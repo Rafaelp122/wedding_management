@@ -1,3 +1,19 @@
+/* -------------------------------------------
+   RESET E CONFIGURAÇÕES GERAIS
+------------------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* -------------------------------------------
+   VARIÁVEIS DE TEMA
+------------------------------------------- */
 :root {
   --font-primary: 'Georgia', serif;
   --font-secondary: 'Montserrat', sans-serif;
@@ -6,15 +22,104 @@
   --color-text-secondary: #6c757d;
   --color-bg-highlight: #fff9e6;
   --color-text-highlight: #4a3c00;
+  
+  --color-button: #c9a227;
+  --color-button-hover: #b38f1f;
+  --color-button-text: #ffffff;
 }
 
-/* Problema - Título */
+/* -------------------------------------------
+   HERO SECTION (com slider de fundo)
+------------------------------------------- */
+#hero {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+}
+
+.slider-wrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  width: 300%; /* 3 imagens lado a lado */
+  animation: slideLoop 20s infinite;
+  z-index: -2;
+}
+
+.slide {
+  width: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.slide1 {
+  background-image: url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+}
+
+.slide2 {
+  background-image: url('https://images.pexels.com/photos/169198/pexels-photo-169198.jpeg');
+}
+
+.slide3 {
+  background-image: url('https://images.pexels.com/photos/1702373/pexels-photo-1702373.jpeg');
+}
+
+@keyframes slideLoop {
+  0%   { transform: translateX(0%); }
+  25%  { transform: translateX(-33.3%); }
+  50%  { transform: translateX(-66.4%); }
+  75%  { transform: translateX(-33.3%); }
+  100% { transform: translateX(0%); }
+}
+
+/* Overlay escuro */
+#hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+#hero .container {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  padding: 2rem;
+}
+
+/* -------------------------------------------
+   BOTÕES DE AÇÃO (Ex: Sou Noivo(a))
+------------------------------------------- */
+.btn-role {
+  background-color: var(--color-button);
+  color: var(--color-button-text);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-role:hover {
+  background-color: var(--color-button-hover);
+  transform: scale(1.05);
+}
+
+/* -------------------------------------------
+   SEÇÃO PROBLEMA
+------------------------------------------- */
+
+/* Título */
 .problema-titulo {
   color: var(--color-primary);
   font-family: var(--font-primary);
 }
 
-/* Problema - Texto */
+/* Texto principal */
 .problema-texto {
   max-width: 680px;
   font-style: italic;
@@ -43,7 +148,7 @@
   align-items: center;
 }
 
-/* Ícone dentro dos itens */
+/* Ícone SVG nos itens */
 .problema-icon {
   width: 20px;
   height: 20px;
@@ -53,7 +158,9 @@
   flex-shrink: 0;
 }
 
-/* Título da seção marketplace */
+/* -------------------------------------------
+   SEÇÃO MARKETPLACE
+------------------------------------------- */
 .marketplace-title {
   color: var(--color-primary);
   font-family: var(--font-secondary);
