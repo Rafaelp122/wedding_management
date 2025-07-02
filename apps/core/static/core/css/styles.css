@@ -22,7 +22,7 @@ html, body {
   --color-text-secondary: #6c757d;
   --color-bg-highlight: #fff9e6;
   --color-text-highlight: #4a3c00;
-  
+
   --color-button: #c9a227;
   --color-button-hover: #b38f1f;
   --color-button-text: #ffffff;
@@ -114,13 +114,13 @@ html, body {
 ------------------------------------------- */
 
 /* Título */
-.problema-titulo {
+.problem-title {
   color: var(--color-primary);
   font-family: var(--font-primary);
 }
 
 /* Texto principal */
-.problema-texto {
+.problem-text {
   max-width: 680px;
   font-style: italic;
   margin: 0 auto 3rem auto;
@@ -129,12 +129,12 @@ html, body {
 }
 
 /* Lista de problemas */
-.problema-lista {
+.problem-list {
   max-width: 500px;
 }
 
 /* Cada item da lista */
-.problema-item {
+.problem-item {
   background: var(--color-bg-highlight);
   border-left: 5px solid var(--color-accent);
   text-align: left;
@@ -149,7 +149,7 @@ html, body {
 }
 
 /* Ícone SVG nos itens */
-.problema-icon {
+.problem-icon {
   width: 20px;
   height: 20px;
   fill: var(--color-accent);
