@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # apps
-    'apps.calendario',
+    'apps.calendar',
     'apps.contratos',
     'apps.itens',
     'apps.orcamento',
