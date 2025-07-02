@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class ItensConfig(AppConfig):
+class itemsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.itens'
+    name = 'apps.items'

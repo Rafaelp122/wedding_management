@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     # apps
     'apps.calendar',
     'apps.contracts',
-    'apps.itens',
+    'apps.items',
     'apps.orcamento',
     'apps.core',
 ]
