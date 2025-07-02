@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'apps.calendar',
     'apps.contracts',
     'apps.items',
-    'apps.orcamento',
+    'apps.budget',
     'apps.core',
 ]
 
