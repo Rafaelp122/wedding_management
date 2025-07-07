@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Planner - Meus Casamentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9C27B0',
+                        secondary: '#7B1FA2',
+                        accent: '#E1BEE7',
+                        light: '#F3E5F5',
+                        dark: '#4A148C'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .wedding-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        .calendar-day {
+            transition: all 0.2s;
+        }
+        .calendar-day:hover {
+            background-color: #E1BEE7;
+            transform: scale(1.05);
+        }
+        .calendar-day.event {
+            background-color: #F3E5F5;
+            position: relative;
+        }
+        .calendar-day.event::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background-color: #9C27B0;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-heart text-primary text-2xl mr-2"></i>
+                <h1 class="text-2xl font-bold text-gray-800">Wedding Planner</h1>
+            </div>
+            <div class="flex items-center">
+                <div class="relative mr-4">
+                    <i class="fas fa-bell text-gray-600 text-xl"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">JP</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800">Meus Casamentos</h2>
+            <p class="text-gray-600">Gerencie todos os detalhes dos seus eventos</p>
+        </div>
+
+        <!-- Wedding Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Wedding Card 1 -->
+            <div class="wedding-card bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer" onclick="showWeddingDetails(1)">
+                <div class="relative">
+                    <div class="h-40 bg-gradient-to-r from-primary to-secondary"></div>
+                    <div class="absolute top-4 right-4 bg-white rounded-full p-2 shadow">
+                        <i class="fas fa-ring text-primary"></i>
+                    </div>
+                    <div class="absolute -bottom-8 left-6">
+                        <div class="bg-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg">
+                            <span class="text-xl font-bold text-primary">C&A</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-12 px-6 pb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Carolina & André</h3>
+                    <p class="text-gray-600 mt-1"><i class="far fa-calendar text-primary mr-2"></i>15 de Novembro, 2023</p>
+                    <p class="text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-primary mr-2"></i>Fazenda Primavera, SP</p>
+                    
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Progresso</span>
+                            <span>65%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div class="progress-fill bg-primary" style="width: 65%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between">
+                        <div class="text-center">
+                            <div class="text-primary font-bold">12</div>
+                            <div class="text-xs text-gray-500">Tarefas</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-primary font-bold">8</div>
+                            <div class="text-xs text-gray-500">Itens</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-primary font-bold">3</div>
+                            <div class="text-xs text-gray-500">Contratos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wedding Card 2 -->
+            <div class="wedding-card bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer" onclick="showWeddingDetails(2)">
+                <div class="relative">
+                    <div class="h-40 bg-gradient-to-r from-purple-500 to-indigo-600"></div>
+                    <div class="absolute top-4 right-4 bg-white rounded-full p-2 shadow">
+                        <i class="fas fa-ring text-purple-500"></i>
+                    </div>
+                    <div class="absolute -bottom-8 left-6">
+                        <div class="bg-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg">
+                            <span class="text-xl font-bold text-purple-500">M&J</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-12 px-6 pb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Mariana & João</h3>
+                    <p class="text-gray-600 mt-1"><i class="far fa-calendar text-purple-500 mr-2"></i>22 de Dezembro, 2023</p>
+                    <p class="text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-purple-500 mr-2"></i>Praia Hotel, SC</p>
+                    
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Progresso</span>
+                            <span>45%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div class="progress-fill bg-purple-500" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between">
+                        <div class="text-center">
+                            <div class="text-purple-500 font-bold">9</div>
+                            <div class="text-xs text-gray-500">Tarefas</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-purple-500 font-bold">6</div>
+                            <div class="text-xs text-gray-500">Itens</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-purple-500 font-bold">2</div>
+                            <div class="text-xs text-gray-500">Contratos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wedding Card 3 -->
+            <div class="wedding-card bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer" onclick="showWeddingDetails(3)">
+                <div class="relative">
+                    <div class="h-40 bg-gradient-to-r from-pink-500 to-rose-500"></div>
+                    <div class="absolute top-4 right-4 bg-white rounded-full p-2 shadow">
+                        <i class="fas fa-ring text-pink-500"></i>
+                    </div>
+                    <div class="absolute -bottom-8 left-6">
+                        <div class="bg-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg">
+                            <span class="text-xl font-bold text-pink-500">P&R</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-12 px-6 pb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Patrícia & Rafael</h3>
+                    <p class="text-gray-600 mt-1"><i class="far fa-calendar text-pink-500 mr-2"></i>10 de Fevereiro, 2024</p>
+                    <p class="text-gray-600 mt-1"><i class="fas fa-map-marker-alt text-pink-500 mr-2"></i>Chácara das Flores, MG</p>
+                    
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Progresso</span>
+                            <span>30%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div class="progress-fill bg-pink-500" style="width: 30%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between">
+                        <div class="text-center">
+                            <div class="text-pink-500 font-bold">7</div>
+                            <div class="text-xs text-gray-500">Tarefas</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-pink-500 font-bold">4</div>
+                            <div class="text-xs text-gray-500">Itens</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-pink-500 font-bold">1</div>
+                            <div class="text-xs text-gray-500">Contratos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wedding Details Section (Hidden by default) -->
+        <div id="weddingDetails" class="hidden">
+            <!-- Back Button -->
+            <div class="mb-6">
+                <button onclick="hideWeddingDetails()" class="flex items-center text-primary font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i> Voltar para Meus Casamentos
+                </button>
+            </div>
+
+            <!-- Wedding Header -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="flex flex-col md:flex-row md:items-center">
+                    <div class="flex items-center mb-4 md:mb-0 md:mr-6">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white text-xl font-bold mr-4">C&A</div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Carolina & André</h2>
+                            <p class="text-gray-600">15 de Novembro, 2023 - Fazenda Primavera, SP</p>
+                        </div>
+                    </div>
+                    <div class="ml-auto flex">
+                        <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg mr-3 flex items-center">
+                            <i class="fas fa-download mr-2"></i> Exportar
+                        </button>
+                        <button class="border border-primary text-primary hover:bg-light px-4 py-2 rounded-lg flex items-center">
+                            <i class="fas fa-share-alt mr-2"></i> Compartilhar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="flex flex-wrap border-b border-gray-200 mb-6">
+                <button class="tab-btn active px-4 py-3 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary" data-tab="budget">
+                    <i class="fas fa-coins mr-2"></i> Orçamento
+                </button>
+                <button class="tab-btn px-4 py-3 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary" data-tab="contract">
+                    <i class="fas fa-file-contract mr-2"></i> Contrato
+                </button>
+                <button class="tab-btn px-4 py-3 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary" data-tab="items">
+                    <i class="fas fa-list-check mr-2"></i> Itens
+                </button>
+                <button class="tab-btn px-4 py-3 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary" data-tab="calendar">
+                    <i class="fas fa-calendar-days mr-2"></i> Calendário
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div>
+                <!-- Budget Tab -->
+                <div id="budget" class="tab-content active">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Visão Geral do Orçamento</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="bg-light rounded-lg p-4">
+                                <div class="text-gray-600 mb-1">Orçamento Total</div>
+                                <div class="text-2xl font-bold text-primary">R$ 85.000,00</div>
+                            </div>
+                            <div class="bg-light rounded-lg p-4">
+                                <div class="text-gray-600 mb-1">Gasto Atual</div>
+                                <div class="text-2xl font-bold text-secondary">R$ 52.300,00</div>
+                            </div>
+                            <div class="bg-light rounded-lg p-4">
+                                <div class="text-gray-600 mb-1">Saldo Disponível</div>
+                                <div class="text-2xl font-bold text-green-500">R$ 32.700,00</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h4 class="font-bold text-gray-700 mb-3">Distribuição de Gastos</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span>Local e Buffet</span>
+                                        <span>R$ 35.000,00</span>
+                                    </div>
+                                    <div class="progress-bar bg-gray-200">
+                                        <div class="progress-fill bg-primary" style="width: 70%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span>Decoração</span>
+                                        <span>R$ 15.000,00</span>
+                                    </div>
+                                    <div class="progress-bar bg-gray-200">
+                                        <div class="progress-fill bg-purple-500" style="width: 50%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span>Fotografia e Vídeo</span>
+                                        <span>R$ 10.000,00</span>
+                                    </div>
+                                    <div class="progress-bar bg-gray-200">
+                                        <div class="progress-fill bg-pink-500" style="width: 80%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span>Vestuário</span>
+                                        <span>R$ 12.000,00</span>
+                                    </div>
+                                    <div class="progress-bar bg-gray-200">
+                                        <div class="progress-fill bg-blue-500" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Adicionar Despesa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contract Tab -->
+                <div id="contract" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Contratos Associados</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fornecedor</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serviço</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-primary rounded-full flex items-center justify-center text-white font-bold mr-3">FS</div>
+                                                <div>Fazenda Primavera</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">Local e Buffet</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">R$ 35.000,00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Assinado</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button class="text-primary hover:text-secondary mr-3">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="text-primary hover:text-secondary">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold mr-3">DF</div>
+                                                <div>Decoração Fina</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">Decoração Completa</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">R$ 15.000,00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendente</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button class="text-primary hover:text-secondary mr-3">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="text-primary hover:text-secondary">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold mr-3">FV</div>
+                                                <div>Fotografia Vivaz</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">Fotos e Vídeo</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">R$ 10.000,00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Assinado</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button class="text-primary hover:text-secondary mr-3">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="text-primary hover:text-secondary">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end">
+                            <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Novo Contrato
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Tab -->
+                <div id="items" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Lista de Itens do Casamento</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Item 1 -->
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h4 class="font-bold text-gray-800">Decoração de Mesa</h4>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Concluído</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-4">Centro de mesa com flores brancas e velas</p>
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-600">Fornecedor: Decoração Fina</div>
+                                    <button class="text-primary hover:text-secondary">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Item 2 -->
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h4 class="font-bold text-gray-800">Buffet Completo</h4>
+                                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Em Andamento</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-4">Cardápio completo com opções vegetarianas</p>
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-600">Fornecedor: Fazenda Primavera</div>
+                                    <button class="text-primary hover:text-secondary">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Item 3 -->
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h4 class="font-bold text-gray-800">Fotografia</h4>
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Pendente</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-4">Cobertura completa do evento</p>
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-600">Fornecedor: Fotografia Vivaz</div>
+                                    <button class="text-primary hover:text-secondary">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Item 4 -->
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h4 class="font-bold text-gray-800">Vestido de Noiva</h4>
+                                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Em Andamento</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-4">Vestido sob medida com detalhes em renda</p>
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-600">Fornecedor: Ateliê Elegante</div>
+                                    <button class="text-primary hover:text-secondary">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end">
+                            <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Adicionar Item
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Tab -->
+                <div id="calendar" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Calendário do Casamento</h3>
+                        
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <span class="text-lg font-bold text-gray-800">Novembro 2023</span>
+                            </div>
+                            <div class="flex">
+                                <button class="p-2 rounded-full hover:bg-gray-100 mr-2">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="p-2 rounded-full hover:bg-gray-100">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-7 gap-1 mb-2">
+                            <div class="text-center text-sm text-gray-500 font-medium py-2">Dom</div>
+                            <div class="text-center text-sm text-gray-500 font-medium py-2">Seg</div>
+                            <div class="text-center text-sm text-gray-500 font-medium py-2">Ter</div>
+                            <div class="text-center text-sm text-gray-500 font-medium py-2">Qua</div>
+                            <div class="text-center text-sm text-gray-500 font-medium py-2">Qui</div>
+                            <div class="text-center text-sm text-gray-500 font-medium py-2">Sex</div>
+                            <div class="text-center text-sm text-gray-500 font-medium py-2">Sáb</div>
+                        </div>
+                        
+                        <div class="grid grid-cols-7 gap-1">
+                            <!-- Empty days -->
+                            <div class="text-center py-4"></div>
+                            <div class="text-center py-4"></div>
+                            <div class="text-center py-4"></div>
+                            
+                            <!-- Calendar days -->
+                            <div class="calendar-day text-center py-4 rounded-lg">1</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">2</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">3</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">4</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">5</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">6</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">7</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">8</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">9</div>
+                            <div class="calendar-day event text-center py-4 rounded-lg font-bold">10</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">11</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">12</div>
+                            <div class="calendar-day event text-center py-4 rounded-lg">13</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">14</div>
+                            <div class="calendar-day event bg-primary text-white text-center py-4 rounded-lg font-bold">15</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">16</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">17</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">18</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">19</div>
+                            <div class="calendar-day event text-center py-4 rounded-lg">20</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">21</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">22</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">23</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">24</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">25</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">26</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">27</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">28</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">29</div>
+                            <div class="calendar-day text-center py-4 rounded-lg">30</div>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <h4 class="font-bold text-gray-700 mb-3">Eventos Marcados</h4>
+                            <div class="space-y-3">
+                                <div class="flex items-start">
+                                    <div class="w-3 h-3 bg-primary rounded-full mt-2 mr-3"></div>
+                                    <div>
+                                        <div class="font-bold text-gray-800">Casamento Carolina & André</div>
+                                        <div class="text-gray-600">15 de Novembro, 2023 - 16:00</div>
+                                        <div class="text-gray-600">Fazenda Primavera, SP</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-3 h-3 bg-purple-500 rounded-full mt-2 mr-3"></div>
+                                    <div>
+                                        <div class="font-bold text-gray-800">Reunião com Decorador</div>
+                                        <div class="text-gray-600">10 de Novembro, 2023 - 14:00</div>
+                                        <div class="text-gray-600">Escritório Decoração Fina</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-3 h-3 bg-pink-500 rounded-full mt-2 mr-3"></div>
+                                    <div>
+                                        <div class="font-bold text-gray-800">Sessão de Fotos Pré-Casamento</div>
+                                        <div class="text-gray-600">13 de Novembro, 2023 - 10:00</div>
+                                        <div class="text-gray-600">Parque Central</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and content
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active', 'border-primary', 'text-primary');
+                    btn.classList.add('text-gray-600');
+                });
+                
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Add active class to clicked button
+                button.classList.add('active', 'border-primary', 'text-primary');
+                button.classList.remove('text-gray-600');
+                
+                // Show corresponding content
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Show wedding details
+        function showWeddingDetails(id) {
+            document.getElementById('weddingDetails').classList.remove('hidden');
+            document.querySelector('.grid').classList.add('hidden');
+            document.querySelector('.mb-8').classList.add('hidden');
+        }
+        
+        // Hide wedding details
+        function hideWeddingDetails() {
+            document.getElementById('weddingDetails').classList.add('hidden');
+            document.querySelector('.grid').classList.remove('hidden');
+            document.querySelector('.mb-8').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

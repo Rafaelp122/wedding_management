@@ -18,13 +18,13 @@ html, body {
   --font-primary: 'Georgia', serif;
   --font-secondary: 'Montserrat', sans-serif;
   --color-primary: #8B6B0B;
-  --color-accent: #d6b84c;
+  --color-accent: #9C27B0;
   --color-text-secondary: #6c757d;
   --color-bg-highlight: #fff9e6;
   --color-text-highlight: #4a3c00;
 
-  --color-button: #c9a227;
-  --color-button-hover: #b38f1f;
+  --color-button: #9C27B0;
+  --color-button-hover: #7B1FA2;
   --color-button-text: #ffffff;
 }
 
@@ -38,7 +38,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var( --color-bg-highlight);
   text-align: center;
 }
 
@@ -46,7 +46,7 @@ html, body {
   position: absolute;
   inset: 0;
   display: flex;
-  width: 300%; /* 3 imagens lado a lado */
+  width: 300%;
   animation: slideLoop 20s infinite;
   z-index: -2;
 }
@@ -76,6 +76,54 @@ html, body {
   50%  { transform: translateX(-66.4%); }
   75%  { transform: translateX(-33.3%); }
   100% { transform: translateX(0%); }
+}
+
+/* -------------------------------------------
+   HEADER
+------------------------------------------- */
+.navbar-nav .nav-link {
+  position: relative;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+}
+
+.navbar-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transition: width 300ms ease-in-out;
+}
+
+.navbar-nav .nav-link:hover::after {
+  width: 100%;
+}
+
+.logo {
+  width: 100px;
+  height: 50px;
+}
+
+/* Botão de login menor e mais arredondado */
+.btn-login {
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  background-color: var(--color-accent);
+  color: var( --color-bg-highlight);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  color:var( --color-bg-highlight);
+  background-color:var(--color-accent);
+  transform: scale(1.05);
 }
 
 /* Overlay escuro */
@@ -112,14 +160,11 @@ html, body {
 /* -------------------------------------------
    SEÇÃO PROBLEMA
 ------------------------------------------- */
-
-/* Título */
 .problem-title {
-  color: var(--color-primary);
+  color: #b262d5;
   font-family: var(--font-primary);
 }
 
-/* Texto principal */
 .problem-text {
   max-width: 680px;
   font-style: italic;
@@ -128,14 +173,12 @@ html, body {
   font-size: 1.25rem;
 }
 
-/* Lista de problemas */
 .problem-list {
   max-width: 500px;
 }
 
-/* Cada item da lista */
 .problem-item {
-  background: var(--color-bg-highlight);
+  background: #F3E5F5; /* Roxo claro */
   border-left: 5px solid var(--color-accent);
   text-align: left;
   font-weight: 600;
@@ -148,7 +191,7 @@ html, body {
   align-items: center;
 }
 
-/* Ícone SVG nos items */
+
 .problem-icon {
   width: 20px;
   height: 20px;
@@ -162,6 +205,6 @@ html, body {
    SEÇÃO MARKETPLACE
 ------------------------------------------- */
 .marketplace-title {
-  color: var(--color-primary);
+  color: #7B1FA2;
   font-family: var(--font-secondary);
 }
