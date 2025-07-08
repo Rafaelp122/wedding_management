@@ -17,15 +17,62 @@ html, body {
 :root {
   --font-primary: 'Georgia', serif;
   --font-secondary: 'Montserrat', sans-serif;
-  --color-primary: #8B6B0B;
-  --color-accent: #9C27B0;
-  --color-text-secondary: #6c757d;
-  --color-bg-highlight: #fff9e6;
-  --color-text-highlight: #4a3c00;
 
+  --color-accent: rgb(156, 39, 176);
   --color-button: #9C27B0;
   --color-button-hover: #7B1FA2;
   --color-button-text: #ffffff;
+
+  --color-text-secondary: #6c757d;
+  --color-text-highlight: #4a3c00;
+  --color-bg-highlight: #fff9e6;
+}
+
+/* -------------------------------------------
+   HEADER / NAVBAR
+------------------------------------------- */
+.navbar-nav .nav-link {
+  position: relative;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.1rem;
+  color: var(--color-text-highlight);
+}
+
+.navbar-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transition: width 300ms ease-in-out;
+}
+
+.navbar-nav .nav-link:hover::after {
+  width: 100%;
+}
+
+.logo {
+  width: 100px;
+  height: 50px;
+}
+
+.btn-login {
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  background-color: var(--color-accent);
+  color: var(--color-bg-highlight);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  color: var(--color-bg-highlight);
+  background-color: var(--color-accent);
+  transform: scale(1.05);
 }
 
 /* -------------------------------------------
@@ -38,10 +85,26 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var( --color-bg-highlight);
+  color: var(--color-bg-highlight);
   text-align: center;
 }
 
+#hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+#hero .container {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  padding: 2rem;
+}
+
+/* Slider de Fundo */
 .slider-wrapper {
   position: absolute;
   inset: 0;
@@ -79,70 +142,6 @@ html, body {
 }
 
 /* -------------------------------------------
-   HEADER
-------------------------------------------- */
-.navbar-nav .nav-link {
-  position: relative;
-  padding: 0.8rem 1.2rem;
-  font-size: 1.1rem;
-  color: var(--primary-color);
-}
-
-.navbar-nav .nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 2px;
-  background: var(--color-accent);
-  transition: width 300ms ease-in-out;
-}
-
-.navbar-nav .nav-link:hover::after {
-  width: 100%;
-}
-
-.logo {
-  width: 100px;
-  height: 50px;
-}
-
-/* Botão de login menor e mais arredondado */
-.btn-login {
-  padding: 6px 16px;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  background-color: var(--color-accent);
-  color: var( --color-bg-highlight);
-  border: none;
-  transition: all 0.3s ease;
-}
-
-.btn-login:hover {
-  color:var( --color-bg-highlight);
-  background-color:var(--color-accent);
-  transform: scale(1.05);
-}
-
-/* Overlay escuro */
-#hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: -1;
-}
-
-#hero .container {
-  position: relative;
-  z-index: 1;
-  max-width: 900px;
-  padding: 2rem;
-}
-
-/* -------------------------------------------
    BOTÕES DE AÇÃO (Ex: Sou Noivo(a))
 ------------------------------------------- */
 .btn-role {
@@ -158,19 +157,19 @@ html, body {
 }
 
 /* -------------------------------------------
-   SEÇÃO PROBLEMA
+   SEÇÃO PROBLEMAS
 ------------------------------------------- */
 .problem-title {
-  color: #b262d5;
+  color:var(--color-button);
   font-family: var(--font-primary);
 }
 
 .problem-text {
   max-width: 680px;
-  font-style: italic;
   margin: 0 auto 3rem auto;
-  color: var(--color-text-secondary);
+  font-style: italic;
   font-size: 1.25rem;
+  color: var(--color-text-secondary);
 }
 
 .problem-list {
@@ -178,7 +177,7 @@ html, body {
 }
 
 .problem-item {
-  background: #F3E5F5; /* Roxo claro */
+  background: #F3E5F5;
   border-left: 5px solid var(--color-accent);
   text-align: left;
   font-weight: 600;
@@ -186,19 +185,18 @@ html, body {
   margin-bottom: 1rem;
   padding: 1rem;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
 }
-
 
 .problem-icon {
   width: 20px;
   height: 20px;
   fill: var(--color-accent);
-  vertical-align: middle;
   margin-right: 8px;
   flex-shrink: 0;
+  vertical-align: middle;
 }
 
 /* -------------------------------------------
@@ -207,4 +205,108 @@ html, body {
 .marketplace-title {
   color: #7B1FA2;
   font-family: var(--font-secondary);
+}
+
+/* Seção Sobre */
+#about {
+  background-color: #f8f9fa;
+}
+
+/* Estilos para a seção Sobre melhorada */
+.py-6 {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
+.py-lg-7 {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 992px) {
+  .py-lg-7 {
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+  }
+}
+
+.z-index-1 {
+  z-index: 1;
+}
+
+.bg-purple-soft {
+  background-color: rgba(156, 39, 176, 0.1);
+}
+
+.icon-box {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rounded-4 {
+  border-radius: 1rem !important;
+}
+
+.rounded-start-5 {
+  border-top-left-radius: 2rem;
+  border-bottom-left-radius: 2rem;
+}
+
+.feature-list .icon-box svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-button-hover);
+  border-color: var(--color-button-hover);
+}
+
+.btn-outline-primary {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+/* Cards de Benefícios e Planos */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 0.75rem;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Formulário de Contato */
+.form-control {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+}
+
+.form-control:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 0.25rem rgba(156, 39, 176, 0.25);
+}
+
+/* Badge de Plano Popular */
+.badge {
+  font-size: 0.8rem;
+  padding: 0.35em 0.65em;
+  border-radius: 50rem;
 }
