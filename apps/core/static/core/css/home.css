@@ -18,8 +18,8 @@ html, body {
   --font-primary: 'Georgia', serif;
   --font-secondary: 'Montserrat', sans-serif;
 
-  --color-accent: rgb(156, 39, 176);
-  --color-button: #9C27B0;
+  --color-accent: #9c27b0;
+  --color-button: #9c27b0;
   --color-button-hover: #7B1FA2;
   --color-button-text: #ffffff;
 
@@ -176,19 +176,6 @@ html, body {
   max-width: 500px;
 }
 
-.problem-item {
-  background: #F3E5F5;
-  border-left: 5px solid var(--color-accent);
-  text-align: left;
-  font-weight: 600;
-  color: var(--color-text-highlight);
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-}
 
 .problem-icon {
   width: 20px;
@@ -310,3 +297,6 @@ html, body {
   padding: 0.35em 0.65em;
   border-radius: 50rem;
 }
+
+
+
