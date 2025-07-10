@@ -1,5 +1,10 @@
 {% extends 'core/base.html' %}
 {% load static %}
+
+{% block extra_head %} 
+  <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <section id="hero">
