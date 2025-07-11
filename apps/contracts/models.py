@@ -1,6 +1,8 @@
 from django.db import models
-from apps.users.models import Cerimonialista, Cliente
+
 from apps.budget.models import Orcamento
+from apps.client.models import Cliente
+from apps.users.models import Cerimonialista
 
 
 class Contrato(models.Model):

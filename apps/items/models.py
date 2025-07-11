@@ -1,6 +1,7 @@
 from django.db import models
-from apps.users.models import Fornecedor
+
 from apps.budget.models import Orcamento
+from apps.suplier.models import Fornecedor
 
 
 class Item(models.Model):
