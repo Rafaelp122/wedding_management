@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.items",
     "apps.budget",
     "apps.core",
+    "apps.users",
 ]
 
 MIDDLEWARE = [
