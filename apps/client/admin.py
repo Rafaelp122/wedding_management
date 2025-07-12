@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from .models import Cliente
+from .models import Client
 
 
-@admin.register(Cliente)
-class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'email', 'cpf', 'telefone')
-    search_fields = ('nome', 'email', 'cpf')
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'cpf', 'phone')
+    search_fields = ('name', 'email', 'cpf')

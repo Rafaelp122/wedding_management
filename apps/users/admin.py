@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from .models import Cerimonialista
+from .models import Planner
 
 
-@admin.register(Cerimonialista)
-class CerimonialistaAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'email', 'cpf_cnpj', 'telefone')
-    search_fields = ('nome', 'email', 'cpf_cnpj')
+@admin.register(Planner)
+class PlannerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'cpf_cnpj', 'phone')
+    search_fields = ('name', 'email', 'cpf_cnpj')

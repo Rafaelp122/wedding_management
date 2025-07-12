@@ -1,11 +1,12 @@
 from django.db import models
 
 
-class Client(models.Model):
+class Supplier(models.Model):
     name = models.CharField(max_length=255)
-    cpf = models.CharField(max_length=20, unique=True)
+    cpf_cnpj = models.CharField(max_length=20, unique=True)  # Brazilian ID
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
+    offered_services = models.TextField()
 
     def __str__(self):
         return self.name
