@@ -29,53 +29,6 @@ html, body {
 }
 
 /* -------------------------------------------
-   HEADER / NAVBAR
-------------------------------------------- */
-.navbar-nav .nav-link {
-  position: relative;
-  padding: 0.8rem 1.2rem;
-  font-size: 1.1rem;
-  color: var(--color-text-highlight);
-}
-
-.navbar-nav .nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 2px;
-  background: var(--color-accent);
-  transition: width 300ms ease-in-out;
-}
-
-.navbar-nav .nav-link:hover::after {
-  width: 100%;
-}
-
-.logo {
-  width: 100px;
-  height: 50px;
-}
-
-.btn-login {
-  padding: 6px 16px;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  background-color: var(--color-accent);
-  color: var(--color-bg-highlight);
-  border: none;
-  transition: all 0.3s ease;
-}
-
-.btn-login:hover {
-  color: var(--color-bg-highlight);
-  background-color: var(--color-accent);
-  transform: scale(1.05);
-}
-
-/* -------------------------------------------
    HERO SECTION (com slider de fundo)
 ------------------------------------------- */
 #hero {

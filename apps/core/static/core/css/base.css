@@ -59,17 +59,30 @@ html, body {
   height: 50px;
 }
 
-.header .btn-login {
-  padding: 6px 16px;
+.btn-register {
+  border: none;
+  transition: all 0.8s ease;
   border-radius: 50px;
-  font-size: 0.9rem;
+}
+
+.btn-register:hover {
+  /* color: var(--color-bg-highlight);
+  background-color: var(--color-text-secondary); */
+  transform: scale(1.05);
+}
+
+.btn-login {
+  margin-left: 10px;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 1rem;
   background-color: var(--color-accent);
   color: var(--color-bg-highlight);
   border: none;
   transition: all 0.3s ease;
 }
 
-.header .btn-login:hover {
+.btn-login:hover {
   color: var(--color-bg-highlight);
   background-color: var(--color-accent);
   transform: scale(1.05);
