@@ -11,9 +11,9 @@ html, body {
   height: 100%;
 }
   
-  /* -------------------------------------------
-     VARIÁVEIS DE TEMA
-  ------------------------------------------- */
+/* -------------------------------------------
+    VARIÁVEIS DE TEMA
+------------------------------------------- */
 :root {
   --font-primary: 'Georgia', serif;
   --font-secondary: 'Montserrat', sans-serif;
@@ -54,12 +54,12 @@ html, body {
   width: 100%;
 }
 
-.logo {
+.header .logo {
   width: 100px;
   height: 50px;
 }
 
-.btn-login {
+.header .btn-login {
   padding: 6px 16px;
   border-radius: 50px;
   font-size: 0.9rem;
@@ -69,7 +69,7 @@ html, body {
   transition: all 0.3s ease;
 }
 
-.btn-login:hover {
+.header .btn-login:hover {
   color: var(--color-bg-highlight);
   background-color: var(--color-accent);
   transform: scale(1.05);

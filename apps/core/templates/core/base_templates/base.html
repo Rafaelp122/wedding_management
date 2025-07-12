@@ -11,8 +11,8 @@
     <!-- Inclui o Cabeçalho -->
     {% include 'core/partials/base/header.html' %}
 
-    <main>
-        {% block content %}{% endblock %}
+    <main class="{% block main_class %} {% endblock %}">
+        {% block content %} {% endblock %}
     </main>
 
     <!-- Inclui o Rodapé -->
