@@ -1,7 +1,11 @@
-{% extends 'core/base.html' %}
+{% extends 'core/base_templates/base.html' %}
 {% load static %}
 
-{% block extra_head %} 
+{% block extra_head %}
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
 {% endblock %}
 
@@ -27,7 +31,6 @@
     </div>
   </div>
 </section>
-
 
 
 <section id="about" class="py-6 py-lg-7 bg-light position-relative overflow-hidden">
@@ -106,7 +109,6 @@
   <!-- Elementos decorativos -->
   <div class="position-absolute top-0 end-0 w-50 h-100 bg-purple-soft opacity-10 rounded-start-5" style="z-index: 0;"></div>
 </section>
-
 
 
 {% comment %} Beneficios {% endcomment %}
@@ -221,6 +223,7 @@
   </div>
 </section>
 
+
 {% comment %} Planos {% endcomment %}
 
 <section id="pricing" class="py-5">
@@ -290,6 +293,7 @@
     </div>
   </div>
 </section>
+
 
 {% comment %} Fale Conosco {% endcomment %}
 
