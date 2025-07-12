@@ -1,0 +1,16 @@
+{% extends 'core/base_templates/base_auth.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <h2>Cadastro</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Cadastrar</button>
+  </form>
+
+  <p class="mt-3 text-center">
+    Não tem uma conta? <a href="{% url 'users:signup' %}">Cadastre-se aqui</a>
+  </p>
+</div>
+{% endblock %}

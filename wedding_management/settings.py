@@ -50,6 +50,9 @@ INSTALLED_APPS = [
     "apps.supplier",
 ]
 
+LOGIN_REDIRECT_URL = "core:home"  # TROCAR DEPOIS
+LOGOUT_REDIRECT_URL = "users:login"  # (opcional) Redireciona após logout
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
