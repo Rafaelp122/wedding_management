@@ -6,4 +6,4 @@ def home(request):
 
 
 def contact_us(request):
-    return render(request, "core/pages/contact_us.html")
+    return render(request, "core/pages/contact-us.html")
