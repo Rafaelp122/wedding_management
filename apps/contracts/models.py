@@ -15,4 +15,4 @@ class Contract(models.Model):
     budget = models.ForeignKey(Budget, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'Contract #{self.id}'
+        return f'Contract #{self.pk}'
