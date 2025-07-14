@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-    {% include "core/partials/auth/head.html" %}
+    {% include "global/partials/auth/head.html" %}
     {% block extra_head%} {% endblock %}
 </head>
+
 <body>
-    {% include 'core/partials/auth/header.html' %}
+    {% include 'global/partials/auth/header.html' %}
 
     <main>
         {% block content %} {% endblock %}
     </main>
 
-    {% include 'core/partials/auth/footer.html' %}
+    {% include 'global/partials/auth/footer.html' %}
 </body>
+
 </html>
