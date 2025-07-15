@@ -1,6 +1,10 @@
 {% extends 'base_auth.html' %}
 {% block title %} Login {% endblock %}
 
+{% block extra_head %} 
+  <link rel="stylesheet" href="{% static 'users/css/login.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container py-5" style="max-width: 400px; margin: auto;">
   <h2 class="mb-4">Entrar</h2>

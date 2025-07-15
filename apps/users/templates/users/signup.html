@@ -1,6 +1,10 @@
 {% extends 'base_auth.html' %}
 {% block title %} Cadastro {% endblock %}
 
+{% block extra_head %} 
+  <link rel="stylesheet" href="{% static 'users/css/signup.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
   <h2>Cadastro</h2>
