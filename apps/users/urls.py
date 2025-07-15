@@ -12,9 +12,9 @@ urlpatterns = [
         name="login",
     ),
     path(
-        "logout/",
+        "deslogar/",
         auth_views.LogoutView.as_view(next_page="users:login"),
         name="logout",
     ),
-    path("signup/", views.signup, name="signup"),
+    path("cadastro/", views.signup, name="signup"),
 ]

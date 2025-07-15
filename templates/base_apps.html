@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    {% include "partials/apps/head.html" %}
+    {% block extra_head %} {% endblock %}
+    <title> Sim, Aceito! | {% block title %} {% endblock title %}</title>
+</head>
+<body>
+    {% include 'partials/apps/header.html' %}
+
+    <main class="{% block main_class %}{% endblock %}">
+        {% block content %} {% endblock %}
+    </main>
+
+    {% include 'partials/apps/footer.html' %}
+</body>
+</html>

@@ -48,10 +48,12 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.client",
     "apps.supplier",
+    "apps.weddings",
 ]
 
-LOGIN_REDIRECT_URL = "pages:home"  # TROCAR DEPOIS
-LOGOUT_REDIRECT_URL = "users:login"  # (opcional) Redireciona após logout
+LOGIN_REDIRECT_URL = "weddings:my_weddings" 
+LOGOUT_REDIRECT_URL = "users:login"  
+LOGIN_URL = "/usuario/login/"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

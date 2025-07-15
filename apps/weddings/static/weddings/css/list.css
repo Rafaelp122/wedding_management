@@ -1,0 +1,39 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+  
+html, body {
+  height: 100%;
+}
+  
+/* -------------------------------------------
+    VARIÁVEIS DE TEMA
+------------------------------------------- */
+:root {
+  --font-primary: 'Georgia', serif;
+  --font-secondary: 'Montserrat', sans-serif;
+
+  --color-accent: #9c27b0;
+  --color-button: #9c27b0;
+  --color-button-hover: #7B1FA2;
+  --color-button-text: #ffffff;
+
+  --color-text-secondary: #6c757d;
+  --color-text-highlight: #4a3c00;
+  --color-bg-highlight: #fff9e6;
+}
+
+.card .circle {
+  width: 50px;
+  height: 50px;
+  background-color: white;
+  color: #4a00e0;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
