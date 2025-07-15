@@ -22,5 +22,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("apps.pages.urls", namespace="pages")),
     path("usuario/", include(("apps.users.urls", "users"), namespace="users")),
-    path("casamentos/", include(("apps.weddings.urls", "weddings"), namespace="weddings")),
+    path(
+        "casamentos/", include(("apps.weddings.urls", "weddings"), namespace="weddings")
+    ),
 ]

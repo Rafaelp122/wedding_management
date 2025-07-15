@@ -21,24 +21,28 @@ GRADIENTS = [
 @login_required
 def my_weddings(request):
     planner = Planner.objects.get(user=request.user)
-    weddings = Wedding.objects.filter(planner=planner).prefetch_related('clients')
+    weddings = Wedding.objects.filter(planner=planner).prefetch_related("clients")
 
     weddings_with_clients = []
     for idx, w in enumerate(weddings):
         clients = list(w.clients.all())
         first = clients[0] if clients else None
         last = clients[-1] if clients else None
-        gradient = GRADIENTS[idx % len(GRADIENTS)]  # escolhe uma cor da lista de forma cíclica
-        weddings_with_clients.append({
-            'wedding': w,
-            'first_client': first,
-            'last_client': last,
-            'gradient': gradient,
-        })
+        gradient = GRADIENTS[
+            idx % len(GRADIENTS)
+        ]  # escolhe uma cor da lista de forma cíclica
+        weddings_with_clients.append(
+            {
+                "wedding": w,
+                "first_client": first,
+                "last_client": last,
+                "gradient": gradient,
+            }
+        )
 
-    return render(request, "weddings/list.html", {
-        "weddings_with_clients": weddings_with_clients
-    })
+    return render(
+        request, "weddings/list.html", {"weddings_with_clients": weddings_with_clients}
+    )
 
 
 @login_required
@@ -70,11 +74,7 @@ def edit_wedding(request, id):
     else:
         form = WeddingForm(instance=wedding)
 
-    return render(
-        request,
-        "weddings/create.html",
-        {"form": form, "wedding": wedding}
-        )
+    return render(request, "weddings/create.html", {"form": form, "wedding": wedding})
 
 
 @login_required

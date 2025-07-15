@@ -10,7 +10,9 @@ class Wedding(models.Model):
     clients = models.ManyToManyField(Client, blank=True)
     groom_name = models.CharField(max_length=100, blank=True, null=True)
     bride_name = models.CharField(max_length=100, blank=True, null=True)
-    contract = models.OneToOneField(Contract, on_delete=models.SET_NULL, null=True, blank=True)
+    contract = models.OneToOneField(
+        Contract, on_delete=models.SET_NULL, null=True, blank=True
+    )
     date = models.DateField()
     location = models.CharField(max_length=255)
 
