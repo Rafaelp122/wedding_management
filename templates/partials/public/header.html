@@ -2,7 +2,7 @@
 
 <nav class="header navbar navbar-expand-lg bg-body-tertiary sticky-top shadow-sm">
     <div class="container">
-      <a href="{% url 'core:home' %}"><img src="{% static 'global/img/logo.png' %}" alt="Logo" class="logo"></a>
+      <a href="{% url 'pages:home' %}"><img src="{% static 'img/logo.png' %}" alt="Logo" class="logo"></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -12,7 +12,7 @@
           <li class="nav-item mx-3"><a class="nav-link" href="#recursos">Beneficios</a></li>
           <li class="nav-item mx-3"><a class="nav-link" href="#marketplace">Recursos</a></li>
           <li class="nav-item mx-3"><a class="nav-link" href="#planos">Planos</a></li>
-          <li class="nav-item mx-3"><a class="nav-link" href="{% url 'core:contact-us' %}">Fale Conosco</a></li>
+          <li class="nav-item mx-3"><a class="nav-link" href="{% url 'pages:contact-us' %}">Fale Conosco</a></li>
         </ul>
 
         <a href="{% url 'users:signup' %}" class="btn btn-register">

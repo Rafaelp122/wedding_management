@@ -44,13 +44,13 @@ INSTALLED_APPS = [
     "apps.contracts",
     "apps.items",
     "apps.budget",
-    "apps.core",
+    "apps.pages",
     "apps.users",
     "apps.client",
     "apps.supplier",
 ]
 
-LOGIN_REDIRECT_URL = "core:home"  # TROCAR DEPOIS
+LOGIN_REDIRECT_URL = "pages:home"  # TROCAR DEPOIS
 LOGOUT_REDIRECT_URL = "users:login"  # (opcional) Redireciona após logout
 
 MIDDLEWARE = [
@@ -69,7 +69,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            BASE_DIR / "base_templates",
+            BASE_DIR / "templates",
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -133,10 +133,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "base_static",
+    BASE_DIR / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / "static"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

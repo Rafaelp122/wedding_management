@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %} Gestão de Casamentos {% endblock %}
+{% load static %}
+
+{% block extra_head %}
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="{% static 'pages/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+  {% include 'pages/partials/home/hero.html' %}
+  {% include 'pages/partials/home/about.html' %}
+  {% include 'pages/partials/home/benefits.html' %}
+  {% include 'pages/partials/home/features.html' %}
+  {% include 'pages/partials/home/pricing.html' %}
+  {% include 'pages/partials/home/contact.html' %}
+
+{% endblock %}
