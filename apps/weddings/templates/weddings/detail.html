@@ -1,0 +1,78 @@
+{% extends 'base_apps.html' %}
+{% load static %}
+
+{% block title %}Detalhes do Casamento{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'weddings/css/detalhes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <a href="{% url 'weddings:my_weddings' %}" class="text-decoration-none text-purple mb-4 d-inline-block">
+    <i class="bi bi-arrow-left"></i> Voltar para Meus Casamentos
+  </a>
+
+  <!-- Cabeçalho com nomes e data -->
+  <div class="card shadow-sm rounded-3 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="fw-bold text-purple mb-1">
+          {% if wedding.groom_name and wedding.bride_name %}
+            {{ wedding.groom_name }} & {{ wedding.bride_name }}
+          {% else %}
+            Casamento sem nome definido
+          {% endif %}
+        </h4>
+        <p class="text-muted">{{ wedding.date|date:"d \d\e F, Y" }} - {{ wedding.location }}</p>
+      </div>
+      <div>
+        <a href="#" class="btn btn-outline-primary me-2">Exportar</a>
+        <a href="#" class="btn btn-outline-secondary">Compartilhar</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu de Abas -->
+  <ul class="nav nav-tabs" id="abasCasamento">
+    <li class="nav-item"><a class="nav-link active" data-tab="orcamento" href="#">Orçamento</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="contrato" href="#">Contrato</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="itens" href="#">Itens</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="calendario" href="#">Calendário</a></li>
+  </ul>
+
+  <!-- Conteúdo das Abas -->
+  <div class="tab-content mt-4">
+    <div id="tab-orcamento" class="tab-pane active">
+      {% include 'budget/budget.html' %}
+    </div>
+    <div id="tab-contrato" class="tab-pane d-none">
+      {% include 'contracts/contracts.html' %}
+    </div>
+    <div id="tab-itens" class="tab-pane d-none">
+      {% include 'items/items.html' %}
+    </div>
+    <div id="tab-calendario" class="tab-pane d-none">
+      {% include 'scheduler/scheduler.html' %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const abas = document.querySelectorAll('#abasCasamento .nav-link');
+  const conteudos = document.querySelectorAll('.tab-pane');
+
+  abas.forEach(aba => {
+    aba.addEventListener('click', function(e) {
+      e.preventDefault();
+      abas.forEach(a => a.classList.remove('active'));
+      conteudos.forEach(c => c.classList.add('d-none'));
+      this.classList.add('active');
+      const tabId = this.getAttribute('data-tab');
+      document.getElementById(`tab-${tabId}`).classList.remove('d-none');
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+<div class="bg-white p-4 rounded shadow-sm border aba-bloco">
+    <h5 class="fw-bold mb-4 text-purple">Visão Geral do Orçamento</h5>
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="bloco-resumo">
+          <small>Orçamento Total</small>
+          <h4>R$ {{ orcamento_total|floatformat:2 }}</h4>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="bloco-resumo">
+          <small>Gasto Atual</small>
+          <h4>R$ {{ gasto_atual|floatformat:2 }}</h4>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="bloco-resumo">
+          <small>Saldo Disponível</small>
+          <h4 class="text-success">R$ {{ saldo_disponivel|floatformat:2 }}</h4>
+        </div>
+      </div>
+    </div>
+    <h6 class="fw-bold">Distribuição de Gastos</h6>
+    {% for categoria, valor in gastos_distribuidos.items %}
+    <div class="mb-2">
+      <div class="d-flex justify-content-between">
+        <span>{{ categoria }}</span>
+        <span>R$ {{ valor|floatformat:2 }}</span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar bg-purple" style="width: {{ valor|divisibleby:orcamento_total|floatformat:2 }}%;"></div>
+      </div>
+    </div>
+    {% endfor %}
+    <div class="mt-4 text-end">
+      <a class="btn btn-primary" href="#">+ Adicionar Despesa</a>
+    </div>
+  </div>
+  

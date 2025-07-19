@@ -25,9 +25,29 @@ html, body {
   --color-bg-highlight: #fff9e6;
 }
 
+.card {
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card .top-banner {
+  height: 160px;
+  background: linear-gradient(135deg, #8e2de2, #4a00e0);
+  position: relative;
+}
+
 .card .circle {
-  width: 50px;
-  height: 50px;
+  position: relative;
+  top: 40px;
+  left: 20px;
+  transform: translateY(-50%);
+  z-index: 1;
+  width: 60px;
+  height: 60px;
   background-color: white;
   color: #4a00e0;
   font-weight: bold;
@@ -36,4 +56,96 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card .card-body {
+  background-color: white;
+  color: #4a00e0;
+  padding: 20px 20px 20px;
+  border-radius: 0 0 1rem 1rem;
+}
+
+.card .progress {
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+}
+
+.card .progress-bar {
+  background-color: #8e2de2;
+  border-radius: 5px;
+}
+
+.card .info-stats {
+  color: #444;
+  font-size: 0.875rem;
+}
+
+.card .info-stats strong {
+  font-size: 1.1rem;
+}
+
+.card .top-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: white;
+  font-size: 1.25rem;
+}
+
+
+
+
+
+
+.top-icon-document {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: white;
+  font-size: 1.5rem;
+  opacity: 0.85;
+}
+
+.top-icon-document:hover {
+  opacity: 1;
+}
+
+
+/* -------------------------------------------
+    BOTOES EDITAR E EXCLUIR
+------------------------------------------- */
+
+.btn-edit,
+.btn-delete {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+  border: none;
+}
+
+
+
+.btn-edit {
+  background-color: white;
+  color: #8e2de2;
+  box-shadow: 4px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-edit:hover {
+  background-color: #f0f0f0;
+}
+
+.btn-delete {
+  background-color: #e53935;
+  color: white;
+}
+.btn-delete:hover {
+  background-color: #c62828;
 }
