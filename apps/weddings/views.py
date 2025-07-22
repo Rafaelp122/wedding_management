@@ -21,7 +21,7 @@ GRADIENTS = [
 @login_required
 def my_weddings(request):
     planner = Planner.objects.get(user=request.user)
-    weddings = Wedding.objects.filter(planner=planner).prefetch_related("clients")
+    weddings = Wedding.objects.filter(planner=planner).prefetch_related("clients")  # noqa: E501
 
     weddings_with_clients = []
     for idx, w in enumerate(weddings):
@@ -41,7 +41,8 @@ def my_weddings(request):
         )
 
     return render(
-        request, "weddings/list.html", {"weddings_with_clients": weddings_with_clients}
+        request, "weddings/list.html",
+        {"weddings_with_clients": weddings_with_clients},
     )
 
 
@@ -74,7 +75,10 @@ def edit_wedding(request, id):
     else:
         form = WeddingForm(instance=wedding)
 
-    return render(request, "weddings/create.html", {"form": form, "wedding": wedding})
+    return render(
+        request, "weddings/create.html",
+        {"form": form, "wedding": wedding},
+    )
 
 
 @login_required
@@ -85,11 +89,12 @@ def delete_wedding(request, id):
     wedding.delete()
     return redirect("weddings:my_weddings")
 
+
 @login_required
 def wedding_detail(request, id):
     planner = Planner.objects.get(user=request.user)
     wedding = get_object_or_404(Wedding, id=id, planner=planner)
-    
+
     # Corrigido: filtra itens via budget__wedding
     itens = Item.objects.filter(budget__wedding=wedding)
 
