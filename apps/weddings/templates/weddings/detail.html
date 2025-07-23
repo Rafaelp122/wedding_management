@@ -61,17 +61,28 @@
 
 {% block extra_js %}
 <script>
-  const abas = document.querySelectorAll('#abasCasamento .nav-link');
-  const conteudos = document.querySelectorAll('.tab-pane');
+  document.addEventListener("DOMContentLoaded", function () {
+    const tabLinks = document.querySelectorAll('#abasCasamento .nav-link');
+    const tabContents = document.querySelectorAll('.tab-content .tab-pane');
 
-  abas.forEach(aba => {
-    aba.addEventListener('click', function(e) {
-      e.preventDefault();
-      abas.forEach(a => a.classList.remove('active'));
-      conteudos.forEach(c => c.classList.add('d-none'));
-      this.classList.add('active');
-      const tabId = this.getAttribute('data-tab');
-      document.getElementById(`tab-${tabId}`).classList.remove('d-none');
+    tabLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        // Remove classes "active" e "d-none" de todos os links e conteúdos
+        tabLinks.forEach(l => l.classList.remove('active'));
+        tabContents.forEach(c => {
+          c.classList.remove('active');
+          c.classList.add('d-none');
+        });
+
+        // Ativa o link clicado
+        this.classList.add('active');
+        const tabId = 'tab-' + this.dataset.tab;
+        const content = document.getElementById(tabId);
+        content.classList.remove('d-none');
+        content.classList.add('active');
+      });
     });
   });
 </script>
