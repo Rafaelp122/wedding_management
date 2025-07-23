@@ -3,6 +3,7 @@ from django.db import models
 from apps.client.models import Client
 from apps.users.models import Planner
 
+
 class Wedding(models.Model):
     planner = models.ForeignKey(Planner, on_delete=models.CASCADE)
     clients = models.ManyToManyField(Client, blank=True)
