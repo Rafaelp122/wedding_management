@@ -1,0 +1,26 @@
+{% extends "_base.html" %}
+{% load static %}
+
+
+{% block title %}{{ block.super }} | {% block page_title %} {% endblock page_title %}{% endblock title %}
+
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <link rel="stylesheet" href="{% static 'css/base-public.css' %}">
+
+  {% block page_styles %} {% endblock page_styles %}
+{% endblock styles %}
+
+
+{% block body_content %}
+
+  {% include 'partials/public-header.html' %}
+
+  <main class="{% block main_class %} {% endblock main_class %}">
+    {% block content %}{% endblock content %}
+  </main>
+
+  {% include 'partials/footer.html' %}
+
+{% endblock body_content %}

@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
-{% block title %} Fale Conosco {% endblock %}
+{% extends 'base-public.html' %}
+{% block page_title %} Fale Conosco {% endblock %}
 {% load static %}
 
-{% block extra_head %} 
+{% block page_styles %} 
   <link rel="stylesheet" href="{% static 'pages/css/contact-us.css' %}">
-{% endblock %}
+{% endblock page_styles %}
 
 {% block main_class %} contact-us-page {% endblock %}
 

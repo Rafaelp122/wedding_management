@@ -1,10 +1,13 @@
-{% extends 'base_apps.html' %}
+{% extends 'base-apps.html' %}
 {% load static %}
-{% block title %} Criar Casamento {% endblock %}
 
-{% block extra_head %}
+{% block page_title %} Criar Casamento {% endblock page_title %}
+
+{% block page_styles %}
   <link rel="stylesheet" href="{% static 'weddings/css/create.css' %}">
-{% endblock %}
+{% endblock page_styles %}
+
+{% block main_class %} wedding-create-page {% endblock %}
 
 {% block content %}
 <div class="container py-5">

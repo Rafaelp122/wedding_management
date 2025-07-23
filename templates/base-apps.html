@@ -1,0 +1,27 @@
+{% extends "_base.html" %}
+{% load static %}
+
+
+{% block title %}{{ block.super }} | {% block page_title %} {% endblock page_title %}{% endblock title %}
+
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/base-apps.css' %}">
+
+  {% block page_styles %} {% endblock page_styles %}
+{% endblock styles %}
+
+
+{% block body_content %}
+
+  {% include 'partials/apps-header.html' %}
+
+  <main class="{% block main_class %} {% endblock main_class %}">
+    {% block content %} {% endblock %}
+  </main>
+
+  {% include 'partials/footer.html' %}
+
+  {% block extra_js %} {% endblock %}
+{% endblock body_content %}

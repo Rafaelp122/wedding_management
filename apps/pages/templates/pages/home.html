@@ -1,14 +1,14 @@
-{% extends 'base.html' %}
-{% block title %} Gestão de Casamentos {% endblock %}
+{% extends 'base-public.html' %}
+{% block page_title %} Gestão de Casamentos {% endblock %}
 {% load static %}
 
-{% block extra_head %}
+{% block page_styles %}
   <link
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     rel="stylesheet"
   />
   <link rel="stylesheet" href="{% static 'pages/css/home.css' %}">
-{% endblock %}
+{% endblock page_styles %}
 
 {% block content %}
 

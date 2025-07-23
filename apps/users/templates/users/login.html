@@ -1,10 +1,10 @@
-{% extends 'base_auth.html' %}
+{% extends 'base-auth.html' %}
 {% load static %}
-{% block title %} Login {% endblock %}
+{% block page_title %} Login {% endblock page_title %}
 
-{% block extra_head %} 
+{% block page_styles %} 
   <link rel="stylesheet" href="{% static 'users/css/login.css' %}">
-{% endblock %}
+{% endblock page_styles %}
 
 {% block content %}
 <div class="container py-5" style="max-width: 400px; margin: auto;">
