@@ -13,7 +13,7 @@
       <h2 class="fw-bold">Meus Casamentos</h2>
       <p class="text-muted">Gerencie todos os detalhes dos seus eventos</p>
     </div>
-    <a href="{% url 'weddings:create_wedding' %}" class="btn btn-primary">+ Novo Casamento</a>
+    <a href="{% url 'weddings:create_wedding_flow' %}" class="btn btn-primary">+ Novo Casamento</a>
   </div>
 
   <div class="row">
@@ -28,8 +28,10 @@
               <div class="circle">
                 {% if w.groom_name and w.bride_name %}
                   {{ w.groom_name|slice:":1" }}&{{ w.bride_name|slice:":1" }}
-                {% elif item.first_client and item.last_client %}
-                  {{ item.first_client.name|slice:":1" }}&{{ item.last_client.name|slice:":1" }}
+                
+                {% elif item.client %}
+                  {{ item.client.name|slice:":1" }}
+                
                 {% else %}
                   --
                 {% endif %}
@@ -48,12 +50,10 @@
                 <h5 class="fw-bold text-dark mb-0">
                   {% if w.groom_name and w.bride_name %}
                     {{ w.groom_name }} & {{ w.bride_name }}
-                  {% elif item.first_client and item.last_client %}
-                    {% if item.first_client == item.last_client %}
-                      {{ item.first_client.name }}
-                    {% else %}
-                      {{ item.first_client.name }} & {{ item.last_client.name }}
-                    {% endif %}
+                  
+                  {% elif item.client %}
+                    {{ item.client.name }}
+                  
                   {% else %}
                     Casamento sem nome
                   {% endif %}
@@ -96,7 +96,7 @@
     {% empty %}
       <div class="col-12">
         <div class="alert alert-info text-center">
-          Você ainda não cadastrou nenhum casamento. <a href="{% url 'weddings:create_wedding' %}">Clique aqui para adicionar</a>.
+          Você ainda não cadastrou nenhum casamento. <a href="{% url 'weddings:create_wedding_flow' %}">Clique aqui para adicionar</a>.
         </div>
       </div>
     {% endfor %}
@@ -106,7 +106,7 @@
 
 {% block extra_js %}
 <script>
-  // Torna o card clicável, exceto nos botões
+  // Seu script está perfeito, não precisa de alterações.
   document.querySelectorAll('.card-wrapper').forEach(wrapper => {
     wrapper.addEventListener('click', function (e) {
       if (e.target.closest('a') || e.target.closest('form')) return;

@@ -1,0 +1,23 @@
+{% extends 'base-apps.html' %}
+{% load static %}
+
+{% block page_title %} Novo Casamento {% endblock page_title %}
+
+{% block page_styles %} 
+  <link rel="stylesheet" href="{% static 'weddings/css/create.css' %}">
+{% endblock page_styles %}
+
+{% block main_class %} wedding-create-page {% endblock %}
+
+{% block content %}
+  <div class="container py-5">
+    <div id="wizard-container" hx-target="this" hx-swap="innerHTML">
+      {% include 'weddings/partials/form-client.html' with form=form %}
+    </div>
+  </div>
+
+  {% block extra_js %}
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  {% endblock extra_js %}
+
+{% endblock content %}

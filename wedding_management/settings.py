@@ -33,13 +33,18 @@ ALLOWED_HOSTS: list[str] = []
 # Application definition
 
 INSTALLED_APPS = [
+    # apps do Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # apps
+
+    # outros apps
+    "django_htmx",
+
+    # nossos apps
     "apps.scheduler",
     "apps.contracts",
     "apps.items",
@@ -56,6 +61,7 @@ LOGOUT_REDIRECT_URL = "users:login"
 LOGIN_URL = "/usuario/login/"
 
 MIDDLEWARE = [
+    # middlewares do Django
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -63,6 +69,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    # outros middlewares
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 ROOT_URLCONF = "wedding_management.urls"
