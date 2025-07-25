@@ -5,8 +5,8 @@ from apps.budget.models import Budget
 
 class BudgetInline(admin.StackedInline):
     model = Budget
-    extra = 1           # Mostra um formulário de orçamento por padrão na criação.
-    max_num = 1         # Não permite adicionar mais de um.
+    extra = 1  # Mostra um formulário de orçamento por padrão na criação.
+    max_num = 1  # Não permite adicionar mais de um.
     can_delete = False  # Evita apagar o orçamento acidentalmente.
 
 

@@ -58,25 +58,28 @@ def create_wedding_flow(request):
         return HttpResponse("Acesso negado", status=403)
 
     if request.htmx:
-        step = request.POST.get('step')
+        step = request.POST.get("step")
 
-        if step == 'client':
+        if step == "client":
             form = ClientForm(request.POST)
             if form.is_valid():
-                request.session['new_wedding_client_data'] = form.cleaned_data
+                request.session["new_wedding_client_data"] = form.cleaned_data
 
                 wedding_form = WeddingForm()
                 budget_form = BudgetForm()
 
-                return render(request, 'weddings/partials/form-wedding-and-budget.html', {
-                    'wedding_form': wedding_form, 
-                    'budget_form': budget_form
-                })
+                return render(
+                    request,
+                    "weddings/partials/form-wedding-and-budget.html",
+                    {"wedding_form": wedding_form, "budget_form": budget_form},
+                )
             else:
-                return render(request, 'weddings/partials/form-client.html', {'form': form})
+                return render(
+                    request, "weddings/partials/form-client.html", {"form": form}
+                )
 
-        elif step == 'wedding_and_budget':
-            client_data = request.session.get('new_wedding_client_data')
+        elif step == "wedding_and_budget":
+            client_data = request.session.get("new_wedding_client_data")
 
             wedding_form = WeddingForm(request.POST)
             budget_form = BudgetForm(request.POST)
@@ -84,7 +87,7 @@ def create_wedding_flow(request):
             if not client_data:
                 # Lógica de segurança para sessão expirada
                 response = HttpResponse()
-                response['HX-Redirect'] = reverse('weddings:create_wedding_flow')
+                response["HX-Redirect"] = reverse("weddings:create_wedding_flow")
                 return response
 
             # Verifique se AMBOS são válidos
@@ -106,22 +109,23 @@ def create_wedding_flow(request):
                 budget.save()
 
                 # Limpe a sessão e redirecione
-                del request.session['new_wedding_client_data']
+                del request.session["new_wedding_client_data"]
                 response = HttpResponse()
-                response['HX-Redirect'] = reverse('weddings:my_weddings')
+                response["HX-Redirect"] = reverse("weddings:my_weddings")
                 return response
             else:
                 # Se um dos formulários for inválido, reenvie a Etapa 2 com os erros
-                return render(request, 'weddings/partials/form-wedding-and-budget.html', {
-                    'wedding_form': wedding_form,
-                    'budget_form': budget_form
-                })
+                return render(
+                    request,
+                    "weddings/partials/form-wedding-and-budget.html",
+                    {"wedding_form": wedding_form, "budget_form": budget_form},
+                )
 
     # Para o primeiro acesso (GET)
-    if 'new_wedding_client_data' in request.session:
-        del request.session['new_wedding_client_data']
+    if "new_wedding_client_data" in request.session:
+        del request.session["new_wedding_client_data"]
     client_form = ClientForm()
-    return render(request, 'weddings/create-flow.html', {'form': client_form})
+    return render(request, "weddings/create-flow.html", {"form": client_form})
 
 
 @login_required
