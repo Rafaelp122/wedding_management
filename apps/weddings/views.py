@@ -12,6 +12,8 @@ from django.urls import reverse
 from django.http import HttpResponse
 from apps.client.forms import ClientForm
 
+from apps.budget.forms import BudgetForm
+
 
 # Lista de degradês para os cards
 GRADIENTS = [
@@ -58,38 +60,50 @@ def create_wedding_flow(request):
     if request.htmx:
         step = request.POST.get('step')
 
-        # Etapa 1: Validação do Cliente
         if step == 'client':
             form = ClientForm(request.POST)
             if form.is_valid():
                 request.session['new_wedding_client_data'] = form.cleaned_data
-                wedding_form = WeddingForm()
-                return render(
-                    request,
-                    'weddings/partials/form-wedding.html',
-                    {'form': wedding_form}
-                )
-            else:
-                return render(
-                    request,
-                    'weddings/partials/form-client.html',
-                    {'form': form}
-                )
 
-        # Etapa 2: Validação e Criação Final
-        elif step == 'wedding':
-            form = WeddingForm(request.POST)
+                wedding_form = WeddingForm()
+                budget_form = BudgetForm()
+
+                return render(request, 'weddings/partials/form-wedding-and-budget.html', {
+                    'wedding_form': wedding_form, 
+                    'budget_form': budget_form
+                })
+            else:
+                return render(request, 'weddings/partials/form-client.html', {'form': form})
+
+        elif step == 'wedding_and_budget':
             client_data = request.session.get('new_wedding_client_data')
 
-            if form.is_valid() and client_data:
-                # Crie o cliente
+            wedding_form = WeddingForm(request.POST)
+            budget_form = BudgetForm(request.POST)
+
+            if not client_data:
+                # Lógica de segurança para sessão expirada
+                response = HttpResponse()
+                response['HX-Redirect'] = reverse('weddings:create_wedding_flow')
+                return response
+
+            # Verifique se AMBOS são válidos
+            if wedding_form.is_valid() and budget_form.is_valid():
+
+                # Primeiro, crie o Cliente
                 new_client = Client.objects.create(**client_data)
 
-                # Crie o casamento e associe tudo
-                wedding = form.save(commit=False)
+                # Segundo, crie o Casamento
+                wedding = wedding_form.save(commit=False)
                 wedding.planner = planner
                 wedding.client = new_client
-                wedding.save()
+                wedding.save()  # Salva para obter um ID
+
+                # Terceiro, crie o Orçamento e o associe
+                budget = budget_form.save(commit=False)
+                budget.planner = planner
+                budget.wedding = wedding  # Associa ao casamento recém-criado
+                budget.save()
 
                 # Limpe a sessão e redirecione
                 del request.session['new_wedding_client_data']
@@ -97,14 +111,15 @@ def create_wedding_flow(request):
                 response['HX-Redirect'] = reverse('weddings:my_weddings')
                 return response
             else:
-                # Se algo der errado (form inválido ou sessão sumiu)
-                return render(
-                    request,
-                    'weddings/partials/form-wedding.html',
-                    {'form': form}
-                )
+                # Se um dos formulários for inválido, reenvie a Etapa 2 com os erros
+                return render(request, 'weddings/partials/form-wedding-and-budget.html', {
+                    'wedding_form': wedding_form,
+                    'budget_form': budget_form
+                })
 
     # Para o primeiro acesso (GET)
+    if 'new_wedding_client_data' in request.session:
+        del request.session['new_wedding_client_data']
     client_form = ClientForm()
     return render(request, 'weddings/create-flow.html', {'form': client_form})
 

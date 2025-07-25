@@ -12,7 +12,7 @@ class Budget(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     planner = models.ForeignKey(Planner, on_delete=models.CASCADE)
     wedding = models.OneToOneField(
-        Wedding, on_delete=models.CASCADE, related_name="budget", null=True
+        Wedding, on_delete=models.CASCADE, related_name="budget", null=False
     )
 
     def __str__(self):

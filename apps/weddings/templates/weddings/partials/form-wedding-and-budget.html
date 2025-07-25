@@ -1,0 +1,50 @@
+<form hx-post="{% url 'weddings:create_wedding_flow' %}">
+  {% csrf_token %}
+  <!-- O valor do 'step' agora reflete o conteúdo do formulário -->
+  <input type="hidden" name="step" value="wedding_and_budget">
+
+  <!-- ======================== -->
+  <!-- SEÇÃO DETALHES DO CASAMENTO -->
+  <!-- ======================== -->
+  <h2 class="fw-bold mb-4">Detalhes do Casamento (2/2)</h2>
+
+  <div class="mb-3">
+    <label for="{{ wedding_form.groom_name.id_for_label }}" class="form-label">Nome do Noivo</label>
+    {{ wedding_form.groom_name }}
+    {% if wedding_form.groom_name.errors %}<div class="invalid-feedback d-block">{{ wedding_form.groom_name.errors.as_text }}</div>{% endif %}
+  </div>
+
+  <div class="mb-3">
+    <label for="{{ wedding_form.bride_name.id_for_label }}" class="form-label">Nome da Noiva</label>
+    {{ wedding_form.bride_name }}
+    {% if wedding_form.bride_name.errors %}<div class="invalid-feedback d-block">{{ wedding_form.bride_name.errors.as_text }}</div>{% endif %}
+  </div>
+
+  <div class="mb-3">
+    <label for="{{ wedding_form.date.id_for_label }}" class="form-label">Data do Casamento</label>
+    {{ wedding_form.date }}
+    {% if wedding_form.date.errors %}<div class="invalid-feedback d-block">{{ wedding_form.date.errors.as_text }}</div>{% endif %}
+  </div>
+
+  <div class="mb-3">
+    <label for="{{ wedding_form.location.id_for_label }}" class="form-label">Localização</label>
+    {{ wedding_form.location }}
+    {% if wedding_form.location.errors %}<div class="invalid-feedback d-block">{{ wedding_form.location.errors.as_text }}</div>{% endif %}
+  </div>
+
+  <!-- ======================== -->
+  <!-- SEÇÃO ORÇAMENTO INICIAL  -->
+  <!-- ======================== -->
+
+  <div class="mb-3">
+      <label for="{{ budget_form.initial_estimate.id_for_label }}" class="form-label">Estimativa de Orçamento Inicial</label>
+      <div class="input-group">
+        <span class="input-group-text">R$</span>
+        {{ budget_form.initial_estimate }}
+      </div>
+      {% if budget_form.initial_estimate.errors %}<div class="invalid-feedback d-block">{{ budget_form.initial_estimate.errors.as_text }}</div>{% endif %}
+  </div>
+  
+  <button type="submit" class="btn btn-success mt-3">Salvar Casamento</button>
+  <a href="{% url 'weddings:my_weddings' %}" class="btn btn-secondary mt-3">Cancelar</a>
+</form>
