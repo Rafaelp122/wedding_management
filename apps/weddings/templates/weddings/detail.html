@@ -4,8 +4,11 @@
 {% block page_title %} Detalhes do Casamento {% endblock %}
 
 {% block page_styles %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{% static 'weddings/css/detail.css' %}">
 {% endblock page_styles %}
+
+{% block main_class %} wedding-detail-class {% endblock main_class %}
 
 {% block content %}
 <div class="container py-5">
@@ -34,11 +37,11 @@
   </div>
 
   <!-- Menu de Abas -->
-  <ul class="nav nav-tabs" id="abasCasamento">
-    <li class="nav-item"><a class="nav-link active" data-tab="orcamento" href="#">Orçamento</a></li>
-    <li class="nav-item"><a class="nav-link" data-tab="contrato" href="#">Contrato</a></li>
-    <li class="nav-item"><a class="nav-link" data-tab="itens" href="#">Itens</a></li>
-    <li class="nav-item"><a class="nav-link" data-tab="calendario" href="#">Calendário</a></li>
+  <ul class="abas-casamento nav" id="abasCasamento">
+    <li class="nav-item"> <a class="nav-link active" data-tab="orcamento" href="#"><i class="fas fa-coins me-2"></i> Orçamento</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="contrato" href="#"><i class="fas fa-file-contract me-2"></i> Contrato</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="itens" href="#"><i class="fas fa-list-check me-2"></i> Itens</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="calendario" href="#"><i class="fas fa-calendar-days me-2"></i>Calendário</a></li>
   </ul>
 
   <!-- Conteúdo das Abas -->
