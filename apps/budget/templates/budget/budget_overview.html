@@ -4,36 +4,37 @@
     <div class="col-md-4">
       <div class="bloco-resumo">
         <small>Orçamento Total</small>
-        <h4>R$ {{ orcamento_total|floatformat:2 }}</h4>
+        <h4>R$ {{ total_budget|floatformat:2 }}</h4>
       </div>
     </div>
     <div class="col-md-4">
       <div class="bloco-resumo">
         <small>Gasto Atual</small>
-        <h4>R$ {{ gasto_atual|floatformat:2 }}</h4>
+        <h4>R$ {{ current_spent|floatformat:2 }}</h4>
       </div>
     </div>
     <div class="col-md-4">
       <div class="bloco-resumo">
         <small>Saldo Disponível</small>
-        <h4 class="text-success">R$ {{ saldo_disponivel|floatformat:2 }}</h4>
+        <h4 class="text-success">R$ {{ available_balance|floatformat:2 }}</h4>
       </div>
     </div>
   </div>
+
   <h6 class="fw-bold">Distribuição de Gastos</h6>
-  {% for categoria, valor in gastos_distribuidos.items %}
-  <div class="mb-2">
-    <div class="d-flex justify-content-between">
-      <span>{{ categoria }}</span>
-      <span>R$ {{ valor|floatformat:2 }}</span>
+  {% for category, value in distributed_expenses.items %}
+    <div class="mb-2">
+      <div class="d-flex justify-content-between">
+        <span>{{ category }}</span>
+        <span>R$ {{ value|floatformat:2 }}</span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar bg-purple" style="width: {% if total_budget > 0 %}{% widthratio value total_budget 100 %}{% else %}0{% endif %}%;"></div>
+      </div>
     </div>
-    <div class="progress">
-      <div class="progress-bar bg-purple" style="width: {{ valor|divisibleby:orcamento_total|floatformat:2 }}%;"></div>
-    </div>
-  </div>
   {% endfor %}
+
   <div class="mt-4 text-end">
     <a class="btn btn-primary" href="#">+ Adicionar Despesa</a>
   </div>
 </div>
-  

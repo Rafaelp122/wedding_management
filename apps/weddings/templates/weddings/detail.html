@@ -6,6 +6,7 @@
 {% block page_styles %}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{% static 'weddings/css/detail.css' %}">
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 {% endblock page_styles %}
 
 {% block main_class %} wedding-detail-class {% endblock main_class %}
@@ -38,48 +39,86 @@
 
   <!-- Menu de Abas -->
   <ul class="abas-casamento nav" id="abasCasamento">
-    <li class="nav-item"> <a class="nav-link active" data-tab="orcamento" href="#"><i class="fas fa-coins me-2"></i> Orçamento</a></li>
-    <li class="nav-item"><a class="nav-link" data-tab="contrato" href="#"><i class="fas fa-file-contract me-2"></i> Contrato</a></li>
-    <li class="nav-item"><a class="nav-link" data-tab="itens" href="#"><i class="fas fa-list-check me-2"></i> Itens</a></li>
-    <li class="nav-item"><a class="nav-link" data-tab="calendario" href="#"><i class="fas fa-calendar-days me-2"></i>Calendário</a></li>
+    <li class="nav-item">
+      <a
+        class="nav-link active"
+        href="#"
+        data-tab="budget"
+        hx-get="{% url 'budget:partial_budget' wedding.id %}"
+        hx-target="#tab-budget"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+      >
+        <i class="fas fa-coins me-2"></i> Orçamento
+      </a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link"
+        href="#"
+        data-tab="contracts"
+        hx-get="{% url 'contracts:partial_contracts' wedding.id %}"
+        hx-target="#tab-contracts"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+      >
+        <i class="fas fa-file-contract me-2"></i> Contratos
+      </a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link"
+        href="#"
+        data-tab="items"
+        hx-get="{% url 'items:partial_items' wedding.id %}"
+        hx-target="#tab-items"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+      >
+        <i class="fas fa-list-check me-2"></i> Itens
+      </a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link"
+        href="#"
+        data-tab="scheduler"
+        hx-get="{% url 'scheduler:partial_scheduler' wedding.id %}"
+        hx-target="#tab-scheduler"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+      >
+        <i class="fas fa-calendar-days me-2"></i> Calendário
+      </a>
+    </li>
   </ul>
 
   <!-- Conteúdo das Abas -->
   <div class="tab-content mt-4">
-    <div id="tab-orcamento" class="tab-pane active">
-      {% include 'budget/budget_overview.html' %}
-    </div>
-    <div id="tab-contrato" class="tab-pane d-none">
-      {% include 'contracts/contracts.html' %}
-    </div>
-    <div id="tab-itens" class="tab-pane d-none">
-      {% include 'items/items.html' %}
-    </div>
-    <div id="tab-calendario" class="tab-pane d-none">
-      {% include 'scheduler/scheduler.html' %}
-    </div>
+    <div id="tab-budget" class="tab-pane active"></div>
+    <div id="tab-contracts" class="tab-pane d-none"></div>
+    <div id="tab-items" class="tab-pane d-none"></div>
+    <div id="tab-scheduler" class="tab-pane d-none"></div>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener('DOMContentLoaded', function() {
     const tabLinks = document.querySelectorAll('#abasCasamento .nav-link');
-    const tabContents = document.querySelectorAll('.tab-content .tab-pane');
+    const tabPanes = document.querySelectorAll('.tab-content .tab-pane');
 
     tabLinks.forEach(link => {
       link.addEventListener('click', function(e) {
         e.preventDefault();
 
-        // Remove classes "active" e "d-none" de todos os links e conteúdos
         tabLinks.forEach(l => l.classList.remove('active'));
-        tabContents.forEach(c => {
-          c.classList.remove('active');
-          c.classList.add('d-none');
+        tabPanes.forEach(pane => {
+          pane.classList.remove('active');
+          pane.classList.add('d-none');
         });
 
-        // Ativa o link clicado
         this.classList.add('active');
         const tabId = 'tab-' + this.dataset.tab;
         const content = document.getElementById(tabId);
@@ -87,6 +126,9 @@
         content.classList.add('active');
       });
     });
+
+    // Carrega a primeira aba automaticamente
+    tabLinks[0].click();
   });
 </script>
 {% endblock %}

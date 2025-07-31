@@ -157,3 +157,9 @@ def delete_wedding(request, id):
     return redirect("weddings:my_weddings")
 
 
+@login_required
+def wedding_detail(request, wedding_id):
+    planner = Planner.objects.get(user=request.user)
+    wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
+
+    return render(request, "weddings/detail.html", {"wedding": wedding})

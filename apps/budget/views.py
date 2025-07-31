@@ -1,32 +1,36 @@
-# apps/budget/views.py
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+
 from apps.users.models import Planner
 from apps.items.models import Item
 from apps.weddings.models import Wedding
 
-from django.db.models import Sum
-from django.db.models import F, ExpressionWrapper, DecimalField
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+
 
 @login_required
-def budget_detail(request, id):
+def partial_budget(request, wedding_id):
+    # Pega o planner relacionado ao usuário logado
     planner = Planner.objects.get(user=request.user)
-    wedding = get_object_or_404(Wedding, id=id, planner=planner)
 
-    # Pega o orçamento relacionado ao casamento
+    # Busca o casamento pelo id e planner, ou retorna 404 se não achar
+    wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
+
+    # Obtém o orçamento relacionado ao casamento, ou None se não existir
     budget = getattr(wedding, 'budget', None)
 
     if not budget:
-        # Se orçamento não existir para esse casamento, trate como quiser:
-        orcamento_total = 0
+        total_budget = 0  # Orçamento total
+        items = Item.objects.none()  # Queryset vazio caso não tenha orçamento
     else:
-        orcamento_total = budget.initial_estimate  # ou budget.final_value, conforme seu fluxo
+        total_budget = budget.initial_estimate  # Estimativa inicial do orçamento
+        items = Item.objects.filter(budget=budget)  # Itens relacionados a esse orçamento
 
-    itens = Item.objects.filter(budget=budget) if budget else Item.objects.none()
-
-
-    gasto_atual = itens.aggregate(
+    # Calcula o gasto atual somando unit_price * quantity de todos os itens
+    current_spent = items.aggregate(
         total=Sum(
             ExpressionWrapper(
                 F('unit_price') * F('quantity'),
@@ -34,22 +38,26 @@ def budget_detail(request, id):
             )
         )
     )['total'] or 0
-    saldo_disponivel = orcamento_total - gasto_atual
 
-    gastos_distribuidos = {
+    # Calcula o saldo disponível subtraindo gasto atual do orçamento total
+    available_balance = total_budget - current_spent
+
+    # Gastos distribuídos de exemplo (fixos)
+    distributed_expenses = {
         "Local e Buffet": 35000,
         "Decoração": 15000,
         "Fotografia e Vídeo": 10000,
         "Vestuário": 12000,
     }
 
+    # Prepara o contexto para renderizar o template
     context = {
         "wedding": wedding,
-        "itens": itens,
-        "orcamento_total": orcamento_total,
-        "gasto_atual": gasto_atual,
-        "saldo_disponivel": saldo_disponivel,
-        "gastos_distribuidos": gastos_distribuidos,
+        "items": items,
+        "total_budget": total_budget,
+        "current_spent": current_spent,
+        "available_balance": available_balance,
+        "distributed_expenses": distributed_expenses,
     }
 
-    return render(request, "weddings/detail.html", context)
+    return render(request, "budget/budget_overview.html", context)
