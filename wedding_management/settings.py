@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # outros apps
     "django_htmx",
+    'django_extensions',
     # nossos apps
     "apps.scheduler",
     "apps.contracts",
