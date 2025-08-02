@@ -16,18 +16,18 @@ def partial_budget(request, wedding_id):
     # Pega o planner relacionado ao usuário logado
     planner = Planner.objects.get(user=request.user)
 
-    # Busca o casamento pelo id e planner, ou retorna 404 se não achar
+    # Busca o casamento pelo id e planner, ou retorna 40  # corrigido aqui4 se não achar
     wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
 
     # Obtém o orçamento relacionado ao casamento, ou None se não existir
     budget = getattr(wedding, 'budget', None)
 
     if not budget:
-        total_budget = 0  # Orçamento total
-        items = Item.objects.none()  # Queryset vazio caso não tenha orçamento
+        total_budget = 0
+        items = Item.objects.none()
     else:
-        total_budget = budget.initial_estimate  # Estimativa inicial do orçamento
-        items = Item.objects.filter(budget=budget)  # Itens relacionados a esse orçamento
+        total_budget = budget.initial_estimate
+        items = Item.objects.filter(wedding=wedding)
 
     # Calcula o gasto atual somando unit_price * quantity de todos os itens
     current_spent = items.aggregate(
