@@ -1,7 +1,6 @@
 from django.db import models
 
-from apps.contracts.models import Contract
-from apps.users.models import Planner
+from apps.weddings.models import Wedding
 
 
 class Schedule(models.Model):
@@ -10,8 +9,9 @@ class Schedule(models.Model):
     datetime = models.DateTimeField()
     type = models.CharField(max_length=50, blank=True)
     status = models.CharField(max_length=50, blank=True)
-    planner = models.ForeignKey(Planner, on_delete=models.CASCADE)
-    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
+    wedding = models.ForeignKey(
+        Wedding, on_delete=models.CASCADE, null=True, blank=True
+    )
 
     def __str__(self):
         return self.title
