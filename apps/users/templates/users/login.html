@@ -1,73 +1,63 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tela de Login</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
+{% extends 'base-auth.html' %}
+{% load static %}
+{% load widget_tweaks %}
 
-<body class="min-h-screen flex items-center justify-center p-4">
-  <div class="login-container bg-white rounded-xl overflow-hidden flex flex-col md:flex-row w-full max-w-4xl">
+{% block page_title %}
+  Login
+{% endblock page_title %}
+
+{% block page_styles %}
+  <link rel="stylesheet" href="{% static 'users/css/login.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-white p-4">
+  <div class="login-container bg-white rounded-xl overflow-hidden flex flex-col md:flex-row w-full max-w-4xl shadow-lg min-h-[500px]">
 
     <!-- Seção da Imagem -->
-    <div class="image-section md:w-1/2 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-8">
-      <div class="text-center text-white">
-        <img src="https://wallpapers.com/images/file/plano-de-fundo-do-casamento-1920-x-1200-cu70nyp5uebg1ypp.jpg"
-             alt="Pessoa usando computador"
-             class="rounded-lg shadow-lg mb-6 w-full h-auto max-h-80 object-cover">
-        <h2 class="text-2xl font-bold mb-2">Faça login em nosso site!</h2>
-        <p class="opacity-90">Entre na sua conta para continuar sua jornada conosco.</p>
-      </div>
+    <div class="image-section md:w-1/2 bg-gradient-to-br from-indigo-500 to-purple-600 flex flex-col items-center justify-center p-8 text-center text-white">
+      <img src="https://wallpapers.com/images/file/plano-de-fundo-do-casamento-1920-x-1200-cu70nyp5uebg1ypp.jpg"
+           alt="Casamento"
+           class="rounded-lg shadow-lg mb-6 max-h-80 object-cover w-full">
+      <h2 class="text-2xl font-bold mb-2">Faça login em nosso site!</h2>
+      <p class="opacity-90">Entre na sua conta para continuar sua jornada conosco.</p>
     </div>
 
     <!-- Seção do Formulário -->
-    <div class="form-section md:w-1/2 p-8 sm:p-12">
+    <div class="form-section md:w-1/2 p-8 sm:p-12 flex flex-col justify-center">
       <!-- Botão de Voltar -->
       <div class="mb-4">
         <a href="{% url 'pages:home' %}" class="flex items-center text-indigo-600 hover:text-indigo-800 text-sm">
-          {% load static %}
           <img src="{% static 'img/logo.png' %}" alt="Logo" class="w-24 h-auto">
         </a>
       </div>
-      
-      
 
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Login</h1>
-        <p class="text-gray-600">Entre com suas credenciais para acessar sua conta</p>
+        <p class="text-gray-600">Entre com seu nome de usuário e senha</p>
       </div>
 
-      <form class="space-y-6">
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i class="fas fa-envelope text-gray-400"></i>
-            </div>
-            <input type="email" id="email"
-                   class="input-field pl-10 w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-500 transition duration-300"
-                   placeholder="seu@email.com" required>
+      <form method="post" novalidate class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Campo de usuário -->
+        <div class="relative">
+          <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Usuário</label>
+          {{ form.username|add_class:"w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-500 pl-10" }}
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none top-9">
+            <i class="fas fa-user text-gray-400"></i>
           </div>
         </div>
 
-        <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <input type="password" id="password"
-                   class="input-field pl-10 w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-500 transition duration-300"
-                   placeholder="••••••••" required>
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer">
-              <i class="fas fa-eye-slash text-gray-400 hover:text-gray-600" id="togglePassword"></i>
-            </div>
+        <!-- Campo de senha -->
+        <div class="relative">
+          <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+          {{ form.password|add_class:"w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-indigo-500 pl-10 pr-10" }}
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none top-9">
+            <i class="fas fa-lock text-gray-400"></i>
           </div>
-          <div class="flex justify-end mt-2">
-            <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500">Esqueceu a senha?</a>
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer top-9">
+            <i class="fas fa-eye-slash text-gray-400 hover:text-gray-600" id="togglePassword"></i>
           </div>
         </div>
 
@@ -80,58 +70,21 @@
           Entrar
         </button>
 
-        <div class="relative my-6">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-300"></div>
-          </div>
-          <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-white text-gray-500">Ou continue com</span>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <button type="button" class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300">
-            <i class="fab fa-google text-red-500 mr-2"></i>
-            <span class="text-sm font-medium text-gray-700">Google</span>
-          </button>
-          <button type="button" class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300">
-            <i class="fab fa-facebook-f text-blue-600 mr-2"></i>
-            <span class="text-sm font-medium text-gray-700">Facebook</span>
-          </button>
-        </div>
-
         <div class="text-center text-sm text-gray-600 mt-6">
-          Não tem uma conta? <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">Cadastre-se</a>
+          Não tem uma conta? <a href="{% url 'users:signup' %}" class="text-indigo-600 hover:text-indigo-500 font-medium">Cadastre-se</a>
         </div>
+
+        {% if form.errors %}
+          <div class="alert alert-danger text-red-600 mt-4 text-sm">
+            Usuário ou senha inválidos. Tente novamente.
+          </div>
+        {% endif %}
       </form>
     </div>
   </div>
+</div>
+{% endblock content %}
 
-  <script>
-    // Alternar visibilidade da senha
-    const togglePassword = document.querySelector('#togglePassword');
-    const password = document.querySelector('#password');
-
-    togglePassword.addEventListener('click', function () {
-      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-      password.setAttribute('type', type);
-      this.classList.toggle('fa-eye');
-      this.classList.toggle('fa-eye-slash');
-    });
-
-    // Validação simples do formulário
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      if (email && password) {
-        alert('Login realizado com sucesso! Redirecionando...');
-      } else {
-        alert('Por favor, preencha todos os campos.');
-      }
-    });
-  </script>
-</body>
-</html>
+{% block extra_js %}
+  
+{% endblock extra_js %}

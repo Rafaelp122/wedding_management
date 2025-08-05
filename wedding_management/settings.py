@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # outros apps
     "django_htmx",
     'django_extensions',
+    'widget_tweaks',
     # nossos apps
     "apps.scheduler",
     "apps.contracts",
