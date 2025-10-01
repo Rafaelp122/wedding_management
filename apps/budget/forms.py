@@ -5,7 +5,6 @@ from .models import Budget
 class BudgetForm(forms.ModelForm):
     class Meta:
         model = Budget
-        # Pediremos apenas a estimativa inicial na criação
         fields = ["initial_estimate"]
         widgets = {
             "initial_estimate": forms.NumberInput(

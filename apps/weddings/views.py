@@ -1,21 +1,22 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.urls import reverse, reverse_lazy
+from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 
-from apps.users.models import Planner
-from apps.items.models import Item
+# Import do decorator personalizado
+from .decorators import planner_required
+
+# Imports de apps
+from apps.client.forms import ClientForm
 from apps.client.models import Client
+from apps.budget.forms import BudgetForm
+from apps.users.models import Planner
 from .forms import WeddingForm
 from .models import Wedding
 
-from django.urls import reverse
-from django.http import HttpResponse
-from apps.client.forms import ClientForm
-
-from apps.budget.forms import BudgetForm
-
-
-# Lista de degradês para os cards
+# Constante para os gradientes dos cards
 GRADIENTS = [
     "linear-gradient(135deg, #8e2de2, #4a00e0)",
     "linear-gradient(135deg, #7b1fa2, #512da8)",
@@ -23,39 +24,75 @@ GRADIENTS = [
     "linear-gradient(135deg, #009688, #00695c)",
     "linear-gradient(135deg, #3f51b5, #1a237e)",
     "linear-gradient(135deg, #ff9800, #ef6c00)",
+    "linear-gradient(135deg, #2196f3, #0d47a1)",  
+    "linear-gradient(135deg, #4caf50, #1b5e20)",  
+    "linear-gradient(135deg, #f44336, #b71c1c)",  
+    "linear-gradient(135deg, #ffeb3b, #fbc02d)",  
+    "linear-gradient(135deg, #00bcd4, #00838f)",  
+    "linear-gradient(135deg, #9c27b0, #4a148c)",  
+    "linear-gradient(135deg, #cddc39, #827717)",  
+    "linear-gradient(135deg, #795548, #3e2723)",  
+    "linear-gradient(135deg, #607d8b, #263238)",  
+    "linear-gradient(135deg, #673ab7, #311b92)",  
+    "linear-gradient(135deg, #ff5722, #bf360c)",  
+    "linear-gradient(135deg, #03a9f4, #01579b)",  
+    "linear-gradient(135deg, #76ff03, #33691e)",  
 ]
 
+# --- Mixin para reutilização de lógica nas CBVs ---
 
-@login_required
-def my_weddings(request):
-    planner = Planner.objects.get(user=request.user)
+class PlannerOwnerMixin:
+    """ Mixin que filtra os resultados para mostrar apenas os dados do planner logado. """
+    def get_queryset(self):
+        # Garante que o usuário é um planner e filtra os casamentos
+        planner = Planner.objects.get(user=self.request.user)
+        return super().get_queryset().filter(planner=planner)
 
-    weddings = Wedding.objects.filter(planner=planner).select_related("client")
+# --- Class-Based Views (CBVs) para CRUD ---
 
-    weddings_with_gradients = []
-    for idx, wedding in enumerate(weddings):
-        gradient = GRADIENTS[idx % len(GRADIENTS)]
-        weddings_with_gradients.append(
+class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
+    model = Wedding
+    template_name = "weddings/list.html"
+    context_object_name = "weddings"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        weddings = self.get_queryset().select_related("client")
+        context["weddings_with_clients"] = [
             {
                 "wedding": wedding,
                 "client": wedding.client,
-                "gradient": gradient,
+                "gradient": GRADIENTS[idx % len(GRADIENTS)],
             }
-        )
+            for idx, wedding in enumerate(weddings)
+        ]
+        return context
 
-    return render(
-        request,
-        "weddings/list.html",
-        {"weddings_with_clients": weddings_with_gradients},
-    )
+class WeddingDetailView(LoginRequiredMixin, PlannerOwnerMixin, DetailView):
+    model = Wedding
+    template_name = "weddings/detail.html"
+    context_object_name = "wedding"
+    pk_url_kwarg = 'wedding_id'
 
+class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
+    model = Wedding
+    form_class = WeddingForm
+    template_name = "weddings/edit.html"
+    success_url = reverse_lazy("weddings:my_weddings")
+    pk_url_kwarg = 'id'
 
-@login_required
+class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
+    model = Wedding
+    template_name = "weddings/confirm_delete.html" # Requer um template de confirmação
+    success_url = reverse_lazy("weddings:my_weddings")
+    pk_url_kwarg = 'id'
+
+# --- View de Função para o fluxo de criação com HTMX ---
+
+@planner_required
 def create_wedding_flow(request):
-    try:
-        planner = Planner.objects.get(user=request.user)
-    except Planner.DoesNotExist:
-        return HttpResponse("Acesso negado", status=403)
+    """ View para o fluxo de criação de casamento em múltiplos passos com HTMX. """
+    planner = request.planner # O decorator já injetou o planner aqui
 
     if request.htmx:
         step = request.POST.get("step")
@@ -64,102 +101,50 @@ def create_wedding_flow(request):
             form = ClientForm(request.POST)
             if form.is_valid():
                 request.session["new_wedding_client_data"] = form.cleaned_data
-
-                wedding_form = WeddingForm()
-                budget_form = BudgetForm()
-
                 return render(
                     request,
                     "weddings/partials/form-wedding-and-budget.html",
-                    {"wedding_form": wedding_form, "budget_form": budget_form},
+                    {"wedding_form": WeddingForm(), "budget_form": BudgetForm()},
                 )
-            else:
-                return render(
-                    request, "weddings/partials/form-client.html", {"form": form}
-                )
+            return render(request, "weddings/partials/form-client.html", {"form": form})
 
         elif step == "wedding_and_budget":
             client_data = request.session.get("new_wedding_client_data")
-
-            wedding_form = WeddingForm(request.POST)
-            budget_form = BudgetForm(request.POST)
-
             if not client_data:
-                # Lógica de segurança para sessão expirada
                 response = HttpResponse()
                 response["HX-Redirect"] = reverse("weddings:create_wedding_flow")
                 return response
 
-            # Verifique se AMBOS são válidos
+            wedding_form = WeddingForm(request.POST)
+            budget_form = BudgetForm(request.POST)
+
             if wedding_form.is_valid() and budget_form.is_valid():
+                with transaction.atomic(): # Garante a integridade dos dados
+                    client = Client.objects.create(**client_data)
+                    
+                    wedding = wedding_form.save(commit=False)
+                    wedding.planner = planner
+                    wedding.client = client
+                    wedding.save()
 
-                # Primeiro, crie o Cliente
-                new_client = Client.objects.create(**client_data)
+                    budget = budget_form.save(commit=False)
+                    budget.planner = planner
+                    budget.wedding = wedding
+                    budget.save()
 
-                # Segundo, crie o Casamento
-                wedding = wedding_form.save(commit=False)
-                wedding.planner = planner
-                wedding.client = new_client
-                wedding.save()  # Salva para obter um ID
-
-                # Terceiro, crie o Orçamento e o associe
-                budget = budget_form.save(commit=False)
-                budget.planner = planner
-                budget.wedding = wedding  # Associa ao casamento recém-criado
-                budget.save()
-
-                # Limpe a sessão e redirecione
                 del request.session["new_wedding_client_data"]
                 response = HttpResponse()
                 response["HX-Redirect"] = reverse("weddings:my_weddings")
                 return response
-            else:
-                # Se um dos formulários for inválido, reenvie a Etapa 2 com os erros
-                return render(
-                    request,
-                    "weddings/partials/form-wedding-and-budget.html",
-                    {"wedding_form": wedding_form, "budget_form": budget_form},
-                )
+            
+            return render(
+                request,
+                "weddings/partials/form-wedding-and-budget.html",
+                {"wedding_form": wedding_form, "budget_form": budget_form},
+            )
 
-    # Para o primeiro acesso (GET)
+    # Limpa a sessão em caso de um GET inicial para recomeçar o fluxo
     if "new_wedding_client_data" in request.session:
         del request.session["new_wedding_client_data"]
-    client_form = ClientForm()
-    return render(request, "weddings/create-flow.html", {"form": client_form})
-
-
-@login_required
-def edit_wedding(request, id):
-    planner = Planner.objects.get(user=request.user)
-    wedding = get_object_or_404(Wedding, id=id, planner=planner)
-
-    if request.method == "POST":
-        form = WeddingForm(request.POST, instance=wedding)
-        if form.is_valid():
-            form.save()
-            return redirect("weddings:my_weddings")
-    else:
-        form = WeddingForm(instance=wedding)
-
-    return render(
-        request,
-        "weddings/create.html",
-        {"form": form, "wedding": wedding},
-    )
-
-
-@login_required
-@require_POST
-def delete_wedding(request, id):
-    planner = Planner.objects.get(user=request.user)
-    wedding = get_object_or_404(Wedding, id=id, planner=planner)
-    wedding.delete()
-    return redirect("weddings:my_weddings")
-
-
-@login_required
-def wedding_detail(request, wedding_id):
-    planner = Planner.objects.get(user=request.user)
-    wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
-
-    return render(request, "weddings/detail.html", {"wedding": wedding})
+    
+    return render(request, "weddings/create-flow.html", {"form": ClientForm()})

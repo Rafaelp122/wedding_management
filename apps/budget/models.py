@@ -1,6 +1,6 @@
 from django.db import models
 from apps.users.models import Planner
-from apps.weddings.models import Wedding  # importa Wedding
+from apps.weddings.models import Wedding 
 
 
 class Budget(models.Model):

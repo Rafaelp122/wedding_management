@@ -1,6 +1,36 @@
-<div class="bg-white p-4 rounded shadow-lg-tailwind aba-bloco">
-    <h5 class="fw-bold mb-3 text-purple">Contratos com Fornecedores</h5>
-    <p class="text-muted">Aqui você pode visualizar e gerenciar os contratos fechados com fornecedores.</p>
-    <a class="btn btn-outline-primary" href="#">+ Adicionar Contrato</a>
-  </div>
-  
+<div class="bg-white p-4 rounded aba-bloco shadow-lg-tailwind">
+  <h5 class="fw-bold mb-4 text-purple">Contratos do Casamento</h5>
+
+  {% if contracts %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col">Fornecedor</th>
+            <th scope="col">Data da Assinatura</th>
+            <th scope="col">Status</th>
+            <th scope="col">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for contract in contracts %}
+            <tr>
+              <td>{{ contract.item.name|default:"N/A" }}</td>
+              <td>{{ contract.supplier.name|default:"N/A" }}</td>
+              <td>{{ contract.signature_date|date:"d/m/Y" }}</td>
+              <td>
+                <span class="badge bg-primary rounded-pill">{{ contract.status }}</span>
+              </td>
+              <td>
+                <a href="#" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">Nenhum contrato foi gerado para este casamento ainda.</p>
+  {% endif %}
+</div>

@@ -1,0 +1,17 @@
+{% extends "base-apps.html" %}
+{% load static %}
+
+
+{% block content %}
+    <div class="container">
+        <form hx-post="{% url 'items:add_item' wedding.id %}" hx-target="#item-list-container" hx-swap="outerHTML">
+            {% csrf_token %}
+            
+            {{ form.as_p }}
+            
+            <button type="submit" class="btn btn-primary">Salvar Item</button>
+
+            <button type="button" class="btn btn-secondary" hx-get="{% url 'items:partial_items' wedding.id %}" hx-target="#item-list-container" hx-swap="outerHTML">Cancelar</button>
+        </form>
+    </div>
+{% endblock content %}
