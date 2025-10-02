@@ -22,9 +22,14 @@
               <td>
                 <span class="badge bg-primary rounded-pill">{{ contract.status }}</span>
               </td>
-              <td>
-                <a href="#" class="btn btn-sm btn-outline-secondary">Detalhes</a>
-              </td>
+              <td class="whitespace-nowrap">
+                <button class="text-primary hover:text-secondary mr-3">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="text-primary hover:text-secondary">
+                    <i class="fas fa-download"></i>
+                </button>
+            </td>
             </tr>
           {% endfor %}
         </tbody>
