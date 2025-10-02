@@ -1,17 +1,27 @@
-{% extends "base-apps.html" %}
-{% load static %}
+<div id="items-wrapper" class="bg-white p-4 rounded aba-bloco shadow-lg-tailwind">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold text-purple mb-0">Adicionar Novo Item</h5>
+    </div>
 
+    <form hx-post="{% url 'items:add_item' wedding.id %}"
+          hx-target="#items-wrapper"
+          hx-swap="outerHTML">
+        
+        {% csrf_token %}
+        {{ form.as_p }}
 
-{% block content %}
-    <div class="container">
-        <form hx-post="{% url 'items:add_item' wedding.id %}" hx-target="#item-list-container" hx-swap="outerHTML">
-            {% csrf_token %}
-            
-            {{ form.as_p }}
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" 
+                    class="btn btn-outline-secondary"
+                    hx-get="{% url 'items:partial_items' wedding.id %}"
+                    hx-target="#items-wrapper"
+                    hx-swap="outerHTML">
+                Cancelar
+            </button>
             
             <button type="submit" class="btn btn-primary">Salvar Item</button>
-
-            <button type="button" class="btn btn-secondary" hx-get="{% url 'items:partial_items' wedding.id %}" hx-target="#item-list-container" hx-swap="outerHTML">Cancelar</button>
-        </form>
-    </div>
-{% endblock content %}
+        </div>
+    </form>
+</div>

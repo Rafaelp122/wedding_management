@@ -7,7 +7,8 @@ from apps.weddings.models import Wedding
 class Item(models.Model):
 
     CATEGORY_CHOICES = [
-    ('BUFFET', 'Local e Buffet'),
+    ('LOCAL', 'Local '),
+    ('BUFFET', 'Buffet'),
     ('DECOR', 'Decoração'),
     ('PHOTO_VIDEO', 'Fotografia e Vídeo'),
     ('ATTIRE', 'Vestuário'),

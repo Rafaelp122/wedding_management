@@ -8,7 +8,7 @@
           <tr>
             <th scope="col">Item</th>
             <th scope="col">Fornecedor</th>
-            <th scope="col">Data da Assinatura</th>
+            <th scope="col">Data da Criação</th>
             <th scope="col">Status</th>
             <th scope="col">Ações</th>
           </tr>
@@ -18,7 +18,7 @@
             <tr>
               <td>{{ contract.item.name|default:"N/A" }}</td>
               <td>{{ contract.supplier.name|default:"N/A" }}</td>
-              <td>{{ contract.signature_date|date:"d/m/Y" }}</td>
+              <td>{{ contract.created_at|date:"d/m/Y" }}</td>
               <td>
                 <span class="badge bg-primary rounded-pill">{{ contract.status }}</span>
               </td>

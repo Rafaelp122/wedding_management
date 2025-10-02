@@ -5,7 +5,7 @@ from apps.supplier.models import Supplier
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ['name', 'description', 'quantity', 'unit_price', 'supplier', 'category']
+        fields = ['name', 'quantity', 'unit_price', 'supplier', 'category','description']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Buffet Completo'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
