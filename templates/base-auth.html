@@ -16,13 +16,9 @@
 
 {% block body_content %}
 
-  {% include 'partials/auth-header.html' %}
-
   <main>
     {% block content %} {% endblock content %}
   </main>
-
-  {% comment %} {% include 'partials/footer.html' %} {% endcomment %}
   
   {% block extra_js %} {% endblock %}
 {% endblock body_content %}
