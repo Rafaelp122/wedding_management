@@ -28,6 +28,16 @@ class SignUpView(CreateView):
             'password1': 'col-md-6',
             'password2': 'col-md-6',
         }
+
+        context['form_icons'] = {
+            'username': 'fas fa-user',
+            'email': 'fas fa-envelope',
+            'first_name': 'fas fa-id-card',
+            'last_name': 'fas fa-id-card',
+            'password1': 'fas fa-lock',
+            'password2': 'fas fa-lock',
+        }
+
         context["form_action"] = reverse_lazy("users:sign_up")
         context['button_text'] = 'Enviar'
         context['default_column_class'] = 'col-md-6'
