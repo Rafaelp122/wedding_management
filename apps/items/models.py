@@ -7,15 +7,15 @@ from apps.weddings.models import Wedding
 class Item(models.Model):
 
     CATEGORY_CHOICES = [
-    ('LOCAL', 'Local '),
-    ('BUFFET', 'Buffet'),
-    ('DECOR', 'Decoração'),
-    ('PHOTO_VIDEO', 'Fotografia e Vídeo'),
-    ('ATTIRE', 'Vestuário'),
-    ('MUSIC', 'Música/Entretenimento'),
-    ('OTHERS', 'Outros'),
-]
-      
+        ('LOCAL', 'Local '),
+        ('BUFFET', 'Buffet'),
+        ('DECOR', 'Decoração'),
+        ('PHOTO_VIDEO', 'Fotografia e Vídeo'),
+        ('ATTIRE', 'Vestuário'),
+        ('MUSIC', 'Música/Entretenimento'),
+        ('OTHERS', 'Outros'),
+    ]
+
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     quantity = models.IntegerField()

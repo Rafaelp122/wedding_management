@@ -1,11 +1,11 @@
-from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.shortcuts import get_object_or_404
-from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+from django.views.generic import TemplateView
 
-from apps.users.models import Planner
 from apps.items.models import Item
 from apps.weddings.models import Wedding
+
 
 class BudgetPartialView(LoginRequiredMixin, TemplateView):
     template_name = "budget/budget_overview.html"
@@ -14,9 +14,9 @@ class BudgetPartialView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         wedding_id = self.kwargs.get('wedding_id')
-        
-        planner = get_object_or_404(Planner, user=self.request.user)
-        
+
+        planner = self.request.user
+
         wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
         context['wedding'] = wedding
 
@@ -28,7 +28,7 @@ class BudgetPartialView(LoginRequiredMixin, TemplateView):
         else:
             total_budget = budget.initial_estimate
             items = Item.objects.filter(wedding=wedding)
-        
+
         context['items'] = items
         context['total_budget'] = total_budget
 
@@ -58,7 +58,7 @@ class BudgetPartialView(LoginRequiredMixin, TemplateView):
             item['category']: item['total_cost']
             for item in category_expenses_query
         }
-        
+
         category_display_map = dict(Item.CATEGORY_CHOICES)
         context['distributed_expenses'] = {
             category_display_map.get(cat, cat): cost

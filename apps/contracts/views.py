@@ -1,14 +1,13 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
-from apps.users.models import Planner
-from apps.weddings.models import Wedding
 from apps.contracts.models import Contract
+from apps.weddings.models import Wedding
 
 
 @login_required
 def partial_contracts(request, wedding_id):
-    planner = Planner.objects.get(user=request.user)
+    planner = request.user
     wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
 
     contracts = Contract.objects.filter(wedding=wedding)

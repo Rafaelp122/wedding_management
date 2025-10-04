@@ -1,13 +1,16 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
-from .forms import ItemForm
-from apps.users.models import Planner
-from apps.weddings.models import Wedding
+
 from apps.items.models import Item
+from apps.users.models import User
+from apps.weddings.models import Wedding
+
+from .forms import ItemForm
+
 
 @login_required
 def partial_items(request, wedding_id):
-    planner = get_object_or_404(Planner, user=request.user)
+    planner = request.user
     wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
     items = Item.objects.filter(wedding=wedding).select_related('supplier')
     context = {"wedding": wedding, "items": items}
@@ -16,9 +19,9 @@ def partial_items(request, wedding_id):
 
 @login_required
 def add_item(request, wedding_id):
-    planner = get_object_or_404(Planner, user=request.user)
+    planner = request.user
     wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
-    
+
     if request.method == 'POST':
         form = ItemForm(request.POST)
         if form.is_valid():
@@ -26,7 +29,11 @@ def add_item(request, wedding_id):
             item.wedding = wedding
             item.save()
             return partial_items(request, wedding_id) 
-    else: 
+    else:
         form = ItemForm()
-        
-    return render(request, 'items/partials/add_item_form.html', {'form': form, 'wedding': wedding})
+
+    return render(
+        request,
+        'items/partials/add_item_form.html',
+        {'form': form, 'wedding': wedding}
+        )

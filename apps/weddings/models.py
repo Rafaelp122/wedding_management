@@ -1,11 +1,11 @@
 from django.db import models
 
 from apps.client.models import Client
-from apps.users.models import Planner
+from apps.users.models import User
 
 
 class Wedding(models.Model):
-    planner = models.ForeignKey(Planner, on_delete=models.CASCADE)
+    planner = models.ForeignKey(User, on_delete=models.CASCADE)
     client = models.OneToOneField(
         Client, on_delete=models.CASCADE, related_name="weddings"
     )

@@ -3,16 +3,17 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import ListView, DetailView, UpdateView, DeleteView
+from django.views.generic import DeleteView, DetailView, ListView, UpdateView
 
-# Import do decorator personalizado
-from .decorators import planner_required
+from apps.budget.forms import BudgetForm
 
 # Imports de apps
 from apps.client.forms import ClientForm
 from apps.client.models import Client
-from apps.budget.forms import BudgetForm
-from apps.users.models import Planner
+from apps.users.models import User
+
+# Import do decorator personalizado
+from .decorators import planner_required
 from .forms import WeddingForm
 from .models import Wedding
 
@@ -24,31 +25,32 @@ GRADIENTS = [
     "linear-gradient(135deg, #009688, #00695c)",
     "linear-gradient(135deg, #3f51b5, #1a237e)",
     "linear-gradient(135deg, #ff9800, #ef6c00)",
-    "linear-gradient(135deg, #2196f3, #0d47a1)",  
-    "linear-gradient(135deg, #4caf50, #1b5e20)",  
-    "linear-gradient(135deg, #f44336, #b71c1c)",  
-    "linear-gradient(135deg, #ffeb3b, #fbc02d)",  
-    "linear-gradient(135deg, #00bcd4, #00838f)",  
-    "linear-gradient(135deg, #9c27b0, #4a148c)",  
-    "linear-gradient(135deg, #cddc39, #827717)",  
-    "linear-gradient(135deg, #795548, #3e2723)",  
-    "linear-gradient(135deg, #607d8b, #263238)",  
-    "linear-gradient(135deg, #673ab7, #311b92)",  
-    "linear-gradient(135deg, #ff5722, #bf360c)",  
-    "linear-gradient(135deg, #03a9f4, #01579b)",  
-    "linear-gradient(135deg, #76ff03, #33691e)",  
+    "linear-gradient(135deg, #2196f3, #0d47a1)",
+    "linear-gradient(135deg, #4caf50, #1b5e20)",
+    "linear-gradient(135deg, #f44336, #b71c1c)",
+    "linear-gradient(135deg, #ffeb3b, #fbc02d)",
+    "linear-gradient(135deg, #00bcd4, #00838f)",
+    "linear-gradient(135deg, #9c27b0, #4a148c)",
+    "linear-gradient(135deg, #cddc39, #827717)",
+    "linear-gradient(135deg, #795548, #3e2723)",
+    "linear-gradient(135deg, #607d8b, #263238)",
+    "linear-gradient(135deg, #673ab7, #311b92)",
+    "linear-gradient(135deg, #ff5722, #bf360c)",
+    "linear-gradient(135deg, #03a9f4, #01579b)",
+    "linear-gradient(135deg, #76ff03, #33691e)",
 ]
 
 # --- Mixin para reutilização de lógica nas CBVs ---
 
+
 class PlannerOwnerMixin:
     """ Mixin que filtra os resultados para mostrar apenas os dados do planner logado. """
     def get_queryset(self):
-        # Garante que o usuário é um planner e filtra os casamentos
-        planner = Planner.objects.get(user=self.request.user)
-        return super().get_queryset().filter(planner=planner)
+        queryset = super().get_queryset()
+        return queryset.filter(planner=self.request.user)
 
 # --- Class-Based Views (CBVs) para CRUD ---
+
 
 class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
     model = Wedding
@@ -68,11 +70,13 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
         ]
         return context
 
+
 class WeddingDetailView(LoginRequiredMixin, PlannerOwnerMixin, DetailView):
     model = Wedding
     template_name = "weddings/detail.html"
     context_object_name = "wedding"
     pk_url_kwarg = 'wedding_id'
+
 
 class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
     model = Wedding
@@ -80,6 +84,7 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
     template_name = "weddings/edit.html"
     success_url = reverse_lazy("weddings:my_weddings")
     pk_url_kwarg = 'id'
+
 
 class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
     model = Wedding
@@ -89,10 +94,11 @@ class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
 
 # --- View de Função para o fluxo de criação com HTMX ---
 
+
 @planner_required
 def create_wedding_flow(request):
     """ View para o fluxo de criação de casamento em múltiplos passos com HTMX. """
-    planner = request.planner # O decorator já injetou o planner aqui
+    planner = request.planner  # O decorator já injetou o planner aqui
 
     if request.htmx:
         step = request.POST.get("step")
@@ -119,9 +125,9 @@ def create_wedding_flow(request):
             budget_form = BudgetForm(request.POST)
 
             if wedding_form.is_valid() and budget_form.is_valid():
-                with transaction.atomic(): # Garante a integridade dos dados
+                with transaction.atomic():  # Garante a integridade dos dados
                     client = Client.objects.create(**client_data)
-                    
+
                     wedding = wedding_form.save(commit=False)
                     wedding.planner = planner
                     wedding.client = client
@@ -136,7 +142,7 @@ def create_wedding_flow(request):
                 response = HttpResponse()
                 response["HX-Redirect"] = reverse("weddings:my_weddings")
                 return response
-            
+
             return render(
                 request,
                 "weddings/partials/form-wedding-and-budget.html",
@@ -146,5 +152,5 @@ def create_wedding_flow(request):
     # Limpa a sessão em caso de um GET inicial para recomeçar o fluxo
     if "new_wedding_client_data" in request.session:
         del request.session["new_wedding_client_data"]
-    
+
     return render(request, "weddings/create-flow.html", {"form": ClientForm()})
