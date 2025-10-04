@@ -12,7 +12,14 @@
             {{ field.label }}
           </label>
 
-          {{ field }}
+          {% with icon_class=field|get_icon_class:form_icons %}
+            <div class="position-relative mb-3">
+              {{ field }}
+              {% if icon_class %}
+                <i class="{{ icon_class }} position-absolute top-50 start-0 translate-middle-y ps-3 text-muted" style="opacity: 0.5;"></i>
+              {% endif %}
+            </div>
+          {% endwith %}
 
           {% if field.help_text %}
             <div class="form-text text-muted">{{ field.help_text }}</div>
@@ -30,7 +37,7 @@
 
   {% if button_text %}
     <div class="col-12 d-flex justify-content-center mt-4 mb-3">
-      <button type="submit" class="btn btn-primary col-12">
+      <button type="submit" class="btn btn-primary btn-lg col-12">
         {{ button_text|default:'Enviar' }}
       </button>
     </div>
