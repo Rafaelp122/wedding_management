@@ -18,3 +18,9 @@ def get_field_class(field, layout_dict, default_class='col-12'):
     # Usa o método .get() do dicionário, que é uma forma segura de buscar uma chave.
     # Se a chave `field.name` não existir, ele retorna o valor de `default_class`.
     return layout_dict.get(field.name, default_class)
+
+
+@register.filter
+def get_icon_class(field, icon_dict):
+    """Retorna a classe do ícone para o campo, ou vazio se não existir."""
+    return icon_dict.get(field.name, '')
