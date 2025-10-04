@@ -1,0 +1,25 @@
+{% extends 'base-auth.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block page_title %} Login {% endblock page_title %}
+
+{% block page_styles %}
+  <link rel="stylesheet" href="{% static 'users/css/login.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10">
+
+        <h2>Login</h2>
+        <p>Preencha os campos abaixo para fazer login</p>
+        <hr class="mb-4">
+
+        {% include "partials/form.html" with form=form form_action=form_action button_text=button_text layout_dict=form_layout_dict default_col_class=default_column_class %}
+
+      </div>
+    </div>
+  </div>
+{% endblock content %}

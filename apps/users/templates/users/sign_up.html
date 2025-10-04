@@ -1,0 +1,24 @@
+{% extends 'base-auth.html' %} 
+{% load static %}
+
+{% block page_title %} Cadastro {% endblock page_title %}
+
+{% block page_styles %} 
+  <link rel="stylesheet" href="{% static 'users/css/signup.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10">
+
+        <h2>Crie sua Conta</h2>
+        <p>Preencha os campos abaixo para se registrar.</p>
+        <hr class="mb-4">
+
+        {% include "partials/form.html" with form=form form_action=form_action button_text=button_text layout_dict=form_layout_dict default_col_class=default_column_class %}
+
+      </div>
+    </div>
+  </div>
+{% endblock content %}
