@@ -56,11 +56,14 @@ INSTALLED_APPS = [
     "apps.client",
     "apps.supplier",
     "apps.weddings",
+    "apps.core",
 ]
 
 LOGIN_REDIRECT_URL = "weddings:my_weddings"
 LOGOUT_REDIRECT_URL = "users:login"
 LOGIN_URL = "/usuario/login/"
+
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     # middlewares do Django
