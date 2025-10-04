@@ -16,6 +16,7 @@
   {% include 'partials/public-header.html' %}
 
   <main class="{% block main_class %} {% endblock main_class %}">
+    {% include "partials/messages.html" %}
     {% block content %}{% endblock content %}
   </main>
 
