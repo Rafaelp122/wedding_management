@@ -12,14 +12,20 @@
             {{ field.label }}
           </label>
 
-          {% with icon_class=field|get_icon_class:form_icons %}
-            <div class="position-relative mb-3">
+          {% if form_icons %}
+            {% with icon_class=field|get_icon_class:form_icons %}
+              <div class="position-relative mb-3">
+                {{ field }}
+                {% if icon_class %}
+                  <i class="{{ icon_class }} position-absolute top-50 start-0 translate-middle-y ps-3 text-muted" style="opacity: 0.5;"></i>
+                {% endif %}
+              </div>
+            {% endwith %}
+          {% else %}
+            <div class="mb-3">
               {{ field }}
-              {% if icon_class %}
-                <i class="{{ icon_class }} position-absolute top-50 start-0 translate-middle-y ps-3 text-muted" style="opacity: 0.5;"></i>
-              {% endif %}
             </div>
-          {% endwith %}
+          {% endif %}
 
           {% if field.help_text %}
             <div class="form-text text-muted">{{ field.help_text }}</div>
