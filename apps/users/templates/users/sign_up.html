@@ -1,24 +1,73 @@
-{% extends 'base-auth.html' %} 
+{% extends 'base-auth.html' %}
 {% load static %}
 
 {% block page_title %} Cadastro {% endblock page_title %}
 
-{% block page_styles %} 
-  <link rel="stylesheet" href="{% static 'users/css/signup.css' %}">
+{% block page_styles %}
+  <style>
+    /* Estilo para o corpo da página */
+    body {
+      background-color: #f9fafb;
+    }
+
+    /* Seção da imagem com o fundo gradiente */
+    .image-section {
+      background: linear-gradient(to bottom right, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .custom-font-size {
+      font-size: 1.1rem;
+    }
+  </style>
 {% endblock page_styles %}
 
 {% block content %}
-  <div class="container py-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-8 col-md-10">
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-xl-10 col-lg-12 col-md-9">
 
-        <h2>Crie sua Conta</h2>
-        <p>Preencha os campos abaixo para se registrar.</p>
-        <hr class="mb-4">
+      <div class="card o-hidden border-0 shadow-lg">
+        <div class="card-body p-0">
+          <div class="row g-0">
+            
+            <div class="col-lg-5 d-none d-lg-flex image-section align-items-center justify-content-center rounded-start-3">
+              <div class="text-center text-white">
+                <img src="{% static 'img/img_login.jpg' %}" 
+                    alt="Casamento" 
+                    class="img-fluid rounded-3 shadow-sm mb-4" 
+                    style="max-height: 280px; object-fit: cover;">
+                <h2 class="fw-bold mb-2">Junte-se a nós!</h2>
+                <p class="opacity-75">Crie sua conta e comece a planejar o casamento dos seus sonhos.</p>
+              </div>
+            </div>
 
-        {% include "partials/form.html" with form=form form_action=form_action button_text=button_text layout_dict=form_layout_dict default_col_class=default_column_class %}
+            <div class="col-lg-7">
+              <div class="p-4 p-sm-5">
+                <div class="text-center mb-4">
+                  <h1 class="h3 fw-bold text-dark mb-2">Cadastro</h1>
+                  <p class="text-muted">Preencha os dados abaixo para criar sua conta</p>
+                </div>
 
+                {% include "partials/form.html" with form=form form_action=form_action button_text=button_text layout_dict=form_layout_dict default_col_class=default_column_class %}
+
+                <div class="text-center mt-4">
+                  <small class="text-muted">
+                    Já tem uma conta? <a href="{% url 'users:sign_in' %}" class="fw-bold text-decoration-none">Faça login aqui</a>
+                  </small>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
+</div>
 {% endblock content %}
