@@ -1,0 +1,38 @@
+{% load form_helpers %}
+
+<form method="POST" action="{{ form_action|default:'#' }}" novalidate>
+  {% csrf_token %}
+
+  <div class="row">
+    {% for field in form %}
+      <div class="{% get_field_class field layout_dict default_col_class %}">
+
+        <div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}
+          </label>
+
+          {{ field }}
+
+          {% if field.help_text %}
+            <div class="form-text text-muted">{{ field.help_text }}</div>
+          {% endif %}
+          
+          {% for error in field.errors %}
+            <div class="invalid-feedback d-block">
+              {{ error }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if button_text %}
+    <div class="col-12 d-flex justify-content-center mt-4 mb-3">
+      <button type="submit" class="btn btn-primary col-12">
+        {{ button_text|default:'Enviar' }}
+      </button>
+    </div>
+  {% endif %}
+</form>
