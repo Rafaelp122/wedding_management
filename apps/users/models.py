@@ -26,7 +26,8 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self.create_user(username, password, **extra_fields)
+        # Correção aqui: passe 'email' e 'password' corretamente
+        return self.create_user(username, email, password, **extra_fields)
 
 
 class User(AbstractUser):
@@ -37,7 +38,7 @@ class User(AbstractUser):
         validators=[MaxLengthValidator(255)]
     )
 
-    REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
+    REQUIRED_FIELDS = ['email']
 
     objects = CustomUserManager()
 
