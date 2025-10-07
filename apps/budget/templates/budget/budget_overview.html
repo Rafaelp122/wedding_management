@@ -16,7 +16,9 @@
     <div class="col-md-4">
       <div class="bloco-resumo">
         <small>Saldo Disponível</small>
-        <h4 class="text-success">R$ {{ available_balance|floatformat:2 }}</h4>
+        <h4 class="{% if available_balance < 0 %}text-danger{% elif available_balance == 0 %}text-warning{% else %}text-success{% endif %}">
+          R$ {{ available_balance|floatformat:2 }}
+        </h4>
       </div>
     </div>
   </div>
