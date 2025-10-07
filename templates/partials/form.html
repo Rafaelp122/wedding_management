@@ -1,6 +1,12 @@
 {% load form_helpers %}
 
-<form method="POST" action="{{ form_action|default:'#' }}" novalidate>
+<form method="POST" 
+      action="{{ form_action|default:'#' }}"
+      hx-post="{{ form_action|default:'#' }}"
+      hx-target="this"
+      hx-swap="outerHTML"
+      novalidate
+  >
   {% csrf_token %}
 
   <div class="row">
