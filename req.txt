@@ -1,4 +1,3 @@
 django
 django_htmx
 django_extensions
-django-widget-tweaks
