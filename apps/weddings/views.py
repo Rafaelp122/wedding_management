@@ -3,16 +3,14 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import DeleteView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
-from apps.budget.forms import BudgetForm
-
-# Imports de apps
-from apps.client.forms import ClientForm
-from apps.client.models import Client
-from apps.users.models import User
-
-# Import do decorator personalizado
 from .decorators import planner_required
 from .forms import WeddingForm
 from .models import Wedding
@@ -71,6 +69,25 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
         return context
 
 
+class WeddingCreateView(CreateView):
+    model = Wedding
+    form_class = WeddingForm
+    template_name = 'weddings/create.html'
+
+    def form_valid(self, form):
+        form.save()
+
+        response = HttpResponse()
+
+        response['HX-Trigger'] = 'itemAdded, refreshList'
+        return response
+
+    def form_invalid(self, form):
+        response = render(self.request, self.template_name, {'form': form})
+        response.status_code = 422
+        return response
+
+
 class WeddingDetailView(LoginRequiredMixin, PlannerOwnerMixin, DetailView):
     model = Wedding
     template_name = "weddings/detail.html"
@@ -91,66 +108,3 @@ class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
     template_name = "weddings/confirm_delete.html" # Requer um template de confirmação
     success_url = reverse_lazy("weddings:my_weddings")
     pk_url_kwarg = 'id'
-
-# --- View de Função para o fluxo de criação com HTMX ---
-
-
-@planner_required
-def create_wedding_flow(request):
-    """ View para o fluxo de criação de casamento em múltiplos passos com HTMX. """
-    planner = request.planner  # O decorator já injetou o planner aqui
-
-    if request.htmx:
-        step = request.POST.get("step")
-
-        if step == "client":
-            form = ClientForm(request.POST)
-            if form.is_valid():
-                request.session["new_wedding_client_data"] = form.cleaned_data
-                return render(
-                    request,
-                    "weddings/partials/form-wedding-and-budget.html",
-                    {"wedding_form": WeddingForm(), "budget_form": BudgetForm()},
-                )
-            return render(request, "weddings/partials/form-client.html", {"form": form})
-
-        elif step == "wedding_and_budget":
-            client_data = request.session.get("new_wedding_client_data")
-            if not client_data:
-                response = HttpResponse()
-                response["HX-Redirect"] = reverse("weddings:create_wedding_flow")
-                return response
-
-            wedding_form = WeddingForm(request.POST)
-            budget_form = BudgetForm(request.POST)
-
-            if wedding_form.is_valid() and budget_form.is_valid():
-                with transaction.atomic():  # Garante a integridade dos dados
-                    client = Client.objects.create(**client_data)
-
-                    wedding = wedding_form.save(commit=False)
-                    wedding.planner = planner
-                    wedding.client = client
-                    wedding.save()
-
-                    budget = budget_form.save(commit=False)
-                    budget.planner = planner
-                    budget.wedding = wedding
-                    budget.save()
-
-                del request.session["new_wedding_client_data"]
-                response = HttpResponse()
-                response["HX-Redirect"] = reverse("weddings:my_weddings")
-                return response
-
-            return render(
-                request,
-                "weddings/partials/form-wedding-and-budget.html",
-                {"wedding_form": wedding_form, "budget_form": budget_form},
-            )
-
-    # Limpa a sessão em caso de um GET inicial para recomeçar o fluxo
-    if "new_wedding_client_data" in request.session:
-        del request.session["new_wedding_client_data"]
-
-    return render(request, "weddings/create-flow.html", {"form": ClientForm()})
