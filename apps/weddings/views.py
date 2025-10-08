@@ -1,8 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -10,8 +9,8 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django.db.models import Count
 
-from .decorators import planner_required
 from .forms import WeddingForm
 from .models import Wedding
 
@@ -38,8 +37,6 @@ GRADIENTS = [
     "linear-gradient(135deg, #76ff03, #33691e)",
 ]
 
-# --- Mixin para reutilização de lógica nas CBVs ---
-
 
 class PlannerOwnerMixin:
     """ Mixin que filtra os resultados para mostrar apenas os dados do planner logado. """
@@ -47,29 +44,40 @@ class PlannerOwnerMixin:
         queryset = super().get_queryset()
         return queryset.filter(planner=self.request.user)
 
-# --- Class-Based Views (CBVs) para CRUD ---
-
 
 class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
     model = Wedding
     template_name = "weddings/list.html"
     context_object_name = "weddings"
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        queryset = queryset.select_related("client").annotate(
+            items_count=Count('item', distinct=True),
+            contracts_count=Count('contract', distinct=True)
+        )
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        weddings = self.get_queryset().select_related("client")
+
+        weddings = self.object_list
+
         context["weddings_with_clients"] = [
             {
                 "wedding": wedding,
                 "client": wedding.client,
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
+                "items_count": wedding.items_count,
+                "contracts_count": wedding.contracts_count,
             }
             for idx, wedding in enumerate(weddings)
         ]
         return context
 
 
-class WeddingCreateView(CreateView):
+class WeddingCreateView(LoginRequiredMixin, CreateView):
     model = Wedding
     form_class = WeddingForm
     template_name = 'weddings/create.html'
@@ -105,6 +113,6 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
 
 class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
     model = Wedding
-    template_name = "weddings/confirm_delete.html" # Requer um template de confirmação
+    template_name = "weddings/confirm_delete.html"  # Requer um template de confirmação
     success_url = reverse_lazy("weddings:my_weddings")
     pk_url_kwarg = 'id'
