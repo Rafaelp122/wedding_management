@@ -20,17 +20,11 @@ class BudgetPartialView(LoginRequiredMixin, TemplateView):
         wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
         context['wedding'] = wedding
 
-        budget = getattr(wedding, 'budget', None)
+        total_budget = wedding.budget
+        items = Item.objects.filter(wedding=wedding)
 
-        if not budget:
-            total_budget = 0
-            items = Item.objects.none()
-        else:
-            total_budget = budget.initial_estimate
-            items = Item.objects.filter(wedding=wedding)
-
-        context['items'] = items
         context['total_budget'] = total_budget
+        context['items'] = items
 
         current_spent = items.aggregate(
             total=Sum(

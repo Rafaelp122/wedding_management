@@ -1,7 +1,8 @@
 # apps/budget/urls.py
 
 from django.urls import path
-from .views import BudgetPartialView 
+
+from .views import BudgetPartialView
 
 app_name = 'budget'
 
