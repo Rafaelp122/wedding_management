@@ -63,6 +63,12 @@ class SignInView(LoginView):
             'username': 'col-md-12',
             'password': 'col-md-12',
             }
+
+        context['form_icons'] = {
+            'username': 'fas fa-user',
+            'password': 'fas fa-lock',
+        }
+
         context["form_action"] = reverse_lazy("users:sign_in")
         context['button_text'] = 'Entrar'
         context['default_column_class'] = 'col-md-6'

@@ -77,7 +77,7 @@ class SignInForm(AuthenticationForm):
             if isinstance(field.widget, forms.CheckboxInput):
                 add_attr(field, 'class', 'form-check-input')
             else:
-                add_attr(field, 'class', 'form-control')
+                add_attr(field, 'class', 'form-control form-control-lg ps-5 custom-font-size')
 
             if field_name in self.errors:
                 add_attr(field, 'class', 'is-invalid')

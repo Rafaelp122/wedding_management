@@ -1,0 +1,33 @@
+/* Estilo para o corpo da página */
+body {
+    background-color: #f9fafb;
+}
+
+/* Seção da imagem com o fundo gradiente */
+.image-section {
+    background: linear-gradient(to bottom right, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.auth-img {
+    max-height: 280px;
+    object-fit: cover;
+}
+
+.form-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-font-size {
+    font-size: 1.1rem;
+}
+
+.min-height {
+    min-height: 38rem;
+}
+
