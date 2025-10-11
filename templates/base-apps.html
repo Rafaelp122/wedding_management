@@ -6,9 +6,7 @@
 
 
 {% block styles %}
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="{% static 'css/base-apps.css' %}">
-  
   {% block page_styles %} {% endblock page_styles %}
 {% endblock styles %}
 
@@ -23,5 +21,17 @@
     {% block content %} {% endblock content %}
   </main>
 
-  {% block extra_js %} {% endblock %}
+  <div class="modal fade" id="main-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" id="modal-container">
+      </div>
+    </div>
+  </div>
+
+  {% block scripts %}
+    {{ block.super }}  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+  {% endblock scripts %}
+
+  {% block extra_js %} 
+  {% endblock %}
 {% endblock body_content %}
