@@ -1,5 +1,3 @@
-{% load form_helpers %}
-
 <form method="POST" 
       action="{{ form_action|default:'#' }}"
       hx-post="{{ form_action|default:'#' }}"
@@ -9,43 +7,7 @@
   >
   {% csrf_token %}
 
-  <div class="row">
-    {% for field in form %}
-      <div class="{% get_field_class field layout_dict default_col_class %}">
-
-        <div class="mb-3">
-          <label for="{{ field.id_for_label }}" class="form-label">
-            {{ field.label }}
-          </label>
-
-          {% if form_icons %}
-            {% with icon_class=field|get_icon_class:form_icons %}
-              <div class="position-relative mb-3">
-                {{ field }}
-                {% if icon_class %}
-                  <i class="{{ icon_class }} position-absolute top-50 start-0 translate-middle-y ps-3 text-muted" style="opacity: 0.5;"></i>
-                {% endif %}
-              </div>
-            {% endwith %}
-          {% else %}
-            <div class="mb-3">
-              {{ field }}
-            </div>
-          {% endif %}
-
-          {% if field.help_text %}
-            <div class="form-text text-muted">{{ field.help_text }}</div>
-          {% endif %}
-          
-          {% for error in field.errors %}
-            <div class="invalid-feedback d-block">
-              {{ error }}
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-    {% endfor %}
-  </div>
+  {% include "partials/_form_fields.html" %}
 
   {% if button_text %}
     <div class="col-12 d-flex justify-content-center mt-4 mb-3">
