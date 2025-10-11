@@ -11,4 +11,5 @@ urlpatterns = [
     path("detail/<int:wedding_id>/", views.WeddingDetailView.as_view(), name="wedding_detail"),
     path("edit/<int:id>/", views.WeddingUpdateView.as_view(), name="edit_wedding"),
     path("delete/<int:id>/", views.WeddingDeleteView.as_view(), name="delete_wedding"),
+    path('create/', views.WeddingCreateView.as_view(), name='create_wedding'),
 ]

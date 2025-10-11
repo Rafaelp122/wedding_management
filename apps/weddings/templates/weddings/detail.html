@@ -4,9 +4,7 @@
 {% block page_title %} Detalhes do Casamento {% endblock %}
 
 {% block page_styles %}
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{% static 'weddings/css/detail.css' %}">
-  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 {% endblock page_styles %}
 
 {% block main_class %} wedding-detail-class {% endblock main_class %}
@@ -14,7 +12,7 @@
 {% block content %}
 <div class="container py-5">
   <a href="{% url 'weddings:my_weddings' %}" class="text-decoration-none text-purple mb-4 d-inline-block">
-    <i class="bi bi-arrow-left"></i> Voltar para Meus Casamentos
+    <i class="fas fa-arrow-left"></i> Voltar para Meus Casamentos
   </a>
 
   <!-- Cabeçalho com nomes e data -->

@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -9,7 +10,6 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
-from django.db.models import Count
 
 from .forms import WeddingForm
 from .models import Wedding
@@ -80,19 +80,61 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
 class WeddingCreateView(LoginRequiredMixin, CreateView):
     model = Wedding
     form_class = WeddingForm
-    template_name = 'weddings/create.html'
+    template_name = 'weddings/partials/_create_wedding_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_layout_dict'] = {
+            'client': 'col-md-12',
+            'groom_name': 'col-md-6',
+            'bride_name': 'col-md-6',
+            'date': 'col-md-6',
+            'location': 'col-md-12',
+            'budget': 'col-6',
+        }
+
+        context['default_col_class'] = 'col-12'
+
+        context['form_icons'] = {
+            'client': 'fas fa-id-card',
+            'groom_name': 'fas fa-user',
+            'bride_name': 'fas fa-user',
+            'date': 'fas fa-calendar-days',
+            'location': 'fas fa-location-dot',
+            'budget': 'fas fa-money-bill-wave',
+        }
+        return context
 
     def form_valid(self, form):
-        form.save()
+        form.instance.planner = self.request.user
+        new_wedding = form.save()
 
-        response = HttpResponse()
+        total_weddings = Wedding.objects.filter(planner=self.request.user).count()
 
-        response['HX-Trigger'] = 'itemAdded, refreshList'
+        new_card_index = total_weddings - 1
+
+        item_context = {
+            'wedding': new_wedding,
+            'client': new_wedding.client,
+            'gradient': GRADIENTS[new_card_index % len(GRADIENTS)],
+            'items_count': 0,
+            'contracts_count': 0,
+            'progress': 0
+        }
+
+        html = render_to_string(
+            'weddings/partials/_wedding_card.html',
+            {'item': item_context}
+        )
+        response = HttpResponse(html)
+        response['HX-Trigger'] = '{"weddingCreated": {}, "removeEmptyMessage": {}}'
         return response
 
     def form_invalid(self, form):
-        response = render(self.request, self.template_name, {'form': form})
+        response = super().form_invalid(form)
         response.status_code = 422
+        response['HX-Retarget'] = '#modal-container'
+        response['HX-Reswap'] = 'innerHTML'
         return response
 
 

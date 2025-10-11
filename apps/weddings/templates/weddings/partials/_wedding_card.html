@@ -3,7 +3,6 @@
     <div class="card-wrapper" data-href="{% url 'weddings:wedding_detail' w.id %}">
     <div class="card shadow-lg rounded-4 border-0 position-relative">
 
-        <!-- Topo colorido -->
         <div class="top-banner" style="background: {{ item.gradient }};">
         <div class="circle">
             {% if w.groom_name and w.bride_name %}
@@ -14,16 +13,13 @@
             --
             {% endif %}
         </div>
-        <!-- Ícone no topo direito -->
         <div class="top-icon-document">
-            <i class="bi bi-file-earmark-text"></i>
+            <i class="fas fa-file-lines"></i>
         </div>
         </div>
 
-        <!-- Parte branca -->
         <div class="card-body position-relative">
 
-        <!-- Título + botões -->
         <div class="d-flex justify-content-between align-items-center mb-1">
             <h5 class="fw-bold text-dark mb-0">
             {% if w.groom_name and w.bride_name %}
@@ -36,19 +32,19 @@
             </h5>
             <div class="d-flex gap-2">
             <a href="{% url 'weddings:edit_wedding' w.id %}" class="btn-edit" title="Editar">
-                <i class="bi bi-pencil"></i>
+                <i class="fas fa-pencil-alt"></i>
             </a>
             <form method="POST" action="{% url 'weddings:delete_wedding' w.id %}" onsubmit="return confirm('Deseja excluir este casamento?')">
                 {% csrf_token %}
                 <button type="submit" class="btn-delete" title="Excluir">
-                <i class="bi bi-trash"></i>
+                <i class="fas fa-trash-alt"></i>
                 </button>
             </form>
             </div>
         </div>
 
-        <p class="mb-1 text-muted"><i class="bi bi-calendar-event"></i> {{ w.date|date:"d \d\e F, Y" }}</p>
-        <p class="mb-3 text-muted"><i class="bi bi-geo-alt"></i> {{ w.location }}</p>
+        <p class="mb-1 text-muted"><i class="fas fa-calendar-days"></i> {{ w.date|date:"d \d\e F, Y" }}</p>
+        <p class="mb-3 text-muted"><i class="fas fa-location-dot"></i> {{ w.location }}</p>
 
         <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="text-muted small">Progresso</span>

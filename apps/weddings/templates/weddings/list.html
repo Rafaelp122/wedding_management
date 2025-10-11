@@ -13,12 +13,19 @@
       <h2 class="fw-bold">Meus Casamentos</h2>
       <p class="text-muted">Gerencie todos os detalhes dos seus eventos</p>
     </div>
-    <a href="#" class="btn btn-primary">+ Novo Casamento</a>
+
+    <button class="btn btn-primary"
+          hx-get="{% url 'weddings:create_wedding' %}"  
+          hx-target="#modal-container"
+          data-bs-toggle="modal"
+          data-bs-target="#main-modal">
+    + Novo Casamento
+    </button>
   </div>
 
-  <div class="row">
+  <div class="row" id="wedding-list-container">
     {% for item in weddings_with_clients %}
-      {% include 'weddings/partials/wedding_card.html' with item=item %}
+      {% include 'weddings/partials/_wedding_card.html' with item=item %}
     {% empty %}
       <div class="col-12">
         <div class="alert alert-info text-center">
@@ -33,14 +40,18 @@
 
 {% block extra_js %}
 <script>
-  document.querySelectorAll('.card-wrapper').forEach(wrapper => {
-    wrapper.addEventListener('click', function (e) {
-      if (e.target.closest('a') || e.target.closest('form')) return;
-      const link = this.getAttribute('data-href');
-      if (link) {
-        window.location.href = link;
-      }
-    });
+  document.body.addEventListener('click', function(e) {
+    
+    const cardWrapper = e.target.closest('.card-wrapper');
+
+    if (!cardWrapper || e.target.closest('a') || e.target.closest('form')) {
+      return;
+    }
+
+    const link = cardWrapper.getAttribute('data-href');
+    if (link) {
+      window.location.href = link;
+    }
   });
 </script>
 {% endblock %}
