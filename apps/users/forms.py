@@ -5,13 +5,13 @@ from django.contrib.auth.forms import (
     UserCreationForm,
 )
 
-from apps.core.utils.django_forms import add_attr, add_placeholder
-from apps.core.utils.mixins import FormStylingMixin
+from apps.core.utils.django_forms import add_placeholder
+from apps.core.utils.mixins import FormStylingMixinLarge
 
 from .models import User
 
 
-class CustomUserCreationForm(FormStylingMixin, UserCreationForm):
+class CustomUserCreationForm(FormStylingMixinLarge, UserCreationForm):
     email = forms.EmailField(label="E-mail")
 
     def __init__(self, *args, **kwargs):
@@ -55,7 +55,7 @@ class CustomUserCreationForm(FormStylingMixin, UserCreationForm):
     # )
 
 
-class SignInForm(FormStylingMixin, AuthenticationForm):
+class SignInForm(FormStylingMixinLarge, AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
