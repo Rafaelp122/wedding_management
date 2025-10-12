@@ -1,23 +1,19 @@
 from django import forms
 
-from apps.core.utils.django_forms import add_attr
+from apps.core.utils.django_forms import add_placeholder
 from apps.core.utils.mixins import FormStylingMixin
 
 from .models import Wedding
 
 
-class WeddingForm(forms.ModelForm):
+class WeddingForm(FormStylingMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for field_name, field in self.fields.items():
-            if isinstance(field.widget, forms.CheckboxInput):
-                add_attr(field, 'class', 'form-check-input')
-            else:
-                add_attr(field, 'class', 'form-control ps-5')
-
-            if field_name in self.errors:
-                add_attr(field, 'class', 'is-invalid')
+        add_placeholder(self.fields['groom_name'], 'Ex: Flavio')
+        add_placeholder(self.fields['bride_name'], 'Ex: Mirela')
+        add_placeholder(self.fields['budget'], 'Ex.: R$ 30.000,00')
+        add_placeholder(self.fields['location'], 'Ex.: Igreja Matriz, São Gonçalo, RJ')
 
     class Meta:
         model = Wedding
