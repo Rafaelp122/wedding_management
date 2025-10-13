@@ -30,7 +30,7 @@
         <span>{{ category }}</span>
         <span>R$ {{ value|floatformat:2 }}</span>
       </div>
-      <div class="progress">
+      <div class="progress" style="height: 15px">
         <div class="progress-bar bg-purple" style="width: {% if total_budget > 0 %}{% widthratio value total_budget 100 %}{% else %}0{% endif %}%;"></div>
       </div>
     </div>

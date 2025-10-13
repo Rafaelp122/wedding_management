@@ -90,7 +90,7 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
             'bride_name': 'col-md-6',
             'date': 'col-md-6',
             'location': 'col-md-12',
-            'budget': 'col-6',
+            'budget': 'col-md-6',
         }
 
         context['default_col_class'] = 'col-12'
