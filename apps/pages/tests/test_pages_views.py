@@ -1,42 +1,43 @@
-from django.test import TestCase
-from django.urls import resolve, reverse
+# import datetime
 
-from apps.pages import views
+from django.test import TestCase
+from django.urls import reverse
+from parameterized import parameterized
 
 
 class TestPagesViews(TestCase):
-    def test_pages_home_view_is_correct(self):
-        view = resolve(
-            reverse("pages:home")
-        )
-        self.assertIs(view.func, views.home)
+    """Testa as Class-Based Views da app 'pages'."""
 
-    def test_pages_home_view_returns_status_code_200_OK(self):
-        response = self.client.get(reverse("pages:home"))
+    @parameterized.expand([
+        # Tupla de argumentos: (nome_do_caso, url_name, template_name, expected_content)
+        ("home_page", "pages:home", "pages/home.html", "Gestão de Casamentos"),
+        ("contact_us_page", "pages:contact_us", "pages/contact-us.html", "Fale Conosco"),
+    ])
+    def test_static_pages_render_correctly(self, _, url_name, template_name, expected_content):
+        """
+        Verifica se as páginas estáticas renderizam corretamente.
+        Este teste é parametrizado e cada caso será executado individualmente.
+        """
+        url = reverse(url_name)
+        response = self.client.get(url)
+
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name)
+        self.assertContains(response, expected_content)
 
-    def test_pages_home_template_is_correct(self):
-        response = self.client.get(reverse("pages:home"))
-        self.assertTemplateUsed(response, "pages/home.html")
+    # def test_home_view_provides_correct_context(self):
+    #     """
+    #     Verifica se a HomeView adiciona o 'current_year' ao contexto corretamente.
+    #     """
+    #     url = reverse("pages:home")
+    #     response = self.client.get(url)
 
-    def test_pages_home_contains_expected_content(self):
-        response = self.client.get(reverse("pages:home"))
-        self.assertContains(response, "Gestão de Casamentos")
+    #     # O ano atual, baseado na data do sistema onde o teste roda
+    #     expected_year = datetime.date.today().year
 
-    def test_pages_contact_us_view_is_correct(self):
-        view = resolve(
-            reverse("pages:contact_us")
-        )
-        self.assertIs(view.func, views.contact_us)
+    #     # Verifica se o ano está no contexto da resposta
+    #     self.assertIn('current_year', response.context)
+    #     self.assertEqual(response.context['current_year'], expected_year)
 
-    def test_pages_contact_us_view_returns_status_code_200_OK(self):
-        response = self.client.get(reverse("pages:contact_us"))
-        self.assertEqual(response.status_code, 200)
-
-    def test_pages_contact_us_template_is_correct(self):
-        response = self.client.get(reverse("pages:contact_us"))
-        self.assertTemplateUsed(response, "pages/contact-us.html")
-
-    def test_pages_contact_us_contains_expected_content(self):
-        response = self.client.get(reverse("pages:contact_us"))
-        self.assertContains(response, "Fale Conosco")
+    #     # Um teste ainda melhor é verificar se o ano foi renderizado no HTML
+    #     self.assertContains(response, str(expected_year))
