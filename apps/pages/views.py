@@ -1,9 +1,11 @@
-from django.shortcuts import render
+from django.views.generic import TemplateView
 
 
-def home(request):
-    return render(request, "pages/home.html")
+class HomeView(TemplateView):
+    """Renderiza a página inicial."""
+    template_name = "pages/home.html"
 
 
-def contact_us(request):
-    return render(request, "pages/contact-us.html")
+class ContactUsView(TemplateView):
+    """Renderiza a página de contato."""
+    template_name = "pages/contact-us.html"
