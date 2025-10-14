@@ -17,7 +17,26 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
 
     class Meta:
         model = Wedding
-        fields = ["groom_name", "bride_name", "date", "budget", "client", "location"]
+        fields = ["groom_name", "bride_name", "date", "budget", "location"]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
         }
+        labels = {
+            'date': 'Data',  # 👈 Aqui você muda o label
+        }
+
+    groom_name = forms.CharField(
+        label="Noivo",
+    )
+
+    bride_name = forms.CharField(
+        label="Noiva",
+    )
+
+    budget = forms.DecimalField(
+        label="Orçamento",
+    )
+
+    location = forms.CharField(
+        label="Localização",
+    )
