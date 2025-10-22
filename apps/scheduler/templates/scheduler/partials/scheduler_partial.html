@@ -1,0 +1,70 @@
+<div class="card shadow">
+    <div class="card-body">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<script>
+    // Este script executa imediatamente após o HTMX injetar este HTML.
+    
+    // Medida de segurança: Se o usuário clicar na aba novamente,
+    // destruímos o calendário antigo antes de criar um novo.
+    if (window.weddingCalendarInstance) {
+        window.weddingCalendarInstance.destroy();
+    }
+
+    // 1. Encontra o container
+    var calendarEl = document.getElementById('calendar');
+
+    // 2. Pega os dados JSON que a view (Passo 3) enviou
+    //    Usamos |safe para garantir que o JSON seja lido corretamente
+    var eventsData = {{ calendar_events_json|safe }};
+
+    // 3. Cria a instância do FullCalendar
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        // --- Configurações ---
+        locale: 'pt-br',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+
+        // --- Eventos ---
+        events: eventsData, // Carrega os eventos do casamento!
+        
+        // --- Interatividade (para CRUD futuro) ---
+        selectable: true,  // Permite clicar em dias
+        editable: true,    // Permite arrastar eventos
+        
+        // Chamado ao clicar em um dia vazio
+        dateClick: function(info) {
+            // AÇÃO FUTURA: Abrir o modal #main-modal para criar um evento
+            // Você usará HTMX para carregar um formulário de criação no modal
+            console.log('Clicou no dia: ' + info.dateStr);
+            // Ex: htmx.ajax('GET', '/scheduler/create/{{wedding.id}}/', '#modal-container');
+        },
+        
+        // Chamado ao clicar em um evento existente
+        eventClick: function(info) {
+            // AÇÃO FUTURA: Abrir o modal #main-modal para editar/excluir
+            // info.event.id é o ID do seu modelo Schedule
+            console.log('Clicou no evento: ' + info.event.title + ' (ID: ' + info.event.id + ')');
+            // Ex: htmx.ajax('GET', '/scheduler/update/' + info.event.id + '/', '#modal-container');
+        },
+        
+        // Chamado ao arrastar e soltar um evento
+        eventDrop: function(info) {
+            // AÇÃO FUTURA: Salvar a nova data no banco via HTMX/AJAX
+            console.log(info.event.title + " movido para " + info.event.start.toISOString());
+            // Ex: htmx.ajax('POST', '/scheduler/move/' + info.event.id + '/', { body: ... });
+        }
+    });
+
+    // 4. Desenha o calendário na tela
+    calendar.render();
+
+    // 5. Salva a instância globalmente para poder destruí-la (ver início do script)
+    window.weddingCalendarInstance = calendar;
+</script>

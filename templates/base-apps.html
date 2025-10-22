@@ -29,9 +29,12 @@
   </div>
 
   {% block scripts %}
-    {{ block.super }}  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    {{ block.super }}  
+      <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+      <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+      <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core/locales/pt-br.global.min.js'></script>
   {% endblock scripts %}
-
+  
   {% block extra_js %} 
-  {% endblock %}
+  {% endblock extra_js %}
 {% endblock body_content %}

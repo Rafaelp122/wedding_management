@@ -9,5 +9,6 @@ urlpatterns = [
     path("orcamento/", include(("apps.budget.urls", "budget"), namespace="budget")),
     path("contratos/", include(("apps.contracts.urls", "contracts"), namespace="contracts")),
     path("itens/", include(("apps.items.urls", "items"), namespace="items")),
-    path("calendario/", include(("apps.scheduler.urls", "scheduler"), namespace="scheduler")),
+    path("scheduler/", include(("apps.scheduler.urls", "scheduler"), namespace="scheduler")),
+
 ]
