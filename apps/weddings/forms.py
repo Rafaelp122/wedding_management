@@ -17,7 +17,7 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
 
     class Meta:
         model = Wedding
-        fields = ["groom_name", "bride_name", "date", "budget", "client", "location"]
+        fields = ["groom_name", "bride_name", "date", "budget", "location"]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
         }
@@ -35,10 +35,6 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
 
     budget = forms.DecimalField(
         label="Orçamento",
-    )
-
-    client = forms.CharField(
-        label="Cliente"
     )
 
     location = forms.CharField(

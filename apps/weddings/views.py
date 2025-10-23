@@ -14,7 +14,6 @@ from django.views.generic import (
 from .forms import WeddingForm
 from .models import Wedding
 
-# Constante para os gradientes dos cards
 GRADIENTS = [
     "linear-gradient(135deg, #8e2de2, #4a00e0)",
     "linear-gradient(135deg, #7b1fa2, #512da8)",
@@ -37,7 +36,6 @@ GRADIENTS = [
     "linear-gradient(135deg, #76ff03, #33691e)",
 ]
 
-
 class PlannerOwnerMixin:
     """ Mixin que filtra os resultados para mostrar apenas os dados do planner logado. """
     def get_queryset(self):
@@ -48,12 +46,13 @@ class PlannerOwnerMixin:
 class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
     model = Wedding
     template_name = "weddings/list.html"
-    context_object_name = "weddings"
+    context_object_name = "weddings"  # <-- Pode manter, mas veja a próxima função
 
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        queryset = queryset.select_related("client").annotate(
+        # REMOVIDO: .select_related("client")
+        queryset = queryset.annotate(
             items_count=Count('item', distinct=True),
             contracts_count=Count('contract', distinct=True)
         )
@@ -64,16 +63,21 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
 
         weddings = self.object_list
 
-        context["weddings_with_clients"] = [
+        # Renomeei 'weddings_with_clients' para 'wedding_items' para ficar mais claro
+        context["wedding_items"] = [
             {
                 "wedding": wedding,
-                "client": wedding.client,
+                # REMOVIDO: "client": wedding.client,
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
                 "items_count": wedding.items_count,
                 "contracts_count": wedding.contracts_count,
             }
             for idx, wedding in enumerate(weddings)
         ]
+        
+        # Você pode remover o 'context_object_name' e usar só 'wedding_items' no template
+        # Ou manter ambos, se preferir.
+        
         return context
 
 
@@ -85,7 +89,7 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form_layout_dict'] = {
-            'client': 'col-md-12',
+            # REMOVIDO: 'client': 'col-md-12',
             'groom_name': 'col-md-6',
             'bride_name': 'col-md-6',
             'date': 'col-md-6',
@@ -96,7 +100,7 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
         context['default_col_class'] = 'col-12'
 
         context['form_icons'] = {
-            'client': 'fas fa-id-card',
+            # REMOVIDO: 'client': 'fas fa-id-card',
             'groom_name': 'fas fa-user',
             'bride_name': 'fas fa-user',
             'date': 'fas fa-calendar-days',
@@ -110,12 +114,11 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
         new_wedding = form.save()
 
         total_weddings = Wedding.objects.filter(planner=self.request.user).count()
-
         new_card_index = total_weddings - 1
 
         item_context = {
             'wedding': new_wedding,
-            'client': new_wedding.client,
+            # REMOVIDO: 'client': new_wedding.client,
             'gradient': GRADIENTS[new_card_index % len(GRADIENTS)],
             'items_count': 0,
             'contracts_count': 0,
@@ -155,6 +158,6 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
 
 class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
     model = Wedding
-    template_name = "weddings/confirm_delete.html"  # Requer um template de confirmação
+    template_name = "weddings/confirm_delete.html"  
     success_url = reverse_lazy("weddings:my_weddings")
     pk_url_kwarg = 'id'
