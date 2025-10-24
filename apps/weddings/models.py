@@ -1,9 +1,14 @@
 from django.db import models
+
+from apps.client.models import Client
 from apps.users.models import User
 
 
 class Wedding(models.Model):
     planner = models.ForeignKey(User, on_delete=models.CASCADE)
+    client = models.OneToOneField(
+        Client, on_delete=models.SET_NULL, related_name="weddings", blank=True, null=True
+    )
     groom_name = models.CharField(max_length=100, blank=True, null=True)
     bride_name = models.CharField(max_length=100, blank=True, null=True)
     date = models.DateField()
