@@ -1,70 +1,344 @@
 <div class="card shadow">
     <div class="card-body">
+        <!-- Container DIV principal para o FullCalendar -->
         <div id="calendar"></div>
     </div>
 </div>
 
+
+<!-- 
+  ======================================================================
+                 INÍCIO DO BLOCO DE SCRIPT JAVASCRIPT 
+                 (Versão estável - Outubro 2025 v5)
+  ======================================================================
+-->
 <script>
-    // Este script executa imediatamente após o HTMX injetar este HTML.
-    
-    // Medida de segurança: Se o usuário clicar na aba novamente,
-    // destruímos o calendário antigo antes de criar um novo.
+    // ***************************************************************
+    // LOG DE VERIFICAÇÃO INICIAL
+    console.log("LOG v5: Script scheduler_partial.html está a EXECUTAR!"); 
+    // ***************************************************************
+
+    // --- Bloco de Segurança para evitar múltiplos calendários ---
     if (window.weddingCalendarInstance) {
-        window.weddingCalendarInstance.destroy();
+        console.log("LOG v5: Instância anterior encontrada. A destruir...");
+        try {
+            window.weddingCalendarInstance.destroy();
+            console.log("LOG v5: Instância anterior destruída.");
+        } catch (destroyError) {
+            console.error("LOG v5: Erro ao destruir instância anterior:", destroyError);
+        }
+        window.weddingCalendarInstance = null; 
+    } else {
+        console.log("LOG v5: Nenhuma instância anterior encontrada.");
+    }
+    // --- Fim do Bloco de Segurança ---
+
+    // 1. Encontrar o container do calendário
+    var calendarEl = document.getElementById('calendar');
+    if (!calendarEl) {
+        console.error("ERRO CRÍTICO v5: Elemento #calendar não encontrado!");
+    } else {
+        console.log("LOG v5: Elemento #calendar encontrado.");
+
+        // 2. Obter e Processar os Dados JSON dos Eventos
+        var eventDataJson = "{{ calendar_events_json|escapejs }}" || '[]'; 
+        var eventsData = []; 
+        try {
+            if (eventDataJson && eventDataJson !== "''") { 
+               eventsData = JSON.parse(eventDataJson); 
+            } else {
+               eventsData = []; 
+            }
+             if (!Array.isArray(eventsData)) {
+                console.warn("LOG v5: JSON processado não é um array. A usar array vazio.", eventsData);
+                eventsData = [];
+             }
+             console.log("LOG v5: Dados JSON processados:", eventsData.length, "eventos.");
+        } catch (e) {
+            console.error("ERRO v5: Falha ao processar JSON.", "Erro:", e, "JSON Recebido:", eventDataJson);
+            eventsData = []; 
+        }
+
+        // 3. Criar e Configurar a Instância do FullCalendar
+        console.log("LOG v5: A inicializar FullCalendar.");
+        try {
+            var calendar = new FullCalendar.Calendar(calendarEl, { 
+                
+                locale: 'pt-br',             
+                initialView: 'dayGridMonth', 
+                headerToolbar: {             
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' 
+                }, 
+                
+                events: eventsData,          
+                
+                eventDidMount: function(info) { 
+                    if (info.event.extendedProps.isWeddingDay) {
+                        info.el.classList.add('fc-event-wedding-day'); 
+                         // Adiciona a classe current/other também aos dias de casamento para cor
+                        if (info.event.extendedProps.isCurrentWedding) {
+                            info.el.classList.add('fc-event-current');
+                        } else {
+                            info.el.classList.add('fc-event-other');
+                        }
+                    }
+                    else if (info.event.extendedProps.isCurrentWedding) { 
+                        info.el.classList.add('fc-event-current');
+                    } else {
+                        info.el.classList.add('fc-event-other');
+                    }
+                }, 
+
+                dateClick: function(info) { 
+                    console.log('LOG v5 - dateClick:', info.dateStr);
+                    var myModalEl = document.getElementById('main-modal');
+                    if (!myModalEl) { console.error("ERRO v5: Modal #main-modal não encontrado (dateClick)."); return; }
+                    var myModal = bootstrap.Modal.getOrCreateInstance(myModalEl);
+                    
+                    const weddingIdForUrl = {{ wedding.id|default:'null' }};
+                    if (weddingIdForUrl === null) {
+                         console.error("ERRO v5 - dateClick: wedding.id indisponível.");
+                         alert("Erro: Casamento atual não identificado.");
+                         return;
+                    }
+                    htmx.ajax('GET', `/scheduler/manage/${weddingIdForUrl}/?action=get_create_form&date=${info.dateStr}`, {
+                        target: '#modal-container', swap: 'innerHTML'
+                    }).then(() => {
+                        console.log("LOG v5 - dateClick: Form de criação carregado.");
+                        myModal.show(); 
+                    }).catch(error => {
+                        console.error("ERRO v5 - dateClick: Falha HTMX (create form):", error);
+                        alert("Erro ao abrir formulário de criação.");
+                    });
+                }, 
+
+                eventClick: function(info) { 
+                    if (info.event.extendedProps.isWeddingDay) {
+                        console.log("LOG v5 - eventClick: Ignorado (dia de casamento).");
+                        return; 
+                    }
+                    console.log('LOG v5 - eventClick:', info.event.id, info.event.title);
+                    var myModalEl = document.getElementById('main-modal');
+                    if (!myModalEl) { console.error("ERRO v5: Modal #main-modal não encontrado (eventClick)."); return; }
+                    var myModal = bootstrap.Modal.getOrCreateInstance(myModalEl);
+
+                     const weddingIdForUrl = {{ wedding.id|default:'null' }};
+                     if (weddingIdForUrl === null) {
+                         console.error("ERRO v5 - eventClick: wedding.id indisponível.");
+                         alert("Erro: Casamento atual não identificado.");
+                         return;
+                    }
+                    htmx.ajax('GET', `/scheduler/manage/${weddingIdForUrl}/?action=get_edit_form&event_id=${info.event.id}`, {
+                        target: '#modal-container', swap: 'innerHTML'
+                    }).then(() => {
+                         console.log("LOG v5 - eventClick: Form de edição carregado (ID:", info.event.id, ")");
+                        myModal.show(); 
+                    }).catch(error => {
+                        console.error("ERRO v5 - eventClick: Falha HTMX (edit form):", error);
+                        alert("Erro ao abrir formulário de edição.");
+                    });
+                }, 
+
+                editable: true, 
+
+                eventDrop: function(info) { 
+                     if (info.event.extendedProps.isWeddingDay) { info.revert(); return; } 
+                    console.log('LOG v5 - eventDrop:', info.event.id, 'Novo início:', info.event.start);
+                    sendCalendarUpdate({
+                        action: 'move_resize',
+                        event_id: info.event.id,
+                        start_time: info.event.start.toISOString(), 
+                        end_time: info.event.end ? info.event.end.toISOString() : null
+                    }, info); 
+                }, 
+
+                eventResize: function(info) { 
+                    if (info.event.extendedProps.isWeddingDay) { info.revert(); return; } 
+                    console.log('LOG v5 - eventResize:', info.event.id, 'Novo fim:', info.event.end);
+                    sendCalendarUpdate({
+                        action: 'move_resize',
+                        event_id: info.event.id,
+                        start_time: info.event.start.toISOString(),
+                        end_time: info.event.end.toISOString() 
+                    }, info); 
+                } 
+
+            }); // FIM da config do FullCalendar
+
+            console.log("LOG v5: A renderizar o calendário...");
+            calendar.render();
+            console.log("LOG v5: Calendário renderizado.");
+
+            window.weddingCalendarInstance = calendar;
+            console.log("LOG v5: Instância guardada em window.weddingCalendarInstance.");
+
+        } catch (calendarError) {
+            console.error("ERRO CRÍTICO v5: Falha ao inicializar FullCalendar:", calendarError);
+            if (calendarEl) {
+                calendarEl.innerHTML = '<div class="alert alert-danger">Erro ao carregar o calendário. Verifique o console (F12).</div>';
+            }
+        } // Fim do try...catch
+
+    } // Fim do else (calendarEl existe)
+
+    // --- Início da Função Auxiliar sendCalendarUpdate ---
+    function sendCalendarUpdate(data, info = null) { 
+        const weddingId = {{ wedding.id|default:'null' }}; 
+        if (weddingId === null) { console.error("ERRO AJAX v5: wedding.id não definido!"); alert("Erro crítico: ID do casamento ausente."); return; }
+        
+        const csrfTokenEl = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfTokenEl) { console.error("ERRO AJAX v5: Token CSRF não encontrado!"); alert("Erro de segurança: Token CSRF ausente."); return; }
+        const csrfToken = csrfTokenEl.value;
+
+        console.log("LOG AJAX v5: Enviando:", data);
+        const apiUrl = `/scheduler/manage/${weddingId}/`;
+        
+        fetch(apiUrl, { 
+            method: 'POST',                     
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(data)          
+        })
+        .then(response => { 
+            if (!response.ok) {
+                 // Tenta obter mensagem de erro do JSON, senão usa status
+                 return response.json().then(errData => { 
+                     throw new Error(errData.message || JSON.stringify(errData.errors) || `Erro ${response.status}`);
+                 }).catch(() => { 
+                      throw new Error(`Erro HTTP ${response.status}.`);
+                 });
+            }
+            return response.json(); 
+        }) 
+        .then(result => { 
+            console.log('LOG AJAX v5: Resposta JSON:', result);
+            if (result.status === 'success') {
+                console.log("LOG AJAX v5: Sucesso:", result.message || 'OK');
+                // Ações pós-sucesso (ex: fechar modal, recarregar eventos)
+                 var myModalEl = document.getElementById('main-modal');
+                 if (myModalEl) {
+                     var myModal = bootstrap.Modal.getInstance(myModalEl); 
+                     if (myModal) { 
+                         console.log("LOG AJAX v5: Fechando modal após sucesso.");
+                         myModal.hide();
+                     }
+                 }
+                 // Sempre recarrega eventos após CUD (Create, Update, Delete)
+                 if (window.weddingCalendarInstance) {
+                     console.log("LOG AJAX v5: Recarregando eventos após sucesso...");
+                     window.weddingCalendarInstance.refetchEvents();
+                 }
+
+            } else {
+                 throw new Error(result.message || JSON.stringify(result.errors) || 'Erro inesperado do servidor.');
+            }
+        }) 
+        .catch(error => { 
+            console.error('ERRO AJAX v5:', error);
+            alert(`Falha na operação: ${error.message}`); 
+            
+            // Tenta reverter a alteração visual se 'info' foi passado (drag/drop)
+            if (info && typeof info.revert === 'function') {
+                console.log("LOG AJAX v5: Revertendo alteração visual devido a erro.");
+                info.revert(); 
+            } else if (window.weddingCalendarInstance) {
+                 // Se foi erro no modal, apenas recarrega para garantir consistência
+                 console.warn("LOG AJAX v5: Erro no modal, recarregando eventos.");
+                 window.weddingCalendarInstance.refetchEvents(); 
+            }
+        }); 
+    } // Fim da função sendCalendarUpdate
+
+    console.log("LOG v5: Fim da execução do script.");
+
+</script>
+<!-- ====================================================================== -->
+<!--                 FIM DO BLOCO DE SCRIPT JAVASCRIPT                      -->
+<!-- ====================================================================== -->
+
+
+<!-- 
+  ======================================================================
+                 INÍCIO DO BLOCO DE ESTILOS CSS (CORES AJUSTADAS)
+  ======================================================================
+-->
+<style>
+    /* Estilo para o dia atual no calendário */
+    .fc-daygrid-day.fc-day-today { 
+        background-color: rgba(220, 240, 255, 0.5) !important; /* Um azul muito claro */
     }
 
-    // 1. Encontra o container
-    var calendarEl = document.getElementById('calendar');
+    /* --- Estilos para os DIAS DE CASAMENTO (Fundo) --- */
+    
+    /* Dia do casamento ATUAL (fundo amarelo) */
+    .fc-event-wedding-day.fc-event-current .fc-bg-event {
+        background-color: #ffc107 !important; /* Amarelo Bootstrap */
+        opacity: 0.7 !important;              
+        cursor: default !important;           /* Não permite clicar/arrastar */
+    }
+    /* Dia de OUTROS casamentos (fundo cinza escuro) */
+    .fc-event-wedding-day.fc-event-other .fc-bg-event {
+        background-color: #6c757d !important; /* Cinza Bootstrap */
+        opacity: 0.5 !important;              
+         cursor: default !important;          /* Não permite clicar/arrastar */
+    }
 
-    // 2. Pega os dados JSON que a view (Passo 3) enviou
-    //    Usamos |safe para garantir que o JSON seja lido corretamente
-    var eventsData = {{ calendar_events_json|safe }};
+    /* --- Estilos para os EVENTOS NORMAIS (Caixas coloridas) --- */
 
-    // 3. Cria a instância do FullCalendar
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        // --- Configurações ---
-        locale: 'pt-br',
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-        },
+    /* Eventos do casamento ATUAL (roxo escuro, texto branco) */
+    .fc-daygrid-event.fc-event-current,                  
+    .fc-timegrid-event.fc-event-current .fc-event-main,  
+    .fc-list-event.fc-event-current                     
+    {
+        /* Cor principal roxa escura (ajuste se necessário) */
+        background-color: #4a00e0 !important; 
+        border-color: #311b92 !important;     /* Borda um pouco mais escura */
+        color: white !important;              /* Texto branco para contraste */
+        padding: 2px 4px;                     /* Pequeno espaçamento interno */
+        font-size: 0.85em;                    /* Tamanho da fonte ligeiramente menor */
+    }
+    /* Efeito hover para eventos atuais */
+    .fc-daygrid-event.fc-event-current:hover,
+    .fc-timegrid-event.fc-event-current:hover,
+    .fc-list-event.fc-event-current:hover 
+    {
+         background-color: #311b92 !important; /* Roxo mais escuro no hover */
+         cursor: pointer;                      
+    }
 
-        // --- Eventos ---
-        events: eventsData, // Carrega os eventos do casamento!
-        
-        // --- Interatividade (para CRUD futuro) ---
-        selectable: true,  // Permite clicar em dias
-        editable: true,    // Permite arrastar eventos
-        
-        // Chamado ao clicar em um dia vazio
-        dateClick: function(info) {
-            // AÇÃO FUTURA: Abrir o modal #main-modal para criar um evento
-            // Você usará HTMX para carregar um formulário de criação no modal
-            console.log('Clicou no dia: ' + info.dateStr);
-            // Ex: htmx.ajax('GET', '/scheduler/create/{{wedding.id}}/', '#modal-container');
-        },
-        
-        // Chamado ao clicar em um evento existente
-        eventClick: function(info) {
-            // AÇÃO FUTURA: Abrir o modal #main-modal para editar/excluir
-            // info.event.id é o ID do seu modelo Schedule
-            console.log('Clicou no evento: ' + info.event.title + ' (ID: ' + info.event.id + ')');
-            // Ex: htmx.ajax('GET', '/scheduler/update/' + info.event.id + '/', '#modal-container');
-        },
-        
-        // Chamado ao arrastar e soltar um evento
-        eventDrop: function(info) {
-            // AÇÃO FUTURA: Salvar a nova data no banco via HTMX/AJAX
-            console.log(info.event.title + " movido para " + info.event.start.toISOString());
-            // Ex: htmx.ajax('POST', '/scheduler/move/' + info.event.id + '/', { body: ... });
-        }
-    });
+    /* Eventos de OUTROS casamentos (cinza médio, texto escuro) */
+    .fc-daygrid-event.fc-event-other,                  
+    .fc-timegrid-event.fc-event-other .fc-event-main,  
+    .fc-list-event.fc-event-other                     
+    {
+        background-color: #adb5bd !important; /* Cinza médio Bootstrap */
+        border-color: #87919a !important;     /* Borda cinza um pouco mais escura */
+        color: #212529 !important;            /* Texto escuro para boa legibilidade */
+        padding: 2px 4px;
+        font-size: 0.85em;
+    }
+     /* Efeito hover para outros eventos */
+     .fc-daygrid-event.fc-event-other:hover,
+     .fc-timegrid-event.fc-event-other:hover,
+     .fc-list-event.fc-event-other:hover
+     {
+         background-color: #87919a !important; /* Cinza mais escuro no hover */
+         cursor: pointer;
+     }
 
-    // 4. Desenha o calendário na tela
-    calendar.render();
+     /* --- Ajustes Gerais de Estilo --- */
 
-    // 5. Salva a instância globalmente para poder destruí-la (ver início do script)
-    window.weddingCalendarInstance = calendar;
-</script>
+     /* Garante que o texto do evento não quebre linha e use '...' */
+     .fc-daygrid-event {
+         white-space: nowrap;          
+         overflow: hidden;             
+         text-overflow: ellipsis;      
+     }
+
+     /* Garante uma altura mínima para o calendário não colapsar se vazio */
+     #calendar {
+         min-height: 400px; 
+     }
+
+</style>

@@ -81,16 +81,17 @@ ROOT_URLCONF = "wedding_management.urls"
 
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [
-            BASE_DIR / "templates",
-        ],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # CERTIFIQUE-SE QUE ESTAS 4 LINHAS EXISTEM:
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request', # Necessário para o Admin
+                'django.contrib.auth.context_processors.auth', # Necessário para o Admin
+                'django.contrib.messages.context_processors.messages', # Necessário para o Admin
+                # Pode ter outros aqui
             ],
         },
     },

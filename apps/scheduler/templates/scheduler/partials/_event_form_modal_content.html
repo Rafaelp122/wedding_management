@@ -1,0 +1,117 @@
+<div class="modal-header">
+    <h5 class="modal-title">{% if event %}Editar Evento{% else %}Novo Evento{% endif %}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    {% comment %} 
+        O atributo hx-post aponta para a URL que a view 'manage_event' está a escutar.
+        hx-target="#calendar-container" (ou similar) - Onde a resposta de sucesso deve ir (atualizar calendário?)
+        hx-swap="outerHTML" - Como a resposta deve ser inserida.
+        *** PRECISAMOS AJUSTAR hx-target e hx-swap dependendo do fluxo desejado ***
+        Para agora, vamos focar em submeter para a view correta. A view retornará JSON.
+    {% endcomment %}
+    <form id="event-modal-form" action="{{ action_url }}" method="POST"> 
+        {% csrf_token %}
+        <input type="hidden" name="action" value="modal_save">
+        {% if event %}
+            <input type="hidden" name="event_id" value="{{ event.id }}">
+        {% endif %}
+        
+        {% comment %} Renderiza os campos do formulário (EventForm) usando um loop ou manualmente se precisar de mais controlo {% endcomment %}
+        {% for field in form %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }} 
+                {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <p class="text-muted small">Associado ao Casamento: {{ wedding }}</p>
+
+    </form>
+</div>
+<div class="modal-footer">
+    {% if event %}
+        {% comment %} 
+            Botão Excluir: Usa JavaScript para chamar sendCalendarUpdate 
+            porque precisamos confirmar e depois enviar JSON.
+        {% endcomment %}
+        <button type="button" class="btn btn-danger me-auto" id="delete-event-btn">
+            Excluir
+        </button>
+    {% endif %}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-primary" form="event-modal-form">Salvar Evento</button>
+</div>
+
+{% comment %} 
+    ======================================================================
+                 INÍCIO DO SCRIPT ESPECÍFICO DO MODAL
+    ======================================================================
+{% endcomment %}
+<script>
+    console.log("LOG MODAL: Conteúdo do modal carregado para evento {% if event %}ID {{ event.id }}{% else %}novo{% endif %}.");
+
+    // Seleciona o formulário DEPOIS de ser inserido no DOM
+    const eventModalForm = document.getElementById('event-modal-form');
+    
+    // Adiciona o listener para o SUBMIT do formulário
+    if (eventModalForm) {
+        eventModalForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Impede o envio HTML tradicional
+            console.log("LOG MODAL: Formulário submetido.");
+            
+            const formData = new FormData(this);
+            const dataToSend = {
+                action: 'modal_save', // Ação que a view 'manage_event' espera
+                event_id: formData.get('event_id') || null,
+                // Envia os dados do formulário como um objeto aninhado
+                form_data: {
+                    title: formData.get('title'),
+                    location: formData.get('location'),
+                    description: formData.get('description'),
+                    event_type: formData.get('event_type'),
+                    start_date: formData.get('start_date'),
+                    start_time_input: formData.get('start_time_input'),
+                    end_date: formData.get('end_date'),
+                    end_time_input: formData.get('end_time_input')
+                }
+            };
+
+            // Usa a função AJAX global definida no scheduler_partial.html
+            console.log("LOG MODAL: Chamando sendCalendarUpdate para salvar...");
+            sendCalendarUpdate(dataToSend); 
+        });
+    } else {
+        console.error("ERRO MODAL: Formulário #event-modal-form não encontrado após carregamento HTMX.");
+    }
+
+    // Adiciona o listener para o botão EXCLUIR (se existir)
+    const deleteButton = document.getElementById('delete-event-btn');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("LOG MODAL: Botão Excluir clicado.");
+            if (confirm('Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.')) {
+                console.log("LOG MODAL: Confirmação de exclusão recebida.");
+                const dataToSend = {
+                    action: 'delete', // Ação que a view 'manage_event' espera
+                    event_id: '{{ event.id }}' // ID do evento renderizado pelo Django
+                };
+                // Usa a função AJAX global definida no scheduler_partial.html
+                console.log("LOG MODAL: Chamando sendCalendarUpdate para excluir...");
+                sendCalendarUpdate(dataToSend);
+            } else {
+                console.log("LOG MODAL: Exclusão cancelada.");
+            }
+        });
+    } else {
+         console.log("LOG MODAL: Botão Excluir não presente (provavelmente é um formulário de criação).");
+    }
+
+</script>

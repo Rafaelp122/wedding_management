@@ -1,39 +1,61 @@
-# Em scheduler/models.py
-# (Ou no models.py do seu app principal, se preferir)
+# -------------------------------------------------------------------
+# MENSAGEM IMPORTANTE:
+# Este ficheiro define o modelo 'Event'.
+# Este era o ficheiro que estava a causar o erro 'ImportError',
+# porque o 'views.py' tentava importar 'Event' mas ele não existia aqui.
+# Agora, nós estamos a criá-lo.
+# -------------------------------------------------------------------
 
 from django.db import models
-from django.conf import settings
-from apps.weddings.models import Wedding # Ajuste este import para onde seu modelo Wedding está
+from apps.weddings.models import Wedding
+from apps.users.models import User
 
-class Schedule(models.Model):
+# Estes são os tipos de eventos que o seu formulário original (EventForm)
+# parecia estar a usar.
+EVENT_TYPE_CHOICES = (
+    ('reuniao', 'Reunião'),
+    ('pagamento', 'Pagamento'),
+    ('visita', 'Visita Técnica'),
+    ('degustacao', 'Degustação'),
+    ('outro', 'Outro'),
+)
+
+class Event(models.Model):
     """
-    Armazena um evento, tarefa ou prazo no calendário
-    de um casamento específico.
+    Este é o modelo de Evento/Compromisso para o calendário.
     """
-    # O VÍNCULO MAIS IMPORTANTE:
+    
+    # Relação com o Casamento (opcional, um evento pode ser geral)
     wedding = models.ForeignKey(
         Wedding, 
         on_delete=models.CASCADE, 
-        related_name="schedule_events", # Facilita buscas: wedding.schedule_events.all()
-        verbose_name="Casamento"
-    )
-    
-    title = models.CharField("Título do Evento", max_length=255)
-    description = models.TextField("Descrição", blank=True, null=True)
-    start_datetime = models.DateTimeField("Início do Evento")
-    end_datetime = models.DateTimeField("Fim do Evento")
-
-    planner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, # Ou seu modelo 'Planner'
-        on_delete=models.SET_NULL, 
-        null=True, 
+        related_name="events",
+        null=True,  # Permite eventos que não são de um casamento específico
         blank=True
     )
-
-    class Meta:
-        verbose_name = "Evento da Agenda"
-        verbose_name_plural = "Eventos da Agenda"
-        ordering = ['start_datetime'] # Ordena eventos por data de início
+    
+    # Relação com o Planner (para sabermos quem é o dono)
+    planner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="events"
+    )
+    
+    # Campos do seu formulário original
+    title = models.CharField(max_length=255, verbose_name="Título")
+    location = models.CharField(max_length=255, null=True, blank=True, verbose_name="Local")
+    description = models.TextField(null=True, blank=True, verbose_name="Descrição")
+    event_type = models.CharField(
+        max_length=50, 
+        choices=EVENT_TYPE_CHOICES, 
+        default='outro',
+        verbose_name="Tipo de Evento"
+    )
+    
+    # Campos de data/hora
+    start_time = models.DateTimeField(verbose_name="Início do Evento")
+    end_time = models.DateTimeField(verbose_name="Fim do Evento", null=True, blank=True)
 
     def __str__(self):
         return self.title
+

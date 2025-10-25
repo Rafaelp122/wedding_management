@@ -1,0 +1,55 @@
+<!-- 
+  ARQUIVO: apps/scheduler/templates/scheduler/schedule_confirm_delete.html
+  Template para a ScheduleDeleteView
+  
+  *** NOTA DE DEBUG: Este template usa a variável 'schedule' 
+  (definida no context_object_name) para mostrar o título. ***
+-->
+
+{% extends 'base_apps.html' %}
+{% load static %}
+
+{% block title %}Confirmar Exclusão{% endblock title %}
+
+{% block content %}
+<div class="container-fluid p-4">
+  
+  <!-- Card Principal -->
+  <div class="card shadow-sm border-0 rounded-lg">
+    <div class="card-body p-4 p-md-5">
+
+      <h2 class="h4 fw-bold text-dark mb-3">Excluir Evento</h2>
+      
+      <!-- Usamos 'schedule' (definido no context_object_name da view) -->
+      <p class="text-muted mb-4 fs-5">
+        Tem certeza que deseja excluir o evento: <strong>"{{ schedule.title }}"</strong>?
+      </p>
+      
+      <p class="text-danger fw-bold">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Esta ação não pode ser desfeita.
+      </p>
+
+      <!-- Formulário de Exclusão -->
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="d-flex gap-2 mt-4">
+          <!-- Botão de Excluir -->
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash-alt me-2"></i>
+            Confirmar Exclusão
+          </button>
+          
+          <!-- Botão de Cancelar -->
+          <a href="{% url 'scheduler:list' %}" class="btn btn-secondary">
+            Cancelar
+          </a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
