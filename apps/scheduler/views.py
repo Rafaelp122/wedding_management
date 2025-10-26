@@ -1,174 +1,202 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect 
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.http import JsonResponse, HttpResponseBadRequest
-# from django.views.decorators.http import require_POST # Não usado em manage_event
-from django.utils import timezone
-from django.core.serializers import serialize
+from django.http import JsonResponse, HttpResponseBadRequest, Http404 
+from django.views.decorators.http import require_POST 
+from django.utils import timezone 
+# from django.core.serializers import serialize # Não necessário
 import json
-from datetime import datetime
-from django.core.exceptions import PermissionDenied # Importado para o Mixin
+from datetime import datetime 
+from django.contrib.auth.decorators import login_required 
 
 # Importações dos modelos e formulários corretos (usando Event)
 from .models import Event
-from apps.weddings.models import Wedding # Importa Wedding
-from .forms import EventForm, EventCrudForm # Importa AMBOS os formulários
+from apps.weddings.models import Wedding 
+from .forms import EventForm, EventCrudForm 
 
-# Mixin para garantir que o planner só veja/edite seus próprios eventos
+# --- MIXINS E VIEWS DE CRUD (mantidas como na versão anterior) ---
+# ... (EventPlannerOwnerMixin, EventListView, EventCreateView, EventUpdateView, EventDeleteView) ...
+# (O código destas classes permanece o mesmo da versão anterior com logs)
+
 class EventPlannerOwnerMixin(LoginRequiredMixin):
-    """ Garante que o usuário logado (planner) só acesse seus próprios eventos. """
-    model = Event # Define o modelo padrão para este Mixin
+    model = Event 
 
     def get_queryset(self):
-        # Filtra a queryset para retornar apenas eventos do planner logado.
-        # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-        return super().get_queryset().filter(planner=self.request.user)
+        print(f"DEBUG EventPlannerOwnerMixin: Filtrando queryset para planner ID: {self.request.user.id}") 
+        qs = super().get_queryset().filter(planner=self.request.user)
+        print(f"DEBUG EventPlannerOwnerMixin: Queryset filtrada encontrada: {qs.count()} eventos.") 
+        return qs
 
     def get_object(self, queryset=None):
-        # Garante que o objeto a ser editado/apagado pertence ao planner logado.
         obj = super().get_object(queryset=queryset)
-        # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
         if obj.planner != self.request.user:
+            from django.core.exceptions import PermissionDenied
+            print(f"DEBUG EventPlannerOwnerMixin: Acesso NEGADO evento ID {obj.id} user ID {self.request.user.id}. Dono: {obj.planner.id}") 
             raise PermissionDenied("Você não tem permissão para acessar este evento.")
+        print(f"DEBUG EventPlannerOwnerMixin: Acesso PERMITIDO evento ID {obj.id} user ID {self.request.user.id}") 
         return obj
 
-# ======================================================================
-#                     VIEWS PARA O CRUD TRADICIONAL
-# ======================================================================
-
-class EventListView(LoginRequiredMixin, ListView): # Removido Mixin duplicado, LoginRequiredMixin já basta aqui
+class EventListView(LoginRequiredMixin, ListView):
     model = Event
-    template_name = 'scheduler/schedule_list.html'
-    context_object_name = 'events'
+    template_name = 'scheduler/schedule_list.html' 
+    context_object_name = 'events' 
 
     def get_queryset(self):
-        # Lista apenas os eventos do planner logado, ordenados por data/hora
-        # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-        return Event.objects.filter(planner=self.request.user).order_by('start_time')
+        print(f"DEBUG EventListView: Buscando eventos para planner ID: {self.request.user.id}") 
+        qs = Event.objects.filter(planner=self.request.user).order_by('start_time')
+        print(f"DEBUG EventListView: Encontrados {qs.count()} eventos.") 
+        return qs
 
 class EventCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Event
-    form_class = EventCrudForm
-    template_name = 'scheduler/schedule_form.html'
-    success_url = reverse_lazy('scheduler:list')
+    form_class = EventCrudForm 
+    template_name = 'scheduler/schedule_form.html' 
+    success_url = reverse_lazy('scheduler:list') 
     success_message = "Evento '%(title)s' criado com sucesso!"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
+        print("DEBUG EventCreateView: Enviando user para form kwargs.") 
         return kwargs
 
     def form_valid(self, form):
-        # Define o planner do evento como o usuário logado ANTES de salvar
-        # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
         form.instance.planner = self.request.user
+        print(f"DEBUG EventCreateView: Definindo planner {self.request.user.id} para novo evento.") 
         return super().form_valid(form)
 
 class EventUpdateView(EventPlannerOwnerMixin, SuccessMessageMixin, UpdateView):
-    form_class = EventCrudForm
-    template_name = 'scheduler/schedule_form.html'
-    success_url = reverse_lazy('scheduler:list')
+    form_class = EventCrudForm 
+    template_name = 'scheduler/schedule_form.html' 
+    success_url = reverse_lazy('scheduler:list') 
     success_message = "Evento '%(title)s' atualizado com sucesso!"
-    pk_url_kwarg = 'event_id'
+    pk_url_kwarg = 'event_id' 
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
+        print("DEBUG EventUpdateView: Enviando user para form kwargs.") 
         return kwargs
 
-    # Não precisa de form_valid aqui, o UpdateView já salva a instância
-
 class EventDeleteView(EventPlannerOwnerMixin, SuccessMessageMixin, DeleteView):
-    template_name = 'scheduler/schedule_confirm_delete.html'
-    success_url = reverse_lazy('scheduler:list')
-    # success_message já não é mais necessário aqui, vamos usar form_valid
-    pk_url_kwarg = 'event_id'
+    template_name = 'scheduler/schedule_confirm_delete.html' 
+    success_url = reverse_lazy('scheduler:list') 
+    pk_url_kwarg = 'event_id' 
 
     def get_object(self, queryset=None):
          obj = super().get_object(queryset=queryset)
-         self.object_title = obj.title
+         self.object_title = obj.title 
+         print(f"DEBUG EventDeleteView: Preparando exclusão ID {obj.id} ('{self.object_title}')") 
          return obj
 
     def form_valid(self, form):
-        # Usamos form_valid para definir a mensagem ANTES da exclusão ocorrer
-        from django.contrib import messages # Importa messages aqui
-        messages.success(self.request, f"Evento '{self.object_title}' excluído com sucesso!")
-        return super().form_valid(form)
-
+        self.success_message = f"Evento '{self.object_title}' excluído com sucesso!"
+        print(f"DEBUG EventDeleteView: Evento '{self.object_title}' excluído.") 
+        response = super().form_valid(form)
+        return response
 
 # ======================================================================
 #             VIEWS PARA O CALENDÁRIO INTERATIVO (FullCalendar)
 # ======================================================================
 
+@login_required 
 def partial_scheduler(request, wedding_id):
     """
-    Renderiza o HTML parcial do calendário e fornece os dados JSON iniciais.
-    Agora busca TODOS os eventos e casamentos do planner.
+    Renderiza APENAS o HTML parcial do calendário. 
+    Os dados JSON serão buscados pelo FullCalendar via 'event_api'.
     """
     planner = request.user
-    current_wedding = get_object_or_404(Wedding, pk=wedding_id, planner=planner)
-    
+    try:
+        current_wedding = get_object_or_404(Wedding, pk=wedding_id, planner=planner)
+        print(f"DEBUG partial_scheduler: Carregando parcial para Wedding ID: {current_wedding.id}") 
+        context = {'wedding': current_wedding}
+    except Http404:
+         print(f"ERRO DEBUG partial_scheduler: Casamento ID {wedding_id} não encontrado para planner {planner.id}") 
+         return HttpResponseBadRequest("Casamento não encontrado ou não pertence a si.")
+
+    return render(request, 'scheduler/partials/scheduler_partial.html', context)
+
+# ======================================================================
+#                    API DE EVENTOS (JSON) - AJUSTES VISUAIS
+# ======================================================================
+@login_required
+def event_api(request, wedding_id):
+    """
+    Retorna os eventos e dias de casamento do planner em formato JSON 
+    para ser consumido pelo FullCalendar. 
+    AJUSTADO: Título e cor dos dias de casamento.
+    """
+    planner = request.user
+    print(f"\n--- DEBUG event_api para Wedding ID: {wedding_id}, Planner ID: {planner.id} ---") 
+
+    try:
+        current_wedding = get_object_or_404(Wedding, pk=wedding_id, planner=planner)
+        print(f"DEBUG event_api: Casamento atual ({current_wedding.id}) validado.") 
+    except Http404:
+        print(f"ERRO DEBUG event_api: Casamento ID {wedding_id} inválido/não pertence ao planner {planner.id}.") 
+        return JsonResponse({'error': 'Casamento inválido ou não autorizado.'}, status=403)
+
     # Busca todos os eventos e casamentos do planner
-    # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-    all_events = Event.objects.filter(planner=planner)
+    all_events = Event.objects.filter(planner=planner) 
     all_weddings = Wedding.objects.filter(planner=planner)
 
-    calendar_events = []
+    print(f"DEBUG event_api [DB]: Encontrados {all_events.count()} eventos e {all_weddings.count()} casamentos.") 
+
+    calendar_events = [] # Lista para os dados formatados
 
     # Adiciona os dias de casamento
     for w in all_weddings:
         is_current = (w.id == current_wedding.id)
+        # *** ALTERAÇÃO 1: Título do evento de casamento ***
+        wedding_title = f"{w.groom_name} & {w.bride_name}" if w.groom_name and w.bride_name else (w.client.name if w.client else 'Casamento')
         calendar_events.append({
-            'title': f"Dia Casamento: {w.groom_name} & {w.bride_name}" if w.groom_name and w.bride_name else f"Dia Casamento: {w.client.name}",
-            'start': w.date.isoformat(),
+            'title': wedding_title, # Título sem o prefixo "Dia Casamento:"
+            'start': w.date.isoformat(), 
             'allDay': True,
-            'display': 'background',
-            'color': '#ffc107' if is_current else '#6c757d',
-            'extendedProps': {
-                'isWeddingDay': True,
-                'isCurrentWedding': is_current
+            'display': 'background', 
+            # *** ALTERAÇÃO 2: Cor de fundo amarela para TODOS os casamentos ***
+            'color': '#ffc107', # Amarelo Bootstrap para todos
+            'extendedProps': { 
+                'isWeddingDay': True, 
+                'isCurrentWedding': is_current # Mantém a distinção para possível estilo CSS (ex: opacidade)
             }
         })
 
-    # Adiciona os eventos normais
+    # Adiciona os eventos normais (sem alterações aqui)
     for event in all_events:
-        is_current_w_event = (event.wedding_id == current_wedding.id)
+        is_current_w_event = (event.wedding_id == current_wedding.id) 
         calendar_events.append({
-            'id': event.id,
-            'title': event.title,
+            'id': event.id, 'title': event.title,
             'start': timezone.localtime(event.start_time).isoformat() if event.start_time else None, 
             'end': timezone.localtime(event.end_time).isoformat() if event.end_time else None,
-            'allDay': False,
-            'color': '#0d6efd' if is_current_w_event else '#adb5bd',
+            'allDay': False, 
             'extendedProps': {
-                'isWeddingDay': False,
-                'isCurrentWedding': is_current_w_event,
-                'description': event.description,
-                'location': event.location,
-                'type': event.event_type
+                'isWeddingDay': False, 'isCurrentWedding': is_current_w_event, 
+                'description': event.description or '', 'location': event.location or '',     
+                'type': event.event_type or ''         
             }
         })
 
-    calendar_events_json = json.dumps(calendar_events)
-    
-    context = {
-        'wedding': current_wedding,
-        'calendar_events_json': calendar_events_json,
-    }
-    return render(request, 'scheduler/partials/scheduler_partial.html', context)
+    print(f"DEBUG event_api [JSON OK]: Retornando JSON com {len(calendar_events)} entradas.") 
+    print(f"--- DEBUG event_api FIM ---") 
+    return JsonResponse(calendar_events, safe=False) 
 
+# --- Função manage_event (mantida como na versão anterior) ---
+# ... (código da função manage_event permanece o mesmo) ...
 
 def manage_event(request, wedding_id):
     """
-    View ÚNICA para lidar com GET (buscar forms) e POST (salvar/atualizar/excluir).
+    View ÚNICA para GET (buscar forms) e POST (salvar/atualizar/excluir).
     """
     planner = request.user
     wedding = get_object_or_404(Wedding, pk=wedding_id, planner=planner)
+    print(f"\n--- DEBUG manage_event (Wedding: {wedding_id}, Planner: {planner.id}, Método: {request.method}) ---") 
 
     if request.method == 'GET':
         action = request.GET.get('action')
+        print(f"DEBUG manage_event [GET]: Ação={action}") 
         
         if action == 'get_create_form':
             clicked_date_str = request.GET.get('date')
@@ -176,135 +204,108 @@ def manage_event(request, wedding_id):
             if clicked_date_str:
                 try:
                     initial_data['start_date'] = datetime.strptime(clicked_date_str, '%Y-%m-%d').date()
+                    print(f"DEBUG manage_event [GET create]: Data inicial={initial_data['start_date']}") 
                 except ValueError:
-                    pass
+                    print(f"AVISO DEBUG manage_event [GET create]: Data recebida ('{clicked_date_str}') inválida.") 
+                    pass 
             form = EventForm(initial=initial_data) 
-            return render(request, 'scheduler/partials/_event_form_modal_content.html', {'form': form, 'wedding': wedding, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id})})
+            context = { 'form': form, 'wedding': wedding, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id}) }
+            print("DEBUG manage_event [GET create]: Renderizando form.") 
+            return render(request, 'scheduler/partials/_event_form_modal_content.html', context)
 
         elif action == 'get_edit_form':
             event_id = request.GET.get('event_id')
-            # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-            event = get_object_or_404(Event, pk=event_id, planner=planner)
+            print(f"DEBUG manage_event [GET edit]: Buscando ID={event_id}") 
+            event = get_object_or_404(Event, pk=event_id, planner=planner) 
+            print(f"DEBUG manage_event [GET edit]: Evento '{event.title}' encontrado.") 
             form = EventForm(instance=event) 
-            return render(request, 'scheduler/partials/_event_form_modal_content.html', {'form': form, 'wedding': wedding, 'event': event, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id})})
+            context = { 'form': form, 'wedding': wedding, 'event': event, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id}) }
+            print("DEBUG manage_event [GET edit]: Renderizando form.") 
+            return render(request, 'scheduler/partials/_event_form_modal_content.html', context)
             
         else:
+            print(f"ERRO DEBUG manage_event [GET]: Ação inválida: '{action}'") 
             return HttpResponseBadRequest("Ação GET inválida.")
 
     elif request.method == 'POST':
         try:
-            # Tenta ler como JSON primeiro (para AJAX do FullCalendar)
-            try:
-                data = json.loads(request.body)
-                is_json_request = True
-            except json.JSONDecodeError:
-                # Se não for JSON, tenta ler como dados de formulário (para HTMX do modal)
-                data = request.POST 
-                is_json_request = False
-
+            data = json.loads(request.body)
             action = data.get('action')
+            print(f"DEBUG manage_event [POST]: Ação={action}, Dados={data}") 
             
-            # Ação: Mover ou Redimensionar (JSON do FullCalendar)
-            if action == 'move_resize' and is_json_request:
+            if action == 'move_resize':
                 event_id = data.get('event_id')
                 start_time_iso = data.get('start_time')
                 end_time_iso = data.get('end_time')
-                
-                # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-                event = get_object_or_404(Event, pk=event_id, planner=planner)
-                
+                print(f"DEBUG manage_event [POST move_resize]: ID={event_id}, Start={start_time_iso}, End={end_time_iso}") 
+                event = get_object_or_404(Event, pk=event_id, planner=planner) 
                 try:
-                    event.start_time = datetime.fromisoformat(start_time_iso.replace('Z', '+00:00'))
-                    if end_time_iso:
-                        event.end_time = datetime.fromisoformat(end_time_iso.replace('Z', '+00:00'))
-                    else:
-                        event.end_time = None
+                    if start_time_iso: event.start_time = datetime.fromisoformat(start_time_iso.replace('Z', '+00:00'))
+                    else: raise ValueError("Start time não pode ser nulo.")
+                    if end_time_iso: event.end_time = datetime.fromisoformat(end_time_iso.replace('Z', '+00:00'))
+                    else: event.end_time = None 
                     event.save()
+                    print(f"DEBUG manage_event [POST move_resize OK]: Evento ID {event_id} atualizado.") 
                     return JsonResponse({'status': 'success', 'message': 'Evento atualizado.'})
                 except (ValueError, TypeError) as e:
-                     return JsonResponse({'status': 'error', 'message': f'Formato de data/hora inválido: {e}'}, status=400)
+                     print(f"ERRO DEBUG manage_event [POST move_resize FALHA]: Formato data/hora: {e}") 
+                     return JsonResponse({'status': 'error', 'message': f'Formato data/hora inválido: {e}'}, status=400)
 
-            # Ação: Salvar via Modal (POST do formulário HTMX ou JS do modal)
             elif action == 'modal_save':
                 event_id = data.get('event_id') 
-                
+                print(f"DEBUG manage_event [POST modal_save]: ID={event_id}") 
                 instance = None
-                if event_id:
-                     # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-                    instance = get_object_or_404(Event, pk=event_id, planner=planner)
-                
-                # Se for JSON, pega os dados do form_data
-                post_data = data.get('form_data') if is_json_request else data
-                form = EventForm(post_data, instance=instance)
-                
+                if event_id: instance = get_object_or_404(Event, pk=event_id, planner=planner) 
+                else: print("DEBUG manage_event [POST modal_save]: Criando novo.") 
+                post_data = data.get('form_data', {}) 
+                print(f"DEBUG manage_event [POST modal_save]: Dados form={post_data}") 
+                form = EventForm(post_data, instance=instance) 
                 if form.is_valid():
-                    event = form.save(commit=False)
-                     # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-                    event.planner = planner # Garante o planner
+                    print("DEBUG manage_event [POST modal_save]: Form VÁLIDO.") 
+                    event = form.save(commit=False) 
+                    event.planner = planner 
                     event.start_time = form.cleaned_data.get('start_time') 
                     event.end_time = form.cleaned_data.get('end_time')
-                    if not event.wedding: 
-                         event.wedding = wedding
-                    event.save()
-                    # Resposta para AJAX/Fetch
-                    if is_json_request or request.headers.get('HX-Request'): # Verifica se é HTMX
-                        return JsonResponse({'status': 'success', 'message': 'Evento salvo.'})
-                    else: # Resposta para envio normal (menos provável aqui)
-                        # Idealmente redirecionar ou retornar algo diferente
-                        return redirect(reverse_lazy('scheduler:list')) # Exemplo
+                    if not event.wedding: event.wedding = wedding 
+                    event.save() 
+                    print(f"DEBUG manage_event [POST modal_save OK]: Evento ID {event.id} salvo.") 
+                    return JsonResponse({'status': 'success', 'message': 'Evento salvo.'})
                 else:
-                    # Erro de validação
-                    if is_json_request or request.headers.get('HX-Request'):
-                        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-                    else:
-                        # Se fosse um form normal, renderizaria o form com erros
-                        # Mas aqui, vindo do modal, retornar erro JSON é melhor
-                         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+                    print(f"ERRO DEBUG manage_event [POST modal_save FALHA]: Form INVÁLIDO: {form.errors.as_json()}") 
+                    return JsonResponse({'status': 'error', 'errors': form.errors}, status=400) 
 
-
-            # Ação: Excluir via Modal (POST do formulário HTMX ou JS do modal)
             elif action == 'delete':
                  event_id = data.get('event_id')
+                 print(f"DEBUG manage_event [POST delete]: Tentando ID={event_id}") 
                  if not event_id:
-                     resp_kwargs = {'status': 400}
-                     if is_json_request or request.headers.get('HX-Request'):
-                         return JsonResponse({'status': 'error', 'message': 'ID do evento não fornecido.'}, **resp_kwargs)
-                     else:
-                         return HttpResponseBadRequest("ID do evento não fornecido.")
-
-                 # CORRIGIDO: Usa 'planner' em vez de 'event_planner'
-                 event = get_object_or_404(Event, pk=event_id, planner=planner)
-                 event_title = event.title # Guarda para mensagem
+                      print("ERRO DEBUG manage_event [POST delete]: ID não fornecido.") 
+                      return JsonResponse({'status': 'error', 'message': 'ID do evento não fornecido.'}, status=400)
+                 event = get_object_or_404(Event, pk=event_id, planner=planner) 
+                 event_title = event.title 
                  event.delete()
-                 
-                 if is_json_request or request.headers.get('HX-Request'):
-                     return JsonResponse({'status': 'success', 'message': f'Evento "{event_title}" excluído.'})
-                 else:
-                     # Redireciona se for um POST normal
-                      from django.contrib import messages
-                      messages.success(request, f'Evento "{event_title}" excluído.')
-                      return redirect(reverse_lazy('scheduler:list')) # Exemplo
+                 print(f"DEBUG manage_event [POST delete OK]: Evento ID {event_id} ('{event_title}') excluído.") 
+                 return JsonResponse({'status': 'success', 'message': 'Evento excluído.'})
 
             else:
-                 resp_kwargs = {'status': 400}
-                 if is_json_request or request.headers.get('HX-Request'):
-                     return JsonResponse({'status': 'error', 'message': 'Ação POST desconhecida.'}, **resp_kwargs)
-                 else:
-                    return HttpResponseBadRequest("Ação POST desconhecida.")
+                print(f"ERRO DEBUG manage_event [POST]: Ação desconhecida: '{action}'") 
+                return JsonResponse({'status': 'error', 'message': 'Ação POST desconhecida.'}, status=400)
 
         except json.JSONDecodeError:
-             # Este erro só acontece se não for POST normal e o JSON for inválido
-            return JsonResponse({'status': 'error', 'message': 'JSON inválido recebido.'}, status=400)
-        except Wedding.DoesNotExist:
-             return JsonResponse({'status': 'error', 'message': 'Casamento não encontrado ou não pertence a si.'}, status=404)
-        except Event.DoesNotExist:
-             return JsonResponse({'status': 'error', 'message': 'Evento não encontrado ou não pertence a si.'}, status=404)
-        except PermissionDenied as e: # Captura erro de permissão do Mixin/get_object
-             return JsonResponse({'status': 'error', 'message': str(e)}, status=403) # 403 Forbidden
+            print("ERRO DEBUG manage_event [POST]: JSON inválido.") 
+            return JsonResponse({'status': 'error', 'message': 'JSON inválido.'}, status=400)
+        except Http404 as e: 
+             object_type = "Casamento" if isinstance(e, Wedding.DoesNotExist) else "Evento"
+             # Tenta obter o ID que falhou a partir dos dados recebidos
+             failed_id = wedding_id if object_type == "Casamento" else data.get('event_id', 'desconhecido')
+             print(f"ERRO DEBUG manage_event [POST]: {object_type} ID {failed_id} não encontrado/não pertence ao planner.")
+             return JsonResponse({'status': 'error', 'message': f'{object_type} não encontrado ou não pertence a si.'}, status=404)
         except Exception as e:
-            import traceback
+            import traceback 
+            print("\n!!! ERRO INESPERADO manage_event (POST) !!!") 
             traceback.print_exc() 
-            return JsonResponse({'status': 'error', 'message': f'Erro interno no servidor: {e}'}, status=500)
+            print(f"!!! FIM ERRO INESPERADO !!!\n") 
+            return JsonResponse({'status': 'error', 'message': f'Erro interno: {type(e).__name__}'}, status=500)
             
     else:
-        return HttpResponseBadRequest("Método não permitido para esta URL.")
+        print(f"ERRO DEBUG manage_event: Método '{request.method}' não permitido.") 
+        return HttpResponseBadRequest(f"Método '{request.method}' não permitido.")
