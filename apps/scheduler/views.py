@@ -17,8 +17,6 @@ from apps.weddings.models import Wedding
 from .forms import EventForm, EventCrudForm 
 
 # --- MIXINS E VIEWS DE CRUD (mantidas como na versão anterior) ---
-# ... (EventPlannerOwnerMixin, EventListView, EventCreateView, EventUpdateView, EventDeleteView) ...
-# (O código destas classes permanece o mesmo da versão anterior com logs)
 
 class EventPlannerOwnerMixin(LoginRequiredMixin):
     model = Event 
@@ -41,7 +39,7 @@ class EventPlannerOwnerMixin(LoginRequiredMixin):
 class EventListView(LoginRequiredMixin, ListView):
     model = Event
     template_name = 'scheduler/schedule_list.html' 
-    context_object_name = 'events' 
+    context_object_name = 'events' # <-- O template deve usar 'events'
 
     def get_queryset(self):
         print(f"DEBUG EventListView: Buscando eventos para planner ID: {self.request.user.id}") 
@@ -55,6 +53,11 @@ class EventCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     template_name = 'scheduler/schedule_form.html' 
     success_url = reverse_lazy('scheduler:list') 
     success_message = "Evento '%(title)s' criado com sucesso!"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Criar Novo Evento'
+        return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -73,6 +76,11 @@ class EventUpdateView(EventPlannerOwnerMixin, SuccessMessageMixin, UpdateView):
     success_url = reverse_lazy('scheduler:list') 
     success_message = "Evento '%(title)s' atualizado com sucesso!"
     pk_url_kwarg = 'event_id' 
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Editar Evento'
+        return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -84,6 +92,7 @@ class EventDeleteView(EventPlannerOwnerMixin, SuccessMessageMixin, DeleteView):
     template_name = 'scheduler/schedule_confirm_delete.html' 
     success_url = reverse_lazy('scheduler:list') 
     pk_url_kwarg = 'event_id' 
+    context_object_name = 'event' # Nome padrão usado no template corrigido
 
     def get_object(self, queryset=None):
          obj = super().get_object(queryset=queryset)
@@ -119,14 +128,13 @@ def partial_scheduler(request, wedding_id):
     return render(request, 'scheduler/partials/scheduler_partial.html', context)
 
 # ======================================================================
-#                    API DE EVENTOS (JSON) - AJUSTES VISUAIS
+#                       API DE EVENTOS (JSON)
 # ======================================================================
 @login_required
 def event_api(request, wedding_id):
     """
     Retorna os eventos e dias de casamento do planner em formato JSON 
     para ser consumido pelo FullCalendar. 
-    AJUSTADO: Título e cor dos dias de casamento.
     """
     planner = request.user
     print(f"\n--- DEBUG event_api para Wedding ID: {wedding_id}, Planner ID: {planner.id} ---") 
@@ -149,22 +157,20 @@ def event_api(request, wedding_id):
     # Adiciona os dias de casamento
     for w in all_weddings:
         is_current = (w.id == current_wedding.id)
-        # *** ALTERAÇÃO 1: Título do evento de casamento ***
         wedding_title = f"{w.groom_name} & {w.bride_name}" if w.groom_name and w.bride_name else (w.client.name if w.client else 'Casamento')
         calendar_events.append({
-            'title': wedding_title, # Título sem o prefixo "Dia Casamento:"
+            'title': wedding_title, 
             'start': w.date.isoformat(), 
             'allDay': True,
             'display': 'background', 
-            # *** ALTERAÇÃO 2: Cor de fundo amarela para TODOS os casamentos ***
             'color': '#ffc107', # Amarelo Bootstrap para todos
             'extendedProps': { 
                 'isWeddingDay': True, 
-                'isCurrentWedding': is_current # Mantém a distinção para possível estilo CSS (ex: opacidade)
+                'isCurrentWedding': is_current
             }
         })
 
-    # Adiciona os eventos normais (sem alterações aqui)
+    # Adiciona os eventos normais
     for event in all_events:
         is_current_w_event = (event.wedding_id == current_wedding.id) 
         calendar_events.append({
@@ -175,7 +181,7 @@ def event_api(request, wedding_id):
             'extendedProps': {
                 'isWeddingDay': False, 'isCurrentWedding': is_current_w_event, 
                 'description': event.description or '', 'location': event.location or '',     
-                'type': event.event_type or ''         
+                'type': event.get_event_type_display() or '' # Usar get_..._display
             }
         })
 
@@ -183,9 +189,10 @@ def event_api(request, wedding_id):
     print(f"--- DEBUG event_api FIM ---") 
     return JsonResponse(calendar_events, safe=False) 
 
-# --- Função manage_event (mantida como na versão anterior) ---
-# ... (código da função manage_event permanece o mesmo) ...
-
+# ======================================================================
+#                       VIEW DE GESTÃO (GET/POST)
+# ======================================================================
+@login_required
 def manage_event(request, wedding_id):
     """
     View ÚNICA para GET (buscar forms) e POST (salvar/atualizar/excluir).
@@ -200,15 +207,17 @@ def manage_event(request, wedding_id):
         
         if action == 'get_create_form':
             clicked_date_str = request.GET.get('date')
-            initial_data = {}
+            initial_data_for_form = {}
             if clicked_date_str:
                 try:
-                    initial_data['start_date'] = datetime.strptime(clicked_date_str, '%Y-%m-%d').date()
-                    print(f"DEBUG manage_event [GET create]: Data inicial={initial_data['start_date']}") 
+                    # Passa a data para o 'clicked_date' do __init__ do EventForm
+                    initial_data_for_form['clicked_date'] = datetime.strptime(clicked_date_str, '%Y-%m-%d').date()
+                    print(f"DEBUG manage_event [GET create]: Data inicial (via clicked_date)={initial_data_for_form['clicked_date']}") 
                 except ValueError:
                     print(f"AVISO DEBUG manage_event [GET create]: Data recebida ('{clicked_date_str}') inválida.") 
                     pass 
-            form = EventForm(initial=initial_data) 
+            # Passa a data inicial para o construtor do formulário
+            form = EventForm(**initial_data_for_form) 
             context = { 'form': form, 'wedding': wedding, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id}) }
             print("DEBUG manage_event [GET create]: Renderizando form.") 
             return render(request, 'scheduler/partials/_event_form_modal_content.html', context)
@@ -218,6 +227,7 @@ def manage_event(request, wedding_id):
             print(f"DEBUG manage_event [GET edit]: Buscando ID={event_id}") 
             event = get_object_or_404(Event, pk=event_id, planner=planner) 
             print(f"DEBUG manage_event [GET edit]: Evento '{event.title}' encontrado.") 
+            # Passa a instância para o EventForm (o __init__ vai tratar)
             form = EventForm(instance=event) 
             context = { 'form': form, 'wedding': wedding, 'event': event, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id}) }
             print("DEBUG manage_event [GET edit]: Renderizando form.") 
@@ -264,8 +274,15 @@ def manage_event(request, wedding_id):
                     print("DEBUG manage_event [POST modal_save]: Form VÁLIDO.") 
                     event = form.save(commit=False) 
                     event.planner = planner 
+                    # Pega o 'start_time' combinado (data + hora) do clean() do formulário
                     event.start_time = form.cleaned_data.get('start_time') 
-                    event.end_time = form.cleaned_data.get('end_time')
+                    
+                    # -----------------------------------------------------------
+                    # --- ALTERAÇÃO APLICADA AQUI ---
+                    # Agora pegamos o 'end_time' do formulário novamente
+                    event.end_time = form.cleaned_data.get('end_time') 
+                    # -----------------------------------------------------------
+                    
                     if not event.wedding: event.wedding = wedding 
                     event.save() 
                     print(f"DEBUG manage_event [POST modal_save OK]: Evento ID {event.id} salvo.") 
@@ -294,11 +311,10 @@ def manage_event(request, wedding_id):
             print("ERRO DEBUG manage_event [POST]: JSON inválido.") 
             return JsonResponse({'status': 'error', 'message': 'JSON inválido.'}, status=400)
         except Http404 as e: 
-             object_type = "Casamento" if isinstance(e, Wedding.DoesNotExist) else "Evento"
-             # Tenta obter o ID que falhou a partir dos dados recebidos
+             object_type = "Casamento" if 'Wedding' in str(e) else "Evento"
              failed_id = wedding_id if object_type == "Casamento" else data.get('event_id', 'desconhecido')
              print(f"ERRO DEBUG manage_event [POST]: {object_type} ID {failed_id} não encontrado/não pertence ao planner.")
-             return JsonResponse({'status': 'error', 'message': f'{object_type} não encontrado ou não pertence a si.'}, status=404)
+             return JsonResponse({'status': 'error', 'message': f'{object_type} não encontrado ou não pertence a si.'}, status=4404)
         except Exception as e:
             import traceback 
             print("\n!!! ERRO INESPERADO manage_event (POST) !!!") 

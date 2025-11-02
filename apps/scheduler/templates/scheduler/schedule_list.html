@@ -1,13 +1,3 @@
-<!-- 
-  ARQUIVO: apps/scheduler/templates/scheduler/schedule_list.html
-  Template para a ScheduleListView (Lista do CRUD)
-  
-  *** NOTA DE DEBUG: Este é um novo template gerado para 
-  garantir que o conteúdo não seja ocultado. 
-  Ele usa a variável 'schedules' (plural) no loop
-  e 'schedule' (singular) para cada item. ***
--->
-
 {% extends 'base_apps.html' %}
 {% load static %}
 
@@ -16,54 +6,47 @@
 {% block content %}
 <div class="container-fluid p-4">
 
-  <!-- Cabeçalho e Botão de Adicionar -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="h4 fw-bold text-dark mb-0">{{ page_title }}</h2>
+    <h2 class="h4 fw-bold text-dark mb-0">Meus Eventos</h2>
     <a href="{% url 'scheduler:create' %}" class="btn btn-primary shadow-sm">
       <i class="fas fa-plus me-2"></i>
       Novo Evento
     </a>
   </div>
 
-  <!-- Card Principal -->
   <div class="card shadow-sm border-0 rounded-lg">
     <div class="card-body">
 
-      <!-- Usamos 'schedules' (definido no context_object_name da view) -->
-      {% if schedules %}
+      {% if events %}
         <div class="table-responsive">
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
                 <th scope="col">Título</th>
-                <th scope="col">Data e Hora</th>
+                <th scope="col">Data e Hora (Início)</th>
                 <th scope="col">Casamento Vinculado</th>
                 <th scope="col">Tipo</th>
                 <th scope="col" class="text-end">Ações</th>
               </tr>
             </thead>
             <tbody>
-              <!-- Loop sobre os eventos (agora 'schedule') -->
-              {% for schedule in schedules %}
+              {% for event in events %}
               <tr>
                 <td>
-                  <!-- O link de update usa schedule.pk -->
-                  <a href="{% url 'scheduler:update' pk=schedule.pk %}" class="text-dark fw-bold text-decoration-none">
-                    {{ schedule.title }}
+                  <a href="{% url 'scheduler:update' event_id=event.pk %}" class="text-dark fw-bold text-decoration-none">
+                    {{ event.title }}
                   </a>
                 </td>
-                <td>{{ schedule.datetime|date:"d/m/Y H:i" }}</td>
-                <td>{{ schedule.wedding|default:"N/A" }}</td>
+                <td>{{ event.start_time|date:"d/m/Y H:i" }}</td>
+                <td>{{ event.wedding|default:"N/A" }}</td>
                 <td>
-                  <span class="badge bg-light text-dark">{{ schedule.type|default:"N/A" }}</span>
+                  <span class="badge bg-light text-dark">{{ event.get_event_type_display|default:"N/A" }}</span>
                 </td>
                 <td class="text-end">
-                  <!-- Botão Editar -->
-                  <a href="{% url 'scheduler:update' pk=schedule.pk %}" class="btn btn-sm btn-outline-primary me-2" title="Editar">
+                  <a href="{% url 'scheduler:update' event_id=event.pk %}" class="btn btn-sm btn-outline-primary me-2" title="Editar">
                     <i class="fas fa-pencil-alt"></i>
                   </a>
-                  <!-- Botão Excluir -->
-                  <a href="{% url 'scheduler:delete' pk=schedule.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir">
+                  <a href="{% url 'scheduler:delete' event_id=event.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir">
                     <i class="fas fa-trash-alt"></i>
                   </a>
                 </td>
@@ -73,14 +56,11 @@
           </table>
         </div>
 
-        <!-- TODO: Adicionar Paginação aqui se necessário -->
-
       {% else %}
-        <!-- Mensagem de Lista Vazia -->
         <div class="text-center p-5">
           <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
           <h5 class="fw-bold">Nenhum evento encontrado.</h5>
-          <p class="text-muted">Comece adicionando seu primeiro evento no calendário.</p>
+          <p class="text-muted">Comece adicionando seu primeiro evento.</p>
           <a href="{% url 'scheduler:create' %}" class="btn btn-primary mt-3">
             Criar primeiro evento
           </a>
@@ -91,4 +71,3 @@
   </div>
 </div>
 {% endblock content %}
-

@@ -3,29 +3,59 @@
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <div class="modal-body">
-    {# O formulário agora NÃO usa hx-post. O envio será tratado pelo JavaScript abaixo #}
+    
     <form id="event-modal-form"> 
         {% csrf_token %}
-        {# Adiciona campos ocultos para ação e ID (se for edição) #}
         <input type="hidden" name="action" value="modal_save">
         {% if event %}
             <input type="hidden" name="event_id" value="{{ event.id }}">
         {% endif %}
         
-        <!-- Renderiza os campos do formulário (EventForm) -->
-        {# Iterar pelos campos para melhor controlo ou usar as_p/as_bootstrap #}
-        {% for field in form %}
-            <div class="mb-3">
-                {{ field.label_tag }}
-                {{ field }}
-                {% if field.help_text %}
-                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                {% endif %}
-                {% for error in field.errors %}
-                    <div class="invalid-feedback d-block">{{ error }}</div>
-                {% endfor %}
+        {{ form.event_date }}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger p-2 small">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
             </div>
-        {% endfor %}
+        {% endif %}
+
+        <div class="mb-3">
+            {{ form.title.label_tag }}
+            {{ form.title }}
+            {% for error in form.title.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.location.label_tag }}
+            {{ form.location }}
+            {% for error in form.location.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            {% for error in form.description.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.event_type.label_tag }}
+            {{ form.event_type }}
+            {% for error in form.event_type.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        
+        <div class="row g-2">
+            <div class="col-6 mb-3">
+                {{ form.start_time_input.label_tag }}
+                {{ form.start_time_input }}
+                {% for error in form.start_time_input.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            
+            <div class="col-6 mb-3">
+                {{ form.end_time_input.label_tag }}
+                {{ form.end_time_input }}
+                {% for error in form.end_time_input.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+        </div>
 
         <p class="text-muted small">Casamento associado: {{ wedding }}</p>
 
@@ -33,13 +63,11 @@
 </div>
 <div class="modal-footer">
     {% if event %}
-        {# Botão Excluir - A ação será tratada pelo JavaScript #}
         <button type="button" class="btn btn-danger me-auto" id="delete-event-button">
             Excluir
         </button>
     {% endif %}
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-    {# Botão Salvar - Aciona o submit do formulário que o JavaScript interceta #}
     <button type="submit" class="btn btn-primary" form="event-modal-form">Salvar</button> 
 </div>
 

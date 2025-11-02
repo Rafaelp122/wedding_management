@@ -1,53 +1,52 @@
-# -------------------------------------------------------------------
-# MENSAGEM IMPORTANTE:
-# Este ficheiro 'forms.py' foi totalmente corrigido.
-# 1. Ele agora importa 'Event' do 'models.py' que acabámos de criar.
-# 2. Ele contém o seu 'EventForm' original (para o modal).
-# 3. Ele contém o novo 'EventCrudForm' (para as páginas de CRUD).
-# 4. Ambos os formulários usam 'model = Event'.
-# -------------------------------------------------------------------
+# MENSAGEM: O EventForm (do modal) foi atualizado:
+# 1. O campo 'end_time_input' (Hora de Fim) foi re-adicionado (required=False).
+# 2. O campo 'event_date' permanece oculto (o label será removido no template).
 
 from django import forms
-from .models import Event  # <--- Importa o modelo Event que criámos
+from .models import Event
 from apps.weddings.models import Wedding
 from apps.core.utils.django_forms import add_placeholder
 from apps.core.utils.mixins import FormStylingMixin
+from django.utils import timezone
 
 # -------------------------------------------------
-# 1. O SEU FORMULÁRIO ORIGINAL (Para o Modal)
+# 1. O FORMULÁRIO DO MODAL (Com Hora de Fim)
 # -------------------------------------------------
 class EventForm(forms.ModelForm):
     """
-    Este é o seu formulário original, usado no modal interativo.
-    Ele usa campos separados de data/hora para facilitar o preenchimento.
+    Formulário do modal.
+    - 'event_date' é um campo oculto para guardar a data.
+    - 'start_time_input' e 'end_time_input' são visíveis.
     """
     
-    # Campos separados para data e hora (para o modal)
-    start_date = forms.DateField(
-        label='Data de Início', 
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    # Campo de data (continua oculto)
+    event_date = forms.DateField(
+        widget=forms.HiddenInput(),
+        required=True
     )
+
+    # Hora de início (obrigatório)
     start_time_input = forms.TimeField(
         label='Hora de Início',
-        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'})
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        required=True
     )
-    end_date = forms.DateField(
-        label='Data de Fim',
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
-    )
+    
+    # --- CAMPO ADICIONADO ---
+    # Hora de fim (opcional)
     end_time_input = forms.TimeField(
         label='Hora de Fim',
-        required=False,
-        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'})
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        required=False  # <--- Opcional
     )
 
     class Meta:
-        model = Event  # <--- CORRIGIDO
-        # Estes são os campos que o seu formulário tentava usar
+        model = Event
+        # --- CAMPOS MODIFICADOS ---
+        # Adicionamos 'end_time_input' de volta
         fields = [
             'title', 'location', 'description', 'event_type', 
-            'start_date', 'start_time_input', 'end_date', 'end_time_input'
+            'event_date', 'start_time_input', 'end_time_input' 
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Reunião com Decorador'}),
@@ -63,74 +62,70 @@ class EventForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        clicked_date = kwargs.pop('clicked_date', None)
+        clicked_date = kwargs.pop('clicked_date', None) 
+        instance = kwargs.get('instance')
+        
         super().__init__(*args, **kwargs)
         
-        if clicked_date:
-            self.fields['start_date'].initial = clicked_date
+        if instance:
+            # Se for EDITAR, preenche os campos com dados da instância
+            if instance.start_time:
+                local_start_time = timezone.localtime(instance.start_time)
+                self.fields['event_date'].initial = local_start_time.date()
+                self.fields['start_time_input'].initial = local_start_time.time()
             
+            # --- LÓGICA ADICIONADA ---
+            if instance.end_time:
+                local_end_time = timezone.localtime(instance.end_time)
+                self.fields['end_time_input'].initial = local_end_time.time()
+        
+        elif clicked_date:
+            # Se for CRIAR, preenche a data com o clique do calendário
+            self.fields['event_date'].initial = clicked_date
+            
+
     def clean(self):
         cleaned_data = super().clean()
-        start_date = cleaned_data.get('start_date')
+        event_date = cleaned_data.get('event_date')
         start_time_input = cleaned_data.get('start_time_input')
         
         # Combina data e hora no campo 'start_time' do modelo
-        if start_date and start_time_input:
-            cleaned_data['start_time'] = f'{start_date} {start_time_input}'
+        if event_date and start_time_input:
+            cleaned_data['start_time'] = f'{event_date} {start_time_input}'
         
-        end_date = cleaned_data.get('end_date')
+        # --- LÓGICA ADICIONADA ---
         end_time_input = cleaned_data.get('end_time_input')
         
         # Combina data e hora no campo 'end_time' do modelo
-        if end_date and end_time_input:
-            cleaned_data['end_time'] = f'{end_date} {end_time_input}'
-        elif end_date and not end_time_input:
-            cleaned_data['end_time'] = f'{end_date} 23:59:59'
-            
+        if event_date and end_time_input:
+            cleaned_data['end_time'] = f'{event_date} {end_time_input}'
+        
         return cleaned_data
 
 # -------------------------------------------------
-# 2. O NOVO FORMULÁRIO (Para o CRUD)
+# 2. O NOVO FORMULÁRIO (Para o CRUD) - Sem alterações
 # -------------------------------------------------
 class EventCrudForm(FormStylingMixin, forms.ModelForm):
-    """
-    Este é o novo formulário para as páginas de CRUD (Criar e Editar).
-    Ele usa os campos 'start_time' e 'end_time' diretamente.
-    """
-
+    # ... (Este formulário permanece exatamente igual ao anterior) ...
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None) 
         super().__init__(*args, **kwargs)
-        
-        # Filtra o dropdown 'wedding' para mostrar apenas os do planner logado
         if user:
             self.fields['wedding'].queryset = Wedding.objects.filter(planner=user)
         elif 'wedding' in self.fields:
              self.fields['wedding'].queryset = Wedding.objects.none()
-
-        # Adicionar placeholders
         add_placeholder(self.fields['title'], 'Ex: Reunião com fornecedor')
         add_placeholder(self.fields['description'], 'Ex: Discutir flores e decoração')
         add_placeholder(self.fields['event_type'], 'Selecione um tipo')
         add_placeholder(self.fields['wedding'], 'Selecione um casamento (opcional)')
-
     class Meta:
-        model = Event  # <--- CORRIGIDO
-        # Usamos os campos reais do modelo
+        model = Event
         fields = ['title', 'wedding', 'start_time', 'end_time', 'event_type', 'description', 'location']
-        
         widgets = {
-            'start_time': forms.DateTimeInput(
-                attrs={'type': 'datetime-local'},
-                format='%Y-%m-%dT%H:%M'
-            ),
-            'end_time': forms.DateTimeInput(
-                attrs={'type': 'datetime-local'},
-                format='%Y-%m-%dT%H:%M'
-            ),
+            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
             'description': forms.Textarea(attrs={'rows': 4}),
         }
-        
         labels = {
             'title': 'Título do Evento',
             'wedding': 'Casamento Vinculado',
@@ -140,4 +135,3 @@ class EventCrudForm(FormStylingMixin, forms.ModelForm):
             'description': 'Descrição',
             'location': 'Local',
         }
-
