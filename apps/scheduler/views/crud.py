@@ -10,6 +10,7 @@ from ..models import Event
 from ..forms import EventCrudForm
 from .mixins import EventPlannerOwnerMixin
 
+
 class EventListView(LoginRequiredMixin, ListView):
     model = Event
     template_name = 'scheduler/schedule_list.html' 
@@ -21,13 +22,14 @@ class EventListView(LoginRequiredMixin, ListView):
         print(f"DEBUG EventListView: Encontrados {qs.count()} eventos.") 
         return qs
 
+
 class EventCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Event
     form_class = EventCrudForm 
     template_name = 'scheduler/schedule_form.html' 
     success_url = reverse_lazy('scheduler:list') 
     success_message = "Evento '%(title)s' criado com sucesso!"
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Criar Novo Evento'
@@ -44,13 +46,14 @@ class EventCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         print(f"DEBUG EventCreateView: Definindo planner {self.request.user.id} para novo evento.") 
         return super().form_valid(form)
 
+
 class EventUpdateView(EventPlannerOwnerMixin, SuccessMessageMixin, UpdateView):
     form_class = EventCrudForm 
     template_name = 'scheduler/schedule_form.html' 
     success_url = reverse_lazy('scheduler:list') 
     success_message = "Evento '%(title)s' atualizado com sucesso!"
     pk_url_kwarg = 'event_id' 
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Editar Evento'
@@ -61,6 +64,7 @@ class EventUpdateView(EventPlannerOwnerMixin, SuccessMessageMixin, UpdateView):
         kwargs['user'] = self.request.user
         print("DEBUG EventUpdateView: Enviando user para form kwargs.") 
         return kwargs
+
 
 class EventDeleteView(EventPlannerOwnerMixin, SuccessMessageMixin, DeleteView):
     template_name = 'scheduler/schedule_confirm_delete.html' 

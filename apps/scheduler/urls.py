@@ -1,27 +1,30 @@
 from django.urls import path
-from . import views 
+from . import views
 
-app_name = 'scheduler' 
+app_name = 'scheduler'
 
 urlpatterns = [
     path('list/', views.EventListView.as_view(), name='list'),
     path('new/', views.EventCreateView.as_view(), name='new'),
-    path('edit/<int:event_id>/', views.EventUpdateView.as_view(), name='edit'), 
-    path('delete/<int:event_id>/', views.EventDeleteView.as_view(), name='delete'),
+    path('edit/<int:event_id>/', views.EventUpdateView.as_view(), name='edit'),
     path(
-        'partial/<int:wedding_id>/', 
-        views.partial_scheduler, 
-        name='partial_scheduler' 
+        'delete/<int:event_id>/',
+        views.EventDeleteView.as_view(),
+        name='delete'
     ),
     path(
-        'api/events/<int:wedding_id>/', 
-        views.event_api, 
-        name='event_api' 
+        'partial/<int:wedding_id>/',
+        views.partial_scheduler,
+        name='partial_scheduler'
     ),
     path(
-        'manage/<int:wedding_id>/', 
-        views.manage_event, 
-        name='manage_event' 
+        'api/events/<int:wedding_id>/',
+        views.event_api,
+        name='event_api'
+    ),
+    path(
+        'manage/<int:wedding_id>/',
+        views.manage_event,
+        name='manage_event'
     ),
 ]
-

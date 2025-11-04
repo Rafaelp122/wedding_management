@@ -1,0 +1,363 @@
+console.log("LOG v17 FINAL: Script scheduler_partial.html está a EXECUTAR!"); 
+
+// Lê o ID do casamento da tag json_script (necessário para URLs AJAX e API)
+let currentWeddingIdFromScript = null; 
+try {
+    const weddingIdElement = document.getElementById('wedding-id-data');
+    if (weddingIdElement && weddingIdElement.textContent) {
+            currentWeddingIdFromScript = JSON.parse(weddingIdElement.textContent); 
+            console.log("LOG v17: ID Casamento lido do DOM:", currentWeddingIdFromScript); 
+    } else {
+            console.warn("LOG v17: Elemento #wedding-id-data não encontrado ou vazio. ID Casamento será null.");
+    }
+} catch(e) {
+        console.error("ERRO v17: Falha ao ler/processar ID do casamento (#wedding-id-data).", "Erro:", e);
+}
+
+// Verifica se o ID é crucial e aborta se necessário
+if (currentWeddingIdFromScript === null) {
+    console.error("ERRO CRÍTICO v17: Não foi possível obter o ID do casamento atual. As interações AJAX e o carregamento de eventos falharão.");
+    const calendarEl = document.getElementById('calendar');
+    if(calendarEl) {
+            calendarEl.innerHTML = '<div class="alert alert-danger" role="alert">Erro crítico: Não foi possível identificar o casamento atual. O calendário não pode ser carregado.</div>';
+    }
+    // Interrompe a execução do script se o ID for essencial
+    throw new Error("ID do casamento não encontrado, interropendo script."); 
+}
+
+// --- Bloco de Segurança para evitar múltiplos calendários ---
+if (window.weddingCalendarInstance) {
+    console.log("LOG v17: Instância anterior encontrada. A destruir...");
+    try {
+        window.weddingCalendarInstance.destroy();
+        console.log("LOG v17: Instância anterior destruída.");
+    } catch (destroyError) {
+        console.error("LOG v17: Erro ao destruir instância anterior:", destroyError);
+    }
+    window.weddingCalendarInstance = null; 
+} else {
+    console.log("LOG v17: Nenhuma instância anterior encontrada.");
+}
+
+const htmxTargetSelector = '#calendar-tab-content'; // <-- VERIFIQUE ESTE SELETOR!
+const htmxTargetElement = document.querySelector(htmxTargetSelector); 
+
+if (!htmxTargetElement) {
+    console.error(`ERRO CRÍTICO v17: Não foi possível encontrar o elemento alvo do HTMX ('${htmxTargetSelector}'). Verifique o seletor.`);
+    console.warn("LOG v17: Tentando inicializar calendário com atraso como fallback...");
+    setTimeout(initializeFullCalendar, 50); 
+} else {
+    console.log("LOG v17: Elemento alvo do HTMX encontrado:", htmxTargetElement);
+    htmxTargetElement.addEventListener('htmx:afterSwap', function(event) {
+        console.log("LOG v17: Evento htmx:afterSwap DETETADO!");
+        
+        // --- VERIFICAÇÃO FullCalendar + Tippy ---
+        let attemptCount = 0; 
+        const maxAttempts = 30; 
+        function attemptInitialization() {
+            if (typeof FullCalendar !== 'undefined' && FullCalendar.Calendar && typeof tippy !== 'undefined') {
+                    console.log(`LOG v17: FullCalendar e Tippy estão DEFINIDOS (tentativa ${attemptCount + 1}). Chamando initializeFullCalendar().`);
+                    initializeFullCalendar(); 
+            } else {
+                    attemptCount++; 
+                    if (attemptCount < maxAttempts) {
+                        console.warn(`LOG v17: FullCalendar ou Tippy AINDA NÃO definidos (tentativa ${attemptCount}). Tentando novamente em 100ms...`);
+                        setTimeout(attemptInitialization, 100); 
+                    } else {
+                        console.error(`ERRO CRÍTICO v17: FullCalendar ou Tippy não definidos após ${maxAttempts} tentativas.`);
+                        const calendarEl = document.getElementById('calendar');
+                        if (calendarEl) {
+                            calendarEl.innerHTML = '<div class="alert alert-danger" role="alert">Erro: A biblioteca do calendário ou de tooltips não pôde ser carregada.</div>';
+                        }
+                    }
+            }
+        }
+        attemptInitialization(); 
+
+    }, { once: true }); 
+    console.log("LOG v17: Ouvinte para htmx:afterSwap adicionado.");
+
+    // Log de aviso
+    setTimeout(() => {
+            if (!window.weddingCalendarInstance) {
+                console.warn("LOG v17: AVISO - htmx:afterSwap não disparou ou libs externas não carregaram após 1s?");
+            }
+    }, 1000); 
+}
+
+function initializeFullCalendar() {
+    console.log("LOG v17: Função initializeFullCalendar() iniciada.");
+
+    const calendarEl = document.getElementById('calendar'); 
+    if (!calendarEl) {
+        console.error("ERRO CRÍTICO v17: Elemento #calendar NÃO ENCONTRADO!");
+        return; 
+    } else {
+        console.log("LOG v17: Elemento #calendar encontrado.");
+
+        const currentWeddingId = currentWeddingIdFromScript; 
+        if (currentWeddingId === null) {
+                console.error("ERRO CRÍTICO v17: ID casamento nulo DENTRO de initialize.");
+                calendarEl.innerHTML = '<div class="alert alert-warning" role="alert">ID Casamento não encontrado.</div>';
+                return; // Aborta
+        }
+        console.log("LOG v17: ID Casamento a usar:", currentWeddingId);
+
+        console.log("LOG v17: A inicializar instância do FullCalendar.");
+        try {
+            if (window.weddingCalendarInstance) {
+                console.warn("LOG v17: Instância ANTERIOR ainda existia? Destruindo DE NOVO.");
+                window.weddingCalendarInstance.destroy();
+                window.weddingCalendarInstance = null;
+            }
+
+            // Cria o calendário
+            const calendar = new FullCalendar.Calendar(calendarEl, { 
+                
+                locale: 'pt-br',             
+                initialView: 'dayGridMonth', 
+                headerToolbar: {             
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' 
+                }, 
+                
+                // Eventos agora vêm da URL da API Django
+                events: `/scheduler/api/events/${currentWeddingId}/`, 
+                
+                // Formata conteúdo (mostra hora)
+                eventContent: function(arg) { 
+                    if (arg.event.allDay || arg.event.extendedProps.isWeddingDay) {
+                            return { html: `<div class="fc-event-title fc-sticky">${arg.event.title}</div>` };
+                    }
+                    let startTime = arg.event.start ? arg.event.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+                    return { 
+                            html: `<div class="fc-event-main-frame"><span class="fc-event-time">${startTime}</span> <span class="fc-event-title fc-sticky">${arg.event.title}</span></div>` 
+                    };
+                },
+
+                // Adiciona classes CSS e Tooltips
+                eventDidMount: function(info) { 
+                    // Adiciona classes para cores
+                    if (info.event.extendedProps.isWeddingDay) {
+                        info.el.classList.add('fc-event-wedding-day'); 
+                        if (info.event.extendedProps.isCurrentWedding) {
+                            info.el.classList.add('fc-event-current');
+                        } else {
+                            info.el.classList.add('fc-event-other');
+                        }
+                    }
+                    else if (info.event.extendedProps.isCurrentWedding) { 
+                        info.el.classList.add('fc-event-current');
+                    } else {
+                        info.el.classList.add('fc-event-other');
+                    }
+
+                    // Adiciona Tooltip com Tippy.js (sem alteração)
+                    if (!info.event.extendedProps.isWeddingDay && typeof tippy !== 'undefined') {
+                        let tooltipContent = `
+                            <strong>${info.event.title}</strong><br>
+                            ${info.event.start ? info.event.start.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : ''}
+                            ${info.event.end ? ' - ' + info.event.end.toLocaleString('pt-BR', { timeStyle: 'short' }) : ''}
+                            ${info.event.extendedProps.type ? '<br>Tipo: ' + info.event.extendedProps.type : ''}
+                            ${info.event.extendedProps.location ? '<br>Local: ' + info.event.extendedProps.location : ''}
+                            ${info.event.extendedProps.description ? '<hr class="my-1"><small>' + info.event.extendedProps.description + '</small>' : ''}
+                        `;
+                        tippy(info.el, {
+                            content: tooltipContent,
+                            allowHTML: true, 
+                            theme: 'light-border', 
+                            placement: 'top', 
+                            interactive: false, 
+                        });
+                    }
+                }, 
+
+                // Clique num dia vazio (chama HTMX para form criação)
+                dateClick: function(info) { 
+                        console.log('LOG v17 - dateClick:', info.dateStr);
+                    const myModalEl = document.getElementById('main-modal'); 
+                    if (!myModalEl) { console.error("ERRO v17: Modal #main-modal não encontrado (dateClick)."); return; }
+                    const myModal = bootstrap.Modal.getOrCreateInstance(myModalEl); 
+                    
+                    if (currentWeddingId === null) {
+                            console.error("ERRO v17 - dateClick: currentWeddingId é nulo.");
+                            alert("Erro: Casamento atual não identificado.");
+                            return;
+                    }
+                    console.log("LOG v17 - dateClick: Chamando HTMX para criar...");
+                    htmx.ajax('GET', `/scheduler/manage/${currentWeddingId}/?action=get_create_form&date=${info.dateStr}`, {
+                        target: '#modal-container', swap: 'innerHTML'
+                    }).then(() => {
+                        console.log("LOG v17 - dateClick: HTMX terminou. Mostrando modal.");
+                        myModal.show(); 
+                    }).catch(error => {
+                        console.error("ERRO v17 - dateClick: Falha HTMX (create form):", error);
+                        alert("Erro ao abrir formulário de criação.");
+                    });
+                }, 
+
+                // Clique num evento (chama HTMX para form edição)
+                eventClick: function(info) { 
+                    if (info.event.extendedProps.isWeddingDay) {
+                        console.log("LOG v17 - eventClick: Ignorado (dia de casamento).");
+                        return; 
+                    }
+                    console.log('LOG v17 - eventClick:', info.event.id, info.event.title);
+                    const myModalEl = document.getElementById('main-modal'); 
+                    if (!myModalEl) { console.error("ERRO v17: Modal #main-modal não encontrado (eventClick)."); return; }
+                    const myModal = bootstrap.Modal.getOrCreateInstance(myModalEl); 
+
+                        if (currentWeddingId === null) {
+                            console.error("ERRO v17 - eventClick: currentWeddingId é nulo.");
+                            alert("Erro: Casamento atual não identificado.");
+                            return;
+                    }
+                        console.log("LOG v17 - eventClick: Chamando HTMX para editar...");
+                    htmx.ajax('GET', `/scheduler/manage/${currentWeddingId}/?action=get_edit_form&event_id=${info.event.id}`, {
+                        target: '#modal-container', swap: 'innerHTML'
+                    }).then(() => {
+                            console.log("LOG v17 - eventClick: HTMX terminou. Mostrando modal (ID:", info.event.id, ")");
+                            myModal.show(); 
+                    }).catch(error => {
+                        console.error("ERRO v17 - eventClick: Falha HTMX (edit form):", error);
+                        alert("Erro ao abrir formulário de edição.");
+                    });
+                }, 
+
+                editable: true, // Permite arrastar/redimensionar
+
+                // Arrastar e largar
+                eventDrop: function(info) { 
+                        if (info.event.extendedProps.isWeddingDay) { 
+                        console.warn("LOG v17 - eventDrop: Arrastar dia de casamento não permitido.");
+                        info.revert(); 
+                        return; 
+                        } 
+                    console.log('LOG v17 - eventDrop:', info.event.id, 'Novo início:', info.event.start);
+                    sendCalendarUpdate({
+                        action: 'move_resize', 
+                        event_id: info.event.id,
+                        start_time: info.event.start.toISOString(), 
+                        end_time: info.event.end ? info.event.end.toISOString() : null 
+                    }, info); 
+                }, 
+
+                // Redimensionar
+                eventResize: function(info) { 
+                    if (info.event.extendedProps.isWeddingDay) { 
+                            console.warn("LOG v17 - eventResize: Redimensionar dia de casamento não permitido.");
+                            info.revert(); 
+                            return; 
+                    } 
+                    console.log('LOG v17 - eventResize:', info.event.id, 'Novo fim:', info.event.end);
+                    sendCalendarUpdate({
+                        action: 'move_resize', 
+                        event_id: info.event.id,
+                        start_time: info.event.start.toISOString(),
+                        end_time: info.event.end.toISOString() 
+                    }, info); 
+                } 
+                
+            }); // FIM da config do FullCalendar
+
+            // 4. Renderiza o calendário
+            console.log("LOG v17: A renderizar o calendário...");
+            calendar.render();
+            console.log("LOG v17: Calendário renderizado.");
+
+            // 5. Guarda a instância globalmente
+            window.weddingCalendarInstance = calendar;
+            console.log("LOG v17: Instância guardada.");
+
+        } catch (calendarError) {
+            console.error("ERRO CRÍTICO v17: Falha ao inicializar FullCalendar:", calendarError);
+            if (calendarEl) {
+                calendarEl.innerHTML = '<div class="alert alert-danger" role="alert">Erro ao carregar o calendário. Verifique o console (F12).</div>';
+            }
+        } // Fim do try...catch
+
+    } // Fim do else (calendarEl existe)
+} // FIM DA FUNÇÃO initializeFullCalendar
+
+// --- Função Auxiliar sendCalendarUpdate (FORA da initialize) ---
+function sendCalendarUpdate(data, info = null) { 
+    if (currentWeddingIdFromScript === null || typeof currentWeddingIdFromScript === 'undefined') { 
+        console.error("ERRO AJAX v17: ID do casamento nulo/indefinido!"); 
+        alert("Erro crítico: ID do casamento ausente."); 
+        return; 
+    }
+    
+    const csrfTokenEl = document.querySelector('[name=csrfmiddlewaretoken]');
+    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]'); 
+    let csrfToken = null; 
+    if (csrfTokenEl) {
+            csrfToken = csrfTokenEl.value;
+    } else if (csrfTokenMeta) {
+            csrfToken = csrfTokenMeta.getAttribute('content');
+    }
+
+    if (!csrfToken) { 
+        console.error("ERRO AJAX v17: Token CSRF não encontrado!"); 
+        alert("Erro de segurança: Token CSRF ausente."); 
+        return; 
+    }
+    
+    console.log("LOG AJAX v17: Enviando:", data);
+    const apiUrl = `/scheduler/manage/${currentWeddingIdFromScript}/`; 
+    
+    fetch(apiUrl, { 
+        method: 'POST',                     
+        headers: { 
+            'Content-Type': 'application/json', 
+            'X-CSRFToken': csrfToken 
+        },
+        body: JSON.stringify(data)          
+    })
+    .then(response => { 
+        if (!response.ok) { 
+                return response.json().then(errData => { 
+                    throw new Error(errData.message || JSON.stringify(errData.errors) || `Erro HTTP ${response.status}`);
+                }).catch(() => { 
+                    throw new Error(`Erro HTTP ${response.status}.`);
+                });
+        }
+        return response.json(); 
+    }) 
+    .then(result => { 
+        console.log('LOG AJAX v17: Resposta JSON:', result);
+        if (result.status === 'success') { 
+            console.log("LOG AJAX v17: Sucesso:", result.message || 'OK');
+                const myModalEl = document.getElementById('main-modal'); 
+                if (myModalEl) {
+                    const myModal = bootstrap.Modal.getInstance(myModalEl); 
+                    if (myModal) { 
+                        console.log("LOG AJAX v17: Fechando modal.");
+                        try { myModal.hide(); } catch (e) { console.warn("LOG AJAX v17: Aviso ao tentar fechar modal:", e); }
+                    }
+                }
+                if (window.weddingCalendarInstance) {
+                    console.log("LOG AJAX v17: Recarregando eventos via API...");
+                    window.weddingCalendarInstance.refetchEvents(); 
+                }
+
+        } else { 
+                throw new Error(result.message || JSON.stringify(result.errors) || 'Erro inesperado do servidor.');
+        }
+    }) 
+    .catch(error => { 
+        console.error('ERRO AJAX v17:', error);
+        alert(`Falha na operação: ${error.message}`); 
+        
+        if (info && typeof info.revert === 'function') {
+            console.log("LOG AJAX v17: Revertendo alteração visual.");
+            info.revert(); 
+        } else if (window.weddingCalendarInstance) {
+                console.warn("LOG AJAX v17: Erro (modal?), recarregando eventos via API.");
+                window.weddingCalendarInstance.refetchEvents(); 
+        }
+    }); 
+} // Fim da função sendCalendarUpdate
+
+// Mensagem final
+console.log("LOG v17: Fim da execução síncrona do script.");

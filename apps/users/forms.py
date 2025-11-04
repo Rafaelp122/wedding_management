@@ -15,7 +15,7 @@ class CustomUserCreationForm(FormStylingMixinLarge, UserCreationForm):
     # Apenas campos NOVOS são declarados aqui
     email = forms.EmailField(
         label="E-mail",
-        help_text="O e-mail é obrigatório."
+        # help_text="O e-mail é obrigatório."
     )
 
     class Meta(UserCreationForm.Meta):
@@ -39,8 +39,8 @@ class CustomUserCreationForm(FormStylingMixinLarge, UserCreationForm):
 
         add_placeholder(self.fields['username'], 'Digite seu usuário')
         add_placeholder(self.fields['email'], 'seu@email.com')
-        add_placeholder(self.fields['first_name'], 'Seu primeiro nome')
-        add_placeholder(self.fields['last_name'], 'Seu último nome')
+        add_placeholder(self.fields['first_name'], 'Ex: Pedro')
+        add_placeholder(self.fields['last_name'], 'Ex: Silva')
         add_placeholder(self.fields['password1'], 'Sua senha')
         add_placeholder(self.fields['password2'], 'Repita sua senha')
 
@@ -49,8 +49,8 @@ class SignInForm(FormStylingMixinLarge, AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        add_placeholder(self.fields['username'], 'Coloque seu usuário')
-        add_placeholder(self.fields['password'], 'Coloque sua senha')
+        add_placeholder(self.fields['username'], 'Seu usuário')
+        add_placeholder(self.fields['password'], 'Sua senha')
 
     username = forms.CharField(
         label="Nome de Usuário",

@@ -1,0 +1,91 @@
+/* Estilo para o dia atual no calendário */
+.fc-daygrid-day.fc-day-today { 
+    background-color: rgba(220, 240, 255, 0.5) !important; 
+}
+
+/* --- Estilos para os DIAS DE CASAMENTO (Fundo) --- */
+
+/* Dia do casamento ATUAL (fundo amarelo) */
+.fc-event-wedding-day.fc-event-current .fc-bg-event {
+    background-color: #ffc107 !important; 
+    opacity: 0.7 !important;              
+    cursor: default !important;           
+}
+
+/* *** ALTERAÇÃO v21: Seletor mais específico e direto para o título *** */
+/* Regra para TODOS os eventos de dia de casamento (fundo) para garantir texto preto e normal */
+/* Este seletor deve pegar o título diretamente dentro do elemento de evento de fundo */
+.fc-event-wedding-day .fc-event-title {
+    color: black !important;          /* Força o texto a ser preto */
+    font-weight: bold !important;      /* Mantém negrito */
+    font-style: normal !important;     /* REMOVE o itálico */
+    padding-left: 4px;       
+    padding-right: 4px;
+    white-space: nowrap;          
+    overflow: hidden;             
+    text-overflow: ellipsis; 
+    display: block;                  /* Garante que o padding funcione */
+}
+
+/* --- Estilos para os EVENTOS NORMAIS (Caixas coloridas) --- */
+/* (Regras mantidas como na v17) */
+.fc-daygrid-event.fc-event-current,                  
+.fc-timegrid-event.fc-event-current .fc-event-main,  
+.fc-list-event.fc-event-current                     
+{
+    background-color: #4a00e0 !important; 
+    border-color: #311b92 !important;     
+    color: white !important;              
+    padding: 2px 4px;                     
+    font-size: 0.85em;                    
+        white-space: nowrap;          
+        overflow: hidden;             
+        text-overflow: ellipsis; 
+}
+.fc-daygrid-event.fc-event-current .fc-event-main-frame { display: block; } 
+.fc-daygrid-event.fc-event-current .fc-event-time { margin-right: 4px; font-weight: bold; }
+.fc-daygrid-event.fc-event-current:hover,
+.fc-timegrid-event.fc-event-current:hover,
+.fc-list-event.fc-event-current:hover 
+{
+        background-color: #311b92 !important; 
+        cursor: pointer;                      
+}
+
+.fc-daygrid-event.fc-event-other,                  
+.fc-timegrid-event.fc-event-other .fc-event-main,  
+.fc-list-event.fc-event-other                     
+{
+    background-color: #9c27b0 !important; 
+    border-color: #7b1fa2 !important;     
+    color: white !important;            
+    padding: 2px 4px;
+    font-size: 0.85em;
+        white-space: nowrap;          
+        overflow: hidden;             
+        text-overflow: ellipsis; 
+}
+    .fc-daygrid-event.fc-event-other .fc-event-main-frame { display: block; }
+    .fc-daygrid-event.fc-event-other .fc-event-time { margin-right: 4px; font-weight: bold; }
+    .fc-daygrid-event.fc-event-other:hover,
+    .fc-timegrid-event.fc-event-other:hover,
+    .fc-list-event.fc-event-other:hover
+    {
+        background-color: #7b1fa2 !important; 
+        cursor: pointer;
+    }
+
+    /* --- Ajustes Gerais de Estilo --- */
+    #calendar { min-height: 400px; }
+
+    /* --- ANIMAÇÃO HOVER NOS DIAS --- */
+    .fc-daygrid-day:not(.fc-day-other):hover { 
+        background-color: rgba(200, 220, 255, 0.4) !important; 
+        cursor: pointer; 
+        transition: background-color 0.2s ease-in-out; 
+    }
+    .fc-daygrid-day.fc-day-today:hover {
+        background-color: rgba(220, 240, 255, 0.5) !important; 
+        cursor: default; 
+    }
+    /* --- FIM DA ANIMAÇÃO HOVER --- */

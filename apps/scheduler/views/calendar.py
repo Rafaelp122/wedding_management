@@ -1,19 +1,18 @@
-# scheduler/views/calendar.py
-
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
-from django.http import JsonResponse, HttpResponseBadRequest, Http404 
-from django.contrib.auth.decorators import login_required 
+from django.http import JsonResponse, HttpResponseBadRequest, Http404
+from django.contrib.auth.decorators import login_required
 import json
-import traceback # Para o 'except Exception'
-from datetime import datetime 
+import traceback
+from datetime import datetime
 
 # Importações relativas e de outros apps
 from ..models import Event
-from apps.weddings.models import Wedding 
-from ..forms import EventForm 
+from apps.weddings.models import Wedding
+from ..forms import EventForm
 
-@login_required 
+
+@login_required
 def partial_scheduler(request, wedding_id):
     planner = request.user
     try:
@@ -26,6 +25,7 @@ def partial_scheduler(request, wedding_id):
 
     return render(request, 'scheduler/partials/scheduler_partial.html', context)
 
+
 @login_required
 def manage_event(request, wedding_id):
     planner = request.user
@@ -35,7 +35,7 @@ def manage_event(request, wedding_id):
     if request.method == 'GET':
         action = request.GET.get('action')
         print(f"DEBUG manage_event [GET]: Ação={action}") 
-        
+
         if action == 'get_create_form':
             clicked_date_str = request.GET.get('date')
             initial_data_for_form = {}
@@ -45,7 +45,7 @@ def manage_event(request, wedding_id):
                     print(f"DEBUG manage_event [GET create]: Data inicial (via clicked_date)={initial_data_for_form['clicked_date']}") 
                 except ValueError:
                     print(f"AVISO DEBUG manage_event [GET create]: Data recebida ('{clicked_date_str}') inválida.") 
-                    pass 
+                    pass
             form = EventForm(**initial_data_for_form) 
             context = { 'form': form, 'wedding': wedding, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id}) }
             print("DEBUG manage_event [GET create]: Renderizando form.") 
@@ -60,7 +60,7 @@ def manage_event(request, wedding_id):
             context = { 'form': form, 'wedding': wedding, 'event': event, 'action_url': reverse_lazy('scheduler:manage_event', kwargs={'wedding_id': wedding.id}) }
             print("DEBUG manage_event [GET edit]: Renderizando form.") 
             return render(request, 'scheduler/partials/_event_form_modal_content.html', context)
-            
+
         else:
             print(f"ERRO DEBUG manage_event [GET]: Ação inválida: '{action}'") 
             return HttpResponseBadRequest("Ação GET inválida.")
@@ -70,7 +70,7 @@ def manage_event(request, wedding_id):
             data = json.loads(request.body)
             action = data.get('action')
             print(f"DEBUG manage_event [POST]: Ação={action}, Dados={data}") 
-            
+
             if action == 'move_resize':
                 event_id = data.get('event_id')
                 start_time_iso = data.get('start_time')
@@ -94,25 +94,24 @@ def manage_event(request, wedding_id):
                 print(f"DEBUG manage_event [POST modal_save]: ID={event_id}") 
                 instance = None
                 if event_id: instance = get_object_or_404(Event, pk=event_id, planner=planner) 
-                else: print("DEBUG manage_event [POST modal_save]: Criando novo.") 
-                post_data = data.get('form_data', {}) 
-                print(f"DEBUG manage_event [POST modal_save]: Dados form={post_data}") 
+                else: print("DEBUG manage_event [POST modal_save]: Criando novo.")
+                post_data = data.get('form_data', {})
+                print(f"DEBUG manage_event [POST modal_save]: Dados form={post_data}")
                 form = EventForm(post_data, instance=instance) 
                 if form.is_valid():
-                    print("DEBUG manage_event [POST modal_save]: Form VÁLIDO.") 
+                    print("DEBUG manage_event [POST modal_save]: Form VÁLIDO.")
                     event = form.save(commit=False) 
                     event.planner = planner 
-                    event.start_time = form.cleaned_data.get('start_time') 
-                    event.end_time = form.cleaned_data.get('end_time') 
+                    event.start_time = form.cleaned_data.get('start_time')
+                    event.end_time = form.cleaned_data.get('end_time')
 
-                    
-                    if not event.wedding: event.wedding = wedding 
+                    if not event.wedding: event.wedding = wedding
                     event.save() 
                     print(f"DEBUG manage_event [POST modal_save OK]: Evento ID {event.id} salvo.") 
                     return JsonResponse({'status': 'success', 'message': 'Evento salvo.'})
                 else:
                     print(f"ERRO DEBUG manage_event [POST modal_save FALHA]: Form INVÁLIDO: {form.errors.as_json()}") 
-                    return JsonResponse({'status': 'error', 'errors': form.errors}, status=400) 
+                    return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
             elif action == 'delete':
                 event_id = data.get('event_id')
@@ -143,7 +142,7 @@ def manage_event(request, wedding_id):
             traceback.print_exc() 
             print(f"!!! FIM ERRO INESPERADO !!!\n") 
             return JsonResponse({'status': 'error', 'message': f'Erro interno: {type(e).__name__}'}, status=500)
-            
+
     else:
-        print(f"ERRO DEBUG manage_event: Método '{request.method}' não permitido.") 
+        print(f"ERRO DEBUG manage_event: Método '{request.method}' não permitido.")
         return HttpResponseBadRequest(f"Método '{request.method}' não permitido.")

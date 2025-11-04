@@ -1,3 +1,0 @@
-django
-django_htmx
-django_extensions
