@@ -26,31 +26,31 @@ class CustomUserCreationForm(FormStylingMixinLarge, UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['username'].label = "Usuário"
-        self.fields['first_name'].label = "Primeiro Nome"
-        self.fields['last_name'].label = "Último Nome"
+        self.fields["username"].label = "Usuário"
+        self.fields["first_name"].label = "Primeiro Nome"
+        self.fields["last_name"].label = "Último Nome"
 
-        self.fields['password1'].label = "Senha"
-        self.fields['password1'].help_text = (
+        self.fields["password1"].label = "Senha"
+        self.fields["password1"].help_text = (
             "Senha com pelo menos 8 caracteres, não totalmente "
             "numérica e pouco comum."
         )
-        self.fields['password2'].label = "Confirme a senha"
+        self.fields["password2"].label = "Confirme a senha"
 
-        add_placeholder(self.fields['username'], 'Digite seu usuário')
-        add_placeholder(self.fields['email'], 'seu@email.com')
-        add_placeholder(self.fields['first_name'], 'Ex: Pedro')
-        add_placeholder(self.fields['last_name'], 'Ex: Silva')
-        add_placeholder(self.fields['password1'], 'Sua senha')
-        add_placeholder(self.fields['password2'], 'Repita sua senha')
+        add_placeholder(self.fields["username"], "Digite seu usuário")
+        add_placeholder(self.fields["email"], "seu@email.com")
+        add_placeholder(self.fields["first_name"], "Ex: Pedro")
+        add_placeholder(self.fields["last_name"], "Ex: Silva")
+        add_placeholder(self.fields["password1"], "Sua senha")
+        add_placeholder(self.fields["password2"], "Repita sua senha")
 
 
 class SignInForm(FormStylingMixinLarge, AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        add_placeholder(self.fields['username'], 'Seu usuário')
-        add_placeholder(self.fields['password'], 'Sua senha')
+        add_placeholder(self.fields["username"], "Seu usuário")
+        add_placeholder(self.fields["password"], "Sua senha")
 
     username = forms.CharField(
         label="Nome de Usuário",
@@ -62,4 +62,4 @@ class CustomUserChangeForm(UserChangeForm):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name')
+        fields = ("username", "email", "first_name", "last_name")

@@ -7,19 +7,26 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Contract',
+            name="Contract",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('signature_date', models.DateField()),
-                ('expiration_date', models.DateField(blank=True, null=True)),
-                ('description', models.TextField(blank=True)),
-                ('status', models.CharField(blank=True, max_length=50)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("signature_date", models.DateField()),
+                ("expiration_date", models.DateField(blank=True, null=True)),
+                ("description", models.TextField(blank=True)),
+                ("status", models.CharField(blank=True, max_length=50)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
         ),
     ]

@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # outros apps
     "django_htmx",
-    'django_extensions',
+    "django_extensions",
     # nossos apps
     "apps.scheduler",
     "apps.contracts",
@@ -62,7 +62,7 @@ LOGIN_REDIRECT_URL = "weddings:my_weddings"
 LOGOUT_REDIRECT_URL = "users:login"
 LOGIN_URL = "/usuario/login/"
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     # middlewares do Django
@@ -81,16 +81,16 @@ ROOT_URLCONF = "wedding_management.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
                 # CERTIFIQUE-SE QUE ESTAS 4 LINHAS EXISTEM:
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request', # Necessário para o Admin
-                'django.contrib.auth.context_processors.auth', # Necessário para o Admin
-                'django.contrib.messages.context_processors.messages', # Necessário para o Admin
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",  # Necessário para o Admin
+                "django.contrib.auth.context_processors.auth",  # Necessário para o Admin
+                "django.contrib.messages.context_processors.messages",  # Necessário para o Admin
                 # Pode ter outros aqui
             ],
         },
@@ -163,9 +163,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MESSAGE_TAGS = {
-    messages.DEBUG: 'secondary',
-    messages.INFO: 'info',
-    messages.SUCCESS: 'success',
-    messages.WARNING: 'warning',
-    messages.ERROR: 'danger',
+    messages.DEBUG: "secondary",
+    messages.INFO: "info",
+    messages.SUCCESS: "success",
+    messages.WARNING: "warning",
+    messages.ERROR: "danger",
 }

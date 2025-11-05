@@ -7,19 +7,26 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Supplier',
+            name="Supplier",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('cpf_cnpj', models.CharField(max_length=20, unique=True)),
-                ('email', models.EmailField(max_length=254, unique=True)),
-                ('phone', models.CharField(max_length=20)),
-                ('offered_services', models.TextField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("cpf_cnpj", models.CharField(max_length=20, unique=True)),
+                ("email", models.EmailField(max_length=254, unique=True)),
+                ("phone", models.CharField(max_length=20)),
+                ("offered_services", models.TextField()),
             ],
         ),
     ]

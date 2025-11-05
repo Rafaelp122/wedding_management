@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Wedding
 
+
 @admin.register(Wedding)
 class WeddingAdmin(admin.ModelAdmin):
     list_display = ("id", "display_couple_or_client", "planner", "date", "location")

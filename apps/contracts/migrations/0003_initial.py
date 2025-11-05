@@ -9,14 +9,19 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('contracts', '0002_initial'),
-        ('weddings', '0001_initial'),
+        ("contracts", "0002_initial"),
+        ("weddings", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='contract',
-            name='wedding',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='weddings.wedding'),
+            model_name="contract",
+            name="wedding",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="weddings.wedding",
+            ),
         ),
     ]

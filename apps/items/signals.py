@@ -15,6 +15,6 @@ def create_contract_for_new_item(sender, instance, created, **kwargs):
             wedding=instance.wedding,
             supplier=instance.supplier,
             signature_date=timezone.now().date(),
-            status='Pendente',
-            description=f'Contrato para o item: {instance.name}'
+            status="Pendente",
+            description=f"Contrato para o item: {instance.name}",
         )

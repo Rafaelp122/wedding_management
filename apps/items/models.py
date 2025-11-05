@@ -14,11 +14,11 @@ class ItemQuerySet(models.QuerySet):
         total = self.aggregate(
             total=Sum(
                 ExpressionWrapper(
-                    F('unit_price') * F('quantity'),
-                    output_field=DecimalField(max_digits=10, decimal_places=2)
+                    F("unit_price") * F("quantity"),
+                    output_field=DecimalField(max_digits=10, decimal_places=2),
                 )
             )
-        )['total']
+        )["total"]
         return total or 0
 
     def category_expenses(self):
@@ -26,26 +26,30 @@ class ItemQuerySet(models.QuerySet):
         Agrupa os custos por categoria.
         Retorna um QuerySet de dicionários.
         """
-        return self.values('category').annotate(
-            total_cost=Sum(
-                ExpressionWrapper(
-                    F('unit_price') * F('quantity'),
-                    output_field=DecimalField(max_digits=10, decimal_places=2)
+        return (
+            self.values("category")
+            .annotate(
+                total_cost=Sum(
+                    ExpressionWrapper(
+                        F("unit_price") * F("quantity"),
+                        output_field=DecimalField(max_digits=10, decimal_places=2),
+                    )
                 )
             )
-        ).order_by('-total_cost')
+            .order_by("-total_cost")
+        )
 
 
 class Item(models.Model):
 
     CATEGORY_CHOICES = [
-        ('LOCAL', 'Local '),
-        ('BUFFET', 'Buffet'),
-        ('DECOR', 'Decoração'),
-        ('PHOTO_VIDEO', 'Fotografia e Vídeo'),
-        ('ATTIRE', 'Vestuário'),
-        ('MUSIC', 'Música/Entretenimento'),
-        ('OTHERS', 'Outros'),
+        ("LOCAL", "Local "),
+        ("BUFFET", "Buffet"),
+        ("DECOR", "Decoração"),
+        ("PHOTO_VIDEO", "Fotografia e Vídeo"),
+        ("ATTIRE", "Vestuário"),
+        ("MUSIC", "Música/Entretenimento"),
+        ("OTHERS", "Outros"),
     ]
 
     name = models.CharField(max_length=255)
@@ -53,20 +57,16 @@ class Item(models.Model):
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     supplier = models.ForeignKey(
-        Supplier, on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        Supplier, on_delete=models.CASCADE, null=True, blank=True
     )
     wedding = models.ForeignKey(
-        Wedding, on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        Wedding, on_delete=models.CASCADE, null=True, blank=True
     )
     category = models.CharField(
         max_length=20,
         choices=CATEGORY_CHOICES,
-        default='OTHERS',
-        verbose_name="Categoria"
+        default="OTHERS",
+        verbose_name="Categoria",
     )
 
     objects = ItemQuerySet.as_manager()

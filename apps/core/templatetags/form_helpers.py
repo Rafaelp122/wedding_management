@@ -4,7 +4,7 @@ register = template.Library()
 
 
 @register.simple_tag
-def get_field_class(field, layout_dict, default_class='col-12'):
+def get_field_class(field, layout_dict, default_class="col-12"):
     """
     Retorna a classe de coluna CSS para um campo de formulário específico.
     """
@@ -23,4 +23,4 @@ def get_icon_class(field, icon_dict):
     if not isinstance(icon_dict, dict):
         icon_dict = {}
 
-    return icon_dict.get(field.name, '')
+    return icon_dict.get(field.name, "")

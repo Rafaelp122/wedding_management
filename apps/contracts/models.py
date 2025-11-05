@@ -11,10 +11,10 @@ class Contract(models.Model):
     description = models.TextField(blank=True)
     status = models.CharField(max_length=50, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True) 
-    item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, null=True, blank=True
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.CASCADE, null=True, blank=True
     )
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, null=True, blank=True)
     wedding = models.ForeignKey(
         Wedding, on_delete=models.CASCADE, null=True, blank=True
     )

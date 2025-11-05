@@ -8,12 +8,21 @@ from parameterized import parameterized
 class TestPagesViews(TestCase):
     """Testa as Class-Based Views da app 'pages'."""
 
-    @parameterized.expand([
-        # Tupla de argumentos: (nome_do_caso, url_name, template_name, expected_content)
-        ("home_page", "pages:home", "pages/home.html", "Gestão de Casamentos"),
-        ("contact_us_page", "pages:contact_us", "pages/contact-us.html", "Fale Conosco"),
-    ])
-    def test_static_pages_render_correctly(self, _, url_name, template_name, expected_content):
+    @parameterized.expand(
+        [
+            # Tupla de argumentos: (nome_do_caso, url_name, template_name, expected_content)
+            ("home_page", "pages:home", "pages/home.html", "Gestão de Casamentos"),
+            (
+                "contact_us_page",
+                "pages:contact_us",
+                "pages/contact-us.html",
+                "Fale Conosco",
+            ),
+        ]
+    )
+    def test_static_pages_render_correctly(
+        self, _, url_name, template_name, expected_content
+    ):
         """
         Verifica se as páginas estáticas renderizam corretamente.
         Este teste é parametrizado e cada caso será executado individualmente.

@@ -4,8 +4,6 @@ from .models import Item
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = (
-        "id", "name", "quantity", "unit_price", "supplier", "wedding"
-        )
+    list_display = ("id", "name", "quantity", "unit_price", "supplier", "wedding")
     search_fields = ("name",)
     list_filter = ("supplier", "wedding")

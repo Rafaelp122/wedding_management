@@ -7,23 +7,39 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Schedule',
+            name="Schedule",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255, verbose_name='Título do Evento')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='Descrição')),
-                ('start_datetime', models.DateTimeField(verbose_name='Início do Evento')),
-                ('end_datetime', models.DateTimeField(verbose_name='Fim do Evento')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "title",
+                    models.CharField(max_length=255, verbose_name="Título do Evento"),
+                ),
+                (
+                    "description",
+                    models.TextField(blank=True, null=True, verbose_name="Descrição"),
+                ),
+                (
+                    "start_datetime",
+                    models.DateTimeField(verbose_name="Início do Evento"),
+                ),
+                ("end_datetime", models.DateTimeField(verbose_name="Fim do Evento")),
             ],
             options={
-                'verbose_name': 'Evento da Agenda',
-                'verbose_name_plural': 'Eventos da Agenda',
-                'ordering': ['start_datetime'],
+                "verbose_name": "Evento da Agenda",
+                "verbose_name_plural": "Eventos da Agenda",
+                "ordering": ["start_datetime"],
             },
         ),
     ]

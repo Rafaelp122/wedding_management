@@ -10,22 +10,43 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('client', '0001_initial'),
+        ("client", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Wedding',
+            name="Wedding",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('groom_name', models.CharField(blank=True, max_length=100, null=True)),
-                ('bride_name', models.CharField(blank=True, max_length=100, null=True)),
-                ('date', models.DateField()),
-                ('location', models.CharField(max_length=255)),
-                ('budget', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('client', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='weddings', to='client.client')),
-                ('planner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("groom_name", models.CharField(blank=True, max_length=100, null=True)),
+                ("bride_name", models.CharField(blank=True, max_length=100, null=True)),
+                ("date", models.DateField()),
+                ("location", models.CharField(max_length=255)),
+                ("budget", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "client",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="weddings",
+                        to="client.client",
+                    ),
+                ),
+                (
+                    "planner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]
