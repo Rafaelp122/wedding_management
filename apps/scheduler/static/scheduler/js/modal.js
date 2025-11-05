@@ -1,100 +1,95 @@
-// Usa uma função auto-executável para criar um escopo isolado
+/* ====== Event Modal Controller (Integration with FullCalendar) ====== */
+
 (function() {
-    console.log("LOG MODAL v2: Script do _event_form_modal_content.html a EXECUTAR.");
+  console.log("LOG MODAL v2: Script do _event_form_modal_content.html iniciado.");
 
-    const form = document.getElementById('event-modal-form');
-    const deleteButton = document.getElementById('delete-event-button');
-    // Obtém o token CSRF (necessário para a função sendCalendarUpdate)
-    const csrfTokenInput = form.querySelector('[name=csrfmiddlewaretoken]');
-    
-    // Verifica se os elementos essenciais existem
-    if (!form) {
-        console.error("ERRO MODAL v2: Formulário #event-modal-form não encontrado!");
-        return; 
+  /* Referências principais */
+  const form = document.getElementById('event-modal-form');
+  const deleteButton = document.getElementById('delete-event-button');
+  const csrfTokenInput = form?.querySelector('[name=csrfmiddlewaretoken]');
+
+  /* Validação inicial */
+  if (!form) {
+    console.error("ERRO MODAL v2: Formulário #event-modal-form não encontrado.");
+    return;
+  }
+  if (!csrfTokenInput) {
+    console.warn("LOG MODAL v2: Campo CSRF token ausente — operação pode ser limitada.");
+  }
+
+  /* Listener de envio do formulário */
+  form.removeEventListener('submit', handleFormSubmit);
+  form.addEventListener('submit', handleFormSubmit);
+  console.log("LOG MODAL v2: Listener de 'submit' aplicado.");
+
+  /* Listener do botão de exclusão */
+  if (deleteButton) {
+    deleteButton.removeEventListener('click', handleDeleteClick);
+    deleteButton.addEventListener('click', handleDeleteClick);
+    console.log("LOG MODAL v2: Listener de 'click' aplicado ao botão excluir.");
+  } else {
+    console.log("LOG MODAL v2: Botão de exclusão não encontrado (modo criação).");
+  }
+
+  /* ===== Submissão do formulário ===== */
+  function handleFormSubmit(e) {
+    e.preventDefault();
+    console.log("LOG MODAL v2: Submissão interceptada.");
+
+    const formData = new FormData(form);
+    const dataToSend = {
+      action: 'modal_save',
+      event_id: formData.get('event_id') || null,
+      form_data: {}
+    };
+
+    /* Serializa os campos do formulário */
+    for (const [key, value] of formData.entries()) {
+      if (!['csrfmiddlewaretoken', 'action', 'event_id'].includes(key)) {
+        dataToSend.form_data[key] = value;
+      }
     }
-    if (!csrfTokenInput) {
-         console.error("ERRO MODAL v2: Campo CSRF token não encontrado no formulário!");
-        // Não retorna, pois a exclusão pode não precisar dele se usarmos sendCalendarUpdate
-    }
 
-    // --- Tratador para o ENVIO do formulário ---
-    // Remove listener antigo se existir (segurança extra)
-    form.removeEventListener('submit', handleFormSubmit); 
-    // Adiciona o novo listener
-    form.addEventListener('submit', handleFormSubmit); 
-    console.log("LOG MODAL v2: Listener 'submit' adicionado ao formulário.");
-
-    // --- Tratador para o botão EXCLUIR (se existir) ---
-    if (deleteButton) {
-        // Remove listener antigo se existir
-        deleteButton.removeEventListener('click', handleDeleteClick);
-        // Adiciona o novo listener
-        deleteButton.addEventListener('click', handleDeleteClick);
-        console.log("LOG MODAL v2: Listener 'click' adicionado ao botão excluir.");
+    /* Envia via função global do calendário */
+    if (typeof sendCalendarUpdate === 'function') {
+      console.log("LOG MODAL v2: Enviando dados para sendCalendarUpdate...");
+      sendCalendarUpdate(dataToSend);
     } else {
-         console.log("LOG MODAL v2: Botão excluir não encontrado (provavelmente é um formulário de criação).");
+      console.error("ERRO MODAL v2: Função 'sendCalendarUpdate' não encontrada.");
+      alert("Erro: Não foi possível enviar os dados. O evento não foi salvo.");
+    }
+  }
+
+  /* ===== Exclusão de evento ===== */
+  function handleDeleteClick(e) {
+    e.preventDefault();
+    console.log("LOG MODAL v2: Clique no botão de exclusão.");
+
+    if (!confirm('Tem certeza que deseja excluir este evento?')) {
+      console.log("LOG MODAL v2: Exclusão cancelada pelo usuário.");
+      return;
     }
 
-    // --- Função para lidar com o SUBMIT ---
-    function handleFormSubmit(e) {
-        e.preventDefault(); // Impede o envio tradicional do formulário
-        console.log("LOG MODAL v2: Formulário submetido via JavaScript.");
-        
-        const formData = new FormData(form);
-        const dataToSend = {
-            action: 'modal_save',
-            event_id: formData.get('event_id') || null, // Pega o ID do evento (se existir)
-            // Envia os dados do formulário como um objeto aninhado
-            form_data: {}
-        };
-
-        // Preenche o objeto form_data com os valores do formulário
-        for (const [key, value] of formData.entries()) {
-            // Não inclui o csrf token nem a action nos dados do formulário aninhado
-            if (key !== 'csrfmiddlewaretoken' && key !== 'action' && key !== 'event_id') {
-                dataToSend.form_data[key] = value;
-            }
-        }
-
-        console.log("LOG MODAL v2: Chamando sendCalendarUpdate para salvar...");
-        // Chama a função global (definida em scheduler_partial.html) para enviar os dados
-        if (typeof sendCalendarUpdate === 'function') {
-            sendCalendarUpdate(dataToSend); 
-        } else {
-             console.error("ERRO MODAL v2: Função global 'sendCalendarUpdate' não encontrada!");
-             alert("Erro crítico: Não foi possível contactar a função de envio. O evento não foi salvo.");
-        }
+    const eventIdInput = form.querySelector('[name=event_id]');
+    if (!eventIdInput || !eventIdInput.value) {
+      console.error("ERRO MODAL v2: ID do evento não encontrado.");
+      alert("Erro: Não foi possível identificar o evento para exclusão.");
+      return;
     }
 
-    // --- Função para lidar com o clique em EXCLUIR ---
-    function handleDeleteClick(e) {
-        e.preventDefault();
-        console.log("LOG MODAL v2: Botão excluir clicado.");
-        if (confirm('Tem certeza que deseja excluir este evento?')) {
-            console.log("LOG MODAL v2: Confirmação de exclusão recebida.");
-            const eventIdInput = form.querySelector('[name=event_id]');
-            if (!eventIdInput || !eventIdInput.value) {
-                 console.error("ERRO MODAL v2: Não foi possível encontrar o ID do evento para exclusão.");
-                 alert("Erro: Não foi possível identificar o evento para excluir.");
-                 return;
-            }
-            
-            const dataToSend = {
-                action: 'delete',
-                event_id: eventIdInput.value // Obtém o ID do campo oculto
-            };
+    const dataToSend = {
+      action: 'delete',
+      event_id: eventIdInput.value
+    };
 
-            console.log("LOG MODAL v2: Chamando sendCalendarUpdate para excluir...");
-            // Chama a função global para enviar a ação de exclusão
-            if (typeof sendCalendarUpdate === 'function') {
-                sendCalendarUpdate(dataToSend);
-            } else {
-                console.error("ERRO MODAL v2: Função global 'sendCalendarUpdate' não encontrada!");
-                alert("Erro crítico: Não foi possível contactar a função de envio. O evento não foi excluído.");
-            }
-        } else {
-             console.log("LOG MODAL v2: Exclusão cancelada pelo utilizador.");
-        }
+    /* Executa exclusão via função global */
+    if (typeof sendCalendarUpdate === 'function') {
+      console.log("LOG MODAL v2: Enviando requisição de exclusão...");
+      sendCalendarUpdate(dataToSend);
+    } else {
+      console.error("ERRO MODAL v2: Função 'sendCalendarUpdate' não encontrada.");
+      alert("Erro: Não foi possível contactar o servidor. O evento não foi excluído.");
     }
+  }
 
 })();
