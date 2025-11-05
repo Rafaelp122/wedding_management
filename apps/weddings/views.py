@@ -3,7 +3,13 @@ from django.db.models import Count
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
 from .forms import WeddingForm
 from .models import Wedding
@@ -30,10 +36,12 @@ GRADIENTS = [
     "linear-gradient(135deg, #76ff03, #33691e)",
 ]
 
+
 class PlannerOwnerMixin:
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(planner=self.request.user)
+
 
 class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
     model = Wedding
@@ -43,8 +51,8 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.select_related("client").annotate(
-            items_count=Count('item', distinct=True),
-            contracts_count=Count('contract', distinct=True),
+            items_count=Count("item", distinct=True),
+            contracts_count=Count("contract", distinct=True),
         )
 
     def get_context_data(self, **kwargs):
@@ -63,32 +71,33 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
         ]
         return context
 
+
 class WeddingCreateView(LoginRequiredMixin, CreateView):
     model = Wedding
     form_class = WeddingForm
-    template_name = 'weddings/partials/_create_wedding_form.html'
+    template_name = "weddings/partials/_create_wedding_form.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['form_layout_dict'] = {
-            'client': 'col-md-12',
-            'groom_name': 'col-md-6',
-            'bride_name': 'col-md-6',
-            'date': 'col-md-6',
-            'location': 'col-md-12',
-            'budget': 'col-md-6',
+        context["form_layout_dict"] = {
+            "client": "col-md-12",
+            "groom_name": "col-md-6",
+            "bride_name": "col-md-6",
+            "date": "col-md-6",
+            "location": "col-md-12",
+            "budget": "col-md-6",
         }
 
-        context['default_col_class'] = 'col-12'
+        context["default_col_class"] = "col-12"
 
-        context['form_icons'] = {
-            'client': 'fas fa-id-card',
-            'groom_name': 'fas fa-user',
-            'bride_name': 'fas fa-user',
-            'date': 'fas fa-calendar-days',
-            'location': 'fas fa-location-dot',
-            'budget': 'fas fa-money-bill-wave',
+        context["form_icons"] = {
+            "client": "fas fa-id-card",
+            "groom_name": "fas fa-user",
+            "bride_name": "fas fa-user",
+            "date": "fas fa-calendar-days",
+            "location": "fas fa-location-dot",
+            "budget": "fas fa-money-bill-wave",
         }
 
         return context
@@ -101,41 +110,45 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
         new_card_index = total_weddings - 1
 
         item_context = {
-            'wedding': new_wedding,
-            'client': new_wedding.client,
-            'gradient': GRADIENTS[new_card_index % len(GRADIENTS)],
-            'items_count': 0,
-            'contracts_count': 0,
-            'progress': 0,
+            "wedding": new_wedding,
+            "client": new_wedding.client,
+            "gradient": GRADIENTS[new_card_index % len(GRADIENTS)],
+            "items_count": 0,
+            "contracts_count": 0,
+            "progress": 0,
         }
 
-        html = render_to_string('weddings/partials/_wedding_card.html', {'item': item_context})
+        html = render_to_string(
+            "weddings/partials/_wedding_card.html", {"item": item_context}
+        )
         response = HttpResponse(html)
-        response['HX-Trigger'] = '{"weddingCreated": {}, "removeEmptyMessage": {}}'
+        response["HX-Retarget"] = "#wedding-list-container"
+        response["HX-Reswap"] = "beforeend"
+        response["HX-Trigger"] = '{"weddingCreated": {}, "removeEmptyMessage": {}}'
         return response
 
     def form_invalid(self, form):
         response = super().form_invalid(form)
-        response.status_code = 422
-        response['HX-Retarget'] = '#modal-container'
-        response['HX-Reswap'] = 'innerHTML'
         return response
+
 
 class WeddingDetailView(LoginRequiredMixin, PlannerOwnerMixin, DetailView):
     model = Wedding
     template_name = "weddings/detail.html"
     context_object_name = "wedding"
-    pk_url_kwarg = 'wedding_id'
+    pk_url_kwarg = "wedding_id"
+
 
 class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
     model = Wedding
     form_class = WeddingForm
     template_name = "weddings/edit.html"
     success_url = reverse_lazy("weddings:my_weddings")
-    pk_url_kwarg = 'id'
+    pk_url_kwarg = "id"
+
 
 class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
     model = Wedding
     template_name = "weddings/confirm_delete.html"
     success_url = reverse_lazy("weddings:my_weddings")
-    pk_url_kwarg = 'id'
+    pk_url_kwarg = "id"

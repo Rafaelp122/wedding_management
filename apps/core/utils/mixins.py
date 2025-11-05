@@ -13,8 +13,14 @@ class FormStylingMixin:
             else:
                 add_attr(field, "class", "form-control ps-5")
 
-            if field_name in self.errors:
-                add_attr(field, "class", "is-invalid")
+    def _post_clean(self):
+        super()._post_clean()
+
+        if self.errors:
+            for field_name in self.errors:
+                field = self.fields.get(field_name)
+                if field:
+                    add_attr(field, "class", "is-invalid")
 
 
 class FormStylingMixinLarge:
@@ -29,5 +35,11 @@ class FormStylingMixinLarge:
                     field, "class", "form-control form-control-lg ps-5 custom-font-size"
                 )
 
-            if field_name in self.errors:
-                add_attr(field, "class", "is-invalid")
+    def _post_clean(self):
+        super()._post_clean()
+
+        if self.errors:
+            for field_name in self.errors:
+                field = self.fields.get(field_name)
+                if field:
+                    add_attr(field, "class", "is-invalid")

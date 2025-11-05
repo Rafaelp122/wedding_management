@@ -1,7 +1,9 @@
 <form 
-  hx-post="{% url 'weddings:create_wedding' %}" 
-  hx-target="#wedding-list-container" 
-  hx-swap="beforeend">
+  method="POST"
+  hx-post="{% url 'weddings:create_wedding' %}"
+  hx-swap="outerHTML"
+  hx-target="this"
+>
   
   {% csrf_token %}
 
