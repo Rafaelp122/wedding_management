@@ -6,7 +6,11 @@
     </div>
 </div>
 
-{{ wedding.id|default:None|json_script:"wedding-id-data" }}
+{{ wedding.id|default:None|json_script:"wedding-id-data" }} 
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'scheduler/css/scheduler_partial.css' %}">
+{% endblock page_styles %}
 
 <script>
   // Aguarda o JS global estar pronto antes de notificar

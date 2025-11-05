@@ -1,7 +1,6 @@
 // v21 - FullCalendar + HTMX integração estável
 (function() {
   console.log("LOG v21: calendar.js carregado (modo global compatível com HTMX).");
-  
   document.readyState === "complete"
   ? console.log("LOG v21: script pronto para eventos scheduler:loaded.")
   : window.addEventListener("load", () => console.log("LOG v21: DOM totalmente carregado."))
@@ -61,17 +60,42 @@
       },
       events: `/scheduler/api/events/${weddingId}/`,
 
-      eventContent(arg) {
-        const e = arg.event;
-        const time = e.start
-          ? e.start.toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false
-            })
-          : "";
-        return { html: `<div><b>${time}</b> ${e.title}</div>` };
-      },
+eventContent(arg) {
+  const e = arg.event;
+  const props = e.extendedProps || {};
+
+  // Casamento especial
+  if (props.isWeddingDay) {
+    const coupleNames = e.title || "Casamento";
+    return {
+      html: `
+        <div class="fc-event-wedding">
+          <div class="couple-names">${coupleNames}</div>
+          <div class="heart">❤️</div>
+        </div>
+      `
+    };
+  }
+
+  // Eventos normais (retângulo roxo)
+  const time = e.start
+    ? e.start.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      })
+    : "";
+
+  return {
+    html: `
+      <div class="fc-event-main-frame">
+        <span class="fc-event-time">${time}</span>
+        <span class="fc-event-title">${e.title}</span>
+      </div>
+    `
+  };
+},
+
 
       eventDidMount(info) {
         const props = info.event.extendedProps || {};
