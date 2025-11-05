@@ -1,126 +1,239 @@
+/* ====== FullCalendar Custom Theme (Purple Variant) ====== */
+
+/* Highlight do dia atual */
 .fc-daygrid-day.fc-day-today { 
-    background-color: rgba(220, 240, 255, 0.5) !important; 
+  background-color: rgba(220, 240, 255, 0.5) !important; 
 }
 
+/* Estilo do dia de casamento */
 .fc-event-wedding-day.fc-event-current .fc-bg-event {
-    background-color: #ffdf70 !important; 
-    opacity: 1 !important;
-    box-shadow: 0 0 10px rgba(255, 200, 0, 0.6) inset, 0 0 8px rgba(255, 200, 0, 0.7);
-    border: 1px solid #ffcc00 !important;
-    z-index: 1;
+  background-color: #ffdf70 !important; 
+  opacity: 1 !important;
+  box-shadow: 0 0 10px rgba(255, 200, 0, 0.6) inset, 0 0 8px rgba(255, 200, 0, 0.7);
+  border: 1px solid #ffcc00 !important;
+  z-index: 1;
 }
 
 .fc-daygrid-day.fc-event-wedding-day {
-    overflow: hidden !important;
-    position: relative;
+  overflow: hidden !important;
+  position: relative;
 }
 
 .fc-event-wedding {
-    position: absolute !important;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    text-align: center;
-    pointer-events: none;
-    z-index: 10;
+  position: absolute !important;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .fc-event-wedding .couple-names {
-    font-weight: 900;
-    color: #3c2400;
-    font-size: 1.15rem;
-    text-shadow:
-        0 2px 3px rgba(255, 255, 255, 0.9),
-        0 0 8px rgba(255, 255, 255, 0.6);
-    margin-bottom: 5px;
-    white-space: nowrap;
+  font-weight: 900;
+  color: #3c2400;
+  font-size: 1.15rem;
+  text-shadow: 0 2px 3px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 255, 255, 0.6);
+  margin-bottom: 5px;
+  white-space: nowrap;
 }
 
 .fc-event-wedding .heart {
-    font-size: 2.6rem;
-    color: #ff0044;
-    text-shadow:
-        0 2px 3px rgba(255, 255, 255, 0.8),
-        0 0 8px rgba(255, 0, 70, 0.7),
-        0 0 12px rgba(255, 0, 90, 0.5);
-    animation: pulse-glow 1.5s infinite ease-in-out;
+  font-size: 2.6rem;
+  color: #ff0044;
+  text-shadow: 0 2px 3px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 0, 70, 0.7), 0 0 12px rgba(255, 0, 90, 0.5);
+  animation: pulse-glow 1.5s infinite ease-in-out;
 }
 
 @keyframes pulse-glow {
-    0%, 100% {
-        transform: scale(1);
-        filter: brightness(1);
-    }
-    50% {
-        transform: scale(1.25);
-        filter: brightness(1.3);
-    }
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.25);
+    filter: brightness(1.3);
+  }
 }
 
+/* Estilo dos eventos normais */
 .fc-daygrid-event.fc-event-current,
 .fc-timegrid-event.fc-event-current .fc-event-main,
 .fc-list-event.fc-event-current {
-    background-color: #7519ff !important;
-    border-color: #4a00e0 !important;
-    color: white !important;
-    padding: 3px 6px;
-    font-size: 0.85em;
-    border-radius: 6px;
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15);
-    transition: transform 0.1s ease-in-out;
+  background-color: #7519ff !important;
+  border-color: #4a00e0 !important;
+  color: white !important;
+  padding: 3px 6px;
+  font-size: 0.85em;
+  border-radius: 6px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.1s ease-in-out;
 }
 
 .fc-daygrid-event.fc-event-current:hover {
-    background-color: #4a00e0 !important;
-    transform: scale(1.02);
+  background-color: #4a00e0 !important;
+  transform: scale(1.02);
 }
 
+/* Layout e scroll dos dias */
 .fc-daygrid-day-frame {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 110px !important;
-    max-height: 110px !important;
-    overflow: hidden;
-    position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 110px !important;
+  max-height: 110px !important;
+  overflow: hidden;
+  position: relative;
 }
 
 .fc-daygrid-day-events {
-    flex-grow: 1;
-    overflow-y: auto !important;
-    overflow-x: hidden;
-    margin-top: 2px;
-    padding: 0 2px;
-    max-height: 85px !important;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(160, 160, 160, 0.3) transparent;
+  flex-grow: 1;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  margin-top: 2px;
+  padding: 0 2px;
+  max-height: 85px !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(160, 160, 160, 0.3) transparent;
 }
 
 .fc-daygrid-day-events::-webkit-scrollbar {
-    width: 4px;
+  width: 4px;
 }
 .fc-daygrid-day-events::-webkit-scrollbar-thumb {
-    background: rgba(150, 150, 150, 0.4);
-    border-radius: 4px;
+  background: rgba(150, 150, 150, 0.4);
+  border-radius: 4px;
 }
 
 .fc-daygrid-day-top {
-    z-index: 3;
-    position: relative;
-    background: transparent;
+  z-index: 3;
+  position: relative;
+  background: transparent;
 }
 
+/* Hover nos dias */
 .fc-daygrid-day:not(.fc-day-other):hover { 
-    background-color: rgba(200, 220, 255, 0.4) !important; 
-    cursor: pointer; 
-    transition: background-color 0.2s ease-in-out; 
+  background-color: rgba(200, 220, 255, 0.4) !important; 
+  cursor: pointer; 
+  transition: background-color 0.2s ease-in-out; 
 }
 
 .fc-daygrid-day.fc-event-wedding-day:hover {
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.8) inset, 0 0 8px rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.8) inset, 0 0 8px rgba(255, 215, 0, 0.8);
 }
 
+/* Calendário base */
 #calendar { 
-    min-height: 400px; 
+  min-height: 400px; 
+}
+
+/* ===== Toolbar personalizada ===== */
+
+.fc .fc-toolbar {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(156, 39, 176, 0.25);
+  padding: 8px 0 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fc-toolbar-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #9c27b0;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+}
+
+/* Botões principais */
+.fc .fc-button {
+  background: none !important;
+  border: none !important;
+  color: #9c27b0 !important;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  transition: all 0.15s ease-in-out;
+}
+
+.fc .fc-button:hover {
+  background-color: rgba(156, 39, 176, 0.1) !important;
+  color: #7B1FA2 !important;
+}
+
+.fc .fc-button-active {
+  color: #9c27b0 !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #9c27b0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+}
+
+/* Remove contorno de foco */
+.fc .fc-button:focus,
+.fc .fc-button:active,
+.fc .fc-button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Botões de navegação */
+.fc .fc-prev-button,
+.fc .fc-next-button {
+  font-size: 1.2rem; 
+  color: #9c27b0 !important;
+  border-radius: 50% !important;
+  width: 38px; 
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(156, 39, 176, 0.4) !important;
+  background-color: rgba(156, 39, 176, 0.05) !important;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(156, 39, 176, 0.1);
+}
+
+.fc .fc-prev-button:hover,
+.fc .fc-next-button:hover {
+  background-color: rgba(156, 39, 176, 0.15) !important;
+  border-color: rgba(123, 31, 162, 0.6) !important;
+  color: #7B1FA2 !important;
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(123, 31, 162, 0.25);
+}
+
+/* Botão “Hoje” */
+.fc .fc-today-button {
+  color: #9c27b0 !important;
+  border: 1px solid rgba(156, 39, 176, 0.3) !important;
+  border-radius: 6px !important;
+  padding: 7px 18px !important;
+  background: none !important;
+  font-size: 0.95rem; 
+  transition: all 0.2s ease-in-out;
+}
+
+.fc .fc-today-button:hover {
+  background-color: rgba(156, 39, 176, 0.1) !important;
+  border-color: rgba(123, 31, 162, 0.6) !important;
+  color: #7B1FA2 !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .fc .fc-toolbar {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .fc-toolbar-title {
+    font-size: 1.1rem;
+  }
 }
