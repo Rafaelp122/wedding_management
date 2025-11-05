@@ -237,3 +237,32 @@
     font-size: 1.1rem;
   }
 }
+
+/* ===== Remoção completa de sublinhados no calendário ===== */
+
+.fc a,
+.fc a:hover,
+.fc a:focus,
+.fc a:active,
+.fc a:visited {
+  text-decoration: none !important;
+  outline: none !important;
+}
+
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number,
+.fc .fc-daygrid-day-top a {
+  text-decoration: none !important;
+}
+
+.fc-event-title,
+.fc-event-time {
+  text-decoration: none !important;
+}
+
+.fc-button:focus,
+.fc-button:active,
+.fc-button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
