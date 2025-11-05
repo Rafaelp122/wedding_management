@@ -14,7 +14,7 @@ urlpatterns = [
     ),
     path(
         'partial/<int:wedding_id>/',
-        views.partial_scheduler,
+        views.PartialSchedulerView.as_view(),
         name='partial_scheduler'
     ),
     path(
@@ -24,7 +24,7 @@ urlpatterns = [
     ),
     path(
         'manage/<int:wedding_id>/',
-        views.manage_event,
+        views.ManageEventView.as_view(),
         name='manage_event'
     ),
 ]

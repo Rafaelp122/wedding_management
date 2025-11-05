@@ -1,7 +1,7 @@
 from .mixins import EventPlannerOwnerMixin
 from .crud import EventListView, EventCreateView, EventUpdateView, EventDeleteView
 from .api import event_api
-from .calendar import partial_scheduler, manage_event
+from .calendar import PartialSchedulerView, ManageEventView
 
 __all__ = [
     'EventPlannerOwnerMixin',
@@ -10,6 +10,6 @@ __all__ = [
     'EventUpdateView',
     'EventDeleteView',
     'event_api',
-    'partial_scheduler',
-    'manage_event',
+    'PartialSchedulerView',
+    'ManageEventView',
 ]

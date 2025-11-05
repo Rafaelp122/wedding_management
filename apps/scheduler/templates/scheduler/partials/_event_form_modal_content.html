@@ -1,3 +1,5 @@
+{% load static %}
+
 <div class="modal-header">
     <h5 class="modal-title">{% if event %}Editar Evento{% else %}Novo Evento{% endif %}</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -74,4 +76,3 @@
 {% block extra_js %} 
     <script src="{% static 'scheduler/js/modal.js' %}"></script>
 {% endblock extra_js %}
-
