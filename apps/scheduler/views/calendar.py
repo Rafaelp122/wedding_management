@@ -1,21 +1,17 @@
-# Importações do Django
-from django.shortcuts import render, get_object_or_404
-from django.urls import reverse_lazy
-from django.http import JsonResponse, HttpResponseBadRequest, Http404, HttpResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import View, TemplateView
 import json
 import traceback
 from datetime import datetime
 
-# Importações relativas e de outros apps
-from ..models import Event
-from apps.weddings.models import Wedding
-from ..forms import EventForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView, View
 
-# ---
-# MIXIN DE REUTILIZAÇÃO
-# ---
+from apps.weddings.models import Wedding
+
+from ..forms import EventForm
+from ..models import Event
 
 
 class WeddingPlannerMixin(LoginRequiredMixin):
@@ -54,19 +50,7 @@ class WeddingPlannerMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-# ---
-# CBVs REATORADAS
-# ---
-
-
 class PartialSchedulerView(WeddingPlannerMixin, TemplateView):
-    """
-    Substitui a FBV 'partial_scheduler'.
-
-    - Usa WeddingPlannerMixin para validar o acesso.
-    - Usa TemplateView para renderizar um template simples.
-    """
-
     template_name = "scheduler/partials/scheduler_partial.html"
 
     def get_context_data(self, **kwargs) -> dict:
@@ -80,17 +64,6 @@ class PartialSchedulerView(WeddingPlannerMixin, TemplateView):
 
 
 class ManageEventView(WeddingPlannerMixin, View):
-    """
-    Substitui a FBV 'manage_event' usando um padrão de roteamento interno.
-
-    - Os métodos 'get' e 'post' agora são "roteadores" limpos.
-    - Eles usam dicionários ('get_action_handlers', 'post_action_handlers')
-      para mapear a 'action' string diretamente ao método que a executa.
-    - A lógica de negócio real permanece em métodos privados (ex: _get_create_form).
-    """
-
-    # --- Lógica GET (Roteador + Handlers) ---
-
     def get(self, request, *args, **kwargs) -> HttpResponse:
         """Roteador principal para requisições GET."""
         action = request.GET.get("action")
@@ -164,8 +137,6 @@ class ManageEventView(WeddingPlannerMixin, View):
         return render(
             request, "scheduler/partials/_event_form_modal_content.html", context
         )
-
-    # --- Lógica POST (Roteador + Handlers) ---
 
     def post(self, request, *args, **kwargs) -> JsonResponse:
         """Roteador principal para requisições POST."""

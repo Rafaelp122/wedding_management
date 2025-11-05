@@ -1,6 +1,10 @@
 <form 
   method="POST"
-  hx-post="{% url 'weddings:create_wedding' %}"
+  {% if form.instance.pk %}
+    hx-post="{% url 'weddings:edit_wedding' form.instance.pk %}"
+  {% else %}
+    hx-post="{% url 'weddings:create_wedding' %}"
+  {% endif %}
   hx-swap="outerHTML"
   hx-target="this"
 >
@@ -11,12 +15,24 @@
 
     <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
 
-    <h3 class="fw-bold mb-4 text-center">Novo Casamento</h3>
+    <h3 class="fw-bold mb-4 text-center">
+      {% if form.instance.pk %}
+        Editar Casamento
+      {% else %}
+        Novo Casamento
+      {% endif %}
+    </h3>
 
     {% include "partials/_form_fields.html" with form=form form_layout_dict=form_layout_dict default_col_class=default_col_class form_icons=form_icons %}
 
     <div class="d-grid gap-2 mt-4">
-      <button type="submit" class="btn btn-primary btn-lg">Salvar Casamento</button>
+      <button type="submit" class="btn btn-primary btn-lg">
+        {% if form.instance.pk %}
+          Salvar Alterações
+        {% else %}
+          Salvar Casamento
+        {% endif %}
+      </button>
       <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
     </div>
 

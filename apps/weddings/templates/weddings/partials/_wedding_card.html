@@ -1,6 +1,6 @@
 {% with w=item.wedding %}
 
-<div class="col-md-4 mb-4">
+<div class="col-md-4 mb-4" id="wedding-card-{{ w.id }}">
     <div class="card-wrapper" data-href="{% url 'weddings:wedding_detail' w.id %}">
     <div class="card shadow-lg rounded-4 border-0 position-relative">
 
@@ -32,15 +32,21 @@
             {% endif %}
             </h5>
             <div class="d-flex gap-2">
-            <a href="{% url 'weddings:edit_wedding' w.id %}" class="btn-edit" title="Editar">
-                <i class="fas fa-pencil-alt"></i>
-            </a>
-            <form method="POST" action="{% url 'weddings:delete_wedding' w.id %}" onsubmit="return confirm('Deseja excluir este casamento?')">
-                {% csrf_token %}
-                <button type="submit" class="btn-delete" title="Excluir">
-                <i class="fas fa-trash-alt"></i>
-                </button>
-            </form>
+                <a href="#" 
+                class="btn-edit"
+                hx-get={% url 'weddings:edit_wedding' w.id %} 
+                hx-target="#modal-container"
+                data-bs-toggle="modal"
+                data-bs-target="#main-modal">
+                    <i class="fas fa-pencil-alt"></i>
+                </a>
+                
+                <form method="POST" action="{% url 'weddings:delete_wedding' w.id %}" onsubmit="return confirm('Deseja excluir este casamento?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete" title="Excluir">
+                    <i class="fas fa-trash-alt"></i>
+                    </button>
+                </form>
             </div>
         </div>
 
