@@ -12,9 +12,16 @@
     <link rel="stylesheet" href="{% static 'scheduler/css/scheduler_partial.css' %}">
 {% endblock page_styles %}
 
-{% block extra_js %} 
-    <script src="{% static 'scheduler/js/calendar.js' %}"></script>
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light-border.css"/>
-{% endblock extra_js %}
+<script>
+  // Aguarda o JS global estar pronto antes de notificar
+  window.dispatchSchedulerLoaded = () => {
+    console.log("LOG partial: scheduler_partial carregado, disparando evento global.");
+    document.dispatchEvent(new CustomEvent("scheduler:loaded"));
+  };
+
+  if (document.readyState === "complete") {
+    window.dispatchSchedulerLoaded();
+  } else {
+    window.addEventListener("load", window.dispatchSchedulerLoaded, { once: true });
+  }
+</script>

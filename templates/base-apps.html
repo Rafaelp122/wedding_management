@@ -1,40 +1,54 @@
 {% extends "_base.html" %}
 {% load static %}
 
-
-{% block title %}{% block page_title %}{% endblock %} | {{ block.super }}{% endblock %}
-
+{% block title %}
+  {% block page_title %}{% endblock %} | {{ block.super }}
+{% endblock %}
 
 {% block styles %}
+  <!-- CSS base -->
   <link rel="stylesheet" href="{% static 'css/base-apps.css' %}">
-  {% block page_styles %} {% endblock page_styles %}
+
+  <!-- ✅ FullCalendar CSS (precisa estar no HEAD) -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+  
+  <!-- ✅ Tippy CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light-border.css" />
+
+  {% block page_styles %}{% endblock page_styles %}
 {% endblock styles %}
 
 {% block body_class %}apps-layout{% endblock body_class %}
 
 {% block body_content %}
-
   {% include 'partials/apps-header.html' %}
 
-  <main class="{% block main_class %} {% endblock main_class %}">
+  <main class="{% block main_class %}{% endblock main_class %}">
     {% include "partials/messages.html" %}
-    {% block content %} {% endblock content %}
+    {% block content %}{% endblock content %}
   </main>
 
+  <!-- Modal global -->
   <div class="modal fade" id="main-modal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content" id="modal-container">
-      </div>
+      <div class="modal-content" id="modal-container"></div>
     </div>
   </div>
 
-  {% block scripts %}
-    {{ block.super }}  
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core/locales/pt-br.global.min.js'></script>
-  {% endblock scripts %}
-  
-  {% block extra_js %} 
-  {% endblock extra_js %}
 {% endblock body_content %}
+
+{% block scripts %}
+  {{ block.super }}
+
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core/locales/pt-br.global.min.js"></script>
+
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  <script src="https://unpkg.com/tippy.js@6"></script>
+
+  <script src="{% static 'scheduler/js/calendar.js' %}"></script>
+
+  {% block extra_js %}{% endblock extra_js %}
+{% endblock scripts %}
