@@ -11,30 +11,10 @@ from django.views.generic import (
     UpdateView,
 )
 
+from apps.core.utils.constants import GRADIENTS
+
 from .forms import WeddingForm
 from .models import Wedding
-
-GRADIENTS = [
-    "linear-gradient(135deg, #8e2de2, #4a00e0)",
-    "linear-gradient(135deg, #7b1fa2, #512da8)",
-    "linear-gradient(135deg, #e91e63, #ff6f61)",
-    "linear-gradient(135deg, #009688, #00695c)",
-    "linear-gradient(135deg, #3f51b5, #1a237e)",
-    "linear-gradient(135deg, #ff9800, #ef6c00)",
-    "linear-gradient(135deg, #2196f3, #0d47a1)",
-    "linear-gradient(135deg, #4caf50, #1b5e20)",
-    "linear-gradient(135deg, #f44336, #b71c1c)",
-    "linear-gradient(135deg, #ffeb3b, #fbc02d)",
-    "linear-gradient(135deg, #00bcd4, #00838f)",
-    "linear-gradient(135deg, #9c27b0, #4a148c)",
-    "linear-gradient(135deg, #cddc39, #827717)",
-    "linear-gradient(135deg, #795548, #3e2723)",
-    "linear-gradient(135deg, #607d8b, #263238)",
-    "linear-gradient(135deg, #673ab7, #311b92)",
-    "linear-gradient(135deg, #ff5722, #bf360c)",
-    "linear-gradient(135deg, #03a9f4, #01579b)",
-    "linear-gradient(135deg, #76ff03, #33691e)",
-]
 
 
 class PlannerOwnerMixin:
