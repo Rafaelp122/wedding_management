@@ -1,0 +1,23 @@
+{% extends "_base.html" %}
+{% load static %}
+
+
+{% block title %}{% block page_title %}{% endblock %} | {{ block.super }}{% endblock %}
+
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'css/base-auth.css' %}">
+  {% block page_styles %} {% endblock page_styles %}
+{% endblock styles %}
+
+
+{% block body_content %}
+
+  <main>
+    {% include "partials/messages.html" %}
+    {% block content %} {% endblock content %}
+  </main>
+  
+{% endblock body_content %}
+
+{% block extra_js %} {% endblock %}

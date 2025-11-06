@@ -1,0 +1,37 @@
+<div class="bg-white p-4 rounded aba-bloco custom-shadow-lg">
+  <h5 class="fw-bold mb-4 text-purple">Visão Geral do Orçamento</h5>
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="bloco-resumo">
+        <small>Orçamento Total</small>
+        <h4>R$ {{ total_budget|floatformat:2 }}</h4>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="bloco-resumo">
+        <small>Gasto Atual</small>
+        <h4>R$ {{ current_spent|floatformat:2 }}</h4>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="bloco-resumo">
+        <small>Saldo Disponível</small>
+        <h4 class="{% if available_balance < 0 %}text-danger{% elif available_balance == 0 %}text-warning{% else %}text-success{% endif %}">
+          R$ {{ available_balance|floatformat:2 }}
+        </h4>
+      </div>
+    </div>
+  </div>
+
+  <h6 class="fw-bold">Distribuição de Gastos</h6>
+  {% for category, value in distributed_expenses.items %}
+    <div class="mb-2">
+      <div class="d-flex justify-content-between">
+        <span>{{ category }}</span>
+        <span>R$ {{ value|floatformat:2 }}</span>
+      </div>
+      <div class="progress" style="height: 15px">
+        <div class="progress-bar bg-purple" style="width: {% if total_budget > 0 %}{% widthratio value total_budget 100 %}{% else %}0{% endif %}%;"></div>
+      </div>
+    </div>
+  {% endfor %}

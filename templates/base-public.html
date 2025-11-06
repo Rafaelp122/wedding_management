@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+{% load static %}
+
+
+{% block title %}{% block page_title %}{% endblock %} | {{ block.super }}{% endblock %}
+
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'css/base-public.css' %}">
+  {% block page_styles %} {% endblock page_styles %}
+{% endblock styles %}
+
+
+{% block body_content %}
+
+  {% include 'partials/public-header.html' %}
+
+  <main class="{% block main_class %} {% endblock main_class %}">
+    {% include "partials/messages.html" %}
+    {% block content %}{% endblock content %}
+  </main>
+
+  {% include 'partials/footer.html' %}
+
+{% endblock body_content %}

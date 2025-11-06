@@ -1,0 +1,71 @@
+{% load static %}
+
+{% comment %} Fale Conosco {% endcomment %}
+
+<section id="contact" class="py-5 bg-light">
+  <div class="container">
+    <h2 class="display-5 fw-bold mb-5 text-center" style="color: var(--color-accent);">Fale Conosco</h2>
+    
+    <div class="row">
+      <div class="col-lg-6 mb-4 mb-lg-0">
+        <form>
+          <div class="mb-3">
+            <label for="name" class="form-label">Seu Nome</label>
+            <input type="text" class="form-control" id="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Seu E-mail</label>
+            <input type="email" class="form-control" id="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="message" class="form-label">Sua Mensagem</label>
+            <textarea class="form-control" id="message" rows="5" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-role">Enviar Mensagem</button>
+        </form>
+      </div>
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h3 class="h4 fw-bold mb-4">Outras formas de contato</h3>
+            
+            <div class="d-flex align-items-start mb-4">
+              <svg class="problem-icon me-3 mt-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                <path d="M13.485 1.929a.75.75 0 0 1 1.06 1.06l-7.5 7.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 1 1 1.06-1.06L6 8.439l7.485-7.51z"/>
+              </svg>
+              <div>
+                <h4 class="h5 fw-bold">E-mail</h4>
+                <p>contato@simaceito.com.br</p>
+              </div>
+            </div>
+            
+            <div class="d-flex align-items-start mb-4">
+              <svg class="problem-icon me-3 mt-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                <path d="M13.485 1.929a.75.75 0 0 1 1.06 1.06l-7.5 7.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 1 1 1.06-1.06L6 8.439l7.485-7.51z"/>
+              </svg>
+              <div>
+                <h4 class="h5 fw-bold">Telefone</h4>
+                <p>(11) 1234-5678</p>
+                <small class="text-muted">Segunda a sexta, 9h às 18h</small>
+              </div>
+            </div>
+            
+            <div class="d-flex align-items-start">
+              <svg class="problem-icon me-3 mt-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                <path d="M13.485 1.929a.75.75 0 0 1 1.06 1.06l-7.5 7.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 1 1 1.06-1.06L6 8.439l7.485-7.51z"/>
+              </svg>
+              <div>
+                <h4 class="h5 fw-bold">Redes Sociais</h4>
+                <div class="d-flex gap-3 mt-2">
+                  <a href="#" class="text-decoration-none fs-4"><i class="fa-brands fa-facebook fa-lg" style="color: #9c27b0;"></i></a>
+                  <a href="#" class="text-decoration-none fs-4"><i class="fa-brands fa-github fa-lg" style="color: #9c27b0;"></i></a>
+                  <a href="#" class="text-decoration-none fs-4"><i class="fa-brands fa-instagram fa-lg" style="color: #9c27b0;"></i></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,18 @@
+{% extends 'base-public.html' %}
+{% block page_title %} Gestão de Casamentos {% endblock %}
+{% load static %}
+
+{% block page_styles %}
+  <link rel="stylesheet" href="{% static 'pages/css/home.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+
+  {% include 'pages/partials/home/hero.html' %}
+  {% include 'pages/partials/home/about.html' %}
+  {% include 'pages/partials/home/benefits.html' %}
+  {% include 'pages/partials/home/features.html' %}
+  {% include 'pages/partials/home/pricing.html' %}
+  {% include 'pages/partials/home/contact.html' %}
+
+{% endblock %}

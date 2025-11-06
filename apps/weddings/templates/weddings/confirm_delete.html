@@ -1,0 +1,27 @@
+{% extends "base-apps.html" %}
+
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Confirmar Exclusão</h3>
+                </div>
+                <div class="card-body">
+                    <p>Você tem certeza que deseja excluir o casamento de <strong>{{ wedding.groom_name }} e {{ wedding.bride_name }}</strong>?</p>
+                    <p class="text-danger"><strong>Atenção:</strong> Esta ação não pode ser desfeita.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Sim, excluir</button>
+                        <a href="{% url 'weddings:my_weddings' %}" class="btn btn-secondary">Cancelar</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

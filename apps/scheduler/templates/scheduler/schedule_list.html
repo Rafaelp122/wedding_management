@@ -1,0 +1,73 @@
+{% extends 'base_apps.html' %}
+{% load static %}
+
+{% block title %}{{ page_title|default:"Meus Eventos" }}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid p-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 fw-bold text-dark mb-0">Meus Eventos</h2>
+    <a href="{% url 'scheduler:create' %}" class="btn btn-primary shadow-sm">
+      <i class="fas fa-plus me-2"></i>
+      Novo Evento
+    </a>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-lg">
+    <div class="card-body">
+
+      {% if events %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Título</th>
+                <th scope="col">Data e Hora (Início)</th>
+                <th scope="col">Casamento Vinculado</th>
+                <th scope="col">Tipo</th>
+                <th scope="col" class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr>
+                <td>
+                  <a href="{% url 'scheduler:update' event_id=event.pk %}" class="text-dark fw-bold text-decoration-none">
+                    {{ event.title }}
+                  </a>
+                </td>
+                <td>{{ event.start_time|date:"d/m/Y H:i" }}</td>
+                <td>{{ event.wedding|default:"N/A" }}</td>
+                <td>
+                  <span class="badge bg-light text-dark">{{ event.get_event_type_display|default:"N/A" }}</span>
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'scheduler:update' event_id=event.pk %}" class="btn btn-sm btn-outline-primary me-2" title="Editar">
+                    <i class="fas fa-pencil-alt"></i>
+                  </a>
+                  <a href="{% url 'scheduler:delete' event_id=event.pk %}" class="btn btn-sm btn-outline-danger" title="Excluir">
+                    <i class="fas fa-trash-alt"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      {% else %}
+        <div class="text-center p-5">
+          <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+          <h5 class="fw-bold">Nenhum evento encontrado.</h5>
+          <p class="text-muted">Comece adicionando seu primeiro evento.</p>
+          <a href="{% url 'scheduler:create' %}" class="btn btn-primary mt-3">
+            Criar primeiro evento
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock content %}

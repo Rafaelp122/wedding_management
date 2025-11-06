@@ -1,0 +1,27 @@
+{% load static %}
+
+<div class="card shadow">
+    <div class="card-body">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+{{ wedding.id|default:None|json_script:"wedding-id-data" }} 
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'scheduler/css/scheduler_partial.css' %}">
+{% endblock page_styles %}
+
+<script>
+  // Aguarda o JS global estar pronto antes de notificar
+  window.dispatchSchedulerLoaded = () => {
+    console.log("LOG partial: scheduler_partial carregado, disparando evento global.");
+    document.dispatchEvent(new CustomEvent("scheduler:loaded"));
+  };
+
+  if (document.readyState === "complete") {
+    window.dispatchSchedulerLoaded();
+  } else {
+    window.addEventListener("load", window.dispatchSchedulerLoaded, { once: true });
+  }
+</script>

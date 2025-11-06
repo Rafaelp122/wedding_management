@@ -1,0 +1,39 @@
+<div id="items-wrapper" class="bg-white p-4 rounded aba-bloco custom-shadow-lg">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="fw-bold text-purple mb-0">Lista de Itens do Casamento</h5>
+      
+      <a href="#" 
+         class="btn btn-primary"
+         hx-get="{% url 'items:add_item' wedding.id %}"
+         hx-target="#items-wrapper"
+         hx-swap="outerHTML">
+         + Adicionar Item
+      </a>
+  </div>
+
+  {% if items %}
+  <div class="row gy-4">
+      {% for item in items %}
+      <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm item-card">
+              <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="card-title fw-bold text-purple mb-0">{{ item.name }}</h6>
+                      {% if item.status == 'DONE' %}<span class="badge bg-success rounded-pill">{{ item.get_status_display }}</span>
+                      {% elif item.status == 'IN_PROGRESS' %}<span class="badge bg-warning text-dark rounded-pill">{{ item.get_status_display }}</span>
+                      {% else %}<span class="badge bg-info text-dark rounded-pill">{{ item.get_status_display }}</span>
+                      {% endif %}
+                  </div>
+                  <p class="card-text text-muted small">{{ item.description|truncatewords:15 }}</p>
+                  <p class="text-muted small mb-0"><strong>Fornecedor:</strong> {{ item.supplier.name|default:"N/D" }}</p>
+              </div>
+          </div>
+      </div>
+      {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+      <p class="text-muted">Nenhum item cadastrado ainda.</p>
+  </div>
+  {% endif %}
+</div>

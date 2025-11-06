@@ -1,0 +1,92 @@
+{% extends 'base-apps.html' %}
+{% load static %}
+{% block page_title %} Meus Casamentos {% endblock %}
+
+{% block page_styles %}
+  <link rel="stylesheet" href="{% static 'weddings/css/list.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+<div class="container py-3">
+  
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="display-6 fw-bold text-dark">Meus Casamentos</h2>
+      <p class="text-muted fs-5">Gerencie todos os detalhes dos seus eventos</p>
+    </div>
+
+    <button class="btn btn-primary"
+          hx-get="{% url 'weddings:create_wedding' %}"  
+          hx-target="#modal-container"
+          data-bs-toggle="modal"
+          data-bs-target="#main-modal">
+      <i class="fas fa-plus me-1"></i> Novo Casamento
+    </button>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5" id="wedding-list-container">
+    
+    {% for item in weddings_with_clients %}
+      <div class="col" id="wedding-card-{{ item.wedding.id }}">
+        {% include 'weddings/partials/_wedding_card.html' with item=item %}
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info text-center">
+          Você ainda não cadastrou nenhum casamento. 
+          <a href="#" 
+            class="link-primary fw-semibold"
+            hx-get="{% url 'weddings:create_wedding' %}"  
+            hx-target="#modal-container"
+            data-bs-toggle="modal"
+            data-bs-target="#main-modal">
+            Clique aqui para adicionar
+          </a>.
+        </div>
+      </div>
+    {% endfor %}
+  
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.body.addEventListener('click', function(e) {
+    
+    // Procura pelo 'card-wrapper' clicável
+    const cardWrapper = e.target.closest('.card-wrapper');
+
+    // Ignora se não for um card-wrapper ou se o clique foi num link, botão ou form
+    if (!cardWrapper || e.target.closest('a') || e.target.closest('button') || e.target.closest('form')) {
+      return;
+    }
+
+    // Redireciona para a página de detalhes
+    const link = cardWrapper.getAttribute('data-href');
+    if (link) {
+      window.location.href = link;
+    }
+  });
+</script>
+
+<script>
+  // Seu script para fechar o modal (ótimo para HTMX)
+  document.body.addEventListener('weddingCreated', function(evt) {
+    const modalEl = document.getElementById('main-modal');
+    if (modalEl) {
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) {
+        modalInstance.hide(); 
+      }
+      
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(b => b.remove());
+
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = ''; // Garante que o scroll da página volte
+    }
+  });
+</script>
+
+{% endblock %}

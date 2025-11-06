@@ -1,0 +1,59 @@
+:root {
+  --font-primary: 'Georgia', serif;
+  --font-secondary: 'Montserrat', sans-serif;
+  --color-accent: rgb(156, 39, 176);
+  --color-button: #9c27b0;
+  --color-button-hover: #7B1FA2;
+  --color-button-text: #ffffff;
+  --color-text-secondary: #6c757d;
+  --color-text-highlight: #000000;
+  --color-bg-highlight: #fff9e6;
+}
+
+.contact-us-page {
+  font-family: var(--font-secondary);
+  color: #333;
+  line-height: 1.6;
+}
+
+.contact-us-page h1,
+.contact-us-page h2,
+.contact-us-page h3,
+.contact-us-page h4,
+.contact-us-page h5,
+.contact-us-page h6 {
+  font-family: var(--font-primary);
+  color: var(--color-accent);
+}
+
+.contact-us-page .btn-primary {
+  background-color: var(--color-button);
+  border-color: var(--color-button);
+  color: var(--color-button-text);
+  font-weight: 500;
+  padding: 10px 25px;
+  transition: all 0.3s ease;
+}
+
+.contact-us-page .btn-primary:hover {
+  background-color: var(--color-button-hover);
+  border-color: var(--color-button-hover);
+  transform: translateY(-2px);
+}
+
+.contact-us-page .highlight-bg {
+  background-color: var(--color-bg-highlight);
+  padding: 2rem;
+  border-radius: 10px;
+}
+
+.contact-us-page .contact-icon {
+  font-size: 2.5rem;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+}
+
+.contact-us-page .form-control:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 0.25rem rgba(156, 39, 176, 0.25);
+}
