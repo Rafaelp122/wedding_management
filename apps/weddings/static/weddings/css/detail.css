@@ -60,3 +60,17 @@ a {
   border-bottom-color: rgb(156, 39, 176);
   font-weight: 500;
 }
+
+/* partial budget */
+
+.custom-budget-bg {
+  background-color: rgb(243 229 245 / var(--tw-bg-opacity, 1));
+}
+
+.total-budget-text {
+  color: rgb(156 39 176 / var(--tw-text-opacity, 1));
+}
+
+.current-budget-text {
+  color: rgb(123 31 162 / var(--tw-text-opacity, 1));
+}
