@@ -11,27 +11,42 @@
 
 {% block content %}
 <div class="container py-4">
-  <a href="{% url 'weddings:my_weddings' %}" class="text-decoration-none text-purple mb-4 d-inline-block">
-    <i class="fas fa-arrow-left"></i> Voltar para Meus Casamentos
+  <a href="{% url 'weddings:my_weddings' %}" class="btn btn-link p-0 text-decoration-none fw-medium mb-4 d-inline-block" style="color: #9C27B0;">
+    <i class="fas fa-arrow-left me-2"></i> Voltar para Meus Casamentos
   </a>
 
-  <!-- Cabeçalho com nomes e data -->
-  <div class="card shadow-lg-tailwind rounded-3 p-4 mb-4">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <h4 class="fw-bold text-purple mb-1">
-          {% if wedding.groom_name and wedding.bride_name %}
-            {{ wedding.groom_name }} & {{ wedding.bride_name }}
-          {% else %}
-            Casamento sem nome definido
-          {% endif %}
-        </h4>
-        <p class="text-muted">{{ wedding.date|date:"d \d\e F, Y" }} - {{ wedding.location }}</p>
-      </div>
-      <div>
-        <a href="#" class="btn btn-outline-primary me-2">Exportar</a>
-        <a href="#" class="btn btn-outline-secondary">Compartilhar</a>
-      </div>
+  <div class="card custom-shadow-lg rounded-4 p-4 mb-4">
+    <div class="d-flex flex-column flex-md-row align-items-md-center">
+      
+        <div class="d-flex align-items-center mb-3 mb-md-0 me-md-4">
+            <div class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center text-white fs-5 fw-bold me-3" style="width: 64px; height: 64px; flex-shrink: 0;">
+                {% if wedding.groom_name and wedding.bride_name %}
+                    {{ wedding.groom_name|slice:":1" }}&{{ wedding.bride_name|slice:":1" }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+
+            <div>
+                <h4 class="fw-bold text-dark mb-0">
+                  {% if wedding.groom_name and wedding.bride_name %}
+                    {{ wedding.groom_name }} & {{ wedding.bride_name }}
+                  {% else %}
+                    Casamento sem nome definido
+                  {% endif %}
+                </h4>
+                <p class="text-muted mb-0">{{ wedding.date|date:"d \d\e F, Y" }} - {{ wedding.location }}</p>
+            </div>
+        </div>
+
+        <div class="ms-md-auto d-flex">
+            <a href="#" class="btn btn-primary d-flex align-items-center me-3">
+                <i class="fas fa-download me-2"></i> Exportar
+            </a>
+            <a href="#" class="btn btn-outline-primary d-flex align-items-center">
+                <i class="fas fa-share-alt me-2"></i> Compartilhar
+            </a>
+        </div>
     </div>
   </div>
 
@@ -52,7 +67,7 @@
     </li>
     <li class="nav-item">
       <a
-        class="nav-link"
+        class="nav-link active"
         href="#"
         data-tab="contracts"
         hx-get="{% url 'contracts:partial_contracts' wedding.id %}"
@@ -65,7 +80,7 @@
     </li>
     <li class="nav-item">
       <a
-        class="nav-link"
+        class="nav-link active"
         href="#"
         data-tab="items"
         hx-get="{% url 'items:partial_items' wedding.id %}"
@@ -78,7 +93,7 @@
     </li>
     <li class="nav-item">
       <a
-        class="nav-link"
+        class="nav-link active"
         href="#"
         data-tab="scheduler"
         hx-get="{% url 'scheduler:partial_scheduler' wedding.id %}"
@@ -102,7 +117,6 @@
 {% endblock content %}
 
 {% block extra_js %}
-
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const tabLinks = document.querySelectorAll('#abasCasamento .nav-link');
@@ -112,12 +126,14 @@
       link.addEventListener('click', function(e) {
         e.preventDefault();
 
+        // Remove 'active' de todas as abas e esconde todos os painéis
         tabLinks.forEach(l => l.classList.remove('active'));
         tabPanes.forEach(pane => {
           pane.classList.remove('active');
           pane.classList.add('d-none');
         });
 
+        // Adiciona 'active' à aba clicada e mostra o painel correspondente
         this.classList.add('active');
         const tabId = 'tab-' + this.dataset.tab;
         const content = document.getElementById(tabId);
@@ -126,7 +142,7 @@
       });
     });
 
-    // Carrega a primeira aba automaticamente
+    // Dispara o clique (e o HTMX) na primeira aba ao carregar a página
     tabLinks[0].click();
   });
 </script>
