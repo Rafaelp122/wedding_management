@@ -1,10 +1,13 @@
 from django.urls import path
-from . import views
+
+from .views import ContractsPartialView
 
 app_name = "contracts"
 
 urlpatterns = [
     path(
-        "partial/<int:wedding_id>/", views.partial_contracts, name="partial_contracts"
+        "partial/<int:wedding_id>/",
+        ContractsPartialView.as_view(),
+        name="partial_contracts"
     ),
 ]

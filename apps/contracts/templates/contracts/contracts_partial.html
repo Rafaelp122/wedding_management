@@ -1,36 +1,55 @@
-<div class="bg-white p-4 rounded aba-bloco custom-shadow-lg">
-  <h5 class="fw-bold mb-4 text-purple">Contratos do Casamento</h5>
+<div class="bg-white p-4 rounded-4 aba-bloco custom-shadow-lg">
+  
+  <h3 class="fs-4 fw-bold text-dark mb-4">Contratos do Casamento</h3>
 
-  {% if contracts %}
+  {% if contracts_list %}
     <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
+      <table class="table align-middle">
+        
+        <thead class="table-light thead-custom-color">
           <tr>
-            <th scope="col">Item</th>
             <th scope="col">Fornecedor</th>
+            <th scope="col">Item</th>
             <th scope="col">Data da Criação</th>
             <th scope="col">Status</th>
             <th scope="col">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {% for contract in contracts %}
+          {% for item in contracts_list %}
+            
+            {% with contract=item.contract %}
             <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                       style="width: 40px; height: 40px; background: {{ item.gradient }};">
+                    {{ contract.supplier.name|slice:":1"|default:"-" }}
+                  </div>
+                  <div>{{ contract.supplier.name|default:"N/A" }}</div>
+                </div>
+              </td>
               <td>{{ contract.item.name|default:"N/A" }}</td>
-              <td>{{ contract.supplier.name|default:"N/A" }}</td>
               <td>{{ contract.created_at|date:"d/m/Y" }}</td>
               <td>
-                <span class="badge bg-primary rounded-pill">{{ contract.status }}</span>
+                {% if contract.status == "Assinado" %}
+                  <span class="badge rounded-pill bg-success-subtle text-success-emphasis">{{ contract.status }}</span>
+                {% elif contract.status == "Pendente" %}
+                  <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">{{ contract.status }}</span>
+                {% else %}
+                  <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ contract.status }}</span>
+                {% endif %}
               </td>
-              <td class="whitespace-nowrap">
-                <button class="text-primary hover:text-secondary mr-3">
+              <td class="text-nowrap">
+                <a href="#" class="btn btn-link text-primary p-0 me-3" title="Visualizar">
                     <i class="fas fa-eye"></i>
-                </button>
-                <button class="text-primary hover:text-secondary">
+                </a>
+                <a href="#" class="btn btn-link text-primary p-0" title="Download">
                     <i class="fas fa-download"></i>
-                </button>
-            </td>
+                </a>
+              </td>
             </tr>
+            {% endwith %}
           {% endfor %}
         </tbody>
       </table>
@@ -38,4 +57,5 @@
   {% else %}
     <p class="text-muted">Nenhum contrato foi gerado para este casamento ainda.</p>
   {% endif %}
+
 </div>

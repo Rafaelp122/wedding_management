@@ -61,6 +61,7 @@ a {
   font-weight: 500;
 }
 
+
 /* partial budget */
 
 .custom-budget-bg {
@@ -73,4 +74,11 @@ a {
 
 .current-budget-text {
   color: rgb(123 31 162 / var(--tw-text-opacity, 1));
+}
+
+
+/* partial contracts */
+
+.thead-custom-color th {
+  color: rgb(107, 114, 128);
 }

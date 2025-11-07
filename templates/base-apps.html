@@ -6,15 +6,9 @@
 {% endblock %}
 
 {% block styles %}
-  <!-- CSS base -->
   <link rel="stylesheet" href="{% static 'css/base-apps.css' %}">
-
-  <!-- ✅ FullCalendar CSS (precisa estar no HEAD) -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-  
-  <!-- ✅ Tippy CSS -->
   <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light-border.css" />
-
   {% block page_styles %}{% endblock page_styles %}
 {% endblock styles %}
 
