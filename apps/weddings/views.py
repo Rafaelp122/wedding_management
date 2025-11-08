@@ -17,243 +17,169 @@ from .forms import WeddingForm
 from .models import Wedding
 
 
-class PlannerOwnerMixin:
+class WeddingBaseMixin(LoginRequiredMixin):
+    """
+    Unifica:
+    - filtro por planner
+    - order_by
+    - annotate (items_count, contracts_count)
+    - geração de weddings_with_clients
+    - renderização HTMX da lista
+    """
+
     def get_queryset(self):
+        """
+        Método de segurança padrão (usado por UpdateView, DeleteView).
+        Garante que o usuário só pode operar em seus próprios objetos.
+        """
         queryset = super().get_queryset()
         return queryset.filter(planner=self.request.user)
 
+    def get_base_queryset(self):
+        return (
+            Wedding.objects.filter(planner=self.request.user)
+            .order_by("id")
+            .annotate(
+                items_count=Count("item", distinct=True),
+                contracts_count=Count("contract", distinct=True),
+            )
+        )
 
-class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
+    def build_weddings_with_clients(self, queryset=None):
+        qs = queryset if queryset is not None else self.get_base_queryset()
+        return [
+            {
+                "wedding": wedding,
+                "gradient": GRADIENTS[idx % len(GRADIENTS)],
+                "items_count": wedding.items_count,
+                "contracts_count": wedding.contracts_count,
+            }
+            for idx, wedding in enumerate(qs)
+        ]
+
+    def render_wedding_list_response(self, trigger="weddingCreated"):
+        context = {"weddings_with_clients": self.build_weddings_with_clients()}
+        html = render_to_string(
+            "weddings/partials/_wedding_list_content.html",
+            context,
+            request=self.request,
+        )
+
+        response = HttpResponse(html)
+        response["HX-Retarget"] = "#wedding-list-container"
+        response["HX-Reswap"] = "innerHTML"
+        response["HX-Trigger-After-Swap"] = trigger
+        return response
+
+
+class WeddingFormLayoutMixin:
+    """
+    Define o layout e ícones para o formulário de Casamento.
+    """
+    form_class = WeddingForm
+    template_name = "weddings/partials/_create_wedding_form.html"
+
+    form_layout_dict = {
+        "groom_name": "col-md-6",
+        "bride_name": "col-md-6",
+        "date": "col-md-6",
+        "location": "col-md-12",
+        "budget": "col-md-6",
+    }
+    default_col_class = "col-12"
+    form_icons = {
+        "groom_name": "fas fa-user",
+        "bride_name": "fas fa-user",
+        "date": "fas fa-calendar-days",
+        "location": "fas fa-location-dot",
+        "budget": "fas fa-money-bill-wave",
+    }
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["form_layout_dict"] = self.form_layout_dict
+        ctx["default_col_class"] = self.default_col_class
+        ctx["form_icons"] = self.form_icons
+        return ctx
+
+
+class WeddingListView(WeddingBaseMixin, ListView):
     model = Wedding
     template_name = "weddings/list.html"
     context_object_name = "weddings"
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        # Usa o método do Mixin
+        return self.get_base_queryset()
 
-        queryset = queryset.order_by('id')
-
-        queryset = queryset.annotate(
-            items_count=Count('item', distinct=True),
-            contracts_count=Count('contract', distinct=True)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Adiciona o contexto da lista ('weddings_with_clients') do Mixin
+        context.update(
+            {"weddings_with_clients": self.build_weddings_with_clients()}
         )
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        weddings = self.object_list
-
-        context["weddings_with_clients"] = [
-            {
-                "wedding": wedding,
-                "gradient": GRADIENTS[idx % len(GRADIENTS)],
-                "items_count": wedding.items_count,
-                "contracts_count": wedding.contracts_count,
-            }
-            for idx, wedding in enumerate(weddings)
-        ]
         return context
 
 
-class WeddingCreateView(LoginRequiredMixin, CreateView):
+class WeddingCreateView(WeddingBaseMixin, WeddingFormLayoutMixin, CreateView):
     model = Wedding
-    form_class = WeddingForm
-    template_name = "weddings/partials/_create_wedding_form.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context["form_layout_dict"] = {
-            "groom_name": "col-md-6",
-            "bride_name": "col-md-6",
-            "date": "col-md-6",
-            "location": "col-md-12",
-            "budget": "col-md-6",
-        }
-
-        context["default_col_class"] = "col-12"
-
-        context["form_icons"] = {
-            "groom_name": "fas fa-user",
-            "bride_name": "fas fa-user",
-            "date": "fas fa-calendar-days",
-            "location": "fas fa-location-dot",
-            "budget": "fas fa-money-bill-wave",
-        }
-
-        return context
+    # form_class e template_name vêm do WeddingFormLayoutMixin
+    # get_context_data vem do WeddingFormLayoutMixin
 
     def form_valid(self, form):
         form.instance.planner = self.request.user
-        # Esta variável está sendo usada, nao remover
-        new_wedding = form.save()
-
-        queryset = Wedding.objects.filter(planner=self.request.user)
-        queryset = queryset.order_by('id')
-        queryset = queryset.annotate(
-            items_count=Count('item', distinct=True),
-            contracts_count=Count('contract', distinct=True)
-        )
-
-        weddings_with_clients = [
-            {
-                "wedding": wedding,
-                "gradient": GRADIENTS[idx % len(GRADIENTS)],
-                "items_count": wedding.items_count,
-                "contracts_count": wedding.contracts_count,
-            }
-            for idx, wedding in enumerate(queryset)
-        ]
-
-        context = {
-            "weddings_with_clients": weddings_with_clients
-        }
-
-        html = render_to_string(
-            "weddings/partials/_wedding_list_content.html",
-            context,
-            request=self.request,
-        )
-
-        response = HttpResponse(html)
-        response["HX-Retarget"] = '#wedding-list-container'
-        response["HX-Reswap"] = 'innerHTML'
-        response["HX-Trigger-After-Swap"] = 'weddingCreated'
-        return response
-
-    def form_invalid(self, form):
-        response = super().form_invalid(form)
-        return response
+        form.save()
+        # Retorna a resposta HTMX completa do Mixin
+        return self.render_wedding_list_response()
 
 
-class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
+class WeddingUpdateView(WeddingFormLayoutMixin, WeddingBaseMixin, UpdateView):
     model = Wedding
-    form_class = WeddingForm
-    template_name = "weddings/partials/_create_wedding_form.html"
     pk_url_kwarg = "id"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context["form_layout_dict"] = {
-            "groom_name": "col-md-6",
-            "bride_name": "col-md-6",
-            "date": "col-md-6",
-            "location": "col-md-12",
-            "budget": "col-md-6",
-        }
-
-        context["default_col_class"] = "col-12"
-
-        context["form_icons"] = {
-            "groom_name": "fas fa-user",
-            "bride_name": "fas fa-user",
-            "date": "fas fa-calendar-days",
-            "location": "fas fa-location-dot",
-            "budget": "fas fa-money-bill-wave",
-        }
-
-        return context
-
-    def form_invalid(self, form):
-        response = super().form_invalid(form)
-        return response
+    # form_class e template_name vêm do WeddingFormLayoutMixin
+    # get_context_data vem do WeddingFormLayoutMixin
 
     def form_valid(self, form):
-        # Esta variável está sendo usada, nao remover
-        updated_wedding = form.save()
-
-        queryset = Wedding.objects.filter(planner=self.request.user)
-        queryset = queryset.order_by('id')
-        queryset = queryset.annotate(
-            items_count=Count('item', distinct=True),
-            contracts_count=Count('contract', distinct=True)
-        )
-
-        weddings_with_clients = [
-            {
-                "wedding": wedding,
-                "gradient": GRADIENTS[idx % len(GRADIENTS)],
-                "items_count": wedding.items_count,
-                "contracts_count": wedding.contracts_count,
-            }
-            for idx, wedding in enumerate(queryset)
-        ]
-
-        context = {
-            "weddings_with_clients": weddings_with_clients
-        }
-
-        html = render_to_string(
-            "weddings/partials/_wedding_list_content.html",
-            context,
-            request=self.request,
-        )
-
-        response = HttpResponse(html)
-        response["HX-Retarget"] = '#wedding-list-container'
-        response["HX-Reswap"] = 'innerHTML'
-        response["HX-Trigger-After-Swap"] = 'weddingCreated'
-        return response
+        form.save()
+        # Retorna a resposta HTMX completa do Mixin
+        return self.render_wedding_list_response()
 
 
-class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
+class WeddingDeleteView(WeddingBaseMixin, DeleteView):
     model = Wedding
     template_name = "partials/confirm_delete_modal.html"
     pk_url_kwarg = "id"
 
     def get_context_data(self, **kwargs):
+        # Esta view ainda precisa do seu próprio get_context_data
+        # para o modal de deleção reutilizável
         context = super().get_context_data(**kwargs)
-
-        # Variáveis passadas para o modal de deleção reutilizável
         context['object_name'] = str(self.object)
         context['object_type'] = 'o casamento'
         context['hx_post_url'] = reverse(
             'weddings:delete_wedding',
             kwargs={'id': self.object.pk}
         )
-
         context['hx_target_id'] = '#wedding-list-container'
-
         return context
 
     def post(self, request, *args, **kwargs):
-        user = self.request.user
-
         self.object = self.get_object()
         self.object.delete()
-
-        queryset = Wedding.objects.filter(planner=user)
-        queryset = queryset.order_by('id')
-        queryset = queryset.annotate(
-            items_count=Count('item', distinct=True),
-            contracts_count=Count('contract', distinct=True)
-        )
-
-        weddings_with_clients = [
-            {
-                "wedding": wedding,
-                "gradient": GRADIENTS[idx % len(GRADIENTS)],
-                "items_count": wedding.items_count,
-                "contracts_count": wedding.contracts_count,
-            }
-            for idx, wedding in enumerate(queryset)
-        ]
-
-        context = {"weddings_with_clients": weddings_with_clients}
-
-        html = render_to_string(
-            "weddings/partials/_wedding_list_content.html",
-            context
-        )
-
-        response = HttpResponse(html)
-        response["HX-Trigger-After-Swap"] = 'weddingCreated'
-        return response
+        # Retorna a resposta HTMX completa do Mixin
+        return self.render_wedding_list_response()
 
 
-class WeddingDetailView(LoginRequiredMixin, PlannerOwnerMixin, DetailView):
+class WeddingDetailView(DetailView):
+    # Esta view não muda, pois é única
     model = Wedding
     template_name = "weddings/detail.html"
     context_object_name = "wedding"
     pk_url_kwarg = "wedding_id"
+
+    def get_queryset(self):
+        """
+        Garante que o usuário só pode ver seus próprios casamentos.
+        """
+        queryset = super().get_queryset()
+        return queryset.filter(planner=self.request.user)
