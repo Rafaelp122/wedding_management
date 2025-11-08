@@ -33,7 +33,7 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
 
         queryset = queryset.order_by('id')
 
-        queryset = queryset.select_related("client").annotate(
+        queryset = queryset.annotate(
             items_count=Count('item', distinct=True),
             contracts_count=Count('contract', distinct=True)
         )
@@ -46,7 +46,6 @@ class WeddingListView(LoginRequiredMixin, PlannerOwnerMixin, ListView):
         context["weddings_with_clients"] = [
             {
                 "wedding": wedding,
-                "client": wedding.client,
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
                 "items_count": wedding.items_count,
                 "contracts_count": wedding.contracts_count,
@@ -65,7 +64,6 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
 
         context["form_layout_dict"] = {
-            "client": "col-md-12",
             "groom_name": "col-md-6",
             "bride_name": "col-md-6",
             "date": "col-md-6",
@@ -76,7 +74,6 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
         context["default_col_class"] = "col-12"
 
         context["form_icons"] = {
-            "client": "fas fa-id-card",
             "groom_name": "fas fa-user",
             "bride_name": "fas fa-user",
             "date": "fas fa-calendar-days",
@@ -93,7 +90,7 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
 
         queryset = Wedding.objects.filter(planner=self.request.user)
         queryset = queryset.order_by('id')
-        queryset = queryset.select_related("client").annotate(
+        queryset = queryset.annotate(
             items_count=Count('item', distinct=True),
             contracts_count=Count('contract', distinct=True)
         )
@@ -101,7 +98,6 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
         weddings_with_clients = [
             {
                 "wedding": wedding,
-                "client": wedding.client,
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
                 "items_count": wedding.items_count,
                 "contracts_count": wedding.contracts_count,
@@ -140,7 +136,6 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
         context = super().get_context_data(**kwargs)
 
         context["form_layout_dict"] = {
-            "client": "col-md-12",
             "groom_name": "col-md-6",
             "bride_name": "col-md-6",
             "date": "col-md-6",
@@ -151,7 +146,6 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
         context["default_col_class"] = "col-12"
 
         context["form_icons"] = {
-            "client": "fas fa-id-card",
             "groom_name": "fas fa-user",
             "bride_name": "fas fa-user",
             "date": "fas fa-calendar-days",
@@ -171,7 +165,7 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
 
         queryset = Wedding.objects.filter(planner=self.request.user)
         queryset = queryset.order_by('id')
-        queryset = queryset.select_related("client").annotate(
+        queryset = queryset.annotate(
             items_count=Count('item', distinct=True),
             contracts_count=Count('contract', distinct=True)
         )
@@ -179,7 +173,6 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
         weddings_with_clients = [
             {
                 "wedding": wedding,
-                "client": wedding.client,
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
                 "items_count": wedding.items_count,
                 "contracts_count": wedding.contracts_count,

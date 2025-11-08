@@ -13,16 +13,11 @@ class Wedding(models.Model):
         blank=True,
         null=True,
     )
-    groom_name = models.CharField(max_length=100, blank=True, null=True)
-    bride_name = models.CharField(max_length=100, blank=True, null=True)
+    groom_name = models.CharField(max_length=100)
+    bride_name = models.CharField(max_length=100)
     date = models.DateField()
     location = models.CharField(max_length=255)
     budget = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        if self.groom_name and self.bride_name:
-            return f"{self.groom_name} & {self.bride_name} - {self.date}"
-        elif self.client:
-            return f"{self.client.name} - {self.date}"
-        else:
-            return f"Wedding on {self.date}"
+        return f"{self.groom_name} & {self.bride_name}"
