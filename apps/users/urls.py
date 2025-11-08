@@ -1,4 +1,5 @@
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required
 from django.urls import path
 
 from . import views
@@ -12,5 +13,10 @@ urlpatterns = [
         "deslogar/",
         auth_views.LogoutView.as_view(next_page="users:sign_in"),
         name="logout",
+    ),
+    path(
+        "editar-perfil/",
+        login_required(views.EditProfileView.as_view()),
+        name="edit_profile",
     ),
 ]

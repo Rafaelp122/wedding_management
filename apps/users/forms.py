@@ -57,9 +57,21 @@ class SignInForm(FormStylingMixinLarge, AuthenticationForm):
     )
 
 
-class CustomUserChangeForm(UserChangeForm):
+class CustomUserChangeForm(FormStylingMixinLarge, UserChangeForm):
     password = None
 
     class Meta:
         model = User
         fields = ("username", "email", "first_name", "last_name")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = "Usuário"
+        self.fields["email"].label = "E-mail"
+        self.fields["first_name"].label = "Primeiro Nome"
+        self.fields["last_name"].label = "Último Nome"
+
+        add_placeholder(self.fields["username"], "Digite seu usuário")
+        add_placeholder(self.fields["email"], "seu@email.com")
+        add_placeholder(self.fields["first_name"], "Ex: Pedro")
+        add_placeholder(self.fields["last_name"], "Ex: Silva")
