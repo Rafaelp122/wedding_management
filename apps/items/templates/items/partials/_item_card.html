@@ -1,0 +1,136 @@
+{% comment %} 
+  ARQUIVO: items/_item_card.html
+  Este template renderiza um único card de item.
+{% endcomment %}
+
+{% comment %} 
+  Define a coluna da grade do Bootstrap. 
+  Tudo dentro disso será substituído pelo HTMX.
+{% endcomment %}
+<div class="col-md-6 col-lg-4">
+    {% comment %} 
+      'h-100' faz todos os cards terem a mesma altura.
+      'd-flex flex-column' no card-body (abaixo) ajuda a alinhar 
+      o rodapé do card (com o menu de 3 pontos).
+    {% endcomment %}
+    <div class="card h-100 shadow-sm item-card">
+        <div class="card-body d-flex flex-column">
+            
+            {% comment %} ---------- SEÇÃO SUPERIOR: TÍTULO E STATUS ---------- {% endcomment %}
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="card-title fw-bold text-dark mb-0">{{ item.name }}</h6>
+                
+                {% comment %} 
+                  Exibe um badge 'sutil' com base no status atual do item.
+                  Vem do 'item.get_status_display' do model.
+                {% endcomment %}
+                {% if item.status == 'DONE' %}
+                  <span class="badge rounded-pill bg-success-subtle text-success-emphasis">{{ item.get_status_display }}</span>
+                {% elif item.status == 'IN_PROGRESS' %}
+                  <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">{{ item.get_status_display }}</span>
+                {% else %}
+                  <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{ item.get_status_display }}</span>
+                {% endif %}
+            </div>
+
+            {% comment %} ---------- SEÇÃO DO MEIO: DESCRIÇÃO ---------- {% endcomment %}
+            {% comment %} 
+              Usa a classe CSS 'card-description-scroll' para limitar a altura
+              e adicionar uma barra de rolagem se o texto for muito longo.
+            {% endcomment %}
+            <p class="card-text text-muted small card-description-scroll">
+                {{ item.description }}
+            </p>
+
+            {% comment %} ---------- SEÇÃO INFERIOR: FORNECEDOR E AÇÕES ---------- {% endcomment %}
+            {% comment %} 
+              'mt-auto' (margin-top: auto) empurra este bloco 
+              para o fundo do card.
+            {% endcomment %}
+            <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
+                <p class="text-muted small mb-0"><strong>Fornecedor:</strong> {{ item.supplier.name|default:"N/D" }}</p>
+                
+                {% comment %} 
+                  Este é o dropdown (menu de 3 pontos) do Bootstrap.
+                {% endcomment %}
+                <div class="dropdown">
+                    {% comment %} O botão (os 3 pontos) que abre o menu {% endcomment %}
+                    <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="line-height: 1;">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    
+                    {% comment %} A lista de opções do menu {% endcomment %}
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">Ações do Item</h6></li>
+                        
+                        {% comment %} 
+                          Ação ATUALIZAR (GET): 
+                          - hx-get: Busca o formulário de edição na view 'edit_item'.
+                          - hx-target: O alvo é '#items-wrapper' (o container inteiro).
+                          - hx-swap: Substitui o container inteiro pelo formulário.
+                        {% endcomment %}
+                        <li><a class="dropdown-item" href="#"
+                               hx-get="{% url 'items:edit_item' item.pk %}"
+                               hx-target="#items-wrapper"
+                               hx-swap="outerHTML">
+                            <i class="fas fa-pencil-alt fa-fw me-2"></i> Atualizar
+                        </a></li>
+                        
+                        {% comment %} 
+                          Ação DELETAR (POST):
+                          - hx-post: Envia um POST para a view 'delete_item'.
+                          - hx-vals: Inclui o CSRF token necessário para o POST.
+                          - hx-target/hx-swap: Substitui o container pela lista atualizada.
+                          - hx-confirm: Mostra um pop-up de confirmação.
+                        {% endcomment %}
+                        <li><a class="dropdown-item" href="#"
+                               hx-post="{% url 'items:delete_item' item.pk %}"
+                               hx-vals='{"csrfmiddlewaretoken": "{{ csrf_token }}"}'
+                               hx-target="#items-wrapper"
+                               hx-swap="outerHTML"
+                               hx-confirm="Tem certeza que deseja excluir o item '{{ item.name }}'?">
+                            <i class="fas fa-trash-alt fa-fw me-2 text-danger"></i> Deletar
+                        </a></li>
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Mudar Status</h6></li>
+                        
+                        {% comment %} 
+                          Ação MUDAR STATUS (POST):
+                          - hx-post: Envia um POST para a view 'update_status'.
+                          - hx-vals: Envia o novo 'status' E o 'csrf_token'.
+                          - hx-target/hx-swap: Substitui o container pela lista atualizada.
+                        {% endcomment %}
+                        {% if item.status != 'PENDING' %}
+                            <li><a class="dropdown-item" href="#"
+                                   hx-post="{% url 'items:update_status' item.pk %}"
+                                   hx-vals='{"status": "PENDING", "csrfmiddlewaretoken": "{{ csrf_token }}"}'
+                                   hx-target="#items-wrapper"
+                                   hx-swap="outerHTML">
+                                <i class="fas fa-exclamation-circle fa-fw me-2 text-info"></i> Pendente
+                            </a></li>
+                        {% endif %}
+                        {% if item.status != 'IN_PROGRESS' %}
+                            <li><a class="dropdown-item" href="#"
+                                   hx-post="{% url 'items:update_status' item.pk %}"
+                                   hx-vals='{"status": "IN_PROGRESS", "csrfmiddlewaretoken": "{{ csrf_token }}"}'
+                                   hx-target="#items-wrapper"
+                                   hx-swap="outerHTML">
+                                <i class="fas fa-spinner fa-fw me-2 text-warning"></i> Em Andamento
+                            </a></li>
+                        {% endif %}
+                        {% if item.status != 'DONE' %}
+                            <li><a class="dropdown-item" href="#"
+                                   hx-post="{% url 'items:update_status' item.pk %}"
+                                   hx-vals='{"status": "DONE", "csrfmiddlewaretoken": "{{ csrf_token }}"}'
+                                   hx-target="#items-wrapper"
+                                   hx-swap="outerHTML">
+                                <i class="fas fa-check-circle fa-fw me-2 text-success"></i> Concluído
+                            </a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -60,41 +60,41 @@
       },
       events: `/scheduler/api/events/${weddingId}/`,
 
-eventContent(arg) {
-  const e = arg.event;
-  const props = e.extendedProps || {};
+      eventContent(arg) {
+        const e = arg.event;
+        const props = e.extendedProps || {};
 
-  // Casamento especial
-  if (props.isWeddingDay) {
-    const coupleNames = e.title || "Casamento";
-    return {
-      html: `
-        <div class="fc-event-wedding">
-          <div class="couple-names">${coupleNames}</div>
-          <div class="heart">❤️</div>
-        </div>
-      `
-    };
-  }
+        // Casamento especial
+        if (props.isWeddingDay) {
+          const coupleNames = e.title || "Casamento";
+          return {
+            html: `
+              <div class="fc-event-wedding">
+                <div class="couple-names">${coupleNames}</div>
+                <div class="heart">❤️</div>
+              </div>
+            `
+          };
+        }
 
-  // Eventos normais (retângulo roxo)
-  const time = e.start
-    ? e.start.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-      })
-    : "";
+        // Eventos normais (retângulo roxo)
+        const time = e.start
+          ? e.start.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false
+            })
+          : "";
 
-  return {
-    html: `
-      <div class="fc-event-main-frame">
-        <span class="fc-event-time">${time}</span>
-        <span class="fc-event-title">${e.title}</span>
-      </div>
-    `
-  };
-},
+        return {
+          html: `
+            <div class="fc-event-main-frame">
+              <span class="fc-event-time">${time}</span>
+              <span class="fc-event-title">${e.title}</span>
+            </div>
+          `
+        };
+      },
 
 
       eventDidMount(info) {
