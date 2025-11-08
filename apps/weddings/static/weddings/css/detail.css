@@ -82,3 +82,11 @@ a {
 .thead-custom-color th {
   color: rgb(107, 114, 128);
 }
+
+/* partial items */
+
+.card-description-scroll {
+  max-height: 150px;
+  overflow-y: auto;
+  word-break: break-word;
+}

@@ -53,7 +53,7 @@ html, body {
 ------------------------------------------- */
 
 .wedding-card {
-  /* 'overflow: visible' é importante para que o círculo 
+  /* 'overflow: visible' é para que o círculo 
     possa "vazar" para fora do banner sem ser cortado.
   */
   overflow: visible; 

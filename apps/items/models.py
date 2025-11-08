@@ -52,6 +52,12 @@ class Item(models.Model):
         ("OTHERS", "Outros"),
     ]
 
+    STATUS_CHOICES = [
+        ("PENDING", "Pendente"),
+        ("IN_PROGRESS", "Em Andamento"),
+        ("DONE", "Concluído"),
+    ]
+
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     quantity = models.IntegerField()
@@ -67,6 +73,12 @@ class Item(models.Model):
         choices=CATEGORY_CHOICES,
         default="OTHERS",
         verbose_name="Categoria",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="PENDING",  # Define 'Pendente' como padrão
+        verbose_name="Status",
     )
 
     objects = ItemQuerySet.as_manager()
