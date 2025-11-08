@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.urls import reverse_lazy
+from django.urls import reverse
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -197,15 +197,63 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
         return response
 
 
+class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
+    model = Wedding
+    template_name = "partials/confirm_delete_modal.html"
+    pk_url_kwarg = "id"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Variáveis passadas para o modal de deleção reutilizável
+        context['object_name'] = str(self.object)
+        context['object_type'] = 'o casamento'
+        context['hx_post_url'] = reverse(
+            'weddings:delete_wedding',
+            kwargs={'id': self.object.pk}
+        )
+
+        context['hx_target_id'] = '#wedding-list-container'
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        user = self.request.user
+
+        self.object = self.get_object()
+        self.object.delete()
+
+        queryset = Wedding.objects.filter(planner=user)
+        queryset = queryset.order_by('id')
+        queryset = queryset.annotate(
+            items_count=Count('item', distinct=True),
+            contracts_count=Count('contract', distinct=True)
+        )
+
+        weddings_with_clients = [
+            {
+                "wedding": wedding,
+                "gradient": GRADIENTS[idx % len(GRADIENTS)],
+                "items_count": wedding.items_count,
+                "contracts_count": wedding.contracts_count,
+            }
+            for idx, wedding in enumerate(queryset)
+        ]
+
+        context = {"weddings_with_clients": weddings_with_clients}
+
+        html = render_to_string(
+            "weddings/partials/_wedding_list_content.html",
+            context
+        )
+
+        response = HttpResponse(html)
+        response["HX-Trigger-After-Swap"] = 'weddingCreated'
+        return response
+
+
 class WeddingDetailView(LoginRequiredMixin, PlannerOwnerMixin, DetailView):
     model = Wedding
     template_name = "weddings/detail.html"
     context_object_name = "wedding"
     pk_url_kwarg = "wedding_id"
-
-
-class WeddingDeleteView(LoginRequiredMixin, PlannerOwnerMixin, DeleteView):
-    model = Wedding
-    template_name = "weddings/confirm_delete.html"
-    success_url = reverse_lazy("weddings:my_weddings")
-    pk_url_kwarg = "id"

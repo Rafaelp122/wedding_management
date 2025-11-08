@@ -1,0 +1,48 @@
+{% comment %}
+  Este template é REUTILIZÁVEL.
+  Ele não sabe nada sobre 'Wedding' ou 'Item'.
+  Ele recebe todo o 'contexto' da view que o chamou.
+{% endcomment %}
+
+{% comment %} 
+  hx_post_url e hx_target_id são variáveis que a view vai passar.
+{% endcomment %}
+<form
+  method="POST"
+  hx-post="{{ hx_post_url }}"
+  hx-target="{{ hx_target_id }}"
+  hx-swap="innerHTML"
+>
+  {% csrf_token %}
+
+  <div class="modal-body p-4 p-md-5 position-relative">
+    
+    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+
+    <h3 class="fw-bold mb-4 text-center text-danger">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      Confirmar Exclusão
+    </h3>
+
+    {% comment %} 
+      'object_name' é uma variável que a view vai passar.
+      (ex: "Casamento de João e Maria")
+    {% endcomment %}
+    <p class="text-center fs-5">
+      Tem certeza que deseja excluir {{ object_type }}
+      <strong>"{{ object_name }}"</strong>?
+    </p>
+    <p class="text-center text-muted">Esta ação não pode ser desfeita.</p>
+
+    <div class="d-flex justify-content-center gap-2 mt-4">
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+        Não, Cancelar
+      </button>
+      <button type="submit" class="btn btn-danger"
+              data-bs-dismiss="modal">
+        Sim, Excluir
+      </button>
+    </div>
+
+  </div>
+</form>

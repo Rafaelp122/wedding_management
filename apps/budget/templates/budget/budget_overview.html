@@ -27,25 +27,29 @@
 
   <h6 class="fw-bold">Distribuição de Gastos</h6>
   
-  <div class="d-flex flex-column gap-3">
-    
-    {% for item in distributed_expenses %}
-    
-      <div>
-        <div class="d-flex justify-content-between">
-          <span>{{ item.category }}</span>
-          <span>R$ {{ item.value|floatformat:2 }}</span>
-        </div>
-        <div class="progress" style="height: 8px;">
-          <div class="progress-bar" 
-               role="progressbar"
-               style="background: {{ item.gradient }}; width: {% if total_budget > 0 %}{% widthratio item.value total_budget 100 %}{% else %}0{% endif %}%;" 
-               aria-valuenow="{% if total_budget > 0 %}{% widthratio item.value total_budget 100 %}{% else %}0{% endif %}" 
-               aria-valuemin="0" 
-               aria-valuemax="100">
+  {% if distributed_expenses %}
+    <div class="d-flex flex-column gap-3">
+      
+      {% for item in distributed_expenses %}
+      
+        <div>
+          <div class="d-flex justify-content-between">
+            <span>{{ item.category }}</span>
+            <span>R$ {{ item.value|floatformat:2 }}</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar" 
+                role="progressbar"
+                style="background: {{ item.gradient }}; width: {% if total_budget > 0 %}{% widthratio item.value total_budget 100 %}{% else %}0{% endif %}%;" 
+                aria-valuenow="{% if total_budget > 0 %}{% widthratio item.value total_budget 100 %}{% else %}0{% endif %}" 
+                aria-valuemin="0" 
+                aria-valuemax="100">
+            </div>
           </div>
         </div>
-      </div>
-    {% endfor %}
-  </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">Nenhum gasto foi gerado para este casamento ainda.</p>
+  {% endif %}
 </div>

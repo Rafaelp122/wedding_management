@@ -12,14 +12,12 @@
   </div>
 
   {% if items %}
-  <div class="row gy-4">
-      {% for item in items %}
-        {% include "items/partials/_item_card.html" with item=item %}
-      {% endfor %}
-  </div>
+    <div class="row gy-4">
+        {% for item in items %}
+          {% include "items/partials/_item_card.html" with item=item %}
+        {% endfor %}
+    </div>
   {% else %}
-  <div class="text-center py-5">
-      <p class="text-muted">Nenhum item cadastrado ainda.</p>
-  </div>
+    <p class="text-muted">Nenhum item cadastrado ainda.</p>
   {% endif %}
 </div>

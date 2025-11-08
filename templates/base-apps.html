@@ -22,9 +22,9 @@
     {% block content %}{% endblock content %}
   </main>
 
-  <!-- Modal global -->
+  {% comment %} Modal Global {% endcomment %}
   <div class="modal fade" id="main-modal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
       <div class="modal-content" id="modal-container"></div>
     </div>
   </div>
@@ -44,5 +44,23 @@
 
   <script src="{% static 'scheduler/js/calendar.js' %}"></script>
 
+  <script>
+  // Script para fechar o modal
+  document.body.addEventListener('weddingCreated', function(evt) {
+    const modalEl = document.getElementById('main-modal');
+    if (modalEl) {
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) {
+        modalInstance.hide(); 
+      }
+      
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(b => b.remove());
+
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = ''; // Garante que o scroll da página volte
+    }
+  });
+  </script>
   {% block extra_js %}{% endblock extra_js %}
 {% endblock scripts %}
