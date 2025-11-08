@@ -24,29 +24,10 @@
     </button>
   </div>
 
+  {% comment %} Renderiza a lista de casamentos {% endcomment %}
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5" id="wedding-list-container">
-    
-    {% for item in weddings_with_clients %}
-      <div class="col" id="wedding-card-{{ item.wedding.id }}">
-        {% include 'weddings/partials/_wedding_card.html' with item=item %}
-      </div>
-    {% empty %}
-      <div class="col-lg-12">
-        
-        <div class="alert alert-info text-center">
-          Você ainda não cadastrou nenhum casamento. 
-          <a href="#" 
-            class="link-primary fw-semibold"
-            hx-get="{% url 'weddings:create_wedding' %}"  
-            hx-target="#modal-container"
-            data-bs-toggle="modal"
-            data-bs-target="#main-modal">
-            Clique aqui para adicionar
-          </a>.
-        </div>
-      </div>
-    {% endfor %}
-</div>
+    {% include "weddings/partials/_wedding_list_content.html" %}
+  </div>
 </div>
 {% endblock %}
 
@@ -71,7 +52,7 @@
 </script>
 
 <script>
-  // Seu script para fechar o modal (ótimo para HTMX)
+  // Script para fechar o modal
   document.body.addEventListener('weddingCreated', function(evt) {
     const modalEl = document.getElementById('main-modal');
     if (modalEl) {

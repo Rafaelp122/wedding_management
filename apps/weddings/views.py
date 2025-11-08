@@ -88,31 +88,41 @@ class WeddingCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.planner = self.request.user
+        # Esta variável está sendo usada, nao remover
         new_wedding = form.save()
 
-        total_weddings = Wedding.objects.filter(planner=self.request.user).count()
-        new_card_index = total_weddings - 1
+        queryset = Wedding.objects.filter(planner=self.request.user)
+        queryset = queryset.order_by('id')
+        queryset = queryset.select_related("client").annotate(
+            items_count=Count('item', distinct=True),
+            contracts_count=Count('contract', distinct=True)
+        )
 
-        item_context = {
-            "wedding": new_wedding,
-            "client": new_wedding.client,
-            "gradient": GRADIENTS[new_card_index % len(GRADIENTS)],
-            "items_count": 0,
-            "contracts_count": 0,
-            "progress": 0,
+        weddings_with_clients = [
+            {
+                "wedding": wedding,
+                "client": wedding.client,
+                "gradient": GRADIENTS[idx % len(GRADIENTS)],
+                "items_count": wedding.items_count,
+                "contracts_count": wedding.contracts_count,
+            }
+            for idx, wedding in enumerate(queryset)
+        ]
+
+        context = {
+            "weddings_with_clients": weddings_with_clients
         }
 
         html = render_to_string(
-            "weddings/partials/_wedding_card.html",
-            {"item": item_context},
+            "weddings/partials/_wedding_list_content.html",
+            context,
             request=self.request,
         )
 
         response = HttpResponse(html)
-
-        response["HX-Retarget"] = "#wedding-list-container"
-        response["HX-Reswap"] = "beforeend"
-        response["HX-Trigger"] = '{"weddingCreated": {}, "removeEmptyMessage": {}}'
+        response["HX-Retarget"] = '#wedding-list-container'
+        response["HX-Reswap"] = 'innerHTML'
+        response["HX-Trigger-After-Swap"] = 'weddingCreated'
         return response
 
     def form_invalid(self, form):
@@ -156,43 +166,41 @@ class WeddingUpdateView(LoginRequiredMixin, PlannerOwnerMixin, UpdateView):
         return response
 
     def form_valid(self, form):
+        # Esta variável está sendo usada, nao remover
         updated_wedding = form.save()
 
-        planner_weddings = list(
-            Wedding.objects.filter(
-                planner=self.request.user
-            ).order_by(
-                'id'
-            ).values_list(
-                'pk', flat=True
-            ))
+        queryset = Wedding.objects.filter(planner=self.request.user)
+        queryset = queryset.order_by('id')
+        queryset = queryset.select_related("client").annotate(
+            items_count=Count('item', distinct=True),
+            contracts_count=Count('contract', distinct=True)
+        )
 
-        card_index = planner_weddings.index(updated_wedding.pk)
+        weddings_with_clients = [
+            {
+                "wedding": wedding,
+                "client": wedding.client,
+                "gradient": GRADIENTS[idx % len(GRADIENTS)],
+                "items_count": wedding.items_count,
+                "contracts_count": wedding.contracts_count,
+            }
+            for idx, wedding in enumerate(queryset)
+        ]
 
-        item_context = {
-            'wedding': updated_wedding,
-            'client': updated_wedding.client,
-            'gradient': GRADIENTS[card_index % len(GRADIENTS)],
-            'items_count': updated_wedding.item_set.count(),
-            'contracts_count': updated_wedding.contract_set.count(),
-            'progress': 0
+        context = {
+            "weddings_with_clients": weddings_with_clients
         }
 
         html = render_to_string(
-            "weddings/partials/_wedding_card.html",
-            {"item": item_context},
+            "weddings/partials/_wedding_list_content.html",
+            context,
             request=self.request,
         )
 
         response = HttpResponse(html)
-
-        # Retarget para o card específico que foi editado
-        response['HX-Retarget'] = f'#wedding-card-{updated_wedding.pk}'
-        # Substitui o card antigo pelo novo
-        response['HX-Reswap'] = 'outerHTML'
-        # Fecha o modal
-        response['HX-Trigger'] = '{"weddingCreated": {}}'
-
+        response["HX-Retarget"] = '#wedding-list-container'
+        response["HX-Reswap"] = 'innerHTML'
+        response["HX-Trigger-After-Swap"] = 'weddingCreated'
         return response
 
 

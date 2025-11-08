@@ -1,0 +1,20 @@
+{% for item in weddings_with_clients %}
+    <div class="col" id="wedding-card-{{ item.wedding.id }}">
+    {% include 'weddings/partials/_wedding_card.html' with item=item %}
+    </div>
+{% empty %}
+    <div class="col-lg-12 col-md-12">
+    
+    <div class="alert alert-info text-center">
+        Você ainda não cadastrou nenhum casamento. 
+        <a href="#" 
+        class="link-primary fw-semibold"
+        hx-get="{% url 'weddings:create_wedding' %}"  
+        hx-target="#modal-container"
+        data-bs-toggle="modal"
+        data-bs-target="#main-modal">
+        Clique aqui para adicionar
+        </a>.
+    </div>
+    </div>
+{% endfor %}
