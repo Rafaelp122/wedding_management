@@ -57,27 +57,27 @@ class SignUpViewTests(TestCase):
             "password2": "strongpass123",
         }
 
-        # 1. Verifica o estado do banco ANTES da ação
+        # Verifica o estado do banco ANTES da ação
         initial_user_count = User.objects.count()
 
-        # 2. Faz a requisição POST e já segue o redirecionamento
+        # Faz a requisição POST e já segue o redirecionamento
         response = self.client.post(
             reverse("users:sign_up"),
             data=valid_data,
             follow=True,  # Ação principal: envia o form e carrega a página de login
         )
 
-        # 3. Verifica se o usuário foi criado no banco DEPOIS da ação
+        # Verifica se o usuário foi criado no banco DEPOIS da ação
         self.assertEqual(User.objects.count(), initial_user_count + 1)
         created_user = User.objects.get(username="newuser")
         self.assertEqual(created_user.email, "new@example.com")
 
-        # 4. Verifica se a mensagem de sucesso está na PÁGINA FINAL (página de login)
+        # Verifica se a mensagem de sucesso está na PÁGINA FINAL (página de login)
         self.assertContains(
             response, "Cadastro realizado com sucesso! Faça login para continuar."
         )
 
-        # 5. (Opcional) Verifica se o redirecionamento ocorreu corretamente
+        # (Opcional) Verifica se o redirecionamento ocorreu corretamente
         self.assertEqual(len(response.redirect_chain), 1)
         self.assertEqual(response.redirect_chain[0][0], reverse("users:sign_in"))
         self.assertEqual(response.redirect_chain[0][1], 302)

@@ -43,17 +43,17 @@ class SignInViewTests(TestCase):
     def test_login_succeeds_with_valid_credentials(self):
         """Verifica se o login funciona com credenciais corretas (POST)."""
 
-        # 1. Faz a requisição POST e já segue o redirecionamento
+        # Faz a requisição POST e já segue o redirecionamento
         response = self.client.post(
             reverse("users:sign_in"),
             data=self.credentials,
             follow=True,  # Simula o clique e o carregamento da próxima página
         )
 
-        # 2. Verifica se a mensagem de sucesso está no conteúdo da PÁGINA FINAL
-        #    'assertContains' é um atalho do Django que já decodifica o 'response.content'
+        # Verifica se a mensagem de sucesso está no conteúdo da PÁGINA FINAL
+        # 'assertContains' é um atalho do Django que já decodifica o 'response.content'
         self.assertContains(response, "Login bem sucedido!")
 
-        # 3. Garante que a sessão do usuário foi criada corretamente
+        # Garante que a sessão do usuário foi criada corretamente
         self.assertIn("_auth_user_id", self.client.session)
         self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.id)
