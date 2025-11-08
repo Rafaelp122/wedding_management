@@ -5,6 +5,11 @@
 
 {% block page_styles %}
   <link rel="stylesheet" href="{% static 'weddings/css/detail.css' %}">
+  {% comment %} 
+    CSS de scheduler colocado aqui, já que não é possível
+    colocar no template "scheduler_partial" por conta do HTMX 
+  {% endcomment %}
+  <link rel="stylesheet" href="{% static 'scheduler/css/scheduler_partial.css' %}">
 {% endblock page_styles %}
 
 {% block main_class %} wedding-detail-class {% endblock main_class %}

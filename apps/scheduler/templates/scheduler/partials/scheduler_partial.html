@@ -1,19 +1,19 @@
-{% load static %}
+<div class="bg-white p-4 rounded-4 aba-bloco custom-shadow-lg">
+  
+    <h3 class="fs-4 fw-bold text-dark mb-4">Calendário do Casamento</h3>
 
-<div class="card shadow">
-    <div class="card-body">
-        <div id="calendar"></div>
+    <div id="calendar">
+      <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Carregando calendário...</span>
+        </div>
+      </div>
     </div>
 </div>
 
 {{ wedding.id|default:None|json_script:"wedding-id-data" }} 
 
-{% block page_styles %}
-    <link rel="stylesheet" href="{% static 'scheduler/css/scheduler_partial.css' %}">
-{% endblock page_styles %}
-
 <script>
-  // Aguarda o JS global estar pronto antes de notificar
   window.dispatchSchedulerLoaded = () => {
     console.log("LOG partial: scheduler_partial carregado, disparando evento global.");
     document.dispatchEvent(new CustomEvent("scheduler:loaded"));
