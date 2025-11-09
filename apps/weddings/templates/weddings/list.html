@@ -10,21 +10,33 @@
 <div class="container py-3">
   
   <div class="d-flex justify-content-between align-items-center mb-3">
+    {% comment %} Lado esquerdo: Título {% endcomment %}
     <div>
       <h2 class="display-6 fw-bold text-dark">Meus Casamentos</h2>
       <p class="text-muted fs-5">Gerencie todos os detalhes dos seus eventos</p>
     </div>
 
-    <button class="btn btn-primary"
-          hx-get="{% url 'weddings:create_wedding' %}"  
-          hx-target="#modal-container"
-          data-bs-toggle="modal"
-          data-bs-target="#main-modal">
-      <i class="fas fa-plus me-1"></i> Novo Casamento
-    </button>
+    {% comment %} Lado direito: Wrapper para os botões {% endcomment %}
+    <div class="d-flex align-items-center gap-2">
+
+      {% comment %} Botão dropdown de filtragem {% endcomment %}
+      {% include "weddings/partials/_wedding_filter.html" %}
+
+      {% comment %} Botão Novo Casamento {% endcomment %}
+      <button class="btn btn-primary"
+            hx-get="{% url 'weddings:create_wedding' %}"  
+            hx-target="#modal-container"
+            data-bs-toggle="modal"
+            data-bs-target="#main-modal">
+        <i class="fas fa-plus me-1"></i> Novo Casamento
+      </button>
+      
+    </div>
   </div>
 
-  {% comment %} Renderiza a lista de casamentos {% endcomment %}
+  {% comment %} 
+    Este container é o ALVO do hx-target do filtro. 
+  {% endcomment %}
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5" id="wedding-list-container">
     {% include "weddings/partials/_wedding_list_content.html" %}
   </div>

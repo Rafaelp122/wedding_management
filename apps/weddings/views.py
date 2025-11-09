@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.generic import (
@@ -36,9 +37,20 @@ class WeddingBaseMixin(LoginRequiredMixin):
         return queryset.filter(planner=self.request.user)
 
     def get_base_queryset(self):
+        sort_option = self.request.GET.get('sort', 'id')
+
+        if sort_option == 'date_desc':
+            order_by_field = '-date'
+        elif sort_option == 'date_asc':
+            order_by_field = 'date'
+        elif sort_option == 'name_asc':
+            order_by_field = 'groom_name'
+        else:
+            order_by_field = 'id'
+
         return (
             Wedding.objects.filter(planner=self.request.user)
-            .order_by("id")
+            .order_by(order_by_field)
             .annotate(
                 items_count=Count("item", distinct=True),
                 contracts_count=Count("contract", distinct=True),
@@ -119,6 +131,25 @@ class WeddingListView(WeddingBaseMixin, ListView):
             {"weddings_with_clients": self.build_weddings_with_clients()}
         )
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Sobrescreve o método de renderização para lidar com
+        requisições HTMX.
+        """
+        # Verifica se o request foi feito pelo HTMX
+        if self.request.htmx:
+            # Se for, renderiza APENAS o partial da lista.
+            # O 'context' já foi preparado pelo get_context_data.
+            return render(
+                self.request,
+                "weddings/partials/_wedding_list_content.html",
+                context
+            )
+
+        # Se for um carregamento de página normal,
+        # renderiza a página inteira (list.html)
+        return super().render_to_response(context, **response_kwargs)
 
 
 class WeddingCreateView(WeddingBaseMixin, WeddingFormLayoutMixin, CreateView):

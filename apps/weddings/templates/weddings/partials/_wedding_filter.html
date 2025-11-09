@@ -1,0 +1,35 @@
+{% comment %}
+  Este partial contém apenas o dropdown de filtro/ordenação.
+{% endcomment %}
+
+<div class="dropdown">
+  <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fas fa-filter me-1"></i> Ordenar por
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    {% comment %} 
+      Cada link faz um GET para a URL da lista (my_weddings), 
+      passando o parâmetro 'sort'.
+      O HTMX intercepta, pega o HTML da view, e o coloca
+      no container da lista (#wedding-list-container).
+    {% endcomment %}
+    <li><a class="dropdown-item" href="#"
+           hx-get="{% url 'weddings:my_weddings' %}?sort=date_desc"
+           hx-target="#wedding-list-container"
+           hx-swap="innerHTML">
+      Data (Mais Recente)
+    </a></li>
+    <li><a class="dropdown-item" href="#"
+           hx-get="{% url 'weddings:my_weddings' %}?sort=date_asc"
+           hx-target="#wedding-list-container"
+           hx-swap="innerHTML">
+      Data (Mais Antigo)
+    </a></li>
+    <li><a class="dropdown-item" href="#"
+           hx-get="{% url 'weddings:my_weddings' %}?sort=name_asc"
+           hx-target="#wedding-list-container"
+           hx-swap="innerHTML">
+      Nome (A-Z)
+    </a></li>
+  </ul>
+</div>
