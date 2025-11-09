@@ -22,12 +22,12 @@
       {% comment %} Botão dropdown de filtragem {% endcomment %}
       {% include "weddings/partials/_wedding_filter.html" %}
 
-      {% comment %} Botão Novo Casamento {% endcomment %}
+      {% comment %} Botão Novo Casamento (vai para o modal de formulário) {% endcomment %}
       <button class="btn btn-primary"
             hx-get="{% url 'weddings:create_wedding' %}"  
-            hx-target="#modal-container"
+            hx-target="#form-modal-container"
             data-bs-toggle="modal"
-            data-bs-target="#main-modal">
+            data-bs-target="#form-modal">
         <i class="fas fa-plus me-1"></i> Novo Casamento
       </button>
       

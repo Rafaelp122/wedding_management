@@ -33,22 +33,24 @@
                 </h5>
                 
                 <div class="d-flex gap-2 flex-shrink-0">
+                    {% comment %} Botão EDITAR (vai para o modal de formulário) {% endcomment %}
                     <a href="#" 
                     class="btn-edit border"
                     hx-get="{% url 'weddings:edit_wedding' w.id %}" 
-                    hx-target="#modal-container"
+                    hx-target="#form-modal-container"
                     data-bs-toggle="modal"
-                    data-bs-target="#main-modal">
+                    data-bs-target="#form-modal">
                         <i class="fas fa-pencil-alt"></i>
                     </a>
                     
+                    {% comment %} Botão DELETAR (vai para o modal de deleção) {% endcomment %}
                     <a href="#" 
                        class="btn-delete" 
                        title="Excluir"
                        hx-get="{% url 'weddings:delete_wedding' w.id %}"
-                       hx-target="#modal-container"
+                       hx-target="#delete-modal-container"
                        data-bs-toggle="modal"
-                       data-bs-target="#main-modal">
+                       data-bs-target="#delete-modal">
                         <i class="fas fa-trash-alt"></i>
                     </a>
                 </div>

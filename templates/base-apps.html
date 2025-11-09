@@ -22,12 +22,8 @@
     {% block content %}{% endblock content %}
   </main>
 
-  {% comment %} Modal Global {% endcomment %}
-  <div class="modal fade" id="main-modal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content" id="modal-container"></div>
-    </div>
-  </div>
+  {% comment %} Modais Globais {% endcomment %}
+  {% include "partials/_modals.html" %}
 
 {% endblock body_content %}
 

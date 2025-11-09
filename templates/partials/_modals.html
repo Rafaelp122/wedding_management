@@ -1,0 +1,32 @@
+{% comment %} 
+  ARQUIVO: templates/partials/_modals.html
+  Este arquivo centraliza todos os shells de modal da aplicação.
+{% endcomment %}
+
+{% comment %} 
+  Modal 1: Para Formulários (Criar/Editar).
+  Tamanho: Grande ('modal-lg')
+{% endcomment %}
+<div class="modal fade" id="form-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" id="form-modal-container">
+      {% comment %} O conteúdo do formulário (vindo do hx-get) é carregado aqui {% endcomment %}
+    </div>
+  </div>
+</div>
+
+{% comment %} 
+  Modal 2: Para Confirmações (Deletar).
+  Tamanho: Padrão (pequeno)
+{% endcomment %}
+<div class="modal fade" id="delete-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" id="delete-modal-container">
+      {% comment %} O conteúdo de deleção (vindo do hx-get) é carregado aqui {% endcomment %}
+    </div>
+  </div>
+</div>
+
+{% comment %} 
+  (Adicione futuros modais globais aqui, se necessário)
+{% endcomment %}
