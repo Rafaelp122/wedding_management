@@ -45,7 +45,7 @@ class WeddingBaseMixin(LoginRequiredMixin):
         sort_option = self.request.GET.get('sort', 'id')
         search_query = self.request.GET.get('q', None)
 
-        queryset = Wedding.objects.filter(planner=self.request.user)
+        queryset = self.get_queryset()
 
         # Aplica o filtro de BUSCA (se existir)
         if search_query:
