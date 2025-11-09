@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -38,6 +38,17 @@ class WeddingBaseMixin(LoginRequiredMixin):
 
     def get_base_queryset(self):
         sort_option = self.request.GET.get('sort', 'id')
+        search_query = self.request.GET.get('q', None)
+
+        # 2. Queryset base (planner)
+        queryset = Wedding.objects.filter(planner=self.request.user)
+
+        # Aplica o filtro de BUSCA (se existir)
+        if search_query:
+            queryset = queryset.filter(
+                Q(groom_name__icontains=search_query) |
+                Q(bride_name__icontains=search_query)
+            )
 
         if sort_option == 'date_desc':
             order_by_field = '-date'
@@ -49,7 +60,7 @@ class WeddingBaseMixin(LoginRequiredMixin):
             order_by_field = 'id'
 
         return (
-            Wedding.objects.filter(planner=self.request.user)
+            queryset
             .order_by(order_by_field)
             .annotate(
                 items_count=Count("item", distinct=True),

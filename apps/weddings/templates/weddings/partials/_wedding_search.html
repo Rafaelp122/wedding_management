@@ -1,0 +1,27 @@
+{% comment %}
+  Este partial contém a nova barra de busca 
+  com o ícone de lupa (estilo Bootstrap Input Group).
+{% endcomment %}
+
+<div class="input-group mb-4">
+    {% comment %} O ícone de lupa {% endcomment %}
+    <span class="input-group-text" id="search-icon">
+        <i class="fas fa-search"></i>
+    </span>
+    
+    {% comment %} 
+      O input (mantém todos os atributos HTMX).
+      Adicionamos 'aria-describedby' para acessibilidade.
+    {% endcomment %}
+    <input type="search" 
+           name="q" 
+           class="form-control" 
+           placeholder="Buscar por nome do noivo ou noiva..."
+           aria-label="Buscar"
+           aria-describedby="search-icon"
+           
+           hx-get="{% url 'weddings:my_weddings' %}"
+           hx-target="#wedding-list-container"
+           hx-trigger="keyup changed delay:500ms, search"
+           hx-swap="innerHTML">
+</div>
