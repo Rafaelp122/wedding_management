@@ -6,7 +6,7 @@ from django.contrib.auth.forms import (
 )
 
 from apps.core.utils.django_forms import add_placeholder
-from apps.core.utils.mixins import FormStylingMixinLarge
+from apps.core.utils.mixins import FormStylingMixin, FormStylingMixinLarge
 
 from .models import User
 
@@ -57,7 +57,7 @@ class SignInForm(FormStylingMixinLarge, AuthenticationForm):
     )
 
 
-class CustomUserChangeForm(FormStylingMixinLarge, UserChangeForm):
+class CustomUserChangeForm(FormStylingMixin, UserChangeForm):
     password = None
 
     class Meta:

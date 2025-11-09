@@ -84,7 +84,7 @@ class WeddingBaseMixin(LoginRequiredMixin):
             for idx, wedding in enumerate(qs)
         ]
 
-    def render_wedding_list_response(self, trigger="weddingCreated"):
+    def render_wedding_list_response(self, trigger="listUpdated"):
         # Pega o queryset completo, filtrado e ordenado
         full_queryset = self.get_base_queryset()
 
