@@ -30,8 +30,8 @@ class WeddingBaseMixin(LoginRequiredMixin):
     - renderização HTMX da lista
     """
 
-    # Define quantos itens por página
-    paginate_by = 9
+    # Define a quantidade de itens por página
+    paginate_by = 6
 
     def get_queryset(self):
         """
@@ -115,6 +115,8 @@ class WeddingBaseMixin(LoginRequiredMixin):
         )
 
         response = HttpResponse(html)
+        response["HX-Retarget"] = '#wedding-list-container'
+        response["HX-Reswap"] = 'innerHTML'
 
         response["HX-Trigger-After-Swap"] = trigger
         return response
@@ -157,7 +159,7 @@ class WeddingListView(WeddingBaseMixin, ListView):
     context_object_name = "weddings"
 
     # Define o 'paginate_by' (deve ser o mesmo do seu Mixin)
-    paginate_by = 9
+    paginate_by = 6
 
     def get_queryset(self):
         # Usa o 'get_base_queryset' do Mixin para
@@ -170,10 +172,10 @@ class WeddingListView(WeddingBaseMixin, ListView):
         # Executa a paginação e coloca 'page_obj' no contexto.
         context = super().get_context_data(**kwargs)
 
-        # Pega os 9 itens da página atual
+        # Pega os itens da página atual
         page_items = context['page_obj'].object_list
 
-        # Formata esses 9 itens usando o método helper do Mixin
+        # Formata esses itens usando o método helper do Mixin
         context['paginated_weddings'] = self.build_weddings_with_clients(
             queryset=page_items
         )
@@ -190,8 +192,8 @@ class WeddingListView(WeddingBaseMixin, ListView):
         if self.request.htmx:
             # Renderiza o partial que contém a LISTA + PAGINAÇÃO (OOB)
             return render(
-                self.request, 
-                "weddings/partials/_list_and_pagination.html", 
+                self.request,
+                "weddings/partials/_list_and_pagination.html",
                 context
             )
 

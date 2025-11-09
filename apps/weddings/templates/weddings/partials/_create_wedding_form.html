@@ -5,8 +5,6 @@
   {% else %}
     hx-post="{% url 'weddings:create_wedding' %}"
   {% endif %}
-  hx-swap="outerHTML"
-  hx-target="this"
 >
   
   {% csrf_token %}

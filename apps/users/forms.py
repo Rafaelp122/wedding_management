@@ -62,7 +62,7 @@ class CustomUserChangeForm(FormStylingMixin, UserChangeForm):
 
     class Meta:
         model = User
-        fields = ("username", "email", "first_name", "last_name")
+        fields = ("username",  "first_name", "last_name", "email")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
