@@ -67,9 +67,9 @@ class CustomUserChangeForm(FormStylingMixinLarge, UserChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["username"].label = "Usuário"
-        self.fields["email"].label = "E-mail"
         self.fields["first_name"].label = "Primeiro Nome"
         self.fields["last_name"].label = "Último Nome"
+        self.fields["email"].label = "E-mail"
 
         add_placeholder(self.fields["username"], "Digite seu usuário")
         add_placeholder(self.fields["email"], "seu@email.com")

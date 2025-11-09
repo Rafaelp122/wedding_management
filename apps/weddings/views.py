@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -25,8 +26,12 @@ class WeddingBaseMixin(LoginRequiredMixin):
     - order_by
     - annotate (items_count, contracts_count)
     - geração de weddings_with_clients
+    - paginação
     - renderização HTMX da lista
     """
+
+    # Define quantos itens por página
+    paginate_by = 9
 
     def get_queryset(self):
         """
@@ -40,7 +45,6 @@ class WeddingBaseMixin(LoginRequiredMixin):
         sort_option = self.request.GET.get('sort', 'id')
         search_query = self.request.GET.get('q', None)
 
-        # 2. Queryset base (planner)
         queryset = Wedding.objects.filter(planner=self.request.user)
 
         # Aplica o filtro de BUSCA (se existir)
@@ -81,16 +85,37 @@ class WeddingBaseMixin(LoginRequiredMixin):
         ]
 
     def render_wedding_list_response(self, trigger="weddingCreated"):
-        context = {"weddings_with_clients": self.build_weddings_with_clients()}
+        # Pega o queryset completo, filtrado e ordenado
+        full_queryset = self.get_base_queryset()
+
+        # Pagina o queryset
+        paginator = Paginator(full_queryset, self.paginate_by)
+        page_number = self.request.GET.get('page', 1)  # Pega a página da URL
+        page_obj = paginator.get_page(page_number)
+
+        # Formata APENAS os itens da página atual
+        paginated_weddings_formatted = self.build_weddings_with_clients(
+            queryset=page_obj.object_list
+        )
+
+        # Constrói o contexto para os parciais
+        context = {
+            "page_obj": page_obj,
+            "paginated_weddings": paginated_weddings_formatted,
+            "current_sort": self.request.GET.get('sort', 'id'),
+            "current_search": self.request.GET.get('q', ''),
+            "request": self.request # Passa o request para o partial (para o ?q=)
+        }
+
+        # Renderiza o template que contém a LISTA + PAGINAÇÃO (OOB)
         html = render_to_string(
-            "weddings/partials/_wedding_list_content.html",
+            "weddings/partials/_list_and_pagination.html",
             context,
             request=self.request,
         )
 
         response = HttpResponse(html)
-        response["HX-Retarget"] = "#wedding-list-container"
-        response["HX-Reswap"] = "innerHTML"
+
         response["HX-Trigger-After-Swap"] = trigger
         return response
 
@@ -131,35 +156,46 @@ class WeddingListView(WeddingBaseMixin, ListView):
     template_name = "weddings/list.html"
     context_object_name = "weddings"
 
+    # Define o 'paginate_by' (deve ser o mesmo do seu Mixin)
+    paginate_by = 9
+
     def get_queryset(self):
-        # Usa o método do Mixin
+        # Usa o 'get_base_queryset' do Mixin para
+        # pegar a lista já filtrada/buscada/ordenada.
+        # O ListView vai paginar este queryset.
         return self.get_base_queryset()
 
     def get_context_data(self, **kwargs):
+        # 'super().get_context_data()' é chamado primeiro.
+        # Executa a paginação e coloca 'page_obj' no contexto.
         context = super().get_context_data(**kwargs)
-        # Adiciona o contexto da lista ('weddings_with_clients') do Mixin
-        context.update(
-            {"weddings_with_clients": self.build_weddings_with_clients()}
+
+        # Pega os 9 itens da página atual
+        page_items = context['page_obj'].object_list
+
+        # Formata esses 9 itens usando o método helper do Mixin
+        context['paginated_weddings'] = self.build_weddings_with_clients(
+            queryset=page_items
         )
+
+        # Passa os filtros/busca atuais para os links de paginação
+        context['current_sort'] = self.request.GET.get('sort', 'id')
+        context['current_search'] = self.request.GET.get('q', '')
+        context['request'] = self.request # Para a mensagem de 'vazio' no partial
+
         return context
 
     def render_to_response(self, context, **response_kwargs):
-        """
-        Sobrescreve o método de renderização para lidar com
-        requisições HTMX.
-        """
-        # Verifica se o request foi feito pelo HTMX
+        # Lida com as requisições HTMX (filtro, busca, paginação)
         if self.request.htmx:
-            # Se for, renderiza APENAS o partial da lista.
-            # O 'context' já foi preparado pelo get_context_data.
+            # Renderiza o partial que contém a LISTA + PAGINAÇÃO (OOB)
             return render(
-                self.request,
-                "weddings/partials/_wedding_list_content.html",
+                self.request, 
+                "weddings/partials/_list_and_pagination.html", 
                 context
             )
 
-        # Se for um carregamento de página normal,
-        # renderiza a página inteira (list.html)
+        # Se for um F5, renderiza a página inteira
         return super().render_to_response(context, **response_kwargs)
 
 
