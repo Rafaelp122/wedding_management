@@ -6,11 +6,10 @@ from apps.weddings.models import Wedding
 
 
 class ItemQuerySet(models.QuerySet):
+    # QuerySet personalizado com métodos de cálculo para os itens
+
     def total_spent(self):
-        """
-        Calcula o custo total dos itens neste QuerySet.
-        Retorna um Decimal ou 0.
-        """
+        """Calcula o custo total dos itens neste QuerySet."""
         total = self.aggregate(
             total=Sum(
                 ExpressionWrapper(
@@ -22,10 +21,7 @@ class ItemQuerySet(models.QuerySet):
         return total or 0
 
     def category_expenses(self):
-        """
-        Agrupa os custos por categoria.
-        Retorna um QuerySet de dicionários.
-        """
+        """Agrupa os custos por categoria e retorna o total de cada uma."""
         return (
             self.values("category")
             .annotate(
@@ -41,9 +37,10 @@ class ItemQuerySet(models.QuerySet):
 
 
 class Item(models.Model):
+    # Modelo que representa um item de orçamento vinculado a um casamento
 
     CATEGORY_CHOICES = [
-        ("LOCAL", "Local "),
+        ("LOCAL", "Local"),
         ("BUFFET", "Buffet"),
         ("DECOR", "Decoração"),
         ("PHOTO_VIDEO", "Fotografia e Vídeo"),
@@ -62,12 +59,8 @@ class Item(models.Model):
     description = models.TextField(blank=True)
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    supplier = models.ForeignKey(
-        Supplier, on_delete=models.CASCADE, null=True, blank=True
-    )
-    wedding = models.ForeignKey(
-        Wedding, on_delete=models.CASCADE, null=True, blank=True
-    )
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True)
+    wedding = models.ForeignKey(Wedding, on_delete=models.CASCADE, null=True, blank=True)
     category = models.CharField(
         max_length=20,
         choices=CATEGORY_CHOICES,
@@ -77,15 +70,18 @@ class Item(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="PENDING",  # Define 'Pendente' como padrão
+        default="PENDING",
         verbose_name="Status",
     )
 
+    # Conecta o QuerySet personalizado
     objects = ItemQuerySet.as_manager()
 
     def __str__(self):
+        # Exibe o nome do item no Django Admin e em representações de texto
         return self.name
 
     @property
     def total_cost(self):
+        # Calcula o custo total do item (quantidade * preço unitário)
         return self.unit_price * self.quantity
