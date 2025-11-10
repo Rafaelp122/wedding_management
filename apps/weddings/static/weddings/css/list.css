@@ -1,84 +1,17 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-  
-html, body {
-  height: 100%;
-}
-  
-/* -------------------------------------------
-    VARIÁVEIS DE TEMA
-------------------------------------------- */
-:root {
-  --font-primary: 'Georgia', serif;
-  --font-secondary: 'Montserrat', sans-serif;
-
-  /* Suas cores personalizadas */
-  --color-accent: #9c27b0;
-  --color-button: #9c27b0;
-  --color-button-hover: #7B1FA2;
-  --color-button-text: #ffffff;
-
-  --color-text-secondary: #6c757d;
-  --color-text-highlight: #4a3c00;
-  --color-bg-highlight: #fff9e6;
-
-  --bs-primary: #9C27B0;
-  --bs-secondary: #7B1FA2;
-}
-
-/* -------------------------------------------
-    ESTILO DO BOTÃO
-------------------------------------------- */
-
-.btn-primary {
-  --bs-btn-bg: var(--bs-primary);
-  --bs-btn-border-color: var(--bs-primary);
-  --bs-btn-hover-bg: var(--bs-secondary);
-  --bs-btn-hover-border-color: var(--bs-secondary);
-  --bs-btn-active-bg: var(--bs-secondary);
-  --bs-btn-active-border-color: var(--bs-secondary);
-  --bs-btn-focus-shadow-rgb: 156, 39, 176;
-}
-
-.btn-outline-primary {
-  --bs-btn-color: var(--bs-primary);
-  --bs-btn-border-color: var(--bs-primary);
-  --bs-btn-hover-bg: var(--bs-primary);
-  --bs-btn-hover-border-color: var(--bs-primary);
-  --bs-btn-hover-color: #fff;
-  --bs-btn-active-bg: var(--bs-primary);
-  --bs-btn-active-border-color: var(--bs-primary);
-  --bs-btn-active-color: #fff;
-  --bs-btn-focus-shadow-rgb: 156, 39, 176;
-}
-
-/* -------------------------------------------
-    ESTILO DO CARD
-------------------------------------------- */
-
+/* CARTÕES DE CASAMENTO (LISTAGEM) */
 .wedding-card {
-  /* 'overflow: visible' é para que o círculo 
-    possa "vazar" para fora do banner sem ser cortado.
-  */
-  overflow: visible; 
+  overflow: visible;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
 }
 
-/* Efeito de hover do meu exemplo, 
-  aplicado à classe do seu card.
-*/
 .wedding-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+              0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* -------------------------------------------
-    STATS
-------------------------------------------- */
+/* Informações estatísticas dentro do card */
 .card .info-stats {
   color: #444;
   font-size: 0.875rem;
@@ -88,10 +21,7 @@ html, body {
   font-size: 1.1rem;
 }
 
-/* -------------------------------------------
-    BOTÕES EDITAR E EXCLUIR
-------------------------------------------- */
-
+/* BOTÕES DE AÇÃO (EDITAR/EXCLUIR)*/
 .btn-edit,
 .btn-delete {
   width: 36px;
@@ -100,14 +30,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem; /* Levemente ajustado */
+  font-size: 0.9rem;
   transition: all 0.2s ease-in-out;
   border: none;
 }
 
 .btn-edit {
   background-color: white;
-  color: #8e2de2; /* Você pode trocar por var(--bs-primary) */
+  color: #8e2de2;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -127,39 +57,16 @@ html, body {
   transform: scale(1.05);
 }
 
-/* -------------------------------------------
-    FORMULAŔIO
-------------------------------------------- */
-.form-control:focus {
-  border-color: var(--bs-primary);
-  box-shadow: 0 0 0 0.25rem rgba(156, 39, 176, 0.25);
-}
-
-/* -------------------------------------------
-    PAGINAÇÃO
-------------------------------------------- */
+/* PAGINAÇÃO DA LISTAGEM */
 .pagination {
-  /* --- Cor do NÚMERO da página ativa --- */
   --bs-pagination-active-color: #fff;
-  
-  /* --- Cor do FUNDO da página ativa --- */
   --bs-pagination-active-bg: var(--bs-primary);
   --bs-pagination-active-border-color: var(--bs-primary);
-  
-  /* --- Cor dos números INATIVOS --- */
   --bs-pagination-color: var(--bs-primary);
-  
-  /* --- Cor do 'brilho' de FOCO --- */
+  --bs-pagination-hover-bg: #F3E5F5;
+  --bs-pagination-hover-color: var(--bs-secondary);
+  --bs-pagination-hover-border-color: #E1BEE7;
   --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(156, 39, 176, 0.25);
-
-  /* 1. Cor do FUNDO ao passar o mouse */
-  --bs-pagination-hover-bg: #F3E5F5; /* Seu roxo claro
-  
-  /* 2. Cor do NÚMERO ao passar o mouse */
-  --bs-pagination-hover-color: var(--bs-secondary); /* Seu roxo escuro */
-  
-  /* 3. Cor da BORDA ao passar o mouse */
-  --bs-pagination-hover-border-color: #E1BEE7; /* Roxo um pouco mais escuro */
 }
 
 .page-link {
