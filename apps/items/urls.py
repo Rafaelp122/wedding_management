@@ -6,7 +6,7 @@ from .views import (
     delete_item,
     update_item_status,
 )
-
+# Define o namespace para o app de itens
 app_name = "items"
 
 # Rotas do app de itens (itens do orçamento vinculados ao casamento)
