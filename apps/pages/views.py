@@ -1,13 +1,11 @@
 from django.views.generic import TemplateView
 
 
+# Página inicial do site
 class HomeView(TemplateView):
-    """Renderiza a página inicial."""
-
     template_name = "pages/home.html"
 
 
+# Página de contato
 class ContactUsView(TemplateView):
-    """Renderiza a página de contato."""
-
     template_name = "pages/contact-us.html"
