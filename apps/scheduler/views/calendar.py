@@ -16,29 +16,20 @@ from ..models import Event
 
 class WeddingPlannerMixin(LoginRequiredMixin):
     """
-    Mixin para CBVs que atuam sobre um 'Wedding'.
-
-    1. Garante que o usuário esteja logado (via LoginRequiredMixin).
-    2. Busca o 'Wedding' pelo 'wedding_id' da URL.
-    3. Valida se o 'request.user' é o 'planner' daquele 'Wedding'.
-    4. Armazena o objeto 'wedding' em 'self.wedding' para uso nos métodos.
-    5. Retorna HttpResponseBadRequest se o casamento não for encontrado
-       ou não pertencer ao planner.
+    Mixin usado em CBVs que trabalham com um 'Wedding'.
+    Garante que o usuário logado é o planner responsável pelo casamento.
     """
 
     wedding = None
 
     def dispatch(self, request, *args, **kwargs) -> HttpResponse:
+        # Verifica se o casamento pertence ao planner logado
         try:
-            # Tenta carregar o casamento usando o 'wedding_id' da URL
             self.wedding = get_object_or_404(
                 Wedding, pk=self.kwargs.get("wedding_id"), planner=request.user
             )
-            print(
-                f"DEBUG [CBV Mixin]: Acesso validado ao Casamento ID {self.wedding.id}"
-            )
+            print(f"DEBUG [CBV Mixin]: Acesso validado ao Casamento ID {self.wedding.id}")
         except Http404:
-            # Se não encontrar ou não for o dono, retorna erro
             print(
                 f"ERRO DEBUG [CBV Mixin]: Casamento ID {self.kwargs.get('wedding_id')} não encontrado para planner {request.user.id}"
             )
@@ -46,15 +37,17 @@ class WeddingPlannerMixin(LoginRequiredMixin):
                 "Casamento não encontrado ou não pertence a si."
             )
 
-        # Se tudo deu certo, continua para o método 'get', 'post', etc.
+        # Continua o fluxo normal da view
         return super().dispatch(request, *args, **kwargs)
 
 
 class PartialSchedulerView(WeddingPlannerMixin, TemplateView):
+    """Renderiza o calendário parcial com base no casamento atual."""
+
     template_name = "scheduler/partials/scheduler_partial.html"
 
     def get_context_data(self, **kwargs) -> dict:
-        # O 'self.wedding' já foi carregado e validado pelo Mixin
+        # Adiciona o casamento validado no contexto
         context = super().get_context_data(**kwargs)
         context["wedding"] = self.wedding
         print(
@@ -64,32 +57,34 @@ class PartialSchedulerView(WeddingPlannerMixin, TemplateView):
 
 
 class ManageEventView(WeddingPlannerMixin, View):
+    """View principal que gerencia a criação, edição, movimentação e exclusão de eventos."""
+
     def get(self, request, *args, **kwargs) -> HttpResponse:
-        """Roteador principal para requisições GET."""
+        """Roteia as requisições GET para o método correto."""
         action = request.GET.get("action")
         print(
             f"\n--- DEBUG [ManageEventView GET] (Wedding: {self.wedding.id}, Planner: {request.user.id}, Ação: {action}) ---"
         )
 
-        # Mapeia a string 'action' ao método que deve tratá-la
+        # Dicionário de ações válidas para GET
         action_handlers = {
             "get_create_form": self._get_create_form,
             "get_edit_form": self._get_edit_form,
         }
 
-        # Encontra o método handler no dicionário
         handler = action_handlers.get(action)
-
         if handler:
-            return handler(request)  # Executa o método encontrado
+            return handler(request)
         else:
             print(f"ERRO DEBUG [ManageEventView GET]: Ação inválida: '{action}'")
             return HttpResponseBadRequest("Ação GET inválida.")
 
     def _get_create_form(self, request) -> HttpResponse:
-        """Handler para 'action=get_create_form'."""
+        """Exibe o formulário de criação de evento."""
         clicked_date_str = request.GET.get("date")
         initial_data_for_form = {}
+
+        # Define a data inicial caso o usuário tenha clicado em um dia no calendário
         if clicked_date_str:
             try:
                 initial_data_for_form["clicked_date"] = datetime.strptime(
@@ -106,7 +101,7 @@ class ManageEventView(WeddingPlannerMixin, View):
         form = EventForm(**initial_data_for_form)
         context = {
             "form": form,
-            "wedding": self.wedding,  # self.wedding vem do Mixin
+            "wedding": self.wedding,
             "action_url": reverse_lazy(
                 "scheduler:manage_event", kwargs={"wedding_id": self.wedding.id}
             ),
@@ -117,7 +112,7 @@ class ManageEventView(WeddingPlannerMixin, View):
         )
 
     def _get_edit_form(self, request) -> HttpResponse:
-        """Handler para 'action=get_edit_form'."""
+        """Exibe o formulário de edição de evento existente."""
         event_id = request.GET.get("event_id")
         print(f"DEBUG [ManageEventView GET edit]: Buscando ID={event_id}")
 
@@ -127,7 +122,7 @@ class ManageEventView(WeddingPlannerMixin, View):
         form = EventForm(instance=event)
         context = {
             "form": form,
-            "wedding": self.wedding,  # self.wedding vem do Mixin
+            "wedding": self.wedding,
             "event": event,
             "action_url": reverse_lazy(
                 "scheduler:manage_event", kwargs={"wedding_id": self.wedding.id}
@@ -139,10 +134,9 @@ class ManageEventView(WeddingPlannerMixin, View):
         )
 
     def post(self, request, *args, **kwargs) -> JsonResponse:
-        """Roteador principal para requisições POST."""
+        """Roteia as requisições POST para o método correto."""
         planner = request.user
 
-        # Mapeia a string 'action' ao método que deve tratá-la
         action_handlers = {
             "move_resize": self._post_move_resize,
             "modal_save": self._post_modal_save,
@@ -156,11 +150,9 @@ class ManageEventView(WeddingPlannerMixin, View):
                 f"\n--- DEBUG [ManageEventView POST] (Wedding: {self.wedding.id}, Planner: {planner.id}, Ação: {action}) ---"
             )
 
-            # Encontra o método handler no dicionário
             handler = action_handlers.get(action)
-
             if handler:
-                return handler(data, planner)  # Executa o método encontrado
+                return handler(data, planner)
             else:
                 print(
                     f"ERRO DEBUG [ManageEventView POST]: Ação desconhecida: '{action}'"
@@ -176,7 +168,6 @@ class ManageEventView(WeddingPlannerMixin, View):
                 {"status": "error", "message": "JSON inválido."}, status=400
             )
         except Http404:
-            # Esta exceção será para 'Event', já que 'Wedding' foi validado no Mixin
             failed_id = (
                 data.get("event_id", "desconhecido")
                 if "data" in locals()
@@ -193,6 +184,7 @@ class ManageEventView(WeddingPlannerMixin, View):
                 status=404,
             )
         except Exception as e:
+            # Captura erros inesperados e retorna 500
             print("\n!!! ERRO INESPERADO [ManageEventView POST] !!!")
             traceback.print_exc()
             print(f"!!! FIM ERRO INESPERADO !!!\n")
@@ -202,7 +194,7 @@ class ManageEventView(WeddingPlannerMixin, View):
             )
 
     def _post_move_resize(self, data, planner) -> JsonResponse:
-        """Handler para 'action=move_resize'."""
+        """Atualiza a posição ou duração de um evento no calendário."""
         event_id = data.get("event_id")
         start_time_iso = data.get("start_time")
         end_time_iso = data.get("end_time")
@@ -239,13 +231,12 @@ class ManageEventView(WeddingPlannerMixin, View):
             )
 
     def _post_modal_save(self, data, planner) -> JsonResponse:
-        """Handler para 'action=modal_save' (Criar ou Editar)."""
+        """Cria ou atualiza um evento a partir do modal."""
         event_id = data.get("event_id")
         print(f"DEBUG [ManageEventView POST modal_save]: ID={event_id}")
 
         instance = None
         if event_id:
-            # Busca para garantir que o evento pertence ao planner antes de editar
             instance = get_object_or_404(Event, pk=event_id, planner=planner)
         else:
             print("DEBUG [ManageEventView POST modal_save]: Criando novo.")
@@ -259,16 +250,13 @@ class ManageEventView(WeddingPlannerMixin, View):
             print("DEBUG [ManageEventView POST modal_save]: Form VÁLIDO.")
             event = form.save(commit=False)
             event.planner = planner
-            # A FBV original tinha essa lógica, mantendo
             event.start_time = form.cleaned_data.get("start_time")
             event.end_time = form.cleaned_data.get("end_time")
 
-            # Se for um novo evento, associa ao casamento da URL
             if not event.wedding:
-                event.wedding = self.wedding  # self.wedding vem do Mixin
+                event.wedding = self.wedding
 
             event.save()
-
             print(
                 f"DEBUG [ManageEventView POST modal_save OK]: Evento ID {event.id} salvo."
             )
@@ -280,7 +268,7 @@ class ManageEventView(WeddingPlannerMixin, View):
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
 
     def _post_delete(self, data, planner) -> JsonResponse:
-        """Handler para 'action=delete'."""
+        """Exclui um evento existente."""
         event_id = data.get("event_id")
         print(f"DEBUG [ManageEventView POST delete]: Tentando ID={event_id}")
 
