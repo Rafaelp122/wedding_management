@@ -1,3 +1,4 @@
+from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import (
@@ -6,11 +7,11 @@ from django.views.generic import (
     DetailView,
     ListView,
     UpdateView,
-    View
+    View,
 )
+
 from .mixins import WeddingBaseMixin, WeddingFormLayoutMixin
 from .models import Wedding
-from django.http import HttpResponseBadRequest
 
 
 class WeddingListView(WeddingBaseMixin, ListView):
@@ -30,12 +31,8 @@ class WeddingListView(WeddingBaseMixin, ListView):
         # Executa a paginação e coloca 'page_obj' no contexto.
         context = super().get_context_data(**kwargs)
 
-        # Pega os itens da página atual
-        page_items = context['page_obj'].object_list
-
-        # Formata esses itens usando o método helper do Mixin
-        context['paginated_weddings'] = self.build_weddings_with_clients(
-            queryset=page_items
+        context.update(
+            self.build_paginated_context(self.request.GET)
         )
 
         # Passa os filtros/busca atuais para os links de paginação

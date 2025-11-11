@@ -1,10 +1,10 @@
+from urllib.parse import parse_qs, urlparse
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import Paginator
-from django.db.models import Case, CharField, Count, Q, Value, When
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.utils import timezone
 
 from apps.core.utils.constants import GRADIENTS
 
@@ -41,55 +41,36 @@ class WeddingBaseMixin(LoginRequiredMixin):
 
         return queryset.filter(planner=self.request.user)
 
-    def get_base_queryset(self):
-        sort_option = self.request.GET.get('sort', 'id')
-        search_query = self.request.GET.get('q', None)
-
-        # --- NOVO: Pega o filtro de status da URL ---
-        status_filter = self.request.GET.get('status', None)
+    def get_base_queryset(self, sort='id', q=None, status=None):
+        """
+        Pega o queryset base e chama os helpers do model
+        para aplicar lógica.
+        """
 
         queryset = Wedding.objects.filter(planner=self.request.user)
-        today = timezone.now().date()
 
-        queryset = queryset.annotate(
-            effective_status=Case(
-                When(status='CANCELED', then=Value('CANCELED')),
-                When(status='COMPLETED', then=Value('COMPLETED')),
-                When(date__lt=today, then=Value('COMPLETED')),
-                default=Value('IN_PROGRESS'),
-                output_field=CharField()
-            )
-        )
-
-        if search_query:
-            queryset = queryset.filter(
-                Q(groom_name__icontains=search_query) |
-                Q(bride_name__icontains=search_query)
-            )
-
-        if status_filter:
-            queryset = queryset.filter(effective_status=status_filter)
-
-        if sort_option == 'date_desc':
-            order_by_field = '-date'
-        elif sort_option == 'date_asc':
-            order_by_field = 'date'
-        elif sort_option == 'name_asc':
-            order_by_field = 'groom_name'
-        else:
-            order_by_field = 'id'
-
-        return (
+        # Chama os helpers do Model
+        queryset = (
             queryset
-            .order_by(order_by_field)
-            .annotate(
-                items_count=Count("item", distinct=True),
-                contracts_count=Count("contract", distinct=True),
-            )
+            .with_effective_status()  # Anota o status
+            .apply_search(q)          # Aplica a busca
+            .apply_sort(sort)         # Aplica a ordenação
         )
 
-    def build_weddings_with_clients(self, queryset=None):
-        qs = queryset if queryset is not None else self.get_base_queryset()
+        # Aplica o filtro de status (se existir)
+        if status:
+            queryset = queryset.filter(effective_status=status)
+
+        # Chama o helper de contagem/progresso do Model
+        queryset = queryset.with_counts_and_progress()
+
+        return queryset
+
+    def _build_context_list(self, queryset):
+        """
+        Helper "privado" que apenas formata a lista de objetos
+        para o contexto do template.
+        """
         return [
             {
                 "wedding": wedding,
@@ -97,35 +78,65 @@ class WeddingBaseMixin(LoginRequiredMixin):
                 "items_count": wedding.items_count,
                 "contracts_count": wedding.contracts_count,
                 "effective_status": wedding.effective_status,
-                # "progress": wedding.progress,
+                "progress": wedding.progress,  # Vem do with_counts_and_progress
             }
-            for idx, wedding in enumerate(qs)
+            for idx, wedding in enumerate(queryset)
         ]
 
-    def render_wedding_list_response(self, trigger="listUpdated"):
-        # Pega o queryset completo, filtrado e ordenado
-        full_queryset = self.get_base_queryset()
+    def build_paginated_context(self, request_params):
+        """
+        Pega os parâmetros (do GET ou POST), pagina
+        e formata o contexto.
+        """
+        # Pega o estado (página, filtro, busca) dos parâmetros
+        page = request_params.get('page', 1)
+        sort = request_params.get('sort', 'id')
+        q = request_params.get('q', None)
+        status = request_params.get('status', None)
+
+        # Pega o queryset filtrado e ordenado
+        qs = self.get_base_queryset(sort=sort, q=q, status=status)
 
         # Pagina o queryset
-        paginator = Paginator(full_queryset, self.paginate_by)
-        page_number = self.request.GET.get('page', 1)  # Pega a página da URL
-        page_obj = paginator.get_page(page_number)
+        paginator = Paginator(qs, self.paginate_by)
+        page_obj = paginator.get_page(page)
 
-        # Formata APENAS os itens da página atual
-        paginated_weddings_formatted = self.build_weddings_with_clients(
+        # Formata OS ITENS DA PÁGINA ATUAL
+        paginated_weddings_formatted = self._build_context_list(
             queryset=page_obj.object_list
         )
 
-        # Constrói o contexto para os parciais
-        context = {
+        # Retorna o contexto completo que os parciais precisam
+        return {
             "page_obj": page_obj,
             "paginated_weddings": paginated_weddings_formatted,
-            "current_sort": self.request.GET.get('sort', 'id'),
-            "current_search": self.request.GET.get('q', ''),
-            "request": self.request  # Passa o request para o partial
+            "current_sort": sort,
+            "current_search": q or '',
+            "current_status": status or '',
+            "request": self.request,
         }
 
-        # Renderiza o template que contém a LISTA + PAGINAÇÃO (OOB)
+    def render_wedding_list_response(self, trigger="listUpdated"):
+        """
+        Renderiza a resposta HTMX para Create/Update/Delete.
+        Lê o 'HX-Current-Url' para preservar o estado.
+        """
+        # Pega a URL que o usuário estava vendo (do header HTMX)
+        current_url = self.request.headers.get('Hx-Current-Url')
+        params = {}
+        if current_url:
+            try:
+                # Parseia a URL para extrair os query params
+                query_string = urlparse(current_url).query
+                parsed_params = parse_qs(query_string)
+                params = {k: v[0] for k, v in parsed_params.items()}
+            except Exception:
+                pass  # Se falhar, usa os defaults (page=1, etc)
+
+        # Constrói o contexto com o estado correto
+        context = self.build_paginated_context(params)
+
+        # Renderiza o partial
         html = render_to_string(
             "weddings/partials/_list_and_pagination.html",
             context,
