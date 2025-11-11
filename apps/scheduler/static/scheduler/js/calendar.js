@@ -1,11 +1,11 @@
+// =============================================================
+// FULLCALENDAR + HTMX - Integração completa e reativa
+// =============================================================
 (function () {
-    /**
-     * Inicializa o FullCalendar sempre que a aba "Calendário" for carregada via HTMX.
-     */
     document.addEventListener("htmx:afterSwap", function (event) {
-      // Verifica se o conteúdo injetado pertence à aba de calendário
+      // Só roda quando a aba do calendário for carregada
       if (event.detail.target.id === "tab-scheduler") {
-        console.log("HTMX carregou aba do calendário. Iniciando FullCalendar...");
+        console.log("✅ HTMX carregou aba do calendário. Iniciando FullCalendar...");
   
         const calendarEl = document.getElementById("calendar");
         if (!calendarEl) {
@@ -13,14 +13,13 @@
           return;
         }
   
-        // Obtém o ID do casamento a partir do atributo data
         const weddingId = calendarEl.dataset.weddingId;
         if (!weddingId) {
-          console.error("ID do casamento não encontrado no elemento #calendar.");
+          console.error("ID do casamento não encontrado no calendário.");
           return;
         }
   
-        // Remove qualquer instância anterior
+        // Se já existir um calendário ativo, destrói antes de recriar
         if (calendarEl.fullCalendarInstance) {
           calendarEl.fullCalendarInstance.destroy();
         }
@@ -36,30 +35,40 @@
             right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
           },
           events: `/scheduler/api/events/?wedding_id=${weddingId}`,
+  
+          // Clique em uma data → abre modal HTMX de criação
           dateClick: function (info) {
+            console.log("📅 Data clicada:", info.dateStr);
             const modal = new bootstrap.Modal(document.getElementById("form-modal"));
-            const modalContainer = document.getElementById("form-modal-container");
-          
+  
             htmx.ajax("GET", `/scheduler/partial/${weddingId}/event/new/?date=${info.dateStr}`, {
               target: "#form-modal-container",
-              swap: "innerHTML",
-              trigger: "revealed",
-              headers: { "HX-Request": "true" },
+              swap: "innerHTML"
             });
-          
+  
             modal.show();
-          },          
-          eventClick: function (info) {
-            console.log("Evento clicado:", info.event.title);
-            // Aqui depois podemos abrir modal de edição
           },
+  
+          // Clique em um evento → (depois) abrir modal de edição
+          eventClick: function (info) {
+            console.log("🟣 Evento clicado:", info.event.title);
+            const modal = new bootstrap.Modal(document.getElementById("form-modal"));
+  
+            htmx.ajax("GET", `/scheduler/partial/${weddingId}/event/${info.event.id}/edit/`, {
+              target: "#form-modal-container",
+              swap: "innerHTML"
+            });
+  
+            modal.show();
+          }
         });
   
-        // Guarda a instância para destruir depois se precisar
-        calendarEl.fullCalendarInstance = calendar;
         calendar.render();
   
-        console.log("FullCalendar renderizado com sucesso!");
+        // Guarda referência global para uso no modal_handler.js
+        calendarEl.fullCalendarInstance = calendar;
+  
+        console.log("✅ FullCalendar renderizado e pronto!");
       }
     });
   })();
