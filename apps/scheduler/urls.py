@@ -1,37 +1,37 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.views.generic import TemplateView
 
-# Define o namespace para o app de contratos
+from apps.weddings.models import Wedding
+from . import api_views
+
 app_name = "scheduler"
 
-# Rotas principais do agendador de eventos
+router = DefaultRouter()
+router.register(r"api/events", api_views.EventViewSet, basename="event")
+
+
+class SchedulerPartialView(TemplateView):
+    """Renderiza o calendário HTMX dentro do detalhe do casamento."""
+    template_name = "scheduler/partials/_scheduler_partial.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        wedding_id = kwargs.get("wedding_id")
+        context["wedding"] = get_object_or_404(Wedding, id=wedding_id)
+        return context
+
+
 urlpatterns = [
-    # Lista todos os eventos do planner
-    path("list/", views.EventListView.as_view(), name="list"),
+    # API REST
+    path("", include(router.urls)),
 
-    # Cria um novo evento
-    path("new/", views.EventCreateView.as_view(), name="new"),
-
-    # Edita um evento existente
-    path("edit/<int:event_id>/", views.EventUpdateView.as_view(), name="edit"),
-
-    # Exclui um evento existente
-    path("delete/<int:event_id>/", views.EventDeleteView.as_view(), name="delete"),
-
-    # Exibe o calendário parcial vinculado a um casamento
+    # Parcial HTMX (corrigida)
     path(
         "partial/<int:wedding_id>/",
-        views.PartialSchedulerView.as_view(),
+        login_required(SchedulerPartialView.as_view()),
         name="partial_scheduler",
-    ),
-
-    # API para buscar eventos em formato JSON
-    path("api/events/<int:wedding_id>/", views.event_api, name="event_api"),
-
-    # Gerencia criação, edição e exclusão via modal no calendário
-    path(
-        "manage/<int:wedding_id>/",
-        views.ManageEventView.as_view(),
-        name="manage_event",
     ),
 ]

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     # Aplicativos de terceiros
     "django_htmx",
     "django_extensions",
+    "rest_framework",
 
     # Aplicativos do projeto
     "apps.scheduler",
