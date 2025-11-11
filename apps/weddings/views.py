@@ -38,7 +38,7 @@ class WeddingListView(WeddingBaseMixin, ListView):
         # Passa os filtros/busca atuais para os links de paginação
         context['current_sort'] = self.request.GET.get('sort', 'id')
         context['current_search'] = self.request.GET.get('q', '')
-        context['request'] = self.request  # Para a mensagem de 'vazio' no partial
+        context['request'] = self.request
 
         return context
 
@@ -115,17 +115,21 @@ class UpdateWeddingStatusView(WeddingBaseMixin, View):
     def post(self, request, *args, **kwargs):
 
         # Pega o objeto de forma segura
-        # 'self.get_queryset()' vem do WeddingBaseMixin (que já filtra por planner)
+        # 'self.get_queryset()' vem do WeddingBaseMixin
         try:
             # ATENÇÃO: A URL que vamos criar usa 'id', não 'pk'
             wedding = self.get_queryset().get(pk=self.kwargs['id'])
         except Wedding.DoesNotExist:
-            return HttpResponseBadRequest("Casamento não encontrado ou sem permissão.")
+            return HttpResponseBadRequest(
+                "Casamento não encontrado ou sem permissão."
+            )
 
         new_status = request.POST.get("status")
         valid_statuses = [status[0] for status in Wedding.STATUS_CHOICES]
         if new_status not in valid_statuses:
-            return HttpResponseBadRequest("Status inválido ou Model não atualizado.")
+            return HttpResponseBadRequest(
+                "Status inválido ou Model não atualizado."
+            )
 
         # Atualiza e salva o casamento
         wedding.status = new_status

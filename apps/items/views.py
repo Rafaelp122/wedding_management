@@ -9,23 +9,19 @@ from .mixins import ItemBaseMixin, ItemFormLayoutMixin
 class ItemListView(ItemBaseMixin, ListView):
     """
     Exibe a lista parcial de itens (com paginação, filtro e busca).
-    Lida com a carga inicial da aba E com
-    as requisições HTMX de filtro/busca/paginação.
     """
-    template_name = "items/items_list.html"
+    template_name = "items/item_list.html"
 
     def get_queryset(self):
-        # O Mixin 'dispatch' já nos deu 'self.wedding'
+        # ... (O teu get_queryset está ótimo, não mexe) ...
         sort = self.request.GET.get('sort', 'id')
         q = self.request.GET.get('q', None)
         category = self.request.GET.get('category', None)
-
-        # Chama o 'get_base_queryset' com todos os filtros
         return self.get_base_queryset(sort=sort, q=q, category=category)
 
     def get_context_data(self, **kwargs):
+        # ... (O teu get_context_data está ótimo, não mexe) ...
         context = super().get_context_data(**kwargs)
-        # Constrói o contexto paginado completo
         context.update(
             self.build_paginated_context(self.request.GET)
         )
@@ -35,15 +31,21 @@ class ItemListView(ItemBaseMixin, ListView):
         if self.request.htmx:
             htmx_target = self.request.headers.get('HX-Target')
 
+            # Se o target for o container INTERNO da lista...
+            # (ou seja, um filtro, busca ou clique de paginação)
             if htmx_target == 'item-list-container':
-                # Retorna SÓ a lista (para Filtro/Busca/Paginação)
-                return render(
-                    self.request, 
-                    "items/partials/_list_and_pagination.html", 
-                    context
+                return self.render_item_list_response(
+                    request_params=self.request.GET
                 )
 
-        # Retorna a ABA INTEIRA (para o clique na aba)
+            # Se o target for '#tab-items' (o clique inicial na aba),
+            # o 'if' acima vai falhar, e o código vai "cair"
+            # para o return final, que é o que queremos.
+
+        # Retorna a ABA INTEIRA (items/item_list.html)
+        # Isto serve para:
+        # 1. Carregamento de página (F5)
+        # 2. O clique inicial na aba (HX-Target é '#tab-items')
         return super().render_to_response(context, **response_kwargs)
 
 
@@ -57,7 +59,7 @@ class AddItemView(ItemBaseMixin, ItemFormLayoutMixin, CreateView):
         item.wedding = self.wedding  # 'self.wedding' vem do dispatch do Mixin
         item.save()
         # Retorna a resposta HTMX completa
-        return self.render_item_list_response(trigger="listUpdated")
+        return self.render_full_tab_response(trigger="listUpdated")
 
 
 class EditItemView(ItemBaseMixin, ItemFormLayoutMixin, UpdateView):
@@ -68,7 +70,7 @@ class EditItemView(ItemBaseMixin, ItemFormLayoutMixin, UpdateView):
     def form_valid(self, form):
         form.save()
         # Retorna a resposta HTMX completa
-        return self.render_item_list_response(trigger="listUpdated")
+        return self.render_full_tab_response(trigger="listUpdated")
 
 
 class UpdateItemStatusView(ItemBaseMixin, View):
@@ -108,7 +110,7 @@ class ItemDeleteView(ItemBaseMixin, DeleteView):
         context['hx_post_url'] = reverse(
             'items:delete_item', kwargs={'pk': self.object.pk}
         )
-        context['hx_target_id'] = '#items-wrapper'  # Container dos Itens
+        context['hx_target_id'] = '#item-list-container'  # Container dos Itens
         return context
 
     def post(self, request, *args, **kwargs):

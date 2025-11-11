@@ -15,9 +15,9 @@
                 {% if item.status == 'DONE' %}
                   <span class="badge rounded-pill bg-success-subtle text-success-emphasis">{{ item.get_status_display }}</span>
                 {% elif item.status == 'IN_PROGRESS' %}
-                  <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">{{ item.get_status_display }}</span>
+                  <span class="badge rounded-pill bg-info-subtle text-warning-emphasis">{{ item.get_status_display }}</span>
                 {% else %}
-                  <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{ item.get_status_display }}</span>
+                  <span class="badge rounded-pill bg-warning-subtle text-info-emphasis">{{ item.get_status_display }}</span>
                 {% endif %}
             </div>
 

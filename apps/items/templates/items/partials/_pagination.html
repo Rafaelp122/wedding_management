@@ -1,30 +1,58 @@
+{% comment %}
+  ARQUIVO: items/partials/_pagination.html
+  Este partial desenha os botões da paginação para a lista de Itens.
+{% endcomment %}
+
 {% if page_obj.has_other_pages %}
 <nav aria-label="Paginação de Itens">
   <ul class="pagination">
+
     {% comment %} Botão 'Anterior' {% endcomment %}
     <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
       <a class="page-link" href="#"
+         {% comment %} 
+           SÓ renderiza o hx-get SE houver uma página anterior 
+         {% endcomment %}
          {% if page_obj.has_previous %}
            hx-get="{% url 'items:partial_items' wedding.id %}?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}&q={{ current_search }}&category={{ current_category }}"
            hx-target="#item-list-container"
            hx-swap="innerHTML"
-         {% endif %}>
+         {% endif %}
+         >
         Anterior
       </a>
     </li>
-    {% comment %} (Loop de Números das Páginas) {% endcomment %}
-    ...
+
+    {% comment %} 
+      Números das Páginas
+    {% endcomment %}
+    {% for page_num in page_obj.paginator.page_range %}
+      <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
+        <a class="page-link" href="#"
+           hx-get="{% url 'items:partial_items' wedding.id %}?page={{ page_num }}&sort={{ current_sort }}&q={{ current_search }}&category={{ current_category }}"
+           hx-target="#item-list-container"
+           hx-swap="innerHTML">
+          {{ page_num }}
+        </a>
+      </li>
+    {% endfor %}
+
     {% comment %} Botão 'Próxima' {% endcomment %}
     <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
       <a class="page-link" href="#"
+         {% comment %} 
+           SÓ renderiza o hx-get SE houver uma próxima página 
+         {% endcomment %}
          {% if page_obj.has_next %}
            hx-get="{% url 'items:partial_items' wedding.id %}?page={{ page_obj.next_page_number }}&sort={{ current_sort }}&q={{ current_search }}&category={{ current_category }}"
            hx-target="#item-list-container"
            hx-swap="innerHTML"
-         {% endif %}>
+         {% endif %}
+         >
         Próxima
       </a>
     </li>
+    
   </ul>
 </nav>
 {% endif %}
