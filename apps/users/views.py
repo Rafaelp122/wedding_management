@@ -15,7 +15,8 @@ class SignUpView(CreateView):
 
     def form_valid(self, form):
         messages.success(
-            self.request, "Cadastro realizado com sucesso! Faça login para continuar."
+            self.request,
+            "Cadastro realizado com sucesso! Faça login para continuar."
         )
         return super().form_valid(form)
 

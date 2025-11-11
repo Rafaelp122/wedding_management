@@ -1,9 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Case, CharField, Count, Q, Value, When
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.core.exceptions import ImproperlyConfigured
+from django.utils import timezone
 
 from apps.core.utils.constants import GRADIENTS
 
@@ -44,14 +45,30 @@ class WeddingBaseMixin(LoginRequiredMixin):
         sort_option = self.request.GET.get('sort', 'id')
         search_query = self.request.GET.get('q', None)
 
-        queryset = Wedding.objects.filter(planner=self.request.user)
+        # --- NOVO: Pega o filtro de status da URL ---
+        status_filter = self.request.GET.get('status', None)
 
-        # Aplica o filtro de BUSCA (se existir)
+        queryset = Wedding.objects.filter(planner=self.request.user)
+        today = timezone.now().date()
+
+        queryset = queryset.annotate(
+            effective_status=Case(
+                When(status='CANCELED', then=Value('CANCELED')),
+                When(status='COMPLETED', then=Value('COMPLETED')),
+                When(date__lt=today, then=Value('COMPLETED')),
+                default=Value('IN_PROGRESS'),
+                output_field=CharField()
+            )
+        )
+
         if search_query:
             queryset = queryset.filter(
                 Q(groom_name__icontains=search_query) |
                 Q(bride_name__icontains=search_query)
             )
+
+        if status_filter:
+            queryset = queryset.filter(effective_status=status_filter)
 
         if sort_option == 'date_desc':
             order_by_field = '-date'
@@ -79,6 +96,8 @@ class WeddingBaseMixin(LoginRequiredMixin):
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
                 "items_count": wedding.items_count,
                 "contracts_count": wedding.contracts_count,
+                "effective_status": wedding.effective_status,
+                # "progress": wedding.progress,
             }
             for idx, wedding in enumerate(qs)
         ]

@@ -31,5 +31,28 @@
            hx-swap="innerHTML">
       Nome (A-Z)
     </a></li>
+
+    <li><hr class="dropdown-divider"></li>
+    
+    <li><a class="dropdown-item" href="#"
+           hx-get="{% url 'weddings:my_weddings' %}"
+           hx-target="#wedding-list-container" hx-swap="innerHTML">
+      Todos os Status
+    </a></li>
+    <li><a class="dropdown-item" href="#"
+           hx-get="{% url 'weddings:my_weddings' %}?status=IN_PROGRESS"
+           hx-target="#wedding-list-container" hx-swap="innerHTML">
+      Em Andamento
+    </a></li>
+    <li><a class="dropdown-item" href="#"
+           hx-get="{% url 'weddings:my_weddings' %}?status=COMPLETED"
+           hx-target="#wedding-list-container" hx-swap="innerHTML">
+      Concluídos
+    </a></li>
+    <li><a class="dropdown-item" href="#"
+           hx-get="{% url 'weddings:my_weddings' %}?status=CANCELED"
+           hx-target="#wedding-list-container" hx-swap="innerHTML">
+      Cancelados
+    </a></li>
   </ul>
 </div>
