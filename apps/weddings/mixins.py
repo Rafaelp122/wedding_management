@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-
+from django.core.exceptions import ImproperlyConfigured
 
 from apps.core.utils.constants import GRADIENTS
 
@@ -30,7 +30,14 @@ class WeddingBaseMixin(LoginRequiredMixin):
         Método de segurança padrão (usado por UpdateView, DeleteView).
         Garante que o usuário só pode operar em seus próprios objetos.
         """
-        queryset = super().get_queryset()
+
+        if not hasattr(self, 'model'):
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} is missing a 'model' attribute."
+            )
+
+        queryset = self.model.objects.all()
+
         return queryset.filter(planner=self.request.user)
 
     def get_base_queryset(self):

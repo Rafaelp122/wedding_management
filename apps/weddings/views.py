@@ -6,9 +6,11 @@ from django.views.generic import (
     DetailView,
     ListView,
     UpdateView,
+    View
 )
 from .mixins import WeddingBaseMixin, WeddingFormLayoutMixin
 from .models import Wedding
+from django.http import HttpResponseBadRequest
 
 
 class WeddingListView(WeddingBaseMixin, ListView):
@@ -104,6 +106,37 @@ class WeddingDeleteView(WeddingBaseMixin, DeleteView):
         self.object.delete()
         # Retorna a resposta HTMX completa do Mixin
         return self.render_wedding_list_response()
+
+
+class UpdateWeddingStatusView(WeddingBaseMixin, View):
+    """
+    Atualiza o status de um Casamento (Ex: Em Andamento, Concluído).
+    Chamada via hx-post a partir do dropdown do card.
+    """
+    model = Wedding  # Informa ao get_queryset qual model usar
+
+    def post(self, request, *args, **kwargs):
+
+        # Pega o objeto de forma segura
+        # 'self.get_queryset()' vem do WeddingBaseMixin (que já filtra por planner)
+        try:
+            # ATENÇÃO: A URL que vamos criar usa 'id', não 'pk'
+            wedding = self.get_queryset().get(pk=self.kwargs['id'])
+        except Wedding.DoesNotExist:
+            return HttpResponseBadRequest("Casamento não encontrado ou sem permissão.")
+
+        new_status = request.POST.get("status")
+        valid_statuses = [status[0] for status in Wedding.STATUS_CHOICES]
+        if new_status not in valid_statuses:
+            return HttpResponseBadRequest("Status inválido ou Model não atualizado.")
+
+        # Atualiza e salva o casamento
+        wedding.status = new_status
+        wedding.save()
+
+        # Retorna a lista completa (com paginação/filtros preservados)
+        # 'self.render_wedding_list_response()' vem do WeddingBaseMixin
+        return self.render_wedding_list_response(trigger="listUpdated")
 
 
 class WeddingDetailView(DetailView):

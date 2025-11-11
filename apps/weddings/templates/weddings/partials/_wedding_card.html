@@ -3,56 +3,39 @@
 
     <div class="card shadow-lg rounded-4 border-0 position-relative wedding-card h-100">
 
+        {% comment %} ... (Cabeçalho do card - Banner, Círculo - Sem mudanças) ... {% endcomment %}
         <div class="position-relative">
-        
             <div class="rounded-top-4" style="height: 160px; background: {{ item.gradient }};"></div>
-            
             <div class="position-absolute top-0 end-0 m-3 bg-white bg-opacity-25 rounded-circle p-2 shadow-sm" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
                 <i class="fas fa-file-lines text-white"></i>
             </div>
-
             <div class="position-absolute start-0 ms-3" style="bottom: -32px;">
                 <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 64px; height: 64px;">
                     <span class="fs-5 fw-bold" style="color: var(--bs-primary);">
-                        {% if w.groom_name and w.bride_name %}
-                            {{ w.groom_name|slice:":1" }}&{{ w.bride_name|slice:":1" }}
-                        {% elif item.client %}
-                            {{ item.client.name|slice:":1" }}
-                        {% else %}
-                            --
-                        {% endif %}
+                        {{ w.groom_name|slice:":1" }}&{{ w.bride_name|slice:":1" }}
                     </span>
                 </div>
             </div>
         </div>
-        <div class="card-body position-relative" style="padding-top: 48px !important;">
+        
+        <div class="card-body d-flex flex-column" style="padding-top: 48px !important;">
 
-            <div class="d-flex justify-content-between align-items-start mb-1">
-                <h5 class="fw-bold text-dark mb-0 me-2">
-                    {{ w }}
-                </h5>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+    
+                <h5 class="fw-bold text-dark mb-0 me-2">{{ w }}</h5>
                 
-                <div class="d-flex gap-2 flex-shrink-0">
-                    {% comment %} Botão EDITAR (vai para o modal de formulário) {% endcomment %}
-                    <a href="#" 
-                    class="btn-edit border"
-                    hx-get="{% url 'weddings:edit_wedding' w.id %}" 
-                    hx-target="#form-modal-container"
-                    data-bs-toggle="modal"
-                    data-bs-target="#form-modal">
-                        <i class="fas fa-pencil-alt"></i>
-                    </a>
-                    
-                    {% comment %} Botão DELETAR (vai para o modal de deleção) {% endcomment %}
-                    <a href="#" 
-                       class="btn-delete" 
-                       title="Excluir"
-                       hx-get="{% url 'weddings:delete_wedding' w.id %}"
-                       hx-target="#delete-modal-container"
-                       data-bs-toggle="modal"
-                       data-bs-target="#delete-modal">
-                        <i class="fas fa-trash-alt"></i>
-                    </a>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    {% with s=w.status %}
+                        {% if s == 'COMPLETED' %}
+                            <span class="badge rounded-pill bg-success-subtle text-success-emphasis">{{ w.get_status_display }}</span>
+                        {% elif s == 'CANCELED' %}
+                            <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">{{ w.get_status_display }}</span>
+                        {% else %} 
+                            <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{ w.get_status_display }}</span>
+                        {% endif %}
+                    {% endwith %}
+            
+                    {% include "weddings/partials/_wedding_card_actions.html" with w=w %}
                 </div>
             </div>
 
@@ -61,16 +44,19 @@
 
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-muted small">Progresso</span>
-                <span class="small text-muted">65%</span>
+                <span class="small text-muted">{{ item.progress }}%</span>
             </div>
-            
             <div class="progress mb-3" style="height: 8px;">
-                <div class="progress-bar" role="progressbar" style="width: 65%; background: {{ item.gradient }};" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress-bar" role="progressbar" style="width: {{ item.progress }}%; background: {{ item.gradient }};" aria-valuenow="{{ item.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
 
-            <div class="d-flex justify-content-between text-center info-stats">
-                <div><strong>{{ item.items_count }}</strong><br><small>Itens</small></div>
-                <div><strong>{{ item.contracts_count }}</strong><br><small>Contratos</small></div>
+            <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
+                
+                {% comment %} As estatísticas (Itens, Contratos) {% endcomment %}
+                <div class="d-flex gap-3 text-center info-stats">
+                    <div><strong>{{ item.items_count }}</strong><br><small>Itens</small></div>
+                    <div><strong>{{ item.contracts_count }}</strong><br><small>Contratos</small></div>
+                </div>
             </div>
         </div>
 
