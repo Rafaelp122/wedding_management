@@ -1,39 +1,9 @@
 from django.db import models
-from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 
 from apps.supplier.models import Supplier
 from apps.weddings.models import Wedding
 
-
-class ItemQuerySet(models.QuerySet):
-    # QuerySet personalizado com métodos de cálculo para os itens
-
-    def total_spent(self):
-        """Calcula o custo total dos itens neste QuerySet."""
-        total = self.aggregate(
-            total=Sum(
-                ExpressionWrapper(
-                    F("unit_price") * F("quantity"),
-                    output_field=DecimalField(max_digits=10, decimal_places=2),
-                )
-            )
-        )["total"]
-        return total or 0
-
-    def category_expenses(self):
-        """Agrupa os custos por categoria e retorna o total de cada uma."""
-        return (
-            self.values("category")
-            .annotate(
-                total_cost=Sum(
-                    ExpressionWrapper(
-                        F("unit_price") * F("quantity"),
-                        output_field=DecimalField(max_digits=10, decimal_places=2),
-                    )
-                )
-            )
-            .order_by("-total_cost")
-        )
+from .querysets import ItemQuerySet
 
 
 class Item(models.Model):
@@ -59,8 +29,17 @@ class Item(models.Model):
     description = models.TextField(blank=True)
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True)
-    wedding = models.ForeignKey(Wedding, on_delete=models.CASCADE, null=True, blank=True)
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    wedding = models.ForeignKey(
+        Wedding,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
     category = models.CharField(
         max_length=20,
         choices=CATEGORY_CHOICES,
