@@ -21,7 +21,7 @@ class ItemBaseMixin(LoginRequiredMixin):
     - Lida com busca, filtro, paginação
     - Renderiza a resposta HTMX OOB (Lista + Paginação)
     """
-    paginate_by = 10
+    paginate_by = 6
     model = Item
 
     def dispatch(self, request, *args, **kwargs):
@@ -109,26 +109,58 @@ class ItemBaseMixin(LoginRequiredMixin):
             "request": self.request
         }
 
-    def render_list_partial_response(self, request_params):
+    def render_item_list_response(self, request_params=None, trigger=None):
         """
-        Renderiza a resposta HTMX para Filtro/Busca/Paginação (GETs).
-        Retorna APENAS a lista + paginação (OOB).
-        """
-        context = self.build_paginated_context(request_params)
+        Renderiza a resposta HTMX APENAS da lista + paginação.
+        Usado tanto por GET (filtro/paginação) quanto por POST (add/edit/delete).
 
-        # Renderiza o partial da lista
+        - Se 'request_params' for fornecido (GET), usa-o.
+        - Se não (POST), lê o 'HX-Current-Url' para preservar o estado.
+        """
+        params = {}
+
+        if request_params is not None:
+            # Lógica para GET (Filtro, Paginação)
+            params = request_params
+        else:
+            # Lógica para POST (Create, Update, Delete)
+            # Lê o 'HX-Current-Url' para preservar o estado
+            current_url = self.request.headers.get('Hx-Current-Url')
+            if current_url:
+                try:
+                    query_string = urlparse(current_url).query
+                    parsed_params = parse_qs(query_string)
+                    params = {k: v[0] for k, v in parsed_params.items()}
+                except Exception:
+                    pass  # Se falhar, usa os defaults (page=1, etc)
+
+        # Constrói o contexto com o estado correto
+        context = self.build_paginated_context(params)
+
+        # Renderiza o partial da lista + paginação (que faz OOB)
         html = render_to_string(
             "items/partials/_list_and_pagination.html",
             context,
             request=self.request,
         )
-        return HttpResponse(html)
 
-    def render_full_tab_response(self, trigger="listUpdated"):
+        response = HttpResponse(html)
+
+        # Define o target principal. O partial fará OOB para a paginação.
+        response["HX-Retarget"] = '#item-list-container'
+        response["HX-Reswap"] = 'innerHTML'
+
+        if trigger:
+            response["HX-Trigger-After-Swap"] = trigger
+
+        return response
+
+    def render_full_tab_response(self, trigger=None):
         """
-        Renderiza a resposta HTMX para Create/Update/Delete (POSTs).
+        Renderiza a resposta HTMX para Create/Update (POSTs de formulário).
         Retorna a ABA INTEIRA (item_list.html).
-        Lê o 'HX-Current-Url' para preservar o estado.
+        Lê o 'HX-Current-Url' para preservar o estado de filtros/paginação
+        que possa estar na URL do browser.
         """
         current_url = self.request.headers.get('Hx-Current-Url')
         params = {}
@@ -138,8 +170,9 @@ class ItemBaseMixin(LoginRequiredMixin):
                 parsed_params = parse_qs(query_string)
                 params = {k: v[0] for k, v in parsed_params.items()}
             except Exception:
-                pass
+                pass  # Usa defaults se falhar
 
+        # Constrói o contexto com o estado correto
         context = self.build_paginated_context(params)
 
         # Renderiza o template da aba inteira
@@ -150,7 +183,17 @@ class ItemBaseMixin(LoginRequiredMixin):
         )
 
         response = HttpResponse(html)
-        response["HX-Trigger-After-Swap"] = trigger
+
+        # IMPORTANTE: Não definimos HX-Retarget.
+        # A resposta vai por defeito para o 'hx-target' do elemento
+        # que iniciou o ciclo (o botão 'Adicionar Item'),
+        # que era '#items-wrapper' com 'outerHTML'.
+        # Como a nossa resposta também tem id="items-wrapper",
+        # ela vai substituir o formulário perfeitamente.
+
+        if trigger:
+            response["HX-Trigger-After-Swap"] = trigger
+
         return response
 
 

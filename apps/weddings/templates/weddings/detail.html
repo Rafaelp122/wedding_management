@@ -67,19 +67,6 @@
       <a
         class="nav-link active"
         href="#"
-        data-tab="contracts"
-        hx-get="{% url 'contracts:partial_contracts' wedding.id %}"
-        hx-target="#tab-contracts"
-        hx-swap="innerHTML"
-        hx-trigger="click"
-      >
-        <i class="fas fa-file-contract me-2"></i> Contratos
-      </a>
-    </li>
-    <li class="nav-item">
-      <a
-        class="nav-link active"
-        href="#"
         data-tab="items"
         hx-get="{% url 'items:partial_items' wedding.id %}"
         hx-target="#tab-items"
@@ -87,6 +74,19 @@
         hx-trigger="click"
       >
         <i class="fas fa-list-check me-2"></i> Itens
+      </a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link active"
+        href="#"
+        data-tab="contracts"
+        hx-get="{% url 'contracts:partial_contracts' wedding.id %}"
+        hx-target="#tab-contracts"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+      >
+        <i class="fas fa-file-contract me-2"></i> Contratos
       </a>
     </li>
     <li class="nav-item">
@@ -107,8 +107,8 @@
   <!-- Conteúdo das Abas -->
   <div class="tab-content mt-4">
     <div id="tab-budget" class="tab-pane active"></div>
-    <div id="tab-contracts" class="tab-pane d-none"></div>
     <div id="tab-items" class="tab-pane d-none"></div>
+    <div id="tab-contracts" class="tab-pane d-none"></div>
     <div id="tab-scheduler" class="tab-pane d-none"></div>
   </div>
 </div>
