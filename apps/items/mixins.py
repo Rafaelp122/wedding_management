@@ -106,12 +106,28 @@ class ItemBaseMixin(LoginRequiredMixin):
             "current_sort": sort,
             "current_search": q or '',
             "current_category": category or '',
-            "request": self.request 
+            "request": self.request
         }
 
-    def render_item_list_response(self, trigger="listUpdated"):
+    def render_list_partial_response(self, request_params):
         """
-        Renderiza a resposta HTMX para Create/Update/Delete.
+        Renderiza a resposta HTMX para Filtro/Busca/Paginação (GETs).
+        Retorna APENAS a lista + paginação (OOB).
+        """
+        context = self.build_paginated_context(request_params)
+
+        # Renderiza o partial da lista
+        html = render_to_string(
+            "items/partials/_list_and_pagination.html",
+            context,
+            request=self.request,
+        )
+        return HttpResponse(html)
+
+    def render_full_tab_response(self, trigger="listUpdated"):
+        """
+        Renderiza a resposta HTMX para Create/Update/Delete (POSTs).
+        Retorna a ABA INTEIRA (item_list.html).
         Lê o 'HX-Current-Url' para preservar o estado.
         """
         current_url = self.request.headers.get('Hx-Current-Url')
@@ -126,8 +142,9 @@ class ItemBaseMixin(LoginRequiredMixin):
 
         context = self.build_paginated_context(params)
 
+        # Renderiza o template da aba inteira
         html = render_to_string(
-            "items/partials/_list_and_pagination.html",
+            "items/item_list.html",
             context,
             request=self.request,
         )
@@ -146,7 +163,7 @@ class ItemFormLayoutMixin:
 
     # Você já tinha isso em AddItemView
     form_layout_dict = {
-        "name": "col-12",
+        "name": "col-6",
         "category": "col-md-6",
         # "status": "col-md-6",
         "quantity": "col-md-6",
@@ -164,11 +181,6 @@ class ItemFormLayoutMixin:
         "supplier": "fas fa-user-tie",
         "description": "fas fa-align-left",
     }
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['planner'] = self.request.user
-        return kwargs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

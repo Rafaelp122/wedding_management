@@ -1,0 +1,33 @@
+<div class="dropdown">
+  <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+    <i class="fas fa-filter me-1"></i> Filtrar
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><h6 class="dropdown-header">Ordenar por</h6></li>
+    <li><a class="dropdown-item" href="#" 
+           hx-get="{% url 'items:partial_items' wedding.id %}?sort=name_asc&q={{ current_search }}&category={{ current_category }}"
+           hx-target="#item-list-container" hx-swap="innerHTML">
+      Nome (A-Z)
+    </a></li>
+    <li><a class="dropdown-item" href="#" 
+           hx-get="{% url 'items:partial_items' wedding.id %}?sort=status&q={{ current_search }}&category={{ current_category }}"
+           hx-target="#item-list-container" hx-swap="innerHTML">
+      Status
+    </a></li>
+    
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header">Categoria</h6></li>
+    <li><a class="dropdown-item" href="#" 
+           hx-get="{% url 'items:partial_items' wedding.id %}?sort={{ current_sort }}&q={{ current_search }}&category="
+           hx-target="#item-list-container" hx-swap="innerHTML">
+      Todas as Categorias
+    </a></li>
+    {% for value, display in form_class.Meta.model.CATEGORY_CHOICES %}
+      <li><a class="dropdown-item" href="#"
+             hx-get="{% url 'items:partial_items' wedding.id %}?sort={{ current_sort }}&q={{ current_search }}&category={{ value }}"
+             hx-target="#item-list-container" hx-swap="innerHTML">
+        {{ display }}
+      </a></li>
+    {% endfor %}
+  </ul>
+</div>

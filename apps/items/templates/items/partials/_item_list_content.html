@@ -1,0 +1,13 @@
+<div class="row gy-4">
+    {% for item in items %}
+      {% include "items/partials/_item_card.html" with item=item %}
+    {% empty %}
+      <div class="col-12">
+        {% if request.GET.q %}
+          <p class="text-muted text-center">Nenhum item encontrado para a busca "<strong>{{ request.GET.q }}</strong>".</p>
+        {% else %}
+          <p class="text-muted text-center">Nenhum item cadastrado ainda.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+</div>
