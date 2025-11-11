@@ -15,16 +15,19 @@
       <div class="card o-hidden border-0 shadow-lg">
         <div class="card-body p-0">
           <div class="row g-0">
-            
-            <div class="image-section min-height col-lg-5 d-flex align-items-center justify-content-center rounded-3">
+            <div class="image-section min-height col-lg-5 d-flex flex-column align-items-center justify-content-center rounded-3">
+              <a href="{% url 'pages:home' %}" class="btn btn-link p-0 text-decoration-none fw-medium mb-4 d-inline-block" style="color: #ffffffff;">
+                  <i class="fas fa-arrow-left me-2"></i> Voltar para a página inicial
+              </a>
+              
               <div class="text-center text-white">
-                <img src="{% static 'img/img_login.jpg' %}" 
-                    alt="Casamento" 
-                    class="auth-img img-fluid rounded-3 shadow-sm mb-4">
-                <h2 class="fw-bold mb-2">Junte-se a nós!</h2>
-                <p class="opacity-75">Entre na sua conta para continuar seus planejamentos.</p>
+                  <img src="{% static 'img/img_login.jpg' %}" 
+                      alt="Casamento" 
+                      class="auth-img img-fluid rounded-3 shadow-sm mb-4">
+                  <h2 class="fw-bold mb-2">Junte-se a nós!</h2>
+                  <p class="opacity-75">Entre na sua conta para continuar seus planejamentos.</p>
               </div>
-            </div>
+          </div>
 
             <div class="form-section col-lg-7">
               <div class="p-4 p-sm-5">
