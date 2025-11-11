@@ -15,11 +15,14 @@
         </a></li>
         
         <li><a class="dropdown-item" href="#"
-               hx-post="{% url 'items:delete_item' item.pk %}"
-               hx-vals='{"csrfmiddlewaretoken": "{{ csrf_token }}"}'
-               hx-target="#item-list-container"
-               hx-swap="innerHTML"
-               hx-confirm="Tem certeza que deseja excluir o item '{{ item.name }}'?">
+       
+            hx-get="{% url 'items:delete_item' item.pk %}"
+            
+            hx-target="#delete-modal-container"
+            
+            data-bs-toggle="modal"
+            data-bs-target="#delete-modal">
+            
             <i class="fas fa-trash-alt fa-fw me-2 text-danger"></i> Deletar
         </a></li>
         
