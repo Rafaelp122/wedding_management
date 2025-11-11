@@ -1,0 +1,22 @@
+<form 
+  hx-post="{% if is_edit %}{% url 'scheduler:event_update' wedding.id event.id %}{% else %}{% url 'scheduler:event_save' wedding.id %}{% endif %}"
+  hx-target="#form-modal-container"
+  hx-swap="innerHTML"
+>
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      {% if is_edit %}Editar Evento{% else %}Novo Evento{% endif %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+
+  <div class="modal-body">
+    {{ form.as_p }}
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-primary">Salvar</button>
+  </div>
+</form>

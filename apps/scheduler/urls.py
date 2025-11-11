@@ -6,6 +6,7 @@ from django.views.generic import TemplateView
 
 from apps.weddings.models import Wedding
 from . import api_views
+from . import views_htmx
 
 app_name = "scheduler"
 
@@ -35,3 +36,28 @@ urlpatterns = [
         name="partial_scheduler",
     ),
 ]
+
+urlpatterns += [
+    # Formulário de evento (criar/editar)
+    path(
+        "partial/<int:wedding_id>/event/new/",
+        views_htmx.event_form,
+        name="event_new",
+    ),
+    path(
+        "partial/<int:wedding_id>/event/<int:event_id>/edit/",
+        views_htmx.event_form,
+        name="event_edit",
+    ),
+    path(
+        "partial/<int:wedding_id>/event/save/",
+        views_htmx.event_save,
+        name="event_save",
+    ),
+    path(
+        "partial/<int:wedding_id>/event/<int:event_id>/save/",
+        views_htmx.event_save,
+        name="event_update",
+    ),
+]
+

@@ -37,9 +37,18 @@
           },
           events: `/scheduler/api/events/?wedding_id=${weddingId}`,
           dateClick: function (info) {
-            console.log("Data clicada:", info.dateStr);
-            // Aqui depois podemos abrir modal HTMX para criar evento
-          },
+            const modal = new bootstrap.Modal(document.getElementById("form-modal"));
+            const modalContainer = document.getElementById("form-modal-container");
+          
+            htmx.ajax("GET", `/scheduler/partial/${weddingId}/event/new/?date=${info.dateStr}`, {
+              target: "#form-modal-container",
+              swap: "innerHTML",
+              trigger: "revealed",
+              headers: { "HX-Request": "true" },
+            });
+          
+            modal.show();
+          },          
           eventClick: function (info) {
             console.log("Evento clicado:", info.event.title);
             // Aqui depois podemos abrir modal de edição
