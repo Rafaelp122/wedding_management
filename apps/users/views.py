@@ -4,11 +4,13 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
+from apps.core.utils.view_mixins import RedirectAuthenticatedUserMixin
+
 from .forms import CustomUserChangeForm, CustomUserCreationForm, SignInForm
 from .models import User
 
 
-class SignUpView(CreateView):
+class SignUpView(RedirectAuthenticatedUserMixin, CreateView):
     template_name = "users/sign_up.html"
     form_class = CustomUserCreationForm
     success_url = reverse_lazy("users:sign_in")
@@ -47,7 +49,7 @@ class SignUpView(CreateView):
         return context
 
 
-class SignInView(LoginView):
+class SignInView(RedirectAuthenticatedUserMixin, LoginView):
     template_name = "users/sign_in.html"
     form_class = SignInForm
 

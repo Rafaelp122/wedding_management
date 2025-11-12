@@ -1,11 +1,8 @@
 from django.views.generic import TemplateView
 
+from apps.core.utils.view_mixins import RedirectAuthenticatedUserMixin
+
 
 # Página inicial do site
-class HomeView(TemplateView):
+class HomeView(RedirectAuthenticatedUserMixin, TemplateView):
     template_name = "pages/home.html"
-
-
-# Página de contato
-class ContactUsView(TemplateView):
-    template_name = "pages/contact-us.html"

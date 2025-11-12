@@ -1,4 +1,4 @@
-# from datetime import date  # Usado no teste comentado
+# from datetime import date
 
 from django.test import TestCase
 from django.urls import reverse
@@ -12,7 +12,6 @@ class TestPagesViews(TestCase):
         [
             # Cada tupla representa um caso de teste (nome, url, template, conteúdo esperado)
             ("home_page", "pages:home", "pages/home.html", "Gestão de Casamentos"),
-            ("contact_us_page", "pages:contact_us", "pages/contact-us.html", "Fale Conosco"),
         ]
     )
     def test_static_pages_render_correctly(self, _, url_name, template_name, expected_content):
@@ -24,7 +23,6 @@ class TestPagesViews(TestCase):
         self.assertTemplateUsed(response, template_name)
         self.assertContains(response, expected_content)
 
-    # Exemplo de teste adicional (comentado)
     # def test_home_view_provides_correct_context(self):
     #     """Verifica se a HomeView adiciona o ano atual ao contexto."""
     #     url = reverse("pages:home")
