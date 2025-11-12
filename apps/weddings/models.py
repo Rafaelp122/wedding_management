@@ -1,11 +1,12 @@
 from django.db import models
 
+from apps.core.models import BaseModel
 from apps.users.models import User
 
 from .querysets import WeddingQuerySet
 
 
-class Wedding(models.Model):
+class Wedding(BaseModel):
     planner = models.ForeignKey(User, on_delete=models.CASCADE)
     groom_name = models.CharField(max_length=100)
     bride_name = models.CharField(max_length=100)

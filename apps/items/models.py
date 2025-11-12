@@ -1,12 +1,13 @@
 from django.db import models
 
+from apps.core.models import BaseModel
 from apps.supplier.models import Supplier
 from apps.weddings.models import Wedding
 
 from .querysets import ItemQuerySet
 
 
-class Item(models.Model):
+class Item(BaseModel):
     # Modelo que representa um item de orçamento vinculado a um casamento
 
     CATEGORY_CHOICES = [

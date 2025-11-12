@@ -41,11 +41,23 @@ class ItemQuerySet(models.QuerySet):
         return self
 
     def apply_sort(self, sort_option):
-        """Ordena o queryset com base na opção de sort"""
+        """Ordena o queryset de itens com base na opção de sort, incluindo preço e data."""
         if sort_option == 'name_asc':
             order_by_field = 'name'
         elif sort_option == 'status':
             order_by_field = 'status'
+
+        elif sort_option == 'price_desc':
+            order_by_field = '-unit_price'
+        elif sort_option == 'price_asc':
+            order_by_field = 'unit_price'
+
+        # NOVAS OPÇÕES: Data de Criação
+        elif sort_option == 'date_desc':
+            order_by_field = '-created_at'
+        elif sort_option == 'date_asc':
+            order_by_field = 'created_at'
+
         else:
             order_by_field = 'id'  # Padrão
         return self.order_by(order_by_field)
