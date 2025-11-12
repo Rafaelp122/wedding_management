@@ -10,7 +10,11 @@
             </div>
             <div class="position-absolute start-0 ms-3" style="bottom: -32px;">
                 <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 64px; height: 64px;">
-                    <span class="fs-5 fw-bold" style="color: var(--bs-primary);">
+                    <span class="fs-5 fw-bold" 
+                        style="background: {{ item.gradient }}; 
+                                -webkit-background-clip: text; 
+                                background-clip: text; 
+                                color: transparent;">
                         {{ w.groom_name|slice:":1" }}&{{ w.bride_name|slice:":1" }}
                     </span>
                 </div>
