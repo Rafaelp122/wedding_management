@@ -37,14 +37,18 @@ class ItemBaseMixin(LoginRequiredMixin):
             # e encontra o casamento através dele
             if 'pk' in self.kwargs:
                 try:
-                    item = Item.objects.select_related('wedding').get(pk=self.kwargs['pk'])
+                    item = Item.objects.select_related('wedding').get(
+                        pk=self.kwargs['pk']
+                    )
                     if item.wedding.planner != self.request.user:
                         return HttpResponseBadRequest("Permissão negada.")
                     self.wedding = item.wedding
                 except Item.DoesNotExist:
                     return HttpResponseBadRequest("Item não encontrado.")
             else:
-                return HttpResponseBadRequest("ID do Casamento não encontrado.")
+                return HttpResponseBadRequest(
+                    "ID do Casamento não encontrado."
+                )
         else:
             self.wedding = get_object_or_404(
                 Wedding,
@@ -112,7 +116,7 @@ class ItemBaseMixin(LoginRequiredMixin):
     def render_item_list_response(self, request_params=None, trigger=None):
         """
         Renderiza a resposta HTMX APENAS da lista + paginação.
-        Usado tanto por GET (filtro/paginação) quanto por POST (add/edit/delete).
+        Usado tanto por GET (filtro/paginação) quanto por POST (update_status/delete).
 
         - Se 'request_params' for fornecido (GET), usa-o.
         - Se não (POST), lê o 'HX-Current-Url' para preservar o estado.

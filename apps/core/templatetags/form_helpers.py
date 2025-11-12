@@ -1,5 +1,5 @@
 from django import template
-
+from django.forms.widgets import Textarea
 register = template.Library()
 
 
@@ -24,3 +24,12 @@ def get_icon_class(field, icon_dict):
         icon_dict = {}
 
     return icon_dict.get(field.name, "")
+
+
+@register.filter
+def is_textarea(field):
+    """
+    Verifica se o widget de um campo é um Textarea.
+    Uso: {% if field|is_textarea %}
+    """
+    return isinstance(field.field.widget, Textarea)

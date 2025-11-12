@@ -1,7 +1,23 @@
+{% comment %}
+  ARQUIVO: partials/_form_fields.html
+  Template REUTILIZÁVEL para renderizar os campos de um formulário.
+
+  Ele é "configurado" pelo contexto da View que o chama, esperando:
+  - form (obrigatório): A instância do formulário Django.
+  - form_layout_dict (opcional): Dicionário para classes de coluna.
+  - default_col_class (opcional): Classe de coluna padrão.
+  - form_icons (opcional): Dicionário com ícones para os campos.
+{% endcomment %}
+
+{% comment %} Carrega os filtros customizados (get_field_class, get_icon_class, is_textarea) {% endcomment %}
 {% load form_helpers %}
 
 <div class="row">
   {% for field in form %}
+    {% comment %}
+      O filtro 'get_field_class' usa o 'form_layout_dict' (da view)
+      para definir a classe da coluna (ex: "col-md-6").
+    {% endcomment %}
     <div class="{% get_field_class field form_layout_dict default_col_class %}">
 
       <div class="mb-3">
@@ -9,16 +25,43 @@
           {{ field.label }}
         </label>
 
+        {% comment %}
+          Bloco de lógica dos Ícones.
+          Só é executado se a view passar 'form_icons' no contexto.
+        {% endcomment %}
         {% if form_icons %}
+          {% comment %}
+            'get_icon_class' busca o ícone para este campo específico.
+          {% endcomment %}
           {% with icon_class=field|get_icon_class:form_icons %}
             <div class="position-relative mb-3">
               {{ field }}
               {% if icon_class %}
-                <i class="{{ icon_class }} position-absolute top-50 start-0 translate-middle-y ps-3 text-muted" style="opacity: 0.5;"></i>
+                
+                {% comment %}
+                  FIXO DE ALINHAMENTO DE ÍCONE:
+                  Usamos o filtro customizado 'is_textarea' para
+                  diferenciar o posicionamento do ícone.
+                {% endcomment %}
+                {% if field|is_textarea %}
+                  {% comment %}
+                    Textarea: Alinha o ícone no TOPO (top-0, pt-3).
+                  {% endcomment %}
+                  <i class="{{ icon_class }} position-absolute top-0 start-0 ps-3 pt-3 text-muted" style="opacity: 0.5;"></i>
+                {% else %}
+                  {% comment %}
+                    Input Padrão: Centraliza verticalmente (top-50, translate-middle-y).
+                  {% endcomment %}
+                  <i class="{{ icon_class }} position-absolute top-50 start-0 translate-middle-y ps-3 text-muted" style="opacity: 0.5;"></i>
+                {% endif %}
+
               {% endif %}
             </div>
           {% endwith %}
         {% else %}
+          {% comment %}
+            Fallback: Renderiza o campo sem ícone se 'form_icons' não for fornecido.
+          {% endcomment %}
           <div class="mb-3">
             {{ field }}
           </div>
@@ -28,6 +71,10 @@
           <div class="form-text text-muted">{{ field.help_text }}</div>
         {% endif %}
         
+        {% comment %}
+          Renderiza os erros de validação do campo, se houverem.
+          'd-block' força o feedback a aparecer mesmo sem 'was-validated'.
+        {% endcomment %}
         {% for error in field.errors %}
           <div class="invalid-feedback d-block">
             {{ error }}
