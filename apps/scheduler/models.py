@@ -1,6 +1,5 @@
 from django.db import models
 
-from apps.core.models import BaseModel
 from apps.users.models import User
 from apps.weddings.models import Wedding
 
@@ -14,7 +13,7 @@ EVENT_TYPE_CHOICES = (
 )
 
 
-class Event(BaseModel):
+class Event(models.Model):
     """Modelo que representa um evento/compromisso no calendário."""
 
     # Casamento ao qual o evento está vinculado (opcional)
