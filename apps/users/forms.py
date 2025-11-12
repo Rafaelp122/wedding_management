@@ -20,7 +20,6 @@ class CustomUserCreationForm(FormStylingMixinLarge, UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = User
-        # Adicione os campos que você quer do UserCreationForm + o seu novo campo 'email'
         fields = ("username", "email", "first_name", "last_name")
 
     def __init__(self, *args, **kwargs):

@@ -4,9 +4,10 @@ Configurações do projeto Django Wedding Management.
 Gerado por 'django-admin startproject' usando Django 5.2.3.
 """
 
-from pathlib import Path
-from django.contrib.messages import constants as messages
 import os
+from pathlib import Path
+
+from django.contrib.messages import constants as messages
 
 # Caminho base do projeto (usado para construir outros caminhos)
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,7 +39,7 @@ INSTALLED_APPS = [
 
     # Aplicativos de terceiros
     "django_htmx",
-    "django_extensions",
+    # "django_extensions",
     "rest_framework",
 
     # Aplicativos do projeto
@@ -100,7 +101,7 @@ WSGI_APPLICATION = "wedding_management.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",  # Banco padrão (simples e local)
+        "ENGINE": "django.db.backends.sqlite3",  # Banco padrão
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
