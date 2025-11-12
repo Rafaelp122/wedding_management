@@ -2,3 +2,4 @@ asgiref==3.8.1
 Django==5.2.4
 django-htmx==1.23.2
 sqlparse==0.5.3
+djangorestframework==3.16.1
