@@ -97,8 +97,7 @@
         hx-get="{% url 'scheduler:partial_scheduler' wedding.id %}"
         hx-target="#tab-scheduler"
         hx-swap="innerHTML"
-        hx-trigger="click"
-      >
+        hx-trigger="click once"  >
         <i class="fas fa-calendar-days me-2"></i> Calendário
       </a>
     </li>

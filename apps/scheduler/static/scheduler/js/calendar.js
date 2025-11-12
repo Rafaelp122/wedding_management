@@ -1,30 +1,29 @@
-// =============================================================
-// FULLCALENDAR + HTMX - Integração completa e reativa
-// =============================================================
 (function () {
-    document.addEventListener("htmx:afterSwap", function (event) {
-      // Só roda quando a aba do calendário for carregada
-      if (event.detail.target.id === "tab-scheduler") {
-        console.log("✅ HTMX carregou aba do calendário. Iniciando FullCalendar...");
-  
+  // Namespace global que mantém a instância ativa do calendário
+  window.weddingApp = window.weddingApp || {};
+  window.weddingApp.currentCalendar = null;
+
+  // Inicializa o calendário quando o conteúdo HTMX da aba é carregado
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id === "tab-scheduler") {
+      if (window.weddingApp.currentCalendar) return;
+
+      console.log("Inicializando calendário pela primeira vez...");
+
+      // Aguarda a aba estar visível antes de renderizar
+      setTimeout(function () {
         const calendarEl = document.getElementById("calendar");
         if (!calendarEl) {
           console.warn("Elemento #calendar não encontrado.");
           return;
         }
-  
+
         const weddingId = calendarEl.dataset.weddingId;
         if (!weddingId) {
           console.error("ID do casamento não encontrado no calendário.");
           return;
         }
-  
-        // Se já existir um calendário ativo, destrói antes de recriar
-        if (calendarEl.fullCalendarInstance) {
-          calendarEl.fullCalendarInstance.destroy();
-        }
-  
-        // Inicializa o FullCalendar
+
         const calendar = new FullCalendar.Calendar(calendarEl, {
           locale: "pt-br",
           height: 650,
@@ -35,41 +34,47 @@
             right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
           },
           events: `/scheduler/api/events/?wedding_id=${weddingId}`,
-  
-          // Clique em uma data → abre modal HTMX de criação
+
+          // Abre o modal de criação de evento
           dateClick: function (info) {
-            console.log("📅 Data clicada:", info.dateStr);
-            const modal = new bootstrap.Modal(document.getElementById("form-modal"));
-  
+            const modalEl = document.getElementById("form-modal");
+            if (!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             htmx.ajax("GET", `/scheduler/partial/${weddingId}/event/new/?date=${info.dateStr}`, {
               target: "#form-modal-container",
-              swap: "innerHTML"
+              swap: "innerHTML",
             });
-  
             modal.show();
           },
-  
-          // Clique em um evento → (depois) abrir modal de edição
+
+          // Abre o modal de edição de evento existente
           eventClick: function (info) {
-            console.log("🟣 Evento clicado:", info.event.title);
-            const modal = new bootstrap.Modal(document.getElementById("form-modal"));
-  
+            const modalEl = document.getElementById("form-modal");
+            if (!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             htmx.ajax("GET", `/scheduler/partial/${weddingId}/event/${info.event.id}/edit/`, {
               target: "#form-modal-container",
-              swap: "innerHTML"
+              swap: "innerHTML",
             });
-  
             modal.show();
-          }
+          },
         });
-  
+
         calendar.render();
-  
-        // Guarda referência global para uso no modal_handler.js
-        calendarEl.fullCalendarInstance = calendar;
-  
-        console.log("✅ FullCalendar renderizado e pronto!");
-      }
-    });
-  })();
-  
+        window.weddingApp.currentCalendar = calendar;
+        console.log("Calendário renderizado com sucesso.");
+      }, 50);
+    }
+  });
+
+  // Garante o redimensionamento correto ao reabrir a aba do calendário
+  document.addEventListener("click", function (e) {
+    const tabLink = e.target.closest('a[data-tab="scheduler"]');
+    if (tabLink && window.weddingApp.currentCalendar) {
+      setTimeout(function () {
+        console.log("Atualizando layout do calendário (updateSize).");
+        window.weddingApp.currentCalendar.updateSize();
+      }, 50);
+    }
+  });
+})();
