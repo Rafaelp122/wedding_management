@@ -8,7 +8,9 @@ class EventAdmin(admin.ModelAdmin):
     """Define como o modelo Event será exibido e filtrado no admin."""
 
     # Campos exibidos na listagem
-    list_display = ("id", "title", "start_time", "event_type", "wedding", "planner")
+    list_display = (
+        "id", "title", "start_time", "event_type", "wedding", "planner"
+    )
 
     # Campos pesquisáveis
     search_fields = ("title", "description", "location")
