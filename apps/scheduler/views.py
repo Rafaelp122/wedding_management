@@ -1,5 +1,3 @@
-# scheduler/views.py
-
 import json
 from datetime import datetime
 from django.shortcuts import get_object_or_404, render
@@ -7,28 +5,13 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views import View
 from django.views.generic import DeleteView
-
-from .models import Event
-from .forms import EventForm
-from .mixins import SchedulerWeddingMixin  # Importa o Mixin responsável por garantir contexto do casamento
-
-
-from django.urls import reverse
-
-# apps/scheduler/views.py
-
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse
-from django.utils import timezone
-from django.views import View
-from django.views.generic import DeleteView
-from django.urls import reverse
-from datetime import datetime
-import json
 
 from .models import Event
 from .forms import EventForm
 from .mixins import SchedulerWeddingMixin
+
+
+from django.urls import reverse
 
 
 class EventFormView(SchedulerWeddingMixin, View):
@@ -43,14 +26,20 @@ class EventFormView(SchedulerWeddingMixin, View):
         instance = None
 
         if event_id:
-            instance = get_object_or_404(Event, id=event_id, planner=request.user)
+            instance = get_object_or_404(
+                Event, id=event_id,
+                planner=request.user
+            )
 
         clicked_date = request.GET.get("date")
         form = self.form_class(instance=instance, clicked_date=clicked_date)
 
         # Define URL correta do form (create/update)
         if instance:
-            form_action = reverse("scheduler:event_update", args=[self.wedding.id, instance.id])
+            form_action = reverse(
+                "scheduler:event_update",
+                args=[self.wedding.id, instance.id]
+            )
         else:
             form_action = reverse("scheduler:event_save", args=[self.wedding.id])
 
@@ -62,7 +51,6 @@ class EventFormView(SchedulerWeddingMixin, View):
             "event": instance,
         }
         return render(request, self.template_name, context)
-
 
 
 class EventSaveView(SchedulerWeddingMixin, View):
@@ -79,7 +67,9 @@ class EventSaveView(SchedulerWeddingMixin, View):
 
         # Recupera o evento se for uma edição
         if event_id:
-            instance = get_object_or_404(Event, id=event_id, planner=request.user)
+            instance = get_object_or_404(
+                Event, id=event_id, planner=request.user
+            )
 
         form = self.form_class(request.POST, instance=instance)
 
@@ -93,9 +83,13 @@ class EventSaveView(SchedulerWeddingMixin, View):
             end_time_input = form.cleaned_data.get("end_time_input")
 
             if event_date and start_time_input:
-                event.start_time = timezone.make_aware(datetime.combine(event_date, start_time_input))
+                event.start_time = timezone.make_aware(
+                    datetime.combine(event_date, start_time_input)
+                )
             if event_date and end_time_input:
-                event.end_time = timezone.make_aware(datetime.combine(event_date, end_time_input))
+                event.end_time = timezone.make_aware(
+                    datetime.combine(event_date, end_time_input)
+                )
 
             event.save()
 
@@ -116,7 +110,6 @@ class EventSaveView(SchedulerWeddingMixin, View):
                 "closeModal": True
             })
             return response
-
 
         # Caso o formulário seja inválido, reexibe o formulário com erros
         context = {
@@ -139,8 +132,8 @@ class EventDeleteView(SchedulerWeddingMixin, DeleteView):
 
     def get_queryset(self):
         """
-        Restringe a exclusão apenas a eventos pertencentes ao planner autenticado
-        e ao casamento em contexto.
+        Restringe a exclusão apenas a eventos pertencentes ao planner
+        autenticado e ao casamento em contexto.
         """
         return self.model.objects.filter(
             planner=self.request.user,

@@ -1,9 +1,8 @@
-# scheduler/mixins.py
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from apps.weddings.models import Wedding
+
 
 class SchedulerWeddingMixin(LoginRequiredMixin):
     """
@@ -20,10 +19,12 @@ class SchedulerWeddingMixin(LoginRequiredMixin):
         # Busca o casamento
         wedding_id = self.kwargs.get("wedding_id")
         self.wedding = get_object_or_404(Wedding, id=wedding_id)
-        
+
         # Verifica a permissão
         if self.wedding.planner != request.user:
-            raise PermissionDenied("Você não tem permissão para acessar este casamento.")
-            
+            raise PermissionDenied(
+                "Você não tem permissão para acessar este casamento."
+            )
+
         # Continua para o método (get, post) da view
         return super().dispatch(request, *args, **kwargs)
