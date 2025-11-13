@@ -13,10 +13,27 @@ from .forms import EventForm
 from .mixins import SchedulerWeddingMixin  # Importa o Mixin responsável por garantir contexto do casamento
 
 
+from django.urls import reverse
+
+# apps/scheduler/views.py
+
+from django.shortcuts import get_object_or_404, render
+from django.http import JsonResponse
+from django.utils import timezone
+from django.views import View
+from django.views.generic import DeleteView
+from django.urls import reverse
+from datetime import datetime
+import json
+
+from .models import Event
+from .forms import EventForm
+from .mixins import SchedulerWeddingMixin
+
+
 class EventFormView(SchedulerWeddingMixin, View):
     """
     Exibe o formulário de criação ou edição de um evento.
-    Substitui a antiga função 'event_form'.
     """
     form_class = EventForm
     template_name = "scheduler/partials/_event_form.html"
@@ -25,25 +42,27 @@ class EventFormView(SchedulerWeddingMixin, View):
         event_id = self.kwargs.get("event_id")
         instance = None
 
-        # Caso o evento exista, busca-o garantindo que pertença ao planner logado
         if event_id:
             instance = get_object_or_404(Event, id=event_id, planner=request.user)
 
-        # Caso o usuário tenha clicado em uma data específica no calendário
         clicked_date = request.GET.get("date")
+        form = self.form_class(instance=instance, clicked_date=clicked_date)
 
-        form = self.form_class(
-            instance=instance,
-            clicked_date=clicked_date
-        )
+        # Define URL correta do form (create/update)
+        if instance:
+            form_action = reverse("scheduler:event_update", args=[self.wedding.id, instance.id])
+        else:
+            form_action = reverse("scheduler:event_save", args=[self.wedding.id])
 
         context = {
             "form": form,
-            "wedding": self.wedding,  # Atributo herdado do Mixin
+            "form_action": form_action,
+            "wedding": self.wedding,
             "is_edit": instance is not None,
             "event": instance,
         }
         return render(request, self.template_name, context)
+
 
 
 class EventSaveView(SchedulerWeddingMixin, View):
@@ -67,9 +86,8 @@ class EventSaveView(SchedulerWeddingMixin, View):
         if form.is_valid():
             event = form.save(commit=False)
             event.planner = request.user
-            event.wedding = self.wedding  # Obtido via Mixin
+            event.wedding = self.wedding
 
-            # Combina a data e as horas em objetos datetime com fuso horário
             event_date = form.cleaned_data.get("event_date")
             start_time_input = form.cleaned_data.get("start_time_input")
             end_time_input = form.cleaned_data.get("end_time_input")
@@ -81,7 +99,6 @@ class EventSaveView(SchedulerWeddingMixin, View):
 
             event.save()
 
-            # Estrutura de resposta para o HTMX atualizar o calendário dinamicamente
             data = {
                 "id": event.id,
                 "title": event.title,
@@ -94,8 +111,12 @@ class EventSaveView(SchedulerWeddingMixin, View):
             trigger_type = "eventUpdated" if instance else "eventCreated"
 
             response = JsonResponse(data)
-            response["HX-Trigger"] = json.dumps({trigger_type: data})
+            response["HX-Trigger-After-Settle"] = json.dumps({
+                trigger_type: data,
+                "closeModal": True
+            })
             return response
+
 
         # Caso o formulário seja inválido, reexibe o formulário com erros
         context = {

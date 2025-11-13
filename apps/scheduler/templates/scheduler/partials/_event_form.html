@@ -1,22 +1,39 @@
 <form 
-  hx-post="{% if is_edit %}{% url 'scheduler:event_update' wedding.id event.id %}{% else %}{% url 'scheduler:event_save' wedding.id %}{% endif %}"
+  hx-post="{{ form_action }}"
   hx-target="#form-modal-container"
   hx-swap="innerHTML"
 >
   {% csrf_token %}
+
   <div class="modal-header">
     <h5 class="modal-title">
       {% if is_edit %}Editar Evento{% else %}Novo Evento{% endif %}
     </h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
   </div>
 
   <div class="modal-body">
     {{ form.as_p }}
   </div>
 
-  <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-    <button type="submit" class="btn btn-primary">Salvar</button>
+  <div class="modal-footer d-flex justify-content-between align-items-center">
+    {% if is_edit %}
+      <button
+        type="button"
+        class="btn btn-outline-danger"
+        hx-get="{% url 'scheduler:event_delete' wedding.id event.id %}"
+        hx-target="#form-modal-container"
+        hx-swap="innerHTML"
+      >
+        <i class="fas fa-trash-alt me-1"></i> Excluir
+      </button>
+    {% else %}
+      <div></div>  {# Mantém alinhamento quando o botão Excluir não aparece #}
+    {% endif %}
+
+    <div class="d-flex gap-2 ms-auto">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
   </div>
 </form>

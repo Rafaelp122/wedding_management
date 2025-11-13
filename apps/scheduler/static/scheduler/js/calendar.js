@@ -1,28 +1,20 @@
 (function () {
-  // Namespace global que mantém a instância ativa do calendário
+  // Namespace global do calendário
   window.weddingApp = window.weddingApp || {};
   window.weddingApp.currentCalendar = null;
 
-  // Inicializa o calendário quando o conteúdo HTMX da aba é carregado
+  // ===== Inicialização do calendário =====
   document.addEventListener("htmx:afterSwap", function (event) {
     if (event.detail.target.id === "tab-scheduler") {
       if (window.weddingApp.currentCalendar) return;
+      console.log("🟣 Inicializando calendário...");
 
-      console.log("Inicializando calendário pela primeira vez...");
-
-      // Aguarda a aba estar visível antes de renderizar
       setTimeout(function () {
         const calendarEl = document.getElementById("calendar");
-        if (!calendarEl) {
-          console.warn("Elemento #calendar não encontrado.");
-          return;
-        }
+        if (!calendarEl) return console.warn("Elemento #calendar não encontrado.");
 
         const weddingId = calendarEl.dataset.weddingId;
-        if (!weddingId) {
-          console.error("ID do casamento não encontrado no calendário.");
-          return;
-        }
+        if (!weddingId) return console.error("ID do casamento não encontrado.");
 
         const calendar = new FullCalendar.Calendar(calendarEl, {
           locale: "pt-br",
@@ -35,10 +27,9 @@
           },
           events: `/scheduler/api/events/?wedding_id=${weddingId}`,
 
-          // Abre o modal de criação de evento
+          // Ações: novo evento / editar evento
           dateClick: function (info) {
             const modalEl = document.getElementById("form-modal");
-            if (!modalEl) return;
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             htmx.ajax("GET", `/scheduler/partial/${weddingId}/event/new/?date=${info.dateStr}`, {
               target: "#form-modal-container",
@@ -46,11 +37,8 @@
             });
             modal.show();
           },
-
-          // Abre o modal de edição de evento existente
           eventClick: function (info) {
             const modalEl = document.getElementById("form-modal");
-            if (!modalEl) return;
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             htmx.ajax("GET", `/scheduler/partial/${weddingId}/event/${info.event.id}/edit/`, {
               target: "#form-modal-container",
@@ -62,19 +50,42 @@
 
         calendar.render();
         window.weddingApp.currentCalendar = calendar;
-        console.log("Calendário renderizado com sucesso.");
-      }, 50);
+        console.log("✅ Calendário renderizado com sucesso.");
+      }, 100);
     }
   });
 
-  // Garante o redimensionamento correto ao reabrir a aba do calendário
+  // ===== Ajuste visual ao trocar de aba =====
   document.addEventListener("click", function (e) {
     const tabLink = e.target.closest('a[data-tab="scheduler"]');
     if (tabLink && window.weddingApp.currentCalendar) {
-      setTimeout(function () {
-        console.log("Atualizando layout do calendário (updateSize).");
+      setTimeout(() => {
+        console.log("↻ Atualizando tamanho do calendário...");
         window.weddingApp.currentCalendar.updateSize();
-      }, 50);
+      }, 100);
+    }
+  });
+
+  // ===== Eventos HTMX (criação, edição, exclusão) =====
+  ["eventCreated", "eventUpdated", "eventDeleted"].forEach(eventName => {
+    document.body.addEventListener(eventName, function (e) {
+      console.log(`🔁 Trigger recebido: ${eventName}`, e.detail);
+      if (window.weddingApp.currentCalendar) {
+        window.weddingApp.currentCalendar.refetchEvents();
+      }
+      const modalEl = document.getElementById("form-modal");
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    });
+  });
+
+  // ===== Fechamento de modal via trigger adicional =====
+  document.body.addEventListener("closeModal", function () {
+    const modalEl = document.getElementById("form-modal");
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) {
+      modal.hide();
+      console.log("✅ Modal fechado automaticamente (closeModal).");
     }
   });
 })();

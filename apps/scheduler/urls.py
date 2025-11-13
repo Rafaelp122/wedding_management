@@ -1,4 +1,4 @@
-# scheduler/urls.py
+# apps/scheduler/urls.py
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
@@ -7,22 +7,19 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
 
 from apps.weddings.models import Wedding
-from . import api_views
-from . import views 
+from . import api_views, views
 
 app_name = "scheduler"
 
-# Configuração da API REST utilizada pelo FullCalendar
-# Responsável por fornecer os dados dos eventos via endpoints.
+# ===== API REST (FullCalendar) =====
+# Endpoint usado pelo FullCalendar para carregar eventos dinamicamente.
 router = DefaultRouter()
 router.register(r"api/events", api_views.EventViewSet, basename="event")
 
 
+# ===== View parcial (HTMX) =====
+# Renderiza o calendário dentro do contexto de um casamento específico.
 class SchedulerPartialView(TemplateView):
-    """
-    Renderiza o componente parcial do calendário (HTMX)
-    vinculado a um casamento específico.
-    """
     template_name = "scheduler/partials/_scheduler_partial.html"
 
     def get_context_data(self, **kwargs):
@@ -32,46 +29,47 @@ class SchedulerPartialView(TemplateView):
         return context
 
 
+# ===== URL Patterns =====
 urlpatterns = [
-    # Endpoints da API REST
+    # Endpoints da API
     path("", include(router.urls)),
 
-    # Renderização parcial do calendário, usada dentro do detalhe do casamento
+    # Renderização parcial do calendário (HTMX)
     path(
         "partial/<int:wedding_id>/",
         login_required(SchedulerPartialView.as_view()),
         name="partial_scheduler",
     ),
 
-    # Exibe o formulário para criação de um novo evento
+    # Exibição do formulário de criação de evento
     path(
         "partial/<int:wedding_id>/event/new/",
         views.EventFormView.as_view(),
         name="event_new",
     ),
 
-    # Exibe o formulário para edição de um evento existente
+    # Exibição do formulário de edição de evento
     path(
         "partial/<int:wedding_id>/event/<int:event_id>/edit/",
         views.EventFormView.as_view(),
         name="event_edit",
     ),
 
-    # Recebe o POST de um novo evento e realiza o salvamento
+    # Salvamento de novo evento
     path(
         "partial/<int:wedding_id>/event/save/",
         views.EventSaveView.as_view(),
         name="event_save",
     ),
 
-    # Atualiza um evento existente com base no ID informado
+    # Atualização de evento existente
     path(
-        "partial/<int>wedding_id>/event/<int:event_id>/save/",
+        "partial/<int:wedding_id>/event/<int:event_id>/save/",
         views.EventSaveView.as_view(),
         name="event_update",
     ),
 
-    # Exibe o modal de confirmação e realiza a exclusão do evento
+    # Exclusão de evento com confirmação
     path(
         "partial/<int:wedding_id>/event/<int:event_id>/delete/",
         views.EventDeleteView.as_view(),
