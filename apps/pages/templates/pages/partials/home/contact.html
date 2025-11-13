@@ -1,6 +1,9 @@
 {% load static %}
 
-{% comment %} Fale Conosco {% endcomment %}
+{% comment %}
+  ARQUIVO: pages/partials/home/contact.html
+  (Este é o "wrapper" da secção de contato)
+{% endcomment %}
 
 <section id="contact" class="py-5 bg-light">
   <div class="container">
@@ -8,22 +11,21 @@
     
     <div class="row">
       <div class="col-lg-6 mb-4 mb-lg-0">
-        <form>
-          <div class="mb-3">
-            <label for="name" class="form-label">Seu Nome</label>
-            <input type="text" class="form-control" id="name" required>
-          </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">Seu E-mail</label>
-            <input type="email" class="form-control" id="email" required>
-          </div>
-          <div class="mb-3">
-            <label for="message" class="form-label">Sua Mensagem</label>
-            <textarea class="form-control" id="message" rows="5" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-role">Enviar Mensagem</button>
-        </form>
+        
+        {% comment %}
+          Este 'div' é o alvo do HTMX. O conteúdo dele
+          será substituído (pelo formulário com erros ou pela msg de sucesso).
+        {% endcomment %}
+        <div id="contact-form-wrapper">
+
+          {% comment %}
+            Formulário (que vem da HomeView) foi incluído num partial separado.
+          {% endcomment %}
+          {% include 'pages/partials/home/_contact_form_partial.html' %}
+
+        </div>
       </div>
+
       <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body">

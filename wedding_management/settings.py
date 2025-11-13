@@ -122,6 +122,23 @@ TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
+# Configurações de E-mail
+
+# Para testes locais (imprime e-mails na consola)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# (Para produção, usarias SMTP, ex: SendGrid, Amazon SES, etc.)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.sendgrid.net'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'apikey'
+# EMAIL_HOST_PASSWORD = '...'
+
+# Define os e-mails que a tua view vai usar
+DEFAULT_FROM_EMAIL = 'contato@simaceito.com.br'  # O e-mail que "envia"
+ADMIN_EMAIL = 'teu-email-admin@gmail.com'  # O e-mail que "recebe"
+
 # Arquivos estáticos e de mídia
 
 STATIC_URL = "static/"

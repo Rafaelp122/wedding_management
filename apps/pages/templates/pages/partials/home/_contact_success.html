@@ -1,0 +1,15 @@
+{% comment %}
+  ARQUIVO: pages/partials/_contact_success.html (NOVO)
+  (Esta é a mensagem de sucesso que substitui o formulário)
+{% endcomment %}
+
+{% comment %}
+  IMPORTANTE: Este 'div' DEVE ter o mesmo 'id' do wrapper
+  (id="contact-form-wrapper"), porque estamos a usar 'outerHTML'.
+{% endcomment %}
+<div id="contact-form-wrapper">
+  <div class="alert alert-success p-4">
+    <h4 class="alert-heading fw-bold">Obrigado!</h4>
+    <p>A sua mensagem foi enviada com sucesso. Entraremos em contato em breve.</p>
+  </div>
+</div>

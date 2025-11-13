@@ -22,4 +22,12 @@
 
   {% include 'partials/footer.html' %}
 
+  {% block scripts %}
+  {{ block.super }}
+
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+
+  {% block extra_js %}{% endblock extra_js %}
+{% endblock scripts %}
+
 {% endblock body_content %}
