@@ -1,21 +1,32 @@
 {% extends "_base.html" %}
 {% load static %}
 
-
 {% block title %}{% block page_title %}{% endblock %} | {{ block.super }}{% endblock %}
-
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'css/base-public.css' %}">
-  {% block page_styles %} {% endblock page_styles %}
-{% endblock styles %}
 
+  <!-- 🔹 Estilo do efeito de surgimento -->
+  <style>
+    .reveal {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 1s ease-out;
+    }
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+
+  {% block page_styles %}{% endblock page_styles %}
+{% endblock styles %}
 
 {% block body_content %}
 
   {% include 'partials/public-header.html' %}
 
-  <main class="{% block main_class %} {% endblock main_class %}">
+  <main class="{% block main_class %}{% endblock main_class %}">
     {% include "partials/messages.html" %}
     {% block content %}{% endblock content %}
   </main>
@@ -23,11 +34,28 @@
   {% include 'partials/footer.html' %}
 
   {% block scripts %}
-  {{ block.super }}
+    {{ block.super }}
 
-  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 
-  {% block extra_js %}{% endblock extra_js %}
-{% endblock scripts %}
+    <!-- 🔹 Script do efeito ao rolar -->
+    <script>
+      function revelarAoRolar() {
+        const elementos = document.querySelectorAll('.reveal');
+        for (let el of elementos) {
+          const posicao = el.getBoundingClientRect().top;
+          const alturaJanela = window.innerHeight;
+          if (posicao < alturaJanela - 100) {
+            el.classList.add('active');
+          }
+        }
+      }
+
+      window.addEventListener('scroll', revelarAoRolar);
+      revelarAoRolar();
+    </script>
+
+    {% block extra_js %}{% endblock extra_js %}
+  {% endblock scripts %}
 
 {% endblock body_content %}
