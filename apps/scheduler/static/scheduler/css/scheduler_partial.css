@@ -7,14 +7,14 @@
   overflow: visible !important;
 }
 
-/* Remove bordas padrão do FullCalendar */
+/* Remove bordas padrão */
 .fc-theme-standard td,
 .fc-theme-standard th,
 .fc-theme-standard .fc-scrollgrid {
   border: none !important;
 }
 
-/* Barra superior do calendário */
+/* Toolbar */
 .fc .fc-toolbar {
   display: flex;
   justify-content: space-between;
@@ -29,15 +29,15 @@
   text-transform: capitalize;
 }
 
-/* Botões do FullCalendar */
+/* Botões */
 .fc .fc-button-primary,
 .fc .fc-button-group > .fc-button {
   background: none !important;
   border: none !important;
   color: #111827 !important;
   font-weight: 600;
-  box-shadow: none !important;
   transition: 0.2s ease;
+  box-shadow: none !important;
 }
 
 .fc .fc-button-primary:hover,
@@ -53,7 +53,7 @@
   border-radius: 10px;
 }
 
-/* Cabeçalho dos dias da semana */
+/* Cabeçalho dos dias */
 .fc .fc-col-header-cell-cushion {
   color: #6b7280;
   font-weight: 600;
@@ -61,15 +61,15 @@
   text-transform: capitalize;
 }
 
-/* Células da grade com altura fixa */
+/* Altura fixa das células */
 .fc-daygrid-day {
   height: 110px !important;
   max-height: 110px !important;
-  position: relative;
   overflow: hidden !important;
+  position: relative;
 }
 
-/* Área onde os eventos são renderizados (scroll interno) */
+/* Área que contém os eventos */
 .fc-daygrid-day-events {
   max-height: 65px !important;
   overflow-y: auto !important;
@@ -77,7 +77,7 @@
   padding-right: 4px;
 }
 
-/* Scroll personalizado */
+/* Scrollbar */
 .fc-daygrid-day-events::-webkit-scrollbar {
   width: 4px;
 }
@@ -91,7 +91,7 @@
   background: transparent;
 }
 
-/* Efeito hover na célula */
+/* Hover da célula */
 .fc-daygrid-day-frame {
   border-radius: 1rem;
   padding: 0.6rem;
@@ -103,49 +103,57 @@
   transform: scale(1.04);
 }
 
-/* Número da data */
+/* Número do dia */
 .fc-daygrid-day-number {
   color: #111827;
   font-weight: 600;
   font-size: 1rem;
 }
 
-/* Dia atual sem destaque visual */
+/* Dia atual */
 .fc .fc-day-today {
   background: none !important;
   border-radius: 1rem;
 }
 
-/* Blocos de eventos coloridos */
+/* Eventos */
 .fc-event {
-  height: 14px !important;
-  min-height: 14px !important;
-  width: 70% !important;
-  margin: 3px auto !important;
-  border-radius: 6px !important;
-  border: none !important;
-  padding: 0 !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  width: 85% !important;
 
-  /* Texto oculto */
-  color: transparent !important;
-  font-size: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+
+  margin: 4px auto !important;
+  padding: 0 6px !important;
+
+  border-radius: 8px !important;
+  border: none !important;
+
+  color: #000 !important; 
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+
   white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
 
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
 .fc-event:hover {
-  transform: scale(1.15);
-  filter: brightness(1.2);
+  transform: scale(1.05);
+  filter: brightness(1.12);
   cursor: pointer;
 }
 
-/* Remove background extra do FullCalendar */
+/* Remove sombra da célula */
 .fc .fc-daygrid-day-bg {
   background: none !important;
 }
 
-/* Ajustes responsivos */
+/* Mobile */
 @media (max-width: 768px) {
   .fc .fc-toolbar-title { font-size: 1rem; }
   .fc-daygrid-day-number { font-size: 0.9rem; }

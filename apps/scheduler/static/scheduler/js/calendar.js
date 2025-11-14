@@ -2,7 +2,7 @@
   window.weddingApp = window.weddingApp || {};
   window.weddingApp.currentCalendar = null;
 
-  // Retorna uma cor fixa por evento (persistente via localStorage)
+  // Cor fixa por evento
   function getEventColor(eventId) {
     const key = `event_color_${eventId}`;
     let color = localStorage.getItem(key);
@@ -11,13 +11,13 @@
       color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`;
       localStorage.setItem(key, color);
     }
+
     return color;
   }
 
-  // Inicializa o calendário quando a aba "scheduler" é carregada
+  // Inicializa calendário quando aba scheduler carregar
   document.addEventListener("htmx:afterSwap", function (event) {
     if (event.detail.target.id !== "tab-scheduler") return;
-
     if (window.weddingApp.currentCalendar) return;
 
     setTimeout(function () {
@@ -31,6 +31,7 @@
         height: "auto",
         expandRows: true,
         initialView: "dayGridMonth",
+        displayEventTime: false,   
 
         headerToolbar: {
           left: "prev,next today",
@@ -40,31 +41,43 @@
 
         events: `/scheduler/api/events/?wedding_id=${weddingId}`,
 
-        // Aplica cor fixa e tooltip aos eventos
+        // Tooltip + cor fixa
         eventDidMount: function (info) {
           const color = getEventColor(info.event.id);
-
           info.el.style.backgroundColor = color;
           info.el.style.borderColor = color;
 
-          let tooltip = info.event.title || "";
+          let tooltip = `Título: ${info.event.title || "—"}`;
 
-          if (info.event.extendedProps.description) {
-            tooltip += "\n" + info.event.extendedProps.description;
-          }
+          if (info.event.extendedProps.type)
+            tooltip += `\nTipo: ${info.event.extendedProps.type}`;
+
+          if (info.event.extendedProps.location)
+            tooltip += `\nLocal: ${info.event.extendedProps.location}`;
 
           if (info.event.start) {
-            const time = info.event.start.toLocaleTimeString("pt-BR", {
+            const inicio = info.event.start.toLocaleTimeString("pt-BR", {
               hour: "2-digit",
-              minute: "2-digit"
+              minute: "2-digit",
             });
-            tooltip += "\n" + time;
+            tooltip += `\nInício: ${inicio}`;
           }
+
+          if (info.event.end) {
+            const fim = info.event.end.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            tooltip += `\nFim: ${fim}`;
+          }
+
+          if (info.event.extendedProps.description)
+            tooltip += `\nDescrição: ${info.event.extendedProps.description}`;
 
           info.el.setAttribute("title", tooltip);
         },
 
-        // Ação: Criar novo evento ao clicar em uma data
+        // Criar evento
         dateClick: function (info) {
           const modalEl = document.getElementById("form-modal");
           const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -78,7 +91,7 @@
           modal.show();
         },
 
-        // Ação: Editar evento ao clicar no bloquinho
+        // Editar evento
         eventClick: function (info) {
           const modalEl = document.getElementById("form-modal");
           const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -99,22 +112,21 @@
     }, 100);
   });
 
-  // Ajusta o tamanho do calendário ao alternar abas
+  // Atualiza tamanho ao trocar aba
   document.addEventListener("click", function (e) {
-    const tabLink = e.target.closest('a[data-tab="scheduler"]');
-    if (!tabLink || !window.weddingApp.currentCalendar) return;
+    const tab = e.target.closest('a[data-tab="scheduler"]');
+    if (!tab || !window.weddingApp.currentCalendar) return;
 
     setTimeout(() => {
       window.weddingApp.currentCalendar.updateSize();
     }, 100);
   });
 
-  // Recarrega eventos após criar/editar/excluir
-  ["eventCreated", "eventUpdated", "eventDeleted"].forEach(eventName => {
-    document.body.addEventListener(eventName, function () {
-      if (window.weddingApp.currentCalendar) {
+  // Atualiza após create/edit/delete
+  ["eventCreated", "eventUpdated", "eventDeleted"].forEach(evt => {
+    document.body.addEventListener(evt, function () {
+      if (window.weddingApp.currentCalendar)
         window.weddingApp.currentCalendar.refetchEvents();
-      }
 
       const modalEl = document.getElementById("form-modal");
       const modal = bootstrap.Modal.getInstance(modalEl);
@@ -122,7 +134,7 @@
     });
   });
 
-  // Permite fechar modal via evento customizado
+  // Fechar modal via evento customizado
   document.body.addEventListener("closeModal", function () {
     const modalEl = document.getElementById("form-modal");
     const modal = bootstrap.Modal.getInstance(modalEl);
