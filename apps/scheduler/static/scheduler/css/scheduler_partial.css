@@ -1,8 +1,4 @@
-/* =========================================================
-   CALENDÁRIO MINIMALISTA - "BUBBLES LILÁS"
-   ========================================================= */
-
-/* Layout geral */
+/* Estilos gerais */
 #calendar {
   background: transparent;
   border-radius: 1rem;
@@ -11,14 +7,14 @@
   overflow: visible !important;
 }
 
-/* Remove bordas padrão */
+/* Remove bordas padrão do FullCalendar */
 .fc-theme-standard td,
 .fc-theme-standard th,
 .fc-theme-standard .fc-scrollgrid {
   border: none !important;
 }
 
-/* Toolbar */
+/* Barra superior do calendário */
 .fc .fc-toolbar {
   display: flex;
   justify-content: space-between;
@@ -33,7 +29,7 @@
   text-transform: capitalize;
 }
 
-/* Botões */
+/* Botões do FullCalendar */
 .fc .fc-button-primary,
 .fc .fc-button-group > .fc-button {
   background: none !important;
@@ -57,7 +53,7 @@
   border-radius: 10px;
 }
 
-/* Cabeçalho dos dias */
+/* Cabeçalho dos dias da semana */
 .fc .fc-col-header-cell-cushion {
   color: #6b7280;
   font-weight: 600;
@@ -65,7 +61,37 @@
   text-transform: capitalize;
 }
 
-/* Dias */
+/* Células da grade com altura fixa */
+.fc-daygrid-day {
+  height: 110px !important;
+  max-height: 110px !important;
+  position: relative;
+  overflow: hidden !important;
+}
+
+/* Área onde os eventos são renderizados (scroll interno) */
+.fc-daygrid-day-events {
+  max-height: 65px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 4px;
+}
+
+/* Scroll personalizado */
+.fc-daygrid-day-events::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fc-daygrid-day-events::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 39, 176, 0.35);
+  border-radius: 4px;
+}
+
+.fc-daygrid-day-events::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Efeito hover na célula */
 .fc-daygrid-day-frame {
   border-radius: 1rem;
   padding: 0.6rem;
@@ -77,34 +103,30 @@
   transform: scale(1.04);
 }
 
+/* Número da data */
 .fc-daygrid-day-number {
   color: #111827;
   font-weight: 600;
   font-size: 1rem;
 }
 
-/* Remove destaque do dia atual */
+/* Dia atual sem destaque visual */
 .fc .fc-day-today {
   background: none !important;
   border-radius: 1rem;
 }
 
-/* =========================================================
-   EVENTOS — BLOQUINHOS SIMPLES E COLORIDOS
-   ========================================================= */
+/* Blocos de eventos coloridos */
 .fc-event {
-  height: 12px !important;
-  width: 75% !important;
-  min-height: 12px !important;
-
-  border-radius: 8px !important;
+  height: 14px !important;
+  min-height: 14px !important;
+  width: 70% !important;
+  margin: 3px auto !important;
+  border-radius: 6px !important;
   border: none !important;
-  margin: 6px auto !important;
-
   padding: 0 !important;
-  display: block !important;
 
-  /* Remove qualquer texto */
+  /* Texto oculto */
   color: transparent !important;
   font-size: 0 !important;
   white-space: nowrap !important;
@@ -113,17 +135,17 @@
 }
 
 .fc-event:hover {
-  transform: scale(1.1);
-  filter: brightness(1.15);
+  transform: scale(1.15);
+  filter: brightness(1.2);
   cursor: pointer;
 }
 
-/* Remove fundo atrás das células */
+/* Remove background extra do FullCalendar */
 .fc .fc-daygrid-day-bg {
   background: none !important;
 }
 
-/* Mobile */
+/* Ajustes responsivos */
 @media (max-width: 768px) {
   .fc .fc-toolbar-title { font-size: 1rem; }
   .fc-daygrid-day-number { font-size: 0.9rem; }
