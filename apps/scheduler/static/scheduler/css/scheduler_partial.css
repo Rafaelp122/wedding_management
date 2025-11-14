@@ -1,155 +1,130 @@
 /* =========================================================
-   Calendário Estilo Minimalista - "Bubbles Lilás"
+   CALENDÁRIO MINIMALISTA - "BUBBLES LILÁS"
    ========================================================= */
 
 /* Layout geral */
 #calendar {
-    background: transparent;
-    border-radius: 1rem;
-    padding: 1rem 0;
-    font-family: 'Inter', sans-serif;
-  }
-  
-  /* Remove as bordas padrão */
-  .fc-theme-standard td, 
-  .fc-theme-standard th,
-  .fc-theme-standard .fc-scrollgrid {
-    border: none !important;
-  }
-  
-  /* Cabeçalho do calendário */
-  .fc .fc-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem !important;
-    border: none !important;
-  }
-  
-  .fc .fc-toolbar-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #111827;
-    text-transform: capitalize;
-  }
-  
-  /* Botões de navegação (setas e Hoje) */
-  .fc .fc-button-primary {
-    background: none !important;
-    border: none !important;
-    color: #111827 !important;
-    font-weight: 600;
-    box-shadow: none !important;
-    transition: all 0.2s ease-in-out;
-    border-radius: 50%;
-  }
-  
-  .fc .fc-button-primary:hover {
-    background-color: rgba(156, 39, 176, 0.08) !important;
-    color: #9C27B0 !important;
-  }
-  
-  /* Botões Mês/Semana/Dia/Lista */
-  .fc .fc-button-group > .fc-button {
-    background: none !important;
-    border: none !important;
-    color: #111827 !important;
-    font-weight: 600;
-    transition: 0.2s ease;
-  }
-  
-  .fc .fc-button-group > .fc-button:hover {
-    background-color: rgba(156, 39, 176, 0.08) !important;
-    color: #9C27B0 !important;
-    border-radius: 8px;
-  }
-  
-  .fc .fc-button-group > .fc-button.fc-button-active {
-    background-color: rgba(156, 39, 176, 0.15) !important;
-    color: #9C27B0 !important;
-    border-radius: 8px;
-  }
-  
-  /* Cabeçalho dos dias da semana */
-  .fc .fc-col-header-cell {
-    border: none !important;
-    background: transparent !important;
-  }
-  
-  .fc .fc-col-header-cell-cushion {
-    color: #6b7280;
-    font-weight: 600;
-    font-size: 0.95rem;
-    text-transform: capitalize;
-  }
-  
-  /* Dias */
-  .fc-daygrid-day-frame {
-    border-radius: 1rem;
-    padding: 0.6rem;
-    transition: background-color 0.25s ease;
-  }
-  
-  .fc-daygrid-day-number {
-    color: #111827;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  
-  .fc-daygrid-day-frame:hover {
-    background-color: rgba(156, 39, 176, 0.05);
-  }
-  
-  /* Remove linhas entre células */
-  .fc .fc-scrollgrid-sync-table {
-    border: none !important;
-  }
-  
-  /* Data de hoje */
-  .fc .fc-day-today {
-    background-color: rgba(156, 39, 176, 0.08) !important;
-    border-radius: 1rem;
-  }
-  
-  /* Eventos como pílulas lilás */
-  .fc-event {
-    background-color: rgba(156, 39, 176, 0.12) !important;
-    border: none !important;
-    border-radius: 12px !important;
-    padding: 8px 10px !important;
-    color: #7B1FA2 !important;
-    font-weight: 700;
-    font-size: 0.9rem;
-    box-shadow: none !important;
-    text-align: center;
-  }
-  
-  .fc-event:hover {
-    background-color: rgba(156, 39, 176, 0.25) !important;
-    cursor: pointer;
-  }
-  
-  /* Pontinho no centro do evento */
-  .fc-event::before {
-    content: '•';
-    color: #7B1FA2;
-    font-size: 1.2rem;
-    margin-right: 5px;
-    vertical-align: middle;
-  }
-  
-  /* Remove sombra dos cards */
-  .fc .fc-daygrid-day-bg {
-    background: none !important;
-  }
-  
-  /* Responsivo */
-  @media (max-width: 768px) {
-    .fc .fc-toolbar-title {
-      font-size: 1rem;
-    }
-    .fc-daygrid-day-number {
-      font-size: 0.9rem;
-    }
-  }
-  
+  background: transparent;
+  border-radius: 1rem;
+  padding: 1rem 0;
+  font-family: 'Inter', sans-serif;
+  overflow: visible !important;
+}
+
+/* Remove bordas padrão */
+.fc-theme-standard td,
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid {
+  border: none !important;
+}
+
+/* Toolbar */
+.fc .fc-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem !important;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+  text-transform: capitalize;
+}
+
+/* Botões */
+.fc .fc-button-primary,
+.fc .fc-button-group > .fc-button {
+  background: none !important;
+  border: none !important;
+  color: #111827 !important;
+  font-weight: 600;
+  box-shadow: none !important;
+  transition: 0.2s ease;
+}
+
+.fc .fc-button-primary:hover,
+.fc .fc-button-group > .fc-button:hover {
+  background-color: rgba(156, 39, 176, 0.12) !important;
+  color: #9C27B0 !important;
+  border-radius: 10px;
+}
+
+.fc .fc-button-group > .fc-button.fc-button-active {
+  background-color: rgba(156, 39, 176, 0.18) !important;
+  color: #9C27B0 !important;
+  border-radius: 10px;
+}
+
+/* Cabeçalho dos dias */
+.fc .fc-col-header-cell-cushion {
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+}
+
+/* Dias */
+.fc-daygrid-day-frame {
+  border-radius: 1rem;
+  padding: 0.6rem;
+  transition: background-color 0.25s ease, transform 0.2s ease;
+}
+
+.fc-daygrid-day-frame:hover {
+  background-color: rgba(156, 39, 176, 0.12) !important;
+  transform: scale(1.04);
+}
+
+.fc-daygrid-day-number {
+  color: #111827;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Remove destaque do dia atual */
+.fc .fc-day-today {
+  background: none !important;
+  border-radius: 1rem;
+}
+
+/* =========================================================
+   EVENTOS — BLOQUINHOS SIMPLES E COLORIDOS
+   ========================================================= */
+.fc-event {
+  height: 12px !important;
+  width: 75% !important;
+  min-height: 12px !important;
+
+  border-radius: 8px !important;
+  border: none !important;
+  margin: 6px auto !important;
+
+  padding: 0 !important;
+  display: block !important;
+
+  /* Remove qualquer texto */
+  color: transparent !important;
+  font-size: 0 !important;
+  white-space: nowrap !important;
+
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.fc-event:hover {
+  transform: scale(1.1);
+  filter: brightness(1.15);
+  cursor: pointer;
+}
+
+/* Remove fundo atrás das células */
+.fc .fc-daygrid-day-bg {
+  background: none !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .fc .fc-toolbar-title { font-size: 1rem; }
+  .fc-daygrid-day-number { font-size: 0.9rem; }
+}
