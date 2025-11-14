@@ -1,5 +1,3 @@
-# apps/scheduler/urls.py
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from django.contrib.auth.decorators import login_required
@@ -11,14 +9,12 @@ from . import api_views, views
 
 app_name = "scheduler"
 
-# ===== API REST (FullCalendar) =====
-# Endpoint usado pelo FullCalendar para carregar eventos dinamicamente.
+# ===== API REST (FullCalendar) ===== #
 router = DefaultRouter()
 router.register(r"api/events", api_views.EventViewSet, basename="event")
 
 
-# ===== View parcial (HTMX) =====
-# Renderiza o calendário dentro do contexto de um casamento específico.
+# ===== View parcial (HTMX) ===== #
 class SchedulerPartialView(TemplateView):
     template_name = "scheduler/partials/_scheduler_partial.html"
 
@@ -30,46 +26,55 @@ class SchedulerPartialView(TemplateView):
 
 
 # ===== URL Patterns =====
+
 urlpatterns = [
     # Endpoints da API
     path("", include(router.urls)),
 
-    # Renderização parcial do calendário (HTMX)
+    # Calendário parcial via HTMX
     path(
         "partial/<int:wedding_id>/",
         login_required(SchedulerPartialView.as_view()),
         name="partial_scheduler",
     ),
 
-    # Exibição do formulário de criação de evento
+    # Criar evento
     path(
         "partial/<int:wedding_id>/event/new/",
         views.EventFormView.as_view(),
         name="event_new",
     ),
 
-    # Exibição do formulário de edição de evento
+    # Editar evento
     path(
         "partial/<int:wedding_id>/event/<int:event_id>/edit/",
         views.EventFormView.as_view(),
         name="event_edit",
     ),
 
-    # Salvamento de novo evento
+    # Salvar novo evento
     path(
         "partial/<int:wedding_id>/event/save/",
         views.EventSaveView.as_view(),
         name="event_save",
     ),
 
-    # Atualização de evento existente
+    # Atualizar evento existente
     path(
         "partial/<int:wedding_id>/event/<int:event_id>/save/",
         views.EventSaveView.as_view(),
         name="event_update",
     ),
 
-    # Exclusão de evento com confirmação
+    # URL para abrir modal genérico de CONFIRMAÇÃO de exclusão
+
+    path(
+        "partial/<int:wedding_id>/event/<int:event_id>/delete/modal/",
+        views.EventDeleteModalView.as_view(),
+        name="event_delete_modal",
+    ),
+
+    # URL que DELETE de fato o evento (POST)
     path(
         "partial/<int:wedding_id>/event/<int:event_id>/delete/",
         views.EventDeleteView.as_view(),
