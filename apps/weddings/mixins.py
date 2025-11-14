@@ -1,6 +1,6 @@
 from urllib.parse import parse_qs, urlparse
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import Paginator
 from django.http import HttpResponse
@@ -10,6 +10,28 @@ from apps.core.utils.constants import GRADIENTS
 
 from .forms import WeddingForm
 from .models import Wedding
+
+
+class WeddingOwnerRequiredMixin(UserPassesTestMixin):
+    """
+    Mixin que verifica se o usuário autenticado é o planejador (owner)
+    do casamento. Deve ser usado em views que necessitam de permissão
+    explícita de acesso ao objeto.
+    """
+
+    def test_func(self):
+        """
+        Verifica se o usuário atual é o planejador do casamento.
+        Retorna False se o usuário não está autenticado ou se não é o owner.
+        """
+        # Verifica se o usuário está autenticado
+        if not self.request.user.is_authenticated:
+            return False
+
+        wedding = self.get_object()
+        if wedding is None:
+            return False
+        return wedding.planner == self.request.user
 
 
 class WeddingBaseMixin(LoginRequiredMixin):
@@ -32,7 +54,7 @@ class WeddingBaseMixin(LoginRequiredMixin):
         Garante que o usuário só pode operar em seus próprios objetos.
         """
 
-        if not hasattr(self, 'model'):
+        if not hasattr(self, "model"):
             raise ImproperlyConfigured(
                 f"{self.__class__.__name__} is missing a 'model' attribute."
             )
@@ -41,7 +63,7 @@ class WeddingBaseMixin(LoginRequiredMixin):
 
         return queryset.filter(planner=self.request.user)
 
-    def get_base_queryset(self, sort='id', q=None, status=None):
+    def get_base_queryset(self, sort="id", q=None, status=None):
         """
         Pega o queryset base e chama os helpers do model
         para aplicar lógica.
@@ -51,10 +73,9 @@ class WeddingBaseMixin(LoginRequiredMixin):
 
         # Chama os helpers do Model
         queryset = (
-            queryset
-            .with_effective_status()  # Anota o status
-            .apply_search(q)          # Aplica a busca
-            .apply_sort(sort)         # Aplica a ordenação
+            queryset.with_effective_status()  # Anota o status
+            .apply_search(q)  # Aplica a busca
+            .apply_sort(sort)  # Aplica a ordenação
         )
 
         # Aplica o filtro de status (se existir)
@@ -89,10 +110,10 @@ class WeddingBaseMixin(LoginRequiredMixin):
         e formata o contexto.
         """
         # Pega o estado (página, filtro, busca) dos parâmetros
-        page = request_params.get('page', 1)
-        sort = request_params.get('sort', 'id')
-        q = request_params.get('q', None)
-        status = request_params.get('status', None)
+        page = request_params.get("page", 1)
+        sort = request_params.get("sort", "id")
+        q = request_params.get("q", None)
+        status = request_params.get("status", None)
 
         # Pega o queryset filtrado e ordenado
         qs = self.get_base_queryset(sort=sort, q=q, status=status)
@@ -111,8 +132,8 @@ class WeddingBaseMixin(LoginRequiredMixin):
             "page_obj": page_obj,
             "paginated_weddings": paginated_weddings_formatted,
             "current_sort": sort,
-            "current_search": q or '',
-            "current_status": status or '',
+            "current_search": q or "",
+            "current_status": status or "",
             "request": self.request,
         }
 
@@ -122,7 +143,7 @@ class WeddingBaseMixin(LoginRequiredMixin):
         Lê o 'HX-Current-Url' para preservar o estado.
         """
         # Pega a URL que o usuário estava vendo (do header HTMX)
-        current_url = self.request.headers.get('Hx-Current-Url')
+        current_url = self.request.headers.get("Hx-Current-Url")
         params = {}
         if current_url:
             try:
@@ -144,8 +165,8 @@ class WeddingBaseMixin(LoginRequiredMixin):
         )
 
         response = HttpResponse(html)
-        response["HX-Retarget"] = '#wedding-list-container'
-        response["HX-Reswap"] = 'innerHTML'
+        response["HX-Retarget"] = "#wedding-list-container"
+        response["HX-Reswap"] = "innerHTML"
 
         response["HX-Trigger-After-Swap"] = trigger
         return response
@@ -155,6 +176,7 @@ class WeddingFormLayoutMixin:
     """
     Define o layout e ícones para o formulário de Casamento.
     """
+
     form_class = WeddingForm
     template_name = "weddings/partials/_create_wedding_form.html"
 

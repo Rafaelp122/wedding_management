@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse
@@ -10,7 +11,7 @@ from django.views.generic import (
     View,
 )
 
-from .mixins import WeddingBaseMixin, WeddingFormLayoutMixin
+from .mixins import WeddingBaseMixin, WeddingFormLayoutMixin, WeddingOwnerRequiredMixin
 from .models import Wedding
 
 
@@ -31,14 +32,12 @@ class WeddingListView(WeddingBaseMixin, ListView):
         # Executa a paginação e coloca 'page_obj' no contexto.
         context = super().get_context_data(**kwargs)
 
-        context.update(
-            self.build_paginated_context(self.request.GET)
-        )
+        context.update(self.build_paginated_context(self.request.GET))
 
         # Passa os filtros/busca atuais para os links de paginação
-        context['current_sort'] = self.request.GET.get('sort', 'id')
-        context['current_search'] = self.request.GET.get('q', '')
-        context['request'] = self.request
+        context["current_sort"] = self.request.GET.get("sort", "id")
+        context["current_search"] = self.request.GET.get("q", "")
+        context["request"] = self.request
 
         return context
 
@@ -47,9 +46,7 @@ class WeddingListView(WeddingBaseMixin, ListView):
         if self.request.htmx:
             # Renderiza o partial que contém a LISTA + PAGINAÇÃO (OOB)
             return render(
-                self.request,
-                "weddings/partials/_list_and_pagination.html",
-                context
+                self.request, "weddings/partials/_list_and_pagination.html", context
             )
 
         # Se for um F5, renderiza a página inteira
@@ -68,7 +65,9 @@ class WeddingCreateView(WeddingBaseMixin, WeddingFormLayoutMixin, CreateView):
         return self.render_wedding_list_response()
 
 
-class WeddingUpdateView(WeddingFormLayoutMixin, WeddingBaseMixin, UpdateView):
+class WeddingUpdateView(
+    WeddingOwnerRequiredMixin, WeddingFormLayoutMixin, WeddingBaseMixin, UpdateView
+):
     model = Wedding
     pk_url_kwarg = "id"
     # form_class e template_name vêm do WeddingFormLayoutMixin
@@ -80,7 +79,7 @@ class WeddingUpdateView(WeddingFormLayoutMixin, WeddingBaseMixin, UpdateView):
         return self.render_wedding_list_response()
 
 
-class WeddingDeleteView(WeddingBaseMixin, DeleteView):
+class WeddingDeleteView(WeddingOwnerRequiredMixin, WeddingBaseMixin, DeleteView):
     model = Wedding
     template_name = "partials/confirm_delete_modal.html"
     pk_url_kwarg = "id"
@@ -89,13 +88,12 @@ class WeddingDeleteView(WeddingBaseMixin, DeleteView):
         # Esta view ainda precisa do seu próprio get_context_data
         # para o modal de deleção reutilizável
         context = super().get_context_data(**kwargs)
-        context['object_name'] = str(self.object)
-        context['object_type'] = 'o casamento'
-        context['hx_post_url'] = reverse(
-            'weddings:delete_wedding',
-            kwargs={'id': self.object.pk}
+        context["object_name"] = str(self.object)
+        context["object_type"] = "o casamento"
+        context["hx_post_url"] = reverse(
+            "weddings:delete_wedding", kwargs={"id": self.object.pk}
         )
-        context['hx_target_id'] = '#wedding-list-container'
+        context["hx_target_id"] = "#wedding-list-container"
         return context
 
     def post(self, request, *args, **kwargs):
@@ -105,31 +103,36 @@ class WeddingDeleteView(WeddingBaseMixin, DeleteView):
         return self.render_wedding_list_response()
 
 
-class UpdateWeddingStatusView(WeddingBaseMixin, View):
+class UpdateWeddingStatusView(WeddingOwnerRequiredMixin, WeddingBaseMixin, View):
     """
     Atualiza o status de um Casamento (Ex: Em Andamento, Concluído).
     Chamada via hx-post a partir do dropdown do card.
     """
+
     model = Wedding  # Informa ao get_queryset qual model usar
+
+    def get_object(self):
+        """
+        Retorna o objeto Wedding para o mixin de permissão.
+        """
+        try:
+            # ATENÇÃO: A URL que vamos criar usa 'id', não 'pk'
+            return self.get_queryset().get(pk=self.kwargs["id"])
+        except Wedding.DoesNotExist:
+            return None
 
     def post(self, request, *args, **kwargs):
 
         # Pega o objeto de forma segura
         # 'self.get_queryset()' vem do WeddingBaseMixin
-        try:
-            # ATENÇÃO: A URL que vamos criar usa 'id', não 'pk'
-            wedding = self.get_queryset().get(pk=self.kwargs['id'])
-        except Wedding.DoesNotExist:
-            return HttpResponseBadRequest(
-                "Casamento não encontrado ou sem permissão."
-            )
+        wedding = self.get_object()
+        if wedding is None:
+            return HttpResponseBadRequest("Casamento não encontrado ou sem permissão.")
 
         new_status = request.POST.get("status")
         valid_statuses = [status[0] for status in Wedding.STATUS_CHOICES]
         if new_status not in valid_statuses:
-            return HttpResponseBadRequest(
-                "Status inválido ou Model não atualizado."
-            )
+            return HttpResponseBadRequest("Status inválido ou Model não atualizado.")
 
         # Atualiza e salva o casamento
         wedding.status = new_status
@@ -140,7 +143,7 @@ class UpdateWeddingStatusView(WeddingBaseMixin, View):
         return self.render_wedding_list_response(trigger="listUpdated")
 
 
-class WeddingDetailView(DetailView):
+class WeddingDetailView(LoginRequiredMixin, WeddingOwnerRequiredMixin, DetailView):
     # Esta view não muda, pois é única
     model = Wedding
     template_name = "weddings/detail.html"
