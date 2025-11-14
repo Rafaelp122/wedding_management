@@ -1,10 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-from django.views.generic import TemplateView
 
-from apps.weddings.models import Wedding
 from . import api_views, views
 
 app_name = "scheduler"
@@ -14,19 +11,6 @@ router = DefaultRouter()
 router.register(r"api/events", api_views.EventViewSet, basename="event")
 
 
-# ===== View parcial (HTMX) ===== #
-class SchedulerPartialView(TemplateView):
-    template_name = "scheduler/partials/_scheduler_partial.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        wedding_id = kwargs.get("wedding_id")
-        context["wedding"] = get_object_or_404(Wedding, id=wedding_id)
-        return context
-
-
-# ===== URL Patterns =====
-
 urlpatterns = [
     # Endpoints da API
     path("", include(router.urls)),
@@ -34,7 +18,7 @@ urlpatterns = [
     # Calendário parcial via HTMX
     path(
         "partial/<int:wedding_id>/",
-        login_required(SchedulerPartialView.as_view()),
+        login_required(views.SchedulerPartialView.as_view()),
         name="partial_scheduler",
     ),
 
@@ -52,7 +36,7 @@ urlpatterns = [
         name="event_edit",
     ),
 
-    # Salvar novo evento
+    # Criar evento (POST)
     path(
         "partial/<int:wedding_id>/event/save/",
         views.EventSaveView.as_view(),
@@ -66,15 +50,14 @@ urlpatterns = [
         name="event_update",
     ),
 
-    # URL para abrir modal genérico de CONFIRMAÇÃO de exclusão
-
+    # Modal genérico de confirmação
     path(
         "partial/<int:wedding_id>/event/<int:event_id>/delete/modal/",
         views.EventDeleteModalView.as_view(),
         name="event_delete_modal",
     ),
 
-    # URL que DELETE de fato o evento (POST)
+    # Delete real (POST)
     path(
         "partial/<int:wedding_id>/event/<int:event_id>/delete/",
         views.EventDeleteView.as_view(),

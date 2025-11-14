@@ -4,40 +4,46 @@ from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views import View
+from django.views.generic import TemplateView
 from django.urls import reverse
 
 from .models import Event
 from .forms import EventForm
 from .mixins import SchedulerWeddingMixin
 
-# FORMULÁRIO DE EVENTO (criar/editar)
+# CALENDÁRIO (PARCIAL VIA HTMX)
+
+class SchedulerPartialView(SchedulerWeddingMixin, TemplateView):
+    """
+    Renderiza o calendário dentro do contexto de um casamento.
+    """
+    template_name = "scheduler/partials/_scheduler_partial.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["wedding"] = self.wedding
+        return context
+
+# FORMULÁRIO DE EVENTO (CRIAR / EDITAR)
 
 class EventFormView(SchedulerWeddingMixin, View):
-    """
-    Exibe o formulário de criação ou edição de um evento.
-    """
     form_class = EventForm
     template_name = "scheduler/partials/_event_form.html"
 
     def get(self, request, *args, **kwargs):
-        event_id = self.kwargs.get("event_id")
+        event_id = kwargs.get("event_id")
         instance = None
 
         if event_id:
             instance = get_object_or_404(
-                Event, id=event_id,
-                planner=request.user
+                Event, id=event_id, planner=request.user
             )
 
         clicked_date = request.GET.get("date")
         form = self.form_class(instance=instance, clicked_date=clicked_date)
 
-        # Define URL correta do form (create/update)
         if instance:
-            form_action = reverse(
-                "scheduler:event_update",
-                args=[self.wedding.id, instance.id]
-            )
+            form_action = reverse("scheduler:event_update", args=[self.wedding.id, instance.id])
         else:
             form_action = reverse("scheduler:event_save", args=[self.wedding.id])
 
@@ -53,21 +59,16 @@ class EventFormView(SchedulerWeddingMixin, View):
 # SALVAMENTO DO EVENTO
 
 class EventSaveView(SchedulerWeddingMixin, View):
-    """
-    Processa requisições POST para criar ou atualizar eventos.
-    """
     form_class = EventForm
     template_name = "scheduler/partials/_event_form.html"
 
     def post(self, request, *args, **kwargs):
-        event_id = self.kwargs.get("event_id")
+        event_id = kwargs.get("event_id")
         instance = None
 
         if event_id:
             instance = get_object_or_404(
-                Event,
-                id=event_id,
-                planner=request.user
+                Event, id=event_id, planner=request.user
             )
 
         form = self.form_class(request.POST, instance=instance)
@@ -101,16 +102,14 @@ class EventSaveView(SchedulerWeddingMixin, View):
                 "event_type": event.event_type,
             }
 
-            trigger_type = "eventUpdated" if instance else "eventCreated"
-
             response = JsonResponse(data)
             response["HX-Trigger-After-Settle"] = json.dumps({
-                trigger_type: data,
+                "eventUpdated" if instance else "eventCreated": data,
                 "closeModal": True
             })
             return response
 
-        # Caso inválido → reexibe modal com erros
+        # Formulário inválido → exibe novamente com erros
         context = {
             "form": form,
             "wedding": self.wedding,
@@ -119,11 +118,9 @@ class EventSaveView(SchedulerWeddingMixin, View):
         }
         return render(request, self.template_name, context)
 
-
-# ABRIR MODAL DE CONFIRMAÇÃO (GENÉRICO)
+# MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (GENÉRICO)
 
 class EventDeleteModalView(SchedulerWeddingMixin, View):
-
     template_name = "partials/confirm_delete_modal.html"
 
     def get(self, request, *args, **kwargs):
@@ -135,22 +132,19 @@ class EventDeleteModalView(SchedulerWeddingMixin, View):
         )
 
         context = {
-            "hx_post_url": reverse(
-                "scheduler:event_delete",
-                args=[self.wedding.id, event.id]
-            ),
+            "hx_post_url": reverse("scheduler:event_delete", args=[self.wedding.id, event.id]),
             "hx_target_id": "#form-modal-container",
             "object_type": "o evento",
             "object_name": event.title,
         }
-
         return render(request, self.template_name, context)
-   
-# EXECUTAR EXCLUSÃO
+
+
+# EXCLUSÃO DO EVENTO (POST)
 
 class EventDeleteView(SchedulerWeddingMixin, View):
     """
-    Deleta o evento e retorna JSON com trigger HTMX.
+    Deleta o evento e dispara trigger HTMX.
     """
 
     def post(self, request, *args, **kwargs):
