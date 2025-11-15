@@ -50,27 +50,36 @@ class ItemListView(ItemBaseMixin, ListView):
 
 
 class AddItemView(ItemBaseMixin, ItemFormLayoutMixin, CreateView):
-    """Exibe e processa o formulário de adição de item."""
-    # dispatch, get_queryset, get_context_data, get_form_kwargs
-    # form_class, e template_name já vêm dos Mixins!
+    """Exibe e processa o formulário de adição de item DENTRO DE UM MODAL."""
+
+    # NÃO precisamos definir template_name, já vem do ItemFormLayoutMixin.
+    # NÃO precisamos de get_context_data, o template _item_form.html
+    # agora usa {% if form.instance.pk %} para o título.
+
+    # Toda a lógica de contexto e template já está nos Mixins!
 
     def form_valid(self, form):
         item = form.save(commit=False)
         item.wedding = self.wedding  # 'self.wedding' vem do dispatch do Mixin
         item.save()
-        # Retorna a resposta HTMX completa
-        return self.render_full_tab_response(trigger="listUpdated")
+
+        # Resposta HTMX (correta): atualiza a lista de itens
+        return self.render_item_list_response(trigger="listUpdated")
 
 
 class EditItemView(ItemBaseMixin, ItemFormLayoutMixin, UpdateView):
-    """Permite editar um item existente."""
-    # dispatch, get_queryset (segurança), get_context_data, get_form_kwargs
-    # form_class, e template_name já vêm dos Mixins!
+    """Permite editar um item existente DENTRO DE UM MODAL."""
+
+    # NÃO precisamos definir template_name, já vem do ItemFormLayoutMixin.
+    # NÃO precisamos de get_context_data.
+
+    # Toda a lógica de contexto e template já está nos Mixins!
 
     def form_valid(self, form):
         form.save()
-        # Retorna a resposta HTMX completa
-        return self.render_full_tab_response(trigger="listUpdated")
+
+        # Resposta HTMX (correta): atualiza a lista de itens
+        return self.render_item_list_response(trigger="listUpdated")
 
 
 class UpdateItemStatusView(ItemBaseMixin, View):

@@ -1,45 +1,64 @@
-<div id="items-wrapper" class="bg-white p-4 rounded-4 aba-bloco custom-shadow-lg">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="fw-bold text-dark mb-0">
-            {% if form.instance.pk %}
-                Editar Item: {{ form.instance.name }}
-            {% else %}
-                Adicionar Novo Item
-            {% endif %}
-        </h5>
+{% comment %}
+  Este template é renderizado dentro de um modal.
+{% endcomment %}
+
+<form 
+  method="POST"
+  {% comment %} 
+    O hx-post aponta para a view correta.
+    - Se for edição (pk), usa 'edit_item'.
+    - Se for criação (sem pk), usa 'add_item' e precisa do 'wedding.id'.
+  {% endcomment %}
+  {% if form.instance.pk %}
+    hx-post="{% url 'items:edit_item' form.instance.pk %}"
+  {% else %}
+    hx-post="{% url 'items:add_item' wedding.id %}"
+  {% endif %}
+  {% comment %} 
+    Não precisamos de hx-target ou hx-swap aqui.
+    A view (AddItemView/EditItemView) vai responder com os
+    headers HX-Retarget e HX-Reswap para atualizar a lista.
+  {% endcomment %}
+>
+  
+  {% csrf_token %}
+
+  <div class="modal-body p-4 p-md-5 position-relative">
+
+    {% comment %} Botão de fechar (padrão Bootstrap) {% endcomment %}
+    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+
+    {% comment %} Título dinâmico, igual ao de weddings {% endcomment %}
+    <h3 class="fw-bold mb-4 text-center">
+      {% if form.instance.pk %}
+        Editar Item
+      {% else %}
+        Adicionar Novo Item
+      {% endif %}
+    </h3>
+
+    {% comment %} 
+      Incluímos os campos do formulário.
+      As variáveis de layout (form_layout_dict, etc.)
+      vêm do ItemFormLayoutMixin.
+    {% endcomment %}
+    {% include "partials/_form_fields.html" with form=form form_layout_dict=form_layout_dict default_col_class=default_col_class form_icons=form_icons %}
+
+    {% comment %} Botões de ação {% endcomment %}
+    <div class="d-grid gap-2 mt-4">
+      <button type="submit" class="btn btn-primary btn-lg">
+        {% if form.instance.pk %}
+          Salvar Alterações
+        {% else %}
+          Salvar Item
+        {% endif %}
+      </button>
+      {% comment %} 
+        O botão Cancelar agora apenas fecha o modal.
+        Não precisa de hx-get.
+      {% endcomment %}
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
     </div>
 
-    {% comment %} O hx-post aponta dinamicamente para a view correta {% endcomment %}
-    <form hx-post="{% if form.instance.pk %}{% url 'items:edit_item' form.instance.pk %}{% else %}{% url 'items:add_item' wedding.id %}{% endif %}"
-          hx-target="#items-wrapper"
-          hx-swap="outerHTML">
-        
-        {% csrf_token %}
-        {% include "partials/_form_fields.html" %}
-
-        <hr class="my-4">
-
-        <div class="d-flex justify-content-end gap-2">
-            {% comment %} 
-              Botão Cancelar.
-              Ele SEMPRE recarrega a lista de itens.
-              'wedding.id' está disponível em ambas as views (Add e Edit).
-            {% endcomment %}
-            <button type="button" 
-                    class="btn btn-outline-secondary"
-                    hx-get="{% url 'items:partial_items' wedding.id %}"
-                    hx-target="#items-wrapper"
-                    hx-swap="outerHTML">
-                Cancelar
-            </button>
-
-            <button type="submit" class="btn btn-primary">
-                {% if form.instance.pk %}
-                    Salvar Alterações
-                {% else %}
-                    Salvar Item
-                {% endif %}
-            </button>
-        </div>
-    </form>
-</div>
+  </div>
+</form>

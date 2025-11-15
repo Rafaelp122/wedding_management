@@ -8,21 +8,19 @@
         <li><h6 class="dropdown-header">Ações do Item</h6></li>
         
         <li><a class="dropdown-item" href="#"
-               hx-get="{% url 'items:edit_item' item.pk %}"
-               hx-target="#items-wrapper"
-               hx-swap="outerHTML">
+            hx-get="{% url 'items:edit_item' item.pk %}"
+            hx-target="#form-modal-container"
+            data-bs-toggle="modal"
+            data-bs-target="#form-modal"
+        >
             <i class="fas fa-pencil-alt fa-fw me-2"></i> Atualizar
         </a></li>
         
         <li><a class="dropdown-item" href="#"
-       
             hx-get="{% url 'items:delete_item' item.pk %}"
-            
             hx-target="#delete-modal-container"
-            
             data-bs-toggle="modal"
             data-bs-target="#delete-modal">
-            
             <i class="fas fa-trash-alt fa-fw me-2 text-danger"></i> Deletar
         </a></li>
         

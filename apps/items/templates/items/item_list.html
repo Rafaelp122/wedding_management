@@ -9,12 +9,21 @@
       {% include "items/partials/_item_filter.html" %}
       
       <a href="#" 
-          class="btn btn-primary d-flex align-items-center"
-          hx-get="{% url 'items:add_item' wedding.id %}"
-          hx-target="#items-wrapper"
-          hx-swap="outerHTML">
-          <i class="fas fa-plus me-2"></i> Adicionar Item
+        class="btn btn-primary d-flex align-items-center"
+        hx-get="{% url 'items:add_item' wedding.id %}"
+        
+        {% comment %} 1. Miramos no SEU container de conteúdo {% endcomment %}
+        hx-target="#form-modal-container" 
+        
+        {% comment %} 2. Atributos do Bootstrap para ABRIR o SEU modal {% endcomment %}
+        data-bs-toggle="modal"
+        data-bs-target="#form-modal"
+        
+        {% comment %} (Removemos hx-swap="outerHTML") {% endcomment %}
+      >
+        <i class="fas fa-plus me-2"></i> Adicionar Item
       </a>
+
     </div>
   </div>
 

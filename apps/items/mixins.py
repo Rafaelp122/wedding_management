@@ -159,47 +159,6 @@ class ItemBaseMixin(LoginRequiredMixin):
 
         return response
 
-    def render_full_tab_response(self, trigger=None):
-        """
-        Renderiza a resposta HTMX para Create/Update (POSTs de formulário).
-        Retorna a ABA INTEIRA (item_list.html).
-        Lê o 'HX-Current-Url' para preservar o estado de filtros/paginação
-        que possa estar na URL do browser.
-        """
-        current_url = self.request.headers.get('Hx-Current-Url')
-        params = {}
-        if current_url:
-            try:
-                query_string = urlparse(current_url).query
-                parsed_params = parse_qs(query_string)
-                params = {k: v[0] for k, v in parsed_params.items()}
-            except Exception:
-                pass  # Usa defaults se falhar
-
-        # Constrói o contexto com o estado correto
-        context = self.build_paginated_context(params)
-
-        # Renderiza o template da aba inteira
-        html = render_to_string(
-            "items/item_list.html",
-            context,
-            request=self.request,
-        )
-
-        response = HttpResponse(html)
-
-        # IMPORTANTE: Não definimos HX-Retarget.
-        # A resposta vai por defeito para o 'hx-target' do elemento
-        # que iniciou o ciclo (o botão 'Adicionar Item'),
-        # que era '#items-wrapper' com 'outerHTML'.
-        # Como a nossa resposta também tem id="items-wrapper",
-        # ela vai substituir o formulário perfeitamente.
-
-        if trigger:
-            response["HX-Trigger-After-Swap"] = trigger
-
-        return response
-
 
 class ItemFormLayoutMixin:
     """
