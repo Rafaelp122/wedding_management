@@ -1,12 +1,45 @@
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ImproperlyConfigured
+
+
+class OwnerRequiredMixin(LoginRequiredMixin):
+    """
+    GENÉRICO (Core): Garante que o usuário esteja logado e que as
+    operações (get_queryset) sejam restritas ao dono.
+
+    A View/Mixin que herda DEVE fornecer:
+    - self.model
+    - self.owner_field_name (str): Ex: 'planner', 'user', 'owner'.
+    """
+    owner_field_name = None
+
+    def get_queryset(self):
+        """
+        Método de segurança padrão (usado por UpdateView, DeleteView).
+        """
+        if not hasattr(self, 'model'):
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} is missing a 'model' attribute."
+            )
+        if not self.owner_field_name:
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} must define 'owner_field_name'."
+            )
+
+        queryset = self.model.objects.all()
+        # Filtra dinamicamente
+        return queryset.filter(
+            **{self.owner_field_name: self.request.user}
+        )
 
 
 class RedirectAuthenticatedUserMixin:
     """
-    Mixin para views públicas (Login, Signup, Home).
-    Redireciona utilizadores já autenticados para a página
+    Mixin para views públicas (Login, Signup, Home).\n
+    Redireciona usuários já autenticados para a página
     principal de "meus casamentos".
     """
 
