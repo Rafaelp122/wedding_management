@@ -4,7 +4,7 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
-from apps.core.utils.view_mixins import RedirectAuthenticatedUserMixin
+from apps.core.mixins.auth import RedirectAuthenticatedUserMixin
 
 from .forms import CustomUserChangeForm, CustomUserCreationForm, SignInForm
 from .models import User

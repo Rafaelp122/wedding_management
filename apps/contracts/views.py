@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
 
 from apps.contracts.models import Contract
-from apps.core.utils.constants import GRADIENTS
+from apps.core.constants import GRADIENTS
 from apps.items.models import Item
 from apps.weddings.models import Wedding
 

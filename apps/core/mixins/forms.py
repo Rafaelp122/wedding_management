@@ -1,9 +1,9 @@
 from django import forms
-from .django_forms import add_attr
+from ..utils.forms_utils import add_attr
 
 
-# Mixin que aplica classes CSS padrão aos campos de formulário
 class FormStylingMixin:
+    """Mixin que aplica classes CSS padrão aos campos de formulário"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -25,8 +25,12 @@ class FormStylingMixin:
                     add_attr(field, "class", "is-invalid")
 
 
-# Versão do mixin com campos maiores (usado em formulários mais destacados)
 class FormStylingMixinLarge:
+    """
+    Mixin que aplica classes CSS padrão aos campos de formulário.\n
+    Versão do mixin com campos maiores (usado em formulários mais destacados).
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

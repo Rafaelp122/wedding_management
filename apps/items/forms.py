@@ -1,7 +1,7 @@
 from django import forms
 
-from apps.core.utils.django_forms import add_placeholder
-from apps.core.utils.form_mixins import FormStylingMixin
+from apps.core.utils.forms_utils import add_placeholder
+from apps.core.mixins.forms import FormStylingMixin
 
 from .models import Item
 

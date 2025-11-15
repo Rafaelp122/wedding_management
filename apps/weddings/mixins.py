@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 
-from apps.core.utils.constants import GRADIENTS
+from apps.core.constants import GRADIENTS
 
 from .forms import WeddingForm
 from .models import Wedding

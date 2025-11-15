@@ -5,8 +5,8 @@ from django.contrib.auth.forms import (
     UserCreationForm,
 )
 
-from apps.core.utils.django_forms import add_placeholder
-from apps.core.utils.form_mixins import FormStylingMixin, FormStylingMixinLarge
+from apps.core.utils.forms_utils import add_placeholder
+from apps.core.mixins.forms import FormStylingMixin, FormStylingMixinLarge
 
 from .models import User
 

@@ -1,4 +1,4 @@
-from apps.core.utils.view_mixins import RedirectAuthenticatedUserMixin
+from apps.core.mixins.auth import RedirectAuthenticatedUserMixin
 from django.shortcuts import render
 from django.views.generic import View, TemplateView
 from .forms import ContactForm
