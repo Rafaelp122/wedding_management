@@ -61,6 +61,14 @@ class WeddingCreateView(WeddingBaseMixin, WeddingFormLayoutMixin, CreateView):
     # form_class e template_name vêm do WeddingFormLayoutMixin
     # get_context_data vem do WeddingFormLayoutMixin
 
+    def get_context_data(self, **kwargs):
+        # Adicionamos o contexto dinâmico para o modal
+        context = super().get_context_data(**kwargs)
+        context['modal_title'] = "Novo Casamento"
+        context['submit_button_text'] = "Salvar Casamento"
+        context['hx_post_url'] = reverse('weddings:create_wedding')
+        return context
+
     def form_valid(self, form):
         form.instance.planner = self.request.user
         form.save()
@@ -73,6 +81,17 @@ class WeddingUpdateView(WeddingFormLayoutMixin, WeddingBaseMixin, UpdateView):
     pk_url_kwarg = "id"
     # form_class e template_name vêm do WeddingFormLayoutMixin
     # get_context_data vem do WeddingFormLayoutMixin
+
+    def get_context_data(self, **kwargs):
+        # Adicionamos o contexto dinâmico para o modal
+        context = super().get_context_data(**kwargs)
+        context['modal_title'] = "Editar Casamento"
+        context['submit_button_text'] = "Salvar Alterações"
+        context['hx_post_url'] = reverse(
+            'weddings:edit_wedding', 
+            kwargs={'id': self.object.pk}
+        )
+        return context
 
     def form_valid(self, form):
         form.save()

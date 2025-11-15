@@ -50,13 +50,18 @@ class ItemListView(ItemBaseMixin, ListView):
 
 
 class AddItemView(ItemBaseMixin, ItemFormLayoutMixin, CreateView):
-    """Exibe e processa o formulário de adição de item DENTRO DE UM MODAL."""
+    """Exibe e processa o formulário de adição de item dentro de um modal."""
 
-    # NÃO precisamos definir template_name, já vem do ItemFormLayoutMixin.
-    # NÃO precisamos de get_context_data, o template _item_form.html
-    # agora usa {% if form.instance.pk %} para o título.
-
-    # Toda a lógica de contexto e template já está nos Mixins!
+    def get_context_data(self, **kwargs):
+        # Adicionamos o contexto dinâmico para o modal
+        context = super().get_context_data(**kwargs)
+        context['modal_title'] = "Adicionar Novo Item"
+        context['submit_button_text'] = "Salvar Item"
+        context['hx_post_url'] = reverse(
+            'items:add_item', 
+            kwargs={'wedding_id': self.wedding.id}
+        )
+        return context
 
     def form_valid(self, form):
         item = form.save(commit=False)
@@ -68,17 +73,23 @@ class AddItemView(ItemBaseMixin, ItemFormLayoutMixin, CreateView):
 
 
 class EditItemView(ItemBaseMixin, ItemFormLayoutMixin, UpdateView):
-    """Permite editar um item existente DENTRO DE UM MODAL."""
+    """Permite editar um item existente dentro de um modal."""
 
-    # NÃO precisamos definir template_name, já vem do ItemFormLayoutMixin.
-    # NÃO precisamos de get_context_data.
-
-    # Toda a lógica de contexto e template já está nos Mixins!
+    def get_context_data(self, **kwargs):
+        # Adicionamos o contexto dinâmico para o modal
+        context = super().get_context_data(**kwargs)
+        context['modal_title'] = "Editar Item"
+        context['submit_button_text'] = "Salvar Alterações"
+        context['hx_post_url'] = reverse(
+            'items:edit_item', 
+            kwargs={'pk': self.object.pk}
+        )
+        return context
 
     def form_valid(self, form):
         form.save()
 
-        # Resposta HTMX (correta): atualiza a lista de itens
+        # Resposta HTMX: atualiza a lista de itens
         return self.render_item_list_response(trigger="listUpdated")
 
 

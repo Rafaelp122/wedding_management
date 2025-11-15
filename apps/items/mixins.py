@@ -165,9 +165,8 @@ class ItemFormLayoutMixin:
     Define o layout e ícones para o formulário de Item.
     """
     form_class = ItemForm
-    template_name = "items/partials/_item_form.html"
+    template_name = "partials/form_modal.html"
 
-    # Você já tinha isso em AddItemView
     form_layout_dict = {
         "name": "col-6",
         "category": "col-md-6",

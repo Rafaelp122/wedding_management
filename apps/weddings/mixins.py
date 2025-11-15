@@ -78,7 +78,7 @@ class WeddingBaseMixin(LoginRequiredMixin):
                 "items_count": wedding.items_count,
                 "contracts_count": wedding.contracts_count,
                 "effective_status": wedding.effective_status,
-                "progress": wedding.progress,  # Vem do with_counts_and_progress
+                "progress": wedding.progress,  # É do with_counts_and_progress
             }
             for idx, wedding in enumerate(queryset)
         ]
@@ -156,7 +156,7 @@ class WeddingFormLayoutMixin:
     Define o layout e ícones para o formulário de Casamento.
     """
     form_class = WeddingForm
-    template_name = "weddings/partials/_create_wedding_form.html"
+    template_name = "partials/form_modal.html"
 
     form_layout_dict = {
         "groom_name": "col-md-6",
