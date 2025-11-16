@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.conf import settings
 
 # Define as rotas principais do projeto.
 # Cada app tem seu próprio arquivo de rotas, que é incluído aqui.
@@ -29,3 +30,11 @@ urlpatterns = [
     # Agendamentos e tarefas do planejador de casamentos
     path("scheduler/", include(("apps.scheduler.urls", "scheduler"), namespace="scheduler")),
 ]
+
+if settings.DEBUG:
+    # 3. Importe a toolbar dentro do if
+    import debug_toolbar
+    urlpatterns = [
+        # 4. Adicione a URL da toolbar
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

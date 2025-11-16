@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django_htmx",
     # "django_extensions",
     "rest_framework",
+    'debug_toolbar',
 
     # Aplicativos do projeto
     "apps.scheduler",
@@ -67,6 +68,7 @@ AUTH_USER_MODEL = "users.User"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -161,3 +163,9 @@ MESSAGE_TAGS = {
     messages.WARNING: "warning",
     messages.ERROR: "danger",
 }
+
+# Para o Django Debug Toolbar
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
