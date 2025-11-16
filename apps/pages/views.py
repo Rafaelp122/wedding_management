@@ -12,11 +12,11 @@ class HomeView(RedirectAuthenticatedUserMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['contact_form'] = ContactForm
-        context['form_icons'] = {
-            'name': 'fas fa-user',
-            'email': 'fas fa-envelope',
-            'message': 'fas fa-align-left',
+        context["contact_form"] = ContactForm
+        context["form_icons"] = {
+            "name": "fas fa-user",
+            "email": "fas fa-envelope",
+            "message": "fas fa-align-left",
         }
         return context
 
@@ -32,14 +32,13 @@ class ContactFormSubmitView(View):
             # Prepara o e-mail
             subject = f"Nova Mensagem de Contato de {inquiry.name}"
             context_email = {
-                'name': inquiry.name,
-                'email': inquiry.email,
-                'message': inquiry.message,
-                'created_at': inquiry.created_at,
+                "name": inquiry.name,
+                "email": inquiry.email,
+                "message": inquiry.message,
+                "created_at": inquiry.created_at,
             }
             body = render_to_string(
-                "pages/emails/contact_notification.txt",
-                context_email
+                "pages/emails/contact_notification.txt", context_email
             )
 
             try:
@@ -61,9 +60,7 @@ class ContactFormSubmitView(View):
         # Se o formulário for inválido, retorna o formulário com erros
         # O HTMX vai substituir o formulário, agora mostrando os erros
         response = render(
-            request,
-            "pages/partials/_contact_form_partial.html",
-            {'contact_form': form}
+            request, "pages/partials/_contact_form_partial.html", {"contact_form": form}
         )
         # Define o status como 400 para que o HTMX saiba que foi um erro
         response.status_code = 400

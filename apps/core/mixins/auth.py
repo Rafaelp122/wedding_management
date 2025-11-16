@@ -14,13 +14,14 @@ class OwnerRequiredMixin(LoginRequiredMixin):
     - self.model
     - self.owner_field_name (str): Ex: 'planner', 'user', 'owner'.
     """
+
     owner_field_name = None
 
     def get_queryset(self):
         """
         Método de segurança padrão (usado por UpdateView, DeleteView).
         """
-        if not hasattr(self, 'model'):
+        if not hasattr(self, "model"):
             raise ImproperlyConfigured(
                 f"{self.__class__.__name__} is missing a 'model' attribute."
             )
@@ -31,9 +32,7 @@ class OwnerRequiredMixin(LoginRequiredMixin):
 
         queryset = self.model.objects.all()
         # Filtra dinamicamente
-        return queryset.filter(
-            **{self.owner_field_name: self.request.user}
-        )
+        return queryset.filter(**{self.owner_field_name: self.request.user})
 
 
 class RedirectAuthenticatedUserMixin:
@@ -44,7 +43,7 @@ class RedirectAuthenticatedUserMixin:
     """
 
     # Define o destino do redirecionamento
-    redirect_url_authenticated = reverse_lazy('weddings:my_weddings')
+    redirect_url_authenticated = reverse_lazy("weddings:my_weddings")
 
     # A mensagem base a ser exibida
     redirect_message = "Bem vindo de volta"
@@ -59,7 +58,8 @@ class RedirectAuthenticatedUserMixin:
             # Adiciona a mensagem de sucesso
             messages.success(
                 self.request,
-                f"{self.redirect_message}, {request.user.first_name or request.user.username}!"
+                f"{self.redirect_message},{request.user.first_name or
+                                           request.user.username}!",
             )
 
             # Redireciona para a página principal

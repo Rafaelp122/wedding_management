@@ -6,34 +6,33 @@ from django.views.generic import (
     DeleteView,
     UpdateView,
     View,
-    TemplateView  # Usaremos TemplateView para a lista
+    TemplateView,  # Usaremos TemplateView para a lista
 )
 from .models import Item
 from .mixins import (
-    ItemWeddingContextMixin,    # OBRIGATÓRIO: Carrega 'self.wedding'
-    ItemPlannerSecurityMixin,   # Segurança para Update/Delete
-    ItemFormLayoutMixin,        # Layout do Formulário
-    ItemListActionsMixin,       # O "Pacote de Lista" (Query, Pag, HTMX)
+    ItemWeddingContextMixin,  # OBRIGATÓRIO: Carrega 'self.wedding'
+    ItemPlannerSecurityMixin,  # Segurança para Update/Delete
+    ItemFormLayoutMixin,  # Layout do Formulário
+    ItemListActionsMixin,  # O "Pacote de Lista" (Query, Pag, HTMX)
 )
 
 
 class ItemListView(
     ItemWeddingContextMixin,  # Carrega self.wedding
-    ItemListActionsMixin,     # Fornece get_base_queryset, build_paginated_context
-    TemplateView
+    ItemListActionsMixin,  # Fornece get_base_queryset, build_paginated_context
+    TemplateView,
 ):
     """
     Exibe a aba de itens completa ou apenas o partial da lista.
     """
+
     template_name = "items/item_list.html"  # A "aba" inteira
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # 'build_paginated_context' vem do ItemListActionsMixin
         # e usa 'self.wedding' do ItemWeddingContextMixin
-        context.update(
-            self.build_paginated_context(self.request.GET)
-        )
+        context.update(self.build_paginated_context(self.request.GET))
 
         context["pagination_url_name"] = "items:partial_items"
         # O 'pagination_target' é o ID do container da lista
@@ -44,15 +43,13 @@ class ItemListView(
 
     def render_to_response(self, context, **response_kwargs):
         if self.request.htmx:
-            htmx_target = self.request.headers.get('HX-Target')
+            htmx_target = self.request.headers.get("HX-Target")
 
             # Se o target for o container INTERNO (filtro, paginação)...
-            if htmx_target == 'item-list-container':
+            if htmx_target == "item-list-container":
                 # Renderiza SÓ o partial
                 return render(
-                    self.request,
-                    "items/partials/_list_and_pagination.html",
-                    context
+                    self.request, "items/partials/_list_and_pagination.html", context
                 )
 
             # Se o target for '#tab-items' (clique na aba),
@@ -64,20 +61,20 @@ class ItemListView(
 
 class AddItemView(
     ItemWeddingContextMixin,  # Carrega self.wedding (de wedding_id)
-    ItemFormLayoutMixin,      # Layout do formulário
-    ItemListActionsMixin,     # Para render_item_list_response
-    CreateView
+    ItemFormLayoutMixin,  # Layout do formulário
+    ItemListActionsMixin,  # Para render_item_list_response
+    CreateView,
 ):
     """Exibe e processa o formulário de adição de item."""
+
     model = Item  # Necessário para CreateView
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['modal_title'] = "Adicionar Novo Item"
-        context['submit_button_text'] = "Salvar Item"
-        context['hx_post_url'] = reverse(
-            'items:add_item',
-            kwargs={'wedding_id': self.wedding.id}
+        context["modal_title"] = "Adicionar Novo Item"
+        context["submit_button_text"] = "Salvar Item"
+        context["hx_post_url"] = reverse(
+            "items:add_item", kwargs={"wedding_id": self.wedding.id}
         )
         return context
 
@@ -90,24 +87,24 @@ class AddItemView(
 
 
 class EditItemView(
-    ItemWeddingContextMixin,    # Carrega self.wedding (de pk)
-    ItemPlannerSecurityMixin,   # Fornece get_queryset()
-    ItemFormLayoutMixin,        # Layout do formulário
-    ItemListActionsMixin,       # Para render_item_list_response
-    UpdateView
+    ItemWeddingContextMixin,  # Carrega self.wedding (de pk)
+    ItemPlannerSecurityMixin,  # Fornece get_queryset()
+    ItemFormLayoutMixin,  # Layout do formulário
+    ItemListActionsMixin,  # Para render_item_list_response
+    UpdateView,
 ):
     """Permite editar um item existente."""
+
     model = Item  # Necessário para UpdateView
-    pk_url_kwarg = 'pk'
+    pk_url_kwarg = "pk"
     # get_queryset() vem do ItemPlannerSecurityMixin
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['modal_title'] = "Editar Item"
-        context['submit_button_text'] = "Salvar Alterações"
-        context['hx_post_url'] = reverse(
-            'items:edit_item',
-            kwargs={'pk': self.object.pk}
+        context["modal_title"] = "Editar Item"
+        context["submit_button_text"] = "Salvar Alterações"
+        context["hx_post_url"] = reverse(
+            "items:edit_item", kwargs={"pk": self.object.pk}
         )
         return context
 
@@ -117,22 +114,21 @@ class EditItemView(
 
 
 class UpdateItemStatusView(
-    ItemWeddingContextMixin,    # Carrega self.wedding (de pk)
-    ItemPlannerSecurityMixin,   # Fornece get_queryset()
-    ItemListActionsMixin,       # Para render_item_list_response
-    View
+    ItemWeddingContextMixin,  # Carrega self.wedding (de pk)
+    ItemPlannerSecurityMixin,  # Fornece get_queryset()
+    ItemListActionsMixin,  # Para render_item_list_response
+    View,
 ):
     """Atualiza o status de um item."""
+
     model = Item  # Informa ao ItemPlannerSecurityMixin qual model usar
 
     def post(self, request, *args, **kwargs):
         try:
             # get_queryset() vem do ItemPlannerSecurityMixin
-            item = self.get_queryset().get(pk=self.kwargs['pk'])
+            item = self.get_queryset().get(pk=self.kwargs["pk"])
         except self.model.DoesNotExist:
-            return HttpResponseBadRequest(
-                "Item não encontrado ou sem permissão."
-            )
+            return HttpResponseBadRequest("Item não encontrado ou sem permissão.")
 
         new_status = request.POST.get("status")
         valid_statuses = [status[0] for status in self.model.STATUS_CHOICES]
@@ -146,25 +142,26 @@ class UpdateItemStatusView(
 
 
 class ItemDeleteView(
-    ItemWeddingContextMixin,    # Carrega self.wedding (de pk)
-    ItemPlannerSecurityMixin,   # Fornece get_queryset()
-    ItemListActionsMixin,       # Para render_item_list_response
-    DeleteView
+    ItemWeddingContextMixin,  # Carrega self.wedding (de pk)
+    ItemPlannerSecurityMixin,  # Fornece get_queryset()
+    ItemListActionsMixin,  # Para render_item_list_response
+    DeleteView,
 ):
     """Exclui um item."""
+
     model = Item  # Necessário para DeleteView
-    pk_url_kwarg = 'pk'
+    pk_url_kwarg = "pk"
     template_name = "partials/confirm_delete_modal.html"
     # get_queryset() vem do ItemPlannerSecurityMixin
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['object_name'] = str(self.object)
-        context['object_type'] = 'o item'
-        context['hx_post_url'] = reverse(
-            'items:delete_item', kwargs={'pk': self.object.pk}
+        context["object_name"] = str(self.object)
+        context["object_type"] = "o item"
+        context["hx_post_url"] = reverse(
+            "items:delete_item", kwargs={"pk": self.object.pk}
         )
-        context['hx_target_id'] = '#item-list-container'
+        context["hx_target_id"] = "#item-list-container"
         return context
 
     def post(self, request, *args, **kwargs):

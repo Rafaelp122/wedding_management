@@ -14,7 +14,9 @@ class TestPagesViews(TestCase):
             ("home_page", "pages:home", "pages/home.html", "Gestão de Casamentos"),
         ]
     )
-    def test_static_pages_render_correctly(self, _, url_name, template_name, expected_content):
+    def test_static_pages_render_correctly(
+        self, _, url_name, template_name, expected_content
+    ):
         """Verifica se as páginas estáticas renderizam corretamente com o template e conteúdo esperado."""
         url = reverse(url_name)
         response = self.client.get(url)

@@ -8,6 +8,6 @@ class Client(models.Model):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
 
-   # Exibe o nome do cliente como representação do objeto
+    # Exibe o nome do cliente como representação do objeto
     def __str__(self):
         return self.name

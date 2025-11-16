@@ -6,13 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('weddings', '0004_alter_wedding_bride_name_alter_wedding_groom_name'),
+        ("weddings", "0004_alter_wedding_bride_name_alter_wedding_groom_name"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='wedding',
-            name='status',
-            field=models.CharField(choices=[('IN_PROGRESS', 'Em Andamento'), ('COMPLETED', 'Concluído'), ('CANCELED', 'Cancelado')], default='IN_PROGRESS', max_length=20),
+            model_name="wedding",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("IN_PROGRESS", "Em Andamento"),
+                    ("COMPLETED", "Concluído"),
+                    ("CANCELED", "Cancelado"),
+                ],
+                default="IN_PROGRESS",
+                max_length=20,
+            ),
         ),
     ]

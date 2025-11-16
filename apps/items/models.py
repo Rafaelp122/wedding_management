@@ -31,15 +31,10 @@ class Item(BaseModel):
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     supplier = models.ForeignKey(
-        Supplier, on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        Supplier, on_delete=models.CASCADE, null=True, blank=True
     )
     wedding = models.ForeignKey(
-        Wedding,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        Wedding, on_delete=models.CASCADE, null=True, blank=True
     )
     category = models.CharField(
         max_length=20,

@@ -18,6 +18,7 @@ from .models import Item
 # sozinhos em Views (ex: DetailView) e seguem o
 # Princípio da Segregação de Interface (ISP).
 
+
 class ItemWeddingContextMixin(LoginRequiredMixin):
     """
     Mixin de Contexto e Segurança (Standalone) - OBRIGATÓRIO
@@ -29,6 +30,7 @@ class ItemWeddingContextMixin(LoginRequiredMixin):
     Ele garante que 'self.wedding' está sempre disponível e que
     o usuário tem permissão para acessá-lo.
     """
+
     def dispatch(self, request, *args, **kwargs):
         """
         Busca o Casamento ANTES de qualquer outra coisa.
@@ -38,10 +40,10 @@ class ItemWeddingContextMixin(LoginRequiredMixin):
         if not wedding_id:
             # Se não houver 'wedding_id' na URL, a view deve ser
             # de um item existente (Edit, Delete, UpdateStatus).
-            if 'pk' in self.kwargs:
+            if "pk" in self.kwargs:
                 try:
-                    item = Item.objects.select_related('wedding__planner').get(
-                        pk=self.kwargs['pk']
+                    item = Item.objects.select_related("wedding__planner").get(
+                        pk=self.kwargs["pk"]
                     )
                     # Checagem de segurança
                     if item.wedding.planner != self.request.user:
@@ -57,9 +59,7 @@ class ItemWeddingContextMixin(LoginRequiredMixin):
             # Se 'wedding_id' está na URL (ListView, AddItemView),
             # busca o casamento e já checa a segurança.
             self.wedding = get_object_or_404(
-                Wedding,
-                id=wedding_id,
-                planner=self.request.user
+                Wedding, id=wedding_id, planner=self.request.user
             )
         return super().dispatch(request, *args, **kwargs)
 
@@ -71,9 +71,10 @@ class ItemPlannerSecurityMixin(OwnerRequiredMixin):
     Fornece o 'get_queryset' de segurança para as views
     genéricas (UpdateView, DeleteView).
     """
+
     model = Item
     # Usa a busca aninhada para checar o "dono"
-    owner_field_name = 'wedding__planner'
+    owner_field_name = "wedding__planner"
 
 
 class ItemFormLayoutMixin:
@@ -84,6 +85,7 @@ class ItemFormLayoutMixin:
     Assume que 'self.wedding' já existe no contexto (fornecido
     pelo 'ItemWeddingContextMixin').
     """
+
     form_class = ItemForm
     template_name = "partials/form_modal.html"
 
@@ -120,6 +122,7 @@ class ItemFormLayoutMixin:
 # Princípio da Responsabilidade Única (SRP).
 # Cada um é responsável por uma única parte da "lógica de lista".
 
+
 class ItemQuerysetMixin:
     """
     Fine-Grained Mixin: Query Logic
@@ -127,18 +130,15 @@ class ItemQuerysetMixin:
     Responsável por construir o queryset de 'Item' (busca, filtro, sort).
     Assume que 'self.wedding' existe.
     """
-    def get_base_queryset(self, sort='id', q=None, category=None):
+
+    def get_base_queryset(self, sort="id", q=None, category=None):
         # Começa com os itens APENAS deste casamento
         queryset = Item.objects.filter(wedding=self.wedding)
 
         if category:
             queryset = queryset.filter(category=category)
 
-        queryset = (
-            queryset
-            .apply_search(q)
-            .apply_sort(sort)
-        )
+        queryset = queryset.apply_search(q).apply_sort(sort)
         return queryset.select_related("supplier")
 
 
@@ -149,13 +149,14 @@ class ItemPaginationContextMixin:
     Pagina e formata o contexto da lista.
     Depende de 'get_base_queryset' e 'self.wedding'.
     """
+
     paginate_by = 6
 
     def build_paginated_context(self, request_params):
-        page = request_params.get('page', 1)
-        sort = request_params.get('sort', 'id')
-        q = request_params.get('q', None)
-        category = request_params.get('category', None)
+        page = request_params.get("page", 1)
+        sort = request_params.get("sort", "id")
+        q = request_params.get("q", None)
+        category = request_params.get("category", None)
 
         # Dependência: chama get_base_queryset()
         qs = self.get_base_queryset(sort=sort, q=q, category=category)
@@ -165,7 +166,7 @@ class ItemPaginationContextMixin:
         elided_page_range = paginator.get_elided_page_range(
             number=page_obj.number,
             on_each_side=2,  # Um valor curto é melhor para listas de itens
-            on_ends=1
+            on_ends=1,
         )
 
         return {
@@ -174,16 +175,16 @@ class ItemPaginationContextMixin:
             "items": page_obj.object_list,
             "elided_page_range": elided_page_range,
             "current_sort": sort,
-            "current_search": q or '',
-            "current_category": category or '',
-            "request": self.request
+            "current_search": q or "",
+            "current_category": category or "",
+            "request": self.request,
         }
 
 
 class ItemHtmxListResponseMixin(
     BaseHtmxResponseMixin,
     HtmxUrlParamsMixin,
-    ItemPaginationContextMixin  # Dependência explícita
+    ItemPaginationContextMixin,  # Dependência explícita
 ):
     """
     Fine-Grained Mixin: HTMX Connector
@@ -191,6 +192,7 @@ class ItemHtmxListResponseMixin(
     Conecta a lógica de 'Item' ao renderizador HTMX genérico.
     Usado para renderizar a lista após POST/PUT/DELETE.
     """
+
     htmx_template_name = "items/partials/_list_and_pagination.html"
     htmx_retarget_id = "#item-list-container"
     htmx_reswap_method = "innerHTML"
@@ -216,9 +218,10 @@ class ItemHtmxListResponseMixin(
 
 # --- Mixin de Composição (Facade Pattern) ---
 
+
 class ItemListActionsMixin(
     ItemQuerysetMixin,
-    ItemHtmxListResponseMixin  # Já inclui o ItemPaginationContextMixin
+    ItemHtmxListResponseMixin,  # Já inclui o ItemPaginationContextMixin
 ):
     """
     Mixin de Composição (Composition Mixin)
@@ -226,4 +229,5 @@ class ItemListActionsMixin(
     Atua como uma "fachada" (Facade Pattern) que agrupa
     a lógica de lista (Query, Paginação, HTMX).
     """
+
     pass

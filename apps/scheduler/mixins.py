@@ -13,6 +13,7 @@ class SchedulerWeddingMixin(LoginRequiredMixin):
     3. Garante que o 'request.user' seja o 'planner' do casamento.
     4. Disponibiliza 'self.wedding' para as views.
     """
+
     wedding = None
 
     def dispatch(self, request, *args, **kwargs):

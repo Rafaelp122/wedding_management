@@ -24,7 +24,9 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
 # Domínios permitidos para o servidor
-ALLOWED_HOSTS: list[str] = os.getenv("ALLOWED_HOSTS", "").split(",") if not DEBUG else []
+ALLOWED_HOSTS: list[str] = (
+    os.getenv("ALLOWED_HOSTS", "").split(",") if not DEBUG else []
+)
 
 # Aplicativos instalados
 
@@ -36,13 +38,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     # Aplicativos de terceiros
     "django_htmx",
     # "django_extensions",
     "rest_framework",
-    'debug_toolbar',
-
+    "debug_toolbar",
     # Aplicativos do projeto
     "apps.scheduler",
     "apps.contracts",
@@ -111,7 +111,9 @@ DATABASES = {
 # Validação de senhas
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -127,7 +129,7 @@ USE_TZ = True
 # Configurações de E-mail
 
 # Para testes locais (imprime e-mails na consola)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # (Para produção, usarias SMTP, ex: SendGrid, Amazon SES, etc.)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -138,8 +140,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_HOST_PASSWORD = '...'
 
 # Define os e-mails que a tua view vai usar
-DEFAULT_FROM_EMAIL = 'contato@simaceito.com.br'  # O e-mail que "envia"
-ADMIN_EMAIL = 'teu-email-admin@gmail.com'  # O e-mail que "recebe"
+DEFAULT_FROM_EMAIL = "contato@simaceito.com.br"  # O e-mail que "envia"
+ADMIN_EMAIL = "teu-email-admin@gmail.com"  # O e-mail que "recebe"
 
 # Arquivos estáticos e de mídia
 
@@ -167,5 +169,5 @@ MESSAGE_TAGS = {
 # Para o Django Debug Toolbar
 
 INTERNAL_IPS = [
-    '127.0.0.1',
+    "127.0.0.1",
 ]

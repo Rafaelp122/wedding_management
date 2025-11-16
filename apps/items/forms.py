@@ -54,7 +54,5 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
         """Valida se o preço não é negativo."""
         unit_price = self.cleaned_data.get("unit_price")
         if unit_price is not None and unit_price < 0:
-            raise forms.ValidationError(
-                "O preço unitário não pode ser negativo."
-            )
+            raise forms.ValidationError("O preço unitário não pode ser negativo.")
         return unit_price

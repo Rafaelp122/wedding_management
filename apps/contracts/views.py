@@ -13,6 +13,7 @@ class ContractsPartialView(LoginRequiredMixin, TemplateView):
     Mostra os contratos relacionados a um casamento específico.
     Cada contrato recebe um gradiente para exibição no template.
     """
+
     template_name = "contracts/contracts_partial.html"
 
     def get_context_data(self, **kwargs):
@@ -30,16 +31,13 @@ class ContractsPartialView(LoginRequiredMixin, TemplateView):
 
         # Busca os contratos relacionados ao casamento
         # select_related otimiza as consultas com joins em item e supplier
-        contracts_qs = Contract.objects.filter(
-            wedding=wedding
-        ).select_related("item", "supplier")
+        contracts_qs = Contract.objects.filter(wedding=wedding).select_related(
+            "item", "supplier"
+        )
 
         # Cria uma lista de contratos com gradiente associado
         context["contracts_list"] = [
-            {
-                "contract": contract,
-                "gradient": GRADIENTS[idx % len(GRADIENTS)]
-            }
+            {"contract": contract, "gradient": GRADIENTS[idx % len(GRADIENTS)]}
             for idx, contract in enumerate(contracts_qs)
         ]
 

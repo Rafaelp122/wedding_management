@@ -11,6 +11,6 @@ urlpatterns = [
     path(
         "partial/<int:wedding_id>/",
         ContractsPartialView.as_view(),
-        name="partial_contracts"
+        name="partial_contracts",
     ),
 ]

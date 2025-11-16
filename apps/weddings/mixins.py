@@ -14,6 +14,7 @@ from .models import Wedding
 # sozinhos em Views (ex: DetailView) e seguem o
 # Princípio da Segregação de Interface (ISP).
 
+
 class PlannerOwnershipMixin(OwnerRequiredMixin):
     """
     Domain-Specific Security Mixin (Standalone)
@@ -21,8 +22,9 @@ class PlannerOwnershipMixin(OwnerRequiredMixin):
     Define o 'model' e 'owner_field_name' (lógica de negócio específica)
     para o 'OwnerRequiredMixin' (lógica genérica do core).
     """
+
     model = Wedding
-    owner_field_name = 'planner'
+    owner_field_name = "planner"
 
 
 class WeddingFormLayoutMixin:
@@ -32,6 +34,7 @@ class WeddingFormLayoutMixin:
     Define o layout estático, ícones e classes (lógica de
     apresentação específica) para o formulário de Wedding.
     """
+
     form_class = WeddingForm
     template_name = "partials/form_modal.html"
 
@@ -64,6 +67,7 @@ class WeddingFormLayoutMixin:
 # Princípio da Responsabilidade Única (SRP).
 # Cada um é responsável por uma única parte da "lógica de lista".
 
+
 class WeddingQuerysetMixin:
     """
     Fine-Grained Mixin: Query Logic
@@ -71,14 +75,10 @@ class WeddingQuerysetMixin:
     Responsável *apenas* por construir o queryset de 'Wedding'.
     (lógica de dados específica).
     """
-    def get_base_queryset(self, sort='id', q=None, status=None):
+
+    def get_base_queryset(self, sort="id", q=None, status=None):
         queryset = Wedding.objects.filter(planner=self.request.user)
-        queryset = (
-            queryset
-            .with_effective_status()
-            .apply_search(q)
-            .apply_sort(sort)
-        )
+        queryset = queryset.with_effective_status().apply_search(q).apply_sort(sort)
         if status:
             queryset = queryset.filter(effective_status=status)
         queryset = queryset.with_counts_and_progress()
@@ -93,6 +93,7 @@ class WeddingPaginationContextMixin:
     o contexto final. Possui uma *dependência* implícita do
     'get_base_queryset' (fornecido pelo WeddingQuerysetMixin).
     """
+
     paginate_by = 6
 
     def _build_context_list(self, queryset):
@@ -109,10 +110,10 @@ class WeddingPaginationContextMixin:
         ]
 
     def build_paginated_context(self, request_params):
-        page = request_params.get('page', 1)
-        sort = request_params.get('sort', 'id')
-        q = request_params.get('q', None)
-        status = request_params.get('status', None)
+        page = request_params.get("page", 1)
+        sort = request_params.get("sort", "id")
+        q = request_params.get("q", None)
+        status = request_params.get("status", None)
 
         # Dependência: chama get_base_queryset()
         qs = self.get_base_queryset(sort=sort, q=q, status=status)
@@ -123,7 +124,7 @@ class WeddingPaginationContextMixin:
         elided_page_range = paginator.get_elided_page_range(
             number=page_obj.number,
             on_each_side=3,  # Ex: 1 ... 4 [5] 6 ... 50
-            on_ends=1
+            on_ends=1,
         )
 
         paginated_weddings_formatted = self._build_context_list(
@@ -135,8 +136,8 @@ class WeddingPaginationContextMixin:
             "paginated_weddings": paginated_weddings_formatted,
             "elided_page_range": elided_page_range,
             "current_sort": sort,
-            "current_search": q or '',
-            "current_status": status or '',
+            "current_search": q or "",
+            "current_status": status or "",
             "request": self.request,
         }
 
@@ -144,7 +145,7 @@ class WeddingPaginationContextMixin:
 class WeddingHtmxListResponseMixin(
     BaseHtmxResponseMixin,
     HtmxUrlParamsMixin,
-    WeddingPaginationContextMixin  # Dependência explícita
+    WeddingPaginationContextMixin,  # Dependência explícita
 ):
     """
     Fine-Grained Mixin: HTMX Connector
@@ -155,6 +156,7 @@ class WeddingHtmxListResponseMixin(
     Possui uma *dependência* direta do 'WeddingPaginationContextMixin'
     para obter o 'build_paginated_context'.
     """
+
     htmx_template_name = "weddings/partials/_list_and_pagination.html"
     htmx_retarget_id = "#wedding-list-container"
 
@@ -172,10 +174,8 @@ class WeddingHtmxListResponseMixin(
 
 # --- Mixin de Composição (Facade Pattern) ---
 
-class WeddingListActionsMixin(
-    WeddingQuerysetMixin,
-    WeddingHtmxListResponseMixin
-):
+
+class WeddingListActionsMixin(WeddingQuerysetMixin, WeddingHtmxListResponseMixin):
     """
     Mixin de Composição (Composition Mixin)
 
@@ -187,4 +187,5 @@ class WeddingListActionsMixin(
     (Don't Repeat Yourself) nas Views: em vez de uma View herdar
     3 ou 4 mixins de lista, ela herda apenas este.
     """
+
     pass

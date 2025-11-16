@@ -6,13 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('items', '0003_item_status'),
+        ("items", "0003_item_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='item',
-            name='category',
-            field=models.CharField(choices=[('LOCAL', 'Local'), ('BUFFET', 'Buffet'), ('DECOR', 'Decoração'), ('PHOTO_VIDEO', 'Fotografia e Vídeo'), ('ATTIRE', 'Vestuário'), ('MUSIC', 'Música/Entretenimento'), ('OTHERS', 'Outros')], default='OTHERS', max_length=20, verbose_name='Categoria'),
+            model_name="item",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("LOCAL", "Local"),
+                    ("BUFFET", "Buffet"),
+                    ("DECOR", "Decoração"),
+                    ("PHOTO_VIDEO", "Fotografia e Vídeo"),
+                    ("ATTIRE", "Vestuário"),
+                    ("MUSIC", "Música/Entretenimento"),
+                    ("OTHERS", "Outros"),
+                ],
+                default="OTHERS",
+                max_length=20,
+                verbose_name="Categoria",
+            ),
         ),
     ]

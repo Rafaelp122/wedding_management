@@ -9,8 +9,6 @@ app_name = "pages"
 urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),  # Página inicial
     path(
-        'contact-submit/',
-        views.ContactFormSubmitView.as_view(),
-        name='contact_submit'
+        "contact-submit/", views.ContactFormSubmitView.as_view(), name="contact_submit"
     ),
 ]

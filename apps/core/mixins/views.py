@@ -10,11 +10,12 @@ class HtmxUrlParamsMixin:
     GENÉRICO (Core): Fornece um helper para ler os query params
     do header 'HX-Current-Url' para preservar o estado.
     """
+
     def _get_params_from_htmx_url(self):
         """
         Lê a URL que o usuário estava vendo (do header HTMX).
         """
-        current_url = self.request.headers.get('Hx-Current-Url')
+        current_url = self.request.headers.get("Hx-Current-Url")
         params = {}
         if current_url:
             try:
@@ -37,6 +38,7 @@ class BaseHtmxResponseMixin:
     - self.htmx_template_name (str)
     - self.htmx_retarget_id (str)
     """
+
     htmx_template_name = None
     htmx_retarget_id = None
     htmx_reswap_method = "innerHTML"
@@ -45,7 +47,7 @@ class BaseHtmxResponseMixin:
         """
         Hook para adicionar contexto ao template HTMX.
         """
-        kwargs['request'] = self.request
+        kwargs["request"] = self.request
         return kwargs
 
     def render_htmx_response(self, trigger=None, **kwargs):

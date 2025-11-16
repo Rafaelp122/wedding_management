@@ -10,8 +10,6 @@ urlpatterns = [
     # Exibe ou atualiza parcialmente o orçamento de um casamento específico
     # O parâmetro <int:wedding_id> identifica qual casamento está sendo tratado
     path(
-        "partial/<int:wedding_id>/",
-        BudgetPartialView.as_view(),
-        name="partial_budget"
+        "partial/<int:wedding_id>/", BudgetPartialView.as_view(), name="partial_budget"
     ),
 ]

@@ -25,9 +25,7 @@ class ItemQuerySet(models.QuerySet):
                 total_cost=Sum(
                     ExpressionWrapper(
                         F("unit_price") * F("quantity"),
-                        output_field=DecimalField(
-                            max_digits=10, decimal_places=2
-                        ),
+                        output_field=DecimalField(max_digits=10, decimal_places=2),
                     )
                 )
             )
@@ -45,16 +43,16 @@ class ItemQuerySet(models.QuerySet):
 
         # Mapeia as opções de string para os campos reais do DB
         SORT_MAP = {
-            'name_asc': 'name',
-            'status': 'status',
-            'price_desc': '-unit_price',
-            'price_asc': 'unit_price',
-            'date_desc': '-created_at',
-            'date_asc': 'created_at',
+            "name_asc": "name",
+            "status": "status",
+            "price_desc": "-unit_price",
+            "price_asc": "unit_price",
+            "date_desc": "-created_at",
+            "date_asc": "created_at",
         }
 
         # .get() busca a opção no mapa.
         # Se não encontrar, usa o valor padrão ('id').
-        order_by_field = SORT_MAP.get(sort_option, 'id')
+        order_by_field = SORT_MAP.get(sort_option, "id")
 
         return self.order_by(order_by_field)

@@ -15,7 +15,7 @@ class ContactInquiry(BaseModel):
         verbose_name = "Mensagem de Contato"
         verbose_name_plural = "Mensagens de Contato"
         # A ordenação por 'created_at' funciona porque vem do BaseModel
-        ordering = ('-created_at',)
+        ordering = ("-created_at",)
 
     def __str__(self):
         return f"Mensagem de {self.name} ({self.email})"

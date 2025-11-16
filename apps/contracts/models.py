@@ -13,22 +13,11 @@ class Contract(BaseModel):
     description = models.TextField(blank=True)
     status = models.CharField(max_length=50, blank=True)
     supplier = models.ForeignKey(
-        Supplier,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        Supplier, on_delete=models.CASCADE, null=True, blank=True
     )
-    item = models.ForeignKey(
-        Item,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, null=True, blank=True)
     wedding = models.ForeignKey(
-        Wedding,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        Wedding, on_delete=models.CASCADE, null=True, blank=True
     )
 
     # Retorna uma representação legível do contrato,

@@ -4,6 +4,7 @@ from ..utils.forms_utils import add_attr
 
 class FormStylingMixin:
     """Mixin que aplica classes CSS padrão aos campos de formulário"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

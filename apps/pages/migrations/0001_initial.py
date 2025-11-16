@@ -7,25 +7,46 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='ContactInquiry',
+            name="ContactInquiry",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Data e hora em que este objeto foi criado.', verbose_name='Data de Criação')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Data e hora em que foi atualizado pela última vez.', verbose_name='Última Atualização')),
-                ('name', models.CharField(max_length=100, verbose_name='Nome')),
-                ('email', models.EmailField(max_length=254, verbose_name='E-mail')),
-                ('message', models.TextField(verbose_name='Mensagem')),
-                ('read', models.BooleanField(default=False, verbose_name='Lido')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Data e hora em que este objeto foi criado.",
+                        verbose_name="Data de Criação",
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True,
+                        help_text="Data e hora em que foi atualizado pela última vez.",
+                        verbose_name="Última Atualização",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, verbose_name="Nome")),
+                ("email", models.EmailField(max_length=254, verbose_name="E-mail")),
+                ("message", models.TextField(verbose_name="Mensagem")),
+                ("read", models.BooleanField(default=False, verbose_name="Lido")),
             ],
             options={
-                'verbose_name': 'Mensagem de Contato',
-                'verbose_name_plural': 'Mensagens de Contato',
-                'ordering': ('-created_at',),
+                "verbose_name": "Mensagem de Contato",
+                "verbose_name_plural": "Mensagens de Contato",
+                "ordering": ("-created_at",),
             },
         ),
     ]

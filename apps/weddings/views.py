@@ -11,23 +11,24 @@ from django.views.generic import (
 )
 
 from .mixins import (
-    PlannerOwnershipMixin,     # Apenas Segurança
-    WeddingFormLayoutMixin,    # Apenas Layout de Formulário
-    WeddingListActionsMixin,   # O "Pacote de Lista" (Query, Pag, HTMX)
+    PlannerOwnershipMixin,  # Apenas Segurança
+    WeddingFormLayoutMixin,  # Apenas Layout de Formulário
+    WeddingListActionsMixin,  # O "Pacote de Lista" (Query, Pag, HTMX)
 )
 from .models import Wedding
 
 
 class WeddingListView(
-    PlannerOwnershipMixin,      # Segurança (para garantir que a pág. carregue)
+    PlannerOwnershipMixin,  # Segurança (para garantir que a pág. carregue)
     WeddingListActionsMixin,  # Lógica de Lista (Query, Paginação, Contexto)
-    TemplateView              # MAIS LIMPO que ListView
+    TemplateView,  # MAIS LIMPO que ListView
 ):
     """
     Renderiza a página completa (F5) ou o partial da lista (HTMX).
     Usar TemplateView é mais simples, pois o
     WeddingListActionsMixin já faz todo o trabalho.
     """
+
     template_name = "weddings/list.html"  # A página COMPLETA
 
     def get_context_data(self, **kwargs):
@@ -53,9 +54,7 @@ class WeddingListView(
         if self.request.htmx:
             # Renderiza o partial
             return render(
-                self.request,
-                "weddings/partials/_list_and_pagination.html",
-                context
+                self.request, "weddings/partials/_list_and_pagination.html", context
             )
 
         # Se for um F5, renderiza a página inteira
@@ -63,10 +62,10 @@ class WeddingListView(
 
 
 class WeddingCreateView(
-    PlannerOwnershipMixin,     # Segurança
-    WeddingListActionsMixin,   # Resposta HTMX da Lista
-    WeddingFormLayoutMixin,    # Layout do Formulário
-    CreateView
+    PlannerOwnershipMixin,  # Segurança
+    WeddingListActionsMixin,  # Resposta HTMX da Lista
+    WeddingFormLayoutMixin,  # Layout do Formulário
+    CreateView,
 ):
     model = Wedding
     # form_class e template_name vêm do WeddingFormLayoutMixin
@@ -75,9 +74,9 @@ class WeddingCreateView(
         # Chama o get_context_data do WeddingFormLayoutMixin
         context = super().get_context_data(**kwargs)
         # Adiciona o contexto DINÂMICO do modal
-        context['modal_title'] = "Novo Casamento"
-        context['submit_button_text'] = "Salvar Casamento"
-        context['hx_post_url'] = reverse('weddings:create_wedding')
+        context["modal_title"] = "Novo Casamento"
+        context["submit_button_text"] = "Salvar Casamento"
+        context["hx_post_url"] = reverse("weddings:create_wedding")
         return context
 
     def form_valid(self, form):
@@ -88,10 +87,10 @@ class WeddingCreateView(
 
 
 class WeddingUpdateView(
-    PlannerOwnershipMixin,     # Segurança (usa get_queryset)
-    WeddingListActionsMixin,   # Resposta HTMX da Lista
-    WeddingFormLayoutMixin,    # Layout do Formulário
-    UpdateView
+    PlannerOwnershipMixin,  # Segurança (usa get_queryset)
+    WeddingListActionsMixin,  # Resposta HTMX da Lista
+    WeddingFormLayoutMixin,  # Layout do Formulário
+    UpdateView,
 ):
     model = Wedding
     pk_url_kwarg = "id"
@@ -102,11 +101,10 @@ class WeddingUpdateView(
         # Chama o get_context_data do WeddingFormLayoutMixin
         context = super().get_context_data(**kwargs)
         # Adiciona o contexto DINÂMICO do modal
-        context['modal_title'] = "Editar Casamento"
-        context['submit_button_text'] = "Salvar Alterações"
-        context['hx_post_url'] = reverse(
-            'weddings:edit_wedding',
-            kwargs={'id': self.object.pk}
+        context["modal_title"] = "Editar Casamento"
+        context["submit_button_text"] = "Salvar Alterações"
+        context["hx_post_url"] = reverse(
+            "weddings:edit_wedding", kwargs={"id": self.object.pk}
         )
         return context
 
@@ -117,9 +115,9 @@ class WeddingUpdateView(
 
 
 class WeddingDeleteView(
-    PlannerOwnershipMixin,     # Segurança (usa get_queryset)
-    WeddingListActionsMixin,   # Resposta HTMX da Lista
-    DeleteView
+    PlannerOwnershipMixin,  # Segurança (usa get_queryset)
+    WeddingListActionsMixin,  # Resposta HTMX da Lista
+    DeleteView,
 ):
     model = Wedding
     template_name = "partials/confirm_delete_modal.html"
@@ -128,13 +126,12 @@ class WeddingDeleteView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['object_name'] = str(self.object)
-        context['object_type'] = 'o casamento'
-        context['hx_post_url'] = reverse(
-            'weddings:delete_wedding',
-            kwargs={'id': self.object.pk}
+        context["object_name"] = str(self.object)
+        context["object_type"] = "o casamento"
+        context["hx_post_url"] = reverse(
+            "weddings:delete_wedding", kwargs={"id": self.object.pk}
         )
-        context['hx_target_id'] = '#wedding-list-container'
+        context["hx_target_id"] = "#wedding-list-container"
         return context
 
     def post(self, request, *args, **kwargs):
@@ -145,27 +142,23 @@ class WeddingDeleteView(
 
 
 class UpdateWeddingStatusView(
-    PlannerOwnershipMixin,     # Segurança (usa get_queryset)
-    WeddingListActionsMixin,   # Resposta HTMX da Lista
-    View
+    PlannerOwnershipMixin,  # Segurança (usa get_queryset)
+    WeddingListActionsMixin,  # Resposta HTMX da Lista
+    View,
 ):
     model = Wedding  # Informa ao PlannerOwnershipMixin qual model usar
     # get_queryset (segurança) vem do PlannerOwnershipMixin
 
     def post(self, request, *args, **kwargs):
         try:
-            wedding = self.get_queryset().get(pk=self.kwargs['id'])
+            wedding = self.get_queryset().get(pk=self.kwargs["id"])
         except Wedding.DoesNotExist:
-            return HttpResponseBadRequest(
-                "Casamento não encontrado ou sem permissão."
-            )
+            return HttpResponseBadRequest("Casamento não encontrado ou sem permissão.")
 
         new_status = request.POST.get("status")
         valid_statuses = [status[0] for status in Wedding.STATUS_CHOICES]
         if new_status not in valid_statuses:
-            return HttpResponseBadRequest(
-                "Status inválido ou Model não atualizado."
-            )
+            return HttpResponseBadRequest("Status inválido ou Model não atualizado.")
         wedding.status = new_status
         wedding.save()
 
@@ -173,10 +166,7 @@ class UpdateWeddingStatusView(
         return self.render_wedding_list_response(trigger="listUpdated")
 
 
-class WeddingDetailView(
-    PlannerOwnershipMixin,  # APENAS Segurança
-    DetailView
-):
+class WeddingDetailView(PlannerOwnershipMixin, DetailView):  # APENAS Segurança
     model = Wedding
     template_name = "weddings/detail.html"
     context_object_name = "wedding"

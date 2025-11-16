@@ -8,7 +8,7 @@ from .views import (
     WeddingCreateView,
     WeddingDeleteView,
     WeddingDetailView,
-    UpdateWeddingStatusView
+    UpdateWeddingStatusView,
 )
 
 app_name = "weddings"
@@ -21,15 +21,11 @@ urlpatterns = [
         name="wedding_detail",
     ),
     path("edit/<int:id>/", WeddingUpdateView.as_view(), name="edit_wedding"),
-    path(
-        "delete/<int:id>/",
-        WeddingDeleteView.as_view(),
-        name="delete_wedding"
-    ),
+    path("delete/<int:id>/", WeddingDeleteView.as_view(), name="delete_wedding"),
     path("create/", WeddingCreateView.as_view(), name="create_wedding"),
     path(
-        'update-status/<int:id>/',
+        "update-status/<int:id>/",
         UpdateWeddingStatusView.as_view(),
-        name='update_wedding_status'
+        name="update_wedding_status",
     ),
 ]

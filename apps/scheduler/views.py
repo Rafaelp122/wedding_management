@@ -11,12 +11,13 @@ from .models import Event
 from .forms import EventForm
 from .mixins import SchedulerWeddingMixin
 
-# CALENDÁRIO (PARCIAL VIA HTMX)
 
+# CALENDÁRIO (PARCIAL VIA HTMX)
 class SchedulerPartialView(SchedulerWeddingMixin, TemplateView):
     """
     Renderiza o calendário dentro do contexto de um casamento.
     """
+
     template_name = "scheduler/partials/_scheduler_partial.html"
 
     def get_context_data(self, **kwargs):
@@ -24,8 +25,8 @@ class SchedulerPartialView(SchedulerWeddingMixin, TemplateView):
         context["wedding"] = self.wedding
         return context
 
-# FORMULÁRIO DE EVENTO (CRIAR / EDITAR)
 
+# FORMULÁRIO DE EVENTO (CRIAR / EDITAR)
 class EventFormView(SchedulerWeddingMixin, View):
     form_class = EventForm
     template_name = "scheduler/partials/_event_form.html"
@@ -35,15 +36,15 @@ class EventFormView(SchedulerWeddingMixin, View):
         instance = None
 
         if event_id:
-            instance = get_object_or_404(
-                Event, id=event_id, planner=request.user
-            )
+            instance = get_object_or_404(Event, id=event_id, planner=request.user)
 
         clicked_date = request.GET.get("date")
         form = self.form_class(instance=instance, clicked_date=clicked_date)
 
         if instance:
-            form_action = reverse("scheduler:event_update", args=[self.wedding.id, instance.id])
+            form_action = reverse(
+                "scheduler:event_update", args=[self.wedding.id, instance.id]
+            )
         else:
             form_action = reverse("scheduler:event_save", args=[self.wedding.id])
 
@@ -56,8 +57,8 @@ class EventFormView(SchedulerWeddingMixin, View):
         }
         return render(request, self.template_name, context)
 
-# SALVAMENTO DO EVENTO
 
+# SALVAMENTO DO EVENTO
 class EventSaveView(SchedulerWeddingMixin, View):
     form_class = EventForm
     template_name = "scheduler/partials/_event_form.html"
@@ -67,9 +68,7 @@ class EventSaveView(SchedulerWeddingMixin, View):
         instance = None
 
         if event_id:
-            instance = get_object_or_404(
-                Event, id=event_id, planner=request.user
-            )
+            instance = get_object_or_404(Event, id=event_id, planner=request.user)
 
         form = self.form_class(request.POST, instance=instance)
 
@@ -103,10 +102,12 @@ class EventSaveView(SchedulerWeddingMixin, View):
             }
 
             response = JsonResponse(data)
-            response["HX-Trigger-After-Settle"] = json.dumps({
-                "eventUpdated" if instance else "eventCreated": data,
-                "closeModal": True
-            })
+            response["HX-Trigger-After-Settle"] = json.dumps(
+                {
+                    "eventUpdated" if instance else "eventCreated": data,
+                    "closeModal": True,
+                }
+            )
             return response
 
         # Formulário inválido → exibe novamente com erros
@@ -118,21 +119,20 @@ class EventSaveView(SchedulerWeddingMixin, View):
         }
         return render(request, self.template_name, context)
 
-# MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (GENÉRICO)
 
+# MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (GENÉRICO)
 class EventDeleteModalView(SchedulerWeddingMixin, View):
     template_name = "partials/confirm_delete_modal.html"
 
     def get(self, request, *args, **kwargs):
         event = get_object_or_404(
-            Event,
-            id=kwargs["event_id"],
-            planner=request.user,
-            wedding=self.wedding
+            Event, id=kwargs["event_id"], planner=request.user, wedding=self.wedding
         )
 
         context = {
-            "hx_post_url": reverse("scheduler:event_delete", args=[self.wedding.id, event.id]),
+            "hx_post_url": reverse(
+                "scheduler:event_delete", args=[self.wedding.id, event.id]
+            ),
             "hx_target_id": "#form-modal-container",
             "object_type": "o evento",
             "object_name": event.title,
@@ -141,7 +141,6 @@ class EventDeleteModalView(SchedulerWeddingMixin, View):
 
 
 # EXCLUSÃO DO EVENTO (POST)
-
 class EventDeleteView(SchedulerWeddingMixin, View):
     """
     Deleta o evento e dispara trigger HTMX.
@@ -149,10 +148,7 @@ class EventDeleteView(SchedulerWeddingMixin, View):
 
     def post(self, request, *args, **kwargs):
         event = get_object_or_404(
-            Event,
-            id=kwargs["event_id"],
-            planner=request.user,
-            wedding=self.wedding
+            Event, id=kwargs["event_id"], planner=request.user, wedding=self.wedding
         )
 
         event_id = event.id
