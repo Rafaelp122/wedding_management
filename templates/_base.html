@@ -5,6 +5,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <script>
+    // Define a flag de debug
+    window.APP_DEBUG = {% if debug %}true{% else %}false{% endif %};
+
+    // Cria o logger "falso" (para produção)
+    window.logger = {
+      log: () => {},
+      warn: () => {},
+      error: () => {},
+    };
+
+    // Se estiver em debug, "liga" o logger 
+    // para apontar para o 'console' real.
+    if (window.APP_DEBUG === true) {
+      window.logger = console;
+    }
+  </script>
+
   <title>{% block title %} Sim, Aceito! {% endblock title %}</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -1,13 +1,18 @@
 // =============================================================
 // MODAL HANDLER GLOBAL (HTMX + BOOTSTRAP + FULLCALENDAR)
 // =============================================================
+// 
+// Este script espera que 'window.logger' exista
+// (definido no template _base.html).
+//
+// =============================================================
 
 // Fecha modais globais após atualização de listas padrão
 document.body.addEventListener("listUpdated", () => closeAnyModal());
 
-// 🔹 Escuta o evento "eventCreated" vindo do backend HTMX
+// Escuta o evento "eventCreated" vindo do backend HTMX
 document.body.addEventListener("eventCreated", (e) => {
-  console.log("🟢 Evento criado recebido via HTMX:", e.detail);
+  logger.log("🟢 Evento criado recebido via HTMX:", e.detail);
 
   // Fecha o modal de criação
   closeAnyModal();
@@ -17,20 +22,19 @@ document.body.addEventListener("eventCreated", (e) => {
   if (calendarEl && calendarEl.fullCalendarInstance) {
     const calendar = calendarEl.fullCalendarInstance;
 
-    // Adiciona o evento novo no calendário
     if (e.detail && e.detail.id) {
       calendar.addEvent(e.detail);
-      console.log("✅ Evento adicionado no calendário em tempo real!");
+      logger.log("✅ Evento adicionado no calendário em tempo real!");
     } else {
-      console.warn("⚠️ Detalhes do evento ausentes, recarregando eventos...");
+      logger.warn("⚠️ Detalhes do evento ausentes, recarregando eventos...");
       calendar.refetchEvents();
     }
   }
 });
 
-// 🔹 Escuta "eventUpdated" para atualizar um evento existente (edição)
+// Escuta "eventUpdated" para atualizar um evento existente (edição)
 document.body.addEventListener("eventUpdated", (e) => {
-  console.log("🟠 Evento atualizado via HTMX:", e.detail);
+  logger.log("🟠 Evento atualizado via HTMX:", e.detail);
 
   closeAnyModal();
   const calendarEl = document.getElementById("calendar");
@@ -41,24 +45,24 @@ document.body.addEventListener("eventUpdated", (e) => {
       event.setStart(e.detail.start);
       event.setEnd(e.detail.end);
       event.setExtendedProp("description", e.detail.description);
-      console.log("✅ Evento atualizado no calendário instantaneamente!");
+      logger.log("✅ Evento atualizado no calendário instantaneamente!");
     } else {
-      console.warn("Evento não encontrado, recarregando todos...");
+      logger.warn("Evento não encontrado, recarregando todos...");
       calendarEl.fullCalendarInstance.refetchEvents();
     }
   }
 });
 
-// 🔹 Escuta "eventDeleted" para remover do calendário
+// Escuta "eventDeleted" para remover do calendário
 document.body.addEventListener("eventDeleted", (e) => {
-  console.log("🔴 Evento removido via HTMX:", e.detail);
+  logger.log("🔴 Evento removido via HTMX:", e.detail);
   closeAnyModal();
   const calendarEl = document.getElementById("calendar");
   if (calendarEl && calendarEl.fullCalendarInstance) {
     const event = calendarEl.fullCalendarInstance.getEventById(e.detail.id);
     if (event) {
       event.remove();
-      console.log("✅ Evento removido instantaneamente do calendário!");
+      logger.log("✅ Evento removido instantaneamente do calendário!");
     } else {
       calendarEl.fullCalendarInstance.refetchEvents();
     }
