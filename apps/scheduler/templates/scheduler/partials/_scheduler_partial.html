@@ -1,8 +1,29 @@
 {% load static %}
 
-<div class="card shadow-sm border-0 p-3">
-  <h5 class="fw-bold mb-3" style="color:#9C27B0;">Calendário do Casamento</h5>
+{% comment %}
+  CSS "Preguiçoso" (Lazy-loaded)
+  O HTMX vai carregar este CSS no <head> da página 
+  apenas quando esta aba for clicada.
+{% endcomment %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light-border.css" />
+
+{# Conteúdo da aba #}
+<div class="card shadow-sm border-0 rounded-4 p-3">
+  <h3 class="fs-4 fw-bold text-dark mb-4">Calendário do Casamento</h3>
+  
   <div id="calendar"
        data-wedding-id="{{ wedding.id }}"
        style="min-height: 600px;"></div>
 </div>
+
+
+{% comment %}
+  Javascript "Preguiçoso" (Lazy-loaded)
+  Estes scripts só serão descarregados e executados 
+  pelo navegador quando esta aba for clicada.
+{% endcomment %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core/locales/pt-br.global.min.js"></script>
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>

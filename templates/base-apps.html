@@ -7,8 +7,6 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'css/base-apps.css' %}">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light-border.css" />
   {% block page_styles %}{% endblock page_styles %}
 {% endblock styles %}
 
@@ -29,17 +27,7 @@
 
 {% block scripts %}
   {{ block.super }}
-
   <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core/locales/pt-br.global.min.js"></script>
-
-  <script src="https://unpkg.com/@popperjs/core@2"></script>
-  <script src="https://unpkg.com/tippy.js@6"></script>
-
-  <script src="{% static 'scheduler/js/calendar.js' %}"></script>
   <script src="{% static 'js/modal_handler.js' %}"></script>
-
   {% block extra_js %}{% endblock extra_js %}
 {% endblock scripts %}
