@@ -35,30 +35,26 @@ class ItemQuerySet(models.QuerySet):
         )
 
     def apply_search(self, search_query):
-        """Filtra por nome do item"""
+        """Filtra por nome do item (otimizado com istartswith)"""
         if search_query:
-            return self.filter(name__icontains=search_query)
+            return self.filter(name__istartswith=search_query)
         return self
 
     def apply_sort(self, sort_option):
-        """Ordena o queryset de itens com base na opção de sort,
-         incluindo preço e data."""
-        if sort_option == 'name_asc':
-            order_by_field = 'name'
-        elif sort_option == 'status':
-            order_by_field = 'status'
+        """Ordena o queryset de itens (refatorado com um mapa)"""
 
-        elif sort_option == 'price_desc':
-            order_by_field = '-unit_price'
-        elif sort_option == 'price_asc':
-            order_by_field = 'unit_price'
+        # Mapeia as opções de string para os campos reais do DB
+        SORT_MAP = {
+            'name_asc': 'name',
+            'status': 'status',
+            'price_desc': '-unit_price',
+            'price_asc': 'unit_price',
+            'date_desc': '-created_at',
+            'date_asc': 'created_at',
+        }
 
-        # NOVAS OPÇÕES: Data de Criação
-        elif sort_option == 'date_desc':
-            order_by_field = '-created_at'
-        elif sort_option == 'date_asc':
-            order_by_field = 'created_at'
+        # .get() busca a opção no mapa.
+        # Se não encontrar, usa o valor padrão ('id').
+        order_by_field = SORT_MAP.get(sort_option, 'id')
 
-        else:
-            order_by_field = 'id'  # Padrão
         return self.order_by(order_by_field)
