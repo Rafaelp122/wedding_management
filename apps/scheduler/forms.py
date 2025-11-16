@@ -17,13 +17,17 @@ class EventForm(forms.ModelForm):
     # Campos de hora de início e fim (separados da data)
     start_time_input = forms.TimeField(
         label="Hora de Início",
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(
+            attrs={"type": "time", "class": "form-control"}
+        ),
         required=True,
     )
 
     end_time_input = forms.TimeField(
         label="Hora de Fim",
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(
+            attrs={"type": "time", "class": "form-control"}
+        ),
         required=False,
     )
 
@@ -40,12 +44,21 @@ class EventForm(forms.ModelForm):
         ]
         widgets = {
             "title": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Ex: Reunião com Decorador"}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ex: Reunião com Decorador"
+                }
             ),
             "location": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Ex: Escritório Decoração Fina"}
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ex: Escritório Decoração Fina"
+                }
             ),
-            "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "description": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3}
+            ),
             "event_type": forms.Select(attrs={"class": "form-select"}),
         }
         labels = {
@@ -56,7 +69,6 @@ class EventForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Permite pré-preencher os campos ao editar ou criar a partir de uma data clicada
         clicked_date = kwargs.pop("clicked_date", None)
         instance = kwargs.get("instance")
         super().__init__(*args, **kwargs)
@@ -93,7 +105,8 @@ class EventForm(forms.ModelForm):
 
 
 class EventCrudForm(FormStylingMixin, forms.ModelForm):
-    """Formulário completo para criar e editar eventos no painel administrativo."""
+    """Formulário completo para criar e editar eventos no
+    painel administrativo."""
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
@@ -101,15 +114,23 @@ class EventCrudForm(FormStylingMixin, forms.ModelForm):
 
         # Filtra os casamentos para exibir apenas os do planner logado
         if user:
-            self.fields["wedding"].queryset = Wedding.objects.filter(planner=user)
+            self.fields["wedding"].queryset = Wedding.objects.filter(
+                planner=user
+            )
         elif "wedding" in self.fields:
             self.fields["wedding"].queryset = Wedding.objects.none()
 
         # Adiciona placeholders para melhorar a experiência do usuário
-        add_placeholder(self.fields["title"], "Ex: Reunião com fornecedor")
-        add_placeholder(self.fields["description"], "Ex: Discutir flores e decoração")
+        add_placeholder(
+            self.fields["title"], "Ex: Reunião com fornecedor"
+        )
+        add_placeholder(
+            self.fields["description"], "Ex: Discutir flores e decoração"
+        )
         add_placeholder(self.fields["event_type"], "Selecione um tipo")
-        add_placeholder(self.fields["wedding"], "Selecione um casamento (opcional)")
+        add_placeholder(
+            self.fields["wedding"], "Selecione um casamento (opcional)"
+        )
 
     class Meta:
         model = Event

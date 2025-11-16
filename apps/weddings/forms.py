@@ -14,7 +14,9 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
         add_placeholder(self.fields["groom_name"], "Ex: Flavio")
         add_placeholder(self.fields["bride_name"], "Ex: Mirela")
         add_placeholder(self.fields["budget"], "Ex.: R$ 30.000,00")
-        add_placeholder(self.fields["location"], "Ex.: Igreja Matriz, São Gonçalo, RJ")
+        add_placeholder(
+            self.fields["location"], "Ex.: Igreja Matriz, São Gonçalo, RJ"
+        )
 
     class Meta:
         model = Wedding
