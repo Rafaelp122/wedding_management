@@ -25,8 +25,8 @@ class WeddingListView(
 ):
     """
     Renderiza a página completa (F5) ou o partial da lista (HTMX).
-    Usar TemplateView é mais simples, pois nosso
-    WeddingListActionsMixin JÁ faz todo o trabalho.
+    Usar TemplateView é mais simples, pois o
+    WeddingListActionsMixin já faz todo o trabalho.
     """
     template_name = "weddings/list.html"  # A página COMPLETA
 
@@ -40,6 +40,12 @@ class WeddingListView(
         list_context = self.build_paginated_context(request_params)
 
         context.update(list_context)
+
+        context["pagination_url_name"] = "weddings:my_weddings"
+        # O ID do container que o HTMX deve atualizar
+        context["pagination_target"] = "#wedding-list-container"
+        # Opcional, para acessibilidade
+        context["pagination_aria_label"] = "Paginação de Casamentos"
         return context
 
     def render_to_response(self, context, **response_kwargs):

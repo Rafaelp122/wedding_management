@@ -34,6 +34,12 @@ class ItemListView(
         context.update(
             self.build_paginated_context(self.request.GET)
         )
+
+        context["pagination_url_name"] = "items:partial_items"
+        # O 'pagination_target' é o ID do container da lista
+        context["pagination_target"] = "#item-list-container"
+        # Acessibilidade
+        context["pagination_aria_label"] = "Paginação de Itens"
         return context
 
     def render_to_response(self, context, **response_kwargs):

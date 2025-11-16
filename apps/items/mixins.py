@@ -162,10 +162,17 @@ class ItemPaginationContextMixin:
         paginator = Paginator(qs, self.paginate_by)
         page_obj = paginator.get_page(page)
 
+        elided_page_range = paginator.get_elided_page_range(
+            number=page_obj.number,
+            on_each_side=2,  # Um valor curto é melhor para listas de itens
+            on_ends=1
+        )
+
         return {
             "wedding": self.wedding,
             "page_obj": page_obj,
             "items": page_obj.object_list,
+            "elided_page_range": elided_page_range,
             "current_sort": sort,
             "current_search": q or '',
             "current_category": category or '',

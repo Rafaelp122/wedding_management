@@ -44,9 +44,8 @@
   </div>
 
   <div id="pagination-container" class="d-flex justify-content-center mt-4">
-    {% include "weddings/partials/_pagination.html" %}
+    {% include "partials/_pagination_htmx.html" with page_obj=page_obj elided_page_range=elided_page_range pagination_url_name=pagination_url_name pagination_target=pagination_target pagination_aria_label=pagination_aria_label current_sort=current_sort current_search=current_search current_status=current_status %}
   </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
