@@ -9,9 +9,6 @@
     {% comment %} Botão 'Anterior' {% endcomment %}
     <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
       <a class="page-link" href="#"
-         {% comment %} 
-           SÓ renderiza o hx-get SE houver uma página anterior 
-         {% endcomment %}
          {% if page_obj.has_previous %}
            hx-get="{% url 'weddings:my_weddings' %}?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}&q={{ current_search }}"
            hx-target="#wedding-list-container"
@@ -23,23 +20,36 @@
     </li>
 
     {% comment %} Números das Páginas {% endcomment %}
-    {% for page_num in page_obj.paginator.page_range %}
-      <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
-        <a class="page-link" href="#"
-           hx-get="{% url 'weddings:my_weddings' %}?page={{ page_num }}&sort={{ current_sort }}&q={{ current_search }}"
-           hx-target="#wedding-list-container"
-           hx-swap="innerHTML">
-          {{ page_num }}
-        </a>
-      </li>
+    {% for page_num in elided_page_range %}
+
+      {% comment %} 
+        Se o 'page_num' for uma elipse (...), 
+        mostre-o como um item desabilitado.
+      {% endcomment %}
+      {% if page_num == page_obj.paginator.ELLIPSIS %}
+        <li class="page-item disabled">
+          <span class="page-link">{{ page_num }}</span>
+        </li>
+
+      {% comment %} 
+        Caso contrário, é um número de página normal.
+      {% endcomment %}
+      {% else %}
+        <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
+          <a class="page-link" href="#"
+             hx-get="{% url 'weddings:my_weddings' %}?page={{ page_num }}&sort={{ current_sort }}&q={{ current_search }}"
+             hx-target="#wedding-list-container"
+             hx-swap="innerHTML">
+            {{ page_num }}
+          </a>
+        </li>
+      {% endif %}
+
     {% endfor %}
 
     {% comment %} Botão 'Próxima' {% endcomment %}
     <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
       <a class="page-link" href="#"
-         {% comment %} 
-           SÓ renderiza o hx-get SE houver uma próxima página 
-         {% endcomment %}
          {% if page_obj.has_next %}
            hx-get="{% url 'weddings:my_weddings' %}?page={{ page_obj.next_page_number }}&sort={{ current_sort }}&q={{ current_search }}"
            hx-target="#wedding-list-container"

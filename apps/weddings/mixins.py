@@ -120,6 +120,12 @@ class WeddingPaginationContextMixin:
         paginator = Paginator(qs, self.paginate_by)
         page_obj = paginator.get_page(page)
 
+        elided_page_range = paginator.get_elided_page_range(
+            number=page_obj.number,
+            on_each_side=3,  # Ex: 1 ... 4 [5] 6 ... 50
+            on_ends=1
+        )
+
         paginated_weddings_formatted = self._build_context_list(
             queryset=page_obj.object_list
         )
@@ -127,6 +133,7 @@ class WeddingPaginationContextMixin:
         return {
             "page_obj": page_obj,
             "paginated_weddings": paginated_weddings_formatted,
+            "elided_page_range": elided_page_range,
             "current_sort": sort,
             "current_search": q or '',
             "current_status": status or '',
