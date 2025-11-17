@@ -4,6 +4,8 @@ Configurações do projeto Django Wedding Management.
 Gerado por 'django-admin startproject' usando Django 5.2.3.
 """
 
+import logging
+import logging.handlers
 import os
 from pathlib import Path
 
@@ -53,13 +55,6 @@ INSTALLED_APPS = [
     "apps.weddings",
     "apps.core",
 ]
-
-# Autenticação e redirecionamentos
-
-LOGIN_REDIRECT_URL = "weddings:my_weddings"
-LOGOUT_REDIRECT_URL = "users:login"
-LOGIN_URL = "/usuario/login/"
-AUTH_USER_MODEL = "users.User"
 
 # Middlewares
 
@@ -117,6 +112,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# Autenticação e redirecionamentos
+
+LOGIN_REDIRECT_URL = "weddings:my_weddings"
+LOGOUT_REDIRECT_URL = "users:login"
+LOGIN_URL = "/usuario/login/"
+AUTH_USER_MODEL = "users.User"
+
 # Internacionalização
 
 LANGUAGE_CODE = "pt-br"
@@ -140,6 +142,120 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Define os e-mails que a tua view vai usar
 DEFAULT_FROM_EMAIL = "contato@simaceito.com.br"  # O e-mail que "envia"
 ADMIN_EMAIL = "teu-email-admin@gmail.com"  # O e-mail que "recebe"
+
+
+# --- INÍCIO DA CONFIGURAÇÃO DE LOGGING ---
+
+# Apps que terão logs separados
+APP_LOGS = [
+    "apps.scheduler",
+    "apps.contracts",
+    "apps.items",
+    "apps.budget",
+    "apps.pages",
+    "apps.users",
+    "apps.weddings",
+    "apps.core",
+]
+
+# Cria as pastas de logs (ex: /logs/scheduler/, /logs/core/)
+LOGS_DIR = BASE_DIR / "logs"
+for app in APP_LOGS:
+    (LOGS_DIR / app).mkdir(parents=True, exist_ok=True)
+
+# Define o nível do console baseado no modo DEBUG
+CONSOLE_LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    # === FORMATTERS ===
+    "formatters": {
+        # Formato para o Terminal (colorido)
+        "color": {
+            "()": "colorlog.ColoredFormatter",
+            "format": "%(log_color)s[%(levelname)s]%(reset)s %(asctime)s — %(name)s — %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+        },
+        # Formato para Arquivos (sem cor, mais detalhes)
+        "verbose": {
+            "format": "[%(levelname)s] %(asctime)s — %(name)s (%(pathname)s:%(lineno)d) — %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        # Formato padrão do django
+        "django_server": {
+            "()": "django.utils.log.ServerFormatter",
+            "format": "[%(asctime)s] %(message)s",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        },
+    },
+
+    # === HANDLERS ===
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "color",
+            "level": CONSOLE_LOG_LEVEL,  # Nível dinâmico
+        },
+        "console_server": {
+            "class": "logging.StreamHandler",
+            "formatter": "django_server",
+            "level": "INFO",
+        },
+    },
+
+    # === LOGGERS ===
+    "loggers": {
+        # Logs padrão do Django (ex: requisições HTTP)
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",  # Evita poluir o console com logs DEBUG do Django
+            "propagate": True,
+        },
+        # Logs de requisições do Django (para capturar 5XX, 4XX)
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",  # Só loga erros sérios de requisição
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console_server"], # <-- Usa o handler NÃO colorido
+            "level": "INFO",
+            "propagate": False, # <-- IMPEDE que ele use o handler "console" colorido
+        },
+    },
+}
+
+# === CRIAÇÃO DINÂMICA DE HANDLERS E LOGGERS ===
+for app in APP_LOGS:
+    # Handler: Define um arquivo de log rotativo para cada app
+    LOGGING["handlers"][f"file_{app}"] = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "filename": LOGS_DIR / f"{app}/app.log",
+        "formatter": "verbose",
+        "encoding": "utf-8",
+        "level": "DEBUG",  # Captura TUDO (debug, info, warning...) no arquivo
+        "maxBytes": 5 * 1024 * 1024,  # 5 MB por arquivo
+        "backupCount": 5,  # Mantém 5 arquivos de backup (app.log.1, ... .5)
+    }
+
+    # Logger: Define o logger para cada app
+    LOGGING["loggers"][app] = {
+        "handlers": ["console", f"file_{app}"],  # Envia para o console E para o arquivo
+        "level": "DEBUG",  # O nível do logger principal do app
+        "propagate": False,  # Impede que o log seja enviado duas vezes
+    }
+
+# --- FIM DA CONFIGURAÇÃO DE LOGGING ---
+
 
 # Arquivos estáticos e de mídia
 
