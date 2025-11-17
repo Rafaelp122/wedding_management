@@ -1,4 +1,4 @@
-/* CARTÕES DE CASAMENTO (LISTAGEM) */
+/* Estilos de interação e comportamento dos cards de casamento */
 .wedding-card {
   overflow: visible;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -7,11 +7,12 @@
 
 .wedding-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-              0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Informações estatísticas dentro do card */
+/* Tipografia e proporções dos dados exibidos nos cards */
 .card .info-stats {
   color: #444;
   font-size: 0.875rem;
@@ -21,7 +22,7 @@
   font-size: 1.1rem;
 }
 
-/* BOTÕES DE AÇÃO (EDITAR/EXCLUIR)*/
+/* Estrutura dos botões de ação (editar e excluir) */
 .btn-edit,
 .btn-delete {
   width: 36px;
@@ -31,10 +32,11 @@
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
-  transition: all 0.2s ease-in-out;
   border: none;
+  transition: all 0.2s ease-in-out;
 }
 
+/* Estilo do botão de edição com cor roxa do tema */
 .btn-edit {
   background-color: white;
   color: #8e2de2;
@@ -46,6 +48,7 @@
   transform: scale(1.05);
 }
 
+/* Estilo do botão de exclusão com tonalidade vermelha */
 .btn-delete {
   background-color: #e53935;
   color: white;
@@ -57,7 +60,7 @@
   transform: scale(1.05);
 }
 
-/* PAGINAÇÃO DA LISTAGEM */
+/* Personalização da paginação com integração ao tema roxo */
 .pagination {
   --bs-pagination-active-color: #fff;
   --bs-pagination-active-bg: var(--bs-primary);
@@ -79,4 +82,28 @@
 
 .page-link:hover {
   color: var(--bs-pagination-hover-color);
+}
+
+/* Alerta personalizado com paleta roxa */
+.alert-purple {
+  background-color: rgba(156, 39, 176, 0.1);
+  border-color: rgba(156, 39, 176, 0.25);
+  color: #6A1B9A;
+}
+
+/* Estilo dos links dentro do alerta roxo */
+.alert-purple a {
+  color: #9C27B0;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.alert-purple a:hover {
+  color: #7B1FA2;
+  text-decoration: underline;
+}
+
+/* Ajuste de contraste para textos em negrito no alerta */
+.alert-purple strong {
+  color: #4A148C;
 }
