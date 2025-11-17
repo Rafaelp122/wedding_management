@@ -1,10 +1,12 @@
+/* users/static/users/css/auth-pages.css */
+
 /* Mantém o estilo que já existia para o corpo e imagem */
 body {
     background-color: #f9fafb;
 }
 
 .image-section {
-    /* Aqui mantive o gradiente roxo que sugerimos antes, se quiser o azul original me avise */
+    /* Gradiente Roxo */
     background: linear-gradient(to bottom right, #9C27B0, #7B1FA2); 
     display: flex;
     align-items: center;
@@ -27,7 +29,7 @@ body {
     min-height: 38rem;
 }
 
-/* --- AQUI COMEÇAM AS MUDANÇAS DE COR SOLICITADAS --- */
+/* --- AQUI COMEÇAM AS MUDANÇAS DE COR --- */
 
 /* 1. Mudança da borda do Input (foco) de Azul para Roxo */
 .form-control:focus {
@@ -37,16 +39,22 @@ body {
 }
 
 /* 2. Botões (Entrar / Cadastrar / Salvar) */
-/* Sobrescreve o btn-primary apenas nestas páginas */
+/* Sobrescreve o btn-primary e remove qualquer borda azul/shadow padrão */
 .btn-primary {
     background-color: #9C27B0 !important;
     border-color: #9C27B0 !important;
     color: #fff;
+    outline: none !important;     /* Remove borda de foco do navegador */
+    box-shadow: none !important;  /* Remove sombra de foco do Bootstrap */
 }
 
-.btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+.btn-primary:hover, 
+.btn-primary:active, 
+.btn-primary:focus {
     background-color: #7B1FA2 !important; /* Roxo mais escuro no hover */
     border-color: #7B1FA2 !important;
+    outline: none !important;     /* Garante remoção no hover/foco */
+    box-shadow: none !important;  /* Garante remoção no hover/foco */
 }
 
 /* 3. Links (Faça seu cadastro aqui / Faça login aqui) */
