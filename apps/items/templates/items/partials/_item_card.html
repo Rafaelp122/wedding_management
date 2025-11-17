@@ -28,7 +28,7 @@
 
             {% comment %} Fornecedor e Ações {% endcomment %}
             <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
-                <p class="text-muted small mb-0"><strong>Fornecedor:</strong> {{ item.supplier.name|default:"N/D" }}</p>
+                <p class="text-muted small mb-0"><strong>Fornecedor:</strong> {{ item.supplier|default:"N/D" }}</p>
                 
                 {% comment %} Botão dropdown para os botões mudar status, atualizar e deletar {% endcomment %}
                 {% include "items/partials/_item_card_actions.html" with item=item %}

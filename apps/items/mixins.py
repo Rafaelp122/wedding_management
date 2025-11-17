@@ -139,7 +139,7 @@ class ItemQuerysetMixin:
             queryset = queryset.filter(category=category)
 
         queryset = queryset.apply_search(q).apply_sort(sort)
-        return queryset.select_related("supplier")
+        return queryset
 
 
 class ItemPaginationContextMixin:

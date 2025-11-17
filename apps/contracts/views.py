@@ -4,7 +4,6 @@ from django.views.generic import TemplateView
 
 from apps.contracts.models import Contract
 from apps.core.constants import GRADIENTS
-from apps.items.models import Item
 from apps.weddings.models import Wedding
 
 
@@ -29,10 +28,10 @@ class ContractsPartialView(LoginRequiredMixin, TemplateView):
         wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
         context["wedding"] = wedding
 
-        # Busca os contratos relacionados ao casamento
-        # select_related otimiza as consultas com joins em item e supplier
-        contracts_qs = Contract.objects.filter(wedding=wedding).select_related(
-            "item", "supplier"
+        # Busca os contratos cujo item está relacionado ao casamento
+        # select_related otimiza a consulta para buscar o item relacionado
+        contracts_qs = Contract.objects.filter(item__wedding=wedding).select_related(
+            "item"
         )
 
         # Cria uma lista de contratos com gradiente associado

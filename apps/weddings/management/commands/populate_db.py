@@ -1,6 +1,6 @@
 import random
 from django.core.management.base import BaseCommand
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
@@ -10,7 +10,6 @@ from django.contrib.auth import get_user_model
 from apps.weddings.models import Wedding
 from apps.items.models import Item
 from apps.contracts.models import Contract
-from apps.supplier.models import Supplier
 
 # --- Listas de dados de exemplo para aleatoriedade ---
 
@@ -24,7 +23,6 @@ BRIDE_NAMES = [
     "Larissa",
     "Gabriela",
 ]
-# Esta lista será usada para o 'name' do Item
 ITEM_NAMES = [
     "Decoração Salão",
     "Buffet Completo",
@@ -34,6 +32,7 @@ ITEM_NAMES = [
     "Cerimonialista",
     "Convites",
 ]
+ITEM_CATEGORIES = ["DECORATION", "FOOD", "MUSIC", "PHOTO_VIDEO", "VENUE", "SERVICE"]
 ITEM_STATUSES = ["DONE", "IN_PROGRESS", "PENDING"]
 SUPPLIERS = [
     "Eventos Mágicos",
@@ -41,13 +40,14 @@ SUPPLIERS = [
     "Som & Luz Pro",
     "Foto Eterna",
     "Recanto Feliz",
+    "Detalhes & Cia",
 ]
 
 
 class Command(BaseCommand):
     """
     Comando de gestão para popular o banco de dados com dados de teste.
-    Cria Casamentos, e Itens/Contratos relacionados para cada um.
+    Cria Casamentos, Itens e Contratos (1 para cada item).
     """
 
     help = "Popula o banco com dados de teste para Casamentos, Itens e Contratos."
@@ -65,28 +65,32 @@ class Command(BaseCommand):
         """
         O ponto de entrada principal do comando.
         """
-
         User = get_user_model()
         total_weddings = options["total"]
-        self.stdout.write(self.style.SUCCESS(f"Iniciando..."))
+        self.stdout.write(self.style.SUCCESS("Iniciando..."))
+
+        # -----------------------------------------------------------------
+        # Limpa os dados existentes para evitar duplicatas
+        # -----------------------------------------------------------------
+        self.stdout.write(self.style.WARNING("Limpando dados antigos..."))
+        Contract.objects.all().delete()
+        Item.objects.all().delete()
+        Wedding.objects.all().delete()
 
         # -----------------------------------------------------------------
         # Busque um planner (usuário) para associar
         # -----------------------------------------------------------------
-        try:
-            planner_to_assign = User.objects.filter(is_superuser=True).first()
-            if not planner_to_assign:
-                planner_to_assign = User.objects.first()
-            if not planner_to_assign:
-                self.stdout.write(
-                    self.style.ERROR(
-                        "Nenhum utilizador (planner) encontrado! "
-                        "Por favor, crie um superuser (python manage.py createsuperuser) antes de rodar este comando."
-                    )
+        planner_to_assign = User.objects.filter(is_superuser=True).first()
+        if not planner_to_assign:
+            planner_to_assign = User.objects.first()
+
+        if not planner_to_assign:
+            self.stdout.write(
+                self.style.ERROR(
+                    "Nenhum utilizador (planner) encontrado! "
+                    "Crie um superuser (createsuperuser) antes de rodar este comando."
                 )
-                return
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f"Erro ao buscar planner: {e}"))
+            )
             return
 
         self.stdout.write(
@@ -95,110 +99,66 @@ class Command(BaseCommand):
             )
         )
 
-        # -----------------------------------------------------------------
-        # Obter ou Criar Fornecedores
-        # -----------------------------------------------------------------
-        self.stdout.write(self.style.WARNING("Preparando fornecedores..."))
-        suppliers_in_db = []
-
-        for i, supplier_name in enumerate(SUPPLIERS):
-            fake_email_name = supplier_name.lower().replace(" ", "_").replace("&", "e")
-            fake_email = f"{fake_email_name}_{i}@fake.com"
-            fake_cnpj = f"00.000.000/0001-{i:02d}"
-
-            defaults = {
-                "email": fake_email,
-                "cpf_cnpj": fake_cnpj,
-                "phone": "(00) 00000-0000",
-                "offered_services": f"Serviços de teste para {supplier_name}",
-            }
-
-            try:
-                supplier, created = Supplier.objects.get_or_create(
-                    name=supplier_name, defaults=defaults
-                )
-                if created:
-                    self.stdout.write(f'  -> Fornecedor "{supplier_name}" criado.')
-                suppliers_in_db.append(supplier)
-            except IntegrityError as e:
-                self.stdout.write(self.style.ERROR(f"Erro de integridade: {e}"))
-                return
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"Erro desconhecido: {e}"))
-                return
-
         self.stdout.write(
             f"Serão criados {total_weddings} casamentos (e seus itens/contratos)..."
         )
+
         items_to_create = []
-        contracts_to_create = []
 
-        # --- 2. Criar os Casamentos ---
+        # --- 1. Criar os Casamentos e preparar os Itens ---
         for i in range(total_weddings):
-
-            groom = f"{random.choice(GROOM_NAMES)} {i}"
-            bride = f"{random.choice(BRIDE_NAMES)} {i}"
-            date = timezone.now().date() + timezone.timedelta(
-                days=random.randint(30, 730)
-            )
-
             wedding = Wedding.objects.create(
-                groom_name=groom,
-                bride_name=bride,
-                date=date,
-                status="IN_PROGRESS",
+                groom_name=f"{random.choice(GROOM_NAMES)} {i}",
+                bride_name=f"{random.choice(BRIDE_NAMES)} {i}",
+                date=timezone.now().date()
+                + timezone.timedelta(days=random.randint(30, 730)),
+                status=random.choice(["IN_PROGRESS", "DONE", "PENDING"]),
                 budget=random.uniform(5000.0, 50000.0),
                 planner=planner_to_assign,
             )
 
-            # -----------------------------------------------------------------
-            # ✨ CORREÇÃO: Preparar Itens para este Casamento
-            # -----------------------------------------------------------------
+            # --- 2. Preparar Itens para este Casamento ---
             num_items = random.randint(3, len(ITEM_NAMES))
-            # Usa a lista 'ITEM_NAMES'
             shuffled_names = random.sample(ITEM_NAMES, num_items)
 
             for item_name in shuffled_names:
                 items_to_create.append(
                     Item(
                         wedding=wedding,
-                        # Campos obrigatórios adicionados:
                         name=item_name,
                         quantity=random.randint(1, 5),
                         unit_price=random.uniform(100.0, 5000.0),
-                        # Campo opcional (mas bom ter)
                         description=f"Descrição de teste para {item_name}",
-                        # Status (baseado no seu modelo)
                         status=random.choice(ITEM_STATUSES),
+                        category=random.choice(ITEM_CATEGORIES),
+                        supplier=random.choice(SUPPLIERS),  # Fornecedor como CharField
                     )
                 )
-
-            # --- 4. Preparar Contratos para este Casamento ---
-            num_contracts = random.randint(1, 3)
-            shuffled_suppliers = random.sample(suppliers_in_db, num_contracts)
-
-            for supplier_obj in shuffled_suppliers:
-                sig_date = timezone.now().date() - timezone.timedelta(
-                    days=random.randint(0, 30)
-                )
-
-                contracts_to_create.append(
-                    Contract(
-                        wedding=wedding, supplier=supplier_obj, signature_date=sig_date
-                    )
-                )
-
             if (i + 1) % (total_weddings // 5 or 1) == 0:
                 self.stdout.write(
-                    f"  -> {i + 1} / {total_weddings} casamentos criados..."
+                    f"  -> {i + 1} / {total_weddings} casamentos preparados..."
                 )
 
-        # --- 5. Executar a Criação em Massa (Bulk Create) ---
-
+        # --- 3. Executar a Criação em Massa de Itens ---
         self.stdout.write(
             self.style.WARNING(f"\nInserindo {len(items_to_create)} itens no banco...")
         )
-        Item.objects.bulk_create(items_to_create)
+        # bulk_create retorna a lista de objetos criados
+        created_items = Item.objects.bulk_create(items_to_create)
+
+        # --- 4. Preparar e Criar Contratos para cada Item criado ---
+        contracts_to_create = []
+        for item in created_items:
+            sig_date = item.created_at.date() - timezone.timedelta(
+                days=random.randint(0, 30)
+            )
+            contracts_to_create.append(
+                Contract(
+                    item=item,
+                    signature_date=sig_date,
+                    status=random.choice(["PENDING", "SIGNED"]),
+                )
+            )
 
         self.stdout.write(
             self.style.WARNING(

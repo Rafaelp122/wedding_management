@@ -8,6 +8,9 @@ from django.views.generic import (
     View,
     TemplateView,  # Usaremos TemplateView para a lista
 )
+
+from apps.contracts.models import Contract
+
 from .models import Item
 from .mixins import (
     ItemWeddingContextMixin,  # OBRIGATÓRIO: Carrega 'self.wedding'
@@ -82,6 +85,8 @@ class AddItemView(
         item = form.save(commit=False)
         item.wedding = self.wedding
         item.save()
+        # Cria o contrato associado ao item recém-criado
+        Contract.objects.create(item=item)
         # 'render_item_list_response' vem do ItemListActionsMixin
         return self.render_item_list_response(trigger="listUpdated")
 

@@ -24,9 +24,9 @@
                 <div class="d-flex align-items-center">
                   <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
                        style="width: 40px; height: 40px; background: {{ item.gradient }};">
-                    {{ contract.supplier.name|slice:":1"|default:"-" }}
+                    {{ contract.supplier|slice:":1"|default:"-" }}
                   </div>
-                  <div>{{ contract.supplier.name|default:"N/A" }}</div>
+                  <div>{{ contract.supplier|default:"N/A" }}</div>
                 </div>
               </td>
               <td>{{ contract.item.name|default:"N/A" }}</td>

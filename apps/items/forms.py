@@ -16,6 +16,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
             self.fields["description"], "Detalhes do item, observações, etc."
         )
         add_placeholder(self.fields["unit_price"], "Ex: 150.00")
+        add_placeholder(self.fields["supplier"], "Ex: Floricultura")
 
     class Meta:
         model = Item
@@ -26,6 +27,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
             # "status",
             "quantity",
             "unit_price",
+            "supplier",
             "description",
         ]
 
@@ -35,6 +37,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
             # "status": "Status",
             "quantity": "Quantidade",
             "unit_price": "Preço Unitário",
+            "supplier": "Fornecedor",
             "description": "Descrição (Opcional)",
         }
 

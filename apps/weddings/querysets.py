@@ -50,8 +50,8 @@ class WeddingQuerySet(models.QuerySet):
 
         # Subquery para contar contratos
         contract_count_sq = Subquery(
-            Contract.objects.filter(wedding=OuterRef("pk"))
-            .values("wedding")
+            Contract.objects.filter(item__wedding=OuterRef("pk"))
+            .values("item__wedding")
             .annotate(c=Count("pk"))
             .values("c")
         )

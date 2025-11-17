@@ -1,8 +1,9 @@
+from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.core.exceptions import ImproperlyConfigured
+from django.http import HttpRequest, HttpResponse
+from django.template.loader import render_to_string
 
 
 class HtmxUrlParamsMixin:
@@ -11,12 +12,14 @@ class HtmxUrlParamsMixin:
     do header 'HX-Current-Url' para preservar o estado.
     """
 
-    def _get_params_from_htmx_url(self):
+    request: HttpRequest
+
+    def _get_params_from_htmx_url(self) -> Dict[str, str]:
         """
         Lê a URL que o usuário estava vendo (do header HTMX).
         """
         current_url = self.request.headers.get("Hx-Current-Url")
-        params = {}
+        params: Dict[str, str] = {}
         if current_url:
             try:
                 # Parseia a URL para extrair os query params
@@ -39,18 +42,21 @@ class BaseHtmxResponseMixin:
     - self.htmx_retarget_id (str)
     """
 
-    htmx_template_name = None
-    htmx_retarget_id = None
-    htmx_reswap_method = "innerHTML"
+    htmx_template_name: str
+    htmx_retarget_id: str
+    htmx_reswap_method: str = "innerHTML"
+    request: HttpRequest
 
-    def get_htmx_context_data(self, **kwargs):
+    def get_htmx_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Hook para adicionar contexto ao template HTMX.
         """
         kwargs["request"] = self.request
         return kwargs
 
-    def render_htmx_response(self, trigger=None, **kwargs):
+    def render_htmx_response(
+        self, trigger: Optional[str] = None, **kwargs: Any
+    ) -> HttpResponse:
         """
         Método genérico: Renderiza o template e anexa
         os headers HTMX.

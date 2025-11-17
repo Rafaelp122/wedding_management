@@ -50,8 +50,6 @@ INSTALLED_APPS = [
     "apps.budget",
     "apps.pages",
     "apps.users",
-    "apps.client",
-    "apps.supplier",
     "apps.weddings",
     "apps.core",
 ]

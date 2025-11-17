@@ -12,6 +12,7 @@ class ContractAdmin(admin.ModelAdmin):
         "status",
     )  # Campos mostrados na listagem
     search_fields = (
-        "wedding__client__name",
-    )  # Permite buscar pelo nome do cliente do casamento
-    list_filter = ("status", "wedding")  # Filtros laterais para facilitar a navegação
+        "wedding__groom_name",
+        "wedding__bride_name",
+    )  # Permite buscar pelo nome do noivo ou da noiva
+    list_filter = ("status",)  # Filtros laterais para facilitar a navegação

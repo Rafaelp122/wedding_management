@@ -1,9 +1,0 @@
-from django import forms
-from .models import Client
-
-
-class ClientForm(forms.ModelForm):
-    # Formulário baseado no modelo Client
-    class Meta:
-        model = Client
-        fields = ["name", "cpf", "email", "phone"]
