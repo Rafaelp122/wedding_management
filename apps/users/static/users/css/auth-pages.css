@@ -1,11 +1,11 @@
-/* Estilo para o corpo da página */
+/* Mantém o estilo que já existia para o corpo e imagem */
 body {
     background-color: #f9fafb;
 }
 
-/* Seção da imagem com o fundo gradiente */
 .image-section {
-    background: linear-gradient(to bottom right, #6366f1, #8b5cf6);
+    /* Aqui mantive o gradiente roxo que sugerimos antes, se quiser o azul original me avise */
+    background: linear-gradient(to bottom right, #9C27B0, #7B1FA2); 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -23,11 +23,48 @@ body {
     justify-content: center;
 }
 
-.custom-font-size {
-    font-size: 1.1rem;
-}
-
 .min-height {
     min-height: 38rem;
 }
 
+/* --- AQUI COMEÇAM AS MUDANÇAS DE COR SOLICITADAS --- */
+
+/* 1. Mudança da borda do Input (foco) de Azul para Roxo */
+.form-control:focus {
+    border-color: #9C27B0; /* Roxo da marca */
+    box-shadow: 0 0 0 0.25rem rgba(156, 39, 176, 0.25); /* O brilho roxo translúcido */
+    outline: 0;
+}
+
+/* 2. Botões (Entrar / Cadastrar / Salvar) */
+/* Sobrescreve o btn-primary apenas nestas páginas */
+.btn-primary {
+    background-color: #9C27B0 !important;
+    border-color: #9C27B0 !important;
+    color: #fff;
+}
+
+.btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+    background-color: #7B1FA2 !important; /* Roxo mais escuro no hover */
+    border-color: #7B1FA2 !important;
+}
+
+/* 3. Links (Faça seu cadastro aqui / Faça login aqui) */
+a {
+    color: #9C27B0; /* Cor do texto do link */
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #7B1FA2; /* Cor ao passar o mouse */
+    text-decoration: underline;
+}
+
+/* Garante que links dentro de textos mudos (text-muted) também fiquem roxos */
+.text-muted a {
+    color: #9C27B0 !important;
+}
+
+.text-muted a:hover {
+    color: #7B1FA2 !important;
+}
