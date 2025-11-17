@@ -1,12 +1,15 @@
+import logging
+
 from django.core.paginator import Paginator
 
+from apps.core.constants import GRADIENTS
 from apps.core.mixins.auth import OwnerRequiredMixin
 from apps.core.mixins.views import BaseHtmxResponseMixin, HtmxUrlParamsMixin
-from apps.core.constants import GRADIENTS
 
 from .forms import WeddingForm
 from .models import Wedding
 
+logger = logging.getLogger(__name__)
 
 # --- Mixins Independentes (Standalone) ---
 # Estes mixins são "standalone" (autônomos/independentes) e não
@@ -16,13 +19,7 @@ from .models import Wedding
 
 
 class PlannerOwnershipMixin(OwnerRequiredMixin):
-    """
-    Domain-Specific Security Mixin (Standalone)
-
-    Define o 'model' e 'owner_field_name' (lógica de negócio específica)
-    para o 'OwnerRequiredMixin' (lógica genérica do core).
-    """
-
+    """Define model e owner_field_name para o OwnerRequiredMixin."""
     model = Wedding
     owner_field_name = "planner"
 
@@ -55,6 +52,10 @@ class WeddingFormLayoutMixin:
     }
 
     def get_context_data(self, **kwargs):
+        """
+        Adiciona as variáveis de layout (dicionários, classes)
+        ao contexto do template do formulário.
+        """
         ctx = super().get_context_data(**kwargs)
         ctx["form_layout_dict"] = self.form_layout_dict
         ctx["default_col_class"] = self.default_col_class
@@ -77,6 +78,20 @@ class WeddingQuerysetMixin:
     """
 
     def get_base_queryset(self, sort="id", q=None, status=None):
+        """
+        Constrói o queryset base para 'Wedding' logado.
+
+        Aplica filtros de planner, status, busca (q) e
+        ordenação (sort), além de anotar contagens.
+
+        Args:
+            sort (str): O campo de ordenação.
+            q (Optional[str]): O termo de busca.
+            status (Optional[str]): O filtro de status.
+
+        Returns:
+            QuerySet: O queryset filtrado e anotado.
+        """
         queryset = Wedding.objects.filter(planner=self.request.user)
         queryset = queryset.with_effective_status().apply_search(q).apply_sort(sort)
         if status:
@@ -97,6 +112,12 @@ class WeddingPaginationContextMixin:
     paginate_by = 6
 
     def _build_context_list(self, queryset):
+        """
+        Formata a lista de 'Wedding' para o template.
+
+        Adiciona dados contextuais (ex: gradientes, contagens)
+        que não são necessários na paginação pura.
+        """
         return [
             {
                 "wedding": wedding,
@@ -110,10 +131,29 @@ class WeddingPaginationContextMixin:
         ]
 
     def build_paginated_context(self, request_params):
+        """
+        Constrói o contexto completo para a lista de casamentos.
+
+        Este método é o "núcleo" da paginação:
+        1. Obtém os parâmetros da request.
+        2. Chama get_base_queryset() para filtrar e ordenar.
+        3. Pagina os resultados.
+        4. Formata o contexto final para o template.
+
+        Args:
+            request_params (dict): Um dicionário de query params (ex: page, sort, q).
+
+        Returns:
+            dict: Um contexto pronto para ser usado no template.
+        """
         page = request_params.get("page", 1)
         sort = request_params.get("sort", "id")
         q = request_params.get("q", None)
         status = request_params.get("status", None)
+
+        logger.debug(
+            f"Construindo contexto: page={page}, sort={sort}, q={q}, status={status}"
+        )
 
         # Dependência: chama get_base_queryset()
         qs = self.get_base_queryset(sort=sort, q=q, status=status)
@@ -145,7 +185,7 @@ class WeddingPaginationContextMixin:
 class WeddingHtmxListResponseMixin(
     BaseHtmxResponseMixin,
     HtmxUrlParamsMixin,
-    WeddingPaginationContextMixin,  # Dependência explícita
+    WeddingPaginationContextMixin,
 ):
     """
     Fine-Grained Mixin: HTMX Connector
@@ -161,14 +201,26 @@ class WeddingHtmxListResponseMixin(
     htmx_retarget_id = "#wedding-list-container"
 
     def get_htmx_context_data(self, **kwargs):
-        # Dependência: chama _get_params_from_htmx_url()
-        params = self._get_params_from_htmx_url()
+        """
+        Prepara o contexto para a resposta HTMX.
 
-        # Dependência: chama build_paginated_context()
+        Busca os parâmetros da URL do HTMX e os utiliza para
+        construir o contexto de paginação.
+        """
+        params = self._get_params_from_htmx_url()
         context = self.build_paginated_context(params)
         return context
 
     def render_wedding_list_response(self, trigger="listUpdated"):
+        """
+        Helper para renderizar a resposta HTMX da lista de casamentos.
+
+        Args:
+            trigger (str): O nome do evento HTMX a ser disparado.
+
+        Returns:
+            HttpResponse: A resposta HTMX renderizada.
+        """
         return self.render_htmx_response(trigger=trigger)
 
 
