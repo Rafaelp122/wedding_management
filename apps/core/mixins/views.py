@@ -1,9 +1,12 @@
+import logging
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
+
+logger = logging.getLogger(__name__)
 
 
 class HtmxUrlParamsMixin:
@@ -26,7 +29,12 @@ class HtmxUrlParamsMixin:
                 query_string = urlparse(current_url).query
                 parsed_params = parse_qs(query_string)
                 params = {k: v[0] for k, v in parsed_params.items()}
-            except Exception:
+            except Exception as e:
+                # não quebra a requisição, mas avisa o desenvolvedor no log.
+                logger.warning(
+                    f"Falha ao parsear HX-Current-Url: {current_url}. Erro: {e}",
+                    exc_info=True
+                )
                 pass  # Se falhar, usa os defaults (page=1, etc)
         return params
 
