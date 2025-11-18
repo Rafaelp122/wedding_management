@@ -1,3 +1,4 @@
+import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.http import HttpResponseBadRequest
@@ -11,6 +12,7 @@ from apps.weddings.models import Wedding
 from .forms import ItemForm
 from .models import Item
 
+logger = logging.getLogger(__name__)
 
 # --- Mixins Independentes (Standalone) ---
 # Estes mixins são "standalone" (autônomos/independentes) e não
@@ -33,34 +35,60 @@ class ItemWeddingContextMixin(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         """
-        Busca o Casamento ANTES de qualquer outra coisa.
+        Garante a segurança e carrega 'self.wedding' antes da view executar.
+
+        Este método atua como um portão de segurança:
+        1. Se 'wedding_id' estiver na URL (views de Lista/Criação),
+           ele o carrega.
+        2. Se 'pk' (do item) estiver na URL (views de Edição/Remoção),
+           ele carrega o item, e dele, o casamento.
+        3. Em ambos os casos, valida se o 'request.user' é o 'planner'.
         """
         wedding_id = self.kwargs.get("wedding_id")
 
         if not wedding_id:
-            # Se não houver 'wedding_id' na URL, a view deve ser
-            # de um item existente (Edit, Delete, UpdateStatus).
+            # Caminho 1: Carregar via 'pk' do Item (Update, Delete)
             if "pk" in self.kwargs:
+                pk = self.kwargs["pk"]
+                logger.debug(f"Carregando contexto de item via pk: {pk}")
                 try:
                     item = Item.objects.select_related("wedding__planner").get(
                         pk=self.kwargs["pk"]
                     )
                     # Checagem de segurança
                     if item.wedding.planner != self.request.user:
+                        logger.warning(
+                            f"SEGURANÇA: Usuário {self.request.user.id} "
+                            f"tentou acessar o item {pk} (do casamento {item.wedding.id}) "
+                            "sem permissão."
+                        )
                         return HttpResponseBadRequest("Permissão negada.")
                     self.wedding = item.wedding
                 except Item.DoesNotExist:
+                    logger.warning(
+                        f"Tentativa de acesso a um item (pk={pk}) "
+                        f"que não existe. Usuário: {self.request.user.id}"
+                    )
                     return HttpResponseBadRequest("Item não encontrado.")
             else:
+                # Erro: URL não tem nem 'wedding_id' nem 'pk'
+                logger.error(
+                    f"URL malformada para ItemWeddingContextMixin: "
+                    f"Sem 'wedding_id' ou 'pk'. Kwargs: {self.kwargs}"
+                )
                 return HttpResponseBadRequest(
                     "ID do Casamento ou do Item não encontrado."
                 )
         else:
-            # Se 'wedding_id' está na URL (ListView, AddItemView),
-            # busca o casamento e já checa a segurança.
+            # Caminho 2: Carregar via 'wedding_id' (List, Create)
+            logger.debug(f"Carregando contexto de item via wedding_id: {wedding_id}")
+            # get_object_or_404 já faz a checagem de segurança
+            # (planner=self.request.user)
             self.wedding = get_object_or_404(
                 Wedding, id=wedding_id, planner=self.request.user
             )
+
+        logger.debug(f"Contexto do casamento {self.wedding.id} carregado com sucesso.")
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -108,6 +136,10 @@ class ItemFormLayoutMixin:
     }
 
     def get_context_data(self, **kwargs):
+        """
+        Adiciona o layout (ícones, classes) e o objeto 'wedding'
+        ao contexto do template do formulário.
+        """
         ctx = super().get_context_data(**kwargs)
         # Assume que 'self.wedding' foi injetado pelo ItemWeddingContextMixin
         ctx["wedding"] = self.wedding
@@ -132,12 +164,27 @@ class ItemQuerysetMixin:
     """
 
     def get_base_queryset(self, sort="id", q=None, category=None):
+        """
+        Constrói o queryset base para 'Item' FILTRADO por 'self.wedding'.
+
+        Aplica filtros de categoria, busca (q) e ordenação (sort).
+
+        Args:
+            sort (str): O campo de ordenação.
+            q (str, optional): O termo de busca.
+            category (str, optional): O filtro de categoria.
+
+        Returns:
+            QuerySet: O queryset filtrado e ordenado.
+        """
         # Começa com os itens APENAS deste casamento
         queryset = Item.objects.filter(wedding=self.wedding)
 
         if category:
             queryset = queryset.filter(category=category)
 
+        # Assume que o Manager/QuerySet de Item tem
+        # os métodos .apply_search() e .apply_sort()
         queryset = queryset.apply_search(q).apply_sort(sort)
         return queryset
 
@@ -153,10 +200,32 @@ class ItemPaginationContextMixin:
     paginate_by = 6
 
     def build_paginated_context(self, request_params):
+        """
+        Constrói o contexto completo para a lista de itens.
+
+        Este é o "cérebro" da paginação:
+        1. Obtém os parâmetros da request.
+        2. Chama get_base_queryset() para filtrar e ordenar.
+        3. Pagina os resultados.
+        4. Formata o contexto final para o template.
+
+        Args:
+            request_params (dict): Um dicionário de query params
+                                   (ex: page, sort, q, category).
+
+        Returns:
+            dict: Um contexto pronto para ser usado no template.
+        """
         page = request_params.get("page", 1)
         sort = request_params.get("sort", "id")
         q = request_params.get("q", None)
         category = request_params.get("category", None)
+
+        # Loga os parâmetros de entrada
+        logger.debug(
+            f"Construindo contexto de lista de itens: "
+            f"page={page}, sort={sort}, q={q}, category={category}"
+        )
 
         # Dependência: chama get_base_queryset()
         qs = self.get_base_queryset(sort=sort, q=q, category=category)
@@ -165,7 +234,7 @@ class ItemPaginationContextMixin:
 
         elided_page_range = paginator.get_elided_page_range(
             number=page_obj.number,
-            on_each_side=2,  # Um valor curto é melhor para listas de itens
+            on_each_side=2,
             on_ends=1,
         )
 
@@ -199,8 +268,10 @@ class ItemHtmxListResponseMixin(
 
     def get_htmx_context_data(self, **kwargs):
         """
-        Hook do Base: Pega o estado da URL (dos headers) e
-        constrói o contexto de paginação.
+        Prepara o contexto para a resposta HTMX (usado após POST/PUT).
+
+        Busca os parâmetros da URL do header HTMX e os utiliza para
+        re-construir o contexto de paginação.
         """
         # _get_params_from_htmx_url vem de HtmxUrlParamsMixin
         params = self._get_params_from_htmx_url()
@@ -211,7 +282,15 @@ class ItemHtmxListResponseMixin(
 
     def render_item_list_response(self, trigger="listUpdated"):
         """
-        Método de conveniência que as Views (Create/Update/Delete) chamarão.
+        Helper para renderizar a resposta HTMX da lista de itens.
+
+        Este é o método que as Views (Create/Update/Delete) chamarão.
+
+        Args:
+            trigger (str): O nome do evento HTMX a ser disparado.
+
+        Returns:
+            HttpResponse: A resposta HTMX renderizada.
         """
         return self.render_htmx_response(trigger=trigger)
 
