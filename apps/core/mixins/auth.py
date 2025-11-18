@@ -1,8 +1,11 @@
+from typing import Any, Optional
+
 from django.contrib import messages
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import QuerySet
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 
 
 class OwnerRequiredMixin(LoginRequiredMixin):
@@ -15,22 +18,31 @@ class OwnerRequiredMixin(LoginRequiredMixin):
     - self.owner_field_name (str): Ex: 'planner', 'user', 'owner'.
     """
 
-    owner_field_name = None
+    owner_field_name: Optional[str] = None
+    model: Any = None  # Type hint para o modelo
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         """
         Método de segurança padrão (usado por UpdateView, DeleteView).
         """
-        if not hasattr(self, "model"):
+        # Valida se o Model existe
+        if getattr(self, "model", None) is None:
             raise ImproperlyConfigured(
-                f"{self.__class__.__name__} is missing a 'model' attribute."
+                f"{self.__class__.__name__} must define a 'model' attribute."
             )
+
+        # Valida se o nome do campo dono existe
         if not self.owner_field_name:
             raise ImproperlyConfigured(
                 f"{self.__class__.__name__} must define 'owner_field_name'."
             )
 
+        # Obtém o queryset base
+        # Nota: Usamos self.model.objects.all() para garantir um fresh start,
+        # mas poderíamos usar super().get_queryset() se quiséssemos herdar
+        # filtros anteriores.
         queryset = self.model.objects.all()
+
         # Filtra dinamicamente
         return queryset.filter(**{self.owner_field_name: self.request.user})
 
