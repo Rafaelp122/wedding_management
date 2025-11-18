@@ -8,7 +8,7 @@ Este sistema tem como objetivo auxiliar cerimonialistas na organização de casa
 
 ## Status do Projeto
 
- Em desenvolvimento (Início: Março 2025 – Previsão de conclusão: Setembro 2025)
+ Em desenvolvimento (Início: Março 2025 – Previsão de conclusão: Dezembro 2025)
 
 ---
 
@@ -31,9 +31,9 @@ Este sistema tem como objetivo auxiliar cerimonialistas na organização de casa
 ##  Tecnologias utilizadas
 
 - **Backend**: Python, Django, Django REST Framework  
-- **Frontend**: HTML, CSS, JavaScript  
+- **Frontend**: HTML, CSS, JavaScript, Bootstrap, Django Htmx 
 - **Banco de dados**: SQLite (fase inicial)  
-- **Outros**: Bootstrap, Git
+- **Outros**:  Git
 
 ---
 
@@ -50,5 +50,5 @@ Este sistema tem como objetivo auxiliar cerimonialistas na organização de casa
 ###  Clonando o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/software-gestao-casamentos.git
-cd software-gestao-casamentos
+git clone https://github.com/seu-usuario/wedding_management.git
+cd wedding_management.git
