@@ -27,7 +27,7 @@ class HtmxUrlParamsMixin:
             try:
                 # Parseia a URL para extrair os query params
                 query_string = urlparse(current_url).query
-                parsed_params = parse_qs(query_string)
+                parsed_params = parse_qs(query_string, keep_blank_values=True)
                 params = {k: v[0] for k, v in parsed_params.items()}
             except Exception as e:
                 # não quebra a requisição, mas avisa o desenvolvedor no log.
@@ -50,8 +50,9 @@ class BaseHtmxResponseMixin:
     - self.htmx_retarget_id (str)
     """
 
-    htmx_template_name: str
-    htmx_retarget_id: str
+    htmx_template_name: Optional[str] = None 
+    htmx_retarget_id: Optional[str] = None
+
     htmx_reswap_method: str = "innerHTML"
     request: HttpRequest
 
@@ -73,6 +74,7 @@ class BaseHtmxResponseMixin:
             raise ImproperlyConfigured(
                 f"{self.__class__.__name__} must define 'htmx_template_name'."
             )
+
         if not self.htmx_retarget_id:
             raise ImproperlyConfigured(
                 f"{self.__class__.__name__} must define 'htmx_retarget_id'."
@@ -80,6 +82,7 @@ class BaseHtmxResponseMixin:
 
         context = self.get_htmx_context_data(**kwargs)
 
+        # Usamos direto o self.htmx_template_name, pois já validamos acima
         html = render_to_string(
             self.htmx_template_name,
             context,
