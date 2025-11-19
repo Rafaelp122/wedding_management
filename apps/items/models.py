@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.validators import MinValueValidator
 from apps.core.models import BaseModel
 from apps.weddings.models import Wedding
 
@@ -27,8 +27,12 @@ class Item(BaseModel):
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    quantity = models.IntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0.00)]
+    )
     supplier = models.CharField(
         max_length=255, null=True, blank=True, verbose_name="Fornecedor"
     )
