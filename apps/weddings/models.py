@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.core.models import BaseModel
+from apps.core.models import BaseModel  # fornece created_at e updated_at
 from apps.users.models import User
 
 from .querysets import WeddingQuerySet
