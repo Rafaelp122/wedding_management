@@ -1,0 +1,139 @@
+
+/* --- Variáveis --- */
+:root {
+    --primary-color: #9c23b0;
+    --primary-dark: #7b1fa2;
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+    --bg-section: #f8f9fa;
+}
+
+#pricing {
+    background-color: var(--bg-section);
+    position: relative;
+}
+
+/* --- O "Super Card" de Plano Único --- */
+.single-plan-card {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08); /* Sombra elegante */
+    overflow: hidden; /* Para conter o background colorido */
+    max-width: 900px;
+    margin: 0 auto; /* Centraliza na tela */
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Lado Esquerdo (Preço e CTA) */
+.plan-sidebar {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+}
+
+.plan-tag {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+}
+
+.annual-price {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.price-detail {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.price-equivalence {
+    font-size: 0.9rem;
+    background: rgba(0,0,0,0.2);
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+/* Botão branco para contrastar com o roxo */
+.btn-white {
+    background: #fff;
+    color: var(--primary-color);
+    font-weight: 700;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    width: 100%;
+    border: none;
+    transition: transform 0.2s;
+}
+
+.btn-white:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    background: #f8f9fa;
+}
+
+/* Lado Direito (Lista de Recursos) */
+.plan-content {
+    padding: 3rem 2.5rem;
+}
+
+.content-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.content-desc {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+/* Grid para os itens da lista (2 colunas) */
+.features-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+.check-icon {
+    color: var(--primary-color);
+    background: rgba(156, 35, 176, 0.1);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}

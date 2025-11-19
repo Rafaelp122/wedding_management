@@ -1,0 +1,151 @@
+
+/* --- Variáveis Globais --- */
+:root {
+    --primary-color: #9c23b0;
+    --primary-light: rgba(156, 35, 176, 0.08);
+    --primary-hover: #7b1fa2;
+    --text-dark: #2c3e50;
+    --text-body: #5f6c7b;
+    --bg-card: #f8f9fa;
+}
+
+#features {
+    background-color: #fff;
+    overflow: hidden;
+}
+
+/* --- Tipografia Principal --- */
+.section-header-title {
+    color: var(--primary-color);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 1rem;
+}
+
+.feature-main-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.feature-main-desc {
+    font-size: 1.1rem;
+    color: var(--text-body);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
+
+/* --- NOVOS CARDS DE TEXTO (Substituindo a lista simples) --- */
+/* Cria um grid de 2 colunas para os itens de texto */
+.feature-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: 1 coluna */
+    gap: 20px;
+}
+
+/* No tablet/desktop vira 2 colunas se o texto for curto, ou mantém 1 se preferir destaque */
+@media (min-width: 768px) {
+    .feature-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.feature-box {
+    background: #fff;
+    border: 1px solid #edf2f7;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hover no box de texto */
+.feature-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-color: transparent;
+}
+
+/* Barrinha colorida lateral que aparece no hover */
+.feature-box::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.feature-box:hover::before {
+    opacity: 1;
+}
+
+/* Ícone dentro do box */
+.icon-box-small {
+    width: 45px;
+    height: 45px;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+
+.feature-box:hover .icon-box-small {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.box-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.box-desc {
+    font-size: 0.9rem;
+    color: var(--text-body);
+    line-height: 1.5;
+    margin: 0;
+}
+
+
+/* --- MANDEI SUA ESTILIZAÇÃO DE IMAGEM INTACTA AQUI EMBAIXO --- */
+.feature-img-container {
+    position: relative;
+    padding: 20px;
+    z-index: 1;
+}
+.feature-img-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 90%;
+    height: 100%;
+    background-color: var(--primary-light);
+    border-radius: 30px;
+    z-index: -1;
+    transition: all 0.5s ease;
+}
+.img-right .feature-img-container::before { right: -10px; transform: rotate(3deg); }
+.img-left .feature-img-container::before { left: -10px; transform: rotate(-3deg); }
+.feature-img {
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    width: 100%;
+    object-fit: cover;
+}
+.feature-img-container:hover .feature-img { transform: scale(1.02); }
+.feature-img-container:hover::before { transform: rotate(0deg) scale(0.95); }

@@ -1,71 +1,79 @@
 {% load static %}
 
-{% comment %} Planos {% endcomment %}
-
 <section id="pricing" class="py-5 reveal">
   <div class="container">
-    <h2 class="display-5 fw-bold mb-5 text-center" style="color: var(--color-accent);">Planos que se adaptam a você</h2>
     
-    <div class="row g-4">
-      <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-          <div class="card-body text-center">
-            <h3 class="h4 fw-bold">Básico</h3>
-            <div class="my-4">
-              <span class="display-4 fw-bold">R$49</span>
-              <span>/mês</span>
-            </div>
-            <ul class="list-unstyled mb-4">
-              <li class="mb-2">Até 3 casamentos</li>
-              <li class="mb-2">Checklists básicos</li>
-              <li class="mb-2">Gestão de convidados</li>
-              <li class="mb-2">Suporte por e-mail</li>
-            </ul>
-            <button class="btn btn-role w-100">Começar</button>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-md-4">
-        <div class="card h-100 border-2 border-primary shadow-lg">
-          <div class="card-body text-center">
-            <div class="badge bg-primary mb-3">Mais Popular</div>
-            <h3 class="h4 fw-bold">Profissional</h3>
-            <div class="my-4">
-              <span class="display-4 fw-bold">R$89</span>
-              <span>/mês</span>
-            </div>
-            <ul class="list-unstyled mb-4">
-              <li class="mb-2">Até 10 casamentos</li>
-              <li class="mb-2">Checklists completos</li>
-              <li class="mb-2">Gestão avançada</li>
-              <li class="mb-2">Orçamento detalhado</li>
-              <li class="mb-2">Suporte prioritário</li>
-            </ul>
-            <button class="btn btn-role w-100">Começar</button>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-          <div class="card-body text-center">
-            <h3 class="h4 fw-bold">Premium</h3>
-            <div class="my-4">
-              <span class="display-4 fw-bold">R$149</span>
-              <span>/mês</span>
-            </div>
-            <ul class="list-unstyled mb-4">
-              <li class="mb-2">Casamentos ilimitados</li>
-              <li class="mb-2">Todos os recursos</li>
-              <li class="mb-2">Relatórios personalizados</li>
-              <li class="mb-2">Contratos automatizados</li>
-              <li class="mb-2">Suporte 24/7</li>
-            </ul>
-            <button class="btn btn-role w-100">Começar</button>
-          </div>
-        </div>
-      </div>
+    <div class="text-center mb-5">
+        <h2 class="display-5 fw-bold" style="color: var(--primary-color);">Simples e Transparente</h2>
+        <p class="text-muted">Sem taxas ocultas, sem níveis complicados. Acesso completo com uma assinatura anual.</p>
     </div>
+    
+    <div class="single-plan-card">
+        <div class="row g-0 align-items-stretch">
+            
+            <div class="col-lg-5">
+                <div class="plan-sidebar">
+                    <span class="plan-tag">Plano Profissional</span>
+                    
+                    <div class="price-area">
+                        <div class="annual-price">R$ 997</div>
+                        <div class="price-detail">por ano</div>
+                    </div>
+
+                    <div class="price-equivalence">
+                        Equivalente a <strong>R$ 83,00/mês</strong>
+                    </div>
+
+                    <button class="btn btn-white">Assinar Agora <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                    <small class="mt-3 text-white-50" style="font-size: 0.8rem;">Renovação automática anual. Cancele quando quiser.</small>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="plan-content">
+                    <h3 class="content-title">Tudo o que você precisa</h3>
+                    <p class="content-desc">Não cobramos por módulos extras. Sua assinatura libera o potencial total do sistema imediatamente.</p>
+                    
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span><strong>Casamentos Ilimitados</strong></span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Gestão Multi-Eventos</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Módulo de Itens & Financeiro</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Contratos & Assinatura Digital</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Calendário Inteligente</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Suporte Prioritário</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Backups Diários</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                            <span>Acesso via Celular e PC</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
   </div>
 </section>
