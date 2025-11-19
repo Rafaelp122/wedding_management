@@ -1,7 +1,10 @@
+import logging
 from django import forms
 from .models import ContactInquiry
 from apps.core.mixins.forms import FormStylingMixin
 from apps.core.utils.forms_utils import add_placeholder
+
+logger = logging.getLogger(__name__)
 
 
 class ContactForm(FormStylingMixin, forms.ModelForm):
@@ -22,3 +25,12 @@ class ContactForm(FormStylingMixin, forms.ModelForm):
             "email": "E-mail",
             "message": "Mensagem",
         }
+
+    def clean(self):
+        """
+        Loga erros de validação para monitoramento.
+        """
+        cleaned_data = super().clean()
+        if self.errors:
+            logger.warning(f"Erro no formulário de contato: {self.errors}")
+        return cleaned_data
