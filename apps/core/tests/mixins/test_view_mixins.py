@@ -40,11 +40,7 @@ class HtmxUrlParamsMixinTest(SimpleTestCase):
 
         params = self.view._get_params_from_htmx_url()
 
-        expected = {
-            "page": "2",
-            "search": "django",
-            "order": "desc"
-        }
+        expected = {"page": "2", "search": "django", "order": "desc"}
         self.assertEqual(params, expected)
 
     def test_header_url_without_query_params(self):
@@ -122,10 +118,7 @@ class HtmxUrlParamsMixinTest(SimpleTestCase):
         params = self.view._get_params_from_htmx_url()
 
         # O parse_qs geralmente retorna string vazia para isso
-        expected = {
-            "page": "",
-            "filter": "active"
-        }
+        expected = {"page": "", "filter": "active"}
         self.assertEqual(params, expected)
 
 

@@ -68,7 +68,9 @@ class ItemListView(
 
             # Se o target for o container INTERNO (filtro, paginação)...
             if htmx_target == "item-list-container":
-                logger.debug("Requisição HTMX (GET) recebida, renderizando partial de lista.")
+                logger.debug(
+                    "Requisição HTMX (GET) recebida, renderizando partial de lista."
+                )
                 # Renderiza SÓ o partial
                 return render(
                     self.request, "items/partials/_list_and_pagination.html", context

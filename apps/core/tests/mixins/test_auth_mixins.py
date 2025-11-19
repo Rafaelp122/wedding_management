@@ -3,11 +3,13 @@ from unittest.mock import MagicMock
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.exceptions import ImproperlyConfigured
 from django.test import RequestFactory, SimpleTestCase, TestCase
-from django.views.generic import ListView
+from django.urls import reverse_lazy
+from django.views.generic import ListView, TemplateView
 
-from apps.core.mixins.auth import OwnerRequiredMixin
+from apps.core.mixins.auth import OwnerRequiredMixin, RedirectAuthenticatedUserMixin
 from apps.users.models import User
 from apps.weddings.models import Wedding
 
@@ -45,7 +47,7 @@ class OwnerRequiredMixinTest(SimpleTestCase):
         """
         Deve lançar erro se a view não tiver 'owner_field_name'.
         """
-        self.view.model = MagicMock() # Simulamos um model qualquer
+        self.view.model = MagicMock()  # Simulamos um model qualquer
         # owner_field_name não definido (é None por padrão no Mixin)
 
         with self.assertRaises(ImproperlyConfigured) as cm:
@@ -91,6 +93,7 @@ class OwnerRequiredMixinTest(SimpleTestCase):
         (Teste estrutural simples)
         """
         from django.contrib.auth.mixins import LoginRequiredMixin
+
         self.assertTrue(issubclass(OwnerRequiredMixin, LoginRequiredMixin))
 
 
@@ -105,14 +108,10 @@ class OwnerRequiredMixinIntegrationTest(TestCase):
     def setUpTestData(cls):
         # Criamos dois Planners (Usuários) diferentes
         cls.planner_alpha = User.objects.create_user(
-            username="alpha",
-            email="alpha@test.com",
-            password="123"
+            username="alpha", email="alpha@test.com", password="123"
         )
         cls.planner_beta = User.objects.create_user(
-            username="beta",
-            email="beta@test.com",
-            password="123"
+            username="beta", email="beta@test.com", password="123"
         )
 
         # Criamos Casamentos para o Planner Alpha
@@ -122,7 +121,7 @@ class OwnerRequiredMixinIntegrationTest(TestCase):
             bride_name="Alpha Bride",
             date=date(2025, 12, 25),
             location="Rio de Janeiro",
-            budget=50000.00
+            budget=50000.00,
         )
 
         # Criamos Casamentos para o Planner Beta
@@ -132,21 +131,24 @@ class OwnerRequiredMixinIntegrationTest(TestCase):
             bride_name="Beta Bride",
             date=date(2026, 1, 1),
             location="São Paulo",
-            budget=100000.00
+            budget=100000.00,
         )
 
     def setUp(self):
         # Configura uma View Concreta usando seus models reais
         class WeddingListView(OwnerRequiredMixin, ListView):
             model = Wedding
-            owner_field_name = "planner"  # O campo ForeignKey no seu model Wedding
+            owner_field_name = "planner"
 
         self.view = WeddingListView()
-        self.factory = RequestFactory()  # Certifique-se de importar RequestFactory lá em cima
+        self.factory = (
+            RequestFactory()
+        )  # Certifique-se de importar RequestFactory lá em cima
 
     def test_planner_alpha_sees_only_his_weddings(self):
         """
-        Se eu sou o Planner Alpha, o get_queryset SÓ pode trazer o wedding_alpha.
+        Se eu sou o Planner Alpha, o get_queryset SÓ pode trazer o
+        wedding_alpha.
         """
         # Simulamos requisição do Alpha
         request = self.factory.get("/")
@@ -181,7 +183,8 @@ class OwnerRequiredMixinIntegrationTest(TestCase):
     def test_anonymous_user_is_redirected(self):
         """
         Garante que o LoginRequiredMixin está funcionando:
-        Usuário anônimo nem chega a tocar no get_queryset, é redirecionado antes.
+        Usuário anônimo nem chega a tocar no get_queryset,
+        é redirecionado antes.
         """
         # Criamos um request anônimo
         request = self.factory.get("/")
@@ -208,7 +211,9 @@ class OwnerRequiredMixinIntegrationTest(TestCase):
         Deve apenas retornar uma lista vazia.
         """
         # Criamos um usuário novo (Charlie) que não tem casamentos no setUpTestData
-        user_charlie = User.objects.create_user(username="charlie", email="charlie@test.com", password="123")
+        user_charlie = User.objects.create_user(
+            username="charlie", email="charlie@test.com", password="123"
+        )
 
         request = self.factory.get("/")
         request.user = user_charlie
@@ -219,3 +224,89 @@ class OwnerRequiredMixinIntegrationTest(TestCase):
         # Não deve ser None, deve ser um QuerySet vazio
         self.assertFalse(queryset.exists())
         self.assertEqual(queryset.count(), 0)
+
+
+@pytest.mark.unit
+class RedirectAuthenticatedUserMixinTest(SimpleTestCase):
+    """
+    Testes Unitários Puros (sem banco de dados).
+    Simulamos o usuário com Mocks.
+    """
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+        class PublicView(RedirectAuthenticatedUserMixin, TemplateView):
+            template_name = "dummy.html"
+
+        self.view_class = PublicView
+
+    def _setup_request(self, user):
+        """Helper para configurar request com mensagens"""
+        request = self.factory.get("/login")
+        request.user = user
+
+        # Configura mensagens sem banco de dados
+        setattr(request, "session", "session")
+        messages = FallbackStorage(request)
+        setattr(request, "_messages", messages)
+        return request
+
+    def test_anonymous_user_can_access_view(self):
+        # AnonymousUser já é um objeto em memória, não toca no banco
+        request = self._setup_request(AnonymousUser())
+
+        view = self.view_class()
+        view.setup(request)
+        response = view.dispatch(request)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_authenticated_user_is_redirected(self):
+        # MOCK: Fingimos um usuário logado
+        mock_user = MagicMock()
+        mock_user.is_authenticated = True
+        mock_user.first_name = "Teste"
+        mock_user.username = "teste_user"
+
+        request = self._setup_request(mock_user)
+
+        view = self.view_class()
+        view.setup(request)
+        response = view.dispatch(request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse_lazy("weddings:my_weddings"))
+
+    def test_redirect_message_uses_first_name(self):
+        # MOCK: Usuário com first_name
+        mock_user = MagicMock()
+        mock_user.is_authenticated = True
+        mock_user.first_name = "João"
+        mock_user.username = "joao123"
+
+        request = self._setup_request(mock_user)
+
+        view = self.view_class()
+        view.setup(request)
+        view.dispatch(request)
+
+        # Verificamos a mensagem diretamente no storage
+        messages = list(request._messages)
+        self.assertEqual(str(messages[0]), "Bem vindo de volta,João!")
+
+    def test_redirect_message_fallback_to_username(self):
+        # MOCK: Usuário SEM first_name (string vazia ou None)
+        mock_user = MagicMock()
+        mock_user.is_authenticated = True
+        mock_user.first_name = ""
+        mock_user.username = "usuario_sem_nome"
+
+        request = self._setup_request(mock_user)
+
+        view = self.view_class()
+        view.setup(request)
+        view.dispatch(request)
+
+        messages = list(request._messages)
+        self.assertEqual(str(messages[0]), "Bem vindo de volta,usuario_sem_nome!")

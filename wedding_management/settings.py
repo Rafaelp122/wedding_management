@@ -169,7 +169,6 @@ CONSOLE_LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-
     # === FORMATTERS ===
     "formatters": {
         # Formato para o Terminal (colorido)
@@ -197,7 +196,6 @@ LOGGING = {
             "datefmt": "%d/%b/%Y %H:%M:%S",
         },
     },
-
     # === HANDLERS ===
     "handlers": {
         "console": {
@@ -211,7 +209,6 @@ LOGGING = {
             "level": "INFO",
         },
     },
-
     # === LOGGERS ===
     "loggers": {
         # Logs padrão do Django (ex: requisições HTTP)
@@ -227,9 +224,9 @@ LOGGING = {
             "propagate": False,
         },
         "django.server": {
-            "handlers": ["console_server"], # <-- Usa o handler NÃO colorido
+            "handlers": ["console_server"],  # <-- Usa o handler NÃO colorido
             "level": "INFO",
-            "propagate": False, # <-- IMPEDE que ele use o handler "console" colorido
+            "propagate": False,  # <-- IMPEDE que ele use o handler "console" colorido
         },
     },
 }

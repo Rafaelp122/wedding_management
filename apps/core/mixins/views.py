@@ -33,7 +33,7 @@ class HtmxUrlParamsMixin:
                 # não quebra a requisição, mas avisa o desenvolvedor no log.
                 logger.warning(
                     f"Falha ao parsear HX-Current-Url: {current_url}. Erro: {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
                 pass  # Se falhar, usa os defaults (page=1, etc)
         return params
@@ -50,7 +50,7 @@ class BaseHtmxResponseMixin:
     - self.htmx_retarget_id (str)
     """
 
-    htmx_template_name: Optional[str] = None 
+    htmx_template_name: Optional[str] = None
     htmx_retarget_id: Optional[str] = None
 
     htmx_reswap_method: str = "innerHTML"

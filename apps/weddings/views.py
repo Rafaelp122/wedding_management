@@ -89,6 +89,7 @@ class WeddingCreateView(
     Lida com a criação de um novo Casamento.
     Responde com o formulário (GET) ou a lista atualizada (POST).
     """
+
     model = Wedding
     # form_class e template_name vêm do WeddingFormLayoutMixin
 
@@ -134,6 +135,7 @@ class WeddingUpdateView(
     Lida com a atualização de um Casamento.
     Responde com o formulário pré-preenchido (GET) ou a lista atualizada (POST).
     """
+
     model = Wedding
     pk_url_kwarg = "id"
     # form_class e template_name vêm do WeddingFormLayoutMixin
@@ -157,7 +159,9 @@ class WeddingUpdateView(
         atualizada via HTMX.
         """
         form.save()
-        logger.info(f"Casamento {self.object.id} atualizado pelo usuário {self.request.user.id}")
+        logger.info(
+            f"Casamento {self.object.id} atualizado pelo usuário {self.request.user.id}"
+        )
         # render_wedding_list_response vem do WeddingListActionsMixin
         return self.render_wedding_list_response()
 
@@ -178,6 +182,7 @@ class WeddingDeleteView(
     Lida com a exclusão de um Casamento.
     Responde com o modal de confirmação (GET) ou a lista atualizada (POST).
     """
+
     model = Wedding
     template_name = "partials/confirm_delete_modal.html"
     pk_url_kwarg = "id"
@@ -220,6 +225,7 @@ class UpdateWeddingStatusView(
     View 'apenas-POST' para atualizar o status de um Casamento.
     (Ex: de "Em Andamento" para "Concluído").
     """
+
     model = Wedding  # Informa ao PlannerOwnershipMixin qual model usar
     # get_queryset (segurança) vem do PlannerOwnershipMixin
 
@@ -266,6 +272,7 @@ class WeddingDetailView(PlannerOwnershipMixin, DetailView):  # APENAS Segurança
     Herda apenas o mixin de segurança, pois não precisa de
     lógica de formulário ou de lista.
     """
+
     model = Wedding
     template_name = "weddings/detail.html"
     context_object_name = "wedding"

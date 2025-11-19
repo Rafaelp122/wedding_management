@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class PlannerOwnershipMixin(OwnerRequiredMixin):
     """Define model e owner_field_name para o OwnerRequiredMixin."""
+
     model = Wedding
     owner_field_name = "planner"
 
