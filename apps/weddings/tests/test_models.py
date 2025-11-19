@@ -1,5 +1,6 @@
 from datetime import date
 
+import pytest
 from django.test import TestCase
 
 from apps.users.models import User
