@@ -35,7 +35,7 @@ class FormUtilsTest(SimpleTestCase):
         Garante que não ficam espaços sobrando nas pontas.
         """
         field = forms.CharField()
-        add_attr(field, "class", " teste ") # Com espaços
+        add_attr(field, "class", " teste ")  # Com espaços
 
         self.assertEqual(field.widget.attrs["class"], "teste")
 

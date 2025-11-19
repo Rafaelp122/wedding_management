@@ -1,24 +1,25 @@
 import logging
+
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
     DeleteView,
+    TemplateView,  # Usaremos TemplateView para a lista
     UpdateView,
     View,
-    TemplateView,  # Usaremos TemplateView para a lista
 )
 
 from apps.contracts.models import Contract
 
-from .models import Item
 from .mixins import (
-    ItemWeddingContextMixin,  # OBRIGATÓRIO: Carrega 'self.wedding'
-    ItemPlannerSecurityMixin,  # Segurança para Update/Delete
     ItemFormLayoutMixin,  # Layout do Formulário
     ItemListActionsMixin,  # O "Pacote de Lista" (Query, Pag, HTMX)
+    ItemPlannerSecurityMixin,  # Segurança para Update/Delete
+    ItemWeddingContextMixin,  # OBRIGATÓRIO: Carrega 'self.wedding'
 )
+from .models import Item
 
 logger = logging.getLogger(__name__)
 

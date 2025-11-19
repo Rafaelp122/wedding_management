@@ -15,9 +15,7 @@ class WeddingQuerySetTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user(
-            username="planner",
-            email="test@test.com",
-            password="123"
+            username="planner", email="test@test.com", password="123"
         )
 
         # Casamento 1: Data Futura (Em andamento)
@@ -27,7 +25,7 @@ class WeddingQuerySetTest(TestCase):
             bride_name="Future Bride",
             date=timezone.now().date() + timedelta(days=30),
             location="Hall A",
-            budget=10000
+            budget=10000,
         )
 
         # Casamento 2: Data Passada (Deveria ser completado automaticamente)
@@ -37,7 +35,7 @@ class WeddingQuerySetTest(TestCase):
             bride_name="Past Bride",
             date=timezone.now().date() - timedelta(days=1),
             location="Hall B",
-            budget=10000
+            budget=10000,
         )
 
         # Casamento 3: Cancelado explícito
@@ -48,7 +46,7 @@ class WeddingQuerySetTest(TestCase):
             date=timezone.now().date() - timedelta(days=10),  # Passado, mas cancelado
             location="Hall C",
             budget=10000,
-            status="CANCELED"
+            status="CANCELED",
         )
 
     def test_apply_search(self):
@@ -120,7 +118,7 @@ class WeddingQuerySetTest(TestCase):
             name="Item 1",
             status="DONE",
             quantity=1,
-            unit_price=10.0
+            unit_price=10.0,
         )
         # Item 2: Pendente
         item2 = Item.objects.create(
@@ -128,7 +126,7 @@ class WeddingQuerySetTest(TestCase):
             name="Item 2",
             status="PENDING",
             quantity=1,
-            unit_price=10.0
+            unit_price=10.0,
         )
         # Item 3: Feito
         item3 = Item.objects.create(
@@ -136,7 +134,7 @@ class WeddingQuerySetTest(TestCase):
             name="Item 3",
             status="DONE",
             quantity=1,
-            unit_price=10.0
+            unit_price=10.0,
         )
         # Item 4: Pendente
         item4 = Item.objects.create(
@@ -144,18 +142,20 @@ class WeddingQuerySetTest(TestCase):
             name="Item 4",
             status="PENDING",
             quantity=1,
-            unit_price=10.0
+            unit_price=10.0,
         )
 
         # Cria 1 Contrato vinculado ao Item 1
         Contract.objects.create(
             item=item1,
             description="Contrato de prestação de serviços",
-            signature_date=timezone.now().date()
+            signature_date=timezone.now().date(),
         )
 
         # --- EXECUÇÃO ---
-        qs = Wedding.objects.filter(pk=self.wedding_future.pk).with_counts_and_progress()
+        qs = Wedding.objects.filter(
+            pk=self.wedding_future.pk
+        ).with_counts_and_progress()
         wedding = qs.first()
 
         # --- VERIFICAÇÃO ---
@@ -212,7 +212,7 @@ class WeddingQuerySetTest(TestCase):
             date=timezone.now().date() + timedelta(days=50),  # Futuro
             location="Hall D",
             budget=10000,
-            status="COMPLETED"  # Manualmente concluído
+            status="COMPLETED",  # Manualmente concluído
         )
 
         qs = Wedding.objects.filter(pk=w_early_finish.pk).with_effective_status()

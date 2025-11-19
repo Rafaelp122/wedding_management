@@ -41,7 +41,9 @@ class WeddingFormTest(SimpleTestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("budget", form.errors)
-        self.assertEqual(form.errors["budget"][0], "O orçamento deve ser maior que zero.")
+        self.assertEqual(
+            form.errors["budget"][0], "O orçamento deve ser maior que zero."
+        )
 
     def test_form_invalid_budget_negative(self):
         """
@@ -68,7 +70,7 @@ class WeddingFormTest(SimpleTestCase):
         data = {
             "groom_name": "Romeu",
             "bride_name": "Julieta",
-            "date": past_date, # Inválido
+            "date": past_date,  # Inválido
             "budget": 50000.00,
             "location": "Verona",
         }
@@ -77,8 +79,8 @@ class WeddingFormTest(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("date", form.errors)
         self.assertEqual(
-            form.errors["date"][0], 
-            "A data do casamento não pode ser anterior ao dia atual."
+            form.errors["date"][0],
+            "A data do casamento não pode ser anterior ao dia atual.",
         )
 
     def test_form_today_date_is_valid(self):
@@ -90,7 +92,7 @@ class WeddingFormTest(SimpleTestCase):
         data = {
             "groom_name": "Romeu",
             "bride_name": "Julieta",
-            "date": today, # Válido
+            "date": today,  # Válido
             "budget": 50000.00,
             "location": "Verona",
         }
@@ -106,13 +108,16 @@ class WeddingFormTest(SimpleTestCase):
 
         # Verifica placeholder
         self.assertEqual(
-            form.fields["groom_name"].widget.attrs.get("placeholder"),
-            "Ex: Flavio"
+            form.fields["groom_name"].widget.attrs.get("placeholder"), "Ex: Flavio"
         )
 
         # Verifica widget type="date" (Usamos .get() para evitar KeyError se falhar)
         widget_type = form.fields["date"].widget.attrs.get("type")
-        self.assertEqual(widget_type, "date", "O campo Data deve ter o atributo type='date' para ativar o calendário HTML5.")
+        self.assertEqual(
+            widget_type,
+            "date",
+            "O campo Data deve ter o atributo type='date' para ativar o calendário HTML5.",
+        )
 
     def test_form_missing_required_fields(self):
         """

@@ -57,17 +57,14 @@ class WeddingQuerysetMixinTest(TestCase):
     """
     Testa a lógica de construção do Queryset isolada da View.
     """
+
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user(
-            username="planner",
-            email="planner@test.com",
-            password="123"
+            username="planner", email="planner@test.com", password="123"
         )
         cls.other_user = User.objects.create_user(
-            username="other",
-            email="other@test.com",
-            password="123"
+            username="other", email="other@test.com", password="123"
         )
 
         # DATA FUTURA DINÂMICA (Hoje + 1 ano)
@@ -77,14 +74,20 @@ class WeddingQuerysetMixinTest(TestCase):
         # Casamento do Planner (deve aparecer)
         cls.w1 = Wedding.objects.create(
             planner=cls.user,
-            groom_name="G1", bride_name="B1",
-            date=future_date, location="Loc", budget=1000
+            groom_name="G1",
+            bride_name="B1",
+            date=future_date,
+            location="Loc",
+            budget=1000,
         )
         # Casamento de Outro (não deve aparecer)
         cls.w2 = Wedding.objects.create(
             planner=cls.other_user,
-            groom_name="G2", bride_name="B2",
-            date=future_date, location="Loc", budget=1000
+            groom_name="G2",
+            bride_name="B2",
+            date=future_date,
+            location="Loc",
+            budget=1000,
         )
 
     def setUp(self):
@@ -113,8 +116,11 @@ class WeddingQuerysetMixinTest(TestCase):
         # Cria mais um casamento para testar filtro
         w3 = Wedding.objects.create(
             planner=self.user,
-            groom_name="SearchMe", bride_name="B3",
-            date="2025-01-01", location="Loc", budget=1000
+            groom_name="SearchMe",
+            bride_name="B3",
+            date="2025-01-01",
+            location="Loc",
+            budget=1000,
         )
 
         # Testando filtro de busca (q)
@@ -134,9 +140,11 @@ class WeddingQuerysetMixinTest(TestCase):
 
         w_completed = Wedding.objects.create(
             planner=self.user,
-            groom_name="Old Groom", bride_name="Old Bride",
+            groom_name="Old Groom",
+            bride_name="Old Bride",
             date=timezone.now().date() - timedelta(days=10),
-            location="Loc", budget=1000
+            location="Loc",
+            budget=1000,
         )
 
         qs = self.view.get_base_queryset(status="COMPLETED")
@@ -147,29 +155,33 @@ class WeddingQuerysetMixinTest(TestCase):
 
 # --- Teste de Paginação e Contexto ---
 
+
 class WeddingPaginationContextMixinTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         # CORREÇÃO: Adicionando o email obrigatório
         cls.user = User.objects.create_user(
-            username="paginator_user",
-            email="paginator@test.com",
-            password="123"
+            username="paginator_user", email="paginator@test.com", password="123"
         )
 
         # Criamos 7 casamentos para testar paginação (Paginate by 6)
         for i in range(7):
             Wedding.objects.create(
                 planner=cls.user,
-                groom_name=f"Groom {i}", bride_name=f"Bride {i}",
-                date="2025-01-01", location="Loc", budget=1000
+                groom_name=f"Groom {i}",
+                bride_name=f"Bride {i}",
+                date="2025-01-01",
+                location="Loc",
+                budget=1000,
             )
 
     def setUp(self):
         # Criamos uma View que herda de Queryset E Pagination para testar a integração
         from apps.weddings.mixins import WeddingQuerysetMixin
 
-        class ConcretePaginationView(WeddingQuerysetMixin, WeddingPaginationContextMixin):
+        class ConcretePaginationView(
+            WeddingQuerysetMixin, WeddingPaginationContextMixin
+        ):
             pass
 
         self.view = ConcretePaginationView()
@@ -216,9 +228,12 @@ class WeddingPaginationContextMixinTest(TestCase):
         """
         # Cria um registro específico para buscar
         Wedding.objects.create(
-            planner=self.user, 
-            groom_name="TargetUnique", bride_name="B", 
-            date="2025-01-01", location="L", budget=1000
+            planner=self.user,
+            groom_name="TargetUnique",
+            bride_name="B",
+            date="2025-01-01",
+            location="L",
+            budget=1000,
         )
 
         # Pagina com filtro de busca
@@ -227,7 +242,9 @@ class WeddingPaginationContextMixinTest(TestCase):
 
         # Deve retornar APENAS o item buscado, ignorando os outros 7
         self.assertEqual(len(context["paginated_weddings"]), 1)
-        self.assertEqual(context["paginated_weddings"][0]["wedding"].groom_name, "TargetUnique")
+        self.assertEqual(
+            context["paginated_weddings"][0]["wedding"].groom_name, "TargetUnique"
+        )
 
         # Verifica se o contexto final devolve o termo de busca (para o template persistir)
         self.assertEqual(context["current_search"], "TargetUnique")
@@ -251,6 +268,7 @@ class WeddingPaginationContextMixinTest(TestCase):
 
 # --- Teste de Integração HTMX ---
 
+
 class WeddingHtmxListResponseMixinTest(TestCase):
     def setUp(self):
         # View completa simulada
@@ -271,7 +289,9 @@ class WeddingHtmxListResponseMixinTest(TestCase):
         # Dizemos que a URL no header tinha ?page=2&q=teste
         expected_params = {"page": "2", "q": "teste"}
 
-        with patch.object(self.view, '_get_params_from_htmx_url', return_value=expected_params):
+        with patch.object(
+            self.view, "_get_params_from_htmx_url", return_value=expected_params
+        ):
 
             # 2. Chama o método
             context = self.view.get_htmx_context_data()
@@ -287,7 +307,7 @@ class WeddingHtmxListResponseMixinTest(TestCase):
         Testa se o render chama o render_htmx_response com os triggers corretos.
         """
         # Mock do render_htmx_response (que vem do BaseHtmxResponseMixin)
-        with patch.object(self.view, 'render_htmx_response') as mock_render:
+        with patch.object(self.view, "render_htmx_response") as mock_render:
 
             self.view.render_wedding_list_response()
 
@@ -298,7 +318,7 @@ class WeddingHtmxListResponseMixinTest(TestCase):
         """
         Testa se é possível sobrescrever o trigger padrão.
         """
-        with patch.object(self.view, 'render_htmx_response') as mock_render:
+        with patch.object(self.view, "render_htmx_response") as mock_render:
 
             self.view.render_wedding_list_response(trigger="SpecialEvent")
 
@@ -306,6 +326,7 @@ class WeddingHtmxListResponseMixinTest(TestCase):
 
 
 # --- Teste de Facade (Herança) ---
+
 
 class WeddingListActionsMixinTest(TestCase):
     def test_inheritance_structure(self):
@@ -319,4 +340,6 @@ class WeddingListActionsMixinTest(TestCase):
 
         # Verifica MRO (Method Resolution Order) ou issubclass
         self.assertTrue(issubclass(WeddingListActionsMixin, WeddingQuerysetMixin))
-        self.assertTrue(issubclass(WeddingListActionsMixin, WeddingHtmxListResponseMixin))
+        self.assertTrue(
+            issubclass(WeddingListActionsMixin, WeddingHtmxListResponseMixin)
+        )

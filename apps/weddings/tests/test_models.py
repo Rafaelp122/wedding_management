@@ -11,9 +11,7 @@ from apps.weddings.models import Wedding
 class WeddingModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="planner",
-            email="p@test.com",
-            password="123"
+            username="planner", email="p@test.com", password="123"
         )
 
     def test_wedding_creation_and_str(self):
@@ -26,7 +24,7 @@ class WeddingModelTest(TestCase):
             bride_name="Juliet",
             date=date(2025, 5, 20),
             location="Verona",
-            budget=50000
+            budget=50000,
         )
 
         # Verifica __str__

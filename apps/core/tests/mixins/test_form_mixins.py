@@ -23,12 +23,12 @@ class FormStylingMixinTest(SimpleTestCase):
         form = self.form_class()
 
         # Verifica campo CharField
-        class_nome = form.fields['nome'].widget.attrs.get('class')
+        class_nome = form.fields["nome"].widget.attrs.get("class")
         self.assertIn("form-control", class_nome)
         self.assertIn("ps-5", class_nome)
 
         # Verifica campo BooleanField (Checkbox)
-        class_ativo = form.fields['ativo'].widget.attrs.get('class')
+        class_ativo = form.fields["ativo"].widget.attrs.get("class")
         self.assertEqual(class_ativo, "form-check-input")
 
     def test_post_clean_applies_error_class(self):
@@ -42,7 +42,7 @@ class FormStylingMixinTest(SimpleTestCase):
         form.is_valid()
 
         # Verifica se o campo 'nome' (que deu erro) ganhou a classe is-invalid
-        class_nome = form.fields['nome'].widget.attrs.get('class')
+        class_nome = form.fields["nome"].widget.attrs.get("class")
         self.assertIn("is-invalid", class_nome)
         # Deve manter as classes originais também
         self.assertIn("form-control", class_nome)
@@ -63,12 +63,12 @@ class FormStylingMixinLargeTest(SimpleTestCase):
         """
         form = self.form_class()
 
-        class_titulo = form.fields['titulo'].widget.attrs.get('class')
+        class_titulo = form.fields["titulo"].widget.attrs.get("class")
 
         self.assertIn("form-control-lg", class_titulo)
         self.assertIn("custom-font-size", class_titulo)
         # Checkbox continua igual
-        class_check = form.fields['check'].widget.attrs.get('class')
+        class_check = form.fields["check"].widget.attrs.get("class")
         self.assertEqual(class_check, "form-check-input")
 
     def test_post_clean_applies_error_class_large(self):
@@ -79,5 +79,5 @@ class FormStylingMixinLargeTest(SimpleTestCase):
         form = self.form_class(data={})
         form.is_valid()
 
-        class_titulo = form.fields['titulo'].widget.attrs.get('class')
+        class_titulo = form.fields["titulo"].widget.attrs.get("class")
         self.assertIn("is-invalid", class_titulo)
