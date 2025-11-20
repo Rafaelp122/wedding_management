@@ -16,58 +16,43 @@ class BudgetPartialView(LoginRequiredMixin, TemplateView):
     template_name = "budget/budget_overview.html"
 
     def get_context_data(self, **kwargs):
-        """
-        Adiciona ao contexto as informações de orçamento,
-        itens e distribuição de gastos por categoria.
-        """
         context = super().get_context_data(**kwargs)
 
-        # Obtém o ID do casamento a partir da URL
         wedding_id = self.kwargs.get("wedding_id")
 
-        # Usuário autenticado (planner)
-        planner = self.request.user
-
-        # Busca o casamento pertencente ao planner; retorna 404 se não existir
-        wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
+        # Segurança: Garante que o casamento pertence ao usuário logado
+        wedding = get_object_or_404(Wedding, id=wedding_id, planner=self.request.user)
         context["wedding"] = wedding
 
-        # Itens associados ao casamento
+        # QuerySet Base
         items = Item.objects.filter(wedding=wedding)
 
-        # Calcula o total e o gasto atual
+        # 1. Cálculos Financeiros Gerais
         total_budget = wedding.budget
-        current_spent = items.total_spent()  # Método customizado no model Item
+        current_spent = items.total_spent()  # Retorna Decimal ou 0
 
-        # Valores principais do orçamento
         context["total_budget"] = total_budget
         context["items"] = items
         context["current_spent"] = current_spent
         context["available_balance"] = total_budget - current_spent
 
-        # Consulta de despesas por categoria (query agregada)
+        # 2. Distribuição por Categoria
+        # category_expenses() já retorna ordenado pelo maior gasto
         category_expenses_query = items.category_expenses()
 
-        # Converte o resultado em dicionário {categoria: custo_total}
-        distributed_expenses_dict = {
-            item["category"]: item["total_cost"] for item in category_expenses_query
-        }
-
-        # Mapeia o valor da categoria para o nome legível (choices)
+        # Cria um mapa {Código: Nome Legível} para exibição (ex: "DECOR" -> "Decoração")
         category_display_map = dict(Item.CATEGORY_CHOICES)
-        distributed_expenses_with_names = {
-            category_display_map.get(cat, cat): cost
-            for cat, cost in distributed_expenses_dict.items()
-        }
 
-        # Prepara os dados para o gráfico ou cards (com gradiente visual)
+        # Monta a lista final para o template em uma única iteração
+        # Preservando a ordem do QuerySet
         context["distributed_expenses"] = [
             {
-                "category": cat,
-                "value": cost,
+                # Pega o nome legível ou usa o código se falhar
+                "category": category_display_map.get(entry["category"], entry["category"]),
+                "value": entry["total_cost"],
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
             }
-            for idx, (cat, cost) in enumerate(distributed_expenses_with_names.items())
+            for idx, entry in enumerate(category_expenses_query)
         ]
 
         return context

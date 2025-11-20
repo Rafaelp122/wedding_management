@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from django.db import models
 from django.db.models import (
     Case,
@@ -16,11 +14,8 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-if TYPE_CHECKING:
-    from .models import Wedding
 
-
-class WeddingQuerySet(models.QuerySet["Wedding"]):
+class WeddingQuerySet(models.QuerySet):
     """
     QuerySet customizado para o modelo Wedding,
     otimizado com Subqueries para contagens de performance.
