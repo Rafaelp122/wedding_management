@@ -234,7 +234,16 @@ class ItemHtmxListResponseMixinTest(TestCase):
 
             # Verifica se chamou a paginação com os params corretos
             self.view.build_paginated_context.assert_called_once_with(mock_params)
-            self.assertEqual(context, {"context": "ok"})
+
+            # O método adiciona keys extras ao contexto retornado pelo
+            # build_paginated_context
+            expected_context = {
+                "context": "ok",
+                "pagination_url_name": "items:partial_items",
+                "pagination_target": "#item-list-container",
+                "pagination_aria_label": "Paginação de Itens",
+            }
+            self.assertEqual(context, expected_context)
 
     def test_render_item_list_response_defaults(self):
         """
