@@ -52,14 +52,14 @@ class EventOwnershipMixin:
             planner=self.request.user,
             wedding=self.wedding,
         )
-        
+
         logger.debug(
             f"Event retrieved: event_id={event.id}, "
             f"title='{event.title}', "
             f"wedding_id={self.wedding.id}, "
             f"user={self.request.user.username}"
         )
-        
+
         return event
 
 
@@ -86,7 +86,7 @@ class EventHtmxResponseMixin:
             f"Event saved successfully: "
             f"user={self.request.user.username}"
         )
-        
+
         response = HttpResponse(status=204)
         response["HX-Trigger"] = EVENT_SAVED_TRIGGER
         return response
@@ -109,7 +109,7 @@ class EventHtmxResponseMixin:
             f"Event deleted: event_id={event_id}, "
             f"user={self.request.user.username}"
         )
-        
+
         response = JsonResponse({"id": event_id})
         response["HX-Trigger"] = json.dumps(
             {"eventDeleted": {"id": event_id}}
@@ -217,7 +217,7 @@ class EventFormMixin:
             f"errors={form.errors.as_json()}, "
             f"user={self.request.user.username}"
         )
-        
+
         context = self.get_context_data(
             form=form,
             wedding=self.wedding,
