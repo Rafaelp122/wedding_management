@@ -2,10 +2,10 @@ from typing import Any, Optional, Type
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 
 
@@ -133,4 +133,73 @@ class RedirectAuthenticatedUserMixin:
             return redirect(str(self.redirect_url_authenticated))
 
         # Se não estiver autenticado, continua para a view
+        return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
+
+
+class WeddingOwnershipMixin(LoginRequiredMixin):
+    """
+    GENÉRICO (Core): Garante que o usuário logado seja o planner
+    (dono) do casamento especificado na URL.
+
+    Este mixin verifica automaticamente a propriedade do casamento
+    antes de permitir qualquer operação, protegendo contra acessos
+    não autorizados.
+
+    Attributes:
+        wedding: Instância do Wedding carregado da URL.
+                Disponibilizado para uso nas views filhas.
+
+    Usage:
+        class SchedulerView(WeddingOwnershipMixin, TemplateView):
+            # self.wedding estará disponível automaticamente
+            def get_context_data(self, **kwargs):
+                context = super().get_context_data(**kwargs)
+                context['wedding'] = self.wedding
+                return context
+
+    Expects:
+        - URL pattern deve ter 'wedding_id' como parâmetro
+        - request.user deve estar autenticado
+        - Wedding model deve ter campo 'planner'
+
+    Raises:
+        Http404: Se o casamento não existir.
+        PermissionDenied: Se o usuário não for o planner do casamento.
+    """
+
+    wedding = None
+    request: HttpRequest
+
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        """
+        Intercepta a requisição para validar ownership do casamento.
+
+        Args:
+            request: Objeto HttpRequest do Django.
+            *args: Argumentos posicionais.
+            **kwargs: Argumentos nomeados (deve conter 'wedding_id').
+
+        Returns:
+            HttpResponse da view se autorizado.
+
+        Raises:
+            Http404: Se wedding_id não existir.
+            PermissionDenied: Se não for o planner do casamento.
+        """
+        # Lazy import para evitar dependência circular
+        from apps.weddings.models import Wedding
+
+        # Busca o casamento pelo ID da URL
+        wedding_id = self.kwargs.get("wedding_id")
+        self.wedding = get_object_or_404(Wedding, id=wedding_id)
+
+        # Verifica se o usuário é o planner do casamento
+        if self.wedding.planner != request.user:
+            raise PermissionDenied(
+                "Você não tem permissão para acessar este casamento."
+            )
+
+        # Continua para o método (get, post) da view
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
