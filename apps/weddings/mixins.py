@@ -1,16 +1,26 @@
 import logging
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from django.core.paginator import Paginator
-from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 
 from apps.core.constants import GRADIENTS
 from apps.core.mixins.auth import OwnerRequiredMixin
 from apps.core.mixins.views import BaseHtmxResponseMixin, HtmxUrlParamsMixin
 
+from .constants import (
+    PAGINATION_ENDS,
+    PAGINATION_SIDES,
+    WEDDING_FORM_MODAL_TEMPLATE,
+    WEDDING_ITEMS_PER_PAGE,
+    WEDDING_LIST_CONTAINER_ID,
+    WEDDING_LIST_TEMPLATE,
+)
 from .forms import WeddingForm
 from .models import Wedding
+
+if TYPE_CHECKING:
+    from .querysets import WeddingQuerySet
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +47,48 @@ class PlannerOwnershipMixin(OwnerRequiredMixin):
     owner_field_name = "planner"
 
 
+class WeddingModalContextMixin:
+    """
+    Fornece contexto para modais de formulário de Wedding.
+
+    Este mixin extrai a lógica comum de construção de contexto
+    para modais, evitando duplicação entre Create/Update views.
+
+    Attributes:
+        modal_title: Título do modal.
+        submit_button_text: Texto do botão de submit.
+    """
+
+    modal_title: str = ""
+    submit_button_text: str = ""
+
+    def get_modal_title(self) -> str:
+        """Retorna o título do modal."""
+        return self.modal_title
+
+    def get_submit_button_text(self) -> str:
+        """Retorna o texto do botão de submit."""
+        return self.submit_button_text
+
+    def get_hx_post_url(self) -> str:
+        """
+        Retorna a URL para o POST do formulário.
+
+        Deve ser implementado pela view concreta.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must implement get_hx_post_url()"
+        )
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        """Adiciona contexto do modal ao contexto do template."""
+        context = super().get_context_data(**kwargs)  # type: ignore[misc]
+        context["modal_title"] = self.get_modal_title()
+        context["submit_button_text"] = self.get_submit_button_text()
+        context["hx_post_url"] = self.get_hx_post_url()
+        return context
+
+
 class WeddingFormLayoutMixin:
     """
     Domain-Specific Form Layout Mixin (Standalone)
@@ -60,7 +112,7 @@ class WeddingFormLayoutMixin:
     """
 
     form_class = WeddingForm
-    template_name = "partials/form_modal.html"
+    template_name = WEDDING_FORM_MODAL_TEMPLATE
 
     form_layout_dict = {
         "groom_name": "col-md-6",
@@ -122,7 +174,7 @@ class WeddingQuerysetMixin:
 
     def get_base_queryset(
         self, sort: str = "id", q: str | None = None, status: str | None = None
-    ) -> "QuerySet[Any, Any]":
+    ) -> "WeddingQuerySet":
         """
         Constrói o queryset base para 'Wedding' logado.
 
@@ -138,20 +190,13 @@ class WeddingQuerysetMixin:
             QuerySet filtrado, anotado e ordenado de Wedding.
         """
         queryset = Wedding.objects.filter(planner=self.request.user)
-        # type: ignore - métodos customizados do WeddingQuerySet
-        queryset = (  # type: ignore[assignment]
-            queryset.with_effective_status()  # type: ignore[attr-defined]
-            .apply_search(q)  # type: ignore[attr-defined]
-            .apply_sort(sort)  # type: ignore[attr-defined]
-        )
+        queryset = queryset.with_effective_status()
+        queryset = queryset.apply_search(q)
+        queryset = queryset.apply_sort(sort)
         if status:
-            # type: ignore - filtragem customizada
-            queryset = queryset.filter(  # type: ignore[assignment]
-                effective_status=status
-            )
-        # type: ignore - método customizado do WeddingQuerySet
-        queryset = queryset.with_counts_and_progress()  # type: ignore[assignment,attr-defined]
-        return queryset  # type: ignore[return-value]
+            queryset = queryset.filter(effective_status=status)
+        queryset = queryset.with_counts_and_progress()
+        return queryset
 
 
 class WeddingPaginationContextMixin:
@@ -170,12 +215,10 @@ class WeddingPaginationContextMixin:
         request: HttpRequest object (deve ser fornecido pela View).
     """
 
-    paginate_by = 6
+    paginate_by = WEDDING_ITEMS_PER_PAGE
     request: HttpRequest
 
-    def _build_context_list(
-        self, queryset: Any
-    ) -> List[Dict[str, Any]]:
+    def _build_context_list(self, queryset: Any) -> List[Dict[str, Any]]:
         """
         Formata a lista de 'Wedding' para o template.
 
@@ -196,17 +239,11 @@ class WeddingPaginationContextMixin:
             {
                 "wedding": wedding,
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
-                # type: ignore - campos anotados pelo QuerySet
-                "items_count": (
-                    wedding.items_count  # type: ignore[attr-defined]
-                ),
-                "contracts_count": (
-                    wedding.contracts_count  # type: ignore[attr-defined]
-                ),
-                "effective_status": (
-                    wedding.effective_status  # type: ignore[attr-defined]
-                ),
-                "progress": wedding.progress,  # type: ignore[attr-defined]
+                # type: ignore[attr-defined] - Campos anotados pelo QuerySet
+                "items_count": wedding.items_count,
+                "contracts_count": wedding.contracts_count,
+                "effective_status": wedding.effective_status,
+                "progress": wedding.progress,
             }
             for idx, wedding in enumerate(queryset)
         ]
@@ -251,8 +288,8 @@ class WeddingPaginationContextMixin:
 
         elided_page_range = paginator.get_elided_page_range(
             number=page_obj.number,
-            on_each_side=3,  # Ex: 1 ... 4 [5] 6 ... 50
-            on_ends=1,
+            on_each_side=PAGINATION_SIDES,
+            on_ends=PAGINATION_ENDS,
         )
 
         paginated_weddings_formatted = self._build_context_list(
@@ -292,8 +329,8 @@ class WeddingHtmxListResponseMixin(
         htmx_retarget_id: ID do container alvo no DOM.
     """
 
-    htmx_template_name = "weddings/partials/_list_and_pagination.html"
-    htmx_retarget_id = "#wedding-list-container"
+    htmx_template_name = WEDDING_LIST_TEMPLATE
+    htmx_retarget_id = WEDDING_LIST_CONTAINER_ID
 
     def get_htmx_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
@@ -335,7 +372,7 @@ class WeddingListActionsMixin(
     WeddingQuerysetMixin, WeddingHtmxListResponseMixin
 ):
     """
-    Mixin de Composição (Composition Mixin)
+    Mixin de Composição (Composition Mixin) - Facade Pattern
 
     Este mixin não implementa lógica nova. Ele atua como uma "fachada"
     (Facade Pattern) que agrupa os mixins granulares
@@ -345,11 +382,49 @@ class WeddingListActionsMixin(
     (Don't Repeat Yourself) nas Views: em vez de uma View herdar
     3 ou 4 mixins de lista, ela herda apenas este.
 
+    Composição Interna:
+        - WeddingQuerysetMixin: Fornece get_base_queryset()
+        - WeddingHtmxListResponseMixin: Herda de:
+            * BaseHtmxResponseMixin (core)
+            * HtmxUrlParamsMixin (core)
+            * WeddingPaginationContextMixin
+
+    Requisitos da View que herda este mixin:
+        - Atributos obrigatórios:
+            * request: HttpRequest - Fornecido automaticamente
+            * model: Model class - Para segurança (PlannerOwnershipMixin)
+
+    Métodos Expostos:
+        - get_base_queryset(sort, q, status) -> WeddingQuerySet
+        - build_paginated_context(request_params) -> Dict[str, Any]
+        - render_wedding_list_response(trigger) -> HttpResponse
+
     Usage:
-        class WeddingListView(WeddingListActionsMixin, ListView):
-            # Acesso a get_base_queryset, build_paginated_context,
-            # e render_wedding_list_response em uma única herança
-            pass
+        class WeddingListView(
+            PlannerOwnershipMixin,
+            WeddingListActionsMixin,
+            TemplateView
+        ):
+            template_name = "weddings/list.html"
+
+            def get_context_data(self, **kwargs):
+                context = super().get_context_data(**kwargs)
+                list_context = self.build_paginated_context(
+                    self.request.GET.copy()
+                )
+                context.update(list_context)
+                return context
+
+    Design Notes:
+        - Este é um facade "fino": não contém lógica de negócio
+        - A lógica está nos mixins granulares para facilitar testes
+        - Dependências são documentadas mas não verificadas em runtime
+          (adicione checks em dispatch() se necessário fail-fast)
+
+    See Also:
+        - WeddingQuerysetMixin: Query logic
+        - WeddingPaginationContextMixin: Pagination logic
+        - WeddingHtmxListResponseMixin: HTMX response logic
     """
 
     pass

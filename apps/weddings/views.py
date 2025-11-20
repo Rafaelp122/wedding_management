@@ -1,20 +1,32 @@
-from django.http import HttpResponseBadRequest
+import logging
+
+from django.contrib import messages
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+)
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
     DeleteView,
     DetailView,
+    TemplateView,
     UpdateView,
     View,
-    TemplateView,
 )
 
-import logging
+from .constants import (
+    WEDDING_LIST_CONTAINER_ID,
+    WEDDING_LIST_URL_NAME,
+    WEDDING_PAGINATION_ARIA_LABEL,
+)
 from .mixins import (
     PlannerOwnershipMixin,  # Apenas Segurança
     WeddingFormLayoutMixin,  # Apenas Layout de Formulário
     WeddingListActionsMixin,  # O "Pacote de Lista" (Query, Pag, HTMX)
+    WeddingModalContextMixin,  # Contexto de Modais
 )
 from .models import Wedding
 
@@ -33,6 +45,9 @@ class WeddingListView(
     """
 
     template_name = "weddings/list.html"
+    pagination_url_name = WEDDING_LIST_URL_NAME
+    pagination_target = WEDDING_LIST_CONTAINER_ID
+    pagination_aria_label = WEDDING_PAGINATION_ARIA_LABEL
 
     def get_context_data(self, **kwargs):
         """
@@ -47,7 +62,8 @@ class WeddingListView(
         request_params = self.request.GET.copy()
 
         logger.debug(
-            f"Construindo contexto de lista para F5 load. Params: {request_params}"
+            f"Construindo contexto de lista para F5 load. "
+            f"Params: {request_params}"
         )
 
         # herda build_paginated_context de "WeddingPaginationContextMixin"
@@ -55,9 +71,9 @@ class WeddingListView(
 
         context.update(list_context)
 
-        context["pagination_url_name"] = "weddings:my_weddings"
-        context["pagination_target"] = "#wedding-list-container"
-        context["pagination_aria_label"] = "Paginação de Casamentos"
+        context["pagination_url_name"] = self.pagination_url_name
+        context["pagination_target"] = self.pagination_target
+        context["pagination_aria_label"] = self.pagination_aria_label
         return context
 
     def render_to_response(self, context, **response_kwargs):
@@ -69,10 +85,14 @@ class WeddingListView(
         """
         # Lida com as requisições HTMX (filtro, busca, paginação)
         if self.request.htmx:
-            logger.debug("Requisição HTMX (GET) recebida, renderizando partial.")
+            logger.debug(
+                "Requisição HTMX (GET) recebida, renderizando partial."
+            )
             # Renderiza o partial
             return render(
-                self.request, "weddings/partials/_list_and_pagination.html", context
+                self.request,
+                "weddings/partials/_list_and_pagination.html",
+                context
             )
 
         # Se for um F5, renderiza a página inteira
@@ -82,6 +102,7 @@ class WeddingListView(
 class WeddingCreateView(
     PlannerOwnershipMixin,  # Segurança
     WeddingListActionsMixin,  # Resposta HTMX da Lista
+    WeddingModalContextMixin,  # Contexto do Modal
     WeddingFormLayoutMixin,  # Layout do Formulário
     CreateView,
 ):
@@ -91,17 +112,12 @@ class WeddingCreateView(
     """
 
     model = Wedding
-    # form_class e template_name vêm do WeddingFormLayoutMixin
+    modal_title = "Novo Casamento"
+    submit_button_text = "Salvar Casamento"
 
-    def get_context_data(self, **kwargs):
-        """
-        Adiciona o contexto dinâmico do modal (título, botão, URL).
-        """
-        context = super().get_context_data(**kwargs)
-        context["modal_title"] = "Novo Casamento"
-        context["submit_button_text"] = "Salvar Casamento"
-        context["hx_post_url"] = reverse("weddings:create_wedding")
-        return context
+    def get_hx_post_url(self) -> str:
+        """Retorna a URL para o POST do formulário."""
+        return reverse("weddings:create_wedding")
 
     def form_valid(self, form):
         """
@@ -111,7 +127,8 @@ class WeddingCreateView(
         form.instance.planner = self.request.user
         form.save()
         logger.info(
-            f"Novo casamento criado: '{form.instance}' (ID: {form.instance.id})"
+            f"Novo casamento criado: '{form.instance}' "
+            f"(ID: {form.instance.id}) "
             f"pelo usuário {self.request.user.id}"
         )
         # render_wedding_list_response vem do WeddingListActionsMixin
@@ -119,39 +136,38 @@ class WeddingCreateView(
 
     def form_invalid(self, form):
         """Loga falhas de validação do formulário."""
-        logger.warning(
-            f"Tentativa de criação de casamento falhou (inválido): {form.errors}"
-        )
+        # Log apenas erros não-field (inesperados)
+        if form.non_field_errors():
+            logger.warning(
+                f"Erro inesperado na criação de casamento: "
+                f"{form.non_field_errors()}"
+            )
         return super().form_invalid(form)
 
 
 class WeddingUpdateView(
     PlannerOwnershipMixin,  # Segurança (usa get_queryset)
     WeddingListActionsMixin,  # Resposta HTMX da Lista
+    WeddingModalContextMixin,  # Contexto do Modal
     WeddingFormLayoutMixin,  # Layout do Formulário
     UpdateView,
 ):
     """
     Lida com a atualização de um Casamento.
-    Responde com o formulário pré-preenchido (GET) ou a lista atualizada (POST).
+    Responde com o formulário pré-preenchido (GET) ou a lista
+    atualizada (POST).
     """
 
     model = Wedding
     pk_url_kwarg = "id"
-    # form_class e template_name vêm do WeddingFormLayoutMixin
-    # get_queryset (segurança) vem do PlannerOwnershipMixin
+    modal_title = "Editar Casamento"
+    submit_button_text = "Salvar Alterações"
 
-    def get_context_data(self, **kwargs):
-        """
-        Adiciona o contexto dinâmico do modal (título, botão, URL de post).
-        """
-        context = super().get_context_data(**kwargs)
-        context["modal_title"] = "Editar Casamento"
-        context["submit_button_text"] = "Salvar Alterações"
-        context["hx_post_url"] = reverse(
+    def get_hx_post_url(self) -> str:
+        """Retorna a URL para o POST do formulário."""
+        return reverse(
             "weddings:edit_wedding", kwargs={"id": self.object.pk}
         )
-        return context
 
     def form_valid(self, form):
         """
@@ -160,16 +176,20 @@ class WeddingUpdateView(
         """
         form.save()
         logger.info(
-            f"Casamento {self.object.id} atualizado pelo usuário {self.request.user.id}"
+            f"Casamento {self.object.id} atualizado "
+            f"pelo usuário {self.request.user.id}"
         )
         # render_wedding_list_response vem do WeddingListActionsMixin
         return self.render_wedding_list_response()
 
     def form_invalid(self, form):
         """Loga falhas de validação do formulário."""
-        logger.warning(
-            f"Tentativa de atualização do casamento {self.object.id} falhou (inválido): {form.errors}"
-        )
+        # Log apenas erros não-field (inesperados)
+        if form.non_field_errors():
+            logger.warning(
+                f"Erro inesperado na atualização do casamento "
+                f"{self.object.id}: {form.non_field_errors()}"
+            )
         return super().form_invalid(form)
 
 
@@ -227,41 +247,65 @@ class UpdateWeddingStatusView(
     """
 
     model = Wedding  # Informa ao PlannerOwnershipMixin qual model usar
-    # get_queryset (segurança) vem do PlannerOwnershipMixin
 
     def post(self, request, *args, **kwargs):
         """
         Valida e atualiza o status do casamento, depois
         retorna a lista de casamentos atualizada via HTMX.
         """
+        wedding_id = self.kwargs["id"]
+
+        # Verifica se o casamento existe
         try:
-            wedding = self.get_queryset().get(pk=self.kwargs["id"])
+            wedding = Wedding.objects.get(pk=wedding_id)
         except Wedding.DoesNotExist:
             logger.warning(
-                f"Tentativa de mudança de status falhou (Não Encontrado ou Sem Permissão). "
-                f"Casamento ID: {self.kwargs['id']}, Usuário: {self.request.user.id}"
+                f"Tentativa de acesso a casamento inexistente. "
+                f"ID: {wedding_id}, Usuário: {request.user.id}"
             )
-            return HttpResponseBadRequest("Casamento não encontrado ou sem permissão.")
+            messages.error(request, "Casamento não encontrado.")
+            return HttpResponseNotFound(
+                "Casamento não encontrado.",
+                content_type="text/html"
+            )
+
+        # Verifica ownership explicitamente
+        if wedding.planner != request.user:
+            logger.warning(
+                f"Tentativa de acesso não autorizado. "
+                f"Casamento ID: {wedding_id}, "
+                f"Usuário: {request.user.id}"
+            )
+            messages.error(
+                request, "Você não tem permissão para este recurso."
+            )
+            return HttpResponseForbidden(
+                "Sem permissão.",
+                content_type="text/html"
+            )
 
         new_status = request.POST.get("status")
-        valid_statuses = [status[0] for status in Wedding.STATUS_CHOICES]
 
-        if new_status not in valid_statuses:
-            logger.warning(
-                f"Tentativa de mudança de status falhou (Status Inválido): '{new_status}'"
+        # Valida se o status é válido usando TextChoices
+        try:
+            Wedding.StatusChoices(new_status)
+        except ValueError:
+            logger.warning(f"Status inválido recebido: '{new_status}'")
+            messages.error(request, f"Status '{new_status}' não é válido.")
+            return HttpResponseBadRequest(
+                "Status inválido ou Model não atualizado."
             )
-            return HttpResponseBadRequest("Status inválido ou Model não atualizado.")
 
         old_status = wedding.status
         wedding.status = new_status
         wedding.save()
 
         logger.info(
-            f"Status do casamento {wedding.id} alterado de '{old_status}' "
-            f"para '{new_status}' pelo usuário {self.request.user.id}"
+            f"Status do casamento {wedding.id} alterado de "
+            f"'{old_status}' para '{new_status}' "
+            f"pelo usuário {request.user.id}"
         )
 
-        # render_wedding_list_response vem do WeddingListActionsMixin
         return self.render_wedding_list_response(trigger="listUpdated")
 
 

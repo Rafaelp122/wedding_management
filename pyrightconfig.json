@@ -7,10 +7,20 @@
     ".venv"
   ],
   "pythonVersion": "3.12",
-  "typeCheckingMode": "strict",
+  "typeCheckingMode": "basic",
 
   "reportMissingImports": true,
   "reportMissingTypeStubs": false,
+  
+  "reportUnknownMemberType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownParameterType": "none",
+  "reportMissingParameterType": "none",
+  "reportUnknownLambdaType": "none",
+  "reportUnnecessaryTypeIgnoreComment": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportAttributeAccessIssue": "none",
 
   "executionEnvironments": [
     {

@@ -111,14 +111,14 @@ class BaseHtmxResponseMixin:
         """
         Hook para adicionar contexto ao template HTMX.
 
-        Injeta automaticamente o objeto 'request' no contexto
-        e preserva todos os kwargs passados.
-
         Args:
             **kwargs: Dados de contexto adicionais para o template.
 
         Returns:
-            Dicionário com o contexto completo incluindo 'request'.
+            Dicionário com o contexto fornecido + request injetado.
+            
+        Note:
+            Injeta 'request' automaticamente para facilitar uso no template.
         """
         kwargs["request"] = self.request
         return kwargs

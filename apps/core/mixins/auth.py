@@ -52,7 +52,7 @@ class OwnerRequiredMixin(LoginRequiredMixin):
                                  não estiverem definidos.
         """
         # Valida se o Model existe
-        if getattr(self, "model", None) is None:
+        if not self.model:
             raise ImproperlyConfigured(
                 f"{self.__class__.__name__} must define a 'model' attribute."
             )
@@ -63,13 +63,9 @@ class OwnerRequiredMixin(LoginRequiredMixin):
                 f"{self.__class__.__name__} must define 'owner_field_name'."
             )
 
-        # Obtém o queryset base
         # Nota: Usamos self.model.objects.all() para garantir um
         # fresh start, mas poderíamos usar super().get_queryset()
         # se quiséssemos herdar filtros anteriores.
-        if self.model is None:
-            raise ImproperlyConfigured("Model cannot be None")
-
         queryset = self.model.objects.all()
 
         # Filtra dinamicamente pelo proprietário
@@ -134,7 +130,7 @@ class RedirectAuthenticatedUserMixin:
             )
 
             # Redireciona para a página principal
-            return redirect(self.redirect_url_authenticated)
+            return redirect(str(self.redirect_url_authenticated))
 
         # Se não estiver autenticado, continua para a view
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]

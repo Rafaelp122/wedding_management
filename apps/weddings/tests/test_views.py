@@ -402,10 +402,9 @@ class UpdateWeddingStatusViewTest(TestCase):
         data = {"status": "COMPLETED"}
         response = self.client.post(self.url, data)
 
-        # Como a view usa get_queryset().get(), e o filtro não acha o casamento para o hacker,
-        # ele cai no except Wedding.DoesNotExist e retorna 400 (conforme sua implementação)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("Casamento não encontrado", response.content.decode())
+        # View retorna 403 para acesso não autorizado (ownership check)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("Sem permissão", response.content.decode())
 
     def test_get_method_not_allowed(self):
         """
