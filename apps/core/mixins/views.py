@@ -1,10 +1,10 @@
 import logging
 from typing import Any, Dict, Optional
+from urllib.parse import parse_qs, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
-from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger(__name__)
 

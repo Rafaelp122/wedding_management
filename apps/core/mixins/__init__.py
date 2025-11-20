@@ -22,11 +22,7 @@ View Mixins:
 from .auth import OwnerRequiredMixin, RedirectAuthenticatedUserMixin
 
 # Form Mixins
-from .forms import (
-    BaseFormStylingMixin,
-    FormStylingMixin,
-    FormStylingMixinLarge,
-)
+from .forms import BaseFormStylingMixin, FormStylingMixin, FormStylingMixinLarge
 
 # View Mixins
 from .views import BaseHtmxResponseMixin, HtmxUrlParamsMixin
