@@ -1,0 +1,24 @@
+{
+  "include": ["."],
+  "exclude": [
+    "**/migrations",
+    "**/__pycache__",
+    "venv",
+    ".venv"
+  ],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "strict",
+
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "./",
+        "./apps"
+      ]
+    }
+  ]
+}
