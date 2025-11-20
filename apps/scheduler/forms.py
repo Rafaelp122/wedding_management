@@ -1,29 +1,32 @@
+import logging
+from datetime import datetime
+
 from django import forms
-from .models import Event
-from apps.weddings.models import Wedding
-from apps.core.utils.forms_utils import add_placeholder
-from apps.core.mixins.forms import FormStylingMixin
 from django.utils import timezone
 
+from apps.core.mixins.forms import FormStylingMixin
+from apps.core.utils.forms_utils import add_placeholder
 
-class EventForm(forms.ModelForm):
+from .models import Event
+
+logger = logging.getLogger(__name__)
+
+
+class EventForm(FormStylingMixin, forms.ModelForm):
     """
-    Formulário usado no modal de eventos do calendário.
-    Possui campos visíveis para horários e um campo oculto para a data.
+    Formulário para criação e edição de eventos no calendário.
+    Herda de FormStylingMixin para aplicar classes Bootstrap automaticamente.
     """
 
     event_date = forms.DateField(widget=forms.HiddenInput(), required=True)
 
-    # Campos de hora de início e fim (separados da data)
     start_time_input = forms.TimeField(
-        label="Hora de Início",
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(attrs={"type": "time"}),
         required=True,
     )
 
     end_time_input = forms.TimeField(
-        label="Hora de Fim",
-        widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}),
+        widget=forms.TimeInput(attrs={"type": "time"}),
         required=False,
     )
 
@@ -34,37 +37,24 @@ class EventForm(forms.ModelForm):
             "location",
             "description",
             "event_type",
-            "event_date",
-            "start_time_input",
-            "end_time_input",
         ]
-        widgets = {
-            "title": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Ex: Reunião com Decorador",
-                }
-            ),
-            "location": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Ex: Escritório Decoração Fina",
-                }
-            ),
-            "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "event_type": forms.Select(attrs={"class": "form-select"}),
-        }
         labels = {
             "title": "Título do Evento",
             "location": "Local",
             "description": "Descrição",
             "event_type": "Tipo de Evento",
         }
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         clicked_date = kwargs.pop("clicked_date", None)
         instance = kwargs.get("instance")
         super().__init__(*args, **kwargs)
+
+        add_placeholder(self.fields["title"], "Ex: Reunião com Decorador")
+        add_placeholder(self.fields["location"], "Ex: Escritório Decoração Fina")
 
         # Preenche os campos ao editar um evento existente
         if instance:
@@ -81,68 +71,52 @@ class EventForm(forms.ModelForm):
         elif clicked_date:
             self.fields["event_date"].initial = clicked_date
 
-    def clean(self):
-        """Combina data e hora nos campos 'start_time' e 'end_time'."""
-        cleaned_data = super().clean()
-        event_date = cleaned_data.get("event_date")
-        start_time_input = cleaned_data.get("start_time_input")
-        end_time_input = cleaned_data.get("end_time_input")
+    def clean_end_time_input(self):
+        """Valida se o horário de fim é posterior ao horário de início."""
+        end_time = self.cleaned_data.get("end_time_input")
+        start_time = self.cleaned_data.get("start_time_input")
 
+        if end_time and start_time and end_time <= start_time:
+            logger.warning(
+                "Tentativa de cadastro com horário de fim antes do início: %s <= %s",
+                end_time,
+                start_time,
+            )
+            raise forms.ValidationError(
+                "O horário de fim deve ser posterior ao horário de início."
+            )
+
+        return end_time
+
+    def save(self, commit=True):
+        """
+        Combina data e hora nos campos start_time e end_time.
+
+        Args:
+            commit: Se True, salva no banco. Se False, apenas prepara a instância.
+
+        Returns:
+            Instância do Event com datas combinadas.
+        """
+        instance = super().save(commit=False)
+
+        event_date = self.cleaned_data.get("event_date")
+        start_time_input = self.cleaned_data.get("start_time_input")
+        end_time_input = self.cleaned_data.get("end_time_input")
+
+        # Combina data + hora de início
         if event_date and start_time_input:
-            cleaned_data["start_time"] = f"{event_date} {start_time_input}"
+            instance.start_time = timezone.make_aware(
+                datetime.combine(event_date, start_time_input)
+            )
 
+        # Combina data + hora de fim (opcional)
         if event_date and end_time_input:
-            cleaned_data["end_time"] = f"{event_date} {end_time_input}"
+            instance.end_time = timezone.make_aware(
+                datetime.combine(event_date, end_time_input)
+            )
 
-        return cleaned_data
+        if commit:
+            instance.save()
 
-
-class EventCrudForm(FormStylingMixin, forms.ModelForm):
-    """Formulário completo para criar e editar eventos no
-    painel administrativo."""
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop("user", None)
-        super().__init__(*args, **kwargs)
-
-        # Filtra os casamentos para exibir apenas os do planner logado
-        if user:
-            self.fields["wedding"].queryset = Wedding.objects.filter(planner=user)
-        elif "wedding" in self.fields:
-            self.fields["wedding"].queryset = Wedding.objects.none()
-
-        # Adiciona placeholders para melhorar a experiência do usuário
-        add_placeholder(self.fields["title"], "Ex: Reunião com fornecedor")
-        add_placeholder(self.fields["description"], "Ex: Discutir flores e decoração")
-        add_placeholder(self.fields["event_type"], "Selecione um tipo")
-        add_placeholder(self.fields["wedding"], "Selecione um casamento (opcional)")
-
-    class Meta:
-        model = Event
-        fields = [
-            "title",
-            "wedding",
-            "start_time",
-            "end_time",
-            "event_type",
-            "description",
-            "location",
-        ]
-        widgets = {
-            "start_time": forms.DateTimeInput(
-                attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
-            ),
-            "end_time": forms.DateTimeInput(
-                attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
-            ),
-            "description": forms.Textarea(attrs={"rows": 4}),
-        }
-        labels = {
-            "title": "Título do Evento",
-            "wedding": "Casamento Vinculado",
-            "start_time": "Data e Hora de Início",
-            "end_time": "Data e Hora de Fim",
-            "event_type": "Tipo de Evento",
-            "description": "Descrição",
-            "location": "Local",
-        }
+        return instance
