@@ -1,7 +1,8 @@
 import logging
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
-from django.http import HttpResponseBadRequest
+from django.http import Http404, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 
 # Importa os Mixins GENÉRICOS do Core
@@ -23,72 +24,45 @@ logger = logging.getLogger(__name__)
 
 class ItemWeddingContextMixin(LoginRequiredMixin):
     """
-    Mixin de Contexto e Segurança (Standalone) - OBRIGATÓRIO
-
-    Este é o mixin mais importante do app 'items'. Sua única
-    responsabilidade é carregar 'self.wedding' ANTES de qualquer
-    outra lógica da view (via 'dispatch').
-
-    Ele garante que 'self.wedding' está sempre disponível e que
-    o usuário tem permissão para acessá-lo.
+    Mixin de Contexto e Segurança.
+    Carrega 'self.wedding' e protege o acesso.
     """
 
     def dispatch(self, request, *args, **kwargs):
-        """
-        Garante a segurança e carrega 'self.wedding' antes da view executar.
-
-        Este método atua como um portão de segurança:
-        1. Se 'wedding_id' estiver na URL (views de Lista/Criação),
-           ele o carrega.
-        2. Se 'pk' (do item) estiver na URL (views de Edição/Remoção),
-           ele carrega o item, e dele, o casamento.
-        3. Em ambos os casos, valida se o 'request.user' é o 'planner'.
-        """
         wedding_id = self.kwargs.get("wedding_id")
+        pk = self.kwargs.get("pk")
 
-        if not wedding_id:
-            # Caminho 1: Carregar via 'pk' do Item (Update, Delete)
-            if "pk" in self.kwargs:
-                pk = self.kwargs["pk"]
-                logger.debug(f"Carregando contexto de item via pk: {pk}")
-                try:
-                    item = Item.objects.select_related("wedding__planner").get(
-                        pk=self.kwargs["pk"]
-                    )
-                    # Checagem de segurança
-                    if item.wedding.planner != self.request.user:
-                        logger.warning(
-                            f"SEGURANÇA: Usuário {self.request.user.id} "
-                            f"tentou acessar o item {pk} (do casamento {item.wedding.id}) "
-                            "sem permissão."
-                        )
-                        return HttpResponseBadRequest("Permissão negada.")
-                    self.wedding = item.wedding
-                except Item.DoesNotExist:
-                    logger.warning(
-                        f"Tentativa de acesso a um item (pk={pk}) "
-                        f"que não existe. Usuário: {self.request.user.id}"
-                    )
-                    return HttpResponseBadRequest("Item não encontrado.")
-            else:
-                # Erro: URL não tem nem 'wedding_id' nem 'pk'
-                logger.error(
-                    f"URL malformada para ItemWeddingContextMixin: "
-                    f"Sem 'wedding_id' ou 'pk'. Kwargs: {self.kwargs}"
+        if not wedding_id and not pk:
+            logger.error(f"URL malformada: Sem 'wedding_id' ou 'pk'. Kwargs: {self.kwargs}")
+            return HttpResponseBadRequest("ID do Casamento ou do Item não encontrado.")
+
+        # Caminho 1: Carregar via 'pk' do Item (Update, Delete)
+        if pk:
+            # Tenta buscar o item ou lança 404 automaticamente
+            # select_related otimiza a query para trazer o planner junto
+            try:
+                item = Item.objects.select_related("wedding__planner").get(pk=pk)
+            except Item.DoesNotExist:
+                logger.warning(f"Item {pk} não encontrado para usuário {request.user.id}")
+                raise Http404("Item não encontrado.")
+
+            # Checagem de segurança (403 Forbidden)
+            if item.wedding.planner != request.user:
+                logger.warning(
+                    f"SEGURANÇA: Usuário {request.user.id} tentou acessar item {pk} de outro planner."
                 )
-                return HttpResponseBadRequest(
-                    "ID do Casamento ou do Item não encontrado."
-                )
-        else:
-            # Caminho 2: Carregar via 'wedding_id' (List, Create)
-            logger.debug(f"Carregando contexto de item via wedding_id: {wedding_id}")
-            # get_object_or_404 já faz a checagem de segurança
-            # (planner=self.request.user)
+                return HttpResponseForbidden("Você não tem permissão para acessar este item.")
+
+            self.wedding = item.wedding
+
+        # Caminho 2: Carregar via 'wedding_id' (List, Create)
+        elif wedding_id:
+            # get_object_or_404 já lida com DoesNotExist -> 404
+            # Filtramos por planner=request.user para garantir segurança (404 se não for dono)
             self.wedding = get_object_or_404(
                 Wedding, id=wedding_id, planner=self.request.user
             )
 
-        logger.debug(f"Contexto do casamento {self.wedding.id} carregado com sucesso.")
         return super().dispatch(request, *args, **kwargs)
 
 
