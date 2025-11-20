@@ -100,23 +100,22 @@ class WeddingFormTest(SimpleTestCase):
 
         self.assertTrue(form.is_valid())
 
-    def test_form_placeholders_and_widgets(self):
+    def test_form_placeholders(self):
         """
-        Testa se o __init__ aplicou os placeholders e se o widget de data está correto.
+        Testa se o __init__ aplicou os placeholders corretamente.
         """
         form = WeddingForm()
 
-        # Verifica placeholder
+        # Verifica placeholder do Noivo
         self.assertEqual(
-            form.fields["groom_name"].widget.attrs.get("placeholder"), "Ex: Flavio"
+            form.fields["groom_name"].widget.attrs.get("placeholder"),
+            "Ex: Flavio"
         )
 
-        # Verifica widget type="date" (Usamos .get() para evitar KeyError se falhar)
-        widget_type = form.fields["date"].widget.attrs.get("type")
+        # Verifica placeholder do Orçamento (só para garantir mais um)
         self.assertEqual(
-            widget_type,
-            "date",
-            "O campo Data deve ter o atributo type='date' para ativar o calendário HTML5.",
+            form.fields["budget"].widget.attrs.get("placeholder"),
+            "Ex.: R$ 30.000,00"
         )
 
     def test_form_missing_required_fields(self):

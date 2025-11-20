@@ -24,7 +24,6 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
         add_placeholder(self.fields["bride_name"], "Ex: Mirela")
         add_placeholder(self.fields["budget"], "Ex.: R$ 30.000,00")
         add_placeholder(self.fields["location"], "Ex.: Igreja Matriz, São Gonçalo, RJ")
-        self.fields["date"].widget.attrs["type"] = "date"
 
     class Meta:
         model = Wedding
@@ -35,6 +34,9 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
             "date": "Data",
             "budget": "Orçamento",
             "location": "Localização",
+        }
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}),
         }
 
     def clean_budget(self):
