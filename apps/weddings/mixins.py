@@ -6,7 +6,12 @@ from django.http import HttpRequest, HttpResponse
 
 from apps.core.constants import GRADIENTS
 from apps.core.mixins.auth import OwnerRequiredMixin
-from apps.core.mixins.views import BaseHtmxResponseMixin, HtmxUrlParamsMixin
+from apps.core.mixins.forms import FormLayoutMixin
+from apps.core.mixins.views import (
+    BaseHtmxResponseMixin,
+    HtmxUrlParamsMixin,
+    ModalContextMixin,
+)
 
 from .constants import (
     PAGINATION_ENDS,
@@ -47,58 +52,34 @@ class PlannerOwnershipMixin(OwnerRequiredMixin):
     owner_field_name = "planner"
 
 
-class WeddingModalContextMixin:
+class WeddingModalContextMixin(ModalContextMixin):
     """
-    Fornece contexto para modais de formulário de Wedding.
+    Domain-Specific Modal Context Mixin para Wedding.
 
-    Este mixin extrai a lógica comum de construção de contexto
-    para modais, evitando duplicação entre Create/Update views.
+    Herda de ModalContextMixin (genérico do core) e pode
+    especializar comportamentos específicos do domínio Wedding,
+    se necessário.
+
+    Este mixin fornece contexto para modais de formulário de Wedding,
+    evitando duplicação entre Create/Update views.
 
     Attributes:
         modal_title: Título do modal.
         submit_button_text: Texto do botão de submit.
     """
 
-    modal_title: str = ""
-    submit_button_text: str = ""
-
-    def get_modal_title(self) -> str:
-        """Retorna o título do modal."""
-        return self.modal_title
-
-    def get_submit_button_text(self) -> str:
-        """Retorna o texto do botão de submit."""
-        return self.submit_button_text
-
-    def get_hx_post_url(self) -> str:
-        """
-        Retorna a URL para o POST do formulário.
-
-        Deve ser implementado pela view concreta.
-        """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must implement get_hx_post_url()"
-        )
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        """Adiciona contexto do modal ao contexto do template."""
-        context = super().get_context_data(**kwargs)  # type: ignore[misc]
-        context["modal_title"] = self.get_modal_title()
-        context["submit_button_text"] = self.get_submit_button_text()
-        context["hx_post_url"] = self.get_hx_post_url()
-        return context
+    pass
 
 
-class WeddingFormLayoutMixin:
+class WeddingFormLayoutMixin(FormLayoutMixin):
     """
     Domain-Specific Form Layout Mixin (Standalone)
 
     Define o layout estático, ícones e classes (lógica de
     apresentação específica) para o formulário de Wedding.
 
-    Este mixin adiciona informações de apresentação ao contexto
-    do template, como classes CSS para layout responsivo e
-    ícones Font Awesome para cada campo.
+    Herda de FormLayoutMixin (genérico do core) e especializa
+    os atributos para o domínio de Wedding.
 
     Attributes:
         form_class: Classe do formulário Django.
@@ -129,24 +110,6 @@ class WeddingFormLayoutMixin:
         "location": "fas fa-location-dot",
         "budget": "fas fa-money-bill-wave",
     }
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        """
-        Adiciona as variáveis de layout (dicionários, classes)
-        ao contexto do template do formulário.
-
-        Args:
-            **kwargs: Argumentos de contexto adicionais.
-
-        Returns:
-            Dicionário com o contexto completo incluindo dados
-            de layout.
-        """
-        ctx = super().get_context_data(**kwargs)  # type: ignore[misc]
-        ctx["form_layout_dict"] = self.form_layout_dict
-        ctx["default_col_class"] = self.default_col_class
-        ctx["form_icons"] = self.form_icons
-        return ctx
 
 
 # --- Mixins Granulares de Lógica de Lista ---
