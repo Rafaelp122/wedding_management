@@ -24,29 +24,40 @@ logger = logging.getLogger(__name__)
 
 class ItemWeddingContextMixin(LoginRequiredMixin):
     """
-    Mixin de Contexto e Segurança.
-    Carrega 'self.wedding' e protege o acesso.
+    Mixin de Contexto e Segurança (Standalone) - OBRIGATÓRIO
+
     """
 
     def dispatch(self, request, *args, **kwargs):
+        # Se não estiver autenticado, redireciona para o login imediatamente.
+        # Isso impede que o código tente usar 'AnonymousUser' nas queries abaixo.
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        # -----------------------------
+
         wedding_id = self.kwargs.get("wedding_id")
         pk = self.kwargs.get("pk")
 
         if not wedding_id and not pk:
-            logger.error(f"URL malformada: Sem 'wedding_id' ou 'pk'. Kwargs: {self.kwargs}")
+            logger.error(
+                f"URL malformada para ItemWeddingContextMixin: "
+                f"Sem 'wedding_id' ou 'pk'. Kwargs: {self.kwargs}"
+            )
             return HttpResponseBadRequest("ID do Casamento ou do Item não encontrado.")
 
-        # Caminho 1: Carregar via 'pk' do Item (Update, Delete)
+        # Caminho 1: Carregar via 'pk' do Item (Update, Delete, Status)
         if pk:
             # Tenta buscar o item ou lança 404 automaticamente
-            # select_related otimiza a query para trazer o planner junto
             try:
+                # select_related otimiza a query
                 item = Item.objects.select_related("wedding__planner").get(pk=pk)
             except Item.DoesNotExist:
-                logger.warning(f"Item {pk} não encontrado para usuário {request.user.id}")
+                logger.warning(
+                    f"Tentativa de acesso a item inexistente (pk={pk}). Usuário: {request.user.id}"
+                )
                 raise Http404("Item não encontrado.")
 
-            # Checagem de segurança (403 Forbidden)
+            # Checagem de segurança
             if item.wedding.planner != request.user:
                 logger.warning(
                     f"SEGURANÇA: Usuário {request.user.id} tentou acessar item {pk} de outro planner."
@@ -58,11 +69,12 @@ class ItemWeddingContextMixin(LoginRequiredMixin):
         # Caminho 2: Carregar via 'wedding_id' (List, Create)
         elif wedding_id:
             # get_object_or_404 já lida com DoesNotExist -> 404
-            # Filtramos por planner=request.user para garantir segurança (404 se não for dono)
+            # Filtramos por planner=request.user para garantir segurança
             self.wedding = get_object_or_404(
                 Wedding, id=wedding_id, planner=self.request.user
             )
 
+        # Sucesso
         return super().dispatch(request, *args, **kwargs)
 
 

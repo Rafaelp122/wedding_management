@@ -126,7 +126,7 @@ class AddItemView(
         """Loga falhas de validação do formulário."""
         logger.warning(
             f"Tentativa de criação de item falhou (inválido) "
-            f"para o casamento {self.wedding.id}: {form.errors}"
+            f"para o casamento {self.wedding.id}: {form.errors.as_text()}"
         )
         return super().form_invalid(form)
 
