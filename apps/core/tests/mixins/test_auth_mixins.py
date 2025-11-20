@@ -293,7 +293,7 @@ class RedirectAuthenticatedUserMixinTest(SimpleTestCase):
 
         # Verificamos a mensagem diretamente no storage
         messages = list(request._messages)
-        self.assertEqual(str(messages[0]), "Bem vindo de volta,João!")
+        self.assertEqual(str(messages[0]), "Bem vindo de volta, João!")
 
     def test_redirect_message_fallback_to_username(self):
         # MOCK: Usuário SEM first_name (string vazia ou None)
@@ -309,4 +309,4 @@ class RedirectAuthenticatedUserMixinTest(SimpleTestCase):
         view.dispatch(request)
 
         messages = list(request._messages)
-        self.assertEqual(str(messages[0]), "Bem vindo de volta,usuario_sem_nome!")
+        self.assertEqual(str(messages[0]), "Bem vindo de volta, usuario_sem_nome!")
