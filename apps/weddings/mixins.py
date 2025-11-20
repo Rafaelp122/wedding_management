@@ -1,6 +1,9 @@
 import logging
+from typing import Any, Dict, List
 
 from django.core.paginator import Paginator
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse
 
 from apps.core.constants import GRADIENTS
 from apps.core.mixins.auth import OwnerRequiredMixin
@@ -19,7 +22,16 @@ logger = logging.getLogger(__name__)
 
 
 class PlannerOwnershipMixin(OwnerRequiredMixin):
-    """Define model e owner_field_name para o OwnerRequiredMixin."""
+    """
+    Define model e owner_field_name para o OwnerRequiredMixin.
+
+    Este mixin especializa o OwnerRequiredMixin genérico para o modelo
+    Wedding, configurando os atributos necessários.
+
+    Usage:
+        class MyWeddingView(PlannerOwnershipMixin, UpdateView):
+            fields = ['date', 'location', 'budget']
+    """
 
     model = Wedding
     owner_field_name = "planner"
@@ -31,6 +43,20 @@ class WeddingFormLayoutMixin:
 
     Define o layout estático, ícones e classes (lógica de
     apresentação específica) para o formulário de Wedding.
+
+    Este mixin adiciona informações de apresentação ao contexto
+    do template, como classes CSS para layout responsivo e
+    ícones Font Awesome para cada campo.
+
+    Attributes:
+        form_class: Classe do formulário Django.
+        template_name: Nome do template a ser renderizado.
+        form_layout_dict: Dicionário com classes CSS Bootstrap
+                         para cada campo.
+        default_col_class: Classe CSS padrão para campos
+                          não especificados.
+        form_icons: Dicionário com ícones Font Awesome para
+                   cada campo.
     """
 
     form_class = WeddingForm
@@ -52,12 +78,19 @@ class WeddingFormLayoutMixin:
         "budget": "fas fa-money-bill-wave",
     }
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Adiciona as variáveis de layout (dicionários, classes)
         ao contexto do template do formulário.
+
+        Args:
+            **kwargs: Argumentos de contexto adicionais.
+
+        Returns:
+            Dicionário com o contexto completo incluindo dados
+            de layout.
         """
-        ctx = super().get_context_data(**kwargs)
+        ctx = super().get_context_data(**kwargs)  # type: ignore[misc]
         ctx["form_layout_dict"] = self.form_layout_dict
         ctx["default_col_class"] = self.default_col_class
         ctx["form_icons"] = self.form_icons
@@ -76,9 +109,20 @@ class WeddingQuerysetMixin:
 
     Responsável *apenas* por construir o queryset de 'Wedding'.
     (lógica de dados específica).
+
+    Este mixin encapsula toda a lógica de filtragem, busca e
+    ordenação de casamentos, utilizando os métodos personalizados
+    do QuerySet Manager.
+
+    Attributes:
+        request: HttpRequest object (deve ser fornecido pela View).
     """
 
-    def get_base_queryset(self, sort="id", q=None, status=None):
+    request: HttpRequest
+
+    def get_base_queryset(
+        self, sort: str = "id", q: str | None = None, status: str | None = None
+    ) -> "QuerySet[Any, Any]":
         """
         Constrói o queryset base para 'Wedding' logado.
 
@@ -86,19 +130,28 @@ class WeddingQuerysetMixin:
         ordenação (sort), além de anotar contagens.
 
         Args:
-            sort (str): O campo de ordenação.
-            q (Optional[str]): O termo de busca.
-            status (Optional[str]): O filtro de status.
+            sort: O campo de ordenação (default: 'id').
+            q: O termo de busca (opcional).
+            status: O filtro de status (opcional).
 
         Returns:
-            QuerySet: O queryset filtrado e anotado.
+            QuerySet filtrado, anotado e ordenado de Wedding.
         """
         queryset = Wedding.objects.filter(planner=self.request.user)
-        queryset = queryset.with_effective_status().apply_search(q).apply_sort(sort)
+        # type: ignore - métodos customizados do WeddingQuerySet
+        queryset = (  # type: ignore[assignment]
+            queryset.with_effective_status()  # type: ignore[attr-defined]
+            .apply_search(q)  # type: ignore[attr-defined]
+            .apply_sort(sort)  # type: ignore[attr-defined]
+        )
         if status:
-            queryset = queryset.filter(effective_status=status)
-        queryset = queryset.with_counts_and_progress()
-        return queryset
+            # type: ignore - filtragem customizada
+            queryset = queryset.filter(  # type: ignore[assignment]
+                effective_status=status
+            )
+        # type: ignore - método customizado do WeddingQuerySet
+        queryset = queryset.with_counts_and_progress()  # type: ignore[assignment,attr-defined]
+        return queryset  # type: ignore[return-value]
 
 
 class WeddingPaginationContextMixin:
@@ -108,30 +161,59 @@ class WeddingPaginationContextMixin:
     Responsável *apenas* por paginar o queryset e formatar
     o contexto final. Possui uma *dependência* implícita do
     'get_base_queryset' (fornecido pelo WeddingQuerysetMixin).
+
+    Este mixin formata os dados de wedding para exibição,
+    adicionando informações visuais como gradientes e contadores.
+
+    Attributes:
+        paginate_by: Número de itens por página.
+        request: HttpRequest object (deve ser fornecido pela View).
     """
 
     paginate_by = 6
+    request: HttpRequest
 
-    def _build_context_list(self, queryset):
+    def _build_context_list(
+        self, queryset: Any
+    ) -> List[Dict[str, Any]]:
         """
         Formata a lista de 'Wedding' para o template.
 
         Adiciona dados contextuais (ex: gradientes, contagens)
         que não são necessários na paginação pura.
+
+        Args:
+            queryset: QuerySet ou lista de Wedding a ser formatado.
+
+        Returns:
+            Lista de dicionários com dados formatados para o template.
+
+        Note:
+            Aceita Any devido à incompatibilidade de tipos entre
+            Page.object_list e QuerySet no sistema de tipos.
         """
         return [
             {
                 "wedding": wedding,
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
-                "items_count": wedding.items_count,
-                "contracts_count": wedding.contracts_count,
-                "effective_status": wedding.effective_status,
-                "progress": wedding.progress,
+                # type: ignore - campos anotados pelo QuerySet
+                "items_count": (
+                    wedding.items_count  # type: ignore[attr-defined]
+                ),
+                "contracts_count": (
+                    wedding.contracts_count  # type: ignore[attr-defined]
+                ),
+                "effective_status": (
+                    wedding.effective_status  # type: ignore[attr-defined]
+                ),
+                "progress": wedding.progress,  # type: ignore[attr-defined]
             }
             for idx, wedding in enumerate(queryset)
         ]
 
-    def build_paginated_context(self, request_params):
+    def build_paginated_context(
+        self, request_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Constrói o contexto completo para a lista de casamentos.
 
@@ -142,10 +224,11 @@ class WeddingPaginationContextMixin:
         4. Formata o contexto final para o template.
 
         Args:
-            request_params (dict): Um dicionário de query params (ex: page, sort, q).
+            request_params: Um dicionário de query params
+                           (ex: page, sort, q, status).
 
         Returns:
-            dict: Um contexto pronto para ser usado no template.
+            Dicionário com contexto pronto para o template.
         """
         page = request_params.get("page", 1)
         sort = request_params.get("sort", "id")
@@ -153,11 +236,15 @@ class WeddingPaginationContextMixin:
         status = request_params.get("status", None)
 
         logger.debug(
-            f"Construindo contexto: page={page}, sort={sort}, q={q}, status={status}"
+            f"Construindo contexto: page={page}, sort={sort}, "
+            f"q={q}, status={status}"
         )
 
         # Dependência: chama get_base_queryset()
-        qs = self.get_base_queryset(sort=sort, q=q, status=status)
+        # type: ignore - método fornecido por WeddingQuerysetMixin
+        qs = self.get_base_queryset(  # type: ignore[attr-defined]
+            sort=sort, q=q, status=status
+        )
 
         paginator = Paginator(qs, self.paginate_by)
         page_obj = paginator.get_page(page)
@@ -196,31 +283,47 @@ class WeddingHtmxListResponseMixin(
 
     Possui uma *dependência* direta do 'WeddingPaginationContextMixin'
     para obter o 'build_paginated_context'.
+
+    Este mixin conecta a lógica de paginação de Wedding com o
+    sistema de respostas HTMX genérico do core.
+
+    Attributes:
+        htmx_template_name: Template parcial para lista de weddings.
+        htmx_retarget_id: ID do container alvo no DOM.
     """
 
     htmx_template_name = "weddings/partials/_list_and_pagination.html"
     htmx_retarget_id = "#wedding-list-container"
 
-    def get_htmx_context_data(self, **kwargs):
+    def get_htmx_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Prepara o contexto para a resposta HTMX.
 
         Busca os parâmetros da URL do HTMX e os utiliza para
         construir o contexto de paginação.
+
+        Args:
+            **kwargs: Argumentos de contexto adicionais (ignorados).
+
+        Returns:
+            Dicionário com contexto completo para o template.
         """
         params = self._get_params_from_htmx_url()
         context = self.build_paginated_context(params)
         return context
 
-    def render_wedding_list_response(self, trigger="listUpdated"):
+    def render_wedding_list_response(
+        self, trigger: str = "listUpdated"
+    ) -> HttpResponse:
         """
         Helper para renderizar a resposta HTMX da lista de casamentos.
 
         Args:
-            trigger (str): O nome do evento HTMX a ser disparado.
+            trigger: O nome do evento HTMX a ser disparado
+                    (default: 'listUpdated').
 
         Returns:
-            HttpResponse: A resposta HTMX renderizada.
+            HttpResponse com HTML renderizado e headers HTMX.
         """
         return self.render_htmx_response(trigger=trigger)
 
@@ -228,7 +331,9 @@ class WeddingHtmxListResponseMixin(
 # --- Mixin de Composição (Facade Pattern) ---
 
 
-class WeddingListActionsMixin(WeddingQuerysetMixin, WeddingHtmxListResponseMixin):
+class WeddingListActionsMixin(
+    WeddingQuerysetMixin, WeddingHtmxListResponseMixin
+):
     """
     Mixin de Composição (Composition Mixin)
 
@@ -239,6 +344,12 @@ class WeddingListActionsMixin(WeddingQuerysetMixin, WeddingHtmxListResponseMixin
     O objetivo é puramente de conveniência e de seguir o princípio DRY
     (Don't Repeat Yourself) nas Views: em vez de uma View herdar
     3 ou 4 mixins de lista, ela herda apenas este.
+
+    Usage:
+        class WeddingListView(WeddingListActionsMixin, ListView):
+            # Acesso a get_base_queryset, build_paginated_context,
+            # e render_wedding_list_response em uma única herança
+            pass
     """
 
     pass
