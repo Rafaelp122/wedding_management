@@ -3,5 +3,4 @@ colorlog==6.10.1
 Django==5.2.4
 django-debug-toolbar==6.1.0
 django-htmx==1.23.2
-djangorestframework==3.16.1
 sqlparse==0.5.3
