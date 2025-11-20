@@ -1,45 +1,91 @@
-from rest_framework import viewsets, permissions
-from rest_framework.response import Response
-from rest_framework.decorators import action
+"""
+Views JSON simples para o Scheduler.
+
+Substituição do DRF por views Django nativas para reduzir dependências.
+"""
+
+import logging
+
+from django.http import JsonResponse
+from django.views import View
+
+from apps.core.mixins.auth import LoginRequiredMixin
 
 from .models import Event
-from .serializers import EventSerializer
+
+logger = logging.getLogger(__name__)
 
 
-class IsPlannerOwner(permissions.BasePermission):
-    """Permissão personalizada: apenas o planner dono do evento pode acessar/modificar."""
+class EventsJsonView(LoginRequiredMixin, View):
+    """
+    Retorna eventos em formato JSON para o FullCalendar.
 
-    def has_object_permission(self, request, view, obj):
-        return obj.planner == request.user
+    Esta view substitui o EventViewSet do DRF, eliminando a
+    dependência do Django Rest Framework para uma simples
+    listagem de eventos.
 
-    def has_permission(self, request, view):
-        return request.user.is_authenticated
+    Query Parameters:
+        wedding_id (int): ID do casamento para filtrar eventos.
 
+    Returns:
+        JSON array com eventos no formato FullCalendar:
+        [{
+            id: int,
+            title: str,
+            start: ISO datetime string,
+            end: ISO datetime string | null,
+            description: str,
+            event_type: str,
+            location: str
+        }]
 
-class EventViewSet(viewsets.ModelViewSet):
-    """ViewSet DRF para CRUD de eventos, filtrados pelo planner logado."""
+    Security:
+        - Requer autenticação (LoginRequiredMixin)
+        - Filtra apenas eventos do planner logado
+        - Opcionalmente filtra por wedding_id
+    """
 
-    serializer_class = EventSerializer
-    permission_classes = [IsPlannerOwner]
+    def get(self, request):
+        """
+        GET handler que retorna eventos do usuário em JSON.
 
-    def get_queryset(self):
-        """Retorna apenas os eventos do planner logado (ou de um casamento específico)."""
-        user = self.request.user
-        wedding_id = self.request.query_params.get("wedding_id")
+        Args:
+            request: HttpRequest com query params opcionais.
 
-        queryset = Event.objects.filter(planner=user)
+        Returns:
+            JsonResponse com array de eventos.
+        """
+        # Filtra eventos do usuário logado usando QuerySet customizado
+        queryset = Event.objects.for_planner(request.user)
+
+        # Filtra por casamento se fornecido
+        wedding_id = request.GET.get("wedding_id")
         if wedding_id:
-            queryset = queryset.filter(wedding_id=wedding_id)
+            queryset = queryset.for_wedding_id(wedding_id)
+            logger.info(
+                f"Events API called: wedding_id={wedding_id}, "
+                f"user={request.user.username}, "
+                f"count={queryset.count()}"
+            )
+        else:
+            logger.info(
+                f"Events API called: all weddings, "
+                f"user={request.user.username}, "
+                f"count={queryset.count()}"
+            )
 
-        return queryset
+        # Serializa manualmente para o formato FullCalendar
+        events = [
+            {
+                "id": event.id,
+                "title": event.title,
+                "start": event.start_time.isoformat(),
+                "end": event.end_time.isoformat() if event.end_time else None,
+                "description": event.description or "",
+                "event_type": event.event_type,
+                "location": event.location or "",
+            }
+            for event in queryset
+        ]
 
-    def perform_create(self, serializer):
-        """Define o planner automaticamente como o usuário logado."""
-        serializer.save(planner=self.request.user)
-
-    @action(detail=False, methods=["get"])
-    def my_events(self, request):
-        """Endpoint extra: retorna todos os eventos do planner logado."""
-        events = self.get_queryset()
-        serializer = self.get_serializer(events, many=True)
-        return Response(serializer.data)
+        return JsonResponse(events, safe=False)
