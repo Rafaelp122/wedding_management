@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.test import SimpleTestCase
 from django.urls import resolve, reverse
 
-from apps.users import views
+from apps.users.web import views
 
 
 class UsersUrlsTest(SimpleTestCase):

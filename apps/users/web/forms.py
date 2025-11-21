@@ -10,7 +10,7 @@ from django.contrib.auth.forms import (
 from apps.core.mixins.forms import FormStylingMixin, FormStylingMixinLarge
 from apps.core.utils.forms_utils import add_placeholder
 
-from .models import User
+from ..models import User
 
 logger = logging.getLogger(__name__)
 

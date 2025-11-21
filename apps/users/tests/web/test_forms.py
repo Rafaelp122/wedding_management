@@ -2,7 +2,11 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from apps.users.forms import CustomUserChangeForm, CustomUserCreationForm, SignInForm
+from apps.users.web.forms import (
+    CustomUserChangeForm,
+    CustomUserCreationForm,
+    SignInForm,
+)
 from apps.users.models import User
 
 

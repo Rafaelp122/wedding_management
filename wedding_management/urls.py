@@ -10,8 +10,11 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # Página inicial e seções estáticas.
     path("", include("apps.pages.urls", namespace="pages")),
-    # Rotas relacionadas a autenticação e perfis de usuário
-    path("usuario/", include(("apps.users.urls", "users"), namespace="users")),
+    # Rotas relacionadas a autenticação e perfis de usuário - Interface Web
+    path(
+        "usuario/",
+        include(("apps.users.web.urls", "users"), namespace="users"),
+    ),
     # Área de casamentos (listagem, detalhes, gerenciamento) - Interface Web
     path(
         "casamentos/",
@@ -34,6 +37,7 @@ urlpatterns = [
     # --- API REST (DRF) ---
     # API v1 para integrações externas (mobile, calendários, webhooks)
     path("api/v1/", include([
+        path("", include("apps.users.api.urls")),
         path("weddings/", include("apps.weddings.api.urls")),
         path("items/", include("apps.items.api.urls")),
         path("scheduler/", include("apps.scheduler.api.urls")),
