@@ -24,35 +24,49 @@
                 <div class="d-flex align-items-center">
                   <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
                        style="width: 40px; height: 40px; background: {{ item.gradient }};">
+                    <!-- CORREÇÃO: Removido .name (supplier já é o texto) -->
                     {{ contract.supplier|slice:":1"|default:"-" }}
                   </div>
+                  <!-- CORREÇÃO: Removido .name aqui também -->
                   <div>{{ contract.supplier|default:"N/A" }}</div>
                 </div>
               </td>
               <td>{{ contract.item.name|default:"N/A" }}</td>
               <td>{{ contract.created_at|date:"d/m/Y" }}</td>
               <td>
-                {% if contract.status == "Assinado" %}
-                  <span class="badge rounded-pill bg-success-subtle text-success-emphasis">{{ contract.status }}</span>
-                {% elif contract.status == "Pendente" %}
-                  <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">{{ contract.status }}</span>
+                {% if contract.status == "COMPLETED" %}
+                  <span class="badge rounded-pill bg-success-subtle text-success-emphasis">Concluído</span>
+                {% elif contract.status == "WAITING_PLANNER" %}
+                  <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">Aguardando Você</span>
+                {% elif contract.status == "WAITING_SUPPLIER" %}
+                  <span class="badge rounded-pill bg-info-subtle text-info-emphasis">Aguardando Fornecedor</span>
+                {% elif contract.status == "WAITING_COUPLE" %}
+                  <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis">Aguardando Noivos</span>
                 {% else %}
-                  <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ contract.status }}</span>
+                  <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ contract.get_status_display }}</span>
                 {% endif %}
               </td>
               <td class="text-nowrap">
-                <a href="#" class="btn btn-link text-primary p-0 me-3" title="Visualizar">
-                    <i class="fas fa-eye" style="background: var(--color-accent); 
-                    -webkit-background-clip: text; 
-                    background-clip: text; 
-                    color: transparent;"></i>
+                
+                {% if contract.status != 'COMPLETED' %}
+                    <button type="button" class="btn btn-link p-0 me-3" 
+                            title="Coletar Assinatura" 
+                            data-url="{% url 'contracts:generate_link' contract.id %}"
+                            onclick="openSignatureModal(this)">
+                        <i class="fas fa-paper-plane" style="background: var(--color-accent); -webkit-background-clip: text; background-clip: text; color: transparent;"></i>
+                    </button>
+                {% else %}
+                    <span class="text-success me-3" title="Processo Finalizado"><i class="fas fa-check-circle"></i></span>
+                {% endif %}
+
+                <a href="{% url 'contracts:download_pdf' contract.id %}" target="_blank" class="btn btn-link p-0" title="Visualizar/Baixar Contrato">
+                    {% if contract.status == 'COMPLETED' %}
+                        <i class="fas fa-file-pdf text-danger fs-5"></i>
+                    {% else %}
+                        <i class="fas fa-file-alt text-secondary fs-5"></i>
+                    {% endif %}
                 </a>
-                <a href="#" class="btn btn-link text-primary p-0" title="Download">
-                    <i class="fas fa-download" style="background: var(--color-accent); 
-                    -webkit-background-clip: text; 
-                    background-clip: text; 
-                    color: transparent;"></i>
-                </a>
+
               </td>
             </tr>
             {% endwith %}
@@ -65,3 +79,5 @@
   {% endif %}
 
 </div>
+
+{% include 'contracts/modals/signature_modal.html' %}

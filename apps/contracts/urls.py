@@ -1,16 +1,33 @@
 from django.urls import path
-from .views import ContractsPartialView
+from .views import (
+    ContractsPartialView, 
+    GenerateSignatureLinkView, 
+    SignContractExternalView,
+    download_contract_pdf # <--- Importe a nova view
+)
 
-
-# Define o namespace para o app de contratos
 app_name = "contracts"
 
-# Rotas do app de contratos
 urlpatterns = [
-    # Exibe a lista parcial de contratos de um casamento específico
     path(
         "partial/<int:wedding_id>/",
         ContractsPartialView.as_view(),
         name="partial_contracts",
+    ),
+    path(
+        "generate-link/<int:contract_id>/",
+        GenerateSignatureLinkView.as_view(),
+        name="generate_link",
+    ),
+    path(
+        "sign/<uuid:token>/",
+        SignContractExternalView.as_view(),
+        name="sign_contract",
+    ),
+    # NOVA ROTA DE PDF
+    path(
+        "download-pdf/<int:contract_id>/",
+        download_contract_pdf,
+        name="download_pdf",
     ),
 ]

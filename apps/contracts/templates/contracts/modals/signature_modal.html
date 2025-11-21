@@ -1,0 +1,122 @@
+<!-- MODAL DE ASSINATURA -->
+<div class="modal fade" id="signatureModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Coletar Assinatura</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Copie o link abaixo e envie para o cliente, ou insira o e-mail para notificar.</p>
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold">Link Seguro de Assinatura</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="modalLinkInput" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="mb-2">
+            <label class="form-label fw-bold">Enviar por E-mail (Opcional)</label>
+            <input type="email" class="form-control" id="modalEmailInput" placeholder="cliente@email.com">
+            <!-- Input hidden para guardar o token CSRF de forma segura -->
+            <input type="hidden" id="csrfTokenModal" value="{{ csrf_token }}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        <button type="button" class="btn text-white" style="background-color: #9C27B0;" onclick="sendEmail()">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    let currentUrl = null;
+
+    // A função agora recebe o botão inteiro (element) para pegar a URL do data-attribute
+    function openSignatureModal(element) {
+        // Pega a URL gerada pelo Django no atributo data-url
+        currentUrl = element.getAttribute('data-url');
+        
+        const linkInput = document.getElementById('modalLinkInput');
+        const modal = new bootstrap.Modal(document.getElementById('signatureModal'));
+        
+        linkInput.value = "Gerando link...";
+        document.getElementById('modalEmailInput').value = "";
+        
+        modal.show();
+
+        if (!currentUrl) {
+            linkInput.value = "Erro: URL não encontrada.";
+            return;
+        }
+
+        // Busca o link via AJAX usando a URL correta
+        fetch(currentUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na rede: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                linkInput.value = data.link;
+            })
+            .catch(err => {
+                console.error("Erro detalhado:", err);
+                linkInput.value = "Erro ao gerar link. Veja o console (F12).";
+            });
+    }
+
+    function copyLink() {
+        const copyText = document.getElementById("modalLinkInput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            alert("Link copiado!");
+        });
+    }
+
+    function sendEmail() {
+        const email = document.getElementById('modalEmailInput').value;
+        if(!email) {
+            alert("Digite um e-mail.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('email', email);
+        
+        // Pega o token direto do input hidden que colocamos no HTML
+        const csrfToken = document.getElementById('csrfTokenModal').value;
+        
+        fetch(currentUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+        .then(response => {
+             if (!response.ok) throw new Error('Erro HTTP: ' + response.status);
+             return response.json();
+        })
+        .then(data => {
+            alert("Sucesso: " + data.message);
+            // Fecha o modal corretamente
+            const modalEl = document.getElementById('signatureModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+        })
+        .catch(err => {
+            console.error("Erro no envio:", err);
+            alert("Erro ao enviar e-mail. Verifique o console (F12) para detalhes.");
+        });
+    }
+</script>

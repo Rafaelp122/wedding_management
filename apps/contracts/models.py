@@ -1,5 +1,6 @@
-from django.core.exceptions import ValidationError
+import uuid
 from django.db import models
+from django.urls import reverse
 
 from apps.core.models import BaseModel
 from apps.items.models import Item
@@ -7,55 +8,65 @@ from apps.items.models import Item
 
 class Contract(BaseModel):
     """
-    Representa o contrato financeiro/jurídico associado a um item do casamento.
+    Modelo de Contrato Tripartite.
     """
-
-    STATUS_CHOICES = [
-        ("PENDING", "Pendente"),
-        ("SIGNED", "Assinado"),
-        ("COMPLETED", "Finalizado"),
+    item = models.OneToOneField(Item, on_delete=models.CASCADE, related_name="contract")
+    description = models.TextField(blank=True, help_text="Cláusulas específicas ou descrição do serviço.")
+    
+    STATUS_CHOICES = (
+        ("DRAFT", "Rascunho"),
+        ("WAITING_PLANNER", "Aguardando Cerimonialista"),
+        ("WAITING_SUPPLIER", "Aguardando Fornecedor"),
+        ("WAITING_COUPLE", "Aguardando Noivos"),
+        ("COMPLETED", "Concluído"),
         ("CANCELED", "Cancelado"),
-    ]
-
-    item = models.OneToOneField(
-        Item, 
-        on_delete=models.CASCADE, 
-        related_name="contract",
-        verbose_name="Item"
     )
-    signature_date = models.DateField("Data de Assinatura", null=True, blank=True)
-    expiration_date = models.DateField("Data de Vencimento", null=True, blank=True)
-    description = models.TextField("Descrição/Observações", blank=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="WAITING_PLANNER")
 
-    status = models.CharField(
-        "Status",
-        max_length=20, 
-        choices=STATUS_CHOICES, 
-        default="PENDING"
-    )
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
-    class Meta:
-        verbose_name = "Contrato"
-        verbose_name_plural = "Contratos"
+    # Assinaturas
+    planner_signature = models.FileField(upload_to="signatures/planner/", null=True, blank=True)
+    planner_signed_at = models.DateTimeField(null=True, blank=True)
+    planner_ip = models.GenericIPAddressField(null=True, blank=True)
+
+    supplier_signature = models.FileField(upload_to="signatures/supplier/", null=True, blank=True)
+    supplier_signed_at = models.DateTimeField(null=True, blank=True)
+    supplier_ip = models.GenericIPAddressField(null=True, blank=True)
+
+    couple_signature = models.FileField(upload_to="signatures/couple/", null=True, blank=True)
+    couple_signed_at = models.DateTimeField(null=True, blank=True)
+    couple_ip = models.GenericIPAddressField(null=True, blank=True)
+
+    integrity_hash = models.CharField(max_length=64, blank=True, null=True)
+    final_pdf = models.FileField(upload_to="contracts_pdf/", null=True, blank=True)
 
     def __str__(self):
-        return f"Contrato: {self.item.name}"
+        return f"Contrato {self.status} - {self.item.name}"
 
     @property
     def supplier(self):
-        # Acessa o fornecedor diretamente do item relacionado
+        # Retorna o nome do fornecedor (string) do item
         return self.item.supplier
 
     @property
     def wedding(self):
-        # Acessa o casamento diretamente do item relacionado
         return self.item.wedding
 
-    def clean(self):
-        """Validações customizadas do modelo."""
-        # Garante que a data de expiração não seja anterior à assinatura
-        if self.signature_date and self.expiration_date:
-            if self.expiration_date < self.signature_date:
-                raise ValidationError({
-                    "expiration_date": "A data de vencimento não pode ser anterior à data de assinatura."
-                })
+    @property
+    def contract_value(self):
+        """
+        Retorna o custo total do item usando a propriedade do modelo Item.
+        """
+        if not self.item:
+            return 0
+        # Usa a propriedade total_cost definida no Item (unit_price * quantity)
+        return self.item.total_cost
+
+    def get_absolute_url(self):
+        return reverse("contracts:sign_contract", kwargs={"token": self.token})
+
+    def save(self, *args, **kwargs):
+        if not self.status:
+            self.status = "WAITING_PLANNER"
+        super().save(*args, **kwargs)

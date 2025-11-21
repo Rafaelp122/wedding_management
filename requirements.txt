@@ -5,3 +5,4 @@ django-debug-toolbar==6.1.0
 django-htmx==1.23.2
 djangorestframework==3.16.1
 sqlparse==0.5.3
+xhtml2pdf==0.2.17
