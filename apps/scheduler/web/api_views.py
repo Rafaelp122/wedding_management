@@ -11,7 +11,7 @@ from django.views import View
 
 from apps.core.mixins.auth import LoginRequiredMixin
 
-from .models import Event
+from ..models import Event
 
 logger = logging.getLogger(__name__)
 

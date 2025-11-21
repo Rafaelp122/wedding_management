@@ -4,7 +4,7 @@ Testes para as URLs do app scheduler.
 from django.test import TestCase
 from django.urls import resolve, reverse
 
-from apps.scheduler import api_views, views
+from apps.scheduler.web import api_views, views
 
 
 class SchedulerUrlsTest(TestCase):

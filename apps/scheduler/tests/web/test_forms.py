@@ -6,7 +6,7 @@ from datetime import date, time, timedelta
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.scheduler.forms import EventForm
+from apps.scheduler.web.forms import EventForm
 from apps.scheduler.models import Event
 from apps.users.models import User
 from apps.weddings.models import Wedding

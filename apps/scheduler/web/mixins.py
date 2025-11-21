@@ -13,9 +13,9 @@ from django.shortcuts import get_object_or_404
 from apps.core.mixins.forms import FormLayoutMixin
 from apps.core.mixins.views import ModalContextMixin
 
-from .constants import EVENT_FORM_MODAL_TEMPLATE, EVENT_SAVED_TRIGGER
+from ..constants import EVENT_FORM_MODAL_TEMPLATE, EVENT_SAVED_TRIGGER
 from .forms import EventForm
-from .models import Event
+from ..models import Event
 
 logger = logging.getLogger(__name__)
 

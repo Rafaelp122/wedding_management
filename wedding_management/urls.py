@@ -26,16 +26,17 @@ urlpatterns = [
     ),
     # Itens e serviços relacionados a casamentos - Interface Web
     path("itens/", include(("apps.items.web.urls", "items"), namespace="items")),
-    # Agendamentos e tarefas do planejador de casamentos
+    # Agendamentos e tarefas do planejador de casamentos - Interface Web
     path(
         "scheduler/",
-        include(("apps.scheduler.urls", "scheduler"), namespace="scheduler"),
+        include(("apps.scheduler.web.urls", "scheduler"), namespace="scheduler"),
     ),
     # --- API REST (DRF) ---
     # API v1 para integrações externas (mobile, calendários, webhooks)
     path("api/v1/", include([
         path("weddings/", include("apps.weddings.api.urls")),
         path("items/", include("apps.items.api.urls")),
+        path("scheduler/", include("apps.scheduler.api.urls")),
     ])),
 ]
 

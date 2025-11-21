@@ -7,7 +7,7 @@ from django.views.generic import CreateView, TemplateView, UpdateView
 
 from apps.core.mixins.auth import WeddingOwnershipMixin
 
-from .constants import (
+from ..constants import (
     CONFIRM_DELETE_TEMPLATE,
     DELETE_OBJECT_TYPE,
     EVENT_DETAIL_TEMPLATE,

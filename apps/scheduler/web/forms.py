@@ -7,7 +7,7 @@ from django.utils import timezone
 from apps.core.mixins.forms import FormStylingMixin
 from apps.core.utils.forms_utils import add_placeholder
 
-from .models import Event
+from ..models import Event
 
 logger = logging.getLogger(__name__)
 
