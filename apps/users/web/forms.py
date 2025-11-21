@@ -1,11 +1,8 @@
 import logging
 
 from django import forms
-from django.contrib.auth.forms import (
-    AuthenticationForm,
-    UserChangeForm,
-    UserCreationForm,
-)
+from django.contrib.auth.forms import (AuthenticationForm, UserChangeForm,
+                                       UserCreationForm)
 
 from apps.core.mixins.forms import FormStylingMixin, FormStylingMixinLarge
 from apps.core.utils.forms_utils import add_placeholder

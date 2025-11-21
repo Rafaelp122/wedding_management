@@ -2,12 +2,9 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from apps.users.web.forms import (
-    CustomUserChangeForm,
-    CustomUserCreationForm,
-    SignInForm,
-)
 from apps.users.models import User
+from apps.users.web.forms import (CustomUserChangeForm, CustomUserCreationForm,
+                                  SignInForm)
 
 
 class CustomUserCreationFormTest(TestCase):
@@ -121,8 +118,8 @@ class CustomUserCreationFormTest(TestCase):
 class SignInFormTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="loginuser", 
-            email="login@test.com", 
+            username="loginuser",
+            email="login@test.com",
             password="CorrectPassword123"
         )
 

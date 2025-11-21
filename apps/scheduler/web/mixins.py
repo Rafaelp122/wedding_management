@@ -14,8 +14,8 @@ from apps.core.mixins.forms import FormLayoutMixin
 from apps.core.mixins.views import ModalContextMixin
 
 from ..constants import EVENT_FORM_MODAL_TEMPLATE, EVENT_SAVED_TRIGGER
-from .forms import EventForm
 from ..models import Event
+from .forms import EventForm
 
 logger = logging.getLogger(__name__)
 

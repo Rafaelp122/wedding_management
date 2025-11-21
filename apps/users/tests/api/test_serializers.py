@@ -3,13 +3,10 @@ Testes dos serializers da API de Users.
 """
 from django.test import TestCase
 
+from apps.users.api.serializers import (ChangePasswordSerializer,
+                                        UserDetailSerializer,
+                                        UserListSerializer, UserSerializer)
 from apps.users.models import User
-from apps.users.api.serializers import (
-    ChangePasswordSerializer,
-    UserDetailSerializer,
-    UserListSerializer,
-    UserSerializer,
-)
 
 
 class UserSerializerTest(TestCase):
@@ -129,8 +126,9 @@ class UserDetailSerializerTest(TestCase):
     def test_serialization_with_counts(self):
         """Testa serialização com contagens de recursos."""
         from decimal import Decimal
-        from apps.weddings.models import Wedding
+
         from apps.scheduler.models import Event
+        from apps.weddings.models import Wedding
 
         user = User.objects.create_user(
             username="planner",
@@ -201,4 +199,5 @@ class ChangePasswordSerializerTest(TestCase):
         }
 
         serializer = ChangePasswordSerializer(data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
         self.assertTrue(serializer.is_valid(), serializer.errors)

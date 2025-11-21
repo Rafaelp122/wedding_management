@@ -1,18 +1,17 @@
 """
 Testes dos serializers da API de Events (Scheduler).
 """
+from datetime import timedelta
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
-from datetime import timedelta
 
+from apps.scheduler.api.serializers import (EventDetailSerializer,
+                                            EventListSerializer,
+                                            EventSerializer)
 from apps.scheduler.models import Event
-from apps.scheduler.api.serializers import (
-    EventSerializer,
-    EventListSerializer,
-    EventDetailSerializer,
-)
 from apps.weddings.models import Wedding
 
 User = get_user_model()
@@ -41,7 +40,7 @@ class EventSerializerTest(TestCase):
         """Testa a serialização de um evento."""
         start = timezone.now()
         end = start + timedelta(hours=2)
-        
+
         event = Event.objects.create(
             wedding=self.wedding,
             planner=self.user,
@@ -66,7 +65,7 @@ class EventSerializerTest(TestCase):
         """Testa a desserialização com dados válidos."""
         start = timezone.now()
         end = start + timedelta(hours=1)
-        
+
         data = {
             "wedding": self.wedding.id,
             "planner": self.user.id,
@@ -90,7 +89,7 @@ class EventSerializerTest(TestCase):
         """Testa validação de horário de término anterior ao início."""
         start = timezone.now()
         end = start - timedelta(hours=1)  # Erro: end antes de start
-        
+
         data = {
             "wedding": self.wedding.id,
             "planner": self.user.id,
@@ -128,7 +127,7 @@ class EventListSerializerTest(TestCase):
         """Testa serialização com campos calculados."""
         start = timezone.now()
         end = start + timedelta(hours=3)
-        
+
         event = Event.objects.create(
             wedding=self.wedding,
             planner=self.user,
@@ -150,7 +149,7 @@ class EventListSerializerTest(TestCase):
         """Testa o cálculo correto da duração."""
         start = timezone.now()
         end = start + timedelta(minutes=45)
-        
+
         event = Event.objects.create(
             wedding=self.wedding,
             planner=self.user,
@@ -187,7 +186,7 @@ class EventDetailSerializerTest(TestCase):
         """Testa serialização com detalhes completos."""
         start = timezone.now() + timedelta(days=10)
         end = start + timedelta(hours=2)
-        
+
         event = Event.objects.create(
             wedding=self.wedding,
             planner=self.user,
@@ -239,4 +238,5 @@ class EventDetailSerializerTest(TestCase):
         )
 
         serializer_future = EventDetailSerializer(future_event)
+        self.assertFalse(serializer_future.data["is_past"])
         self.assertFalse(serializer_future.data["is_past"])
