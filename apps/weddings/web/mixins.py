@@ -21,8 +21,8 @@ from apps.weddings.constants import (
     WEDDING_LIST_TEMPLATE,
 )
 
-from .forms import WeddingForm
 from ..models import Wedding
+from .forms import WeddingForm
 
 if TYPE_CHECKING:
     from ..querysets import WeddingQuerySet

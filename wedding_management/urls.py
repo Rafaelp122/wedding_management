@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from django.conf import settings
 
 # Define as rotas principais do projeto.
 # Cada app tem seu próprio arquivo de rotas, que é incluído aqui.

@@ -10,8 +10,8 @@ from apps.core.mixins.auth import OwnerRequiredMixin
 from apps.core.mixins.views import BaseHtmxResponseMixin, HtmxUrlParamsMixin
 from apps.weddings.models import Wedding
 
-from .forms import ItemForm
 from ..models import Item
+from .forms import ItemForm
 
 logger = logging.getLogger(__name__)
 

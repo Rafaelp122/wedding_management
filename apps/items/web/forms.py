@@ -1,8 +1,9 @@
 import logging
+
 from django import forms
 
-from apps.core.utils.forms_utils import add_placeholder
 from apps.core.mixins.forms import FormStylingMixin
+from apps.core.utils.forms_utils import add_placeholder
 
 from ..models import Item
 

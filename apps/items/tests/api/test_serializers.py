@@ -2,15 +2,16 @@
 Testes dos serializers da API de Items.
 """
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from apps.items.models import Item
 from apps.items.api.serializers import (
-    ItemSerializer,
-    ItemListSerializer,
     ItemDetailSerializer,
+    ItemListSerializer,
+    ItemSerializer,
 )
+from apps.items.models import Item
 from apps.weddings.models import Wedding
 
 User = get_user_model()

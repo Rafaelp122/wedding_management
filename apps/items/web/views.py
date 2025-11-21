@@ -15,13 +15,13 @@ from django.views.generic import (
 from apps.contracts.models import Contract
 from apps.core.mixins.views import ModalContextMixin
 
+from ..models import Item
 from .mixins import (
     ItemFormLayoutMixin,  # Layout do Formulário
     ItemListActionsMixin,  # O "Pacote de Lista" (Query, Pag, HTMX)
     ItemPlannerSecurityMixin,  # Segurança para Update/Delete
     ItemWeddingContextMixin,  # OBRIGATÓRIO: Carrega 'self.wedding'
 )
-from ..models import Item
 
 logger = logging.getLogger(__name__)
 

@@ -4,6 +4,8 @@ from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 from django.views.generic import TemplateView, View
 
+from apps.items.models import Item
+
 # Imports dos Mixins
 from apps.items.web.mixins import (
     ItemFormLayoutMixin,
@@ -13,7 +15,6 @@ from apps.items.web.mixins import (
     ItemQuerysetMixin,
     ItemWeddingContextMixin,
 )
-from apps.items.models import Item
 from apps.users.models import User
 from apps.weddings.models import Wedding
 

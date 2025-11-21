@@ -1,7 +1,9 @@
-from django.test import SimpleTestCase, TestCase
 from unittest.mock import patch
-from apps.items.web.forms import ItemForm
+
+from django.test import SimpleTestCase, TestCase
+
 from apps.items.models import Item
+from apps.items.web.forms import ItemForm
 
 
 class ItemFormTest(SimpleTestCase):

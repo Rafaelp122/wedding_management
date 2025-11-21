@@ -16,12 +16,12 @@ from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from apps.users.models import User
+from apps.weddings.models import Wedding
 from apps.weddings.web.mixins import (
     WeddingHtmxListResponseMixin,
     WeddingPaginationContextMixin,
     WeddingQuerysetMixin,
 )
-from apps.weddings.models import Wedding
 
 
 class WeddingQuerysetMixinTest(TestCase):
