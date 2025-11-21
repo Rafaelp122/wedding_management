@@ -17,18 +17,19 @@ from django.views.generic import (
     View,
 )
 
-from .constants import (
+from apps.weddings.constants import (
     WEDDING_LIST_CONTAINER_ID,
     WEDDING_LIST_URL_NAME,
     WEDDING_PAGINATION_ARIA_LABEL,
 )
+from apps.weddings.models import Wedding
+
 from .mixins import (
     PlannerOwnershipMixin,  # Apenas Segurança
     WeddingFormLayoutMixin,  # Apenas Layout de Formulário
     WeddingListActionsMixin,  # O "Pacote de Lista" (Query, Pag, HTMX)
     WeddingModalContextMixin,  # Contexto de Modais
 )
-from .models import Wedding
 
 logger = logging.getLogger(__name__)
 

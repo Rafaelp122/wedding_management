@@ -5,7 +5,7 @@ Centraliza valores mágicos e configurações.
 
 # Paginação
 WEDDING_ITEMS_PER_PAGE = 6
-PAGINATION_SIDES = 3
+PAGINATION_SIDES = 2
 PAGINATION_ENDS = 1
 
 # IDs e Seletores HTMX

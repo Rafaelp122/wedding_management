@@ -12,9 +12,10 @@ urlpatterns = [
     path("", include("apps.pages.urls", namespace="pages")),
     # Rotas relacionadas a autenticação e perfis de usuário
     path("usuario/", include(("apps.users.urls", "users"), namespace="users")),
-    # Área de casamentos (listagem, detalhes, gerenciamento)
+    # Área de casamentos (listagem, detalhes, gerenciamento) - Interface Web
     path(
-        "casamentos/", include(("apps.weddings.urls", "weddings"), namespace="weddings")
+        "casamentos/",
+        include(("apps.weddings.web.urls", "weddings"), namespace="weddings"),
     ),
     # Orçamentos de casamento
     path("orcamento/", include(("apps.budget.urls", "budget"), namespace="budget")),
@@ -30,6 +31,11 @@ urlpatterns = [
         "scheduler/",
         include(("apps.scheduler.urls", "scheduler"), namespace="scheduler"),
     ),
+    # --- API REST (DRF) ---
+    # API v1 para integrações externas (mobile, calendários, webhooks)
+    path("api/v1/", include([
+        path("weddings/", include("apps.weddings.api.urls")),
+    ])),
 ]
 
 if settings.DEBUG:

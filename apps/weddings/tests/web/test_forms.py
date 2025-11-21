@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.test import SimpleTestCase
 from django.utils import timezone
 
-from apps.weddings.forms import WeddingForm
+from apps.weddings.web.forms import WeddingForm
 
 
 class WeddingFormTest(SimpleTestCase):

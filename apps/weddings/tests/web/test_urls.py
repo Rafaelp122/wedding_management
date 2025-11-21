@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from django.urls import resolve, reverse
 
-from apps.weddings.views import (
+from apps.weddings.web.views import (
     UpdateWeddingStatusView,
     WeddingCreateView,
     WeddingDeleteView,

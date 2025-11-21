@@ -12,8 +12,7 @@ from apps.core.mixins.views import (
     HtmxUrlParamsMixin,
     ModalContextMixin,
 )
-
-from .constants import (
+from apps.weddings.constants import (
     PAGINATION_ENDS,
     PAGINATION_SIDES,
     WEDDING_FORM_MODAL_TEMPLATE,
@@ -21,11 +20,12 @@ from .constants import (
     WEDDING_LIST_CONTAINER_ID,
     WEDDING_LIST_TEMPLATE,
 )
+
 from .forms import WeddingForm
-from .models import Wedding
+from ..models import Wedding
 
 if TYPE_CHECKING:
-    from .querysets import WeddingQuerySet
+    from ..querysets import WeddingQuerySet
 
 logger = logging.getLogger(__name__)
 
