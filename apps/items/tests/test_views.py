@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -156,6 +157,33 @@ class AddItemViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/form_modal.html")
         self.assertTrue(response.context["form"].errors)
+
+    def test_post_transaction_rollback_on_contract_creation_failure(self):
+        """
+        CRÍTICO: Se a criação do contrato falhar, o item NÃO deve
+        ser salvo (transação atômica).
+        """
+        data = {
+            "name": "Item com Erro",
+            "category": "DECOR",
+            "quantity": 1,
+            "unit_price": "10.00",
+        }
+        headers = {"HTTP_HX-Request": "true"}
+
+        # Mock Contract.objects.create para lançar erro
+        with patch("apps.items.views.Contract.objects.create") as mock:
+            mock.side_effect = Exception("Erro simulado no banco")
+
+            # O POST deve falhar
+            with self.assertRaises(Exception):
+                self.client.post(self.url, data, **headers)
+
+        # VALIDAÇÃO CRÍTICA: Item NÃO deve ter sido criado
+        # (rollback da transação)
+        self.assertFalse(
+            Item.objects.filter(name="Item com Erro").exists()
+        )
 
 
 class UpdateItemStatusViewTest(TestCase):

@@ -1,5 +1,6 @@
 import logging
 
+from django.db import transaction
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse
@@ -12,6 +13,7 @@ from django.views.generic import (
 )
 
 from apps.contracts.models import Contract
+from apps.core.mixins.views import ModalContextMixin
 
 from .mixins import (
     ItemFormLayoutMixin,  # Layout do Formulário
@@ -86,40 +88,43 @@ class AddItemView(
     ItemWeddingContextMixin,  # Carrega self.wedding (de wedding_id)
     ItemFormLayoutMixin,  # Layout do formulário
     ItemListActionsMixin,  # Para render_item_list_response
+    ModalContextMixin,  # Contexto do modal (do core)
     CreateView,
 ):
     """
     Exibe (GET) e processa (POST) o formulário de adição de item.
     """
 
-    model = Item  # Necessário para CreateView
+    model = Item
+    modal_title = "Adicionar Novo Item"
+    submit_button_text = "Salvar Item"
 
-    def get_context_data(self, **kwargs):
-        """Adiciona o contexto dinâmico do modal (título, botão, URL)."""
-        context = super().get_context_data(**kwargs)
-        context["modal_title"] = "Adicionar Novo Item"
-        context["submit_button_text"] = "Salvar Item"
-        context["hx_post_url"] = reverse(
+    def get_hx_post_url(self) -> str:
+        """Retorna a URL para POST do formulário."""
+        return reverse(
             "items:add_item", kwargs={"wedding_id": self.wedding.id}
         )
-        return context
 
     def form_valid(self, form):
         """
         Define o 'wedding', salva o item e cria o contrato associado,
         depois retorna a lista de itens atualizada.
+
+        Usa transação atômica para garantir que item e contrato
+        sejam criados juntos ou nenhum seja criado.
         """
-        item = form.save(commit=False)
-        item.wedding = self.wedding
-        item.save()
-        # Cria o contrato associado ao item recém-criado
-        Contract.objects.create(item=item)
+        with transaction.atomic():
+            item = form.save(commit=False)
+            item.wedding = self.wedding
+            item.save()
+            # Cria o contrato associado ao item recém-criado
+            Contract.objects.create(item=item)
 
         logger.info(
             f"Novo item '{item}' (ID: {item.id}) e contrato associado "
-            f"criados para o casamento {self.wedding.id} pelo usuário {self.request.user.id}"
+            f"criados para o casamento {self.wedding.id} "
+            f"pelo usuário {self.request.user.id}"
         )
-        # 'render_item_list_response' vem do ItemListActionsMixin
         return self.render_item_list_response(trigger="listUpdated")
 
     def form_invalid(self, form):
@@ -136,37 +141,34 @@ class EditItemView(
     ItemPlannerSecurityMixin,  # Fornece get_queryset()
     ItemFormLayoutMixin,  # Layout do formulário
     ItemListActionsMixin,  # Para render_item_list_response
+    ModalContextMixin,  # Contexto do modal (do core)
     UpdateView,
 ):
     """Exibe (GET) e processa (POST) o formulário de edição de item."""
 
-    model = Item  # Necessário para UpdateView
+    model = Item
     pk_url_kwarg = "pk"
-    # get_queryset() vem do ItemPlannerSecurityMixin
+    modal_title = "Editar Item"
+    submit_button_text = "Salvar Alterações"
 
-    def get_context_data(self, **kwargs):
-        """Adiciona o contexto dinâmico do modal (título, botão, URL de post)."""
-        context = super().get_context_data(**kwargs)
-        context["modal_title"] = "Editar Item"
-        context["submit_button_text"] = "Salvar Alterações"
-        context["hx_post_url"] = reverse(
-            "items:edit_item", kwargs={"pk": self.object.pk}
-        )
-        return context
+    def get_hx_post_url(self) -> str:
+        """Retorna a URL para POST do formulário."""
+        return reverse("items:edit_item", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
-        """Salva as alterações e retorna a lista de itens atualizada."""
+        """Salva as alterações e retorna a lista atualizada."""
         item = form.save()
         logger.info(
-            f"Item {item.id} ('{item.name}') atualizado "
-            f"pelo usuário {self.request.user.id}"
+            f"Item {item.id} ('{item.name}') "
+            f"atualizado pelo usuário {self.request.user.id}"
         )
         return self.render_item_list_response(trigger="listUpdated")
 
     def form_invalid(self, form):
         """Loga falhas de validação do formulário."""
         logger.warning(
-            f"Tentativa de atualização do item {self.object.id} falhou (inválido): {form.errors}"
+            f"Tentativa de atualização do item {self.object.id} "
+            f"falhou (inválido): {form.errors}"
         )
         return super().form_invalid(form)
 
@@ -177,7 +179,10 @@ class UpdateItemStatusView(
     ItemListActionsMixin,  # Para render_item_list_response
     View,
 ):
-    """View 'apenas-POST' para atualizar o status de um item (Ex: Concluído)."""
+    """
+    View 'apenas-POST' para atualizar o status de um item
+    (Ex: Concluído).
+    """
 
     model = Item  # Informa ao ItemPlannerSecurityMixin qual model usar
 
@@ -190,18 +195,22 @@ class UpdateItemStatusView(
             # A segurança do dispatch já deve ter pego isso, mas é uma
             # boa prática ter uma verificação dupla.
             logger.warning(
-                f"Tentativa de mudança de status falhou (Não Encontrado ou Sem Permissão). "
-                f"Item ID: {self.kwargs['pk']}, Usuário: {self.request.user.id}"
+                f"Tentativa de mudança de status falhou "
+                f"(Não Encontrado ou Sem Permissão). "
+                f"Item ID: {self.kwargs['pk']}, "
+                f"Usuário: {self.request.user.id}"
             )
-            return HttpResponseBadRequest("Item não encontrado ou sem permissão.")
+            return HttpResponseBadRequest(
+                "Item não encontrado ou sem permissão."
+            )
 
         new_status = request.POST.get("status")
         valid_statuses = [status[0] for status in self.model.STATUS_CHOICES]
 
         if new_status not in valid_statuses:
             logger.warning(
-                f"Tentativa de mudança de status falhou (Status Inválido): '{new_status}' "
-                f"para o item {item.id}"
+                f"Tentativa de mudança de status falhou "
+                f"(Status Inválido): '{new_status}' para o item {item.id}"
             )
             return HttpResponseBadRequest("Status inválido")
 
@@ -209,8 +218,9 @@ class UpdateItemStatusView(
         item.status = new_status
         item.save()
         logger.info(
-            f"Status do item {item.id} ('{item.name}') alterado de '{old_status}' "
-            f"para '{new_status}' pelo usuário {self.request.user.id}"
+            f"Status do item {item.id} ('{item.name}') "
+            f"alterado de '{old_status}' para '{new_status}' "
+            f"pelo usuário {self.request.user.id}"
         )
         return self.render_item_list_response(trigger="listUpdated")
 
