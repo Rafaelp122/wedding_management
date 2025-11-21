@@ -14,32 +14,39 @@ from apps.weddings.models import Wedding
 class EventQuerySetTest(TestCase):
     """Testes para o EventQuerySet."""
 
-    def setUp(self):
-        """Configuração inicial para os testes."""
+    @classmethod
+    def setUpTestData(cls):
+        """Configuração inicial (executado uma vez por classe)."""
         # Criar usuários
-        self.user1 = User.objects.create_user(
+        cls.user1 = User.objects.create_user(
             username="planner1",
             email="planner1@test.com",
             password="testpass123",
         )
 
-        self.user2 = User.objects.create_user(
+        cls.user2 = User.objects.create_user(
             username="planner2",
             email="planner2@test.com",
             password="testpass123",
         )
 
+        cls.user3 = User.objects.create_user(
+            username="planner3",
+            email="planner3@test.com",
+            password="testpass123",
+        )
+
         # Criar casamentos
-        self.wedding1 = Wedding.objects.create(
-            planner=self.user1,
+        cls.wedding1 = Wedding.objects.create(
+            planner=cls.user1,
             groom_name="João",
             bride_name="Maria",
             date=timezone.now().date() + timedelta(days=180),
             budget=50000.00,
         )
 
-        self.wedding2 = Wedding.objects.create(
-            planner=self.user1,
+        cls.wedding2 = Wedding.objects.create(
+            planner=cls.user1,
             groom_name="Pedro",
             bride_name="Ana",
             date=timezone.now().date() + timedelta(days=200),
@@ -47,30 +54,30 @@ class EventQuerySetTest(TestCase):
         )
 
         # Criar eventos do user1
-        self.event1 = Event.objects.create(
-            wedding=self.wedding1,
-            planner=self.user1,
+        cls.event1 = Event.objects.create(
+            wedding=cls.wedding1,
+            planner=cls.user1,
             title="Evento 1 do Wedding 1",
             start_time=timezone.now() + timedelta(days=7),
         )
 
-        self.event2 = Event.objects.create(
-            wedding=self.wedding1,
-            planner=self.user1,
+        cls.event2 = Event.objects.create(
+            wedding=cls.wedding1,
+            planner=cls.user1,
             title="Evento 2 do Wedding 1",
             start_time=timezone.now() + timedelta(days=14),
         )
 
-        self.event3 = Event.objects.create(
-            wedding=self.wedding2,
-            planner=self.user1,
+        cls.event3 = Event.objects.create(
+            wedding=cls.wedding2,
+            planner=cls.user1,
             title="Evento do Wedding 2",
             start_time=timezone.now() + timedelta(days=21),
         )
 
         # Criar evento do user2
-        self.event4 = Event.objects.create(
-            planner=self.user2,
+        cls.event4 = Event.objects.create(
+            planner=cls.user2,
             title="Evento do User 2",
             start_time=timezone.now() + timedelta(days=28),
         )
@@ -122,14 +129,8 @@ class EventQuerySetTest(TestCase):
 
     def test_queryset_empty_result(self):
         """Testa que filtros retornam queryset vazio quando apropriado."""
-        # Criar usuário sem eventos
-        user3 = User.objects.create_user(
-            username="planner3",
-            email="planner3@test.com",
-            password="testpass123",
-        )
-
-        events = Event.objects.for_planner(user3)
+        # Usar usuário já criado no setUpTestData ao invés de criar novo
+        events = Event.objects.for_planner(self.user3)
 
         self.assertEqual(events.count(), 0)
         self.assertFalse(events.exists())

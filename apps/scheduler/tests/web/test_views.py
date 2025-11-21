@@ -15,28 +15,36 @@ from apps.weddings.models import Wedding
 class SchedulerViewsTestCase(TestCase):
     """Classe base para testes de views do scheduler."""
 
-    def setUp(self):
-        """Configuração inicial para os testes."""
-        self.client = Client()
-
-        # Criar usuário
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        """Configuração inicial (executado uma vez por classe)."""
+        # Criar usuários
+        cls.user = User.objects.create_user(
             username="testplanner",
             email="planner@test.com",
             password="testpass123",
         )
 
+        cls.other_user = User.objects.create_user(
+            username="otherplanner",
+            email="other@test.com",
+            password="testpass123",
+        )
+
         # Criar casamento
-        self.wedding = Wedding.objects.create(
-            planner=self.user,
+        cls.wedding = Wedding.objects.create(
+            planner=cls.user,
             groom_name="João",
             bride_name="Maria",
             date=timezone.now().date() + timedelta(days=180),
             budget=50000.00,
         )
 
-        # Fazer login
-        self.client.login(username="testplanner", password="testpass123")
+    def setUp(self):
+        """Configuração que precisa ser executada antes de cada teste."""
+        self.client = Client()
+        # Usar force_login ao invés de login (mais rápido)
+        self.client.force_login(self.user)
 
 
 class SchedulerPartialViewTest(SchedulerViewsTestCase):
@@ -66,15 +74,9 @@ class SchedulerPartialViewTest(SchedulerViewsTestCase):
 
     def test_scheduler_partial_view_wrong_owner(self):
         """Testa acesso de usuário não proprietário."""
-        # Criar outro usuário
-        User.objects.create_user(
-            username="otherplanner",
-            email="other@test.com",
-            password="testpass123",
-        )
-
+        # Reusar usuário já criado no setUpTestData
         self.client.logout()
-        self.client.login(username="otherplanner", password="testpass123")
+        self.client.force_login(self.other_user)
 
         url = reverse("scheduler:partial_scheduler", args=[self.wedding.id])
         response = self.client.get(url)
@@ -178,12 +180,9 @@ class EventDetailViewTest(SchedulerViewsTestCase):
 
     def test_event_detail_wrong_owner(self):
         """Testa acesso ao detalhe por usuário errado."""
-        User.objects.create_user(
-            username="other", email="other@test.com", password="testpass123"
-        )
-
+        # Reusar usuário já criado no setUpTestData
         self.client.logout()
-        self.client.login(username="other", password="testpass123")
+        self.client.force_login(self.other_user)
 
         url = reverse(
             "scheduler:event_detail", args=[self.wedding.id, self.event.id]
