@@ -21,7 +21,7 @@ from .mixins import (
     ItemPlannerSecurityMixin,  # Segurança para Update/Delete
     ItemWeddingContextMixin,  # OBRIGATÓRIO: Carrega 'self.wedding'
 )
-from .models import Item
+from ..models import Item
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ from django.test import RequestFactory, TestCase
 from django.views.generic import TemplateView, View
 
 # Imports dos Mixins
-from apps.items.mixins import (
+from apps.items.web.mixins import (
     ItemFormLayoutMixin,
     ItemHtmxListResponseMixin,
     ItemListActionsMixin,
@@ -270,7 +270,7 @@ class ItemListActionsMixinTest(TestCase):
         Teste de Sanidade: Garante que a Fachada (Facade) herda
         das classes corretas para compor a funcionalidade completa.
         """
-        from apps.items.mixins import ItemHtmxListResponseMixin, ItemQuerysetMixin
+        from apps.items.web.mixins import ItemHtmxListResponseMixin, ItemQuerysetMixin
 
         self.assertTrue(issubclass(ItemListActionsMixin, ItemQuerysetMixin))
         self.assertTrue(issubclass(ItemListActionsMixin, ItemHtmxListResponseMixin))

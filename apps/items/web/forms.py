@@ -4,7 +4,7 @@ from django import forms
 from apps.core.utils.forms_utils import add_placeholder
 from apps.core.mixins.forms import FormStylingMixin
 
-from .models import Item
+from ..models import Item
 
 logger = logging.getLogger(__name__)
 

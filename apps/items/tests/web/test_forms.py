@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from unittest.mock import patch
-from apps.items.forms import ItemForm
+from apps.items.web.forms import ItemForm
 from apps.items.models import Item
 
 
@@ -82,7 +82,7 @@ class ItemFormTest(SimpleTestCase):
         # Placeholder checado via utilitário (só pra garantir que o init rodou)
         self.assertEqual(form.fields["name"].widget.attrs["placeholder"], "Ex: Buffet Completo")
 
-    @patch("apps.items.forms.logger")
+    @patch("apps.items.web.forms.logger")
     def test_logging_on_validation_error(self, mock_logger):
         """
         Deve logar warning quando a validação customizada falhar.

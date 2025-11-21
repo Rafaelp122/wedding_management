@@ -24,8 +24,8 @@ urlpatterns = [
         "contratos/",
         include(("apps.contracts.urls", "contracts"), namespace="contracts"),
     ),
-    # Itens e serviços relacionados a casamentos
-    path("itens/", include(("apps.items.urls", "items"), namespace="items")),
+    # Itens e serviços relacionados a casamentos - Interface Web
+    path("itens/", include(("apps.items.web.urls", "items"), namespace="items")),
     # Agendamentos e tarefas do planejador de casamentos
     path(
         "scheduler/",
@@ -35,6 +35,7 @@ urlpatterns = [
     # API v1 para integrações externas (mobile, calendários, webhooks)
     path("api/v1/", include([
         path("weddings/", include("apps.weddings.api.urls")),
+        path("items/", include("apps.items.api.urls")),
     ])),
 ]
 

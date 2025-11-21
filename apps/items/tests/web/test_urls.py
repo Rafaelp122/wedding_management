@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from django.urls import resolve, reverse
 
-from apps.items import views
+from apps.items.web import views
 
 
 class ItemUrlsTest(SimpleTestCase):

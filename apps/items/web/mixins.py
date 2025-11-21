@@ -11,7 +11,7 @@ from apps.core.mixins.views import BaseHtmxResponseMixin, HtmxUrlParamsMixin
 from apps.weddings.models import Wedding
 
 from .forms import ItemForm
-from .models import Item
+from ..models import Item
 
 logger = logging.getLogger(__name__)
 

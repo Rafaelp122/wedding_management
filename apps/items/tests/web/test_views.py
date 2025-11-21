@@ -172,7 +172,7 @@ class AddItemViewTest(TestCase):
         headers = {"HTTP_HX-Request": "true"}
 
         # Mock Contract.objects.create para lançar erro
-        with patch("apps.items.views.Contract.objects.create") as mock:
+        with patch("apps.items.web.views.Contract.objects.create") as mock:
             mock.side_effect = Exception("Erro simulado no banco")
 
             # O POST deve falhar
