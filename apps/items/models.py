@@ -1,5 +1,6 @@
-from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import models
+
 from apps.core.models import BaseModel
 from apps.weddings.models import Wedding
 
@@ -37,7 +38,11 @@ class Item(BaseModel):
         max_length=255, null=True, blank=True, verbose_name="Fornecedor"
     )
     wedding = models.ForeignKey(
-        Wedding, on_delete=models.CASCADE, null=True, blank=True
+        Wedding,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="items",
     )
     category = models.CharField(
         max_length=20,
@@ -54,6 +59,19 @@ class Item(BaseModel):
 
     # Conecta o QuerySet personalizado
     objects = ItemQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = "Item"
+        verbose_name_plural = "Itens"
+        ordering = ["-created_at"]
+        indexes = [
+            # Índice para queries de lista (filtra por wedding + category)
+            models.Index(fields=["wedding", "category"]),
+            # Índice para queries de status (filtra por wedding + status)
+            models.Index(fields=["wedding", "status"]),
+            # Índice para ordenação por data
+            models.Index(fields=["-created_at"]),
+        ]
 
     def __str__(self):
         # Exibe o nome do item no Django Admin e em representações de texto
