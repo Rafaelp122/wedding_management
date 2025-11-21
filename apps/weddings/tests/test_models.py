@@ -9,8 +9,9 @@ from apps.weddings.models import Wedding
 
 @pytest.mark.integration
 class WeddingModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
             username="planner", email="p@test.com", password="123"
         )
 

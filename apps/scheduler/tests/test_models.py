@@ -14,16 +14,17 @@ from apps.weddings.models import Wedding
 class EventModelTest(TestCase):
     """Testes para o modelo Event."""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         """Configuração inicial para os testes."""
-        self.user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username="testplanner",
             email="planner@test.com",
             password="testpass123",
         )
 
-        self.wedding = Wedding.objects.create(
-            planner=self.user,
+        cls.wedding = Wedding.objects.create(
+            planner=cls.user,
             groom_name="João",
             bride_name="Maria",
             date=timezone.now().date() + timedelta(days=180),

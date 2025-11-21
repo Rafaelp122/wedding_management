@@ -7,11 +7,12 @@ from apps.users.models import User
 
 
 class ItemModelTest(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         # Setup básico para não dar erro de FK se tiver
-        self.user = User.objects.create_user("u", "u@t.com", "123")
-        self.wedding = Wedding.objects.create(
-            planner=self.user,
+        cls.user = User.objects.create_user("u", "u@t.com", "123")
+        cls.wedding = Wedding.objects.create(
+            planner=cls.user,
             groom_name="G", bride_name="B",
             date="2025-01-01", location="Loc", budget=1000
         )

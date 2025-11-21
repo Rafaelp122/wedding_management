@@ -56,8 +56,11 @@ class SignUpViewTest(TestCase):
 
 
 class SignInViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user("loginuser", "l@test.com", "123")
+
     def setUp(self):
-        self.user = User.objects.create_user("loginuser", "l@test.com", "123")
         self.url = reverse("users:sign_in")
 
     def test_get_renders_template(self):
@@ -101,8 +104,11 @@ class SignInViewTest(TestCase):
 
 
 class EditProfileViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user("edituser", "e@test.com", "123")
+
     def setUp(self):
-        self.user = User.objects.create_user("edituser", "e@test.com", "123")
         self.url = reverse("users:edit_profile")
 
     def test_anonymous_redirected_to_login(self):

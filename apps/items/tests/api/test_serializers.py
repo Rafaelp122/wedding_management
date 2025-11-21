@@ -20,15 +20,16 @@ User = get_user_model()
 class ItemSerializerTest(TestCase):
     """Testes do ItemSerializer (CRUD)."""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         """Configuração inicial dos testes."""
-        self.user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username="planner",
             email="planner@example.com",
             password="test123"
         )
-        self.wedding = Wedding.objects.create(
-            planner=self.user,
+        cls.wedding = Wedding.objects.create(
+            planner=cls.user,
             groom_name="João",
             bride_name="Maria",
             date="2025-12-31",
@@ -110,15 +111,16 @@ class ItemSerializerTest(TestCase):
 class ItemListSerializerTest(TestCase):
     """Testes do ItemListSerializer (otimizado para listagem)."""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         """Configuração inicial dos testes."""
-        self.user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username="planner",
             email="planner2@example.com",
             password="test123"
         )
-        self.wedding = Wedding.objects.create(
-            planner=self.user,
+        cls.wedding = Wedding.objects.create(
+            planner=cls.user,
             groom_name="Pedro",
             bride_name="Ana",
             date="2025-06-15",
@@ -163,15 +165,16 @@ class ItemListSerializerTest(TestCase):
 class ItemDetailSerializerTest(TestCase):
     """Testes do ItemDetailSerializer (detalhes completos)."""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         """Configuração inicial dos testes."""
-        self.user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username="planner",
             email="planner3@example.com",
             password="test123"
         )
-        self.wedding = Wedding.objects.create(
-            planner=self.user,
+        cls.wedding = Wedding.objects.create(
+            planner=cls.user,
             groom_name="Carlos",
             bride_name="Julia",
             date="2025-09-20",
