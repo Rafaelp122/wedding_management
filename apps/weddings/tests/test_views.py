@@ -413,6 +413,20 @@ class UpdateWeddingStatusViewTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
 
+    def test_post_nonexistent_wedding_returns_404(self):
+        """Tentar atualizar status de casamento inexistente retorna 404."""
+        nonexistent_url = reverse(
+            "weddings:update_wedding_status", kwargs={"id": 99999}
+        )
+        data = {"status": "COMPLETED"}
+
+        response = self.client.post(
+            nonexistent_url, data, HTTP_HX_Request="true"
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Casamento não encontrado", response.content.decode())
+
 
 class WeddingAccessControlTest(TestCase):
     """

@@ -205,3 +205,67 @@ class EventFormTest(TestCase):
         title_widget_attrs = form.fields["title"].widget.attrs
         self.assertIn("class", title_widget_attrs)
         self.assertIn("form-control", title_widget_attrs["class"])
+
+    def test_form_fills_fields_when_editing_event(self):
+        """Testa que form preenche data/hora ao editar evento existente."""
+        # Cria um evento com horários específicos
+        event_datetime = timezone.now() + timedelta(days=10, hours=3)
+        event = Event.objects.create(
+            wedding=self.wedding,
+            planner=self.user,  # Campo obrigatório
+            title="Evento Teste",
+            event_type=Event.TypeChoices.MEETING,
+            start_time=event_datetime,
+            end_time=event_datetime + timedelta(hours=2),
+        )
+
+        # Cria o form passando a instância
+        form = EventForm(instance=event)
+
+        # Verifica que os campos foram preenchidos corretamente
+        local_start = timezone.localtime(event.start_time)
+        local_end = timezone.localtime(event.end_time)
+
+        self.assertEqual(
+            form.fields["event_date"].initial, local_start.date()
+        )
+        self.assertEqual(
+            form.fields["start_time_input"].initial, local_start.time()
+        )
+        self.assertEqual(
+            form.fields["end_time_input"].initial, local_end.time()
+        )
+
+    def test_form_save_combines_date_and_time_correctly(self):
+        """Testa que o form.save() combina data + hora corretamente."""
+        form_data = {
+            "title": "Reunião Importante",
+            "event_type": Event.TypeChoices.MEETING,
+            "event_date": date.today() + timedelta(days=5),
+            "start_time_input": time(10, 30),
+            "end_time_input": time(12, 0),
+        }
+
+        form = EventForm(data=form_data)
+        self.assertTrue(form.is_valid())
+
+        # Salva sem commit para inspecionar
+        event = form.save(commit=False)
+        event.wedding = self.wedding
+        event.planner = self.user  # Campo obrigatório
+        event.save()
+
+        # Verifica que start_time foi combinado corretamente
+        expected_start = timezone.make_aware(
+            timezone.datetime.combine(
+                form_data["event_date"], form_data["start_time_input"]
+            )
+        )
+        expected_end = timezone.make_aware(
+            timezone.datetime.combine(
+                form_data["event_date"], form_data["end_time_input"]
+            )
+        )
+
+        self.assertEqual(event.start_time, expected_start)
+        self.assertEqual(event.end_time, expected_end)

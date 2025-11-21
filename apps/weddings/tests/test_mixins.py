@@ -8,8 +8,6 @@ Princípios seguidos:
 - Testar comportamento, não implementação
 - Testar lógica de negócio e segurança (ownership, filtros)
 - Testar edge cases que podem causar bugs reais
-- NÃO testar configuração estática simples
-- NÃO testar detalhes visuais (gradientes, ícones)
 """
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
@@ -29,7 +27,7 @@ from apps.weddings.models import Wedding
 class WeddingQuerysetMixinTest(TestCase):
     """
     Testes CRÍTICOS para WeddingQuerysetMixin.
-    
+
     Foco: Segurança (isolamento de dados) e lógica de filtros.
     """
 
@@ -55,7 +53,7 @@ class WeddingQuerysetMixinTest(TestCase):
             location="Loc",
             budget=1000,
         )
-        
+
         # Casamento de outro usuário (NÃO deve aparecer)
         cls.w2 = Wedding.objects.create(
             planner=cls.other_user,
@@ -79,7 +77,7 @@ class WeddingQuerysetMixinTest(TestCase):
     def test_get_base_queryset_filters_by_user(self):
         """
         CRÍTICO (SEGURANÇA): Verifica isolamento de dados entre usuários.
-        
+
         Cada planner só deve ver seus próprios casamentos.
         Falha aqui significa vazamento de dados entre usuários.
         """
@@ -91,7 +89,7 @@ class WeddingQuerysetMixinTest(TestCase):
     def test_get_base_queryset_applies_search_filter(self):
         """
         IMPORTANTE: Verifica que busca funciona corretamente.
-        
+
         Usuários dependem da busca para encontrar casamentos.
         """
         # Criar casamento com nome específico
@@ -105,14 +103,14 @@ class WeddingQuerysetMixinTest(TestCase):
         )
 
         qs = self.view.get_base_queryset(q="SearchMe")
-        
+
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs.first(), w3)
 
     def test_get_base_queryset_filters_by_status(self):
         """
         IMPORTANTE: Verifica filtro de status (IN_PROGRESS/COMPLETED).
-        
+
         Crucial para organização de casamentos do usuário.
         """
         # Criar casamento completado (data passada)
@@ -133,7 +131,7 @@ class WeddingQuerysetMixinTest(TestCase):
     def test_get_base_queryset_has_annotations(self):
         """
         CRÍTICO: Verifica que anotações necessárias estão presentes.
-        
+
         Templates dependem dessas anotações (items_count, progress, etc).
         Falha aqui causa erros no template.
         """
@@ -150,7 +148,7 @@ class WeddingQuerysetMixinTest(TestCase):
 class WeddingPaginationContextMixinTest(TestCase):
     """
     Testes para WeddingPaginationContextMixin.
-    
+
     Foco: Paginação correta e preservação de filtros.
     """
 
@@ -190,25 +188,25 @@ class WeddingPaginationContextMixinTest(TestCase):
     def test_pagination_splits_records(self):
         """
         CRÍTICO: Verifica que paginação divide registros corretamente.
-        
+
         Com 7 registros e paginate_by=6, deve criar 2 páginas.
         """
         # Página 1
         context = self.view.build_paginated_context({"page": 1})
-        
+
         self.assertEqual(len(context["paginated_weddings"]), 6)
         self.assertTrue(context["page_obj"].has_next())
 
         # Página 2
         context = self.view.build_paginated_context({"page": 2})
-        
+
         self.assertEqual(len(context["paginated_weddings"]), 1)
         self.assertFalse(context["page_obj"].has_next())
 
     def test_filters_are_preserved_in_pagination(self):
         """
         CRÍTICO: Verifica que filtros são preservados ao navegar páginas.
-        
+
         Usuário não pode perder busca/filtros ao mudar de página.
         """
         # Criar casamento específico para buscar
@@ -238,7 +236,7 @@ class WeddingPaginationContextMixinTest(TestCase):
     def test_pagination_handles_invalid_page_param(self):
         """
         IMPORTANTE: Edge case - página inválida não deve quebrar.
-        
+
         Previne erro 500 em produção com ?page=banana ou ?page=999
         """
         # Caso 1: Texto inválido (?page=banana)
@@ -254,7 +252,7 @@ class WeddingPaginationContextMixinTest(TestCase):
 class WeddingHtmxListResponseMixinTest(TestCase):
     """
     Testes para WeddingHtmxListResponseMixin.
-    
+
     Foco: Integração entre parâmetros HTMX e contexto.
     """
 
@@ -270,7 +268,7 @@ class WeddingHtmxListResponseMixinTest(TestCase):
     def test_get_htmx_context_data_bridges_params(self):
         """
         IMPORTANTE: Verifica que parâmetros do HTMX são passados corretamente.
-        
+
         Frontend HTMX envia parâmetros no header que devem ser
         extraídos e usados para paginação/filtros.
         """

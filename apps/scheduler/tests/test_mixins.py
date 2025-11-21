@@ -32,7 +32,7 @@ from apps.weddings.models import Wedding
 class EventOwnershipMixinTest(TestCase):
     """
     Testes CRÍTICOS para EventOwnershipMixin.
-    
+
     Foco: Segurança e isolamento de dados entre usuários.
     """
 
@@ -121,7 +121,7 @@ class EventOwnershipMixinTest(TestCase):
 class EventHtmxResponseMixinTest(TestCase):
     """
     Testes para EventHtmxResponseMixin.
-    
+
     Foco: Respostas HTMX corretas (status codes e triggers).
     """
 
@@ -144,7 +144,7 @@ class EventHtmxResponseMixinTest(TestCase):
 
         # Deve retornar 204 No Content
         self.assertEqual(response.status_code, 204)
-        
+
         # Deve ter trigger HTMX para atualizar calendário
         self.assertIn("HX-Trigger", response.headers)
         self.assertEqual(response.headers["HX-Trigger"], "eventSaved")
@@ -177,7 +177,7 @@ class EventHtmxResponseMixinTest(TestCase):
 class EventFormMixinTest(TestCase):
     """
     Testes para EventFormMixin.
-    
+
     Foco: Lógica de salvamento com planner e wedding corretos.
     """
 
@@ -208,7 +208,7 @@ class EventFormMixinTest(TestCase):
         """
         CRÍTICO: Verifica que form_valid salva evento com
         planner e wedding corretos.
-        
+
         Isso é lógica de negócio essencial - eventos devem
         pertencer ao usuário e wedding corretos.
         """
@@ -245,7 +245,7 @@ class EventFormMixinTest(TestCase):
         """
         IMPORTANTE: Verifica que formulário inválido mantém
         contexto do modal (wedding, event).
-        
+
         Edge case: usuário não perde contexto ao corrigir erros.
         """
         # Form inválido (sem título obrigatório)
