@@ -7,6 +7,7 @@ Gerado por 'django-admin startproject' usando Django 5.2.3.
 import logging
 import logging.handlers
 import os
+import sys
 from pathlib import Path
 
 from django.contrib.messages import constants as messages
@@ -163,8 +164,13 @@ LOGS_DIR = BASE_DIR / "logs"
 for app in APP_LOGS:
     (LOGS_DIR / app).mkdir(parents=True, exist_ok=True)
 
-# Define o nível do console baseado no modo DEBUG
-CONSOLE_LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
+# Define o nível do console baseado no modo DEBUG e se está rodando testes
+if "test" in sys.argv or "pytest" in sys.modules:
+    CONSOLE_LOG_LEVEL = "ERROR"  # Durante testes, só mostra erros
+elif DEBUG:
+    CONSOLE_LOG_LEVEL = "DEBUG"
+else:
+    CONSOLE_LOG_LEVEL = "INFO"
 
 LOGGING = {
     "version": 1,
