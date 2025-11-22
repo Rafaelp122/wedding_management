@@ -1,0 +1,77 @@
+{% extends 'base-auth.html' %}
+{% load static %}
+
+{% block page_title %} Cadastro {% endblock page_title %}
+
+{% block page_styles %}
+  <link rel="stylesheet" href="{% static 'users/css/auth-pages.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center min-vh-100">
+  <div class="row justify-content-center w-100">
+    <div class="col-xl-10 col-lg-12 col-md-9">
+
+      <div class="card o-hidden border-0 shadow-lg">
+        <div class="card-body p-0">
+          <div class="row g-0">
+            
+            <div class="image-section min-height col-lg-5 d-lg-flex flex-column align-items-center justify-content-center rounded-3">
+              <a href="{% url 'pages:home' %}" class="btn btn-link p-0 text-decoration-none fw-medium mb-4 d-inline-block" style="color: #ffffffff;">
+                <i class="fas fa-arrow-left me-2"></i> Voltar para a página inicial
+              </a>
+
+              <div class="text-center text-white">
+                <img src="{% static 'img/img_login.jpg' %}" 
+                  alt="Casamento" 
+                  class="auth-img img-fluid rounded-3 shadow-sm mb-4">
+                <h2 class="fw-bold mb-2">Junte-se a nós!</h2>
+                <p class="opacity-75">Crie sua conta e comece a planejar seus casamentos.</p>
+              </div>
+            </div>
+
+            <div class="form-section col-lg-7">
+              <div class="p-4 p-sm-5">
+                <div class="text-center mb-4">
+                  <h1 class="h3 fw-bold text-dark mb-2">Cadastro</h1>
+                  <p class="text-muted">Preencha o formulário para criar sua conta</p>
+                </div>
+
+                <form method="post" action="{% url 'account_signup' %}">
+                  {% csrf_token %}
+                  
+                  {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                      {{ form.non_field_errors }}
+                    </div>
+                  {% endif %}
+
+                  {% comment %} Usa o partial _form_fields.html para renderizar os campos {% endcomment %}
+                  {% include 'partials/_form_fields.html' %}
+
+                  {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                  {% endif %}
+
+                  <button type="submit" class="btn btn-primary w-100 mt-3">
+                    <i class="fas fa-user-plus me-2"></i>{{ button_text|default:"Cadastrar" }}
+                  </button>
+                </form>
+                
+                <div class="text-center mt-4">
+                  <small class="text-muted">
+                    Já tem uma conta? <a href="{% url 'account_login' %}" class="fw-bold text-decoration-none">Faça login aqui</a>
+                  </small>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock content %}
