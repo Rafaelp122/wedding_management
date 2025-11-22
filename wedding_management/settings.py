@@ -41,11 +41,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",  # Necessário para django-allauth
     # Aplicativos de terceiros
     "rest_framework",  # Django REST Framework
     "django_htmx",
     # "django_extensions",
     "debug_toolbar",
+    # Django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     # Aplicativos do projeto
     "apps.scheduler",
     "apps.contracts",
@@ -69,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",  # Suporte para requisições htmx
+    "allauth.account.middleware.AccountMiddleware",  # django-allauth middleware
 ]
 
 # URLs e templates
@@ -116,9 +122,39 @@ AUTH_PASSWORD_VALIDATORS = [
 # Autenticação e redirecionamentos
 
 LOGIN_REDIRECT_URL = "weddings:my_weddings"
-LOGOUT_REDIRECT_URL = "users:login"
-LOGIN_URL = "/usuario/login/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"  # Redireciona para login do allauth
+LOGIN_URL = "/accounts/login/"  # URL de login do allauth
 AUTH_USER_MODEL = "users.User"
+
+# Django Sites Framework (necessário para allauth)
+SITE_ID = 1
+
+# Django-allauth Configuration
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Configurações do allauth
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Permite login por username ou email
+ACCOUNT_EMAIL_REQUIRED = True  # Email é obrigatório no cadastro
+ACCOUNT_USERNAME_REQUIRED = True  # Username também é obrigatório
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Desabilita verificação de email por enquanto
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
+ACCOUNT_LOGOUT_ON_GET = False  # Requer POST para logout (mais seguro)
+ACCOUNT_SESSION_REMEMBER = None  # Deixa o usuário escolher se quer lembrar
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True  # Pedir senha duas vezes
+ACCOUNT_USERNAME_MIN_LENGTH = 3  # Mínimo de caracteres para username
+ACCOUNT_FORMS = {
+    'signup': 'apps.users.web.forms.CustomUserCreationForm',
+    'login': 'apps.users.web.forms.CustomLoginForm',
+    'reset_password': 'apps.users.web.forms.CustomResetPasswordForm',
+}
+# Redireciona após login/logout
+ACCOUNT_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
+ACCOUNT_LOGOUT_REDIRECT_URL = LOGOUT_REDIRECT_URL
 
 # Internacionalização
 
