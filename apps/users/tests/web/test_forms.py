@@ -1,10 +1,17 @@
+"""
+Testes para os formulários do app users.
+
+Nota: Os testes da classe SignInForm foram removidos pois agora usamos
+CustomLoginForm do django-allauth, que já é amplamente testado pela
+biblioteca.
+"""
+
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 from apps.users.models import User
-from apps.users.web.forms import (CustomUserChangeForm, CustomUserCreationForm,
-                                  SignInForm)
+from apps.users.web.forms import CustomUserChangeForm, CustomUserCreationForm
 
 
 class CustomUserCreationFormTest(TestCase):
@@ -24,7 +31,14 @@ class CustomUserCreationFormTest(TestCase):
         self.assertTrue(form.is_valid())
 
         # Salva e verifica se foi para o banco
-        user = form.save()
+        # O allauth precisa de um request com session
+        from django.contrib.sessions.middleware import SessionMiddleware
+        request = RequestFactory().post('/fake-url')
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        
+        user = form.save(request)
         self.assertEqual(user.email, "new@test.com")
         self.assertTrue(user.check_password("StrongPass123!"))
 
@@ -82,25 +96,6 @@ class CustomUserCreationFormTest(TestCase):
         args, _ = mock_logger.warning.call_args
         self.assertIn("Falha no registro", args[0])
 
-    def test_inactive_user_cannot_login(self):
-        """
-        Usuário com is_active=False não deve conseguir logar,
-        mesmo com a senha correta.
-        """
-        inactive_user = User.objects.create_user(
-            "inactive", "in@test.com", "123", is_active=False
-        )
-
-        data = {
-            "username": "inactive",
-            "password": "123"  # Senha correta
-        }
-        form = SignInForm(request=None, data=data)
-
-        self.assertFalse(form.is_valid())
-        # O erro específico geralmente diz "Esta conta está inativa"
-        self.assertIn("__all__", form.errors)
-
     def test_form_has_large_css_classes(self):
         """
         Garante que o FormStylingMixinLarge foi aplicado no cadastro,
@@ -109,64 +104,6 @@ class CustomUserCreationFormTest(TestCase):
         form = CustomUserCreationForm()
 
         # Verifica um campo qualquer (ex: username)
-        widget_class = form.fields["username"].widget.attrs.get("class", "")
-
-        self.assertIn("form-control-lg", widget_class)
-        self.assertIn("custom-font-size", widget_class)
-
-
-class SignInFormTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="loginuser",
-            email="login@test.com",
-            password="CorrectPassword123"
-        )
-
-    def test_form_valid_login(self):
-        """
-        Login com credenciais corretas deve ser válido.
-        """
-        data = {
-            "username": "loginuser",
-            "password": "CorrectPassword123"
-        }
-        # AuthenticationForm precisa do request (pode ser None nos testes simples)
-        form = SignInForm(request=None, data=data)
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.get_user(), self.user)
-
-    def test_form_invalid_login_wrong_password(self):
-        """
-        Login com senha errada deve falhar.
-        """
-        data = {
-            "username": "loginuser",
-            "password": "WrongPassword"
-        }
-        form = SignInForm(request=None, data=data)
-        self.assertFalse(form.is_valid())
-        # O erro genérico de login fica em __all__
-        self.assertIn("__all__", form.errors)
-
-    @patch("apps.users.forms.logger")
-    def test_form_logs_warning_on_login_failure(self, mock_logger):
-        """
-        Verifica se o logger.warning é chamado quando o login falha.
-        """
-        data = {"username": "wrong", "password": "wrong"}
-        form = SignInForm(request=None, data=data)
-        form.is_valid()
-
-        self.assertTrue(mock_logger.warning.called)
-        args, _ = mock_logger.warning.call_args
-        self.assertIn("Tentativa de login falhou", args[0])
-
-    def test_form_has_large_css_classes(self):
-        """
-        Garante que o FormStylingMixinLarge foi aplicado corretamente.
-        """
-        form = SignInForm()
         widget_class = form.fields["username"].widget.attrs.get("class", "")
 
         self.assertIn("form-control-lg", widget_class)
