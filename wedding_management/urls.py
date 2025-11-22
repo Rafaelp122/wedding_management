@@ -2,6 +2,10 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.users.web.allauth_views import (CustomLoginView, CustomLogoutView,
+                                          CustomPasswordResetView,
+                                          CustomSignupView)
+
 # Define as rotas principais do projeto.
 # Cada app tem seu próprio arquivo de rotas, que é incluído aqui.
 
@@ -10,7 +14,18 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # Página inicial e seções estáticas.
     path("", include("apps.pages.urls", namespace="pages")),
-    # Rotas relacionadas a autenticação e perfis de usuário - Interface Web
+    # Views customizadas do allauth (com ícones e layout)
+    path("accounts/signup/", CustomSignupView.as_view(), name="account_signup"),
+    path("accounts/login/", CustomLoginView.as_view(), name="account_login"),
+    path("accounts/logout/", CustomLogoutView.as_view(), name="account_logout"),
+    path(
+        "accounts/password/reset/",
+        CustomPasswordResetView.as_view(),
+        name="account_reset_password",
+    ),
+    # Demais rotas do allauth (password reset, email, etc)
+    path("accounts/", include("allauth.urls")),
+    # Rotas customizadas do usuário (edit profile, etc)
     path(
         "usuario/",
         include(("apps.users.web.urls", "users"), namespace="users"),
