@@ -20,6 +20,7 @@ Pygments==2.19.2
 pyright==1.1.407
 pytest==8.4.1
 pytest-django==4.11.1
+pytest-xdist==3.6.1
 tomlkit==0.13.3
 types-PyYAML==6.0.12.20250915
 typing_extensions==4.15.0

@@ -42,6 +42,74 @@
             padding: 15px;
             margin-bottom: 20px;
         }
+
+        /* --- ESTILOS DO STEPPER (NOVO) --- */
+        .stepper-wrapper {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .stepper-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            z-index: 2;
+        }
+        .stepper-item::before {
+            position: absolute;
+            content: "";
+            border-bottom: 2px solid #e0e0e0;
+            width: 100%;
+            top: 15px;
+            left: -50%;
+            z-index: 1;
+        }
+        .stepper-item::after {
+            position: absolute;
+            content: "";
+            border-bottom: 2px solid #e0e0e0;
+            width: 100%;
+            top: 15px;
+            left: 50%;
+            z-index: 1;
+        }
+        .stepper-item .step-counter {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e0e0e0; /* Cinza padrão */
+            color: #fff;
+            margin-bottom: 6px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .stepper-item.active .step-counter {
+            background-color: #9C27B0; /* Roxo ativo */
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #9C27B0;
+        }
+        .stepper-item.completed .step-counter {
+            background-color: #4caf50; /* Verde completo */
+        }
+        .stepper-item.completed::after {
+            border-bottom: 2px solid #4caf50;
+            z-index: 3;
+        }
+        .stepper-item:first-child::before { content: none; }
+        .stepper-item:last-child::after { content: none; }
+        
+        .step-name { font-size: 0.75rem; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stepper-item.active .step-name { color: #9C27B0; }
+        .stepper-item.completed .step-name { color: #4caf50; }
     </style>
 </head>
 <body>
@@ -54,15 +122,33 @@
                 <div class="header-bg">
                     <h2 class="fw-bold mb-1">{{ contract.item.name }}</h2>
                     <p class="mb-0 opacity-75">Fornecedor: {{ contract.item.supplier|default:"Fornecedor" }}</p>
-                    
-                    {% if signer_role and contract.status != 'COMPLETED' and contract.status != 'CANCELED' %}
-                        <div class="step-badge">
-                            <i class="fas fa-pen-nib me-1"></i> Assinatura Atual: <strong>{{ signer_role }}</strong>
-                        </div>
-                    {% endif %}
                 </div>
 
                 <div class="card-body p-4 p-md-5">
+
+                    <!-- BARRA DE PROGRESSO (STEPPER) -->
+                    <div class="stepper-wrapper">
+                        <!-- Passo 1: Cerimonialista -->
+                        <div class="stepper-item {% if contract.planner_signature %}completed{% elif contract.status == 'WAITING_PLANNER' %}active{% endif %}">
+                            <div class="step-counter">{% if contract.planner_signature %}✓{% else %}1{% endif %}</div>
+                            <div class="step-name">Cerimonial</div>
+                        </div>
+                        
+                        <!-- Passo 2: Fornecedor -->
+                        <div class="stepper-item {% if contract.supplier_signature %}completed{% elif contract.status == 'WAITING_SUPPLIER' %}active{% endif %}">
+                            <div class="step-counter">{% if contract.supplier_signature %}✓{% else %}2{% endif %}</div>
+                            <div class="step-name">Fornecedor</div>
+                        </div>
+                        
+                        <!-- Passo 3: Noivos -->
+                        <div class="stepper-item {% if contract.couple_signature %}completed{% elif contract.status == 'WAITING_COUPLE' %}active{% endif %}">
+                            <div class="step-counter">{% if contract.couple_signature %}✓{% else %}3{% endif %}</div>
+                            <div class="step-name">Noivos</div>
+                        </div>
+                    </div>
+                    <!-- FIM STEPPER -->
+
+                    <hr class="mb-4 mt-0">
 
                     {% if contract.status == 'COMPLETED' %}
                         <div class="text-center py-4">
@@ -95,15 +181,17 @@
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted fw-bold text-uppercase d-block mb-1" style="font-size: 0.75rem;">Valor Total</small>
-                                    <!-- CORREÇÃO: Usando contract_value -->
                                     <div class="fw-bold text-success fs-4">R$ {{ contract.contract_value|floatformat:2 }}</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex align-items-center mb-2">
+                        <!-- TÍTULO E BOTÃO DE DOWNLOAD (NOVO) -->
+                        <div class="d-flex align-items-center justify-content-between mb-2">
                             <h5 class="fw-bold text-dark mb-0"><i class="fas fa-file-contract me-2 text-primary"></i>Termos do Contrato</h5>
-                            <small class="text-muted ms-auto">Role para ler tudo</small>
+                            <a href="{% url 'contracts:download_pdf' contract.id %}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Baixar PDF">
+                                <i class="fas fa-download me-1"></i> Baixar
+                            </a>
                         </div>
 
                         <div class="terms-box">
@@ -113,7 +201,6 @@
 
                             <h6>1. Identificação das Partes</h6>
                             <p>
-                                <!-- CORREÇÃO: Noivos -->
                                 <strong>CONTRATANTE (NOIVOS):</strong> {{ contract.wedding.bride_name }} e {{ contract.wedding.groom_name }}<br>
                                 <strong>CONTRATADA (FORNECEDOR):</strong> {{ contract.item.supplier|default:"Fornecedor" }}<br>
                                 <strong>INTERVENIENTE (CERIMONIAL):</strong> {{ contract.wedding.planner.get_full_name|default:"Cerimonialista Responsável" }}

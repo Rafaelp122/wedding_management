@@ -44,7 +44,7 @@
           <li><a class="dropdown-item" href="{% url 'users:edit_profile' %}">Editar Perfil</a></li>
           <li><hr class="dropdown-divider"></li>
           <li>
-            <form action="{% url 'users:logout' %}" method="post" class="d-inline">
+            <form action="{% url 'account_logout' %}" method="post" class="d-inline">
               {% csrf_token %}
               <button type="submit" class="dropdown-item">Deslogar</button>
             </form>

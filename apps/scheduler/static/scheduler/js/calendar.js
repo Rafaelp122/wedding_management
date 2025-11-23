@@ -106,15 +106,15 @@
           modal.show();
         },
 
-        // Editar evento
+        // Visualizar detalhes do evento
         eventClick: function (info) {
-          logger.log(`✏️ Abrindo modal: Editar Evento ID: ${info.event.id}`);
+          logger.log(`👁️ Abrindo modal: Detalhes do Evento ID: ${info.event.id}`);
           const modalEl = document.getElementById("form-modal");
           const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
           htmx.ajax(
             "GET",
-            `/scheduler/partial/${weddingId}/event/${info.event.id}/edit/`,
+            `/scheduler/partial/${weddingId}/event/${info.event.id}/detail/`,
             { target: "#form-modal-container", swap: "innerHTML" }
           );
 
@@ -151,6 +151,45 @@
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) {
       logger.log("Event 'closeModal' recebido. Fechando modal.");
+      modal.hide();
+    }
+  });
+
+  // Listener para refetch após salvar evento
+  document.body.addEventListener("eventSaved", function () {
+    logger.log("🔄 Event 'eventSaved' recebido. Refazendo fetch de eventos.");
+    
+    if (window.weddingApp.currentCalendar) {
+      window.weddingApp.currentCalendar.refetchEvents();
+      logger.log("✅ Eventos atualizados no calendário.");
+      
+      // Fecha o modal após atualizar
+      const modalEl = document.getElementById("form-modal");
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) {
+        modal.hide();
+        logger.log("Modal fechado após salvar evento.");
+      }
+    }
+  });
+
+  // Listener para remover evento deletado do calendário
+  document.body.addEventListener("eventDeleted", function (e) {
+    const eventId = e.detail?.id;
+    if (!eventId || !window.weddingApp.currentCalendar) return;
+    
+    logger.log(`🗑️ Event 'eventDeleted' recebido. Removendo evento ID: ${eventId}`);
+    
+    const event = window.weddingApp.currentCalendar.getEventById(eventId);
+    if (event) {
+      event.remove();
+      logger.log(`✅ Evento ${eventId} removido do calendário.`);
+    }
+    
+    // Fecha o modal
+    const modalEl = document.getElementById("form-modal");
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) {
       modal.hide();
     }
   });

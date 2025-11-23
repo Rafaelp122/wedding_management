@@ -7,6 +7,7 @@ Gerado por 'django-admin startproject' usando Django 5.2.3.
 import logging
 import logging.handlers
 import os
+import sys
 from pathlib import Path
 
 from django.contrib.messages import constants as messages
@@ -40,11 +41,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",  # Necessário para django-allauth
     # Aplicativos de terceiros
+    "rest_framework",  # Django REST Framework
     "django_htmx",
     # "django_extensions",
-    "rest_framework",
     "debug_toolbar",
+    # Django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     # Aplicativos do projeto
     "apps.scheduler",
     "apps.contracts",
@@ -68,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",  # Suporte para requisições htmx
+    "allauth.account.middleware.AccountMiddleware",  # django-allauth middleware
 ]
 
 # URLs e templates
@@ -115,9 +122,39 @@ AUTH_PASSWORD_VALIDATORS = [
 # Autenticação e redirecionamentos
 
 LOGIN_REDIRECT_URL = "weddings:my_weddings"
-LOGOUT_REDIRECT_URL = "users:login"
-LOGIN_URL = "/usuario/login/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"  # Redireciona para login do allauth
+LOGIN_URL = "/accounts/login/"  # URL de login do allauth
 AUTH_USER_MODEL = "users.User"
+
+# Django Sites Framework (necessário para allauth)
+SITE_ID = 1
+
+# Django-allauth Configuration
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Configurações do allauth
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Permite login por username ou email
+ACCOUNT_EMAIL_REQUIRED = True  # Email é obrigatório no cadastro
+ACCOUNT_USERNAME_REQUIRED = True  # Username também é obrigatório
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Desabilita verificação de email por enquanto
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
+ACCOUNT_LOGOUT_ON_GET = False  # Requer POST para logout (mais seguro)
+ACCOUNT_SESSION_REMEMBER = None  # Deixa o usuário escolher se quer lembrar
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True  # Pedir senha duas vezes
+ACCOUNT_USERNAME_MIN_LENGTH = 3  # Mínimo de caracteres para username
+ACCOUNT_FORMS = {
+    'signup': 'apps.users.web.forms.CustomUserCreationForm',
+    'login': 'apps.users.web.forms.CustomLoginForm',
+    'reset_password': 'apps.users.web.forms.CustomResetPasswordForm',
+}
+# Redireciona após login/logout
+ACCOUNT_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
+ACCOUNT_LOGOUT_REDIRECT_URL = LOGOUT_REDIRECT_URL
 
 # Internacionalização
 
@@ -163,8 +200,13 @@ LOGS_DIR = BASE_DIR / "logs"
 for app in APP_LOGS:
     (LOGS_DIR / app).mkdir(parents=True, exist_ok=True)
 
-# Define o nível do console baseado no modo DEBUG
-CONSOLE_LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
+# Define o nível do console baseado no modo DEBUG e se está rodando testes
+if "test" in sys.argv or "pytest" in sys.modules:
+    CONSOLE_LOG_LEVEL = "ERROR"  # Durante testes, só mostra erros
+elif DEBUG:
+    CONSOLE_LOG_LEVEL = "DEBUG"
+else:
+    CONSOLE_LOG_LEVEL = "INFO"
 
 LOGGING = {
     "version": 1,
@@ -282,3 +324,41 @@ MESSAGE_TAGS = {
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+# Django REST Framework Configuration
+
+REST_FRAMEWORK = {
+    # Autenticação padrão (Session para web, Token possível)
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    # Permissões padrão (requer autenticação)
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    # Paginação padrão
+    "DEFAULT_PAGINATION_CLASS": (
+        "rest_framework.pagination.PageNumberPagination"
+    ),
+    "PAGE_SIZE": 10,
+    # Filtros e busca
+    "DEFAULT_FILTER_BACKENDS": [
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    # Formato de resposta padrão
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",  # Web UI
+    ],
+    # Parser de requisições
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
+    # Formato de data/hora
+    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
+    "DATE_FORMAT": "%Y-%m-%d",
+}
+

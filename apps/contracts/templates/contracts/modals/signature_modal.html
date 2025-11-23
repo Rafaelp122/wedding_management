@@ -37,28 +37,42 @@
 </div>
 
 <script>
-    let currentUrl = null;
+    // CORREÇÃO DEFINITIVA PARA HTMX:
+    // Usamos 'window.' para garantir que a variável seja Global e única.
+    // Se ela já existir, apenas ignoramos a recriação.
+    
+    if (typeof window.currentSignatureUrl === 'undefined') {
+        window.currentSignatureUrl = null;
+    }
 
-    // A função agora recebe o botão inteiro (element) para pegar a URL do data-attribute
-    function openSignatureModal(element) {
+    // Função Global para abrir o modal
+    window.openSignatureModal = function(element) {
         // Pega a URL gerada pelo Django no atributo data-url
-        currentUrl = element.getAttribute('data-url');
+        window.currentSignatureUrl = element.getAttribute('data-url');
         
         const linkInput = document.getElementById('modalLinkInput');
-        const modal = new bootstrap.Modal(document.getElementById('signatureModal'));
-        
-        linkInput.value = "Gerando link...";
-        document.getElementById('modalEmailInput').value = "";
-        
-        modal.show();
+        // Instancia o modal de forma segura usando Bootstrap 5
+        const modalEl = document.getElementById('signatureModal');
+        // Se o Bootstrap não estiver carregado ainda, previne erro
+        if (typeof bootstrap !== 'undefined') {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            
+            linkInput.value = "Gerando link...";
+            document.getElementById('modalEmailInput').value = "";
+            
+            modal.show();
+        } else {
+            console.error("Bootstrap JS não carregado.");
+            return;
+        }
 
-        if (!currentUrl) {
+        if (!window.currentSignatureUrl) {
             linkInput.value = "Erro: URL não encontrada.";
             return;
         }
 
-        // Busca o link via AJAX usando a URL correta
-        fetch(currentUrl)
+        // Busca o link via AJAX
+        fetch(window.currentSignatureUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Erro na rede: ' + response.status);
@@ -70,20 +84,20 @@
             })
             .catch(err => {
                 console.error("Erro detalhado:", err);
-                linkInput.value = "Erro ao gerar link. Veja o console (F12).";
+                linkInput.value = "Erro ao gerar link. Tente recarregar a página.";
             });
     }
 
-    function copyLink() {
+    window.copyLink = function() {
         const copyText = document.getElementById("modalLinkInput");
         copyText.select();
-        copyText.setSelectionRange(0, 99999);
+        copyText.setSelectionRange(0, 99999); // Mobile
         navigator.clipboard.writeText(copyText.value).then(() => {
             alert("Link copiado!");
         });
     }
 
-    function sendEmail() {
+    window.sendEmail = function() {
         const email = document.getElementById('modalEmailInput').value;
         if(!email) {
             alert("Digite um e-mail.");
@@ -93,10 +107,11 @@
         const formData = new FormData();
         formData.append('email', email);
         
-        // Pega o token direto do input hidden que colocamos no HTML
-        const csrfToken = document.getElementById('csrfTokenModal').value;
+        const csrfInput = document.getElementById('csrfTokenModal');
+        // Tenta pegar do input, se falhar tenta cookie
+        const csrfToken = csrfInput ? csrfInput.value : getCookie('csrftoken');
         
-        fetch(currentUrl, {
+        fetch(window.currentSignatureUrl, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -109,14 +124,29 @@
         })
         .then(data => {
             alert("Sucesso: " + data.message);
-            // Fecha o modal corretamente
             const modalEl = document.getElementById('signatureModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
             if (modalInstance) modalInstance.hide();
         })
         .catch(err => {
             console.error("Erro no envio:", err);
-            alert("Erro ao enviar e-mail. Verifique o console (F12) para detalhes.");
+            alert("Erro ao enviar. Verifique o console.");
         });
+    }
+    
+    // Auxiliar para pegar cookie CSRF se necessário
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 </script>

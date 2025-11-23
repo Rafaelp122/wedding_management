@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .forms import CustomUserChangeForm, CustomUserCreationForm
 from .models import User
+from .web.forms import CustomUserChangeForm, CustomUserCreationForm
 
 
 @admin.register(User)

@@ -111,14 +111,14 @@ class BaseHtmxResponseMixin:
         """
         Hook para adicionar contexto ao template HTMX.
 
-        Injeta automaticamente o objeto 'request' no contexto
-        e preserva todos os kwargs passados.
-
         Args:
             **kwargs: Dados de contexto adicionais para o template.
 
         Returns:
-            Dicionário com o contexto completo incluindo 'request'.
+            Dicionário com o contexto fornecido + request injetado.
+
+        Note:
+            Injeta 'request' automaticamente para facilitar uso no template.
         """
         kwargs["request"] = self.request
         return kwargs
@@ -188,3 +188,68 @@ class BaseHtmxResponseMixin:
             response["HX-Trigger-After-Swap"] = trigger
 
         return response
+
+
+class ModalContextMixin:
+    """
+    Mixin genérico para contexto de modais de formulário.
+
+    Este mixin extrai a lógica comum de construção de contexto
+    para modais, evitando duplicação entre Create/Update views.
+
+    Fornece métodos para obter título do modal, texto do botão
+    e URL de POST, que devem ser definidos como atributos ou
+    implementados pelas views concretas.
+
+    Attributes:
+        modal_title: Título do modal.
+        submit_button_text: Texto do botão de submit.
+
+    Usage:
+        class MyCreateView(ModalContextMixin, CreateView):
+            modal_title = "Criar Item"
+            submit_button_text = "Salvar"
+
+            def get_hx_post_url(self) -> str:
+                return reverse('items:create')
+    """
+
+    modal_title: str = ""
+    submit_button_text: str = ""
+
+    def get_modal_title(self) -> str:
+        """Retorna o título do modal."""
+        return self.modal_title
+
+    def get_submit_button_text(self) -> str:
+        """Retorna o texto do botão de submit."""
+        return self.submit_button_text
+
+    def get_hx_post_url(self) -> str:
+        """
+        Retorna a URL para o POST do formulário.
+
+        Deve ser implementado pela view concreta.
+
+        Raises:
+            NotImplementedError: Se não for implementado pela subclasse.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must implement get_hx_post_url()"
+        )
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Adiciona contexto do modal ao contexto do template.
+
+        Args:
+            **kwargs: Argumentos de contexto adicionais.
+
+        Returns:
+            Dicionário com o contexto completo incluindo dados do modal.
+        """
+        context = super().get_context_data(**kwargs)  # type: ignore[misc]
+        context["modal_title"] = self.get_modal_title()
+        context["submit_button_text"] = self.get_submit_button_text()
+        context["hx_post_url"] = self.get_hx_post_url()
+        return context

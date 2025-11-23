@@ -1,8 +1,9 @@
-# terraria - Versão Final Blindada (Aceita Fornecedor Texto ou Objeto)
 import base64
 import hashlib
 import os
 import traceback
+import qrcode
+from io import BytesIO
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
@@ -12,6 +13,7 @@ from django.template.loader import get_template
 from django.utils import timezone
 from django.views.generic import TemplateView, View
 from xhtml2pdf import pisa
+from django.core.mail import send_mail
 
 from apps.contracts.models import Contract
 from apps.core.constants import GRADIENTS
@@ -63,10 +65,8 @@ class GenerateSignatureLinkView(LoginRequiredMixin, View):
                 next_signer = "Você (Cerimonialista)"
                 
             elif contract.status == "WAITING_SUPPLIER":
-                # --- CORREÇÃO DO ERRO 'str' object has no attribute 'name' ---
-                # Verifica se o fornecedor existe
                 if contract.supplier:
-                    # Se for um Objeto (tem .name), usa .name. Se for Texto (String), usa ele mesmo.
+                    # Se for um Objeto usa .name, se for string usa ela mesma
                     nome_fornecedor = getattr(contract.supplier, 'name', str(contract.supplier))
                     next_signer = f"Fornecedor ({nome_fornecedor})"
                 else:
@@ -74,7 +74,6 @@ class GenerateSignatureLinkView(LoginRequiredMixin, View):
                     
             elif contract.status == "WAITING_COUPLE":
                 if contract.wedding:
-                     # Mesma proteção para os noivos
                      nome_casal = getattr(contract.wedding, 'couple_name', str(contract.wedding))
                      next_signer = f"Noivos ({nome_casal})"
                 else:
@@ -91,8 +90,39 @@ class GenerateSignatureLinkView(LoginRequiredMixin, View):
             return JsonResponse({"link": f"ERRO NO SERVIDOR: {str(e)}"})
     
     def post(self, request, contract_id):
-        email_cliente = request.POST.get('email')
-        return JsonResponse({'success': True, 'message': f'Link enviado para {email_cliente}!'})
+        # Implementação real do envio de e-mail
+        try:
+            contract = get_object_or_404(Contract, id=contract_id)
+            email_cliente = request.POST.get('email')
+            link = request.build_absolute_uri(contract.get_absolute_url())
+            
+            assunto = f"Assinatura Pendente: {contract.item.name}"
+            mensagem = f"""
+            Olá,
+            
+            Um contrato requer sua assinatura digital no sistema Sim, Aceito.
+            
+            Item: {contract.item.name}
+            Status: {contract.get_status_display()}
+            
+            Acesse o link seguro abaixo para visualizar e assinar:
+            {link}
+            
+            Atenciosamente,
+            Equipe Sim, Aceito.
+            """
+            
+            send_mail(
+                assunto,
+                mensagem,
+                settings.DEFAULT_FROM_EMAIL, # Certifique-se de ter configurado isso no settings.py
+                [email_cliente],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({'success': True, 'message': f'E-mail enviado com sucesso para {email_cliente}!'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erro ao enviar e-mail: {str(e)}'})
 
 
 class SignContractExternalView(TemplateView):
@@ -164,7 +194,27 @@ class SignContractExternalView(TemplateView):
 def download_contract_pdf(request, contract_id):
     contract = get_object_or_404(Contract, id=contract_id)
     template_path = 'contracts/pdf_template.html'
-    context = {'contract': contract}
+    
+    # --- GERAÇÃO DO QR CODE ---
+    # Cria o link público
+    link = request.build_absolute_uri(contract.get_absolute_url())
+    
+    # Gera o QR Code em memória
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(link)
+    qr.make(fit=True)
+    img_qr = qr.make_image(fill_color="black", back_color="white")
+    
+    # Salva em buffer (bytes) e converte para base64 para o HTML ler
+    buffer = BytesIO()
+    img_qr.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+    # ---------------------------
+
+    context = {
+        'contract': contract,
+        'qr_code': qr_base64 # Passa o QR Code para o template
+    }
     
     response = HttpResponse(content_type='application/pdf')
     filename = f"contrato_{contract.item.name}_{str(contract.token)[:8]}.pdf"

@@ -5,14 +5,14 @@ from django.db.models import (
     Count,
     F,
     IntegerField,
+    OuterRef,
     Q,
+    Subquery,
     Value,
     When,
-    Subquery,
-    OuterRef,
 )
-from django.utils import timezone
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 
 class WeddingQuerySet(models.QuerySet):
@@ -21,15 +21,15 @@ class WeddingQuerySet(models.QuerySet):
     otimizado com Subqueries para contagens de performance.
     """
 
-    def with_counts_and_progress(self):
+    def with_counts_and_progress(self) -> "WeddingQuerySet":
         """
         Anota o queryset com contagens e progresso,
         usando Subqueries para performance e precisão.
         """
 
         # Colocado aqui para evitar import circular
-        from apps.items.models import Item
         from apps.contracts.models import Contract
+        from apps.items.models import Item
 
         # Subquery para contar TODOS os itens do casamento
         # OuterRef('pk') refere-se ao 'id' do Wedding na consulta principal
@@ -60,11 +60,15 @@ class WeddingQuerySet(models.QuerySet):
         # Usamos Coalesce para garantir que o valor seja 0 em vez de None
         # se não houver itens/contratos, evitando erros no cálculo.
         annotated_queryset = self.annotate(
-            items_count=Coalesce(item_count_sq, 0, output_field=IntegerField()),
+            items_count=Coalesce(
+                item_count_sq, 0, output_field=IntegerField()
+            ),
             done_items_count=Coalesce(
                 done_item_count_sq, 0, output_field=IntegerField()
             ),
-            contracts_count=Coalesce(contract_count_sq, 0, output_field=IntegerField()),
+            contracts_count=Coalesce(
+                contract_count_sq, 0, output_field=IntegerField()
+            ),
         )
 
         # Segundo .annotate() para calcular o progresso
@@ -76,7 +80,7 @@ class WeddingQuerySet(models.QuerySet):
             )
         )
 
-    def with_effective_status(self):
+    def with_effective_status(self) -> "WeddingQuerySet":
         """Anota o status 'real' (manual ou automático pela data)"""
         today = timezone.now().date()
         return self.annotate(
@@ -89,7 +93,7 @@ class WeddingQuerySet(models.QuerySet):
             )
         )
 
-    def apply_search(self, search_query):
+    def apply_search(self, search_query: str | None) -> "WeddingQuerySet":
         """
         Filtra por nome do noivo ou noiva (otimizado com 'istartswith')
         """
@@ -102,7 +106,7 @@ class WeddingQuerySet(models.QuerySet):
             )
         return self
 
-    def apply_sort(self, sort_option):
+    def apply_sort(self, sort_option: str) -> "WeddingQuerySet":
         """Ordena o queryset com base na opção de sort (refatorado)"""
 
         SORT_MAP = {

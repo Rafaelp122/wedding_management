@@ -1,40 +1,52 @@
+{% comment %}
+  Template de formulário de evento usando o modal reutilizável.
+  Para criar e editar eventos.
+{% endcomment %}
+
 <form 
-  hx-post="{{ form_action }}"
+  method="POST"
+  hx-post="{{ hx_post_url }}"
   hx-target="#form-modal-container"
   hx-swap="innerHTML"
 >
   {% csrf_token %}
 
-  <div class="modal-header">
-    <h5 class="modal-title">
-      {% if is_edit %}Editar Evento{% else %}Novo Evento{% endif %}
-    </h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-  </div>
+  <div class="modal-body p-4 p-md-5 position-relative">
 
-  <div class="modal-body">
-    {{ form.as_p }}
-  </div>
+    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
 
-  <div class="modal-footer d-flex justify-content-between align-items-center">
+    <h3 class="fw-bold mb-4 text-center">
+      {{ modal_title }}
+    </h3>
 
-    {% if is_edit %}
-      <button
-        type="button"
-        class="btn btn-outline-danger"
-        hx-get="{% url 'scheduler:event_delete_modal' wedding.id event.id %}"
-        hx-target="#form-modal-container"
-        hx-swap="innerHTML"
-      >
-        <i class="fas fa-trash-alt me-1"></i> Excluir
-      </button>
-    {% else %}
-      <div></div>
-    {% endif %}
-
-    <div class="d-flex gap-2 ms-auto">
-      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Salvar</button>
+    <div class="row g-3">
+      {% for field in form %}
+        {% if field.name != 'event_date' %}
+          <div class="col-12">
+            <label for="{{ field.id_for_label }}" class="form-label">
+              {{ field.label }}
+              {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {{ field.errors }}
+              </div>
+            {% endif %}
+          </div>
+        {% else %}
+          {# Campo hidden para event_date #}
+          {{ field }}
+        {% endif %}
+      {% endfor %}
     </div>
+
+    <div class="d-grid gap-2 mt-4">
+      <button type="submit" class="btn btn-primary btn-lg">
+        {{ submit_button_text }}
+      </button>
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+    </div>
+
   </div>
 </form>

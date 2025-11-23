@@ -45,13 +45,16 @@
         .footer-audit { 
             margin-top: 40px; 
             border-top: 1px dotted #ccc; 
-            padding-top: 10px; 
+            padding-top: 15px; 
             font-size: 8pt; 
             color: #999; 
             font-family: Courier, monospace;
-            text-align: center;
             page-break-inside: avoid;
         }
+        /* Layout para alinhar QR Code e Texto no rodapé */
+        .footer-table { width: 100%; }
+        .footer-text { text-align: left; vertical-align: middle; }
+        .footer-qr { text-align: right; vertical-align: middle; width: 80px; }
     </style>
 </head>
 <body>
@@ -59,7 +62,6 @@
     <div class="header-container">
         <img src="{% static 'img/inline_logo.png' %}" class="logo">
         <div class="title">Contrato de Prestação de Serviços</div>
-        <!-- CORREÇÃO: Usando nome do noivo e noiva -->
         <div class="subtitle">Evento: Casamento de {{ contract.wedding.bride_name }} & {{ contract.wedding.groom_name }}</div>
         <div class="subtitle">Data: {{ contract.wedding.date|date:"d \d\e F \d\e Y" }}</div>
     </div>
@@ -72,7 +74,6 @@
                     {{ contract.item.name }}
                 </td>
                 <td class="value-highlight">
-                    <!-- CORREÇÃO: Usando a propriedade contract_value -->
                     Valor Total: R$ {{ contract.contract_value|floatformat:2 }}
                 </td>
             </tr>
@@ -87,7 +88,6 @@
         </div>
         
         <div class="party-info">
-            <!-- CORREÇÃO: Usando supplier direto (é string) -->
             <strong>CONTRATADA (FORNECEDOR):</strong> {{ contract.item.supplier|default:"Fornecedor a definir" }}
         </div>
 
@@ -150,9 +150,22 @@
     </table>
 
     <div class="footer-audit">
-        <p>DOCUMENTO ASSINADO DIGITALMENTE VIA SISTEMA SIM, ACEITO.</p>
-        <p>HASH: {{ contract.integrity_hash|default:"(Em processamento)" }}</p>
-        <p>ID: {{ contract.token }} - Página <pdf:pagenumber /> de <pdf:pagecount /></p>
+        <table class="footer-table">
+            <tr>
+                <td class="footer-text">
+                    <p>DOCUMENTO ASSINADO DIGITALMENTE VIA SISTEMA SIM, ACEITO.</p>
+                    <p>HASH: {{ contract.integrity_hash|default:"(Em processamento)" }}</p>
+                    <p>ID: {{ contract.token }} - Página <pdf:pagenumber /> de <pdf:pagecount /></p>
+                </td>
+                <!-- COLUNA DO QR CODE -->
+                <td class="footer-qr">
+                    {% if qr_code %}
+                        <img src="data:image/png;base64,{{ qr_code }}" style="width: 80px; height: 80px;">
+                        <div style="font-size: 6pt; text-align: center; margin-top: 2px;">Validar</div>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
     </div>
 
 </body>
