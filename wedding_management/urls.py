@@ -60,10 +60,11 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    # 3. Importe a toolbar dentro do if
-    import debug_toolbar
-
-    urlpatterns = [
-        # 4. Adicione a URL da toolbar
-        path("__debug__/", include(debug_toolbar.urls)),
-    ] + urlpatterns
+    # Import debug toolbar only if available
+    try:
+        import debug_toolbar
+        urlpatterns = [
+            path("__debug__/", include(debug_toolbar.urls)),
+        ] + urlpatterns
+    except ImportError:
+        pass  # Debug toolbar not installed
