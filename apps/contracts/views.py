@@ -1,3 +1,4 @@
+# terraria - Versão Final Pós-Conflito (Com QR Code, Email e Auditoria)
 import base64
 import hashlib
 import os
@@ -66,7 +67,6 @@ class GenerateSignatureLinkView(LoginRequiredMixin, View):
                 
             elif contract.status == "WAITING_SUPPLIER":
                 if contract.supplier:
-                    # Se for um Objeto usa .name, se for string usa ela mesma
                     nome_fornecedor = getattr(contract.supplier, 'name', str(contract.supplier))
                     next_signer = f"Fornecedor ({nome_fornecedor})"
                 else:
@@ -90,7 +90,6 @@ class GenerateSignatureLinkView(LoginRequiredMixin, View):
             return JsonResponse({"link": f"ERRO NO SERVIDOR: {str(e)}"})
     
     def post(self, request, contract_id):
-        # Implementação real do envio de e-mail
         try:
             contract = get_object_or_404(Contract, id=contract_id)
             email_cliente = request.POST.get('email')
@@ -115,7 +114,7 @@ class GenerateSignatureLinkView(LoginRequiredMixin, View):
             send_mail(
                 assunto,
                 mensagem,
-                settings.DEFAULT_FROM_EMAIL, # Certifique-se de ter configurado isso no settings.py
+                settings.DEFAULT_FROM_EMAIL,
                 [email_cliente],
                 fail_silently=False,
             )
@@ -196,16 +195,13 @@ def download_contract_pdf(request, contract_id):
     template_path = 'contracts/pdf_template.html'
     
     # --- GERAÇÃO DO QR CODE ---
-    # Cria o link público
     link = request.build_absolute_uri(contract.get_absolute_url())
     
-    # Gera o QR Code em memória
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(link)
     qr.make(fit=True)
     img_qr = qr.make_image(fill_color="black", back_color="white")
     
-    # Salva em buffer (bytes) e converte para base64 para o HTML ler
     buffer = BytesIO()
     img_qr.save(buffer, format="PNG")
     qr_base64 = base64.b64encode(buffer.getvalue()).decode()
@@ -213,7 +209,7 @@ def download_contract_pdf(request, contract_id):
 
     context = {
         'contract': contract,
-        'qr_code': qr_base64 # Passa o QR Code para o template
+        'qr_code': qr_base64
     }
     
     response = HttpResponse(content_type='application/pdf')
