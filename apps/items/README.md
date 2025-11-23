@@ -304,30 +304,6 @@ O app `items` gerencia os itens do orçamento de cada casamento. Permite criar, 
 
 ---
 
-## Lições Aprendidas
-
-**Arquitetura:**
-- Mixins granulares facilitam composição
-- Facade pattern agrupa funcionalidades
-- Reutilização de core mixins evita duplicação
-- ItemWeddingContextMixin implementa segurança multicamadas
-
-**Performance:**
-- Índices compostos melhoram performance de queries
-- Cálculos no banco são mais eficientes que em Python
-- select_related previne N+1
-
-**Testes:**
-- Teste de transação atômica é crítico para integridade
-- Mock para simular falhas de banco
-- Assertivas claras sobre rollback
-
-**Filosofia de Testes:**
-- **TESTA:** Segurança (isolamento), transações, edge cases
-- **NÃO TESTA:** Config estática, detalhes de UI, Django ORM
-
----
-
 ## Integrações
 
 - **apps.contracts:** Criação automática de Contract para cada Item

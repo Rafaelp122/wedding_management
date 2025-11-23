@@ -336,18 +336,4 @@ PATCH  /api/v1/weddings/{id}/update-status/ - Atualiza status
 
 ---
 
-## Lições Aprendidas
-
-**Filosofia de Testes:**
-- **TESTA:** Segurança, lógica de negócio, edge cases
-- **NÃO TESTA:** Config estática, detalhes de UI, implementação
-
-**Arquitetura:**
-- Mixins granulares facilitam composição
-- Facade pattern agrupa funcionalidades relacionadas
-- Reutilização de mixins do core evita duplicação
-
----
-
 **Última Atualização:** 21 de novembro de 2025  
-**Refatoração:** Lean Testing (38→16 testes em mixins)
