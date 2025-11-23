@@ -1,7 +1,6 @@
 import base64
 import hashlib
 import uuid
-
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
@@ -30,21 +29,25 @@ class Contract(BaseModel):
 
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
-    # Assinaturas
+    # Assinaturas - Cerimonialista
     planner_signature = models.FileField(upload_to="signatures/planner/", null=True, blank=True)
     planner_signed_at = models.DateTimeField(null=True, blank=True)
     planner_ip = models.GenericIPAddressField(null=True, blank=True)
 
+    # Assinaturas - Fornecedor
     supplier_signature = models.FileField(upload_to="signatures/supplier/", null=True, blank=True)
     supplier_signed_at = models.DateTimeField(null=True, blank=True)
     supplier_ip = models.GenericIPAddressField(null=True, blank=True)
 
+    # Assinaturas - Noivos
     couple_signature = models.FileField(upload_to="signatures/couple/", null=True, blank=True)
     couple_signed_at = models.DateTimeField(null=True, blank=True)
     couple_ip = models.GenericIPAddressField(null=True, blank=True)
 
+    # Auditoria e Arquivos Finais
     integrity_hash = models.CharField(max_length=64, blank=True, null=True)
     final_pdf = models.FileField(upload_to="contracts_pdf/", null=True, blank=True)
+    external_pdf = models.FileField(upload_to="contracts_external/", null=True, blank=True)
 
     def __str__(self):
         return f"Contrato {self.status} - {self.item.name}"
@@ -79,17 +82,6 @@ class Contract(BaseModel):
     def process_signature(self, signature_b64: str, client_ip: str) -> bool:
         """
         Processa e salva uma assinatura digital.
-
-        Args:
-            signature_b64: String base64 da imagem de assinatura
-            client_ip: Endereço IP do assinante
-
-        Returns:
-            bool: True se processado com sucesso, False caso contrário
-
-        Raises:
-            ValueError: Se a assinatura estiver vazia ou formato inválido
-            RuntimeError: Se o status do contrato for inválido
         """
         if not signature_b64 or ';base64,' not in signature_b64:
             raise ValueError("Assinatura inválida ou vazia")
@@ -98,24 +90,16 @@ class Contract(BaseModel):
         MAX_SIGNATURE_SIZE = 500 * 1024  # 500KB
         ALLOWED_FORMATS = ['png', 'jpg', 'jpeg']
 
-        # Decodifica a imagem base64
         try:
             format_part, imgstr = signature_b64.split(';base64,')
             ext = format_part.split('/')[-1].lower()
 
-            # Valida formato
             if ext not in ALLOWED_FORMATS:
-                raise ValueError(
-                    f"Formato {ext} não permitido. "
-                    f"Use: {', '.join(ALLOWED_FORMATS)}"
-                )
+                raise ValueError(f"Formato {ext} não permitido.")
 
-            # Decodifica e valida tamanho
             decoded_data = base64.b64decode(imgstr)
             if len(decoded_data) > MAX_SIGNATURE_SIZE:
-                raise ValueError(
-                    "Assinatura muito grande. Máximo: 500KB"
-                )
+                raise ValueError("Assinatura muito grande. Máximo: 500KB")
 
             signature_file = ContentFile(
                 decoded_data,
@@ -146,9 +130,7 @@ class Contract(BaseModel):
             self._generate_integrity_hash()
 
         else:
-            raise RuntimeError(
-                f"Não é possível assinar contrato com status: {self.status}"
-            )
+            raise RuntimeError(f"Não é possível assinar contrato com status: {self.status}")
 
         self.save()
         return True
@@ -156,16 +138,20 @@ class Contract(BaseModel):
     def _generate_integrity_hash(self) -> None:
         """
         Gera hash de integridade para o contrato completado.
-        Inclui todas as datas de assinatura e IPs.
         """
+        # Garante que as datas não sejam None antes de formatar
+        planner_dt = self.planner_signed_at.isoformat() if self.planner_signed_at else ""
+        supplier_dt = self.supplier_signed_at.isoformat() if self.supplier_signed_at else ""
+        couple_dt = self.couple_signed_at.isoformat() if self.couple_signed_at else ""
+
         hash_components = [
             str(self.id),
-            str(self.planner_signed_at.isoformat()),
-            str(self.planner_ip),
-            str(self.supplier_signed_at.isoformat()),
-            str(self.supplier_ip),
-            str(self.couple_signed_at.isoformat()),
-            str(self.couple_ip),
+            planner_dt,
+            str(self.planner_ip or ""),
+            supplier_dt,
+            str(self.supplier_ip or ""),
+            couple_dt,
+            str(self.couple_ip or ""),
             str(self.token),
         ]
         hash_input = '|'.join(hash_components)
@@ -176,62 +162,37 @@ class Contract(BaseModel):
     def get_next_signer_info(self) -> dict:
         """
         Retorna informações sobre o próximo assinante.
-
-        Returns:
-            dict: Informações com 'role' e 'name'
         """
         if self.status == "WAITING_PLANNER":
-            return {
-                'role': 'Cerimonialista',
-                'name': 'Você (Cerimonialista)'
-            }
+            return {'role': 'Cerimonialista', 'name': 'Você (Cerimonialista)'}
 
         elif self.status == "WAITING_SUPPLIER":
             supplier_name = self.supplier or "Não vinculado"
-            return {
-                'role': 'Fornecedor',
-                'name': f"Fornecedor ({supplier_name})"
-            }
+            return {'role': 'Fornecedor', 'name': f"Fornecedor ({supplier_name})"}
 
         elif self.status == "WAITING_COUPLE":
             if self.wedding:
                 bride = self.wedding.bride_name
                 groom = self.wedding.groom_name
-                return {
-                    'role': 'Noivos',
-                    'name': f"Noivos ({bride} e {groom})"
-                }
-            return {
-                'role': 'Noivos',
-                'name': 'Noivos'
-            }
+                return {'role': 'Noivos', 'name': f"Noivos ({bride} e {groom})"}
+            return {'role': 'Noivos', 'name': 'Noivos'}
 
-        return {
-            'role': 'Desconhecido',
-            'name': 'Alguém'
-        }
+        return {'role': 'Desconhecido', 'name': 'Alguém'}
 
     def is_fully_signed(self) -> bool:
         """
         Verifica se o contrato foi assinado por todas as partes.
-
-        Returns:
-            bool: True se todas as assinaturas foram coletadas
         """
         return (
             self.status == "COMPLETED" and
-            self.planner_signature and
-            self.supplier_signature and
-            self.couple_signature and
-            self.integrity_hash
+            bool(self.planner_signature) and
+            bool(self.supplier_signature) and
+            bool(self.couple_signature)
         )
 
     def get_signatures_status(self) -> dict:
         """
         Retorna o status de cada assinatura.
-
-        Returns:
-            dict: Dicionário com status de cada parte
         """
         return {
             'planner': {

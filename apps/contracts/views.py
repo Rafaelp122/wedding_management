@@ -1,4 +1,4 @@
-# terraria - Versão Final Pós-Conflito (Com QR Code, Email e Auditoria)
+# terraria - Versão Final Consolidada (Todas as Funcionalidades)
 import base64
 import hashlib
 import os
@@ -241,3 +241,61 @@ def link_callback(uri, rel):
     if not os.path.isfile(path):
             pass
     return path
+
+
+class CancelContractView(LoginRequiredMixin, View):
+    """
+    Cancela o contrato e invalida o link.
+    """
+    def post(self, request, contract_id):
+        contract = get_object_or_404(Contract, id=contract_id, item__wedding__planner=request.user)
+        
+        if contract.status != 'COMPLETED':
+            contract.status = 'CANCELED'
+            contract.save()
+            return JsonResponse({'success': True, 'message': 'Contrato cancelado com sucesso.'})
+        
+        return JsonResponse({'success': False, 'message': 'Não é possível cancelar um contrato concluído.'})
+
+
+class EditContractView(LoginRequiredMixin, View):
+    """
+    Atualiza a descrição (minuta) do contrato.
+    """
+    def post(self, request, contract_id):
+        contract = get_object_or_404(Contract, id=contract_id, item__wedding__planner=request.user)
+        
+        # Só permite editar se ninguém assinou ainda (ou apenas o planner)
+        if contract.status not in ['WAITING_PLANNER', 'DRAFT']:
+             return JsonResponse({'success': False, 'message': 'Não é possível editar um contrato que já foi enviado/assinado por outros.'})
+
+        new_description = request.POST.get('description')
+        if new_description:
+            contract.description = new_description
+            contract.save()
+            return JsonResponse({'success': True, 'message': 'Termos atualizados com sucesso!'})
+            
+        return JsonResponse({'success': False, 'message': 'A descrição não pode estar vazia.'})
+
+
+class UploadContractView(LoginRequiredMixin, View):
+    """
+    Permite upload manual de um contrato assinado externamente.
+    """
+    def post(self, request, contract_id):
+        contract = get_object_or_404(Contract, id=contract_id, item__wedding__planner=request.user)
+        
+        if 'external_pdf' not in request.FILES:
+            return JsonResponse({'success': False, 'message': 'Nenhum arquivo enviado.'})
+            
+        file = request.FILES['external_pdf']
+        
+        if not file.name.endswith('.pdf'):
+             return JsonResponse({'success': False, 'message': 'Apenas arquivos PDF são permitidos.'})
+
+        contract.external_pdf = file
+        contract.status = 'COMPLETED' 
+        contract.integrity_hash = "UPLOAD_MANUAL_EXTERNO"
+        contract.save()
+        
+        return JsonResponse({'success': True, 'message': 'Contrato externo anexado e finalizado!'})
