@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-
+from django.conf import settings
+from django.conf.urls.static import static
 from apps.users.web.allauth_views import (CustomLoginView, CustomLogoutView,
                                           CustomPasswordResetView,
                                           CustomSignupView)
 
-# Define as rotas principais do projeto.
-# Cada app tem seu próprio arquivo de rotas, que é incluído aqui.
 
+# Define as rotas principais do projeto.
 urlpatterns = [
     # Painel administrativo padrão do Django
     path("admin/", admin.site.urls),
@@ -60,10 +60,14 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    # 3. Importe a toolbar dentro do if
+    # Importe a toolbar dentro do if
     import debug_toolbar
 
-    urlpatterns = [
-        # 4. Adicione a URL da toolbar
+    # Adiciona as URLs do debug toolbar
+    urlpatterns += [
         path("__debug__/", include(debug_toolbar.urls)),
-    ] + urlpatterns
+    ]
+    
+    # Adiciona a rota para servir arquivos de mídia (upload) localmente
+    # ISSO AQUI QUE ESTAVA QUEBRADO E IMPEDIA O DOWNLOAD
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
