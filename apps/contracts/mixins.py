@@ -1,247 +1,403 @@
 """
-Mixins para views de contratos.
-Contém lógicas reutilizáveis para autorização, geração de PDF e tracking.
+Mixins reutilizáveis para views de contratos.
+Seguindo o padrão de organização do app weddings.
 """
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Dict
 
-from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
-from django.template.loader import get_template
-from xhtml2pdf import pisa
 
+from apps.contracts.constants import (EXTERNAL_CONTRACT_HASH, STATUS_CANCELED,
+                                      STATUS_COMPLETED)
 from apps.contracts.models import Contract
+from apps.core.mixins.auth import OwnerRequiredMixin
+from apps.core.mixins.responses import JsonResponseMixin
+
+if TYPE_CHECKING:
+    from apps.contracts.querysets import ContractQuerySet
 
 logger = logging.getLogger(__name__)
 
 
-class ClientIPMixin:
+# --- Mixins Independentes (Standalone) ---
+
+
+class ContractOwnershipMixin(OwnerRequiredMixin):
     """
-    Mixin genérico para extrair o IP do cliente de requisições.
-
-    Útil para funcionalidades de auditoria, logging e tracking.
-    Trata corretamente headers de proxy (X-Forwarded-For).
-
+    Define model e owner_field_name para contratos.
+    
+    Este mixin especializa o OwnerRequiredMixin genérico para o modelo
+    Contract, garantindo que apenas o cerimonialista dono do casamento
+    possa acessar o contrato.
+    
     Usage:
-        class MyView(ClientIPMixin, View):
-            def get(self, request):
-                ip = self.get_client_ip()
-                # usar o IP para auditoria
+        class MyContractView(ContractOwnershipMixin, UpdateView):
+            fields = ['description', 'status']
     """
-
-    request: HttpRequest
-
-    def get_client_ip(self) -> str:
-        """
-        Extrai o endereço IP do cliente para fins de auditoria.
-
-        Trata corretamente requisições através de proxies,
-        extraindo o IP original do header X-Forwarded-For.
-
-        Returns:
-            str: Endereço IP do cliente ou 'unknown' se não disponível
-        """
-        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            # Pega o primeiro IP da cadeia (cliente original)
-            ip = x_forwarded_for.split(',')[0].strip()
-        else:
-            ip = self.request.META.get('REMOTE_ADDR', 'unknown')
-        return ip
+    
+    model = Contract
+    owner_field_name = "item__wedding__planner"
 
 
-class ContractOwnershipMixin(LoginRequiredMixin):
+class ContractQuerysetMixin:
     """
-    Mixin para verificar se o usuário tem permissão de acessar um contrato.
-
-    Valida que o usuário logado é o planner responsável pelo casamento
-    vinculado ao contrato.
-
+    Fine-Grained Mixin: Query Logic
+    
+    Responsável por construir querysets de Contract.
+    Encapsula toda a lógica de filtragem e busca de contratos.
+    
     Attributes:
-        contract: Instância do Contract (deve ser definida pela view)
-
-    Usage:
-        class MyContractView(ContractOwnershipMixin, View):
-            def get(self, request, contract_id):
-                contract = self.get_contract_or_403(contract_id)
-                # usuário tem permissão garantida
+        request: HttpRequest object (deve ser fornecido pela View).
     """
-
+    
     request: HttpRequest
-
-    def get_contract_or_403(self, contract_id: int) -> Contract:
+    
+    def get_contracts_for_planner(self) -> "ContractQuerySet":
         """
-        Obtém o contrato e valida permissões do usuário.
-
+        Retorna todos os contratos do cerimonialista logado.
+        
+        Returns:
+            QuerySet filtrado e otimizado de Contract.
+        """
+        return (
+            Contract.objects
+            .for_planner(self.request.user)
+            .with_related()
+        )
+    
+    def get_contracts_for_wedding(self, wedding_id: int) -> "ContractQuerySet":
+        """
+        Retorna contratos de um casamento específico.
+        
         Args:
-            contract_id: ID do contrato
-
+            wedding_id: ID do casamento.
+            
         Returns:
-            Contract: Instância do contrato se usuário tiver permissão
-
-        Raises:
-            PermissionDenied: Se o usuário não for o planner do casamento
+            QuerySet filtrado de Contract.
         """
-        contract = get_object_or_404(Contract, id=contract_id)
+        from apps.weddings.models import Wedding
+        
+        wedding = get_object_or_404(
+            Wedding,
+            id=wedding_id,
+            planner=self.request.user
+        )
+        
+        return (
+            Contract.objects
+            .for_wedding(wedding)
+            .with_related()
+        )
 
-        # Verifica se o usuário tem permissão
-        if contract.wedding.planner != self.request.user:
-            logger.warning(
-                f"Acesso negado ao contrato {contract_id} "
-                f"por {self.request.user.username}"
-            )
-            raise PermissionDenied(
-                "Você não tem permissão para acessar este contrato."
-            )
 
-        return contract
-
-
-class TokenAccessMixin:
+class ContractSignatureMixin:
     """
-    Mixin para acessar contratos via token UUID (acesso público).
-
-    Usado em views que permitem acesso externo via link único,
-    como assinatura de contratos por fornecedores/clientes.
-
-    Usage:
-        class SignContractView(TokenAccessMixin, TemplateView):
-            def get_context_data(self, **kwargs):
-                context = super().get_context_data(**kwargs)
-                contract = self.get_contract_by_token()
-                context['contract'] = contract
-                return context
+    Fine-Grained Mixin: Signature Logic
+    
+    Responsável pela lógica de assinatura de contratos.
+    Extrai a lógica repetida de processamento de assinaturas.
     """
-
-    kwargs: dict
-
-    def get_contract_by_token(self) -> Contract:
+    
+    def get_client_ip(self, request: HttpRequest) -> str:
         """
-        Obtém o contrato usando o token UUID da URL.
-
+        Extrai o IP do cliente da request para auditoria.
+        
+        Args:
+            request: HttpRequest object.
+            
         Returns:
-            Contract: Instância do contrato
-
-        Raises:
-            Http404: Se o token não for válido
+            String com o IP do cliente.
         """
-        token = self.kwargs.get("token")
-        contract = get_object_or_404(Contract, token=token)
-        return contract
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+    
+    def process_contract_signature(
+        self,
+        contract: Contract,
+        signature_b64: str,
+        request: HttpRequest
+    ) -> tuple[bool, str]:
+        """
+        Processa a assinatura de um contrato.
+        
+        Args:
+            contract: Instância do Contract.
+            signature_b64: Assinatura em base64.
+            request: HttpRequest object.
+            
+        Returns:
+            Tupla (sucesso: bool, mensagem: str).
+        """
+        if not signature_b64:
+            return False, "Assinatura vazia."
+        
+        try:
+            client_ip = self.get_client_ip(request)
+            contract.process_signature(signature_b64, client_ip)
+            return True, "Assinatura processada com sucesso."
+            
+        except ValueError as e:
+            logger.warning(f"Erro de validação na assinatura: {str(e)}")
+            return False, f"Erro de validação: {str(e)}"
+            
+        except RuntimeError as e:
+            logger.error(f"Erro de runtime na assinatura: {str(e)}")
+            return False, f"Erro: {str(e)}"
+            
+        except Exception as e:
+            logger.exception("Erro inesperado ao processar assinatura")
+            return False, f"Erro técnico: {str(e)}"
 
 
-class PDFResponseMixin:
+class ContractUrlGeneratorMixin:
     """
-    Mixin para gerar respostas em PDF usando xhtml2pdf.
+    Fine-Grained Mixin: URL Generation Logic
+    
+    Responsável pela geração de URLs e links de assinatura.
+    """
+    
+    request: HttpRequest
+    
+    def generate_signature_link(
+        self,
+        contract: Contract
+    ) -> Dict[str, Any]:
+        """
+        Gera o link de assinatura e informações do próximo signatário.
+        
+        Args:
+            contract: Instância do Contract.
+            
+        Returns:
+            Dicionário com link, status e próximo signatário.
+        """
+        try:
+            link = self.request.build_absolute_uri(
+                contract.get_absolute_url()
+            )
+        except Exception as e:
+            logger.error(f"Erro ao gerar URL: {str(e)}")
+            return {"link": f"ERRO NA URL: {str(e)}"}
+        
+        next_signer_info = contract.get_next_signer_info()
+        
+        return {
+            "link": link,
+            "status": contract.status,
+            "next_signer": next_signer_info['name'],
+            "message": f"Próximo a assinar: {next_signer_info['name']}"
+        }
 
-    Renderiza templates Django como PDFs com suporte a arquivos
-    estáticos e media (CSS, imagens).
 
-    Attributes:
-        pdf_template_name: Nome do template a ser renderizado como PDF
-        pdf_filename: Nome do arquivo PDF (pode incluir variáveis)
+class ContractEmailMixin:
+    """
+    Fine-Grained Mixin: Email Logic
+    
+    Responsável pelo envio de e-mails relacionados a contratos.
+    """
+    
+    request: HttpRequest
+    
+    def send_signature_email(
+        self,
+        contract: Contract,
+        recipient_email: str
+    ) -> tuple[bool, str]:
+        """
+        Envia e-mail com link de assinatura.
+        
+        Args:
+            contract: Instância do Contract.
+            recipient_email: E-mail do destinatário.
+            
+        Returns:
+            Tupla (sucesso: bool, mensagem: str).
+        """
+        from django.conf import settings
+        from django.core.mail import send_mail
+        
+        try:
+            link = self.request.build_absolute_uri(
+                contract.get_absolute_url()
+            )
+            
+            subject = f"Assinatura Pendente: {contract.item.name}"
+            message = f"""
+Olá,
 
+Um contrato requer sua assinatura digital no sistema Sim, Aceito.
+
+Item: {contract.item.name}
+Status: {contract.get_status_display()}
+
+Acesse o link seguro abaixo para visualizar e assinar:
+{link}
+
+Atenciosamente,
+Equipe Sim, Aceito.
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [recipient_email],
+                fail_silently=False,
+            )
+            
+            return True, f'E-mail enviado com sucesso para {recipient_email}!'
+            
+        except Exception as e:
+            logger.exception(f"Erro ao enviar e-mail para {recipient_email}")
+            return False, f'Erro ao enviar e-mail: {str(e)}'
+
+
+class ContractActionsMixin:
+    """
+    Fine-Grained Mixin: Contract Actions
+    
+    Responsável por ações específicas em contratos usando querysets
+    para validação e operações eficientes.
+    """
+    
+    request: HttpRequest
+    
+    def cancel_contract(self, contract: Contract) -> tuple[bool, str]:
+        """
+        Cancela um contrato se possível.
+        Usa queryset para validar se é cancelável.
+        
+        Args:
+            contract: Instância do Contract.
+            
+        Returns:
+            Tupla (sucesso: bool, mensagem: str).
+        """
+        # Usa queryset para verificar se é cancelável
+        is_cancelable = Contract.objects.filter(
+            pk=contract.pk
+        ).cancelable().exists()
+        
+        if not is_cancelable:
+            return (
+                False,
+                'Não é possível cancelar um contrato concluído.'
+            )
+        
+        contract.status = STATUS_CANCELED
+        contract.save()
+        return True, 'Contrato cancelado com sucesso.'
+    
+    def update_contract_description(
+        self,
+        contract: Contract,
+        new_description: str
+    ) -> tuple[bool, str]:
+        """
+        Atualiza a descrição de um contrato editável.
+        Usa queryset para verificar se é editável.
+        
+        Args:
+            contract: Instância do Contract.
+            new_description: Nova descrição do contrato.
+            
+        Returns:
+            Tupla (sucesso: bool, mensagem: str).
+        """
+        # Usa queryset para verificar se é editável
+        is_editable = Contract.objects.filter(
+            pk=contract.pk
+        ).editable().exists()
+        
+        if not is_editable:
+            return (
+                False,
+                'Não é possível editar um contrato que já foi '
+                'enviado/assinado por outros.'
+            )
+        
+        if not new_description:
+            return False, 'A descrição não pode estar vazia.'
+        
+        contract.description = new_description
+        contract.save()
+        return True, 'Termos atualizados com sucesso!'
+    
+    def upload_external_contract(
+        self,
+        contract: Contract,
+        pdf_file
+    ) -> tuple[bool, str]:
+        """
+        Faz upload de um contrato assinado externamente.
+        
+        Args:
+            contract: Instância do Contract.
+            pdf_file: Arquivo PDF enviado.
+            
+        Returns:
+            Tupla (sucesso: bool, mensagem: str).
+        """
+        if not pdf_file:
+            return False, 'Nenhum arquivo enviado.'
+        
+        if not pdf_file.name.endswith('.pdf'):
+            return False, 'Apenas arquivos PDF são permitidos.'
+        
+        contract.external_pdf = pdf_file
+        contract.status = STATUS_COMPLETED
+        contract.integrity_hash = EXTERNAL_CONTRACT_HASH
+        contract.save()
+        
+        return True, 'Contrato externo anexado e finalizado!'
+
+
+# --- Mixin de Composição (Facade Pattern) ---
+
+
+class ContractManagementMixin(
+    ContractQuerysetMixin,
+    ContractSignatureMixin,
+    ContractUrlGeneratorMixin,
+    ContractEmailMixin,
+    ContractActionsMixin,
+    JsonResponseMixin
+):
+    """
+    Mixin de Composição (Composition Mixin) - Facade Pattern
+    
+    Este mixin atua como uma "fachada" que agrupa todos os mixins
+    granulares de contratos em uma única interface conveniente.
+    
+    Composição Interna:
+        - ContractQuerysetMixin: Query logic
+        - ContractSignatureMixin: Signature processing
+        - ContractUrlGeneratorMixin: URL generation
+        - ContractEmailMixin: Email sending
+        - ContractActionsMixin: Contract actions
+        - JsonResponseMixin: JSON response helpers
+    
+    Requisitos da View que herda este mixin:
+        - Atributos obrigatórios:
+            * request: HttpRequest - Fornecido automaticamente
+    
     Usage:
-        class DownloadPDFView(PDFResponseMixin, View):
-            pdf_template_name = 'documents/contract.html'
-
-            def get(self, request, contract_id):
-                contract = Contract.objects.get(id=contract_id)
-                return self.render_to_pdf(
-                    context={'contract': contract},
-                    filename=f'contrato_{contract.id}.pdf'
+        class MyContractView(
+            ContractOwnershipMixin,
+            ContractManagementMixin,
+            View
+        ):
+            def post(self, request, contract_id):
+                contract = get_object_or_404(Contract, id=contract_id)
+                success, message = self.cancel_contract(contract)
+                return self.json_success(message) if success else (
+                    self.json_error(message)
                 )
     """
 
-    request: HttpRequest
-    pdf_template_name: Optional[str] = None
-
-    def render_to_pdf(
-        self,
-        context: dict,
-        filename: str,
-        template_name: Optional[str] = None
-    ) -> HttpResponse:
-        """
-        Renderiza um template como PDF e retorna como download.
-
-        Args:
-            context: Dicionário de contexto para o template
-            filename: Nome do arquivo PDF para download
-            template_name: Template a usar (sobrescreve pdf_template_name)
-
-        Returns:
-            HttpResponse: Resposta HTTP com PDF ou mensagem de erro
-        """
-        template_path = template_name or self.pdf_template_name
-
-        if not template_path:
-            logger.error("pdf_template_name não definido")
-            return HttpResponse(
-                'Configuração de template incorreta.',
-                status=500
-            )
-
-        # Prepara a resposta HTTP
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
-        # Renderiza o template
-        template = get_template(template_path)
-        html = template.render(context)
-
-        # Gera o PDF
-        pisa_status = pisa.CreatePDF(
-            html,
-            dest=response,
-            link_callback=self._pdf_link_callback
-        )
-
-        if pisa_status.err:
-            logger.error(
-                f"Erro ao gerar PDF: {template_path}",
-                exc_info=True
-            )
-            return HttpResponse(
-                'Erro ao gerar PDF. Por favor, tente novamente.',
-                status=500
-            )
-
-        return response
-
-    @staticmethod
-    def _pdf_link_callback(uri: str, rel: str) -> str:
-        """
-        Callback para resolver URLs de arquivos estáticos e media no PDF.
-
-        Converte URLs relativas para caminhos absolutos no sistema de
-        arquivos, permitindo que o xhtml2pdf acesse CSS, imagens, etc.
-
-        Args:
-            uri: URI do recurso (pode ser relativa ou absoluta)
-            rel: Caminho relativo (não usado)
-
-        Returns:
-            str: Caminho absoluto do arquivo ou URI original se não encontrado
-        """
-        import os
-
-        sUrl = settings.STATIC_URL
-        sRoot = settings.STATIC_ROOT
-        mUrl = settings.MEDIA_URL
-        mRoot = settings.MEDIA_ROOT
-
-        if uri.startswith(mUrl):
-            path = os.path.join(mRoot, uri.replace(mUrl, ""))
-        elif uri.startswith(sUrl):
-            path = os.path.join(sRoot, uri.replace(sUrl, ""))
-        else:
-            return uri
-
-        # Retorna o path se existir, caso contrário retorna a URI original
-        if os.path.isfile(path):
-            return path
-        return uri
+    pass
