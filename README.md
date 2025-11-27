@@ -59,9 +59,13 @@ Este sistema auxilia cerimonialistas e organizadores de eventos na gestão compl
   - Controle de pagamentos
 
 - ✅ **Contratos** (`apps/contracts/`)
-  - Armazenamento de contratos com fornecedores
-  - Alertas de vencimento automáticos via Celery
-  - Upload de documentos PDF
+  - **Sistema de assinatura digital tripartite** (Planner → Fornecedor → Noivos)
+  - Validações de segurança (formato, tamanho, base64)
+  - Auditoria completa (IP + timestamp + hash SHA256)
+  - Geração de PDF com QR Code
+  - Notificações por e-mail com links únicos
+  - Upload de contratos externos
+  - Gestão completa (edição, cancelamento)
 
 - ✅ **Gestão de Itens** (`apps/items/`)
   - Lista dinâmica de itens essenciais
@@ -114,6 +118,7 @@ Este sistema auxilia cerimonialistas e organizadores de eventos na gestão compl
 - **Django Allauth** - Autenticação completa
 - **Pillow** - Processamento de imagens
 - **xhtml2pdf** - Geração de PDFs
+- **qrcode** - Geração de QR Codes para contratos
 - **Sentry** - Monitoramento de erros (produção)
 
 ---
@@ -233,15 +238,15 @@ Cada app possui documentação detalhada sobre arquitetura, testes, padrões e l
 | **scheduler** | Calendário e eventos com FullCalendar | [📄 README](apps/scheduler/README.md) | 61 ✅ | v2.0 |
 | **budget** | Visão consolidada de orçamentos | [📄 README](apps/budget/README.md) | 6 ✅ | v1.0 |
 | **pages** | Landing page e formulário de contato | [📄 README](apps/pages/README.md) | 19 ✅ | v1.0 |
-| **contracts** | Contratos com fornecedores (OneToOne com Item) | [📄 README](apps/contracts/README.md) | 13 ✅ | v1.0 |
+| **contracts** | Sistema completo de assinatura digital tripartite | [📄 README](apps/contracts/README.md) | 61 ✅ | v2.0 |
 | **users** | Autenticação e perfis (Allauth + API) | [� README](apps/users/README.md) | 36 ✅ | v2.0 |
 | **templates** | Estrutura de templates e herança | [📄 README](templates/README.md) | - | - |
 
-**Total de testes:** 382 passando ✅
+**Total de testes:** 430 passando ✅
 
 **Breakdown por App:**
 - Core: 34 ✅ | Weddings: 60 ✅ | Items: 57 ✅ | Scheduler: 61 ✅
-- Budget: 6 ✅ | Pages: 19 ✅ | Contracts: 13 ✅ | Users: 36 ✅
+- Budget: 6 ✅ | Pages: 19 ✅ | **Contracts: 61 ✅** | Users: 36 ✅
 - Mixins (core): 30 ✅
 
 ---
