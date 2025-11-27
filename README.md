@@ -2,180 +2,84 @@
 
 Sistema completo para gestão de casamentos desenvolvido como projeto final na **FIRJAN SENAI São Gonçalo**, baseado em uma demanda real do **SAGA SENAI**.
 
-Este sistema auxilia cerimonialistas e organizadores de eventos na gestão completa de casamentos, oferecendo ferramentas integradas para orçamentos, contratos, itens, agendamento e muito mais — tudo em um único lugar.
-
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2-green.svg)](https://www.djangoproject.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](#)
 
 ---
 
-## � Sumário
+## 📋 Sobre o Projeto
 
-- [📊 Status do Projeto](#-status-do-projeto)
-- [✨ Funcionalidades](#-funcionalidades)
-- [🛠 Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [🚀 Como Executar o Projeto](#-como-executar-o-projeto)
-  - [📦 Opção 1: Docker Completo](#-opção-1-docker-completo-recomendado-para-teste)
-  - [🔧 Opção 2: Docker Híbrido](#-opção-2-docker-híbrido-recomendado-para-desenvolvimento)
-  - [💻 Opção 3: Local Puro](#-opção-3-local-puro-desenvolvimento-rápido)
-- [📚 Documentação Adicional](#-documentação-adicional)
-  - [📖 Documentação Geral](#-documentação-geral)
-  - [📦 Documentação por App](#-documentação-por-app)
-- [🧪 Testes](#-testes)
-- [📁 Estrutura do Projeto](#-estrutura-do-projeto)
-- [🤝 Contribuindo](#-contribuindo)
-- [👥 Equipe](#-equipe)
-- [📄 Licença](#-licença)
-- [🔗 Links Úteis](#-links-úteis)
+Sistema web desenvolvido para auxiliar cerimonialistas e organizadores de eventos na **gestão completa de casamentos**, oferecendo ferramentas integradas para orçamentos, contratos digitais, itens, agendamento e muito mais — tudo em um único lugar.
+
+**Status:** 🚧 Em desenvolvimento ativo  
+**Início:** Março 2025 | **Conclusão prevista:** Dezembro 2025
 
 ---
 
-## �📊 Status do Projeto
+## ✨ Principais Funcionalidades
 
-🚧 **Em desenvolvimento ativo**  
-📅 Início: Março 2025 | Previsão de conclusão: Dezembro 2025
-
----
-
-## ✨ Funcionalidades
-
-### 📋 Módulos Implementados
-
-- ✅ **Gestão de Usuários** (`apps/users/`)
-  - Sistema de autenticação completo com Django Allauth
-  - Perfis de usuário personalizados
-  - Controle de acesso e permissões
-
-- ✅ **Gestão de Casamentos** (`apps/weddings/`)
-  - Cadastro completo de eventos
-  - Informações de noivos, data, local
-  - Vinculação com outros módulos
-
-- ✅ **Orçamento** (`apps/budget/`)
-  - Criação de orçamentos detalhados
-  - Estimativas de custo por categoria (decoração, buffet, fotografia, etc)
-  - Controle de pagamentos
-
-- ✅ **Contratos** (`apps/contracts/`)
-  - **Sistema de assinatura digital tripartite** (Planner → Fornecedor → Noivos)
-  - Validações de segurança (formato, tamanho, base64)
-  - Auditoria completa (IP + timestamp + hash SHA256)
-  - Geração de PDF com QR Code
-  - Notificações por e-mail com links únicos
-  - Upload de contratos externos
-  - Gestão completa (edição, cancelamento)
-
-- ✅ **Gestão de Itens** (`apps/items/`)
-  - Lista dinâmica de itens essenciais
-  - Status de aquisição (pendente, adquirido, cancelado)
-  - Categorização e fornecedores
-
-- ✅ **Agendador/Calendário** (`apps/scheduler/`)
-  - Visão cronológica de atividades
-  - Eventos e compromissos
-  - Lembretes automáticos
-
-- ✅ **Páginas Institucionais** (`apps/pages/`)
-  - Landing page
-  - Formulário de contato
-  - Páginas informativas
-
-- ✅ **API REST** (Django REST Framework)
-  - Endpoints para todas as funcionalidades
-  - Serializers e viewsets completos
-  - Autenticação via token
+- 💒 **Gestão de Casamentos** - Cadastro completo de eventos com informações de noivos, data e local
+- 💰 **Orçamento Inteligente** - Controle financeiro com categorização de despesas e acompanhamento de pagamentos
+- 📝 **Contratos Digitais** - Sistema de assinatura digital tripartite com auditoria completa e geração de PDF
+- 🛍️ **Gestão de Itens** - Lista dinâmica de produtos/serviços com status de aquisição
+- 📅 **Calendário de Eventos** - Agenda visual com compromissos e lembretes
+- 👥 **Autenticação Completa** - Sistema de usuários com Django Allauth
+- 🌐 **API REST** - Endpoints para integrações externas
 
 ---
 
-## 🛠 Tecnologias Utilizadas
+## 🛠 Tecnologias
 
-### Backend
-- **Python 3.12** - Linguagem principal
-- **Django 5.2** - Framework web
-- **Django REST Framework 3.16** - API REST
-- **Celery 5.4** - Tarefas assíncronas e agendadas
-- **Redis 7** - Cache e broker do Celery
-
-### Frontend
-- **Django Templates** - Sistema de templates
-- **Django HTMX 1.23** - Interatividade moderna
-- **Bootstrap 5** - Framework CSS
-- **JavaScript** - Interações dinâmicas
-
-### Banco de Dados
-- **PostgreSQL 16** - Banco de dados principal (produção)
-- **SQLite** - Desenvolvimento rápido (opcional)
-
-### Infraestrutura
-- **Docker & Docker Compose** - Containerização
-- **Gunicorn 23** - WSGI server (produção)
-- **Nginx** - Proxy reverso e arquivos estáticos
-- **GitHub Actions** - CI/CD (planejado)
-
-### Bibliotecas Adicionais
-- **Django Allauth** - Autenticação completa
-- **Pillow** - Processamento de imagens
-- **xhtml2pdf** - Geração de PDFs
-- **qrcode** - Geração de QR Codes para contratos
-- **Sentry** - Monitoramento de erros (produção)
+**Backend:** Python 3.12, Django 5.2, Django REST Framework 3.16  
+**Frontend:** HTML5, CSS3, JavaScript, HTMX, Bootstrap 5  
+**Banco de Dados:** PostgreSQL (produção), SQLite (desenvolvimento)  
+**Tarefas Assíncronas:** Celery 5.4 + Redis 7  
+**Infraestrutura:** Docker, Docker Compose, Nginx  
 
 ---
 
-## 🚀 Como Executar o Projeto
+## 🚀 Como Executar
 
-Você pode executar o projeto de **3 formas diferentes**. Escolha a que melhor se adapta ao seu workflow:
+### Pré-requisitos
+- Python 3.12+
+- Docker e Docker Compose (para ambiente containerizado)
+- Git
 
-### 📦 Opção 1: Docker Completo (Recomendado para teste)
-
-Executa todos os serviços em containers (PostgreSQL, Redis, Django, Celery, Nginx).
+### Opção 1: Docker Completo (Recomendado para Testes)
 
 ```bash
 # Clone o repositório
 git clone https://github.com/Rafaelp122/wedding_management.git
 cd wedding_management
 
-# Configure variáveis de ambiente
-cp .env.example .env
+# Execute com Docker Compose
+docker-compose up --build
 
-# Inicie todos os serviços
-docker compose up -d
-
-# Acesse a aplicação
-# http://localhost (via Nginx)
-# http://localhost/admin (painel admin)
+# Acesse: http://localhost:8000
 ```
 
-**Credenciais padrão:** admin / admin123 (altere no `.env`)
-
-### 🔧 Opção 2: Docker Híbrido (Recomendado para desenvolvimento)
-
-Executa apenas DB e Redis em Docker, Django roda localmente (hot-reload instantâneo).
+### Opção 2: Ambiente Local (Desenvolvimento Rápido)
 
 ```bash
 # Clone o repositório
 git clone https://github.com/Rafaelp122/wedding_management.git
 cd wedding_management
 
-# Inicie apenas DB e Redis
-docker compose -f docker-compose.local.yml up -d
-
-# Crie e ative ambiente virtual
+# Crie e ative o ambiente virtual
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# ou: venv\Scripts\activate  # Windows
+# ou
+venv\Scripts\activate  # Windows
 
-# Instale dependências
-pip install -r requirements/local.txt
+# Instale as dependências
+pip install -r requirements.txt
 
-# Configure variáveis de ambiente
-cp .env.example .env
-
-# Execute migrações
+# Execute as migrações
 python manage.py migrate
 
-# Crie superusuário
+# Crie um superusuário
 python manage.py createsuperuser
 
 # Inicie o servidor
@@ -183,89 +87,21 @@ python manage.py runserver
 
 # Acesse: http://localhost:8000
 ```
-
-### 💻 Opção 3: Local Puro (Desenvolvimento rápido)
-
-Executa tudo localmente sem Docker (SQLite).
-
-```bash
-# Clone o repositório
-git clone https://github.com/Rafaelp122/wedding_management.git
-cd wedding_management
-
-# Crie e ative ambiente virtual
-python -m venv venv
-source venv/bin/activate
-
-# Instale dependências
-pip install -r requirements/local.txt
-
-# Configure para usar SQLite (edite .env)
-cp .env.example .env
-# Certifique-se que DEBUG=True
-
-# Execute migrações
-python manage.py migrate
-
-# Crie superusuário
-python manage.py createsuperuser
-
-# Inicie o servidor
-python manage.py runserver
-
-# Acesse: http://localhost:8000
-```
-
----
-
-## 📚 Documentação Adicional
-
-### 📖 Documentação Geral
-- **[DOCKER.md](DOCKER.md)** - Guia completo de Docker, ambientes, troubleshooting, deploy
-- **[Makefile](Makefile)** - Comandos úteis (`make help` para ver todos)
-- **[docs/SENTRY_SETUP.md](docs/SENTRY_SETUP.md)** - Configuração do Sentry para monitoramento
-
-### 📦 Documentação por App
-
-Cada app possui documentação detalhada sobre arquitetura, testes, padrões e lições aprendidas:
-
-| App | Descrição | README | Testes | Versão |
-|-----|-----------|--------|--------|--------|
-| **core** | Base compartilhada (mixins, utils, tasks, models) | [📄 README](apps/core/README.md) | 34 ✅ | Atual |
-| **core/mixins** | Mixins reutilizáveis (auth, forms, views) | [📄 README](apps/core/mixins/README.md) | 30 ✅ | Atual |
-| **weddings** | Gestão de casamentos (Web + API REST) | [📄 README](apps/weddings/README.md) | 60 ✅ | v3.0 |
-| **items** | Itens de orçamento com contratos automáticos | [📄 README](apps/items/README.md) | 57 ✅ | v3.0 |
-| **scheduler** | Calendário e eventos com FullCalendar | [📄 README](apps/scheduler/README.md) | 61 ✅ | v2.0 |
-| **budget** | Visão consolidada de orçamentos | [📄 README](apps/budget/README.md) | 6 ✅ | v1.0 |
-| **pages** | Landing page e formulário de contato | [📄 README](apps/pages/README.md) | 19 ✅ | v1.0 |
-| **contracts** | Sistema completo de assinatura digital tripartite | [📄 README](apps/contracts/README.md) | 61 ✅ | v2.0 |
-| **users** | Autenticação e perfis (Allauth + API) | [� README](apps/users/README.md) | 36 ✅ | v2.0 |
-| **templates** | Estrutura de templates e herança | [📄 README](templates/README.md) | - | - |
-
-**Total de testes:** 430 passando ✅
-
-**Breakdown por App:**
-- Core: 34 ✅ | Weddings: 60 ✅ | Items: 57 ✅ | Scheduler: 61 ✅
-- Budget: 6 ✅ | Pages: 19 ✅ | **Contracts: 61 ✅** | Users: 36 ✅
-- Mixins (core): 30 ✅
 
 ---
 
 ## 🧪 Testes
 
 ```bash
-# Com Docker
-docker compose exec web python manage.py test
-
-# Ou com pytest e coverage
-docker compose exec web pytest --cov=apps --cov-report=html
-
-# Local
+# Executar todos os testes
 python manage.py test
-pytest --cov=apps --cov-report=html
-```
 
-Relatório de cobertura disponível em `htmlcov/index.html`
+# Com cobertura
+pytest --cov=apps --cov-report=html
+
+# Testes específicos de um app
+python manage.py test apps.contracts
+```
 
 ---
 
@@ -273,56 +109,54 @@ Relatório de cobertura disponível em `htmlcov/index.html`
 
 ```
 wedding_management/
-├── apps/                          # Aplicações Django
-│   ├── users/                    # Autenticação e perfis
-│   ├── weddings/                 # Gestão de casamentos
-│   ├── budget/                   # Orçamentos
-│   ├── contracts/                # Contratos
-│   ├── items/                    # Itens do casamento
-│   ├── scheduler/                # Calendário e eventos
-│   ├── pages/                    # Páginas institucionais
-│   └── core/                     # Funcionalidades compartilhadas
-├── wedding_management/            # Configurações do projeto
-│   ├── settings/                 # Settings por ambiente
-│   │   ├── base.py              # Configurações base
-│   │   ├── local.py             # Desenvolvimento
-│   │   ├── production.py        # Produção
-│   │   └── test.py              # Testes
-│   ├── urls.py                   # URLs principais
-│   └── wsgi.py                   # WSGI application
-├── templates/                     # Templates HTML
-├── static/                       # Arquivos estáticos
-├── media/                        # Uploads de usuários
-├── requirements/                  # Dependências Python
-│   ├── base.txt                 # Comuns
-│   ├── local.txt                # Desenvolvimento
-│   ├── production.txt           # Produção
-│   └── test.txt                 # Testes
-├── docker-compose.yml            # Docker completo
-├── docker-compose.local.yml      # Docker minimalista
-├── Dockerfile                    # Imagem Docker
-├── Makefile                      # Comandos úteis
-├── manage.py                     # Django CLI
-└── README.md                     # Este arquivo
+├── apps/                   # Aplicações Django
+│   ├── budget/            # Gestão de orçamentos
+│   ├── contracts/         # Contratos digitais
+│   ├── core/              # Utilitários compartilhados
+│   ├── items/             # Gestão de itens
+│   ├── pages/             # Páginas institucionais
+│   ├── scheduler/         # Calendário de eventos
+│   ├── users/             # Autenticação e usuários
+│   └── weddings/          # Gestão de casamentos
+├── docs/                   # Documentação técnica detalhada
+├── static/                # Arquivos estáticos
+├── templates/             # Templates globais
+├── docker-compose.yml     # Configuração Docker
+└── manage.py             # CLI do Django
 ```
 
 ---
 
-## 🤝 Contribuindo
+## 📚 Documentação
 
-Este é um projeto acadêmico, mas contribuições são bem-vindas!
+### Visão Geral
+- 📖 [Arquitetura do Sistema](docs/architecture/overview.md)
+- 🏗️ [Decisões de Design](docs/architecture/design-decisions.md)
+- 🔄 [Fluxo de Dados](docs/architecture/data-flow.md)
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+### Por Aplicação
+- 💒 [Weddings](docs/apps/weddings.md) - Gestão de casamentos
+- 📝 [Contracts](docs/apps/contracts.md) - Sistema de assinatura digital
+- 🛍️ [Items](docs/apps/items.md) - Gestão de itens
+- 💰 [Budget](docs/apps/budget.md) - Controle orçamentário
+- 📅 [Scheduler](docs/apps/scheduler.md) - Calendário de eventos
+- 👥 [Users](docs/apps/users.md) - Autenticação e usuários
+- 🌐 [Pages](docs/apps/pages.md) - Páginas institucionais
+- 🔧 [Core](docs/apps/core.md) - Utilitários compartilhados
+
+### Desenvolvimento
+- 🐳 [Docker Setup](docs/DOCKER.md)
+- 🧪 [Guia de Testes](docs/testing.md)
+- 🔌 [API REST](docs/api.md)
 
 ---
 
 ## 👥 Equipe
 
-Projeto desenvolvido por alunos da **FIRJAN SENAI São Gonçalo** como trabalho de conclusão de curso.
+Projeto desenvolvido por **Rafael Pimenta** como trabalho de conclusão do curso técnico na FIRJAN SENAI São Gonçalo.
+
+**Orientação:** SAGA SENAI  
+**Instituição:** FIRJAN SENAI São Gonçalo  
 
 ---
 
@@ -334,11 +168,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 🔗 Links Úteis
 
-- [Documentação Django](https://docs.djangoproject.com/)
-- [Docker Documentation](https://docs.docker.com/)
+- [Documentação do Django](https://docs.djangoproject.com/)
 - [Django REST Framework](https://www.django-rest-framework.org/)
-- [Celery Documentation](https://docs.celeryproject.org/)
-
----
-
-**Desenvolvido com ❤️ na FIRJAN SENAI São Gonçalo**
+- [HTMX Documentation](https://htmx.org/docs/)
+- [Docker Documentation](https://docs.docker.com/)
