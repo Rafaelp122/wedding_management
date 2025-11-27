@@ -199,19 +199,6 @@ O app `scheduler` gerencia o calendário de eventos relacionados aos casamentos.
 
 ---
 
-## Lições Aprendidas
-
-**Filosofia de Testes:**
-- **TESTA:** Segurança (isolamento de dados), validações, edge cases
-- **NÃO TESTA:** Config estática (model = Event), detalhes de UI
-
-**Arquitetura:**
-- Mixins granulares facilitam manutenção
-- Reutilização de core mixins evita duplicação
-- Separação de API views mantém código limpo
-
----
-
 ## Integrações
 
 - **FullCalendar.js:** Biblioteca JavaScript para visualização de calendário

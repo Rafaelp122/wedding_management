@@ -1,0 +1,13 @@
+# Include base requirements
+-r base.txt
+
+# Testing frameworks
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0  # Coverage reporting
+pytest-xdist==3.6.1  # Parallel testing
+factory-boy==3.3.1  # Test fixtures
+faker==33.1.0  # Fake data generation
+
+# Code quality
+coverage==7.6.9  # Code coverage

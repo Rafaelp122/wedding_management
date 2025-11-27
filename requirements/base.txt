@@ -1,0 +1,17 @@
+# Core dependencies for all environments
+Django==5.2.4
+django-allauth==65.3.0
+django-htmx==1.23.2
+djangorestframework==3.16.1
+
+# Utilities
+colorlog==6.10.1
+Pillow==12.0.0
+xhtml2pdf==0.2.17
+
+# Database & Caching
+psycopg2-binary==2.9.10  # PostgreSQL adapter
+redis==5.2.1  # Redis client
+
+# Async & Task Queue
+celery==5.4.0  # Task queue

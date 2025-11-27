@@ -60,14 +60,14 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    # Importe a toolbar dentro do if
-    import debug_toolbar
-
-    # Adiciona as URLs do debug toolbar
-    urlpatterns += [
-        path("__debug__/", include(debug_toolbar.urls)),
-    ]
+    # Import debug toolbar only if available
+    try:
+        import debug_toolbar
+        urlpatterns += [
+            path("__debug__/", include(debug_toolbar.urls)),
+        ]
+    except ImportError:
+        pass  # Debug toolbar not installed
     
     # Adiciona a rota para servir arquivos de mídia (upload) localmente
-    # ISSO AQUI QUE ESTAVA QUEBRADO E IMPEDIA O DOWNLOAD
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
