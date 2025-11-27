@@ -1,209 +1,315 @@
-# terraria - Versão Final Consolidada (Todas as Funcionalidades)
+# apps/contracts/views.py - Views Refatoradas com Mixins e Querysets
+"""
+Views para gerenciamento de contratos de casamento.
+
+Este módulo contém views para:
+- Listagem e visualização de contratos
+- Geração de links de assinatura
+- Assinatura externa (pública, por token)
+- Cancelamento e edição de contratos
+- Upload de contratos externos
+- Geração de PDF com QR code
+
+Organização:
+- Views de listagem e visualização
+- Views de ações autenticadas (planner)
+- Views públicas (assinatura externa)
+- Views funcionais (PDF)
+"""
 import base64
-import hashlib
 import os
 import traceback
-import qrcode
 from io import BytesIO
+
+import qrcode
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.files.base import ContentFile
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import get_template
-from django.utils import timezone
 from django.views.generic import TemplateView, View
 from xhtml2pdf import pisa
-from django.core.mail import send_mail
 
+from apps.contracts.mixins import (ContractManagementMixin,
+                                   ContractOwnershipMixin)
 from apps.contracts.models import Contract
 from apps.core.constants import GRADIENTS
 from apps.weddings.models import Wedding
 
 
-def get_client_ip(request):
-    """Função auxiliar para pegar o IP do usuário para auditoria."""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
-
-
 class ContractsPartialView(LoginRequiredMixin, TemplateView):
+    """
+    Exibe lista parcial de contratos de um casamento específico.
+    
+    Acesso: Apenas usuários autenticados (cerimonialistas).
+    
+    Contexto fornecido ao template:
+        - wedding: Instância do casamento
+        - contracts_list: Lista de dicionários com:
+            * contract: Instância do Contract
+            * gradient: Gradiente CSS para estilização
+    
+    URL Pattern:
+        /contracts/partial/<wedding_id>/
+    
+    Mixins:
+        - LoginRequiredMixin: Garante autenticação
+    
+    Nota: Verifica manualmente se o planner é dono do casamento via
+          get_object_or_404 com filtro de planner.
+    """
     template_name = "contracts/contracts_partial.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         wedding_id = self.kwargs.get("wedding_id")
         planner = self.request.user
-        wedding = get_object_or_404(Wedding, id=wedding_id, planner=planner)
-        
+        wedding = get_object_or_404(
+            Wedding,
+            id=wedding_id,
+            planner=planner
+        )
+
         context["wedding"] = wedding
-        contracts_qs = Contract.objects.filter(item__wedding=wedding).select_related("item")
+
+        # Usa o queryset customizado
+        contracts_qs = (
+            Contract.objects
+            .for_wedding(wedding)
+            .with_related()
+        )
 
         context["contracts_list"] = [
-            {"contract": contract, "gradient": GRADIENTS[idx % len(GRADIENTS)]}
+            {
+                "contract": contract,
+                "gradient": GRADIENTS[idx % len(GRADIENTS)]
+            }
             for idx, contract in enumerate(contracts_qs)
         ]
         return context
 
 
-class GenerateSignatureLinkView(LoginRequiredMixin, View):
+class GenerateSignatureLinkView(
+    ContractOwnershipMixin,
+    ContractManagementMixin,
+    View
+):
+    """
+    Gera link de assinatura digital e envia por e-mail.
+    
+    Acesso: Apenas cerimonialistas donos do contrato.
+    
+    Métodos HTTP:
+        GET: Retorna JSON com informações do link de assinatura
+            Response: {
+                'link': str,
+                'token': str,
+                'expires_at': str
+            }
+        
+        POST: Envia link de assinatura por e-mail
+            Body: {'email': str}
+            Response: JSON com success/error
+    
+    URL Pattern:
+        /contracts/generate-link/<contract_id>/
+    
+    Mixins:
+        - ContractOwnershipMixin: Garante autenticação e ownership
+          (herda LoginRequiredMixin, então não precisa declarar
+          explicitamente)
+        - ContractManagementMixin: Fornece métodos de negócio
+            * generate_signature_link()
+            * send_signature_email()
+            * json_success() / json_error()
+    
+    Raises:
+        Http404: Se contrato não existir ou não pertencer ao planner
+        Exception: Erros de servidor retornam JSON com mensagem
+    """
     def get(self, request, contract_id):
+        """
+        Retorna informações do link de assinatura em formato JSON.
+        
+        Args:
+            request: HttpRequest
+            contract_id: ID do contrato
+        
+        Returns:
+            JsonResponse com informações do link ou erro
+        """
         try:
-            contract = get_object_or_404(Contract, id=contract_id)
-            
-            try:
-                link = request.build_absolute_uri(contract.get_absolute_url())
-            except Exception as e:
-                return JsonResponse({"link": f"ERRO NA URL: {str(e)}"})
-            
-            next_signer = "Alguém"
-            
-            if contract.status == "WAITING_PLANNER":
-                next_signer = "Você (Cerimonialista)"
-                
-            elif contract.status == "WAITING_SUPPLIER":
-                if contract.supplier:
-                    nome_fornecedor = getattr(contract.supplier, 'name', str(contract.supplier))
-                    next_signer = f"Fornecedor ({nome_fornecedor})"
-                else:
-                    next_signer = "Fornecedor (Não vinculado)"
-                    
-            elif contract.status == "WAITING_COUPLE":
-                if contract.wedding:
-                     nome_casal = getattr(contract.wedding, 'couple_name', str(contract.wedding))
-                     next_signer = f"Noivos ({nome_casal})"
-                else:
-                    next_signer = "Noivos"
-                
-            return JsonResponse({
-                "link": link,
-                "status": contract.status,
-                "message": f"Próximo a assinar: {next_signer}"
-            })
+            contract = self.get_queryset().get(id=contract_id)
+            link_info = self.generate_signature_link(contract)
+            return JsonResponse(link_info)
 
         except Exception as e:
             traceback.print_exc()
-            return JsonResponse({"link": f"ERRO NO SERVIDOR: {str(e)}"})
-    
+            return self.json_error(f"ERRO NO SERVIDOR: {str(e)}")
+
     def post(self, request, contract_id):
+        """
+        Envia link de assinatura por e-mail para o signatário.
+        
+        Args:
+            request: HttpRequest com 'email' no POST
+            contract_id: ID do contrato
+        
+        Returns:
+            JsonResponse com sucesso ou erro
+        """
         try:
-            contract = get_object_or_404(Contract, id=contract_id)
+            contract = self.get_queryset().get(id=contract_id)
             email_cliente = request.POST.get('email')
-            link = request.build_absolute_uri(contract.get_absolute_url())
-            
-            assunto = f"Assinatura Pendente: {contract.item.name}"
-            mensagem = f"""
-            Olá,
-            
-            Um contrato requer sua assinatura digital no sistema Sim, Aceito.
-            
-            Item: {contract.item.name}
-            Status: {contract.get_status_display()}
-            
-            Acesse o link seguro abaixo para visualizar e assinar:
-            {link}
-            
-            Atenciosamente,
-            Equipe Sim, Aceito.
-            """
-            
-            send_mail(
-                assunto,
-                mensagem,
-                settings.DEFAULT_FROM_EMAIL,
-                [email_cliente],
-                fail_silently=False,
+
+            success, message = self.send_signature_email(
+                contract,
+                email_cliente
             )
-            
-            return JsonResponse({'success': True, 'message': f'E-mail enviado com sucesso para {email_cliente}!'})
+
+            if success:
+                return self.json_success(message)
+            return self.json_error(message)
+
         except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Erro ao enviar e-mail: {str(e)}'})
+            return self.json_error(f'Erro ao enviar e-mail: {str(e)}')
 
 
-class SignContractExternalView(TemplateView):
+class SignContractExternalView(ContractManagementMixin, TemplateView):
+    """
+    Página pública para assinatura digital de contratos via token.
+    
+    Acesso: PÚBLICO - Não requer autenticação.
+    Autenticação: Via token UUID na URL (sem login necessário).
+    
+    Esta view permite que fornecedores e noivos assinem contratos
+    externamente sem necessidade de conta no sistema.
+    
+    Métodos HTTP:
+        GET: Renderiza página de assinatura
+            Contexto:
+                - contract: Instância do contrato
+                - signer_role: Role do próximo signatário
+        
+        POST: Processa a assinatura digital
+            Body: {'signature_base64': str}
+            Sucesso: Renderiza página de confirmação
+            Erro: Re-renderiza página com mensagem de erro
+    
+    URL Pattern:
+        /contracts/sign/<token>/
+    
+    Mixins:
+        - ContractManagementMixin: Fornece métodos de assinatura
+            * get_next_signer_info()
+            * process_contract_signature()
+    
+    Security:
+        - Token UUID único e não-guessable
+        - Token pode ser invalidado/expirado
+        - Verificação do próximo signatário esperado
+        - Validação de formato e tamanho da assinatura
+    
+    Nota: Propositalmente NÃO herda de LoginRequiredMixin para
+          permitir acesso público via token.
+    """
     template_name = "contracts/external_signature.html"
 
     def get_context_data(self, **kwargs):
+        """
+        Prepara contexto para renderização da página de assinatura.
+        
+        Returns:
+            dict: Contexto com contract e signer_role
+        """
         context = super().get_context_data(**kwargs)
         token = self.kwargs.get("token")
         contract = get_object_or_404(Contract, token=token)
-        
-        signer_role = None
-        if contract.status == "WAITING_PLANNER":
-            signer_role = "Cerimonialista"
-        elif contract.status == "WAITING_SUPPLIER":
-            signer_role = "Fornecedor"
-        elif contract.status == "WAITING_COUPLE":
-            signer_role = "Noivos (Contratantes)"
-            
+
+        next_signer_info = contract.get_next_signer_info()
+
         context["contract"] = contract
-        context["signer_role"] = signer_role
+        context["signer_role"] = next_signer_info['role']
         return context
 
     def post(self, request, token):
+        """
+        Processa a assinatura digital enviada pelo formulário.
+        
+        Args:
+            request: HttpRequest com signature_base64 no POST
+            token: UUID token do contrato
+        
+        Returns:
+            HttpResponse com página de sucesso ou erro
+        """
         contract = get_object_or_404(Contract, token=token)
         signature_b64 = request.POST.get("signature_base64")
-        client_ip = get_client_ip(request)
 
-        if not signature_b64:
-            return render(request, self.template_name, {"contract": contract, "error": "Assinatura vazia."})
+        success, message = self.process_contract_signature(
+            contract,
+            signature_b64,
+            request
+        )
 
-        try:
-            if ';base64,' in signature_b64:
-                format, imgstr = signature_b64.split(';base64,') 
-                ext = format.split('/')[-1] 
-                data = ContentFile(base64.b64decode(imgstr), name=f'sig_{contract.status}_{contract.token}.{ext}')
+        if success:
+            return render(
+                request,
+                "contracts/signature_success.html",
+                {"contract": contract}
+            )
 
-                if contract.status == "WAITING_PLANNER":
-                    contract.planner_signature = data
-                    contract.planner_signed_at = timezone.now()
-                    contract.planner_ip = client_ip
-                    contract.status = "WAITING_SUPPLIER" 
-                    
-                elif contract.status == "WAITING_SUPPLIER":
-                    contract.supplier_signature = data
-                    contract.supplier_signed_at = timezone.now()
-                    contract.supplier_ip = client_ip
-                    contract.status = "WAITING_COUPLE" 
-                    
-                elif contract.status == "WAITING_COUPLE":
-                    contract.couple_signature = data
-                    contract.couple_signed_at = timezone.now()
-                    contract.couple_ip = client_ip
-                    contract.status = "COMPLETED" 
-                    
-                    hash_input = f"{contract.id}-{str(contract.planner_signed_at)}-{str(contract.supplier_signed_at)}-{timezone.now()}"
-                    contract.integrity_hash = hashlib.sha256(hash_input.encode()).hexdigest()
-
-                contract.save()
-                return render(request, "contracts/signature_success.html", {"contract": contract})
-                
-        except Exception as e:
-            print(f"Erro ao processar assinatura: {e}")
-            traceback.print_exc()
-            return render(request, self.template_name, {"contract": contract, "error": f"Erro técnico: {str(e)}"})
-
-        return render(request, self.template_name, {"contract": contract})
+        return render(
+            request,
+            "contracts/external_signature.html",
+            {"contract": contract, "error": message}
+        )
 
 
 def download_contract_pdf(request, contract_id):
+    """
+    View funcional para geração e download de PDF do contrato.
+    
+    Acesso: Público (sem verificação de autenticação).
+    
+    Funcionalidades:
+        - Gera PDF a partir de template HTML
+        - Inclui QR code com link para o contrato
+        - Nome do arquivo inclui nome do item e parte do token
+    
+    Args:
+        request: HttpRequest (usado para construir URL absoluta)
+        contract_id: ID do contrato a ser baixado
+    
+    Returns:
+        HttpResponse com PDF anexado ou mensagem de erro
+    
+    URL Pattern:
+        /contracts/download-pdf/<contract_id>/
+    
+    Tecnologias:
+        - xhtml2pdf: Conversão HTML → PDF
+        - qrcode: Geração de QR code
+        - PIL/Pillow: Manipulação de imagem do QR code
+    
+    Template usado:
+        contracts/pdf_template.html
+    
+    TODO: Adicionar verificação de autenticação/ownership se necessário
+    """
     contract = get_object_or_404(Contract, id=contract_id)
     template_path = 'contracts/pdf_template.html'
-    
+
     # --- GERAÇÃO DO QR CODE ---
     link = request.build_absolute_uri(contract.get_absolute_url())
-    
+
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(link)
     qr.make(fit=True)
     img_qr = qr.make_image(fill_color="black", back_color="white")
-    
+
     buffer = BytesIO()
-    img_qr.save(buffer, format="PNG")
+    img_qr.save(buffer, "PNG")  # format removido, passado como posicional
     qr_base64 = base64.b64encode(buffer.getvalue()).decode()
     # ---------------------------
 
@@ -211,21 +317,50 @@ def download_contract_pdf(request, contract_id):
         'contract': contract,
         'qr_code': qr_base64
     }
-    
+
     response = HttpResponse(content_type='application/pdf')
-    filename = f"contrato_{contract.item.name}_{str(contract.token)[:8]}.pdf"
+    filename = (
+        f"contrato_{contract.item.name}_{str(contract.token)[:8]}.pdf"
+    )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     template = get_template(template_path)
     html = template.render(context)
 
-    pisa_status = pisa.CreatePDF(html, dest=response, link_callback=link_callback)
+    pisa_status = pisa.CreatePDF(
+        html,
+        dest=response,
+        link_callback=link_callback
+    )
     if pisa_status.err:
-       return HttpResponse('Erro PDF <pre>' + html + '</pre>')
+        return HttpResponse('Erro PDF <pre>' + html + '</pre>')
     return response
 
 
 def link_callback(uri, rel):
+    """
+    Callback para resolver caminhos de recursos estáticos no PDF.
+    
+    Esta função é chamada pelo xhtml2pdf quando encontra referências
+    a arquivos estáticos (CSS, imagens) no HTML que está sendo
+    convertido para PDF.
+    
+    Args:
+        uri: URI do recurso (pode ser relativa ou absoluta)
+        rel: Caminho relativo (não usado nesta implementação)
+    
+    Returns:
+        str: Caminho absoluto do arquivo no sistema de arquivos
+             ou a URI original se não for encontrada
+    
+    Lógica:
+        1. Se URI começa com MEDIA_URL → busca em MEDIA_ROOT
+        2. Se URI começa com STATIC_URL → busca em STATIC_ROOT
+        3. Caso contrário → retorna URI sem modificação
+    
+    Nota: Arquivos não encontrados não geram erro, apenas retorna
+          a URI original (xhtml2pdf vai ignorar o recurso).
+    """
     sUrl = settings.STATIC_URL
     sRoot = settings.STATIC_ROOT
     mUrl = settings.MEDIA_URL
@@ -239,63 +374,184 @@ def link_callback(uri, rel):
         return uri
 
     if not os.path.isfile(path):
-            pass
+        pass
     return path
 
 
-class CancelContractView(LoginRequiredMixin, View):
+class CancelContractView(
+    ContractOwnershipMixin,
+    ContractManagementMixin,
+    View
+):
     """
-    Cancela o contrato e invalida o link.
+    Cancela um contrato e invalida seu link de assinatura.
+    
+    Acesso: Apenas cerimonialistas donos do contrato.
+    
+    Métodos HTTP:
+        POST: Cancela o contrato
+            Response: JSON com success/error
+    
+    URL Pattern:
+        /contracts/cancel/<contract_id>/
+    
+    Mixins:
+        - ContractOwnershipMixin: Garante autenticação e ownership
+          através do get_queryset() filtrado
+        - ContractManagementMixin: Fornece métodos de negócio
+            * cancel_contract()
+            * json_success() / json_error()
+    
+    Regras de Negócio:
+        - Apenas contratos não-completos podem ser cancelados
+        - Verificação via queryset.cancelable()
+        - Status alterado para CANCELED
+    
+    Returns:
+        JsonResponse: {'success': bool, 'message': str}
+    
+    Nota: LoginRequiredMixin é herdado via ContractOwnershipMixin,
+          não precisa ser declarado explicitamente.
     """
     def post(self, request, contract_id):
-        contract = get_object_or_404(Contract, id=contract_id, item__wedding__planner=request.user)
+        """
+        Processa o cancelamento do contrato.
         
-        if contract.status != 'COMPLETED':
-            contract.status = 'CANCELED'
-            contract.save()
-            return JsonResponse({'success': True, 'message': 'Contrato cancelado com sucesso.'})
+        Args:
+            request: HttpRequest
+            contract_id: ID do contrato a ser cancelado
         
-        return JsonResponse({'success': False, 'message': 'Não é possível cancelar um contrato concluído.'})
+        Returns:
+            JsonResponse com resultado da operação
+        """
+        contract = self.get_queryset().get(id=contract_id)
+
+        success, message = self.cancel_contract(contract)
+
+        if success:
+            return self.json_success(message)
+        return self.json_error(message)
 
 
-class EditContractView(LoginRequiredMixin, View):
+class EditContractView(
+    ContractOwnershipMixin,
+    ContractManagementMixin,
+    View
+):
     """
-    Atualiza a descrição (minuta) do contrato.
+    Atualiza a descrição (minuta) de um contrato editável.
+    
+    Acesso: Apenas cerimonialistas donos do contrato.
+    
+    Métodos HTTP:
+        POST: Atualiza descrição do contrato
+            Body: {'description': str}
+            Response: JSON com success/error
+    
+    URL Pattern:
+        /contracts/edit/<contract_id>/
+    
+    Mixins:
+        - ContractOwnershipMixin: Garante autenticação e ownership
+        - ContractManagementMixin: Fornece métodos de negócio
+            * update_contract_description()
+            * json_success() / json_error()
+    
+    Regras de Negócio:
+        - Apenas contratos em status DRAFT ou WAITING_PLANNER
+          podem ser editados
+        - Verificação via queryset.editable()
+        - Descrição não pode ser vazia
+    
+    Returns:
+        JsonResponse: {'success': bool, 'message': str}
+    
+    Nota: LoginRequiredMixin é herdado via ContractOwnershipMixin.
     """
     def post(self, request, contract_id):
-        contract = get_object_or_404(Contract, id=contract_id, item__wedding__planner=request.user)
+        """
+        Processa a atualização da descrição do contrato.
         
-        # Só permite editar se ninguém assinou ainda (ou apenas o planner)
-        if contract.status not in ['WAITING_PLANNER', 'DRAFT']:
-             return JsonResponse({'success': False, 'message': 'Não é possível editar um contrato que já foi enviado/assinado por outros.'})
+        Args:
+            request: HttpRequest com 'description' no POST
+            contract_id: ID do contrato a ser editado
+        
+        Returns:
+            JsonResponse com resultado da operação
+        """
+        contract = self.get_queryset().get(id=contract_id)
 
         new_description = request.POST.get('description')
-        if new_description:
-            contract.description = new_description
-            contract.save()
-            return JsonResponse({'success': True, 'message': 'Termos atualizados com sucesso!'})
-            
-        return JsonResponse({'success': False, 'message': 'A descrição não pode estar vazia.'})
+        success, message = self.update_contract_description(
+            contract,
+            new_description
+        )
+
+        if success:
+            return self.json_success(message)
+        return self.json_error(message)
 
 
-class UploadContractView(LoginRequiredMixin, View):
+class UploadContractView(
+    ContractOwnershipMixin,
+    ContractManagementMixin,
+    View
+):
     """
-    Permite upload manual de um contrato assinado externamente.
+    Upload manual de contrato assinado externamente (físico/offline).
+    
+    Acesso: Apenas cerimonialistas donos do contrato.
+    
+    Use Case:
+        Quando o contrato foi assinado de forma física (papel) ou
+        através de outro sistema, o planner pode fazer upload do
+        PDF final, pulando o fluxo de assinatura digital.
+    
+    Métodos HTTP:
+        POST: Faz upload do PDF externo
+            Body (multipart/form-data):
+                - external_pdf: arquivo PDF
+            Response: JSON com success/error
+    
+    URL Pattern:
+        /contracts/upload/<contract_id>/
+    
+    Mixins:
+        - ContractOwnershipMixin: Garante autenticação e ownership
+        - ContractManagementMixin: Fornece métodos de negócio
+            * upload_external_contract()
+            * json_success() / json_error()
+    
+    Regras de Negócio:
+        - Apenas arquivos PDF são aceitos
+        - Contrato é marcado como COMPLETED
+        - Hash de integridade definido como EXTERNAL_CONTRACT_HASH
+        - Contrato não passa por fluxo de assinaturas digitais
+    
+    Returns:
+        JsonResponse: {'success': bool, 'message': str}
+    
+    Nota: LoginRequiredMixin é herdado via ContractOwnershipMixin.
     """
     def post(self, request, contract_id):
-        contract = get_object_or_404(Contract, id=contract_id, item__wedding__planner=request.user)
+        """
+        Processa o upload do arquivo PDF externo.
         
-        if 'external_pdf' not in request.FILES:
-            return JsonResponse({'success': False, 'message': 'Nenhum arquivo enviado.'})
-            
-        file = request.FILES['external_pdf']
+        Args:
+            request: HttpRequest com 'external_pdf' em FILES
+            contract_id: ID do contrato
         
-        if not file.name.endswith('.pdf'):
-             return JsonResponse({'success': False, 'message': 'Apenas arquivos PDF são permitidos.'})
+        Returns:
+            JsonResponse com resultado da operação
+        """
+        contract = self.get_queryset().get(id=contract_id)
 
-        contract.external_pdf = file
-        contract.status = 'COMPLETED' 
-        contract.integrity_hash = "UPLOAD_MANUAL_EXTERNO"
-        contract.save()
-        
-        return JsonResponse({'success': True, 'message': 'Contrato externo anexado e finalizado!'})
+        pdf_file = request.FILES.get('external_pdf')
+        success, message = self.upload_external_contract(
+            contract,
+            pdf_file
+        )
+
+        if success:
+            return self.json_success(message)
+        return self.json_error(message)
