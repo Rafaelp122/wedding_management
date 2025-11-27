@@ -153,7 +153,7 @@ wedding_management/
 
 ## 👥 Equipe
 
-Projeto desenvolvido por **Rafael Pimenta** como trabalho de conclusão do curso técnico na FIRJAN SENAI São Gonçalo.
+Projeto desenvolvido por **Rafael Pereira**, **Flávio Costa**, **Jhony Assal** e **Pedro Azevedo** como trabalho de conclusão do curso técnico na FIRJAN SENAI São Gonçalo.
 
 **Orientação:** SAGA SENAI  
 **Instituição:** FIRJAN SENAI São Gonçalo  
