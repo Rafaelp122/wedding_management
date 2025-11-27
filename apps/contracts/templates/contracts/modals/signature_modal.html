@@ -1,0 +1,213 @@
+<!-- MODAL DE ASSINATURA -->
+<div class="modal fade" id="signatureModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Coletar Assinatura</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Copie o link abaixo e envie para o cliente, ou insira o e-mail para notificar.</p>
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold">Link Seguro de Assinatura</label>
+            <div class="input-group">
+                <input type="text" class="form-control bg-light" id="modalLinkInput" readonly style="cursor: text;">
+                
+                <!-- Botão Copiar -->
+                <button class="btn btn-outline-secondary" type="button" onclick="copyLink()" id="copyBtn" title="Copiar para área de transferência">
+                    <i class="fas fa-copy"></i>
+                </button>
+                
+                <!-- Botão Abrir Link -->
+                <a href="#" target="_blank" id="openLinkBtn" class="btn btn-outline-primary disabled" title="Abrir link em nova aba">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+            
+            <!-- Feedback de Cópia -->
+            <div id="copyFeedback" class="form-text text-success fw-bold mt-1" style="opacity: 0; transition: opacity 0.3s ease-in-out;">
+                <i class="fas fa-check-circle me-1"></i> Link copiado com sucesso!
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="mb-2">
+            <label class="form-label fw-bold">Enviar por E-mail (Opcional)</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="far fa-envelope"></i></span>
+                <input type="email" class="form-control" id="modalEmailInput" placeholder="cliente@email.com">
+            </div>
+            <input type="hidden" id="csrfTokenModal" value="{{ csrf_token }}">
+            
+            <!-- NOVA ÁREA DE FEEDBACK DE E-MAIL -->
+            <!-- Aqui aparecerá a mensagem de sucesso ou erro sem usar alert() -->
+            <div id="emailFeedback" class="mt-2" style="display: none;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        <button type="button" class="btn text-white" style="background-color: #9C27B0;" onclick="sendEmail()" id="sendEmailBtn">
+            Enviar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    if (typeof window.currentSignatureUrl === 'undefined') {
+        window.currentSignatureUrl = null;
+    }
+
+    window.openSignatureModal = function(element) {
+        window.currentSignatureUrl = element.getAttribute('data-url');
+        
+        const linkInput = document.getElementById('modalLinkInput');
+        const openBtn = document.getElementById('openLinkBtn');
+        const feedback = document.getElementById('copyFeedback');
+        const emailFeedback = document.getElementById('emailFeedback');
+        const emailInput = document.getElementById('modalEmailInput');
+        
+        // Reseta estados visuais (limpa mensagens antigas)
+        linkInput.value = "Gerando link seguro...";
+        openBtn.classList.add('disabled');
+        openBtn.href = "#";
+        feedback.style.opacity = '0'; 
+        emailFeedback.style.display = 'none'; // Esconde feedback de email anterior
+        emailFeedback.className = 'mt-2';
+        emailFeedback.innerHTML = '';
+        emailInput.value = "";
+        emailInput.classList.remove('is-invalid');
+        
+        // Abre o modal
+        if (typeof bootstrap !== 'undefined') {
+            const modalEl = document.getElementById('signatureModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+
+        if (!window.currentSignatureUrl) {
+            linkInput.value = "Erro: URL base não encontrada.";
+            return;
+        }
+
+        fetch(window.currentSignatureUrl)
+            .then(response => {
+                if (!response.ok) throw new Error('Erro na rede: ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                linkInput.value = data.link;
+                openBtn.href = data.link;
+                openBtn.classList.remove('disabled');
+            })
+            .catch(err => {
+                console.error("Erro detalhado:", err);
+                linkInput.value = "Erro ao gerar link.";
+            });
+    }
+
+    window.copyLink = function() {
+        const copyText = document.getElementById("modalLinkInput");
+        if (copyText.value.includes("Gerando") || copyText.value.includes("Erro")) return;
+
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); 
+        
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.style.opacity = '1';
+            setTimeout(() => { feedback.style.opacity = '0'; }, 2000);
+        });
+    }
+
+    window.sendEmail = function() {
+        const emailInput = document.getElementById('modalEmailInput');
+        const sendBtn = document.getElementById('sendEmailBtn');
+        const emailFeedback = document.getElementById('emailFeedback');
+        const email = emailInput.value;
+        
+        // Validação visual simples
+        if(!email) {
+            emailInput.classList.add('is-invalid');
+            emailFeedback.style.display = 'block';
+            emailFeedback.className = 'mt-2 text-danger small';
+            emailFeedback.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Por favor, digite um e-mail.';
+            return;
+        } else {
+            emailInput.classList.remove('is-invalid');
+            emailFeedback.style.display = 'none';
+        }
+
+        // Estado de Carregamento
+        const originalBtnText = sendBtn.innerText;
+        sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...';
+        sendBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('email', email);
+        
+        const csrfInput = document.getElementById('csrfTokenModal');
+        const csrfToken = csrfInput ? csrfInput.value : getCookie('csrftoken');
+        
+        fetch(window.currentSignatureUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Restaura botão
+            sendBtn.innerText = originalBtnText;
+            sendBtn.disabled = false;
+            
+            // Mostra feedback na tela
+            emailFeedback.style.display = 'block';
+
+            if (data.success) {
+                // Sucesso: Mensagem Verde
+                emailFeedback.className = 'mt-2 alert alert-success py-2 small mb-0';
+                emailFeedback.innerHTML = '<i class="fas fa-check-circle me-1"></i> ' + data.message;
+                
+                // Fecha o modal automaticamente após 2 segundos para dar tempo de ler
+                setTimeout(() => {
+                    const modalEl = document.getElementById('signatureModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) modalInstance.hide();
+                }, 2500);
+            } else {
+                // Erro: Mensagem Vermelha
+                emailFeedback.className = 'mt-2 alert alert-danger py-2 small mb-0';
+                emailFeedback.innerHTML = '<i class="fas fa-times-circle me-1"></i> ' + data.message;
+            }
+        })
+        .catch(err => {
+            sendBtn.innerText = originalBtnText;
+            sendBtn.disabled = false;
+            console.error("Erro no envio:", err);
+            
+            emailFeedback.style.display = 'block';
+            emailFeedback.className = 'mt-2 alert alert-danger py-2 small mb-0';
+            emailFeedback.innerHTML = '<i class="fas fa-wifi me-1"></i> Erro de conexão. Tente novamente.';
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>

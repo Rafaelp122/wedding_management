@@ -1,67 +1,151 @@
 <div class="bg-white p-4 rounded-4 aba-bloco custom-shadow-lg">
   
-  <h3 class="fs-4 fw-bold text-dark mb-4">Contratos do Casamento</h3>
+  <h3 class="fs-4 fw-bold text-dark mb-4">
+      Contratos do Casamento
+  </h3>
 
-  {% if contracts_list %}
-    <div class="table-responsive">
-      <table class="table align-middle">
-        
-        <thead class="table-light thead-custom-color">
-          <tr>
-            <th scope="col">Fornecedor</th>
-            <th scope="col">Item</th>
-            <th scope="col">Data da Criação</th>
-            <th scope="col">Status</th>
-            <th scope="col">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in contracts_list %}
+  <!-- 
+      ZONA DE ATUALIZAÇÃO SEGURA (POLLING) 
+      Aqui aplicamos o HTMX apenas na lista, usando hx-select para filtrar a resposta.
+      Isso impede que os modais (que estão fora desta div) sejam recarregados.
+  -->
+  <div id="contracts-list-zone"
+       hx-get="{% url 'contracts:partial_contracts' wedding.id %}"
+       hx-trigger="every 5s"
+       hx-swap="outerHTML"
+       hx-select="#contracts-list-zone">
+
+      {% if contracts_list %}
+        <div class="table-responsive">
+          <table class="table align-middle">
             
-            {% with contract=item.contract %}
-            <tr>
-              <td>
-                <div class="d-flex align-items-center">
-                  <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
-                       style="width: 40px; height: 40px; background: {{ item.gradient }};">
-                    {{ contract.supplier|slice:":1"|default:"-" }}
-                  </div>
-                  <div>{{ contract.supplier|default:"N/A" }}</div>
-                </div>
-              </td>
-              <td>{{ contract.item.name|default:"N/A" }}</td>
-              <td>{{ contract.created_at|date:"d/m/Y" }}</td>
-              <td>
-                {% if contract.status == "Assinado" %}
-                  <span class="badge rounded-pill bg-success-subtle text-success-emphasis">{{ contract.status }}</span>
-                {% elif contract.status == "Pendente" %}
-                  <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">{{ contract.status }}</span>
-                {% else %}
-                  <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ contract.status }}</span>
-                {% endif %}
-              </td>
-              <td class="text-nowrap">
-                <a href="#" class="btn btn-link text-primary p-0 me-3" title="Visualizar">
-                    <i class="fas fa-eye" style="background: var(--color-accent); 
-                    -webkit-background-clip: text; 
-                    background-clip: text; 
-                    color: transparent;"></i>
-                </a>
-                <a href="#" class="btn btn-link text-primary p-0" title="Download">
-                    <i class="fas fa-download" style="background: var(--color-accent); 
-                    -webkit-background-clip: text; 
-                    background-clip: text; 
-                    color: transparent;"></i>
-                </a>
-              </td>
-            </tr>
-            {% endwith %}
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <p class="text-muted">Nenhum contrato foi gerado para este casamento ainda.</p>
-  {% endif %}
+            <thead class="table-light thead-custom-color">
+              <tr>
+                <th scope="col">Fornecedor</th>
+                <th scope="col">Item</th>
+                <th scope="col">Data da Criação</th>
+                <th scope="col">Status</th>
+                <th scope="col">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in contracts_list %}
+                
+                {% with contract=item.contract %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                           style="width: 40px; height: 40px; background: {{ item.gradient }};">
+                        {{ contract.supplier|slice:":1"|default:"-" }}
+                      </div>
+                      <div>{{ contract.supplier|default:"N/A" }}</div>
+                    </div>
+                  </td>
+                  <td>{{ contract.item.name|default:"N/A" }}</td>
+                  <td>{{ contract.created_at|date:"d/m/Y" }}</td>
+                  <td>
+                    {% if contract.status == "COMPLETED" %}
+                      <span class="badge rounded-pill bg-success-subtle text-success-emphasis">Concluído</span>
+                    {% elif contract.status == "WAITING_PLANNER" %}
+                      <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">Aguardando Você</span>
+                    {% elif contract.status == "WAITING_SUPPLIER" %}
+                      <span class="badge rounded-pill bg-info-subtle text-info-emphasis">Aguardando Fornecedor</span>
+                    {% elif contract.status == "WAITING_COUPLE" %}
+                      <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis">Aguardando Noivos</span>
+                    {% elif contract.status == "CANCELED" %}
+                       <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">Cancelado</span>
+                    {% else %}
+                      <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ contract.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-nowrap">
+                    
+                    {% if contract.status != 'COMPLETED' and contract.status != 'CANCELED' %}
+                        
+                        <!-- 1. Botão Assinatura -->
+                        <button type="button" class="btn btn-link p-0 me-2" 
+                                title="Coletar Assinatura Digital" 
+                                data-url="{% url 'contracts:generate_link' contract.id %}"
+                                onclick="openSignatureModal(this)">
+                            <i class="fas fa-paper-plane" style="color: #9C27B0;"></i>
+                        </button>
+    
+                        <!-- 2. Botão Editar -->
+                        {% if contract.status == 'WAITING_PLANNER' %}
+                        <button type="button" class="btn btn-link p-0 me-2" 
+                                title="Editar Termos"
+                                onclick='openEditModal({{ contract.id }}, `{{ contract.description|escapejs }}`)'>
+                            <i class="fas fa-pen" style="color: #9C27B0;"></i>
+                        </button>
+                        {% endif %}
+    
+                        <!-- 3. Botão Upload -->
+                        <button type="button" class="btn btn-link p-0 me-2" 
+                                title="Upload de Contrato Externo (Papel)"
+                                onclick="openUploadModal({{ contract.id }})">
+                            <i class="fas fa-paperclip" style="color: #9C27B0;"></i>
+                        </button>
+                        
+                    {% endif %}
+                    
+                    {% if contract.status == 'COMPLETED' %}
+                        <span class="text-success me-2" title="Concluído"><i class="fas fa-check-circle"></i></span>
+                    {% endif %}
+                    
+                    {% if contract.status == 'CANCELED' %}
+                        <span class="text-danger me-2" title="Cancelado"><i class="fas fa-times-circle"></i></span>
+                    {% endif %}
+    
+                    <!-- Download -->
+                    {% if contract.external_pdf %}
+                        <a href="{{ contract.external_pdf.url }}" target="_blank" class="btn btn-link p-0" title="Baixar Contrato Externo">
+                            <i class="fas fa-file-pdf text-success fs-5"></i>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'contracts:download_pdf' contract.id %}" target="_blank" class="btn btn-link p-0" title="Gerar PDF do Sistema">
+                            {% if contract.status == 'COMPLETED' %}
+                                <i class="fas fa-file-pdf text-danger fs-5"></i>
+                            {% else %}
+                                <i class="fas fa-file-alt text-secondary fs-5"></i>
+                            {% endif %}
+                        </a>
+                    {% endif %}
+    
+                  </td>
+                </tr>
+                {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">Nenhum contrato foi gerado para este casamento ainda.</p>
+      {% endif %}
+  </div>
+  <!-- FIM DA ZONA DE ATUALIZAÇÃO -->
 
 </div>
+
+<!-- MODAIS FORA DA ZONA DE POLLING -->
+<!-- Como estão fora da div 'contracts-list-zone', o HTMX não mexe neles -->
+{% include 'contracts/modals/signature_modal.html' %}
+{% include 'contracts/modals/edit_contract_modal.html' %}
+{% include 'contracts/modals/upload_contract_modal.html' %}
+
+<script>
+    function cancelContract(contractId) {
+        if (confirm('Tem certeza? Isso invalidará qualquer link enviado.')) {
+            const csrfToken = getCookie('csrftoken');
+            fetch(`/contratos/cancel/${contractId}/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrfToken}
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) alert('Cancelado!');
+                else alert(data.message);
+            });
+        }
+    }
+</script>

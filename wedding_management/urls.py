@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-
+from django.conf import settings
+from django.conf.urls.static import static
 from apps.users.web.allauth_views import (CustomLoginView, CustomLogoutView,
                                           CustomPasswordResetView,
                                           CustomSignupView)
 
-# Define as rotas principais do projeto.
-# Cada app tem seu próprio arquivo de rotas, que é incluído aqui.
 
+# Define as rotas principais do projeto.
 urlpatterns = [
     # Painel administrativo padrão do Django
     path("admin/", admin.site.urls),
@@ -63,8 +63,11 @@ if settings.DEBUG:
     # Import debug toolbar only if available
     try:
         import debug_toolbar
-        urlpatterns = [
+        urlpatterns += [
             path("__debug__/", include(debug_toolbar.urls)),
-        ] + urlpatterns
+        ]
     except ImportError:
         pass  # Debug toolbar not installed
+    
+    # Adiciona a rota para servir arquivos de mídia (upload) localmente
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
