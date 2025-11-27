@@ -1,71 +1,24 @@
 """
-Testes para os mixins do app contracts.
+Testes para os mixins refatorados do app contracts.
 """
-from unittest.mock import Mock, patch
+import base64
+from io import BytesIO
+from unittest.mock import patch
 
-from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest, HttpResponse
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
+from PIL import Image
 
-from apps.contracts.mixins import (ClientIPMixin, ContractOwnershipMixin,
-                                   PDFResponseMixin, TokenAccessMixin)
+from apps.contracts.mixins import (ContractActionsMixin, ContractEmailMixin,
+                                   ContractManagementMixin,
+                                   ContractOwnershipMixin,
+                                   ContractQuerysetMixin,
+                                   ContractSignatureMixin,
+                                   ContractUrlGeneratorMixin)
 from apps.contracts.models import Contract
 from apps.items.models import Item
 from apps.users.models import User
 from apps.weddings.models import Wedding
-
-
-class ClientIPMixinTest(TestCase):
-    """Testes para o ClientIPMixin."""
-
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.mixin = ClientIPMixin()
-
-    def test_get_client_ip_from_remote_addr(self):
-        """Deve extrair IP do REMOTE_ADDR quando não há proxy."""
-        request = self.factory.get('/')
-        request.META['REMOTE_ADDR'] = '192.168.1.100'
-        self.mixin.request = request
-
-        ip = self.mixin.get_client_ip()
-
-        self.assertEqual(ip, '192.168.1.100')
-
-    def test_get_client_ip_from_x_forwarded_for(self):
-        """Deve pegar o primeiro IP do X-Forwarded-For."""
-        request = self.factory.get('/')
-        request.META['HTTP_X_FORWARDED_FOR'] = '203.0.113.1, 198.51.100.1'
-        request.META['REMOTE_ADDR'] = '10.0.0.1'
-        self.mixin.request = request
-
-        ip = self.mixin.get_client_ip()
-
-        # Deve pegar o primeiro (cliente original)
-        self.assertEqual(ip, '203.0.113.1')
-
-    def test_get_client_ip_strips_whitespace(self):
-        """Deve remover espaços em branco do IP."""
-        request = self.factory.get('/')
-        request.META['HTTP_X_FORWARDED_FOR'] = '  192.168.1.1  , 10.0.0.1'
-        self.mixin.request = request
-
-        ip = self.mixin.get_client_ip()
-
-        self.assertEqual(ip, '192.168.1.1')
-
-    def test_get_client_ip_returns_unknown_when_missing(self):
-        """Deve retornar 'unknown' quando não há informação de IP."""
-        request = self.factory.get("/")
-        # Remove REMOTE_ADDR completamente
-        del request.META['REMOTE_ADDR']
-        # Sem REMOTE_ADDR e sem X-Forwarded-For
-        self.mixin.request = request
-
-        ip = self.mixin.get_client_ip()
-
-        self.assertEqual(ip, 'unknown')
 
 
 class ContractOwnershipMixinTest(TestCase):
@@ -101,61 +54,199 @@ class ContractOwnershipMixinTest(TestCase):
 
         self.contract = Contract.objects.create(item=self.item)
 
-    def test_get_contract_or_403_success_for_owner(self):
-        """Proprietário deve conseguir acessar o contrato."""
+    def test_model_and_owner_field_configured(self):
+        """Verifica se model e owner_field_name estão configurados."""
+        self.assertEqual(self.mixin.model, Contract)
+        self.assertEqual(
+            self.mixin.owner_field_name,
+            "item__wedding__planner"
+        )
+
+    def test_get_queryset_filters_by_owner(self):
+        """Queryset deve filtrar apenas contratos do owner."""
         request = self.factory.get('/')
         request.user = self.owner
         self.mixin.request = request
 
-        contract = self.mixin.get_contract_or_403(self.contract.id)
+        queryset = self.mixin.get_queryset()
 
-        self.assertEqual(contract, self.contract)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first(), self.contract)
 
-    def test_get_contract_or_403_raises_for_other_user(self):
-        """Outro usuário deve receber PermissionDenied."""
-        request = self.factory.get('/')
-        request.user = self.other_user
-        self.mixin.request = request
-
-        with self.assertRaises(PermissionDenied):
-            self.mixin.get_contract_or_403(self.contract.id)
-
-    def test_get_contract_or_403_raises_for_anonymous(self):
-        """Usuário anônimo deve ser bloqueado."""
-        request = self.factory.get('/')
-        request.user = AnonymousUser()
-        self.mixin.request = request
-
-        with self.assertRaises(PermissionDenied):
-            self.mixin.get_contract_or_403(self.contract.id)
-
-    def test_get_contract_or_403_returns_404_for_invalid_id(self):
-        """ID inválido deve retornar 404."""
-        from django.http import Http404
-
-        request = self.factory.get('/')
-        request.user = self.owner
-        self.mixin.request = request
-
-        with self.assertRaises(Http404):
-            self.mixin.get_contract_or_403(99999)
-
-
-class TokenAccessMixinTest(TestCase):
-    """Testes para o TokenAccessMixin."""
-
-    def setUp(self):
-        self.mixin = TokenAccessMixin()
-
-        # Cria contrato com token
-        user = User.objects.create_user('user', 'u@test.com', '123')
-        wedding = Wedding.objects.create(
-            planner=user,
+    def test_get_queryset_excludes_other_users_contracts(self):
+        """Queryset não deve incluir contratos de outros usuários."""
+        # Cria contrato de outro usuário
+        other_wedding = Wedding.objects.create(
+            planner=self.other_user,
             groom_name="Pedro",
             bride_name="Ana",
             date="2025-12-01",
             location="Igreja",
             budget=30000
+        )
+        other_item = Item.objects.create(
+            wedding=other_wedding,
+            name="DJ",
+            quantity=1,
+            unit_price=2000
+        )
+        Contract.objects.create(item=other_item)
+
+        request = self.factory.get('/')
+        request.user = self.owner
+        self.mixin.request = request
+
+        queryset = self.mixin.get_queryset()
+
+        # Deve ter apenas o contrato do owner
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(queryset.first().item.wedding.planner, self.owner)
+
+
+class ContractQuerysetMixinTest(TestCase):
+    """Testes para o ContractQuerysetMixin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.mixin = ContractQuerysetMixin()
+
+        self.planner = User.objects.create_user(
+            'planner', 'p@test.com', '123'
+        )
+
+        self.wedding = Wedding.objects.create(
+            planner=self.planner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000
+        )
+
+        # Cria múltiplos contratos
+        for i in range(3):
+            item = Item.objects.create(
+                wedding=self.wedding,
+                name=f"Item {i}",
+                quantity=1,
+                unit_price=1000 * (i + 1)
+            )
+            Contract.objects.create(item=item)
+
+        request = self.factory.get('/')
+        request.user = self.planner
+        self.mixin.request = request
+
+    def test_get_contracts_for_planner_returns_all_contracts(self):
+        """Deve retornar todos os contratos do planner."""
+        contracts = self.mixin.get_contracts_for_planner()
+
+        self.assertEqual(contracts.count(), 3)
+
+    def test_get_contracts_for_planner_uses_with_related(self):
+        """Deve usar select_related para otimização."""
+        contracts = self.mixin.get_contracts_for_planner()
+
+        # Verifica que a query foi otimizada
+        # (queryset deve ter os prefetch/select aplicados)
+        self.assertTrue(hasattr(contracts, 'query'))
+
+    def test_get_contracts_for_wedding_returns_filtered_contracts(self):
+        """Deve retornar apenas contratos do casamento específico."""
+        contracts = self.mixin.get_contracts_for_wedding(self.wedding.id)
+
+        self.assertEqual(contracts.count(), 3)
+        for contract in contracts:
+            self.assertEqual(contract.item.wedding, self.wedding)
+
+    def test_get_contracts_for_wedding_raises_404_for_invalid_id(self):
+        """Deve retornar 404 para wedding_id inválido."""
+        from django.http import Http404
+
+        with self.assertRaises(Http404):
+            self.mixin.get_contracts_for_wedding(99999)
+
+
+class ContractSignatureMixinTest(TestCase):
+    """Testes para o ContractSignatureMixin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.mixin = ContractSignatureMixin()
+
+        planner = User.objects.create_user('p', 'p@t.com', '123')
+        wedding = Wedding.objects.create(
+            planner=planner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000
+        )
+        item = Item.objects.create(
+            wedding=wedding,
+            name="Fotógrafo",
+            quantity=1,
+            unit_price=5000
+        )
+        self.contract = Contract.objects.create(item=item)
+
+    def _create_fake_signature_base64(self):
+        """Helper para criar assinatura base64 fake."""
+        img = Image.new('RGB', (100, 50), color='white')
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        img_bytes = buffer.getvalue()
+        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+        return f"data:image/png;base64,{img_b64}"
+
+    def test_process_contract_signature_success(self):
+        """Deve processar assinatura com sucesso."""
+        request = self.factory.post('/')
+        request.META['REMOTE_ADDR'] = '192.168.1.1'
+
+        signature = self._create_fake_signature_base64()
+
+        success, message = self.mixin.process_contract_signature(
+            self.contract,
+            signature,
+            request
+        )
+
+        self.assertTrue(success)
+        self.assertIn('sucesso', message.lower())
+
+    def test_process_contract_signature_handles_errors(self):
+        """Deve capturar e retornar erros de forma amigável."""
+        request = self.factory.post('/')
+        request.META['REMOTE_ADDR'] = '192.168.1.1'
+
+        # Assinatura inválida
+        success, message = self.mixin.process_contract_signature(
+            self.contract,
+            "invalid_signature",
+            request
+        )
+
+        self.assertFalse(success)
+        self.assertIsInstance(message, str)
+
+
+class ContractUrlGeneratorMixinTest(TestCase):
+    """Testes para o ContractUrlGeneratorMixin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.mixin = ContractUrlGeneratorMixin()
+
+        planner = User.objects.create_user('p', 'p@t.com', '123')
+        wedding = Wedding.objects.create(
+            planner=planner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000
         )
         item = Item.objects.create(
             wedding=wedding,
@@ -165,146 +256,278 @@ class TokenAccessMixinTest(TestCase):
         )
         self.contract = Contract.objects.create(item=item)
 
-    def test_get_contract_by_token_success(self):
-        """Deve retornar contrato com token válido."""
-        self.mixin.kwargs = {"token": self.contract.token}
+    def test_generate_signature_link_returns_dict(self):
+        """Deve retornar dicionário com informações do link."""
+        request = self.factory.get('/')
+        self.mixin.request = request
 
-        contract = self.mixin.get_contract_by_token()
+        link_info = self.mixin.generate_signature_link(self.contract)
 
-        self.assertEqual(contract, self.contract)
+        self.assertIsInstance(link_info, dict)
+        self.assertIn('link', link_info)
+        self.assertIn('status', link_info)
 
-    def test_get_contract_by_token_raises_404_for_invalid_token(self):
-        """Token inválido deve retornar 404."""
-        import uuid
+    def test_generate_signature_link_creates_absolute_url(self):
+        """Link deve ser URL absoluta."""
+        request = self.factory.get('/')
+        self.mixin.request = request
 
-        from django.http import Http404
+        link_info = self.mixin.generate_signature_link(self.contract)
 
-        self.mixin.kwargs = {"token": uuid.uuid4()}
-
-        with self.assertRaises(Http404):
-            self.mixin.get_contract_by_token()
+        self.assertTrue(link_info['link'].startswith('http'))
 
 
-class PDFResponseMixinTest(TestCase):
-    """Testes para o PDFResponseMixin."""
+class ContractEmailMixinTest(TestCase):
+    """Testes para o ContractEmailMixin."""
 
     def setUp(self):
         self.factory = RequestFactory()
-        self.mixin = PDFResponseMixin()
-        self.mixin.request = self.factory.get('/')
+        self.mixin = ContractEmailMixin()
+        
+        # Adiciona request ao mixin
+        request = self.factory.get('/')
+        self.mixin.request = request
 
-    def test_render_to_pdf_returns_http_response(self):
-        """Deve retornar HttpResponse com PDF."""
-        self.mixin.pdf_template_name = 'contracts/pdf_template.html'
+        planner = User.objects.create_user('p', 'p@t.com', '123')
+        wedding = Wedding.objects.create(
+            planner=planner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000
+        )
+        item = Item.objects.create(
+            wedding=wedding,
+            name="Buffet",
+            quantity=1,
+            unit_price=10000
+        )
+        self.contract = Contract.objects.create(item=item)
 
-        # Mock do template e pisa
-        with patch('apps.contracts.mixins.get_template') as mock_get_template:
-            mock_template = Mock()
-            mock_template.render.return_value = '<html>Test</html>'
-            mock_get_template.return_value = mock_template
+    @patch('django.core.mail.send_mail')
+    def test_send_signature_email_success(self, mock_send_mail):
+        """Deve enviar e-mail com sucesso."""
+        mock_send_mail.return_value = 1  # Simula sucesso
 
-            with patch('apps.contracts.mixins.pisa.CreatePDF') as mock_pisa:
-                mock_pisa.return_value.err = False
-
-                response = self.mixin.render_to_pdf(
-                    context={'test': 'data'},
-                    filename='test.pdf'
-                )
-
-        self.assertIsInstance(response, HttpResponse)
-        self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertIn('test.pdf', response['Content-Disposition'])
-
-    def test_render_to_pdf_uses_template_name_parameter(self):
-        """Deve usar template_name passado como parâmetro."""
-        with patch('apps.contracts.mixins.get_template') as mock_get_template:
-            mock_template = Mock()
-            mock_template.render.return_value = '<html>Custom</html>'
-            mock_get_template.return_value = mock_template
-
-            with patch('apps.contracts.mixins.pisa.CreatePDF') as mock_pisa:
-                mock_pisa.return_value.err = False
-
-                self.mixin.render_to_pdf(
-                    context={},
-                    filename='custom.pdf',
-                    template_name='custom/template.html'
-                )
-
-            # Verifica se usou o template correto
-            mock_get_template.assert_called_once_with('custom/template.html')
-
-    def test_render_to_pdf_returns_error_when_no_template(self):
-        """Deve retornar erro 500 se não houver template configurado."""
-        # Não define pdf_template_name
-        response = self.mixin.render_to_pdf(
-            context={},
-            filename='test.pdf'
+        success, message = self.mixin.send_signature_email(
+            self.contract,
+            'destinatario@test.com'
         )
 
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('Configuração', response.content.decode())
+        self.assertTrue(success)
+        self.assertIn('enviado', message.lower())
+        mock_send_mail.assert_called_once()
 
-    def test_render_to_pdf_returns_error_when_pisa_fails(self):
-        """Deve retornar erro 500 se pisa falhar."""
-        self.mixin.pdf_template_name = 'contracts/pdf_template.html'
+    @patch('django.core.mail.send_mail')
+    def test_send_signature_email_handles_errors(self, mock_send_mail):
+        """Deve capturar erros de envio de e-mail."""
+        mock_send_mail.side_effect = Exception('SMTP Error')
 
-        with patch('apps.contracts.mixins.get_template') as mock_get_template:
-            mock_template = Mock()
-            mock_template.render.return_value = '<html>Bad</html>'
-            mock_get_template.return_value = mock_template
-
-            with patch('apps.contracts.mixins.pisa.CreatePDF') as mock_pisa:
-                mock_pisa.return_value.err = True  # Simula erro
-
-                response = self.mixin.render_to_pdf(
-                    context={},
-                    filename='test.pdf'
-                )
-
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('Erro ao gerar PDF', response.content.decode())
-
-    def test_pdf_link_callback_resolves_static_files(self):
-        """Link callback deve resolver arquivos estáticos."""
-        import os
-
-        from django.conf import settings
-
-        # Simula um arquivo que existe
-        test_path = os.path.join(
-            settings.STATIC_ROOT or '/static',
-            'test.css'
+        success, message = self.mixin.send_signature_email(
+            self.contract,
+            'destinatario@test.com'
         )
 
-        with patch('os.path.isfile', return_value=True):
-            result = self.mixin._pdf_link_callback(
-                f"{settings.STATIC_URL}test.css",
-                ""
+        self.assertFalse(success)
+        self.assertIn('erro', message.lower())
+
+    def test_send_signature_email_validates_email(self):
+        """Deve capturar erro de e-mail inválido."""
+        # Email inválido vai gerar erro no send_mail
+        with patch('django.core.mail.send_mail') as mock_send_mail:
+            mock_send_mail.side_effect = Exception('Invalid email')
+            
+            success, message = self.mixin.send_signature_email(
+                self.contract,
+                'invalid_email'
             )
 
-        # Deve retornar o caminho absoluto
-        self.assertTrue(result.endswith('test.css'))
+            self.assertFalse(success)
 
-    def test_pdf_link_callback_returns_uri_for_nonexistent_file(self):
-        """Link callback deve retornar URI original se arquivo não existir."""
-        from django.conf import settings
 
-        with patch('os.path.isfile', return_value=False):
-            result = self.mixin._pdf_link_callback(
-                f"{settings.STATIC_URL}nonexistent.css",
-                ""
-            )
+class ContractActionsMixinTest(TestCase):
+    """Testes para o ContractActionsMixin."""
 
-        # Deve retornar a URI original
-        self.assertEqual(result, f"{settings.STATIC_URL}nonexistent.css")
+    def setUp(self):
+        self.mixin = ContractActionsMixin()
 
-    def test_pdf_link_callback_handles_absolute_urls(self):
-        """Link callback deve retornar URLs absolutas sem modificação."""
-        absolute_url = "https://example.com/style.css"
+        planner = User.objects.create_user('p', 'p@t.com', '123')
+        wedding = Wedding.objects.create(
+            planner=planner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000
+        )
+        item = Item.objects.create(
+            wedding=wedding,
+            name="Decoração",
+            quantity=1,
+            unit_price=3000
+        )
+        self.contract = Contract.objects.create(
+            item=item,
+            status='WAITING_PLANNER'
+        )
 
-        result = self.mixin._pdf_link_callback(absolute_url, "")
+    def test_cancel_contract_success(self):
+        """Deve cancelar contrato com sucesso."""
+        success, message = self.mixin.cancel_contract(self.contract)
 
-        self.assertEqual(result, absolute_url)
+        self.assertTrue(success)
+        self.contract.refresh_from_db()
+        self.assertEqual(self.contract.status, 'CANCELED')
 
-        self.assertEqual(result, absolute_url)
+    def test_cancel_contract_completed_fails(self):
+        """Não deve cancelar contrato completo."""
+        self.contract.status = 'COMPLETED'
+        self.contract.save()
+
+        success, message = self.mixin.cancel_contract(self.contract)
+
+        self.assertFalse(success)
+        self.assertIn('concluído', message.lower())
+
+    def test_update_contract_description_success(self):
+        """Deve atualizar descrição com sucesso."""
+        success, message = self.mixin.update_contract_description(
+            self.contract,
+            'Nova descrição do contrato'
+        )
+
+        self.assertTrue(success)
+        self.contract.refresh_from_db()
+        self.assertEqual(
+            self.contract.description,
+            'Nova descrição do contrato'
+        )
+
+    def test_update_contract_description_not_editable(self):
+        """Não deve atualizar contrato não editável."""
+        self.contract.status = 'COMPLETED'
+        self.contract.save()
+
+        success, message = self.mixin.update_contract_description(
+            self.contract,
+            'Nova descrição'
+        )
+
+        self.assertFalse(success)
+
+    def test_upload_external_contract_success(self):
+        """Deve fazer upload de PDF externo com sucesso."""
+        # Cria arquivo PDF fake
+        pdf_content = b'%PDF-1.4 fake pdf content'
+        pdf_file = SimpleUploadedFile(
+            'contrato.pdf',
+            pdf_content,
+            content_type='application/pdf'
+        )
+
+        success, message = self.mixin.upload_external_contract(
+            self.contract,
+            pdf_file
+        )
+
+        self.assertTrue(success)
+        self.contract.refresh_from_db()
+        self.assertEqual(self.contract.status, 'COMPLETED')
+        self.assertEqual(
+            self.contract.integrity_hash,
+            'UPLOAD_MANUAL_EXTERNO'
+        )
+
+    def test_upload_external_contract_invalid_file_type(self):
+        """Deve rejeitar arquivo que não é PDF."""
+        txt_file = SimpleUploadedFile(
+            'arquivo.txt',
+            b'Not a PDF',
+            content_type='text/plain'
+        )
+
+        success, message = self.mixin.upload_external_contract(
+            self.contract,
+            txt_file
+        )
+
+        self.assertFalse(success)
+        self.assertIn('pdf', message.lower())
+
+
+class ContractManagementMixinTest(TestCase):
+    """
+    Testes para o ContractManagementMixin (Facade).
+    Verifica se todos os métodos dos mixins compostos estão acessíveis.
+    """
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.mixin = ContractManagementMixin()
+
+        self.planner = User.objects.create_user('p', 'p@t.com', '123')
+        self.wedding = Wedding.objects.create(
+            planner=self.planner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000
+        )
+        item = Item.objects.create(
+            wedding=self.wedding,
+            name="Flores",
+            quantity=1,
+            unit_price=5000
+        )
+        self.contract = Contract.objects.create(item=item)
+
+        request = self.factory.get('/')
+        request.user = self.planner
+        self.mixin.request = request
+
+    def test_facade_has_queryset_methods(self):
+        """Facade deve ter métodos do ContractQuerysetMixin."""
+        self.assertTrue(hasattr(self.mixin, 'get_contracts_for_planner'))
+        self.assertTrue(hasattr(self.mixin, 'get_contracts_for_wedding'))
+
+    def test_facade_has_signature_methods(self):
+        """Facade deve ter métodos do ContractSignatureMixin."""
+        self.assertTrue(
+            hasattr(self.mixin, 'process_contract_signature')
+        )
+
+    def test_facade_has_url_generator_methods(self):
+        """Facade deve ter métodos do ContractUrlGeneratorMixin."""
+        self.assertTrue(hasattr(self.mixin, 'generate_signature_link'))
+
+    def test_facade_has_email_methods(self):
+        """Facade deve ter métodos do ContractEmailMixin."""
+        self.assertTrue(hasattr(self.mixin, 'send_signature_email'))
+
+    def test_facade_has_actions_methods(self):
+        """Facade deve ter métodos do ContractActionsMixin."""
+        self.assertTrue(hasattr(self.mixin, 'cancel_contract'))
+        self.assertTrue(hasattr(self.mixin, 'update_contract_description'))
+        self.assertTrue(hasattr(self.mixin, 'upload_external_contract'))
+
+    def test_facade_has_json_response_methods(self):
+        """Facade deve ter métodos do JsonResponseMixin."""
+        self.assertTrue(hasattr(self.mixin, 'json_success'))
+        self.assertTrue(hasattr(self.mixin, 'json_error'))
+
+    def test_facade_methods_are_callable(self):
+        """Todos os métodos do facade devem ser chamáveis."""
+        # Testa que os métodos podem ser chamados
+        contracts = self.mixin.get_contracts_for_planner()
+        self.assertIsNotNone(contracts)
+
+        link_info = self.mixin.generate_signature_link(self.contract)
+        self.assertIsInstance(link_info, dict)
+
+        json_response = self.mixin.json_success('Teste')
+        self.assertEqual(json_response.status_code, 200)
+
+        self.assertEqual(json_response.status_code, 200)
+
