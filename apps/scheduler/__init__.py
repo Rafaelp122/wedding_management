@@ -35,22 +35,22 @@ def __getattr__(name):
         'urls': 'apps.scheduler.web.urls',
         'api_views': 'apps.scheduler.web.api_views',
     }
-    
+
     # Mapeamento de módulos API (REST Framework)
     api_modules = {
         'serializers': 'apps.scheduler.api.serializers',
         'api': 'apps.scheduler.api',
     }
-    
+
     # Verifica se é um módulo web
     if name in web_modules:
         import importlib
         return importlib.import_module(web_modules[name])
-    
+
     # Verifica se é um módulo API
     if name in api_modules:
         import importlib
         return importlib.import_module(api_modules[name])
-    
+
     # Se não encontrar, lança AttributeError padrão
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

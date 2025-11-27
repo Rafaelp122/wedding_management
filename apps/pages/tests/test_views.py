@@ -1,11 +1,12 @@
-from django.test import TestCase
-from django.urls import reverse
-from django.core import mail
-from django.conf import settings
 from unittest.mock import patch
 
-from apps.users.models import User
+from django.conf import settings
+from django.core import mail
+from django.test import TestCase
+from django.urls import reverse
+
 from apps.pages.models import ContactInquiry
+from apps.users.models import User
 
 
 class HomeViewTest(TestCase):

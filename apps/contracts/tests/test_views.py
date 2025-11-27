@@ -119,7 +119,7 @@ class ContractsPartialViewTest(TestCase):
         """
         # Criamos um casamento novo sem itens/contratos
         empty_wedding = Wedding.objects.create(
-            planner=self.planner, 
+            planner=self.planner,
             groom_name="Empty", bride_name="State",
             date=timezone.now().date(), location="Nowhere", budget=0
         )

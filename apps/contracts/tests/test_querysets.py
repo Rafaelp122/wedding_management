@@ -125,11 +125,11 @@ class ContractQuerySetTest(TestCase):
         # Verifica que tem pelo menos o contrato que criamos
         # (pode ter o do wedding2 que também é COMPLETED)
         self.assertGreaterEqual(fully_signed.count(), 1)
-        
+
         # Verifica que nosso contrato está na lista
         contract_ids = [c.id for c in fully_signed]
         self.assertIn(contract.id, contract_ids)
-        
+
         # Verifica que todos têm status COMPLETED e assinaturas
         for c in fully_signed:
             self.assertEqual(c.status, 'COMPLETED')
@@ -143,7 +143,7 @@ class ContractQuerySetTest(TestCase):
 
         # Deve ter DRAFT e WAITING_PLANNER (2 contratos)
         self.assertEqual(editable.count(), 2)
-        
+
         statuses = [c.status for c in editable]
         self.assertIn('DRAFT', statuses)
         self.assertIn('WAITING_PLANNER', statuses)
@@ -317,7 +317,7 @@ class ContractQuerySetChainingTest(TestCase):
         )
 
         self.assertEqual(contracts.count(), 2)
-        
+
         # Verifica que são os editáveis
         for contract in contracts:
             self.assertIn(contract.status, ['DRAFT', 'WAITING_PLANNER'])

@@ -7,12 +7,16 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.contracts.constants import (ALLOWED_SIGNATURE_FORMATS,
-                                      MAX_SIGNATURE_SIZE, STATUS_CANCELED,
-                                      STATUS_COMPLETED, STATUS_DRAFT,
-                                      STATUS_WAITING_COUPLE,
-                                      STATUS_WAITING_PLANNER,
-                                      STATUS_WAITING_SUPPLIER)
+from apps.contracts.constants import (
+    ALLOWED_SIGNATURE_FORMATS,
+    MAX_SIGNATURE_SIZE,
+    STATUS_CANCELED,
+    STATUS_COMPLETED,
+    STATUS_DRAFT,
+    STATUS_WAITING_COUPLE,
+    STATUS_WAITING_PLANNER,
+    STATUS_WAITING_SUPPLIER,
+)
 from apps.contracts.querysets import ContractQuerySet
 from apps.core.models import BaseModel
 from apps.items.models import Item
@@ -22,14 +26,10 @@ class Contract(BaseModel):
     """
     Modelo de Contrato Tripartite.
     """
-    item = models.OneToOneField(
-        Item,
-        on_delete=models.CASCADE,
-        related_name="contract"
-    )
+
+    item = models.OneToOneField(Item, on_delete=models.CASCADE, related_name="contract")
     description = models.TextField(
-        blank=True,
-        help_text="Cláusulas específicas ou descrição do serviço."
+        blank=True, help_text="Cláusulas específicas ou descrição do serviço."
     )
 
     STATUS_CHOICES = (
@@ -41,59 +41,37 @@ class Contract(BaseModel):
         (STATUS_CANCELED, "Cancelado"),
     )
     status = models.CharField(
-        max_length=50,
-        choices=STATUS_CHOICES,
-        default=STATUS_WAITING_PLANNER
+        max_length=50, choices=STATUS_CHOICES, default=STATUS_WAITING_PLANNER
     )
 
-    token = models.UUIDField(
-        default=uuid.uuid4,
-        editable=False,
-        unique=True
-    )
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     # Assinaturas - Cerimonialista
     planner_signature = models.FileField(
-        upload_to="signatures/planner/",
-        null=True,
-        blank=True
+        upload_to="signatures/planner/", null=True, blank=True
     )
     planner_signed_at = models.DateTimeField(null=True, blank=True)
     planner_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Assinaturas - Fornecedor
     supplier_signature = models.FileField(
-        upload_to="signatures/supplier/",
-        null=True,
-        blank=True
+        upload_to="signatures/supplier/", null=True, blank=True
     )
     supplier_signed_at = models.DateTimeField(null=True, blank=True)
     supplier_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Assinaturas - Noivos
     couple_signature = models.FileField(
-        upload_to="signatures/couple/",
-        null=True,
-        blank=True
+        upload_to="signatures/couple/", null=True, blank=True
     )
     couple_signed_at = models.DateTimeField(null=True, blank=True)
     couple_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Auditoria e Arquivos Finais
-    integrity_hash = models.CharField(
-        max_length=64,
-        blank=True,
-        null=True
-    )
-    final_pdf = models.FileField(
-        upload_to="contracts_pdf/",
-        null=True,
-        blank=True
-    )
+    integrity_hash = models.CharField(max_length=64, blank=True, null=True)
+    final_pdf = models.FileField(upload_to="contracts_pdf/", null=True, blank=True)
     external_pdf = models.FileField(
-        upload_to="contracts_external/",
-        null=True,
-        blank=True
+        upload_to="contracts_external/", null=True, blank=True
     )
 
     # Manager customizado
@@ -133,13 +111,13 @@ class Contract(BaseModel):
         """
         Processa e salva uma assinatura digital.
         """
-        if not signature_b64 or ';base64,' not in signature_b64:
+        if not signature_b64 or ";base64," not in signature_b64:
             raise ValueError("Assinatura inválida ou vazia")
 
         # Validações de segurança usando constantes
         try:
-            format_part, imgstr = signature_b64.split(';base64,')
-            ext = format_part.split('/')[-1].lower()
+            format_part, imgstr = signature_b64.split(";base64,")
+            ext = format_part.split("/")[-1].lower()
 
             if ext not in ALLOWED_SIGNATURE_FORMATS:
                 raise ValueError(f"Formato {ext} não permitido.")
@@ -147,17 +125,15 @@ class Contract(BaseModel):
             decoded_data = base64.b64decode(imgstr)
             if len(decoded_data) > MAX_SIGNATURE_SIZE:
                 raise ValueError(
-                    f"Assinatura muito grande. Máximo: "
-                    f"{MAX_SIGNATURE_SIZE // 1024}KB"
+                    f"Assinatura muito grande. Máximo: {MAX_SIGNATURE_SIZE // 1024}KB"
                 )
 
             signature_file = ContentFile(
-                decoded_data,
-                name=f'sig_{self.status}_{self.token}.{ext}'
+                decoded_data, name=f"sig_{self.status}_{self.token}.{ext}"
             )
 
         except (ValueError, TypeError) as e:
-            raise ValueError(f"Erro ao decodificar assinatura: {str(e)}")
+            raise ValueError(f"Erro ao decodificar assinatura: {e!s}")
 
         # Processa conforme o status atual
         if self.status == STATUS_WAITING_PLANNER:
@@ -181,8 +157,7 @@ class Contract(BaseModel):
 
         else:
             raise RuntimeError(
-                f"Não é possível assinar contrato com status: "
-                f"{self.status}"
+                f"Não é possível assinar contrato com status: {self.status}"
             )
 
         self.save()
@@ -194,17 +169,12 @@ class Contract(BaseModel):
         """
         # Garante que as datas não sejam None antes de formatar
         planner_dt = (
-            self.planner_signed_at.isoformat()
-            if self.planner_signed_at else ""
+            self.planner_signed_at.isoformat() if self.planner_signed_at else ""
         )
         supplier_dt = (
-            self.supplier_signed_at.isoformat()
-            if self.supplier_signed_at else ""
+            self.supplier_signed_at.isoformat() if self.supplier_signed_at else ""
         )
-        couple_dt = (
-            self.couple_signed_at.isoformat()
-            if self.couple_signed_at else ""
-        )
+        couple_dt = self.couple_signed_at.isoformat() if self.couple_signed_at else ""
 
         hash_components = [
             str(self.id),
@@ -216,10 +186,8 @@ class Contract(BaseModel):
             str(self.couple_ip or ""),
             str(self.token),
         ]
-        hash_input = '|'.join(hash_components)
-        self.integrity_hash = hashlib.sha256(
-            hash_input.encode('utf-8')
-        ).hexdigest()
+        hash_input = "|".join(hash_components)
+        self.integrity_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
 
     def get_next_signer_info(self) -> dict:
         """
@@ -233,28 +201,26 @@ class Contract(BaseModel):
         Verifica se o contrato foi assinado por todas as partes.
         Usa o queryset para verificação consistente.
         """
-        return Contract.objects.filter(
-            pk=self.pk
-        ).fully_signed().exists()
+        return Contract.objects.filter(pk=self.pk).fully_signed().exists()
 
     def get_signatures_status(self) -> dict:
         """
         Retorna o status de cada assinatura.
         """
         return {
-            'planner': {
-                'signed': bool(self.planner_signature),
-                'signed_at': self.planner_signed_at,
-                'ip': self.planner_ip
+            "planner": {
+                "signed": bool(self.planner_signature),
+                "signed_at": self.planner_signed_at,
+                "ip": self.planner_ip,
             },
-            'supplier': {
-                'signed': bool(self.supplier_signature),
-                'signed_at': self.supplier_signed_at,
-                'ip': self.supplier_ip
+            "supplier": {
+                "signed": bool(self.supplier_signature),
+                "signed_at": self.supplier_signed_at,
+                "ip": self.supplier_ip,
             },
-            'couple': {
-                'signed': bool(self.couple_signature),
-                'signed_at': self.couple_signed_at,
-                'ip': self.couple_ip
-            }
+            "couple": {
+                "signed": bool(self.couple_signature),
+                "signed_at": self.couple_signed_at,
+                "ip": self.couple_ip,
+            },
         }

@@ -157,11 +157,11 @@ class ContractSignatureProcessingTest(TestCase):
         # Cria imagem grande no formato JPEG sem compressão
         # 3000x3000 pixels em RGB resulta em ~2MB sem compressão
         width, height = 3000, 3000
-        
+
         # Cria imagem com gradiente para evitar compressão eficiente
         large_img = Image.new('RGB', (width, height))
         pixels = large_img.load()
-        
+
         # Preenche com padrão complexo que não comprime bem
         for i in range(width):
             for j in range(height):
@@ -170,25 +170,25 @@ class ContractSignatureProcessingTest(TestCase):
                 g = (i + j) % 256
                 b = (i - j) % 256
                 pixels[i, j] = (r, g, b)
-        
+
         buffer = BytesIO()
         # Salva como JPEG com qualidade máxima (sem compressão)
         large_img.save(buffer, format='JPEG', quality=100)
         img_bytes = buffer.getvalue()
-        
+
         # Verifica que é realmente > 500KB
         size_kb = len(img_bytes) / 1024
         self.assertGreater(
             len(img_bytes), 500 * 1024,
             f"Imagem tem apenas {size_kb:.1f}KB"
         )
-        
+
         img_b64 = base64.b64encode(img_bytes).decode('utf-8')
         fake_sig = f"data:image/jpeg;base64,{img_b64}"
 
         with self.assertRaises(ValueError) as cm:
             self.contract.process_signature(fake_sig, "192.168.1.1")
-        
+
         # Verifica mensagem de erro
         self.assertIn("muito grande", str(cm.exception))
 

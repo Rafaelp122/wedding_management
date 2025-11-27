@@ -1,0 +1,26 @@
+fix = true
+line-length = 88
+target-version = "py310"
+
+# Rules to select
+select = ["E", "F", "W", "I", "B", "RUF"]
+
+# Rules to ignore globally
+ignore = ["E203", "F401"]
+
+# Exclude directories
+exclude = [
+    ".git",
+    "__pycache__",
+    "migrations",
+    "static",
+    "media",
+    "venv",
+    ".venv",
+    "node_modules"
+]
+
+# Per-file ignores
+[per-file-ignores]
+"*/__init__.py" = ["F401"]
+"*/settings.py" = ["F401"]

@@ -265,8 +265,8 @@ class ItemHtmxListResponseMixin(
         # build_paginated_context vem de ItemPaginationContextMixin
         context = self.build_paginated_context(params)
 
-        # Precisamos injetar manualmente as variáveis que o template de paginação 
-        # espera, pois o 'ItemListView.get_context_data' não é chamado 
+        # Precisamos injetar manualmente as variáveis que o template de paginação
+        # espera, pois o 'ItemListView.get_context_data' não é chamado
         # nas views de Create/Update/Delete.
         context.update({
             "pagination_url_name": "items:partial_items",

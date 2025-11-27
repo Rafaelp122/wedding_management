@@ -3,9 +3,12 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.users.web.allauth_views import (CustomLoginView, CustomLogoutView,
-                                          CustomPasswordResetView,
-                                          CustomSignupView)
+from apps.users.web.allauth_views import (
+    CustomLoginView,
+    CustomLogoutView,
+    CustomPasswordResetView,
+    CustomSignupView,
+)
 
 # Define as rotas principais do projeto.
 urlpatterns = [
@@ -50,23 +53,29 @@ urlpatterns = [
     ),
     # --- API REST (DRF) ---
     # API v1 para integrações externas (mobile, calendários, webhooks)
-    path("api/v1/", include([
-        path("", include("apps.users.api.urls")),
-        path("weddings/", include("apps.weddings.api.urls")),
-        path("items/", include("apps.items.api.urls")),
-        path("scheduler/", include("apps.scheduler.api.urls")),
-    ])),
+    path(
+        "api/v1/",
+        include(
+            [
+                path("", include("apps.users.api.urls")),
+                path("weddings/", include("apps.weddings.api.urls")),
+                path("items/", include("apps.items.api.urls")),
+                path("scheduler/", include("apps.scheduler.api.urls")),
+            ]
+        ),
+    ),
 ]
 
 if settings.DEBUG:
     # Import debug toolbar only if available
     try:
         import debug_toolbar
+
         urlpatterns += [
             path("__debug__/", include(debug_toolbar.urls)),
         ]
     except ImportError:
         pass  # Debug toolbar not installed
-    
+
     # Adiciona a rota para servir arquivos de mídia (upload) localmente
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

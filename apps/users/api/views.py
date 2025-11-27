@@ -12,8 +12,12 @@ from rest_framework.response import Response
 from apps.users.models import User
 
 from .permissions import IsOwnerOrReadOnly, IsSelfOrAdmin
-from .serializers import (ChangePasswordSerializer, UserDetailSerializer,
-                          UserListSerializer, UserSerializer)
+from .serializers import (
+    ChangePasswordSerializer,
+    UserDetailSerializer,
+    UserListSerializer,
+    UserSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -151,9 +155,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 f"[API] Usuário {username} (ID: {user_id}) "
                 f"desativado por {request.user.id}"
             )
-        
+
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
     @action(detail=False, methods=['get'])
     def me(self, request):
         """

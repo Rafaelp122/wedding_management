@@ -31,12 +31,12 @@ def __getattr__(name):
     elif name == "WeddingQuerySet":
         from .querysets import WeddingQuerySet
         return WeddingQuerySet
-    
+
     # Web - Forms
     elif name == "WeddingForm":
         from .web.forms import WeddingForm
         return WeddingForm
-    
+
     # Web - Views
     elif name == "WeddingListView":
         from .web.views import WeddingListView
@@ -56,7 +56,7 @@ def __getattr__(name):
     elif name == "UpdateWeddingStatusView":
         from .web.views import UpdateWeddingStatusView
         return UpdateWeddingStatusView
-    
+
     # Web - Mixins
     elif name == "PlannerOwnershipMixin":
         from .web.mixins import PlannerOwnershipMixin
@@ -79,7 +79,7 @@ def __getattr__(name):
     elif name == "WeddingListActionsMixin":
         from .web.mixins import WeddingListActionsMixin
         return WeddingListActionsMixin
-    
+
     # API - Serializers
     elif name == "WeddingSerializer":
         from .api.serializers import WeddingSerializer
@@ -90,17 +90,17 @@ def __getattr__(name):
     elif name == "WeddingDetailSerializer":
         from .api.serializers import WeddingDetailSerializer
         return WeddingDetailSerializer
-    
+
     # API - ViewSets
     elif name == "WeddingViewSet":
         from .api.views import WeddingViewSet
         return WeddingViewSet
-    
+
     # API - Permissions
     elif name == "IsWeddingOwner":
         from .api.permissions import IsWeddingOwner
         return IsWeddingOwner
-    
+
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

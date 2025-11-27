@@ -12,8 +12,7 @@ from rest_framework.response import Response
 from apps.scheduler.models import Event
 
 from .permissions import IsEventOwner
-from .serializers import (EventDetailSerializer, EventListSerializer,
-                          EventSerializer)
+from .serializers import EventDetailSerializer, EventListSerializer, EventSerializer
 
 logger = logging.getLogger(__name__)
 

@@ -9,12 +9,15 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from PIL import Image
 
-from apps.contracts.mixins import (ContractActionsMixin, ContractEmailMixin,
-                                   ContractManagementMixin,
-                                   ContractOwnershipMixin,
-                                   ContractQuerysetMixin,
-                                   ContractSignatureMixin,
-                                   ContractUrlGeneratorMixin)
+from apps.contracts.mixins import (
+    ContractActionsMixin,
+    ContractEmailMixin,
+    ContractManagementMixin,
+    ContractOwnershipMixin,
+    ContractQuerysetMixin,
+    ContractSignatureMixin,
+    ContractUrlGeneratorMixin,
+)
 from apps.contracts.models import Contract
 from apps.items.models import Item
 from apps.users.models import User
@@ -283,7 +286,7 @@ class ContractEmailMixinTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.mixin = ContractEmailMixin()
-        
+
         # Adiciona request ao mixin
         request = self.factory.get('/')
         self.mixin.request = request
@@ -337,7 +340,7 @@ class ContractEmailMixinTest(TestCase):
         # Email inválido vai gerar erro no send_mail
         with patch('django.core.mail.send_mail') as mock_send_mail:
             mock_send_mail.side_effect = Exception('Invalid email')
-            
+
             success, message = self.mixin.send_signature_email(
                 self.contract,
                 'invalid_email'

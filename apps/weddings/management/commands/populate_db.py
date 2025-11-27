@@ -1,15 +1,17 @@
 import random
+
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-from django.contrib.auth import get_user_model
+
+from apps.contracts.models import Contract
+from apps.items.models import Item
 
 # --------------------------------------------------------------------------
 # Importe seus modelos
 # --------------------------------------------------------------------------
 from apps.weddings.models import Wedding
-from apps.items.models import Item
-from apps.contracts.models import Contract
 
 # --- Listas de dados de exemplo para aleatoriedade ---
 

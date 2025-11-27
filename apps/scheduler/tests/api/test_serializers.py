@@ -8,9 +8,11 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.scheduler.api.serializers import (EventDetailSerializer,
-                                            EventListSerializer,
-                                            EventSerializer)
+from apps.scheduler.api.serializers import (
+    EventDetailSerializer,
+    EventListSerializer,
+    EventSerializer,
+)
 from apps.scheduler.models import Event
 from apps.weddings.models import Wedding
 

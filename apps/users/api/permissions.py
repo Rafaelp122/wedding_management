@@ -13,7 +13,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     Usado em:
     - Retrieve, Update, Delete de perfis de usuário
     """
-    
+
     def has_object_permission(self, request, view, obj):
         """
         Verifica se o usuário pode acessar/editar o perfil.
@@ -29,7 +29,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         # Métodos SAFE (GET, HEAD, OPTIONS) permitidos para todos
         if request.method in permissions.SAFE_METHODS:
             return True
-        
+
         # Métodos de escrita (PUT, PATCH, DELETE) apenas para o dono
         return obj == request.user
 
@@ -44,7 +44,7 @@ class IsSelfOrAdmin(permissions.BasePermission):
     Usado em:
     - Endpoints sensíveis como troca de senha
     """
-    
+
     def has_object_permission(self, request, view, obj):
         """
         Verifica se é o próprio usuário ou admin.

@@ -1,8 +1,10 @@
-from django.test import TestCase
 from decimal import Decimal
+
+from django.test import TestCase
+
 from apps.items.models import Item
-from apps.weddings.models import Wedding
 from apps.users.models import User
+from apps.weddings.models import Wedding
 
 
 class ItemQuerySetTest(TestCase):

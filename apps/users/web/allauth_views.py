@@ -5,8 +5,7 @@ Sobrescreve as views padrão do allauth para adicionar contexto
 customizado (ícones, layout) aos templates.
 """
 
-from allauth.account.views import (LoginView, LogoutView, PasswordResetView,
-                                   SignupView)
+from allauth.account.views import LoginView, LogoutView, PasswordResetView, SignupView
 from django.urls import reverse_lazy
 
 

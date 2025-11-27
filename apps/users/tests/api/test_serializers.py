@@ -3,9 +3,12 @@ Testes dos serializers da API de Users.
 """
 from django.test import TestCase
 
-from apps.users.api.serializers import (ChangePasswordSerializer,
-                                        UserDetailSerializer,
-                                        UserListSerializer, UserSerializer)
+from apps.users.api.serializers import (
+    ChangePasswordSerializer,
+    UserDetailSerializer,
+    UserListSerializer,
+    UserSerializer,
+)
 from apps.users.models import User
 
 

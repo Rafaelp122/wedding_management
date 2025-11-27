@@ -9,7 +9,7 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
-from .base import *  # noqa: F403, F401
+from .base import *  # noqa: F403
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -80,7 +80,7 @@ LOGGING["handlers"]["file_production"] = {  # noqa: F405
     "backupCount": 10,
 }
 
-LOGGING["loggers"]["django"]["handlers"].append("file_production")  # noqa: F405, E501
+LOGGING["loggers"]["django"]["handlers"].append("file_production")  # noqa: F405
 LOGGING["loggers"]["django"]["level"] = "INFO"  # noqa: F405
 
 # Sentry Configuration (Error Monitoring)
@@ -97,14 +97,14 @@ if SENTRY_DSN:
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         # We recommend adjusting this value in production (0.1 = 10% of transactions).
         traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
-        
+
         # If you wish to associate users to errors (assuming you are using
         # django.contrib.auth) you may enable sending PII data.
         send_default_pii=True,
-        
+
         # Set environment
         environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
-        
+
         # Set release version (optional)
         # release=f"wedding_management@{VERSION}",
     )

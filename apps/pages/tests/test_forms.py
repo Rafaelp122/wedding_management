@@ -1,5 +1,7 @@
-from django.test import SimpleTestCase, TestCase
 from unittest.mock import patch
+
+from django.test import SimpleTestCase, TestCase
+
 from apps.pages.forms import ContactForm
 from apps.pages.models import ContactInquiry
 

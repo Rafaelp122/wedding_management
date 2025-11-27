@@ -247,9 +247,9 @@ class RedirectAuthenticatedUserMixinTest(SimpleTestCase):
         request.user = user
 
         # Configura mensagens sem banco de dados
-        setattr(request, "session", "session")
+        request.session = "session"
         messages = FallbackStorage(request)
-        setattr(request, "_messages", messages)
+        request._messages = messages
         return request
 
     def test_anonymous_user_can_access_view(self):

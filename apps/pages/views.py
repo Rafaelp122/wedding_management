@@ -1,11 +1,13 @@
 import logging
-from django.shortcuts import render
-from django.views.generic import View, TemplateView
-from django.core.mail import send_mail
+
 from django.conf import settings
+from django.core.mail import send_mail
+from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.views.generic import TemplateView, View
 
 from apps.core.mixins.auth import RedirectAuthenticatedUserMixin
+
 from .forms import ContactForm
 
 # Configura o logger para registrar erros de envio de e-mail

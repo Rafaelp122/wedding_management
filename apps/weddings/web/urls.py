@@ -3,12 +3,12 @@
 from django.urls import path
 
 from .views import (
-    WeddingListView,
-    WeddingUpdateView,
+    UpdateWeddingStatusView,
     WeddingCreateView,
     WeddingDeleteView,
     WeddingDetailView,
-    UpdateWeddingStatusView,
+    WeddingListView,
+    WeddingUpdateView,
 )
 
 app_name = "weddings"

@@ -14,9 +14,9 @@ class IsItemOwner(permissions.BasePermission):
         class ItemViewSet(ModelViewSet):
             permission_classes = [IsAuthenticated, IsItemOwner]
     """
-    
+
     message = "Você não tem permissão para acessar este item."
-    
+
     def has_object_permission(self, request, view, obj):
         """
         Verifica se o usuário é o planner do wedding do item.

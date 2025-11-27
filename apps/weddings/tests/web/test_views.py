@@ -290,7 +290,7 @@ class WeddingUpdateViewTest(TestCase):
             "location": "Loc"
         }
         # Simulamos HTMX pois a view retorna partials
-        headers = {"HTTP_HX-Request": "true"} 
+        headers = {"HTTP_HX-Request": "true"}
         response = self.client.post(self.url, data, **headers)
 
         self.assertEqual(response.status_code, 200)

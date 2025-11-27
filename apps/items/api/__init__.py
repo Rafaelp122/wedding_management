@@ -13,10 +13,10 @@ __all__ = [
     "ItemSerializer",
     "ItemListSerializer",
     "ItemDetailSerializer",
-    
+
     # ViewSets
     "ItemViewSet",
-    
+
     # Permissions
     "IsItemOwner",
 ]

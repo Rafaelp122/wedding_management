@@ -8,10 +8,9 @@ django-debug-toolbar==6.1.0
 ipython==8.31.0  # Enhanced Python shell
 django-extensions==3.2.3  # Additional management commands
 
-# Code quality
-flake8==7.1.1  # Linting
-black==24.10.0  # Code formatting
-isort==5.13.2  # Import sorting
+# Code quality (using Ruff instead of flake8, black, isort)
+ruff==0.7.4
+ruff-lsp==0.0.53
 
 # Environment management
 python-dotenv==1.0.1  # Load .env files

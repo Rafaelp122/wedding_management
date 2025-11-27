@@ -30,22 +30,22 @@ def __getattr__(name):
         'views': 'apps.users.web.views',
         'urls': 'apps.users.web.urls',
     }
-    
+
     # Mapeamento de módulos API (REST Framework)
     api_modules = {
         'serializers': 'apps.users.api.serializers',
         'api': 'apps.users.api',
     }
-    
+
     # Verifica se é um módulo web
     if name in web_modules:
         import importlib
         return importlib.import_module(web_modules[name])
-    
+
     # Verifica se é um módulo API
     if name in api_modules:
         import importlib
         return importlib.import_module(api_modules[name])
-    
+
     # Se não encontrar, lança AttributeError padrão
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

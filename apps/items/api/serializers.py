@@ -14,7 +14,7 @@ class ItemListSerializer(serializers.ModelSerializer):
     Usado no endpoint GET /api/v1/items/
     Retorna apenas informações essenciais para performance.
     """
-    
+
     category_display = serializers.CharField(
         source="get_category_display", read_only=True
     )
@@ -25,7 +25,7 @@ class ItemListSerializer(serializers.ModelSerializer):
         max_digits=10, decimal_places=2, read_only=True
     )
     wedding_couple = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Item
         fields = [
@@ -44,7 +44,7 @@ class ItemListSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at", "total_cost"]
-    
+
     def get_wedding_couple(self, obj):
         """Retorna o nome do casal do casamento."""
         if obj.wedding:
@@ -59,7 +59,7 @@ class ItemDetailSerializer(serializers.ModelSerializer):
     Usado no endpoint GET /api/v1/items/{id}/
     Inclui informações detalhadas e relacionamentos.
     """
-    
+
     category_display = serializers.CharField(
         source="get_category_display", read_only=True
     )
@@ -73,10 +73,10 @@ class ItemDetailSerializer(serializers.ModelSerializer):
     wedding_date = serializers.DateField(
         source="wedding.date", read_only=True
     )
-    
+
     # Contrato relacionado (se existir)
     contracts_count = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Item
         fields = [
@@ -101,13 +101,13 @@ class ItemDetailSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id", "created_at", "updated_at", "total_cost"
         ]
-    
+
     def get_wedding_couple(self, obj):
         """Retorna o nome do casal do casamento."""
         if obj.wedding:
             return str(obj.wedding)
         return None
-    
+
     def get_contracts_count(self, obj):
         """Retorna o número de contratos associados ao item."""
         return 1 if hasattr(obj, 'contract') else 0
@@ -122,7 +122,7 @@ class ItemSerializer(serializers.ModelSerializer):
     - PUT /api/v1/items/{id}/
     - PATCH /api/v1/items/{id}/
     """
-    
+
     category_display = serializers.CharField(
         source="get_category_display", read_only=True
     )
@@ -132,7 +132,7 @@ class ItemSerializer(serializers.ModelSerializer):
     total_cost = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
-    
+
     class Meta:
         model = Item
         fields = [
@@ -154,7 +154,7 @@ class ItemSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id", "created_at", "updated_at", "total_cost"
         ]
-    
+
     def validate_unit_price(self, value):
         """Valida se o preço unitário não é negativo."""
         if value < 0:
@@ -162,7 +162,7 @@ class ItemSerializer(serializers.ModelSerializer):
                 "O preço unitário não pode ser negativo."
             )
         return value
-    
+
     def validate_quantity(self, value):
         """Valida se a quantidade é positiva."""
         if value <= 0:

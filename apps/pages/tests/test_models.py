@@ -1,5 +1,6 @@
-from django.test import TestCase
 from django.core.exceptions import ValidationError
+from django.test import TestCase
+
 from apps.pages.models import ContactInquiry
 
 
@@ -41,8 +42,9 @@ class ContactInquiryModelTest(TestCase):
         # Forçamos datas diferentes caso o teste rode rápido demais (no mesmo milissegundo)
         # O BaseModel usa auto_now_add, então precisamos atualizar manualmente via SQL ou mock.
         # Uma forma simples é usar update() que vai direto no banco
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
 
         ContactInquiry.objects.filter(pk=msg_old.pk).update(
             created_at=timezone.now() - timedelta(hours=1)

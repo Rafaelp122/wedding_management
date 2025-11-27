@@ -33,11 +33,12 @@ class CustomUserCreationFormTest(TestCase):
         # Salva e verifica se foi para o banco
         # O allauth precisa de um request com session
         from django.contrib.sessions.middleware import SessionMiddleware
-        request = RequestFactory().post('/fake-url')
+
+        request = RequestFactory().post("/fake-url")
         middleware = SessionMiddleware(lambda x: None)
         middleware.process_request(request)
         request.session.save()
-        
+
         user = form.save(request)
         self.assertEqual(user.email, "new@test.com")
         self.assertTrue(user.check_password("StrongPass123!"))
@@ -66,7 +67,7 @@ class CustomUserCreationFormTest(TestCase):
         # Tenta criar usuário 2 com mesmo email
         data = {
             "username": "u2",
-            "email": "exist@test.com", # Duplicado
+            "email": "exist@test.com",  # Duplicado
             "password1": "Pass123!",
             "password2": "Pass123!",
         }
@@ -122,7 +123,7 @@ class CustomUserChangeFormTest(TestCase):
             "username": "edited_user",
             "first_name": "Edited",
             "last_name": "Name",
-            "email": "edited@test.com"
+            "email": "edited@test.com",
         }
         form = CustomUserChangeForm(instance=self.user, data=data)
         self.assertTrue(form.is_valid())

@@ -20,8 +20,11 @@ from django.utils import timezone
 
 from apps.scheduler.models import Event
 from apps.scheduler.web.forms import EventForm
-from apps.scheduler.web.mixins import (EventFormMixin, EventHtmxResponseMixin,
-                                       EventOwnershipMixin)
+from apps.scheduler.web.mixins import (
+    EventFormMixin,
+    EventHtmxResponseMixin,
+    EventOwnershipMixin,
+)
 from apps.users.models import User
 from apps.weddings.models import Wedding
 

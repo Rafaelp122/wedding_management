@@ -1,9 +1,14 @@
 from django.db import models
 from django.db.models import Case, Value, When
 
-from .constants import (EDITABLE_STATUSES, STATUS_CANCELED, STATUS_COMPLETED,
-                        STATUS_WAITING_COUPLE, STATUS_WAITING_PLANNER,
-                        STATUS_WAITING_SUPPLIER)
+from .constants import (
+    EDITABLE_STATUSES,
+    STATUS_CANCELED,
+    STATUS_COMPLETED,
+    STATUS_WAITING_COUPLE,
+    STATUS_WAITING_PLANNER,
+    STATUS_WAITING_SUPPLIER,
+)
 
 
 class ContractQuerySet(models.QuerySet):
@@ -143,20 +148,20 @@ class ContractQuerySet(models.QuerySet):
             contract = self.select_related(
                 'item__wedding'
             ).get(id=contract_id)
-            
+
             if contract.status == STATUS_WAITING_PLANNER:
                 return {
                     'role': 'Cerimonialista',
                     'name': 'Você (Cerimonialista)'
                 }
-            
+
             elif contract.status == STATUS_WAITING_SUPPLIER:
                 supplier_name = contract.item.supplier or "Não vinculado"
                 return {
                     'role': 'Fornecedor',
                     'name': f"Fornecedor ({supplier_name})"
                 }
-            
+
             elif contract.status == STATUS_WAITING_COUPLE:
                 if contract.item.wedding:
                     bride = contract.item.wedding.bride_name
@@ -166,9 +171,9 @@ class ContractQuerySet(models.QuerySet):
                         'name': f"Noivos ({bride} e {groom})"
                     }
                 return {'role': 'Noivos', 'name': 'Noivos'}
-            
+
             return {'role': 'Desconhecido', 'name': 'Alguém'}
-            
+
         except self.model.DoesNotExist:
             return {'role': 'Erro', 'name': 'Contrato não encontrado'}
 

@@ -1,8 +1,11 @@
 import logging
+
 from django import forms
-from .models import ContactInquiry
+
 from apps.core.mixins.forms import FormStylingMixin
 from apps.core.utils.forms_utils import add_placeholder
+
+from .models import ContactInquiry
 
 logger = logging.getLogger(__name__)
 

@@ -7,14 +7,24 @@ from django.views.generic import CreateView, TemplateView, UpdateView
 
 from apps.core.mixins.auth import WeddingOwnershipMixin
 
-from ..constants import (CONFIRM_DELETE_TEMPLATE, DELETE_OBJECT_TYPE,
-                         EVENT_DETAIL_TEMPLATE, FORM_MODAL_CONTAINER_ID,
-                         MODAL_CREATE_TITLE, MODAL_EDIT_TITLE,
-                         SCHEDULER_PARTIAL_TEMPLATE, SUBMIT_CREATE_TEXT,
-                         SUBMIT_EDIT_TEXT)
-from .mixins import (EventFormLayoutMixin, EventFormMixin,
-                     EventHtmxResponseMixin, EventModalContextMixin,
-                     EventOwnershipMixin)
+from ..constants import (
+    CONFIRM_DELETE_TEMPLATE,
+    DELETE_OBJECT_TYPE,
+    EVENT_DETAIL_TEMPLATE,
+    FORM_MODAL_CONTAINER_ID,
+    MODAL_CREATE_TITLE,
+    MODAL_EDIT_TITLE,
+    SCHEDULER_PARTIAL_TEMPLATE,
+    SUBMIT_CREATE_TEXT,
+    SUBMIT_EDIT_TEXT,
+)
+from .mixins import (
+    EventFormLayoutMixin,
+    EventFormMixin,
+    EventHtmxResponseMixin,
+    EventModalContextMixin,
+    EventOwnershipMixin,
+)
 
 logger = logging.getLogger(__name__)
 

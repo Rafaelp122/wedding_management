@@ -30,13 +30,13 @@ class CustomUserCreationForm(FormStylingMixinLarge, SignupForm):
         max_length=150,
         required=False,
         label="Primeiro Nome",
-        widget=forms.TextInput(attrs={'placeholder': 'Ex: Pedro'})
+        widget=forms.TextInput(attrs={"placeholder": "Ex: Pedro"}),
     )
     last_name = forms.CharField(
         max_length=150,
         required=False,
         label="Último Nome",
-        widget=forms.TextInput(attrs={'placeholder': 'Ex: Silva'})
+        widget=forms.TextInput(attrs={"placeholder": "Ex: Silva"}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -47,8 +47,7 @@ class CustomUserCreationForm(FormStylingMixinLarge, SignupForm):
         self.fields["email"].label = "E-mail"
         self.fields["password1"].label = "Senha"
         self.fields["password1"].help_text = (
-            "Senha com pelo menos 8 caracteres, não totalmente "
-            "numérica e pouco comum."
+            "Senha com pelo menos 8 caracteres, não totalmente numérica e pouco comum."
         )
         self.fields["password2"].label = "Confirme a senha"
 
@@ -64,8 +63,8 @@ class CustomUserCreationForm(FormStylingMixinLarge, SignupForm):
         O método save do allauth já lida com a criação do usuário.
         """
         user = super().save(request)
-        user.first_name = self.cleaned_data.get('first_name', '')
-        user.last_name = self.cleaned_data.get('last_name', '')
+        user.first_name = self.cleaned_data.get("first_name", "")
+        user.last_name = self.cleaned_data.get("last_name", "")
         user.save()
         return user
 
@@ -93,9 +92,7 @@ class CustomLoginForm(FormStylingMixinLarge, LoginForm):
         if "remember" in self.fields:
             self.fields["remember"].label = "Lembrar de mim"
             # Aplica classe de checkbox do Bootstrap
-            self.fields["remember"].widget.attrs.update({
-                'class': 'form-check-input'
-            })
+            self.fields["remember"].widget.attrs.update({"class": "form-check-input"})
 
         # Placeholders
         # add_placeholder(self.fields["login"], "Digite seu usuário ou e-mail")
@@ -123,6 +120,7 @@ class CustomUserChangeForm(FormStylingMixin, UserChangeForm):
     Formulário para edição de perfil (nome, email).
     A senha é removida para evitar alterações acidentais aqui.
     """
+
     password = None
 
     class Meta:
