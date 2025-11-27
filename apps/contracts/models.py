@@ -1,11 +1,19 @@
 import base64
 import hashlib
 import uuid
+
 from django.core.files.base import ContentFile
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.contracts.constants import (ALLOWED_SIGNATURE_FORMATS,
+                                      MAX_SIGNATURE_SIZE, STATUS_CANCELED,
+                                      STATUS_COMPLETED, STATUS_DRAFT,
+                                      STATUS_WAITING_COUPLE,
+                                      STATUS_WAITING_PLANNER,
+                                      STATUS_WAITING_SUPPLIER)
+from apps.contracts.querysets import ContractQuerySet
 from apps.core.models import BaseModel
 from apps.items.models import Item
 
@@ -14,40 +22,82 @@ class Contract(BaseModel):
     """
     Modelo de Contrato Tripartite.
     """
-    item = models.OneToOneField(Item, on_delete=models.CASCADE, related_name="contract")
-    description = models.TextField(blank=True, help_text="Cláusulas específicas ou descrição do serviço.")
+    item = models.OneToOneField(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="contract"
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Cláusulas específicas ou descrição do serviço."
+    )
 
     STATUS_CHOICES = (
-        ("DRAFT", "Rascunho"),
-        ("WAITING_PLANNER", "Aguardando Cerimonialista"),
-        ("WAITING_SUPPLIER", "Aguardando Fornecedor"),
-        ("WAITING_COUPLE", "Aguardando Noivos"),
-        ("COMPLETED", "Concluído"),
-        ("CANCELED", "Cancelado"),
+        (STATUS_DRAFT, "Rascunho"),
+        (STATUS_WAITING_PLANNER, "Aguardando Cerimonialista"),
+        (STATUS_WAITING_SUPPLIER, "Aguardando Fornecedor"),
+        (STATUS_WAITING_COUPLE, "Aguardando Noivos"),
+        (STATUS_COMPLETED, "Concluído"),
+        (STATUS_CANCELED, "Cancelado"),
     )
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="WAITING_PLANNER")
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default=STATUS_WAITING_PLANNER
+    )
 
-    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
 
     # Assinaturas - Cerimonialista
-    planner_signature = models.FileField(upload_to="signatures/planner/", null=True, blank=True)
+    planner_signature = models.FileField(
+        upload_to="signatures/planner/",
+        null=True,
+        blank=True
+    )
     planner_signed_at = models.DateTimeField(null=True, blank=True)
     planner_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Assinaturas - Fornecedor
-    supplier_signature = models.FileField(upload_to="signatures/supplier/", null=True, blank=True)
+    supplier_signature = models.FileField(
+        upload_to="signatures/supplier/",
+        null=True,
+        blank=True
+    )
     supplier_signed_at = models.DateTimeField(null=True, blank=True)
     supplier_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Assinaturas - Noivos
-    couple_signature = models.FileField(upload_to="signatures/couple/", null=True, blank=True)
+    couple_signature = models.FileField(
+        upload_to="signatures/couple/",
+        null=True,
+        blank=True
+    )
     couple_signed_at = models.DateTimeField(null=True, blank=True)
     couple_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Auditoria e Arquivos Finais
-    integrity_hash = models.CharField(max_length=64, blank=True, null=True)
-    final_pdf = models.FileField(upload_to="contracts_pdf/", null=True, blank=True)
-    external_pdf = models.FileField(upload_to="contracts_external/", null=True, blank=True)
+    integrity_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True
+    )
+    final_pdf = models.FileField(
+        upload_to="contracts_pdf/",
+        null=True,
+        blank=True
+    )
+    external_pdf = models.FileField(
+        upload_to="contracts_external/",
+        null=True,
+        blank=True
+    )
+
+    # Manager customizado
+    objects = ContractQuerySet.as_manager()
 
     def __str__(self):
         return f"Contrato {self.status} - {self.item.name}"
@@ -76,7 +126,7 @@ class Contract(BaseModel):
 
     def save(self, *args, **kwargs):
         if not self.status:
-            self.status = "WAITING_PLANNER"
+            self.status = STATUS_WAITING_PLANNER
         super().save(*args, **kwargs)
 
     def process_signature(self, signature_b64: str, client_ip: str) -> bool:
@@ -86,20 +136,20 @@ class Contract(BaseModel):
         if not signature_b64 or ';base64,' not in signature_b64:
             raise ValueError("Assinatura inválida ou vazia")
 
-        # Validações de segurança
-        MAX_SIGNATURE_SIZE = 500 * 1024  # 500KB
-        ALLOWED_FORMATS = ['png', 'jpg', 'jpeg']
-
+        # Validações de segurança usando constantes
         try:
             format_part, imgstr = signature_b64.split(';base64,')
             ext = format_part.split('/')[-1].lower()
 
-            if ext not in ALLOWED_FORMATS:
+            if ext not in ALLOWED_SIGNATURE_FORMATS:
                 raise ValueError(f"Formato {ext} não permitido.")
 
             decoded_data = base64.b64decode(imgstr)
             if len(decoded_data) > MAX_SIGNATURE_SIZE:
-                raise ValueError("Assinatura muito grande. Máximo: 500KB")
+                raise ValueError(
+                    f"Assinatura muito grande. Máximo: "
+                    f"{MAX_SIGNATURE_SIZE // 1024}KB"
+                )
 
             signature_file = ContentFile(
                 decoded_data,
@@ -110,27 +160,30 @@ class Contract(BaseModel):
             raise ValueError(f"Erro ao decodificar assinatura: {str(e)}")
 
         # Processa conforme o status atual
-        if self.status == "WAITING_PLANNER":
+        if self.status == STATUS_WAITING_PLANNER:
             self.planner_signature = signature_file
             self.planner_signed_at = timezone.now()
             self.planner_ip = client_ip
-            self.status = "WAITING_SUPPLIER"
+            self.status = STATUS_WAITING_SUPPLIER
 
-        elif self.status == "WAITING_SUPPLIER":
+        elif self.status == STATUS_WAITING_SUPPLIER:
             self.supplier_signature = signature_file
             self.supplier_signed_at = timezone.now()
             self.supplier_ip = client_ip
-            self.status = "WAITING_COUPLE"
+            self.status = STATUS_WAITING_COUPLE
 
-        elif self.status == "WAITING_COUPLE":
+        elif self.status == STATUS_WAITING_COUPLE:
             self.couple_signature = signature_file
             self.couple_signed_at = timezone.now()
             self.couple_ip = client_ip
-            self.status = "COMPLETED"
+            self.status = STATUS_COMPLETED
             self._generate_integrity_hash()
 
         else:
-            raise RuntimeError(f"Não é possível assinar contrato com status: {self.status}")
+            raise RuntimeError(
+                f"Não é possível assinar contrato com status: "
+                f"{self.status}"
+            )
 
         self.save()
         return True
@@ -140,9 +193,18 @@ class Contract(BaseModel):
         Gera hash de integridade para o contrato completado.
         """
         # Garante que as datas não sejam None antes de formatar
-        planner_dt = self.planner_signed_at.isoformat() if self.planner_signed_at else ""
-        supplier_dt = self.supplier_signed_at.isoformat() if self.supplier_signed_at else ""
-        couple_dt = self.couple_signed_at.isoformat() if self.couple_signed_at else ""
+        planner_dt = (
+            self.planner_signed_at.isoformat()
+            if self.planner_signed_at else ""
+        )
+        supplier_dt = (
+            self.supplier_signed_at.isoformat()
+            if self.supplier_signed_at else ""
+        )
+        couple_dt = (
+            self.couple_signed_at.isoformat()
+            if self.couple_signed_at else ""
+        )
 
         hash_components = [
             str(self.id),
@@ -162,33 +224,18 @@ class Contract(BaseModel):
     def get_next_signer_info(self) -> dict:
         """
         Retorna informações sobre o próximo assinante.
+        Delegado para o queryset para melhor organização.
         """
-        if self.status == "WAITING_PLANNER":
-            return {'role': 'Cerimonialista', 'name': 'Você (Cerimonialista)'}
-
-        elif self.status == "WAITING_SUPPLIER":
-            supplier_name = self.supplier or "Não vinculado"
-            return {'role': 'Fornecedor', 'name': f"Fornecedor ({supplier_name})"}
-
-        elif self.status == "WAITING_COUPLE":
-            if self.wedding:
-                bride = self.wedding.bride_name
-                groom = self.wedding.groom_name
-                return {'role': 'Noivos', 'name': f"Noivos ({bride} e {groom})"}
-            return {'role': 'Noivos', 'name': 'Noivos'}
-
-        return {'role': 'Desconhecido', 'name': 'Alguém'}
+        return Contract.objects.get_next_signer_name(self.id)
 
     def is_fully_signed(self) -> bool:
         """
         Verifica se o contrato foi assinado por todas as partes.
+        Usa o queryset para verificação consistente.
         """
-        return (
-            self.status == "COMPLETED" and
-            bool(self.planner_signature) and
-            bool(self.supplier_signature) and
-            bool(self.couple_signature)
-        )
+        return Contract.objects.filter(
+            pk=self.pk
+        ).fully_signed().exists()
 
     def get_signatures_status(self) -> dict:
         """
