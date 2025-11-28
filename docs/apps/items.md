@@ -19,9 +19,7 @@ Sistema de gerenciamento de itens de orçamento com transações atômicas e ín
 - [Segurança](#segurança)
 - [Performance](#performance)
 - [Testes](#testes)
-- [Integr
-
-ações](#integrações)
+- [Integrações](#integrações)
 
 ---
 
