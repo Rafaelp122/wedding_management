@@ -1,0 +1,52 @@
+name: Testes Automatizados (CI)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # Configurações para o teste rodar
+  DJANGO_SETTINGS_MODULE: wedding_management.settings.test
+  # Chave secreta falsa apenas para os testes rodarem
+  SECRET_KEY: 'django-insecure-test-key-for-github-actions'
+  # Define que estamos em modo CI
+  CI: 'true'
+
+jobs:
+  test-code:
+    name: Rodar Testes e Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependências do sistema
+        # Instala bibliotecas necessárias para compilar o psycopg2 e outros pacotes
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev gcc python3-dev musl-dev libcairo2-dev
+
+      - name: Instalar dependências do projeto
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/test.txt
+
+      - name: Verificar Estilo (Ruff)
+        run: |
+          # Verifica se o código segue o padrão definido no seu .ruff.toml
+          ruff check .
+          ruff format --check .
+
+      - name: Rodar Pytest
+        run: |
+          # Roda os testes usando as configurações do seu pytest.ini
+          pytest

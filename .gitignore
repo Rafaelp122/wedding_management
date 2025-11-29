@@ -130,4 +130,3 @@ db copy.sqlite3
 /staticfiles/
 settings.json
 .idea
-.github
