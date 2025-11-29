@@ -1,3 +1,0 @@
-[run]
-branch = True
-omit = venv/*,**/*test*.py,manage.py,populate_db.py,*/admin.py,*/__init__.py,*/migrations/*

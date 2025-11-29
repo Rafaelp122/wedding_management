@@ -24,15 +24,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      # Cache pip dependencies
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/local.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: 'pip' # Otimização: Cache nativo
+          cache-dependency-path: requirements/*.txt
 
       - name: Install system dependencies
         run: |
@@ -43,13 +36,13 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements/local.txt
-          pip install coverage pytest-cov
+          # CRUCIAL: Instalar pytest-xdist porque seu pyproject.toml usa "-n auto"
+          pip install coverage pytest-cov pytest-xdist
 
       - name: Run Tests with Coverage
         run: |
-          coverage run -m pytest
-          coverage html
-          coverage xml
+          # O comando agora usa as configs do pyproject.toml automaticamente
+          pytest --cov=. --cov-report=xml --cov-report=html
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
