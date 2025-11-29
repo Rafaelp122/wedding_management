@@ -1,6 +1,7 @@
 """
 Testes para as views do app scheduler.
 """
+
 from datetime import date, timedelta
 
 from django.test import Client, TestCase
@@ -56,9 +57,7 @@ class SchedulerPartialViewTest(SchedulerViewsTestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, "scheduler/partials/_scheduler_partial.html"
-        )
+        self.assertTemplateUsed(response, "scheduler/partials/_scheduler_partial.html")
         self.assertIn("wedding", response.context)
         self.assertEqual(response.context["wedding"], self.wedding)
 
@@ -166,15 +165,11 @@ class EventDetailViewTest(SchedulerViewsTestCase):
 
     def test_event_detail_view(self):
         """Testa visualização de detalhes do evento."""
-        url = reverse(
-            "scheduler:event_detail", args=[self.wedding.id, self.event.id]
-        )
+        url = reverse("scheduler:event_detail", args=[self.wedding.id, self.event.id])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, "scheduler/partials/_event_detail.html"
-        )
+        self.assertTemplateUsed(response, "scheduler/partials/_event_detail.html")
         self.assertIn("event", response.context)
         self.assertEqual(response.context["event"], self.event)
 
@@ -184,9 +179,7 @@ class EventDetailViewTest(SchedulerViewsTestCase):
         self.client.logout()
         self.client.force_login(self.other_user)
 
-        url = reverse(
-            "scheduler:event_detail", args=[self.wedding.id, self.event.id]
-        )
+        url = reverse("scheduler:event_detail", args=[self.wedding.id, self.event.id])
         response = self.client.get(url)
 
         # Deve retornar 403 (wedding não pertence ao usuário)
@@ -204,16 +197,12 @@ class EventUpdateViewTest(SchedulerViewsTestCase):
             wedding=self.wedding,
             planner=self.user,
             title="Evento Original",
-            start_time=timezone.make_aware(
-                timezone.datetime(2025, 12, 15, 14, 0)
-            ),
+            start_time=timezone.make_aware(timezone.datetime(2025, 12, 15, 14, 0)),
         )
 
     def test_event_update_form_get(self):
         """Testa exibição do formulário de edição (GET)."""
-        url = reverse(
-            "scheduler:event_edit", args=[self.wedding.id, self.event.id]
-        )
+        url = reverse("scheduler:event_edit", args=[self.wedding.id, self.event.id])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -223,9 +212,7 @@ class EventUpdateViewTest(SchedulerViewsTestCase):
 
     def test_event_update_post_valid(self):
         """Testa atualização com dados válidos (POST)."""
-        url = reverse(
-            "scheduler:event_update", args=[self.wedding.id, self.event.id]
-        )
+        url = reverse("scheduler:event_update", args=[self.wedding.id, self.event.id])
 
         data = {
             "title": "Evento Atualizado",
@@ -269,17 +256,13 @@ class EventDeleteViewTest(SchedulerViewsTestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, "partials/confirm_delete_modal.html"
-        )
+        self.assertTemplateUsed(response, "partials/confirm_delete_modal.html")
         self.assertIn("object_name", response.context)
         self.assertEqual(response.context["object_name"], "Evento a Deletar")
 
     def test_event_delete_post(self):
         """Testa deleção do evento (POST)."""
-        url = reverse(
-            "scheduler:event_delete", args=[self.wedding.id, self.event.id]
-        )
+        url = reverse("scheduler:event_delete", args=[self.wedding.id, self.event.id])
 
         # Verificar que evento existe
         self.assertEqual(Event.objects.count(), 1)

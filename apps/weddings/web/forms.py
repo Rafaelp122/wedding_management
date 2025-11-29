@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 
 from django import forms
 from django.utils import timezone
@@ -26,15 +27,21 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
 
     class Meta:
         model = Wedding
-        fields = ["groom_name", "bride_name", "date", "budget", "location"]
-        labels = {
+        fields: ClassVar[list[str]] = [
+            "groom_name",
+            "bride_name",
+            "date",
+            "budget",
+            "location",
+        ]
+        labels: ClassVar[dict] = {
             "groom_name": "Noivo",
             "bride_name": "Noiva",
             "date": "Data",
             "budget": "Orçamento",
             "location": "Localização",
         }
-        widgets = {
+        widgets: ClassVar[dict] = {
             "date": forms.DateInput(attrs={"type": "date"}),
         }
 

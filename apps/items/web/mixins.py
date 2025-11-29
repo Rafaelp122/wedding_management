@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
@@ -51,18 +52,22 @@ class ItemWeddingContextMixin(LoginRequiredMixin):
             try:
                 # select_related otimiza a query
                 item = Item.objects.select_related("wedding__planner").get(pk=pk)
-            except Item.DoesNotExist:
+            except Item.DoesNotExist as err:
                 logger.warning(
-                    f"Tentativa de acesso a item inexistente (pk={pk}). Usuário: {request.user.id}"
+                    f"Tentativa de acesso a item inexistente (pk={pk})."
+                    f"Usuário: {request.user.id}"
                 )
-                raise Http404("Item não encontrado.")
+                raise Http404("Item não encontrado.") from err
 
             # Checagem de segurança
             if item.wedding.planner != request.user:
                 logger.warning(
-                    f"SEGURANÇA: Usuário {request.user.id} tentou acessar item {pk} de outro planner."
+                    f"SEGURANÇA: Usuário {request.user.id} tentou acessar "
+                    f"item {pk} de outro planner."
                 )
-                return HttpResponseForbidden("Você não tem permissão para acessar este item.")
+                return HttpResponseForbidden(
+                    "Você não tem permissão para acessar este item."
+                )
 
             self.wedding = item.wedding
 
@@ -103,7 +108,7 @@ class ItemFormLayoutMixin:
     form_class = ItemForm
     template_name = "partials/form_modal.html"
 
-    form_layout_dict = {
+    form_layout_dict: ClassVar[dict[str, str]] = {
         "name": "col-6",
         "category": "col-md-6",
         "quantity": "col-md-6",
@@ -112,7 +117,7 @@ class ItemFormLayoutMixin:
         "description": "col-12",
     }
     default_col_class = "col-12"
-    form_icons = {
+    form_icons: ClassVar[dict[str, str]] = {
         "name": "fas fa-gift",
         "category": "fas fa-tags",
         "quantity": "fas fa-hashtag",
@@ -268,11 +273,13 @@ class ItemHtmxListResponseMixin(
         # Precisamos injetar manualmente as variáveis que o template de paginação
         # espera, pois o 'ItemListView.get_context_data' não é chamado
         # nas views de Create/Update/Delete.
-        context.update({
-            "pagination_url_name": "items:partial_items",
-            "pagination_target": "#item-list-container",
-            "pagination_aria_label": "Paginação de Itens",
-        })
+        context.update(
+            {
+                "pagination_url_name": "items:partial_items",
+                "pagination_target": "#item-list-container",
+                "pagination_aria_label": "Paginação de Itens",
+            }
+        )
 
         return context
 

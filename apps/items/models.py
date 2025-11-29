@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import ClassVar
 
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -12,7 +13,7 @@ from .querysets import ItemQuerySet
 class Item(BaseModel):
     # Modelo que representa um item de orçamento vinculado a um casamento
 
-    CATEGORY_CHOICES = [
+    CATEGORY_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ("LOCAL", "Local"),
         ("BUFFET", "Buffet"),
         ("DECOR", "Decoração"),
@@ -22,7 +23,7 @@ class Item(BaseModel):
         ("OTHERS", "Outros"),
     ]
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ("PENDING", "Pendente"),
         ("IN_PROGRESS", "Em Andamento"),
         ("DONE", "Concluído"),
@@ -32,13 +33,9 @@ class Item(BaseModel):
     description = models.TextField(blank=True)
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("0.00"))]
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))]
     )
-    supplier = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name="Fornecedor"
-    )
+    supplier = models.CharField(max_length=255, blank=True, verbose_name="Fornecedor")
     wedding = models.ForeignKey(
         Wedding,
         on_delete=models.CASCADE,
@@ -65,8 +62,8 @@ class Item(BaseModel):
     class Meta:
         verbose_name = "Item"
         verbose_name_plural = "Itens"
-        ordering = ["-created_at"]
-        indexes = [
+        ordering: ClassVar[list[str]] = ["-created_at"]
+        indexes: ClassVar[list[models.Index]] = [
             # Índice para queries de lista (filtra por wedding + category)
             models.Index(fields=["wedding", "category"]),
             # Índice para queries de status (filtra por wedding + status)

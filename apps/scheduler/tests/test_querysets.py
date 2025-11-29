@@ -1,6 +1,7 @@
 """
 Testes para o EventQuerySet do app scheduler.
 """
+
 from datetime import timedelta
 
 from django.test import TestCase
@@ -110,9 +111,7 @@ class EventQuerySetTest(TestCase):
     def test_queryset_chaining(self):
         """Testa encadeamento de métodos do QuerySet."""
         # Filtrar por planner e depois por casamento
-        events = Event.objects.for_planner(self.user1).for_wedding_id(
-            self.wedding1.id
-        )
+        events = Event.objects.for_planner(self.user1).for_wedding_id(self.wedding1.id)
 
         self.assertEqual(events.count(), 2)
         self.assertIn(self.event1, events)

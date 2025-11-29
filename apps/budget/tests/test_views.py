@@ -17,29 +17,43 @@ class BudgetPartialViewTest(TestCase):
         # 1. Setup Básico
         cls.user = User.objects.create_user("planner", "p@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
             date=timezone.now().date() + timedelta(days=365),
-            location="Loc", budget=Decimal("10000.00")  # Orçamento de 10k
+            location="Loc",
+            budget=Decimal("10000.00"),  # Orçamento de 10k
         )
-        cls.url = reverse("budget:partial_budget", kwargs={"wedding_id": cls.wedding.id})
+        cls.url = reverse(
+            "budget:partial_budget", kwargs={"wedding_id": cls.wedding.id}
+        )
 
         # 2. Criamos Itens para popular o orçamento
         # Item 1: Buffet (Gasto alto) -> 5000.00
         Item.objects.create(
-            wedding=cls.wedding, name="Buffet", category="BUFFET",
-            quantity=1, unit_price=Decimal("5000.00")
+            wedding=cls.wedding,
+            name="Buffet",
+            category="BUFFET",
+            quantity=1,
+            unit_price=Decimal("5000.00"),
         )
 
         # Item 2: Decoração (Gasto médio) -> 2000.00
         Item.objects.create(
-            wedding=cls.wedding, name="Flores", category="DECOR",
-            quantity=2, unit_price=Decimal("1000.00")
+            wedding=cls.wedding,
+            name="Flores",
+            category="DECOR",
+            quantity=2,
+            unit_price=Decimal("1000.00"),
         )
 
         # Item 3: Outros (Gasto baixo) -> 500.00
         Item.objects.create(
-            wedding=cls.wedding, name="Velas", category="OTHERS",
-            quantity=10, unit_price=Decimal("50.00")
+            wedding=cls.wedding,
+            name="Velas",
+            category="OTHERS",
+            quantity=10,
+            unit_price=Decimal("50.00"),
         )
 
     def setUp(self):
@@ -88,8 +102,12 @@ class BudgetPartialViewTest(TestCase):
         """
         # Cria um casamento novo sem itens
         empty_w = Wedding.objects.create(
-            planner=self.user, groom_name="Empty", bride_name="E",
-            date=timezone.now().date(), location="L", budget=Decimal("5000.00")
+            planner=self.user,
+            groom_name="Empty",
+            bride_name="E",
+            date=timezone.now().date(),
+            location="L",
+            budget=Decimal("5000.00"),
         )
         url = reverse("budget:partial_budget", kwargs={"wedding_id": empty_w.id})
 
@@ -124,15 +142,19 @@ class BudgetPartialViewTest(TestCase):
         # Isso evita somar com os itens criados no setUpTestData (7500.00)
         clean_wedding = Wedding.objects.create(
             planner=self.user,
-            groom_name="Over", bride_name="Budget",
-            date=timezone.now().date(), location="Loc",
-            budget=Decimal("1000.00")  # Orçamento Baixo
+            groom_name="Over",
+            bride_name="Budget",
+            date=timezone.now().date(),
+            location="Loc",
+            budget=Decimal("1000.00"),  # Orçamento Baixo
         )
 
         # 2. Adiciona Item Caro (1500.00) neste novo casamento
         Item.objects.create(
-            wedding=clean_wedding, name="Extravagância",
-            quantity=1, unit_price=Decimal("1500.00")
+            wedding=clean_wedding,
+            name="Extravagância",
+            quantity=1,
+            unit_price=Decimal("1500.00"),
         )
 
         # 3. Gera a URL para este casamento específico
@@ -144,7 +166,9 @@ class BudgetPartialViewTest(TestCase):
 
         # 5. Verificações
         self.assertEqual(context["total_budget"], Decimal("1000.00"))
-        self.assertEqual(context["current_spent"], Decimal("1500.00"))  # Agora será exato
+        self.assertEqual(
+            context["current_spent"], Decimal("1500.00")
+        )  # Agora será exato
 
         # Saldo deve ser -500.00
         self.assertEqual(context["available_balance"], Decimal("-500.00"))

@@ -1,6 +1,7 @@
 """
 Testes dos serializers da API de Users.
 """
+
 from django.test import TestCase
 
 from apps.users.api.serializers import (
@@ -22,7 +23,7 @@ class UserSerializerTest(TestCase):
             email="test@example.com",
             password="testpass123",
             first_name="Test",
-            last_name="User"
+            last_name="User",
         )
 
         serializer = UserSerializer(user)
@@ -72,9 +73,7 @@ class UserSerializerTest(TestCase):
     def test_update_without_password(self):
         """Testa atualização sem alterar senha."""
         user = User.objects.create_user(
-            username="olduser",
-            email="old@example.com",
-            password="oldpass123"
+            username="olduser", email="old@example.com", password="oldpass123"
         )
         old_password = user.password
 
@@ -101,7 +100,7 @@ class UserListSerializerTest(TestCase):
             email="list@example.com",
             password="pass123",
             first_name="John",
-            last_name="Doe"
+            last_name="Doe",
         )
 
         serializer = UserListSerializer(user)
@@ -114,9 +113,7 @@ class UserListSerializerTest(TestCase):
     def test_full_name_fallback_to_username(self):
         """Testa que full_name usa username se nome não fornecido."""
         user = User.objects.create_user(
-            username="noname",
-            email="noname@example.com",
-            password="pass123"
+            username="noname", email="noname@example.com", password="pass123"
         )
 
         serializer = UserListSerializer(user)
@@ -138,7 +135,7 @@ class UserDetailSerializerTest(TestCase):
             email="planner@example.com",
             password="pass123",
             first_name="Jane",
-            last_name="Planner"
+            last_name="Planner",
         )
 
         # Cria 2 casamentos
@@ -148,7 +145,7 @@ class UserDetailSerializerTest(TestCase):
             bride_name="Bride1",
             date="2025-12-31",
             location="Location",
-            budget=Decimal("10000.00")
+            budget=Decimal("10000.00"),
         )
         Wedding.objects.create(
             planner=user,
@@ -156,17 +153,18 @@ class UserDetailSerializerTest(TestCase):
             bride_name="Bride2",
             date="2025-11-30",
             location="Location",
-            budget=Decimal("15000.00")
+            budget=Decimal("15000.00"),
         )
 
         # Cria 3 eventos
         from django.utils import timezone
+
         for i in range(3):
             Event.objects.create(
                 planner=user,
                 title=f"Event {i}",
                 start_time=timezone.now(),
-                event_type="reuniao"
+                event_type="reuniao",
             )
 
         serializer = UserDetailSerializer(user)

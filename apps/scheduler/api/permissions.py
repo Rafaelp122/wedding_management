@@ -1,6 +1,7 @@
 """
 Permissions customizadas para a API de Events (Scheduler).
 """
+
 from rest_framework import permissions
 
 

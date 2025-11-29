@@ -15,9 +15,7 @@ class UserModelTest(TestCase):
         password = "secret_password"
 
         user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
+            username=username, email=email, password=password
         )
 
         self.assertEqual(user.email, email)
@@ -32,9 +30,7 @@ class UserModelTest(TestCase):
         Deve criar um superusuário com is_staff e is_superuser True.
         """
         admin = User.objects.create_superuser(
-            username="admin",
-            email="admin@test.com",
-            password="123"
+            username="admin", email="admin@test.com", password="123"
         )
 
         self.assertTrue(admin.is_staff)
@@ -66,10 +62,15 @@ class UserModelTest(TestCase):
                 username="admin1", email="a1@test.com", password="123", is_staff=False
             )
 
-        # Tenta criar superuser sem ser superuser (parece redundante, mas valida a lógica)
-        with self.assertRaisesMessage(ValueError, "Superuser must have is_superuser=True."):
+        # Tenta criar superuser sem ser superuser
+        with self.assertRaisesMessage(
+            ValueError, "Superuser must have is_superuser=True."
+        ):
             User.objects.create_superuser(
-                username="admin2", email="a2@test.com", password="123", is_superuser=False
+                username="admin2",
+                email="a2@test.com",
+                password="123",
+                is_superuser=False,
             )
 
     def test_email_normalization(self):
@@ -86,7 +87,9 @@ class UserModelTest(TestCase):
         """
         O __str__ do modelo deve retornar o email.
         """
-        user = User.objects.create_user(username="strtest", email="str@test.com", password="123")
+        user = User.objects.create_user(
+            username="strtest", email="str@test.com", password="123"
+        )
         self.assertEqual(str(user), "str@test.com")
 
 
@@ -109,13 +112,16 @@ class UserModelIntegrationTest(TestCase):
 
     def test_username_must_be_unique(self):
         """
-        CAMINHO TRISTE: Tentar criar dois usuários com o mesmo username deve falhar no DB.
+        CAMINHO TRISTE: Tentar criar dois usuários com o mesmo username deve
+        falhar no DB.
         """
         username = "unique_dude"
         User.objects.create_user(username=username, email="u1@test.com", password="123")
 
         with self.assertRaises(IntegrityError):
-            User.objects.create_user(username=username, email="u2@test.com", password="123")
+            User.objects.create_user(
+                username=username, email="u2@test.com", password="123"
+            )
 
     def test_username_max_length_validation(self):
         """

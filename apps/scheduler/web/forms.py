@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import ClassVar
 
 from django import forms
 from django.utils import timezone
@@ -32,19 +33,19 @@ class EventForm(FormStylingMixin, forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = [
+        fields: ClassVar[list] = [
             "title",
             "location",
             "description",
             "event_type",
         ]
-        labels = {
+        labels: ClassVar[dict] = {
             "title": "Título do Evento",
             "location": "Local",
             "description": "Descrição",
             "event_type": "Tipo de Evento",
         }
-        widgets = {
+        widgets: ClassVar[dict] = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
 

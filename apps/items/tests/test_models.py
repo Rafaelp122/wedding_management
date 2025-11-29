@@ -15,17 +15,20 @@ class ItemModelTest(TestCase):
         cls.user = User.objects.create_user("u", "u@t.com", "123")
         cls.wedding = Wedding.objects.create(
             planner=cls.user,
-            groom_name="G", bride_name="B",
-            date="2025-01-01", location="Loc", budget=1000
+            groom_name="G",
+            bride_name="B",
+            date="2025-01-01",
+            location="Loc",
+            budget=1000,
         )
 
     def test_total_cost_property(self):
         """
         A property .total_cost deve multiplicar quantidade * preço unitário.
         """
-        item = Item(quantity=5, unit_price=Decimal('20.00'))
+        item = Item(quantity=5, unit_price=Decimal("20.00"))
         # 5 * 20.00 = 100.00
-        self.assertEqual(item.total_cost, Decimal('100.00'))
+        self.assertEqual(item.total_cost, Decimal("100.00"))
 
     def test_str_representation(self):
         item = Item(name="Cadeira Tiffany")
@@ -36,10 +39,7 @@ class ItemModelTest(TestCase):
         Garante que quantidade não pode ser negativa
         (Se você aplicou PositiveIntegerField).
         """
-        item = Item(
-            name="Teste", quantity=-1, unit_price=10,
-            wedding=self.wedding
-        )
+        item = Item(name="Teste", quantity=-1, unit_price=10, wedding=self.wedding)
         # O Django valida PositiveInteger no nível do banco ou full_clean
         with self.assertRaises(ValidationError):
             item.full_clean()
@@ -50,8 +50,7 @@ class ItemModelTest(TestCase):
         (Se você aplicou o MinValueValidator).
         """
         item = Item(
-            name="Teste", quantity=1, unit_price=Decimal("-10.00"),
-            wedding=self.wedding
+            name="Teste", quantity=1, unit_price=Decimal("-10.00"), wedding=self.wedding
         )
         with self.assertRaises(ValidationError):
             item.full_clean()
@@ -63,8 +62,7 @@ class ItemModelTest(TestCase):
         """
         # Cria um item vinculado ao casamento do setUp
         item = Item.objects.create(
-            name="Item Cascata", quantity=1, unit_price=10,
-            wedding=self.wedding
+            name="Item Cascata", quantity=1, unit_price=10, wedding=self.wedding
         )
 
         # Deleta o casamento

@@ -41,11 +41,7 @@ class ContactFormSubmitViewTest(TestCase):
         """
         Submissão válida deve criar registro no banco, enviar email e retornar sucesso.
         """
-        data = {
-            "name": "Tester",
-            "email": "test@valid.com",
-            "message": "Hello World"
-        }
+        data = {"name": "Tester", "email": "test@valid.com", "message": "Hello World"}
 
         # Limpa a caixa de saída de email (mock do Django)
         mail.outbox = []
@@ -71,7 +67,7 @@ class ContactFormSubmitViewTest(TestCase):
         data = {
             "name": "",  # Obrigatório
             "email": "invalid-email",  # Formato errado
-            "message": ""
+            "message": "",
         }
 
         response = self.client.post(self.url, data)
@@ -80,7 +76,9 @@ class ContactFormSubmitViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
 
         # Verifica Template do Formulário (para re-renderizar com erros)
-        self.assertTemplateUsed(response, "pages/partials/home/_contact_form_partial.html")
+        self.assertTemplateUsed(
+            response, "pages/partials/home/_contact_form_partial.html"
+        )
 
         # Verifica se o Contexto tem os Erros
         self.assertTrue(response.context["contact_form"].errors)
@@ -103,11 +101,7 @@ class ContactFormSubmitViewTest(TestCase):
         # Simula exceção no envio de email
         mock_send_mail.side_effect = Exception("SMTP Server Down")
 
-        data = {
-            "name": "Tester",
-            "email": "t@t.com",
-            "message": "Msg"
-        }
+        data = {"name": "Tester", "email": "t@t.com", "message": "Msg"}
 
         response = self.client.post(self.url, data)
 

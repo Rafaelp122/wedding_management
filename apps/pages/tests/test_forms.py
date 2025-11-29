@@ -14,7 +14,7 @@ class ContactFormTest(SimpleTestCase):
         data = {
             "name": "Cliente Feliz",
             "email": "cliente@teste.com",
-            "message": "Adorei o serviço!"
+            "message": "Adorei o serviço!",
         }
         form = ContactForm(data=data)
         self.assertTrue(form.is_valid())
@@ -38,7 +38,7 @@ class ContactFormTest(SimpleTestCase):
         data = {
             "name": "Teste",
             "email": "not-an-email",  # Inválido
-            "message": "Hello"
+            "message": "Hello",
         }
         form = ContactForm(data=data)
 
@@ -54,20 +54,14 @@ class ContactFormTest(SimpleTestCase):
         # Placeholder
         self.assertEqual(
             form.fields["message"].widget.attrs["placeholder"],
-            "Digite sua mensagem aqui..."
+            "Digite sua mensagem aqui...",
         )
 
         # Widget (rows=5 no Textarea)
-        self.assertEqual(
-            form.fields["message"].widget.attrs["rows"],
-            5
-        )
+        self.assertEqual(form.fields["message"].widget.attrs["rows"], 5)
 
         # Mixin de estilo (FormStylingMixin adiciona form-control)
-        self.assertIn(
-            "form-control",
-            form.fields["name"].widget.attrs["class"]
-        )
+        self.assertIn("form-control", form.fields["name"].widget.attrs["class"])
 
     @patch("apps.pages.forms.logger")
     def test_logging_on_error(self, mock_logger):
@@ -93,7 +87,7 @@ class ContactFormIntegrationTest(TestCase):
         data = {
             "name": "Integração",
             "email": "integra@test.com",
-            "message": "Salvando no banco."
+            "message": "Salvando no banco.",
         }
         form = ContactForm(data=data)
 
@@ -105,4 +99,6 @@ class ContactFormIntegrationTest(TestCase):
         # Verificações
         self.assertIsInstance(inquiry, ContactInquiry)
         self.assertEqual(inquiry.pk, 1)  # Primeiro registro
-        self.assertTrue(ContactInquiry.objects.filter(email="integra@test.com").exists())
+        self.assertTrue(
+            ContactInquiry.objects.filter(email="integra@test.com").exists()
+        )

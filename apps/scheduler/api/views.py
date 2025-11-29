@@ -1,7 +1,9 @@
 """
 Views da API de Events (Scheduler).
 """
+
 import logging
+from typing import ClassVar
 
 from django.db import transaction
 from django.utils import timezone
@@ -41,7 +43,7 @@ class EventViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Event.objects.all()
-    permission_classes = [IsEventOwner]
+    permission_classes: ClassVar[list] = [IsEventOwner]
 
     def get_queryset(self):
         """
@@ -51,23 +53,23 @@ class EventViewSet(viewsets.ModelViewSet):
         queryset = Event.objects.for_planner(self.request.user)
 
         # Filtro por casamento
-        wedding_id = self.request.query_params.get('wedding')
+        wedding_id = self.request.query_params.get("wedding")
         if wedding_id:
             queryset = queryset.filter(wedding_id=wedding_id)
 
         # Filtro por categoria
-        category = self.request.query_params.get('category')
+        category = self.request.query_params.get("category")
         if category:
             queryset = queryset.filter(category=category)
 
         # Filtro por prioridade
-        priority = self.request.query_params.get('priority')
+        priority = self.request.query_params.get("priority")
         if priority:
             queryset = queryset.filter(priority=priority)
 
         # Filtro por range de datas
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
         if start_date and end_date:
             queryset = queryset.in_range(start_date, end_date)
         elif start_date:
@@ -76,37 +78,37 @@ class EventViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(end__lte=end_date)
 
         # Filtro por eventos passados/futuros
-        is_past = self.request.query_params.get('is_past')
+        is_past = self.request.query_params.get("is_past")
         if is_past is not None:
             now = timezone.now()
-            if is_past.lower() == 'true':
+            if is_past.lower() == "true":
                 queryset = queryset.filter(end__lt=now)
-            elif is_past.lower() == 'false':
+            elif is_past.lower() == "false":
                 queryset = queryset.filter(end__gte=now)
 
         # Busca textual
-        search_query = self.request.query_params.get('q')
+        search_query = self.request.query_params.get("q")
         if search_query:
             queryset = queryset.search(search_query)
 
         # Ordenação (padrão: por data de início)
-        sort = self.request.query_params.get('sort', 'start')
-        if sort == 'priority':
-            queryset = queryset.order_by('-priority', 'start')
-        elif sort == '-priority':
-            queryset = queryset.order_by('priority', 'start')
-        elif sort == '-start':
-            queryset = queryset.order_by('-start')
+        sort = self.request.query_params.get("sort", "start")
+        if sort == "priority":
+            queryset = queryset.order_by("-priority", "start")
+        elif sort == "-priority":
+            queryset = queryset.order_by("priority", "start")
+        elif sort == "-start":
+            queryset = queryset.order_by("-start")
         else:
-            queryset = queryset.order_by('start')
+            queryset = queryset.order_by("start")
 
-        return queryset.select_related('wedding')
+        return queryset.select_related("wedding")
 
     def get_serializer_class(self):
         """Retorna o serializer apropriado para cada ação."""
-        if self.action == 'list':
+        if self.action == "list":
             return EventListSerializer
-        elif self.action == 'retrieve':
+        elif self.action == "retrieve":
             return EventDetailSerializer
         return EventSerializer
 
@@ -125,18 +127,13 @@ class EventViewSet(viewsets.ModelViewSet):
 
         # Retorna com serializer detalhado
         output_serializer = EventDetailSerializer(event)
-        return Response(
-            output_serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         """Atualiza um evento (PUT ou PATCH)."""
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop("partial", False)
         instance = self.get_object()
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=partial
-        )
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         with transaction.atomic():
@@ -165,7 +162,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def mark_as_done(self, request, pk=None):
         """
         Marca um evento como concluído alterando a prioridade para LOW.
@@ -175,8 +172,8 @@ class EventViewSet(viewsets.ModelViewSet):
         event = self.get_object()
 
         with transaction.atomic():
-            event.priority = 'LOW'
-            event.save(update_fields=['priority'])
+            event.priority = "LOW"
+            event.save(update_fields=["priority"])
             logger.info(
                 f"[API] Evento '{event.title}' (ID: {event.id}) "
                 f"marcado como concluído pelo usuário {request.user.id}"

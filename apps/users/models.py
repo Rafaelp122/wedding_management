@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import MaxLengthValidator
 from django.db import models
@@ -35,7 +37,7 @@ class User(AbstractUser):
         max_length=255, unique=True, validators=[MaxLengthValidator(255)]
     )
 
-    REQUIRED_FIELDS = ["email"]
+    REQUIRED_FIELDS: ClassVar[list] = ["email"]
 
     objects = CustomUserManager()
 

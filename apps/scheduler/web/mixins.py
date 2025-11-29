@@ -4,8 +4,10 @@ Mixins específicos do app scheduler.
 Este módulo contém mixins reutilizáveis para views do scheduler,
 seguindo o princípio DRY (Don't Repeat Yourself).
 """
+
 import json
 import logging
+from typing import ClassVar
 
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -82,10 +84,7 @@ class EventHtmxResponseMixin:
         Returns:
             HttpResponse com status 204 e header HX-Trigger.
         """
-        logger.info(
-            f"Event saved successfully: "
-            f"user={self.request.user.username}"
-        )
+        logger.info(f"Event saved successfully: " f"user={self.request.user.username}")
 
         response = HttpResponse(status=204)
         response["HX-Trigger"] = EVENT_SAVED_TRIGGER
@@ -106,14 +105,11 @@ class EventHtmxResponseMixin:
             JsonResponse com ID e header HX-Trigger.
         """
         logger.warning(
-            f"Event deleted: event_id={event_id}, "
-            f"user={self.request.user.username}"
+            f"Event deleted: event_id={event_id}, " f"user={self.request.user.username}"
         )
 
         response = JsonResponse({"id": event_id})
-        response["HX-Trigger"] = json.dumps(
-            {"eventDeleted": {"id": event_id}}
-        )
+        response["HX-Trigger"] = json.dumps({"eventDeleted": {"id": event_id}})
         return response
 
 
@@ -160,7 +156,7 @@ class EventFormLayoutMixin(FormLayoutMixin):
     form_class = EventForm
     template_name = EVENT_FORM_MODAL_TEMPLATE
 
-    form_layout_dict = {
+    form_layout_dict: ClassVar[dict] = {
         "title": "col-md-12",
         "event_type": "col-md-6",
         "location": "col-md-12",
@@ -169,7 +165,7 @@ class EventFormLayoutMixin(FormLayoutMixin):
         "end_time_input": "col-md-6",
     }
     default_col_class = "col-12"
-    form_icons = {
+    form_icons: ClassVar[dict] = {
         "title": "fas fa-heading",
         "event_type": "fas fa-tag",
         "location": "fas fa-map-marker-alt",

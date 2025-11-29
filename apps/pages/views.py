@@ -91,7 +91,7 @@ class ContactFormSubmitView(View):
                     fail_silently=False,
                 )
             except Exception as e:
-                # Loga o erro para o admin investigar, mas não quebra a experiência do usuário
+                # Loga o erro para o admin investigar, sem quebrar a ux
                 logger.error(f"Erro ao enviar e-mail de contato: {e}", exc_info=True)
                 pass
 

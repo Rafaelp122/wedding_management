@@ -3,6 +3,7 @@ ViewSets para a API REST de Wedding.
 """
 
 import logging
+from typing import ClassVar
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -44,7 +45,7 @@ class WeddingViewSet(viewsets.ModelViewSet):
     - Create/Update: WeddingSerializer (campos editáveis)
     """
 
-    permission_classes = [IsAuthenticated, IsWeddingOwner]
+    permission_classes: ClassVar[list] = [IsAuthenticated, IsWeddingOwner]
 
     def get_queryset(self):
         """
@@ -57,15 +58,15 @@ class WeddingViewSet(viewsets.ModelViewSet):
         queryset = queryset.with_counts_and_progress()
 
         # Suporta filtros via query params
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.query_params.get("status", None)
         if status_filter:
             queryset = queryset.filter(effective_status=status_filter)
 
-        search = self.request.query_params.get('q', None)
+        search = self.request.query_params.get("q", None)
         if search:
             queryset = queryset.apply_search(search)
 
-        sort = self.request.query_params.get('sort', 'id')
+        sort = self.request.query_params.get("sort", "id")
         queryset = queryset.apply_sort(sort)
 
         return queryset
@@ -78,9 +79,9 @@ class WeddingViewSet(viewsets.ModelViewSet):
         - retrieve: WeddingDetailSerializer (completo)
         - create/update/partial_update: WeddingSerializer (editável)
         """
-        if self.action == 'list':
+        if self.action == "list":
             return WeddingListSerializer
-        elif self.action == 'retrieve':
+        elif self.action == "retrieve":
             return WeddingDetailSerializer
         return WeddingSerializer
 
@@ -118,9 +119,9 @@ class WeddingViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['patch'],
-        url_path='update-status',
-        url_name='update_status'
+        methods=["patch"],
+        url_path="update-status",
+        url_name="update_status",
     )
     def update_status(self, request, pk=None):
         """
@@ -132,24 +133,21 @@ class WeddingViewSet(viewsets.ModelViewSet):
         Valida se o status é válido usando TextChoices.
         """
         wedding = self.get_object()
-        new_status = request.data.get('status')
+        new_status = request.data.get("status")
 
         # Valida se o status é válido
         try:
             Wedding.StatusChoices(new_status)
         except ValueError:
-            logger.warning(
-                f"Status inválido recebido via API: '{new_status}'"
-            )
+            logger.warning(f"Status inválido recebido via API: '{new_status}'")
             return Response(
                 {
                     "error": f"Status '{new_status}' não é válido.",
                     "valid_statuses": [
-                        choice[0] for choice in
-                        Wedding.StatusChoices.choices
-                    ]
+                        choice[0] for choice in Wedding.StatusChoices.choices
+                    ],
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         old_status = wedding.status

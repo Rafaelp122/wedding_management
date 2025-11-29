@@ -1,6 +1,7 @@
 """
 Views da API de Users.
 """
+
 import logging
 
 from django.db import transaction
@@ -47,13 +48,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Define permissões por ação."""
-        if self.action == 'create':
+        if self.action == "create":
             # Registro público
             permission_classes = [AllowAny]
-        elif self.action in ['update', 'partial_update', 'destroy']:
+        elif self.action in ["update", "partial_update", "destroy"]:
             # Apenas dono ou admin
             permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
-        elif self.action == 'change_password':
+        elif self.action == "change_password":
             # Apenas próprio usuário ou admin
             permission_classes = [IsAuthenticated, IsSelfOrAdmin]
         else:
@@ -64,11 +65,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         """Retorna o serializer apropriado para cada ação."""
-        if self.action == 'list':
+        if self.action == "list":
             return UserListSerializer
-        elif self.action == 'retrieve' or self.action == 'me':
+        elif self.action == "retrieve" or self.action == "me":
             return UserDetailSerializer
-        elif self.action == 'change_password':
+        elif self.action == "change_password":
             return ChangePasswordSerializer
         return UserSerializer
 
@@ -80,24 +81,28 @@ class UserViewSet(viewsets.ModelViewSet):
         queryset = User.objects.filter(is_active=True)
 
         # Filtro por busca
-        search = self.request.query_params.get('q')
+        search = self.request.query_params.get("q")
         if search:
-            queryset = queryset.filter(
-                username__icontains=search
-            ) | queryset.filter(
-                email__icontains=search
-            ) | queryset.filter(
-                first_name__icontains=search
-            ) | queryset.filter(
-                last_name__icontains=search
+            queryset = (
+                queryset.filter(username__icontains=search)
+                | queryset.filter(email__icontains=search)
+                | queryset.filter(first_name__icontains=search)
+                | queryset.filter(last_name__icontains=search)
             )
 
         # Ordenação
-        sort = self.request.query_params.get('sort', 'username')
-        if sort in ['username', '-username', 'email', '-email', 'date_joined', '-date_joined']:
+        sort = self.request.query_params.get("sort", "username")
+        if sort in [
+            "username",
+            "-username",
+            "email",
+            "-email",
+            "date_joined",
+            "-date_joined",
+        ]:
             queryset = queryset.order_by(sort)
         else:
-            queryset = queryset.order_by('username')
+            queryset = queryset.order_by("username")
 
         return queryset
 
@@ -115,18 +120,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # Retorna com serializer detalhado
         output_serializer = UserDetailSerializer(user)
-        return Response(
-            output_serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         """Atualiza usuário (PUT ou PATCH)."""
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop("partial", False)
         instance = self.get_object()
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=partial
-        )
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         with transaction.atomic():
@@ -150,7 +150,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             instance.is_active = False
-            instance.save(update_fields=['is_active'])
+            instance.save(update_fields=["is_active"])
             logger.info(
                 f"[API] Usuário {username} (ID: {user_id}) "
                 f"desativado por {request.user.id}"
@@ -158,7 +158,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def me(self, request):
         """
         Retorna perfil do usuário autenticado.
@@ -168,7 +168,7 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def change_password(self, request, pk=None):
         """
         Troca senha do usuário.
@@ -181,15 +181,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             # Verifica senha antiga
-            if not user.check_password(serializer.data.get('old_password')):
+            if not user.check_password(serializer.data.get("old_password")):
                 return Response(
                     {"old_password": "Senha incorreta."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # Atualiza senha
             with transaction.atomic():
-                user.set_password(serializer.data.get('new_password'))
+                user.set_password(serializer.data.get("new_password"))
                 user.save()
                 logger.info(
                     f"[API] Senha alterada para usuário {user.username} "
@@ -197,8 +197,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 )
 
             return Response(
-                {"message": "Senha alterada com sucesso."},
-                status=status.HTTP_200_OK
+                {"message": "Senha alterada com sucesso."}, status=status.HTTP_200_OK
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

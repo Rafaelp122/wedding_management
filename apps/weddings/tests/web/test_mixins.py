@@ -9,6 +9,7 @@ Princípios seguidos:
 - Testar lógica de negócio e segurança (ownership, filtros)
 - Testar edge cases que podem causar bugs reais
 """
+
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
@@ -66,6 +67,7 @@ class WeddingQuerysetMixinTest(TestCase):
 
     def setUp(self):
         """Configuração por teste."""
+
         class QuerysetView(WeddingQuerysetMixin):
             request = None
 
@@ -139,10 +141,10 @@ class WeddingQuerysetMixinTest(TestCase):
         wedding = qs.first()
 
         # Estas anotações são CRÍTICAS para o template
-        self.assertTrue(hasattr(wedding, 'items_count'))
-        self.assertTrue(hasattr(wedding, 'contracts_count'))
-        self.assertTrue(hasattr(wedding, 'effective_status'))
-        self.assertTrue(hasattr(wedding, 'progress'))
+        self.assertTrue(hasattr(wedding, "items_count"))
+        self.assertTrue(hasattr(wedding, "contracts_count"))
+        self.assertTrue(hasattr(wedding, "effective_status"))
+        self.assertTrue(hasattr(wedding, "progress"))
 
 
 class WeddingPaginationContextMixinTest(TestCase):
@@ -156,9 +158,7 @@ class WeddingPaginationContextMixinTest(TestCase):
     def setUpTestData(cls):
         """Dados para todos os testes."""
         cls.user = User.objects.create_user(
-            username="paginator_user",
-            email="paginator@test.com",
-            password="123"
+            username="paginator_user", email="paginator@test.com", password="123"
         )
 
         # Criar 7 casamentos para testar paginação (paginate_by=6)
@@ -174,6 +174,7 @@ class WeddingPaginationContextMixinTest(TestCase):
 
     def setUp(self):
         """Configuração por teste."""
+
         # View que herda Queryset + Pagination para testar integração
         class ConcretePaginationView(
             WeddingQuerysetMixin, WeddingPaginationContextMixin
@@ -226,8 +227,7 @@ class WeddingPaginationContextMixinTest(TestCase):
         # Deve retornar APENAS o item buscado
         self.assertEqual(len(context["paginated_weddings"]), 1)
         self.assertEqual(
-            context["paginated_weddings"][0]["wedding"].groom_name,
-            "TargetUnique"
+            context["paginated_weddings"][0]["wedding"].groom_name, "TargetUnique"
         )
 
         # Contexto deve devolver termo de busca (para template persistir)
@@ -258,6 +258,7 @@ class WeddingHtmxListResponseMixinTest(TestCase):
 
     def setUp(self):
         """Configuração por teste."""
+
         class HtmxView(WeddingHtmxListResponseMixin):
             # Mock do método de construir contexto
             build_paginated_context = MagicMock(return_value={"mock": "data"})
@@ -276,15 +277,12 @@ class WeddingHtmxListResponseMixinTest(TestCase):
         expected_params = {"page": "2", "q": "teste"}
 
         with patch.object(
-            self.view, "_get_params_from_htmx_url",
-            return_value=expected_params
+            self.view, "_get_params_from_htmx_url", return_value=expected_params
         ):
             context = self.view.get_htmx_context_data()
 
             # Verifica que método de paginação foi chamado com params corretos
-            self.view.build_paginated_context.assert_called_once_with(
-                expected_params
-            )
+            self.view.build_paginated_context.assert_called_once_with(expected_params)
 
             # Verifica que retornou o contexto correto
             self.assertEqual(context, {"mock": "data"})

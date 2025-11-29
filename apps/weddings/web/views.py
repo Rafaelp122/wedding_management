@@ -63,8 +63,7 @@ class WeddingListView(
         request_params = self.request.GET.copy()
 
         logger.debug(
-            f"Construindo contexto de lista para F5 load. "
-            f"Params: {request_params}"
+            f"Construindo contexto de lista para F5 load. " f"Params: {request_params}"
         )
 
         # herda build_paginated_context de "WeddingPaginationContextMixin"
@@ -86,14 +85,10 @@ class WeddingListView(
         """
         # Lida com as requisições HTMX (filtro, busca, paginação)
         if self.request.htmx:
-            logger.debug(
-                "Requisição HTMX (GET) recebida, renderizando partial."
-            )
+            logger.debug("Requisição HTMX (GET) recebida, renderizando partial.")
             # Renderiza o partial
             return render(
-                self.request,
-                "weddings/partials/_list_and_pagination.html",
-                context
+                self.request, "weddings/partials/_list_and_pagination.html", context
             )
 
         # Se for um F5, renderiza a página inteira
@@ -166,9 +161,7 @@ class WeddingUpdateView(
 
     def get_hx_post_url(self) -> str:
         """Retorna a URL para o POST do formulário."""
-        return reverse(
-            "weddings:edit_wedding", kwargs={"id": self.object.pk}
-        )
+        return reverse("weddings:edit_wedding", kwargs={"id": self.object.pk})
 
     def form_valid(self, form):
         """
@@ -266,8 +259,7 @@ class UpdateWeddingStatusView(
             )
             messages.error(request, "Casamento não encontrado.")
             return HttpResponseNotFound(
-                "Casamento não encontrado.",
-                content_type="text/html"
+                "Casamento não encontrado.", content_type="text/html"
             )
 
         # Verifica ownership explicitamente
@@ -277,13 +269,8 @@ class UpdateWeddingStatusView(
                 f"Casamento ID: {wedding_id}, "
                 f"Usuário: {request.user.id}"
             )
-            messages.error(
-                request, "Você não tem permissão para este recurso."
-            )
-            return HttpResponseForbidden(
-                "Sem permissão.",
-                content_type="text/html"
-            )
+            messages.error(request, "Você não tem permissão para este recurso.")
+            return HttpResponseForbidden("Sem permissão.", content_type="text/html")
 
         new_status = request.POST.get("status")
 
@@ -293,9 +280,7 @@ class UpdateWeddingStatusView(
         except ValueError:
             logger.warning(f"Status inválido recebido: '{new_status}'")
             messages.error(request, f"Status '{new_status}' não é válido.")
-            return HttpResponseBadRequest(
-                "Status inválido ou Model não atualizado."
-            )
+            return HttpResponseBadRequest("Status inválido ou Model não atualizado.")
 
         old_status = wedding.status
         wedding.status = new_status

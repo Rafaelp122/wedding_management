@@ -2,6 +2,8 @@
 Serializers para a API REST de Item.
 """
 
+from typing import ClassVar
+
 from rest_framework import serializers
 
 from apps.items.models import Item
@@ -10,7 +12,7 @@ from apps.items.models import Item
 class ItemListSerializer(serializers.ModelSerializer):
     """
     Serializer simplificado para listagem de itens.
-    
+
     Usado no endpoint GET /api/v1/items/
     Retorna apenas informações essenciais para performance.
     """
@@ -18,9 +20,7 @@ class ItemListSerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(
         source="get_category_display", read_only=True
     )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
     total_cost = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
@@ -28,7 +28,7 @@ class ItemListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = [
+        fields: ClassVar[list[str]] = [
             "id",
             "name",
             "category",
@@ -43,7 +43,7 @@ class ItemListSerializer(serializers.ModelSerializer):
             "wedding_couple",
             "created_at",
         ]
-        read_only_fields = ["id", "created_at", "total_cost"]
+        read_only_fields: ClassVar[list[str]] = ["id", "created_at", "total_cost"]
 
     def get_wedding_couple(self, obj):
         """Retorna o nome do casal do casamento."""
@@ -55,7 +55,7 @@ class ItemListSerializer(serializers.ModelSerializer):
 class ItemDetailSerializer(serializers.ModelSerializer):
     """
     Serializer completo para detalhes de um item específico.
-    
+
     Usado no endpoint GET /api/v1/items/{id}/
     Inclui informações detalhadas e relacionamentos.
     """
@@ -63,23 +63,19 @@ class ItemDetailSerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(
         source="get_category_display", read_only=True
     )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
     total_cost = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
     wedding_couple = serializers.SerializerMethodField()
-    wedding_date = serializers.DateField(
-        source="wedding.date", read_only=True
-    )
+    wedding_date = serializers.DateField(source="wedding.date", read_only=True)
 
     # Contrato relacionado (se existir)
     contracts_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
-        fields = [
+        fields: ClassVar[list[str]] = [
             "id",
             "name",
             "description",
@@ -98,8 +94,11 @@ class ItemDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
-            "id", "created_at", "updated_at", "total_cost"
+        read_only_fields: ClassVar[list[str]] = [
+            "id",
+            "created_at",
+            "updated_at",
+            "total_cost",
         ]
 
     def get_wedding_couple(self, obj):
@@ -110,13 +109,13 @@ class ItemDetailSerializer(serializers.ModelSerializer):
 
     def get_contracts_count(self, obj):
         """Retorna o número de contratos associados ao item."""
-        return 1 if hasattr(obj, 'contract') else 0
+        return 1 if hasattr(obj, "contract") else 0
 
 
 class ItemSerializer(serializers.ModelSerializer):
     """
     Serializer para criação e atualização de itens.
-    
+
     Usado nos endpoints:
     - POST /api/v1/items/
     - PUT /api/v1/items/{id}/
@@ -126,16 +125,14 @@ class ItemSerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(
         source="get_category_display", read_only=True
     )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
     total_cost = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
 
     class Meta:
         model = Item
-        fields = [
+        fields: ClassVar[list[str]] = [
             "id",
             "name",
             "description",
@@ -151,22 +148,21 @@ class ItemSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
-            "id", "created_at", "updated_at", "total_cost"
+        read_only_fields: ClassVar[list[str]] = [
+            "id",
+            "created_at",
+            "updated_at",
+            "total_cost",
         ]
 
     def validate_unit_price(self, value):
         """Valida se o preço unitário não é negativo."""
         if value < 0:
-            raise serializers.ValidationError(
-                "O preço unitário não pode ser negativo."
-            )
+            raise serializers.ValidationError("O preço unitário não pode ser negativo.")
         return value
 
     def validate_quantity(self, value):
         """Valida se a quantidade é positiva."""
         if value <= 0:
-            raise serializers.ValidationError(
-                "A quantidade deve ser maior que zero."
-            )
+            raise serializers.ValidationError("A quantidade deve ser maior que zero.")
         return value

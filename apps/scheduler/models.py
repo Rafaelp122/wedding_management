@@ -28,18 +28,12 @@ class Event(models.Model):
     )
 
     # Usuário responsável (planner)
-    planner = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="events"
-    )
+    planner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="events")
 
     # Informações principais do evento
     title = models.CharField(max_length=255, verbose_name="Título")
-    location = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name="Local"
-    )
-    description = models.TextField(
-        null=True, blank=True, verbose_name="Descrição"
-    )
+    location = models.CharField(max_length=255, blank=True, verbose_name="Local")
+    description = models.TextField(blank=True, verbose_name="Descrição")
     event_type = models.CharField(
         max_length=50,
         choices=TypeChoices.choices,
@@ -49,9 +43,7 @@ class Event(models.Model):
 
     # Datas e horários do evento
     start_time = models.DateTimeField(verbose_name="Início do Evento")
-    end_time = models.DateTimeField(
-        verbose_name="Fim do Evento", null=True, blank=True
-    )
+    end_time = models.DateTimeField(verbose_name="Fim do Evento", null=True, blank=True)
 
     # QuerySet customizado
     objects = EventQuerySet.as_manager()

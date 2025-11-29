@@ -1,6 +1,9 @@
 """
 Serializers da API de Events (Scheduler).
 """
+
+from typing import ClassVar
+
 from rest_framework import serializers
 
 from apps.scheduler.models import Event
@@ -17,7 +20,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "wedding",
             "planner",
@@ -28,7 +31,7 @@ class EventSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
         ]
-        read_only_fields = ["id"]
+        read_only_fields: ClassVar[list] = ["id"]
 
     def validate(self, data):
         """Valida que o horário de início é anterior ao de término."""
@@ -36,9 +39,9 @@ class EventSerializer(serializers.ModelSerializer):
         end = data.get("end_time")
 
         if start and end and start >= end:
-            raise serializers.ValidationError({
-                "end_time": "O horário de término deve ser posterior ao de início."
-            })
+            raise serializers.ValidationError(
+                {"end_time": "O horário de término deve ser posterior ao de início."}
+            )
 
         return data
 
@@ -54,12 +57,13 @@ class EventListSerializer(serializers.ModelSerializer):
     - wedding_couple: Nome do casal do casamento
     - duration_minutes: Duração do evento em minutos
     """
+
     wedding_couple = serializers.SerializerMethodField()
     duration_minutes = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "wedding",
             "wedding_couple",
@@ -99,6 +103,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
     - duration_minutes: Duração em minutos
     - is_past: Se o evento já passou
     """
+
     wedding_couple = serializers.SerializerMethodField()
     wedding_date = serializers.SerializerMethodField()
     duration_minutes = serializers.SerializerMethodField()
@@ -106,7 +111,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "wedding",
             "wedding_couple",
@@ -121,7 +126,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
             "duration_minutes",
             "is_past",
         ]
-        read_only_fields = ["id", "is_past"]
+        read_only_fields: ClassVar[list] = ["id", "is_past"]
 
     def get_wedding_couple(self, obj):
         """Retorna o nome do casal do casamento."""
@@ -145,6 +150,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
     def get_is_past(self, obj):
         """Retorna True se o evento já passou."""
         from django.utils import timezone
+
         if obj.end_time:
             return obj.end_time < timezone.now()
         if obj.start_time:

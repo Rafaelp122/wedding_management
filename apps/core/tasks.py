@@ -51,8 +51,7 @@ def send_reminder_emails():
     # Get events happening in the next 24 hours
     tomorrow = timezone.now() + timedelta(days=1)
     upcoming_events = Event.objects.filter(
-        date__date=tomorrow.date(),
-        reminder_sent=False
+        date__date=tomorrow.date(), reminder_sent=False
     )
 
     for event in upcoming_events:
@@ -81,7 +80,7 @@ def cleanup_old_sessions():
     """
     from django.core.management import call_command
 
-    call_command('clearsessions')
+    call_command("clearsessions")
     return True
 
 
@@ -116,22 +115,11 @@ def generate_wedding_report(wedding_id):
 
 @shared_task(bind=True, max_retries=3)
 def process_contract_document(self, contract_id):
-    """
-    Process a contract document (e.g., generate PDF, send for signing).
-
-    Args:
-        contract_id (int): ID of the contract
-
-    Returns:
-        bool: True if processing was successful
-    """
     try:
         from apps.contracts.models import Contract
 
         contract = Contract.objects.get(id=contract_id)
 
-        # Processing logic here
-        # This is just a placeholder
         contract.status = "processed"
         contract.save()
 
@@ -139,7 +127,7 @@ def process_contract_document(self, contract_id):
 
     except Exception as exc:
         # Retry the task if it fails
-        raise self.retry(exc=exc, countdown=60)
+        self.retry(exc=exc, countdown=60)
 
 
 # Example of periodic task configuration

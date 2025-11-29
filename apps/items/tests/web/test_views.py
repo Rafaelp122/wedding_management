@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import patch
 
+from django.db import DatabaseError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -17,15 +18,17 @@ class ItemListViewTest(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user("planner", "p@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
             date=timezone.now().date() + timedelta(days=365),
-            location="Loc", budget=1000
+            location="Loc",
+            budget=1000,
         )
         # Cria 7 itens para testar paginação (paginate_by=6)
         for i in range(7):
             Item.objects.create(
-                wedding=cls.wedding, name=f"Item {i}",
-                quantity=1, unit_price=10
+                wedding=cls.wedding, name=f"Item {i}", quantity=1, unit_price=10
             )
         cls.url = reverse("items:partial_items", kwargs={"wedding_id": cls.wedding.id})
 
@@ -42,10 +45,7 @@ class ItemListViewTest(TestCase):
 
     def test_htmx_partial_load(self):
         """Acesso HTMX com target específico renderiza apenas a lista."""
-        headers = {
-            "HTTP_HX-Request": "true",
-            "HTTP_HX-Target": "item-list-container"
-        }
+        headers = {"HTTP_HX-Request": "true", "HTTP_HX-Target": "item-list-container"}
         response = self.client.get(self.url, **headers)
 
         self.assertEqual(response.status_code, 200)
@@ -66,8 +66,7 @@ class ItemListViewTest(TestCase):
         """
         # Cria um item com nome único
         Item.objects.create(
-            wedding=self.wedding, name="UniqueItemXYZ",
-            quantity=1, unit_price=10
+            wedding=self.wedding, name="UniqueItemXYZ", quantity=1, unit_price=10
         )
 
         # Faz o GET com busca (simulando HTMX)
@@ -85,13 +84,11 @@ class ItemListViewTest(TestCase):
         """
         # Item barato
         Item.objects.create(
-            wedding=self.wedding, name="Barato",
-            quantity=1, unit_price=1.00
+            wedding=self.wedding, name="Barato", quantity=1, unit_price=1.00
         )
         # Item caro
         Item.objects.create(
-            wedding=self.wedding, name="Caro",
-            quantity=1, unit_price=9999.00
+            wedding=self.wedding, name="Caro", quantity=1, unit_price=9999.00
         )
 
         headers = {"HTTP_HX-Request": "true", "HTTP_HX-Target": "item-list-container"}
@@ -107,9 +104,12 @@ class AddItemViewTest(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user("planner", "p@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
             date=timezone.now().date() + timedelta(days=365),
-            location="Loc", budget=1000
+            location="Loc",
+            budget=1000,
         )
         cls.url = reverse("items:add_item", kwargs={"wedding_id": cls.wedding.id})
 
@@ -132,7 +132,7 @@ class AddItemViewTest(TestCase):
             "quantity": 10,
             "unit_price": "5.00",
             "supplier": "Loja X",
-            "description": "Desc"
+            "description": "Desc",
         }
         headers = {"HTTP_HX-Request": "true"}
 
@@ -171,19 +171,16 @@ class AddItemViewTest(TestCase):
         }
         headers = {"HTTP_HX-Request": "true"}
 
-        # Mock Contract.objects.create para lançar erro
+        # Força erro de banco ao criar o contrato
         with patch("apps.items.web.views.Contract.objects.create") as mock:
-            mock.side_effect = Exception("Erro simulado no banco")
+            mock.side_effect = DatabaseError("Erro simulado no banco")
 
-            # O POST deve falhar
-            with self.assertRaises(Exception):
+            # O POST deve falhar com DatabaseError
+            with self.assertRaises(DatabaseError):
                 self.client.post(self.url, data, **headers)
 
-        # VALIDAÇÃO CRÍTICA: Item NÃO deve ter sido criado
-        # (rollback da transação)
-        self.assertFalse(
-            Item.objects.filter(name="Item com Erro").exists()
-        )
+        # VALIDAÇÃO CRÍTICA: Não deve ter criado o item (rollback)
+        self.assertFalse(Item.objects.filter(name="Item com Erro").exists())
 
 
 class UpdateItemStatusViewTest(TestCase):
@@ -191,13 +188,19 @@ class UpdateItemStatusViewTest(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user("planner", "p@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
             date=timezone.now().date() + timedelta(days=365),
-            location="Loc", budget=1000
+            location="Loc",
+            budget=1000,
         )
         cls.item = Item.objects.create(
-            wedding=cls.wedding, name="Item", quantity=1, unit_price=10,
-            status="PENDING"
+            wedding=cls.wedding,
+            name="Item",
+            quantity=1,
+            unit_price=10,
+            status="PENDING",
         )
         cls.url = reverse("items:update_status", kwargs={"pk": cls.item.pk})
 
@@ -244,13 +247,15 @@ class EditItemViewTest(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user("planner", "p@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
             date=timezone.now().date() + timedelta(days=365),
-            location="Loc", budget=1000
+            location="Loc",
+            budget=1000,
         )
         cls.item = Item.objects.create(
-            wedding=cls.wedding, name="Item Original",
-            quantity=1, unit_price=10.00
+            wedding=cls.wedding, name="Item Original", quantity=1, unit_price=10.00
         )
         cls.url = reverse("items:edit_item", kwargs={"pk": cls.item.pk})
 
@@ -274,7 +279,7 @@ class EditItemViewTest(TestCase):
             "quantity": 2,
             "unit_price": "20.00",
             "supplier": "Supplier Y",
-            "description": "Desc Editada"
+            "description": "Desc Editada",
         }
         headers = {"HTTP_HX-Request": "true"}
         response = self.client.post(self.url, data, **headers)
@@ -314,13 +319,15 @@ class ItemDeleteViewTest(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user("planner", "p@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
             date=timezone.now().date() + timedelta(days=365),
-            location="Loc", budget=1000
+            location="Loc",
+            budget=1000,
         )
         cls.item = Item.objects.create(
-            wedding=cls.wedding, name="Para Deletar",
-            quantity=1, unit_price=10
+            wedding=cls.wedding, name="Para Deletar", quantity=1, unit_price=10
         )
         cls.url = reverse("items:delete_item", kwargs={"pk": cls.item.pk})
 
@@ -357,8 +364,12 @@ class ItemSecurityTest(TestCase):
         # Casamento da Vítima
         victim_user = User.objects.create_user("victim", "v@v.com", "123")
         victim_wedding = Wedding.objects.create(
-            planner=victim_user, groom_name="V", bride_name="V",
-            date=timezone.now().date(), location="Loc", budget=1000
+            planner=victim_user,
+            groom_name="V",
+            bride_name="V",
+            date=timezone.now().date(),
+            location="Loc",
+            budget=1000,
         )
 
         # Hacker loga

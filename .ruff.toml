@@ -2,13 +2,6 @@ fix = true
 line-length = 88
 target-version = "py312"
 
-# Rules to select
-select = ["E", "F", "W", "I", "B", "RUF"]
-
-# Rules to ignore globally
-ignore = ["E203", "F401"]
-
-# Exclude directories
 exclude = [
     ".git",
     "__pycache__",
@@ -17,10 +10,16 @@ exclude = [
     "media",
     "venv",
     ".venv",
-    "node_modules"
+    "node_modules",
 ]
 
-# Per-file ignores
-[per-file-ignores]
-"*/__init__.py" = ["F401"]
-"*/settings.py" = ["F401"]
+[lint]
+select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ"]
+
+ignore = ["E203"]
+
+[lint.per-file-ignores]
+# F401: imports não usados (comum em __init__ para expor módulos)
+# F403: 'from module import *' (necessário para carregar settings do Django)
+"__init__.py" = ["F401", "F403"]
+"settings.py" = ["F401", "F403"]

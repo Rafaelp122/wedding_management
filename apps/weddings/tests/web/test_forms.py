@@ -108,14 +108,12 @@ class WeddingFormTest(SimpleTestCase):
 
         # Verifica placeholder do Noivo
         self.assertEqual(
-            form.fields["groom_name"].widget.attrs.get("placeholder"),
-            "Ex: Flavio"
+            form.fields["groom_name"].widget.attrs.get("placeholder"), "Ex: Flavio"
         )
 
         # Verifica placeholder do Orçamento (só para garantir mais um)
         self.assertEqual(
-            form.fields["budget"].widget.attrs.get("placeholder"),
-            "Ex.: R$ 30.000,00"
+            form.fields["budget"].widget.attrs.get("placeholder"), "Ex.: R$ 30.000,00"
         )
 
     def test_form_missing_required_fields(self):

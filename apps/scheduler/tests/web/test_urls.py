@@ -1,6 +1,7 @@
 """
 Testes para as URLs do app scheduler.
 """
+
 from django.test import TestCase
 from django.urls import resolve, reverse
 
@@ -65,9 +66,7 @@ class SchedulerUrlsTest(TestCase):
         self.assertEqual(url, "/scheduler/partial/1/event/5/delete/modal/")
 
         resolved = resolve(url)
-        self.assertEqual(
-            resolved.func.view_class, views.EventDeleteModalView
-        )
+        self.assertEqual(resolved.func.view_class, views.EventDeleteModalView)
 
     def test_event_delete_url(self):
         """Testa URL de deleção de evento (POST)."""
@@ -109,6 +108,4 @@ class SchedulerUrlsTest(TestCase):
                     try:
                         reverse(f"scheduler:{url_name}")
                     except Exception as e:
-                        self.fail(
-                            f"URL 'scheduler:{url_name}' não encontrada: {e}"
-                        )
+                        self.fail(f"URL 'scheduler:{url_name}' não encontrada: {e}")

@@ -11,5 +11,6 @@ urlpatterns = [
         views.EditProfileView.as_view(),
         name="edit_profile",
     ),
-    # As rotas de signup, login e logout agora são gerenciadas pelo allauth em /accounts/
+    # As rotas de signup, login e logout agora são gerenciadas pelo allauth
+    # em /accounts/
 ]

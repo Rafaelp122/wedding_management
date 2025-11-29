@@ -101,9 +101,7 @@ class AddItemView(
 
     def get_hx_post_url(self) -> str:
         """Retorna a URL para POST do formulário."""
-        return reverse(
-            "items:add_item", kwargs={"wedding_id": self.wedding.id}
-        )
+        return reverse("items:add_item", kwargs={"wedding_id": self.wedding.id})
 
     def form_valid(self, form):
         """
@@ -200,9 +198,7 @@ class UpdateItemStatusView(
                 f"Item ID: {self.kwargs['pk']}, "
                 f"Usuário: {self.request.user.id}"
             )
-            return HttpResponseBadRequest(
-                "Item não encontrado ou sem permissão."
-            )
+            return HttpResponseBadRequest("Item não encontrado ou sem permissão.")
 
         new_status = request.POST.get("status")
         valid_statuses = [status[0] for status in self.model.STATUS_CHOICES]

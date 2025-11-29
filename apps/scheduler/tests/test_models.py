@@ -1,6 +1,7 @@
 """
 Testes para o modelo Event do app scheduler.
 """
+
 from datetime import timedelta
 
 from django.test import TestCase

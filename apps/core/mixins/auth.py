@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type
+from typing import Any
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -35,8 +35,8 @@ class OwnerRequiredMixin(LoginRequiredMixin):
                                    proprietário
     """
 
-    owner_field_name: Optional[str] = None
-    model: Optional[Type[Model]] = None
+    owner_field_name: str | None = None
+    model: type[Model] | None = None
     request: HttpRequest
 
     def get_queryset(self) -> "QuerySet[Any, Any]":
@@ -99,9 +99,7 @@ class RedirectAuthenticatedUserMixin:
 
     request: HttpRequest
 
-    def dispatch(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponse:
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """
         Intercepta a requisição antes de processar a view.
 
@@ -170,9 +168,7 @@ class WeddingOwnershipMixin(LoginRequiredMixin):
     wedding = None
     request: HttpRequest
 
-    def dispatch(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponse:
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """
         Intercepta a requisição para validar ownership do casamento.
 

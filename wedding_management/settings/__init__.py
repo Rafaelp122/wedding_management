@@ -18,16 +18,15 @@ import os
 
 # Default to local settings if not specified
 settings_module = os.getenv(
-    'DJANGO_SETTINGS_MODULE',
-    'wedding_management.settings.local'
+    "DJANGO_SETTINGS_MODULE", "wedding_management.settings.local"
 )
 
 # Import the appropriate settings
-if 'local' in settings_module:
+if "local" in settings_module:
     from .local import *
-elif 'production' in settings_module:
+elif "production" in settings_module:
     from .production import *
-elif 'test' in settings_module:
+elif "test" in settings_module:
     from .test import *
 else:
     from .local import *

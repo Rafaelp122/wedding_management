@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, ClassVar
 
 from django import forms
 
@@ -32,8 +32,8 @@ class BaseFormStylingMixin:
     # Classes CSS aplicadas aos checkboxes
     checkbox_classes: str = "form-check-input"
 
-    fields: Dict[str, forms.Field]
-    errors: Dict[str, Any]
+    fields: dict[str, forms.Field]
+    errors: dict[str, Any]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -94,9 +94,7 @@ class FormStylingMixinLarge(BaseFormStylingMixin):
     """
 
     # Sobrescreve as classes para usar tamanho grande
-    form_control_classes: str = (
-        "form-control form-control-lg ps-5 custom-font-size"
-    )
+    form_control_classes: str = "form-control form-control-lg ps-5 custom-font-size"
 
 
 class FormLayoutMixin:
@@ -132,11 +130,11 @@ class FormLayoutMixin:
         pois adiciona contexto ao template através de get_context_data().
     """
 
-    form_layout_dict: Dict[str, str] = {}
+    form_layout_dict: ClassVar[dict[str, str]] = {}
     default_col_class: str = "col-12"
-    form_icons: Dict[str, str] = {}
+    form_icons: ClassVar[dict[str, str]] = {}
 
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Adiciona as variáveis de layout ao contexto do template.
 

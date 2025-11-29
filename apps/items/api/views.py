@@ -3,6 +3,7 @@ ViewSets para a API REST de Item.
 """
 
 import logging
+from typing import ClassVar
 
 from django.db import transaction
 from rest_framework import status, viewsets
@@ -40,7 +41,7 @@ class ItemViewSet(viewsets.ModelViewSet):
     - Create/Update: ItemSerializer (campos editáveis)
     """
 
-    permission_classes = [IsAuthenticated, IsItemOwner]
+    permission_classes: ClassVar[tuple] = (IsAuthenticated, IsItemOwner)
 
     def get_queryset(self):
         """
@@ -48,33 +49,31 @@ class ItemViewSet(viewsets.ModelViewSet):
 
         Aplica filtros, ordenação e anotações do ItemQuerySet.
         """
-        queryset = Item.objects.filter(
-            wedding__planner=self.request.user
-        )
+        queryset = Item.objects.filter(wedding__planner=self.request.user)
 
         # Suporta filtros via query params
-        wedding_id = self.request.query_params.get('wedding', None)
+        wedding_id = self.request.query_params.get("wedding", None)
         if wedding_id:
             queryset = queryset.filter(wedding_id=wedding_id)
 
-        category = self.request.query_params.get('category', None)
+        category = self.request.query_params.get("category", None)
         if category:
             queryset = queryset.filter(category=category)
 
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.query_params.get("status", None)
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
-        search = self.request.query_params.get('q', None)
+        search = self.request.query_params.get("q", None)
         if search:
             queryset = queryset.filter(name__icontains=search)
 
         # Ordenação
-        sort = self.request.query_params.get('sort', '-created_at')
+        sort = self.request.query_params.get("sort", "-created_at")
         queryset = queryset.order_by(sort)
 
         # Select related para otimização
-        queryset = queryset.select_related('wedding')
+        queryset = queryset.select_related("wedding")
 
         return queryset
 
@@ -86,9 +85,9 @@ class ItemViewSet(viewsets.ModelViewSet):
         - retrieve: ItemDetailSerializer (completo)
         - create/update/partial_update: ItemSerializer (editável)
         """
-        if self.action == 'list':
+        if self.action == "list":
             return ItemListSerializer
-        elif self.action == 'retrieve':
+        elif self.action == "retrieve":
             return ItemDetailSerializer
         return ItemSerializer
 
@@ -116,8 +115,7 @@ class ItemViewSet(viewsets.ModelViewSet):
         """
         item = serializer.save()
         logger.info(
-            f"Item {item.id} atualizado via API "
-            f"pelo usuário {self.request.user.id}"
+            f"Item {item.id} atualizado via API " f"pelo usuário {self.request.user.id}"
         )
 
     def perform_destroy(self, instance):
@@ -134,9 +132,9 @@ class ItemViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['patch'],
-        url_path='update-status',
-        url_name='update_status'
+        methods=["patch"],
+        url_path="update-status",
+        url_name="update_status",
     )
     def update_status(self, request, pk=None):
         """
@@ -148,20 +146,18 @@ class ItemViewSet(viewsets.ModelViewSet):
         Valida se o status é válido usando choices.
         """
         item = self.get_object()
-        new_status = request.data.get('status')
+        new_status = request.data.get("status")
 
         # Valida se o status é válido
         valid_statuses = [choice[0] for choice in Item.STATUS_CHOICES]
         if new_status not in valid_statuses:
-            logger.warning(
-                f"Status inválido recebido via API: '{new_status}'"
-            )
+            logger.warning(f"Status inválido recebido via API: '{new_status}'")
             return Response(
                 {
                     "error": f"Status '{new_status}' não é válido.",
-                    "valid_statuses": valid_statuses
+                    "valid_statuses": valid_statuses,
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         old_status = item.status

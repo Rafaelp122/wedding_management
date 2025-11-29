@@ -9,7 +9,7 @@ class IsItemOwner(permissions.BasePermission):
     """
     Permissão para garantir que apenas o planner dono do wedding
     pode visualizar, editar ou deletar itens.
-    
+
     Usage:
         class ItemViewSet(ModelViewSet):
             permission_classes = [IsAuthenticated, IsItemOwner]
@@ -20,12 +20,12 @@ class IsItemOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         """
         Verifica se o usuário é o planner do wedding do item.
-        
+
         Args:
             request: HttpRequest object
             view: APIView instance
             obj: Item instance
-        
+
         Returns:
             bool: True se o usuário é o planner, False caso contrário
         """

@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -95,7 +95,7 @@ class WeddingFormLayoutMixin(FormLayoutMixin):
     form_class = WeddingForm
     template_name = WEDDING_FORM_MODAL_TEMPLATE
 
-    form_layout_dict = {
+    form_layout_dict: ClassVar[dict] = {
         "groom_name": "col-md-6",
         "bride_name": "col-md-6",
         "date": "col-md-6",
@@ -103,7 +103,7 @@ class WeddingFormLayoutMixin(FormLayoutMixin):
         "budget": "col-md-6",
     }
     default_col_class = "col-12"
-    form_icons = {
+    form_icons: ClassVar[dict] = {
         "groom_name": "fas fa-user",
         "bride_name": "fas fa-user",
         "date": "fas fa-calendar-days",
@@ -181,7 +181,7 @@ class WeddingPaginationContextMixin:
     paginate_by = WEDDING_ITEMS_PER_PAGE
     request: HttpRequest
 
-    def _build_context_list(self, queryset: Any) -> List[Dict[str, Any]]:
+    def _build_context_list(self, queryset: Any) -> list[dict[str, Any]]:
         """
         Formata a lista de 'Wedding' para o template.
 
@@ -211,9 +211,7 @@ class WeddingPaginationContextMixin:
             for idx, wedding in enumerate(queryset)
         ]
 
-    def build_paginated_context(
-        self, request_params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def build_paginated_context(self, request_params: dict[str, Any]) -> dict[str, Any]:
         """
         Constrói o contexto completo para a lista de casamentos.
 
@@ -295,7 +293,7 @@ class WeddingHtmxListResponseMixin(
     htmx_template_name = WEDDING_LIST_TEMPLATE
     htmx_retarget_id = WEDDING_LIST_CONTAINER_ID
 
-    def get_htmx_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+    def get_htmx_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Prepara o contexto para a resposta HTMX.
 
@@ -331,9 +329,7 @@ class WeddingHtmxListResponseMixin(
 # --- Mixin de Composição (Facade Pattern) ---
 
 
-class WeddingListActionsMixin(
-    WeddingQuerysetMixin, WeddingHtmxListResponseMixin
-):
+class WeddingListActionsMixin(WeddingQuerysetMixin, WeddingHtmxListResponseMixin):
     """
     Mixin de Composição (Composition Mixin) - Facade Pattern
 

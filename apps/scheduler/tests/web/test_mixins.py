@@ -11,6 +11,7 @@ Princípios seguidos:
 - NÃO testar configuração estática simples
 - NÃO testar detalhes visuais (ícones, classes CSS)
 """
+
 from datetime import date, timedelta
 from unittest.mock import Mock
 
@@ -167,6 +168,7 @@ class EventHtmxResponseMixinTest(TestCase):
 
         # JSON deve conter o ID do evento deletado
         import json
+
         data = json.loads(response.content)
         self.assertEqual(data.get("id"), event_id)
 
@@ -258,11 +260,13 @@ class EventFormMixinTest(TestCase):
         self.assertFalse(form.is_valid())
 
         # Mock dos métodos necessários
-        self.mixin.get_context_data = Mock(return_value={
-            "form": form,
-            "wedding": self.wedding,
-            "event": None,
-        })
+        self.mixin.get_context_data = Mock(
+            return_value={
+                "form": form,
+                "wedding": self.wedding,
+                "event": None,
+            }
+        )
         self.mixin.render_to_response = Mock(return_value=Mock(status_code=200))
 
         self.mixin.form_invalid(form)

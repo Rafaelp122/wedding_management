@@ -9,10 +9,10 @@ from .views import WeddingViewSet
 
 # Configuração do Router DRF
 router = DefaultRouter()
-router.register(r'weddings', WeddingViewSet, basename='wedding')
+router.register(r"weddings", WeddingViewSet, basename="wedding")
 
 app_name = "weddings_api"
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

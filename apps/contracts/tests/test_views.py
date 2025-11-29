@@ -17,9 +17,12 @@ class ContractsPartialViewTest(TestCase):
         # 1. Setup do Planner e Casamento
         cls.planner = User.objects.create_user("planner", "p@test.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.planner, groom_name="G", bride_name="B",
+            planner=cls.planner,
+            groom_name="G",
+            bride_name="B",
             date=timezone.now().date() + timedelta(days=365),
-            location="Loc", budget=10000
+            location="Loc",
+            budget=10000,
         )
 
         # 2. Criamos Itens e Contratos
@@ -27,13 +30,14 @@ class ContractsPartialViewTest(TestCase):
         cls.contracts = []
         for i in range(3):
             item = Item.objects.create(
-                wedding=cls.wedding, name=f"Item {i}",
-                quantity=1, unit_price=100
+                wedding=cls.wedding, name=f"Item {i}", quantity=1, unit_price=100
             )
             contract = Contract.objects.create(item=item, status="PENDING")
             cls.contracts.append(contract)
 
-        cls.url = reverse("contracts:partial_contracts", kwargs={"wedding_id": cls.wedding.id})
+        cls.url = reverse(
+            "contracts:partial_contracts", kwargs={"wedding_id": cls.wedding.id}
+        )
 
     def setUp(self):
         self.client.force_login(self.planner)
@@ -98,8 +102,7 @@ class ContractsPartialViewTest(TestCase):
 
         for i in range(extra_needed):
             item = Item.objects.create(
-                wedding=self.wedding, name=f"Extra {i}",
-                quantity=1, unit_price=10
+                wedding=self.wedding, name=f"Extra {i}", quantity=1, unit_price=10
             )
             Contract.objects.create(item=item)
 
@@ -120,11 +123,16 @@ class ContractsPartialViewTest(TestCase):
         # Criamos um casamento novo sem itens/contratos
         empty_wedding = Wedding.objects.create(
             planner=self.planner,
-            groom_name="Empty", bride_name="State",
-            date=timezone.now().date(), location="Nowhere", budget=0
+            groom_name="Empty",
+            bride_name="State",
+            date=timezone.now().date(),
+            location="Nowhere",
+            budget=0,
         )
 
-        url = reverse("contracts:partial_contracts", kwargs={"wedding_id": empty_wedding.id})
+        url = reverse(
+            "contracts:partial_contracts", kwargs={"wedding_id": empty_wedding.id}
+        )
 
         response = self.client.get(url)
 

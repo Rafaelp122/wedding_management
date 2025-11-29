@@ -6,6 +6,7 @@ nosso FormStylingMixin para manter a consistência visual.
 """
 
 import logging
+from typing import ClassVar
 
 from allauth.account.forms import LoginForm, ResetPasswordForm, SignupForm
 from django import forms
@@ -46,7 +47,9 @@ class CustomUserCreationForm(FormStylingMixinLarge, SignupForm):
         self.fields["username"].label = "Usuário"
         self.fields["email"].label = "E-mail"
         self.fields["password1"].label = "Senha"
-        self.fields["password1"].help_text = (
+        self.fields[
+            "password1"
+        ].help_text = (
             "Senha com pelo menos 8 caracteres, não totalmente numérica e pouco comum."
         )
         self.fields["password2"].label = "Confirme a senha"
@@ -126,7 +129,7 @@ class CustomUserChangeForm(FormStylingMixin, UserChangeForm):
     class Meta:
         model = User
         fields = ("username", "first_name", "last_name", "email")
-        labels = {
+        labels: ClassVar[dict] = {
             "username": "Usuário",
             "first_name": "Primeiro Nome",
             "last_name": "Último Nome",

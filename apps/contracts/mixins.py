@@ -4,7 +4,7 @@ Seguindo o padrão de organização do app weddings.
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -152,7 +152,7 @@ class ContractUrlGeneratorMixin:
 
     request: HttpRequest
 
-    def generate_signature_link(self, contract: Contract) -> Dict[str, Any]:
+    def generate_signature_link(self, contract: Contract) -> dict[str, Any]:
         """
         Gera o link de assinatura e informações do próximo signatário.
 

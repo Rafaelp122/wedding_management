@@ -60,15 +60,11 @@ class WeddingQuerySet(models.QuerySet):
         # Usamos Coalesce para garantir que o valor seja 0 em vez de None
         # se não houver itens/contratos, evitando erros no cálculo.
         annotated_queryset = self.annotate(
-            items_count=Coalesce(
-                item_count_sq, 0, output_field=IntegerField()
-            ),
+            items_count=Coalesce(item_count_sq, 0, output_field=IntegerField()),
             done_items_count=Coalesce(
                 done_item_count_sq, 0, output_field=IntegerField()
             ),
-            contracts_count=Coalesce(
-                contract_count_sq, 0, output_field=IntegerField()
-            ),
+            contracts_count=Coalesce(contract_count_sq, 0, output_field=IntegerField()),
         )
 
         # Segundo .annotate() para calcular o progresso

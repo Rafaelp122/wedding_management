@@ -2,6 +2,8 @@
 Serializers para a API REST de Wedding.
 """
 
+from typing import ClassVar
+
 from rest_framework import serializers
 
 from apps.weddings.models import Wedding
@@ -21,7 +23,7 @@ class WeddingListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Wedding
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "couple_name",
             "groom_name",
@@ -33,7 +35,7 @@ class WeddingListSerializer(serializers.ModelSerializer):
             "planner_name",
             "created_at",
         ]
-        read_only_fields = ["id", "created_at"]
+        read_only_fields: ClassVar[list] = ["id", "created_at"]
 
     def get_couple_name(self, obj):
         """Retorna o nome do casal formatado."""
@@ -59,7 +61,7 @@ class WeddingDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Wedding
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "couple_name",
             "groom_name",
@@ -76,7 +78,7 @@ class WeddingDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields: ClassVar[list] = ["id", "created_at", "updated_at"]
 
     def get_couple_name(self, obj):
         """Retorna o nome do casal formatado."""
@@ -84,12 +86,16 @@ class WeddingDetailSerializer(serializers.ModelSerializer):
 
     def get_items_count(self, obj):
         """Retorna o número de itens associados ao casamento."""
-        return obj.items.count() if hasattr(obj, 'items') else 0
+        return obj.items.count() if hasattr(obj, "items") else 0
 
     def get_contracts_count(self, obj):
         """Retorna o número de contratos associados ao casamento."""
         # Assuming contracts are related through items
-        return sum(item.contracts.count() for item in obj.items.all()) if hasattr(obj, 'items') else 0
+        return (
+            sum(item.contracts.count() for item in obj.items.all())
+            if hasattr(obj, "items")
+            else 0
+        )
 
 
 class WeddingSerializer(serializers.ModelSerializer):
@@ -107,7 +113,7 @@ class WeddingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Wedding
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "groom_name",
             "bride_name",
@@ -120,7 +126,12 @@ class WeddingSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "planner_name", "created_at", "updated_at"]
+        read_only_fields: ClassVar[list] = [
+            "id",
+            "planner_name",
+            "created_at",
+            "updated_at",
+        ]
 
     def validate_budget(self, value):
         """Valida se o orçamento é positivo."""

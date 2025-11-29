@@ -116,9 +116,7 @@ class WeddingListSerializerTestCase(TestCase):
     def test_couple_name_format(self):
         """Testa se couple_name está formatado corretamente."""
         serializer = WeddingListSerializer(instance=self.wedding)
-        self.assertEqual(
-            serializer.data["couple_name"], "John & Jane"
-        )
+        self.assertEqual(serializer.data["couple_name"], "John & Jane")
 
 
 class WeddingDetailSerializerTestCase(TestCase):
@@ -171,6 +169,4 @@ class WeddingDetailSerializerTestCase(TestCase):
     def test_planner_email_included(self):
         """Testa se o email do planner está incluído."""
         serializer = WeddingDetailSerializer(instance=self.wedding)
-        self.assertEqual(
-            serializer.data["planner_email"], "test@example.com"
-        )
+        self.assertEqual(serializer.data["planner_email"], "test@example.com")

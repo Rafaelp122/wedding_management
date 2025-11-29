@@ -9,10 +9,10 @@ from .views import ItemViewSet
 
 # Configuração do Router DRF
 router = DefaultRouter()
-router.register(r'items', ItemViewSet, basename='item')
+router.register(r"items", ItemViewSet, basename="item")
 
 app_name = "items_api"
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

@@ -1,6 +1,7 @@
 """
 Testes para o EventForm do app scheduler.
 """
+
 from datetime import date, time, timedelta
 
 from django.test import TestCase
@@ -155,24 +156,16 @@ class EventFormTest(TestCase):
             wedding=self.wedding,
             planner=self.user,
             title="Evento Original",
-            start_time=timezone.make_aware(
-                timezone.datetime(2025, 12, 15, 14, 0)
-            ),
-            end_time=timezone.make_aware(
-                timezone.datetime(2025, 12, 15, 16, 0)
-            ),
+            start_time=timezone.make_aware(timezone.datetime(2025, 12, 15, 14, 0)),
+            end_time=timezone.make_aware(timezone.datetime(2025, 12, 15, 16, 0)),
         )
 
         # Carregar formulário com instância
         form = EventForm(instance=event)
 
         # Verificar que campos foram preenchidos
-        self.assertEqual(
-            form.fields["event_date"].initial, date(2025, 12, 15)
-        )
-        self.assertEqual(
-            form.fields["start_time_input"].initial, time(14, 0)
-        )
+        self.assertEqual(form.fields["event_date"].initial, date(2025, 12, 15))
+        self.assertEqual(form.fields["start_time_input"].initial, time(14, 0))
         self.assertEqual(form.fields["end_time_input"].initial, time(16, 0))
 
     def test_form_optional_fields(self):
@@ -226,15 +219,9 @@ class EventFormTest(TestCase):
         local_start = timezone.localtime(event.start_time)
         local_end = timezone.localtime(event.end_time)
 
-        self.assertEqual(
-            form.fields["event_date"].initial, local_start.date()
-        )
-        self.assertEqual(
-            form.fields["start_time_input"].initial, local_start.time()
-        )
-        self.assertEqual(
-            form.fields["end_time_input"].initial, local_end.time()
-        )
+        self.assertEqual(form.fields["event_date"].initial, local_start.date())
+        self.assertEqual(form.fields["start_time_input"].initial, local_start.time())
+        self.assertEqual(form.fields["end_time_input"].initial, local_end.time())
 
     def test_form_save_combines_date_and_time_correctly(self):
         """Testa que o form.save() combina data + hora corretamente."""

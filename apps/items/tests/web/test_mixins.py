@@ -23,14 +23,19 @@ class ItemWeddingContextMixinTest(TestCase):
     """
     Testa a segurança e o carregamento de contexto (Gatekeeper).
     """
+
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user("planner", "p@t.com", "123")
         cls.hacker = User.objects.create_user("hacker", "h@t.com", "123")
 
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
-            date="2025-01-01", location="Loc", budget=1000
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
+            date="2025-01-01",
+            location="Loc",
+            budget=1000,
         )
 
         cls.item = Item.objects.create(
@@ -68,6 +73,7 @@ class ItemWeddingContextMixinTest(TestCase):
 
         # get_object_or_404 levanta Http404
         from django.http import Http404
+
         with self.assertRaises(Http404):
             view.dispatch(request)
 
@@ -102,6 +108,7 @@ class ItemWeddingContextMixinTest(TestCase):
         view.setup(request, pk=99999)
 
         from django.http import Http404
+
         with self.assertRaises(Http404):
             view.dispatch(request)
 
@@ -110,33 +117,47 @@ class ItemQuerysetMixinTest(TestCase):
     """
     Testa a lógica de filtros da lista de itens.
     """
+
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user("u", "u@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
-            date="2025-01-01", location="Loc", budget=1000
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
+            date="2025-01-01",
+            location="Loc",
+            budget=1000,
         )
 
         # Item do Casamento (Categoria A)
         cls.item1 = Item.objects.create(
-            wedding=cls.wedding, name="Cadeira", category="DECOR",
-            quantity=1, unit_price=10
+            wedding=cls.wedding,
+            name="Cadeira",
+            category="DECOR",
+            quantity=1,
+            unit_price=10,
         )
         # Item do Casamento (Categoria B)
         cls.item2 = Item.objects.create(
-            wedding=cls.wedding, name="Mesa", category="LOCAL",
-            quantity=1, unit_price=10
+            wedding=cls.wedding,
+            name="Mesa",
+            category="LOCAL",
+            quantity=1,
+            unit_price=10,
         )
 
         # Item de OUTRO Casamento (Não deve aparecer)
         other_w = Wedding.objects.create(
-            planner=cls.user, groom_name="G2", bride_name="B2",
-            date="2025-01-01", location="Loc", budget=1000
+            planner=cls.user,
+            groom_name="G2",
+            bride_name="B2",
+            date="2025-01-01",
+            location="Loc",
+            budget=1000,
         )
         cls.item_other = Item.objects.create(
-            wedding=other_w, name="Invasor", category="DECOR",
-            quantity=1, unit_price=10
+            wedding=other_w, name="Invasor", category="DECOR", quantity=1, unit_price=10
         )
 
     def setUp(self):
@@ -144,6 +165,7 @@ class ItemQuerysetMixinTest(TestCase):
         class QuerysetView(ItemQuerysetMixin):
             wedding = self.wedding
             request = None
+
         self.view = QuerysetView()
 
     def test_get_base_queryset_filters_by_wedding(self):
@@ -171,15 +193,18 @@ class ItemPaginationContextMixinTest(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user("pg", "p@g.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
-            date="2025-01-01", location="L", budget=1000
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
+            date="2025-01-01",
+            location="L",
+            budget=1000,
         )
 
         # Cria 7 itens (paginate_by=6 -> 2 páginas)
         for i in range(7):
             Item.objects.create(
-                wedding=cls.wedding, name=f"Item {i}",
-                quantity=1, unit_price=10
+                wedding=cls.wedding, name=f"Item {i}", quantity=1, unit_price=10
             )
 
     def setUp(self):
@@ -229,8 +254,9 @@ class ItemHtmxListResponseMixinTest(TestCase):
         mock_params = {"page": "2", "category": "DECOR"}
 
         # Mockamos o método que lê o header (HtmxUrlParamsMixin)
-        with patch.object(self.view, '_get_params_from_htmx_url', return_value=mock_params):
-
+        with patch.object(
+            self.view, "_get_params_from_htmx_url", return_value=mock_params
+        ):
             context = self.view.get_htmx_context_data()
 
             # Verifica se chamou a paginação com os params corretos
@@ -250,7 +276,7 @@ class ItemHtmxListResponseMixinTest(TestCase):
         """
         Verifica se o helper de renderização usa o trigger padrão 'listUpdated'.
         """
-        with patch.object(self.view, 'render_htmx_response') as mock_render:
+        with patch.object(self.view, "render_htmx_response") as mock_render:
             self.view.render_item_list_response()
 
             # Deve chamar o render genérico passando o trigger correto
@@ -260,7 +286,7 @@ class ItemHtmxListResponseMixinTest(TestCase):
         """
         Verifica se aceita um trigger customizado.
         """
-        with patch.object(self.view, 'render_htmx_response') as mock_render:
+        with patch.object(self.view, "render_htmx_response") as mock_render:
             self.view.render_item_list_response(trigger="itemDeleted")
             mock_render.assert_called_once_with(trigger="itemDeleted")
 
@@ -281,12 +307,17 @@ class ItemFormLayoutMixinTest(TestCase):
     """
     Testa se o mixin de layout injeta as variáveis visuais corretamente.
     """
+
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user("layout_user", "l@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
-            date="2025-01-01", location="Loc", budget=1000
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
+            date="2025-01-01",
+            location="Loc",
+            budget=1000,
         )
 
     def setUp(self):

@@ -1,6 +1,7 @@
 """
 Testes dos serializers da API de Events (Scheduler).
 """
+
 from datetime import timedelta
 from decimal import Decimal
 
@@ -26,9 +27,7 @@ class EventSerializerTest(TestCase):
     def setUpTestData(cls):
         """Configuração inicial dos testes."""
         cls.user = User.objects.create_user(
-            username="planner",
-            email="planner@example.com",
-            password="test123"
+            username="planner", email="planner@example.com", password="test123"
         )
         cls.wedding = Wedding.objects.create(
             planner=cls.user,
@@ -36,7 +35,7 @@ class EventSerializerTest(TestCase):
             bride_name="Maria",
             date="2025-12-31",
             location="São Paulo",
-            budget=Decimal("50000.00")
+            budget=Decimal("50000.00"),
         )
 
     def test_serialization(self):
@@ -52,7 +51,7 @@ class EventSerializerTest(TestCase):
             start_time=start,
             end_time=end,
             event_type="reuniao",
-            location="Buffet Central"
+            location="Buffet Central",
         )
 
         serializer = EventSerializer(event)
@@ -114,9 +113,7 @@ class EventListSerializerTest(TestCase):
     def setUpTestData(cls):
         """Configuração inicial dos testes."""
         cls.user = User.objects.create_user(
-            username="planner",
-            email="planner2@example.com",
-            password="test123"
+            username="planner", email="planner2@example.com", password="test123"
         )
         cls.wedding = Wedding.objects.create(
             planner=cls.user,
@@ -124,7 +121,7 @@ class EventListSerializerTest(TestCase):
             bride_name="Ana",
             date="2025-06-15",
             location="Rio de Janeiro",
-            budget=Decimal("40000.00")
+            budget=Decimal("40000.00"),
         )
 
     def test_serialization_with_calculated_fields(self):
@@ -174,9 +171,7 @@ class EventDetailSerializerTest(TestCase):
     def setUpTestData(cls):
         """Configuração inicial dos testes."""
         cls.user = User.objects.create_user(
-            username="planner",
-            email="planner3@example.com",
-            password="test123"
+            username="planner", email="planner3@example.com", password="test123"
         )
         cls.wedding = Wedding.objects.create(
             planner=cls.user,
@@ -184,7 +179,7 @@ class EventDetailSerializerTest(TestCase):
             bride_name="Julia",
             date="2025-09-20",
             location="Belo Horizonte",
-            budget=Decimal("45000.00")
+            budget=Decimal("45000.00"),
         )
 
     def test_serialization_with_full_details(self):

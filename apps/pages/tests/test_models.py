@@ -12,7 +12,7 @@ class ContactInquiryModelTest(TestCase):
         inquiry = ContactInquiry.objects.create(
             name="Visitante",
             email="visita@teste.com",
-            message="Gostaria de saber mais."
+            message="Gostaria de saber mais.",
         )
 
         # Verifica persistência
@@ -39,8 +39,9 @@ class ContactInquiryModelTest(TestCase):
             name="New", email="new@t.com", message="msg"
         )
 
-        # Forçamos datas diferentes caso o teste rode rápido demais (no mesmo milissegundo)
-        # O BaseModel usa auto_now_add, então precisamos atualizar manualmente via SQL ou mock.
+        # Forçamos datas diferentes caso o teste rode rápido demais
+        # (no mesmo milissegundo). O BaseModel usa auto_now_add,
+        # então precisamos atualizar manualmente via SQL ou mock.
         # Uma forma simples é usar update() que vai direto no banco
         from datetime import timedelta
 
@@ -62,11 +63,7 @@ class ContactInquiryModelTest(TestCase):
         Deve falhar se o nome tiver mais que 100 caracteres.
         """
         long_name = "a" * 101
-        inquiry = ContactInquiry(
-            name=long_name,
-            email="valid@test.com",
-            message="msg"
-        )
+        inquiry = ContactInquiry(name=long_name, email="valid@test.com", message="msg")
 
         with self.assertRaises(ValidationError):
             inquiry.full_clean()
@@ -96,7 +93,7 @@ class ContactInquiryModelTest(TestCase):
         inquiry = ContactInquiry(
             name="Hacker",
             email="email-invalido",  # Sem @ ou domínio
-            message="spam"
+            message="spam",
         )
 
         with self.assertRaises(ValidationError):

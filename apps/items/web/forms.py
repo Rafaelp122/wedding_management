@@ -1,4 +1,5 @@
 import logging
+from typing import Any, ClassVar
 
 from django import forms
 
@@ -14,6 +15,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
     """
     Formulário para criação e edição de Itens do Orçamento.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -36,7 +38,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
     class Meta:
         model = Item
 
-        fields = [
+        fields: ClassVar[list[str]] = [
             "name",
             "category",
             "quantity",
@@ -45,7 +47,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
             "description",
         ]
 
-        labels = {
+        labels: ClassVar[dict[str, str]] = {
             "name": "Nome do Item",
             "category": "Categoria",
             "quantity": "Quantidade",
@@ -54,7 +56,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
             "description": "Descrição (Opcional)",
         }
 
-        widgets = {
+        widgets: ClassVar[dict[str, Any]] = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
 
@@ -63,7 +65,9 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
         quantity = self.cleaned_data.get("quantity")
         if quantity is not None and quantity <= 0:
             # Loga o erro antes de lançar a exceção
-            logger.warning(f"Tentativa de cadastro de item com quantidade inválida: {quantity}")
+            logger.warning(
+                f"Tentativa de cadastro de item com quantidade inválida: {quantity}"
+            )
             raise forms.ValidationError("A quantidade deve ser pelo menos 1.")
         return quantity
 
@@ -71,6 +75,8 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
         """Valida se o preço não é negativo."""
         unit_price = self.cleaned_data.get("unit_price")
         if unit_price is not None and unit_price < 0:
-            logger.warning(f"Tentativa de cadastro de item com preço negativo: {unit_price}")
+            logger.warning(
+                f"Tentativa de cadastro de item com preço negativo: {unit_price}"
+            )
             raise forms.ValidationError("O preço unitário não pode ser negativo.")
         return unit_price

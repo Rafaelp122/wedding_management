@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
@@ -30,7 +30,7 @@ class HtmxUrlParamsMixin:
 
     request: HttpRequest
 
-    def _get_params_from_htmx_url(self) -> Dict[str, str]:
+    def _get_params_from_htmx_url(self) -> dict[str, str]:
         """
         Extrai os query parameters do header HX-Current-Url.
 
@@ -47,22 +47,19 @@ class HtmxUrlParamsMixin:
             apenas loga o aviso e retorna dict vazio.
         """
         current_url = self.request.headers.get("Hx-Current-Url")
-        params: Dict[str, str] = {}
+        params: dict[str, str] = {}
 
         if current_url:
             try:
                 # Parseia a URL para extrair os query params
                 query_string = urlparse(current_url).query
-                parsed_params = parse_qs(
-                    query_string, keep_blank_values=True
-                )
+                parsed_params = parse_qs(query_string, keep_blank_values=True)
                 # parse_qs retorna listas, pegamos apenas o primeiro
                 params = {k: v[0] for k, v in parsed_params.items()}
             except Exception as e:
                 # Não quebra a requisição, mas avisa no log
                 logger.warning(
-                    f"Falha ao parsear HX-Current-Url: {current_url}. "
-                    f"Erro: {e}",
+                    f"Falha ao parsear HX-Current-Url: {current_url}. " f"Erro: {e}",
                     exc_info=True,
                 )
         return params
@@ -101,13 +98,13 @@ class BaseHtmxResponseMixin:
     - self.htmx_retarget_id (str): ID/seletor do elemento alvo
     """
 
-    htmx_template_name: Optional[str] = None
-    htmx_retarget_id: Optional[str] = None
+    htmx_template_name: str | None = None
+    htmx_retarget_id: str | None = None
     htmx_reswap_method: str = "innerHTML"
 
     request: HttpRequest
 
-    def get_htmx_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+    def get_htmx_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Hook para adicionar contexto ao template HTMX.
 
@@ -124,7 +121,7 @@ class BaseHtmxResponseMixin:
         return kwargs
 
     def render_htmx_response(
-        self, trigger: Optional[str] = None, **kwargs: Any
+        self, trigger: str | None = None, **kwargs: Any
     ) -> HttpResponse:
         """
         Renderiza uma resposta HTMX com os headers apropriados.
@@ -157,14 +154,12 @@ class BaseHtmxResponseMixin:
         """
         if not self.htmx_template_name:
             raise ImproperlyConfigured(
-                f"{self.__class__.__name__} must define "
-                "'htmx_template_name'."
+                f"{self.__class__.__name__} must define " "'htmx_template_name'."
             )
 
         if not self.htmx_retarget_id:
             raise ImproperlyConfigured(
-                f"{self.__class__.__name__} must define "
-                "'htmx_retarget_id'."
+                f"{self.__class__.__name__} must define " "'htmx_retarget_id'."
             )
 
         context = self.get_htmx_context_data(**kwargs)
@@ -238,7 +233,7 @@ class ModalContextMixin:
             f"{self.__class__.__name__} must implement get_hx_post_url()"
         )
 
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """
         Adiciona contexto do modal ao contexto do template.
 

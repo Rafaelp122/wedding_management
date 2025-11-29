@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from django.test import TestCase
@@ -121,7 +121,7 @@ class WeddingQuerySetTest(TestCase):
             unit_price=10.0,
         )
         # Item 2: Pendente
-        item2 = Item.objects.create(
+        _item2 = Item.objects.create(
             wedding=self.wedding_future,
             name="Item 2",
             status="PENDING",
@@ -129,7 +129,7 @@ class WeddingQuerySetTest(TestCase):
             unit_price=10.0,
         )
         # Item 3: Feito
-        item3 = Item.objects.create(
+        _item3 = Item.objects.create(
             wedding=self.wedding_future,
             name="Item 3",
             status="DONE",
@@ -137,7 +137,7 @@ class WeddingQuerySetTest(TestCase):
             unit_price=10.0,
         )
         # Item 4: Pendente
-        item4 = Item.objects.create(
+        _item4 = Item.objects.create(
             wedding=self.wedding_future,
             name="Item 4",
             status="PENDING",
@@ -173,7 +173,8 @@ class WeddingQuerySetTest(TestCase):
 
     def test_progress_calculation_division_by_zero(self):
         """
-        Garante que casamentos sem itens tenham progresso 0 e não quebrem (divisão por zero).
+        Garante que casamentos sem itens tenham progresso 0 e não quebrem
+        (divisão por zero).
         """
         qs = Wedding.objects.filter(pk=self.wedding_past.pk).with_counts_and_progress()
         wedding = qs.first()

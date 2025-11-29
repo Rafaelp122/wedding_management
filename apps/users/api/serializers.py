@@ -1,6 +1,9 @@
 """
 Serializers da API de Users.
 """
+
+from typing import ClassVar
+
 from rest_framework import serializers
 
 from apps.users.models import User
@@ -9,7 +12,7 @@ from apps.users.models import User
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer básico para User (criação e atualização).
-    
+
     Usado nos endpoints:
     - POST /api/v1/users/ (registro)
     - PUT/PATCH /api/v1/users/{id}/
@@ -22,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "username",
             "email",
@@ -33,35 +36,32 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "date_joined",
         ]
-        read_only_fields = ["id", "date_joined", "is_active"]
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'password2': {'write_only': True},
+        read_only_fields: ClassVar[list] = ["id", "date_joined", "is_active"]
+        extra_kwargs: ClassVar[dict] = {
+            "password": {"write_only": True},
+            "password2": {"write_only": True},
         }
 
     def validate(self, data):
         """Valida que as senhas são iguais."""
-        if 'password' in data and 'password2' in data:
-            if data['password'] != data['password2']:
-                raise serializers.ValidationError({
-                    "password2": "As senhas não coincidem."
-                })
+        if "password" in data and "password2" in data:
+            if data["password"] != data["password2"]:
+                raise serializers.ValidationError(
+                    {"password2": "As senhas não coincidem."}
+                )
         return data
 
     def create(self, validated_data):
         """Cria novo usuário com senha criptografada."""
-        validated_data.pop('password2', None)
-        password = validated_data.pop('password')
-        user = User.objects.create_user(
-            password=password,
-            **validated_data
-        )
+        validated_data.pop("password2", None)
+        password = validated_data.pop("password")
+        user = User.objects.create_user(password=password, **validated_data)
         return user
 
     def update(self, instance, validated_data):
         """Atualiza usuário, tratando senha separadamente."""
-        validated_data.pop('password2', None)
-        password = validated_data.pop('password', None)
+        validated_data.pop("password2", None)
+        password = validated_data.pop("password", None)
 
         # Atualiza campos normais
         for attr, value in validated_data.items():
@@ -78,10 +78,10 @@ class UserSerializer(serializers.ModelSerializer):
 class UserListSerializer(serializers.ModelSerializer):
     """
     Serializer otimizado para listagem de usuários.
-    
+
     Usado em:
     - GET /api/v1/users/
-    
+
     Retorna apenas informações essenciais.
     """
 
@@ -89,7 +89,7 @@ class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "username",
             "email",
@@ -108,11 +108,11 @@ class UserListSerializer(serializers.ModelSerializer):
 class UserDetailSerializer(serializers.ModelSerializer):
     """
     Serializer com detalhes completos do usuário.
-    
+
     Usado em:
     - GET /api/v1/users/{id}/
     - GET /api/v1/users/me/ (perfil do usuário autenticado)
-    
+
     Inclui contagens de recursos relacionados.
     """
 
@@ -122,7 +122,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
+        fields: ClassVar[list] = [
             "id",
             "username",
             "email",
@@ -136,7 +136,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "weddings_count",
             "events_count",
         ]
-        read_only_fields = ["id", "date_joined", "last_login"]
+        read_only_fields: ClassVar[list] = ["id", "date_joined", "last_login"]
 
     def get_full_name(self, obj):
         """Retorna nome completo do usuário."""
@@ -146,17 +146,17 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     def get_weddings_count(self, obj):
         """Retorna número de casamentos do planner."""
-        return obj.wedding_set.count() if hasattr(obj, 'wedding_set') else 0
+        return obj.wedding_set.count() if hasattr(obj, "wedding_set") else 0
 
     def get_events_count(self, obj):
         """Retorna número de eventos do planner."""
-        return obj.events.count() if hasattr(obj, 'events') else 0
+        return obj.events.count() if hasattr(obj, "events") else 0
 
 
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Serializer para troca de senha.
-    
+
     Usado em:
     - POST /api/v1/users/{id}/change-password/
     """
@@ -167,8 +167,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, data):
         """Valida que as novas senhas são iguais."""
-        if data['new_password'] != data['new_password2']:
-            raise serializers.ValidationError({
-                "new_password2": "As senhas não coincidem."
-            })
+        if data["new_password"] != data["new_password2"]:
+            raise serializers.ValidationError(
+                {"new_password2": "As senhas não coincidem."}
+            )
         return data

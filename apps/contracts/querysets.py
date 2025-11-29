@@ -20,10 +20,10 @@ class ContractQuerySet(models.QuerySet):
     def for_planner(self, planner) -> "ContractQuerySet":
         """
         Filtra contratos pertencentes a um cerimonialista específico.
-        
+
         Args:
             planner: Instância do usuário cerimonialista.
-            
+
         Returns:
             QuerySet filtrado por planner.
         """
@@ -32,10 +32,10 @@ class ContractQuerySet(models.QuerySet):
     def for_wedding(self, wedding) -> "ContractQuerySet":
         """
         Filtra contratos de um casamento específico.
-        
+
         Args:
             wedding: Instância do modelo Wedding.
-            
+
         Returns:
             QuerySet filtrado por wedding.
         """
@@ -45,20 +45,16 @@ class ContractQuerySet(models.QuerySet):
         """
         Otimiza queries incluindo relacionamentos necessários.
         Previne N+1 queries ao buscar contratos com seus relacionamentos.
-        
+
         Returns:
             QuerySet com select_related aplicado.
         """
-        return self.select_related(
-            "item",
-            "item__wedding",
-            "item__wedding__planner"
-        )
+        return self.select_related("item", "item__wedding", "item__wedding__planner")
 
     def fully_signed(self) -> "ContractQuerySet":
         """
         Filtra apenas contratos com todas as assinaturas completas.
-        
+
         Returns:
             QuerySet com contratos totalmente assinados.
         """
@@ -66,13 +62,13 @@ class ContractQuerySet(models.QuerySet):
             status=STATUS_COMPLETED,
             planner_signature__isnull=False,
             supplier_signature__isnull=False,
-            couple_signature__isnull=False
+            couple_signature__isnull=False,
         )
 
     def with_signature_status(self) -> "ContractQuerySet":
         """
         Anota o queryset com informações sobre o status das assinaturas.
-        
+
         Returns:
             QuerySet anotado com campos booleanos de assinaturas.
         """
@@ -95,7 +91,7 @@ class ContractQuerySet(models.QuerySet):
         """
         Filtra contratos que ainda podem ser editados.
         Apenas contratos em DRAFT ou WAITING_PLANNER são editáveis.
-        
+
         Returns:
             QuerySet com contratos editáveis.
         """
@@ -105,7 +101,7 @@ class ContractQuerySet(models.QuerySet):
         """
         Filtra contratos que podem ser cancelados.
         Contratos COMPLETED não podem ser cancelados.
-        
+
         Returns:
             QuerySet com contratos canceláveis.
         """
@@ -115,7 +111,7 @@ class ContractQuerySet(models.QuerySet):
         """
         Cancela múltiplos contratos de uma vez.
         Apenas contratos que não estão completos serão cancelados.
-        
+
         Returns:
             Número de contratos cancelados.
         """
@@ -124,10 +120,10 @@ class ContractQuerySet(models.QuerySet):
     def bulk_update_description(self, description: str) -> int:
         """
         Atualiza a descrição de múltiplos contratos editáveis.
-        
+
         Args:
             description: Nova descrição para os contratos.
-            
+
         Returns:
             Número de contratos atualizados.
         """
@@ -137,43 +133,31 @@ class ContractQuerySet(models.QuerySet):
         """
         Retorna informações sobre o próximo assinante de um contrato.
         Otimizado com select_related para evitar queries extras.
-        
+
         Args:
             contract_id: ID do contrato.
-            
+
         Returns:
             Dicionário com role e name do próximo signatário.
         """
         try:
-            contract = self.select_related(
-                'item__wedding'
-            ).get(id=contract_id)
+            contract = self.select_related("item__wedding").get(id=contract_id)
 
             if contract.status == STATUS_WAITING_PLANNER:
-                return {
-                    'role': 'Cerimonialista',
-                    'name': 'Você (Cerimonialista)'
-                }
+                return {"role": "Cerimonialista", "name": "Você (Cerimonialista)"}
 
             elif contract.status == STATUS_WAITING_SUPPLIER:
                 supplier_name = contract.item.supplier or "Não vinculado"
-                return {
-                    'role': 'Fornecedor',
-                    'name': f"Fornecedor ({supplier_name})"
-                }
+                return {"role": "Fornecedor", "name": f"Fornecedor ({supplier_name})"}
 
             elif contract.status == STATUS_WAITING_COUPLE:
                 if contract.item.wedding:
                     bride = contract.item.wedding.bride_name
                     groom = contract.item.wedding.groom_name
-                    return {
-                        'role': 'Noivos',
-                        'name': f"Noivos ({bride} e {groom})"
-                    }
-                return {'role': 'Noivos', 'name': 'Noivos'}
+                    return {"role": "Noivos", "name": f"Noivos ({bride} e {groom})"}
+                return {"role": "Noivos", "name": "Noivos"}
 
-            return {'role': 'Desconhecido', 'name': 'Alguém'}
+            return {"role": "Desconhecido", "name": "Alguém"}
 
         except self.model.DoesNotExist:
-            return {'role': 'Erro', 'name': 'Contrato não encontrado'}
-
+            return {"role": "Erro", "name": "Contrato não encontrado"}

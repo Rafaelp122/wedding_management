@@ -10,10 +10,7 @@ import os
 from celery import Celery
 
 # Set default Django settings module
-os.environ.setdefault(
-    "DJANGO_SETTINGS_MODULE",
-    "wedding_management.settings.local"
-)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wedding_management.settings.local")
 
 app = Celery("wedding_management")
 

@@ -15,25 +15,19 @@ class UsersUrlsTest(SimpleTestCase):
         """Testa que a URL de signup resolve para view customizada."""
         url = reverse("account_signup")
         resolved = resolve(url)
-        self.assertEqual(
-            resolved.func.view_class, allauth_views.CustomSignupView
-        )
+        self.assertEqual(resolved.func.view_class, allauth_views.CustomSignupView)
 
     def test_signin_url_resolves(self):
         """Testa que a URL de login resolve para view customizada."""
         url = reverse("account_login")
         resolved = resolve(url)
-        self.assertEqual(
-            resolved.func.view_class, allauth_views.CustomLoginView
-        )
+        self.assertEqual(resolved.func.view_class, allauth_views.CustomLoginView)
 
     def test_logout_url_resolves(self):
         """Testa que a URL de logout resolve para view customizada."""
         url = reverse("account_logout")
         resolved = resolve(url)
-        self.assertEqual(
-            resolved.func.view_class, allauth_views.CustomLogoutView
-        )
+        self.assertEqual(resolved.func.view_class, allauth_views.CustomLogoutView)
 
     def test_edit_profile_url_resolves(self):
         """Testa a URL customizada de edição de perfil."""

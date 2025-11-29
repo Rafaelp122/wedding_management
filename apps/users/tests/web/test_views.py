@@ -46,7 +46,7 @@ class EditProfileViewTest(TestCase):
             "username": "updated_user",
             "first_name": "Updated",
             "last_name": "Name",
-            "email": "updated@test.com"
+            "email": "updated@test.com",
         }
         response = self.client.post(self.url, data)
 
@@ -73,7 +73,7 @@ class EditProfileViewTest(TestCase):
             "username": "",
             "email": "",
             "first_name": "Updated",
-            "last_name": "Name"
+            "last_name": "Name",
         }
         response = self.client.post(self.url, data)
 
@@ -102,7 +102,7 @@ class EditProfileViewTest(TestCase):
             "username": "my_user",
             "email": "occupied@test.com",  # E-mail já em uso!
             "first_name": "Me",
-            "last_name": "Myself"
+            "last_name": "Myself",
         }
         response = self.client.post(self.url, data)
 

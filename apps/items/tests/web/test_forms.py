@@ -17,7 +17,7 @@ class ItemFormTest(SimpleTestCase):
             "quantity": 10,
             "unit_price": "50.00",
             "supplier": "Loja A",
-            "description": "Cadeiras brancas"
+            "description": "Cadeiras brancas",
         }
         form = ItemForm(data=data)
         self.assertTrue(form.is_valid())
@@ -35,7 +35,9 @@ class ItemFormTest(SimpleTestCase):
         form = ItemForm(data=data)
         self.assertFalse(form.is_valid())
         self.assertIn("quantity", form.errors)
-        self.assertEqual(form.errors["quantity"][0], "A quantidade deve ser pelo menos 1.")
+        self.assertEqual(
+            form.errors["quantity"][0], "A quantidade deve ser pelo menos 1."
+        )
 
     def test_form_invalid_quantity_negative(self):
         """
@@ -82,7 +84,9 @@ class ItemFormTest(SimpleTestCase):
         self.assertEqual(form.fields["description"].widget.attrs["rows"], 3)
 
         # Placeholder checado via utilitário (só pra garantir que o init rodou)
-        self.assertEqual(form.fields["name"].widget.attrs["placeholder"], "Ex: Buffet Completo")
+        self.assertEqual(
+            form.fields["name"].widget.attrs["placeholder"], "Ex: Buffet Completo"
+        )
 
     @patch("apps.items.web.forms.logger")
     def test_logging_on_validation_error(self, mock_logger):
@@ -93,7 +97,7 @@ class ItemFormTest(SimpleTestCase):
             "name": "Item",
             "category": "OTHERS",
             "quantity": 0,  # Erro
-            "unit_price": "-5.00"  # Erro
+            "unit_price": "-5.00",  # Erro
         }
         form = ItemForm(data=data)
         form.is_valid()  # Dispara validação
@@ -115,7 +119,7 @@ class ItemFormTest(SimpleTestCase):
                 "quantity": 5,
                 "unit_price": "100.00",
                 "supplier": "Teste Supplier",
-                "description": "Descrição teste"
+                "description": "Descrição teste",
             }
             form = ItemForm(data=data)
 
@@ -127,4 +131,4 @@ class ItemFormTest(SimpleTestCase):
             # Verifica se persistiu
             self.assertIsNotNone(item.pk)
             self.assertTrue(Item.objects.filter(name="Item Teste Integração").exists())
-            self.assertEqual(item.total_cost, 500.00) # 5 * 100
+            self.assertEqual(item.total_cost, 500.00)  # 5 * 100

@@ -68,7 +68,7 @@ class Contract(BaseModel):
     couple_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Auditoria e Arquivos Finais
-    integrity_hash = models.CharField(max_length=64, blank=True, null=True)
+    integrity_hash = models.CharField(max_length=64, blank=True)
     final_pdf = models.FileField(upload_to="contracts_pdf/", null=True, blank=True)
     external_pdf = models.FileField(
         upload_to="contracts_external/", null=True, blank=True
@@ -133,7 +133,7 @@ class Contract(BaseModel):
             )
 
         except (ValueError, TypeError) as e:
-            raise ValueError(f"Erro ao decodificar assinatura: {e!s}")
+            raise ValueError(f"Erro ao decodificar assinatura: {e!s}") from e
 
         # Processa conforme o status atual
         if self.status == STATUS_WAITING_PLANNER:

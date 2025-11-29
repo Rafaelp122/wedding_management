@@ -1,9 +1,7 @@
 import base64
 from datetime import timedelta
 from io import BytesIO
-from unittest.mock import Mock
 
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from PIL import Image
@@ -25,22 +23,19 @@ class ContractModelTest(TestCase):
             bride_name="Maria",
             date="2025-06-15",
             location="Salão de Festas",
-            budget=50000
+            budget=50000,
         )
         cls.item = Item.objects.create(
             wedding=cls.wedding,
             name="Fotógrafo",
             quantity=1,
             unit_price=5000,
-            supplier="Foto Studio X"
+            supplier="Foto Studio X",
         )
 
     def test_contract_creation_and_str(self):
         """Verifica criação básica e representação em string."""
-        contract = Contract.objects.create(
-            item=self.item,
-            status="WAITING_PLANNER"
-        )
+        contract = Contract.objects.create(item=self.item, status="WAITING_PLANNER")
 
         self.assertIn("Fotógrafo", str(contract))
         self.assertEqual(contract.status, "WAITING_PLANNER")
@@ -62,10 +57,7 @@ class ContractModelTest(TestCase):
     def test_contract_value_calculation(self):
         """Verifica se contract_value calcula corretamente."""
         item = Item.objects.create(
-            wedding=self.wedding,
-            name="Buffet",
-            quantity=100,
-            unit_price=50.00
+            wedding=self.wedding, name="Buffet", quantity=100, unit_price=50.00
         )
         contract = Contract.objects.create(item=item)
 
@@ -102,27 +94,26 @@ class ContractSignatureProcessingTest(TestCase):
             bride_name="Maria",
             date="2025-06-15",
             location="Salão",
-            budget=50000
+            budget=50000,
         )
         self.item = Item.objects.create(
             wedding=self.wedding,
             name="Decoração",
             quantity=1,
             unit_price=3000,
-            supplier="Flores & Cia"
+            supplier="Flores & Cia",
         )
         self.contract = Contract.objects.create(
-            item=self.item,
-            status="WAITING_PLANNER"
+            item=self.item, status="WAITING_PLANNER"
         )
 
-    def _create_fake_signature_base64(self, format='png'):
+    def _create_fake_signature_base64(self, format="png"):
         """Helper para criar uma imagem base64 fake."""
-        img = Image.new('RGB', (100, 50), color='white')
+        img = Image.new("RGB", (100, 50), color="white")
         buffer = BytesIO()
         img.save(buffer, format=format.upper())
         img_bytes = buffer.getvalue()
-        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
         return f"data:image/{format};base64,{img_b64}"
 
     def test_process_signature_empty_raises_error(self):
@@ -136,8 +127,7 @@ class ContractSignatureProcessingTest(TestCase):
         """Formato sem base64 deve lançar ValueError."""
         with self.assertRaises(ValueError) as cm:
             self.contract.process_signature(
-                "invalid_data_without_base64",
-                "192.168.1.1"
+                "invalid_data_without_base64", "192.168.1.1"
             )
 
         self.assertIn("inválida ou vazia", str(cm.exception))
@@ -145,7 +135,10 @@ class ContractSignatureProcessingTest(TestCase):
     def test_process_signature_unsupported_format_raises_error(self):
         """Formato não permitido (ex: gif) deve lançar ValueError."""
         # Cria base64 de um formato não permitido
-        fake_sig = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="
+        fake_sig = (
+            "data:image/gif;base64,"
+            "R0lGODlhAQABAIAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="
+        )
 
         with self.assertRaises(ValueError) as cm:
             self.contract.process_signature(fake_sig, "192.168.1.1")
@@ -159,7 +152,7 @@ class ContractSignatureProcessingTest(TestCase):
         width, height = 3000, 3000
 
         # Cria imagem com gradiente para evitar compressão eficiente
-        large_img = Image.new('RGB', (width, height))
+        large_img = Image.new("RGB", (width, height))
         pixels = large_img.load()
 
         # Preenche com padrão complexo que não comprime bem
@@ -173,17 +166,16 @@ class ContractSignatureProcessingTest(TestCase):
 
         buffer = BytesIO()
         # Salva como JPEG com qualidade máxima (sem compressão)
-        large_img.save(buffer, format='JPEG', quality=100)
+        large_img.save(buffer, format="JPEG", quality=100)
         img_bytes = buffer.getvalue()
 
         # Verifica que é realmente > 500KB
         size_kb = len(img_bytes) / 1024
         self.assertGreater(
-            len(img_bytes), 500 * 1024,
-            f"Imagem tem apenas {size_kb:.1f}KB"
+            len(img_bytes), 500 * 1024, f"Imagem tem apenas {size_kb:.1f}KB"
         )
 
-        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
         fake_sig = f"data:image/jpeg;base64,{img_b64}"
 
         with self.assertRaises(ValueError) as cm:
@@ -272,14 +264,14 @@ class ContractNextSignerInfoTest(TestCase):
             bride_name="Ana",
             date="2025-06-15",
             location="Igreja",
-            budget=30000
+            budget=30000,
         )
         self.item = Item.objects.create(
             wedding=self.wedding,
             name="DJ",
             quantity=1,
             unit_price=2000,
-            supplier="Som & Luz"
+            supplier="Som & Luz",
         )
         self.contract = Contract.objects.create(item=self.item)
 
@@ -287,8 +279,8 @@ class ContractNextSignerInfoTest(TestCase):
         """Status WAITING_PLANNER retorna info do cerimonialista."""
         info = self.contract.get_next_signer_info()
 
-        self.assertEqual(info['role'], 'Cerimonialista')
-        self.assertIn('Cerimonialista', info['name'])
+        self.assertEqual(info["role"], "Cerimonialista")
+        self.assertIn("Cerimonialista", info["name"])
 
     def test_next_signer_waiting_supplier(self):
         """Status WAITING_SUPPLIER retorna info do fornecedor."""
@@ -297,8 +289,8 @@ class ContractNextSignerInfoTest(TestCase):
 
         info = self.contract.get_next_signer_info()
 
-        self.assertEqual(info['role'], 'Fornecedor')
-        self.assertIn('Som & Luz', info['name'])
+        self.assertEqual(info["role"], "Fornecedor")
+        self.assertIn("Som & Luz", info["name"])
 
     def test_next_signer_waiting_supplier_no_supplier_name(self):
         """Fornecedor sem nome retorna 'Não vinculado'."""
@@ -310,7 +302,7 @@ class ContractNextSignerInfoTest(TestCase):
 
         info = self.contract.get_next_signer_info()
 
-        self.assertIn('Não vinculado', info['name'])
+        self.assertIn("Não vinculado", info["name"])
 
     def test_next_signer_waiting_couple(self):
         """Status WAITING_COUPLE retorna info dos noivos."""
@@ -319,9 +311,9 @@ class ContractNextSignerInfoTest(TestCase):
 
         info = self.contract.get_next_signer_info()
 
-        self.assertEqual(info['role'], 'Noivos')
-        self.assertIn('Carlos', info['name'])
-        self.assertIn('Ana', info['name'])
+        self.assertEqual(info["role"], "Noivos")
+        self.assertIn("Carlos", info["name"])
+        self.assertIn("Ana", info["name"])
 
     def test_next_signer_completed(self):
         """Status COMPLETED retorna info genérica."""
@@ -330,7 +322,7 @@ class ContractNextSignerInfoTest(TestCase):
 
         info = self.contract.get_next_signer_info()
 
-        self.assertEqual(info['role'], 'Desconhecido')
+        self.assertEqual(info["role"], "Desconhecido")
 
 
 class ContractIntegrityHashTest(TestCase):
@@ -344,13 +336,10 @@ class ContractIntegrityHashTest(TestCase):
             bride_name="Julia",
             date="2025-12-20",
             location="Praia",
-            budget=80000
+            budget=80000,
         )
         self.item = Item.objects.create(
-            wedding=self.wedding,
-            name="Buffet",
-            quantity=150,
-            unit_price=80
+            wedding=self.wedding, name="Buffet", quantity=150, unit_price=80
         )
         self.contract = Contract.objects.create(item=self.item)
 
@@ -392,7 +381,8 @@ class ContractIntegrityHashTest(TestCase):
 
 
 class ContractStatusMethodsTest(TestCase):
-    """Testes para métodos de verificação de status (is_fully_signed, get_signatures_status)."""
+    """Testes para métodos de verificação de status
+    (is_fully_signed, get_signatures_status)."""
 
     def setUp(self):
         planner = User.objects.create_user("p", "p@t.com", "123")
@@ -402,27 +392,24 @@ class ContractStatusMethodsTest(TestCase):
             bride_name="Maria",
             date=timezone.now().date() + timedelta(days=90),
             location="Igreja",
-            budget=80000
+            budget=80000,
         )
         item = Item.objects.create(
             wedding=wedding,
             name="Flores",
             quantity=1,
             unit_price=5000,
-            supplier="Flora Bella"
+            supplier="Flora Bella",
         )
-        self.contract = Contract.objects.create(
-            item=item,
-            status="WAITING_PLANNER"
-        )
+        self.contract = Contract.objects.create(item=item, status="WAITING_PLANNER")
 
     def _create_fake_signature(self):
         """Helper para criar assinatura fake."""
-        img = Image.new('RGB', (100, 50), color='white')
+        img = Image.new("RGB", (100, 50), color="white")
         buffer = BytesIO()
-        img.save(buffer, format='PNG')
+        img.save(buffer, format="PNG")
         img_bytes = buffer.getvalue()
-        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
         return f"data:image/png;base64,{img_b64}"
 
     def test_is_fully_signed_returns_false_initially(self):
@@ -446,18 +433,18 @@ class ContractStatusMethodsTest(TestCase):
         status = self.contract.get_signatures_status()
 
         self.assertIsInstance(status, dict)
-        self.assertIn('planner', status)
-        self.assertIn('supplier', status)
-        self.assertIn('couple', status)
+        self.assertIn("planner", status)
+        self.assertIn("supplier", status)
+        self.assertIn("couple", status)
 
     def test_signatures_status_structure(self):
         """Cada entrada deve ter signed, signed_at, ip."""
         status = self.contract.get_signatures_status()
 
-        for party in ['planner', 'supplier', 'couple']:
-            self.assertIn('signed', status[party])
-            self.assertIn('signed_at', status[party])
-            self.assertIn('ip', status[party])
+        for party in ["planner", "supplier", "couple"]:
+            self.assertIn("signed", status[party])
+            self.assertIn("signed_at", status[party])
+            self.assertIn("ip", status[party])
 
     def test_signatures_status_updates_after_signing(self):
         """Status deve atualizar após assinatura."""
@@ -465,14 +452,13 @@ class ContractStatusMethodsTest(TestCase):
 
         # Antes
         status_before = self.contract.get_signatures_status()
-        self.assertFalse(status_before['planner']['signed'])
+        self.assertFalse(status_before["planner"]["signed"])
 
         # Assina
         self.contract.process_signature(sig, "192.168.1.1")
 
         # Depois
         status_after = self.contract.get_signatures_status()
-        self.assertTrue(status_after['planner']['signed'])
-        self.assertEqual(status_after['planner']['ip'], "192.168.1.1")
-        self.assertIsNotNone(status_after['planner']['signed_at'])
-
+        self.assertTrue(status_after["planner"]["signed"])
+        self.assertEqual(status_after["planner"]["ip"], "192.168.1.1")
+        self.assertIsNotNone(status_after["planner"]["signed_at"])

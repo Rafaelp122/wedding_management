@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 
 from django import forms
 
@@ -19,11 +20,11 @@ class ContactForm(FormStylingMixin, forms.ModelForm):
 
     class Meta:
         model = ContactInquiry
-        fields = ["name", "email", "message"]
-        widgets = {
+        fields: ClassVar[list] = ["name", "email", "message"]
+        widgets: ClassVar[dict] = {
             "message": forms.Textarea(attrs={"rows": 5}),
         }
-        labels = {
+        labels: ClassVar[dict] = {
             "name": "Nome",
             "email": "E-mail",
             "message": "Mensagem",

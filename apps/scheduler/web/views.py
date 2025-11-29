@@ -128,9 +128,7 @@ class EventUpdateFormView(
 
     def get_hx_post_url(self):
         """Retorna a URL para o POST do formulário."""
-        return reverse(
-            "scheduler:event_update", args=[self.wedding.id, self.event.id]
-        )
+        return reverse("scheduler:event_update", args=[self.wedding.id, self.event.id])
 
     def get(self, request, *args, **kwargs):
         event_id = kwargs.get("event_id")
@@ -161,9 +159,7 @@ class EventUpdateView(
 
     def get_hx_post_url(self):
         """Retorna a URL para o POST do formulário."""
-        return reverse(
-            "scheduler:event_update", args=[self.wedding.id, self.object.id]
-        )
+        return reverse("scheduler:event_update", args=[self.wedding.id, self.object.id])
 
     def get_object(self, queryset=None):
         """Obtém o evento a ser editado."""

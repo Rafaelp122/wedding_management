@@ -1,6 +1,7 @@
 """
 Mixins para respostas HTTP padronizadas.
 """
+
 from django.http import JsonResponse
 
 
@@ -38,7 +39,7 @@ class JsonResponseMixin:
                 redirect_url='/items/'
             )
         """
-        data = {'success': True, 'message': message}
+        data = {"success": True, "message": message}
         data.update(extra)
         return JsonResponse(data)
 
@@ -59,6 +60,6 @@ class JsonResponseMixin:
                 errors={'email': ['Email inválido']}
             )
         """
-        data = {'success': False, 'message': message}
+        data = {"success": False, "message": message}
         data.update(extra)
         return JsonResponse(data)

@@ -4,6 +4,7 @@ QuerySets customizados para o app scheduler.
 Este módulo fornece QuerySets com métodos auxiliares para
 facilitar consultas comuns no modelo Event.
 """
+
 from django.db import models
 
 

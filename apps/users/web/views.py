@@ -27,9 +27,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def form_valid(self, form):
-        messages.success(
-            self.request, "Seu perfil foi atualizado com sucesso!"
-        )
+        messages.success(self.request, "Seu perfil foi atualizado com sucesso!")
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):

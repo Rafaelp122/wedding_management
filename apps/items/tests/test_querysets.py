@@ -12,8 +12,12 @@ class ItemQuerySetTest(TestCase):
     def setUpTestData(cls):
         cls.user = User.objects.create_user("qs_user", "qs@t.com", "123")
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="G", bride_name="B",
-            date="2025-01-01", location="Loc", budget=50000
+            planner=cls.user,
+            groom_name="G",
+            bride_name="B",
+            date="2025-01-01",
+            location="Loc",
+            budget=50000,
         )
 
         # --- MOCANDO DADOS ---
@@ -25,7 +29,7 @@ class ItemQuerySetTest(TestCase):
             category="DECOR",
             quantity=2,
             unit_price=Decimal("50.00"),
-            status="PENDING"
+            status="PENDING",
         )
 
         # Item 2: BUFFET (Total: 1 * 300 = 300)
@@ -35,7 +39,7 @@ class ItemQuerySetTest(TestCase):
             category="BUFFET",
             quantity=1,
             unit_price=Decimal("300.00"),
-            status="DONE"
+            status="DONE",
         )
 
         # Item 3: DECOR (Total: 10 * 5 = 50)
@@ -46,7 +50,7 @@ class ItemQuerySetTest(TestCase):
             category="DECOR",
             quantity=10,
             unit_price=Decimal("5.00"),
-            status="IN_PROGRESS"
+            status="IN_PROGRESS",
         )
 
     def test_total_spent_calculation(self):

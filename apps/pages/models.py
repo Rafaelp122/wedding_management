@@ -8,6 +8,7 @@ class ContactInquiry(BaseModel):
     Representa uma mensagem enviada através do formulário de contato.
     Armazena nome, email, mensagem e status de leitura.
     """
+
     name = models.CharField("Nome", max_length=100)
     email = models.EmailField("E-mail")
     message = models.TextField("Mensagem")

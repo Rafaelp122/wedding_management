@@ -1,6 +1,7 @@
 """
 Testes dos serializers da API de Items.
 """
+
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -24,9 +25,7 @@ class ItemSerializerTest(TestCase):
     def setUpTestData(cls):
         """Configuração inicial dos testes."""
         cls.user = User.objects.create_user(
-            username="planner",
-            email="planner@example.com",
-            password="test123"
+            username="planner", email="planner@example.com", password="test123"
         )
         cls.wedding = Wedding.objects.create(
             planner=cls.user,
@@ -34,7 +33,7 @@ class ItemSerializerTest(TestCase):
             bride_name="Maria",
             date="2025-12-31",
             location="São Paulo",
-            budget=Decimal("50000.00")
+            budget=Decimal("50000.00"),
         )
 
     def test_serialization(self):
@@ -45,7 +44,7 @@ class ItemSerializerTest(TestCase):
             category="FOOD",
             quantity=1,
             unit_price=Decimal("5000.00"),
-            status="PENDING"
+            status="PENDING",
         )
 
         serializer = ItemSerializer(item)
@@ -115,9 +114,7 @@ class ItemListSerializerTest(TestCase):
     def setUpTestData(cls):
         """Configuração inicial dos testes."""
         cls.user = User.objects.create_user(
-            username="planner",
-            email="planner2@example.com",
-            password="test123"
+            username="planner", email="planner2@example.com", password="test123"
         )
         cls.wedding = Wedding.objects.create(
             planner=cls.user,
@@ -125,7 +122,7 @@ class ItemListSerializerTest(TestCase):
             bride_name="Ana",
             date="2025-06-15",
             location="Rio de Janeiro",
-            budget=Decimal("40000.00")
+            budget=Decimal("40000.00"),
         )
 
     def test_serialization_with_calculated_fields(self):
@@ -169,9 +166,7 @@ class ItemDetailSerializerTest(TestCase):
     def setUpTestData(cls):
         """Configuração inicial dos testes."""
         cls.user = User.objects.create_user(
-            username="planner",
-            email="planner3@example.com",
-            password="test123"
+            username="planner", email="planner3@example.com", password="test123"
         )
         cls.wedding = Wedding.objects.create(
             planner=cls.user,
@@ -179,7 +174,7 @@ class ItemDetailSerializerTest(TestCase):
             bride_name="Julia",
             date="2025-09-20",
             location="Belo Horizonte",
-            budget=Decimal("45000.00")
+            budget=Decimal("45000.00"),
         )
 
     def test_serialization_with_full_details(self):
@@ -190,7 +185,7 @@ class ItemDetailSerializerTest(TestCase):
             category="PHOTO_VIDEO",
             quantity=1,
             unit_price=Decimal("3000.00"),
-            description="Fotógrafo profissional com álbum incluso"
+            description="Fotógrafo profissional com álbum incluso",
         )
 
         serializer = ItemDetailSerializer(item)
@@ -198,7 +193,9 @@ class ItemDetailSerializerTest(TestCase):
 
         self.assertEqual(data["id"], item.id)
         self.assertEqual(data["name"], "Fotógrafo")
-        self.assertEqual(data["description"], "Fotógrafo profissional com álbum incluso")
+        self.assertEqual(
+            data["description"], "Fotógrafo profissional com álbum incluso"
+        )
         self.assertIn("contracts_count", data)
         self.assertEqual(data["contracts_count"], 0)  # Sem contratos
         self.assertIn("created_at", data)

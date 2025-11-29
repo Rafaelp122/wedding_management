@@ -71,7 +71,8 @@ class WeddingListViewTest(TestCase):
         headers["HTTP_HX-Current-Url"] = f"{self.url}?page=2"
 
         # O GET deve ser limpo, o mixin pega os params do header ou do GET
-        # Na sua implementação atual (WeddingListView), ele pega do GET (request_params = self.request.GET.copy())
+        # Na sua implementação atual (WeddingListView), ele pega do
+        # GET (request_params = self.request.GET.copy())
         # Então passamos no GET também
         response = self.client.get(f"{self.url}?page=2", **headers)
 
@@ -86,8 +87,11 @@ class WeddingListViewTest(TestCase):
         # Cria um casamento com nome único
         Wedding.objects.create(
             planner=self.user,
-            groom_name="UniqueNameXYZ", bride_name="Bride",
-            date=date(2025, 12, 25), location="Loc", budget=1000
+            groom_name="UniqueNameXYZ",
+            bride_name="Bride",
+            date=date(2025, 12, 25),
+            location="Loc",
+            budget=1000,
         )
 
         # Teste Integrado: Busca + HTMX (Simula digitação do usuário)
@@ -109,8 +113,11 @@ class WeddingListViewTest(TestCase):
         # Cria um casamento no futuro distante
         future_w = Wedding.objects.create(
             planner=self.user,
-            groom_name="Future", bride_name="F",
-            date=date(2099, 1, 1), location="L", budget=1000
+            groom_name="Future",
+            bride_name="F",
+            date=date(2099, 1, 1),
+            location="L",
+            budget=1000,
         )
 
         response = self.client.get(f"{self.url}?sort=date_desc")
@@ -166,7 +173,9 @@ class WeddingDetailViewTest(TestCase):
 class WeddingCreateViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="planner", email="p@test.com", password="123")
+        cls.user = User.objects.create_user(
+            username="planner", email="p@test.com", password="123"
+        )
         cls.url = reverse("weddings:create_wedding")
 
     def setUp(self):
@@ -188,7 +197,7 @@ class WeddingCreateViewTest(TestCase):
             "bride_name": "New Bride",
             "date": "2025-12-25",
             "budget": "10000.00",
-            "location": "Test Loc"
+            "location": "Test Loc",
         }
 
         # Simula request HTMX
@@ -200,7 +209,9 @@ class WeddingCreateViewTest(TestCase):
         # Verifica se criou no banco
         self.assertTrue(Wedding.objects.filter(groom_name="New Groom").exists())
         created_wedding = Wedding.objects.get(groom_name="New Groom")
-        self.assertEqual(created_wedding.planner, self.user) # Planner atribuído automaticamente
+        self.assertEqual(
+            created_wedding.planner, self.user
+        )  # Planner atribuído automaticamente
 
         # Verifica se retornou a lista atualizada (Partial)
         self.assertTemplateUsed(response, "weddings/partials/_list_and_pagination.html")
@@ -238,10 +249,16 @@ class WeddingCreateViewTest(TestCase):
 class WeddingUpdateViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="planner", email="p@test.com", password="123")
+        cls.user = User.objects.create_user(
+            username="planner", email="p@test.com", password="123"
+        )
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="Old", bride_name="Old",
-            date=date(2025, 1, 1), location="Loc", budget=1000
+            planner=cls.user,
+            groom_name="Old",
+            bride_name="Old",
+            date=date(2025, 1, 1),
+            location="Loc",
+            budget=1000,
         )
         cls.url = reverse("weddings:edit_wedding", kwargs={"id": cls.wedding.pk})
 
@@ -263,7 +280,7 @@ class WeddingUpdateViewTest(TestCase):
             "bride_name": "Updated Bride",
             "date": future_date,
             "budget": "2000.00",
-            "location": "Loc"
+            "location": "Loc",
         }
         headers = {"HTTP_HX-Request": "true"}
         response = self.client.post(self.url, data, **headers)
@@ -287,7 +304,7 @@ class WeddingUpdateViewTest(TestCase):
             "bride_name": "Updated Bride",
             "date": "2025-12-25",
             "budget": "-100.00",  # Inválido!
-            "location": "Loc"
+            "location": "Loc",
         }
         # Simulamos HTMX pois a view retorna partials
         headers = {"HTTP_HX-Request": "true"}
@@ -308,10 +325,16 @@ class WeddingUpdateViewTest(TestCase):
 class WeddingDeleteViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="planner", email="p@test.com", password="123")
+        cls.user = User.objects.create_user(
+            username="planner", email="p@test.com", password="123"
+        )
         cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="Del", bride_name="Del",
-            date=date(2025, 1, 1), location="Loc", budget=1000
+            planner=cls.user,
+            groom_name="Del",
+            bride_name="Del",
+            date=date(2025, 1, 1),
+            location="Loc",
+            budget=1000,
         )
         cls.url = reverse("weddings:delete_wedding", kwargs={"id": cls.wedding.pk})
 
@@ -341,7 +364,9 @@ class WeddingDeleteViewTest(TestCase):
         O get_queryset do PlannerOwnershipMixin deve filtrar e gerar 404.
         """
         # Cria um usuário hacker e loga com ele
-        hacker = User.objects.create_user(username="hacker", email="h@test.com", password="123")
+        hacker = User.objects.create_user(
+            username="hacker", email="h@test.com", password="123"
+        )
         self.client.force_login(hacker)
 
         # Tenta deletar o casamento do 'planner' (criado no setUpTestData)
@@ -356,13 +381,21 @@ class WeddingDeleteViewTest(TestCase):
 class UpdateWeddingStatusViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username="planner", email="p@test.com", password="123")
-        cls.wedding = Wedding.objects.create(
-            planner=cls.user, groom_name="Status", bride_name="Check",
-            date=date(2025, 1, 1), location="Loc", budget=1000,
-            status="IN_PROGRESS"
+        cls.user = User.objects.create_user(
+            username="planner", email="p@test.com", password="123"
         )
-        cls.url = reverse("weddings:update_wedding_status", kwargs={"id": cls.wedding.pk})
+        cls.wedding = Wedding.objects.create(
+            planner=cls.user,
+            groom_name="Status",
+            bride_name="Check",
+            date=date(2025, 1, 1),
+            location="Loc",
+            budget=1000,
+            status="IN_PROGRESS",
+        )
+        cls.url = reverse(
+            "weddings:update_wedding_status", kwargs={"id": cls.wedding.pk}
+        )
 
     def setUp(self):
         self.client.force_login(self.user)
@@ -388,7 +421,9 @@ class UpdateWeddingStatusViewTest(TestCase):
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode(), "Status inválido ou Model não atualizado.")
+        self.assertEqual(
+            response.content.decode(), "Status inválido ou Model não atualizado."
+        )
 
         # Status não deve mudar
         self.wedding.refresh_from_db()
@@ -396,7 +431,9 @@ class UpdateWeddingStatusViewTest(TestCase):
 
     def test_post_other_user_cannot_change_status(self):
         """Outro usuário não pode alterar status."""
-        other_user = User.objects.create_user(username="hacker", email="h@test.com", password="123")
+        other_user = User.objects.create_user(
+            username="hacker", email="h@test.com", password="123"
+        )
         self.client.force_login(other_user)
 
         data = {"status": "COMPLETED"}
@@ -420,9 +457,7 @@ class UpdateWeddingStatusViewTest(TestCase):
         )
         data = {"status": "COMPLETED"}
 
-        response = self.client.post(
-            nonexistent_url, data, HTTP_HX_Request="true"
-        )
+        response = self.client.post(nonexistent_url, data, HTTP_HX_Request="true")
 
         self.assertEqual(response.status_code, 404)
         self.assertIn("Casamento não encontrado", response.content.decode())
@@ -436,7 +471,9 @@ class WeddingAccessControlTest(TestCase):
 
     def setUp(self):
         # Usuário Logado
-        self.user = User.objects.create_user(username="user", email="u@test.com", password="123")
+        self.user = User.objects.create_user(
+            username="user", email="u@test.com", password="123"
+        )
         # URL de uma view protegida (ex: Lista)
         self.list_url = reverse("weddings:my_weddings")
         # URL de edição de algo que não existe

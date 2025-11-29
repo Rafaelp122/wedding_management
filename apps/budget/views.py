@@ -48,7 +48,9 @@ class BudgetPartialView(LoginRequiredMixin, TemplateView):
         context["distributed_expenses"] = [
             {
                 # Pega o nome legível ou usa o código se falhar
-                "category": category_display_map.get(entry["category"], entry["category"]),
+                "category": category_display_map.get(
+                    entry["category"], entry["category"]
+                ),
                 "value": entry["total_cost"],
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
             }
