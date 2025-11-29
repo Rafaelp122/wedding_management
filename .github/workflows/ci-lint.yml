@@ -19,16 +19,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip' # Faz o cache das dependências automaticamente
+          cache: 'pip'
 
       - name: Install Ruff
         run: |
-          pip install ruff
+          pip install ruff==0.7.4
 
       - name: Run Linting (Ruff)
         run: |
-          # 'check' procura por erros de lógica (imports não usados, bugs, etc.)
-          ruff check . --output-format=github
+          # A flag --config força o uso do seu arquivo específico
+          ruff check . --config .ruff.toml --output-format=github
           
-          # 'format --check' verifica se a formatação (espaços, aspas) está correta
-          ruff format --check .
+          # O format também precisa saber da config (por causa do line-length, etc)
+          ruff format --check . --config .ruff.toml

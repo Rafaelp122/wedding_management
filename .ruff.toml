@@ -17,7 +17,5 @@ select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ"]
 ignore = ["E203"]
 
 [lint.per-file-ignores]
-# F401: imports não usados (comum em __init__ para expor módulos)
-# F403: 'from module import *' (necessário para carregar settings do Django)
 "__init__.py" = ["F401", "F403"]
 "settings.py" = ["F401", "F403"]
