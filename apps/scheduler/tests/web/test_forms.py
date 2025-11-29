@@ -186,7 +186,7 @@ class EventFormTest(TestCase):
         event.planner = self.user
 
         self.assertEqual(event.title, "Evento Mínimo")
-        self.assertIsNone(event.location)
+        self.assertEqual(event.location, "")
         # description retorna string vazia, não None
         self.assertEqual(event.description, "")
 

@@ -149,7 +149,6 @@ class WeddingQuerySetTest(TestCase):
         Contract.objects.create(
             item=item1,
             description="Contrato de prestação de serviços",
-            signature_date=timezone.now().date(),
         )
 
         # --- EXECUÇÃO ---

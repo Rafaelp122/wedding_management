@@ -294,7 +294,7 @@ class ContractNextSignerInfoTest(TestCase):
 
     def test_next_signer_waiting_supplier_no_supplier_name(self):
         """Fornecedor sem nome retorna 'Não vinculado'."""
-        self.item.supplier = None
+        self.item.supplier = ""
         self.item.save()
 
         self.contract.status = "WAITING_SUPPLIER"

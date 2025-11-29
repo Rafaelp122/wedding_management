@@ -9,6 +9,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Remove debug toolbar from installed apps and middleware for tests
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "debug_toolbar"]  # noqa: F405
+MIDDLEWARE = [m for m in MIDDLEWARE if "debug_toolbar" not in m]  # noqa: F405
+
 # Database - in-memory SQLite for tests
 DATABASES = {
     "default": {

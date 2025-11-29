@@ -156,6 +156,6 @@ class EventModelTest(TestCase):
         )
 
         self.assertIsNone(event.wedding)
-        self.assertIsNone(event.location)
-        self.assertIsNone(event.description)
+        self.assertEqual(event.location, "")
+        self.assertEqual(event.description, "")
         self.assertIsNone(event.end_time)
