@@ -1,0 +1,50 @@
+# --- Dockerfile for Development Environment ---
+# Mantém ferramentas de build para desenvolvimento e debugging
+# Uses local.txt which includes test dependencies
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Variáveis de ambiente para desenvolvimento
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Instala dependências de sistema (BUILD + RUNTIME)
+# Em dev, mantemos gcc e headers para instalar pacotes durante desenvolvimento
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    libpq-dev \
+    pkg-config \
+    libcairo2-dev \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Prepara o virtualenv (mesmo em dev, isola dependências)
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Instala dependências de desenvolvimento (inclui pytest, coverage, etc)
+COPY requirements/ /app/requirements/
+RUN pip install --upgrade pip && \
+    pip install -r requirements/local.txt
+
+# Copia o código da aplicação
+COPY . /app/
+
+# Cria diretórios necessários
+RUN mkdir -p /app/staticfiles /app/media /app/logs
+
+# Cria usuário não-root
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8000
+
+# Usa Django dev server com hot reload
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

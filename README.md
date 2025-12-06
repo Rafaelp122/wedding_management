@@ -55,10 +55,12 @@ git clone https://github.com/Rafaelp122/wedding_management.git
 cd wedding_management
 
 # Execute com Docker Compose
-docker-compose up --build
+docker compose -f docker/docker-compose.yml up --build
 
 # Acesse: http://localhost:8000
 ```
+
+> 📘 **Documentação Docker completa:** [docs/DOCKER.md](docs/DOCKER.md)
 
 ### Opção 2: Ambiente Local (Desenvolvimento Rápido)
 
@@ -118,10 +120,19 @@ wedding_management/
 │   ├── scheduler/         # Calendário de eventos
 │   ├── users/             # Autenticação e usuários
 │   └── weddings/          # Gestão de casamentos
+├── docker/                # Configurações Docker
+│   ├── Dockerfile         # Imagem de produção (multi-stage, 411MB)
+│   ├── Dockerfile.dev     # Imagem de desenvolvimento (816MB)
+│   ├── docker-compose.yml         # Ambiente de desenvolvimento
+│   ├── docker-compose.local.yml   # Desenvolvimento híbrido
+│   └── docker-compose.prod.yml    # Produção
 ├── docs/                   # Documentação técnica detalhada
+│   ├── DOCKER.md          # Guia completo Docker
+│   ├── apps/              # Documentação de cada app
+│   └── architecture/      # Arquitetura do sistema
+├── nginx/                 # Configurações Nginx
 ├── static/                # Arquivos estáticos
 ├── templates/             # Templates globais
-├── docker-compose.yml     # Configuração Docker
 └── manage.py             # CLI do Django
 ```
 
@@ -145,7 +156,7 @@ wedding_management/
 - 🔧 [Core](docs/apps/core.md) - Utilitários compartilhados
 
 ### Desenvolvimento
-- 🐳 [Docker Setup](docs/DOCKER.md)
+- 🐳 [Guia Completo Docker](docs/DOCKER.md) - Setup, ambientes, troubleshooting
 - 🧪 [Guia de Testes](docs/testing.md)
 - 🔌 [API REST](docs/api.md)
 

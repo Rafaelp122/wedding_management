@@ -2,16 +2,17 @@
 
 ## 📋 Índice
 1. [Visão Geral](#-visão-geral)
-2. [Diferença entre docker-compose.yml e docker-compose.local.yml](#-diferença-entre-os-arquivos-docker-compose)
-3. [Pré-requisitos](#-pré-requisitos)
-4. [Quick Start](#-quick-start)
-5. [Gerenciamento de Ambientes](#-gerenciamento-de-ambientes)
-6. [Comandos Comuns](#-comandos-comuns)
-7. [Desenvolvimento Local Híbrido](#-desenvolvimento-local-híbrido)
-8. [Monitoramento](#-monitoramento)
-9. [Testes](#-testes)
-10. [Troubleshooting](#-troubleshooting)
-11. [Deploy para Produção](#-deploy-para-produção)
+2. [Dockerfiles - Desenvolvimento vs Produção](#-dockerfiles---desenvolvimento-vs-produção)
+3. [Diferença entre docker-compose.yml e docker-compose.local.yml](#-diferença-entre-os-arquivos-docker-compose)
+4. [Pré-requisitos](#-pré-requisitos)
+5. [Quick Start](#-quick-start)
+6. [Gerenciamento de Ambientes](#-gerenciamento-de-ambientes)
+7. [Comandos Comuns](#-comandos-comuns)
+8. [Desenvolvimento Local Híbrido](#-desenvolvimento-local-híbrido)
+9. [Monitoramento](#-monitoramento)
+10. [Testes](#-testes)
+11. [Troubleshooting](#-troubleshooting)
+12. [Deploy para Produção](#-deploy-para-produção)
 
 ---
 
@@ -25,6 +26,75 @@ Este projeto utiliza Docker Compose para orquestrar múltiplos serviços:
 - **Celery Worker**: Tarefas em background
 - **Celery Beat**: Tarefas agendadas
 - **Nginx**: Proxy reverso e servidor de arquivos estáticos
+
+---
+
+## 🏗️ Dockerfiles - Desenvolvimento vs Produção
+
+### **Dockerfile** (Produção - Multi-Stage Build)
+
+✅ **Características:**
+- **Multi-stage build** em 2 etapas (builder + runtime)
+- **Stage 1 (builder)**: Compila dependências com gcc, headers, etc
+- **Stage 2 (runtime)**: Copia apenas o virtualenv pronto e remove ferramentas de build
+- **Tamanho**: ~411MB (49.6% menor que dev!)
+- **Segurança**: Superfície de ataque reduzida, sem ferramentas de compilação
+- **Performance**: Imagem otimizada para deploy rápido
+
+✅ **Ideal para:**
+- Deploy em produção
+- CI/CD pipelines
+- Docker registries (DockerHub, ECR, etc)
+- Ambientes onde segurança e tamanho importam
+
+```dockerfile
+# Exemplo da estrutura:
+FROM python:3.12-slim as builder  # Stage de build
+RUN apt-get install gcc python3-dev...
+RUN pip install -r requirements/production.txt
+
+FROM python:3.12-slim as runtime  # Stage final
+COPY --from=builder /opt/venv /opt/venv  # Copia apenas o necessário
+# gcc e ferramentas de build NÃO estão aqui!
+```
+
+### **Dockerfile.dev** (Desenvolvimento)
+
+✅ **Características:**
+- **Single-stage build** mais simples
+- **Mantém gcc e ferramentas de desenvolvimento** instaladas
+- **Tamanho**: ~816MB
+- Usa `requirements/local.txt` (inclui pytest, coverage, ipdb, etc)
+- Django dev server com hot reload
+
+✅ **Ideal para:**
+- Desenvolvimento local com Docker
+- Instalar pacotes Python durante desenvolvimento
+- Debug e profiling
+- Testes e experimentação
+
+```dockerfile
+# Exemplo da estrutura:
+FROM python:3.12-slim
+RUN apt-get install gcc python3-dev...  # Ficam na imagem final
+RUN pip install -r requirements/local.txt
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+```
+
+### 📊 Comparação de Tamanho
+
+| Métrica | Dockerfile (Prod) | Dockerfile.dev |
+|---------|------------------|----------------|
+| **Tamanho** | 411MB | 816MB |
+| **Redução** | ✅ 49.6% menor | - |
+| **gcc/build tools** | ❌ Não incluídos | ✅ Incluídos |
+| **Velocidade de deploy** | ⚡ Rápido | 🐢 Mais lento |
+| **Segurança** | 🔒 Mais seguro | ⚠️ Mais pacotes |
+
+### 💡 Resumo
+
+- **Produção (`Dockerfile`)**: Use para deploy! Imagem enxuta, segura e rápida
+- **Desenvolvimento (`Dockerfile.dev`)**: Use para dev em Docker! Mantém ferramentas necessárias
 
 ---
 
@@ -48,7 +118,7 @@ Este projeto utiliza Docker Compose para orquestrar múltiplos serviços:
 
 ✅ **Uso:**
 ```bash
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 # Acessa em: http://localhost (Nginx) ou http://localhost:8000 (Django direto)
 ```
 
@@ -126,7 +196,7 @@ make up
 
 # Ou sem Make:
 docker compose build
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 **Acesso:**
@@ -202,7 +272,7 @@ Depois reinicie os containers:
 
 ```bash
 docker compose down
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 #### **Método 2: Editando docker-compose.yml**
@@ -268,7 +338,7 @@ make celery-beat       # Roda Celery beat localmente
 
 ```bash
 # Gerenciamento básico
-docker compose up -d                    # Inicia em background
+docker compose -f docker/docker-compose.yml up -d                    # Inicia em background
 docker compose down                     # Para os serviços
 docker compose ps                       # Lista containers
 docker compose logs -f web              # Logs em tempo real
@@ -471,7 +541,7 @@ docker compose logs
 
 # Rebuild sem cache
 docker compose build --no-cache
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # Verifique se as portas estão disponíveis
 sudo netstat -tulpn | grep -E ':(80|443|5432|5433|6379|8000)'
@@ -546,7 +616,7 @@ docker compose down -v --remove-orphans --rmi all
 
 # Rebuild completo
 docker compose build --no-cache
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 ### Porta já em uso
@@ -639,7 +709,7 @@ nano .env  # Edite com valores de produção
 docker compose build
 
 # 4. Inicie os serviços
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # 5. Verifique o status
 docker compose ps
@@ -663,7 +733,7 @@ docker compose build
 
 # 3. Pare e inicie os serviços
 docker compose down
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # 4. Execute migrações
 docker compose exec web python manage.py migrate

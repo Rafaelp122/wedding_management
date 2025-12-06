@@ -44,14 +44,14 @@ services:
   # Celery Worker
   celery_worker:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: docker/Dockerfile.dev
     container_name: wedding_celery_worker_local
     command: celery -A wedding_management worker --loglevel=info
     volumes:
-      - .:/app
+      - ../:/app
     env_file:
-      - .env
+      - ../.env
     environment:
       - DJANGO_SETTINGS_MODULE=wedding_management.settings.local
     depends_on:
@@ -66,14 +66,14 @@ services:
   # Celery Beat (opcional)
   celery_beat:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: docker/Dockerfile.dev
     container_name: wedding_celery_beat_local
     command: celery -A wedding_management beat --loglevel=info
     volumes:
-      - .:/app
+      - ../:/app
     env_file:
-      - .env
+      - ../.env
     environment:
       - DJANGO_SETTINGS_MODULE=wedding_management.settings.local
     depends_on:
