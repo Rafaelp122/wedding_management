@@ -16,6 +16,7 @@ DEBUG = False
 
 # Allowed hosts - should be set via environment variable
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost").split(",")
 
 # Security settings
 # TODO: Re-enable HTTPS-only settings when domain is configured
