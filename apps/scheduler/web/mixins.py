@@ -157,7 +157,7 @@ class EventFormLayoutMixin(FormLayoutMixin):
     template_name = EVENT_FORM_MODAL_TEMPLATE
 
     form_layout_dict: ClassVar[dict] = {
-        "title": "col-md-12",
+        "title": "col-md-6",
         "event_type": "col-md-6",
         "location": "col-md-12",
         "description": "col-md-12",
@@ -183,13 +183,69 @@ class EventFormMixin:
     form_class = EventForm
     template_name = EVENT_FORM_MODAL_TEMPLATE
 
+    def get_event_date(self):
+        """
+        Obtém a data do evento.
+
+        Pode ser sobrescrito nas views filhas para fornecer lógica específica.
+        Por padrão, tenta obter do GET (clicked_date) ou do evento existente.
+
+        Returns:
+            date: Data do evento.
+        """
+        # Para updates, pega a data do evento existente
+        if hasattr(self, "object") and self.object and self.object.start_time:
+            from django.utils import timezone
+
+            return timezone.localtime(self.object.start_time).date()
+
+        # Para creates, pega do GET (dia clicado no calendário)
+        clicked_date_str = self.request.GET.get("date")
+        if clicked_date_str:
+            from datetime import datetime
+
+            return datetime.strptime(clicked_date_str, "%Y-%m-%d").date()
+
+        return None
+
     def form_valid(self, form):
         """
-        Salva o evento com planner e wedding, depois retorna resposta HTMX.
+        Salva o evento com planner, wedding e combina data + hora.
         """
+        from datetime import datetime
+
+        from django.utils import timezone
+
         event = form.save(commit=False)
         event.planner = self.request.user
         event.wedding = self.wedding
+
+        # Obtém a data do evento
+        event_date = self.get_event_date()
+
+        if not event_date:
+            logger.error(
+                f"Event date not found: wedding_id={self.wedding.id}, "
+                f"user={self.request.user.username}"
+            )
+            # Adiciona erro ao formulário
+            form.add_error(None, "Data do evento não encontrada.")
+            return self.form_invalid(form)
+
+        # Combina data + hora de início
+        start_time_input = form.get_start_time_input()
+        if start_time_input:
+            event.start_time = timezone.make_aware(
+                datetime.combine(event_date, start_time_input)
+            )
+
+        # Combina data + hora de fim (opcional)
+        end_time_input = form.get_end_time_input()
+        if end_time_input:
+            event.end_time = timezone.make_aware(
+                datetime.combine(event_date, end_time_input)
+            )
+
         event.save()
 
         logger.info(

@@ -65,14 +65,6 @@ class EventCreateView(
         """Retorna a URL para o POST do formulário."""
         return reverse("scheduler:event_create", args=[self.wedding.id])
 
-    def get_form_kwargs(self):
-        """Adiciona clicked_date ao form se veio do GET."""
-        kwargs = super().get_form_kwargs()
-        if self.request.method == "GET":
-            clicked_date = self.request.GET.get("date")
-            kwargs["clicked_date"] = clicked_date
-        return kwargs
-
     def get_context_data(self, **kwargs):
         """Adiciona wedding ao contexto."""
         context = super().get_context_data(**kwargs)

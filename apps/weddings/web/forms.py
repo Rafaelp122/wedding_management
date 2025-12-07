@@ -43,6 +43,7 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
         }
         widgets: ClassVar[dict] = {
             "date": forms.DateInput(attrs={"type": "date"}),
+            "location": forms.Textarea(attrs={"rows": 2}),
         }
 
     def clean_budget(self):

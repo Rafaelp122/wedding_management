@@ -217,17 +217,18 @@ class EventFormMixinTest(TestCase):
         form_data = {
             "title": "Test Event",
             "event_type": Event.TypeChoices.MEETING,
-            "event_date": date.today(),
             "start_time_input": "14:00",
         }
 
         form = EventForm(data=form_data)
         self.assertTrue(form.is_valid())
 
-        # Mock do método de resposta HTMX
+        # Mock do método de resposta HTMX e get_event_date
         self.mixin.render_event_saved_response = Mock(
             return_value=Mock(status_code=204)
         )
+        self.mixin.get_event_date = Mock(return_value=date.today())
+        self.mixin.request.GET = {"date": date.today().strftime("%Y-%m-%d")}
 
         response = self.mixin.form_valid(form)
 
@@ -252,7 +253,6 @@ class EventFormMixinTest(TestCase):
         """
         # Form inválido (sem título obrigatório)
         form_data = {
-            "event_date": date.today(),
             "start_time_input": "14:00",
         }
 

@@ -107,12 +107,13 @@ class EventCreateViewTest(SchedulerViewsTestCase):
             "location": "Restaurante Central",
             "description": "Escolher menu",
             "event_type": Event.TypeChoices.MEETING,
-            "event_date": date.today() + timedelta(days=7),
             "start_time_input": "14:00",
             "end_time_input": "16:00",
         }
 
-        response = self.client.post(url, data)
+        # Adiciona a data no GET params (simula o clique no calendário)
+        url_with_date = f"{url}?date={date.today() + timedelta(days=7)}"
+        response = self.client.post(url_with_date, data)
 
         # Deve retornar 204 com trigger HTMX
         self.assertEqual(response.status_code, 204)
@@ -131,11 +132,12 @@ class EventCreateViewTest(SchedulerViewsTestCase):
 
         data = {
             "title": "",  # Campo obrigatório vazio
-            "event_date": date.today(),
             "start_time_input": "14:00",
         }
 
-        response = self.client.post(url, data)
+        # Adiciona a data no GET params
+        url_with_date = f"{url}?date={date.today()}"
+        response = self.client.post(url_with_date, data)
 
         # Deve retornar formulário com erros
         self.assertEqual(response.status_code, 200)
@@ -218,7 +220,6 @@ class EventUpdateViewTest(SchedulerViewsTestCase):
             "title": "Evento Atualizado",
             "location": "Novo Local",
             "event_type": Event.TypeChoices.PAYMENT,
-            "event_date": date(2025, 12, 20),
             "start_time_input": "15:00",
         }
 

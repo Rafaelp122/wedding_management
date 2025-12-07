@@ -2,7 +2,7 @@
 Testes para o EventForm do app scheduler.
 """
 
-from datetime import date, time, timedelta
+from datetime import time, timedelta
 
 from django.test import TestCase
 from django.utils import timezone
@@ -39,7 +39,6 @@ class EventFormTest(TestCase):
             "location": "Restaurante Central",
             "description": "Escolher menu",
             "event_type": Event.TypeChoices.MEETING,
-            "event_date": date.today() + timedelta(days=7),
             "start_time_input": time(14, 0),
             "end_time_input": time(16, 0),
         }
@@ -58,14 +57,12 @@ class EventFormTest(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("title", form.errors)
-        self.assertIn("event_date", form.errors)
         self.assertIn("start_time_input", form.errors)
 
     def test_form_end_time_before_start_time(self):
         """Testa validação: horário de fim antes do início."""
         form_data = {
             "title": "Evento Teste",
-            "event_date": date.today() + timedelta(days=7),
             "start_time_input": time(16, 0),
             "end_time_input": time(14, 0),  # Antes do início
             "event_type": Event.TypeChoices.OTHER,
@@ -84,7 +81,6 @@ class EventFormTest(TestCase):
         """Testa validação: horário de fim igual ao início."""
         form_data = {
             "title": "Evento Teste",
-            "event_date": date.today() + timedelta(days=7),
             "start_time_input": time(14, 0),
             "end_time_input": time(14, 0),  # Igual ao início
             "event_type": Event.TypeChoices.OTHER,
@@ -95,11 +91,10 @@ class EventFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("end_time_input", form.errors)
 
-    def test_form_save_combines_date_and_time(self):
-        """Testa que o save() combina data e hora corretamente."""
+    def test_form_get_time_methods(self):
+        """Testa que os métodos get_start_time_input e get_end_time_input funcionam."""
         form_data = {
             "title": "Reunião Teste",
-            "event_date": date(2025, 12, 15),
             "start_time_input": time(14, 30),
             "end_time_input": time(16, 0),
             "event_type": Event.TypeChoices.MEETING,
@@ -109,24 +104,14 @@ class EventFormTest(TestCase):
 
         self.assertTrue(form.is_valid())
 
-        event = form.save(commit=False)
-        event.planner = self.user
-        event.wedding = self.wedding
-        event.save()
-
-        # Verifica que start_time foi criado corretamente
-        self.assertEqual(event.start_time.date(), date(2025, 12, 15))
-        self.assertEqual(event.start_time.time(), time(14, 30))
-
-        # Verifica que end_time foi criado corretamente
-        self.assertEqual(event.end_time.date(), date(2025, 12, 15))
-        self.assertEqual(event.end_time.time(), time(16, 0))
+        # Verifica que os métodos retornam os horários corretamente
+        self.assertEqual(form.get_start_time_input(), time(14, 30))
+        self.assertEqual(form.get_end_time_input(), time(16, 0))
 
     def test_form_without_end_time(self):
         """Testa formulário sem horário de término (opcional)."""
         form_data = {
             "title": "Evento sem fim",
-            "event_date": date.today() + timedelta(days=7),
             "start_time_input": time(14, 0),
             "event_type": Event.TypeChoices.OTHER,
         }
@@ -134,20 +119,8 @@ class EventFormTest(TestCase):
         form = EventForm(data=form_data)
 
         self.assertTrue(form.is_valid())
-
-        event = form.save(commit=False)
-        event.planner = self.user
-        event.save()
-
-        self.assertIsNotNone(event.start_time)
-        self.assertIsNone(event.end_time)
-
-    def test_form_with_clicked_date(self):
-        """Testa que clicked_date preenche event_date."""
-        clicked = "2025-12-20"
-        form = EventForm(clicked_date=clicked)
-
-        self.assertEqual(str(form.fields["event_date"].initial), clicked)
+        self.assertEqual(form.get_start_time_input(), time(14, 0))
+        self.assertIsNone(form.get_end_time_input())
 
     def test_form_edit_existing_event(self):
         """Testa edição de evento existente."""
@@ -163,8 +136,7 @@ class EventFormTest(TestCase):
         # Carregar formulário com instância
         form = EventForm(instance=event)
 
-        # Verificar que campos foram preenchidos
-        self.assertEqual(form.fields["event_date"].initial, date(2025, 12, 15))
+        # Verificar que campos de hora foram preenchidos
         self.assertEqual(form.fields["start_time_input"].initial, time(14, 0))
         self.assertEqual(form.fields["end_time_input"].initial, time(16, 0))
 
@@ -172,7 +144,6 @@ class EventFormTest(TestCase):
         """Testa que campos opcionais podem ser omitidos."""
         form_data = {
             "title": "Evento Mínimo",
-            "event_date": date.today() + timedelta(days=7),
             "start_time_input": time(14, 0),
             "event_type": Event.TypeChoices.OTHER,
             # location, description e end_time_input omitidos
@@ -181,14 +152,6 @@ class EventFormTest(TestCase):
         form = EventForm(data=form_data)
 
         self.assertTrue(form.is_valid())
-
-        event = form.save(commit=False)
-        event.planner = self.user
-
-        self.assertEqual(event.title, "Evento Mínimo")
-        self.assertEqual(event.location, "")
-        # description retorna string vazia, não None
-        self.assertEqual(event.description, "")
 
     def test_form_has_bootstrap_classes(self):
         """Testa que FormStylingMixin aplica classes CSS."""
@@ -215,20 +178,19 @@ class EventFormTest(TestCase):
         # Cria o form passando a instância
         form = EventForm(instance=event)
 
-        # Verifica que os campos foram preenchidos corretamente
+        # Verifica que os campos de hora foram preenchidos corretamente
         local_start = timezone.localtime(event.start_time)
         local_end = timezone.localtime(event.end_time)
 
-        self.assertEqual(form.fields["event_date"].initial, local_start.date())
         self.assertEqual(form.fields["start_time_input"].initial, local_start.time())
         self.assertEqual(form.fields["end_time_input"].initial, local_end.time())
 
-    def test_form_save_combines_date_and_time_correctly(self):
-        """Testa que o form.save() combina data + hora corretamente."""
+    def test_form_get_methods_return_correct_values(self):
+        """Testa que get_start_time_input e get_end_time_input retornam
+        valores corretos."""
         form_data = {
             "title": "Reunião Importante",
             "event_type": Event.TypeChoices.MEETING,
-            "event_date": date.today() + timedelta(days=5),
             "start_time_input": time(10, 30),
             "end_time_input": time(12, 0),
         }
@@ -236,23 +198,6 @@ class EventFormTest(TestCase):
         form = EventForm(data=form_data)
         self.assertTrue(form.is_valid())
 
-        # Salva sem commit para inspecionar
-        event = form.save(commit=False)
-        event.wedding = self.wedding
-        event.planner = self.user  # Campo obrigatório
-        event.save()
-
-        # Verifica que start_time foi combinado corretamente
-        expected_start = timezone.make_aware(
-            timezone.datetime.combine(
-                form_data["event_date"], form_data["start_time_input"]
-            )
-        )
-        expected_end = timezone.make_aware(
-            timezone.datetime.combine(
-                form_data["event_date"], form_data["end_time_input"]
-            )
-        )
-
-        self.assertEqual(event.start_time, expected_start)
-        self.assertEqual(event.end_time, expected_end)
+        # Verifica que os métodos retornam os valores corretos
+        self.assertEqual(form.get_start_time_input(), time(10, 30))
+        self.assertEqual(form.get_end_time_input(), time(12, 0))

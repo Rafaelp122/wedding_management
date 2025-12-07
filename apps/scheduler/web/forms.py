@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import ClassVar
 
 from django import forms
@@ -19,25 +18,25 @@ class EventForm(FormStylingMixin, forms.ModelForm):
     Herda de FormStylingMixin para aplicar classes Bootstrap automaticamente.
     """
 
-    event_date = forms.DateField(widget=forms.HiddenInput(), required=True)
-
     start_time_input = forms.TimeField(
         widget=forms.TimeInput(attrs={"type": "time"}),
         required=True,
+        label="Horário de início",
     )
 
     end_time_input = forms.TimeField(
         widget=forms.TimeInput(attrs={"type": "time"}),
         required=False,
+        label="Horário de fim",
     )
 
     class Meta:
         model = Event
         fields: ClassVar[list] = [
             "title",
+            "event_type",
             "location",
             "description",
-            "event_type",
         ]
         labels: ClassVar[dict] = {
             "title": "Título do Evento",
@@ -49,28 +48,35 @@ class EventForm(FormStylingMixin, forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 3}),
         }
 
+    field_order: ClassVar[list] = [
+        "title",
+        "event_type",
+        "start_time_input",
+        "end_time_input",
+        "location",
+        "description",
+    ]
+
     def __init__(self, *args, **kwargs):
-        clicked_date = kwargs.pop("clicked_date", None)
         instance = kwargs.get("instance")
         super().__init__(*args, **kwargs)
 
         add_placeholder(self.fields["title"], "Ex: Reunião com Decorador")
         add_placeholder(self.fields["location"], "Ex: Escritório Decoração Fina")
+        add_placeholder(
+            self.fields["description"],
+            "Ex: Pauta da reunião: definir cardápio, decoração e lista de músicas",
+        )
 
         # Preenche os campos ao editar um evento existente
         if instance:
             if instance.start_time:
                 local_start_time = timezone.localtime(instance.start_time)
-                self.fields["event_date"].initial = local_start_time.date()
                 self.fields["start_time_input"].initial = local_start_time.time()
 
             if instance.end_time:
                 local_end_time = timezone.localtime(instance.end_time)
                 self.fields["end_time_input"].initial = local_end_time.time()
-
-        # Preenche a data com o dia clicado no calendário
-        elif clicked_date:
-            self.fields["event_date"].initial = clicked_date
 
     def clean_end_time_input(self):
         """Valida se o horário de fim é posterior ao horário de início."""
@@ -89,35 +95,10 @@ class EventForm(FormStylingMixin, forms.ModelForm):
 
         return end_time
 
-    def save(self, commit=True):
-        """
-        Combina data e hora nos campos start_time e end_time.
+    def get_start_time_input(self):
+        """Retorna o horário de início do formulário."""
+        return self.cleaned_data.get("start_time_input")
 
-        Args:
-            commit: Se True, salva no banco. Se False, apenas prepara a instância.
-
-        Returns:
-            Instância do Event com datas combinadas.
-        """
-        instance = super().save(commit=False)
-
-        event_date = self.cleaned_data.get("event_date")
-        start_time_input = self.cleaned_data.get("start_time_input")
-        end_time_input = self.cleaned_data.get("end_time_input")
-
-        # Combina data + hora de início
-        if event_date and start_time_input:
-            instance.start_time = timezone.make_aware(
-                datetime.combine(event_date, start_time_input)
-            )
-
-        # Combina data + hora de fim (opcional)
-        if event_date and end_time_input:
-            instance.end_time = timezone.make_aware(
-                datetime.combine(event_date, end_time_input)
-            )
-
-        if commit:
-            instance.save()
-
-        return instance
+    def get_end_time_input(self):
+        """Retorna o horário de fim do formulário."""
+        return self.cleaned_data.get("end_time_input")
