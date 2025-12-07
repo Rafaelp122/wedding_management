@@ -62,8 +62,12 @@ class EventCreateView(
     submit_button_text = SUBMIT_CREATE_TEXT
 
     def get_hx_post_url(self):
-        """Retorna a URL para o POST do formulário."""
-        return reverse("scheduler:event_create", args=[self.wedding.id])
+        """Retorna a URL para o POST do formulário, incluindo o parâmetro date."""
+        base_url = reverse("scheduler:event_create", args=[self.wedding.id])
+        clicked_date = self.request.GET.get("date")
+        if clicked_date:
+            return f"{base_url}?date={clicked_date}"
+        return base_url
 
     def get_context_data(self, **kwargs):
         """Adiciona wedding ao contexto."""

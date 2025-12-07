@@ -188,7 +188,7 @@ class EventFormMixin:
         Obtém a data do evento.
 
         Pode ser sobrescrito nas views filhas para fornecer lógica específica.
-        Por padrão, tenta obter do GET (clicked_date) ou do evento existente.
+        Por padrão, tenta obter do GET/POST (clicked_date) ou do evento existente.
 
         Returns:
             date: Data do evento.
@@ -200,6 +200,7 @@ class EventFormMixin:
             return timezone.localtime(self.object.start_time).date()
 
         # Para creates, pega do GET (dia clicado no calendário)
+        # O parâmetro date é mantido na URL tanto no GET quanto no POST
         clicked_date_str = self.request.GET.get("date")
         if clicked_date_str:
             from datetime import datetime
