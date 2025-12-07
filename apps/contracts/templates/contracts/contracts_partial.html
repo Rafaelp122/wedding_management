@@ -120,10 +120,22 @@
           </table>
         </div>
       {% else %}
-        <p class="text-muted">Nenhum contrato foi gerado para este casamento ainda.</p>
+        <div class="alert alert-light text-center border mt-3">
+          <div class="mb-2">
+            <i class="fas fa-file-signature fa-2x text-muted opacity-50"></i>
+          </div>
+          <span class="text-muted">Nenhum contrato foi gerado ainda.</span>
+          <br>
+          Para criar novos contratos,
+          <a href="#" 
+             class="fw-bold text-decoration-none"
+             style="color: var(--color-accent, #6f42c1);"
+             onclick="document.querySelector('a[data-tab=\'items\']').click(); return false;">
+             adicione itens ao casamento.
+          </a>
+        </div>
       {% endif %}
   </div>
-  <!-- FIM DA ZONA DE ATUALIZAÇÃO -->
 
 </div>
 
