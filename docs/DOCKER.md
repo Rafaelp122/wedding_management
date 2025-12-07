@@ -127,11 +127,50 @@ docker compose -f docker/docker-compose.yml up -d
 ✅ **Contém APENAS serviços de apoio:**
 - PostgreSQL (porta 5432)
 - Redis
-- Celery Worker (opcional)
+- Celery Worker
+- Celery Beat
 
 ❌ **NÃO contém:**
 - Django Web (você roda localmente: `python manage.py runserver`)
 - Nginx (acesso direto ao Django)
+
+### **docker-compose.prod.yml** (Produção Otimizada)
+
+✅ **Versão para produção:**
+- Usa `Dockerfile` (multi-stage, otimizado)
+- Configurações de segurança reforçadas
+- Health checks completos
+- Recursos limitados
+- Restart policies configuradas
+
+✅ **Ideal para:**
+- Deploy em servidor de produção
+- Ambientes CI/CD
+- Staging/homologação
+
+✅ **Uso:**
+```bash
+docker compose -f docker/docker-compose.prod.yml up -d
+# Acessa em: http://localhost (via Nginx)
+```
+
+### 💡 Resumo dos 3 Arquivos
+
+| Aspecto | docker-compose.yml | docker-compose.local.yml | docker-compose.prod.yml |
+|---------|-------------------|-------------------------|------------------------|
+| **Dockerfile** | Dockerfile.dev | - | Dockerfile (otimizado) |
+| **Django** | ✅ Container | ❌ Local | ✅ Container |
+| **PostgreSQL** | ✅ Porta 5433<br>Volume: `postgres_data` | ✅ Porta 5432<br>Volume: `postgres_data_local` | ✅ Porta 5433<br>Volume: `postgres_data_prod` |
+| **Redis** | ✅ Container | ✅ Container | ✅ Container |
+| **Nginx** | ✅ Container | ❌ Não usa | ✅ Container |
+| **Banco de Dados** | ⚠️ Isolado | ⚠️ Isolado (diferente) | ⚠️ Isolado (diferente) |
+| **Uso** | Dev completo | Dev rápido | Produção |
+
+⚠️ **Importante:** Cada ambiente usa um **volume diferente** para o PostgreSQL, então os dados **não são compartilhados** entre ambientes.
+
+---
+
+## 📂 Desenvolvimento Local Híbrido
 
 ✅ **Ideal para:**
 - Desenvolvimento ágil
@@ -142,21 +181,10 @@ docker compose -f docker/docker-compose.yml up -d
 
 ✅ **Uso:**
 ```bash
-docker compose -f docker-compose.local.yml up -d
+docker compose -f docker/docker-compose.local.yml up -d
 python manage.py runserver  # Django roda na sua máquina
 # Acessa em: http://localhost:8000
 ```
-
-### 💡 Resumo da Diferença
-
-| Aspecto | docker-compose.yml | docker-compose.local.yml |
-|---------|-------------------|-------------------------|
-| **Django** | ✅ Container (Gunicorn) | ❌ Roda na máquina local |
-| **PostgreSQL** | ✅ Porta 5433 | ✅ Porta 5432 |
-| **Redis** | ✅ Container | ✅ Container |
-| **Celery** | ✅ Worker + Beat | ✅ Só Worker |
-| **Nginx** | ✅ Container | ❌ Não usa |
-| **Uso** | Completo/Produção | Dev rápido |
 
 ---
 
@@ -212,7 +240,7 @@ docker compose -f docker/docker-compose.yml up -d
 make local-up
 
 # Ou sem Make:
-docker compose -f docker-compose.local.yml up -d
+docker compose -f docker/docker-compose.local.yml up -d
 
 # Em outro terminal, rode Django localmente
 python manage.py migrate
@@ -321,7 +349,12 @@ make collectstatic     # Coleta arquivos estáticos
 make test              # Executa testes
 make test-coverage     # Executa testes com coverage
 make clean             # Remove containers, volumes e orphans
+make clean-temp        # Remove arquivos temporários (cache, logs)
+make clean-logs        # Limpa arquivos de log
+make clean-all         # Limpeza completa (Docker + temp)
 make ps                # Mostra containers rodando
+make images            # Lista imagens Docker
+make image-size        # Compara tamanhos das imagens
 ```
 
 ### Desenvolvimento Local (sem Docker completo)
@@ -332,6 +365,16 @@ make local-down        # Para DB e Redis
 make runserver         # Roda Django localmente
 make celery-worker     # Roda Celery worker localmente
 make celery-beat       # Roda Celery beat localmente
+```
+
+### Produção
+
+```bash
+make prod-build        # Build das imagens de produção
+make prod-up           # Inicia serviços de produção
+make prod-down         # Para serviços de produção
+make prod-logs         # Mostra logs de produção
+make prod-ps           # Lista containers de produção
 ```
 
 ### Usando Docker Compose Diretamente
@@ -373,7 +416,7 @@ Este modo permite rodar PostgreSQL e Redis em Docker, mas Django na sua máquina
 
 ```bash
 # 1. Inicie apenas DB e Redis
-docker compose -f docker-compose.local.yml up -d
+docker compose -f docker/docker-compose.local.yml up -d
 
 # 2. Instale dependências (se ainda não fez)
 pip install -r requirements/local.txt
@@ -401,7 +444,7 @@ celery -A wedding_management beat --loglevel=info
 ### Parando Serviços Locais
 
 ```bash
-docker compose -f docker-compose.local.yml down
+docker compose -f docker/docker-compose.local.yml down
 ```
 
 ---
@@ -760,9 +803,12 @@ Adicione ao crontab do servidor:
 
 ```
 wedding_management/
-├── docker-compose.yml              # Setup completo (dev/prod)
-├── docker-compose.local.yml        # Setup mínimo (dev local)
-├── Dockerfile                      # Imagem Django
+├── docker/
+│   ├── docker-compose.yml          # Setup completo (dev)
+│   ├── docker-compose.local.yml    # Setup mínimo (dev local)
+│   ├── docker-compose.prod.yml     # Setup produção otimizado
+│   ├── Dockerfile                  # Imagem Django (produção)
+│   └── Dockerfile.dev              # Imagem Django (desenvolvimento)
 ├── entrypoint.sh                   # Script de inicialização
 ├── Makefile                        # Atalhos de comandos
 ├── .env                            # Variáveis de ambiente (não versionar!)

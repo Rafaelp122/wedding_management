@@ -56,6 +56,24 @@ test: ## Run tests
 test-coverage: ## Run tests with coverage
 	$(COMPOSE_DEV) exec web pytest --cov=apps --cov-report=html
 
+local-test: ## Run tests locally (fast)
+	@bash -c 'source venv/bin/activate && pytest -n auto --tb=short -q'
+
+local-test-verbose: ## Run tests locally with verbose output
+	@bash -c 'source venv/bin/activate && pytest -n auto -v'
+
+local-test-coverage: ## Run tests locally with coverage
+	@bash -c 'source venv/bin/activate && pytest -n auto --cov=apps --cov-report=html --cov-report=term-missing'
+
+local-test-failed: ## Re-run only failed tests
+	@bash -c 'source venv/bin/activate && pytest --lf -n auto -v'
+
+local-test-specific: ## Run specific test (usage: make local-test-specific TEST=apps/users/tests/test_models.py)
+	@bash -c 'source venv/bin/activate && pytest $(TEST) -v'
+
+local-test-debug: ## Run tests without parallelism (best for debugging)
+	@bash -c 'source venv/bin/activate && pytest -vv --maxfail=1'
+
 clean: ## Remove containers, volumes, and orphans
 	$(COMPOSE_DEV) down -v --remove-orphans
 	rm -rf htmlcov .coverage
@@ -82,8 +100,26 @@ local-up: ## Start local services (db, redis only)
 local-down: ## Stop local services
 	$(COMPOSE_LOCAL) down
 
+local-ps: ## Show local containers
+	$(COMPOSE_LOCAL) ps
+
+local-logs: ## Show logs from local services
+	$(COMPOSE_LOCAL) logs -f
+
 runserver: ## Run Django development server locally
-	python manage.py runserver 0.0.0.0:8000
+	@bash -c 'source venv/bin/activate && python manage.py runserver 0.0.0.0:8000'
+
+local-migrate: ## Run database migrations locally
+	@bash -c 'source venv/bin/activate && python manage.py migrate'
+
+local-makemigrations: ## Create new migrations locally
+	@bash -c 'source venv/bin/activate && python manage.py makemigrations'
+
+local-shell: ## Open Django shell locally
+	@bash -c 'source venv/bin/activate && python manage.py shell'
+
+local-createsuperuser: ## Create superuser locally
+	@bash -c 'source venv/bin/activate && python manage.py createsuperuser'
 
 # Production
 prod-build: ## Build production images
@@ -118,7 +154,7 @@ image-size: ## Compare image sizes
 	@echo "💡 Tip: Production image is ~50% smaller!"
 
 celery-worker: ## Run Celery worker locally
-	celery -A wedding_management worker --loglevel=info
+	@bash -c 'source venv/bin/activate && celery -A wedding_management worker --loglevel=info'
 
 celery-beat: ## Run Celery beat locally
-	celery -A wedding_management beat --loglevel=info
+	@bash -c 'source venv/bin/activate && celery -A wedding_management beat --loglevel=info'
