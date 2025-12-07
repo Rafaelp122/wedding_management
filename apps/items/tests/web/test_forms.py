@@ -77,7 +77,9 @@ class ItemFormTest(SimpleTestCase):
         self.assertEqual(str(form.fields["quantity"].widget.attrs["min"]), "1")
 
         # Preço agora é CharField com classe de moeda, não tem mais min/step
-        self.assertIn("currency-input", form.fields["unit_price"].widget.attrs.get("class", ""))
+        self.assertIn(
+            "currency-input", form.fields["unit_price"].widget.attrs.get("class", "")
+        )
 
         # Descrição deve ter rows=3
         self.assertEqual(form.fields["description"].widget.attrs["rows"], 3)

@@ -140,11 +140,6 @@ wedding_management/
 
 ## 📚 Documentação
 
-### Visão Geral
-- 📖 [Arquitetura do Sistema](docs/architecture/overview.md)
-- 🏗️ [Decisões de Design](docs/architecture/design-decisions.md)
-- 🔄 [Fluxo de Dados](docs/architecture/data-flow.md)
-
 ### Por Aplicação
 - 💒 [Weddings](docs/apps/weddings.md) - Gestão de casamentos
 - 📝 [Contracts](docs/apps/contracts.md) - Sistema de assinatura digital
@@ -157,8 +152,7 @@ wedding_management/
 
 ### Desenvolvimento
 - 🐳 [Guia Completo Docker](docs/DOCKER.md) - Setup, ambientes, troubleshooting
-- 🧪 [Guia de Testes](docs/testing.md)
-- 🔌 [API REST](docs/api.md)
+- 🚀 [Deploy em Produção](docs/PRODUCTION_DEPLOY.md) - Guia de deployment
 
 ---
 
@@ -170,10 +164,6 @@ Projeto desenvolvido por **Rafael Pereira**, **Flávio Costa**, **Jhony Assal** 
 **Instituição:** FIRJAN SENAI São Gonçalo  
 
 ---
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
