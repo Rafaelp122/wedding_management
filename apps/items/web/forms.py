@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal, InvalidOperation
 from typing import Any, ClassVar
 
 from django import forms
@@ -16,24 +17,44 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
     Formulário para criação e edição de Itens do Orçamento.
     """
 
+    # 1. Redefinimos como CharField para aceitar a máscara (R$, vírgula, etc)
+    unit_price = forms.CharField(
+        label="Preço Unitário",
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "currency-input",  # A classe mágica para o seu JS
+                "inputmode": "numeric",  # Teclado numérico no mobile
+                "placeholder": "R$ 0,00",
+            }
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Adiciona os placeholders dinamicamente
+        # Adiciona os placeholders
         add_placeholder(self.fields["name"], "Ex: Buffet Completo")
         add_placeholder(
             self.fields["description"], "Detalhes do item, observações, etc."
         )
-        add_placeholder(self.fields["unit_price"], "Ex: 150.00")
+        # O placeholder do unit_price já foi definido no widget acima
         add_placeholder(self.fields["supplier"], "Ex: Floricultura")
 
-        # Forçamos o min="1" aqui, pois o PositiveIntegerField do model forçava "0"
+        # Configuração da Quantidade (Mantida)
         self.fields["quantity"].widget.attrs["min"] = 1
-        self.fields["quantity"].widget.attrs["value"] = 1  # Valor inicial visual
+        # Se for criação (sem instancia), sugere 1 visualmente
+        if not self.instance.pk:
+            self.fields["quantity"].widget.attrs["value"] = 1
 
-        # Garantimos o preço também
-        self.fields["unit_price"].widget.attrs["min"] = 0
-        self.fields["unit_price"].widget.attrs["step"] = "0.01"
+        # 2. Se for edição, formata o preço do banco (150.00) para visual (R$ 150,00)
+        if self.instance and self.instance.pk and self.instance.unit_price:
+            formatted_value = f"{self.instance.unit_price:,.2f}"
+            # Troca padrão US para BR
+            formatted_value = (
+                formatted_value.replace(",", "X").replace(".", ",").replace("X", ".")
+            )
+            self.fields["unit_price"].initial = f"R$ {formatted_value}"
 
     class Meta:
         model = Item
@@ -51,7 +72,7 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
             "name": "Nome do Item",
             "category": "Categoria",
             "quantity": "Quantidade",
-            "unit_price": "Preço Unitário",
+            # "unit_price": Definido manualmente acima
             "supplier": "Fornecedor",
             "description": "Descrição (Opcional)",
         }
@@ -64,7 +85,6 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
         """Valida se a quantidade é positiva."""
         quantity = self.cleaned_data.get("quantity")
         if quantity is not None and quantity <= 0:
-            # Loga o erro antes de lançar a exceção
             logger.warning(
                 f"Tentativa de cadastro de item com quantidade inválida: {quantity}"
             )
@@ -72,11 +92,36 @@ class ItemForm(FormStylingMixin, forms.ModelForm):
         return quantity
 
     def clean_unit_price(self):
-        """Valida se o preço não é negativo."""
-        unit_price = self.cleaned_data.get("unit_price")
-        if unit_price is not None and unit_price < 0:
+        """
+        Recebe: 'R$ 150,00' (String visual)
+        Transforma em: 150.00 (Decimal puro para o banco)
+        """
+        price_str = self.cleaned_data.get("unit_price")
+
+        if not price_str:
+            return None
+
+        # Limpeza robusta
+        clean_value = (
+            price_str.replace("R$", "")
+            .replace("\xa0", "")  # Remove espaço non-breaking
+            .replace(" ", "")
+            .replace(".", "")  # Remove ponto de milhar
+            .replace(",", ".")  # Troca vírgula por ponto
+        )
+
+        try:
+            price_decimal = Decimal(clean_value)
+        except (ValueError, InvalidOperation):
+            logger.warning("Erro de conversão no preço do item. Input: '%s'", price_str)
+            raise forms.ValidationError(
+                "Valor inválido. Digite apenas números."
+            ) from None
+
+        if price_decimal < 0:
             logger.warning(
-                f"Tentativa de cadastro de item com preço negativo: {unit_price}"
+                f"Tentativa de cadastro de item com preço negativo: {price_decimal}"
             )
             raise forms.ValidationError("O preço unitário não pode ser negativo.")
-        return unit_price
+
+        return price_decimal
