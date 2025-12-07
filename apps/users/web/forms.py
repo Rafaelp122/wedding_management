@@ -124,7 +124,7 @@ class CustomUserChangeForm(FormStylingMixin, UserChangeForm):
     A senha é removida para evitar alterações acidentais aqui.
     """
 
-    password = None
+    password = None  # type: ignore[assignment]
 
     class Meta:
         model = User

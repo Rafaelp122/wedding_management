@@ -4,6 +4,7 @@ Testes para os mixins refatorados do app contracts.
 
 import base64
 from io import BytesIO
+from typing import cast
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -91,7 +92,10 @@ class ContractOwnershipMixinTest(TestCase):
 
         # Deve ter apenas o contrato do owner
         self.assertEqual(queryset.count(), 1)
-        self.assertEqual(queryset.first().item.wedding.planner, self.owner)
+        first_contract = queryset.first()
+        self.assertIsNotNone(first_contract)
+        first_contract = cast("Contract", first_contract)  # Type narrowing
+        self.assertEqual(first_contract.item.wedding.planner, self.owner)
 
 
 class ContractQuerysetMixinTest(TestCase):

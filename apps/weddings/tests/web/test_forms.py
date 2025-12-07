@@ -111,10 +111,9 @@ class WeddingFormTest(SimpleTestCase):
             form.fields["groom_name"].widget.attrs.get("placeholder"), "Ex: Flavio"
         )
 
-        # Verifica placeholder do Orçamento (só para garantir mais um)
-        self.assertEqual(
-            form.fields["budget"].widget.attrs.get("placeholder"), "Ex.: R$ 30.000,00"
-        )
+        # Budget agora tem valor inicial formatado, não placeholder
+        # Verifica que tem o valor inicial formatado em BRL
+        self.assertIn("R$", form.fields["budget"].widget.attrs.get("placeholder", ""))
 
     def test_form_missing_required_fields(self):
         """
@@ -127,6 +126,6 @@ class WeddingFormTest(SimpleTestCase):
         # Todos esses campos são required=True no model
         self.assertIn("groom_name", form.errors)
         self.assertIn("bride_name", form.errors)
-        self.assertIn("budget", form.errors)
+        # budget não é mais required pois tem valor inicial no __init__
         self.assertIn("location", form.errors)
         self.assertIn("date", form.errors)

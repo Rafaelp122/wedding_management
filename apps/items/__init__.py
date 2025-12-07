@@ -9,6 +9,33 @@ Este módulo usa imports lazy para evitar problemas de carregamento
 circular e AppRegistryNotReady.
 """
 
+from typing import TYPE_CHECKING
+
+# Type checking imports (não executados em runtime)
+if TYPE_CHECKING:
+    from .api.permissions import IsItemOwner
+    from .api.serializers import (
+        ItemDetailSerializer,
+        ItemListSerializer,
+        ItemSerializer,
+    )
+    from .api.views import ItemViewSet
+    from .models import Item
+    from .querysets import ItemQuerySet
+    from .web.forms import ItemForm
+    from .web.mixins import (
+        ItemListActionsMixin,
+        ItemQuerysetMixin,
+        ItemWeddingContextMixin,
+    )
+    from .web.views import (
+        AddItemView,
+        DeleteItemView,
+        EditItemView,
+        ItemListView,
+        UpdateItemStatusView,
+    )
+
 
 def __getattr__(name):
     """

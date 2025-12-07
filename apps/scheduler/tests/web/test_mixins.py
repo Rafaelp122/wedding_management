@@ -13,6 +13,7 @@ Princípios seguidos:
 """
 
 from datetime import date, timedelta
+from typing import cast
 from unittest.mock import Mock
 
 from django.http import Http404
@@ -235,6 +236,8 @@ class EventFormMixinTest(TestCase):
         # Verifica que evento foi criado
         self.assertEqual(Event.objects.count(), 1)
         event = Event.objects.first()
+        self.assertIsNotNone(event)
+        event = cast(Event, event)  # Type narrowing for Pylance
 
         # CRÍTICO: Verifica relações corretas
         self.assertEqual(event.planner, self.user)

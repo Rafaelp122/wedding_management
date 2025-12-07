@@ -69,7 +69,7 @@ class WeddingQuerysetMixinTest(TestCase):
         """Configuração por teste."""
 
         class QuerysetView(WeddingQuerysetMixin):
-            request = None
+            request = None  # type: ignore[assignment]
 
         self.view = QuerysetView()
         request = RequestFactory().get("/")

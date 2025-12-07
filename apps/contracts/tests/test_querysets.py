@@ -2,6 +2,8 @@
 Testes para os querysets customizados do app contracts.
 """
 
+from typing import cast
+
 from django.test import TestCase
 
 from apps.contracts.models import Contract
@@ -190,6 +192,8 @@ class ContractQuerySetTest(TestCase):
     def test_get_next_signer_name_waiting_planner(self):
         """Deve retornar info do cerimonialista."""
         contract = Contract.objects.filter(status="WAITING_PLANNER").first()
+        self.assertIsNotNone(contract)
+        contract = cast(Contract, contract)  # Type narrowing
 
         info = Contract.objects.get_next_signer_name(contract.id)
 
@@ -199,6 +203,8 @@ class ContractQuerySetTest(TestCase):
     def test_get_next_signer_name_waiting_supplier(self):
         """Deve retornar info do fornecedor."""
         contract = Contract.objects.filter(status="WAITING_SUPPLIER").first()
+        self.assertIsNotNone(contract)
+        contract = cast(Contract, contract)  # Type narrowing
 
         info = Contract.objects.get_next_signer_name(contract.id)
 

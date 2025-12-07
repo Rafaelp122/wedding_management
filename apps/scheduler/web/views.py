@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from django.shortcuts import render
 from django.urls import reverse
@@ -6,6 +7,9 @@ from django.views import View
 from django.views.generic import CreateView, TemplateView, UpdateView
 
 from apps.core.mixins.auth import WeddingOwnershipMixin
+
+if TYPE_CHECKING:
+    from apps.weddings.models import Wedding
 
 from ..constants import (
     CONFIRM_DELETE_TEMPLATE,
@@ -36,6 +40,7 @@ class SchedulerPartialView(WeddingOwnershipMixin, TemplateView):
     """
 
     template_name = SCHEDULER_PARTIAL_TEMPLATE
+    wedding: "Wedding"  # Set by WeddingOwnershipMixin.dispatch()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -60,6 +65,7 @@ class EventCreateView(
 
     modal_title = MODAL_CREATE_TITLE
     submit_button_text = SUBMIT_CREATE_TEXT
+    wedding: "Wedding"  # Set by WeddingOwnershipMixin.dispatch()
 
     def get_hx_post_url(self):
         """Retorna a URL para o POST do formulário, incluindo o parâmetro date."""
@@ -90,6 +96,7 @@ class EventDetailView(EventOwnershipMixin, WeddingOwnershipMixin, View):
     """Exibe os detalhes do evento no modal."""
 
     template_name = EVENT_DETAIL_TEMPLATE
+    wedding: "Wedding"  # Set by WeddingOwnershipMixin.dispatch()
 
     def get(self, request, *args, **kwargs):
         event_id = kwargs.get("event_id")
@@ -121,6 +128,7 @@ class EventUpdateFormView(
 
     modal_title = MODAL_EDIT_TITLE
     submit_button_text = SUBMIT_EDIT_TEXT
+    wedding: "Wedding"  # Set by WeddingOwnershipMixin.dispatch()
 
     def get_hx_post_url(self):
         """Retorna a URL para o POST do formulário."""
@@ -152,6 +160,7 @@ class EventUpdateView(
 
     modal_title = MODAL_EDIT_TITLE
     submit_button_text = SUBMIT_EDIT_TEXT
+    wedding: "Wedding"  # Set by WeddingOwnershipMixin.dispatch()
 
     def get_hx_post_url(self):
         """Retorna a URL para o POST do formulário."""
@@ -174,6 +183,7 @@ class EventUpdateView(
 # MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (GENÉRICO)
 class EventDeleteModalView(EventOwnershipMixin, WeddingOwnershipMixin, View):
     template_name = CONFIRM_DELETE_TEMPLATE
+    wedding: "Wedding"  # Set by WeddingOwnershipMixin.dispatch()
 
     def get(self, request, *args, **kwargs):
         event = self.get_event_or_404(kwargs["event_id"])
@@ -199,6 +209,8 @@ class EventDeleteView(
     """
     Deleta o evento e dispara trigger HTMX.
     """
+
+    wedding: "Wedding"  # Set by WeddingOwnershipMixin.dispatch()
 
     def post(self, request, *args, **kwargs):
         event = self.get_event_or_404(kwargs["event_id"])

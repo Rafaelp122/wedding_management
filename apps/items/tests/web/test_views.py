@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.db import DatabaseError
@@ -46,7 +47,7 @@ class ItemListViewTest(TestCase):
     def test_htmx_partial_load(self):
         """Acesso HTMX com target específico renderiza apenas a lista."""
         headers = {"HTTP_HX-Request": "true", "HTTP_HX-Target": "item-list-container"}
-        response = self.client.get(self.url, **headers)
+        response = self.client.get(self.url, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "items/partials/_list_and_pagination.html")
@@ -71,7 +72,7 @@ class ItemListViewTest(TestCase):
 
         # Faz o GET com busca (simulando HTMX)
         headers = {"HTTP_HX-Request": "true", "HTTP_HX-Target": "item-list-container"}
-        response = self.client.get(f"{self.url}?q=UniqueItemXYZ", **headers)
+        response = self.client.get(f"{self.url}?q=UniqueItemXYZ", **headers)  # type: ignore[misc]
 
         # A lista paginada deve conter apenas 1 item
         items = response.context["items"]
@@ -92,7 +93,7 @@ class ItemListViewTest(TestCase):
         )
 
         headers = {"HTTP_HX-Request": "true", "HTTP_HX-Target": "item-list-container"}
-        response = self.client.get(f"{self.url}?sort=price_desc", **headers)
+        response = self.client.get(f"{self.url}?sort=price_desc", **headers)  # type: ignore[misc]
 
         items = response.context["items"]
         # O primeiro deve ser o Caro
@@ -136,7 +137,7 @@ class AddItemViewTest(TestCase):
         }
         headers = {"HTTP_HX-Request": "true"}
 
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 
@@ -152,7 +153,7 @@ class AddItemViewTest(TestCase):
         data = {"name": ""}  # Inválido
         headers = {"HTTP_HX-Request": "true"}
 
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/form_modal.html")
@@ -177,7 +178,7 @@ class AddItemViewTest(TestCase):
 
             # O POST deve falhar com DatabaseError
             with self.assertRaises(DatabaseError):
-                self.client.post(self.url, data, **headers)
+                self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         # VALIDAÇÃO CRÍTICA: Não deve ter criado o item (rollback)
         self.assertFalse(Item.objects.filter(name="Item com Erro").exists())
@@ -211,7 +212,7 @@ class UpdateItemStatusViewTest(TestCase):
         data = {"status": "DONE"}
         headers = {"HTTP_HX-Request": "true"}
 
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 
@@ -232,7 +233,7 @@ class UpdateItemStatusViewTest(TestCase):
         data = {"status": "INVALID_STATUS_XYZ"}
         headers = {"HTTP_HX-Request": "true"}
 
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode(), "Status inválido")
@@ -277,19 +278,19 @@ class EditItemViewTest(TestCase):
             "name": "Item Editado",
             "category": "BUFFET",
             "quantity": 2,
-            "unit_price": "20.00",
+            "unit_price": "R$ 20,00",  # Formato BRL
             "supplier": "Supplier Y",
             "description": "Desc Editada",
         }
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 
         # Verifica Banco
         self.item.refresh_from_db()
         self.assertEqual(self.item.name, "Item Editado")
-        self.assertEqual(self.item.unit_price, 20.00)
+        self.assertEqual(self.item.unit_price, Decimal("20.00"))
 
         # Verifica Retorno (Lista atualizada)
         self.assertTemplateUsed(response, "items/partials/_list_and_pagination.html")
@@ -303,7 +304,7 @@ class EditItemViewTest(TestCase):
             "unit_price": "-50.00",  # Inválido
         }
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/form_modal.html")
@@ -342,7 +343,7 @@ class ItemDeleteViewTest(TestCase):
 
     def test_post_deletes_item(self):
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.post(self.url, **headers)
+        response = self.client.post(self.url, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 

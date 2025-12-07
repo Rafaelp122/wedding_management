@@ -154,6 +154,7 @@ class ContractSignatureProcessingTest(TestCase):
         # Cria imagem com gradiente para evitar compressão eficiente
         large_img = Image.new("RGB", (width, height))
         pixels = large_img.load()
+        self.assertIsNotNone(pixels, "Failed to load image pixels")
 
         # Preenche com padrão complexo que não comprime bem
         for i in range(width):
@@ -162,7 +163,7 @@ class ContractSignatureProcessingTest(TestCase):
                 r = (i * j) % 256
                 g = (i + j) % 256
                 b = (i - j) % 256
-                pixels[i, j] = (r, g, b)
+                pixels[i, j] = (r, g, b)  # type: ignore[index]
 
         buffer = BytesIO()
         # Salva como JPEG com qualidade máxima (sem compressão)

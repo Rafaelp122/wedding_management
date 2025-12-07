@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from django.db import transaction
 from django.http import HttpResponseBadRequest
@@ -22,6 +23,9 @@ from .mixins import (
     ItemPlannerSecurityMixin,  # Segurança para Update/Delete
     ItemWeddingContextMixin,  # OBRIGATÓRIO: Carrega 'self.wedding'
 )
+
+if TYPE_CHECKING:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +193,7 @@ class UpdateItemStatusView(
         try:
             # get_queryset() vem do ItemPlannerSecurityMixin (segurança)
             item = self.get_queryset().get(pk=self.kwargs["pk"])
-        except self.model.DoesNotExist:
+        except Item.DoesNotExist:
             # A segurança do dispatch já deve ter pego isso, mas é uma
             # boa prática ter uma verificação dupla.
             logger.warning(
@@ -201,7 +205,7 @@ class UpdateItemStatusView(
             return HttpResponseBadRequest("Item não encontrado ou sem permissão.")
 
         new_status = request.POST.get("status")
-        valid_statuses = [status[0] for status in self.model.STATUS_CHOICES]
+        valid_statuses = [status[0] for status in Item.STATUS_CHOICES]
 
         if new_status not in valid_statuses:
             logger.warning(

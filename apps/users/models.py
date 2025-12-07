@@ -5,7 +5,7 @@ from django.core.validators import MaxLengthValidator
 from django.db import models
 
 
-class CustomUserManager(BaseUserManager):
+class CustomUserManager(BaseUserManager["User"]):
     def create_user(self, username, email, password=None, **extra_fields):
         if not email:
             raise ValueError("O campo de E-mail é obrigatório")
@@ -39,7 +39,7 @@ class User(AbstractUser):
 
     REQUIRED_FIELDS: ClassVar[list] = ["email"]
 
-    objects = CustomUserManager()
+    objects: ClassVar[CustomUserManager] = CustomUserManager()  # type: ignore[assignment]
 
     def __str__(self):
         return self.email

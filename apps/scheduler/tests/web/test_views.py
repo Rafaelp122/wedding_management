@@ -3,6 +3,7 @@ Testes para as views do app scheduler.
 """
 
 from datetime import date, timedelta
+from typing import cast
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -122,6 +123,8 @@ class EventCreateViewTest(SchedulerViewsTestCase):
         # Verificar que evento foi criado
         self.assertEqual(Event.objects.count(), 1)
         event = Event.objects.first()
+        self.assertIsNotNone(event)
+        event = cast(Event, event)  # Type narrowing for Pylance
         self.assertEqual(event.title, "Reunião com Buffet")
         self.assertEqual(event.planner, self.user)
         self.assertEqual(event.wedding, self.wedding)

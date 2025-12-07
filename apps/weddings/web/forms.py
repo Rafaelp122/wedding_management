@@ -38,7 +38,8 @@ class WeddingForm(FormStylingMixin, forms.ModelForm):
         add_placeholder(self.fields["bride_name"], "Ex: Mirela")
         add_placeholder(self.fields["location"], "Ex.: Igreja Matriz, São Gonçalo, RJ")
 
-        # 2. Se for edição, converte o Decimal do banco (30000.00) para Texto (R$ 30.000,00)
+        # 2. Se for edição, converte o Decimal do banco (30000.00) para
+        # Texto (R$ 30.000,00)
         if self.instance and self.instance.pk and self.instance.budget:
             formatted_value = f"{self.instance.budget:,.2f}"
             # Troca padrão US para BR

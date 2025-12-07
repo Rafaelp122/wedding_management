@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from decimal import Decimal
 
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
@@ -54,7 +55,7 @@ class WeddingListViewTest(TestCase):
         """
         # Simulamos headers HTMX
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.get(self.url, **headers)
+        response = self.client.get(self.url, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "weddings/partials/_list_and_pagination.html")
@@ -74,7 +75,7 @@ class WeddingListViewTest(TestCase):
         # Na sua implementação atual (WeddingListView), ele pega do
         # GET (request_params = self.request.GET.copy())
         # Então passamos no GET também
-        response = self.client.get(f"{self.url}?page=2", **headers)
+        response = self.client.get(f"{self.url}?page=2", **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
         # Página 2 deve ter 4 itens (10 total - 6 na pág 1)
@@ -96,7 +97,7 @@ class WeddingListViewTest(TestCase):
 
         # Teste Integrado: Busca + HTMX (Simula digitação do usuário)
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.get(f"{self.url}?q=UniqueNameXYZ", **headers)
+        response = self.client.get(f"{self.url}?q=UniqueNameXYZ", **headers)  # type: ignore[misc]
 
         weddings_context = response.context["paginated_weddings"]
         self.assertEqual(len(weddings_context), 1)
@@ -202,7 +203,7 @@ class WeddingCreateViewTest(TestCase):
 
         # Simula request HTMX
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 
@@ -237,7 +238,7 @@ class WeddingCreateViewTest(TestCase):
         data = {}  # Vazio = Inválido
         headers = {"HTTP_HX-Request": "true"}
 
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/form_modal.html")
@@ -279,17 +280,17 @@ class WeddingUpdateViewTest(TestCase):
             "groom_name": "Updated Groom",
             "bride_name": "Updated Bride",
             "date": future_date,
-            "budget": "2000.00",
+            "budget": "R$ 2.000,00",  # Formato BRL
             "location": "Loc",
         }
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 
         self.wedding.refresh_from_db()
         self.assertEqual(self.wedding.groom_name, "Updated Groom")
-        self.assertEqual(self.wedding.budget, 2000.00)
+        self.assertEqual(self.wedding.budget, Decimal("2000.00"))
 
         # Deve retornar a lista
         self.assertTemplateUsed(response, "weddings/partials/_list_and_pagination.html")
@@ -308,7 +309,7 @@ class WeddingUpdateViewTest(TestCase):
         }
         # Simulamos HTMX pois a view retorna partials
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 
@@ -348,7 +349,7 @@ class WeddingDeleteViewTest(TestCase):
 
     def test_post_deletes_wedding(self):
         headers = {"HTTP_HX-Request": "true"}
-        response = self.client.post(self.url, **headers)
+        response = self.client.post(self.url, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 
@@ -405,7 +406,7 @@ class UpdateWeddingStatusViewTest(TestCase):
         data = {"status": "COMPLETED"}
         headers = {"HTTP_HX-Request": "true"}
 
-        response = self.client.post(self.url, data, **headers)
+        response = self.client.post(self.url, data, **headers)  # type: ignore[misc]
 
         self.assertEqual(response.status_code, 200)
 

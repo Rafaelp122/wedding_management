@@ -9,6 +9,38 @@ Este módulo usa imports lazy para evitar problemas de carregamento
 circular e AppRegistryNotReady.
 """
 
+from typing import TYPE_CHECKING
+
+# Type checking imports (não executados em runtime)
+if TYPE_CHECKING:
+    from .api.permissions import IsWeddingOwner
+    from .api.serializers import (
+        WeddingDetailSerializer,
+        WeddingListSerializer,
+        WeddingSerializer,
+    )
+    from .api.views import WeddingViewSet
+    from .models import Wedding
+    from .querysets import WeddingQuerySet
+    from .web.forms import WeddingForm
+    from .web.mixins import (
+        PlannerOwnershipMixin,
+        WeddingFormLayoutMixin,
+        WeddingHtmxListResponseMixin,
+        WeddingListActionsMixin,
+        WeddingModalContextMixin,
+        WeddingPaginationContextMixin,
+        WeddingQuerysetMixin,
+    )
+    from .web.views import (
+        UpdateWeddingStatusView,
+        WeddingCreateView,
+        WeddingDeleteView,
+        WeddingDetailView,
+        WeddingListView,
+        WeddingUpdateView,
+    )
+
 # Para manter compatibilidade, use imports lazy:
 # from apps.weddings import Wedding
 # from apps.weddings.web import WeddingForm

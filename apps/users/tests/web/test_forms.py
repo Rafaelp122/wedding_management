@@ -33,9 +33,10 @@ class CustomUserCreationFormTest(TestCase):
         # Salva e verifica se foi para o banco
         # O allauth precisa de um request com session
         from django.contrib.sessions.middleware import SessionMiddleware
+        from django.http import HttpResponse
 
         request = RequestFactory().post("/fake-url")
-        middleware = SessionMiddleware(lambda x: None)
+        middleware = SessionMiddleware(lambda x: HttpResponse())  # type: ignore[arg-type]
         middleware.process_request(request)
         request.session.save()
 
