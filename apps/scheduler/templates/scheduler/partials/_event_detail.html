@@ -12,7 +12,15 @@
   </h3>
 
   <div class="event-details">
-    
+    {% if event.wedding %}
+    <div class="detail-item mb-3">
+      <h6 class="text-muted mb-1">
+        <i class="fas fa-heart me-2"></i>Casamento
+      </h6>
+      <p class="mb-0">{{ event.wedding }}</p>
+    </div>
+    {% endif %}
+
     {% if event.event_type %}
     <div class="detail-item mb-3">
       <h6 class="text-muted mb-1">
@@ -49,15 +57,6 @@
         <i class="fas fa-align-left me-2"></i>Descrição
       </h6>
       <p class="mb-0">{{ event.description }}</p>
-    </div>
-    {% endif %}
-
-    {% if event.wedding %}
-    <div class="detail-item mb-3">
-      <h6 class="text-muted mb-1">
-        <i class="fas fa-rings-wedding me-2"></i>Casamento
-      </h6>
-      <p class="mb-0">{{ event.wedding }}</p>
     </div>
     {% endif %}
 

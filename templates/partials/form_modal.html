@@ -11,6 +11,7 @@
   hx-post="{{ hx_post_url }}"
   hx-target="#form-modal-container"
   hx-swap="innerHTML"
+  id="generic-modal-form"
 >
   {% csrf_token %}
 
@@ -37,3 +38,51 @@
 
   </div>
 </form>
+
+<script>
+  (function() {
+    // 1. Função de formatação (Escopo local para não conflitar)
+    function formatCurrency(value) {
+        let numericValue = value.replace(/\D/g, '');
+        if (numericValue === '') return '';
+        let amount = parseInt(numericValue, 10) / 100;
+        return amount.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    // 2. Procura todos os inputs com a classe 'currency-input' que acabaram de carregar
+    const currencyInputs = document.querySelectorAll('.currency-input');
+
+    currencyInputs.forEach(input => {
+        // A) Evento de Digitação
+        input.addEventListener('input', function(e) {
+            let oldLength = this.value.length;
+            let oldPosition = this.selectionStart;
+
+            this.value = formatCurrency(this.value);
+
+            // Ajuste do cursor
+            let newLength = this.value.length;
+            let newPosition = oldPosition + (newLength - oldLength);
+            this.setSelectionRange(newPosition, newPosition);
+        });
+
+        // B) Formatação Inicial (Caso seja Edição e venha do Banco)
+        // Se tem valor e não tem "R$", precisa formatar
+        if (input.value && !input.value.includes('R$')) {
+            // Remove sujeira caso venha com formatação estranha do backend
+            let rawValue = input.value.replace(/[^0-9.]/g, ''); 
+            let numericValue = parseFloat(rawValue);
+            
+            if (!isNaN(numericValue)) {
+                // Multiplica por 100 porque a função formatCurrency divide por 100
+                input.value = formatCurrency((numericValue * 100).toFixed(0));
+            }
+        }
+    });
+  })();
+</script>
