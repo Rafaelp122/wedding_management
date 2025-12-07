@@ -127,6 +127,10 @@ LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
+# Padrão monetário brasileiro
+USE_THOUSAND_SEPARATOR = True
+DECIMAL_SEPARATOR = ","
+THOUSAND_SEPARATOR = "."
 
 # Email settings (default to console, override in production)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
