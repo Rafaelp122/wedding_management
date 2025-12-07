@@ -48,30 +48,32 @@ class Contract(BaseModel):
 
     # Assinaturas - Cerimonialista
     planner_signature = models.FileField(
-        upload_to="signatures/planner/", null=True, blank=True
+        upload_to="signatures/planner/%Y/%m/%d/", null=True, blank=True
     )
     planner_signed_at = models.DateTimeField(null=True, blank=True)
     planner_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Assinaturas - Fornecedor
     supplier_signature = models.FileField(
-        upload_to="signatures/supplier/", null=True, blank=True
+        upload_to="signatures/supplier/%Y/%m/%d/", null=True, blank=True
     )
     supplier_signed_at = models.DateTimeField(null=True, blank=True)
     supplier_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Assinaturas - Noivos
     couple_signature = models.FileField(
-        upload_to="signatures/couple/", null=True, blank=True
+        upload_to="signatures/couple/%Y/%m/%d/", null=True, blank=True
     )
     couple_signed_at = models.DateTimeField(null=True, blank=True)
     couple_ip = models.GenericIPAddressField(null=True, blank=True)
 
     # Auditoria e Arquivos Finais
     integrity_hash = models.CharField(max_length=64, blank=True)
-    final_pdf = models.FileField(upload_to="contracts_pdf/", null=True, blank=True)
+    final_pdf = models.FileField(
+        upload_to="contracts_pdf/%Y/%m/%d/", null=True, blank=True
+    )
     external_pdf = models.FileField(
-        upload_to="contracts_external/", null=True, blank=True
+        upload_to="contracts_external/%Y/%m/%d/", null=True, blank=True
     )
 
     # Manager customizado
