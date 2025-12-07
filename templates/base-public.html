@@ -6,7 +6,6 @@
 {% block styles %}
   <link rel="stylesheet" href="{% static 'css/base-public.css' %}">
 
-  <!-- 🔹 Estilo do efeito de surgimento -->
   <style>
     .reveal {
       opacity: 0;
@@ -33,29 +32,27 @@
 
   {% include 'partials/footer.html' %}
 
-  {% block scripts %}
-    {{ block.super }}
+{% endblock body_content %} 
+{% block scripts %}
+  {{ block.super }}
 
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 
-    <!-- 🔹 Script do efeito ao rolar -->
-    <script>
-      function revelarAoRolar() {
-        const elementos = document.querySelectorAll('.reveal');
-        for (let el of elementos) {
-          const posicao = el.getBoundingClientRect().top;
-          const alturaJanela = window.innerHeight;
-          if (posicao < alturaJanela - 100) {
-            el.classList.add('active');
-          }
+  <script>
+    function revelarAoRolar() {
+      const elementos = document.querySelectorAll('.reveal');
+      for (let el of elementos) {
+        const posicao = el.getBoundingClientRect().top;
+        const alturaJanela = window.innerHeight;
+        if (posicao < alturaJanela - 100) {
+          el.classList.add('active');
         }
       }
+    }
 
-      window.addEventListener('scroll', revelarAoRolar);
-      revelarAoRolar();
-    </script>
+    window.addEventListener('scroll', revelarAoRolar);
+    revelarAoRolar();
+  </script>
 
-    {% block extra_js %}{% endblock extra_js %}
-  {% endblock scripts %}
-
-{% endblock body_content %}
+  {% block extra_js %}{% endblock extra_js %}
+{% endblock scripts %}
