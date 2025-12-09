@@ -42,7 +42,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile  # Usa Dockerfile de produção com multi-stage build
-    image: rafaelp122/wedding_web:v1.3
+    image: rafaelp122/wedding_web:v1.4
     container_name: wedding_web_prod
     command: >
       sh -c "
@@ -74,7 +74,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile  # Usa Dockerfile de produção com multi-stage build
-    image: rafaelp122/wedding_web:v1.3
+    image: rafaelp122/wedding_web:v1.4
     container_name: wedding_celery_worker_prod
     command: celery -A wedding_management worker --loglevel=info
     volumes:
@@ -96,7 +96,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile  # Usa Dockerfile de produção com multi-stage build
-    image: rafaelp122/wedding_web:v1.3
+    image: rafaelp122/wedding_web:v1.4
     container_name: wedding_celery_beat_prod
     command: celery -A wedding_management beat --loglevel=info
     volumes:
