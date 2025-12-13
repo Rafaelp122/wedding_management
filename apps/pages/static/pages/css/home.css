@@ -250,3 +250,56 @@ html, body {
   padding: 0.35em 0.65em;
   border-radius: 50rem;
 }
+
+/* -------------------------------------------
+   BOTÃO VOLTAR AO TOPO
+------------------------------------------- */
+.scroll-to-top-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background-color: #9c27b0;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.scroll-to-top-btn.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.scroll-to-top-btn:hover {
+  background-color: #7B1FA2;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(156, 39, 176, 0.4);
+}
+
+.scroll-to-top-btn:active {
+  transform: scale(0.95);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .scroll-to-top-btn {
+    width: 45px;
+    height: 45px;
+    bottom: 20px;
+    right: 20px;
+    font-size: 1rem;
+  }
+}
