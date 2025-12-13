@@ -65,7 +65,7 @@
     </li>
     <li class="nav-item">
       <a
-        class="nav-link active"
+        class="nav-link"
         href="#"
         data-tab="items"
         hx-get="{% url 'items:partial_items' wedding.id %}"
@@ -78,7 +78,7 @@
     </li>
     <li class="nav-item">
       <a
-        class="nav-link active"
+        class="nav-link"
         href="#"
         data-tab="contracts"
         hx-get="{% url 'contracts:partial_contracts' wedding.id %}"
@@ -91,13 +91,14 @@
     </li>
     <li class="nav-item">
       <a
-        class="nav-link active"
+        class="nav-link"
         href="#"
         data-tab="scheduler"
         hx-get="{% url 'scheduler:partial_scheduler' wedding.id %}"
         hx-target="#tab-scheduler"
         hx-swap="innerHTML"
-        hx-trigger="click once"  >
+        hx-trigger="click once"
+      >
         <i class="fas fa-calendar-days me-2"></i> Calendário
       </a>
     </li>
