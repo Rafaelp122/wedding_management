@@ -38,32 +38,20 @@ class Command(BaseCommand):
 
         # Get or create demo user
         demo_user, created = self.get_or_create_demo_user()
-        
+
         if created:
-            self.stdout.write(
-                self.style.SUCCESS("✓ Demo user created successfully!")
-            )
+            self.stdout.write(self.style.SUCCESS("✓ Demo user created successfully!"))
         else:
             self.stdout.write(
                 self.style.SUCCESS(f"✓ Using existing demo user: {demo_user.username}")
             )
 
         # Display credentials
-        self.stdout.write(
-            self.style.WARNING("\n" + "="*60)
-        )
-        self.stdout.write(
-            self.style.SUCCESS("📋 Demo User Credentials:")
-        )
-        self.stdout.write(
-            self.style.SUCCESS(f"   Username: demo")
-        )
-        self.stdout.write(
-            self.style.SUCCESS(f"   Password: demo123")
-        )
-        self.stdout.write(
-            self.style.WARNING("="*60 + "\n")
-        )
+        self.stdout.write(self.style.WARNING("\n" + "=" * 60))
+        self.stdout.write(self.style.SUCCESS("📋 Demo User Credentials:"))
+        self.stdout.write(self.style.SUCCESS("   Username: demo"))
+        self.stdout.write(self.style.SUCCESS("   Password: demo123"))
+        self.stdout.write(self.style.WARNING("=" * 60 + "\n"))
 
         # Clear data if requested
         if options["clear"]:
@@ -85,7 +73,7 @@ class Command(BaseCommand):
         username = "demo"
         email = "demo@wedding-management.com"
         password = "demo123"
-        
+
         try:
             # Try to get existing demo user
             user = User.objects.get(username=username)
@@ -97,7 +85,7 @@ class Command(BaseCommand):
                 email=email,
                 password=password,
                 first_name="Demo",
-                last_name="User"
+                last_name="User",
             )
             return user, True
 
