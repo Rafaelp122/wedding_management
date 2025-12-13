@@ -60,10 +60,12 @@
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     overflow: hidden;
+    cursor: pointer;
 }
 
 /* Hover no box de texto */
-.feature-box:hover {
+.feature-box:hover,
+.feature-box.active {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     border-color: transparent;
@@ -82,7 +84,8 @@
     transition: opacity 0.3s ease;
 }
 
-.feature-box:hover::before {
+.feature-box:hover::before,
+.feature-box.active::before {
     opacity: 1;
 }
 
@@ -101,7 +104,8 @@
     transition: background 0.3s;
 }
 
-.feature-box:hover .icon-box-small {
+.feature-box:hover .icon-box-small,
+.feature-box.active .icon-box-small {
     background-color: var(--primary-color);
     color: #fff;
 }

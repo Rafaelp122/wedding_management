@@ -13,35 +13,35 @@
         </p>
         
         <div class="feature-grid">
-            <div class="feature-box">
+            <div class="feature-box active" data-image="{% static 'pages/img/signature_img.png' %}">
                 <div class="icon-box-small"><i class="fa-solid fa-signature"></i></div>
                 <h4 class="box-title">Assinatura Digital</h4>
                 <p class="box-desc">Elimine a papelada. Envie contratos e recolha assinaturas de clientes de forma 100% online.</p>
             </div>
 
-            <div class="feature-box">
+            <div class="feature-box" data-image="{% static 'pages/img/system_img.png' %}">
                 <div class="icon-box-small"><i class="fa-solid fa-layer-group"></i></div>
                 <h4 class="box-title">Gestão Multi-Eventos</h4>
                 <p class="box-desc">Gerencie diversos casamentos simultaneamente em uma única conta, mantendo os dados de cada casal separados e organizados.</p>
             </div>
 
-            <div class="feature-box">
+            <div class="feature-box" data-image="{% static 'pages/img/contracts_img.png' %}">
                 <div class="icon-box-small"><i class="fa-solid fa-magnifying-glass"></i></div>
                 <h4 class="box-title">Busca Inteligente</h4>
                 <p class="box-desc">Encontre rapidamente qualquer contrato, item ou data específica sem perder tempo navegando por menus.</p>
             </div>
 
-            <div class="feature-box">
-                <div class="icon-box-small"><i class="fa-solid fa-lock"></i></div>
-                <h4 class="box-title">Segurança de Dados</h4>
-                <p class="box-desc">Suas informações e documentos são protegidos com criptografia e controle de acesso rigoroso.</p>
+            <div class="feature-box" data-image="{% static 'pages/img/budget_img.png' %}">
+                <div class="icon-box-small"><i class="fas fa-calculator"></i></div>
+                <h4 class="box-title">Controle de Orçamento</h4>
+                <p class="box-desc">Gerencie suas receitas e despesas de forma prática, garantindo total transparência e controle sobre suas finanças.</p>
             </div>
         </div>
       </div>
       
       <div class="col-lg-6">
         <div class="feature-img-container">
-            <img src="{% static 'pages/img/img_notebook.JPG' %}" alt="Funcionalidades do Sistema" class="feature-img">
+            <img src="{% static 'pages/img/signature_img.png' %}" alt="Funcionalidades do Sistema" class="feature-img" id="feature-main-img">
         </div>
       </div>
     </div>
@@ -49,3 +49,48 @@
     <div class="my-5"></div> 
   </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const featureBoxes = document.querySelectorAll('.feature-box');
+    const featureImg = document.getElementById('feature-main-img');
+    let hoverTimeout = null;
+
+    featureBoxes.forEach(box => {
+        // Click event - persists active state
+        box.addEventListener('click', function() {
+            // Remove active class from all boxes
+            featureBoxes.forEach(b => b.classList.remove('active'));
+            // Add active class to clicked box
+            this.classList.add('active');
+            // Change image
+            const newImage = this.getAttribute('data-image');
+            if (newImage && featureImg) {
+                featureImg.src = newImage;
+            }
+        });
+
+        // Hover event - temporary preview (priority)
+        box.addEventListener('mouseenter', function() {
+            clearTimeout(hoverTimeout);
+            const newImage = this.getAttribute('data-image');
+            if (newImage && featureImg) {
+                featureImg.src = newImage;
+            }
+        });
+
+        // On mouse leave, restore to active box image
+        box.addEventListener('mouseleave', function() {
+            hoverTimeout = setTimeout(() => {
+                const activeBox = document.querySelector('.feature-box.active');
+                if (activeBox) {
+                    const activeImage = activeBox.getAttribute('data-image');
+                    if (activeImage && featureImg) {
+                        featureImg.src = activeImage;
+                    }
+                }
+            }, 100);
+        });
+    });
+});
+</script>
