@@ -28,7 +28,6 @@ class WeddingQuerySet(models.QuerySet):
         """
 
         # Colocado aqui para evitar import circular
-        from apps.contracts.models import Contract
         from apps.items.models import Item
 
         # Subquery para contar TODOS os itens do casamento
@@ -48,23 +47,25 @@ class WeddingQuerySet(models.QuerySet):
             .values("c")
         )
 
-        # Subquery para contar contratos
-        contract_count_sq = Subquery(
-            Contract.objects.filter(item__wedding=OuterRef("pk"))
-            .values("item__wedding")
+        # Subquery para contar eventos
+        from apps.scheduler.models import Event
+
+        event_count_sq = Subquery(
+            Event.objects.filter(wedding=OuterRef("pk"))
+            .values("wedding")
             .annotate(c=Count("pk"))
             .values("c")
         )
 
         # Primeiro .annotate() com as contagens
         # Usamos Coalesce para garantir que o valor seja 0 em vez de None
-        # se não houver itens/contratos, evitando erros no cálculo.
+        # se não houver itens/eventos, evitando erros no cálculo.
         annotated_queryset = self.annotate(
             items_count=Coalesce(item_count_sq, 0, output_field=IntegerField()),
             done_items_count=Coalesce(
                 done_item_count_sq, 0, output_field=IntegerField()
             ),
-            contracts_count=Coalesce(contract_count_sq, 0, output_field=IntegerField()),
+            events_count=Coalesce(event_count_sq, 0, output_field=IntegerField()),
         )
 
         # Segundo .annotate() para calcular o progresso

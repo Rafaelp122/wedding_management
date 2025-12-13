@@ -204,7 +204,7 @@ class WeddingPaginationContextMixin:
                 "gradient": GRADIENTS[idx % len(GRADIENTS)],
                 # type: ignore[attr-defined] - Campos anotados pelo QuerySet
                 "items_count": wedding.items_count,
-                "contracts_count": wedding.contracts_count,
+                "events_count": wedding.events_count,
                 "effective_status": wedding.effective_status,
                 "progress": wedding.progress,
             }
