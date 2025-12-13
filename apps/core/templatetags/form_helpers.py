@@ -34,3 +34,14 @@ def is_textarea(field):
     Uso: {% if field|is_textarea %}
     """
     return isinstance(field.field.widget, Textarea)
+
+
+@register.filter
+def first_name(value):
+    """
+    Retorna o primeiro nome de uma string.
+    Uso: {{ full_name|first_name }}
+    """
+    if not value:
+        return ""
+    return value.split()[0] if value.split() else ""
