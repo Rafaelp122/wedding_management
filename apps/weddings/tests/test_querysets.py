@@ -164,8 +164,8 @@ class WeddingQuerySetTest(TestCase):
         # Itens Feitos (DONE): 2
         self.assertEqual(wedding.done_items_count, 2)
 
-        # Total Contratos: 1
-        self.assertEqual(wedding.contracts_count, 1)
+        # Total Eventos: 0 (não criamos eventos neste teste)
+        self.assertEqual(wedding.events_count, 0)
 
         # Progresso: 2 feitos de 4 total = 50%
         self.assertEqual(wedding.progress, 50)

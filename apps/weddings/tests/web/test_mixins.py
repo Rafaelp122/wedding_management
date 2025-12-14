@@ -142,7 +142,7 @@ class WeddingQuerysetMixinTest(TestCase):
 
         # Estas anotações são CRÍTICAS para o template
         self.assertTrue(hasattr(wedding, "items_count"))
-        self.assertTrue(hasattr(wedding, "contracts_count"))
+        self.assertTrue(hasattr(wedding, "events_count"))
         self.assertTrue(hasattr(wedding, "effective_status"))
         self.assertTrue(hasattr(wedding, "progress"))
 
