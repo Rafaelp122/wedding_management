@@ -218,6 +218,7 @@ html, body {
 
 .btn-outline-primary:hover {
   background-color: var(--color-accent);
+  border-color: var(--color-accent);
   color: white;
 }
 
