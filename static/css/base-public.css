@@ -31,6 +31,18 @@ html, body {
 /* -------------------------------------------
    HEADER / NAVBAR
 ------------------------------------------- */
+.header.navbar {
+  z-index: 1050;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Adiciona padding ao body para compensar o fixed header */
+body {
+  padding-top: 66px;
+}
+
 .navbar-nav .nav-link {
   position: relative;
   padding: 0.8rem 1.2rem;
