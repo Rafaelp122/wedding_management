@@ -44,7 +44,7 @@ A **v3.0** introduziu uma **arquitetura híbrida** que separa completamente Web 
 
 **Motivação:**
 - **Portfolio:** Demonstrar conhecimento de APIs REST
-- **TCC:** Comparação entre paradigmas (HTMX vs API)
+- **Projeto Integrador:** Comparação entre paradigmas (HTMX vs API)
 - **Escalabilidade:** Preparar para apps mobile e integrações
 
 ### Estrutura de Pastas

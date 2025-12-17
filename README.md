@@ -13,8 +13,8 @@ Sistema completo para gestão de casamentos desenvolvido como projeto final na *
 
 Sistema web desenvolvido para auxiliar cerimonialistas e organizadores de eventos na **gestão completa de casamentos**, oferecendo ferramentas integradas para orçamentos, contratos digitais, itens, agendamento e muito mais — tudo em um único lugar.
 
-**Status:** 🚧 Em desenvolvimento ativo  
-**Início:** Março 2025 | **Conclusão prevista:** Dezembro 2025
+**Status:** ✅ Concluído  
+**Início:** Março 2025 | **Conclusão:** Dezembro 2025
 
 ---
 
@@ -158,7 +158,7 @@ wedding_management/
 
 ## 👥 Equipe
 
-Projeto desenvolvido por **Rafael Pereira**, **Flávio Costa**, **Jhony Assal** e **Pedro Azevedo** como trabalho de conclusão do curso técnico na FIRJAN SENAI São Gonçalo.
+Projeto integrador desenvolvido por **Rafael Pereira**, **Flávio Costa**, **Jhony Assal** e **Pedro Azevedo** no curso técnico da FIRJAN SENAI São Gonçalo.
 
 **Orientação:** SAGA SENAI  
 **Instituição:** FIRJAN SENAI São Gonçalo  
