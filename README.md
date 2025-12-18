@@ -79,9 +79,11 @@ venv\Scripts\activate  # Windows
 # Instale as dependências
 pip install -r requirements/local.txt
 
-# Configure as variáveis de ambiente (opcional para desenvolvimento local com SQLite)
+# Configure as variáveis de ambiente
 cp .env.example .env
-# Edite o .env se necessário, ou use as configurações padrão
+# Para usar SQLite (recomendado para início rápido):
+# O .env.example já vem com POSTGRES_HOST comentado - use assim
+# Para usar PostgreSQL: descomente POSTGRES_HOST no .env
 
 # Execute as migrações
 python manage.py migrate
