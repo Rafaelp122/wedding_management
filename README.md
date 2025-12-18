@@ -60,7 +60,8 @@ docker compose -f docker/docker-compose.yml up --build
 # Acesse: http://localhost:8000
 ```
 
-> 📘 **Documentação Docker completa:** [docs/DOCKER.md](docs/DOCKER.md)
+> 📘 **Documentação Docker completa:** [docs/DOCKER.md](docs/DOCKER.md)  
+> ℹ️ **Nota:** Redis e Celery estão configurados mas são opcionais. O projeto funciona perfeitamente sem eles.
 
 ### Opção 2: Ambiente Local (Desenvolvimento Rápido)
 
@@ -76,7 +77,11 @@ source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate  # Windows
 
 # Instale as dependências
-pip install -r requirements.txt
+pip install -r requirements/local.txt
+
+# Configure as variáveis de ambiente (opcional para desenvolvimento local com SQLite)
+cp .env.example .env
+# Edite o .env se necessário, ou use as configurações padrão
 
 # Execute as migrações
 python manage.py migrate
@@ -89,6 +94,8 @@ python manage.py runserver
 
 # Acesse: http://localhost:8000
 ```
+
+> ℹ️ **Nota:** Para desenvolvimento local, você não precisa do PostgreSQL, Redis ou Celery. O Django usará SQLite automaticamente.
 
 ---
 

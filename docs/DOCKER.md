@@ -20,12 +20,14 @@
 
 Este projeto utiliza Docker Compose para orquestrar múltiplos serviços:
 
-- **PostgreSQL 16**: Banco de dados
-- **Redis 7**: Cache e broker do Celery
-- **Django + Gunicorn**: Aplicação web
-- **Celery Worker**: Tarefas em background
-- **Celery Beat**: Tarefas agendadas
-- **Nginx**: Proxy reverso e servidor de arquivos estáticos
+- **Django + Gunicorn**: Aplicação web (obrigatório)
+- **PostgreSQL 16**: Banco de dados (opcional, usa SQLite por padrão)
+- **Nginx**: Proxy reverso e servidor de arquivos estáticos (opcional)
+- **Redis 7**: Cache e broker do Celery (⚠️ configurado mas não usado ativamente)
+- **Celery Worker**: Tarefas em background (⚠️ configurado mas não usado ativamente)
+- **Celery Beat**: Tarefas agendadas (⚠️ configurado mas não usado ativamente)
+
+> ℹ️ **Nota:** Redis e Celery estão configurados para uso futuro, mas o projeto funciona perfeitamente sem eles.
 
 ---
 
@@ -242,13 +244,17 @@ make local-up
 # Ou sem Make:
 docker compose -f docker/docker-compose.local.yml up -d
 
+# Configure o ambiente Python (se ainda não fez)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac - no Windows: venv\Scripts\activate
+pip install -r requirements/local.txt
+
 # Em outro terminal, rode Django localmente
 python manage.py migrate
 python manage.py runserver
-
-# (Opcional) Em outro terminal, rode Celery
-celery -A wedding_management worker --loglevel=info
 ```
+
+> ℹ️ **Celery não é necessário:** O projeto funciona sem Redis/Celery. Eles estão configurados para uso futuro.
 
 **Acesso:**
 - Web: http://localhost:8000 (Django direto)
@@ -418,22 +424,30 @@ Este modo permite rodar PostgreSQL e Redis em Docker, mas Django na sua máquina
 # 1. Inicie apenas DB e Redis
 docker compose -f docker/docker-compose.local.yml up -d
 
-# 2. Instale dependências (se ainda não fez)
+# 2. Configure o ambiente virtual (se ainda não fez)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac - no Windows: venv\Scripts\activate
+
+# 3. Instale dependências
 pip install -r requirements/local.txt
 
-# 3. Configure variáveis de ambiente
-export DJANGO_SETTINGS_MODULE=wedding_management.settings.local
+# 4. Configure variáveis de ambiente (opcional, use .env)
+cp .env.example .env
+# export DJANGO_SETTINGS_MODULE=wedding_management.settings.local  # Já está no .env
 
-# 4. Execute migrações
+# 5. Execute migrações
 python manage.py migrate
 
-# 5. Rode o servidor
+# 6. Rode o servidor
 python manage.py runserver 0.0.0.0:8000
 ```
 
-### Rodando Celery Localmente
+### Rodando Celery Localmente (Opcional)
+
+> ⚠️ **Não é necessário para desenvolvimento:** Celery está configurado mas não é usado ativamente no projeto.
 
 ```bash
+# Apenas se você quiser testar funcionalidades de Celery:
 # Terminal 1: Celery Worker
 celery -A wedding_management worker --loglevel=info
 
