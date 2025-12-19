@@ -505,7 +505,7 @@ class ContractSignatureMixinEdgeCasesTest(TestCase):
         """Deve extrair IP do cabeçalho X-Forwarded-For quando presente."""
         request = self.factory.post("/fake/")
         request.META["HTTP_X_FORWARDED_FOR"] = "192.168.1.1, 10.0.0.1"
-        
+
         ip = self.mixin.get_client_ip(request)
         self.assertEqual(ip, "192.168.1.1")
 
@@ -528,7 +528,7 @@ class ContractSignatureMixinEdgeCasesTest(TestCase):
     def test_process_signature_with_unexpected_exception(self):
         """Deve capturar exceções inesperadas ao processar assinatura."""
         request = self.factory.post("/fake/")
-        
+
         # Força exceção usando um contrato com item None
         contract_invalid = Contract(id=99999, status="WAITING_PLANNER")
         signature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
@@ -564,6 +564,7 @@ class ContractUrlGeneratorMixinEdgeCasesTest(TestCase):
 
     def test_generate_signature_link_with_url_error(self):
         """Deve tratar erro ao gerar URL."""
+
         class BrokenMixin(ContractUrlGeneratorMixin):
             def __init__(self):
                 self.request = None  # Request None causará erro

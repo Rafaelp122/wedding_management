@@ -221,7 +221,7 @@ class GenerateSignatureLinkViewTest(TestCase):
         """GET com contract_id inexistente retorna JSON de erro."""
         # Usar um contract_id inexistente
         url = reverse("contracts:generate_link", kwargs={"contract_id": 99999})
-        
+
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -280,7 +280,7 @@ class GenerateSignatureLinkViewTest(TestCase):
         """POST com contract_id inexistente retorna JSON de erro."""
         # Forçar exceção tentando enviar para contrato inexistente
         url = reverse("contracts:generate_link", kwargs={"contract_id": 99999})
-        
+
         response = self.client.post(url, {"email": "test@test.com"})
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -773,7 +773,9 @@ class UploadContractViewTest(TestCase):
         url = reverse("contracts:upload_contract", kwargs={"contract_id": contract.id})
 
         self.client.logout()
-        pdf = SimpleUploadedFile("test.pdf", b"%PDF-1.4", content_type="application/pdf")
+        pdf = SimpleUploadedFile(
+            "test.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
         response = self.client.post(url, {"external_pdf": pdf})
 
         self.assertEqual(response.status_code, 302)
@@ -782,6 +784,7 @@ class UploadContractViewTest(TestCase):
     def test_other_planner_cannot_upload(self):
         """Outro planner não pode fazer upload em contrato de outro."""
         from django.core.files.uploadedfile import SimpleUploadedFile
+
         from apps.contracts.models import Contract as ContractModel
 
         contract = Contract.objects.create(item=self.item, status="DRAFT")
@@ -790,7 +793,9 @@ class UploadContractViewTest(TestCase):
         other = User.objects.create_user("other", "o@test.com", "123")
         self.client.force_login(other)
 
-        pdf = SimpleUploadedFile("test.pdf", b"%PDF-1.4", content_type="application/pdf")
+        pdf = SimpleUploadedFile(
+            "test.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
 
         with self.assertRaises(ContractModel.DoesNotExist):
             self.client.post(url, {"external_pdf": pdf})
@@ -802,7 +807,9 @@ class UploadContractViewTest(TestCase):
         contract = Contract.objects.create(item=self.item, status="DRAFT")
         url = reverse("contracts:upload_contract", kwargs={"contract_id": contract.id})
 
-        pdf = SimpleUploadedFile("contract.pdf", b"%PDF-1.4 content", content_type="application/pdf")
+        pdf = SimpleUploadedFile(
+            "contract.pdf", b"%PDF-1.4 content", content_type="application/pdf"
+        )
         response = self.client.post(url, {"external_pdf": pdf})
 
         self.assertEqual(response.status_code, 200)
@@ -830,7 +837,9 @@ class UploadContractViewTest(TestCase):
         contract = Contract.objects.create(item=self.item, status="DRAFT")
         url = reverse("contracts:upload_contract", kwargs={"contract_id": contract.id})
 
-        txt_file = SimpleUploadedFile("test.txt", b"text content", content_type="text/plain")
+        txt_file = SimpleUploadedFile(
+            "test.txt", b"text content", content_type="text/plain"
+        )
         response = self.client.post(url, {"external_pdf": txt_file})
 
         self.assertEqual(response.status_code, 200)
@@ -845,7 +854,11 @@ class UploadContractViewTest(TestCase):
         contract = Contract.objects.create(item=self.item, status="DRAFT")
         url = reverse("contracts:upload_contract", kwargs={"contract_id": contract.id})
 
-        fake_pdf = SimpleUploadedFile("doc.docx", b"fake content", content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        fake_pdf = SimpleUploadedFile(
+            "doc.docx",
+            b"fake content",
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
         response = self.client.post(url, {"external_pdf": fake_pdf})
 
         self.assertEqual(response.status_code, 200)
@@ -855,11 +868,14 @@ class UploadContractViewTest(TestCase):
     def test_upload_nonexistent_contract_raises_exception(self):
         """Tentar upload em contrato inexistente levanta DoesNotExist."""
         from django.core.files.uploadedfile import SimpleUploadedFile
+
         from apps.contracts.models import Contract as ContractModel
 
         url = reverse("contracts:upload_contract", kwargs={"contract_id": 99999})
 
-        pdf = SimpleUploadedFile("test.pdf", b"%PDF-1.4", content_type="application/pdf")
+        pdf = SimpleUploadedFile(
+            "test.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
 
         with self.assertRaises(ContractModel.DoesNotExist):
             self.client.post(url, {"external_pdf": pdf})
@@ -872,8 +888,11 @@ class GenerateSignatureLinkExceptionTest(TestCase):
         """Configura usuário, casamento e item para testes."""
         self.user = User.objects.create_user("testuser", "test@example.com", "testpass")
         self.wedding = Wedding.objects.create(
-            planner=self.user, groom_name="Test", bride_name="Couple", 
-            date="2024-12-31", budget=10000
+            planner=self.user,
+            groom_name="Test",
+            bride_name="Couple",
+            date="2024-12-31",
+            budget=10000,
         )
         self.item = Item.objects.create(
             wedding=self.wedding, name="Test Item", unit_price=1000, quantity=1
@@ -888,7 +907,9 @@ class GenerateSignatureLinkExceptionTest(TestCase):
 
         # Mocka send_signature_email para lançar exceção
         with patch.object(
-            GenerateSignatureLinkView, "send_signature_email", side_effect=Exception("Email error")
+            GenerateSignatureLinkView,
+            "send_signature_email",
+            side_effect=Exception("Email error"),
         ):
             response = self.client.post(url, {"email": "test@example.com"})
 
@@ -905,8 +926,11 @@ class DownloadContractPDFExceptionTest(TestCase):
         """Configura usuário, casamento e item para testes."""
         self.user = User.objects.create_user("testuser", "test@example.com", "testpass")
         self.wedding = Wedding.objects.create(
-            planner=self.user, groom_name="Test", bride_name="Couple", 
-            date="2024-12-31", budget=10000
+            planner=self.user,
+            groom_name="Test",
+            bride_name="Couple",
+            date="2024-12-31",
+            budget=10000,
         )
         self.item = Item.objects.create(
             wedding=self.wedding, name="Test Item", unit_price=1000, quantity=1
@@ -930,8 +954,9 @@ class DownloadContractPDFExceptionTest(TestCase):
 
     def test_link_callback_with_nonexistent_file(self):
         """Testa link_callback quando arquivo não existe."""
-        from apps.contracts.views import link_callback
         from django.conf import settings
+
+        from apps.contracts.views import link_callback
 
         # Usa um arquivo que sabemos que não existe
         result = link_callback(f"{settings.STATIC_URL}nonexistent.css", None)

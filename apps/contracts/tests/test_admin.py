@@ -36,10 +36,11 @@ class ContractAdminTest(TestCase):
 
     def test_item_name_returns_dash_when_no_item(self):
         """item_name() deve retornar '-' quando não há item."""
+
         # Criar mock de contrato sem item
         class MockContract:
             item = None
-        
+
         mock_contract = MockContract()
         result = self.admin.item_name(mock_contract)
         self.assertEqual(result, "-")
@@ -51,12 +52,13 @@ class ContractAdminTest(TestCase):
 
     def test_wedding_couple_returns_dash_when_no_wedding(self):
         """wedding_couple() deve retornar '-' quando não há casamento."""
+
         # Criar mock de contrato sem wedding
         class MockContract:
             @property
             def wedding(self):
                 return None
-        
+
         mock_contract = MockContract()
         result = self.admin.wedding_couple(mock_contract)
         self.assertEqual(result, "-")
