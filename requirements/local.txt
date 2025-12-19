@@ -5,8 +5,8 @@
 # Development tools
 gunicorn==23.0.0  # WSGI server (same as production for consistency)
 django-debug-toolbar==6.1.0
-ipython==8.31.0  # Enhanced Python shell
-django-extensions==3.2.3  # Additional management commands
+ipython==9.8.0  # Enhanced Python shell
+django-extensions==4.1  # Additional management commands
 
 # Code quality (using Ruff instead of flake8, black, isort)
 ruff==0.7.4

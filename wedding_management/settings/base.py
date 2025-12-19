@@ -104,16 +104,15 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-# Allauth settings
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
+# Allauth settings (updated for django-allauth 65+)
+ACCOUNT_LOGIN_METHODS = {"email", "username"}  # Replaces ACCOUNT_AUTHENTICATION_METHOD
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
 ACCOUNT_LOGOUT_ON_GET = False
 ACCOUNT_SESSION_REMEMBER = None
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
 ACCOUNT_USERNAME_MIN_LENGTH = 3
+# Signup fields (replaces deprecated EMAIL_REQUIRED, USERNAME_REQUIRED, SIGNUP_PASSWORD_ENTER_TWICE)
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_FORMS = {
     "signup": "apps.users.web.forms.CustomUserCreationForm",
     "login": "apps.users.web.forms.CustomLoginForm",
