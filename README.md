@@ -3,7 +3,7 @@
 Sistema completo para gestão de casamentos desenvolvido como projeto final na **FIRJAN SENAI São Gonçalo**, baseado em uma demanda real do **SAGA SENAI**.
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-5.2-green.svg)](https://www.djangoproject.com/)
+[![Django](https://img.shields.io/badge/Django-5.2.9-green.svg)](https://www.djangoproject.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](#)
 
@@ -162,6 +162,7 @@ wedding_management/
 ### Desenvolvimento
 - 🐳 [Guia Completo Docker](docs/DOCKER.md) - Setup, ambientes, troubleshooting
 - 🚀 [Deploy em Produção](docs/PRODUCTION_DEPLOY.md) - Guia de deployment
+- 🔒 [Guia de Segurança](docs/SECURITY.md) - Boas práticas e checklist de segurança
 
 ---
 
