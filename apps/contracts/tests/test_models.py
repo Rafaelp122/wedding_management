@@ -463,3 +463,28 @@ class ContractStatusMethodsTest(TestCase):
         self.assertTrue(status_after["planner"]["signed"])
         self.assertEqual(status_after["planner"]["ip"], "192.168.1.1")
         self.assertIsNotNone(status_after["planner"]["signed_at"])
+
+
+class ContractEdgeCasesTest(TestCase):
+    """Testes para casos especiais e edge cases do modelo Contract."""
+
+    def setUp(self):
+        """Configura dados básicos para testes."""
+        self.user = User.objects.create_user("testuser", "test@example.com", "password")
+        self.wedding = Wedding.objects.create(
+            planner=self.user,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000,
+        )
+        self.item = Item.objects.create(
+            wedding=self.wedding, name="Buffet", quantity=1, unit_price=5000
+        )
+
+    def test_save_updates_status_if_not_set(self):
+        """save() deve definir status WAITING_PLANNER por padrão."""
+        # O modelo já define status como WAITING_PLANNER no campo
+        contract = Contract.objects.create(item=self.item)
+        self.assertEqual(contract.status, "WAITING_PLANNER")
