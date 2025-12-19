@@ -477,4 +477,142 @@ class ContractManagementMixinTest(TestCase):
         json_response = self.mixin.json_success("Teste")
         self.assertEqual(json_response.status_code, 200)
 
-        self.assertEqual(json_response.status_code, 200)
+
+class ContractSignatureMixinEdgeCasesTest(TestCase):
+    """Testes para casos extremos do ContractSignatureMixin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.mixin = ContractSignatureMixin()
+
+        self.owner = User.objects.create_user("owner", "owner@test.com", "123")
+        self.wedding = Wedding.objects.create(
+            planner=self.owner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000,
+        )
+        self.item = Item.objects.create(
+            wedding=self.wedding, name="Fotógrafo", quantity=1, unit_price=5000
+        )
+        self.contract = Contract.objects.create(
+            item=self.item, status="WAITING_PLANNER"
+        )
+
+    def test_get_client_ip_with_x_forwarded_for(self):
+        """Deve extrair IP do cabeçalho X-Forwarded-For quando presente."""
+        request = self.factory.post("/fake/")
+        request.META["HTTP_X_FORWARDED_FOR"] = "192.168.1.1, 10.0.0.1"
+        
+        ip = self.mixin.get_client_ip(request)
+        self.assertEqual(ip, "192.168.1.1")
+
+    def test_process_signature_with_runtime_error(self):
+        """Deve capturar RuntimeError ao processar assinatura em status inválido."""
+        # Contrato em status que não aceita assinatura
+        self.contract.status = "COMPLETED"
+        self.contract.save()
+
+        request = self.factory.post("/fake/")
+        signature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+
+        success, message = self.mixin.process_contract_signature(
+            self.contract, signature, request
+        )
+
+        self.assertFalse(success)
+        self.assertIn("erro", message.lower())
+
+    def test_process_signature_with_unexpected_exception(self):
+        """Deve capturar exceções inesperadas ao processar assinatura."""
+        request = self.factory.post("/fake/")
+        
+        # Força exceção usando um contrato com item None
+        contract_invalid = Contract(id=99999, status="WAITING_PLANNER")
+        signature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+
+        success, message = self.mixin.process_contract_signature(
+            contract_invalid, signature, request
+        )
+
+        self.assertFalse(success)
+        self.assertIn("erro", message.lower())
+
+
+class ContractUrlGeneratorMixinEdgeCasesTest(TestCase):
+    """Testes para casos extremos do ContractUrlGeneratorMixin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.owner = User.objects.create_user("owner", "owner@test.com", "123")
+        self.wedding = Wedding.objects.create(
+            planner=self.owner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000,
+        )
+        self.item = Item.objects.create(
+            wedding=self.wedding, name="Fotógrafo", quantity=1, unit_price=5000
+        )
+        self.contract = Contract.objects.create(
+            item=self.item, status="WAITING_PLANNER"
+        )
+
+    def test_generate_signature_link_with_url_error(self):
+        """Deve tratar erro ao gerar URL."""
+        class BrokenMixin(ContractUrlGeneratorMixin):
+            def __init__(self):
+                self.request = None  # Request None causará erro
+
+        mixin = BrokenMixin()
+        result = mixin.generate_signature_link(self.contract)
+
+        self.assertIn("link", result)
+        self.assertIn("ERRO", result["link"].upper())
+
+
+class ContractActionsMixinEdgeCasesTest(TestCase):
+    """Testes para casos extremos do ContractActionsMixin."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.mixin = ContractActionsMixin()
+
+        self.owner = User.objects.create_user("owner", "owner@test.com", "123")
+        self.wedding = Wedding.objects.create(
+            planner=self.owner,
+            groom_name="João",
+            bride_name="Maria",
+            date="2025-06-15",
+            location="Salão",
+            budget=50000,
+        )
+        self.item = Item.objects.create(
+            wedding=self.wedding, name="Fotógrafo", quantity=1, unit_price=5000
+        )
+
+    def test_update_contract_with_empty_description(self):
+        """Deve rejeitar descrição vazia."""
+        contract = Contract.objects.create(
+            item=self.item, status="DRAFT", description="Original"
+        )
+
+        success, message = self.mixin.update_contract_description(contract, "")
+
+        self.assertFalse(success)
+        self.assertIn("vazia", message.lower())
+
+    def test_update_contract_with_none_description(self):
+        """Deve rejeitar descrição None."""
+        contract = Contract.objects.create(
+            item=self.item, status="DRAFT", description="Original"
+        )
+
+        success, message = self.mixin.update_contract_description(contract, None)
+
+        self.assertFalse(success)
+        self.assertIn("vazia", message.lower())
