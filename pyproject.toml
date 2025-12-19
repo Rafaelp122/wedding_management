@@ -84,6 +84,7 @@ omit = [
     "*/apps.py",
     "*/celery.py",
     "*/__init__.py",
+    "*/management/commands/*",
 ]
 
 [tool.coverage.report]
