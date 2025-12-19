@@ -411,7 +411,7 @@ pytest
 Se você descobrir uma vulnerabilidade de segurança, por favor:
 
 1. **NÃO abra uma issue pública**
-2. Envie um email para: **rafaelpereiradearaujo5@gmail.com**
+2. Envie um email para: rafaelpereiradearaujo5@gmail.com com o assunto:[SECURITY VULNERABILITY - SIMACEITO]
 3. Inclua:
    - Descrição detalhada da vulnerabilidade
    - Passos para reproduzir
