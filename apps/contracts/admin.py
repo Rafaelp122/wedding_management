@@ -114,6 +114,6 @@ class ContractAdmin(admin.ModelAdmin):
         else:
             signatures.append('<span style="color: gray;">○ Noivos</span>')
 
-        return format_html(" | ".join(signatures))
+        return format_html("{}", " | ".join(signatures))
 
     signature_progress.short_description = "Assinaturas"
