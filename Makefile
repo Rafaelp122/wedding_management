@@ -40,6 +40,7 @@ help:
 	@echo "  make env-setup           - Configura arquivo .env (copia .env.example)"
 	@echo "  make local-install       - Instala deps localmente (venv + requirements.txt)"
 	@echo "  make local-clean         - Remove ambiente virtual local"
+	@echo "  make setup-hooks         - Instala e configura git hooks (pre-commit)"
 	@echo ""
 	@echo "⚛️  FRONTEND (React + Vite)"
 	@echo "  make front-install       - Instala deps npm (pkg=nome para específico)"
@@ -244,6 +245,12 @@ local-clean:
 	@echo "🗑️  Removendo ambiente virtual local..."
 	@rm -rf $(VENV)
 	@echo "✅ Ambiente virtual removido!"
+
+setup-hooks:
+	@echo "🪝 Configurando pre-commit hooks..."
+	$(PIP) install pre-commit
+	$(VENV)/bin/pre-commit install
+	@echo "✅ Hooks instalados com sucesso!"
 
 # ============================================================================
 # Testing & Quality

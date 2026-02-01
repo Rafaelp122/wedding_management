@@ -13,23 +13,32 @@ Sistema completo de gestão de casamentos refatorado para arquitetura moderna **
 
 ```
 wedding_management/
-├── backend/              # Django REST API
-│   ├── apps/            # Apps Django
-│   ├── config/          # Settings e configurações
+├── backend/                  # Django REST API
+│   ├── apps/
+│   │   ├── suppliers/       # Gestão de Fornecedores
+│   │   ├── weddings/        # Core (Casamento + Orçamento)
+│   │   ├── items/           # Itens Logísticos + Financeiro
+│   │   ├── contracts/       # Gestão de Contratos
+│   │   └── scheduler/       # Agenda e Eventos
+│   ├── config/              # Settings e URLs principais
 │   ├── manage.py
 │   └── requirements.txt
 │
-├── frontend/            # React SPA
+├── frontend/                # React SPA
 │   ├── src/
-│   │   ├── api/        # Services API
-│   │   ├── components/ # Componentes reutilizáveis
-│   │   ├── features/   # Features por domínio
-│   │   ├── pages/      # Páginas
-│   │   ├── stores/     # Zustand stores
-│   │   └── lib/        # Configurações
+│   │   ├── components/      # Componentes UI
+│   │   ├── hooks/           # Custom Hooks
+│   │   ├── pages/           # Telas do sistema
+│   │   ├── services/        # Comunicação com API (Axios)
+│   │   ├── stores/          # Estado Global (Zustand)
+│   │   ├── types/           # Interfaces TypeScript
+│   │   └── utils/           # Funções auxiliares
 │   └── package.json
 │
-└── dev.sh              # Script de desenvolvimento
+├── docs/                    # Documentação do projeto
+├── .env                     # Variáveis de ambiente unificadas
+├── Makefile                 # Automação de comandos
+└── docker-compose.yml       # Orquestração de containers
 ```
 
 ---

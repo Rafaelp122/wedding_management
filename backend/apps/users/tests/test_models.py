@@ -4,7 +4,6 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
-
 User = get_user_model()
 
 
@@ -72,5 +71,4 @@ class TestUserModel:
         user = User.objects.create_user(
             username="testuser", email="test@example.com", password="pass123"
         )
-        # Se não há __str__ customizado, usa o padrão do AbstractUser
-        assert str(user) == "testuser"
+        assert str(user) == user.email
