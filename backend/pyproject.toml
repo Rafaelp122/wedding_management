@@ -1,0 +1,120 @@
+# ==========================================
+# CONFIGURAÇÃO GERAL DO RUFF
+# ==========================================
+[tool.ruff]
+line-length = 88
+target-version = "py311"  # Python 3.11 usado nos containers
+exclude = [
+    ".git",
+    "__pycache__",
+    "migrations",
+    "static",
+    "media",
+    "venv",
+    ".venv",
+    "node_modules",
+]
+
+# ==========================================
+# CONFIGURAÇÃO DO LINTER (Regras de Lógica)
+# ==========================================
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ"]
+ignore = ["E203", "RUF012", "I001"]
+
+# Ignora erros específicos em arquivos específicos
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"settings.py" = ["F401", "F403"]
+
+# ==========================================
+# CONFIGURAÇÃO DO ISORT (Ordenação de Imports)
+# ==========================================
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+lines-after-imports = 2
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+# ==========================================
+# CONFIGURAÇÃO DO FORMATTER (Estilo Visual)
+# ==========================================
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# ==========================================
+# CONFIGURAÇÃO DO PYTEST
+# ==========================================
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+
+# Padrões de arquivos de teste
+python_files = ["test_*.py", "*_test.py", "tests_*.py", "*_tests.py", "test.py", "tests.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Marcadores customizados
+markers = [
+    "slow: marca testes lentos (deselect com '-m \"not slow\"')",
+    "integration: testes de integração",
+    "unit: testes unitários",
+    "functional: testes funcionais",
+]
+
+# Opções padrão
+addopts = [
+    "--strict-markers",
+    "--reuse-db",
+    "-ra",
+    "--tb=short",
+    "--ds=config.settings",
+]
+
+# Diretórios a ignorar
+norecursedirs = [
+    "migrations",
+    ".git",
+    ".tox",
+    "venv",
+    ".venv",
+    "__pycache__",
+    "media",
+    "static",
+    "node_modules",
+]
+
+# Configuração de logs
+log_cli = false
+log_level = "ERROR"
+
+# Warnings
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# ==========================================
+# CONFIGURAÇÃO DO COVERAGE
+# ==========================================
+[tool.coverage.run]
+relative_files = true
+branch = true
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "manage.py",
+    "*/config/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __str__",
+    "def __repr__",
+    "if settings.DEBUG",
+    "raise NotImplementedError",
+]

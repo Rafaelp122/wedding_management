@@ -1,0 +1,3 @@
+"""
+Wedding Management project initialization.
+"""

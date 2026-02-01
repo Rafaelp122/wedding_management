@@ -1,7 +1,0 @@
-Nova mensagem de contato recebida de: {{ name }} ({{ email }})
-
-Data/Hora: {{ created_at|date:"d/m/Y H:i" }}
-
---- MENSAGEM ---
-
-{{ message }}

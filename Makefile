@@ -1,160 +1,281 @@
-.PHONY: help build up down restart logs shell migrate test clean
+SHELL := /bin/bash
+VENV := venv
+PYTHON := $(VENV)/bin/python
+PIP := $(VENV)/bin/pip
 
-# Docker Compose files
-COMPOSE_DEV = docker compose -f docker/docker-compose.yml
-COMPOSE_LOCAL = docker compose -f docker/docker-compose.local.yml
-COMPOSE_PROD = docker compose -f docker/docker-compose.prod.yml
+.PHONY: help up down build rebuild clean logs restart
+.PHONY: migrate makemigrations db-reset superuser shell back-shell back-logs reqs back-install
+.PHONY: front-install front-shell front-logs
+.PHONY: test test-cov test-parallel lint lint-fix format clean-cache fix-perms
+.PHONY: secret-key env-setup local-install local-clean
 
-help: ## Show this help message
-	@echo 'Usage: make [target]'
-	@echo ''
-	@echo 'Available targets:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+# Default target
+help:
+	@echo "=========================================================================="
+	@echo "  💍 Wedding Management - Sistema de Gestão de Casamentos"
+	@echo "=========================================================================="
+	@echo ""
+	@echo "📦 DOCKER & ORQUESTRAÇÃO"
+	@echo "  make up                  - Inicia containers, migrations e exibe logs"
+	@echo "  make down                - Para e remove todos os containers"
+	@echo "  make build               - Reconstrói e inicia os containers"
+	@echo "  make rebuild             - Reconstrói do zero (sem cache)"
+	@echo "  make clean               - Limpeza total (containers, volumes, redes)"
+	@echo "  make logs                - Exibe logs de todos os containers"
+	@echo "  make restart             - Reinicia containers"
+	@echo ""
+	@echo "🐍 BACKEND (Django REST Framework)"
+	@echo "  make migrate             - Aplica migrações no banco de dados"
+	@echo "  make makemigrations      - Gera novos arquivos de migração"
+	@echo "  make db-reset            - ⚠️  APAGA banco e migrations, recria tudo"
+	@echo "  make superuser           - Cria usuário administrativo"
+	@echo "  make shell               - Acessa shell interativo do Django"
+	@echo "  make back-install        - Instala pacote Python (pkg=nome)"
+	@echo "  make reqs                - Atualiza requirements.txt"
+	@echo "  make back-shell          - Acessa terminal do container backend"
+	@echo "  make back-logs           - Exibe logs do backend"
+	@echo ""
+	@echo "🔐 CONFIGURAÇÃO & AMBIENTE"
+	@echo "  make secret-key          - Gera SECRET_KEY segura para Django"
+	@echo "  make env-setup           - Configura arquivo .env (copia .env.example)"
+	@echo "  make local-install       - Instala deps localmente (venv + requirements.txt)"
+	@echo "  make local-clean         - Remove ambiente virtual local"
+	@echo ""
+	@echo "⚛️  FRONTEND (React + Vite)"
+	@echo "  make front-install       - Instala deps npm (pkg=nome para específico)"
+	@echo "  make front-shell         - Acessa terminal do container frontend"
+	@echo "  make front-logs          - Exibe logs do frontend"
+	@echo ""
+	@echo "🧹 QUALIDADE & MANUTENÇÃO"
+	@echo "  make test                - Executa testes com pytest"
+	@echo "  make test-cov            - Testes com cobertura HTML"
+	@echo "  make test-parallel       - Testes em paralelo (pytest-xdist)"
+	@echo "  make lint                - Analisa código com Ruff"
+	@echo "  make lint-fix            - Corrige problemas de lint"
+	@echo "  make format              - Formata código automaticamente"
+	@echo "  make clean-cache         - Limpa cache Python e temporários"
+	@echo "  make fix-perms           - Corrige permissões de arquivos"
+	@echo "=========================================================================="
 
-# Development (full Docker)
-build: ## Build Docker images (dev)
-	$(COMPOSE_DEV) build
+# ============================================================================
+# Docker Commands
+# ============================================================================
 
-up: ## Start all services (dev)
-	$(COMPOSE_DEV) up -d
+up:
+	@echo "🚀 Iniciando containers..."
+	docker compose up -d
+	@echo "🔄 Aplicando migrations..."
+	@sleep 3
+	docker compose exec backend python manage.py migrate
+	@echo "✅ Containers prontos!"
+	@echo "   Frontend: http://localhost:5173"
+	@echo "   Backend:  http://localhost:8000"
+	@echo "   Admin:    http://localhost:8000/admin"
+	@echo ""
+	@echo "📋 Exibindo logs (Ctrl+C para sair)..."
+	docker compose logs -f
 
-down: ## Stop all services (dev)
-	$(COMPOSE_DEV) down
+build:
+	@echo "🔨 Reconstruindo e iniciando containers..."
+	docker compose up --build -d
+	@echo "🔄 Aplicando migrations..."
+	@sleep 3
+	docker compose exec backend python manage.py migrate
+	@echo "✅ Containers prontos!"
+	@echo "   Frontend: http://localhost:5173"
+	@echo "   Backend:  http://localhost:8000"
+	@echo "   Admin:    http://localhost:8000/admin"
+	@echo ""
+	@echo "📋 Exibindo logs (Ctrl+C para sair)..."
+	docker compose logs -f
 
-restart: down up ## Restart all services (dev)
+rebuild:
+	@echo "🔨 Reconstruindo do zero (sem cache)..."
+	docker compose build --no-cache
+	docker compose up -d
+	@echo "🔄 Aplicando migrations..."
+	@sleep 3
+	docker compose exec backend python manage.py migrate
+	@echo "✅ Containers prontos!"
+	@echo "   Frontend: http://localhost:5173"
+	@echo "   Backend:  http://localhost:8000"
+	@echo "   Admin:    http://localhost:8000/admin"
+	@echo ""
+	@echo "📋 Exibindo logs (Ctrl+C para sair)..."
+	docker compose logs -f
 
-logs: ## Show logs from all services
-	$(COMPOSE_DEV) logs -f
+down:
+	@echo "🛑 Parando containers..."
+	docker compose down
 
-logs-web: ## Show logs from web service
-	$(COMPOSE_DEV) logs -f web
+clean:
+	@echo "🧹 Limpeza total (containers, volumes, redes)..."
+	docker compose down -v
+	docker system prune -f
+	@echo "✅ Limpeza concluída!"
 
-logs-celery: ## Show logs from celery worker
-	$(COMPOSE_DEV) logs -f celery_worker
+logs:
+	docker compose logs -f
 
-shell: ## Open Django shell
-	$(COMPOSE_DEV) exec web python manage.py shell
+restart:
+	@echo "🔄 Reiniciando containers..."
+	docker compose restart
 
-bash: ## Open bash shell in web container
-	$(COMPOSE_DEV) exec web bash
+# ============================================================================
+# Backend Commands
+# ============================================================================
 
-migrate: ## Run database migrations
-	$(COMPOSE_DEV) exec web python manage.py migrate
+migrate:
+	@echo "🔄 Aplicando migrations..."
+	docker compose exec backend python manage.py migrate
 
-makemigrations: ## Create new migrations
-	$(COMPOSE_DEV) exec web python manage.py makemigrations
+makemigrations:
+	@echo "📝 Criando migrations..."
+	docker compose exec backend python manage.py makemigrations
 
-createsuperuser: ## Create a superuser
-	$(COMPOSE_DEV) exec web python manage.py createsuperuser
+db-reset:
+	@echo "⚠️  ATENÇÃO: Este comando vai APAGAR o banco de dados e todas as migrations!"
+	@read -p "Tem certeza? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+	echo "🗑️  Parando containers..."; \
+	docker compose down -v; \
+	echo "🗑️  Removendo arquivos de migration..."; \
+	find backend/apps -path "*/migrations/*.py" -not -name "__init__.py" -delete; \
+	find backend/apps -path "*/migrations/__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true; \
+	echo "🚀 Recriando containers..."; \
+	docker compose up -d; \
+	sleep 5; \
+	echo "📝 Gerando novas migrations..."; \
+	for app in users weddings scheduler items contracts; do \
+	docker compose exec backend python manage.py makemigrations $$app; \
+	done; \
+	echo "✅ Aplicando migrations..."; \
+	docker compose exec backend python manage.py migrate; \
+	echo "🎉 Reset completo! Agora crie um superuser com 'make superuser'"; \
+	else \
+	echo "❌ Operação cancelada."; \
+	fi
 
-collectstatic: ## Collect static files
-	$(COMPOSE_DEV) exec web python manage.py collectstatic --noinput
+superuser:
+	docker compose exec backend python manage.py createsuperuser
 
-test: ## Run tests
-	$(COMPOSE_DEV) exec web python manage.py test
+shell:
+	docker compose exec backend python manage.py shell
 
-test-coverage: ## Run tests with coverage
-	$(COMPOSE_DEV) exec web pytest --cov=apps --cov-report=html
+back-shell:
+	docker compose exec backend /bin/sh
 
-local-test: ## Run tests locally (fast)
-	@bash -c 'source venv/bin/activate && pytest -n auto --tb=short -q'
+back-logs:
+	docker compose logs -f backend
 
-local-test-verbose: ## Run tests locally with verbose output
-	@bash -c 'source venv/bin/activate && pytest -n auto -v'
+reqs:
+	docker compose exec backend pip freeze > backend/requirements.txt
+	@echo "✅ requirements.txt atualizado!"
 
-local-test-coverage: ## Run tests locally with coverage
-	@bash -c 'source venv/bin/activate && pytest -n auto --cov=apps --cov-report=html --cov-report=term-missing'
+back-install:
+	docker compose exec backend pip install $(pkg)
+	$(MAKE) reqs
 
-local-test-failed: ## Re-run only failed tests
-	@bash -c 'source venv/bin/activate && pytest --lf -n auto -v'
+# ============================================================================
+# Frontend Commands
+# ============================================================================
 
-local-test-specific: ## Run specific test (usage: make local-test-specific TEST=apps/users/tests/test_models.py)
-	@bash -c 'source venv/bin/activate && pytest $(TEST) -v'
+front-install:
+	docker compose exec frontend npm install $(pkg)
 
-local-test-debug: ## Run tests without parallelism (best for debugging)
-	@bash -c 'source venv/bin/activate && pytest -vv --maxfail=1'
+front-shell:
+	docker compose exec frontend sh
 
-clean: ## Remove containers, volumes, and orphans
-	$(COMPOSE_DEV) down -v --remove-orphans
-	rm -rf htmlcov .coverage
+front-logs:
+	docker compose logs -f frontend
 
-clean-temp: ## Remove temporary files (cache, logs, etc)
-	rm -f celerybeat-schedule db.sqlite3
-	rm -rf htmlcov/ __pycache__/ staticfiles/ .pytest_cache/
+# ============================================================================
+# Quality & Maintenance Commands
+# ============================================================================
+
+clean-cache:
+	@echo "🧹 Limpando cache e arquivos temporários..."
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	find . -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	cd frontend && rm -rf node_modules/.vite 2>/dev/null || true
+	@echo "✅ Limpeza concluída!"
 
-clean-logs: ## Clear log files
-	rm -rf logs/*
-	mkdir -p logs
+# ============================================================================
+# Environment & Security
+# ============================================================================
 
-clean-all: clean clean-temp ## Complete cleanup (Docker + temp files)
+secret-key:
+	@python3 generate_secret_key.py
 
-ps: ## Show running containers
-	$(COMPOSE_DEV) ps
+env-setup:
+	@echo "⚙️  Configurando arquivo .env..."
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "✅ Arquivo .env criado a partir de .env.example"; \
+		echo "⚠️  IMPORTANTE: Execute 'make secret-key' para gerar uma SECRET_KEY segura"; \
+	else \
+		echo "⚠️  Arquivo .env já existe. Não foi modificado."; \
+	fi
 
-# Local development (hybrid - db/redis in Docker, Django local)
-local-up: ## Start local services (db, redis only)
-	$(COMPOSE_LOCAL) up -d
-
-local-down: ## Stop local services
-	$(COMPOSE_LOCAL) down
-
-local-ps: ## Show local containers
-	$(COMPOSE_LOCAL) ps
-
-local-logs: ## Show logs from local services
-	$(COMPOSE_LOCAL) logs -f
-
-runserver: ## Run Django development server locally
-	@bash -c 'source venv/bin/activate && python manage.py runserver 0.0.0.0:8000'
-
-local-migrate: ## Run database migrations locally
-	@bash -c 'source venv/bin/activate && python manage.py migrate'
-
-local-makemigrations: ## Create new migrations locally
-	@bash -c 'source venv/bin/activate && python manage.py makemigrations'
-
-local-shell: ## Open Django shell locally
-	@bash -c 'source venv/bin/activate && python manage.py shell'
-
-local-createsuperuser: ## Create superuser locally
-	@bash -c 'source venv/bin/activate && python manage.py createsuperuser'
-
-# Production
-prod-build: ## Build production images
-	$(COMPOSE_PROD) build
-
-prod-up: ## Start production services
-	$(COMPOSE_PROD) up -d
-
-prod-down: ## Stop production services
-	$(COMPOSE_PROD) down
-
-prod-logs: ## Show production logs
-	$(COMPOSE_PROD) logs -f
-
-prod-ps: ## Show production containers
-	$(COMPOSE_PROD) ps
-
-# Docker image management
-images: ## List Docker images
-	@echo "=== Docker Images ==="
-	@docker images | grep -E "wedding|REPOSITORY" || docker images
-
-image-size: ## Compare image sizes
-	@echo "=== Image Size Comparison ==="
+local-install:
+	@echo "🐍 Configurando ambiente Python local..."
+	@if [ ! -d "$(VENV)" ]; then \
+		echo "📦 Criando ambiente virtual..."; \
+		python3 -m venv $(VENV); \
+	fi
+	@echo "📥 Instalando dependências do backend..."
+	@$(PIP) install --upgrade pip > /dev/null 2>&1
+	@$(PIP) install -r backend/requirements.txt
 	@echo ""
-	@echo "📦 Development (Dockerfile.dev):"
-	@docker images wedding_management-web:latest 2>/dev/null | tail -1 | awk '{print "   " $$7 " " $$8}' || echo "   Not built yet"
+	@echo "✅ Ambiente local configurado com sucesso!"
 	@echo ""
-	@echo "🚀 Production (Dockerfile):"
-	@docker images wedding_management-web:prod 2>/dev/null | tail -1 | awk '{print "   " $$7 " " $$8}' || echo "   Not built yet"
+	@echo "Para ativar o ambiente virtual:"
+	@echo "  source $(VENV)/bin/activate"
 	@echo ""
-	@echo "💡 Tip: Production image is ~50% smaller!"
+	@echo "Para desativar:"
+	@echo "  deactivate"
 
-celery-worker: ## Run Celery worker locally
-	@bash -c 'source venv/bin/activate && celery -A wedding_management worker --loglevel=info'
+local-clean:
+	@echo "🗑️  Removendo ambiente virtual local..."
+	@rm -rf $(VENV)
+	@echo "✅ Ambiente virtual removido!"
 
-celery-beat: ## Run Celery beat locally
-	@bash -c 'source venv/bin/activate && celery -A wedding_management beat --loglevel=info'
+# ============================================================================
+# Testing & Quality
+# ============================================================================
+
+test:
+	@echo "🧪 Executando testes com pytest..."
+	docker compose exec backend pytest -v || echo "⚠️  Nenhum teste encontrado ou testes falharam"
+
+test-cov:
+	@echo "🧪 Executando testes com cobertura..."
+	docker compose exec backend pytest --cov=apps --cov-report=html --cov-report=term-missing
+	@echo "📊 Relatório HTML: backend/htmlcov/index.html"
+
+test-parallel:
+	@echo "🧪 Executando testes em paralelo..."
+	docker compose exec backend pytest -v -n auto
+
+lint:
+	@echo "🔍 Executando linter..."
+	docker compose exec backend ruff check .
+
+lint-fix:
+	@echo "🔧 Corrigindo problemas de lint..."
+	docker compose exec backend ruff check --fix .
+
+format:
+	@echo "✨ Formatando código..."
+	docker compose exec backend ruff format .
+	docker compose exec backend ruff check . --fix
+
+fix-perms:
+	@echo "🔧 Corrigindo permissões..."
+	sudo chown -R $$USER:$$USER .
+	@echo "✅ Permissões corrigidas!"

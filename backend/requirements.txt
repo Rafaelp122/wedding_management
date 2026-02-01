@@ -1,0 +1,35 @@
+# Core Django
+Django==5.2.9
+djangorestframework==3.16.1
+djangorestframework-simplejwt==5.4.0
+django-cors-headers==4.6.0
+drf-spectacular==0.27.1
+
+# Database
+psycopg2-binary==2.9.10
+
+# Utils
+colorlog==6.10.1
+Pillow==12.0.0
+qrcode[pil]==7.4.2
+
+# Production Server
+gunicorn==23.0.0
+
+# Development
+django-debug-toolbar==6.1.0
+django-extensions==4.1
+ipython==9.8.0
+python-dotenv==1.0.1
+
+# Code Quality
+ruff==0.7.4
+
+# Testing
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+pytest-xdist==3.6.1
+pytest-mock==3.14.0
+factory-boy==3.3.1
+faker==34.0.0
