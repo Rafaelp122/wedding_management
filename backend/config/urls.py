@@ -1,3 +1,4 @@
+from apps.users.serializers import EmailTokenObtainPairSerializer
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -7,7 +8,14 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenViewBase
+
+
+class EmailTokenObtainPairView(TokenViewBase):
+    """View JWT customizada para usar email."""
+
+    serializer_class = EmailTokenObtainPairSerializer
+
 
 # Define as rotas principais do projeto.
 urlpatterns = [
@@ -20,7 +28,11 @@ urlpatterns = [
         include(
             [
                 # Authentication
-                path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain"),
+                path(
+                    "auth/token/",
+                    EmailTokenObtainPairView.as_view(),
+                    name="token_obtain",
+                ),
                 path(
                     "auth/token/refresh/",
                     TokenRefreshView.as_view(),

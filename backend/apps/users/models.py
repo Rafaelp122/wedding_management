@@ -6,19 +6,21 @@ from django.db import models
 
 
 class CustomUserManager(BaseUserManager["User"]):
-    def create_user(self, username, email, password=None, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("O campo de E-mail é obrigatório")
-        if not username:
-            raise ValueError("O campo de Username é obrigatório")
 
         email = self.normalize_email(email)
-        user = self.model(username=username, email=email, **extra_fields)
+        # Gera username automaticamente a partir do email se não fornecido
+        if "username" not in extra_fields:
+            extra_fields["username"] = email.split("@")[0]
+
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, password=None, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -28,7 +30,7 @@ class CustomUserManager(BaseUserManager["User"]):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
 
-        return self.create_user(username, email, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):
@@ -37,7 +39,8 @@ class User(AbstractUser):
         max_length=255, unique=True, validators=[MaxLengthValidator(255)]
     )
 
-    REQUIRED_FIELDS: ClassVar[list] = ["email"]
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS: ClassVar[list] = ["username"]
 
     objects: ClassVar[CustomUserManager] = CustomUserManager()  # type: ignore[assignment]
 
