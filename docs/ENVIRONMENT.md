@@ -2,7 +2,14 @@
 
 ## Visão Geral
 
-O sistema utiliza variáveis de ambiente para configuração sensível e específica do ambiente. Nunca commite o arquivo `.env` no Git!
+O sistema utiliza variáveis de ambiente para configuração sensível e específica do ambiente. **Nunca commite o arquivo `.env` no Git!**
+
+### ⚡ Tecnologias de Build
+
+- **BuildKit:** Habilitado automaticamente via Makefile para builds otimizados com cache
+- **UV Package Manager:** Gerenciador ultra-rápido (10-100x mais rápido que pip)
+- **Multi-stage Docker builds:** 4 stages (base → builder → development → production)
+- **Dependency Management:** pyproject.toml (PEP 621) + uv.lock para reprodutibilidade
 
 ## Setup Rápido
 
@@ -10,18 +17,20 @@ O sistema utiliza variáveis de ambiente para configuração sensível e especí
 # 1. Criar arquivo .env
 make env-setup
 
-# 2. Gerar SECRET_KEY segura
+# 2. Gerar SECRET_KEY segura (usa Python secrets.token_urlsafe)
 make secret-key
 
 # 3. Copiar SECRET_KEY gerada e colar no .env
 nano .env  # ou seu editor preferido
 
-# 4. Iniciar containers
-docker compose up -d
+# 4. Iniciar containers (build + up + migrations + logs)
+make up
 
-# 5. Aplicar migrações
-make migrate
+# 5. Criar superusuário (login com email)
+make superuser
 ```
+
+**Nota:** O sistema usa **email como USERNAME_FIELD**, não username.
 
 ## Variáveis de Ambiente
 
@@ -198,6 +207,53 @@ docker compose logs db
 ```
 
 Se usando Docker, certifique-se que `DB_HOST=db`.
+
+### Erro: "Module not found" após adicionar pacote
+
+**Causa:** Adicionou pacote no `pyproject.toml` mas não rebuilou o container.
+
+```bash
+# 1. Atualizar uv.lock
+make reqs
+
+# 2. Rebuild container (com cache, rápido ~10-15s)
+make build
+```
+
+### Build muito lento
+
+**Causa:** Usando `make rebuild` (--no-cache) desnecessariamente.
+
+```bash
+# Use make build (com cache) no dia-a-dia
+make build  # ~10-15s
+
+# Use make rebuild APENAS se cache estiver corrompido
+make rebuild  # ~77s (refaz tudo)
+```
+
+### Hot reload não funciona
+
+**Verificar:**
+
+1. Volumes montados corretamente no docker-compose.yml
+2. Container em modo development (target: development)
+3. Logs do container: `make back-logs` ou `make front-logs`
+
+**Django hot reload:**
+
+```bash
+# Deve aparecer nos logs:
+# "Watching for file changes with StatReloader"
+```
+
+**Vite HMR:**
+
+```bash
+# Deve aparecer nos logs:
+# "VITE v7.3.1  ready in XXXms"
+# "HMR connected"
+```
 
 ### CORS Errors no Frontend
 
