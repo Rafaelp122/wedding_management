@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     # Project apps
+    "apps.core",
     "apps.scheduler",
     "apps.contracts",
     "apps.items",
