@@ -1,55 +1,47 @@
 # ==============================================================================
-# STAGE 1: Base - Configurações comuns
+# STAGE 1: Base - O único lugar com APT
 # ==============================================================================
 FROM python:3.11-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/app/.venv
 
 WORKDIR /app
 
-# Instala apenas o essencial para runtime (com cache mount do BuildKit)
+# Unificamos o APT aqui.postgresql-client e libpq5 são leves e úteis em tudo.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
-    libpq5
+    libpq5 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copia o UV do binário oficial
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # ==============================================================================
-# STAGE 2: Builder - Instala dependências
+# STAGE 2: Installer - Resolve tudo de uma vez
 # ==============================================================================
-FROM base AS builder
+FROM base AS installer
 
-# Instala dependências de COMPILAÇÃO (com cache mount do BuildKit)
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libpq-dev
-
-# Copia arquivos de dependências (pyproject.toml + uv.lock)
+# Copia apenas o necessário para instalar
 COPY pyproject.toml uv.lock ./
 
-# Exporta requirements do uv.lock e instala no sistema (mais compatível com Docker)
+# Instala TUDO (incluindo dev) em um virtualenv dentro de /app/.venv
+# O uv sync é muito mais rápido que exportar para txt
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv export --frozen --no-dev --no-hashes > /tmp/requirements.txt && \
-    uv pip install --system --no-cache -r /tmp/requirements.txt
+    uv sync --frozen --no-install-project
 
 # ==============================================================================
-# STAGE 3: Development - Herda do BASE (mais leve que builder)
+# STAGE 3: Development
 # ==============================================================================
-FROM base AS development
+FROM installer AS development
 
 ENV DJANGO_DEBUG=True
-
-# Copia apenas os pacotes Python instalados (não copia gcc, libpq-dev)
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Garante que o Python use o venv criado no stage anterior
+ENV PATH="/app/.venv/bin:$PATH"
 
 COPY . .
 
@@ -57,23 +49,21 @@ EXPOSE 8000
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # ==============================================================================
-# STAGE 4: Production - Imagem final limpa
+# STAGE 4: Production - A imagem "magra"
 # ==============================================================================
 FROM base AS production
 
-# Copia apenas os pacotes instalados do builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# No lugar de instalar de novo, apenas limpamos o venv do stage installer
+# ou criamos um só com prod (opcional para simplicidade)
+COPY --from=installer /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
 
 COPY . .
 
-# Coleta estáticos e ajusta permissões
 RUN mkdir -p /app/staticfiles /app/media && \
     useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 
 USER appuser
-
 EXPOSE 8000
-# Dica: Use uma variável de ambiente para o número de workers se possível
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

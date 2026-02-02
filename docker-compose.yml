@@ -37,8 +37,13 @@ services:
     container_name: wedding_backend
     env_file:
       - .env
+    environment:
+      - PATH=/app/.venv/bin:$PATH
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend:/app
+      - /app/.venv
     ports:
       - "8000:8000"
     depends_on:
