@@ -16,6 +16,16 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
+    command:
+      - "postgres"
+      - "-c"
+      - "log_statement=none"
+      - "-c"
+      - "log_duration=off"
+      - "-c"
+      - "log_connections=off"
+      - "-c"
+      - "log_disconnections=off"
     networks:
       - wedding_network
 
@@ -27,18 +37,13 @@ services:
     container_name: wedding_backend
     env_file:
       - .env
+    volumes:
+      - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
-    develop:
-      watch:
-        - action: sync
-          path: ./backend
-          target: /app
-          ignore:
-            - __pycache__/
     networks:
       - wedding_network
 
@@ -50,19 +55,13 @@ services:
     container_name: wedding_frontend
     env_file:
       - .env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
       - "5173:5173"
     stdin_open: true
     tty: true
-    develop:
-      watch:
-        - action: sync
-          path: ./frontend
-          target: /app
-          ignore:
-            - node_modules/
-        - action: rebuild
-          path: ./frontend/package.json
     depends_on:
       - backend
     networks:
