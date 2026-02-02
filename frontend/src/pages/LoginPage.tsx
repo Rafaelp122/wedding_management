@@ -28,15 +28,16 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/login/", { email, password });
-      const { token, user } = response.data;
+      const response = await api.post("/v1/auth/token/", {
+        email,
+        password,
+      });
+      const { access, refresh, user } = response.data;
 
-      login(token, user);
+      login(access, user);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(
-        err.response?.data?.detail || "Erro ao fazer login. Tente novamente.",
-      );
+      setError(err.response?.data?.detail || "Erro ao fazer login. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -52,9 +53,7 @@ export function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl">Entrar no sistema</CardTitle>
-          <CardDescription>
-            Gerencie seus casamentos com facilidade
-          </CardDescription>
+          <CardDescription>Gerencie seus casamentos com facilidade</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
