@@ -3,11 +3,16 @@ VENV := venv
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 
+# Habilita BuildKit para builds mais rápidos e com cache
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
 .PHONY: help up down build rebuild clean logs restart
 .PHONY: migrate makemigrations db-reset superuser shell back-shell back-logs reqs back-install
-.PHONY: front-install front-shell front-logs
+.PHONY: front-install front-shell front-logs front-dev
 .PHONY: test test-cov test-parallel lint lint-fix format clean-cache fix-perms
 .PHONY: secret-key env-setup local-install local-clean
+.PHONY: local-migrate local-makemigrations local-run local-shell local-createsuperuser
 
 # Default target
 help:
@@ -31,18 +36,24 @@ help:
 	@echo "  make superuser           - Cria usuário administrativo"
 	@echo "  make shell               - Acessa shell interativo do Django"
 	@echo "  make back-install        - Instala pacote Python (pkg=nome)"
-	@echo "  make reqs                - Atualiza requirements.txt"
+	@echo "  make reqs                - Atualiza uv.lock"
 	@echo "  make back-shell          - Acessa terminal do container backend"
 	@echo "  make back-logs           - Exibe logs do backend"
 	@echo ""
 	@echo "🔐 CONFIGURAÇÃO & AMBIENTE"
 	@echo "  make secret-key          - Gera SECRET_KEY segura para Django"
 	@echo "  make env-setup           - Configura arquivo .env (copia .env.example)"
-	@echo "  make local-install       - Instala deps localmente (venv + requirements.txt)"
+	@echo "  make local-install       - Instala deps localmente (venv + pyproject.toml)"
 	@echo "  make local-clean         - Remove ambiente virtual local"
 	@echo "  make setup-hooks         - Instala e configura git hooks (pre-commit)"
-	@echo ""
-	@echo "⚛️  FRONTEND (React + Vite)"
+	@echo ""	@echo "💻 DESENVOLVIMENTO LOCAL (sem Docker)"
+	@echo "  make local-migrate       - Aplica migrações localmente"
+	@echo "  make local-makemigrations- Cria migrações localmente"
+	@echo "  make local-run           - Inicia servidor Django local"
+	@echo "  make local-shell         - Abre Django shell local"
+	@echo "  make local-createsuperuser - Cria superusuário local"
+	@echo "  make front-dev           - Inicia servidor Vite local"
+	@echo ""	@echo "⚛️  FRONTEND (React + Vite)"
 	@echo "  make front-install       - Instala deps npm (pkg=nome para específico)"
 	@echo "  make front-shell         - Acessa terminal do container frontend"
 	@echo "  make front-logs          - Exibe logs do frontend"
@@ -171,8 +182,8 @@ back-logs:
 	docker compose logs -f backend
 
 reqs:
-	docker compose exec backend pip freeze > backend/requirements.txt
-	@echo "✅ requirements.txt atualizado!"
+	docker compose exec backend uv lock
+	@echo "✅ uv.lock atualizado!"
 
 back-install:
 	docker compose exec backend pip install $(pkg)
@@ -225,13 +236,27 @@ env-setup:
 
 local-install:
 	@echo "🐍 Configurando ambiente Python local..."
+	@echo ""
+	@echo "Verificando pré-requisitos..."
+	@command -v uv >/dev/null 2>&1 || { \
+		echo "❌ UV não encontrado. Instalando..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "✅ UV instalado! Por favor, execute 'source ~/.cargo/env' e rode 'make local-install' novamente."; \
+		exit 1; \
+	}
+	@echo "✅ UV encontrado: $$(uv --version)"
+	@echo ""
 	@if [ ! -d "$(VENV)" ]; then \
 		echo "📦 Criando ambiente virtual..."; \
 		python3 -m venv $(VENV); \
 	fi
 	@echo "📥 Instalando dependências do backend..."
 	@$(PIP) install --upgrade pip > /dev/null 2>&1
-	@$(PIP) install -r backend/requirements.txt
+	@$(PIP) install -e backend/[dev]
+	@echo ""
+	@echo "🪝 Instalando e configurando pre-commit hooks..."
+	@$(PIP) install pre-commit > /dev/null 2>&1
+	@$(VENV)/bin/pre-commit install
 	@echo ""
 	@echo "✅ Ambiente local configurado com sucesso!"
 	@echo ""
@@ -246,11 +271,58 @@ local-clean:
 	@rm -rf $(VENV)
 	@echo "✅ Ambiente virtual removido!"
 
+# ============================================================================
+# Local Development Commands (sem Docker)
+# ============================================================================
+
+local-migrate:
+	@echo "📦 Aplicando migrações localmente..."
+	@cd backend && $(PYTHON) manage.py migrate
+	@echo "✅ Migrações aplicadas!"
+
+local-makemigrations:
+	@echo "📝 Gerando migrações localmente..."
+	@cd backend && $(PYTHON) manage.py makemigrations
+	@echo "✅ Migrações geradas!"
+
+local-run:
+	@echo "🚀 Iniciando servidor Django local..."
+	@echo "   Acesse: http://localhost:8000"
+	@echo "   Admin:  http://localhost:8000/admin"
+	@echo "   API:    http://localhost:8000/api/"
+	@echo ""
+	@cd backend && $(PYTHON) manage.py runserver
+
+local-shell:
+	@echo "🐍 Abrindo Django shell local..."
+	@cd backend && $(PYTHON) manage.py shell
+
+local-createsuperuser:
+	@echo "👤 Criando superusuário local..."
+	@cd backend && $(PYTHON) manage.py createsuperuser
+
+front-dev:
+	@echo "⚡ Iniciando servidor Vite local..."
+	@echo "   Acesse: http://localhost:5173"
+	@echo ""
+	@cd frontend && npm run dev
+
 setup-hooks:
 	@echo "🪝 Configurando pre-commit hooks..."
-	$(PIP) install pre-commit
-	$(VENV)/bin/pre-commit install
+	@if [ ! -d "$(VENV)" ]; then \
+		echo "❌ Ambiente virtual não encontrado. Execute 'make local-install' primeiro."; \
+		exit 1; \
+	fi
+	@$(PIP) install pre-commit > /dev/null 2>&1
+	@$(VENV)/bin/pre-commit install
 	@echo "✅ Hooks instalados com sucesso!"
+	@echo ""
+	@echo "Pre-commit irá executar automaticamente antes de cada commit:"
+	@echo "  • Ruff linter + formatter"
+	@echo "  • Trailing whitespace check"
+	@echo "  • End of file fixer"
+	@echo "  • YAML validator"
+	@echo "  • Large files check"
 
 # ============================================================================
 # Testing & Quality
