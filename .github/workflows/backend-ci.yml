@@ -19,21 +19,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: backend/requirements.txt
 
-      - name: Install dependencies
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install Ruff (version from pyproject.toml)
         run: |
           cd backend
-          pip install --upgrade pip
-          pip install ruff
+          uv pip install --system "ruff>=0.7.4,<0.8"
 
-      - name: Run Ruff linter
+      - name: Run Ruff linter (uses pyproject.toml config)
         run: |
           cd backend
           ruff check .
 
-      - name: Run Ruff formatter check
+      - name: Run Ruff formatter check (uses pyproject.toml config)
         run: |
           cd backend
           ruff format --check .
@@ -65,14 +67,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: backend/requirements.txt
+
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Install dependencies
         run: |
           cd backend
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          uv pip install --system -r <(uv export --frozen --no-hashes)
 
       - name: Run migrations
         env:
