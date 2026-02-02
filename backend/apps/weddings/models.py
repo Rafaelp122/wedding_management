@@ -1,12 +1,13 @@
 from decimal import Decimal
 
+from apps.core.models import BaseModel
 from apps.users.models import User
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q, Sum
 
 
-class Wedding(models.Model):
+class Wedding(BaseModel):
     class StatusChoices(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "Em Andamento"
         COMPLETED = "COMPLETED", "Concluído"
@@ -22,8 +23,6 @@ class Wedding(models.Model):
         choices=StatusChoices.choices,
         default=StatusChoices.IN_PROGRESS,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Casamento"

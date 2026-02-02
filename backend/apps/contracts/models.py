@@ -1,8 +1,9 @@
+from apps.core.models import BaseModel
 from apps.items.models import Item
 from django.db import models
 
 
-class Contract(models.Model):
+class Contract(BaseModel):
     """Modelo simplificado de Contrato."""
 
     class StatusChoices(models.TextChoices):
@@ -43,9 +44,6 @@ class Contract(models.Model):
 
     # PDF final do contrato
     pdf_file = models.FileField(upload_to="contracts/%Y/%m/", null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Contrato"

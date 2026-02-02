@@ -1,9 +1,10 @@
+from apps.core.models import BaseModel
 from apps.users.models import User
 from apps.weddings.models import Wedding
 from django.db import models
 
 
-class Event(models.Model):
+class Event(BaseModel):
     """Modelo que representa um evento/compromisso no calendário."""
 
     class TypeChoices(models.TextChoices):
@@ -53,9 +54,6 @@ class Event(models.Model):
         verbose_name="Lembrete (minutos antes)",
         help_text="Quantos minutos antes do evento enviar lembrete",
     )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Evento"

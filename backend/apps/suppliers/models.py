@@ -1,8 +1,9 @@
+from apps.core.models import BaseModel
 from django.core.validators import MaxLengthValidator, MinValueValidator
 from django.db import models
 
 
-class Supplier(models.Model):
+class Supplier(BaseModel):
     """
     Fornecedores de produtos e serviços para casamentos.
     Centraliza informações de contato e histórico de relacionamento.
@@ -74,10 +75,6 @@ class Supplier(models.Model):
         verbose_name="Ativo",
         help_text="Fornecedor disponível para novos contratos",
     )
-
-    # Metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Fornecedor"

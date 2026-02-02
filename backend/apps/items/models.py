@@ -1,13 +1,14 @@
 from decimal import Decimal
 from typing import ClassVar
 
+from apps.core.models import BaseModel
 from apps.weddings.models import Wedding
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
 
 
-class Item(models.Model):
+class Item(BaseModel):
     """
     Item unificado: logística (RF06/RF07) + financeiro (RF03/RF04).
     Combina controle de aquisição com gestão financeira.
@@ -77,10 +78,6 @@ class Item(models.Model):
         help_text="Valor final após negociação",
     )
 
-    # === METADATA ===
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         verbose_name = "Item"
         verbose_name_plural = "Itens"
@@ -121,7 +118,7 @@ class Item(models.Model):
         return self.actual_cost - self.total_paid
 
 
-class Installment(models.Model):
+class Installment(BaseModel):
     """
     Controle de parcelamento de pagamentos (RF04).
     Cada item pode ter múltiplas parcelas com status independentes.
@@ -166,8 +163,6 @@ class Installment(models.Model):
         blank=True,
         verbose_name="Observações",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Parcela"

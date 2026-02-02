@@ -13,20 +13,16 @@ class ContractAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
     fieldsets = (
-        ("Informações Básicas", {"fields": ("item", "description", "status", "token")}),
+        ("Informações Básicas", {"fields": ("item", "description", "status")}),
         (
-            "Assinatura do Cerimonialista",
-            {"fields": ("planner_signature", "planner_signed_at", "planner_ip")},
+            "Assinaturas",
+            {"fields": ("planner_signed_at", "supplier_signed_at", "couple_signed_at")},
         ),
         (
-            "Assinatura do Fornecedor",
-            {"fields": ("supplier_signature", "supplier_signed_at", "supplier_ip")},
+            "Vencimento",
+            {"fields": ("expiration_date", "alert_days_before")},
         ),
-        (
-            "Assinatura dos Noivos",
-            {"fields": ("couple_signature", "couple_signed_at", "couple_ip")},
-        ),
-        ("Integridade e Arquivos", {"fields": ("integrity_hash", "final_pdf")}),
+        ("Arquivo PDF", {"fields": ("pdf_file",)}),
         (
             "Metadados",
             {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
