@@ -14,9 +14,9 @@ class TestUserModel:
     def test_create_user(self):
         """Testa criação de usuário comum."""
         user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            email="test@example.com", password="testpass123"
         )
-        assert user.username == "testuser"
+        assert user.username == "test"  # Auto-generated from email
         assert user.email == "test@example.com"
         assert user.check_password("testpass123")
         assert not user.is_staff
@@ -26,7 +26,7 @@ class TestUserModel:
     def test_create_superuser(self):
         """Testa criação de superusuário."""
         admin = User.objects.create_superuser(
-            username="admin", email="admin@example.com", password="adminpass123"
+            email="admin@example.com", password="adminpass123"
         )
         assert admin.is_staff
         assert admin.is_superuser
@@ -35,35 +35,29 @@ class TestUserModel:
     def test_user_email_required(self):
         """Testa que email é obrigatório."""
         with pytest.raises(ValueError, match="O campo de E-mail é obrigatório"):
-            User.objects.create_user(
-                username="testuser", email="", password="testpass123"
-            )
+            User.objects.create_user(email="", password="testpass123")
 
-    def test_user_username_required(self):
-        """Testa que username é obrigatório."""
-        with pytest.raises(ValueError, match="O campo de Username é obrigatório"):
-            User.objects.create_user(
-                username="", email="test@example.com", password="testpass123"
-            )
+    def test_user_username_auto_generated(self):
+        """Testa que username é gerado automaticamente a partir do email."""
+        user = User.objects.create_user(
+            email="john.doe@example.com", password="testpass123"
+        )
+        assert user.username == "john.doe"  # Part before @
 
     def test_user_email_unique(self):
         """Testa que email deve ser único."""
-        User.objects.create_user(
-            username="user1", email="same@example.com", password="pass123"
-        )
+        User.objects.create_user(email="same@example.com", password="pass123")
         with pytest.raises(IntegrityError):
-            User.objects.create_user(
-                username="user2", email="same@example.com", password="pass123"
-            )
+            User.objects.create_user(email="same@example.com", password="pass123")
 
     def test_user_username_unique(self):
         """Testa que username deve ser único."""
         User.objects.create_user(
-            username="sameuser", email="email1@example.com", password="pass123"
+            email="email1@example.com", username="sameuser", password="pass123"
         )
         with pytest.raises(IntegrityError):
             User.objects.create_user(
-                username="sameuser", email="email2@example.com", password="pass123"
+                email="email2@example.com", username="sameuser", password="pass123"
             )
 
     def test_user_str_representation(self):
