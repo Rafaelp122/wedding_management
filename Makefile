@@ -1,18 +1,27 @@
 SHELL := /bin/bash
-VENV := venv
-PYTHON := $(VENV)/bin/python
-PIP := $(VENV)/bin/pip
+
+# ==============================================================================
+# CONFIGURAÇÕES E VARIÁVEIS
+# ==============================================================================
+DC := docker compose
+EXEC_BACK := $(DC) exec backend
+EXEC_FRONT := $(DC) exec frontend
+PYTHON := python manage.py
+
+# Detecta todos os apps dentro da pasta apps
+APPS := $(shell find backend/apps -mindepth 1 -maxdepth 1 -type d ! -name '__pycache__' -exec basename {} \;)
 
 # Habilita BuildKit para builds mais rápidos e com cache
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
 .PHONY: help up down build rebuild clean logs restart
-.PHONY: migrate makemigrations db-reset superuser shell back-shell back-logs reqs back-install
+.PHONY: migrate makemigrations db-reset db-flush show-migrations superuser shell back-shell back-logs reqs back-install
 .PHONY: front-install front-shell front-logs front-dev
-.PHONY: test test-cov test-parallel lint lint-fix format clean-cache fix-perms
-.PHONY: secret-key env-setup local-install local-clean
+.PHONY: test test-cov test-parallel lint lint-fix format check clean-cache fix-perms
+.PHONY: secret-key env-setup check-env local-install setup-hooks setup
 .PHONY: local-migrate local-makemigrations local-run local-shell local-createsuperuser
+.PHONY: data-dump data-load prune
 
 # Default target
 help:
@@ -21,20 +30,26 @@ help:
 	@echo "=========================================================================="
 	@echo ""
 	@echo "📦 DOCKER & ORQUESTRAÇÃO"
-	@echo "  make up                  - Inicia containers, migrations e exibe logs"
+	@echo "  make setup               - 🚀 Setup completo (env + build + superuser)"
+	@echo "  make up                  - Inicia containers e aplica migrations"
 	@echo "  make down                - Para e remove todos os containers"
 	@echo "  make build               - Reconstrói e inicia os containers"
 	@echo "  make rebuild             - Reconstrói do zero (sem cache)"
 	@echo "  make clean               - Limpeza total (containers, volumes, redes)"
+	@echo "  make prune               - Limpa imagens e volumes não utilizados"
 	@echo "  make logs                - Exibe logs de todos os containers"
 	@echo "  make restart             - Reinicia containers"
 	@echo ""
 	@echo "🐍 BACKEND (Django REST Framework)"
 	@echo "  make migrate             - Aplica migrações no banco de dados"
-	@echo "  make makemigrations      - Gera novos arquivos de migração"
+	@echo "  make makemigrations      - Gera migrations (todos apps auto-detectados)"
+	@echo "  make show-migrations     - Mostra status das migrações"
 	@echo "  make db-reset            - ⚠️  APAGA banco e migrations, recria tudo"
+	@echo "  make db-flush            - ⚠️  Limpa dados do banco (mantém tabelas)"
 	@echo "  make superuser           - Cria usuário administrativo"
 	@echo "  make shell               - Acessa shell interativo do Django"
+	@echo "  make data-dump           - Exporta dados do banco para seed.json"
+	@echo "  make data-load           - Importa dados do seed.json"
 	@echo "  make back-install        - Instala pacote Python (pkg=nome)"
 	@echo "  make reqs                - Atualiza uv.lock"
 	@echo "  make back-shell          - Acessa terminal do container backend"
@@ -43,22 +58,25 @@ help:
 	@echo "🔐 CONFIGURAÇÃO & AMBIENTE"
 	@echo "  make secret-key          - Gera SECRET_KEY segura para Django"
 	@echo "  make env-setup           - Configura arquivo .env (copia .env.example)"
-	@echo "  make local-install       - Instala deps localmente (venv + pyproject.toml)"
-	@echo "  make local-clean         - Remove ambiente virtual local"
+	@echo "  make check-env           - Verifica se .env está atualizado"
+	@echo "  make local-install       - Instala deps localmente (UV sync)"
 	@echo "  make setup-hooks         - Instala e configura git hooks (pre-commit)"
-	@echo ""	@echo "💻 DESENVOLVIMENTO LOCAL (sem Docker)"
+	@echo ""
+	@echo "💻 DESENVOLVIMENTO LOCAL (sem Docker)"
 	@echo "  make local-migrate       - Aplica migrações localmente"
 	@echo "  make local-makemigrations- Cria migrações localmente"
 	@echo "  make local-run           - Inicia servidor Django local"
 	@echo "  make local-shell         - Abre Django shell local"
 	@echo "  make local-createsuperuser - Cria superusuário local"
 	@echo "  make front-dev           - Inicia servidor Vite local"
-	@echo ""	@echo "⚛️  FRONTEND (React + Vite)"
+	@echo ""
+	@echo "⚛️  FRONTEND (React + Vite)"
 	@echo "  make front-install       - Instala deps npm (pkg=nome para específico)"
 	@echo "  make front-shell         - Acessa terminal do container frontend"
 	@echo "  make front-logs          - Exibe logs do frontend"
 	@echo ""
 	@echo "🧹 QUALIDADE & MANUTENÇÃO"
+	@echo "  make check               - Roda lint + testes (CI gate)"
 	@echo "  make test                - Executa testes com pytest"
 	@echo "  make test-cov            - Testes com cobertura HTML"
 	@echo "  make test-parallel       - Testes em paralelo (pytest-xdist)"
@@ -73,65 +91,52 @@ help:
 # Docker Commands
 # ============================================================================
 
+# Setup completo: env, build, migrations e superuser
+setup: env-setup build
+	@echo "✨ Setup completo! Criando superusuário..."
+	$(MAKE) superuser
+
 up:
 	@echo "🚀 Iniciando containers..."
-	docker compose up -d
-	@echo "🔄 Aplicando migrations..."
-	@sleep 3
-	docker compose exec backend python manage.py migrate
-	@echo "✅ Containers prontos!"
-	@echo "   Frontend: http://localhost:5173"
-	@echo "   Backend:  http://localhost:8000"
-	@echo "   Admin:    http://localhost:8000/admin"
-	@echo ""
-	@echo "📋 Exibindo logs (Ctrl+C para sair)..."
-	docker compose logs -f
+	$(DC) up -d
+	@echo "🔄 Aguardando banco e aplicando migrations..."
+	@# O comando abaixo falhará se o container não subir, o que é melhor que o sleep
+	$(EXEC_BACK) $(PYTHON) migrate
+	@echo "✅ Pronto! Acesse http://localhost:8000"
 
 build:
-	@echo "🔨 Reconstruindo e iniciando containers..."
-	docker compose up --build -d
-	@echo "🔄 Aplicando migrations..."
-	@sleep 3
-	docker compose exec backend python manage.py migrate
-	@echo "✅ Containers prontos!"
-	@echo "   Frontend: http://localhost:5173"
-	@echo "   Backend:  http://localhost:8000"
-	@echo "   Admin:    http://localhost:8000/admin"
-	@echo ""
-	@echo "📋 Exibindo logs (Ctrl+C para sair)..."
-	docker compose logs -f
+	@echo "🔨 Reconstruindo e iniciando..."
+	$(DC) up --build -d
+	$(EXEC_BACK) $(PYTHON) migrate
 
 rebuild:
-	@echo "🔨 Reconstruindo do zero (sem cache)..."
-	docker compose build --no-cache
-	docker compose up -d
-	@echo "🔄 Aplicando migrations..."
-	@sleep 3
-	docker compose exec backend python manage.py migrate
-	@echo "✅ Containers prontos!"
-	@echo "   Frontend: http://localhost:5173"
-	@echo "   Backend:  http://localhost:8000"
-	@echo "   Admin:    http://localhost:8000/admin"
-	@echo ""
-	@echo "📋 Exibindo logs (Ctrl+C para sair)..."
-	docker compose logs -f
+	@echo "� Resetando volumes e reconstruindo do zero..."
+	$(DC) down -v
+	$(DC) build --no-cache
+	$(DC) up -d
+	$(EXEC_BACK) $(PYTHON) migrate
 
 down:
 	@echo "🛑 Parando containers..."
-	docker compose down
+	$(DC) down
 
 clean:
 	@echo "🧹 Limpeza total (containers, volumes, redes)..."
-	docker compose down -v
+	$(DC) down -v
 	docker system prune -f
 	@echo "✅ Limpeza concluída!"
 
+prune:
+	@echo "🧹 Limpando imagens e volumes não utilizados..."
+	docker system prune -a --volumes -f
+	@echo "✅ SSD liberado!"
+
 logs:
-	docker compose logs -f
+	$(DC) logs -f
 
 restart:
 	@echo "🔄 Reiniciando containers..."
-	docker compose restart
+	$(DC) restart
 
 # ============================================================================
 # Backend Commands
@@ -139,11 +144,15 @@ restart:
 
 migrate:
 	@echo "🔄 Aplicando migrations..."
-	docker compose exec backend python manage.py migrate
+	$(EXEC_BACK) $(PYTHON) migrate
 
 makemigrations:
-	@echo "📝 Criando migrations..."
-	docker compose exec backend python manage.py makemigrations
+	@echo "📝 Gerando migrations para: $(APPS)"
+	$(EXEC_BACK) $(PYTHON) makemigrations $(APPS)
+
+show-migrations:
+	@echo "📊 Status das migrações:"
+	$(EXEC_BACK) $(PYTHON) showmigrations
 
 db-reset:
 	@echo "⚠️  ATENÇÃO: Este comando vai APAGAR o banco de dados e todas as migrations!"
@@ -151,56 +160,69 @@ db-reset:
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 	echo "🗑️  Parando containers..."; \
-	docker compose down -v; \
+	$(DC) down -v; \
 	echo "🗑️  Removendo arquivos de migration..."; \
 	find backend/apps -path "*/migrations/*.py" -not -name "__init__.py" -delete; \
 	find backend/apps -path "*/migrations/__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true; \
 	echo "🚀 Recriando containers..."; \
-	docker compose up -d; \
-	sleep 5; \
-	echo "📝 Gerando novas migrations..."; \
-	for app in users weddings scheduler items contracts; do \
-	docker compose exec backend python manage.py makemigrations $$app; \
-	done; \
+	$(DC) up -d; \
+	echo "📝 Gerando novas migrations (Django resolve dependências automaticamente)..."; \
+	$(EXEC_BACK) $(PYTHON) makemigrations; \
 	echo "✅ Aplicando migrations..."; \
-	docker compose exec backend python manage.py migrate; \
+	$(EXEC_BACK) $(PYTHON) migrate; \
 	echo "🎉 Reset completo! Agora crie um superuser com 'make superuser'"; \
 	else \
 	echo "❌ Operação cancelada."; \
 	fi
 
 superuser:
-	docker compose exec backend python manage.py createsuperuser
+	$(EXEC_BACK) $(PYTHON) createsuperuser
+
+db-flush:
+	@echo "⚠️  Limpando dados do banco (mantendo tabelas)..."
+	$(EXEC_BACK) $(PYTHON) flush --noinput
+	@echo "✅ Banco limpo!"
+
+data-dump:
+	@echo "📦 Exportando dados para seed.json..."
+	$(EXEC_BACK) $(PYTHON) dumpdata --exclude auth.permission --exclude contenttypes > seed.json
+	@echo "✅ Dados exportados!"
+
+data-load:
+	@echo "📥 Importando dados de seed.json..."
+	$(EXEC_BACK) $(PYTHON) loaddata seed.json
+	@echo "✅ Dados importados!"
 
 shell:
-	docker compose exec backend python manage.py shell
+	$(EXEC_BACK) $(PYTHON) shell
 
 back-shell:
-	docker compose exec backend /bin/sh
+	$(EXEC_BACK) bash
 
 back-logs:
-	docker compose logs -f backend
+	$(DC) logs -f backend
 
 reqs:
-	docker compose exec backend uv lock
+	$(EXEC_BACK) uv lock
 	@echo "✅ uv.lock atualizado!"
 
 back-install:
-	docker compose exec backend pip install $(pkg)
-	$(MAKE) reqs
+	@if [ -z "$(pkg)" ]; then echo "❌ Erro: Use make back-install pkg=nome-do-pacote"; exit 1; fi
+	$(EXEC_BACK) uv add "$(pkg)"
+	@echo "✅ $(pkg) instalado e adicionado ao pyproject.toml"
 
 # ============================================================================
 # Frontend Commands
 # ============================================================================
 
 front-install:
-	docker compose exec frontend npm install $(pkg)
+	$(EXEC_FRONT) npm install $(pkg)
 
 front-shell:
-	docker compose exec frontend sh
+	$(EXEC_FRONT) sh
 
 front-logs:
-	docker compose logs -f frontend
+	$(DC) logs -f frontend
 
 # ============================================================================
 # Quality & Maintenance Commands
@@ -234,42 +256,19 @@ env-setup:
 		echo "⚠️  Arquivo .env já existe. Não foi modificado."; \
 	fi
 
-local-install:
-	@echo "🐍 Configurando ambiente Python local..."
-	@echo ""
-	@echo "Verificando pré-requisitos..."
-	@command -v uv >/dev/null 2>&1 || { \
-		echo "❌ UV não encontrado. Instalando..."; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-		echo "✅ UV instalado! Por favor, execute 'source ~/.cargo/env' e rode 'make local-install' novamente."; \
-		exit 1; \
-	}
-	@echo "✅ UV encontrado: $$(uv --version)"
-	@echo ""
-	@if [ ! -d "$(VENV)" ]; then \
-		echo "📦 Criando ambiente virtual..."; \
-		python3 -m venv $(VENV); \
-	fi
-	@echo "📥 Instalando dependências do backend..."
-	@$(PIP) install --upgrade pip > /dev/null 2>&1
-	@$(PIP) install -e backend/[dev]
-	@echo ""
-	@echo "🪝 Instalando e configurando pre-commit hooks..."
-	@$(PIP) install pre-commit > /dev/null 2>&1
-	@$(VENV)/bin/pre-commit install
-	@echo ""
-	@echo "✅ Ambiente local configurado com sucesso!"
-	@echo ""
-	@echo "Para ativar o ambiente virtual:"
-	@echo "  source $(VENV)/bin/activate"
-	@echo ""
-	@echo "Para desativar:"
-	@echo "  deactivate"
+check-env:
+	@echo "🔍 Verificando variáveis de ambiente..."
+	@diff <(grep -v '^#' .env.example | cut -d= -f1 | sort) \
+	      <(grep -v '^#' .env | cut -d= -f1 | sort) \
+	      && echo "✅ .env está atualizado!" \
+	      || echo "⚠️  Atenção: Existem divergências entre seu .env e o .env.example"
 
-local-clean:
-	@echo "🗑️  Removendo ambiente virtual local..."
-	@rm -rf $(VENV)
-	@echo "✅ Ambiente virtual removido!"
+local-install:
+	@echo "🐍 Configurando ambiente com UV..."
+	@command -v uv >/dev/null 2>&1 || { echo "❌ UV não encontrado!"; exit 1; }
+	cd backend && uv sync
+	uv run pre-commit install
+	@echo "✅ Ambiente local pronto! Use 'uv run $(PYTHON) runserver'"
 
 # ============================================================================
 # Local Development Commands (sem Docker)
@@ -277,29 +276,23 @@ local-clean:
 
 local-migrate:
 	@echo "📦 Aplicando migrações localmente..."
-	@cd backend && $(PYTHON) manage.py migrate
-	@echo "✅ Migrações aplicadas!"
+	cd backend && uv run $(PYTHON) migrate
 
 local-makemigrations:
 	@echo "📝 Gerando migrações localmente..."
-	@cd backend && $(PYTHON) manage.py makemigrations
-	@echo "✅ Migrações geradas!"
+	cd backend && uv run $(PYTHON) makemigrations
 
 local-run:
-	@echo "🚀 Iniciando servidor Django local..."
-	@echo "   Acesse: http://localhost:8000"
-	@echo "   Admin:  http://localhost:8000/admin"
-	@echo "   API:    http://localhost:8000/api/"
-	@echo ""
-	@cd backend && $(PYTHON) manage.py runserver
+	@echo "🚀 Servidor local via UV..."
+	cd backend && uv run $(PYTHON) runserver
 
 local-shell:
 	@echo "🐍 Abrindo Django shell local..."
-	@cd backend && $(PYTHON) manage.py shell
+	cd backend && uv run $(PYTHON) shell
 
 local-createsuperuser:
 	@echo "👤 Criando superusuário local..."
-	@cd backend && $(PYTHON) manage.py createsuperuser
+	cd backend && uv run $(PYTHON) createsuperuser
 
 front-dev:
 	@echo "⚡ Iniciando servidor Vite local..."
@@ -309,20 +302,8 @@ front-dev:
 
 setup-hooks:
 	@echo "🪝 Configurando pre-commit hooks..."
-	@if [ ! -d "$(VENV)" ]; then \
-		echo "❌ Ambiente virtual não encontrado. Execute 'make local-install' primeiro."; \
-		exit 1; \
-	fi
-	@$(PIP) install pre-commit > /dev/null 2>&1
-	@$(VENV)/bin/pre-commit install
-	@echo "✅ Hooks instalados com sucesso!"
-	@echo ""
-	@echo "Pre-commit irá executar automaticamente antes de cada commit:"
-	@echo "  • Ruff linter + formatter"
-	@echo "  • Trailing whitespace check"
-	@echo "  • End of file fixer"
-	@echo "  • YAML validator"
-	@echo "  • Large files check"
+	uv run pre-commit install
+	@echo "✅ Hooks instalados! Pre-commit rodará automaticamente antes de cada commit."
 
 # ============================================================================
 # Testing & Quality
@@ -330,29 +311,29 @@ setup-hooks:
 
 test:
 	@echo "🧪 Executando testes com pytest..."
-	docker compose exec backend pytest -v || echo "⚠️  Nenhum teste encontrado ou testes falharam"
+	$(EXEC_BACK) uv run pytest -v
 
 test-cov:
 	@echo "🧪 Executando testes com cobertura..."
-	docker compose exec backend pytest --cov=apps --cov-report=html --cov-report=term-missing
+	$(EXEC_BACK) uv run pytest --cov=apps --cov-report=html --cov-report=term-missing
 	@echo "📊 Relatório HTML: backend/htmlcov/index.html"
 
 test-parallel:
 	@echo "🧪 Executando testes em paralelo..."
-	docker compose exec backend pytest -v -n auto
+	$(EXEC_BACK) uv run pytest -v -n auto
 
 lint:
-	@echo "🔍 Executando linter..."
-	docker compose exec backend ruff check .
+	$(EXEC_BACK) uv run ruff check .
 
 lint-fix:
-	@echo "🔧 Corrigindo problemas de lint..."
-	docker compose exec backend ruff check --fix .
+	$(EXEC_BACK) uv run ruff check --fix .
 
 format:
-	@echo "✨ Formatando código..."
-	docker compose exec backend ruff format .
-	docker compose exec backend ruff check . --fix
+	$(EXEC_BACK) uv run ruff format .
+	$(EXEC_BACK) uv run ruff check . --fix
+
+check: lint test
+	@echo "✅ Código aprovado para commit!"
 
 fix-perms:
 	@echo "🔧 Corrigindo permissões..."
