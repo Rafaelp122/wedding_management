@@ -1,341 +1,349 @@
-# 🏗️ Arquitetura de Build e Dependências
+# 🏗️ Arquitetura e Padrões de Código
 
-## Visão Geral
+## Estrutura de Apps Django
 
-O projeto utiliza tecnologias modernas para otimizar velocidade de build, reprodutibilidade e gestão de dependências.
+Cada app segue responsabilidades específicas baseadas nos [Requisitos Funcionais](REQUIREMENTS.md):
+
+```
+apps/
+├── weddings/       # RF01, RF02 (Multitenancy + Permissões)
+│   └── models.py   # Wedding, Budget
+├── budget/         # RF03-RF06 (Categorias + Financeiro)
+│   └── models.py   # BudgetCategory, Installment
+├── items/          # RF07-RF09 (Logística + Fornecedores)
+│   └── models.py   # Item, Vendor
+├── contracts/      # RF10-RF13 (Gestão Jurídica)
+│   └── models.py   # Contract
+└── scheduler/      # RF14-RF15 (Cronograma + Notificações)
+    └── models.py   # Event, Notification
+```
+
+---
+
+## Padrões de Código
+
+### Service Layer Pattern
+
+**Regra:** Toda lógica de negócio deve estar em `services/`, nunca nas Views.
+
+**Estrutura:**
+
+```python
+# apps/items/services.py
+class ItemService:
+    @staticmethod
+    def create_with_installments(data: dict, user) -> Item:
+        """
+        RF04: Valida que soma das parcelas = custo real
+        """
+        installments = data.pop('installments', [])
+        total = sum(i['amount'] for i in installments)
+
+        if total != data['actual_cost']:
+            raise ValidationError(
+                f"Soma das parcelas ({total}) != custo real ({data['actual_cost']})"
+            )
+
+        # RF01: Multitenancy - item pertence ao planner
+        item = Item.objects.create(**data, planner=user)
+
+        for inst_data in installments:
+            Installment.objects.create(item=item, **inst_data)
+
+        return item
+```
+
+**Uso na View:**
+
+```python
+# apps/items/views.py
+class ItemCreateView(APIView):
+    def post(self, request):
+        serializer = ItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Service Layer lida com a lógica
+        item = ItemService.create_with_installments(
+            serializer.validated_data,
+            user=request.user
+        )
+
+        return Response(ItemSerializer(item).data, status=201)
+```
+
+---
+
+### Validações de Integridade
+
+**RF06.1:** Prevenir cross-contamination entre casamentos
+
+```python
+# apps/items/models.py
+class Item(models.Model):
+    budget_category = models.ForeignKey(BudgetCategory)
+    budget = models.ForeignKey(Budget)
+
+    def clean(self):
+        # Validar que categoria pertence ao mesmo casamento
+        if self.budget_category.budget.wedding_id != self.budget.wedding_id:
+            raise ValidationError(
+                "Categoria não pertence ao mesmo casamento do Budget"
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Força validação
+        super().save(*args, **kwargs)
+```
+
+---
+
+### Soft Delete (RNF04)
+
+**Aplicado em:** `Wedding`, `BudgetCategory`, `Item`, `Contract`, `Vendor`
+
+```python
+# apps/core/models.py
+class SoftDeleteManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+class BaseModel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid7)  # RNF05
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = models.Manager()  # Inclui deletados
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def hard_delete(self):
+        super().delete()  # Deleção permanente
+
+    class Meta:
+        abstract = True
+```
+
+**Exceções (imutáveis):** `AuditLog`, `Installment` (quando status=PAID)
+
+---
+
+### Multitenancy (RF01)
+
+**Padrão:** Filtrar automaticamente por `planner` (usuário logado)
+
+```python
+# apps/weddings/views.py
+class WeddingListView(generics.ListAPIView):
+    serializer_class = WeddingSerializer
+
+    def get_queryset(self):
+        # RF01: Isolar dados por planner
+        return Wedding.objects.filter(planner=self.request.user)
+```
+
+**Middleware de segurança:**
+
+```python
+# apps/core/middleware.py
+class MultitenancyMiddleware:
+    def __call__(self, request):
+        # Garantir que views sempre filtram por user
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            request.planner_id = request.user.id
+        return self.get_response(request)
+```
+
+---
+
+## Tarefas Assíncronas (Celery)
+
+### RF05: Atualização de Parcelas Vencidas
+
+```python
+# apps/budget/tasks.py
+from celery import shared_task
+from django.utils import timezone
+
+@shared_task(bind=True, max_retries=3)
+def update_overdue_installments(self):
+    """
+    Roda diariamente às 00:00 UTC
+    Atualiza parcelas vencidas para status OVERDUE
+    """
+    try:
+        overdue_count = Installment.objects.filter(
+            due_date__lt=timezone.now().date(),
+            status='PENDING',
+            is_deleted=False
+        ).update(status='OVERDUE')
+
+        logger.info(f"[Celery] {overdue_count} parcelas marcadas como OVERDUE")
+        return overdue_count
+
+    except Exception as exc:
+        # Retry com backoff exponencial: 1min, 5min, 15min
+        raise self.retry(
+            exc=exc,
+            countdown=60 * (2 ** self.request.retries)
+        )
+```
+
+**Configuração:**
+
+```python
+# config/celery.py
+from celery.schedules import crontab
+
+app.conf.beat_schedule = {
+    'update-overdue-installments': {
+        'task': 'apps.budget.tasks.update_overdue_installments',
+        'schedule': crontab(hour=0, minute=0),  # 00:00 UTC
+    },
+}
+```
+
+---
 
 ## Gerenciamento de Dependências
 
-### Backend: pyproject.toml + uv.lock
+### pyproject.toml + uv.lock
 
-**pyproject.toml** (PEP 621 - padrão moderno Python):
+**Por que UV?** 10-100x mais rápido que pip, escrito em Rust.
+
+```bash
+# Adicionar pacote
+make back-install pkg=requests
+
+# Atualizar lockfile após editar pyproject.toml
+make reqs
+
+# Rebuild container
+make build
+```
+
+**Estrutura:**
 
 ```toml
 [project]
 dependencies = [
     "django>=5.2.9,<5.3",
     "djangorestframework>=3.16.1,<3.17",
-    # ...
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3.4,<9.0",
-    "ruff>=0.7.4,<0.8",
-    # ...
+    "pytest>=8.3.4",
+    "ruff>=0.7.4",
 ]
 ```
 
-**uv.lock** (lockfile com hashes SHA256):
-
-- Gerado automaticamente por `uv lock`
-- 66 pacotes resolvidos (diretos + transitivos)
-- Garante versões exatas em todos os ambientes
-- **Deve ser commitado no git** (como package-lock.json no Node.js)
-
-### UV Package Manager
-
-[UV](https://github.com/astral-sh/uv) - Gerenciador ultra-rápido escrito em Rust:
-
-**Vantagens:**
-
-- ⚡ **10-100x mais rápido** que pip
-- 🔒 Resolução de dependências determinística
-- 💾 Cache agressivo e eficiente
-- 🦀 Performance nativa (Rust)
-
-**Comandos:**
-
-```bash
-# Instalar pacote e atualizar uv.lock
-make back-install pkg=requests
-
-# Apenas atualizar uv.lock (após editar pyproject.toml)
-make reqs
-
-# No container (manual)
-docker compose exec backend uv lock
-docker compose exec backend uv pip install --system nome-pacote
-```
-
-### Frontend: package.json + package-lock.json
-
-Padrão NPM tradicional:
-
-- `package.json` - Dependências diretas
-- `package-lock.json` - Lockfile (commitado no git)
-- Gerenciado por `npm ci` nos builds
+---
 
 ## Multi-Stage Docker Builds
 
-### Estratégia de 4 Stages
-
-#### Stage 1: Base
-
-```dockerfile
-FROM python:3.11-slim AS base
-# - Instala dependências de runtime (postgresql-client, libpq5)
-# - Copia binário UV oficial
-# - Usa cache mount do BuildKit para apt-get
-```
-
-#### Stage 2: Builder
-
-```dockerfile
-FROM base AS builder
-# - Instala dependências de compilação (gcc, libpq-dev)
-# - Exporta uv.lock para requirements.txt temporário
-# - Instala pacotes Python com uv pip install --system
-```
-
-#### Stage 3: Development
-
-```dockerfile
-FROM base AS development
-# - Herda do base (não do builder - mais leve)
-# - Copia apenas pacotes Python instalados
-# - Monta código via volume (hot reload)
-# - Roda com Django runserver
-```
-
-#### Stage 4: Production
-
-```dockerfile
-FROM python:3.11-slim AS production
-# - Imagem limpa sem dependências de build
-# - Copia pacotes do builder
-# - Roda como non-root user (segurança)
-# - Usa Gunicorn com múltiplos workers
-```
-
-### BuildKit
-
-**Habilitado automaticamente** via Makefile:
-
-```makefile
-export DOCKER_BUILDKIT=1
-export COMPOSE_DOCKER_CLI_BUILD=1
-```
-
-**Features utilizadas:**
-
-- `--mount=type=cache` - Cache persistente de apt-get e UV
-- Layer caching inteligente
-- Builds paralelos
-
-## Performance de Build
-
-### Tempos Típicos
-
-**Com cache (make build):**
-
-- Primeira vez: ~77s
-- Rebuilds subsequentes: ~10-15s
-- Apenas código mudou: 0s (hot reload)
-
-**Sem cache (make rebuild):**
-
-- Sempre: ~77s
-- Não use no dia-a-dia!
+**4 Stages:** base → builder → development → production
 
 ### Otimizações Implementadas
 
 1. **Cache mount do BuildKit:**
-
-   ```dockerfile
-   RUN --mount=type=cache,target=/var/cache/apt \
-       apt-get update && apt-get install -y postgresql-client
-   ```
-
-   - Apt-get não baixa pacotes novamente
-   - Economiza ~40s em rebuilds
+   - Apt-get não redownload pacotes
+   - Economiza ~40s
 
 2. **UV com cache:**
-
-   ```dockerfile
-   RUN --mount=type=cache,target=/root/.cache/uv \
-       uv export --frozen --no-dev | uv pip install --system
-   ```
-
-   - UV reutiliza wheels baixados
-   - Economiza ~8s em rebuilds
+   - Wheels reutilizados
+   - Economiza ~8s
 
 3. **Separação de stages:**
-   - Development não inclui gcc/libpq-dev (~200MB menor)
-   - Production não inclui ferramentas de dev
+   - Development: código via volume (hot reload)
+   - Production: código copiado (imagem standalone)
 
-4. **Layer caching:**
-   - pyproject.toml copiado antes do código
-   - Dependências só reinstalam se pyproject.toml mudar
+**Performance:**
 
-## Workflow de Dependências
+- Com cache: ~10-15s
+- Sem cache: ~77s
 
-### Adicionar Pacote Python
+---
+
+## Testes
+
+### Estrutura
+
+```python
+# apps/items/tests/test_services.py
+import pytest
+from apps.items.services import ItemService
+
+@pytest.mark.django_db
+class TestItemService:
+    def test_create_with_valid_installments(self, user, budget):
+        data = {
+            'actual_cost': 1000,
+            'installments': [
+                {'amount': 500, 'due_date': '2026-03-01'},
+                {'amount': 500, 'due_date': '2026-04-01'},
+            ]
+        }
+
+        item = ItemService.create_with_installments(data, user)
+        assert item.actual_cost == 1000
+        assert item.installments.count() == 2
+
+    def test_reject_invalid_installments(self, user):
+        """RF04: Soma das parcelas deve ser igual ao custo"""
+        data = {
+            'actual_cost': 1000,
+            'installments': [{'amount': 600}, {'amount': 600}]  # Soma = 1200
+        }
+
+        with pytest.raises(ValidationError):
+            ItemService.create_with_installments(data, user)
+```
+
+**Comandos:**
 
 ```bash
-# 1. Editar backend/pyproject.toml
-[project]
-dependencies = [
-    "requests>=2.31.0,<3.0",  # <- Adicionar aqui
-]
-
-# 2. Atualizar lockfile
-make reqs
-
-# 3. Rebuild container
-make build
-
-# 4. Verificar instalação
-docker compose exec backend python -c "import requests; print(requests.__version__)"
+make test            # Todos os testes
+make test-cov        # Com cobertura
+pytest apps/items/   # App específico
 ```
 
-### Adicionar Pacote npm
+---
 
-```bash
-# 1. Instalar automaticamente
-make front-install pkg=lodash
+## Decisões Técnicas
 
-# 2. Rebuild container
-make build
+### UUID7 ao invés de UUID4
+
+**Motivo:** Mantém ordenação temporal (útil em queries e merges de bases)
+
+```python
+from uuid_extensions import uuid7
+
+class BaseModel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid7)
 ```
 
-### Remover Pacote
+### Email como USERNAME_FIELD
 
-```bash
-# Python: Remover do pyproject.toml -> make reqs -> make build
-# npm: Remover do package.json -> make build
+```python
+# apps/users/models.py
+class User(AbstractBaseUser):
+    email = models.EmailField(unique=True)
+    USERNAME_FIELD = 'email'  # Login via email
 ```
 
-## CI/CD - GitHub Actions
+### Service Layer ao invés de Fat Models
 
-### Otimizações no Pipeline
+**Motivo:** Facilita testes unitários e reutilização de lógica entre views/tasks.
 
-**Backend CI:**
-
-```yaml
-- name: Install UV
-  run: |
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-- name: Install Ruff (version from pyproject.toml)
-  run: uv pip install --system "ruff>=0.7.4,<0.8"
-```
-
-**Benefícios:**
-
-- Usa mesma versão de Ruff que desenvolvimento local
-- UV acelera instalação de dependências
-- Cache de UV compartilhado entre builds
-
-## Reprodutibilidade
-
-### Garantias
-
-✅ **pyproject.toml + uv.lock commitados:**
-
-- Todos os desenvolvedores usam mesmas versões
-- CI/CD usa mesmas versões
-- Produção usa mesmas versões
-
-✅ **Docker multi-stage:**
-
-- Desenvolvimento e produção compartilham base
-- Dependências de runtime idênticas
-
-✅ **BuildKit determinístico:**
-
-- Layers de cache consistentes
-- Builds reproduzíveis
-
-### Teste de Reprodutibilidade
-
-```bash
-# Em máquina 1
-make rebuild
-docker compose exec backend pip freeze > /tmp/freeze1.txt
-
-# Em máquina 2 (mesmo commit)
-make rebuild
-docker compose exec backend pip freeze > /tmp/freeze2.txt
-
-# Deve ser idêntico
-diff /tmp/freeze1.txt /tmp/freeze2.txt
-```
-
-## Troubleshooting de Build
-
-### "Module not found" após adicionar pacote
-
-**Causa:** Esqueceu de atualizar uv.lock ou rebuildar.
-
-**Solução:**
-
-```bash
-make reqs    # Atualiza uv.lock
-make build   # Rebuilda container
-```
-
-### Build lento mesmo com cache
-
-**Diagnóstico:**
-
-```bash
-# Ver camadas sendo cacheadas
-DOCKER_BUILDKIT=1 docker compose build --progress=plain
-
-# Procurar por linhas sem "CACHED"
-```
-
-**Possíveis causas:**
-
-- Arquivo `.dockerignore` ausente ou incorreto
-- Ordem de COPY no Dockerfile (código antes de dependências)
-- Cache do BuildKit corrompido
-
-**Solução:**
-
-```bash
-# Limpar cache do BuildKit
-docker builder prune -af
-
-# Rebuild
-make build
-```
-
-### Erro "uv lock failed"
-
-**Causa:** Dependências incompatíveis no pyproject.toml.
-
-**Solução:**
-
-```bash
-# Ver erro detalhado
-docker compose exec backend uv lock --verbose
-
-# Ajustar versões no pyproject.toml
-```
-
-## Boas Práticas
-
-### ✅ Fazer
-
-- Commitar `pyproject.toml`, `uv.lock`, `package-lock.json`
-- Usar `make build` (com cache) para rebuilds
-- Testar em ambiente limpo antes de commit
-- Documentar dependências opcionais
-
-### ❌ Evitar
-
-- Não commitar `.env` ou arquivos secretos
-- Não usar `make rebuild` desnecessariamente
-- Não editar `uv.lock` manualmente
-- Não fazer `pip install` direto no container (usar pyproject.toml)
-- Não usar versões exatas sem range (ex: `django==5.2.9` → `django>=5.2.9,<5.3`)
+---
 
 ## Referências
 
-- [UV Documentation](https://github.com/astral-sh/uv)
-- [PEP 621 - pyproject.toml](https://peps.python.org/pep-0621/)
-- [Docker BuildKit](https://docs.docker.com/build/buildkit/)
-- [Multi-stage builds best practices](https://docs.docker.com/build/building/multi-stage/)
+- [Requisitos do Sistema](REQUIREMENTS.md)
+- [Guia de Configuração](ENVIRONMENT.md)
+- [Two Scoops of Django](https://www.feldroy.com/books/two-scoops-of-django-3-x)
+- [Django Best Practices](https://docs.djangoproject.com/en/5.2/misc/design-philosophies/)
