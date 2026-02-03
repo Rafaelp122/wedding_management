@@ -1,6 +1,7 @@
+from django.db import models
+
 from apps.core.models import BaseModel
 from apps.items.models import Item
-from django.db import models
 
 
 class Contract(BaseModel):

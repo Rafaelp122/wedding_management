@@ -1,7 +1,11 @@
 services:
+  # ==========================================================
+  # DATABASE: PostgreSQL 17 (Otimizado para Psycopg3)
+  # ==========================================================
   db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: wedding_db
+    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -10,48 +14,45 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
+    # O Healthcheck garante que o backend só suba quando o DB estiver PRONTO
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 3s
+      interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 15s
-    command:
-      - "postgres"
-      - "-c"
-      - "log_statement=none"
-      - "-c"
-      - "log_duration=off"
-      - "-c"
-      - "log_connections=off"
-      - "-c"
-      - "log_disconnections=off"
+      retries: 5
     networks:
       - wedding_network
 
+  # ==========================================================
+  # BACKEND: Django 5.2 + UV + DRF
+  # ==========================================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development
+      target: development # Usa o estágio de dev do seu Dockerfile multi-stage
     container_name: wedding_backend
     env_file:
       - .env
     environment:
-      - PATH=/app/.venv/bin:$PATH
-      - PYTHONDONTWRITEBYTECODE=1
-      - PYTHONUNBUFFERED=1
+      - DJANGO_SETTINGS_MODULE=config.settings
     volumes:
-      - ./backend:/app
-      - /app/.venv
+      - ./backend:/app # Bind mount para Live Reload do código
+      - /app/.venv # Volume anônimo: evita que o .venv local (Windows/Mac) sobrescreva o do Linux/Container
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     ports:
       - "8000:8000"
+    # Aguarda o DB passar no healthcheck antes de tentar conectar
     depends_on:
       db:
         condition: service_healthy
     networks:
       - wedding_network
 
+  # ==========================================================
+  # FRONTEND: React + Vite
+  # ==========================================================
   frontend:
     build:
       context: ./frontend
@@ -62,20 +63,23 @@ services:
       - .env
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - /app/node_modules # Volume anônimo: evita conflitos de dependências node entre Host e Container
     ports:
       - "5173:5173"
-    stdin_open: true
-    tty: true
+    stdin_open: true # Necessário para o modo interativo do Vite
+    tty: true # Habilita o terminal colorido/interativo
     depends_on:
       - backend
     networks:
       - wedding_network
 
+# ============================================================
+# INFRAESTRUTURA: Volumes e Redes
+# ============================================================
 volumes:
-  postgres_data:
-  static_volume:
-  media_volume:
+  postgres_data: # Persistência dos dados do banco
+  static_volume: # Compartilhamento de arquivos estáticos (WhiteNoise)
+  media_volume: # Uploads de usuários
 
 networks:
   wedding_network:
