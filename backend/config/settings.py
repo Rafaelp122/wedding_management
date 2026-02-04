@@ -10,6 +10,7 @@ from pathlib import Path
 
 from django.contrib.messages import constants as messages
 
+
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,14 +42,14 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "drf_spectacular",
-    # Project apps
+    # Project apps - Core
     "apps.core",
-    "apps.scheduler",
-    "apps.contracts",
-    "apps.items",
-    "apps.suppliers",
     "apps.users",
     "apps.weddings",
+    # Project apps - Domain-driven
+    "apps.finances",
+    "apps.logistics",
+    "apps.scheduler",
 ]
 
 MIDDLEWARE = [
