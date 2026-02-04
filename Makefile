@@ -102,7 +102,11 @@ up:
 	@echo "🔄 Aguardando banco e aplicando migrations..."
 	@# O comando abaixo falhará se o container não subir, o que é melhor que o sleep
 	$(EXEC_BACK) $(PYTHON) migrate
-	@echo "✅ Pronto! Acesse http://localhost:8000"
+	@echo "✅ Pronto!"
+	@echo "   Frontend: http://localhost:5173"
+	@echo "   Backend:  http://localhost:8000"
+	@echo "   Admin:    http://localhost:8000/admin"
+	@echo "   Swagger:  http://localhost:8000/api/schema/swagger-ui/"
 
 build:
 	@echo "🔨 Reconstruindo e iniciando..."

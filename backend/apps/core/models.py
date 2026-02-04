@@ -1,22 +1,88 @@
-import uuid6
+"""
+Models abstratos base do sistema.
+
+DESIGN DECISION (RNF04): Soft delete implementado no MVP para prevenir perda
+de dados críticos. Aplicado seletivamente em: Wedding, BudgetCategory, Item,
+Contract, Supplier. Cascade manual via service layer por simplicidade.
+"""
+
+import uuid
+
 from django.db import models
+from django.utils import timezone
+
+from .managers import SoftDeleteManager
 
 
 class BaseModel(models.Model):
     """
-    Modelo abstrato base para todos os modelos do sistema.
+    Model base para todos os models do sistema.
 
-    Características:
-    - ID primário usando UUID7 (ordenado por tempo)
+    Fornece (RNF05):
+    - ID auto-incremento (interno, performance em JOINs)
+    - UUID (identificador público para APIs, segurança)
     - Timestamps automáticos (created_at, updated_at)
-    - Performance superior ao auto-increment em bancos distribuídos
     """
 
-    # UUID7 combina timestamp + aleatoriedade = ordenação natural + unicidade
-    id = models.UUIDField(primary_key=True, default=uuid6.uuid7, editable=False)
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    id = models.BigAutoField(primary_key=True, editable=False)
+    uuid = models.UUIDField(
+        default=uuid.uuid4, unique=True, editable=False, db_index=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
-        ordering = ["-created_at"]
+
+    @classmethod
+    def get_by_uuid(cls, uuid_value):
+        """Helper para buscar por UUID público na API."""
+        return cls.objects.get(uuid=uuid_value)
+
+
+class SoftDeleteModel(BaseModel):
+    """
+    Model base com soft delete (RNF04).
+
+    IMPORTANTE: Cascade NÃO é automático. Use service layer para deletar
+    relacionamentos antes de deletar o modelo principal.
+
+    Aplicado em: Wedding, BudgetCategory, Item, Contract, Supplier
+
+    Uso:
+        obj.delete()       # Soft delete (esconde do queryset padrão)
+        obj.restore()      # Restaura registro
+        obj.hard_delete()  # Delete permanente (não tem volta!)
+
+        Model.objects.all()              # Apenas ativos
+        Model.all_objects.all()          # Todos (inclusive deletados)
+        Model.objects.deleted().all()    # Apenas deletados (lixeira)
+    """
+
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    all_objects = models.Manager()
+    objects = SoftDeleteManager()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["is_deleted", "created_at"]),
+        ]
+
+    def delete(self, using=None, keep_parents=False):
+        """Soft delete."""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(using=using, update_fields=["is_deleted", "deleted_at", "updated_at"])
+
+    def hard_delete(self, using=None, keep_parents=False):
+        """Delete permanente do banco de dados."""
+        return super().delete(using=using, keep_parents=keep_parents)
+
+    def restore(self, using=None):
+        """Restaura um registro soft deleted."""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save(using=using, update_fields=["is_deleted", "deleted_at", "updated_at"])
