@@ -78,10 +78,11 @@ make superuser
 wedding_management/
 ├── backend/                  # Django REST API
 │   ├── apps/
-│   │   ├── suppliers/       # Gestão de Fornecedores
-│   │   ├── weddings/        # Core (Casamento + Orçamento)
-│   │   ├── items/           # Itens Logísticos + Financeiro
-│   │   ├── contracts/       # Gestão de Contratos
+│   │   ├── core/            # Models Base + Managers
+│   │   ├── users/           # Autenticação
+│   │   ├── weddings/        # Wedding (núcleo)
+│   │   ├── finances/        # Budget, BudgetCategory, Expense, Installment
+│   │   ├── logistics/       # Supplier, Item, Contract
 │   │   └── scheduler/       # Agenda e Eventos
 │   ├── config/              # Settings e URLs principais
 │   └── manage.py

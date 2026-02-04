@@ -4,7 +4,30 @@
 
 ---
 
-## 1. Requisitos Funcionais (RF)
+## Estrutura de Apps Django (Arquitetura DDD)
+
+Cada app segue Domain-Driven Design com responsabilidades específicas:
+
+```
+apps/
+├── core/           # Models base (BaseModel, SoftDeleteModel) + Managers
+├── users/          # RF02 (Autenticação + Permissões)
+│   └── models.py   # User
+├── weddings/       # RF01 (Núcleo - Multitenancy)
+│   └── models.py   # Wedding
+├── finances/       # RF03-RF06 (Domínio Financeiro)
+│   ├── models.py   # Budget, BudgetCategory, Expense, Installment
+│   └── FINANCIAL_INTEGRITY.md  # Documentação de arquitetura
+├── logistics/      # RF07-RF13 (Domínio Logístico + Jurídico)
+│   └── models.py   # Supplier, Item, Contract
+└── scheduler/      # RF14-RF15 (Cronograma + Notificações)
+    └── models.py   # Event, Notification
+```
+
+**Decisão Arquitetural:** Separação por domínios (finances vs logistics) para:
+- Isolar lógica financeira (imutável) da logística (mutável)
+- Facilitar testes unitários por domínio
+- Permitir evolução independente dos módulos
 
 ### Módulo de Casamentos e Multitenancy
 
@@ -19,24 +42,56 @@
 
 ---
 
+### Modelo Financeiro: Expense como Abstração
+
+**Decisão Arquitetural:** `Expense` é a entidade financeira central que desacopla logística de finanças.
+
+**Características:**
+- Pode existir **com ou sem** contrato vinculado (`contract` é opcional)
+- Permite despesas não-logísticas (taxas, multas, mão-de-obra)
+- Protege categoria via `on_delete=PROTECT` (ver FINANCIAL_INTEGRITY.md)
+- Valida soma de parcelas automaticamente via `clean()`
+
+**Exemplo de uso:**
+```python
+# Despesa vinculada à logística:
+Expense.objects.create(
+    category=buffet_category,
+    contract=buffet_contract,  # Liga ao contrato
+    estimated_amount=5000,
+    actual_amount=4800
+)
+
+# Despesa independente (taxa de cartório):
+Expense.objects.create(
+    category=legal_category,
+    contract=None,  # SEM contrato
+    description="Taxa de registro",
+    actual_amount=300
+)
+```
+
+---
+
 ### Módulo Financeiro e Orçamentário
 
 **RF03 (Categorias Dinâmicas):** O sistema deve permitir que planners criem suas próprias categorias de orçamento. Categorias com itens ativos vinculados não podem ser deletadas, apenas arquivadas (soft delete).
 
-**RF04 (Integridade de Fluxo Financeiro):** O sistema deve validar que a soma das parcelas (Installments) seja igual ao `actual_cost` do item, com tolerância de arredondamento de até R$ 0,02 (dois centavos) para lidar com divisões não exatas.
+**RF04 (Integridade de Fluxo Financeiro):** O sistema deve validar que a soma das parcelas (Installments) seja igual ao `actual_amount` da despesa (Expense), com tolerância de arredondamento de até R$ 0,02 (dois centavos) para lidar com divisões não exatas.
 
 ```python
-# Exemplo de validação usando Decimal (obrigatório para operações monetárias)
-from decimal import Decimal
+# Implementado em apps/finances/models.py
+class Expense(BaseModel):
+    def clean(self):
+        if self.pk and self.actual_amount:
+            total_installments = self.installments.aggregate(
+                models.Sum("amount")
+            )["amount__sum"] or Decimal("0.00")
 
-tolerance = Decimal('0.02')
-total_installments = sum(Decimal(str(i['amount'])) for i in installments)
-diff = abs(actual_cost - total_installments)
-
-if diff > tolerance:
-    raise ValidationError(
-        f"Diferença de R$ {diff} excede tolerância permitida de R$ 0.02"
-    )
+            if abs(total_installments - self.actual_amount) > Decimal("0.01"):
+                raise ValidationError(
+                    f"Soma das parcelas (R${total_installments}) != valor total (R${self.actual_amount})"
+                )
 ```
 
 > **Regra de Ouro:** Toda operação monetária deve usar `DecimalField` no Django, nunca `FloatField`, para evitar erros de precisão binária (0.1 + 0.2 ≠ 0.3 em float).
@@ -79,19 +134,27 @@ def validate_scheduler_request(request):
 
 ### Módulo de Logística e Fornecedores
 
-**RF07 (Normalização de Itens):** Itens de logística devem ser vinculados a uma categoria de orçamento, herdando a relação com o casamento via cadeia: `Item → BudgetCategory → Budget → Wedding`.
+**RF07 (Integração Financeiro-Logístico):** Itens de logística devem ser vinculados a uma categoria de orçamento para integração com dashboard financeiro. A cadeia de relacionamentos é:
 
-**RF07.1 (Validação de Integridade):** O sistema deve validar que a `BudgetCategory` pertence ao mesmo `Wedding` do `Budget` ao qual o `Item` está sendo vinculado, prevenindo cross-contamination entre eventos.
+```
+Wedding → Budget (1:1) → BudgetCategory (1:N) → Expense (1:N) → Installment (1:N)
+                                                     ↓ (1:1 opcional)
+                                                  Contract (N:1) → Item (1:N)
+                                                                     ↓
+                                                                 Supplier
+```
+
+**Item como ponte:** `Item.budget_category` permite que itens logísticos apareçam no dashboard financeiro via suas despesas associadas.
+
+**RF07.1 (Validação de Integridade):** ⚠️ **PENDENTE DE IMPLEMENTAÇÃO** - O sistema deve validar que o `Item.wedding` é consistente com `Item.budget_category.budget.wedding` para prevenir cross-contamination entre eventos.
 
 **RF08 (Gestão de Status de Itens):** Atualização de status de aquisição independente por item com estados: `Orçado`, `Contratado`, `Entregue`, `Cancelado`.
 
-**RF09 (Notas de Fornecedores):** O sistema deve permitir que planners mantenham notas internas sobre fornecedores, incluindo estatísticas simples de entregas:
+**RF09 (Notas de Fornecedores):** O sistema deve permitir que planners mantenham notas internas sobre fornecedores via campo de texto livre.
 
-- Quantidade de entregas no prazo
-- Quantidade de entregas atrasadas
-- Campo de texto livre para observações
+> **Nota:** Sistema de rating (estrelas) foi REMOVIDO temporariamente e será implementado apenas em V2.0 após definição de metodologia de avaliação e acúmulo de volume estatístico significativo.
 
-> **Nota:** Sistema de rating público (estrelas) será implementado apenas em V2.0 após acúmulo de volume estatístico significativo.
+> **Status:** Campo `Supplier.rating` foi removido em 2026-02-03. Notas internas (texto) continuam disponíveis.
 
 ---
 
@@ -181,7 +244,7 @@ def generate_upload_url(filename: str, user_id: int):
 **RNF04 (Soft Delete Seletivo):**
 Implementar soft delete apenas nos modelos críticos:
 
-- `Wedding`, `BudgetCategory`, `Item`, `Contract`, `Vendor`
+- `Wedding`, `BudgetCategory`, `Item`, `Contract`, `Supplier`
 - Dados deletados movem para `is_deleted=True` e mantidos por 30 dias
 - **EXCLUSÕES:** Parcelas pagas (`Installment` com status `PAID`) e logs de sistema (imutáveis)
 

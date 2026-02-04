@@ -1,97 +1,174 @@
 # 🏗️ Arquitetura e Padrões de Código
 
-## Estrutura de Apps Django
+## Estrutura de Apps Django (Domain-Driven Design)
 
-Cada app segue responsabilidades específicas baseadas nos [Requisitos Funcionais](REQUIREMENTS.md):
+Cada app segue responsabilidades específicas baseadas em domínios de negócio:
 
 ```
 apps/
-├── weddings/       # RF01, RF02 (Multitenancy + Permissões)
-│   └── models.py   # Wedding, Budget
-├── budget/         # RF03-RF06 (Categorias + Financeiro)
-│   └── models.py   # BudgetCategory, Installment
-├── items/          # RF07-RF09 (Logística + Fornecedores)
-│   └── models.py   # Item, Vendor
-├── contracts/      # RF10-RF13 (Gestão Jurídica)
-│   └── models.py   # Contract
+├── core/           # Models abstratos base + Managers customizados
+│   ├── models.py   # BaseModel, SoftDeleteModel
+│   └── managers.py # SoftDeleteManager
+├── users/          # RF02 (Autenticação + Permissões)
+│   └── models.py   # User
+├── weddings/       # RF01 (Núcleo - Multitenancy)
+│   └── models.py   # Wedding
+├── finances/       # RF03-RF06 (Domínio Financeiro - IMUTÁVEL)
+│   ├── models.py   # Budget, BudgetCategory, Expense, Installment
+│   └── FINANCIAL_INTEGRITY.md  # ⚠️ Leitura obrigatória
+├── logistics/      # RF07-RF13 (Domínio Logístico + Jurídico)
+│   └── models.py   # Supplier, Item, Contract
 └── scheduler/      # RF14-RF15 (Cronograma + Notificações)
     └── models.py   # Event, Notification
 ```
 
+**Princípios arquiteturais:**
+
+1. **Separação finances vs logistics:** Dados financeiros são imutáveis (PROTECT), logística é mutável (CASCADE)
+2. **Expense como ponte:** Liga finances ↔ logistics via OneToOne opcional
+3. **Item sem custos:** Apenas dados logísticos (quantity, status); custos em Expense
+4. **Soft delete seletivo:** Apenas em models críticos (ver RNF04)
+
+**⚠️ IMPORTANTE:** Leia `finances/FINANCIAL_INTEGRITY.md` antes de modificar models financeiros.
+
 ---
 
-## Padrões de Código
+## Estrutura de Apps Django
 
 ### Service Layer Pattern
 
 **Regra:** Toda lógica de negócio deve estar em `services/`, nunca nas Views.
 
-**Estrutura:**
+**⚠️ Status:** Service Layer ainda não implementado. Exemplos abaixo são PLANEJADOS.
+
+**Estrutura planejada:**
 
 ```python
-# apps/items/services.py
-class ItemService:
+# apps/finances/services.py
+class ExpenseService:
     @staticmethod
-    def create_with_installments(data: dict, user) -> Item:
+    def create_with_installments(data: dict, user) -> Expense:
         """
-        RF04: Valida que soma das parcelas = custo real
+        RF04: Valida que soma das parcelas = Expense.actual_amount
         """
-        installments = data.pop('installments', [])
-        total = sum(i['amount'] for i in installments)
+        installments_data = data.pop('installments', [])
+        total = sum(Decimal(str(i['amount'])) for i in installments_data)
 
-        if total != data['actual_cost']:
+        if abs(total - data['actual_amount']) > Decimal('0.01'):
             raise ValidationError(
-                f"Soma das parcelas ({total}) != custo real ({data['actual_cost']})"
+                f"Soma das parcelas ({total}) != valor total ({data['actual_amount']})"
             )
 
-        # RF01: Multitenancy - item pertence ao planner
-        item = Item.objects.create(**data, planner=user)
+        expense = Expense.objects.create(**data)
 
-        for inst_data in installments:
-            Installment.objects.create(item=item, **inst_data)
+        for i, inst_data in enumerate(installments_data, 1):
+            Installment.objects.create(
+                expense=expense,
+                installment_number=i,
+                **inst_data
+            )
 
-        return item
+        return expense
 ```
 
 **Uso na View:**
 
 ```python
-# apps/items/views.py
-class ItemCreateView(APIView):
+# apps/finances/views.py
+class ExpenseCreateView(APIView):
     def post(self, request):
-        serializer = ItemSerializer(data=request.data)
+        serializer = ExpenseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         # Service Layer lida com a lógica
-        item = ItemService.create_with_installments(
+        expense = ExpenseService.create_with_installments(
             serializer.validated_data,
             user=request.user
         )
 
-        return Response(ItemSerializer(item).data, status=201)
+        return Response(ExpenseSerializer(expense).data, status=201)
 ```
 
 ---
 
 ### Validações de Integridade
 
-**RF06.1:** Prevenir cross-contamination entre casamentos
+**Implementadas:**
 
 ```python
-# apps/items/models.py
-class Item(models.Model):
-    budget_category = models.ForeignKey(BudgetCategory)
-    budget = models.ForeignKey(Budget)
-
+# apps/finances/models.py
+class Installment(BaseModel):
     def clean(self):
-        # Validar que categoria pertence ao mesmo casamento
-        if self.budget_category.budget.wedding_id != self.budget.wedding_id:
+        """Valida consistência paid_date ↔ status."""
+        if self.paid_date and self.status != self.StatusChoices.PAID:
             raise ValidationError(
-                "Categoria não pertence ao mesmo casamento do Budget"
+                "Parcela com data de pagamento deve ter status PAGO"
+            )
+        if self.status == self.StatusChoices.PAID and not self.paid_date:
+            raise ValidationError(
+                "Parcela PAGA precisa ter data de pagamento preenchida"
             )
 
     def save(self, *args, **kwargs):
         self.full_clean()  # Força validação
+        super().save(*args, **kwargs)
+
+class Expense(BaseModel):
+    def clean(self):
+        """Valida soma de parcelas."""
+        if self.pk and self.actual_amount:
+            total_installments = self.installments.aggregate(
+                models.Sum("amount")
+            )["amount__sum"] or Decimal("0.00")
+
+            if abs(total_installments - self.actual_amount) > Decimal("0.01"):
+                raise ValidationError(
+                    f"Soma das parcelas (R${total_installments}) != valor total"
+                )
+
+# apps/logistics/models.py
+class Contract(SoftDeleteModel):
+    def clean(self):
+        """Valida PDF obrigatório quando assinado."""
+        if self.status == self.StatusChoices.SIGNED and not self.pdf_file:
+            raise ValidationError(
+                "Contrato ASSINADO precisa ter arquivo PDF anexado"
+            )
+
+    def save(self, *args, **kwargs):
+        # Auto-update status quando todos assinaram
+        if self.is_fully_signed and self.status != self.StatusChoices.SIGNED:
+            self.status = self.StatusChoices.SIGNED
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+# apps/weddings/models.py
+class Wedding(SoftDeleteModel):
+    def clean(self):
+        """Valida status vs data."""
+        if self.status == self.StatusChoices.COMPLETED:
+            if self.date > timezone.now().date():
+                raise ValidationError(
+                    "Não pode marcar como CONCLUÍDO antes da data do casamento"
+                )
+```
+
+**⚠️ PENDENTE DE IMPLEMENTAÇÃO:**
+
+**RF07.1 - Prevenir cross-contamination entre casamentos:**
+
+```python
+# apps/logistics/models.py
+class Item(SoftDeleteModel):
+    def clean(self):
+        # TODO: Validar que wedding == budget_category.budget.wedding
+        if self.budget_category.budget.wedding_id != self.wedding_id:
+            raise ValidationError(
+                "Categoria não pertence ao mesmo casamento"
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
         super().save(*args, **kwargs)
 ```
 
@@ -99,7 +176,7 @@ class Item(models.Model):
 
 ### Soft Delete (RNF04)
 
-**Aplicado em:** `Wedding`, `BudgetCategory`, `Item`, `Contract`, `Vendor`
+**Aplicado em:** `Wedding`, `BudgetCategory`, `Item`, `Contract`, `Supplier`
 
 ```python
 # apps/core/models.py
