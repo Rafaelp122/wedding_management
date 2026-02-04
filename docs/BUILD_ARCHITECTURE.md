@@ -1,6 +1,6 @@
 # 🏗️ Arquitetura e Padrões de Código
 
-## Estrutura de Apps Django (Domain-Driven Design)
+## Estrutura de Apps Django (Organização por Domínios)
 
 Cada app segue responsabilidades específicas baseadas em domínios de negócio:
 
@@ -24,10 +24,13 @@ apps/
 
 **Princípios arquiteturais:**
 
-1. **Separação finances vs logistics:** Dados financeiros são imutáveis (PROTECT), logística é mutável (CASCADE)
-2. **Expense como ponte:** Liga finances ↔ logistics via OneToOne opcional
-3. **Item sem custos:** Apenas dados logísticos (quantity, status); custos em Expense
-4. **Soft delete seletivo:** Apenas em models críticos (ver RNF04)
+1. **Separação por domínios:** Apps organizadas por contextos de negócio (finances, logistics, scheduler)
+2. **Separação finances vs logistics:** Dados financeiros são imutáveis (PROTECT), logística é mutável (CASCADE)
+3. **Expense como ponte:** Liga finances ↔ logistics via OneToOne opcional
+4. **Item sem custos:** Apenas dados logísticos (quantity, status); custos em Expense
+5. **Soft delete seletivo:** Apenas em models críticos (ver RNF04)
+
+**Nota:** Esta arquitetura usa **separação por domínios de negócio**, não Domain-Driven Design (DDD) completo. DDD envolve conceitos mais avançados como Aggregates, Value Objects, Domain Events, Repository Pattern, etc. Aqui usamos apenas a ideia de agrupar models relacionados, aproveitando o ORM do Django para simplicidade.
 
 **⚠️ IMPORTANTE:** Leia `finances/FINANCIAL_INTEGRITY.md` antes de modificar models financeiros.
 

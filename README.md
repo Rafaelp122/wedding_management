@@ -2,6 +2,8 @@
 
 Sistema completo de gestão de casamentos com arquitetura moderna **React SPA + Django REST API**.
 
+Backend organizado por **domínios de negócio** (finances, logistics, scheduler) para melhor separação de responsabilidades.
+
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2.10-green.svg)](https://www.djangoproject.com/)
 [![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://reactjs.org/)
