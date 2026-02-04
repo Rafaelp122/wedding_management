@@ -1,9 +1,9 @@
-from apps.core.models import BaseModel
+from apps.core.models import SoftDeleteModel
 from django.core.validators import MaxLengthValidator, MinValueValidator
 from django.db import models
 
 
-class Supplier(BaseModel):
+class Supplier(SoftDeleteModel):
     """
     Fornecedores de produtos e serviços para casamentos.
     Centraliza informações de contato e histórico de relacionamento.

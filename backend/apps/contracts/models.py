@@ -1,10 +1,10 @@
 from django.db import models
 
-from apps.core.models import BaseModel
+from apps.core.models import SoftDeleteModel
 from apps.items.models import Item
 
 
-class Contract(BaseModel):
+class Contract(SoftDeleteModel):
     """Modelo simplificado de Contrato."""
 
     class StatusChoices(models.TextChoices):

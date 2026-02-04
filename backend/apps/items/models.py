@@ -1,14 +1,15 @@
 from decimal import Decimal
 from typing import ClassVar
 
-from apps.core.models import BaseModel
-from apps.weddings.models import Wedding
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
 
+from apps.core.models import BaseModel, SoftDeleteModel
+from apps.weddings.models import Wedding
 
-class Item(BaseModel):
+
+class Item(SoftDeleteModel):
     """
     Item unificado: logística (RF06/RF07) + financeiro (RF03/RF04).
     Combina controle de aquisição com gestão financeira.

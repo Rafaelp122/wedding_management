@@ -1,13 +1,13 @@
 from decimal import Decimal
 
-from apps.core.models import BaseModel
+from apps.core.models import SoftDeleteModel
 from apps.users.models import User
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q, Sum
 
 
-class Wedding(BaseModel):
+class Wedding(SoftDeleteModel):
     class StatusChoices(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "Em Andamento"
         COMPLETED = "COMPLETED", "Concluído"
@@ -178,7 +178,7 @@ class Budget(models.Model):
         return self.total_estimated - self.total_spent
 
 
-class BudgetCategory(models.Model):
+class BudgetCategory(SoftDeleteModel):
     """
     Categorias de gastos do orçamento (RF03).
     Exemplos: Buffet, Decoração, Fotografia, Música, etc.
