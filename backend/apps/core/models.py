@@ -37,7 +37,10 @@ class BaseModel(models.Model):
     @classmethod
     def get_by_uuid(cls, uuid_value):
         """Helper para buscar por UUID público na API."""
-        return cls.objects.get(uuid=uuid_value)
+        try:
+            return cls.objects.get(uuid=uuid_value)
+        except cls.DoesNotExist:
+            return None
 
 
 class SoftDeleteModel(BaseModel):
