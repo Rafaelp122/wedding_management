@@ -39,6 +39,7 @@ Ao "apagar" uma categoria que possui um `allocated_budget` (valor planejado), o 
 ### Regras de Negócio para o Desenvolvedor:
 
 1. **O Saldo Livre:** O sistema deve calcular o saldo disponível como:
+
    ```
    Saldo = Total_Estimado - Sum(Categorias_Ativas.allocated_budget)
    ```
@@ -64,6 +65,7 @@ Se você alterar para `CASCADE` ou remover o Soft Delete:
 ## 5. Queries Seguras para Dashboard
 
 ### ❌ ERRADO (considera apenas categorias ativas):
+
 ```python
 total_spent = BudgetCategory.objects.filter(
     budget=budget
@@ -71,6 +73,7 @@ total_spent = BudgetCategory.objects.filter(
 ```
 
 ### ✅ CORRETO (considera todas despesas, mesmo de categorias deletadas):
+
 ```python
 total_spent = Expense.objects.filter(
     category__budget=budget
@@ -78,6 +81,7 @@ total_spent = Expense.objects.filter(
 ```
 
 ### ✅ CORRETO (saldo livre considerando apenas categorias ativas):
+
 ```python
 allocated_active = BudgetCategory.objects.filter(
     budget=budget,
