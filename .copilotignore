@@ -1,0 +1,10 @@
+# Ignora tudo que é pesado e não é código-fonte
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+.git/
+dist/
+build/

@@ -15,7 +15,7 @@ APPS := $(shell find backend/apps -mindepth 1 -maxdepth 1 -type d ! -name '__pyc
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-.PHONY: help up down build rebuild clean logs restart
+.PHONY: help up dev down build rebuild clean logs restart
 .PHONY: migrate makemigrations db-reset db-flush show-migrations superuser shell back-shell back-logs reqs back-install
 .PHONY: front-install front-shell front-logs front-dev
 .PHONY: test test-cov test-parallel lint lint-fix format check clean-cache fix-perms
@@ -32,6 +32,7 @@ help:
 	@echo "📦 DOCKER & ORQUESTRAÇÃO"
 	@echo "  make setup               - 🚀 Setup completo (env + build + superuser)"
 	@echo "  make up                  - Inicia containers e aplica migrations"
+	@echo "  make dev                 - 🔥 Modo desenvolvimento (watch + hot reload)"
 	@echo "  make down                - Para e remove todos os containers"
 	@echo "  make build               - Reconstrói e inicia os containers"
 	@echo "  make rebuild             - Reconstrói do zero (sem cache)"
@@ -107,6 +108,18 @@ up:
 	@echo "   Backend:  http://localhost:8000"
 	@echo "   Admin:    http://localhost:8000/admin"
 	@echo "   Swagger:  http://localhost:8000/api/schema/swagger-ui/"
+
+dev:
+	@echo "🔥 Iniciando modo desenvolvimento..."
+	@echo "   • Hot reload automático para código Python"
+	@echo "   • Para rebuild após mudar deps: make build"
+	@echo ""
+	$(DC) up -d
+	@echo "🔄 Aguardando banco e aplicando migrations..."
+	$(EXEC_BACK) $(PYTHON) migrate
+	@echo "✅ Pronto! Logs em tempo real:"
+	@echo ""
+	$(DC) logs -f
 
 build:
 	@echo "🔨 Reconstruindo e iniciando..."

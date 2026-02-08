@@ -30,7 +30,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development # Usa o estágio de dev do seu Dockerfile multi-stage
+      target: development # Usa o estágio de dev do Dockerfile multi-stage
     container_name: wedding_backend
     env_file:
       - .env
@@ -38,7 +38,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.settings
     volumes:
       - ./backend:/app # Bind mount para Live Reload do código
-      - /app/.venv # Volume anônimo: evita que o .venv local (Windows/Mac) sobrescreva o do Linux/Container
+      - /app/.venv # Volume anônimo protege venv do container
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:

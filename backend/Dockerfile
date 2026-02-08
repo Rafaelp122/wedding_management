@@ -41,13 +41,18 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Depois copia o código (camada leve que muda muito)
 COPY . .
-# Sincroniza o projeto (rápido, pois as deps já estão lá)
-RUN uv sync --frozen --all-extras
+# Sincroniza o projeto SEM dependency groups (produção)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --all-extras
 
 # ==============================================================================
-# STAGE 3: Development - O seu "Playground"
+# STAGE 3: Development - Com dependências opcionais (zealot, etc)
 # ==============================================================================
 FROM installer AS development
+
+# Instala dependências opcionais de dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --all-extras
 
 ENV DJANGO_DEBUG=True
 # O PATH e código já foram herdados do installer!
@@ -60,10 +65,10 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 # ==============================================================================
 FROM base AS production
 
-# Copiamos apenas o venv pronto do installer
+# Copiar venv primeiro (muda raramente = melhor cache)
 COPY --from=installer /app/.venv /app/.venv
-# O PATH já foi herdado da base!
 
+# Depois copiar código (muda frequentemente)
 COPY . .
 
 RUN python manage.py collectstatic --noinput && \
