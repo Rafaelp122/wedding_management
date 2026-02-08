@@ -9,10 +9,14 @@ from datetime import timedelta
 from pathlib import Path
 
 from django.contrib.messages import constants as messages
+from dotenv import load_dotenv
 
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file (local dev and Docker)
+load_dotenv(BASE_DIR.parent / ".env")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
@@ -46,7 +50,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.users",
     "apps.weddings",
-    # Project apps - Domain-driven
+    # Project apps - Dominios
     "apps.finances",
     "apps.logistics",
     "apps.scheduler",
@@ -62,6 +66,17 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# django-zeal para detectar N+1 queries (pode deixar a aplicação ~2x mais lenta)
+ENABLE_ZEAL = os.getenv("ENABLE_ZEAL", "False") == "True"
+
+if ENABLE_ZEAL:
+    INSTALLED_APPS += ["zeal"]
+    MIDDLEWARE = ["zeal.middleware.ZealotMiddleware", *MIDDLEWARE]
+
+    # Configurações de comportamento do django-zeal
+    ZEAL_FAIL = True  # Crucial para o CI: faz o teste quebrar (Error 500) se houver N+1
+    ZEAL_LOG = True  # Exibe alertas no console
 
 ROOT_URLCONF = "config.urls"
 

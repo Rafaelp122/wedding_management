@@ -197,6 +197,15 @@ wheels = [
 ]
 
 [[package]]
+name = "django-zeal"
+version = "2.0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/51/c6997d7f4524002359f0e1a657504b9effe7d82ab90e0acea505ffda4582/django_zeal-2.0.4.tar.gz", hash = "sha256:934cd3968c1ede3f3ec5314c4da285ef4796f4b6de1f95870c5999370280e17e", size = 15479, upload-time = "2025-01-28T08:15:02.564Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/6c/cfce455cea55e0ce9256e57164d2a92be111ec9886b89aec5af8e0959b9a/django_zeal-2.0.4-py3-none-any.whl", hash = "sha256:c37b0a7d203572d8eb8462a601f19dedfdf82324a25c7eb7273afdc52fc519fa", size = 12476, upload-time = "2025-01-28T08:15:00.742Z" },
+]
+
+[[package]]
 name = "djangorestframework"
 version = "3.16.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1016,12 +1025,14 @@ dependencies = [
     { name = "drf-spectacular" },
     { name = "gunicorn" },
     { name = "psycopg", extra = ["c"] },
+    { name = "python-dotenv" },
     { name = "uuid6" },
 ]
 
 [package.optional-dependencies]
 dev = [
     { name = "django-extensions" },
+    { name = "django-zeal" },
     { name = "factory-boy" },
     { name = "faker" },
     { name = "ipython" },
@@ -1031,7 +1042,6 @@ dev = [
     { name = "pytest-django" },
     { name = "pytest-mock" },
     { name = "pytest-xdist" },
-    { name = "python-dotenv" },
     { name = "ruff" },
 ]
 
@@ -1040,6 +1050,7 @@ requires-dist = [
     { name = "django", specifier = ">=5.2.9,<6.0" },
     { name = "django-cors-headers", specifier = ">=4.6.0,<4.7" },
     { name = "django-extensions", marker = "extra == 'dev'", specifier = ">=4.1,<4.2" },
+    { name = "django-zeal", marker = "extra == 'dev'", specifier = ">=2.0.4,<3.0" },
     { name = "djangorestframework", specifier = ">=3.16.1,<3.17" },
     { name = "djangorestframework-simplejwt", specifier = ">=5.4.0,<5.5" },
     { name = "drf-spectacular", specifier = ">=0.27.1,<0.28" },
@@ -1054,7 +1065,7 @@ requires-dist = [
     { name = "pytest-django", marker = "extra == 'dev'", specifier = ">=4.9.0,<5.0" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.0,<4.0" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.6.1,<4.0" },
-    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.0.1,<2.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1,<2.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7.4,<0.8" },
     { name = "uuid6", specifier = ">=2025.0.1,<2026" },
 ]
