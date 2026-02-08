@@ -1,493 +1,583 @@
-# Levantamento de Requisitos - Wedding Management System
+# 🎯 Levantamento de Requisitos - Wedding Management System
 
-## Versão 4.1
-
----
-
-## Estrutura de Apps Django (Arquitetura DDD)
-
-Cada app segue Domain-Driven Design com responsabilidades específicas:
-
-```
-apps/
-├── core/           # Models base (BaseModel, SoftDeleteModel) + Managers
-├── users/          # RF02 (Autenticação + Permissões)
-│   └── models.py   # User
-├── weddings/       # RF01 (Núcleo - Multitenancy)
-│   └── models.py   # Wedding
-├── finances/       # RF03-RF06 (Domínio Financeiro)
-│   ├── models.py   # Budget, BudgetCategory, Expense, Installment
-│   └── FINANCIAL_INTEGRITY.md  # Documentação de arquitetura
-├── logistics/      # RF07-RF13 (Domínio Logístico + Jurídico)
-│   └── models.py   # Supplier, Item, Contract
-└── scheduler/      # RF14-RF15 (Cronograma + Notificações)
-    └── models.py   # Event, Notification
-```
-
-**Decisão Arquitetural:** Separação por domínios (finances vs logistics) para:
-- Isolar lógica financeira (imutável) da logística (mutável)
-- Facilitar testes unitários por domínio
-- Permitir evolução independente dos módulos
-
-### Módulo de Casamentos e Multitenancy
-
-**RF01 (Isolamento de Dados):** O sistema deve implementar multitenancy rigoroso. Um Planner (Usuário) só pode visualizar e manipular dados de seus próprios casamentos e fornecedores.
-
-**RF02 (Gestão de Permissões):** O sistema deve implementar 2 níveis de acesso iniciais:
-
-- **Owner** (Planner): CRUD total sobre seus casamentos, itens e fornecedores
-- **Viewer** (Noivos): Read-Only em cronograma, financeiro e contratos de seu casamento
-
-> **Nota:** Níveis adicionais (Editor/Auditor) serão implementados em versões futuras conforme demanda real de usuários.
+## Versão 6.0 - Sistema de Controle Financeiro e Logístico
 
 ---
 
-### Modelo Financeiro: Expense como Abstração
+## 1. Visão Geral: Sistema de Controle (não apenas Gestão)
 
-**Decisão Arquitetural:** `Expense` é a entidade financeira central que desacopla logística de finanças.
+### Problema Real
 
-**Características:**
-- Pode existir **com ou sem** contrato vinculado (`contract` é opcional)
-- Permite despesas não-logísticas (taxas, multas, mão-de-obra)
-- Protege categoria via `on_delete=PROTECT` (ver FINANCIAL_INTEGRITY.md)
-- Valida soma de parcelas automaticamente via `clean()`
+Cerimonialistas perdem **4-6 horas/semana** procurando informações espalhadas e sofrem com:
 
-**Exemplo de uso:**
-```python
-# Despesa vinculada à logística:
-Expense.objects.create(
-    category=buffet_category,
-    contract=buffet_contract,  # Liga ao contrato
-    estimated_amount=5000,
-    actual_amount=4800
-)
+- 📱 Dados fragmentados (WhatsApp, Excel, e-mail, papel)
+- 💸 Juros por atrasos não monitorados
+- ❌ Erros de digitação em valores financeiros
+- 🔢 Soma de parcelas incorreta (arredondamentos manuais)
 
-# Despesa independente (taxa de cartório):
-Expense.objects.create(
-    category=legal_category,
-    contract=None,  # SEM contrato
-    description="Taxa de registro",
-    actual_amount=300
-)
-```
+### Solução: Controle Máximo
+
+Sistema que **garante integridade financeira** e **impede erro humano** através de:
+
+- ⚖️ Validação financeira com tolerância zero
+- 🤖 Auto-geração de parcelas com ajuste automático
+- 📊 Pipeline de importação inteligente (Excel → Sistema)
+- 🔒 Isolamento rigoroso de dados (Multitenancy denormalizado)
+
+### Proposta de Valor
+
+> "Sistema que não apenas guarda seus dados, mas **garante que eles estejam matematicamente corretos e financeiramente seguros**."
 
 ---
 
-### Módulo Financeiro e Orçamentário
+## 2. Arquitetura de Domínios de Negócio
 
-**RF03 (Categorias Dinâmicas):** O sistema deve permitir que planners criem suas próprias categorias de orçamento. Categorias com itens ativos vinculados não podem ser deletadas, apenas arquivadas (soft delete).
-
-**RF04 (Integridade de Fluxo Financeiro):** O sistema deve validar que a soma das parcelas (Installments) seja igual ao `actual_amount` da despesa (Expense), com tolerância de arredondamento de até R$ 0,02 (dois centavos) para lidar com divisões não exatas.
-
-```python
-# Implementado em apps/finances/models.py
-class Expense(BaseModel):
-    def clean(self):
-        if self.pk and self.actual_amount:
-            total_installments = self.installments.aggregate(
-                models.Sum("amount")
-            )["amount__sum"] or Decimal("0.00")
-
-            if abs(total_installments - self.actual_amount) > Decimal("0.01"):
-                raise ValidationError(
-                    f"Soma das parcelas (R${total_installments}) != valor total (R${self.actual_amount})"
-                )
+```
+backend/apps/
+├── core/           # Infraestrutura (BaseModel, SoftDelete, Mixins)
+├── users/          # Autenticação JWT (Planner único no MVP)
+├── weddings/       # 💒 Entidade raiz (Wedding)
+├── finances/       # 💰 Domínio Financeiro
+│   ├── Budget, BudgetCategory
+│   ├── Expense (âncora financeira)
+│   └── Installment (parcelas)
+├── logistics/      # 🤝 Domínio Logístico + Jurídico
+│   ├── Supplier (fornecedores)
+│   ├── Item (itens/serviços)
+│   └── Contract (contratos com valor de face)
+└── scheduler/      # 📅 Domínio de Cronograma
+    ├── Event (calendário)
+    └── Notification (alertas)
 ```
 
-> **Regra de Ouro:** Toda operação monetária deve usar `DecimalField` no Django, nunca `FloatField`, para evitar erros de precisão binária (0.1 + 0.2 ≠ 0.3 em float).
+### Separação de Responsabilidades
 
-**RF05 (Automação de Status):** O sistema deve executar diariamente (via Django management command + cron job) a atualização de parcelas vencidas para o status `OVERDUE`. A task deve:
-
-- Rodar às 00:00 UTC via Cloud Run Scheduler
-- Usar autenticação OIDC (OpenID Connect) para validar que apenas o Cloud Scheduler pode invocar o endpoint
-- Registrar execuções (sucesso/falha) em log estruturado
-- Enviar alerta por email ao administrador em caso de falha persistente
-
-```bash
-# Configuração com OIDC Token (segurança nível sênior)
-gcloud scheduler jobs create http update-overdue-installments \
-  --schedule="0 0 * * *" \
-  --uri="https://wedding-api-xxx.a.run.app/api/tasks/update-overdue/" \
-  --http-method=POST \
-  --oidc-service-account-email="scheduler@project-id.iam.gserviceaccount.com" \
-  --oidc-token-audience="https://wedding-api-xxx.a.run.app"
-```
-
-```python
-# Validação OIDC no backend
-from google.auth.transport import requests
-from google.oauth2 import id_token
-
-def validate_scheduler_request(request):
-    """Valida que requisição veio do Cloud Scheduler via OIDC"""
-    token = request.META.get('HTTP_AUTHORIZATION', '').replace('Bearer ', '')
-    claim = id_token.verify_oauth2_token(token, requests.Request(), settings.CLOUD_RUN_SERVICE_URL)
-    if claim['email'] != settings.SCHEDULER_SERVICE_ACCOUNT:
-        raise PermissionDenied('Unauthorized service account')
-```
-
-> **Justificativa técnica:** OIDC elimina necessidade de gerenciar secrets manualmente e demonstra conhecimento de Service-to-Service authentication no GCP.
-
-**RF06 (Saúde Financeira):** O sistema deve calcular em tempo real a saúde financeira do evento (Gasto Real vs. Estimado) por categoria e exibir em dashboard visual.
+| Domínio       | Responsabilidade          | Pergunta que Responde                |
+| ------------- | ------------------------- | ------------------------------------ |
+| **weddings**  | Orquestração cross-domain | "Qual a visão geral do casamento X?" |
+| **finances**  | Orçamento e integridade   | "Os números estão corretos?"         |
+| **logistics** | Relacionamento B2B        | "O que contratei e quando pagar?"    |
+| **scheduler** | Calendário profissional   | "O que tenho pra fazer essa semana?" |
 
 ---
 
-### Módulo de Logística e Fornecedores
+## 3. Regras de Negócio (Business Rules)
 
-**RF07 (Integração Financeiro-Logístico):** Itens de logística devem ser vinculados a uma categoria de orçamento para integração com dashboard financeiro. A cadeia de relacionamentos é:
+As regras de negócio do sistema estão **consolidadas** em [BUSINESS_RULES.md](BUSINESS_RULES.md).
 
-```
-Wedding → Budget (1:1) → BudgetCategory (1:N) → Expense (1:N) → Installment (1:N)
-                                                     ↓ (1:1 opcional)
-                                                  Contract (N:1) → Item (1:N)
-                                                                     ↓
-                                                                 Supplier
-```
+**Principais regras implementadas:**
 
-**Item como ponte:** `Item.budget_category` permite que itens logísticos apareçam no dashboard financeiro via suas despesas associadas.
+- **BR-F01:** Invariante Financeira (tolerância zero na soma de parcelas)
+- **BR-F02:** Âncora Jurídica (Contract ↔ Expense com validação de valores)
+- **BR-F03:** Consistência de Status de Pagamento
+- **BR-F04:** Orçamento por Categoria (saúde financeira)
+- **BR-L03:** Auto-geração de Parcelas com cálculo exato
+- **BR-L05:** Status de Aquisição independente de pagamento
+- **BR-SEC01:** Isolamento Multitenant com cross-check
+- **BR-SEC03:** Validação Cross-Wedding em Categorias
+- **BR-FUT01:** Imutabilidade de Parcelas Pagas (pendente V2.0)
+- **BR-FUT05:** Automação OVERDUE com OIDC (pendente V2.0)
 
-**RF07.1 (Validação de Integridade):** ⚠️ **PENDENTE DE IMPLEMENTAÇÃO** - O sistema deve validar que o `Item.wedding` é consistente com `Item.budget_category.budget.wedding` para prevenir cross-contamination entre eventos.
-
-**RF08 (Gestão de Status de Itens):** Atualização de status de aquisição independente por item com estados: `Orçado`, `Contratado`, `Entregue`, `Cancelado`.
-
-**RF09 (Notas de Fornecedores):** O sistema deve permitir que planners mantenham notas internas sobre fornecedores via campo de texto livre.
-
-> **Nota:** Sistema de rating (estrelas) foi REMOVIDO temporariamente e será implementado apenas em V2.0 após definição de metodologia de avaliação e acúmulo de volume estatístico significativo.
-
-> **Status:** Campo `Supplier.rating` foi removido em 2026-02-03. Notas internas (texto) continuam disponíveis.
+👉 **Para detalhes completos, implementação e exemplos:** [BUSINESS_RULES.md](BUSINESS_RULES.md)
 
 ---
 
-### Módulo Jurídico (Gestão de Contratos)
+## 4. Requisitos Funcionais
 
-**RF10 (Contratos Externos N:M):** O sistema deve permitir upload de PDFs de contratos externos para Cloudflare R2 via **presigned URLs**, onde um único documento pode reger múltiplos itens de um mesmo fornecedor (Relação N:M).
+### 🎯 Módulo de Multitenancy
 
-**Fluxo de Upload Otimizado:**
+#### RF01: Isolamento Rigoroso de Dados ✅ **IMPLEMENTADO**
+
+Planner só acessa dados de seus casamentos. Implementado via `WeddingOwnedModel` (7 models) e `UserOwnedModel` (Supplier). Ver BR-SEC01 e BR-SEC03 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
+
+---
+
+#### RF02: Gestão de Permissões (2 Níveis)
+
+- **Owner (Planner):** CRUD total
+- **Viewer (Noivos - V2.0):** Read-Only
+
+Tentativa de acesso cross-wedding retorna HTTP 404.
+
+---
+
+### 💰 Módulo Financeiro
+
+#### RF03: Categorias Dinâmicas com Soft Delete ✅ **IMPLEMENTADO**
+
+Planners criam categorias customizadas. Categoria com itens ativos usa soft delete (`is_deleted=True`). Ver implementação em `apps.core.models.SoftDeleteModel`.
+
+---
+
+#### RF04: Validação Financeira Automática ✅ **IMPLEMENTADO**
+
+Sistema valida:
+
+1. Soma parcelas = Expense.actual_amount (tolerância zero)
+2. Expense vinculada = Contract.total_amount
+3. Categoria pertence ao mesmo wedding
+
+Ver BR-F01, BR-F02, BR-SEC03 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
+
+---
+
+#### RF05: Automação de Inadimplência (OVERDUE) 📋 **PENDENTE**
+
+Task diária (Cloud Scheduler + OIDC) atualiza parcelas vencidas para status OVERDUE e envia alertas. Ver BR-FUT05 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
+
+---
+
+#### RF06: Dashboard de Saúde Financeira
+
+Visão em tempo real por categoria:
+
+- **Orçado:** BudgetCategory.allocated_budget
+- **Comprometido:** Soma de Contracts (SIGNED)
+- **Realizado:** Soma de Installments (PAID)
+- **Status:** OK (≤ orçado) ou OVER (> orçado)
+
+Performance: < 500ms. Exportável para PDF (V1.1).
+
+---
+
+### 🤝 Módulo Logístico
+
+#### RF07: Integração Financeiro-Logístico ✅ **IMPLEMENTADO**
+
+Items vinculados a categorias de orçamento via `budget_category`. Validação cross-wedding implementada. Ver BR-SEC03 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
+
+Cadeia: Wedding → Budget → BudgetCategory ← Expense ← Contract ← Item ← Supplier
+
+---
+
+#### RF08: Gestão de Status de Itens ✅ **IMPLEMENTADO**
+
+Status de aquisição independente do financeiro: `PENDING` → `IN_PROGRESS` → `DONE`. Ver BR-L05 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
+
+---
+
+#### RF09: Notas Internas de Fornecedores ✅ **IMPLEMENTADO**
+
+Campo texto livre (`Supplier.notes`) para anotações como "Atende apenas SP capital", "Requer 50% sinal".
+
+---
+
+#### RF10: Pipeline de Importação Inteligente (Excel → Sistema) 📋 **V2.0**
+
+**Descrição:** Mapper dinâmico para importação em lote de planilhas.
+
+**Fluxo:**
+
+1. Upload de `.xlsx` → Detecção automática de colunas
+2. Interface de mapeamento: "Fornecedor" → `supplier`, "Valor" → `amount`
+3. Preview com validação de dados
+4. Confirmação → Criação em lote
+
+**Tecnologias:** `openpyxl`/`pandas` (backend) + React Table (frontend)
+
+**Complexidade:** 2-3 semanas
+
+**Status:** 📋 Planejado para V2.0
+
+---
+
+### 📄 Módulo Jurídico (Contratos)
+
+#### RF11: Upload via Presigned URLs (Cloudflare R2)
+
+**Descrição:** Upload direto de PDFs ao R2 sem passar pelo backend.
+
+**Fluxo:**
 
 1. Frontend solicita presigned URL ao backend
-2. Backend gera URL assinada válida por 15 minutos (sem processar o arquivo)
-3. Frontend faz upload DIRETO ao R2 via PUT request
-4. Frontend confirma ao backend que upload foi concluído
+2. Backend gera URL temporária (15min) no R2
+3. Frontend faz PUT direto ao R2
+4. Frontend confirma upload ao backend
 
-```python
-# Exemplo de geração de presigned URL
-import boto3
+**Vantagens:**
 
-def generate_upload_url(filename: str, user_id: int):
-    s3_client = boto3.client('s3', endpoint_url=settings.R2_ENDPOINT_URL)
-    object_key = f'contracts/{user_id}/{uuid.uuid4()}/{filename}'
+- ✅ Backend gasta ~50ms (não 5s processando upload)
+- ✅ Uploads simultâneos não sobrecarregam Cloud Run
+- ✅ Escalável (100+ uploads paralelos sem problemas)
 
-    presigned_url = s3_client.generate_presigned_url(
-        'put_object',
-        Params={'Bucket': settings.R2_BUCKET, 'Key': object_key},
-        ExpiresIn=900  # 15 minutos
-    )
-    return {'upload_url': presigned_url, 'object_key': object_key}
+**Critérios de Aceitação:**
+
+- ✅ Suporta PDFs até 50MB
+- ✅ URL expira em 15 minutos
+- ✅ Frontend mostra progresso do upload
+- ✅ Validação de tipo MIME no backend
+
+---
+
+#### RF12: Metadados Contratuais ✅ **IMPLEMENTADO**
+
+Contratos armazenam: `total_amount` (âncora financeira), `expiration_date`, `status`, `pdf_file`, `signed_date`. Ver BR-F02 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
+
+---
+
+#### RF13: Controle de Assinatura Simplificado ✅ **IMPLEMENTADO**
+
+Fluxo: Upload PDF (presigned URL) → Validação → Marcar SIGNED. Assinatura digital (DocuSign) em V2.0.
+
+---
+
+#### RF14: Alertas de Vencimento Contratual 📋 **V1.1**
+
+E-mails automáticos para contratos vencendo em ≤ 30 dias ou PENDING há > 15 dias.
+
+---
+
+### 📅 Módulo de Cronograma
+
+#### RF15: Exportação .ics (iCal)
+
+Sincronização unidirecional (read-only) com Google/Outlook/Apple Calendar. URL única (UUID), atualização 1h. Formato: iCalendar (RFC 5545).
+
+---
+
+#### RF16: Notificações Estratificadas
+
+| Canal                   | Casos de Uso            | Custo         |
+| ----------------------- | ----------------------- | ------------- |
+| **E-mail (Resend)**     | Alertas críticos        | R$ 0 (3k/mês) |
+| **In-App (Badge)**      | Lembretes suaves        | R$ 0          |
+| **WhatsApp Quick Link** | Cobrança manual (wa.me) | R$ 0          |
+| **WhatsApp API (V2.0)** | Automação premium       | R$ 0,10/msg   |
+
+**E-mail (MVP):** Parcelas vencendo em 24h, contratos expirando, relatório semanal.
+
+**In-App (MVP):** Badge com contador, refresh manual (sem polling automático).
+
+**WhatsApp Quick Link (MVP):** Frontend gera link `wa.me` com mensagem pré-preenchida.
+
+**WhatsApp API (V2.0):** Automação via Twilio/MessageBird (custo/benefício após validação de mercado).
+
+---
+
+);
+
 ```
 
-> **Vantagem:** Backend gasta ~50ms gerando URL ao invés de 5s processando upload de 50MB, economizando compute time do Cloud Run e permitindo uploads simultâneos escaláveis.
+**Vantagens:**
 
-**RF11 (Metadados Contratuais):** Contratos devem armazenar:
+- ✅ Zero custo (usa WhatsApp pessoal do planner)
+- ✅ 1 clique para enviar
+- ✅ Open rate ~90% (vs 20% e-mail)
 
-- Data de validade
-- Partes envolvidas (Planner, Fornecedor, Noivos)
-- Status simples: `Pendente` ou `Assinado`
-- URL do arquivo no Cloudflare R2
-- Referência aos itens cobertos
+**WhatsApp API Premium (V2.0):**
 
-**RF12 (Controle de Assinatura Simplificado):** O sistema deve permitir marcar manualmente o status de assinatura do contrato como `Assinado` após upload do PDF final assinado.
+- Envio automático via Meta Business API
+- Custo: R$ 0,10/msg + R$ 300/mês plano
+- Apenas para planners no plano pago
 
-> **Nota:** Assinatura digital via DocuSign/Adobe Sign será implementada apenas em V2.0 devido à complexidade e custo de integração.
+**Status:**
 
-**RF13 (Alertas de Vencimento):** O sistema deve disparar alertas automáticos via email para:
-
-- Contratos com vencimento em até 30 dias
-- Contratos pendentes de assinatura por mais de 15 dias
-
----
-
-### Módulo de Cronograma e Notificações
-
-**RF14 (Exportação de Calendário):** O sistema deve gerar um link de exportação `.ics` (iCal) por casamento, permitindo sincronização unidirecional com Google Calendar, Outlook e Apple Calendar.
-
-**RF15 (Notificações Básicas):** Alertas críticos (parcelas atrasadas, prazos contratuais, marcos do cronograma) devem ser enviados via:
-
-- **Email (Resend):** Notificações imediatas (obrigatório)
-- **In-App:** Badge de notificações atualizado ao:
-  - Fazer login
-  - Navegar entre páginas
-  - Clicar manualmente em "Atualizar notificações"
-- **WhatsApp:** Módulo Premium futuro (V2.0), custo repassado ao usuário
-
-> **Justificativa técnica:** Polling a cada 30s geraria 144k requests/dia inúteis. Refresh manual + email cobre 95% dos casos sem overhead de infraestrutura.
+- E-mail: Implementável em 1 sprint
+- WhatsApp Quick Link: Implementável em 2 dias
+- WhatsApp API: V2.0 (após validação de mercado)
 
 ---
 
-## 2. Requisitos Não Funcionais (RNF)
+## 5. Requisitos Não Funcionais
 
-**RNF01 (Arquitetura Headless):** Backend API REST (Django REST Framework) deployado no Google Cloud Run e Frontend SPA (React) deployado no Vercel, com desacoplamento total.
+### RNF01: Arquitetura Headless ✅ **IMPLEMENTADO**
 
-**RNF02 (Segurança):**
+**Stack:** Django DRF (Cloud Run) + React (Vercel) + Neon PostgreSQL + Cloudflare R2 + Resend
 
-- Autenticação JWT Stateless com tokens expirando em 24h
-- Refresh tokens válidos por 7 dias
-- Rate limiting: 100 requests/minuto por IP via `django-ratelimit`
-- HTTPS obrigatório (fornecido automaticamente por Cloud Run e Vercel)
-
-**RNF03 (Arquitetura de Código - Service Layer):**
-
-- Views/Serializers: validação de entrada/saída HTTP apenas
-- Services: lógica de negócio (ex: `ItemService.create_with_installments()`)
-- Models: validações de integridade e propriedades calculadas
-- **Toda lógica financeira deve usar `Decimal`, nunca `float`**
-
-**RNF04 (Soft Delete Seletivo):**
-Implementar soft delete apenas nos modelos críticos:
-
-- `Wedding`, `BudgetCategory`, `Item`, `Contract`, `Supplier`
-- Dados deletados movem para `is_deleted=True` e mantidos por 30 dias
-- **EXCLUSÕES:** Parcelas pagas (`Installment` com status `PAID`) e logs de sistema (imutáveis)
-
-**RNF05 (Chaves Primárias - Estratégia Híbrida):**
-
-- **Interno (JOINs):** `BigAutoField` sequencial (primary key)
-- **Público (API):** `UUIDField` (UUID4) em campo separado com índice único
-- **Vantagem:** Performance de inteiros em queries internas + segurança de UUIDs expostos
-
-```python
-# Implementação base
-import uuid
-from django.db import models
-
-class BaseModel(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-```
-
-**RNF06 (Performance):**
-
-- API deve responder requisições GET em < 500ms (p95) com até 50 itens
-- Paginação obrigatória: máximo 50 itens/página
-- Queries N+1 detectadas via `nplusone` (modo strict em desenvolvimento) e corrigidas antes do merge
-- Meta agressiva de < 200ms será perseguida via otimizações incrementais
-
-**RNF07 (Documentação Automática):** API autodocumentada via `drf-spectacular` (OpenAPI 3.0) com exemplos de request/response e códigos de erro.
-
-**RNF08 (Interface Mobile-First):** UI responsiva otimizada para smartphones (80% dos acessos esperados).
-
-**RNF09 (Continuidade Básica):**
-
-- Backups diários automáticos do Neon PostgreSQL (inclusos no free tier)
-- Retenção: 7 dias
-- Testes de restauração: a cada 3 meses
-- RTO (Recovery Time Objective): < 8 horas
-
-**RNF10 (Observabilidade Simplificada):**
-
-- **Sentry** para captura de erros 5xx (free tier: 5k eventos/mês)
-- Logs estruturados em JSON via `python-json-logger`
-- Cloud Run Logs integrado nativamente
-- **SEM Prometheus/Grafana** até 500+ usuários ativos
+**Vantagens:** Frontend/Backend independentes, múltiplos clientes (Web, Mobile, API), deploy separado.
 
 ---
 
-## 3. Premissas e Restrições
+### RNF02: Segurança e Autenticação ✅ **IMPLEMENTADO**
 
-**P01 (Infraestrutura):** Hospedagem em stack serverless gratuita:
+**JWT Stateless:** Access (24h) + Refresh (7d) com rotação automática
+**Rate Limiting:** 100 req/min por IP
+**HTTPS:** TLS automático (Cloud Run + Vercel)
+**OIDC:** Service-to-service para Cloud Scheduler (zero secrets)
 
-- **Backend:** Google Cloud Run (free tier: 2M requests/mês + 360k GB-s compute)
-- **Frontend:** Vercel (Hobby plan + CDN global)
-- **Database:** Neon PostgreSQL Serverless (3GB storage + 191h compute/mês)
-- **Storage:** Cloudflare R2 (10GB + zero egress costs)
-- **Email:** Resend (3k emails/mês)
-
-**P02:** MVP em Português (pt-BR) apenas. Internacionalização em V2.0.
-
-**P03:** Sem integração com gateways de pagamento no MVP.
-
-**P04 (Cold Start):** Cloud Run pode ter cold start de 2-3s após inatividade. Aceitável para portfólio.
-
-**R01:** Desenvolvimento: **6 meses com 1 desenvolvedor full-stack**.
-
-**R02:** Custos de infraestrutura: **USD 0/mês** (stack gratuita dentro dos limites de free tier).
-
-**R03 (Cobertura de Testes - Estratificada):**
-
-- **Service Layer Financeira:** 100% de cobertura obrigatória
-  - `ItemService`, `InstallmentService`, `BudgetService`
-  - Inclui todos os edge cases de arredondamento e validação de parcelas
-- **Lógica de Multitenancy:** 100% de cobertura obrigatória
-  - Filtros de queryset, permissions, validações de ownership
-- **Models:** 80% (validações, properties calculadas, métodos de negócio)
-- **Serializers/Views:** 60% (apenas casos críticos e validações complexas)
-- **Cobertura Global Mínima:** 75%
-
-> **Justificativa:** Para um sistema financeiro, 100% de cobertura na lógica monetária é inegociável. Bugs em cálculos de parcelas podem causar perda de confiança e disputas legais.
+Ver BR-FUT05 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
 
 ---
 
-## 4. Critérios de Aceitação (Definição de Pronto)
+### RNF03: Service Layer Pattern ✅ **IMPLEMENTADO**
 
-Uma funcionalidade só será considerada completa quando:
+**Camadas:** Views (HTTP) → Serializers (I/O) → Services (lógica) → Models (integridade)
 
-1. Possuir testes unitários conforme estratificação definida em R03
-2. Estar documentada na OpenAPI com pelo menos 1 exemplo funcional
-3. Passar por checklist de auto-revisão (qualidade de código, segurança básica)
-4. Funcionar corretamente em dispositivo móvel real (teste manual obrigatório)
-5. Estar deployada no Cloud Run (staging) + Vercel (preview deployment)
+**Vantagens:** Testável, reutilizável, manutenível.
 
 ---
 
-## 5. Roadmap de Priorização (MoSCoW Realista)
+### RNF04: Soft Delete Seletivo ✅ **IMPLEMENTADO**
+
+**Aplicado:** Wedding, BudgetCategory, Item, Contract, Supplier
+**NÃO aplicado:** Installment, Event, Notification (histórico imutável)
+
+---
+
+### RNF05: Chaves Híbridas ✅ **IMPLEMENTADO**
+
+**Interno:** `BigAutoField` (JOINs rápidos)
+**Público:** `UUIDField` (segurança + merges)
+
+---
+
+### RNF06: Performance
+
+**Metas:** GET < 200ms, Dashboard < 500ms, Batch < 5s (100 items)
+
+**Estratégias:** Paginação (50/página), índices, `select_related()`, detector N+1 no CI
+
+---
+
+### RNF07: Documentação OpenAPI 3.0 ✅ **IMPLEMENTADO**
+
+`/api/docs/` (Swagger UI) + `/api/redoc/` (ReDoc) + `/api/schema/` (JSON)
+
+---
+
+### RNF08: Mobile-First ✅ **DESIGN RESPONSIVO**
+
+Tailwind CSS, breakpoints 320px/768px/1024px, botões ≥ 44px.
+
+---
+
+### RNF09: Continuidade de Negócio
+
+**Backups:**
+
+- **Neon PostgreSQL:** Backups diários automáticos (free tier)
+- **Retenção:** 7 dias
+- **Testes de restauração:** Trimestrais
+
+**RTO/RPO:**
+
+- **RTO:** < 8h | **RPO:** < 24h
+- **Logs:** Cloud Run (30d retenção) + structured logging (JSON)
+
+---
+
+### RNF10: Observabilidade
+
+**Erros:** Sentry (5k eventos/mês free) + Source maps + Slack alerts
+**Logs:** Structured (JSON) com context (wedding_id, amount, etc)
+**Métricas:** Cloud Run nativo (req/s, latency, memory)
+
+**SEM (até 500+ usuários):** Prometheus/Grafana, APM, distributed tracing
+
+---
+
+## 6. Cobertura de Testes
+
+| Camada                       | Cobertura | Justificativa           |
+| ---------------------------- | --------- | ----------------------- |
+| **Service Layer Financeira** | **100%**  | Cálculos críticos       |
+| **Multitenancy (Filtros)**   | **100%**  | Isolamento (LGPD)       |
+| **Models (Validações)**      | **80%**   | Integridade             |
+| **Serializers/Views**        | **60%**   | Casos críticos          |
+| **Global**                   | **≥ 75%** | Meta CI + detector N+1  |
+
+---
+
+## 7. Premissas e Restrições
+
+### Infraestrutura
+
+**Stack:** Django + DRF, PostgreSQL (Neon), React + Vite, Cloud Run + Vercel
+
+**Custo:** R$ 0/mês (free tiers). Detalhes em [ARCHITECTURE.md](#) (a ser criado).
+
+---
+
+### Restrições
+
+**R01 - Timeline:** MVP: 4 meses | V1.1: +2 meses | V2.0: +3 meses
+
+**R02 - Idioma:** MVP: pt-BR | V2.0: i18n (en, es)
+
+**R03 - Integrações:** Fora do MVP: Stripe, DocuSign
+
+---
+
+## 8. Roadmap (MoSCoW)
 
 ### Must Have (MVP - 4 meses)
 
-**As 3 funcionalidades que fazem o Planner largar o Excel:**
+**Sprint 1-4:** Models + Mixins + Validações + Testes (100% coverage financeiro)
 
-1. **RF01, RF02** (Multitenancy + Permissões básicas: Owner/Viewer)
-2. **RF03, RF04, RF06** (Orçamento com validação financeira + Dashboard de saúde)
-3. **RF07, RF07.1, RF08** (Gestão de itens com status + vínculo a fornecedores)
+**Sprint 5-8:** Serializers + ViewSets + Service Layer + Testes (100% coverage services)
 
-**Infraestrutura mínima:**
+**Sprint 9-12 (Features Críticas):**
+Dashboard saúde financeira + Upload presigned URLs + Validações cross-wedding + Alertas e-mail
 
-- RNF01, RNF02, RNF03, RNF04, RNF05, RNF06, RNF07
-
-**Total estimado:** 16 semanas de desenvolvimento
+**Sprint 13-16 (Frontend + Deploy):**
+Dashboard React + Formulários + Tabelas + Deploy Cloud Run/Vercel + Testes E2E (Cypress)
 
 ---
 
-### Should Have (V1.1 - +2 meses após MVP)
+### Should Have (V1.1 - +2 meses)
 
-4. **RF05** (Automação de status via Cloud Run Scheduler + OIDC)
-5. **RF10, RF11, RF12** (Upload de contratos via presigned URLs + metadados)
-6. **RF14** (Exportação .ics para calendário)
-7. **RF09** (Notas internas de fornecedores + estatísticas)
-8. **RNF09, RNF10** (Backups + Sentry)
-
-**Total estimado:** 8 semanas adicionais
+- RF05: Automação OVERDUE (Cloud Scheduler + OIDC)
+- RF15: Exportação .ics
+- RF16: WhatsApp Quick Link
+- Histórico de alterações (audit log)
+- Dashboard avançado (gráficos)
+- Exportação Excel/PDF
+- Imutabilidade de parcelas pagas (BR-FUT01)
 
 ---
 
-### Could Have (V2.0 - +3 meses após V1.1)
+### Could Have (V2.0 - +3 meses)
 
-9. **RF13** (Alertas automáticos de vencimento)
-10. **RF15** (WhatsApp Premium via API oficial)
-11. **RF02** (Níveis adicionais: Editor/Auditor)
-12. **RF09** (Rating público de fornecedores com estrelas)
-13. **Assinatura digital via DocuSign**
+- RF10: Pipeline de importação Excel (Mapper)
+- RF16: WhatsApp API Premium (automação)
+- Níveis de permissão (Editor, Auditor)
+- Rating de fornecedores
+- Assinatura digital (DocuSign)
+- Gateway de pagamento (Stripe)
+- Internacionalização (i18n)
+- App mobile (React Native)
 
 ---
 
 ### Won't Have (Fora de escopo)
 
-- ❌ Auditoria imutável completa
-- ❌ Geração automática de contratos via templates
 - ❌ Marketplace de fornecedores
-- ❌ Gateway de pagamento integrado
 - ❌ Sincronização bidirecional com Google Calendar
+- ❌ Geração automática de contratos via templates
+- ❌ CRM completo
+- ❌ Gestão de equipe (múltiplos planners)
 
 ---
 
-## 6. Decisões Técnicas Documentadas
+## 9. Métricas de Sucesso
 
-### Por que Cloud Run ao invés de Railway/Heroku?
+**MVP será considerado sucesso se:**
 
-- **Free tier generoso:** 2M requests/mês vs créditos limitados
-- **Escala para zero:** Sem uso = custo zero
-- **Docker nativo:** Aplicação já containerizada
-- **Trade-off:** Cold start de 2-3s (aceitável para portfólio)
+1. ✅ **5 cerimonialistas** usam por 30+ dias
+2. ✅ Redução de **50%** no tempo de controle financeiro (vs Excel)
+3. ✅ Dashboard responde em **< 500ms** (p95)
+4. ✅ **Zero** perda de dados (backups testados mensalmente)
+5. ✅ **< 5 bugs críticos** no primeiro mês
+6. ✅ **Pelo menos 1 cerimonialista** paga por plano premium (após V1.1)
 
-### Por que Neon ao invés de Railway PostgreSQL?
+**KPIs Técnicos:**
 
-- **3GB de storage** vs 1GB
-- **Hibernação automática:** Economiza compute time
-- **Branching de banco:** Testa migrations sem afetar produção
-- **Backups inclusos:** 7 dias de retenção
+- Uptime: > 99.5%
+- Latência API (p95): < 500ms
+- Cobertura de testes: ≥ 75%
+- Taxa de erro 5xx: < 0.1%
+
+---
+
+## 10. Decisões Técnicas Documentadas
 
 ### Por que Cloudflare R2 ao invés de AWS S3?
 
-- **10GB grátis** vs 5GB
-- **Zero egress costs:** Downloads gratuitos (S3 cobra USD 0.09/GB)
-- **S3-compatible API:** Usa boto3 normalmente
+**R2:**
 
-### Por que Resend ao invés de AWS SES?
+- ✅ 10GB grátis (S3: 5GB)
+- ✅ **Zero egress costs** (S3 cobra USD 0,09/GB)
+- ✅ S3-compatible API (usa boto3)
 
-- **3k emails/mês grátis** vs USD 0.10 por 1k
-- **API ultra simples:** 5 linhas de código
-- **SPF/DKIM automático:** Sem configuração DNS manual
+**Economia em escala:**
 
-### Por que BigInt + UUID4 ao invés de apenas UUID4?
-
-- **Performance:** JOINs com inteiros são 3x mais rápidos
-- **Segurança:** IDs sequenciais não vazam para API
-- **Flexibilidade:** UUID facilita merges futuros
-- **Trade-off:** Lookup por UUID adiciona ~1ms (negligível)
-
-### Por que OIDC ao invés de simples Authorization header?
-
-- **Segurança:** Tokens assinados pelo GCP e validáveis criptograficamente
-- **Zero secrets:** Não precisa gerenciar/rotacionar senhas
-- **Identity-Aware:** Valida service account específico
-- **Auditável:** Logs mostram qual SA fez a requisição
-
-### Por que Presigned URLs ao invés de upload via backend?
-
-- **Performance:** Backend gasta 50ms ao invés de 5s por upload
-- **Custo:** Não consome compute time do Cloud Run
-- **Escalabilidade:** 100 uploads simultâneos não sobrecarregam backend
-- **Segurança:** URL expira em 15min
-
-### Por que refresh manual ao invés de polling/WebSocket?
-
-- **Polling:** 50 usuários × 2 req/min = 144k requests/dia inúteis
-- **WebSocket:** Requer servidor stateful (USD 50/mês)
-- **Email + refresh:** Cobre 95% dos casos sem complexidade
+**Decisões técnicas detalhadas** (por que R2 vs S3, Neon vs Railway, OIDC vs secrets, Presigned URLs, Chaves híbridas, Service Layer) serão documentadas em [ADR/](#) (Architecture Decision Records - a ser criado).
 
 ---
 
-## 7. Métricas de Sucesso do MVP
+## 11. Referências
 
-O MVP será considerado bem-sucedido se:
-
-1. **5 planners reais** usarem o sistema por pelo menos 30 dias
-2. **Redução de 50%** no tempo gasto com controle financeiro (vs Excel)
-3. **Zero perda de dados** críticos (validado via testes de backup)
-4. **< 5 bugs críticos** reportados no primeiro mês
-5. **Pelo menos 1 planner** demonstrar interesse em pagar por features premium
+- [BUSINESS_RULES.md](BUSINESS_RULES.md) - Regras de negócio consolidadas
+- [BUILD_ARCHITECTURE.md](BUILD_ARCHITECTURE.md) - Decisões técnicas (legado)
+- [ENVIRONMENT.md](ENVIRONMENT.md) - Configuração de ambiente
 
 ---
 
-## 8. Arquitetura de Deploy
+### Por que Service Layer ao invés de Fat Models/Serializers?
+
+**Service Layer:**
+
+- ✅ Lógica testável isoladamente
+- ✅ Reutilizável (views/tasks/commands)
+- ✅ Transações atômicas explícitas
+- ✅ Separação de responsabilidades clara
+
+**Fat Models:**
+
+- ❌ Acoplamento alto
+- ❌ Difícil de testar
+- ❌ Lógica espalhada
+
+---
+
+## 12. Arquitetura de Deploy
 
 ```
-┌─────────────┐         ┌──────────────┐         ┌─────────────┐
-│   GitHub    │────────▶│    Vercel    │────────▶│   CDN Edge  │
-│(Repositório)│         │  (Frontend)  │         │  (Global)   │
-└─────────────┘         └──────────────┘         └─────────────┘
-       │                        │
-       │                        │ API Calls (HTTPS)
-       │                        ▼
-       │                ┌──────────────┐
-       │                │  Cloud Run   │
-       └───────────────▶│  (Backend)   │
-                        └──────────────┘
-                                │
-                    ┌───────────┼───────────┐
-                    ▼           ▼           ▼
-            ┌─────────────┐ ┌─────────┐ ┌─────────┐
-            │    Neon     │ │   R2    │ │ Resend  │
-            │ PostgreSQL  │ │ (PDFs)  │ │ (Email) │
-            └─────────────┘ └─────────┘ └─────────┘
+
+┌─────────────┐ ┌──────────────┐ ┌─────────────┐
+│ GitHub │────────▶│ Vercel │────────▶│ CDN Edge │
+│(Repositório)│ │ (Frontend) │ │ (Global) │
+└─────────────┘ └──────────────┘ └─────────────┘
+│ │
+│ │ HTTPS (JWT)
+│ ▼
+│ ┌──────────────┐
+│ │ Cloud Run │◀────┐ OIDC
+└───────────────▶│ (Backend) │ │
+└──────────────┘ │
+│ │
+┌───────────┼────────────┴────────┐
+▼ ▼ ▼ ▼
+┌─────────────┐ ┌─────────┐ ┌─────────┐ ┌──────────┐
+│ Neon │ │ R2 │ │ Resend │ │ Cloud │
+│ PostgreSQL │ │ (PDFs) │ │ (Email) │ │Scheduler │
+└─────────────┘ └─────────┘ └─────────┘ └──────────┘
+
 ```
+
+**Fluxo de Request:**
+
+1. Usuário acessa Vercel (frontend)
+2. Frontend faz API call ao Cloud Run (JWT no header)
+3. Cloud Run valida JWT e processa
+4. Retorna JSON ao frontend
+5. Frontend renderiza
+
+**Automação (Cloud Scheduler):**
+
+1. Scheduler dispara POST com OIDC token
+2. Cloud Run valida service account
+3. Executa task (update OVERDUE, alertas)
+4. Logs estruturados para observabilidade
 
 ---
 
-**Última atualização:** 3 de fevereiro de 2026
+**Última atualização:** 8 de fevereiro de 2026
 **Responsável:** Rafael
-**Versão:** 4.1
-**Próxima revisão:** Após conclusão do MVP (4 meses)
+**Versão:** 6.0 - Sistema de Controle
+**Próxima revisão:** Após Sprint 8 (2 meses)
+
+---
+
+## Changelog
+
+**v6.0 (08/02/2026):**
+
+- ✅ Documentadas regras de negócio implementadas (tolerância zero, mixins)
+- ✅ Adicionado RF05 (Automação OVERDUE com OIDC)
+- ✅ Adicionado RF10 (Pipeline Excel - V2.0)
+- ✅ Adicionado RF16 (WhatsApp Quick Link)
+- ✅ Separação clara: Implementado vs Planejado
+- ✅ Cobertura de testes estratificada (100% em lógica financeira)
+- ✅ Decisões técnicas justificadas (OIDC, Presigned URLs, Service Layer)
+
+**v5.0 (03/02/2026):**
+
+- Separação de domínios de negócio
+- Soft delete seletivo
+- Chaves primárias híbridas
+
+**v4.1 (anterior):**
+
+- Escopo acadêmico (centralização de dados)
+```
