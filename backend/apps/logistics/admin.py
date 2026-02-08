@@ -1,3 +1,4 @@
+# backend/apps/logistics/admin.py
 from django.contrib import admin
 
 from .models import Contract, Item, Supplier
@@ -30,12 +31,7 @@ class ItemAdmin(admin.ModelAdmin):
         "is_deleted",
     ]
     list_filter = ["acquisition_status", "is_deleted", "wedding", "budget_category"]
-    search_fields = [
-        "name",
-        "description",
-        "wedding__groom_name",
-        "wedding__bride_name",
-    ]
+    search_fields = ["name", "description", "wedding__name"]
     readonly_fields = ["created_at", "updated_at", "deleted_at"]
 
 
@@ -44,18 +40,17 @@ class ContractAdmin(admin.ModelAdmin):
     list_display = [
         "wedding",
         "supplier",
-        "expiration_date",
-        "is_fully_signed",
+        "status",  # Adicionado para controle
+        "total_amount",  # Adicionado para controle
+        "signed_date",  # Adicionado para controle
         "is_deleted",
     ]
-    list_filter = ["is_deleted", "expiration_date", "wedding"]
-    search_fields = ["wedding__groom_name", "wedding__bride_name", "supplier__name"]
+    list_filter = ["status", "is_deleted", "expiration_date", "wedding"]
+    search_fields = ["wedding__name", "supplier__name"]
     readonly_fields = [
+        "uuid",
         "created_at",
         "updated_at",
         "deleted_at",
-        "planner_signed_at",
-        "supplier_signed_at",
-        "couple_signed_at",
     ]
     inlines = [ItemInline]

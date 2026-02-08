@@ -8,6 +8,7 @@ Contract, Supplier. Cascade manual via service layer por simplicidade.
 
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -89,3 +90,37 @@ class SoftDeleteModel(BaseModel):
         self.is_deleted = False
         self.deleted_at = None
         self.save(using=using, update_fields=["is_deleted", "deleted_at", "updated_at"])
+
+
+class WeddingOwnedModel(models.Model):
+    """
+    Mixin para garantir que o modelo pertença a um casamento específico.
+    Essencial para o Multitenancy rigoroso (RF01).
+    """
+
+    wedding = models.ForeignKey(
+        "weddings.Wedding",
+        on_delete=models.CASCADE,
+        related_name="%(class)ss",  # Gera related_names como weddings.expenses, weddings.items # noqa
+        verbose_name="Casamento",
+    )
+
+    class Meta:
+        abstract = True
+
+
+class UserOwnedModel(models.Model):
+    """
+    Mixin para modelos que pertencem ao usuário (Planner) e não a um casamento.
+    Caso específico do Supplier (Fornecedor).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="%(class)ss",
+        verbose_name="Usuário Responsável",
+    )
+
+    class Meta:
+        abstract = True

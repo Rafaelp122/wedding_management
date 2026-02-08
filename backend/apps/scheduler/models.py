@@ -1,10 +1,10 @@
-from apps.core.models import BaseModel
-from apps.users.models import User
-from apps.weddings.models import Wedding
 from django.db import models
 
+from apps.core.models import BaseModel, WeddingOwnedModel
+from apps.users.models import User
 
-class Event(BaseModel):
+
+class Event(BaseModel, WeddingOwnedModel):
     """Modelo que representa um evento/compromisso no calendário."""
 
     class TypeChoices(models.TextChoices):
@@ -15,15 +15,6 @@ class Event(BaseModel):
         VISIT = "visita", "Visita Técnica"
         TASTING = "degustacao", "Degustação"
         OTHER = "outro", "Outro"
-
-    # Casamento ao qual o evento está vinculado (opcional)
-    wedding = models.ForeignKey(
-        Wedding,
-        on_delete=models.CASCADE,
-        related_name="events",
-        null=True,
-        blank=True,
-    )
 
     # Usuário responsável (planner)
     planner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="events")
