@@ -7,7 +7,7 @@
   // --- Python: Pylance e Análise Estática ---
   "python.languageServer": "Pylance",
   // "python.analysis.typeCheckingMode": "basic",
-  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
   "python.terminal.activateEnvironment": true,
   "python.analysis.extraPaths": [
     "${workspaceFolder}/backend",
@@ -127,7 +127,6 @@
     "**/.ruff_cache": true,
     "**/node_modules": true,
     "**/staticfiles": true,
-    "**/media": true,
-    "venv": true
+    "**/media": true
   }
 }
