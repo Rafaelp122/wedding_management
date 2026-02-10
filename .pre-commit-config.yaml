@@ -1,16 +1,55 @@
+# ==============================================================================
+# CONFIGURAÇÃO DE PRE-COMMIT - WEDDING MANAGEMENT (BACKEND)
+# ==============================================================================
+# Este arquivo define os "Quality Gates" que o código deve passar antes de ser
+# aceito no controle de versão. Garante estilo, segurança e integridade Django.
+
 repos:
+  # ----------------------------------------------------------------------------
+  # 1. HIGIENE DE ARQUIVOS (Geral)
+  # ----------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
+        exclude: .*\.py # Deixa o Ruff cuidar do Python
       - id: end-of-file-fixer
+        exclude: .*\.py # Deixa o Ruff cuidar do Python
       - id: check-yaml
       - id: check-added-large-files
+      - id: check-merge-conflict # Impede commit com conflitos de git ativos
+      - id: debug-statements # Impede commit com 'breakpoint()' ou 'pdb'
 
+  # ----------------------------------------------------------------------------
+  # 2. QUALIDADE DE CÓDIGO PYTHON (Ruff)
+  # ----------------------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Versão alinhada com o requirements.txt (0.7.4)
     rev: v0.7.4
     hooks:
       - id: ruff
-        args: [--fix]
-      - id: ruff-format
+        args: [--fix] # Tenta corrigir erros automaticamente (ex: imports inúteis)
+      - id: ruff-format # O formatador oficial que substitui o Black
+
+  # ----------------------------------------------------------------------------
+  # 3. SEGURANÇA: DETECÇÃO DE SEGREDOS
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        # Ignora arquivos de teste e lockfiles que geram falsos positivos
+        exclude: .*/tests/.*|backend/uv.lock
+
+  # ----------------------------------------------------------------------------
+  # 4. INTEGRIDADE DJANGO (Local)
+  # ----------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: check-migrations
+        name: Check Django Migrations
+        description: Garante que não existem mudanças no modelo sem migrações criadas.
+        entry: bash -c "cd backend && uv run python manage.py makemigrations --check --dry-run"
+        language: system
+        types: [python]
+        pass_filenames: false
