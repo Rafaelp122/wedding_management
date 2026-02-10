@@ -101,7 +101,6 @@ class WeddingOwnedModel(models.Model):
     wedding = models.ForeignKey(
         "weddings.Wedding",
         on_delete=models.CASCADE,
-        related_name="%(class)ss",  # Gera related_names como weddings.expenses, weddings.items # noqa
         verbose_name="Casamento",
     )
 
