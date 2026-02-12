@@ -15,8 +15,7 @@ Destaques Técnicos:
 import factory
 
 from apps.users.tests.factories import UserFactory
-
-from ..models import Wedding
+from apps.weddings.models import Wedding
 
 
 class WeddingFactory(factory.django.DjangoModelFactory):
