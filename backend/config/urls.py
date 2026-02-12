@@ -1,4 +1,4 @@
-from apps.users.serializers import EmailTokenObtainPairSerializer
+# config/urls.py
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -8,41 +8,20 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework_simplejwt.views import TokenRefreshView, TokenViewBase
 
 
-class EmailTokenObtainPairView(TokenViewBase):
-    """View JWT customizada para usar email."""
+# Agrupamento das rotas da API v1 para clareza
+api_v1_patterns = [
+    path("auth/", include("apps.users.urls")),
+    path("weddings/", include("apps.weddings.urls")),
+    path("logistics/", include("apps.logistics.urls")),
+]
 
-    serializer_class = EmailTokenObtainPairSerializer
-
-
-# Define as rotas principais do projeto.
 urlpatterns = [
-    # Painel administrativo padrão do Django
     path("admin/", admin.site.urls),
-    # --- API REST (DRF) ---
-    # API v1 - Backend completo
-    path(
-        "api/v1/",
-        include(
-            [
-                # Authentication
-                path(
-                    "auth/token/",
-                    EmailTokenObtainPairView.as_view(),
-                    name="token_obtain",
-                ),
-                path(
-                    "auth/token/refresh/",
-                    TokenRefreshView.as_view(),
-                    name="token_refresh",
-                ),
-                # Apps APIs will be created here
-            ]
-        ),
-    ),
-    # --- API Documentation (RNF06) ---
+    # Versão 1 da API
+    path("api/v1/", include(api_v1_patterns)),
+    # Documentação (RNF06)
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/docs/",
@@ -52,7 +31,6 @@ urlpatterns = [
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
 
-# Adiciona a rota para servir arquivos de mídia (upload) localmente em desenvolvimento
+# Servir arquivos de mídia em desenvolvimento
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

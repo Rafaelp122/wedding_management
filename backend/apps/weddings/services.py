@@ -1,6 +1,6 @@
 from django.db import transaction
 
-from .dto import WeddingCreateDTO
+from .dto import WeddingDTO
 from .models import Wedding
 
 
@@ -12,7 +12,7 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def create(dto: WeddingCreateDTO) -> Wedding:
+    def create(dto: WeddingDTO) -> Wedding:
         """
         Cria um novo casamento a partir de um DTO.
         O uso de atomic garante que, se algo falhar, nada será salvo.
@@ -34,7 +34,7 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Wedding, dto: WeddingCreateDTO) -> Wedding:
+    def update(instance: Wedding, dto: WeddingDTO) -> Wedding:
         """
         Atualiza um casamento existente.
         """
