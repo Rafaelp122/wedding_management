@@ -16,10 +16,9 @@ from decimal import Decimal
 import factory
 
 from apps.finances.tests.factories import ExpenseFactory
+from apps.logistics.models import Contract, Item, Supplier
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
-
-from ..models import Contract, Item, Supplier
 
 
 class SupplierFactory(factory.django.DjangoModelFactory):

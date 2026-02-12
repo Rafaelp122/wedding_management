@@ -16,7 +16,7 @@ class Contract(SoftDeleteModel, WeddingOwnedModel):
     class StatusChoices(models.TextChoices):
         DRAFT = "DRAFT", "Rascunho"
         PENDING = "PENDING", "Pendente"  # Aguardando assinaturas externas
-        SIGNED = "SIGNED", "Assinado"  # PDF assinado foi subido
+        SIGNED = "SIGNED", "Assinado"
         CANCELED = "CANCELED", "Cancelado"
 
     supplier = models.ForeignKey(
