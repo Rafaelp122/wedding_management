@@ -48,3 +48,19 @@ class WeddingService:
         # O método .save() do model executará o seu .clean() (ADR-010)
         instance.save()
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def delete(instance: Wedding) -> None:
+        """
+        Executa a deleção lógica do casamento e seus dependentes.
+
+        Como o cascade não é automático (ADR-008), este é o local para
+        deletar convidados, tarefas e orçamentos vinculados antes
+        de 'remover' o casamento.
+        """
+        # Exemplo de cascade manual:
+        # instance.guest_records.all().delete()
+        # instance.task_records.all().delete()
+
+        instance.delete()
