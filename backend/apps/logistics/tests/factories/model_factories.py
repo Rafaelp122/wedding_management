@@ -5,7 +5,7 @@ Este ficheiro define os blueprints para Fornecedores, Contratos e Itens.
 É essencial para testar a gestão de fornecedores e a entrega de serviços.
 
 Destaques Técnicos:
-- Integridade de Posse: O Supplier pertence a um User (Planner) via UserOwnedModel.
+- Integridade de Posse: O Supplier pertence a um User (Planner) via PlannerOwnedMixin.
 - Integridade de Tenant: Garante que o Contrato, o Fornecedor e o Casamento
   estejam vinculados ao mesmo Planner.
 - Dados Reais: Usa Faker pt_BR para CNPJ, moradas e telefones brasileiros.
@@ -27,7 +27,7 @@ class SupplierFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Supplier
 
-    # Supplier herda de UserOwnedModel, portanto pertence a um User (Planner)
+    # Supplier herda de PlannerOwnedMixin, portanto pertence a um User (Planner)
     user = factory.SubFactory(UserFactory)
 
     name = factory.Faker("company")

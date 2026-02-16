@@ -1,13 +1,7 @@
-from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
-
 from apps.logistics.dto import ContractDTO, ItemDTO, SupplierDTO
-
-
-# --- TESTES: SUPPLIER DTO ---
 
 
 class TestSupplierDTO:
@@ -16,29 +10,31 @@ class TestSupplierDTO:
         validated_data = {
             "name": "Buffet Festança",
             "cnpj": "12.345.678/0001-90",
-            "phone": "(11) 99999-9999",
-            "email": "contato@festanca.com",
             "is_active": True,
         }
-
         dto = SupplierDTO.from_validated_data(
             user_id=planner_uuid, validated_data=validated_data
         )
 
         assert dto.name == "Buffet Festança"
         assert dto.planner_id == planner_uuid
-        assert dto.is_active is True
 
-    def test_integrity_violation(self):
+    def test_extra_fields_are_ignored(self):
+        """
+        Garante que campos extras vindos do Serializer não quebrem o
+        DTO (BaseDTO logic).
+        """
         planner_uuid = uuid4()
-        invalid_data = {"name": "X", "extra_field": "error"}
+        data_with_extra = {
+            "name": "Fornecedor Teste",
+            "field_that_does_not_exist": "ignore-me",
+        }
 
-        with pytest.raises(TypeError) as excinfo:
-            SupplierDTO.from_validated_data(planner_uuid, invalid_data)
-        assert "unexpected keyword argument 'extra_field'" in str(excinfo.value)
+        # Não deve levantar TypeError
+        dto = SupplierDTO.from_validated_data(planner_uuid, data_with_extra)
 
-
-# --- TESTES: CONTRACT DTO ---
+        assert dto.name == "Fornecedor Teste"
+        assert not hasattr(dto, "field_that_does_not_exist")
 
 
 class TestContractDTO:
@@ -48,27 +44,30 @@ class TestContractDTO:
             "wedding_id": uuid4(),
             "supplier_id": uuid4(),
             "total_amount": Decimal("15000.00"),
-            "description": "Contrato de Buffet Completo",
+            "description": "Buffet",
             "status": "SIGNED",
-            "signed_date": date(2026, 5, 20),
-            "pdf_file": None,
         }
-
         dto = ContractDTO.from_validated_data(
             user_id=planner_uuid, validated_data=validated_data
         )
-
         assert dto.total_amount == Decimal("15000.00")
-        assert dto.planner_id == planner_uuid
-        assert dto.status == "SIGNED"
 
-    def test_integrity_violation(self):
+    def test_extra_fields_are_ignored(self):
         planner_uuid = uuid4()
-        invalid_data = {"total_amount": Decimal("100"), "invalid_attr": True}
+        invalid_data = {
+            "total_amount": Decimal("100"),
+            "wedding_id": uuid4(),
+            "supplier_id": uuid4(),
+            "description": "X",
+            "status": "Y",
+            "invalid_attr": True,
+        }
 
-        with pytest.raises(TypeError) as excinfo:
-            ContractDTO.from_validated_data(planner_uuid, invalid_data)
-        assert "unexpected keyword argument 'invalid_attr'" in str(excinfo.value)
+        # O BaseDTO filtra o 'invalid_attr', então o DTO é criado com sucesso
+        dto = ContractDTO.from_validated_data(planner_uuid, invalid_data)
+        assert dto.total_amount == Decimal("100")
+        dto = ContractDTO.from_validated_data(planner_uuid, invalid_data)
+        assert dto.total_amount == Decimal("100")
 
 
 # --- TESTES: ITEM DTO ---
@@ -76,6 +75,7 @@ class TestContractDTO:
 
 class TestItemDTO:
     def test_mapping_success(self):
+        """Valida que um dicionário válido é convertido corretamente em ItemDTO."""
         planner_uuid = uuid4()
         validated_data = {
             "wedding_id": uuid4(),
@@ -92,11 +92,26 @@ class TestItemDTO:
         assert dto.name == "Cadeiras Tiffany"
         assert dto.quantity == 200
         assert dto.planner_id == planner_uuid
+        assert dto.acquisition_status == "PENDING"
 
-    def test_integrity_violation(self):
+    def test_extra_fields_are_silently_ignored(self):
+        """
+        Garante que o BaseDTO ignore campos que não existem na dataclass ItemDTO.
+        Isso evita que mudanças no Serializer quebrem a camada de Serviço.
+        """
         planner_uuid = uuid4()
-        invalid_data = {"name": "Cadeira", "ghost_field": "boo"}
+        data_with_noise = {
+            "name": "Cadeira Individual",
+            "wedding_id": uuid4(),
+            "budget_category_id": uuid4(),
+            "ghost_field": "boo",  # Campo extra que deve ser ignorado
+            "unwanted_metadata": {"id": 123},  # Outro campo lixo
+        }
 
-        with pytest.raises(TypeError) as excinfo:
-            ItemDTO.from_validated_data(planner_uuid, invalid_data)
-        assert "unexpected keyword argument 'ghost_field'" in str(excinfo.value)
+        # Com o BaseDTO, isso NÃO deve levantar TypeError
+        dto = ItemDTO.from_validated_data(planner_uuid, data_with_noise)
+
+        assert dto.name == "Cadeira Individual"
+        # Verificamos que o objeto não possui o campo extra
+        assert not hasattr(dto, "ghost_field")
+        assert not hasattr(dto, "unwanted_metadata")

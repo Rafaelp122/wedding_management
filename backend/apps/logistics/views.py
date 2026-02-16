@@ -11,8 +11,10 @@ from .services import ContractService, ItemService, SupplierService
 @extend_schema(tags=["Logistics - Suppliers"])
 class SupplierViewSet(BaseViewSet):
     """
-    Gestão de fornecedores (RF09).
-    Permite o cadastro e controle de parceiros logísticos.
+    Gestão de entidades fornecedoras (RF09).
+
+    Orquestra o ciclo de vida dos fornecedores e garante o isolamento
+    de dados por Planner através da infraestrutura de BaseViewSet.
     """
 
     queryset = Supplier.objects.all()
@@ -24,11 +26,15 @@ class SupplierViewSet(BaseViewSet):
 @extend_schema(tags=["Logistics - Contracts"])
 class ContractViewSet(BaseViewSet):
     """
-    Gestão de contratos (RF10, RF13).
-    Suporta upload de PDF e controle de status de assinatura.
+    Administração de contratos logísticos (RF10, RF13).
+
+    Gerencia estados de assinatura, metadados financeiros e
+    armazenamento de documentos digitais vinculados a fornecedores.
     """
 
-    queryset = Contract.objects.all()
+    # Consolidação de busca via JOIN para otimizar a resolução de
+    # dependências de Supplier e Wedding em operações de listagem.
+    queryset = Contract.objects.select_related("supplier", "wedding").all()
     serializer_class = ContractSerializer
     service_class = ContractService
     dto_class = ContractDTO
@@ -37,11 +43,17 @@ class ContractViewSet(BaseViewSet):
 @extend_schema(tags=["Logistics - Items"])
 class ItemViewSet(BaseViewSet):
     """
-    Itens de logística (RF07-RF08).
-    Representa necessidades físicas vinculadas a contratos e orçamentos.
+    Gerenciamento de itens e insumos logísticos (RF07-RF08).
+
+    Controla a alocação de recursos físicos e sua vinculação
+    direta a contratos e categorias orçamentárias.
     """
 
-    queryset = Item.objects.all()
+    # Otimização de QuerySet via SQL JOIN para caminhos de relação
+    # diretos e aninhados (Item -> Contract -> Supplier).
+    queryset = Item.objects.select_related(
+        "wedding", "budget_category", "contract", "contract__supplier"
+    ).all()
     serializer_class = ItemSerializer
     service_class = ItemService
     dto_class = ItemDTO

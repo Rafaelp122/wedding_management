@@ -1,39 +1,34 @@
 from rest_framework import serializers
 
 from apps.core.serializers import BaseSerializer
+from apps.finances.models import BudgetCategory
+from apps.weddings.models import Wedding
 
 from .models import Contract, Item, Supplier
 
 
 class SupplierSerializer(BaseSerializer):
-    """
-    Serializer para o modelo Supplier.
-
-    Mantém a paridade 1:1 com o SupplierDTO para permitir o
-    mapeamento seguro via unpacking no ViewSet.
-    """
-
     class Meta(BaseSerializer.Meta):
         model = Supplier
-        # Estendemos os campos da BaseSerializer (uuid, created_at, updated_at)
         fields = [
             *BaseSerializer.Meta.fields,
             "name",
             "cnpj",
             "phone",
             "email",
-            "website",
-            "address",
-            "city",
-            "state",
-            "notes",
             "is_active",
         ]
-        # uuid e timestamps já estão como read_only na BaseSerializer
 
 
 class ContractSerializer(BaseSerializer):
-    """Serializer para contratos com suporte a upload de PDF."""
+    # DRF exige um queryset inicial se o campo não for read_only.
+    # Usamos .all() e filtramos no __init__ para segurança.
+    wedding = serializers.SlugRelatedField(
+        slug_field="uuid", queryset=Wedding.objects.all()
+    )
+    supplier = serializers.SlugRelatedField(
+        slug_field="uuid", queryset=Supplier.objects.all()
+    )
 
     class Meta(BaseSerializer.Meta):
         model = Contract
@@ -42,25 +37,30 @@ class ContractSerializer(BaseSerializer):
             "wedding",
             "supplier",
             "total_amount",
-            "description",
             "status",
-            "expiration_date",
-            "alert_days_before",
-            "signed_date",
-            "pdf_file",
         ]
 
-    def validate_wedding(self, value):
-        """Garante que o casamento pertence ao Planner logado."""
-        if value.planner != self.context["request"].user:
-            raise serializers.ValidationError(
-                "Casamento inválido para este organizador."
-            )
-        return value
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["request"].user
+            self.fields["wedding"].queryset = Wedding.objects.filter(planner=user)
+            self.fields["supplier"].queryset = Supplier.objects.filter(planner=user)
 
 
 class ItemSerializer(BaseSerializer):
-    """Serializer para itens de logística."""
+    wedding = serializers.SlugRelatedField(
+        slug_field="uuid", queryset=Wedding.objects.all()
+    )
+    contract = serializers.SlugRelatedField(
+        slug_field="uuid",
+        queryset=Contract.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    budget_category = serializers.SlugRelatedField(
+        slug_field="uuid", queryset=BudgetCategory.objects.all()
+    )
 
     class Meta(BaseSerializer.Meta):
         model = Item
@@ -70,19 +70,17 @@ class ItemSerializer(BaseSerializer):
             "contract",
             "budget_category",
             "name",
-            "description",
             "quantity",
-            "acquisition_status",
         ]
 
-    def validate(self, data):
-        """Validação cruzada inicial (prevenindo erros óbvios)."""
-        wedding = data.get("wedding")
-        contract = data.get("contract")
-
-        # Se houver contrato, ele deve pertencer ao mesmo casamento
-        if contract and contract.wedding != wedding:
-            raise serializers.ValidationError(
-                {"contract": "O contrato selecionado não pertence a este casamento."}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["request"].user
+            self.fields["wedding"].queryset = Wedding.objects.filter(planner=user)
+            self.fields["contract"].queryset = Contract.objects.filter(
+                wedding__planner=user
             )
-        return data
+            self.fields["budget_category"].queryset = BudgetCategory.objects.filter(
+                wedding__planner=user
+            )
