@@ -9,15 +9,14 @@ Referência: RF04
 
 from django.db import models
 
-from apps.core.models import BaseModel, WeddingOwnedModel
+from apps.core.mixins import WeddingOwnedMixin
+from apps.core.models import BaseModel
 
-from . import Expense
 
-
-class Installment(BaseModel, WeddingOwnedModel):
+class Installment(BaseModel, WeddingOwnedMixin):
     """
     Parcelamento (RF04).
-    Dados puros de vencimento e status.
+    Representa uma fatia financeira de uma Despesa.
     """
 
     class StatusChoices(models.TextChoices):
@@ -25,9 +24,11 @@ class Installment(BaseModel, WeddingOwnedModel):
         PENDING = "PENDING", "Pendente"
         OVERDUE = "OVERDUE", "Atrasado"
 
+    # Relacionamento forte com a Despesa
     expense = models.ForeignKey(
-        Expense, on_delete=models.CASCADE, related_name="installments"
+        "finances.Expense", on_delete=models.CASCADE, related_name="installments"
     )
+
     installment_number = models.PositiveIntegerField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     due_date = models.DateField()
@@ -38,14 +39,16 @@ class Installment(BaseModel, WeddingOwnedModel):
     notes = models.TextField(blank=True)
 
     class Meta:
+        app_label = "finances"
+        # Garante que não existam duas parcelas com o mesmo número para a mesma despesa
         unique_together = [["expense", "installment_number"]]
         ordering = ["due_date"]
+        indexes = [
+            models.Index(fields=["status", "due_date"]),
+        ]
 
     def __str__(self):
-        total = self.expense.installments.count()
-        return (
-            f"Parcela {self.installment_number}/{total} - {self.get_status_display()}"
-        )
+        return f"Parcela {self.installment_number} - {self.expense.description} ({self.status})"  # noqa
 
     def clean(self):
         """Validações de consistência paid_date ↔ status."""
@@ -61,5 +64,6 @@ class Installment(BaseModel, WeddingOwnedModel):
             )
 
     def save(self, *args, **kwargs):
+        """Garante a execução das validações do clean antes de persistir."""
         self.full_clean()
         super().save(*args, **kwargs)

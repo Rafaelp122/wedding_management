@@ -9,10 +9,11 @@ Referência: RF09
 from django.core.validators import MaxLengthValidator
 from django.db import models
 
-from apps.core.models import SoftDeleteModel, UserOwnedModel
+from apps.core.mixins import PlannerOwnedMixin
+from apps.core.models import SoftDeleteModel
 
 
-class Supplier(SoftDeleteModel, UserOwnedModel):
+class Supplier(SoftDeleteModel, PlannerOwnedMixin):
     """
     Fornecedores de produtos e serviços para casamentos (RF09).
     Centraliza informações de contato e histórico de relacionamento.
@@ -82,7 +83,7 @@ class Supplier(SoftDeleteModel, UserOwnedModel):
         verbose_name_plural = "Fornecedores"
         ordering = ["name"]
         indexes = [
-            models.Index(fields=["user", "name"]),
+            models.Index(fields=["planner", "name"]),
             models.Index(fields=["is_active"]),
             models.Index(fields=["city", "state"]),
         ]

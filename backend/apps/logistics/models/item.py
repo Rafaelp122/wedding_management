@@ -9,12 +9,13 @@ Referências: RF07-RF08
 
 from django.db import models
 
-from apps.core.models import SoftDeleteModel, WeddingOwnedModel
+from apps.core.mixins import WeddingOwnedMixin
+from apps.core.models import SoftDeleteModel
 
 from .contract import Contract
 
 
-class Item(SoftDeleteModel, WeddingOwnedModel):
+class Item(SoftDeleteModel, WeddingOwnedMixin):
     """
     Item de logística (RF07-RF08).
     Representa a necessidade física ou o serviço contratado.

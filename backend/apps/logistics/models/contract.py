@@ -9,10 +9,11 @@ Referências: RF10, RF13
 
 from django.db import models
 
-from apps.core.models import SoftDeleteModel, WeddingOwnedModel
+from apps.core.mixins import WeddingOwnedMixin
+from apps.core.models import SoftDeleteModel
 
 
-class Contract(SoftDeleteModel, WeddingOwnedModel):
+class Contract(SoftDeleteModel, WeddingOwnedMixin):
     class StatusChoices(models.TextChoices):
         DRAFT = "DRAFT", "Rascunho"
         PENDING = "PENDING", "Pendente"  # Aguardando assinaturas externas
@@ -90,4 +91,5 @@ class Contract(SoftDeleteModel, WeddingOwnedModel):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        super().save(*args, **kwargs)
         super().save(*args, **kwargs)

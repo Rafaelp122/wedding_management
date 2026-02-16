@@ -1,10 +1,11 @@
 from django.db import models
 
-from apps.core.models import BaseModel, WeddingOwnedModel
+from apps.core.mixins import WeddingOwnedMixin
+from apps.core.models import BaseModel
 from apps.users.models import User
 
 
-class Event(BaseModel, WeddingOwnedModel):
+class Event(BaseModel, WeddingOwnedMixin):
     """Modelo que representa um evento/compromisso no calendário."""
 
     class TypeChoices(models.TextChoices):

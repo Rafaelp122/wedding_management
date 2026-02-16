@@ -12,13 +12,24 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
 
 
-class Budget(BaseModel):
+class Budget(BaseModel, WeddingOwnedMixin):
     """
     Orçamento mestre (RF03).
     Define o teto financeiro global do casamento.
+
+    Nota de Arquitetura:
+    Mantemos o OneToOneField explicitamente definido aqui, sobrescrevendo a
+    ForeignKey padrão que o WeddingOwnedMixin forneceria.
+    Isso é feito por dois motivos:
+    1. Garantir a unicidade (ADR-003): Cada casamento deve ter exatamente UM orçamento
+       mestre.
+    2. Compatibilidade com o BaseViewSet: Ao herdar de WeddingOwnedMixin, o ViewSet
+       continua identificando o modelo como "pertencente a um casamento" e aplica
+       automaticamente os filtros de Multitenancy (Segurança por Design).
     """
 
     wedding = models.OneToOneField(

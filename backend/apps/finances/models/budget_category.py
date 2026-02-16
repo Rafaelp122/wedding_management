@@ -9,17 +9,17 @@ Referência: RF03
 
 from decimal import Decimal
 
-from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from apps.core.models import SoftDeleteModel, WeddingOwnedModel
+from apps.core.mixins import WeddingOwnedMixin
+from apps.core.models import SoftDeleteModel
 
 
-class BudgetCategory(SoftDeleteModel, WeddingOwnedModel):
+class BudgetCategory(SoftDeleteModel, WeddingOwnedMixin):
     """
     Categorias de gastos (RF03).
-    Permite o agrupamento logístico e financeiro.
+    Permite o agrupamento logístico e financeiro vinculando despesas a um orçamento.
     """
 
     budget = models.ForeignKey(
@@ -49,8 +49,9 @@ class BudgetCategory(SoftDeleteModel, WeddingOwnedModel):
 
     def clean(self):
         super().clean()
-        # TRAVA DE SEGURANÇA: Garante que o orçamento e a categoria são do
-        # mesmo casamento
+        from django.core.exceptions import ValidationError
+
+        # TRAVA DE SEGURANÇA: Garante que o orçamento e a categoria são do mesmo casamento # noqa
         if self.budget.wedding != self.wedding:
             raise ValidationError(
                 "O orçamento pai deve pertencer ao mesmo casamento desta categoria."

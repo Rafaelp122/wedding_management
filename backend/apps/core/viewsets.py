@@ -8,6 +8,8 @@ from drf_spectacular.utils import (
 from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
+from .mixins import PlannerOwnedMixin, WeddingOwnedMixin
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -16,8 +18,8 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
                 name="include_deleted",
                 type=OpenApiTypes.BOOL,
                 location=OpenApiParameter.QUERY,
-                description="Se verdadeiro, inclui registros marcados "
-                "como removidos (Soft Delete).",
+                description="Se verdadeiro, inclui registros marcados como "
+                "removidos (Soft Delete).",
                 default=False,
             )
         ]
@@ -25,13 +27,13 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 )
 class BaseViewSet(viewsets.ModelViewSet):
     """
-    ViewSet base para o Wedding Management System.
+    ViewSet base para padronização de comportamentos do sistema.
 
-    Padroniza:
-    1. Lookup por UUID (ADR-007).
-    2. Multitenancy automático via Planner (ADR-009).
-    3. Suporte a Soft Delete (?include_deleted=true) (ADR-008).
-    4. Orquestração via Service Layer e DTO (ADR-006).
+    Funcionalidades:
+    1. Lookup por UUID (Segurança RNF05).
+    2. Multitenancy automático via herança de Mixins (ADR-009).
+    3. Suporte a Soft Delete (ADR-008).
+    4. Orquestração flexível via Service Layer e DTO (ADR-006).
     """
 
     lookup_field = "uuid"
@@ -39,19 +41,18 @@ class BaseViewSet(viewsets.ModelViewSet):
     dto_class = None
 
     def get_queryset(self):
-        """Aplica filtros de segurança de Multitenancy e Soft Delete."""
+        """
+        Retorna o QuerySet filtrado por regras de multitenancy e visibilidade.
+        """
         user = self.request.user
-        model = self.queryset.model
+        queryset = super().get_queryset()
+        model = queryset.model
 
-        # 1. Filtro de Multitenancy (Segurança por Design)
-        if hasattr(model, "wedding"):
-            queryset = model.objects.filter(wedding__planner=user)
-        elif hasattr(model, "planner"):
-            queryset = model.objects.filter(planner=user)
-        else:
-            queryset = super().get_queryset()
+        if issubclass(model, WeddingOwnedMixin):
+            queryset = queryset.filter(wedding__planner=user)
+        elif issubclass(model, PlannerOwnedMixin):
+            queryset = queryset.filter(planner=user)
 
-        # 2. Filtro de Soft Delete
         include_deleted = self.request.query_params.get("include_deleted") == "true"
         if include_deleted and hasattr(model, "all_objects"):
             queryset = model.all_objects.filter(
@@ -61,8 +62,15 @@ class BaseViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        """Converte dados para DTO e delega ao Service."""
-        if self.service_class and self.dto_class:
+        """
+        Criação híbrida: Service.create -> Serializer.save.
+        """
+        # Checa se o trio Service + DTO + Método está completo
+        if (
+            self.service_class
+            and self.dto_class
+            and hasattr(self.service_class, "create")
+        ):
             try:
                 dto = self.dto_class.from_validated_data(
                     user_id=self.request.user.id,
@@ -72,11 +80,18 @@ class BaseViewSet(viewsets.ModelViewSet):
             except DjangoValidationError as e:
                 raise DRFValidationError(e.message_dict) from e
         else:
+            # Fallback para o comportamento padrão do DRF
             serializer.save()
 
     def perform_update(self, serializer):
-        """Delega a atualização ao Service com suporte a DTO."""
-        if self.service_class and self.dto_class:
+        """
+        Atualização híbrida: Service.update -> Serializer.save.
+        """
+        if (
+            self.service_class
+            and self.dto_class
+            and hasattr(self.service_class, "update")
+        ):
             try:
                 dto = self.dto_class.from_validated_data(
                     user_id=self.request.user.id,
@@ -89,3 +104,14 @@ class BaseViewSet(viewsets.ModelViewSet):
                 raise DRFValidationError(e.message_dict) from e
         else:
             serializer.save()
+
+    def perform_destroy(self, instance):
+        """
+        Exclusão híbrida: Service.delete -> Model.delete.
+        """
+        # Verifica se o service tem um método de delete customizado
+        if self.service_class and hasattr(self.service_class, "delete"):
+            self.service_class.delete(instance)
+        else:
+            # Fallback para o delete do model (Soft Delete padrão)
+            instance.delete()
