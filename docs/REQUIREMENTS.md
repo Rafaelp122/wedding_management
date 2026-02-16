@@ -88,7 +88,7 @@ As regras de negócio do sistema estão **consolidadas** em [BUSINESS_RULES.md](
 
 #### RF01: Isolamento Rigoroso de Dados ✅ **IMPLEMENTADO**
 
-Planner só acessa dados de seus casamentos. Implementado via `WeddingOwnedModel` (7 models) e `UserOwnedModel` (Supplier). Ver BR-SEC01 e BR-SEC03 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
+Planner só acessa dados de seus casamentos. Implementado via `WeddingOwnedMixin` (7 models) e `PlannerOwnedMixin` (Supplier). Ver BR-SEC01 e BR-SEC03 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
 
 ---
 

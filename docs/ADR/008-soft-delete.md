@@ -113,14 +113,14 @@ class SoftDeleteModel(models.Model):
 
 ```python
 # apps/finances/models.py
-class Contract(BaseModel, SoftDeleteModel, WeddingOwnedModel):
+class Contract(BaseModel, SoftDeleteModel, WeddingOwnedMixin):
     """
     Contrato COM soft delete (restaurável, auditável).
     """
     supplier = models.ForeignKey('logistics.Supplier', on_delete=models.PROTECT)
     total_value = models.DecimalField(max_digits=10, decimal_places=2)
 
-class Installment(BaseModel, WeddingOwnedModel):
+class Installment(BaseModel, WeddingOwnedMixin):
     """
     Parcela SEM soft delete (imutável, registro financeiro).
     """

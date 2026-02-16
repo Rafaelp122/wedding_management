@@ -80,7 +80,7 @@ docs/
 
 3. **[ARCHITECTURE.md](ARCHITECTURE.md)** ⭐ **ESSENCIAL**
    - Service Layer Pattern (onde colocar lógica)
-   - Mixins (BaseModel, WeddingOwnedModel, SoftDeleteModel)
+   - Mixins (BaseModel, WeddingOwnedMixin, SoftDeleteModel)
    - Configuração (Django, React, Docker)
    - Performance (N+1 detection, caching)
 
@@ -194,7 +194,7 @@ docs/
 
 - **Padrões de código:**
   - Service Layer (lógica de negócio isolada)
-  - Mixins (BaseModel, WeddingOwnedModel, SoftDeleteModel)
+  - Mixins (BaseModel, WeddingOwnedMixin, SoftDeleteModel)
   - Validação em cascata (Model → Serializer → Service)
 
 - **Infraestrutura:**

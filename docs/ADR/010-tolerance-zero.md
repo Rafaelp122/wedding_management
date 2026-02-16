@@ -143,7 +143,7 @@ from decimal import Decimal, ROUND_DOWN
 from django.db import models
 from django.core.exceptions import ValidationError
 
-class Contract(BaseModel, SoftDeleteModel, WeddingOwnedModel):
+class Contract(BaseModel, SoftDeleteModel, WeddingOwnedMixin):
     supplier = models.ForeignKey('logistics.Supplier', on_delete=models.PROTECT)
     total_value = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -163,7 +163,7 @@ class Contract(BaseModel, SoftDeleteModel, WeddingOwnedModel):
                 f'Valor do contrato ({self.total_value})'
             )
 
-class Installment(BaseModel, WeddingOwnedModel):
+class Installment(BaseModel, WeddingOwnedMixin):
     contract = models.ForeignKey(
         Contract,
         on_delete=models.CASCADE,

@@ -292,7 +292,7 @@ contract_a = Contract.objects.create(wedding=wedding_a, supplier=supplier)
 contract_b = Contract.objects.create(wedding=wedding_b, supplier=supplier)
 ```
 
-**Status:** ✅ Implementado via `UserOwnedModel`
+**Status:** ✅ Implementado via `PlannerOwnedMixin`
 
 ---
 
@@ -337,7 +337,7 @@ def clean(self):
 **Definição de status:**
 
 ```python
-class Item(WeddingOwnedModel, SoftDeleteModel):
+class Item(WeddingOwnedMixin, SoftDeleteModel):
     class AcquisitionStatus(models.TextChoices):
         PENDING = "PENDING", "Pendente"
         ACQUIRED = "ACQUIRED", "Adquirido"
@@ -365,13 +365,13 @@ class Item(WeddingOwnedModel, SoftDeleteModel):
 **Implementação:**
 
 ```python
-class BudgetCategory(WeddingOwnedModel, SoftDeleteModel):
+class BudgetCategory(WeddingOwnedMixin, SoftDeleteModel):
     def clean(self):
         # Validação adicional: garantir que wedding não mudou
         if self.pk and self._state.fields_cache.get('wedding') != self.wedding:
             raise ValidationError("Não é permitido alterar o wedding de uma categoria")
 
-class Expense(WeddingOwnedModel):
+class Expense(WeddingOwnedMixin):
     def clean(self):
         # ... outras validações ...
 
@@ -404,7 +404,7 @@ expense_b.full_clean()  # ValidationError
 
 **Motivo:** Prevenir data leakage entre casamentos. Garante isolamento multitenant a nível de objeto.
 
-**Status:** ✅ Implementado via `WeddingOwnedModel` + validação em `clean()`
+**Status:** ✅ Implementado via `WeddingOwnedMixin` + validação em `clean()`
 
 ---
 
@@ -561,14 +561,14 @@ class Budget(BaseModel):
 
 ---
 
-### **BR-X02: Denormalização com Mixins (WeddingOwnedModel)**
+### **BR-X02: Denormalização com Mixins (WeddingOwnedMixin)**
 
-**Regra:** Models que pertencem a um casamento DEVEM herdar `WeddingOwnedModel`.
+**Regra:** Models que pertencem a um casamento DEVEM herdar `WeddingOwnedMixin`.
 
 **Implementação:**
 
 ```python
-class WeddingOwnedModel(models.Model):
+class WeddingOwnedMixin(models.Model):
     wedding = models.ForeignKey('weddings.Wedding', on_delete=models.CASCADE)
 
     class Meta:
@@ -595,7 +595,7 @@ class WeddingOwnedModel(models.Model):
 - ✅ Previne bugs de cross-wedding
 - ✅ Validação consistente via `clean()`
 
-**Status:** ✅ Implementado via `apps.core.models.WeddingOwnedModel`
+**Status:** ✅ Implementado via `apps.core.models.WeddingOwnedMixin`
 
 ---
 

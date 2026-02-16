@@ -31,7 +31,7 @@ Sistema multi-tenant: cada casamento (wedding) é um tenant isolado.
 Usar **multitenancy denormalizado**:
 
 - Campo `wedding_id` em TODOS models (denormalização)
-- Mixin `WeddingOwnedModel` aplica validação automaticamente
+- Mixin `WeddingOwnedMixin` aplica validação automaticamente
 - Queries sempre filtram por `wedding_id`
 
 ---
@@ -102,14 +102,14 @@ class Wedding(BaseModel):
     name = models.CharField(max_length=200)
     date = models.DateField()
 
-class Category(BaseModel, WeddingOwnedModel):  # Herda wedding_id
+class Category(BaseModel, WeddingOwnedMixin):  # Herda wedding_id
     name = models.CharField(max_length=100)
 
-class Item(BaseModel, WeddingOwnedModel):  # Herda wedding_id
+class Item(BaseModel, WeddingOwnedMixin):  # Herda wedding_id
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
-class Expense(BaseModel, WeddingOwnedModel):  # Herda wedding_id
+class Expense(BaseModel, WeddingOwnedMixin):  # Herda wedding_id
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     value = models.DecimalField(max_digits=10, decimal_places=2)
 ```
@@ -130,7 +130,7 @@ SELECT * FROM expenses WHERE wedding_id = 123;
 
 ```python
 # apps/core/models.py
-class WeddingOwnedModel(models.Model):
+class WeddingOwnedMixin(models.Model):
     """
     Mixin que adiciona wedding_id a qualquer model.
 
@@ -169,9 +169,9 @@ class WeddingOwnedModel(models.Model):
                 )
 
 # apps/finances/models.py
-class Expense(BaseModel, WeddingOwnedModel):
+class Expense(BaseModel, WeddingOwnedMixin):
     """
-    Despesa herda wedding_id do WeddingOwnedModel.
+    Despesa herda wedding_id do WeddingOwnedMixin.
 
     - wedding_id: Direto no model (denormalizado)
     - item: FK para Item (validado no .clean())

@@ -351,10 +351,10 @@ class BaseModel(models.Model):
         abstract = True
 ```
 
-**WeddingOwnedModel:**
+**WeddingOwnedMixin:**
 
 ```python
-class WeddingOwnedModel(BaseModel):
+class WeddingOwnedMixin(BaseModel):
     """
     Denormalização: wedding_id em cada entidade para:
     - Queries rápidas (sem JOINs complexos)
@@ -406,7 +406,7 @@ Ver [ADR-007](ADR/007-hybrid-keys.md), [ADR-008](ADR/008-soft-delete.md), [ADR-0
 **Ordem de validação:**
 
 ```python
-class Expense(WeddingOwnedModel):
+class Expense(WeddingOwnedMixin):
     def clean(self):
         """
         Validações executadas nesta ordem:
