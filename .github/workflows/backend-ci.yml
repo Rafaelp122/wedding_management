@@ -8,48 +8,40 @@ on:
 
 jobs:
   lint:
-    name: Lint (Ruff)
+    name: Lint & Security (Ruff/Bandit)
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Install Ruff (version from pyproject.toml)
+      - name: Install Linting Tools
         run: |
           cd backend
-          uv pip install --system "ruff>=0.7.4,<0.8"
+          uv pip install --system "ruff>=0.7.4" bandit
 
-      - name: Run Ruff linter (uses pyproject.toml config)
-        run: |
-          cd backend
-          ruff check .
+      - name: Run Ruff
+        run: cd backend && ruff check . && ruff format --check .
 
-      - name: Run Ruff formatter check (uses pyproject.toml config)
-        run: |
-          cd backend
-          ruff format --check .
+      - name: Run Bandit
+        run: cd backend && bandit -r apps/ -ll
 
-  test:
-    name: Tests (Pytest)
+  integrity-and-test:
+    name: Integrity & Tests
     runs-on: ubuntu-latest
-
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_USER: wedding_user
-          POSTGRES_PASSWORD: wedding_pass
+          POSTGRES_PASSWORD: wedding_pass # pragma: allowlist secret
           POSTGRES_DB: wedding_db
         ports:
           - 5432:5432
@@ -59,60 +51,44 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    env:
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: wedding_db
+      DB_USER: wedding_user
+      DB_PASSWORD: wedding_pass # pragma: allowlist secret
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DJANGO_SETTINGS_MODULE: config.settings
+      SECRET_KEY: django-insecure-test-key # pragma: allowlist secret
+      ENABLE_ZEAL: True
 
+    steps:
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Install dependencies
+      - name: Install project dependencies
         run: |
           cd backend
-          uv pip install --system -r <(uv export --frozen --no-hashes --all-extras)
+          uv sync --all-extras
+
+      - name: Django System Check
+        run: cd backend && uv run python manage.py check
+
+      - name: Check Missing Migrations
+        run: cd backend && uv run python manage.py makemigrations --check --dry-run
 
       - name: Run migrations
-        env:
-          DB_ENGINE: django.db.backends.postgresql
-          DB_NAME: wedding_db
-          DB_USER: wedding_user
-          DB_PASSWORD: wedding_pass
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DJANGO_SETTINGS_MODULE: config.settings
-          SECRET_KEY: django-insecure-test-key-for-github-actions
-        run: |
-          cd backend
-          python manage.py migrate --noinput
+        run: cd backend && uv run python manage.py migrate --noinput
 
       - name: Run tests with coverage
-        env:
-          DB_ENGINE: django.db.backends.postgresql
-          DB_NAME: wedding_db
-          DB_USER: wedding_user
-          DB_PASSWORD: wedding_pass
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DJANGO_SETTINGS_MODULE: config.settings
-          SECRET_KEY: django-insecure-test-key-for-github-actions
-          ENABLE_ZEAL: True # Ativa django-zeal para detectar N+1 queries durante os testes (quebra o teste se encontrar)
         run: |
           cd backend
-          pytest --cov=apps --cov-report=xml --cov-report=term -v
-
-      # Codecov upload (opcional - descomente quando configurar)
-      # - name: Upload coverage to Codecov
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     file: ./backend/coverage.xml
-      #     flags: backend
-      #     name: backend-coverage
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          uv run pytest --cov=apps --cov-report=xml --cov-report=term -v

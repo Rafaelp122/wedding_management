@@ -52,36 +52,31 @@ dev = [
 # ==============================================================================
 [tool.ruff]
 line-length = 88
-target-version = "py312"  # Alinhado com o interpretador 3.12.3 local
+target-version = "py312"
 exclude = [
     ".git",
     "__pycache__",
     "migrations",
-    "static",
-    "media",
     "venv",
     ".venv",
-    "node_modules",
 ]
 
 [tool.ruff.lint]
+# Adicionada a regra 'B' explicitamente para pegar o erro B904
 select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ"]
-ignore = ["E203", "RUF012", "I001"]
-
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401", "F403"]
-"settings.py" = ["F401", "F403"]
+# I001 é o organize imports, não ignore se você quer que ele organize ao salvar!
+ignore = ["E203", "RUF012"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["apps", "config"]
 lines-after-imports = 2
-section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
+# Forçar line-ending para evitar problemas de buffer no Windows/Linux
+line-ending = "lf"
+
 
 # ==============================================================================
 # TESTING: PYTEST CONFIGURATION

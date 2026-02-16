@@ -8,10 +8,7 @@ from apps.weddings.dto import WeddingDTO
 
 class TestWeddingDTO:
     def test_wedding_dto_mapping_success(self):
-        """
-        Testa se o DTO mapeia corretamente todos os campos
-        enviados pelo Serializer (Mapeamento Explícito).
-        """
+        """Testa mapeamento completo."""
         planner_uuid = uuid4()
         validated_data = {
             "groom_name": "João Silva",
@@ -32,12 +29,8 @@ class TestWeddingDTO:
         assert dto.status == "IN_PROGRESS"
 
     def test_wedding_dto_default_values(self):
-        """
-        Testa se o DTO aplica corretamente os valores padrão
-        quando campos opcionais não são enviados.
-        """
+        """Testa aplicação de defaults via BaseDTO."""
         planner_uuid = uuid4()
-        # Simula dados mínimos (sem expected_guests e status)
         validated_data = {
             "groom_name": "Carlos",
             "bride_name": "Ana",
@@ -49,25 +42,25 @@ class TestWeddingDTO:
             user_id=planner_uuid, validated_data=validated_data
         )
 
-        # Verifica se o .get() tratou o None e o default do status
         assert dto.expected_guests is None
         assert dto.status == "IN_PROGRESS"
 
-    def test_wedding_dto_key_error_on_missing_required_field(self):
+    def test_wedding_dto_type_error_on_missing_required_field(self):
         """
-        GARANTIA DE CONTRATO (Mapeamento Explícito):
-        Verifica se o DTO estoura KeyError se o Serializer falhar
-        em enviar um campo obrigatório.
+        GARANTIA DE CONTRATO (BaseDTO):
+        Como agora usamos o construtor do dataclass, a falta de um campo
+        obrigatório resulta em TypeError, não mais KeyError.
         """
         planner_uuid = uuid4()
-        # Falta o campo obrigatório 'location'
+        # Falta 'location'
         incomplete_data = {
             "groom_name": "João",
             "bride_name": "Maria",
             "date": date(2026, 5, 20),
         }
 
-        with pytest.raises(KeyError) as excinfo:
+        # BaseDTO chama cls(**data), que gera TypeError se faltar argumento posicional
+        with pytest.raises(TypeError) as excinfo:
             WeddingDTO.from_validated_data(
                 user_id=planner_uuid, validated_data=incomplete_data
             )

@@ -4,7 +4,6 @@ Development configuration.
 """
 
 import os
-import sys
 from datetime import timedelta
 from pathlib import Path
 
