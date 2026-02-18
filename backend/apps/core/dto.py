@@ -1,22 +1,22 @@
-from dataclasses import dataclass, fields
-from typing import Any, TypeVar
+from typing import Any, Self
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
-T = TypeVar("T", bound="BaseDTO")
-
-
-@dataclass(frozen=True)
-class BaseDTO:
+class BaseDTO(BaseModel):
     """
-    Abstração base para Data Transfer Objects.
-    Automatiza a criação de instâncias a partir de dicionários (validated_data).
+    Abstração base para DTOs usando Pydantic.
+    Garante imutabilidade e limpa dados extras automaticamente.
     """
+
+    # frozen=True: imutável após criação.
+    # extra="ignore": ignora campos não definidos na classe
+    model_config = ConfigDict(frozen=True, extra="ignore")
 
     @classmethod
-    def from_dict(cls: type[T], data: dict[str, Any]) -> T:
+    def from_auth(cls, user_id: UUID, data: dict[str, Any]) -> Self:
         """
-        Instancia o DTO filtrando chaves que não pertencem à dataclass.
-        Evita o erro 'TypeError: __init__() got an unexpected keyword argument'.
+        Instancia o DTO injetando o planner_id do contexto de autenticação.
         """
-        valid_field_names = {f.name for f in fields(cls)}
-        return cls(**{k: v for k, v in data.items() if k in valid_field_names})
+        return cls(**{**data, "planner_id": user_id})

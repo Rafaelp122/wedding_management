@@ -18,10 +18,8 @@ class BudgetCategoryService:
         """
         Garante que a alocação não ultrapasse o teto do orçamento mestre.
         """
-
         budget = Budget.objects.get(uuid=budget_id)
 
-        # Soma as categorias existentes
         query = BudgetCategory.objects.filter(budget=budget)
         if exclude_id:
             query = query.exclude(id=exclude_id)
@@ -42,28 +40,42 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def create(dto: BudgetCategoryDTO) -> BudgetCategory:
-        BudgetCategoryService.validate_budget_ceiling(
-            dto.budget_id, dto.allocated_budget
-        )
+        """Cria uma categoria herdando o contexto do orçamento pai."""
+
+        # 1. Busca o orçamento pai (Herança de Contexto)
+        budget = Budget.objects.get(uuid=dto.budget_id)
+
+        # 2. Validação de teto
+        BudgetCategoryService.validate_budget_ceiling(budget.uuid, dto.allocated_budget)
+
+        data = dto.model_dump()
+
+        # 3. Limpeza para garantir a integridade relacional
+        data.pop("budget_id")
+        data.pop("wedding_id", None)
+        data.pop("planner_id", None)
 
         return BudgetCategory.objects.create(
-            wedding_id=dto.wedding_id,
-            budget_id=dto.budget_id,
-            name=dto.name,
-            description=dto.description,
-            allocated_budget=dto.allocated_budget,
+            planner=budget.planner,  # Herda do pai
+            wedding=budget.wedding,  # Herda do pai (Garante ADR-009)
+            budget=budget,
+            **data,
         )
 
     @staticmethod
     @transaction.atomic
     def update(instance: BudgetCategory, dto: BudgetCategoryDTO) -> BudgetCategory:
+        """Atualização protegendo campos de contexto."""
         BudgetCategoryService.validate_budget_ceiling(
             dto.budget_id, dto.allocated_budget, exclude_id=instance.id
         )
 
-        instance.name = dto.name
-        instance.description = dto.description
-        instance.allocated_budget = dto.allocated_budget
+        # No update, impedimos a troca de orçamento ou casamento
+        exclude_fields = {"planner_id", "wedding_id", "budget_id"}
+
+        for field, value in dto.model_dump(exclude=exclude_fields).items():
+            setattr(instance, field, value)
+
         instance.save()
         return instance
 

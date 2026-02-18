@@ -26,20 +26,24 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def create(dto: InstallmentDTO) -> Installment:
+        """Cria uma parcela garantindo herança de contexto e validação de ADR-010."""
         # Recuperamos a despesa pai para garantir o Multitenancy
         expense = Expense.objects.get(uuid=dto.expense_id)
 
-        status = InstallmentService.determine_status(dto.due_date, dto.paid_date)
+        # Preparamos os dados do DTO e injetamos o status calculado
+        data = dto.model_dump()
+        data["status"] = InstallmentService.determine_status(
+            dto.due_date, dto.paid_date
+        )
+
+        # Removemos expense_id para passar o objeto expense explicitamente
+        # (garante wedding)
+        data.pop("expense_id")
 
         installment = Installment.objects.create(
             wedding=expense.wedding,  # Herda o casamento da despesa
             expense=expense,
-            installment_number=dto.installment_number,
-            amount=dto.amount,
-            due_date=dto.due_date,
-            paid_date=dto.paid_date,
-            status=status,
-            notes=dto.notes,
+            **data,
         )
 
         # Trigger ADR-010: Força a validação de soma na Despesa pai
@@ -53,13 +57,18 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def update(instance: Installment, dto: InstallmentDTO) -> Installment:
-        instance.amount = dto.amount
-        instance.due_date = dto.due_date
-        instance.paid_date = dto.paid_date
-        instance.notes = dto.notes
-        instance.status = InstallmentService.determine_status(
+        """Atualização de parcela com revalidação de teto da Expense."""
+        # Campos que não devem ser alterados via update comum
+        exclude_fields = {"planner_id", "wedding_id", "expense_id"}
+
+        data = dto.model_dump(exclude=exclude_fields)
+        data["status"] = InstallmentService.determine_status(
             dto.due_date, dto.paid_date
         )
+
+        # Atualização dinâmica via setattr
+        for field, value in data.items():
+            setattr(instance, field, value)
 
         instance.save()
 
@@ -74,6 +83,7 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def delete(instance: Installment) -> None:
+        """Deleção lógica garantindo limpeza de parcelas (Cascade Manual)."""
         expense = instance.expense
         instance.delete()
 

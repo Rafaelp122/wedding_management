@@ -1,13 +1,13 @@
-from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from pydantic import AliasChoices, Field
+
 from apps.core.dto import BaseDTO
 
 
-@dataclass(frozen=True)
 class SupplierDTO(BaseDTO):
     """
     Contrato de dados para fornecedores da logística (RF09).
@@ -25,51 +25,44 @@ class SupplierDTO(BaseDTO):
     notes: str | None = None
     is_active: bool = True
 
-    @classmethod
-    def from_validated_data(cls, user_id: UUID, validated_data: dict) -> "SupplierDTO":
-        """Mapeia os dados injetando o planner_id com filtragem automática."""
-        data = {**validated_data, "planner_id": user_id}
-        return cls.from_dict(data)
 
-
-@dataclass(frozen=True)
 class ContractDTO(BaseDTO):
-    """Contrato de dados para a gestão de contratos (RF10, RF13)."""
+    """
+    Contrato de dados para a gestão de contratos (RF10, RF13).
+    Mapeia os campos vindos do Serializer para os IDs internos.
+    """
 
     planner_id: UUID
-    wedding_id: UUID
-    supplier_id: UUID
     total_amount: Decimal
     description: str
     status: str
     expiration_date: date | None = None
     alert_days_before: int = 30
     signed_date: date | None = None
-    pdf_file: Any | None = None  # Recebe o arquivo enviado via Multipart
+    pdf_file: Any | None = None  # Suporta Multipart/Upload
 
-    @classmethod
-    def from_validated_data(cls, user_id: UUID, validated_data: dict) -> "ContractDTO":
-        """Instancia o DTO garantindo a integridade dos campos de auditoria."""
-        data = {**validated_data, "planner_id": user_id}
-        return cls.from_dict(data)
+    # Mapeamentos de campos externos para IDs internos
+    wedding_id: UUID = Field(validation_alias=AliasChoices("wedding_id", "wedding"))
+    supplier_id: UUID = Field(validation_alias=AliasChoices("supplier_id", "supplier"))
 
 
-@dataclass(frozen=True)
 class ItemDTO(BaseDTO):
-    """Contrato de dados para itens de logística (RF07-RF08)."""
+    """
+    Contrato de dados para itens de logística (RF07-RF08).
+    Garante a integridade dos vínculos com orçamento e contrato.
+    """
 
     planner_id: UUID
-    wedding_id: UUID
-    budget_category_id: UUID
     name: str
-    contract_id: UUID | None = None
     description: str | None = ""
     quantity: int = 1
     acquisition_status: str = "PENDING"
 
-    @classmethod
-    def from_validated_data(cls, user_id: UUID, validated_data: dict) -> "ItemDTO":
-        """Cria o DTO de item vinculando-o ao Planner logado."""
-        data = {**validated_data, "planner_id": user_id}
-        return cls.from_dict(data)
-        return cls.from_dict(data)
+    # Mapeamentos para chaves estrangeiras
+    wedding_id: UUID = Field(validation_alias=AliasChoices("wedding_id", "wedding"))
+    budget_category_id: UUID = Field(
+        validation_alias=AliasChoices("budget_category_id", "budget_category")
+    )
+    contract_id: UUID | None = Field(
+        default=None, validation_alias=AliasChoices("contract_id", "contract")
+    )

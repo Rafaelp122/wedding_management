@@ -21,16 +21,10 @@ class WeddingService:
         # 1. Criar categorias de gastos padrão no app de Finances
         # 2. Enviar um e-mail de boas-vindas ao Planner
 
-        wedding = Wedding.objects.create(
-            planner_id=dto.planner_id,
-            groom_name=dto.groom_name,
-            bride_name=dto.bride_name,
-            date=dto.date,
-            location=dto.location,
-            expected_guests=dto.expected_guests,
-            status=dto.status,
-        )
-        return wedding
+        # O model_dump() retorna um dicionário pronto para o create do Django.
+        # planner_id no DTO mapeia corretamente para o campo planner no model via
+        # Django.
+        return Wedding.objects.create(**dto.model_dump())
 
     @staticmethod
     @transaction.atomic
@@ -38,12 +32,9 @@ class WeddingService:
         """
         Atualiza um casamento existente.
         """
-        instance.groom_name = dto.groom_name
-        instance.bride_name = dto.bride_name
-        instance.date = dto.date
-        instance.location = dto.location
-        instance.expected_guests = dto.expected_guests
-        instance.status = dto.status
+        # Atualiza os campos dinamicamente, excluindo o planner_id que é imutável
+        for field, value in dto.model_dump(exclude={"planner_id"}).items():
+            setattr(instance, field, value)
 
         # O método .save() do model executará o seu .clean() (ADR-010)
         instance.save()

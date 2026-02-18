@@ -1,7 +1,8 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 
 from apps.finances.dto import ExpenseDTO
-from apps.finances.models import Expense
+from apps.finances.models import BudgetCategory, Expense
 
 
 class ExpenseService:
@@ -13,26 +14,63 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def create(dto: ExpenseDTO) -> Expense:
-        """Criação de despesa com validação de integridade futura."""
-        # TODO: Implementar validação de vínculo com contrato (ADR-010)
+        """Criação de despesa com herança de contexto e validação de contrato."""
+
+        # Busca a categoria pai para garantir o contexto (Herança de Contexto)
+        category = BudgetCategory.objects.get(uuid=dto.category_id)
+
+        contract = None
+        if dto.contract_id:
+            from apps.logistics.models import Contract
+
+            contract = Contract.objects.get(uuid=dto.contract_id)
+
+            # Garante que o contrato pertença ao mesmo casamento da categoria
+            if contract.wedding_id != category.wedding_id:
+                raise DjangoValidationError(
+                    "O contrato selecionado pertence a outro casamento."
+                )
+
+        data = dto.model_dump()
+
+        # Limpeza para evitar conflito de argumentos (mesma lógica das parcelas)
+        data.pop("category_id")
+        data.pop("contract_id", None)
+        data.pop("wedding_id", None)
+        data.pop("planner_id", None)
+
         return Expense.objects.create(
-            wedding_id=dto.wedding_id,
-            category_id=dto.category_id,
-            contract_id=dto.contract_id,
-            description=dto.description,
-            estimated_amount=dto.estimated_amount,
-            actual_amount=dto.actual_amount,
+            planner=category.planner,  # Herda o dono da categoria
+            wedding=category.wedding,  # Herda o casamento da categoria (Garante Multitenancy) # noqa
+            category=category,
+            contract=contract,
+            **data,
         )
 
     @staticmethod
     @transaction.atomic
     def update(instance: Expense, dto: ExpenseDTO) -> Expense:
-        """Atualização de despesa com revalidação de parcelas."""
-        instance.category_id = dto.category_id
-        instance.contract_id = dto.contract_id
-        instance.description = dto.description
-        instance.estimated_amount = dto.estimated_amount
-        instance.actual_amount = dto.actual_amount
+        """Atualização de despesa com proteção de integridade."""
+
+        # No update, impedimos a troca acidental de Categoria ou Casamento
+        exclude_fields = {"planner_id", "wedding_id", "category_id"}
+
+        data = dto.model_dump(exclude=exclude_fields)
+
+        # Se houver troca de contrato, validamos novamente o vínculo
+        if dto.contract_id and str(dto.contract_id) != str(instance.contract_id):
+            from apps.logistics.models import Contract
+
+            contract = Contract.objects.get(uuid=dto.contract_id)
+            if contract.wedding_id != instance.wedding_id:
+                raise DjangoValidationError(
+                    "O contrato selecionado pertence a outro casamento."
+                )
+            instance.contract = contract
+
+        for field, value in data.items():
+            if field != "contract_id":  # Já tratado acima
+                setattr(instance, field, value)
 
         instance.save()
         return instance
