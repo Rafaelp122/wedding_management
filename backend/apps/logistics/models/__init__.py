@@ -16,4 +16,4 @@ from .supplier import Supplier
 
 
 # Isso garante que o Django "veja" todos os modelos
-__all__ = ["Supplier", "Contract", "Item"]
+__all__ = ["Contract", "Item", "Supplier"]

@@ -2,7 +2,6 @@ from drf_spectacular.utils import extend_schema
 
 from apps.core.viewsets import BaseViewSet
 
-from .dto import BudgetCategoryDTO, ExpenseDTO, InstallmentDTO
 from .models import Budget, BudgetCategory, Expense, Installment
 from .serializers import (
     BudgetCategorySerializer,
@@ -10,7 +9,12 @@ from .serializers import (
     ExpenseSerializer,
     InstallmentSerializer,
 )
-from .services import BudgetCategoryService, ExpenseService, InstallmentService
+from .services import (
+    BudgetCategoryService,
+    BudgetService,
+    ExpenseService,
+    InstallmentService,
+)
 
 
 @extend_schema(tags=["Finances - Budgets"])
@@ -24,6 +28,7 @@ class BudgetViewSet(BaseViewSet):
 
     queryset = Budget.objects.select_related("wedding").all()
     serializer_class = BudgetSerializer
+    service_class = BudgetService
 
 
 @extend_schema(tags=["Finances - Categories"])
@@ -38,7 +43,6 @@ class BudgetCategoryViewSet(BaseViewSet):
     queryset = BudgetCategory.objects.select_related("budget", "wedding").all()
     serializer_class = BudgetCategorySerializer
     service_class = BudgetCategoryService
-    dto_class = BudgetCategoryDTO
 
 
 @extend_schema(tags=["Finances - Expenses"])
@@ -53,7 +57,6 @@ class ExpenseViewSet(BaseViewSet):
     queryset = Expense.objects.select_related("category", "contract", "wedding").all()
     serializer_class = ExpenseSerializer
     service_class = ExpenseService
-    dto_class = ExpenseDTO
 
 
 @extend_schema(tags=["Finances - Installments"])
@@ -68,4 +71,3 @@ class InstallmentViewSet(BaseViewSet):
     queryset = Installment.objects.select_related("expense", "wedding").all()
     serializer_class = InstallmentSerializer
     service_class = InstallmentService
-    dto_class = InstallmentDTO

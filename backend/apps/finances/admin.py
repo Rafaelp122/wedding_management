@@ -31,11 +31,11 @@ class BudgetAdmin(admin.ModelAdmin):
 
 @admin.register(BudgetCategory)
 class BudgetCategoryAdmin(admin.ModelAdmin):
-    list_display = ["name", "budget", "allocated_budget", "is_deleted"]
-    list_filter = ["budget", "is_deleted", "created_at"]
+    list_display = ["name", "budget", "allocated_budget"]
+    list_filter = ["budget", "created_at"]
     # AJUSTE: search_fields corrigido
     search_fields = ["name", "budget__wedding__name"]
-    readonly_fields = ["uuid", "created_at", "updated_at", "deleted_at"]
+    readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [ExpenseInline]
 
 

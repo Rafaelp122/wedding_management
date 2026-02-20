@@ -14,22 +14,24 @@
     "${workspaceFolder}/backend/apps"
   ],
 
-  // --- Formatação e Linting (O segredo está aqui) ---
+  // --- Formatação e Linting (Otimizado para T480) ---
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      // Usar o sufixo .ruff impede que outras extensões tentem formatar ao mesmo tempo
-      "source.organizeImports.ruff": "explicit",
-      "source.fixAll.ruff": "explicit"
+      "source.organizeImports.ruff": "always",
+      "source.fixAll.ruff": "always" // Força o Ruff a consertar Lint (RUF022, etc) em todo save
     }
   },
 
   "ruff.enable": true,
   "ruff.nativeServer": true,
   "ruff.importStrategy": "fromEnvironment",
+  "ruff.fixAll": true, // Ativa a capacidade de corrigir todos os problemas auto-fixáveis
+  "ruff.organizeImports": true, // Garante que a organização de imports via Ruff esteja ativa
+
   "python.linting.enabled": false,
 
   // --- JS / TS / CSS (Prettier) ---

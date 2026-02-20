@@ -1,105 +1,61 @@
+from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError as DjangoValidationError
-from drf_spectacular.utils import (
-    OpenApiParameter,
-    OpenApiTypes,
-    extend_schema,
-    extend_schema_view,
-)
 from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
-from .mixins import PlannerOwnedMixin, WeddingOwnedMixin
 
-
-@extend_schema_view(
-    list=extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="include_deleted",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Se verdadeiro, inclui registros marcados como "
-                "removidos (Soft Delete).",
-                default=False,
-            )
-        ]
-    )
-)
 class BaseViewSet(viewsets.ModelViewSet):
     """
-    ViewSet base para padronização de comportamentos do sistema.
+    ViewSet base híbrida e multitenant.
 
-    Funcionalidades:
-    1. Lookup por UUID (Segurança RNF05).
-    2. Multitenancy automático via herança de Mixins (ADR-009).
-    3. Suporte a Soft Delete (ADR-008).
-    4. Orquestração flexível via Service Layer e DTO (ADR-006).
+    1. Isolamento: Filtra automaticamente por Planner via Manager.
+    2. Híbrida: Usa ServiceLayer se definida, caso contrário segue o padrão DRF.
     """
 
     lookup_field = "uuid"
     service_class = None
-    dto_class = None
 
     def get_queryset(self):
         """
-        Retorna o QuerySet filtrado por regras de multitenancy e visibilidade.
+        Garante isolamento de dados (Multitenancy) via Manager.
         """
-        user = self.request.user
-        queryset = super().get_queryset()
-        model = queryset.model
-
-        if issubclass(model, WeddingOwnedMixin):
-            queryset = queryset.filter(wedding__planner=user)
-        elif issubclass(model, PlannerOwnedMixin):
-            queryset = queryset.filter(planner=user)
-
-        include_deleted = self.request.query_params.get("include_deleted") == "true"
-        if include_deleted and hasattr(model, "all_objects"):
-            queryset = model.all_objects.filter(
-                id__in=queryset.values_list("id", flat=True)
+        if self.queryset is None:
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} precisa de um 'queryset' definido."
             )
 
-        return queryset
+        # O Manager (BaseManager) resolve o isolamento para o usuário autenticado.
+        user = self.request.user
+        return self.queryset.model.objects.all().for_user(user)
 
     def perform_create(self, serializer):
         """
-        Criação híbrida: Service.create -> Serializer.save.
+        Criação híbrida: Service.create ou Serializer.save.
         """
-        # Checa se o trio Service + DTO + Método está completo
-        if (
-            self.service_class
-            and self.dto_class
-            and hasattr(self.service_class, "create")
-        ):
+        if self.service_class and hasattr(self.service_class, "create"):
             try:
-                dto = self.dto_class.from_validated_data(
-                    user_id=self.request.user.id,
-                    validated_data=serializer.validated_data,
+                # O Service é responsável pela persistência e retorno da instância.
+                instance = self.service_class.create(
+                    user=self.request.user, data=serializer.validated_data
                 )
-                self.instance = self.service_class.create(dto)
+                serializer.instance = instance
             except DjangoValidationError as e:
                 raise DRFValidationError(e.message_dict) from e
         else:
-            # Fallback para o comportamento padrão do DRF
             serializer.save()
 
     def perform_update(self, serializer):
         """
-        Atualização híbrida: Service.update -> Serializer.save.
+        Atualização híbrida: Service.update ou Serializer.save.
         """
-        if (
-            self.service_class
-            and self.dto_class
-            and hasattr(self.service_class, "update")
-        ):
+        if self.service_class and hasattr(self.service_class, "update"):
             try:
-                dto = self.dto_class.from_validated_data(
-                    user_id=self.request.user.id,
-                    validated_data=serializer.validated_data,
+                instance = self.service_class.update(
+                    instance=self.get_object(),
+                    user=self.request.user,
+                    data=serializer.validated_data,
                 )
-                self.instance = self.service_class.update(
-                    instance=self.get_object(), dto=dto
-                )
+                serializer.instance = instance
             except DjangoValidationError as e:
                 raise DRFValidationError(e.message_dict) from e
         else:
@@ -107,11 +63,9 @@ class BaseViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         """
-        Exclusão híbrida: Service.delete -> Model.delete.
+        Deleção híbrida: Service.delete ou fallback para Hard Delete.
         """
-        # Verifica se o service tem um método de delete customizado
         if self.service_class and hasattr(self.service_class, "delete"):
-            self.service_class.delete(instance)
+            self.service_class.delete(user=self.request.user, instance=instance)
         else:
-            # Fallback para o delete do model (Soft Delete padrão)
             instance.delete()

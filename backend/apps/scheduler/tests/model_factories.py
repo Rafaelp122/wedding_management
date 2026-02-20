@@ -16,9 +16,8 @@ from datetime import timedelta
 import factory
 from django.utils import timezone
 
-from apps.weddings.tests.factories import WeddingFactory
-
-from ..models import Event
+from apps.scheduler.models import Event
+from apps.weddings.tests.model_factories import WeddingFactory
 
 
 class EventFactory(factory.django.DjangoModelFactory):
@@ -35,14 +34,12 @@ class EventFactory(factory.django.DjangoModelFactory):
     location = factory.Faker("address")
     description = factory.Faker("paragraph")
 
-    event_type = factory.Iterator(
-        [
-            Event.TypeChoices.MEETING,
-            Event.TypeChoices.VISIT,
-            Event.TypeChoices.TASTING,
-            Event.TypeChoices.OTHER,
-        ]
-    )
+    event_type = factory.Iterator([
+        Event.TypeChoices.MEETING,
+        Event.TypeChoices.VISIT,
+        Event.TypeChoices.TASTING,
+        Event.TypeChoices.OTHER,
+    ])
 
     # Datas e Horários
     start_time = factory.Faker(

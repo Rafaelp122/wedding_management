@@ -13,10 +13,10 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import SoftDeleteModel
+from apps.core.models import BaseModel
 
 
-class BudgetCategory(SoftDeleteModel, WeddingOwnedMixin):
+class BudgetCategory(BaseModel, WeddingOwnedMixin):
     """
     Categorias de gastos (RF03).
     Permite o agrupamento logístico e financeiro vinculando despesas a um orçamento.

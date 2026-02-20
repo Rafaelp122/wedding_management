@@ -1,22 +1,20 @@
 from datetime import date
 
-from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
-from rest_framework.exceptions import ValidationError as DRFValidationError
 
-from apps.finances.dto import InstallmentDTO
 from apps.finances.models import Expense, Installment
 
 
 class InstallmentService:
     """
     Orquestrador de parcelas.
-    Implementa cálculos automáticos de status e validação de Tolerância Zero.
+    Garante que a matemática financeira nunca minta para o Planner.
     """
 
     @staticmethod
-    def determine_status(due_date: date, paid_date: date | None) -> str:
-        """Lógica de negócio para definir status da parcela."""
+    def _determine_status(due_date, paid_date) -> str:
+        """Lógica centralizada para definição de status."""
         if paid_date:
             return Installment.StatusChoices.PAID
         if due_date < date.today():
@@ -25,70 +23,82 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def create(dto: InstallmentDTO) -> Installment:
-        """Cria uma parcela garantindo herança de contexto e validação de ADR-010."""
-        # Recuperamos a despesa pai para garantir o Multitenancy
-        expense = Expense.objects.get(uuid=dto.expense_id)
+    def create(user, data: dict) -> Installment:
+        """
+        Cria uma parcela e valida se ela não quebra a integridade da despesa.
+        """
+        expense_uuid = data.pop("expense", None)
 
-        # Preparamos os dados do DTO e injetamos o status calculado
-        data = dto.model_dump()
-        data["status"] = InstallmentService.determine_status(
-            dto.due_date, dto.paid_date
-        )
-
-        # Removemos expense_id para passar o objeto expense explicitamente
-        # (garante wedding)
-        data.pop("expense_id")
-
-        installment = Installment.objects.create(
-            wedding=expense.wedding,  # Herda o casamento da despesa
-            expense=expense,
-            **data,
-        )
-
-        # Trigger ADR-010: Força a validação de soma na Despesa pai
+        # 1. SEGURANÇA: Busca a despesa garantindo que o Planner é o dono.
         try:
-            expense.full_clean()
-        except DjangoValidationError as e:
-            raise DRFValidationError(e.message_dict) from e
+            expense = Expense.objects.all().for_user(user).get(uuid=expense_uuid)
+        except Expense.DoesNotExist:
+            raise ValidationError({
+                "expense": "Despesa não encontrada ou acesso negado."
+            }) from Expense.DoesNotExist
+
+        # 2. Injeção de Contexto e Status
+        data["planner"] = user
+        data["wedding"] = expense.wedding
+        data["expense"] = expense
+        data["status"] = InstallmentService._determine_status(
+            data.get("due_date"), data.get("paid_date")
+        )
+
+        # 3. Criação
+        installment = Installment(**data)
+
+        # 4. VALIDAÇÃO ADR-010: O full_clean da despesa vai checar se a soma
+        # agora bate (ou ainda não bate) com o valor total.
+        # NOTA: Se o seu sistema exige que a soma bata SEMPRE, você não pode criar
+        # parcelas uma a uma. Você precisa criá-las em lote.
+        installment.full_clean()
+        installment.save()
+
+        # Forçamos a revalidação da despesa pai
+        expense.full_clean()
 
         return installment
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Installment, dto: InstallmentDTO) -> Installment:
-        """Atualização de parcela com revalidação de teto da Expense."""
-        # Campos que não devem ser alterados via update comum
-        exclude_fields = {"planner_id", "wedding_id", "expense_id"}
+    def update(instance: Installment, user, data: dict) -> Installment:
+        """
+        Atualiza a parcela e revalida o teto da Expense.
+        """
+        # Proteção de campos imutáveis
+        data.pop("expense", None)
+        data.pop("wedding", None)
+        data.pop("planner", None)
 
-        data = dto.model_dump(exclude=exclude_fields)
-        data["status"] = InstallmentService.determine_status(
-            dto.due_date, dto.paid_date
-        )
+        if "due_date" in data or "paid_date" in data:
+            due = data.get("due_date", instance.due_date)
+            paid = data.get("paid_date", instance.paid_date)
+            instance.status = InstallmentService._determine_status(due, paid)
 
-        # Atualização dinâmica via setattr
         for field, value in data.items():
             setattr(instance, field, value)
 
+        instance.full_clean()
         instance.save()
 
-        # Após atualizar a parcela, validamos se a soma na Expense ainda bate
-        try:
-            instance.expense.full_clean()
-        except DjangoValidationError as e:
-            raise DRFValidationError(e.message_dict) from e
+        # Revalidação de Tolerância Zero na Despesa
+        instance.expense.full_clean()
 
         return instance
 
     @staticmethod
     @transaction.atomic
-    def delete(instance: Installment) -> None:
-        """Deleção lógica garantindo limpeza de parcelas (Cascade Manual)."""
+    def delete(user, instance: Installment) -> None:
+        """
+        Deleção com trava de segurança financeira.
+        """
         expense = instance.expense
+
+        # Se a despesa exige soma exata (ADR-010), deletar uma parcela
+        # sem deletar a despesa ou ajustar o valor total é um erro.
         instance.delete()
 
-        # Validamos se a remoção da parcela não deixou a despesa inconsistente
-        try:
-            expense.full_clean()
-        except DjangoValidationError as e:
-            raise DRFValidationError(e.message_dict) from e
+        # Se após a deleção a despesa ficar inconsistente, o full_clean explode.
+        # O atomic garante que a deleção sofra rollback.
+        expense.full_clean()

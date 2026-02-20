@@ -11,7 +11,7 @@ from decimal import Decimal
 import pytest
 from pytest_factoryboy import register
 
-from .factories import (
+from .model_factories import (
     BudgetCategoryFactory,
     BudgetFactory,
     ExpenseFactory,

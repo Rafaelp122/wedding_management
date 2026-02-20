@@ -1,45 +1,56 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
 class PlannerOwnedMixin(models.Model):
-    """
-    Mixin para modelos que pertencem globalmente a um Planner.
-
-    Deve ser utilizado em recursos que o Planner gerencia de forma transversal
-    a vários casamentos, como catálogos de fornecedores ou configurações personalizadas.
-    """
-
     planner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        # O uso de %(class)s evita colisões de related_name em heranças múltiplas
         related_name="%(class)s_records",
-        verbose_name="Planner Responsável",
-        help_text="Identifica o Planner dono deste registro para isolamento de dados.",
     )
 
     class Meta:
         abstract = True
+
+    def clean(self):
+        super().clean()
+        # Filtra apenas campos declarados localmente que são FKs
+        for field in self._meta.concrete_fields:
+            if isinstance(field, models.ForeignKey):
+                related_obj = getattr(self, field.name)
+                # Verifica se o objeto relacionado também pertence a um casamento
+                if related_obj and hasattr(related_obj, "wedding_id"):
+                    if related_obj.wedding_id != self.wedding_id:
+                        raise ValidationError({
+                            field.name: "Este recurso pertence a outro casamento."
+                        })
 
 
 class WeddingOwnedMixin(models.Model):
-    """
-    Mixin para modelos vinculados a um contexto de Casamento específico.
-
-    Essencial para recursos de logística e planejamento (Convidados, Tarefas,
-    Orçamentos e etc...).
-    O isolamento final é feito via 'wedding__planner' no BaseViewSet (ADR-009).
-    """
-
     wedding = models.ForeignKey(
         "weddings.Wedding",
         on_delete=models.CASCADE,
-        # Garante que possamos acessar registros a partir do objeto Wedding
         related_name="%(class)s_records",
-        verbose_name="Casamento",
-        help_text="Vincula o registro a um evento específico gerenciado pelo Planner.",
     )
 
     class Meta:
         abstract = True
+
+    def clean(self):
+        """
+        Garante que chaves estrangeiras pertençam ao mesmo casamento.
+        Isso impede que um Item do Casamento A seja usado em uma Despesa do Casamento B.
+        """
+        super().clean()
+
+        # Lógica genérica de validação de consistência
+        for field in self._meta.get_fields():
+            if isinstance(field, models.ForeignKey):
+                related_obj = getattr(self, field.name)
+                # Se o objeto relacionado também for 'WeddingOwned', os IDs devem bater
+                if related_obj and hasattr(related_obj, "wedding_id"):
+                    if related_obj.wedding_id != self.wedding_id:
+                        raise ValidationError({
+                            field.name: "Este recurso pertence a outro casamento."
+                        })

@@ -1,6 +1,6 @@
 # ADR-008: Soft Delete Seletivo
 
-**Status:** Aceito
+**Status:** REJEITADO (Decidi remover para reduzir a complexidade no MVP e garantir a integridade financeira imediata.)
 **Data:** Janeiro 2025
 **Decisor:** Rafael
 **Contexto:** Estratégia de exclusão lógica para auditoria e recuperação
@@ -319,4 +319,4 @@ Contract.all_objects.all()  # Com deletados
 
 ---
 
-**Última atualização:** 8 de fevereiro de 2026
+**Última atualização:** 20 de fevereiro de 2026

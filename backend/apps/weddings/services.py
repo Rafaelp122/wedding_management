@@ -1,57 +1,57 @@
 from django.db import transaction
 
-from .dto import WeddingDTO
 from .models import Wedding
 
 
 class WeddingService:
     """
     Camada de serviço para gerenciar a lógica de negócio de casamentos.
-    Implementa a orquestração entre DTO e Model.
+    Focada em multitenancy e integridade real de dados.
     """
 
     @staticmethod
     @transaction.atomic
-    def create(dto: WeddingDTO) -> Wedding:
+    def create(user, data: dict) -> Wedding:
         """
-        Cria um novo casamento a partir de um DTO.
-        O uso de atomic garante que, se algo falhar, nada será salvo.
+        Cria um novo casamento vinculado ao Planner autenticado.
         """
-        # Aqui pode disparar outras ações, como:
-        # 1. Criar categorias de gastos padrão no app de Finances
-        # 2. Enviar um e-mail de boas-vindas ao Planner
+        # Injetamos o planner diretamente do contexto da request,
+        # garantindo que ninguém crie casamentos para outros.
+        data["planner"] = user
 
-        # O model_dump() retorna um dicionário pronto para o create do Django.
-        # planner_id no DTO mapeia corretamente para o campo planner no model via
-        # Django.
-        return Wedding.objects.create(**dto.model_dump())
+        wedding = Wedding.objects.create(**data)
+
+        # ESPAÇO PARA EFEITOS COLATERAIS (MVP):
+        # 1. Criar orçamento base automático.
+        # 2. Criar categorias financeiras padrão (Buffet, Local, etc).
+
+        return wedding
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Wedding, dto: WeddingDTO) -> Wedding:
+    def update(instance: Wedding, user, data: dict) -> Wedding:
         """
-        Atualiza um casamento existente.
+        Atualiza os dados de um casamento existente.
         """
-        # Atualiza os campos dinamicamente, excluindo o planner_id que é imutável
-        for field, value in dto.model_dump(exclude={"planner_id"}).items():
+        # O multitenancy já foi garantido pelo for_user no ViewSet,
+        # então 'instance' já pertence a 'user'.
+
+        for field, value in data.items():
             setattr(instance, field, value)
 
-        # O método .save() do model executará o seu .clean() (ADR-010)
+        # O full_clean() garante que validações de negócio do Model (ADR-009)
+        # sejam respeitadas antes de salvar.
+        instance.full_clean()
         instance.save()
         return instance
 
     @staticmethod
     @transaction.atomic
-    def delete(instance: Wedding) -> None:
+    def delete(user, instance: Wedding) -> None:
         """
-        Executa a deleção lógica do casamento e seus dependentes.
-
-        Como o cascade não é automático (ADR-008), este é o local para
-        deletar convidados, tarefas e orçamentos vinculados antes
-        de 'remover' o casamento.
+        Executa a deleção real (Hard Delete) do casamento.
+        Como removemos o Soft Delete, o Django cuidará do CASCADE real.
         """
-        # Exemplo de cascade manual:
-        # instance.guest_records.all().delete()
-        # instance.task_records.all().delete()
-
+        # Se você definiu PROTECT em alguma relação (ex: Contratos com pagamentos),
+        # o Django impedirá a deleção aqui, protegendo a integridade financeira.
         instance.delete()

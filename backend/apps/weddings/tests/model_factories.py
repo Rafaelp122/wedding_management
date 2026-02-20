@@ -41,7 +41,6 @@ class WeddingFactory(factory.django.DjangoModelFactory):
 
     # Status inicial padrão conforme o modelo
     status = Wedding.StatusChoices.IN_PROGRESS
-    is_deleted = False
 
 
 class CompletedWeddingFactory(WeddingFactory):

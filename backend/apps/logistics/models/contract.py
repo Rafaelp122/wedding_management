@@ -10,10 +10,10 @@ Referências: RF10, RF13
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import SoftDeleteModel
+from apps.core.models import BaseModel
 
 
-class Contract(SoftDeleteModel, WeddingOwnedMixin):
+class Contract(BaseModel, WeddingOwnedMixin):
     class StatusChoices(models.TextChoices):
         DRAFT = "DRAFT", "Rascunho"
         PENDING = "PENDING", "Pendente"  # Aguardando assinaturas externas

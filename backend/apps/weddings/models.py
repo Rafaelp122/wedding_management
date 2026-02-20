@@ -1,10 +1,10 @@
 from django.db import models
 
-from apps.core.models import SoftDeleteModel
+from apps.core.models import BaseModel
 from apps.users.models import User
 
 
-class Wedding(SoftDeleteModel):
+class Wedding(BaseModel):
     class StatusChoices(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "Em Andamento"
         COMPLETED = "COMPLETED", "Concluído"

@@ -1,33 +1,19 @@
-"""
-Managers e QuerySets customizados para o sistema.
-"""
-
 from django.db import models
-from django.utils import timezone
 
 
-class SoftDeleteQuerySet(models.QuerySet):
-    """QuerySet personalizado para soft delete."""
+class BaseQuerySet(models.QuerySet):
+    def for_user(self, user):
+        """Filtra registos baseando-se na posse (Planner ou Wedding)."""
+        model = self.model
+        field_names = [f.name for f in model._meta.get_fields()]
 
-    def delete(self):
-        """Soft delete em lote."""
-        return super().update(is_deleted=True, deleted_at=timezone.now())
-
-    def hard_delete(self):
-        """Delete permanente. USE COM CUIDADO."""
-        return super().delete()
-
-    def restore(self):
-        """Restaura registros soft deleted."""
-        return super().update(is_deleted=False, deleted_at=None)
+        if "wedding" in field_names:
+            return self.filter(wedding__planner=user)
+        if "planner" in field_names:
+            return self.filter(planner=user)
+        return self
 
 
-class SoftDeleteManager(models.Manager):
-    """Manager que filtra automaticamente registros ativos."""
-
+class BaseManager(models.Manager):
     def get_queryset(self):
-        return SoftDeleteQuerySet(self.model, using=self._db).filter(is_deleted=False)
-
-    def deleted(self):
-        """Retorna apenas registros deletados (lixeira)."""
-        return SoftDeleteQuerySet(self.model, using=self._db).filter(is_deleted=True)
+        return BaseQuerySet(self.model, using=self._db)

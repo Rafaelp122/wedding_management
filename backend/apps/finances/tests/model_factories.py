@@ -16,9 +16,8 @@ from decimal import Decimal
 
 import factory
 
-from apps.weddings.tests.factories import WeddingFactory
-
-from ..models import Budget, BudgetCategory, Expense, Installment
+from apps.finances.models import Budget, BudgetCategory, Expense, Installment
+from apps.weddings.tests.model_factories import WeddingFactory
 
 
 class BudgetFactory(factory.django.DjangoModelFactory):

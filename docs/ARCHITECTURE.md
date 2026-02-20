@@ -373,32 +373,6 @@ class WeddingOwnedMixin(BaseModel):
         abstract = True
 ```
 
-**SoftDeleteModel:**
-
-```python
-class SoftDeleteModel(models.Model):
-    is_deleted = models.BooleanField(default=False, db_index=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    objects = SoftDeleteManager()       # Exclui deletados
-    all_objects = models.Manager()      # Inclui deletados
-
-    def delete(self, using=None, keep_parents=False):
-        """Soft delete por padrão"""
-        self.is_deleted = True
-        self.deleted_at = timezone.now()
-        self.save()
-
-    def hard_delete(self):
-        """Hard delete explícito (uso raro)"""
-        super().delete()
-
-    class Meta:
-        abstract = True
-```
-
-Ver [ADR-007](ADR/007-hybrid-keys.md), [ADR-008](ADR/008-soft-delete.md), [ADR-009](ADR/009-multitenancy.md).
-
 ---
 
 ### 3.3 Validações em Cascata
@@ -554,7 +528,10 @@ export default defineConfig({
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom"],
-          "ui-vendor": ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
+          "ui-vendor": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+          ],
         },
       },
     },

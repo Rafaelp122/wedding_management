@@ -1,52 +1,51 @@
 from django.db import transaction
 
-from apps.logistics.dto import SupplierDTO
 from apps.logistics.models import Supplier
 
 
 class SupplierService:
     """
     Camada de serviço para gestão de fornecedores.
-    Centraliza a lógica de criação, atualização e deleção (RF09).
+    Centraliza a lógica de catálogo transversal ao Planner (RF09).
     """
 
     @staticmethod
     @transaction.atomic
-    def create(dto: SupplierDTO) -> Supplier:
+    def create(user, data: dict) -> Supplier:
         """
-        Cria um novo fornecedor garantindo a correta atribuição ao Planner.
+        Cria um novo fornecedor vinculado ao Planner autenticado.
         """
-        # 1. Preparação dos dados e extração de contexto
-        # (Segurança e Integridade)
-        data = dto.model_dump()
-        planner_id = data.pop("planner_id")
+        # Injeção de posse direta do contexto de autenticação.
+        data["planner"] = user
 
-        # 2. Criação com injeção de contexto validado
-        return Supplier.objects.create(planner_id=planner_id, **data)
+        # Como o fornecedor é PlannerOwned (transversal), não precisa de wedding_id.
+        return Supplier.objects.create(**data)
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Supplier, dto: SupplierDTO) -> Supplier:
+    def update(instance: Supplier, user, data: dict) -> Supplier:
         """
-        Atualiza um fornecedor existente protegendo a imutabilidade do dono.
+        Atualiza os dados de um fornecedor protegendo a imutabilidade do dono.
         """
-        # Bloqueamos a troca de Dono via atualização (ADR-009)
-        exclude_fields = {"planner_id"}
-        data = dto.model_dump(exclude=exclude_fields)
+        # Impedimos que o fornecedor mude de dono via API.
+        data.pop("planner", None)
 
-        # Atualização dinâmica de campos
         for field, value in data.items():
             setattr(instance, field, value)
 
+        # O full_clean() aqui é vital caso existam validações de CNPJ único por Planner,
+        # ou outros campos obrigatórios de negócio.
+        instance.full_clean()
         instance.save()
         return instance
 
     @staticmethod
     @transaction.atomic
-    def delete(instance: Supplier) -> None:
+    def delete(user, instance: Supplier) -> None:
         """
-        Executa a deleção lógica do fornecedor (ADR-008).
+        Executa a deleção real do fornecedor.
+        A integridade com contratos existentes é garantida pelo banco de dados.
         """
-        # Conforme ADR-008, a deleção é lógica para preservar histórico e
-        # integridade de contratos passados.
+        # Se você definiu on_delete=models.PROTECT no modelo Contract,
+        # o Django impedirá a deleção se houver contratos ativos, disparando um erro.
         instance.delete()

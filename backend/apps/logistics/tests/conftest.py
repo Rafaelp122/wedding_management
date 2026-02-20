@@ -8,9 +8,9 @@ de contratação, conformidade de fornecedores e inventário do evento.
 import pytest
 from pytest_factoryboy import register
 
-from apps.weddings.tests.factories import WeddingFactory
+from apps.weddings.tests.model_factories import WeddingFactory
 
-from .factories import ContractFactory, ItemFactory, SupplierFactory
+from .model_factories import ContractFactory, ItemFactory, SupplierFactory
 
 
 # Registo das factories logísticas

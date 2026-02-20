@@ -1,6 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from apps.logistics.dto import ContractDTO
 from apps.logistics.models import Contract, Supplier
 from apps.weddings.models import Wedding
 
@@ -13,62 +13,81 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def create(dto: ContractDTO) -> Contract:
+    def create(user, data: dict) -> Contract:
         """
         Cria um contrato garantindo que o fornecedor e o casamento pertencem ao mesmo
         Planner.
         """
-        # 1. Busca instâncias pai para garantir o contexto e segurança
-        # (Herança de Contexto)
-        supplier = Supplier.objects.get(uuid=dto.supplier_id, planner_id=dto.planner_id)
-        wedding = Wedding.objects.get(uuid=dto.wedding_id, planner_id=dto.planner_id)
+        # 1. Recuperamos as instâncias usando o filtro de segurança for_user
+        wedding_uuid = data.pop("wedding", None)
+        supplier_uuid = data.pop("supplier", None)
 
-        data = dto.model_dump()
+        try:
+            wedding = Wedding.objects.all().for_user(user).get(uuid=wedding_uuid)
+            supplier = Supplier.objects.all().for_user(user).get(uuid=supplier_uuid)
+        except (Wedding.DoesNotExist, Supplier.DoesNotExist):
+            raise ValidationError(
+                "Casamento ou Fornecedor não encontrado ou acesso negado."
+            ) from (Wedding.DoesNotExist, Supplier.DoesNotExist)
 
-        # 2. Limpeza de IDs para evitar conflitos de argumentos no .create()
-        data.pop("supplier_id")
-        data.pop("wedding_id")
-        data.pop("planner_id")
+        # 2. Injetamos o contexto de posse
+        data["planner"] = user
+        data["wedding"] = wedding
+        data["supplier"] = supplier
 
-        # 3. Criação com injeção de instâncias validadas
-        return Contract.objects.create(
-            planner=wedding.planner, wedding=wedding, supplier=supplier, **data
-        )
+        # 3. Criação direta
+        return Contract.objects.create(**data)
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Contract, dto: ContractDTO) -> Contract:
+    def update(instance: Contract, user, data: dict) -> Contract:
         """
-        Atualiza o contrato protegendo campos imutáveis e gerenciando arquivos.
+        Atualiza o contrato protegendo vínculos de propriedade e campos imutáveis.
         """
-        # Bloqueamos a troca de Casamento ou Dono via atualização
-        exclude_fields = {"planner_id", "wedding_id", "supplier_id"}
-        data = dto.model_dump(exclude=exclude_fields)
+        # Impedimos a troca de Casamento ou Planner via update
+        data.pop("wedding", None)
+        data.pop("planner", None)
 
-        # Se houver troca de fornecedor, validamos se ele pertence ao mesmo Planner
-        if str(dto.supplier_id) != str(instance.supplier_id):
-            instance.supplier = Supplier.objects.get(
-                uuid=dto.supplier_id, planner_id=instance.planner_id
-            )
+        # Se houver tentativa de trocar o fornecedor, validamos a posse do novo
+        if "supplier" in data:
+            supplier_uuid = data.pop("supplier")
+            try:
+                instance.supplier = (
+                    Supplier.objects.all().for_user(user).get(uuid=supplier_uuid)
+                )
+            except Supplier.DoesNotExist:
+                raise ValidationError({
+                    "supplier": "Fornecedor inválido ou acesso negado."
+                }) from Supplier.DoesNotExist
 
-        # Atualização dinâmica de campos
+        # Atualização dinâmica de campos (total_amount, dates, description, etc)
         for field, value in data.items():
-            # Preserva o PDF atual se nenhum novo arquivo for enviado
+            # Preserva o arquivo se o campo estiver vazio no patch
             if field == "pdf_file" and value is None:
                 continue
             setattr(instance, field, value)
 
-        instance.save()  # Dispara full_clean() conforme ADR-010
+        # Validação de Datas (Regra de Negócio):
+        # Exemplo: Expiração não pode ser anterior à assinatura.
+        if instance.expiration_date and instance.signed_date:
+            if instance.expiration_date < instance.signed_date:
+                raise ValidationError(
+                    "A data de expiração não pode ser anterior à assinatura."
+                )
+
+        instance.full_clean()  # Dispara validações de mixins (Cross-Wedding)
+        instance.save()
         return instance
 
     @staticmethod
     @transaction.atomic
-    def delete(instance: Contract) -> None:
+    def delete(user, instance: Contract) -> None:
         """
-        Executa a deleção lógica e limpa referências em itens vinculados.
+        Executa a deleção real do contrato.
+        Limpa as referências nos itens vinculados para evitar dados órfãos.
         """
-        # Conforme ADR-008, fazemos o cascade manual:
-        # Desvinculamos o contrato dos itens de logística antes de 'deletar'
-        instance.items.update(contract=None)
+        # Se você quer manter os itens de logística mas desvinculá-los do contrato:
+        instance.item_records.update(contract=None)
 
+        # Deleção definitiva (Hard Delete)
         instance.delete()

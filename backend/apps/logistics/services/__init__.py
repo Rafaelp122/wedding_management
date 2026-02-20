@@ -3,4 +3,4 @@ from .item_service import ItemService
 from .supplier_service import SupplierService
 
 
-__all__ = ["SupplierService", "ContractService", "ItemService"]
+__all__ = ["ContractService", "ItemService", "SupplierService"]

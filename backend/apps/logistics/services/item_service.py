@@ -1,96 +1,99 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from apps.finances.models import BudgetCategory
-from apps.logistics.dto import ItemDTO
 from apps.logistics.models import Contract, Item
 
 
 class ItemService:
     """
     Camada de serviço para gestão de itens de logística.
-    Garante a integridade entre categorias de orçamento, contratos e
-    casamentos (RF07/RF08).
+    Garante a integridade entre categorias de orçamento, contratos e casamentos.
     """
 
     @staticmethod
     @transaction.atomic
-    def create(dto: ItemDTO) -> Item:
+    def create(user, data: dict) -> Item:
         """
-        Cria um item garantindo a herança de contexto da categoria de orçamento pai.
+        Cria um item garantindo a herança de contexto da categoria de orçamento.
         """
-        # 1. Busca instâncias pai para garantir o contexto e segurança
-        # (Herança de Contexto / ADR-009)
-        category = BudgetCategory.objects.get(
-            uuid=dto.budget_category_id, planner_id=dto.planner_id
-        )
-
-        # 2. Validação opcional de contrato (Garante que o contrato é do
-        # mesmo casamento)
-        contract = None
-        if dto.contract_id:
-            contract = Contract.objects.get(
-                uuid=dto.contract_id, planner_id=dto.planner_id
+        # 1. Recuperamos a categoria garantindo que ela pertence ao Planner
+        category_uuid = data.pop("budget_category", None)
+        try:
+            category = (
+                BudgetCategory.objects.all().for_user(user).get(uuid=category_uuid)
             )
-            if contract.wedding_id != category.wedding_id:
-                raise DjangoValidationError(
-                    "O contrato selecionado pertence a outro casamento."
-                )
+        except BudgetCategory.DoesNotExist:
+            raise ValidationError({
+                "budget_category": "Categoria não encontrada ou acesso negado."
+            }) from BudgetCategory.DoesNotExist
 
-        data = dto.model_dump()
+        # 2. Tratamento opcional de contrato
+        contract = None
+        contract_uuid = data.pop("contract", None)
+        if contract_uuid:
+            try:
+                contract = Contract.objects.all().for_user(user).get(uuid=contract_uuid)
+            except Contract.DoesNotExist:
+                raise ValidationError({
+                    "contract": "Contrato não encontrado ou acesso negado."
+                }) from Contract.DoesNotExist
 
-        # 3. Limpeza de IDs para evitar conflitos de argumentos no .create()
-        data.pop("budget_category_id")
-        data.pop("contract_id", None)
-        data.pop("wedding_id", None)
-        data.pop("planner_id", None)
+        # 3. Injeção automática de contexto (Multitenancy ADR-009)
+        # O item herda o casamento da categoria pai.
+        data["planner"] = user
+        data["wedding"] = category.wedding
+        data["budget_category"] = category
+        data["contract"] = contract
 
-        # 4. Criação com injeção de instâncias validadas
-        return Item.objects.create(
-            planner=category.planner,
-            wedding=category.wedding,
-            budget_category=category,
-            contract=contract,
-            **data,
-        )
+        # 4. Criação e validação de consistência
+        item = Item(**data)
+        # O full_clean() disparará o WeddingOwnedMixin para garantir que
+        # o contrato pertence ao mesmo casamento da categoria.
+        item.full_clean()
+        item.save()
+        return item
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Item, dto: ItemDTO) -> Item:
+    def update(instance: Item, user, data: dict) -> Item:
         """
-        Atualiza o item protegendo campos imutáveis e validando trocas de vínculo.
+        Atualiza o item protegendo vínculos de propriedade.
         """
-        # Bloqueamos a troca de Casamento, Dono ou Categoria via atualização
-        exclude_fields = {"planner_id", "wedding_id", "budget_category_id"}
-        data = dto.model_dump(exclude=exclude_fields)
+        # Bloqueamos a troca de Casamento, Dono ou Categoria pai
+        data.pop("planner", None)
+        data.pop("wedding", None)
+        data.pop("budget_category", None)
 
-        # Se houver troca de contrato, validamos se ele pertence ao mesmo contexto
-        if dto.contract_id and str(dto.contract_id) != str(instance.contract_id):
-            contract = Contract.objects.get(
-                uuid=dto.contract_id, planner_id=instance.planner_id
-            )
-            if contract.wedding_id != instance.wedding_id:
-                raise DjangoValidationError(
-                    "O contrato selecionado pertence a outro casamento."
-                )
-            instance.contract = contract
-        elif dto.contract_id is None:
-            instance.contract = None
+        # Tratamento de troca de contrato
+        if "contract" in data:
+            contract_uuid = data.pop("contract")
+            if contract_uuid:
+                try:
+                    instance.contract = (
+                        Contract.objects.all().for_user(user).get(uuid=contract_uuid)
+                    )
+                except Contract.DoesNotExist:
+                    raise ValidationError({
+                        "contract": "Contrato inválido ou acesso negado."
+                    }) from Contract.DoesNotExist
+            else:
+                instance.contract = None
 
-        # Atualização dinâmica de campos
+        # Atualização dos campos restantes (name, quantity, status, etc)
         for field, value in data.items():
-            if field != "contract_id":  # Já tratado acima
-                setattr(instance, field, value)
+            setattr(instance, field, value)
 
-        instance.save()  # Dispara full_clean() -> Valida RF07.1
+        # Validação final de consistência (Cross-Wedding check no Mixin)
+        instance.full_clean()
+        instance.save()
         return instance
 
     @staticmethod
     @transaction.atomic
-    def delete(instance: Item) -> None:
+    def delete(user, instance: Item) -> None:
         """
-        Executa a deleção lógica do item (ADR-008).
+        Executa a deleção real (Hard Delete).
         """
-        # Conforme ADR-008, a deleção é lógica para preservar o histórico de
-        # planejamento.
+        # Sem Soft Delete, a deleção é definitiva.
         instance.delete()

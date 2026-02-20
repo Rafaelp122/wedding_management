@@ -10,10 +10,10 @@ from django.core.validators import MaxLengthValidator
 from django.db import models
 
 from apps.core.mixins import PlannerOwnedMixin
-from apps.core.models import SoftDeleteModel
+from apps.core.models import BaseModel
 
 
-class Supplier(SoftDeleteModel, PlannerOwnedMixin):
+class Supplier(BaseModel, PlannerOwnedMixin):
     """
     Fornecedores de produtos e serviços para casamentos (RF09).
     Centraliza informações de contato e histórico de relacionamento.
