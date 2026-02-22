@@ -53,16 +53,21 @@ class EventSerializer(BaseSerializer):
 
         # Regra de Negócio: Fim do evento deve ser posterior ao início
         if start_time and end_time and end_time < start_time:
-            raise serializers.ValidationError({
-                "end_time": "A hora de término não pode ser anterior à hora de início."
-            })
+            raise serializers.ValidationError(
+                {
+                    "end_time": "A hora de término não pode ser anterior à hora de "
+                    "início."
+                }
+            )
 
         # Regra de Negócio: Lembretes só fazem sentido se forem minutos positivos
         reminder_minutes = data.get("reminder_minutes_before")
         if reminder_minutes is not None and reminder_minutes < 0:
-            raise serializers.ValidationError({
-                "reminder_minutes_before": "Os minutos do lembrete devem ser "
-                "um valor positivo."
-            })
+            raise serializers.ValidationError(
+                {
+                    "reminder_minutes_before": "Os minutos do lembrete devem ser "
+                    "um valor positivo."
+                }
+            )
 
         return data

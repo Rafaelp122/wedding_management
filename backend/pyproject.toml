@@ -16,11 +16,9 @@ dependencies = [
     # Database
     "psycopg[c]>=3.2.0,<4.0",
     # Utils
-    "uuid6>=2025.0.1,<2026",
     "python-dotenv>=1.0.1,<2.0",
     # Production Server
     "gunicorn>=23.0.0,<24.0",
-    "pydantic>=2.12.5",
     "python-json-logger>=4.0.0",
 ]
 
@@ -44,7 +42,7 @@ dev = [
     "django-zeal>=2.0.4,<3.0",
     "ipython>=9.8.0,<10.0",
     # Code Quality & Linting
-    "ruff>=0.7.4,<0.8",
+    "ruff>=0.15.2,<0.16",
     "pre-commit>=3.7.1,<3.8",
     "detect-secrets>=1.5.0",
 ]
@@ -55,7 +53,7 @@ dev = [
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-preview = true
+preview = false
 exclude = [
     ".git",
     "__pycache__",

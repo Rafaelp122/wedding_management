@@ -34,12 +34,14 @@ class EventFactory(factory.django.DjangoModelFactory):
     location = factory.Faker("address")
     description = factory.Faker("paragraph")
 
-    event_type = factory.Iterator([
-        Event.TypeChoices.MEETING,
-        Event.TypeChoices.VISIT,
-        Event.TypeChoices.TASTING,
-        Event.TypeChoices.OTHER,
-    ])
+    event_type = factory.Iterator(
+        [
+            Event.TypeChoices.MEETING,
+            Event.TypeChoices.VISIT,
+            Event.TypeChoices.TASTING,
+            Event.TypeChoices.OTHER,
+        ]
+    )
 
     # Datas e Horários
     start_time = factory.Faker(

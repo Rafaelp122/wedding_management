@@ -22,9 +22,9 @@ class PlannerOwnedMixin(models.Model):
                 # Verifica se o objeto relacionado também pertence a um casamento
                 if related_obj and hasattr(related_obj, "wedding_id"):
                     if related_obj.wedding_id != self.wedding_id:
-                        raise ValidationError({
-                            field.name: "Este recurso pertence a outro casamento."
-                        })
+                        raise ValidationError(
+                            {field.name: "Este recurso pertence a outro casamento."}
+                        )
 
 
 class WeddingOwnedMixin(models.Model):
@@ -51,6 +51,6 @@ class WeddingOwnedMixin(models.Model):
                 # Se o objeto relacionado também for 'WeddingOwned', os IDs devem bater
                 if related_obj and hasattr(related_obj, "wedding_id"):
                     if related_obj.wedding_id != self.wedding_id:
-                        raise ValidationError({
-                            field.name: "Este recurso pertence a outro casamento."
-                        })
+                        raise ValidationError(
+                            {field.name: "Este recurso pertence a outro casamento."}
+                        )

@@ -39,14 +39,16 @@ class BudgetCategoryFactory(factory.django.DjangoModelFactory):
 
     budget = factory.SubFactory("apps.finances.tests.model_factories.BudgetFactory")
     wedding = factory.LazyAttribute(lambda o: o.budget.wedding)
-    name = factory.Iterator([
-        "Buffet",
-        "Decoração",
-        "Fotografia",
-        "Música",
-        "Espaço",
-        "Convites",
-    ])
+    name = factory.Iterator(
+        [
+            "Buffet",
+            "Decoração",
+            "Fotografia",
+            "Música",
+            "Espaço",
+            "Convites",
+        ]
+    )
     allocated_budget = Decimal("5000.00")
 
 
@@ -60,7 +62,9 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
         model = Expense
 
     # Se a despesa for criada sozinha, ela cria um contrato (que cria um wedding)
-    contract = factory.SubFactory("apps.logistics.tests.factories.ContractFactory")
+    contract = factory.SubFactory(
+        "apps.logistics.tests.model_factories.ContractFactory"
+    )
 
     # Sincronização automática:
     # Tenta pegar o wedding do contrato; se não existir, usa o que foi passado.

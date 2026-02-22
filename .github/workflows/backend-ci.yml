@@ -22,16 +22,18 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Install Linting Tools
+      - name: Install dependencies
         run: |
           cd backend
-          uv pip install --system "ruff>=0.7.4" bandit
+          uv sync --dev  # Garante que as ferramentas de dev (Ruff) sejam instaladas
 
       - name: Run Ruff
-        run: cd backend && ruff check . && ruff format --check .
+        # O 'uv run' garante que o Ruff executado é o da versão travada no projeto
+        run: cd backend && uv run ruff check . && uv run ruff format --check .
 
       - name: Run Bandit
-        run: cd backend && bandit -r apps/ -ll
+        # Mesma lógica aqui para o Bandit
+        run: cd backend && uv run bandit -r apps/ -ll
 
   integrity-and-test:
     name: Integrity & Tests
