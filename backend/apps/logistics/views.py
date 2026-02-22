@@ -7,7 +7,7 @@ from .serializers import ContractSerializer, ItemSerializer, SupplierSerializer
 from .services import ContractService, ItemService, SupplierService
 
 
-@extend_schema(tags=["Logistics - Suppliers"])
+@extend_schema(tags=["Logistics"])
 class SupplierViewSet(BaseViewSet):
     """
     Gestão de entidades fornecedoras (RF09).
@@ -21,7 +21,7 @@ class SupplierViewSet(BaseViewSet):
     service_class = SupplierService
 
 
-@extend_schema(tags=["Logistics - Contracts"])
+@extend_schema(tags=["Logistics"])
 class ContractViewSet(BaseViewSet):
     """
     Administração de contratos logísticos (RF10, RF13).
@@ -37,7 +37,7 @@ class ContractViewSet(BaseViewSet):
     service_class = ContractService
 
 
-@extend_schema(tags=["Logistics - Items"])
+@extend_schema(tags=["Logistics"])
 class ItemViewSet(BaseViewSet):
     """
     Gerenciamento de itens e insumos logísticos (RF07-RF08).

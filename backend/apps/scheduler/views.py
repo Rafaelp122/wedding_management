@@ -21,6 +21,5 @@ class EventsViewSet(BaseViewSet):
     # Otimização: select_related evita múltiplas consultas ao banco para obter
     # os dados do casamento e do planner vinculados ao evento.
     queryset = Event.objects.select_related("wedding", "planner").all()
-
     serializer_class = EventSerializer
     service_class = EventService

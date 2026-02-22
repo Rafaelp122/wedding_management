@@ -107,7 +107,7 @@ up:
 	@echo "   Frontend: http://localhost:5173"
 	@echo "   Backend:  http://localhost:8000"
 	@echo "   Admin:    http://localhost:8000/admin"
-	@echo "   Swagger:  http://localhost:8000/api/schema/swagger-ui/"
+	@echo "   Swagger:  http://localhost:8000/api/docs/"
 
 dev:
 	@echo "🔥 Iniciando modo desenvolvimento..."

@@ -17,7 +17,7 @@ from .services import (
 )
 
 
-@extend_schema(tags=["Finances - Budgets"])
+@extend_schema(tags=["Finances"])
 class BudgetViewSet(BaseViewSet):
     """
     Gestão do orçamento mestre do casamento (RF03).
@@ -31,7 +31,7 @@ class BudgetViewSet(BaseViewSet):
     service_class = BudgetService
 
 
-@extend_schema(tags=["Finances - Categories"])
+@extend_schema(tags=["Finances"])
 class BudgetCategoryViewSet(BaseViewSet):
     """
     Categorias orçamentárias para agrupamento de gastos (RF03).
@@ -45,7 +45,7 @@ class BudgetCategoryViewSet(BaseViewSet):
     service_class = BudgetCategoryService
 
 
-@extend_schema(tags=["Finances - Expenses"])
+@extend_schema(tags=["Finances"])
 class ExpenseViewSet(BaseViewSet):
     """
     Gestão de despesas e compromissos financeiros (RF04, RF05).
@@ -59,7 +59,7 @@ class ExpenseViewSet(BaseViewSet):
     service_class = ExpenseService
 
 
-@extend_schema(tags=["Finances - Installments"])
+@extend_schema(tags=["Finances"])
 class InstallmentViewSet(BaseViewSet):
     """
     Controle de parcelamentos e fluxos de caixa (RF04).

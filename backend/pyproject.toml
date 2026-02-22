@@ -21,6 +21,7 @@ dependencies = [
     # Production Server
     "gunicorn>=23.0.0,<24.0",
     "pydantic>=2.12.5",
+    "python-json-logger>=4.0.0",
 ]
 
 # ==============================================================================
