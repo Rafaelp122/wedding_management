@@ -1,51 +1,82 @@
-from django.db import transaction
+import logging
 
+from django.db import transaction
+from django.db.models import ProtectedError
+
+from apps.core.exceptions import DomainIntegrityError
 from apps.logistics.models import Supplier
+
+
+logger = logging.getLogger(__name__)
 
 
 class SupplierService:
     """
     Camada de serviço para gestão de fornecedores.
     Centraliza a lógica de catálogo transversal ao Planner (RF09).
+    Garante auditoria, validação estrita via Model e tratamento de integridade
+    referencial.
     """
 
     @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Supplier:
-        """
-        Cria um novo fornecedor vinculado ao Planner autenticado.
-        """
-        # Injeção de posse direta do contexto de autenticação.
-        data["planner"] = user
+        logger.info(f"Iniciando criação de Fornecedor para planner_id={user.id}")
 
-        # Como o fornecedor é PlannerOwned (transversal), não precisa de wedding_id.
-        return Supplier.objects.create(**data)
+        # 1. Instanciação em Memória (O Fornecedor é PlannerOwned, transversal)
+        supplier = Supplier(planner=user, **data)
+
+        # 2. Validação Estrita no Model (CNPJ único, formatação de telefone, etc.)
+        supplier.full_clean()
+        supplier.save()
+
+        logger.info(f"Fornecedor criado com sucesso: uuid={supplier.uuid}")
+        return supplier
 
     @staticmethod
     @transaction.atomic
     def update(instance: Supplier, user, data: dict) -> Supplier:
-        """
-        Atualiza os dados de um fornecedor protegendo a imutabilidade do dono.
-        """
-        # Impedimos que o fornecedor mude de dono via API.
+        logger.info(
+            f"Atualizando Fornecedor uuid={instance.uuid} por planner_id={user.id}"
+        )
+
+        # Proteção: Impedimos o sequestro/mudança de dono via API
         data.pop("planner", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # O full_clean() aqui é vital caso existam validações de CNPJ único por Planner,
-        # ou outros campos obrigatórios de negócio.
+        # O full_clean() aqui é vital para re-validar regras de negócio
+        # (ex: CNPJ duplicado)
         instance.full_clean()
         instance.save()
+
+        logger.info(f"Fornecedor uuid={instance.uuid} atualizado com sucesso.")
         return instance
 
     @staticmethod
     @transaction.atomic
     def delete(user, instance: Supplier) -> None:
-        """
-        Executa a deleção real do fornecedor.
-        A integridade com contratos existentes é garantida pelo banco de dados.
-        """
-        # Se você definiu on_delete=models.PROTECT no modelo Contract,
-        # o Django impedirá a deleção se houver contratos ativos, disparando um erro.
-        instance.delete()
+        logger.info(
+            f"Tentativa de deleção do Fornecedor uuid={instance.uuid} por "
+            f"planner_id={user.id}"
+        )
+
+        try:
+            instance.delete()
+            logger.warning(
+                f"Fornecedor uuid={instance.uuid} DESTRUÍDO por planner_id={user.id}"
+            )
+
+        except ProtectedError as e:
+            # Captura a trava do banco de dados (relacionamento com Contract) e formata
+            # para o Frontend
+            logger.error(
+                f"Falha de integridade ao deletar Fornecedor uuid={instance.uuid}: "
+                f"Possui contratos ativos."
+            )
+            raise DomainIntegrityError(
+                detail="Não é possível apagar este fornecedor pois existem contratos "
+                "vinculados a ele. Remova ou reatribua os contratos primeiro.",
+                code="supplier_protected_error",
+            ) from e

@@ -1,104 +1,151 @@
-from datetime import date
+import logging
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.db.models import ProtectedError
 
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.finances.models import Expense, Installment
+
+
+logger = logging.getLogger(__name__)
 
 
 class InstallmentService:
     """
-    Orquestrador de parcelas.
-    Garante que a matemática financeira nunca minta para o Planner.
+    Camada de serviço para orquestração de Parcelas.
+    Garante o isolamento multitenant e a integridade da Tolerância Zero (ADR-010)
+    nas despesas pai.
     """
-
-    @staticmethod
-    def _determine_status(due_date, paid_date) -> str:
-        """Lógica centralizada para definição de status."""
-        if paid_date:
-            return Installment.StatusChoices.PAID
-        if due_date < date.today():
-            return Installment.StatusChoices.OVERDUE
-        return Installment.StatusChoices.PENDING
 
     @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Installment:
-        """
-        Cria uma parcela e valida se ela não quebra a integridade da despesa.
-        """
-        expense_uuid = data.pop("expense", None)
+        logger.info(f"Iniciando criação de Parcela para planner_id={user.id}")
 
-        # 1. SEGURANÇA: Busca a despesa garantindo que o Planner é o dono.
-        try:
-            expense = Expense.objects.all().for_user(user).get(uuid=expense_uuid)
-        except Expense.DoesNotExist:
-            raise ValidationError({
-                "expense": "Despesa não encontrada ou acesso negado."
-            }) from Expense.DoesNotExist
+        # 1. Resolução Segura de Dependências
+        expense_input = data.pop("expense", None)
+        if isinstance(expense_input, Expense):
+            expense = expense_input
+        else:
+            try:
+                expense = Expense.objects.all().for_user(user).get(uuid=expense_input)
+            except Expense.DoesNotExist as e:
+                logger.warning(
+                    f"Tentativa de uso de despesa inválida/negada: {expense_input}"
+                )
+                raise BusinessRuleViolation(
+                    detail="Despesa não encontrada ou acesso negado.",
+                    code="expense_not_found_or_denied",
+                ) from e
 
-        # 2. Injeção de Contexto e Status
-        data["planner"] = user
-        data["wedding"] = expense.wedding
-        data["expense"] = expense
-        data["status"] = InstallmentService._determine_status(
-            data.get("due_date"), data.get("paid_date")
+        # 2. Injeção de Contexto e Instanciação
+        # NOTA: O cálculo de status (OVERDUE, PENDING, PAID) foi expulso do Service.
+        # Ele DEVE estar no método clean() do Model Installment.
+        installment = Installment(
+            planner=user, wedding=expense.wedding, expense=expense, **data
         )
 
-        # 3. Criação
-        installment = Installment(**data)
-
-        # 4. VALIDAÇÃO ADR-010: O full_clean da despesa vai checar se a soma
-        # agora bate (ou ainda não bate) com o valor total.
-        # NOTA: Se o seu sistema exige que a soma bata SEMPRE, você não pode criar
-        # parcelas uma a uma. Você precisa criá-las em lote.
+        # 3. Validação Estrita da Parcela
         installment.full_clean()
         installment.save()
 
-        # Forçamos a revalidação da despesa pai
-        expense.full_clean()
+        # 4. Checagem de Ricochete (Tolerância Zero)
+        # O full_clean() da Despesa verifica se a matemática global foi quebrada.
+        try:
+            expense.full_clean()
+        except DjangoValidationError as e:
+            logger.error(
+                f"Criação de parcela violou Tolerância Zero da despesa "
+                f"uuid={expense.uuid}"
+            )
+            raise BusinessRuleViolation(
+                detail=(
+                    "A criação desta parcela gera uma inconsistência matemática "
+                    "na despesa total (ADR-010). O valor das parcelas deve bater "
+                    "exatamente com o total."
+                ),
+                code="expense_math_violation",
+            ) from e
 
+        logger.info(f"Parcela criada com sucesso: uuid={installment.uuid}")
         return installment
 
     @staticmethod
     @transaction.atomic
     def update(instance: Installment, user, data: dict) -> Installment:
-        """
-        Atualiza a parcela e revalida o teto da Expense.
-        """
-        # Proteção de campos imutáveis
+        logger.info(
+            f"Atualizando Parcela uuid={instance.uuid} por planner_id={user.id}"
+        )
+
+        # Proteção de campos estruturais
         data.pop("expense", None)
         data.pop("wedding", None)
         data.pop("planner", None)
 
-        if "due_date" in data or "paid_date" in data:
-            due = data.get("due_date", instance.due_date)
-            paid = data.get("paid_date", instance.paid_date)
-            instance.status = InstallmentService._determine_status(due, paid)
-
         for field, value in data.items():
             setattr(instance, field, value)
+
+        # Status auto-update deve ser garantido pelo Model (clean/save).
 
         instance.full_clean()
         instance.save()
 
-        # Revalidação de Tolerância Zero na Despesa
-        instance.expense.full_clean()
+        # Revalidação da Despesa Pai (Tolerância Zero)
+        try:
+            instance.expense.full_clean()
+        except DjangoValidationError as e:
+            logger.error(
+                f"Atualização de parcela quebrou Tolerância Zero na despesa "
+                f"uuid={instance.expense.uuid}"
+            )
+            raise BusinessRuleViolation(
+                detail="A atualização desta parcela viola as regras matemáticas da "
+                "despesa (ADR-010).",
+                code="expense_math_violation",
+            ) from e
 
+        logger.info(f"Parcela uuid={instance.uuid} atualizada com sucesso.")
         return instance
 
     @staticmethod
     @transaction.atomic
     def delete(user, instance: Installment) -> None:
-        """
-        Deleção com trava de segurança financeira.
-        """
+        logger.info(
+            f"Tentativa de deleção da Parcela uuid={instance.uuid} "
+            f"por planner_id={user.id}"
+        )
         expense = instance.expense
 
-        # Se a despesa exige soma exata (ADR-010), deletar uma parcela
-        # sem deletar a despesa ou ajustar o valor total é um erro.
-        instance.delete()
+        try:
+            instance.delete()
 
-        # Se após a deleção a despesa ficar inconsistente, o full_clean explode.
-        # O atomic garante que a deleção sofra rollback.
-        expense.full_clean()
+            # Checagem de Ricochete após deleção
+            expense.full_clean()
+
+            logger.warning(
+                f"Parcela uuid={instance.uuid} DESTRUÍDA por planner_id={user.id}"
+            )
+
+        except DjangoValidationError as e:
+            logger.error(
+                f"Deleção de parcela quebrou integridade matemática da despesa "
+                f"uuid={expense.uuid}"
+            )
+            # Graças ao @transaction.atomic, se cair aqui, o delete da parcela é anulado
+            # (rollback).
+            raise DomainIntegrityError(
+                detail=(
+                    "Não é possível apagar esta parcela isoladamente pois isso "
+                    "quebra a soma exata da despesa (ADR-010). Ajuste as "
+                    "outras parcelas ou a despesa simultaneamente."
+                ),
+                code="installment_deletion_math_error",
+            ) from e
+
+        except ProtectedError as e:
+            logger.error(f"Falha estrutural ao deletar parcela uuid={instance.uuid}")
+            raise DomainIntegrityError(
+                detail="Não é possível apagar esta parcela no momento.",
+                code="installment_protected_error",
+            ) from e

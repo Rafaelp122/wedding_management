@@ -1,103 +1,162 @@
-from django.core.exceptions import ValidationError
-from django.db import transaction
+import logging
 
+from django.db import transaction
+from django.db.models import ProtectedError
+
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.finances.models import BudgetCategory, Expense
 from apps.logistics.models import Contract
 
 
+logger = logging.getLogger(__name__)
+
+
 class ExpenseService:
     """
-    Orquestrador de lógica financeira para Despesas.
-    Garante que gastos reais respeitem o contexto do casamento e os contratos assinados.
+    Camada de serviço para orquestração de Despesas.
+    Garante que gastos reais respeitem o contexto do casamento, os contratos
+    e assegura a rastreabilidade estrita da operação.
     """
 
     @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Expense:
-        """
-        Cria uma despesa garantindo herança de contexto e posse.
-        """
-        # 1. Recuperamos a categoria pai com segurança multitenant
-        category_uuid = data.pop("category", None)
-        try:
-            category = (
-                BudgetCategory.objects.all().for_user(user).get(uuid=category_uuid)
-            )
-        except BudgetCategory.DoesNotExist:
-            raise ValidationError({
-                "category": "Categoria não encontrada ou acesso negado."
-            }) from BudgetCategory.DoesNotExist
+        logger.info(f"Iniciando criação de Despesa para planner_id={user.id}")
 
-        # 2. Tratamento de Contrato (Opcional)
-        contract = None
-        contract_uuid = data.pop("contract", None)
-        if contract_uuid:
+        # 1. Resolução Segura de Categoria (Suporta Instância ou UUID)
+        category_input = data.pop("category", None)
+
+        if isinstance(category_input, BudgetCategory):
+            category = category_input
+        else:
             try:
-                # O for_user garante que o Planner não use contrato de outro casamento
-                contract = Contract.objects.all().for_user(user).get(uuid=contract_uuid)
-            except Contract.DoesNotExist:
-                raise ValidationError({
-                    "contract": "Contrato não encontrado ou acesso negado."
-                }) from Contract.DoesNotExist
+                category = (
+                    BudgetCategory.objects.all().for_user(user).get(uuid=category_input)
+                )
+            except BudgetCategory.DoesNotExist as e:
+                logger.warning(
+                    f"Tentativa de uso de categoria inválida/negada: {category_input}"
+                )
+                raise BusinessRuleViolation(
+                    detail="Categoria não encontrada ou acesso negado.",
+                    code="budget_category_not_found_or_denied",
+                ) from e
 
-        # 3. Injeção de Contexto e Posse (ADR-009)
-        data["planner"] = user
-        data["wedding"] = category.wedding
-        data["category"] = category
-        data["contract"] = contract
+        # 2. Resolução de Contrato (Opcional)
+        contract = None
+        contract_input = data.pop("contract", None)
 
-        # 4. Instanciação e Validação de Negócio
-        expense = Expense(**data)
+        if contract_input:
+            if isinstance(contract_input, Contract):
+                contract = contract_input
+            else:
+                try:
+                    contract = (
+                        Contract.objects.all().for_user(user).get(uuid=contract_input)
+                    )
+                except Contract.DoesNotExist as e:
+                    logger.warning(
+                        f"Tentativa de uso de contrato inválido/negado: "
+                        f"{contract_input}"
+                    )
+                    raise BusinessRuleViolation(
+                        detail="Contrato não encontrado ou acesso negado.",
+                        code="contract_not_found_or_denied",
+                    ) from e
 
-        # O full_clean() disparará:
-        # - WeddingOwnedMixin: Valida se Categoria e Contrato são do mesmo Wedding.
-        # - Expense.clean(): Valida se o valor da despesa bate com o contrato assinado.
+        # 3. Injeção de Contexto (ADR-009) e Instanciação
+        expense = Expense(
+            planner=user,
+            wedding=category.wedding,
+            category=category,
+            contract=contract,
+            **data,
+        )
+
+        # 4. Validação Estrita no Model
+        # WeddingOwnedMixin validará se a Categoria e o Contrato pertencem ao mesmo
+        # Wedding.
+        # Expense.clean() validará se o valor não entra em conflito com o
+        # Contrato.
         expense.full_clean()
         expense.save()
+
+        logger.info(f"Despesa criada com sucesso: uuid={expense.uuid}")
         return expense
 
     @staticmethod
     @transaction.atomic
     def update(instance: Expense, user, data: dict) -> Expense:
-        """
-        Atualiza a despesa protegendo a integridade dos vínculos.
-        """
-        # Bloqueamos a troca de Casamento, Dono ou Categoria pai via API
+        logger.info(
+            f"Atualizando Despesa uuid={instance.uuid} por planner_id={user.id}"
+        )
+
+        # Bloqueio de sequestro de contexto
         data.pop("planner", None)
         data.pop("wedding", None)
         data.pop("category", None)
 
-        # Se houver troca de contrato, validamos o acesso ao novo
+        # Tratamento de troca ou desvinculação de contrato
         if "contract" in data:
-            contract_uuid = data.pop("contract")
-            if contract_uuid:
-                try:
-                    instance.contract = (
-                        Contract.objects.all().for_user(user).get(uuid=contract_uuid)
-                    )
-                except Contract.DoesNotExist:
-                    raise ValidationError({
-                        "contract": "Contrato inválido ou acesso negado."
-                    }) from Contract.DoesNotExist
+            contract_input = data.pop("contract")
+            if contract_input:
+                if isinstance(contract_input, Contract):
+                    instance.contract = contract_input
+                else:
+                    try:
+                        instance.contract = (
+                            Contract.objects.all()
+                            .for_user(user)
+                            .get(uuid=contract_input)
+                        )
+                    except Contract.DoesNotExist as e:
+                        raise BusinessRuleViolation(
+                            detail="Contrato inválido ou acesso negado.",
+                            code="contract_not_found_or_denied",
+                        ) from e
             else:
                 instance.contract = None
 
-        # Atualização dinâmica de campos (description, estimated_amount, actual_amount)
+        # Atualização dinâmica dos campos
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # Revalida as regras de Tolerância Zero e Consistência de Contrato
+        # Se o utilizador alterar o 'actual_amount' da despesa, e esta já tiver
+        # parcelas (Installments) pagas, o full_clean() DEVE ser programado no Model
+        # para explodir e bloquear a ação se violar a Tolerância Zero
+        # (ADR-010).
         instance.full_clean()
         instance.save()
+
+        logger.info(f"Despesa uuid={instance.uuid} atualizada com sucesso.")
         return instance
 
     @staticmethod
     @transaction.atomic
     def delete(user, instance: Expense) -> None:
-        """
-        Deleção real (Hard Delete).
-        Como removemos o Soft Delete, o banco limpa as parcelas via CASCADE.
-        """
-        # Se você definiu on_delete=models.CASCADE nas Installments (Parcelas),
-        # a deleção da despesa limpará o financeiro automaticamente.
-        instance.delete()
+        logger.info(
+            f"Tentativa de deleção da Despesa uuid={instance.uuid} "
+            f"por planner_id={user.id}"
+        )
+
+        try:
+            instance.delete()
+            logger.warning(
+                f"Despesa uuid={instance.uuid} DESTRUÍDA por planner_id={user.id}"
+            )
+
+        except ProtectedError as e:
+            # Mesmo que penses que as parcelas têm CASCADE, a rede de segurança
+            # é obrigatória. Amanhã alguém muda o Model para PROTECT e o teu código
+            # rebenta.
+            logger.error(
+                f"Falha de integridade ao deletar Despesa uuid={instance.uuid}"
+            )
+            raise DomainIntegrityError(
+                detail=(
+                    "Não é possível apagar esta despesa. Verifique se existem "
+                    "registos financeiros ou pagamentos processados que "
+                    "bloqueiem a exclusão."
+                ),
+                code="expense_protected_error",
+            ) from e
