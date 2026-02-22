@@ -7,7 +7,6 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from django.contrib.messages import constants as messages
 from dotenv import load_dotenv
 
 
@@ -58,6 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "apps.core.middleware.RequestIDMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -192,17 +192,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Message tags (Bootstrap compatible)
-MESSAGE_TAGS = {
-    messages.DEBUG: "secondary",
-    messages.INFO: "info",
-    messages.SUCCESS: "success",
-    messages.WARNING: "warning",
-    messages.ERROR: "danger",
-}
-
 # Django REST Framework
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "apps.core.exception_handler.custom_exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -236,16 +228,18 @@ SPECTACULAR_SETTINGS = {
         {"url": "http://localhost:8000", "description": "Development"},
     ],
     "TAGS": [
-        {"name": "Authentication", "description": "Autenticação JWT"},
-        {"name": "Users", "description": "Gestão de usuários"},
-        {"name": "Weddings", "description": "Gestão de casamentos"},
-        {"name": "Budget", "description": "Orçamento e finanças (RF03/RF04/RF05)"},
-        {"name": "Items", "description": "Itens e logística (RF06/RF07)"},
+        {"name": "auth", "description": "Tokens de acesso e renovação (JWT)"},
+        {"name": "Users", "description": "Gestão de perfis e usuários (RF02)"},
+        {"name": "Weddings", "description": "Gestão do Casamento (Core)"},
         {
-            "name": "Contracts",
-            "description": "Contratos e assinaturas (RF08/RF09/RF10)",
+            "name": "Finances",
+            "description": "Orçamentos, Despesas e Fluxo de Caixa (RF03/04/05)",
         },
-        {"name": "Scheduler", "description": "Agenda e eventos (RF11/RF12)"},
+        {
+            "name": "Logistics",
+            "description": "Fornecedores, Contratos e Itens (RF06-RF10)",
+        },
+        {"name": "Scheduler", "description": "Agenda e Eventos (RF11/12)"},
     ],
     "CONTACT": {
         "name": "Wedding Management Team",
@@ -260,22 +254,32 @@ SPECTACULAR_SETTINGS = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "request_id": {
+            "()": "apps.core.logging.RequestIDFilter",
+        },
+    },
     "formatters": {
-        "verbose": {
-            "format": "[{levelname}] {asctime} {name} - {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(levelname)s %(asctime)s %(request_id)s %(name)s %(module)s %(funcName)s %(message)s",  # noqa
+            "datefmt": "%Y-%m-%dT%H:%M:%SZ",
+        },
+        "pretty": {
+            "format": "[\033[1;32m%(asctime)s\033[0m] %(levelname)s [\033[1;35m%(request_id)s\033[0m] [\033[1;34m%(name)s:%(funcName)s\033[0m] %(message)s",  # noqa
+            "datefmt": "%H:%M:%S",
         },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            "formatter": "pretty" if DEBUG else "json",
+            "filters": ["request_id"],
         },
     },
     "root": {
         "handlers": ["console"],
-        "level": "INFO",
+        "level": os.getenv("LOG_LEVEL", "INFO"),
     },
     "loggers": {
         "django": {
@@ -283,5 +287,11 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "wedding_management": {
+            "handlers": ["console"],
+            "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": False,
+        },
+        "urllib3": {"level": "WARNING"},
     },
 }
