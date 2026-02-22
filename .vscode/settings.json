@@ -52,5 +52,14 @@
     "**/.pytest_cache": true,
     "**/.ruff_cache": true,
     "**/node_modules": true
-  }
+  },
+  "python.testing.pytestArgs": [
+    "backend",
+    "-n",
+    "auto", // Roda em paralelo
+    "--nomigrations", // Pula as migrations (muito mais rápido)
+    "--reuse-db" // Reaproveita o banco se não for em memória
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }

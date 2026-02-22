@@ -4,6 +4,7 @@ Development configuration.
 """
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -112,6 +113,13 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT", os.getenv("DATABASE_PORT", "")),
     }
 }
+
+# SQLite para usar com a interface do vscode
+if "test" in sys.argv or "pytest" in sys.modules:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

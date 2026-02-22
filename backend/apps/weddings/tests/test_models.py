@@ -19,12 +19,12 @@ class TestWeddingModelMetadata:
         RF: O método __str__ deve retornar 'Groom & Bride'.
         """
         # 1. Setup com nomes fixos
-        wedding = WeddingFactory(groom_name="Rafael", bride_name="Beatriz")
+        wedding = Wedding(groom_name="Diogo", bride_name="Laura")
 
         # 2. Asserção do método mágico __str__
-        assert str(wedding) == "Rafael & Beatriz"
+        assert str(wedding) == "Diogo & Laura"
 
-    def test_wedding_ordering_by_date_descending(self):
+    def test_wedding_ordering_by_date_descending(self, user):
         """
         RF: A ordenação padrão deve ser pela data mais futura primeiro (-date).
         """
@@ -32,13 +32,13 @@ class TestWeddingModelMetadata:
         today = date.today()
 
         # Casamento mais distante (deve ser o 1º da lista)
-        w_future = WeddingFactory(date=today + timedelta(days=60))
+        w_future = WeddingFactory(planner=user, date=today + timedelta(days=60))
 
         # Casamento intermediário (deve ser o 2º)
-        w_mid = WeddingFactory(date=today + timedelta(days=30))
+        w_mid = WeddingFactory(planner=user, date=today + timedelta(days=30))
 
         # Casamento mais próximo (deve ser o 3º)
-        w_soon = WeddingFactory(date=today + timedelta(days=5))
+        w_soon = WeddingFactory(planner=user, date=today + timedelta(days=5))
 
         # 2. Execução: Buscar todos
         # Como definimos ordering = ["-date"] no Meta, o Django já deve sortear
@@ -62,8 +62,13 @@ class TestWeddingDateValidator:
     def test_wedding_date_future_passes(self, user):
         """Garante que data no futuro passa."""
         future_date = timezone.now().date() + timedelta(days=30)
-        # Passamos o planner=user para evitar o erro de 'campo nulo'
-        wedding = WeddingFactory.build(planner=user, date=future_date)
+        wedding = Wedding(
+            planner=user,
+            date=future_date,
+            groom_name="Noivo Teste",
+            bride_name="Noiva Teste",
+            location="Local Teste",
+        )
         wedding.full_clean()  # Se não levantar erro, passou!
 
     def test_wedding_date_today_passes(self, user):
@@ -118,8 +123,13 @@ class TestWeddingBusinessRules:
         """
         # Daqui a um ano
         future_date = timezone.now().date() + timedelta(days=365)
-        wedding = WeddingFactory.build(
-            planner=user, date=future_date, status=Wedding.StatusChoices.COMPLETED
+        wedding = Wedding(
+            planner=user,
+            date=future_date,
+            status=Wedding.StatusChoices.COMPLETED,
+            groom_name="X",
+            bride_name="Y",
+            location="Z",
         )
 
         with pytest.raises(ValidationError) as excinfo:
