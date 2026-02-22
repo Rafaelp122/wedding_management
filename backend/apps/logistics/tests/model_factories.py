@@ -14,11 +14,11 @@ Destaques Técnicos:
 from decimal import Decimal
 
 import factory
+from django.utils import timezone
 
-from apps.finances.tests.model_factories import ExpenseFactory
 from apps.logistics.models import Contract, Item, Supplier
 from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.model_factories import WeddingFactory
+from apps.weddings.tests.factories import WeddingFactory
 
 
 class SupplierFactory(factory.django.DjangoModelFactory):
@@ -28,7 +28,7 @@ class SupplierFactory(factory.django.DjangoModelFactory):
         model = Supplier
 
     # Supplier herda de PlannerOwnedMixin, portanto pertence a um User (Planner)
-    user = factory.SubFactory(UserFactory)
+    planner = factory.SubFactory(UserFactory)
 
     name = factory.Faker("company")
     cnpj = factory.LazyAttribute(
@@ -50,30 +50,44 @@ class SupplierFactory(factory.django.DjangoModelFactory):
 
 
 class ContractFactory(factory.django.DjangoModelFactory):
-    """
-    Fábrica para Contratos de Serviço.
-    Garante que o fornecedor e o casamento pertençam ao mesmo Planner.
-    """
-
     class Meta:
         model = Contract
 
-    wedding = factory.SubFactory(WeddingFactory)
+    wedding = factory.SubFactory("apps.weddings.tests.factories.WeddingFactory")
 
-    # O Supplier deve pertencer ao Planner do Wedding para manter a consistência
+    # Sincroniza o planner do fornecedor com o do casamento
     supplier = factory.SubFactory(
-        SupplierFactory, user=factory.SelfAttribute("..wedding.planner")
+        "apps.logistics.tests.model_factories.SupplierFactory",
+        planner=factory.SelfAttribute("..wedding.planner"),
     )
 
-    # Opcional: vincula a uma despesa do mesmo casamento
-    expense = factory.SubFactory(
-        ExpenseFactory, wedding=factory.SelfAttribute("..wedding")
-    )
-
-    contract_number = factory.Sequence(lambda n: f"CT-{2026}-{n:04d}")
-    service_description = factory.Faker("paragraph")
+    # Corrigido: Nome do campo no model é 'description'
+    description = factory.Faker("paragraph")
     total_amount = Decimal("5000.00")
+
+    # Se usar SIGNED, precisamos satisfazer o clean() do Model
     status = Contract.StatusChoices.SIGNED
+    signed_date = factory.LazyFunction(timezone.now)
+
+    # Gera um arquivo PDF fake para passar na validação do clean()
+    pdf_file = factory.django.FileField(
+        filename="contrato_fake.pdf", content=b"fake content"
+    )
+
+    # Mantemos o RelatedFactory para a Expense (Despesa)
+    # factory_related_name="contract" vincula a Expense ao Contract criado aqui
+    expense_rel = factory.RelatedFactory(
+        "apps.finances.tests.model_factories.ExpenseFactory",
+        factory_related_name="contract",
+        # Forçamos a despesa a usar o MESMO wedding do contrato
+        wedding=factory.SelfAttribute("..wedding"),
+        estimated_amount=factory.SelfAttribute("..total_amount"),
+        actual_amount=factory.SelfAttribute("..total_amount"),
+    )
+
+    # Campos adicionais do modelo
+    expiration_date = factory.Faker("future_date")
+    alert_days_before = 30
 
 
 class ItemFactory(factory.django.DjangoModelFactory):

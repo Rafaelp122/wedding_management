@@ -17,7 +17,7 @@ from decimal import Decimal
 import factory
 
 from apps.finances.models import Budget, BudgetCategory, Expense, Installment
-from apps.weddings.tests.model_factories import WeddingFactory
+from apps.weddings.tests.factories import WeddingFactory
 
 
 class BudgetFactory(factory.django.DjangoModelFactory):
@@ -27,7 +27,8 @@ class BudgetFactory(factory.django.DjangoModelFactory):
         model = Budget
 
     wedding = factory.SubFactory(WeddingFactory)
-    total_budget = Decimal("50000.00")
+    # agora o campo chama-se total_estimated conforme o modelo
+    total_estimated = Decimal("50000.00")
 
 
 class BudgetCategoryFactory(factory.django.DjangoModelFactory):
@@ -36,8 +37,16 @@ class BudgetCategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BudgetCategory
 
-    wedding = factory.SubFactory(WeddingFactory)
-    name = factory.Faker("commerce_department")
+    budget = factory.SubFactory("apps.finances.tests.model_factories.BudgetFactory")
+    wedding = factory.LazyAttribute(lambda o: o.budget.wedding)
+    name = factory.Iterator([
+        "Buffet",
+        "Decoração",
+        "Fotografia",
+        "Música",
+        "Espaço",
+        "Convites",
+    ])
     allocated_budget = Decimal("5000.00")
 
 
@@ -50,16 +59,25 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Expense
 
-    wedding = factory.SubFactory(WeddingFactory)
+    # Se a despesa for criada sozinha, ela cria um contrato (que cria um wedding)
+    contract = factory.SubFactory("apps.logistics.tests.factories.ContractFactory")
 
-    # Garante que a categoria use o mesmo wedding da despesa
+    # Sincronização automática:
+    # Tenta pegar o wedding do contrato; se não existir, usa o que foi passado.
+    wedding = factory.SelfAttribute("..contract.wedding")
+
+    # Garante que a categoria também pertença ao mesmo orçamento/casamento
     category = factory.SubFactory(
-        BudgetCategoryFactory, wedding=factory.SelfAttribute("..wedding")
+        "apps.finances.tests.model_factories.BudgetCategoryFactory",
+        budget=factory.SelfAttribute("..wedding.budget"),
     )
 
-    name = factory.Faker("commerce_product")
     actual_amount = Decimal("1000.00")
     description = factory.Faker("sentence")
+
+    estimated_amount = factory.Faker(
+        "pydecimal", left_digits=5, right_digits=2, positive=True
+    )
 
 
 class InstallmentFactory(factory.django.DjangoModelFactory):

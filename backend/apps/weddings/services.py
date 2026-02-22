@@ -27,7 +27,8 @@ class WeddingService:
         )
 
         # 1. Extração de campos virtuais (não pertencem ao modelo Wedding)
-        total_budget = data.pop("total_budget", None)
+        # o frontend envia "total_estimated" mas o modelo Wedding não o possui
+        total_estimated = data.pop("total_estimated", None)
 
         # 2. Instanciação e Validação do Casamento
         wedding = Wedding(planner=user, **data)
@@ -37,7 +38,8 @@ class WeddingService:
         # 3. Orquestração Financeira: Criar Orçamento Mestre
         # Passamos a instância 'wedding' diretamente para evitar queries extras
         budget = BudgetService.create(
-            user=user, data={"wedding": wedding, "total_estimated": total_budget or 0}
+            user=user,
+            data={"wedding": wedding, "total_estimated": total_estimated or 0},
         )
 
         # 4. Orquestração Financeira: Gerar Categorias Padrão (Blueprint)
@@ -56,8 +58,8 @@ class WeddingService:
             f"Atualizando casamento uuid={instance.uuid} por planner_id={user.id}"
         )
 
-        # Defesa contra campos que não devem ser editados por este endpoint
-        data.pop("total_budget", None)
+        # Defesa contra campos financeiros que não pertencem ao Wedding
+        data.pop("total_estimated", None)
         data.pop("planner", None)
 
         for field, value in data.items():

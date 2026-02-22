@@ -32,7 +32,7 @@ def budget_setup(db, budget_factory, budget_category_factory):
     Fixture que prepara um cenário financeiro básico:
     Um orçamento com uma categoria já alocada.
     """
-    budget = budget_factory.create(total_budget=Decimal("30000.00"))
+    budget = budget_factory.create(total_estimated=Decimal("30000.00"))
     category = budget_category_factory.create(
         wedding=budget.wedding, name="Decoração", allocated_budget=Decimal("5000.00")
     )

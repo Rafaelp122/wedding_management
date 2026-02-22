@@ -17,7 +17,7 @@ import factory
 from django.utils import timezone
 
 from apps.scheduler.models import Event
-from apps.weddings.tests.model_factories import WeddingFactory
+from apps.weddings.tests.factories import WeddingFactory
 
 
 class EventFactory(factory.django.DjangoModelFactory):

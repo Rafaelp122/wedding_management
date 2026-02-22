@@ -92,4 +92,3 @@ class Contract(BaseModel, WeddingOwnedMixin):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-        super().save(*args, **kwargs)

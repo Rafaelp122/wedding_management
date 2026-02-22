@@ -127,7 +127,6 @@ class BudgetCategoryService:
             # Reutilizamos a lógica de criação para garantir que
             # as validações de posse (planner/wedding) são aplicadas.
             BudgetCategory.objects.create(
-                planner=user,
                 wedding=wedding,
                 budget=budget,
                 name=cat_data["name"],

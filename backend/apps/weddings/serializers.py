@@ -7,7 +7,7 @@ from .models import Wedding
 
 
 class WeddingSerializer(BaseSerializer):
-    total_budget = serializers.DecimalField(
+    total_estimated = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
         write_only=True,
@@ -26,5 +26,5 @@ class WeddingSerializer(BaseSerializer):
             "location",
             "expected_guests",
             "status",
-            "total_budget",
+            "total_estimated",
         ]

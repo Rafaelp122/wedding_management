@@ -6,6 +6,11 @@ from apps.core.models import BaseModel
 from apps.users.models import User
 
 
+def validate_future_date(value):
+    if value < timezone.now().date():
+        raise ValidationError("A data do casamento não pode ser no passado.")
+
+
 class Wedding(BaseModel):
     class StatusChoices(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "Em Andamento"
@@ -15,7 +20,7 @@ class Wedding(BaseModel):
     planner = models.ForeignKey(User, on_delete=models.CASCADE)
     groom_name = models.CharField(max_length=100)
     bride_name = models.CharField(max_length=100)
-    date = models.DateField()
+    date = models.DateField(validators=[validate_future_date])
     location = models.CharField(max_length=255)
     expected_guests = models.PositiveIntegerField(
         null=True,
