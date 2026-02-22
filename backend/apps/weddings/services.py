@@ -1,57 +1,99 @@
+import logging
+
 from django.db import transaction
+from django.db.models import ProtectedError
+
+from apps.core.exceptions import DomainIntegrityError
+from apps.finances.services.budget_category_service import BudgetCategoryService
+from apps.finances.services.budget_service import BudgetService
 
 from .models import Wedding
+
+
+logger = logging.getLogger(__name__)
 
 
 class WeddingService:
     """
     Camada de serviço para gerenciar a lógica de negócio de casamentos.
-    Focada em multitenancy e integridade real de dados.
+    Orquestra a criação atómica do ecossistema inicial (Wedding + Budget + Categories).
     """
 
     @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Wedding:
-        """
-        Cria um novo casamento vinculado ao Planner autenticado.
-        """
-        # Injetamos o planner diretamente do contexto da request,
-        # garantindo que ninguém crie casamentos para outros.
-        data["planner"] = user
+        logger.info(
+            f"Iniciando criação atómica de ecossistema para planner_id={user.id}"
+        )
 
-        wedding = Wedding.objects.create(**data)
+        # 1. Extração de campos virtuais (não pertencem ao modelo Wedding)
+        total_budget = data.pop("total_budget", None)
 
-        # ESPAÇO PARA EFEITOS COLATERAIS (MVP):
-        # 1. Criar orçamento base automático.
-        # 2. Criar categorias financeiras padrão (Buffet, Local, etc).
+        # 2. Instanciação e Validação do Casamento
+        wedding = Wedding(planner=user, **data)
+        wedding.full_clean()
+        wedding.save()
 
+        # 3. Orquestração Financeira: Criar Orçamento Mestre
+        # Passamos a instância 'wedding' diretamente para evitar queries extras
+        budget = BudgetService.create(
+            user=user, data={"wedding": wedding, "total_estimated": total_budget or 0}
+        )
+
+        # 4. Orquestração Financeira: Gerar Categorias Padrão (Blueprint)
+        BudgetCategoryService.setup_defaults(user=user, wedding=wedding, budget=budget)
+
+        logger.info(
+            f"Casamento criado com sucesso: uuid={wedding.uuid} com Orçamento e "
+            f"Categorias."
+        )
         return wedding
 
     @staticmethod
     @transaction.atomic
     def update(instance: Wedding, user, data: dict) -> Wedding:
-        """
-        Atualiza os dados de um casamento existente.
-        """
-        # O multitenancy já foi garantido pelo for_user no ViewSet,
-        # então 'instance' já pertence a 'user'.
+        logger.info(
+            f"Atualizando casamento uuid={instance.uuid} por planner_id={user.id}"
+        )
+
+        # Defesa contra campos que não devem ser editados por este endpoint
+        data.pop("total_budget", None)
+        data.pop("planner", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # O full_clean() garante que validações de negócio do Model (ADR-009)
-        # sejam respeitadas antes de salvar.
+        # Validação estrita (regras de negócio do Model)
         instance.full_clean()
         instance.save()
+
+        logger.info(f"Casamento uuid={instance.uuid} atualizado.")
         return instance
 
     @staticmethod
     @transaction.atomic
     def delete(user, instance: Wedding) -> None:
-        """
-        Executa a deleção real (Hard Delete) do casamento.
-        Como removemos o Soft Delete, o Django cuidará do CASCADE real.
-        """
-        # Se você definiu PROTECT em alguma relação (ex: Contratos com pagamentos),
-        # o Django impedirá a deleção aqui, protegendo a integridade financeira.
-        instance.delete()
+        logger.info(
+            f"Tentativa de deleção do casamento uuid={instance.uuid} por "
+            f"planner_id={user.id}"
+        )
+
+        try:
+            # O Django cuidará do CASCADE para o Budget e Categorias,
+            # a menos que haja PROTECT em contratos/despesas.
+            instance.delete()
+            logger.warning(
+                f"Casamento uuid={instance.uuid} e dependências removidos por "
+                f"planner_id={user.id}"
+            )
+
+        except ProtectedError as e:
+            logger.error(
+                f"Falha de integridade: Casamento uuid={instance.uuid} protegido por "
+                f"contratos/despesas."
+            )
+            raise DomainIntegrityError(
+                detail="Não é possível apagar este casamento pois existem contratos ou "
+                "despesas vinculadas a ele.",
+                code="wedding_protected_error",
+            ) from e

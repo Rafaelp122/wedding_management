@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 from apps.core.models import BaseModel
 from apps.users.models import User
@@ -43,8 +45,6 @@ class Wedding(BaseModel):
     def clean(self):
         """Validações de negócio."""
         super().clean()
-        from django.core.exceptions import ValidationError
-        from django.utils import timezone
 
         if self.status == self.StatusChoices.COMPLETED:
             if self.date > timezone.now().date():
