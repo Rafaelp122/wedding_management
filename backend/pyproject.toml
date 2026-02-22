@@ -64,14 +64,22 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# Adicionada a regra 'B' explicitamente para pegar o erro B904
-select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ"]
-# I001 é o organize imports, não ignore se você quer que ele organize ao salvar!
+
+select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ", "S"]
 ignore = ["E203", "RUF012"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["apps", "config"]
 lines-after-imports = 2
+
+[tool.ruff.lint.per-file-ignores]
+# Ignora regras específicas em arquivos de teste
+"**/tests/*" = [
+    "S101", # Permite o uso de 'assert' (obrigatório em testes)
+    "S105", # Permite strings que pareçam senhas (hardcoded passwords)
+    "S106", # Permite senhas em argumentos de funções
+]
+"**/factories.py" = ["S105", "S106"]
 
 [tool.ruff.format]
 quote-style = "double"
