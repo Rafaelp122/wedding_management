@@ -12,7 +12,7 @@ considere mover o registo das factories para o conftest.py da raiz.
 import pytest
 from pytest_factoryboy import register
 
-from .model_factories import CompletedWeddingFactory, WeddingFactory
+from .factories import CompletedWeddingFactory, WeddingFactory
 
 
 # Regista as factories como fixtures injetáveis (ex: wedding_factory)

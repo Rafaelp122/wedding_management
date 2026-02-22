@@ -18,6 +18,19 @@ from apps.users.tests.factories import UserFactory
 from apps.weddings.models import Wedding
 
 
+class WeddingPayloadFactory(factory.Factory):
+    """Gera o dicionário exato que o Frontend enviaria no POST."""
+
+    class Meta:
+        model = dict  # Esta factory gera dicionários, não modelos
+
+    bride_name = factory.Faker("first_name_female")
+    groom_name = factory.Faker("first_name_male")
+    date = factory.Faker("future_date")
+    location = factory.Faker("address")
+    total_estimated = factory.Iterator([50000, 100000, 150000])
+
+
 class WeddingFactory(factory.django.DjangoModelFactory):
     """
     Fábrica para o modelo Wedding.
@@ -41,6 +54,11 @@ class WeddingFactory(factory.django.DjangoModelFactory):
 
     # Status inicial padrão conforme o modelo
     status = Wedding.StatusChoices.IN_PROGRESS
+
+    budget = factory.RelatedFactory(
+        "apps.finances.tests.model_factories.BudgetFactory",
+        factory_related_name="wedding",
+    )
 
 
 class CompletedWeddingFactory(WeddingFactory):
