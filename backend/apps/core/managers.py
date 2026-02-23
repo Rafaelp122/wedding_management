@@ -4,6 +4,10 @@ from django.db import models
 class BaseQuerySet(models.QuerySet):
     def for_user(self, user):
         """Filtra registos baseando-se na posse (Planner ou Wedding)."""
+        # Escudo contra AnonymousUser (usado pelo drf-spectacular) ---
+        if not user.is_authenticated:
+            return self.none()
+
         model = self.model
         field_names = [f.name for f in model._meta.get_fields()]
 

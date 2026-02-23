@@ -4,17 +4,28 @@ from rest_framework import serializers
 class BaseSerializer(serializers.ModelSerializer):
     """
     Serializer base para todos os models do sistema.
-
-    Seguindo o ADR-007:
-    - Expõe o 'uuid' como identificador público.
-    - Oculta o 'id' sequencial (BigInt) por segurança.
-    - Inclui timestamps automáticos como leitura.
     """
 
-    # Explicitamos o uuid para garantir que ele seja sempre read_only
     uuid = serializers.UUIDField(read_only=True)
 
     class Meta:
-        # Campos comuns a todos os modelos que herdam de BaseModel
         fields = ["uuid", "created_at", "updated_at"]
         read_only_fields = ["uuid", "created_at", "updated_at"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Pega o request do contexto do serializer
+        request = self.context.get("request")
+
+        # Se houver request e usuário instanciado
+        if request and hasattr(request, "user"):
+            user = request.user
+
+            # Percorre todos os campos deste serializer
+            for field in self.fields.items():
+                # Se for um campo de relacionamento (tem queryset)
+                if hasattr(field, "queryset") and field.queryset is not None:
+                    # Aplica o nosso filtro de multitenancy automaticamente!
+                    if hasattr(field.queryset, "for_user"):
+                        field.queryset = field.queryset.for_user(user)

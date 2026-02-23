@@ -7,6 +7,8 @@ from .models import Wedding
 
 
 class WeddingSerializer(BaseSerializer):
+    """Serializador para casamentos, incluindo dados básicos e orçamento inicial."""
+
     total_estimated = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,

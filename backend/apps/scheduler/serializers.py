@@ -34,16 +34,6 @@ class EventSerializer(BaseSerializer):
             "reminder_minutes_before",
         ]
 
-    def __init__(self, *args, **kwargs):
-        """
-        Sobrescreve o init para garantir que o planner só veja seus próprios casamentos.
-        """
-        super().__init__(*args, **kwargs)
-        if "request" in self.context:
-            user = self.context["request"].user
-            # Refinamento do multitenancy em tempo de execução para o campo wedding
-            self.fields["wedding"].queryset = Wedding.objects.filter(planner=user)
-
     def validate(self, data):
         """
         Executa validações cruzadas de campos (RF12).

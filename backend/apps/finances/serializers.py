@@ -27,13 +27,6 @@ class BudgetSerializer(BaseSerializer):
             "notes",
         ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "request" in self.context:
-            user = self.context["request"].user
-            # Refinamento do multitenancy em tempo de execução
-            self.fields["wedding"].queryset = Wedding.objects.filter(planner=user)
-
 
 class BudgetCategorySerializer(BaseSerializer):
     """
@@ -57,15 +50,6 @@ class BudgetCategorySerializer(BaseSerializer):
             "description",
             "allocated_budget",
         ]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "request" in self.context:
-            user = self.context["request"].user
-            self.fields["wedding"].queryset = Wedding.objects.filter(planner=user)
-            self.fields["budget"].queryset = Budget.objects.filter(
-                wedding__planner=user
-            )
 
 
 class ExpenseSerializer(BaseSerializer):
@@ -94,17 +78,6 @@ class ExpenseSerializer(BaseSerializer):
             "actual_amount",
         ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "request" in self.context:
-            user = self.context["request"].user
-            self.fields["category"].queryset = BudgetCategory.objects.filter(
-                wedding__planner=user
-            )
-            self.fields["contract"].queryset = Contract.objects.filter(
-                wedding__planner=user
-            )
-
 
 class InstallmentSerializer(BaseSerializer):
     """
@@ -128,11 +101,3 @@ class InstallmentSerializer(BaseSerializer):
             "notes",
         ]
         read_only_fields = [*BaseSerializer.Meta.read_only_fields, "status"]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "request" in self.context:
-            user = self.context["request"].user
-            self.fields["expense"].queryset = Expense.objects.filter(
-                wedding__planner=user
-            )

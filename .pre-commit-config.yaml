@@ -24,7 +24,7 @@ repos:
   # 2. QUALIDADE DE CÓDIGO PYTHON (Ruff)
   # ----------------------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.4
+    rev: v0.15.2
     hooks:
       - id: ruff
         args: [--fix] # Tenta corrigir erros automaticamente (ex: imports inúteis)
@@ -53,3 +53,32 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+
+  # ----------------------------------------------------------------------------
+  # 5. INTEGRIDADE OPENAPI
+  # ----------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: generate-openapi
+        name: Atualizar OpenAPI Schema
+        description: Gera o arquivo openapi.json atualizado usando o drf-spectacular.
+        # Usamos o caminho relativo ao backend para garantir que o arquivo seja salvo no lugar certo
+        entry: docker compose exec -T backend uv run python manage.py spectacular --file openapi.json
+        language: system
+        pass_filenames: false
+        files: ^backend/.*\.py$
+
+  # ----------------------------------------------------------------------------
+  # 6. SINCRONIZAÇÃO FRONTEND (Orval)
+  # ----------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: generate-orval
+        name: Sincronizar Orval
+        description: Gera os hooks do React Query sempre que o schema OpenAPI muda.
+        # -T é importante para não tentar abrir um terminal interativo no hook
+        entry: docker compose exec -T frontend npm run generate-api
+        language: system
+        pass_filenames: false
+        # Este hook só roda se o arquivo openapi.json tiver sido alterado
+        files: openapi.json
