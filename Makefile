@@ -330,7 +330,8 @@ setup-hooks:
 # ============================================================================
 orval:
 	@echo "🚀 Gerando hooks e tipos no Frontend (Orval)..."
-	$(EXEC_FRONT) npm run generate:api
+	# Entra no frontend e roda o orval (que lerá ../openapi.json)
+	cd frontend && npm run generate:api
 	@echo "✅ Frontend sincronizado com o Schema!"
 
 openapi:
@@ -338,7 +339,6 @@ openapi:
 	$(EXEC_BACK) uv run $(PYTHON) spectacular --file openapi.json
 	@echo "✅ openapi.json atualizado!"
 	@$(MAKE) orval
-	@echo "✅ orval atualizado!"
 
 test:
 	@echo "🧪 Executando testes com pytest..."

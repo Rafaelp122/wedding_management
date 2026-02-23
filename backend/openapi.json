@@ -1,0 +1,3085 @@
+openapi: 3.0.3
+info:
+  title: Wedding Management API
+  version: 1.0.0
+  description: Sistema completo de gestão de casamentos com API REST
+  contact:
+    name: Wedding Management Team
+    email: contato@weddingmanagement.com
+  license:
+    name: Proprietary
+paths:
+  /api/v1/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: View JWT customizada para usar email.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailTokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailTokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailTokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/finances/budgets/:
+    get:
+      operationId: finances_budgets_list
+      description: |-
+        Gestão do orçamento mestre do casamento (RF03).
+
+        Define o teto global e centraliza as notas financeiras.
+        Otimizado para evitar N+1 na resolução do casamento vinculado.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBudgetList'
+          description: ''
+    post:
+      operationId: finances_budgets_create
+      description: |-
+        Gestão do orçamento mestre do casamento (RF03).
+
+        Define o teto global e centraliza as notas financeiras.
+        Otimizado para evitar N+1 na resolução do casamento vinculado.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BudgetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BudgetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/finances/budgets/{uuid}/:
+    get:
+      operationId: finances_budgets_retrieve
+      description: |-
+        Gestão do orçamento mestre do casamento (RF03).
+
+        Define o teto global e centraliza as notas financeiras.
+        Otimizado para evitar N+1 na resolução do casamento vinculado.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+          description: ''
+    put:
+      operationId: finances_budgets_update
+      description: |-
+        Gestão do orçamento mestre do casamento (RF03).
+
+        Define o teto global e centraliza as notas financeiras.
+        Otimizado para evitar N+1 na resolução do casamento vinculado.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BudgetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BudgetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: finances_budgets_partial_update
+      description: |-
+        Gestão do orçamento mestre do casamento (RF03).
+
+        Define o teto global e centraliza as notas financeiras.
+        Otimizado para evitar N+1 na resolução do casamento vinculado.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBudgetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBudgetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBudgetRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+          description: ''
+    delete:
+      operationId: finances_budgets_destroy
+      description: |-
+        Gestão do orçamento mestre do casamento (RF03).
+
+        Define o teto global e centraliza as notas financeiras.
+        Otimizado para evitar N+1 na resolução do casamento vinculado.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/finances/categories/:
+    get:
+      operationId: finances_categories_list
+      description: |-
+        Categorias orçamentárias para agrupamento de gastos (RF03).
+
+        Permite a alocação de verba específica por área (ex: Buffet, Decoração).
+        Valida automaticamente se a soma das categorias não excede o orçamento mestre.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBudgetCategoryList'
+          description: ''
+    post:
+      operationId: finances_categories_create
+      description: |-
+        Categorias orçamentárias para agrupamento de gastos (RF03).
+
+        Permite a alocação de verba específica por área (ex: Buffet, Decoração).
+        Valida automaticamente se a soma das categorias não excede o orçamento mestre.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BudgetCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BudgetCategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/finances/categories/{uuid}/:
+    get:
+      operationId: finances_categories_retrieve
+      description: |-
+        Categorias orçamentárias para agrupamento de gastos (RF03).
+
+        Permite a alocação de verba específica por área (ex: Buffet, Decoração).
+        Valida automaticamente se a soma das categorias não excede o orçamento mestre.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetCategory'
+          description: ''
+    put:
+      operationId: finances_categories_update
+      description: |-
+        Categorias orçamentárias para agrupamento de gastos (RF03).
+
+        Permite a alocação de verba específica por área (ex: Buffet, Decoração).
+        Valida automaticamente se a soma das categorias não excede o orçamento mestre.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BudgetCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BudgetCategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: finances_categories_partial_update
+      description: |-
+        Categorias orçamentárias para agrupamento de gastos (RF03).
+
+        Permite a alocação de verba específica por área (ex: Buffet, Decoração).
+        Valida automaticamente se a soma das categorias não excede o orçamento mestre.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBudgetCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBudgetCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBudgetCategoryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetCategory'
+          description: ''
+    delete:
+      operationId: finances_categories_destroy
+      description: |-
+        Categorias orçamentárias para agrupamento de gastos (RF03).
+
+        Permite a alocação de verba específica por área (ex: Buffet, Decoração).
+        Valida automaticamente se a soma das categorias não excede o orçamento mestre.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/finances/expenses/:
+    get:
+      operationId: finances_expenses_list
+      description: |-
+        Gestão de despesas e compromissos financeiros (RF04, RF05).
+
+        Vincula o planejado ao executado, permitindo associação com contratos.
+        Implementa a regra de 'Tolerância Zero' na integridade de parcelas via Service.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExpenseList'
+          description: ''
+    post:
+      operationId: finances_expenses_create
+      description: |-
+        Gestão de despesas e compromissos financeiros (RF04, RF05).
+
+        Vincula o planejado ao executado, permitindo associação com contratos.
+        Implementa a regra de 'Tolerância Zero' na integridade de parcelas via Service.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExpenseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/finances/expenses/{uuid}/:
+    get:
+      operationId: finances_expenses_retrieve
+      description: |-
+        Gestão de despesas e compromissos financeiros (RF04, RF05).
+
+        Vincula o planejado ao executado, permitindo associação com contratos.
+        Implementa a regra de 'Tolerância Zero' na integridade de parcelas via Service.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+          description: ''
+    put:
+      operationId: finances_expenses_update
+      description: |-
+        Gestão de despesas e compromissos financeiros (RF04, RF05).
+
+        Vincula o planejado ao executado, permitindo associação com contratos.
+        Implementa a regra de 'Tolerância Zero' na integridade de parcelas via Service.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExpenseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: finances_expenses_partial_update
+      description: |-
+        Gestão de despesas e compromissos financeiros (RF04, RF05).
+
+        Vincula o planejado ao executado, permitindo associação com contratos.
+        Implementa a regra de 'Tolerância Zero' na integridade de parcelas via Service.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExpenseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedExpenseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedExpenseRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+          description: ''
+    delete:
+      operationId: finances_expenses_destroy
+      description: |-
+        Gestão de despesas e compromissos financeiros (RF04, RF05).
+
+        Vincula o planejado ao executado, permitindo associação com contratos.
+        Implementa a regra de 'Tolerância Zero' na integridade de parcelas via Service.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/finances/installments/:
+    get:
+      operationId: finances_installments_list
+      description: |-
+        Controle de parcelamentos e fluxos de caixa (RF04).
+
+        Gerencia datas de vencimento, pagamentos e status automáticos.
+        Garante que a soma das parcelas seja sempre idêntica ao valor total da despesa.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInstallmentList'
+          description: ''
+    post:
+      operationId: finances_installments_create
+      description: |-
+        Controle de parcelamentos e fluxos de caixa (RF04).
+
+        Gerencia datas de vencimento, pagamentos e status automáticos.
+        Garante que a soma das parcelas seja sempre idêntica ao valor total da despesa.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstallmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstallmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/finances/installments/{uuid}/:
+    get:
+      operationId: finances_installments_retrieve
+      description: |-
+        Controle de parcelamentos e fluxos de caixa (RF04).
+
+        Gerencia datas de vencimento, pagamentos e status automáticos.
+        Garante que a soma das parcelas seja sempre idêntica ao valor total da despesa.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Installment'
+          description: ''
+    put:
+      operationId: finances_installments_update
+      description: |-
+        Controle de parcelamentos e fluxos de caixa (RF04).
+
+        Gerencia datas de vencimento, pagamentos e status automáticos.
+        Garante que a soma das parcelas seja sempre idêntica ao valor total da despesa.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstallmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstallmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: finances_installments_partial_update
+      description: |-
+        Controle de parcelamentos e fluxos de caixa (RF04).
+
+        Gerencia datas de vencimento, pagamentos e status automáticos.
+        Garante que a soma das parcelas seja sempre idêntica ao valor total da despesa.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInstallmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInstallmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInstallmentRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Installment'
+          description: ''
+    delete:
+      operationId: finances_installments_destroy
+      description: |-
+        Controle de parcelamentos e fluxos de caixa (RF04).
+
+        Gerencia datas de vencimento, pagamentos e status automáticos.
+        Garante que a soma das parcelas seja sempre idêntica ao valor total da despesa.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Finances
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/logistics/contracts/:
+    get:
+      operationId: logistics_contracts_list
+      description: |-
+        Administração de contratos logísticos (RF10, RF13).
+
+        Gerencia estados de assinatura, metadados financeiros e
+        armazenamento de documentos digitais vinculados a fornecedores.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedContractList'
+          description: ''
+    post:
+      operationId: logistics_contracts_create
+      description: |-
+        Administração de contratos logísticos (RF10, RF13).
+
+        Gerencia estados de assinatura, metadados financeiros e
+        armazenamento de documentos digitais vinculados a fornecedores.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContractRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContractRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/logistics/contracts/{uuid}/:
+    get:
+      operationId: logistics_contracts_retrieve
+      description: |-
+        Administração de contratos logísticos (RF10, RF13).
+
+        Gerencia estados de assinatura, metadados financeiros e
+        armazenamento de documentos digitais vinculados a fornecedores.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
+    put:
+      operationId: logistics_contracts_update
+      description: |-
+        Administração de contratos logísticos (RF10, RF13).
+
+        Gerencia estados de assinatura, metadados financeiros e
+        armazenamento de documentos digitais vinculados a fornecedores.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContractRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContractRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: logistics_contracts_partial_update
+      description: |-
+        Administração de contratos logísticos (RF10, RF13).
+
+        Gerencia estados de assinatura, metadados financeiros e
+        armazenamento de documentos digitais vinculados a fornecedores.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedContractRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedContractRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedContractRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
+    delete:
+      operationId: logistics_contracts_destroy
+      description: |-
+        Administração de contratos logísticos (RF10, RF13).
+
+        Gerencia estados de assinatura, metadados financeiros e
+        armazenamento de documentos digitais vinculados a fornecedores.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/logistics/items/:
+    get:
+      operationId: logistics_items_list
+      description: |-
+        Gerenciamento de itens e insumos logísticos (RF07-RF08).
+
+        Controla a alocação de recursos físicos e sua vinculação
+        direta a contratos e categorias orçamentárias.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedItemList'
+          description: ''
+    post:
+      operationId: logistics_items_create
+      description: |-
+        Gerenciamento de itens e insumos logísticos (RF07-RF08).
+
+        Controla a alocação de recursos físicos e sua vinculação
+        direta a contratos e categorias orçamentárias.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/logistics/items/{uuid}/:
+    get:
+      operationId: logistics_items_retrieve
+      description: |-
+        Gerenciamento de itens e insumos logísticos (RF07-RF08).
+
+        Controla a alocação de recursos físicos e sua vinculação
+        direta a contratos e categorias orçamentárias.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+          description: ''
+    put:
+      operationId: logistics_items_update
+      description: |-
+        Gerenciamento de itens e insumos logísticos (RF07-RF08).
+
+        Controla a alocação de recursos físicos e sua vinculação
+        direta a contratos e categorias orçamentárias.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: logistics_items_partial_update
+      description: |-
+        Gerenciamento de itens e insumos logísticos (RF07-RF08).
+
+        Controla a alocação de recursos físicos e sua vinculação
+        direta a contratos e categorias orçamentárias.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedItemRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+          description: ''
+    delete:
+      operationId: logistics_items_destroy
+      description: |-
+        Gerenciamento de itens e insumos logísticos (RF07-RF08).
+
+        Controla a alocação de recursos físicos e sua vinculação
+        direta a contratos e categorias orçamentárias.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/logistics/suppliers/:
+    get:
+      operationId: logistics_suppliers_list
+      description: |-
+        Gestão de entidades fornecedoras (RF09).
+
+        Orquestra o ciclo de vida dos fornecedores e garante o isolamento
+        de dados por Planner através da infraestrutura de BaseViewSet.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSupplierList'
+          description: ''
+    post:
+      operationId: logistics_suppliers_create
+      description: |-
+        Gestão de entidades fornecedoras (RF09).
+
+        Orquestra o ciclo de vida dos fornecedores e garante o isolamento
+        de dados por Planner através da infraestrutura de BaseViewSet.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/logistics/suppliers/{uuid}/:
+    get:
+      operationId: logistics_suppliers_retrieve
+      description: |-
+        Gestão de entidades fornecedoras (RF09).
+
+        Orquestra o ciclo de vida dos fornecedores e garante o isolamento
+        de dados por Planner através da infraestrutura de BaseViewSet.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    put:
+      operationId: logistics_suppliers_update
+      description: |-
+        Gestão de entidades fornecedoras (RF09).
+
+        Orquestra o ciclo de vida dos fornecedores e garante o isolamento
+        de dados por Planner através da infraestrutura de BaseViewSet.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: logistics_suppliers_partial_update
+      description: |-
+        Gestão de entidades fornecedoras (RF09).
+
+        Orquestra o ciclo de vida dos fornecedores e garante o isolamento
+        de dados por Planner através da infraestrutura de BaseViewSet.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    delete:
+      operationId: logistics_suppliers_destroy
+      description: |-
+        Gestão de entidades fornecedoras (RF09).
+
+        Orquestra o ciclo de vida dos fornecedores e garante o isolamento
+        de dados por Planner através da infraestrutura de BaseViewSet.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Logistics
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/scheduler/events/:
+    get:
+      operationId: scheduler_events_list
+      description: |-
+        Gestão de eventos e compromissos do calendário.
+
+        Este endpoint centraliza a organização da agenda do Planner, permitindo o
+        controle de reuniões, visitas técnicas, degustações e prazos de pagamento (RF12).
+
+        A arquitetura garante que lembretes e validações de horário sejam processados
+        antes da persistência.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Scheduler
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEventList'
+          description: ''
+    post:
+      operationId: scheduler_events_create
+      description: |-
+        Gestão de eventos e compromissos do calendário.
+
+        Este endpoint centraliza a organização da agenda do Planner, permitindo o
+        controle de reuniões, visitas técnicas, degustações e prazos de pagamento (RF12).
+
+        A arquitetura garante que lembretes e validações de horário sejam processados
+        antes da persistência.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Scheduler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/scheduler/events/{uuid}/:
+    get:
+      operationId: scheduler_events_retrieve
+      description: |-
+        Gestão de eventos e compromissos do calendário.
+
+        Este endpoint centraliza a organização da agenda do Planner, permitindo o
+        controle de reuniões, visitas técnicas, degustações e prazos de pagamento (RF12).
+
+        A arquitetura garante que lembretes e validações de horário sejam processados
+        antes da persistência.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Scheduler
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+    put:
+      operationId: scheduler_events_update
+      description: |-
+        Gestão de eventos e compromissos do calendário.
+
+        Este endpoint centraliza a organização da agenda do Planner, permitindo o
+        controle de reuniões, visitas técnicas, degustações e prazos de pagamento (RF12).
+
+        A arquitetura garante que lembretes e validações de horário sejam processados
+        antes da persistência.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Scheduler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: scheduler_events_partial_update
+      description: |-
+        Gestão de eventos e compromissos do calendário.
+
+        Este endpoint centraliza a organização da agenda do Planner, permitindo o
+        controle de reuniões, visitas técnicas, degustações e prazos de pagamento (RF12).
+
+        A arquitetura garante que lembretes e validações de horário sejam processados
+        antes da persistência.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Scheduler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEventRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+    delete:
+      operationId: scheduler_events_destroy
+      description: |-
+        Gestão de eventos e compromissos do calendário.
+
+        Este endpoint centraliza a organização da agenda do Planner, permitindo o
+        controle de reuniões, visitas técnicas, degustações e prazos de pagamento (RF12).
+
+        A arquitetura garante que lembretes e validações de horário sejam processados
+        antes da persistência.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Scheduler
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+  /api/v1/weddings/:
+    get:
+      operationId: weddings_list
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
+      summary: Listar registros isolados por usuário
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      tags:
+      - Weddings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWeddingList'
+          description: ''
+    post:
+      operationId: weddings_create
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
+      summary: Criar novo registro via Service Layer
+      tags:
+      - Weddings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeddingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WeddingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WeddingRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: Criado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+        '409':
+          description: Erro de integridade/conflito
+  /api/v1/weddings/{uuid}/:
+    get:
+      operationId: weddings_retrieve
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
+      summary: Obter um registro específico via UUID
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Weddings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wedding'
+          description: ''
+    put:
+      operationId: weddings_update
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
+      summary: Atualizar registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Weddings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeddingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WeddingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WeddingRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Atualizado com sucesso
+        '400':
+          description: Erro de formato/sintaxe (DRF)
+        '422':
+          description: Erro de validação de regra de negócio
+    patch:
+      operationId: weddings_partial_update
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
+      summary: Atualização parcial via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Weddings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWeddingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWeddingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWeddingRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wedding'
+          description: ''
+    delete:
+      operationId: weddings_destroy
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
+      summary: Remover registro via Service Layer
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Weddings
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Removido com sucesso
+        '409':
+          description: 'Erro de integridade (Ex: Protegido contra deleção)'
+components:
+  schemas:
+    Budget:
+      type: object
+      description: Serializer para o Orçamento Mestre.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        wedding:
+          type: string
+          format: uuid
+          description: UUID do Casamento vinculado
+        total_estimated:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Orçamento Total Estimado
+        notes:
+          type: string
+          title: Observações Gerais
+      required:
+      - created_at
+      - total_estimated
+      - updated_at
+      - uuid
+      - wedding
+    BudgetCategory:
+      type: object
+      description: Serializer para Categorias de Orçamento.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        wedding:
+          type: string
+          format: uuid
+        budget:
+          type: string
+          format: uuid
+        name:
+          type: string
+          title: Nome da Categoria
+          maxLength: 100
+        description:
+          type: string
+          title: Descrição
+        allocated_budget:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Verba Alocada
+      required:
+      - allocated_budget
+      - budget
+      - created_at
+      - name
+      - updated_at
+      - uuid
+      - wedding
+    BudgetCategoryRequest:
+      type: object
+      description: Serializer para Categorias de Orçamento.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+        budget:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          title: Nome da Categoria
+          maxLength: 100
+        description:
+          type: string
+          title: Descrição
+        allocated_budget:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Verba Alocada
+      required:
+      - allocated_budget
+      - budget
+      - name
+      - wedding
+    BudgetRequest:
+      type: object
+      description: Serializer para o Orçamento Mestre.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+          description: UUID do Casamento vinculado
+        total_estimated:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Orçamento Total Estimado
+        notes:
+          type: string
+          title: Observações Gerais
+      required:
+      - total_estimated
+      - wedding
+    Contract:
+      type: object
+      description: Serializador de contratos entre casamentos e fornecedores.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        wedding:
+          type: string
+          format: uuid
+        supplier:
+          type: string
+          format: uuid
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Valor Total do Contrato
+          description: Valor exato que consta no documento assinado
+        status:
+          $ref: '#/components/schemas/ContractStatusEnum'
+      required:
+      - created_at
+      - supplier
+      - total_amount
+      - updated_at
+      - uuid
+      - wedding
+    ContractRequest:
+      type: object
+      description: Serializador de contratos entre casamentos e fornecedores.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+        supplier:
+          type: string
+          format: uuid
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Valor Total do Contrato
+          description: Valor exato que consta no documento assinado
+        status:
+          $ref: '#/components/schemas/ContractStatusEnum'
+      required:
+      - supplier
+      - total_amount
+      - wedding
+    ContractStatusEnum:
+      enum:
+      - DRAFT
+      - PENDING
+      - SIGNED
+      - CANCELED
+      type: string
+      description: |-
+        * `DRAFT` - Rascunho
+        * `PENDING` - Pendente
+        * `SIGNED` - Assinado
+        * `CANCELED` - Cancelado
+    EmailTokenObtainPairRequest:
+      type: object
+      description: Serializer JWT customizado para usar email ao invés de username.
+      properties:
+        email:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    Event:
+      type: object
+      description: |-
+        Serializer para o modelo de Eventos (Calendário).
+        Responsável pela validação inicial e representação JSON dos dados.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        wedding:
+          type: string
+          format: uuid
+          description: UUID do Casamento vinculado
+        title:
+          type: string
+          title: Título
+          maxLength: 255
+        location:
+          type: string
+          title: Local
+          maxLength: 255
+        description:
+          type: string
+          title: Descrição
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/EventTypeEnum'
+          title: Tipo de Evento
+        start_time:
+          type: string
+          format: date-time
+          title: Início do Evento
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fim do Evento
+        reminder_enabled:
+          type: boolean
+          title: Lembrete Ativo
+          description: Enviar lembrete automático
+        reminder_minutes_before:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Lembrete (minutos antes)
+          description: Quantos minutos antes do evento enviar lembrete
+      required:
+      - created_at
+      - start_time
+      - title
+      - updated_at
+      - uuid
+      - wedding
+    EventRequest:
+      type: object
+      description: |-
+        Serializer para o modelo de Eventos (Calendário).
+        Responsável pela validação inicial e representação JSON dos dados.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+          description: UUID do Casamento vinculado
+        title:
+          type: string
+          minLength: 1
+          title: Título
+          maxLength: 255
+        location:
+          type: string
+          title: Local
+          maxLength: 255
+        description:
+          type: string
+          title: Descrição
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/EventTypeEnum'
+          title: Tipo de Evento
+        start_time:
+          type: string
+          format: date-time
+          title: Início do Evento
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fim do Evento
+        reminder_enabled:
+          type: boolean
+          title: Lembrete Ativo
+          description: Enviar lembrete automático
+        reminder_minutes_before:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Lembrete (minutos antes)
+          description: Quantos minutos antes do evento enviar lembrete
+      required:
+      - start_time
+      - title
+      - wedding
+    EventTypeEnum:
+      enum:
+      - reuniao
+      - pagamento
+      - visita
+      - degustacao
+      - outro
+      type: string
+      description: |-
+        * `reuniao` - Reunião
+        * `pagamento` - Pagamento
+        * `visita` - Visita Técnica
+        * `degustacao` - Degustação
+        * `outro` - Outro
+    Expense:
+      type: object
+      description: Serializer para Despesas.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        category:
+          type: string
+          format: uuid
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        description:
+          type: string
+          maxLength: 255
+        estimated_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        actual_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - category
+      - created_at
+      - description
+      - estimated_amount
+      - updated_at
+      - uuid
+    ExpenseRequest:
+      type: object
+      description: Serializer para Despesas.
+      properties:
+        category:
+          type: string
+          format: uuid
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        estimated_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        actual_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - category
+      - description
+      - estimated_amount
+    Installment:
+      type: object
+      description: Serializer para Parcelas.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expense:
+          type: string
+          format: uuid
+        installment_number:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        due_date:
+          type: string
+          format: date
+        paid_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/InstallmentStatusEnum'
+          readOnly: true
+        notes:
+          type: string
+      required:
+      - amount
+      - created_at
+      - due_date
+      - expense
+      - installment_number
+      - status
+      - updated_at
+      - uuid
+    InstallmentRequest:
+      type: object
+      description: Serializer para Parcelas.
+      properties:
+        expense:
+          type: string
+          format: uuid
+        installment_number:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        due_date:
+          type: string
+          format: date
+        paid_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - amount
+      - due_date
+      - expense
+      - installment_number
+    InstallmentStatusEnum:
+      enum:
+      - PAID
+      - PENDING
+      - OVERDUE
+      type: string
+      description: |-
+        * `PAID` - Pago
+        * `PENDING` - Pendente
+        * `OVERDUE` - Atrasado
+    Item:
+      type: object
+      description: |-
+        Serializador de itens vinculados a casamentos, contratos e categorias
+        de orçamento.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        wedding:
+          type: string
+          format: uuid
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        budget_category:
+          type: string
+          format: uuid
+        name:
+          type: string
+          title: Nome do Item
+          maxLength: 255
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Quantidade
+      required:
+      - budget_category
+      - created_at
+      - name
+      - updated_at
+      - uuid
+      - wedding
+    ItemRequest:
+      type: object
+      description: |-
+        Serializador de itens vinculados a casamentos, contratos e categorias
+        de orçamento.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        budget_category:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          title: Nome do Item
+          maxLength: 255
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Quantidade
+      required:
+      - budget_category
+      - name
+      - wedding
+    PaginatedBudgetCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetCategory'
+    PaginatedBudgetList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Budget'
+    PaginatedContractList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contract'
+    PaginatedEventList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+    PaginatedExpenseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'
+    PaginatedInstallmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Installment'
+    PaginatedItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+    PaginatedSupplierList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+    PaginatedWeddingList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Wedding'
+    PatchedBudgetCategoryRequest:
+      type: object
+      description: Serializer para Categorias de Orçamento.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+        budget:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          title: Nome da Categoria
+          maxLength: 100
+        description:
+          type: string
+          title: Descrição
+        allocated_budget:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Verba Alocada
+    PatchedBudgetRequest:
+      type: object
+      description: Serializer para o Orçamento Mestre.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+          description: UUID do Casamento vinculado
+        total_estimated:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Orçamento Total Estimado
+        notes:
+          type: string
+          title: Observações Gerais
+    PatchedContractRequest:
+      type: object
+      description: Serializador de contratos entre casamentos e fornecedores.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+        supplier:
+          type: string
+          format: uuid
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Valor Total do Contrato
+          description: Valor exato que consta no documento assinado
+        status:
+          $ref: '#/components/schemas/ContractStatusEnum'
+    PatchedEventRequest:
+      type: object
+      description: |-
+        Serializer para o modelo de Eventos (Calendário).
+        Responsável pela validação inicial e representação JSON dos dados.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+          description: UUID do Casamento vinculado
+        title:
+          type: string
+          minLength: 1
+          title: Título
+          maxLength: 255
+        location:
+          type: string
+          title: Local
+          maxLength: 255
+        description:
+          type: string
+          title: Descrição
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/EventTypeEnum'
+          title: Tipo de Evento
+        start_time:
+          type: string
+          format: date-time
+          title: Início do Evento
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: Fim do Evento
+        reminder_enabled:
+          type: boolean
+          title: Lembrete Ativo
+          description: Enviar lembrete automático
+        reminder_minutes_before:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Lembrete (minutos antes)
+          description: Quantos minutos antes do evento enviar lembrete
+    PatchedExpenseRequest:
+      type: object
+      description: Serializer para Despesas.
+      properties:
+        category:
+          type: string
+          format: uuid
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        estimated_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        actual_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+    PatchedInstallmentRequest:
+      type: object
+      description: Serializer para Parcelas.
+      properties:
+        expense:
+          type: string
+          format: uuid
+        installment_number:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        due_date:
+          type: string
+          format: date
+        paid_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+    PatchedItemRequest:
+      type: object
+      description: |-
+        Serializador de itens vinculados a casamentos, contratos e categorias
+        de orçamento.
+      properties:
+        wedding:
+          type: string
+          format: uuid
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        budget_category:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          title: Nome do Item
+          maxLength: 255
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Quantidade
+    PatchedSupplierRequest:
+      type: object
+      description: Serializador para fornecedores, com campos básicos de contato e
+        status.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nome
+          description: Nome do fornecedor ou empresa
+          maxLength: 255
+        cnpj:
+          type: string
+          description: 'Formato: 00.000.000/0000-00'
+          maxLength: 18
+        phone:
+          type: string
+          title: Telefone
+          description: 'Formato: (00) 00000-0000'
+          maxLength: 20
+        email:
+          type: string
+          format: email
+          title: E-mail
+          maxLength: 254
+        is_active:
+          type: boolean
+          title: Ativo
+          description: Fornecedor disponível para novos contratos
+    PatchedWeddingRequest:
+      type: object
+      description: Serializador para casamentos, incluindo dados básicos e orçamento
+        inicial.
+      properties:
+        groom_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        bride_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        date:
+          type: string
+          format: date
+        location:
+          type: string
+          minLength: 1
+          maxLength: 255
+        expected_guests:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          title: Número de Convidados
+          description: Quantidade estimada de convidados
+        status:
+          $ref: '#/components/schemas/WeddingStatusEnum'
+        total_estimated:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          writeOnly: true
+          description: Valor total do orçamento inicial que será criado para este
+            casamento.
+    Supplier:
+      type: object
+      description: Serializador para fornecedores, com campos básicos de contato e
+        status.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          title: Nome
+          description: Nome do fornecedor ou empresa
+          maxLength: 255
+        cnpj:
+          type: string
+          description: 'Formato: 00.000.000/0000-00'
+          maxLength: 18
+        phone:
+          type: string
+          title: Telefone
+          description: 'Formato: (00) 00000-0000'
+          maxLength: 20
+        email:
+          type: string
+          format: email
+          title: E-mail
+          maxLength: 254
+        is_active:
+          type: boolean
+          title: Ativo
+          description: Fornecedor disponível para novos contratos
+      required:
+      - created_at
+      - name
+      - updated_at
+      - uuid
+    SupplierRequest:
+      type: object
+      description: Serializador para fornecedores, com campos básicos de contato e
+        status.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nome
+          description: Nome do fornecedor ou empresa
+          maxLength: 255
+        cnpj:
+          type: string
+          description: 'Formato: 00.000.000/0000-00'
+          maxLength: 18
+        phone:
+          type: string
+          title: Telefone
+          description: 'Formato: (00) 00000-0000'
+          maxLength: 20
+        email:
+          type: string
+          format: email
+          title: E-mail
+          maxLength: 254
+        is_active:
+          type: boolean
+          title: Ativo
+          description: Fornecedor disponível para novos contratos
+      required:
+      - name
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - refresh
+    Wedding:
+      type: object
+      description: Serializador para casamentos, incluindo dados básicos e orçamento
+        inicial.
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        groom_name:
+          type: string
+          maxLength: 100
+        bride_name:
+          type: string
+          maxLength: 100
+        date:
+          type: string
+          format: date
+        location:
+          type: string
+          maxLength: 255
+        expected_guests:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          title: Número de Convidados
+          description: Quantidade estimada de convidados
+        status:
+          $ref: '#/components/schemas/WeddingStatusEnum'
+      required:
+      - bride_name
+      - created_at
+      - date
+      - groom_name
+      - location
+      - updated_at
+      - uuid
+    WeddingRequest:
+      type: object
+      description: Serializador para casamentos, incluindo dados básicos e orçamento
+        inicial.
+      properties:
+        groom_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        bride_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        date:
+          type: string
+          format: date
+        location:
+          type: string
+          minLength: 1
+          maxLength: 255
+        expected_guests:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          title: Número de Convidados
+          description: Quantidade estimada de convidados
+        status:
+          $ref: '#/components/schemas/WeddingStatusEnum'
+        total_estimated:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          writeOnly: true
+          description: Valor total do orçamento inicial que será criado para este
+            casamento.
+      required:
+      - bride_name
+      - date
+      - groom_name
+      - location
+      - total_estimated
+    WeddingStatusEnum:
+      enum:
+      - IN_PROGRESS
+      - COMPLETED
+      - CANCELED
+      type: string
+      description: |-
+        * `IN_PROGRESS` - Em Andamento
+        * `COMPLETED` - Concluído
+        * `CANCELED` - Cancelado
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: http://localhost:8000
+  description: Development
+tags:
+- name: auth
+  description: Tokens de acesso e renovação (JWT)
+- name: Users
+  description: Gestão de perfis e usuários (RF02)
+- name: Weddings
+  description: Gestão do Casamento (Core)
+- name: Finances
+  description: Orçamentos, Despesas e Fluxo de Caixa (RF03/04/05)
+- name: Logistics
+  description: Fornecedores, Contratos e Itens (RF06-RF10)
+- name: Scheduler
+  description: Agenda e Eventos (RF11/12)
