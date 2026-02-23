@@ -2,8 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./stores/authStore";
 import { PublicLayout } from "./components/layouts/PublicLayout";
 import { AppLayout } from "./components/layouts/AppLayout";
-import { LoginPage } from "./pages/LoginPage";
-import { DashboardPage } from "./pages/DashboardPage";
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -12,7 +10,7 @@ function App() {
     <Routes>
       {/* Public Routes */}
       <Route element={<PublicLayout />}>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<h1>Login</h1>} />
         <Route path="/" element={<h1>Home Page</h1>} />
       </Route>
 
@@ -22,7 +20,7 @@ function App() {
           isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />
         }
       >
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/dashboard" element={<>Dashboard</>} />
         <Route path="/weddings" element={<h1>Weddings</h1>} />
         <Route path="/scheduler" element={<h1>Scheduler</h1>} />
         <Route path="/contracts" element={<h1>Contracts</h1>} />
