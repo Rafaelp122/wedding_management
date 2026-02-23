@@ -22,6 +22,7 @@ export COMPOSE_DOCKER_CLI_BUILD=1
 .PHONY: secret-key env-setup check-env local-install setup-hooks setup
 .PHONY: local-migrate local-makemigrations local-run local-shell local-createsuperuser
 .PHONY: data-dump data-load prune
+.PHONY: test test-cov test-parallel lint lint-fix format check openapi clean-cache fix-perms
 
 # Default target
 help:
@@ -77,7 +78,9 @@ help:
 	@echo "  make front-logs          - Exibe logs do frontend"
 	@echo ""
 	@echo "🧹 QUALIDADE & MANUTENÇÃO"
-	@echo "  make check               - Roda lint + testes (CI gate)"
+	@echo "  make check               - ✅ Roda lint + testes + openapi (CI gate)"
+	@echo "  make openapi             - 📝 Gera/Atualiza o schema openapi.json"
+	@echo "  make orval               - 🚀 Gera hooks e tipos do React Query"
 	@echo "  make test                - Executa testes com pytest"
 	@echo "  make test-cov            - Testes com cobertura HTML"
 	@echo "  make test-parallel       - Testes em paralelo (pytest-xdist)"
@@ -325,6 +328,17 @@ setup-hooks:
 # ============================================================================
 # Testing & Quality
 # ============================================================================
+orval:
+	@echo "🚀 Gerando hooks e tipos no Frontend (Orval)..."
+	$(EXEC_FRONT) npm run generate:api
+	@echo "✅ Frontend sincronizado com o Schema!"
+
+openapi:
+	@echo "📝 Gerando schema OpenAPI..."
+	$(EXEC_BACK) uv run $(PYTHON) spectacular --file openapi.json
+	@echo "✅ openapi.json atualizado!"
+	@$(MAKE) orval
+	@echo "✅ orval atualizado!"
 
 test:
 	@echo "🧪 Executando testes com pytest..."
@@ -349,7 +363,7 @@ format:
 	$(EXEC_BACK) uv run ruff format .
 	$(EXEC_BACK) uv run ruff check . --fix
 
-check: lint test
+check: lint test openapi
 	@echo "✅ Código aprovado para commit!"
 
 fix-perms:
