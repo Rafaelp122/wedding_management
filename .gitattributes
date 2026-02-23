@@ -1,0 +1,9 @@
+# --- GERADOS POR MÁQUINA ---
+frontend/package-lock.json linguist-generated=true
+backend/poetry.lock linguist-generated=true
+backend/uv.lock linguist-generated=true
+backend/*/migrations/*.py linguist-generated=true
+frontend/src/api/generated/** linguist-generated=true
+
+# --- CÓDIGO DE TERCEIROS (VENDORED) ---
+frontend/src/components/ui/** linguist-vendored=true
