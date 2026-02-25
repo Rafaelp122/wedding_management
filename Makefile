@@ -79,8 +79,9 @@ help:
 	@echo ""
 	@echo "🧹 QUALIDADE & MANUTENÇÃO"
 	@echo "  make check               - ✅ Roda lint + testes + openapi (CI gate)"
-	@echo "  make openapi             - 📝 Gera/Atualiza o schema openapi.json"
-	@echo "  make orval               - 🚀 Gera hooks e tipos do React Query"
+	@echo "  make sync-api            - Gera o schema OpenAPI e atualiza os hooks do Orval"
+	@echo "  make openapi             - Gera apenas o arquivo openapi.json na raiz"
+	@echo "  make orval               - Gera apenas os hooks do frontend a partir do openapi.json"
 	@echo "  make test                - Executa testes com pytest"
 	@echo "  make test-cov            - Testes com cobertura HTML"
 	@echo "  make test-parallel       - Testes em paralelo (pytest-xdist)"
@@ -328,17 +329,15 @@ setup-hooks:
 # ============================================================================
 # Testing & Quality
 # ============================================================================
+sync-api: openapi orval
+
 orval:
-	@echo "🚀 Gerando hooks e tipos no Frontend (Orval)..."
-	# Entra no frontend e roda o orval (que lerá ../openapi.json)
+	@echo "📦 Sincronizando hooks do Orval (Frontend)..."
 	cd frontend && npm run generate:api
-	@echo "✅ Frontend sincronizado com o Schema!"
 
 openapi:
-	@echo "📝 Gerando schema OpenAPI..."
-	$(EXEC_BACK) uv run $(PYTHON) spectacular --file openapi.json
-	@echo "✅ openapi.json atualizado!"
-	@$(MAKE) orval
+	@echo "📝 Gerando schema OpenAPI na raiz..."
+	cd backend && uv run $(PYTHON) spectacular --file ../openapi.json
 
 test:
 	@echo "🧪 Executando testes com pytest..."

@@ -1,24 +1,23 @@
 # ==============================================================================
-# CONFIGURAÇÃO DE PRE-COMMIT - WEDDING MANAGEMENT (BACKEND)
+# CONFIGURAÇÃO DE PRE-COMMIT - WEDDING MANAGEMENT (OTIMIZADO)
 # ==============================================================================
-# Este arquivo define os "Quality Gates" que o código deve passar antes de ser
-# aceito no controle de versão. Garante estilo, segurança e integridade Django.
+# O objetivo disto é feedback instantâneo. Build e testes demorados pertencem ao CI.
 
 repos:
   # ----------------------------------------------------------------------------
-  # 1. HIGIENE DE ARQUIVOS (Geral)
+  # 1. HIGIENE UNIVERSAL
   # ----------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$
+        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$ # Ruff já cuida do python
       - id: end-of-file-fixer
-        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$
+        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$ # Ruff já cuida do python
       - id: check-yaml
       - id: check-added-large-files
-      - id: check-merge-conflict # Impede commit com conflitos de git ativos
-      - id: debug-statements # Impede commit com 'breakpoint()' ou 'pdb'
+      - id: check-merge-conflict
+      - id: debug-statements
 
   # ----------------------------------------------------------------------------
   # 2. QUALIDADE DE CÓDIGO PYTHON (Ruff)
@@ -27,58 +26,36 @@ repos:
     rev: v0.15.2
     hooks:
       - id: ruff
-        args: [--fix] # Tenta corrigir erros automaticamente (ex: imports inúteis)
-      - id: ruff-format # O formatador oficial que substitui o Black
+        args: [--fix]
+      - id: ruff-format
 
   # ----------------------------------------------------------------------------
-  # 3. SEGURANÇA: DETECÇÃO DE SEGREDOS
+  # 3. SEGURANÇA (Secrets)
   # ----------------------------------------------------------------------------
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
-        # Ignora arquivos de teste e lockfiles que geram falsos positivos
         exclude: .*/tests/.*|backend/uv.lock
 
   # ----------------------------------------------------------------------------
-  # 4. INTEGRIDADE DJANGO (Local)
+  # 4. INTEGRIDADE LOCAL E LINTING O(1)
   # ----------------------------------------------------------------------------
   - repo: local
     hooks:
+      # --- FRONTEND ---
+      - id: frontend-lint
+        name: ⚛️ React Lint (Fast)
+        entry: bash -c "cd frontend && npx eslint --fix"
+        language: system
+        types_or: [javascript, jsx, ts, tsx]
+        files: ^frontend/src/
+
+      # --- BACKEND MIGRATIONS ---
       - id: check-migrations
-        name: Check Django Migrations
-        description: Garante que não existem mudanças no modelo sem migrações criadas.
+        name: 🐍 Django Check Migrations
         entry: bash -c "cd backend && uv run python manage.py makemigrations --check --dry-run"
         language: system
-        types: [python]
         pass_filenames: false
-
-  # ----------------------------------------------------------------------------
-  # 5. INTEGRIDADE OPENAPI
-  # ----------------------------------------------------------------------------
-  - repo: local
-    hooks:
-      - id: generate-openapi
-        name: Atualizar OpenAPI Schema
-        description: Gera o arquivo openapi.json atualizado usando o drf-spectacular.
-        # Usamos o caminho relativo ao backend para garantir que o arquivo seja salvo no lugar certo
-        entry: bash -c "cd backend && uv run python manage.py spectacular --file ../openapi.json"
-        language: system
-        pass_filenames: false
-        files: ^backend/.*\.py$
-
-  # ----------------------------------------------------------------------------
-  # 6. SINCRONIZAÇÃO FRONTEND (Orval)
-  # ----------------------------------------------------------------------------
-  - repo: local
-    hooks:
-      - id: generate-orval
-        name: Sincronizar Orval
-        description: Gera os hooks do React Query sempre que o schema OpenAPI muda.
-        # -T é importante para não tentar abrir um terminal interativo no hook
-        entry: bash -c "cd frontend && npm run generate:api"
-        language: system
-        pass_filenames: false
-        # Este hook só roda se o arquivo openapi.json tiver sido alterado
-        files: openapi.json
+        files: ^backend/.*models\.py$

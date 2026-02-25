@@ -1,0 +1,123 @@
+name: Integrity CI
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # JOB 1: STATIC ANALYSIS (The "Fail Fast" Filter)
+  # ----------------------------------------------------------------------------
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
+      - name: Backend Lint (Ruff)
+        run: cd backend && uv run ruff check . && uv run ruff format --check .
+      - name: Frontend Lint & TypeCheck
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npm run type-check
+
+  # ----------------------------------------------------------------------------
+  # JOB 2: BACKEND INTEGRITY (Logic & DB)
+  # ----------------------------------------------------------------------------
+  backend-tests:
+    name: Backend Tests & Migrations
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: wedding_db
+          # Usando segredos para as credenciais do container
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: wedding_db
+      # Mapeamento dos segredos para o ambiente do Django
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DJANGO_SETTINGS_MODULE: config.settings
+      SECRET_KEY: ${{ secrets.DJANGO_TEST_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python & UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Django Integrity Check
+        run: |
+          cd backend
+          uv run python manage.py check
+          uv run python manage.py makemigrations --check --dry-run
+          uv run python manage.py migrate --noinput
+      - name: Pytest
+        run: cd backend && uv run pytest --cov=apps --cov-report=term -v
+
+  # ----------------------------------------------------------------------------
+  # JOB 3: FRONTEND INTEGRITY (Unit Tests)
+  # ----------------------------------------------------------------------------
+  frontend-tests:
+    name: Frontend Unit Tests
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "frontend/.nvmrc" # Ajustado para o caminho correto
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install & Test
+        run: |
+          cd frontend
+          npm ci
+          npm test
+
+  # ----------------------------------------------------------------------------
+  # JOB 4: CONTRACT VALIDATION
+  # ----------------------------------------------------------------------------
+  contract-sync:
+    name: API Contract Sync
+    needs: [backend-tests, frontend-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Tools (UV & Node)
+        uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: "frontend/.nvmrc"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Validate OpenAPI & Orval Sync
+        run: |
+          # 1. Gera Schema
+          cd backend && uv run python manage.py spectacular --file ../openapi.json
+          # 2. Gera Hooks React
+          cd ../frontend && npm ci && npm run generate:api
+          # 3. Compara
+          git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
