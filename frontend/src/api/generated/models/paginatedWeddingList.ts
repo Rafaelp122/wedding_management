@@ -5,7 +5,7 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import type { Wedding } from './wedding';
+import type { Wedding } from "./wedding";
 
 export interface PaginatedWeddingList {
   count: number;

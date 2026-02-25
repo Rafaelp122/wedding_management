@@ -8,14 +8,14 @@
 
 /**
  * * `IN_PROGRESS` - Em Andamento
-* `COMPLETED` - Concluído
-* `CANCELED` - Cancelado
+ * `COMPLETED` - Concluído
+ * `CANCELED` - Cancelado
  */
-export type WeddingStatusEnum = typeof WeddingStatusEnum[keyof typeof WeddingStatusEnum];
-
+export type WeddingStatusEnum =
+  (typeof WeddingStatusEnum)[keyof typeof WeddingStatusEnum];
 
 export const WeddingStatusEnum = {
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
-  CANCELED: 'CANCELED',
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+  CANCELED: "CANCELED",
 } as const;

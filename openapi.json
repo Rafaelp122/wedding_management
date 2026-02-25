@@ -12,7 +12,8 @@ paths:
   /api/v1/auth/token/:
     post:
       operationId: auth_token_create
-      description: View JWT customizada para usar email.
+      description: Autentica o utilizador via email e devolve os tokens Access e Refresh.
+      summary: Obter Par de Tokens
       tags:
       - auth
       requestBody:
@@ -20,16 +21,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmailTokenObtainPairRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EmailTokenObtainPairRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EmailTokenObtainPairRequest'
         required: true
       responses:
         '200':
-          description: No response body
+          description: Login com sucesso. Tokens gerados.
+        '400':
+          description: Erro de validação. Estrutura JSON incorreta.
+        '401':
+          description: Não autorizado. Credenciais inválidas.
   /api/v1/auth/token/refresh/:
     post:
       operationId: auth_token_refresh_create
@@ -67,24 +66,12 @@ paths:
         Otimizado para evitar N+1 na resolução do casamento vinculado.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Finances
       security:
@@ -265,24 +252,12 @@ paths:
         Valida automaticamente se a soma das categorias não excede o orçamento mestre.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Finances
       security:
@@ -463,24 +438,12 @@ paths:
         Implementa a regra de 'Tolerância Zero' na integridade de parcelas via Service.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Finances
       security:
@@ -661,24 +624,12 @@ paths:
         Garante que a soma das parcelas seja sempre idêntica ao valor total da despesa.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Finances
       security:
@@ -859,24 +810,12 @@ paths:
         armazenamento de documentos digitais vinculados a fornecedores.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Logistics
       security:
@@ -1057,24 +996,12 @@ paths:
         direta a contratos e categorias orçamentárias.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Logistics
       security:
@@ -1255,24 +1182,12 @@ paths:
         de dados por Planner através da infraestrutura de BaseViewSet.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Logistics
       security:
@@ -1456,24 +1371,12 @@ paths:
         antes da persistência.
       summary: Listar registros isolados por usuário
       parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Qual campo usar ao ordenar os resultados.
-        schema:
-          type: string
       - name: page
         required: false
         in: query
         description: Um número de página dentro do conjunto de resultados paginado.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: Um termo de busca.
-        schema:
-          type: string
       tags:
       - Scheduler
       security:
@@ -1662,11 +1565,7 @@ paths:
   /api/v1/weddings/:
     get:
       operationId: weddings_list
-      description: |-
-        Gestão de casamentos.
-
-        Este endpoint centraliza a criação e controle do ciclo de vida
-        dos casamentos gerenciados pelo Planner logado.
+      description: Gestão de casamentos.
       summary: Listar registros isolados por usuário
       parameters:
       - name: ordering
@@ -1700,11 +1599,7 @@ paths:
           description: ''
     post:
       operationId: weddings_create
-      description: |-
-        Gestão de casamentos.
-
-        Este endpoint centraliza a criação e controle do ciclo de vida
-        dos casamentos gerenciados pelo Planner logado.
+      description: Gestão de casamentos.
       summary: Criar novo registro via Service Layer
       tags:
       - Weddings
@@ -1734,11 +1629,7 @@ paths:
   /api/v1/weddings/{uuid}/:
     get:
       operationId: weddings_retrieve
-      description: |-
-        Gestão de casamentos.
-
-        Este endpoint centraliza a criação e controle do ciclo de vida
-        dos casamentos gerenciados pelo Planner logado.
+      description: Gestão de casamentos.
       summary: Obter um registro específico via UUID
       parameters:
       - in: path
@@ -1760,11 +1651,7 @@ paths:
           description: ''
     put:
       operationId: weddings_update
-      description: |-
-        Gestão de casamentos.
-
-        Este endpoint centraliza a criação e controle do ciclo de vida
-        dos casamentos gerenciados pelo Planner logado.
+      description: Gestão de casamentos.
       summary: Atualizar registro via Service Layer
       parameters:
       - in: path
@@ -1798,11 +1685,7 @@ paths:
           description: Erro de validação de regra de negócio
     patch:
       operationId: weddings_partial_update
-      description: |-
-        Gestão de casamentos.
-
-        Este endpoint centraliza a criação e controle do ciclo de vida
-        dos casamentos gerenciados pelo Planner logado.
+      description: Gestão de casamentos.
       summary: Atualização parcial via Service Layer
       parameters:
       - in: path
@@ -1835,11 +1718,7 @@ paths:
           description: ''
     delete:
       operationId: weddings_destroy
-      description: |-
-        Gestão de casamentos.
-
-        Este endpoint centraliza a criação e controle do ciclo de vida
-        dos casamentos gerenciados pelo Planner logado.
+      description: Gestão de casamentos.
       summary: Remover registro via Service Layer
       parameters:
       - in: path

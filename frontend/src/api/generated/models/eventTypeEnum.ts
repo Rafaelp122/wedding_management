@@ -8,18 +8,17 @@
 
 /**
  * * `reuniao` - Reunião
-* `pagamento` - Pagamento
-* `visita` - Visita Técnica
-* `degustacao` - Degustação
-* `outro` - Outro
+ * `pagamento` - Pagamento
+ * `visita` - Visita Técnica
+ * `degustacao` - Degustação
+ * `outro` - Outro
  */
-export type EventTypeEnum = typeof EventTypeEnum[keyof typeof EventTypeEnum];
-
+export type EventTypeEnum = (typeof EventTypeEnum)[keyof typeof EventTypeEnum];
 
 export const EventTypeEnum = {
-  reuniao: 'reuniao',
-  pagamento: 'pagamento',
-  visita: 'visita',
-  degustacao: 'degustacao',
-  outro: 'outro',
+  reuniao: "reuniao",
+  pagamento: "pagamento",
+  visita: "visita",
+  degustacao: "degustacao",
+  outro: "outro",
 } as const;

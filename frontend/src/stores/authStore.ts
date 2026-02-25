@@ -9,34 +9,46 @@ interface User {
 }
 
 interface AuthState {
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   user: User | null;
   isAuthenticated: boolean;
-  login: (token: string, user: User) => void;
+  login: (access: string, refresh: string, user: User) => void;
   logout: () => void;
+  updateTokens: (access: string, refresh?: string) => void;
   updateUser: (user: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       user: null,
       isAuthenticated: false,
 
-      login: (token, user) =>
+      login: (access, refresh, user) =>
         set({
-          token,
+          accessToken: access,
+          refreshToken: refresh,
           user,
           isAuthenticated: true,
         }),
 
       logout: () =>
         set({
-          token: null,
+          accessToken: null,
+          refreshToken: null,
           user: null,
           isAuthenticated: false,
         }),
+
+      // O Axios vai chamar isso quando renovar o token no background
+      updateTokens: (access, refresh) =>
+        set((state) => ({
+          accessToken: access,
+          refreshToken: refresh || state.refreshToken,
+        })),
 
       updateUser: (userData) =>
         set((state) => ({

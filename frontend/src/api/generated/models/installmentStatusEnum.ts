@@ -8,14 +8,14 @@
 
 /**
  * * `PAID` - Pago
-* `PENDING` - Pendente
-* `OVERDUE` - Atrasado
+ * `PENDING` - Pendente
+ * `OVERDUE` - Atrasado
  */
-export type InstallmentStatusEnum = typeof InstallmentStatusEnum[keyof typeof InstallmentStatusEnum];
-
+export type InstallmentStatusEnum =
+  (typeof InstallmentStatusEnum)[keyof typeof InstallmentStatusEnum];
 
 export const InstallmentStatusEnum = {
-  PAID: 'PAID',
-  PENDING: 'PENDING',
-  OVERDUE: 'OVERDUE',
+  PAID: "PAID",
+  PENDING: "PENDING",
+  OVERDUE: "OVERDUE",
 } as const;

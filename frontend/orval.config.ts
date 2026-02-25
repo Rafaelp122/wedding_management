@@ -2,19 +2,34 @@ import { defineConfig } from "orval";
 
 export default defineConfig({
   weddingApi: {
-    input: "../backend/openapi.json",
+    input: "../openapi.json",
     output: {
       mode: "tags-split",
-      target: "./src/api/generated/api.ts",
+      target: "./src/api/generated/endpoints",
       schemas: "./src/api/generated/models",
       client: "react-query",
-      mock: true,
+      httpClient: "axios",
+      prettier: true,
       override: {
         mutator: {
-          path: "./src/api/api-instance.ts",
+          path: "src/api/mutator/custom-instance.ts",
           name: "customInstance",
         },
+        query: {
+          useQuery: true,
+          useInfinite: true,
+          useMutation: true,
+        },
       },
+    },
+  },
+  weddingZod: {
+    input: "../openapi.json",
+    output: {
+      mode: "tags-split",
+      target: "./src/api/generated/zod", // Pasta separada para não bagunçar
+      client: "zod",
+      prettier: true,
     },
   },
 });

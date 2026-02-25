@@ -2,110 +2,72 @@
 # MULTI-STAGE BUILD - React + Vite Frontend
 # ==============================================================================
 
-# ------------------------------------------------------------------------------
-# Stage 1: Dependencies - Instala node_modules
-# ------------------------------------------------------------------------------
-FROM node:22-alpine AS dependencies
+# Definição de versão para evitar repetição e erro de tag flutuante
+ARG NODE_VERSION=22.14.0
+FROM node:${NODE_VERSION}-slim AS base
 
+# ------------------------------------------------------------------------------
+# Stage 1: Dependencies
+# ------------------------------------------------------------------------------
+FROM base AS dependencies
 WORKDIR /app
-
-# Copia apenas arquivos de dependências para cache otimizado
 COPY package.json package-lock.json ./
-
-# Instala dependências (usa cache quando package.json não muda)
+# npm ci é obrigatório em CI/Docker
 RUN npm ci --quiet
 
 # ------------------------------------------------------------------------------
-# Stage 2: Development - Ambiente de desenvolvimento com hot reload
+# Stage 2: Development (Para uso com Docker Compose + Volumes)
 # ------------------------------------------------------------------------------
-FROM node:22-alpine AS development
-
+FROM base AS development
 WORKDIR /app
-
-# Copia node_modules do stage de dependencies
+# Copiamos as dependências do estágio anterior
 COPY --from=dependencies /app/node_modules ./node_modules
-
-# Copia código da aplicação
 COPY . .
 
 EXPOSE 5173
-
-# Vite dev server com HMR
+# Vite precisa do --host para aceitar conexões de fora do container
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # ------------------------------------------------------------------------------
-# Stage 3: Builder - Build otimizado para produção
+# Stage 3: Builder (Onde a mágica da produção acontece)
 # ------------------------------------------------------------------------------
-FROM node:22-alpine AS builder
-
+FROM base AS builder
 WORKDIR /app
-
-# Copia node_modules do stage de dependencies
 COPY --from=dependencies /app/node_modules ./node_modules
-
-# Copia código fonte
 COPY . .
-
-# Build de produção (minificado, tree-shaking, etc)
+# Build otimizado
 RUN npm run build
 
 # ------------------------------------------------------------------------------
-# Stage 4: Production - Nginx servindo arquivos estáticos
+# Stage 4: Production (Nginx servindo estáticos)
 # ------------------------------------------------------------------------------
-FROM nginx:alpine AS production
+FROM nginx:1.27-alpine AS production
 
-# Remove configuração default do Nginx
-RUN rm /etc/nginx/conf.d/default.conf
+WORKDIR /usr/share/nginx/html
 
-# Copia build otimizado do stage builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Limpeza e cópia do build
+RUN rm -rf ./*
+COPY --from=builder /app/dist .
 
-# Copia configuração customizada do Nginx (se existir)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Cria configuração otimizada do Nginx
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    \
-    # Compressão Gzip \
-    gzip on; \
-    gzip_vary on; \
-    gzip_min_length 1024; \
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json; \
-    \
-    # Logs \
-    access_log /var/log/nginx/access.log; \
-    error_log /var/log/nginx/error.log warn; \
-    \
-    # Cache de assets estáticos \
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ { \
-        expires 1y; \
-        add_header Cache-Control "public, immutable"; \
-    } \
-    \
-    # HTML não deve ser cacheado \
-    location ~* \.html$ { \
-        expires -1; \
-        add_header Cache-Control "no-store, no-cache, must-revalidate"; \
-    } \
-    \
-    # SPA fallback - todas as rotas retornam index.html \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    \
-    # Security headers \
-    add_header X-Frame-Options "SAMEORIGIN" always; \
-    add_header X-Content-Type-Options "nosniff" always; \
-    add_header X-XSS-Protection "1; mode=block" always; \
+# Configuração do Nginx via HEREDOC para legibilidade
+RUN printf 'server { \n\
+    listen 80; \n\
+    root /usr/share/nginx/html; \n\
+    index index.html; \n\
+    gzip on; \n\
+    gzip_types text/plain text/css application/json application/javascript text/xml; \n\
+    location / { \n\
+        try_files $uri $uri/ /index.html; \n\
+    } \n\
+    # Cache para assets estáticos \n\
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ { \n\
+        expires 1y; \n\
+        add_header Cache-Control "public, immutable"; \n\
+    } \n\
 }' > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
-# Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 

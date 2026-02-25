@@ -5,7 +5,7 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import type { EventTypeEnum } from './eventTypeEnum';
+import type { EventTypeEnum } from "./eventTypeEnum";
 
 /**
  * Serializer para o modelo de Eventos (Calendário).

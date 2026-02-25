@@ -7,16 +7,16 @@
  */
 
 export type WeddingsListParams = {
-/**
- * Qual campo usar ao ordenar os resultados.
- */
-ordering?: string;
-/**
- * Um número de página dentro do conjunto de resultados paginado.
- */
-page?: number;
-/**
- * Um termo de busca.
- */
-search?: string;
+  /**
+   * Qual campo usar ao ordenar os resultados.
+   */
+  ordering?: string;
+  /**
+   * Um número de página dentro do conjunto de resultados paginado.
+   */
+  page?: number;
+  /**
+   * Um termo de busca.
+   */
+  search?: string;
 };

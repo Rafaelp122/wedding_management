@@ -5,7 +5,7 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import type { WeddingStatusEnum } from './weddingStatusEnum';
+import type { WeddingStatusEnum } from "./weddingStatusEnum";
 
 /**
  * Serializador para casamentos, incluindo dados básicos e orçamento inicial.

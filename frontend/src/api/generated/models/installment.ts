@@ -5,7 +5,7 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import type { InstallmentStatusEnum } from './installmentStatusEnum';
+import type { InstallmentStatusEnum } from "./installmentStatusEnum";
 
 /**
  * Serializer para Parcelas.

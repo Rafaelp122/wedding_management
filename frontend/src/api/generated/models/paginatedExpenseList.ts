@@ -5,7 +5,7 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import type { Expense } from './expense';
+import type { Expense } from "./expense";
 
 export interface PaginatedExpenseList {
   count: number;

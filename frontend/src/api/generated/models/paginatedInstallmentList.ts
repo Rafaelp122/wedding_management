@@ -5,7 +5,7 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import type { Installment } from './installment';
+import type { Installment } from "./installment";
 
 export interface PaginatedInstallmentList {
   count: number;

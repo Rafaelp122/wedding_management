@@ -5,7 +5,7 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import type { BudgetCategory } from './budgetCategory';
+import type { BudgetCategory } from "./budgetCategory";
 
 export interface PaginatedBudgetCategoryList {
   count: number;

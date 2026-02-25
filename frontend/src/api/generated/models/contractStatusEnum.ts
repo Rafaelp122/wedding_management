@@ -8,16 +8,16 @@
 
 /**
  * * `DRAFT` - Rascunho
-* `PENDING` - Pendente
-* `SIGNED` - Assinado
-* `CANCELED` - Cancelado
+ * `PENDING` - Pendente
+ * `SIGNED` - Assinado
+ * `CANCELED` - Cancelado
  */
-export type ContractStatusEnum = typeof ContractStatusEnum[keyof typeof ContractStatusEnum];
-
+export type ContractStatusEnum =
+  (typeof ContractStatusEnum)[keyof typeof ContractStatusEnum];
 
 export const ContractStatusEnum = {
-  DRAFT: 'DRAFT',
-  PENDING: 'PENDING',
-  SIGNED: 'SIGNED',
-  CANCELED: 'CANCELED',
+  DRAFT: "DRAFT",
+  PENDING: "PENDING",
+  SIGNED: "SIGNED",
+  CANCELED: "CANCELED",
 } as const;
