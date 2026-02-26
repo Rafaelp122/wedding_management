@@ -5,20 +5,16 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
-  DefinedUseInfiniteQueryResult,
   DefinedUseQueryResult,
-  InfiniteData,
   MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseInfiniteQueryOptions,
-  UseInfiniteQueryResult,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -59,169 +55,11 @@ export const schedulerEventsList = (
   );
 };
 
-export const getSchedulerEventsListInfiniteQueryKey = (
-  params?: SchedulerEventsListParams,
-) => {
-  return [
-    "infinite",
-    `/api/v1/scheduler/events/`,
-    ...(params ? [params] : []),
-  ] as const;
-};
-
 export const getSchedulerEventsListQueryKey = (
   params?: SchedulerEventsListParams,
 ) => {
   return [`/api/v1/scheduler/events/`, ...(params ? [params] : [])] as const;
 };
-
-export const getSchedulerEventsListInfiniteQueryOptions = <
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: SchedulerEventsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsList>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getSchedulerEventsListInfiniteQueryKey(params);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof schedulerEventsList>>
-  > = ({ signal }) => schedulerEventsList(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
-    Awaited<ReturnType<typeof schedulerEventsList>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type SchedulerEventsListInfiniteQueryResult = NonNullable<
-  Awaited<ReturnType<typeof schedulerEventsList>>
->;
-export type SchedulerEventsListInfiniteQueryError = ErrorType<unknown>;
-
-export function useSchedulerEventsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params: undefined | SchedulerEventsListParams,
-  options: {
-    query: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsList>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof schedulerEventsList>>,
-          TError,
-          Awaited<ReturnType<typeof schedulerEventsList>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSchedulerEventsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: SchedulerEventsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsList>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof schedulerEventsList>>,
-          TError,
-          Awaited<ReturnType<typeof schedulerEventsList>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSchedulerEventsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: SchedulerEventsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsList>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Listar registros isolados por usuário
- */
-
-export function useSchedulerEventsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: SchedulerEventsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsList>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getSchedulerEventsListInfiniteQueryOptions(
-    params,
-    options,
-  );
-
-  const query = useInfiniteQuery(
-    queryOptions,
-    queryClient,
-  ) as UseInfiniteQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
 
 export const getSchedulerEventsListQueryOptions = <
   TData = Awaited<ReturnType<typeof schedulerEventsList>>,
@@ -486,166 +324,9 @@ export const schedulerEventsRetrieve = (
   );
 };
 
-export const getSchedulerEventsRetrieveInfiniteQueryKey = (uuid: string) => {
-  return ["infinite", `/api/v1/scheduler/events/${uuid}/`] as const;
-};
-
 export const getSchedulerEventsRetrieveQueryKey = (uuid: string) => {
   return [`/api/v1/scheduler/events/${uuid}/`] as const;
 };
-
-export const getSchedulerEventsRetrieveInfiniteQueryOptions = <
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getSchedulerEventsRetrieveInfiniteQueryKey(uuid);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof schedulerEventsRetrieve>>
-  > = ({ signal }) => schedulerEventsRetrieve(uuid, requestOptions, signal);
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!uuid,
-    ...queryOptions,
-  } as UseInfiniteQueryOptions<
-    Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type SchedulerEventsRetrieveInfiniteQueryResult = NonNullable<
-  Awaited<ReturnType<typeof schedulerEventsRetrieve>>
->;
-export type SchedulerEventsRetrieveInfiniteQueryError = ErrorType<unknown>;
-
-export function useSchedulerEventsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options: {
-    query: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof schedulerEventsRetrieve>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSchedulerEventsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof schedulerEventsRetrieve>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSchedulerEventsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Obter um registro específico via UUID
- */
-
-export function useSchedulerEventsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof schedulerEventsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof schedulerEventsRetrieve>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getSchedulerEventsRetrieveInfiniteQueryOptions(
-    uuid,
-    options,
-  );
-
-  const query = useInfiniteQuery(
-    queryOptions,
-    queryClient,
-  ) as UseInfiniteQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
 
 export const getSchedulerEventsRetrieveQueryOptions = <
   TData = Awaited<ReturnType<typeof schedulerEventsRetrieve>>,

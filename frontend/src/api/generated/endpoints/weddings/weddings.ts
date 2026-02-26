@@ -5,20 +5,16 @@
  * Sistema completo de gestão de casamentos com API REST
  * OpenAPI spec version: 1.0.0
  */
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
-  DefinedUseInfiniteQueryResult,
   DefinedUseQueryResult,
-  InfiniteData,
   MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseInfiniteQueryOptions,
-  UseInfiniteQueryResult,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -53,164 +49,9 @@ export const weddingsList = (
   );
 };
 
-export const getWeddingsListInfiniteQueryKey = (
-  params?: WeddingsListParams,
-) => {
-  return [
-    "infinite",
-    `/api/v1/weddings/`,
-    ...(params ? [params] : []),
-  ] as const;
-};
-
 export const getWeddingsListQueryKey = (params?: WeddingsListParams) => {
   return [`/api/v1/weddings/`, ...(params ? [params] : [])] as const;
 };
-
-export const getWeddingsListInfiniteQueryOptions = <
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: WeddingsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsList>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getWeddingsListInfiniteQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof weddingsList>>> = ({
-    signal,
-  }) => weddingsList(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
-    Awaited<ReturnType<typeof weddingsList>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type WeddingsListInfiniteQueryResult = NonNullable<
-  Awaited<ReturnType<typeof weddingsList>>
->;
-export type WeddingsListInfiniteQueryError = ErrorType<unknown>;
-
-export function useWeddingsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params: undefined | WeddingsListParams,
-  options: {
-    query: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsList>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof weddingsList>>,
-          TError,
-          Awaited<ReturnType<typeof weddingsList>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useWeddingsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: WeddingsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsList>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof weddingsList>>,
-          TError,
-          Awaited<ReturnType<typeof weddingsList>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useWeddingsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: WeddingsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsList>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Listar registros isolados por usuário
- */
-
-export function useWeddingsListInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsList>>>,
-  TError = ErrorType<unknown>,
->(
-  params?: WeddingsListParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsList>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getWeddingsListInfiniteQueryOptions(params, options);
-
-  const query = useInfiniteQuery(
-    queryOptions,
-    queryClient,
-  ) as UseInfiniteQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
 
 export const getWeddingsListQueryOptions = <
   TData = Awaited<ReturnType<typeof weddingsList>>,
@@ -436,163 +277,9 @@ export const weddingsRetrieve = (
   );
 };
 
-export const getWeddingsRetrieveInfiniteQueryKey = (uuid: string) => {
-  return ["infinite", `/api/v1/weddings/${uuid}/`] as const;
-};
-
 export const getWeddingsRetrieveQueryKey = (uuid: string) => {
   return [`/api/v1/weddings/${uuid}/`] as const;
 };
-
-export const getWeddingsRetrieveInfiniteQueryOptions = <
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsRetrieve>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getWeddingsRetrieveInfiniteQueryKey(uuid);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof weddingsRetrieve>>
-  > = ({ signal }) => weddingsRetrieve(uuid, requestOptions, signal);
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!uuid,
-    ...queryOptions,
-  } as UseInfiniteQueryOptions<
-    Awaited<ReturnType<typeof weddingsRetrieve>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type WeddingsRetrieveInfiniteQueryResult = NonNullable<
-  Awaited<ReturnType<typeof weddingsRetrieve>>
->;
-export type WeddingsRetrieveInfiniteQueryError = ErrorType<unknown>;
-
-export function useWeddingsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options: {
-    query: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsRetrieve>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof weddingsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof weddingsRetrieve>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useWeddingsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsRetrieve>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof weddingsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof weddingsRetrieve>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useWeddingsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsRetrieve>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Obter um registro específico via UUID
- */
-
-export function useWeddingsRetrieveInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof weddingsRetrieve>>>,
-  TError = ErrorType<unknown>,
->(
-  uuid: string,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof weddingsRetrieve>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getWeddingsRetrieveInfiniteQueryOptions(uuid, options);
-
-  const query = useInfiniteQuery(
-    queryOptions,
-    queryClient,
-  ) as UseInfiniteQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
 
 export const getWeddingsRetrieveQueryOptions = <
   TData = Awaited<ReturnType<typeof weddingsRetrieve>>,

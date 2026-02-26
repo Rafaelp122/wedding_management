@@ -1,5 +1,5 @@
 from drf_spectacular.utils import extend_schema
-from rest_framework import filters  # <-- Importe isto
+from rest_framework import filters
 
 from apps.core.viewsets import BaseViewSet
 
