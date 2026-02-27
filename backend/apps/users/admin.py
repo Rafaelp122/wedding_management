@@ -1,7 +1,8 @@
 """Configuração do Django Admin para o modelo User customizado.
 
 Define a interface administrativa para gerenciamento de usuários,
-incluindo visualizações, filtros, campos de edição e permissões.
+incluindo visualizações, filtros, campos de edição e permissões,
+agora utilizando campos explícitos para primeiro nome e sobrenome.
 """
 
 from django.contrib import admin
@@ -16,13 +17,13 @@ class CustomUserAdmin(BaseUserAdmin):
     """Admin customizado para o modelo User.
 
     Adapta o UserAdmin padrão do Django para trabalhar com o modelo User
-    que usa email como identificador único.
+    que usa email como identificador único e separação de nomes.
 
     Features:
-        - Lista usuários com email, nome, status de equipe e status ativo
+        - Lista usuários com email, primeiro nome, sobrenome e status
         - Filtros por tipo de usuário (staff, superuser, ativo)
-        - Busca por email e nome
-        - Organização de campos em seções lógicas
+        - Busca por email, primeiro nome e sobrenome
+        - Organização de campos em seções lógicas (Informações Pessoais)
         - Interface horizontal para grupos e permissões
         - Campos de data somente leitura para auditoria
     """
@@ -30,15 +31,15 @@ class CustomUserAdmin(BaseUserAdmin):
     form = CustomUserChangeForm
     add_form = CustomUserCreationForm
 
-    list_display = ("email", "name", "is_staff", "is_active")
+    # Exibição na listagem principal
+    list_display = ("email", "first_name", "last_name", "is_staff", "is_active")
     list_filter = ("is_staff", "is_superuser", "is_active")
-    search_fields = ("email", "name")
+    search_fields = ("email", "first_name", "last_name")
     ordering = ("-date_joined",)
 
-    # REMOVE 'password' do fieldsets. O UserChangeForm injeta o link de troca
-    # de senha automaticamente.
+    # Configuração do formulário de EDIÇÃO
     fieldsets = (
-        ("Informações Pessoais", {"fields": ("name", "email")}),
+        ("Informações Pessoais", {"fields": ("first_name", "last_name", "email")}),
         (
             "Permissões",
             {
@@ -51,9 +52,10 @@ class CustomUserAdmin(BaseUserAdmin):
                 )
             },
         ),
-        ("Datas", {"fields": ("last_login", "date_joined")}),
+        ("Datas Importantes", {"fields": ("last_login", "date_joined")}),
     )
 
+    # Configuração do formulário de CRIAÇÃO (Novo Usuário)
     add_fieldsets = (
         (
             None,
@@ -61,10 +63,10 @@ class CustomUserAdmin(BaseUserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
-                    "name",
-                    "password1",
-                    "password2",
-                ),  # O form cuida disso
+                    "first_name",
+                    "last_name",
+                    "password",  # O BaseUserAdmin ou seu form lida com a confirmação
+                ),
             },
         ),
     )

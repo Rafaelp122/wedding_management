@@ -83,49 +83,21 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
 
+        if extra_fields.get("first_name") is None:
+            extra_fields["first_name"] = "Admin"
+        if extra_fields.get("last_name") is None:
+            extra_fields["last_name"] = "Sistema"
+
         # O Django já valida isso, mas manter o check simples não dói
         return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Modelo de usuário customizado usando email como identificador único.
-
-    Implementa RF02 (Gestão de Permissões) com suporte a níveis de acesso:
-    - Owner (is_staff=True, is_superuser=True): Acesso total
-    - Editor (is_staff=True): Acesso ao admin sem super poderes
-    - Viewer (is_staff=False): Acesso apenas via API
-
-    Novos usuários regulares são criados com is_active=False por padrão,
-    exigindo ativação manual. Superusuários são sempre criados ativos.
-
-    O sistema usa email para autenticação (USERNAME_FIELD) ao invés do
-    username tradicional do Django.
-
-    Attributes:
-        email (EmailField): Email único do usuário (usado para login).
-        name (CharField): Nome completo do usuário (obrigatório).
-        is_staff (BooleanField): Define se o usuário tem acesso ao admin.
-        is_active (BooleanField): Define se o usuário está ativo no sistema.
-        date_joined (DateTimeField): Data de cadastro do usuário.
-
-    Usage:
-        # Criar usuário regular (inativo por padrão)
-        user = User.objects.create_user(
-            email='usuario@example.com',
-            name='João Silva',
-            password='senha_segura'
-        )
-
-        # Criar superusuário (ativo automaticamente)
-        admin = User.objects.create_superuser(
-            email='admin@example.com',
-            name='Admin Sistema',
-            password='senha_admin'
-        )
-    """
-
     email = models.EmailField("E-mail", unique=True, max_length=255)
-    name = models.CharField("Nome Completo", max_length=255)
+
+    # NOVOS CAMPOS EXPLÍCITOS
+    first_name = models.CharField("Primeiro Nome", max_length=150)
+    last_name = models.CharField("Sobrenome", max_length=150)
 
     is_staff = models.BooleanField("Status da Equipe", default=False)
     is_active = models.BooleanField("Ativo", default=False)
@@ -134,8 +106,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    # O comando createsuperuser agora exigirá o nome, evitando registros fantasmas
-    REQUIRED_FIELDS = ["name"]
+    # O comando createsuperuser agora pedirá os dois nomes
+    REQUIRED_FIELDS = ["first_name", "last_name"]
 
     class Meta:
         verbose_name = "Usuário"
@@ -143,25 +115,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         ordering = ["-date_joined"]
 
     def __str__(self):
-        """Retorna representação em string do usuário.
-
-        Returns:
-            str: Nome completo e email do usuário.
-        """
-        return f"{self.name} ({self.email})"
+        return f"{self.get_full_name()} ({self.email})"
 
     def get_full_name(self):
-        """Retorna o nome completo do usuário.
-
-        Returns:
-            str: Nome completo do usuário.
-        """
-        return self.name
+        """Retorna o nome completo."""
+        return f"{self.first_name} {self.last_name}".strip()
 
     def get_short_name(self):
-        """Retorna o primeiro nome do usuário ou email se o nome não existir.
-
-        Returns:
-            str: Primeiro nome do usuário ou email como fallback.
-        """
-        return self.name.split()[0] if self.name else self.email
+        """Retorna apenas o primeiro nome."""
+        return self.first_name

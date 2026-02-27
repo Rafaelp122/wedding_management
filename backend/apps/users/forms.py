@@ -30,4 +30,4 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("email", "name")  # Campos iniciais obrigatórios
+        fields = ("email", "first_name", "last_name")
