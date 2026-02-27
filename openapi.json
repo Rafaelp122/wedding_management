@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Wedding Management API
-  version: 1.0.0
+  version: 1.0.0 (v1)
   description: Sistema completo de gestão de casamentos com API REST
   contact:
     name: Wedding Management Team
@@ -12,7 +12,8 @@ paths:
   /api/v1/auth/token/:
     post:
       operationId: auth_token_create
-      description: Autentica o utilizador via email e devolve os tokens Access e Refresh.
+      description: Recebe as credenciais (e-mail/senha) e retorna um par de tokens
+        JWT (Access e Refresh).
       summary: Obter Par de Tokens
       tags:
       - auth
@@ -24,11 +25,15 @@ paths:
         required: true
       responses:
         '200':
-          description: Login com sucesso. Tokens gerados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTokenObtainPair'
+          description: ''
         '400':
-          description: Erro de validação. Estrutura JSON incorreta.
+          description: Requisição inválida. Verifique o formato do JSON.
         '401':
-          description: Não autorizado. Credenciais inválidas.
+          description: Credenciais inválidas ou conta desativada.
   /api/v1/auth/token/refresh/:
     post:
       operationId: auth_token_refresh_create
@@ -1565,7 +1570,11 @@ paths:
   /api/v1/weddings/:
     get:
       operationId: weddings_list
-      description: Gestão de casamentos.
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
       summary: Listar registros isolados por usuário
       parameters:
       - name: ordering
@@ -1599,7 +1608,11 @@ paths:
           description: ''
     post:
       operationId: weddings_create
-      description: Gestão de casamentos.
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
       summary: Criar novo registro via Service Layer
       tags:
       - Weddings
@@ -1629,7 +1642,11 @@ paths:
   /api/v1/weddings/{uuid}/:
     get:
       operationId: weddings_retrieve
-      description: Gestão de casamentos.
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
       summary: Obter um registro específico via UUID
       parameters:
       - in: path
@@ -1651,7 +1668,11 @@ paths:
           description: ''
     put:
       operationId: weddings_update
-      description: Gestão de casamentos.
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
       summary: Atualizar registro via Service Layer
       parameters:
       - in: path
@@ -1685,7 +1706,11 @@ paths:
           description: Erro de validação de regra de negócio
     patch:
       operationId: weddings_partial_update
-      description: Gestão de casamentos.
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
       summary: Atualização parcial via Service Layer
       parameters:
       - in: path
@@ -1718,7 +1743,11 @@ paths:
           description: ''
     delete:
       operationId: weddings_destroy
-      description: Gestão de casamentos.
+      description: |-
+        Gestão de casamentos.
+
+        Este endpoint centraliza a criação e controle do ciclo de vida
+        dos casamentos gerenciados pelo Planner logado.
       summary: Remover registro via Service Layer
       parameters:
       - in: path
@@ -1932,9 +1961,25 @@ components:
         * `PENDING` - Pendente
         * `SIGNED` - Assinado
         * `CANCELED` - Cancelado
+    EmailTokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserData'
+          readOnly: true
+      required:
+      - access
+      - refresh
+      - user
     EmailTokenObtainPairRequest:
       type: object
-      description: Serializer JWT customizado para usar email ao invés de username.
       properties:
         email:
           type: string
@@ -2843,6 +2888,45 @@ components:
           minLength: 1
       required:
       - refresh
+    UserData:
+      type: object
+      description: Estrutura dos dados do usuário retornados no login.
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+      required:
+      - email
+      - first_name
+      - id
+      - last_name
+    UserDataRequest:
+      type: object
+      description: Estrutura dos dados do usuário retornados no login.
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+          minLength: 1
+        first_name:
+          type: string
+          minLength: 1
+        last_name:
+          type: string
+          minLength: 1
+      required:
+      - email
+      - first_name
+      - id
+      - last_name
     Wedding:
       type: object
       description: Serializador para casamentos, incluindo dados básicos e orçamento

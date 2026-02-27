@@ -224,7 +224,7 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "Wedding Management API",
     "DESCRIPTION": "Sistema completo de gestão de casamentos com API REST",
-    "VERSION": "1.0.0",
+    "VERSION": "1.0.0 (v1)",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r"/api/v1",

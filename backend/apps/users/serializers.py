@@ -1,19 +1,30 @@
+# apps/users/serializers.py
+from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
-class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """
-    Serializer JWT customizado para usar email ao invés de username.
-    """
+class UserDataSerializer(serializers.Serializer):
+    """Estrutura dos dados do usuário retornados no login."""
 
+    id = serializers.IntegerField()
+    email = serializers.EmailField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+
+
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = "email"
 
+    # DECLARAÇÃO EXPLÍCITA PARA O SWAGGER ENXERGAR:
+    access = serializers.CharField(read_only=True)
+    refresh = serializers.CharField(read_only=True)
+    user = UserDataSerializer(read_only=True)
+
     def validate(self, attrs):
-        # O campo vem como 'email' mas o SimpleJWT espera 'username' internamente
-        # Então fazemos o mapeamento aqui
+        # O super().validate(attrs) gera os tokens no dicionário 'data'
         data = super().validate(attrs)
 
-        # Adiciona informações extras ao token se necessário
+        # Injeta os dados do usuário
         data["user"] = {
             "id": self.user.id,
             "email": self.user.email,
