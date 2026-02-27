@@ -1,22 +1,19 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface User {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-}
+// IMPORTANTE: Use o tipo real gerado pelo Orval
+import type { UserData } from "@/api/generated/v1/models";
 
 interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
-  user: User | null;
+  user: UserData | null; // Sincronizado com o Django
   isAuthenticated: boolean;
-  login: (access: string, refresh: string, user: User) => void;
+  // Nomeado como login para o fluxo completo do LoginPage
+  login: (access: string, refresh: string, user: UserData) => void;
   logout: () => void;
+  // O Axios vai usar isso para apenas trocar os tokens sem mexer no usuário
   updateTokens: (access: string, refresh?: string) => void;
-  updateUser: (user: Partial<User>) => void;
+  updateUser: (user: Partial<UserData>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -43,7 +40,6 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         }),
 
-      // O Axios vai chamar isso quando renovar o token no background
       updateTokens: (access, refresh) =>
         set((state) => ({
           accessToken: access,
@@ -56,7 +52,7 @@ export const useAuthStore = create<AuthState>()(
         })),
     }),
     {
-      name: "auth-storage",
+      name: "wedding-auth-storage", // Nome mais específico para evitar conflitos
     },
   ),
 );
