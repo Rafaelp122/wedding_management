@@ -16,7 +16,7 @@ class TestWeddingViewSet:
         WeddingFactory(planner=user, bride_name="Noiva do User")
         WeddingFactory(bride_name="Noiva Alheia")  # Planner diferente via factory
 
-        url = reverse("wedding-list")  # Verifique o basename no seu urls.py
+        url = reverse("v1:wedding-list")  # Verifique o basename no seu urls.py
         api_client.force_authenticate(user=user)
 
         response = api_client.get(url)
@@ -32,7 +32,7 @@ class TestWeddingViewSet:
         """
         other_wedding = WeddingFactory(bride_name="Noiva Secreta")
 
-        url = reverse("wedding-detail", kwargs={"uuid": other_wedding.uuid})
+        url = reverse("v1:wedding-detail", kwargs={"uuid": other_wedding.uuid})
         api_client.force_authenticate(user=user)
 
         response = api_client.get(url)
@@ -44,7 +44,7 @@ class TestWeddingViewSet:
         """
         Garante que o POST na API aciona o WeddingService e cria o ecossistema.
         """
-        url = reverse("wedding-list")
+        url = reverse("v1:wedding-list")
         payload = {
             "groom_name": "Rafael",
             "bride_name": "Noiva de Teste",
@@ -66,7 +66,7 @@ class TestWeddingViewSet:
         """
         Garante que ninguém acessa nada sem estar logado.
         """
-        url = reverse("wedding-list")
+        url = reverse("v1:wedding-list")
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED

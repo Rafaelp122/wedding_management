@@ -4,83 +4,89 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
+from .factories import AdminFactory, UserFactory
+
 
 User = get_user_model()
 
 
 @pytest.mark.django_db
 class TestUserModel:
-    """Testes do modelo customizado User."""
+    """Testes do modelo customizado User com campos explícitos e Factories."""
 
-    def test_create_user(self):
-        """Testa criação de usuário comum."""
+    def test_create_user_via_manager(self):
+        """Testa se o Manager cria o usuário com os campos separados corretamente."""
         user = User.objects.create_user(
-            email="test@example.com", name="Test User", password="testpass123"
+            email="manager_test@example.com",
+            first_name="Nome",
+            last_name="Sobrenome",
+            password="password123",
         )
-        assert user.email == "test@example.com"
-        assert user.name == "Test User"
-        assert user.check_password("testpass123")
-        assert not user.is_staff
-        assert not user.is_superuser
-        assert not user.is_active  # Usuários comuns começam inativos
+        assert user.email == "manager_test@example.com"
+        assert user.first_name == "Nome"
+        assert user.last_name == "Sobrenome"
+        assert user.check_password("password123")
+        assert not user.is_active  # Valida regra de negócio: inativo por padrão
 
-    def test_create_superuser(self):
-        """Testa criação de superusuário."""
+    def test_create_superuser_via_manager(self):
+        """Testa se o Manager cria o superusuário com as permissões corretas."""
         admin = User.objects.create_superuser(
-            email="admin@example.com", name="Admin User", password="adminpass123"
+            email="admin_manager@example.com",
+            first_name="Admin",
+            last_name="Root",
+            password="adminpassword",
         )
-        assert admin.email == "admin@example.com"
-        assert admin.name == "Admin User"
         assert admin.is_staff
         assert admin.is_superuser
         assert admin.is_active
 
+    def test_user_factory_creation(self):
+        """Valida que a UserFactory gera usuários ativos e válidos para testes."""
+        user = UserFactory()
+        assert user.is_active is True
+        assert "@example.com" in user.email
+        assert len(user.first_name) > 0
+
+    def test_admin_factory_creation(self):
+        """Valida que a AdminFactory gera superusuários corretamente."""
+        admin = AdminFactory()
+        assert admin.is_superuser is True
+        assert admin.is_staff is True
+
     def test_user_email_required(self):
-        """Testa que email é obrigatório."""
+        """Testa a obrigatoriedade do email no nível do Manager."""
         with pytest.raises(ValueError, match="O e-mail é obrigatório"):
-            User.objects.create_user(email="", name="Test User", password="testpass123")
+            User.objects.create_user(email="", first_name="User", last_name="Test")
 
     def test_user_email_unique(self):
-        """Testa que email deve ser único."""
-        User.objects.create_user(
-            email="same@example.com", name="User One", password="pass123"
-        )
+        """Testa a restrição de unicidade do email no banco de dados."""
+        UserFactory(email="unique@example.com")
         with pytest.raises(IntegrityError):
-            User.objects.create_user(
-                email="same@example.com", name="User Two", password="pass123"
-            )
+            # Tentativa de criar outro usuário com o mesmo email via Factory
+            UserFactory(email="unique@example.com")
 
     def test_user_str_representation(self):
-        """Testa representação string do usuário."""
-        user = User.objects.create_user(
-            email="test@example.com", name="João Silva", password="pass123"
-        )
-        assert str(user) == "João Silva (test@example.com)"
+        """Testa o dunder method __str__ usando dados da Factory."""
+        user = UserFactory(first_name="Dunder", last_name="Method", email="test@ex.com")
+        assert str(user) == "Dunder Method (test@ex.com)"
 
     def test_get_full_name(self):
-        """Testa método get_full_name."""
-        user = User.objects.create_user(
-            email="test@example.com", name="João Silva", password="pass123"
-        )
-        assert user.get_full_name() == "João Silva"
+        """Testa se a união do nome e sobrenome está correta."""
+        user = UserFactory(first_name="Full", last_name="Name")
+        assert user.get_full_name() == "Full Name"
 
     def test_get_short_name(self):
-        """Testa método get_short_name."""
-        user = User.objects.create_user(
-            email="test@example.com", name="João Silva Santos", password="pass123"
-        )
-        assert user.get_short_name() == "João"
-
-    def test_get_short_name_fallback_to_email(self):
-        """Testa que get_short_name retorna email se nome estiver vazio."""
-        user = User.objects.create_user(
-            email="test@example.com", name="", password="pass123"
-        )
-        assert user.get_short_name() == "test@example.com"
+        """Testa se o nome curto retorna apenas o first_name."""
+        user = UserFactory(first_name="Short", last_name="LongName")
+        assert user.get_short_name() == "Short"
 
     def test_email_normalization(self):
-        """Testa que email é normalizado (lowercase no domínio)."""
+        """Testa se o Manager normaliza o domínio do email para minúsculo."""
+        email_mixed = "USER@DOMAIN.COM"
         user = User.objects.create_user(
-            email="Test@EXAMPLE.COM", name="Test User", password="pass123"
+            email=email_mixed,
+            first_name="Test",
+            last_name="Normalization",
+            password="pass",
         )
-        assert user.email == "Test@example.com"  # Domínio normalizado
+        assert user.email == "USER@domain.com"

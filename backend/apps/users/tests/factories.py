@@ -31,7 +31,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Sequence(lambda n: f"planner{n}@example.com")
 
     # Usa o Faker configurado como pt_BR (no conftest global) para nomes reais
-    name = factory.Faker("name")
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
 
     # No modelo o padrão é False, mas para testes a maioria dos fluxos
     # exige um usuário ativo para passar pelo JWT
