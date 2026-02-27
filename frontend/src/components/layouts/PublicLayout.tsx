@@ -1,16 +1,77 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
+import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
-export function PublicLayout() {
+export const PublicLayout = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">Wedding Management</h1>
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* HEADER / NAVBAR */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="container flex h-16 items-center justify-between mx-auto px-4 md:px-8">
+          {/* LOGO */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          >
+            <Heart className="h-6 w-6 text-pink-500 fill-pink-500" />
+            <span className="text-xl font-bold tracking-tight">
+              WeddingSystem
+            </span>
+          </Link>
+
+          {/* NAVEGAÇÃO / AÇÕES */}
+          <nav className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link to="/login">Entrar</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/register">Começar Agora</Link>
+            </Button>
+          </nav>
         </div>
       </header>
-      <main className="container mx-auto">
+
+      {/* CONTEÚDO PRINCIPAL */}
+      <main className="flex-1">
+        {/* O Outlet aqui renderiza a Home ou a tela de Login/Registro.
+            Sem o Outlet, suas rotas filhas são invisíveis.
+        */}
         <Outlet />
       </main>
+
+      <Separator />
+
+      {/* FOOTER */}
+      <footer className="w-full border-t bg-muted/40 py-8">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <div className="flex items-center gap-2">
+              <Heart className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                © 2026 WeddingSystem. Gerenciando sonhos com lógica fria.
+              </p>
+            </div>
+            <div className="flex gap-6 text-sm font-medium text-muted-foreground">
+              <Link
+                to="/privacy"
+                className="hover:underline underline-offset-4"
+              >
+                Privacidade
+              </Link>
+              <Link to="/terms" className="hover:underline underline-offset-4">
+                Termos de Uso
+              </Link>
+              <Link
+                to="/contact"
+                className="hover:underline underline-offset-4"
+              >
+                Contato
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
-}
+};

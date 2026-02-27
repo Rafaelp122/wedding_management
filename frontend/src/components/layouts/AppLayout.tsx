@@ -1,74 +1,45 @@
-import { Outlet, Link } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore";
-import { Button } from "@/components/ui/button";
-import { LogOut, Calendar, FileText, Package, Heart } from "lucide-react";
+import { Outlet } from "react-router-dom";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
-export function AppLayout() {
-  const { user, logout } = useAuthStore();
+import { useAuthStore } from "@/stores/authStore";
+import { User as UserIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AppSidebar } from "../app-sidebar";
+
+export const AppLayout = () => {
+  const user = useAuthStore((state) => state.user);
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-8">
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <Heart className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold">Wedding Management</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-4">
-                <Link
-                  to="/dashboard"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/weddings"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  <Heart className="h-4 w-4" />
-                  Weddings
-                </Link>
-                <Link
-                  to="/scheduler"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Scheduler
-                </Link>
-                <Link
-                  to="/contracts"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  <FileText className="h-4 w-4" />
-                  Contracts
-                </Link>
-                <Link
-                  to="/items"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  <Package className="h-4 w-4" />
-                  Items
-                </Link>
-              </div>
-            </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+
+        <main className="flex-1 flex flex-col overflow-hidden bg-muted/5">
+          {/* Header Minimalista */}
+          <header className="flex h-16 shrink-0 items-center justify-between border-b px-6 bg-background transition-[width,height] ease-linear">
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                {user?.first_name} {user?.last_name}
+              <SidebarTrigger />
+              <Separator orientation="vertical" className="h-6" />
+              <h1 className="font-semibold text-lg">Painel de Controle</h1>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium hidden md:inline-block">
+                Olá, {user?.first_name}
               </span>
-              <Button onClick={logout} variant="outline" size="sm">
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
+              <Button variant="outline" size="icon" className="rounded-full">
+                <UserIcon className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-        </div>
-      </nav>
+          </header>
 
-      <main className="container mx-auto py-6 px-4">
-        <Outlet />
-      </main>
-    </div>
+          {/* Conteúdo com Scroll Independente */}
+          <div className="flex-1 overflow-y-auto p-6 md:p-8">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
-}
+};
