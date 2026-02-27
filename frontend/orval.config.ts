@@ -5,14 +5,14 @@ export default defineConfig({
     input: "../openapi.json",
     output: {
       mode: "tags-split",
-      target: "./src/api/generated/endpoints",
-      schemas: "./src/api/generated/models",
+      target: "./src/api/generated/v1/endpoints",
+      schemas: "./src/api/generated/v1/models",
       client: "react-query",
       httpClient: "axios",
       prettier: true,
       override: {
         mutator: {
-          path: "src/api/mutator/custom-instance.ts",
+          path: "src/api/custom-instance.ts",
           name: "customInstance",
         },
         query: {
@@ -27,7 +27,7 @@ export default defineConfig({
     input: "../openapi.json",
     output: {
       mode: "tags-split",
-      target: "./src/api/generated/zod", // Pasta separada para não bagunçar
+      target: "./src/api/generated/v1/zod",
       client: "zod",
       prettier: true,
     },

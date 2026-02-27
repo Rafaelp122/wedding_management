@@ -1,5 +1,3 @@
-// src/types/api.ts
-
 /**
  * Padrão de erro do Django Rest Framework e da sua Service Layer
  */
@@ -11,7 +9,7 @@ export interface DjangoErrorResponse {
   // O record permite qualquer nome de campo que venha do seu Serializer
   [key: string]: string | string[] | undefined;
 
-  // Caso sua Service Layer retorne um formato customizado para 422/409
+  // Para caso a Service Layer retorne um formato customizado para 422/409
   message?: string;
   code?: string;
 }
