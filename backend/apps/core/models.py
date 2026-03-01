@@ -22,6 +22,18 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+    def save(self, *args, skip_clean=False, **kwargs):
+        """Garante a execução das validações do clean() antes de persistir (ADR-011).
+
+        Args:
+            skip_clean: Se True, pula o full_clean(). Usar apenas em cenários
+                controlados como bulk operations, migrations ou fixtures onde a
+                validação já foi feita externamente.
+        """
+        if not skip_clean:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
     @classmethod
     def get_by_uuid(cls, uuid_value):
         """Busca rápida por identificador público."""
