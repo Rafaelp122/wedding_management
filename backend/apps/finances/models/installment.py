@@ -62,8 +62,3 @@ class Installment(BaseModel, WeddingOwnedMixin):
             raise ValidationError(
                 "Parcela PAGA precisa ter data de pagamento preenchida"
             )
-
-    def save(self, *args, **kwargs):
-        """Garante a execução das validações do clean antes de persistir."""
-        self.full_clean()
-        super().save(*args, **kwargs)

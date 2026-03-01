@@ -63,7 +63,3 @@ class Expense(BaseModel, WeddingOwnedMixin):
                 f"DIVERGÊNCIA: O valor da despesa (R${self.actual_amount}) deve ser "
                 f"igual ao valor do contrato vinculado (R${self.contract.total_amount})."  # noqa
             )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)

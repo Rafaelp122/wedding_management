@@ -88,7 +88,3 @@ class Contract(BaseModel, WeddingOwnedMixin):
                 )
             if not self.signed_date:
                 raise ValidationError("Informe a data em que o contrato foi assinado.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)

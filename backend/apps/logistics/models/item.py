@@ -75,10 +75,6 @@ class Item(BaseModel, WeddingOwnedMixin):
                 "A categoria de orçamento selecionada não pertence a este casamento."
             )
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     @property
     def supplier(self):
         """Fornecedor vem do contrato associado."""

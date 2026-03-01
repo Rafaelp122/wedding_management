@@ -56,7 +56,3 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
             raise ValidationError(
                 "O orçamento pai deve pertencer ao mesmo casamento desta categoria."
             )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
