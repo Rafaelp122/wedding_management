@@ -3,8 +3,8 @@ import { Heart, Calendar, DollarSign, Users } from "lucide-react";
 
 interface StatsCardsProps {
   totalWeddings: number;
-  weddingsThisMonth: number;
-  pendingTasks: number;
+  weddingsThisMonth?: number;
+  pendingTasks?: number;
   totalRevenue?: string;
 }
 
@@ -12,6 +12,7 @@ export function StatsCards({
   totalWeddings,
   weddingsThisMonth,
   pendingTasks,
+  totalRevenue,
 }: StatsCardsProps) {
   const stats = [
     {
@@ -22,19 +23,19 @@ export function StatsCards({
     },
     {
       title: "Este Mês",
-      value: weddingsThisMonth,
+      value: weddingsThisMonth ?? "—",
       icon: Calendar,
       color: "text-blue-600",
     },
     {
       title: "Tarefas Pendentes",
-      value: pendingTasks,
+      value: pendingTasks ?? "—",
       icon: Users,
       color: "text-orange-600",
     },
     {
       title: "Orçamento Sob Gestão",
-      value: "R$ 45.000",
+      value: totalRevenue ?? "—",
       icon: DollarSign,
       color: "text-green-600",
     },

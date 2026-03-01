@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RecentWeddings } from "@/features/dashboard/components/RecentsWeddings";
+import { RecentWeddings } from "@/features/dashboard/components/RecentWeddings";
 
 export default function DashboardPage() {
   // 1. Busca os dados reais da API Django via Orval/React Query
@@ -52,11 +52,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <StatsCards
-        totalWeddings={totalInDatabase}
-        weddingsThisMonth={0} // Filtro opcional a ser implementado
-        pendingTasks={12}
-      />
+      <StatsCards totalWeddings={totalInDatabase} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         {/* Passamos o array real de casamentos (Wedding[]) para o componente */}
