@@ -72,3 +72,7 @@ class ItemSerializer(BaseSerializer):
             "name",
             "quantity",
         ]
+        read_only_fields = [
+            *BaseSerializer.Meta.read_only_fields,
+            "wedding",
+        ]

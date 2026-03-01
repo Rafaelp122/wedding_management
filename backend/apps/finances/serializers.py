@@ -50,6 +50,10 @@ class BudgetCategorySerializer(BaseSerializer):
             "description",
             "allocated_budget",
         ]
+        read_only_fields = [
+            *BaseSerializer.Meta.read_only_fields,
+            "wedding",
+        ]
 
 
 class ExpenseSerializer(BaseSerializer):
