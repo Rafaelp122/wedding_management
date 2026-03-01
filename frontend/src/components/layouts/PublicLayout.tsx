@@ -53,21 +53,9 @@ export const PublicLayout = () => {
               </p>
             </div>
             <div className="flex gap-6 text-sm font-medium text-muted-foreground">
-              <Link
-                to="/privacy"
-                className="hover:underline underline-offset-4"
-              >
-                Privacidade
-              </Link>
-              <Link to="/terms" className="hover:underline underline-offset-4">
-                Termos de Uso
-              </Link>
-              <Link
-                to="/contact"
-                className="hover:underline underline-offset-4"
-              >
-                Contato
-              </Link>
+              <span className="cursor-default">Privacidade</span>
+              <span className="cursor-default">Termos de Uso</span>
+              <span className="cursor-default">Contato</span>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 
@@ -7,8 +7,20 @@ import { User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppSidebar } from "../app-sidebar";
 
+const PAGE_TITLES: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/weddings": "Casamentos",
+  "/scheduler": "Agenda",
+  "/logistics/contracts": "Contratos",
+  "/logistics/items": "Itens & Estoque",
+  "/finances/budgets": "Orçamentos",
+  "/finances/expenses": "Despesas",
+};
+
 export const AppLayout = () => {
   const user = useAuthStore((state) => state.user);
+  const { pathname } = useLocation();
+  const pageTitle = PAGE_TITLES[pathname] ?? "Painel de Controle";
 
   return (
     <SidebarProvider>
@@ -21,7 +33,7 @@ export const AppLayout = () => {
             <div className="flex items-center gap-4">
               <SidebarTrigger />
               <Separator orientation="vertical" className="h-6" />
-              <h1 className="font-semibold text-lg">Painel de Controle</h1>
+              <h1 className="font-semibold text-lg">{pageTitle}</h1>
             </div>
 
             <div className="flex items-center gap-4">

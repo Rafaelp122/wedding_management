@@ -1,7 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import type { Wedding } from "@/api/generated/v1/models";
+import type { WeddingStatusEnum } from "@/api/generated/v1/models";
 import { Badge } from "@/components/ui/badge";
+
+const STATUS_LABELS: Record<WeddingStatusEnum, string> = {
+  IN_PROGRESS: "Em Andamento",
+  COMPLETED: "Concluído",
+  CANCELED: "Cancelado",
+};
 
 export function RecentWeddings({ weddings }: { weddings: Wedding[] }) {
   return (
@@ -26,7 +33,7 @@ export function RecentWeddings({ weddings }: { weddings: Wedding[] }) {
                     {wedding.groom_name} & {wedding.bride_name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(wedding.date).toLocaleDateString("pt-PT")}
+                    {new Date(wedding.date).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
                 <Badge
@@ -34,7 +41,7 @@ export function RecentWeddings({ weddings }: { weddings: Wedding[] }) {
                     wedding.status === "COMPLETED" ? "default" : "secondary"
                   }
                 >
-                  {wedding.status}
+                  {STATUS_LABELS[wedding.status ?? "IN_PROGRESS"]}
                 </Badge>
               </div>
             ))

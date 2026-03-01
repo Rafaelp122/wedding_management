@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Heart } from "lucide-react";
 
@@ -98,12 +98,9 @@ export function LoginForm() {
                 <FormItem>
                   <div className="flex items-center justify-between">
                     <FormLabel>Senha</FormLabel>
-                    <Link
-                      to="/forgot-password"
-                      className="text-xs text-pink-600 hover:underline"
-                    >
+                    <span className="text-xs text-muted-foreground cursor-default">
                       Esqueceu?
-                    </Link>
+                    </span>
                   </div>
                   <FormControl>
                     <Input type="password" {...field} />
