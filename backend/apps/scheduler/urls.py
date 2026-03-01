@@ -9,8 +9,6 @@ from .views import EventsViewSet
 router = DefaultRouter()
 router.register(r"events", EventsViewSet, basename="event")
 
-app_name = "scheduler"
-
 urlpatterns = [
     # Inclui as rotas geradas pelo router
     path("", include(router.urls)),
