@@ -7,8 +7,8 @@ from django.utils import timezone
 
 from apps.core.exceptions import DomainIntegrityError
 from apps.finances.models import Budget, BudgetCategory
-from apps.finances.tests.model_factories import BudgetFactory
-from apps.logistics.tests.model_factories import ContractFactory
+from apps.finances.tests.factories import BudgetFactory
+from apps.logistics.tests.factories import ContractFactory
 from apps.weddings.models import Wedding
 from apps.weddings.services import WeddingService
 from apps.weddings.tests.factories import WeddingFactory

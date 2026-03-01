@@ -57,7 +57,7 @@ class ContractFactory(factory.django.DjangoModelFactory):
 
     # Sincroniza o planner do fornecedor com o do casamento
     supplier = factory.SubFactory(
-        "apps.logistics.tests.model_factories.SupplierFactory",
+        "apps.logistics.tests.factories.SupplierFactory",
         planner=factory.SelfAttribute("..wedding.planner"),
     )
 
@@ -77,7 +77,7 @@ class ContractFactory(factory.django.DjangoModelFactory):
     # Mantemos o RelatedFactory para a Expense (Despesa)
     # factory_related_name="contract" vincula a Expense ao Contract criado aqui
     expense_rel = factory.RelatedFactory(
-        "apps.finances.tests.model_factories.ExpenseFactory",
+        "apps.finances.tests.factories.ExpenseFactory",
         factory_related_name="contract",
         # Forçamos a despesa a usar o MESMO wedding do contrato
         wedding=factory.SelfAttribute("..wedding"),
@@ -99,6 +99,10 @@ class ItemFactory(factory.django.DjangoModelFactory):
     wedding = factory.SubFactory(WeddingFactory)
     contract = factory.SubFactory(
         ContractFactory, wedding=factory.SelfAttribute("..wedding")
+    )
+    budget_category = factory.SubFactory(
+        "apps.finances.tests.factories.BudgetCategoryFactory",
+        wedding=factory.SelfAttribute("..wedding"),
     )
 
     name = factory.Faker("word")

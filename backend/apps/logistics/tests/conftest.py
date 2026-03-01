@@ -10,7 +10,7 @@ from pytest_factoryboy import register
 
 from apps.weddings.tests.factories import WeddingFactory
 
-from .model_factories import ContractFactory, ItemFactory, SupplierFactory
+from .factories import ContractFactory, ItemFactory, SupplierFactory
 
 
 # Registo das factories logísticas
@@ -34,7 +34,7 @@ def supplier_with_items(db, supplier_factory, contract_factory, item_factory):
     supplier = supplier_factory.create()
 
     # Criamos um casamento para este Planner (utilizador do fornecedor)
-    wedding = WeddingFactory(planner=supplier.user)
+    wedding = WeddingFactory(planner=supplier.planner)
 
     # Criamos o contrato vinculado a este casamento e fornecedor
     contract = contract_factory.create(supplier=supplier, wedding=wedding)

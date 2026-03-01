@@ -37,7 +37,7 @@ class BudgetCategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BudgetCategory
 
-    budget = factory.SubFactory("apps.finances.tests.model_factories.BudgetFactory")
+    budget = factory.SubFactory("apps.finances.tests.factories.BudgetFactory")
     wedding = factory.LazyAttribute(lambda o: o.budget.wedding)
     name = factory.Iterator(
         [
@@ -63,7 +63,7 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
 
     # Se a despesa for criada sozinha, ela cria um contrato (que cria um wedding)
     contract = factory.SubFactory(
-        "apps.logistics.tests.model_factories.ContractFactory"
+        "apps.logistics.tests.factories.ContractFactory"
     )
 
     # Sincronização automática:
@@ -72,7 +72,7 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
 
     # Garante que a categoria também pertença ao mesmo orçamento/casamento
     category = factory.SubFactory(
-        "apps.finances.tests.model_factories.BudgetCategoryFactory",
+        "apps.finances.tests.factories.BudgetCategoryFactory",
         budget=factory.SelfAttribute("..wedding.budget"),
     )
 
@@ -91,7 +91,7 @@ class InstallmentFactory(factory.django.DjangoModelFactory):
         model = Installment
 
     expense = factory.SubFactory(ExpenseFactory)
-    number = factory.Sequence(lambda n: n + 1)
+    installment_number = factory.Sequence(lambda n: n + 1)
     amount = Decimal("500.00")
     due_date = factory.Faker("future_date")
     status = Installment.StatusChoices.PENDING
