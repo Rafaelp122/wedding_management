@@ -30,7 +30,7 @@ class ItemAdmin(admin.ModelAdmin):
         "acquisition_status",
     ]
     list_filter = ["acquisition_status", "wedding", "budget_category"]
-    search_fields = ["name", "description", "wedding__name"]
+    search_fields = ["name", "description", "wedding__groom_name", "wedding__bride_name"]
     readonly_fields = ["created_at", "updated_at"]
 
 
@@ -44,7 +44,7 @@ class ContractAdmin(admin.ModelAdmin):
         "signed_date",  # Adicionado para controle
     ]
     list_filter = ["status", "expiration_date", "wedding"]
-    search_fields = ["wedding__name", "supplier__name"]
+    search_fields = ["wedding__groom_name", "wedding__bride_name", "supplier__name"]
     readonly_fields = [
         "uuid",
         "created_at",

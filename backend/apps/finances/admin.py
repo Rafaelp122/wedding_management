@@ -24,9 +24,12 @@ class BudgetAdmin(admin.ModelAdmin):
     # AJUSTE: search_fields corrigido para o novo modelo de Wedding
     list_display = ["wedding", "created_at"]
     list_filter = ["created_at"]
-    search_fields = ["wedding__name"]
+    search_fields = ["wedding__groom_name", "wedding__bride_name"]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [BudgetCategoryInline]
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BudgetCategory)
@@ -34,9 +37,12 @@ class BudgetCategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "budget", "allocated_budget"]
     list_filter = ["budget", "created_at"]
     # AJUSTE: search_fields corrigido
-    search_fields = ["name", "budget__wedding__name"]
+    search_fields = ["name", "budget__wedding__groom_name", "budget__wedding__bride_name"]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [ExpenseInline]
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class InstallmentInline(admin.TabularInline):
@@ -55,7 +61,7 @@ class ExpenseAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = ["category__budget", "created_at"]
-    search_fields = ["description", "category__name", "wedding__name"]
+    search_fields = ["description", "category__name", "wedding__groom_name", "wedding__bride_name"]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [InstallmentInline]
 

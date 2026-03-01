@@ -30,6 +30,7 @@ class WeddingAdmin(admin.ModelAdmin):
                     "bride_name",
                     "date",
                     "location",
+                    "expected_guests",
                     "status",
                 ],
             },
