@@ -13,19 +13,6 @@ class PlannerOwnedMixin(models.Model):
     class Meta:
         abstract = True
 
-    def clean(self):
-        super().clean()
-        # Filtra apenas campos declarados localmente que são FKs
-        for field in self._meta.concrete_fields:
-            if isinstance(field, models.ForeignKey):
-                related_obj = getattr(self, field.name)
-                # Verifica se o objeto relacionado também pertence a um casamento
-                if related_obj and hasattr(related_obj, "wedding_id"):
-                    if related_obj.wedding_id != self.wedding_id:
-                        raise ValidationError(
-                            {field.name: "Este recurso pertence a outro casamento."}
-                        )
-
 
 class WeddingOwnedMixin(models.Model):
     wedding = models.ForeignKey(
@@ -45,7 +32,7 @@ class WeddingOwnedMixin(models.Model):
         super().clean()
 
         # Lógica genérica de validação de consistência
-        for field in self._meta.get_fields():
+        for field in self._meta.concrete_fields:
             if isinstance(field, models.ForeignKey):
                 related_obj = getattr(self, field.name)
                 # Se o objeto relacionado também for 'WeddingOwned', os IDs devem bater

@@ -144,8 +144,8 @@ class BaseViewSet(viewsets.ModelViewSet):
         queryset multitenant) e repassa ao serviço junto com os dados validados.
         """
         serializer.instance = self.service_class.update(
-            instance=self.get_object(),
             user=self.request.user,
+            instance=self.get_object(),
             data=serializer.validated_data,
         )
 

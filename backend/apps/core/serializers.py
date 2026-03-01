@@ -23,9 +23,9 @@ class BaseSerializer(serializers.ModelSerializer):
             user = request.user
 
             # Percorre todos os campos deste serializer
-            for field in self.fields.items():
+            for field_name, field_obj in self.fields.items():
                 # Se for um campo de relacionamento (tem queryset)
-                if hasattr(field, "queryset") and field.queryset is not None:
+                if hasattr(field_obj, "queryset") and field_obj.queryset is not None:
                     # Aplica o nosso filtro de multitenancy automaticamente!
-                    if hasattr(field.queryset, "for_user"):
-                        field.queryset = field.queryset.for_user(user)
+                    if hasattr(field_obj.queryset, "for_user"):
+                        field_obj.queryset = field_obj.queryset.for_user(user)
