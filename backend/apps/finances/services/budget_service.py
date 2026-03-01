@@ -45,7 +45,6 @@ class BudgetService:
 
         # 3. Validação e Persistência
         try:
-            budget.full_clean()
             budget.save()
         except IntegrityError as e:
             # O banco apita se já existir um Budget para este Wedding (OneToOneField)
@@ -64,7 +63,7 @@ class BudgetService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Budget, user, data: dict) -> Budget:
+    def update(user, instance: Budget, data: dict) -> Budget:
         logger.info(
             f"Atualizando Orçamento uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -77,7 +76,6 @@ class BudgetService:
             setattr(instance, field, value)
 
         # O full_clean() garante a validação de regras como MinValueValidator
-        instance.full_clean()
         instance.save()
 
         logger.info(f"Orçamento uuid={instance.uuid} atualizado com sucesso.")

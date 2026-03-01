@@ -60,11 +60,10 @@ class ContractService:
                 ) from e
 
         # 2. Instanciação em Memória
-        contract = Contract(planner=user, wedding=wedding, supplier=supplier, **data)
+        contract = Contract(wedding=wedding, supplier=supplier, **data)
 
         # 3. Validação Estrita (O Model aplica as suas regras, incluindo checagem de
         # datas)
-        contract.full_clean()
         contract.save()
 
         logger.info(f"Contrato criado com sucesso: uuid={contract.uuid}")
@@ -72,7 +71,7 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Contract, user, data: dict) -> Contract:
+    def update(user, instance: Contract, data: dict) -> Contract:
         logger.info(
             f"Atualizando Contrato uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -106,7 +105,6 @@ class ContractService:
         # A regra de 'expiration_date < signed_date' NÃO está mais aqui.
         # Foi enviada para Contract.clean() onde pertence.
 
-        instance.full_clean()
         instance.save()
 
         logger.info(f"Contrato uuid={instance.uuid} atualizado com sucesso.")

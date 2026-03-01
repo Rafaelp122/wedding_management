@@ -27,7 +27,6 @@ class SupplierService:
         supplier = Supplier(planner=user, **data)
 
         # 2. Validação Estrita no Model (CNPJ único, formatação de telefone, etc.)
-        supplier.full_clean()
         supplier.save()
 
         logger.info(f"Fornecedor criado com sucesso: uuid={supplier.uuid}")
@@ -35,7 +34,7 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Supplier, user, data: dict) -> Supplier:
+    def update(user, instance: Supplier, data: dict) -> Supplier:
         logger.info(
             f"Atualizando Fornecedor uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -48,7 +47,6 @@ class SupplierService:
 
         # O full_clean() aqui é vital para re-validar regras de negócio
         # (ex: CNPJ duplicado)
-        instance.full_clean()
         instance.save()
 
         logger.info(f"Fornecedor uuid={instance.uuid} atualizado com sucesso.")

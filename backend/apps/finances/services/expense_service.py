@@ -66,7 +66,6 @@ class ExpenseService:
 
         # 3. Injeção de Contexto (ADR-009) e Instanciação
         expense = Expense(
-            planner=user,
             wedding=category.wedding,
             category=category,
             contract=contract,
@@ -78,7 +77,6 @@ class ExpenseService:
         # Wedding.
         # Expense.clean() validará se o valor não entra em conflito com o
         # Contrato.
-        expense.full_clean()
         expense.save()
 
         logger.info(f"Despesa criada com sucesso: uuid={expense.uuid}")
@@ -86,7 +84,7 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Expense, user, data: dict) -> Expense:
+    def update(user, instance: Expense, data: dict) -> Expense:
         logger.info(
             f"Atualizando Despesa uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -125,7 +123,6 @@ class ExpenseService:
         # parcelas (Installments) pagas, o full_clean() DEVE ser programado no Model
         # para explodir e bloquear a ação se violar a Tolerância Zero
         # (ADR-010).
-        instance.full_clean()
         instance.save()
 
         logger.info(f"Despesa uuid={instance.uuid} atualizada com sucesso.")

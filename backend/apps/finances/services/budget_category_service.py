@@ -43,14 +43,13 @@ class BudgetCategoryService:
 
         # 2. Injeção de Contexto e Instanciação
         category = BudgetCategory(
-            planner=user, wedding=budget.wedding, budget=budget, **data
+            wedding=budget.wedding, budget=budget, **data
         )
 
         # 3. Delegação de Validação ao Model
         # O método _validate_budget_ceiling que estava aqui DEVE ser movido
         # para dentro de BudgetCategory.clean(). Se o teto estourar, o Model
         # levantará ValidationError, e nosso Handler Global cuidará disso.
-        category.full_clean()
         category.save()
 
         logger.info(f"Categoria de Orçamento criada com sucesso: uuid={category.uuid}")
@@ -58,7 +57,7 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: BudgetCategory, user, data: dict) -> BudgetCategory:
+    def update(user, instance: BudgetCategory, data: dict) -> BudgetCategory:
         logger.info(
             f"Atualizando Categoria uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -73,7 +72,6 @@ class BudgetCategoryService:
 
         # A revalidação do teto financeiro com o novo 'allocated_budget'
         # ocorre automaticamente dentro do full_clean() do Model.
-        instance.full_clean()
         instance.save()
 
         logger.info(f"Categoria uuid={instance.uuid} atualizada com sucesso.")
@@ -111,24 +109,33 @@ class BudgetCategoryService:
     def setup_defaults(user, wedding, budget):
         """
         Cria as categorias iniciais obrigatórias para um novo casamento.
+
+        Usa bulk_create para inserir todas as categorias em uma única query,
+        evitando o overhead de full_clean() + validate_unique() + INSERT
+        individual para cada uma das 6 categorias padrão.
+
+        Isso é seguro porque os dados são hardcoded e controlados internamente,
+        sem input do usuário.
         """
         DEFAULT_CATEGORIES = [
-            {"name": "Espaço e Buffet", "allocated_budget": 0},
-            {"name": "Decoração e Flores", "allocated_budget": 0},
-            {"name": "Fotografia e Vídeo", "allocated_budget": 0},
-            {"name": "Música e Iluminação", "allocated_budget": 0},
-            {"name": "Assessoria", "allocated_budget": 0},
-            {"name": "Trajes e Beleza", "allocated_budget": 0},
+            "Espaço e Buffet",
+            "Decoração e Flores",
+            "Fotografia e Vídeo",
+            "Música e Iluminação",
+            "Assessoria",
+            "Trajes e Beleza",
         ]
 
         logger.info(f"Gerando categorias padrão para o casamento {wedding.uuid}")
 
-        for cat_data in DEFAULT_CATEGORIES:
-            # Reutilizamos a lógica de criação para garantir que
-            # as validações de posse (planner/wedding) são aplicadas.
-            BudgetCategory.objects.create(
+        categories = [
+            BudgetCategory(
                 wedding=wedding,
                 budget=budget,
-                name=cat_data["name"],
-                allocated_budget=cat_data["allocated_budget"],
+                name=name,
+                allocated_budget=0,
             )
+            for name in DEFAULT_CATEGORIES
+        ]
+
+        BudgetCategory.objects.bulk_create(categories)

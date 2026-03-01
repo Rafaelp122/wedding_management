@@ -65,7 +65,6 @@ class ItemService:
 
         # 3. Injeção automática de contexto e Instanciação
         item = Item(
-            planner=user,
             wedding=category.wedding,
             budget_category=category,
             contract=contract,
@@ -73,7 +72,6 @@ class ItemService:
         )
 
         # 4. Validação de consistência (Model assume o controle)
-        item.full_clean()
         item.save()
 
         logger.info(f"Item criado com sucesso: uuid={item.uuid}")
@@ -81,7 +79,7 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Item, user, data: dict) -> Item:
+    def update(user, instance: Item, data: dict) -> Item:
         logger.info(f"Atualizando Item uuid={instance.uuid} por planner_id={user.id}")
 
         # Bloqueio de troca de contexto base
@@ -115,7 +113,6 @@ class ItemService:
             setattr(instance, field, value)
 
         # Validação final de consistência (Cross-Wedding check no Mixin)
-        instance.full_clean()
         instance.save()
 
         logger.info(f"Item uuid={instance.uuid} atualizado com sucesso.")

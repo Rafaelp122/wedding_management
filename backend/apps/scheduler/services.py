@@ -48,7 +48,6 @@ class EventService:
 
         # 3. Validação Estrita do Domínio
         # Aqui o Model garante que start_time < end_time e previne conflitos.
-        event.full_clean()
         event.save()
 
         # TODO (RF12): Integração com Celery para agendar notificações de lembrete
@@ -62,7 +61,7 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Event, user, data: dict) -> Event:
+    def update(user, instance: Event, data: dict) -> Event:
         logger.info(f"Atualizando Evento uuid={instance.uuid} por planner_id={user.id}")
 
         # Proteção contra sequestro de dados:
@@ -74,7 +73,6 @@ class EventService:
             setattr(instance, field, value)
 
         # Validação estrita do Model para garantir que as novas datas não quebram regras
-        instance.full_clean()
         instance.save()
 
         # TODO: Se as datas mudaram, reagendar a task no Celery

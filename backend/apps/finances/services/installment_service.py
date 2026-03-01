@@ -43,11 +43,10 @@ class InstallmentService:
         # NOTA: O cálculo de status (OVERDUE, PENDING, PAID) foi expulso do Service.
         # Ele DEVE estar no método clean() do Model Installment.
         installment = Installment(
-            planner=user, wedding=expense.wedding, expense=expense, **data
+            wedding=expense.wedding, expense=expense, **data
         )
 
         # 3. Validação Estrita da Parcela
-        installment.full_clean()
         installment.save()
 
         # 4. Checagem de Ricochete (Tolerância Zero)
@@ -73,7 +72,7 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Installment, user, data: dict) -> Installment:
+    def update(user, instance: Installment, data: dict) -> Installment:
         logger.info(
             f"Atualizando Parcela uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -88,7 +87,6 @@ class InstallmentService:
 
         # Status auto-update deve ser garantido pelo Model (clean/save).
 
-        instance.full_clean()
         instance.save()
 
         # Revalidação da Despesa Pai (Tolerância Zero)

@@ -32,7 +32,6 @@ class WeddingService:
 
         # 2. Instanciação e Validação do Casamento
         wedding = Wedding(planner=user, **data)
-        wedding.full_clean()
         wedding.save()
 
         # 3. Orquestração Financeira: Criar Orçamento Mestre
@@ -53,7 +52,7 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Wedding, user, data: dict) -> Wedding:
+    def update(user, instance: Wedding, data: dict) -> Wedding:
         logger.info(
             f"Atualizando casamento uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -66,7 +65,6 @@ class WeddingService:
             setattr(instance, field, value)
 
         # Validação estrita (regras de negócio do Model)
-        instance.full_clean()
         instance.save()
 
         logger.info(f"Casamento uuid={instance.uuid} atualizado.")
