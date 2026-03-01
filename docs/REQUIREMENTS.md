@@ -34,7 +34,7 @@ Sistema que **garante integridade financeira** e **impede erro humano** através
 
 ```
 backend/apps/
-├── core/           # Infraestrutura (BaseModel, SoftDelete, Mixins)
+├── core/           # Infraestrutura (BaseModel, Mixins, Managers)
 ├── users/          # Autenticação JWT (Planner único no MVP)
 ├── weddings/       # 💒 Entidade raiz (Wedding)
 ├── finances/       # 💰 Domínio Financeiro
@@ -103,9 +103,9 @@ Tentativa de acesso cross-wedding retorna HTTP 404.
 
 ### 💰 Módulo Financeiro
 
-#### RF03: Categorias Dinâmicas com Soft Delete ✅ **IMPLEMENTADO**
+#### RF03: Categorias Dinâmicas ✅ **IMPLEMENTADO**
 
-Planners criam categorias customizadas. Categoria com itens ativos usa soft delete (`is_deleted=True`). Ver implementação em `apps.core.models.SoftDeleteModel`.
+Planners criam categorias customizadas via `BudgetCategory`. Deleção de categorias é gerenciada pela Service Layer.
 
 ---
 
@@ -307,17 +307,16 @@ Ver BR-FUT05 em [BUSINESS_RULES.md](BUSINESS_RULES.md).
 
 ---
 
-### RNF04: Soft Delete Seletivo ✅ **IMPLEMENTADO**
+### RNF04: Deleção de Registros
 
-**Aplicado:** Wedding, BudgetCategory, Item, Contract, Supplier
-**NÃO aplicado:** Installment, Event, Notification (histórico imutável)
+> Soft delete foi removido do projeto. Deleções são gerenciadas pela Service Layer (hard delete com validações).
 
 ---
 
 ### RNF05: Chaves Híbridas ✅ **IMPLEMENTADO**
 
 **Interno:** `BigAutoField` (JOINs rápidos)
-**Público:** `UUIDField` (segurança + merges)
+**Público:** `UUIDField` com UUID v4 (segurança + merges)
 
 ---
 
@@ -488,7 +487,7 @@ Dashboard React + Formulários + Tabelas + Deploy Cloud Run/Vercel + Testes E2E 
 ## 11. Referências
 
 - [BUSINESS_RULES.md](BUSINESS_RULES.md) - Regras de negócio consolidadas
-- [BUILD_ARCHITECTURE.md](BUILD_ARCHITECTURE.md) - Decisões técnicas (legado)
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Decisões técnicas
 - [ENVIRONMENT.md](ENVIRONMENT.md) - Configuração de ambiente
 
 ---
@@ -552,10 +551,10 @@ Dashboard React + Formulários + Tabelas + Deploy Cloud Run/Vercel + Testes E2E 
 
 ---
 
-**Última atualização:** 8 de fevereiro de 2026
+**Última atualização:** 1 de março de 2026
 **Responsável:** Rafael
-**Versão:** 6.0 - Sistema de Controle
-**Próxima revisão:** Após Sprint 8 (2 meses)
+**Versão:** 6.1 - Remoção de SoftDelete, correção de links
+**Próxima revisão:** Após conclusão do MVP
 
 ---
 
@@ -574,7 +573,6 @@ Dashboard React + Formulários + Tabelas + Deploy Cloud Run/Vercel + Testes E2E 
 **v5.0 (03/02/2026):**
 
 - Separação de domínios de negócio
-- Soft delete seletivo
 - Chaves primárias híbridas
 
 **v4.1 (anterior):**

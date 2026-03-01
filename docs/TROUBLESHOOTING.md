@@ -126,26 +126,6 @@ make superuser       # Cria novo admin
 
 ---
 
-## Erros de Celery (quando implementado)
-
-### Tasks não executam
-
-**Causa:** Worker não rodando ou fila travada
-
-```bash
-docker compose logs celery     # Ver logs do worker
-make restart-celery            # Reinicia worker
-```
-
-### "Connection refused" no Redis
-
-```bash
-docker compose ps redis        # Redis rodando?
-docker compose logs redis
-```
-
----
-
 ## Erros de Testes
 
 ### Testes falhando por banco de dados
@@ -155,7 +135,7 @@ docker compose logs redis
 pytest --create-db
 
 # Rodar testes isoladamente
-pytest apps/items/tests/test_models.py -v
+pytest apps/logistics/tests/test_models.py -v
 ```
 
 ### Cobertura baixa inesperada

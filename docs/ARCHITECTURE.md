@@ -1,6 +1,8 @@
 # 🏗️ Arquitetura Técnica - Wedding Management System
 
-## Versão 1.0 - Arquitetura de Software e Infraestrutura
+## Versão 1.1 - Arquitetura de Software e Infraestrutura
+
+> **Última atualização:** 1 de março de 2026
 
 ---
 
@@ -12,10 +14,10 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      FRONTEND LAYER                          │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  React 18 + Vite + TypeScript                        │   │
-│  │  - Tailwind CSS (styling)                            │   │
-│  │  - Zustand (state management)                        │   │
-│  │  - React Query (data fetching)                       │   │
+│  │  React 19 + Vite 7 + TypeScript 5                    │   │
+│  │  - Tailwind CSS v4 (styling)                         │   │
+│  │  - Zustand 5 (state management)                      │   │
+│  │  - TanStack Query 5 (data fetching)                  │   │
 │  │  - Axios (HTTP client)                               │   │
 │  └──────────────────────────────────────────────────────┘   │
 │                           ↕ HTTPS (JWT)                      │
@@ -30,8 +32,7 @@
 │  │  Django 5.2 + DRF 3.16                               │   │
 │  │  - drf-spectacular (OpenAPI)                         │   │
 │  │  - django-filter (query filtering)                   │   │
-│  │  - django-ratelimit (rate limiting)                  │   │
-│  │  - Sentry SDK (error tracking)                       │   │
+│  │  - django-zeal (N+1 detection)                       │   │
 │  └──────────────────────────────────────────────────────┘   │
 │                           ↕                                  │
 │  ┌──────────────────────────────────────────────────────┐   │
@@ -77,39 +78,36 @@
 **Framework Core:**
 
 ```python
-Django==5.2.9
-djangorestframework==3.16.1
-psycopg2-binary==2.9.9  # PostgreSQL adapter
+Django>=5.2.9,<6.0
+djangorestframework>=3.16.1,<3.17
 ```
 
 **Extensões DRF:**
 
 ```python
-drf-spectacular==0.27.0      # OpenAPI 3.0 schema
-django-filter==24.2          # Filtering support
-django-cors-headers==4.3.1   # CORS handling
-djangorestframework-simplejwt==5.3.1  # JWT auth
+drf-spectacular>=0.27.1,<0.28   # OpenAPI 3.0 schema
+django-cors-headers>=4.6.0,<4.7 # CORS handling
+djangorestframework-simplejwt>=5.4.0,<5.5  # JWT auth
 ```
 
 **Utilitários:**
 
 ```python
-django-ratelimit==4.1.0      # Rate limiting
-sentry-sdk==1.40.0           # Error tracking
-python-decouple==3.8         # Environment variables
-boto3==1.34.0                # AWS SDK (R2 compatible)
+django-extensions>=4.1,<4.2     # Shell plus, etc.
+django-zeal>=2.0.4,<3.0         # N+1 query detection
+gunicorn>=23.0.0,<24.0          # WSGI server
 ```
 
 **Estrutura de Apps:**
 
 ```
 backend/apps/
-├── core/           # Mixins, BaseModel, utils
+├── core/           # BaseModel, Mixins, Managers, BaseSerializer
 ├── users/          # Authentication, JWT
-├── weddings/       # Wedding entity
-├── finances/       # Budget, Expense, Installment
+├── weddings/       # Wedding entity (raiz do domínio)
+├── finances/       # Budget, BudgetCategory, Expense, Installment
 ├── logistics/      # Supplier, Item, Contract
-└── scheduler/      # Event, Notification
+└── scheduler/      # Event
 ```
 
 ---
@@ -120,10 +118,10 @@ backend/apps/
 
 ```json
 {
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "vite": "^5.0.0",
-  "typescript": "^5.3.0"
+  "react": "^19.2.0",
+  "react-dom": "^19.2.0",
+  "vite": "^7.2.4",
+  "typescript": "~5.9.3"
 }
 ```
 
@@ -131,9 +129,9 @@ backend/apps/
 
 ```json
 {
-  "tailwindcss": "^3.4.0",
+  "tailwindcss": "^4.1.18",
   "shadcn/ui": "latest",
-  "lucide-react": "^0.294.0" // Icons
+  "lucide-react": "^0.563.0"
 }
 ```
 
@@ -141,9 +139,9 @@ backend/apps/
 
 ```json
 {
-  "zustand": "^4.4.7",
-  "@tanstack/react-query": "^5.17.0",
-  "axios": "^1.6.5"
+  "zustand": "^5.0.11",
+  "@tanstack/react-query": "^5.90.21",
+  "axios": "^1.13.5"
 }
 ```
 
@@ -151,14 +149,15 @@ backend/apps/
 
 ```
 frontend/src/
+├── api/              # Clients gerados (Orval) e configuração Axios
 ├── components/
-│   ├── ui/           # Componentes shadcn/ui
-│   ├── layouts/      # AppLayout, PublicLayout
-│   └── forms/        # Formulários reutilizáveis
-├── pages/            # Páginas da aplicação
-├── services/         # API clients (axios)
-├── stores/           # Zustand stores
+│   └── ui/           # Componentes shadcn/ui
+├── features/         # Funcionalidades por domínio
 ├── hooks/            # Custom React hooks
+├── lib/              # Utilitários e helpers
+├── pages/            # Páginas da aplicação
+├── router/           # Configuração de rotas (React Router v7)
+├── stores/           # Zustand stores
 └── types/            # TypeScript definitions
 ```
 
@@ -171,18 +170,15 @@ frontend/src/
 ```python
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'HOST': os.getenv('NEON_HOST'),
-        'NAME': os.getenv('NEON_DATABASE'),
-        'USER': os.getenv('NEON_USER'),
-        'PASSWORD': os.getenv('NEON_PASSWORD'),
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-        'CONN_MAX_AGE': 600,  # Connection pooling
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+# Em testes, sempre SQLite in-memory para velocidade
 ```
 
 **Índices Estratégicos:**
@@ -336,9 +332,10 @@ Ver [ADR-006](ADR/006-service-layer.md).
 ```python
 # apps/core/models.py
 class BaseModel(models.Model):
+    """Base abstrata com chave híbrida (BigInt + UUID4) e timestamps."""
     id = models.BigAutoField(primary_key=True)  # Interno (JOINs)
     uuid = models.UUIDField(
-        default=uuid.uuid4,
+        default=uuid.uuid4,   # UUID v4 (aleatório)
         unique=True,
         db_index=True,
         editable=False
@@ -347,6 +344,8 @@ class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = BaseManager()  # Manager com for_user()
+
     class Meta:
         abstract = True
 ```
@@ -354,23 +353,36 @@ class BaseModel(models.Model):
 **WeddingOwnedMixin:**
 
 ```python
-class WeddingOwnedMixin(BaseModel):
+class WeddingOwnedMixin(models.Model):
     """
     Denormalização: wedding_id em cada entidade para:
     - Queries rápidas (sem JOINs complexos)
     - Isolamento automático via manager
     - Segurança por design
+
+    NÃO herda de BaseModel — é um mixin complementar.
+    Models usam: class MyModel(BaseModel, WeddingOwnedMixin)
     """
     wedding = models.ForeignKey(
         'weddings.Wedding',
         on_delete=models.CASCADE,
-        db_index=True  # Índice crítico
+        related_name='%(class)s_records',
     )
-
-    objects = WeddingOwnedManager()  # Filtra automaticamente
 
     class Meta:
         abstract = True
+
+    def clean(self):
+        """Valida que FKs apontem para o mesmo wedding."""
+        super().clean()
+        for field in self._meta.get_fields():  # ⚠️ Bug latente: deveria usar concrete_fields
+            if isinstance(field, models.ForeignKey):
+                related_obj = getattr(self, field.name)
+                if related_obj and hasattr(related_obj, 'wedding_id'):
+                    if related_obj.wedding_id != self.wedding_id:
+                        raise ValidationError(
+                            {field.name: 'Este recurso pertence a outro casamento.'}
+                        )
 ```
 
 ---
@@ -613,10 +625,10 @@ jobs:
 ```python
 # settings.py
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Configurável via env
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': False,
+    'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
 }
@@ -705,28 +717,8 @@ Ver [ADR-005](ADR/005-oidc-scheduler.md).
 
 ### 5.3 Rate Limiting
 
-**Configuração:**
-
-```python
-# settings.py
-RATELIMIT_ENABLE = True
-RATELIMIT_USE_CACHE = 'default'
-
-# views.py
-from django_ratelimit.decorators import ratelimit
-
-@ratelimit(key='ip', rate='100/m', method='ALL')
-@api_view(['POST'])
-def create_expense(request):
-    """Limite: 100 requisições por minuto por IP"""
-    # ...
-
-@ratelimit(key='user', rate='1000/h', method='GET')
-@api_view(['GET'])
-def list_expenses(request):
-    """Limite: 1000 requisições por hora por usuário"""
-    # ...
-```
+> 📋 **Planejado** — `django-ratelimit` não está nas dependências atuais.
+> Será adicionado antes do deploy em produção.
 
 ---
 
@@ -740,7 +732,7 @@ def list_expenses(request):
 # settings.py
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50,
+    'PAGE_SIZE': 10,
 }
 ```
 
@@ -822,40 +814,14 @@ def invalidate_financial_health_cache(sender, instance, **kwargs):
 
 ### 7.1 Sentry (Error Tracking)
 
-**Configuração:**
-
-```python
-# settings.py
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-
-sentry_sdk.init(
-    dsn=os.getenv('SENTRY_DSN'),
-    integrations=[DjangoIntegration()],
-    traces_sample_rate=0.1,  # 10% das requisições
-    profiles_sample_rate=0.1,
-    environment=os.getenv('ENVIRONMENT', 'production'),
-    release=os.getenv('GIT_COMMIT', 'unknown'),
-)
-```
-
-**Captura customizada:**
-
-```python
-from sentry_sdk import capture_exception, capture_message
-
-try:
-    process_payment(installment)
-except PaymentGatewayError as e:
-    capture_exception(e)
-    # Fallback ou retry
-```
+> 📋 **Planejado** — `sentry-sdk` não está nas dependências atuais.
+> Será adicionado antes do deploy em produção.
 
 ---
 
 ### 7.2 Structured Logging
 
-**Configuração:**
+**Configuração atual:** O projeto usa logging JSON em produção e `pretty` em DEBUG, com `RequestIDMiddleware` para rastreamento.
 
 ```python
 # settings.py
@@ -896,16 +862,16 @@ LOGGING = {
 **Uso:**
 
 ```python
-import structlog
+import logging
 
-logger = structlog.get_logger()
+logger = logging.getLogger(__name__)
 
 logger.info(
     "expense_created",
-    wedding_id=expense.wedding_id,
-    amount=float(expense.actual_amount),
-    installments=expense.installments_count,
-    user_id=request.user.id
+    extra={
+        "wedding_id": expense.wedding_id,
+        "amount": float(expense.actual_amount),
+    }
 )
 ```
 
@@ -961,7 +927,7 @@ logger.info(
 
 ---
 
-**Última atualização:** 8 de fevereiro de 2026
+**Última atualização:** 1 de março de 2026
 **Responsável:** Rafael
-**Versão:** 1.0 - Arquitetura Técnica Consolidada
-**Próxima revisão:** Após deploy do MVP (Sprint 16)
+**Versão:** 1.1 - Atualizada para refletir estado real do código
+**Próxima revisão:** Após deploy do MVP

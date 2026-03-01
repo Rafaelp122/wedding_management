@@ -99,8 +99,8 @@ make logs            # Ver logs de todos os serviços
 ### Local (sem Docker)
 
 ```bash
-make local-install   # Setup inicial (venv + dependências)
-source venv/bin/activate
+make local-install   # Setup inicial (.venv + dependências)
+source backend/.venv/bin/activate
 make local-run       # Inicia Django
 make local-migrate   # Aplica migrações
 make front-dev       # Inicia Vite

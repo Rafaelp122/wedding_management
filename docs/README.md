@@ -1,7 +1,7 @@
 # 📚 Documentação do Wedding Management System
 
-**Versão:** 6.0
-**Última atualização:** 8 de fevereiro de 2026
+**Versão:** 6.1
+**Última atualização:** 1 de março de 2026
 **Status:** Em desenvolvimento (MVP)
 
 ---
@@ -26,6 +26,9 @@ docs/
 ├── REQUIREMENTS.md              ← O QUÊ construir (funcionalidades)
 ├── BUSINESS_RULES.md            ← REGRAS de negócio (validações)
 ├── ARCHITECTURE.md              ← COMO construir (stack, padrões)
+├── ENVIRONMENT.md               ← Configuração de ambiente
+├── TROUBLESHOOTING.md           ← Resolução de problemas comuns
+
 └── ADR/                         ← POR QUE decisões técnicas
     ├── 001-why-cloud-run.md
     ├── 002-why-neon.md
@@ -185,16 +188,16 @@ docs/
 
 - **Visão geral:** Diagrama de arquitetura (Frontend → Backend → Database/Storage)
 - **Stack tecnológico:**
-  - Backend: Django 5.2 + DRF 3.16 (Google Cloud Run)
-  - Frontend: React 18 + Vite + TypeScript (Vercel)
-  - Database: Neon PostgreSQL (3GB free tier)
-  - Storage: Cloudflare R2 (zero egress cost)
-  - Email: Resend (3k emails/month)
-  - Monitoring: Sentry (5k events/month)
+  - Backend: Django 5.2 + DRF 3.16 (Docker local, Cloud Run produção)
+  - Frontend: React 19 + Vite 7 + TypeScript 5
+  - Database: PostgreSQL (Docker) / SQLite (dev local)
+  - Storage: Cloudflare R2 (planejado)
+  - Email: Resend (planejado)
+  - Monitoring: Sentry (planejado)
 
 - **Padrões de código:**
   - Service Layer (lógica de negócio isolada)
-  - Mixins (BaseModel, WeddingOwnedMixin, SoftDeleteModel)
+  - Mixins (BaseModel, WeddingOwnedMixin, PlannerOwnedMixin)
   - Validação em cascata (Model → Serializer → Service)
 
 - **Infraestrutura:**
@@ -355,9 +358,12 @@ docs/
 
 | Documento            | Linhas   | Atualização | Status    |
 | -------------------- | -------- | ----------- | --------- |
-| REQUIREMENTS.md      | 593      | 08/02/2026  | ✅ v6.0   |
-| BUSINESS_RULES.md    | 839      | 08/02/2026  | ✅ v2.0   |
-| ARCHITECTURE.md      | ~500     | 08/02/2026  | ✅ v1.0   |
+| REQUIREMENTS.md      | ~584     | 01/03/2026  | ✅ v6.0   |
+| BUSINESS_RULES.md    | ~853     | 01/03/2026  | ✅ v2.1   |
+| ARCHITECTURE.md      | ~970     | 01/03/2026  | ✅ v1.1   |
+| FULL_AUDIT.md        | ~612     | 01/03/2026  | ✅ v1.1   |
+| ENVIRONMENT.md       | ~128     | 01/03/2026  | ✅ v1.0   |
+| TROUBLESHOOTING.md   | ~220     | 01/03/2026  | ✅ v1.1   |
 | ADR/001-cloud-run    | 180      | 08/02/2026  | ✅ Aceito |
 | ADR/002-neon         | 200      | 08/02/2026  | ✅ Aceito |
 | ADR/003-r2           | 120      | 08/02/2026  | ✅ Aceito |
@@ -399,7 +405,7 @@ Cada ADR segue template:
 ## 📞 Contato
 
 **Documentação mantida por:** Rafael
-**Última revisão:** 8 de fevereiro de 2026
+**Última revisão:** 1 de março de 2026
 **Versão do sistema:** MVP em desenvolvimento
 
 ---
@@ -409,7 +415,7 @@ Cada ADR segue template:
 - [Estrutura do Projeto](../README.md)
 - [Guia de Instalação](ENVIRONMENT.md)
 - [Troubleshooting](TROUBLESHOOTING.md)
-- [Build Architecture](BUILD_ARCHITECTURE.md)
+- [Arquitetura](ARCHITECTURE.md)
 
 ---
 

@@ -8,7 +8,7 @@ Backend organizado por **domínios de negócio** (finances, logistics, scheduler
 [![Django](https://img.shields.io/badge/Django-5.2.10-green.svg)](https://www.djangoproject.com/)
 [![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.3-purple.svg)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.2-purple.svg)](https://vitejs.dev/)
 
 ---
 
@@ -38,7 +38,7 @@ make superuser
 
 - [Requisitos Funcionais e Não Funcionais](docs/REQUIREMENTS.md)
 - [Guia Completo de Configuração](docs/ENVIRONMENT.md)
-- [Arquitetura e Padrões de Código](docs/BUILD_ARCHITECTURE.md)
+- [Arquitetura e Padrões de Código](docs/ARCHITECTURE.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ---
@@ -51,7 +51,7 @@ make superuser
 - **Autenticação:** JWT (djangorestframework-simplejwt 5.4) - Email-based login
 - **Banco de Dados:** PostgreSQL 16 (produção) / SQLite (desenvolvimento)
 - **Gerenciador de Pacotes:** UV (ultra-rápido, escrito em Rust)
-- **Identificação:** UUID7 (ordenado por tempo)
+- **Identificação:** UUID v4 (público) + BigAutoField (interno)
 - **Documentação API:** drf-spectacular (OpenAPI 3.0)
 
 ### Frontend
@@ -111,8 +111,9 @@ wedding_management/
 ✅ Autenticação JWT com email
 ✅ CRUD de Fornecedores
 ✅ Gestão de Casamentos e Orçamentos
-🚧 Módulo Financeiro com Parcelas (em desenvolvimento)
-📋 Módulo de Contratos (planejado)
+✅ Módulo Financeiro com Parcelas
+✅ Módulo de Contratos
+🚧 Frontend (em desenvolvimento)
 📋 Sistema de Notificações (planejado)
 
 ---
@@ -135,8 +136,8 @@ make shell           # Django shell
 
 ```bash
 # Setup inicial
-make local-install   # Configura venv + instala dependências
-source venv/bin/activate
+make local-install   # Configura .venv + instala dependências
+source backend/.venv/bin/activate
 
 # Comandos diários
 make local-run       # Inicia Django (http://localhost:8000)

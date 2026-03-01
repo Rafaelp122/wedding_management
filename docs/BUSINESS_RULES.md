@@ -50,11 +50,7 @@ queryset = Wedding.objects.filter(planner=request.user)
 
 **Motivo:** Segurança e privacidade (LGPD).
 
-**Status:** 🏗️ Definido (Aguardando implementação nas ViewSets)
-
----
-
-## 3. Domínio: Finances (Financeiro)
+**Status:** ✅ Implementado via `BaseViewSet.get_queryset()` + `for_user()` + Service Layer (Financeiro)
 
 ### **BR-F01: Integridade de Parcelas (Tolerância Zero)**
 
@@ -179,8 +175,7 @@ def budget_health(self):
 
 **Observação:** NÃO bloqueia criação de despesa (soft limit), apenas alerta.
 
-**Status:** 🏗️ Definido (Aguardando implementação de Properties no Model)
-
+**Status:** 📋 Planejado (V2.0 — properties no Model ou Service)
 ---
 
 ## 4. Domínio: Logistics (Fornecedores e Contratos)
@@ -269,7 +264,7 @@ def create_contract_with_finance(data, wedding):
         )
 ```
 
-**Status:** 🏗️ Definido (Aguardando implementação da Service Layer)
+**Status:** 📋 Planejado — Service Layer já existe, mas este fluxo orquestrado ainda não foi implementado
 
 ---
 
@@ -326,7 +321,7 @@ def clean(self):
                 raise ValidationError("Altere a data da parcela no módulo financeiro.")
 ```
 
-**Status:** 🏗️ Definido (Aguardando implementação no model Event)
+**Status:** 📋 Planejado — Event model ainda não tem `clean()` com esta validação
 
 ---
 
@@ -337,7 +332,7 @@ def clean(self):
 **Definição de status:**
 
 ```python
-class Item(WeddingOwnedMixin, SoftDeleteModel):
+class Item(WeddingOwnedMixin):
     class AcquisitionStatus(models.TextChoices):
         PENDING = "PENDING", "Pendente"
         ACQUIRED = "ACQUIRED", "Adquirido"
@@ -365,7 +360,7 @@ class Item(WeddingOwnedMixin, SoftDeleteModel):
 **Implementação:**
 
 ```python
-class BudgetCategory(WeddingOwnedMixin, SoftDeleteModel):
+class BudgetCategory(WeddingOwnedMixin):
     def clean(self):
         # Validação adicional: garantir que wedding não mudou
         if self.pk and self._state.fields_cache.get('wedding') != self.wedding:
@@ -557,7 +552,7 @@ class Budget(BaseModel):
         ).aggregate(models.Sum('amount'))['amount__sum'] or Decimal('0.00')
 ```
 
-**Status:** 🏗️ Definido (Aguardando implementação de Properties no Model ou Logic no Service)
+**Status:** 📋 Planejado (V2.0 — properties no Model ou Service)
 
 ---
 
@@ -569,15 +564,25 @@ class Budget(BaseModel):
 
 ```python
 class WeddingOwnedMixin(models.Model):
-    wedding = models.ForeignKey('weddings.Wedding', on_delete=models.CASCADE)
+    wedding = models.ForeignKey('weddings.Wedding', on_delete=models.CASCADE,
+                                related_name='%(class)s_records')
 
     class Meta:
         abstract = True
 
-    def save(self, *args, **kwargs):
-        self.full_clean()  # Validação automática
-        super().save(*args, **kwargs)
+    def clean(self):
+        """Valida cross-wedding: FKs devem apontar para o mesmo wedding."""
+        super().clean()
+        for field in self._meta.get_fields():
+            if isinstance(field, models.ForeignKey):
+                related_obj = getattr(self, field.name)
+                if related_obj and hasattr(related_obj, 'wedding_id'):
+                    if related_obj.wedding_id != self.wedding_id:
+                        raise ValidationError(...)
 ```
+
+> **Nota:** O `save()` com `full_clean()` é implementado em cada model concreto
+> (BudgetCategory, Expense, Installment, Contract, Item), não no mixin.
 
 **Aplicado em:**
 
@@ -631,7 +636,7 @@ class WeddingService:
         }
 ```
 
-**Status:** 🏗️ Definido (Aguardando implementação da Service Layer)
+**Status:** 📋 Planejado — Service Layer existe, mas `get_dashboard()` ainda não foi implementado
 
 ---
 
@@ -652,30 +657,7 @@ Contract.objects.filter(wedding__planner=request.user)
 Wedding.objects.all()  # Vê casamentos de outros planners
 ```
 
-**Status:** 🏗️ Definido (Aguardando implementação nas ViewSets)
-
----
-
-### **BR-SEC02: Soft Delete Seletivo**
-
-**Regra:** Soft delete APENAS em entidades que podem ser restauradas.
-
-**Aplicado em:**
-
-- ✅ Wedding (restaurável)
-- ✅ BudgetCategory (restaurável)
-- ✅ Supplier (restaurável)
-- ✅ Contract (restaurável)
-- ✅ Item (restaurável)
-
-**NÃO aplicado em:**
-
-- ❌ Budget (núcleo financeiro)
-- ❌ Expense (histórico financeiro)
-- ❌ Installment (histórico financeiro imutável)
-- ❌ Event (histórico de agenda)
-
-**Status:** ✅ Implementado via `SoftDeleteModel`
+**Status:** ✅ Implementado via `BaseViewSet.get_queryset()` + `for_user()` + Service Layer
 
 ---
 
@@ -827,7 +809,7 @@ def sync_expense(sender, instance, **kwargs):
 | **Tolerância Zero** | Soma de parcelas = valor total (sem margem de erro)                               |
 | **Âncora Jurídica** | Regra que vincula Expense ao Contract, impedindo alteração sem modificar contrato |
 | **Cross-Wedding**   | Mistura acidental de dados entre casamentos diferentes                            |
-| **Soft Delete**     | Deletar logicamente (flag `is_deleted=True`) sem remover do banco                 |
+| **Soft Delete**     | Deleção lógica (flag) sem remover do banco — **removido do projeto atual** |
 | **Hard Delete**     | Deletar fisicamente (SQL DELETE)                                                  |
 | **Service Layer**   | Camada de lógica de negócio separada de Views                                     |
 | **Denormalização**  | Duplicar dados para otimizar queries (vs normalização)                            |
@@ -841,12 +823,11 @@ def sync_expense(sender, instance, **kwargs):
 ## 11. Referências
 
 - [REQUIREMENTS.md](REQUIREMENTS.md) - Requisitos Funcionais e Não-Funcionais
-- [BUILD_ARCHITECTURE.md](BUILD_ARCHITECTURE.md) - Decisões Técnicas
-- [FINANCIAL_INTEGRITY.md](../backend/apps/finances/FINANCIAL_INTEGRITY.md) - Regras Específicas de Finanças
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Decisões Técnicas
 
 ---
 
-**Última atualização:** 8 de janeiro de 2025
+**Última atualização:** 1 de março de 2026
 **Responsável:** Rafael
-**Versão:** 2.0 - Consolidação de regras de negócio (BR-F02, BR-L05, BR-SEC03, BR-FUT05)
-**Próxima revisão:** Sprint 4 (após 1 mês)
+**Versão:** 2.1 - Atualização de status das regras, remoção de SoftDelete, correção de links
+**Próxima revisão:** Após conclusão do MVP
