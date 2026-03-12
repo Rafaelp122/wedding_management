@@ -42,9 +42,7 @@ class BudgetCategoryService:
                 ) from e
 
         # 2. Injeção de Contexto e Instanciação
-        category = BudgetCategory(
-            wedding=budget.wedding, budget=budget, **data
-        )
+        category = BudgetCategory(wedding=budget.wedding, budget=budget, **data)
 
         # 3. Delegação de Validação ao Model
         # O método _validate_budget_ceiling que estava aqui DEVE ser movido

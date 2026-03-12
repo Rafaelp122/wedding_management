@@ -62,9 +62,7 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
         model = Expense
 
     # Se a despesa for criada sozinha, ela cria um contrato (que cria um wedding)
-    contract = factory.SubFactory(
-        "apps.logistics.tests.factories.ContractFactory"
-    )
+    contract = factory.SubFactory("apps.logistics.tests.factories.ContractFactory")
 
     # Sincronização automática:
     # Tenta pegar o wedding do contrato; se não existir, usa o que foi passado.

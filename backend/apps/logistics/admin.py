@@ -30,7 +30,12 @@ class ItemAdmin(admin.ModelAdmin):
         "acquisition_status",
     ]
     list_filter = ["acquisition_status", "wedding", "budget_category"]
-    search_fields = ["name", "description", "wedding__groom_name", "wedding__bride_name"]
+    search_fields = [
+        "name",
+        "description",
+        "wedding__groom_name",
+        "wedding__bride_name",
+    ]
     readonly_fields = ["created_at", "updated_at"]
 
 

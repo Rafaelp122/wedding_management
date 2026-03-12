@@ -18,7 +18,9 @@ class Event(BaseModel, WeddingOwnedMixin):
         OTHER = "outro", "Outro"
 
     # Usuário responsável (planner)
-    planner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="event_records")
+    planner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="event_records"
+    )
 
     # Informações principais do evento
     title = models.CharField(max_length=255, verbose_name="Título")

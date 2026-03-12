@@ -17,7 +17,9 @@ class Wedding(BaseModel):
         COMPLETED = "COMPLETED", "Concluído"
         CANCELED = "CANCELED", "Cancelado"
 
-    planner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wedding_records")
+    planner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="wedding_records"
+    )
     groom_name = models.CharField(max_length=100)
     bride_name = models.CharField(max_length=100)
     date = models.DateField(validators=[validate_future_date])

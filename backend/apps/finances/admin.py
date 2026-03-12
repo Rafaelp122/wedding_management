@@ -37,7 +37,11 @@ class BudgetCategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "budget", "allocated_budget"]
     list_filter = ["budget", "created_at"]
     # AJUSTE: search_fields corrigido
-    search_fields = ["name", "budget__wedding__groom_name", "budget__wedding__bride_name"]
+    search_fields = [
+        "name",
+        "budget__wedding__groom_name",
+        "budget__wedding__bride_name",
+    ]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [ExpenseInline]
 
@@ -61,7 +65,12 @@ class ExpenseAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = ["category__budget", "created_at"]
-    search_fields = ["description", "category__name", "wedding__groom_name", "wedding__bride_name"]
+    search_fields = [
+        "description",
+        "category__name",
+        "wedding__groom_name",
+        "wedding__bride_name",
+    ]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [InstallmentInline]
 

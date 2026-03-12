@@ -42,9 +42,7 @@ class InstallmentService:
         # 2. Injeção de Contexto e Instanciação
         # NOTA: O cálculo de status (OVERDUE, PENDING, PAID) foi expulso do Service.
         # Ele DEVE estar no método clean() do Model Installment.
-        installment = Installment(
-            wedding=expense.wedding, expense=expense, **data
-        )
+        installment = Installment(wedding=expense.wedding, expense=expense, **data)
 
         # 3. Validação Estrita da Parcela
         installment.save()
