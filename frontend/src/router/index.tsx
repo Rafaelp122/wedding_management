@@ -1,46 +1,41 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-
-// Layouts
+import { lazy, Suspense } from "react";
+import { ProtectedRoute } from "./guards/ProtectedRoute";
+import { PublicRoute } from "./guards/PublicRoute";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { AppLayout } from "@/components/layouts/AppLayout";
+import { GlobalError } from "@/components/ui/globalError";
+import { LoadingScreen } from "@/components/ui/loadingScreen";
 
-// Guards
-import { ProtectedRoute } from "@/router/guards/ProtectedRoute";
-import { PublicRoute } from "@/router/guards/PublicRoute";
-
-// Pages (Orquestradores)
-import LandingPage from "@/pages/LandingPage";
-import LoginPage from "@/pages/LoginPage";
-import DashboardPage from "@/pages/DashboardPage";
-
-// Nota: Conforme você for criando as outras páginas, importe-as aqui
-// import WeddingsPage from "@/pages/WeddingsPage";
+// Implementa o Lazy Loading para separar os bundles
+const LandingPage = lazy(() => import("../pages/LandingPage"));
+const LoginPage = lazy(() => import("../pages/LoginPage"));
+const DashboardPage = lazy(() => import("../pages/DashboardPage"));
+const ComingSoonPage = lazy(() => import("../pages/ComingSoonPage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 export const router = createBrowserRouter([
   {
-    path: "/",
     element: <PublicLayout />,
+    errorElement: <GlobalError />, // Protege a árvore de rotas públicas
     children: [
       {
-        index: true, // Isso faz com que a LandingPage seja o "/"
-        element: <LandingPage />,
-      },
-      {
-        path: "login",
+        path: "/",
         element: (
           <PublicRoute>
-            <LoginPage />
+            <Suspense fallback={<LoadingScreen />}>
+              <LandingPage />
+            </Suspense>
           </PublicRoute>
         ),
       },
       {
-        path: "register",
+        path: "/login",
         element: (
           <PublicRoute>
-            {/* <RegisterPage /> */}
-            <div className="p-8 text-center">
-              Página de Registro em breve...
-            </div>
+            <Suspense fallback={<LoadingScreen />}>
+              <LoginPage />
+            </Suspense>
           </PublicRoute>
         ),
       },
@@ -52,73 +47,103 @@ export const router = createBrowserRouter([
         <AppLayout />
       </ProtectedRoute>
     ),
+    errorElement: <GlobalError />, // Protege a árvore de rotas da aplicação
     children: [
       {
-        path: "dashboard",
-        element: <DashboardPage />,
+        path: "/app",
+        element: <Navigate to="/dashboard" replace />,
       },
       {
-        path: "weddings",
+        path: "/dashboard",
         element: (
-          <div className="p-6">
-            <h1>Gestão de Casamentos</h1>
-          </div>
+          <Suspense fallback={<LoadingScreen />}>
+            <DashboardPage />
+          </Suspense>
         ),
       },
       {
-        path: "scheduler",
+        path: "/weddings",
         element: (
-          <div className="p-6">
-            <h1>Agenda de Eventos</h1>
-          </div>
+          <Suspense fallback={<LoadingScreen />}>
+            <ComingSoonPage
+              title="Casamentos"
+              description="A gestão detalhada de casamentos será disponibilizada em breve."
+            />
+          </Suspense>
         ),
       },
       {
-        path: "logistics",
-        children: [
-          {
-            path: "contracts",
-            element: (
-              <div className="p-6">
-                <h1>Contratos</h1>
-              </div>
-            ),
-          },
-          {
-            path: "items",
-            element: (
-              <div className="p-6">
-                <h1>Itens & Estoque</h1>
-              </div>
-            ),
-          },
-        ],
+        path: "/scheduler",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <ComingSoonPage
+              title="Agenda"
+              description="A visualização completa da agenda será disponibilizada em breve."
+            />
+          </Suspense>
+        ),
       },
       {
-        path: "finances",
-        children: [
-          {
-            path: "budgets",
-            element: (
-              <div className="p-6">
-                <h1>Orçamentos</h1>
-              </div>
-            ),
-          },
-          {
-            path: "expenses",
-            element: (
-              <div className="p-6">
-                <h1>Despesas</h1>
-              </div>
-            ),
-          },
-        ],
+        path: "/logistics/contracts",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <ComingSoonPage
+              title="Contratos"
+              description="O módulo de contratos está em preparação e ficará disponível em breve."
+            />
+          </Suspense>
+        ),
       },
+      {
+        path: "/logistics/items",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <ComingSoonPage
+              title="Itens & Estoque"
+              description="O controle de itens e estoque será disponibilizado em breve."
+            />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/finances/budgets",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <ComingSoonPage
+              title="Financeiro"
+              description="A área financeira detalhada será disponibilizada em breve."
+            />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/finances/expenses",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <ComingSoonPage
+              title="Despesas"
+              description="A gestão detalhada de despesas será disponibilizada em breve."
+            />
+          </Suspense>
+        ),
+      },
+      {
+        path: "*",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <NotFoundPage />
+          </Suspense>
+        ),
+      },
+      // Adiciona rotas futuras com Lazy Loading aqui
     ],
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />,
+    element: (
+      <Suspense fallback={<LoadingScreen />}>
+        <NotFoundPage />
+      </Suspense>
+    ),
   },
 ]);
