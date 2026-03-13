@@ -90,7 +90,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version-file: "frontend/.nvmrc" # Ajustado para o caminho correto
+          node-version-file: "frontend/.nvmrc"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
       - name: Install & Test
@@ -106,10 +106,33 @@ jobs:
     name: API Contract Sync
     needs: [backend-tests, frontend-tests]
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: wedding_db
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: wedding_db
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DJANGO_SETTINGS_MODULE: config.settings
+      SECRET_KEY: ${{ secrets.DJANGO_TEST_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Tools (UV & Node)
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
       - uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
