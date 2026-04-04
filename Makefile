@@ -5,23 +5,12 @@ SHELL := /bin/bash
 # ==============================================================================
 DC := docker compose
 EXEC_BACK := $(DC) exec backend
-EXEC_FRONT := $(DC) exec frontend
 PYTHON := python manage.py
-
-# Detecta todos os apps dentro da pasta apps
-APPS := $(shell find backend/apps -mindepth 1 -maxdepth 1 -type d ! -name '__pycache__' -exec basename {} \;)
-
-# Habilita BuildKit para builds mais rápidos
+# Otimização do BuildKit
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-.PHONY: help up dev down build rebuild clean logs restart
-.PHONY: migrate makemigrations db-reset db-flush show-migrations superuser shell back-shell back-logs reqs back-install
-.PHONY: front-install front-shell front-logs front-dev
-.PHONY: test test-cov test-parallel lint lint-fix format check clean-cache fix-perms
-.PHONY: secret-key env-setup check-env local-install setup-hooks setup sync-api openapi orval
-.PHONY: local-migrate local-makemigrations local-run local-shell local-createsuperuser
-
+.PHONY: help setup up dev build down clean migrate makemigrations superuser shell reqs back-install openapi orval sync-api test lint format check env-setup secret-key fix-perms
 # Default target
 help:
 	@echo "=========================================================================="
@@ -97,7 +86,7 @@ migrate:
 	$(EXEC_BACK) $(PYTHON) migrate
 
 makemigrations:
-	$(EXEC_BACK) $(PYTHON) makemigrations $(APPS)
+	$(EXEC_BACK) $(PYTHON) makemigrations
 
 superuser:
 	$(EXEC_BACK) $(PYTHON) createsuperuser
@@ -121,7 +110,7 @@ back-install:
 # O Django Ninja usa 'export_schema' em vez do spectacular
 openapi:
 	@echo "📝 Gerando schema OpenAPI a partir do Django Ninja..."
-	$(EXEC_BACK) $(PYTHON) export_openapi_schema --api config.api.api --output ../openapi.json
+	cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json
 	@echo "✅ openapi.json gerado na raiz do projeto."
 
 orval:
