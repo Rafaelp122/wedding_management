@@ -50,7 +50,7 @@ queryset = Wedding.objects.filter(planner=request.user)
 
 **Motivo:** Segurança e privacidade (LGPD).
 
-**Status:** ✅ Implementado via `BaseViewSet.get_queryset()` + `for_user()` + Service Layer (Financeiro)
+**Status:** ✅ Implementado via routers do Ninja + Managers (`for_user()`) + Service Layer
 
 ### **BR-F01: Integridade de Parcelas (Tolerância Zero)**
 
@@ -657,7 +657,7 @@ Contract.objects.filter(wedding__planner=request.user)
 Wedding.objects.all()  # Vê casamentos de outros planners
 ```
 
-**Status:** ✅ Implementado via `BaseViewSet.get_queryset()` + `for_user()` + Service Layer
+**Status:** ✅ Implementado via routers do Ninja + Managers (`for_user()`) + Service Layer
 
 ---
 

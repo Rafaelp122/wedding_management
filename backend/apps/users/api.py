@@ -42,7 +42,12 @@ def obtain_token(request, payload: TokenPayloadIn):
     )
 
 
-@router.post("/refresh/", auth=None, operation_id="auth_refresh_token")
+@router.post(
+    "/refresh/",
+    auth=None,
+    response=TokenRefreshOutputSchema,
+    operation_id="auth_refresh_token",
+)
 def refresh_token(request, payload: TokenRefreshInputSchema):
     """
     Gera um novo token de acesso usando um refresh token.

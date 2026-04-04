@@ -11,7 +11,7 @@ Este projeto usa **Orval** para gerar automaticamente tipos TypeScript, hooks Re
 ```
 ┌──────────────┐     make openapi     ┌───────────────┐     make orval     ┌──────────────────┐
 │   Backend    │  ──────────────────► │ openapi.json  │ ──────────────────► │  generated/v1/   │
-│ DRF + spec.  │                      │  (raiz)       │                     │ endpoints/models │
+│ Django Ninja │                      │  (raiz)       │                     │ endpoints/models │
 └──────────────┘                      └───────────────┘                     └──────────────────┘
 ```
 
@@ -21,7 +21,7 @@ Este projeto usa **Orval** para gerar automaticamente tipos TypeScript, hooks Re
 | `make orval` | Gera tipos, hooks e Zod schemas no frontend a partir do `openapi.json` |
 | `make sync-api` | Executa ambos em sequência |
 
-**Regra:** sempre rode `make sync-api` após alterar qualquer ViewSet, Serializer ou URL no backend.
+**Regra:** sempre rode `make sync-api` após alterar qualquer Endpoint Ninja ou Schema Pydantic no backend.
 
 ---
 
@@ -182,7 +182,7 @@ Opções relevantes:
 ## Fluxo de Trabalho Diário
 
 ```
-1. Alterar Serializer/ViewSet/URL no backend
+1. Alterar Schema/Endpoint/Router no backend
 2. Rodar: make sync-api
 3. Verificar os diffs em generated/ (novos tipos, campos, hooks)
 4. Usar os hooks atualizados no frontend
@@ -197,7 +197,7 @@ Se o TypeScript **não** reclamar após uma mudança no backend, significa que o
 
 | Sintoma | Causa provável | Solução |
 |---|---|---|
-| Hook retorna `unknown` ou tipo genérico | Schema OpenAPI incompleto (serializer sem fields explícitos) | Verificar o serializer no backend e rodar `make sync-api` |
+| Hook retorna `unknown` ou tipo genérico | Schema OpenAPI incompleto | Verificar o dict de resposta do endpoint no backend e rodar `make sync-api` |
 | Import não encontrado após novo endpoint | `make sync-api` não foi rodado | Rodar `make sync-api` |
 | Tipo gerado não reflete campo adicionado | Cache do Orval ou `openapi.json` desatualizado | Rodar `make sync-api` (regenera tudo) |
 | Erro de runtime mas tipo está correto | `openapi.json` divergiu da implementação real | Verificar se o backend está rodando e rodar `make sync-api` |

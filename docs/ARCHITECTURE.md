@@ -29,8 +29,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      BACKEND LAYER                           │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  Django 5.2 + DRF 3.16                               │   │
-│  │  - drf-spectacular (OpenAPI)                         │   │
+│  │  Django 5.2 + Django Ninja 1.6                       │   │
+│  │  - django-ninja-jwt (Auth)                           │   │
 │  │  - django-filter (query filtering)                   │   │
 │  │  - django-zeal (N+1 detection)                       │   │
 │  └──────────────────────────────────────────────────────┘   │
@@ -73,21 +73,20 @@
 
 ## 2. Stack Técnico Detalhado
 
-### 2.1 Backend (Django REST Framework)
+### 2.1 Backend (Django Ninja)
 
 **Framework Core:**
 
 ```python
 Django>=5.2.9,<6.0
-djangorestframework>=3.16.1,<3.17
+django-ninja>=1.6.2
 ```
 
-**Extensões DRF:**
+**Extensões:**
 
 ```python
-drf-spectacular>=0.27.1,<0.28   # OpenAPI 3.0 schema
+django-ninja-jwt>=5.4.4         # JWT auth
 django-cors-headers>=4.6.0,<4.7 # CORS handling
-djangorestframework-simplejwt>=5.4.0,<5.5  # JWT auth
 ```
 
 **Utilitários:**
@@ -102,7 +101,7 @@ gunicorn>=23.0.0,<24.0          # WSGI server
 
 ```
 backend/apps/
-├── core/           # BaseModel, Mixins, Managers, BaseSerializer
+├── core/           # BaseModel, Mixins, Managers, Schemas Base
 ├── users/          # Authentication, JWT
 ├── weddings/       # Wedding entity (raiz do domínio)
 ├── finances/       # Budget, BudgetCategory, Expense, Installment
@@ -270,19 +269,19 @@ Ver [ADR-003](ADR/003-why-r2.md) e [ADR-004](ADR/004-presigned-urls.md).
 **Separação de responsabilidades:**
 
 ```python
-# ❌ ERRADO: Lógica no serializer
-class ExpenseSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        expense = Expense.objects.create(**validated_data)
-        # Lógica de negócio aqui é ANTI-PATTERN
-        for i in range(expense.installments_count):
-            Installment.objects.create(...)
-        return expense
+# ❌ ERRADO: Lógica no endpoint / router diretamente
+@router.post("/expenses")
+def create_expense(request, payload: ExpenseIn):
+    expense = Expense.objects.create(**payload.dict())
+    # Lógica de negócio aqui é ANTI-PATTERN
+    for i in range(expense.installments_count):
+        Installment.objects.create(...)
+    return expense
 
 # ✅ CORRETO: Lógica no service
-class ExpenseSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        return ExpenseService.create_with_installments(validated_data)
+@router.post("/expenses")
+def create_expense(request, payload: ExpenseIn):
+    return ExpenseService.create_with_installments(payload.dict())
 
 # apps/finances/services.py
 class ExpenseService:

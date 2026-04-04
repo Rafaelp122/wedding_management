@@ -47,12 +47,12 @@ make superuser
 
 ### Backend
 
-- **Framework:** Django 5.2.10 + Django REST Framework 3.16.1
-- **Autenticação:** JWT (djangorestframework-simplejwt 5.4) - Email-based login
+- **Framework:** Django 5.2.10 + Django Ninja 1.6.2
+- **Autenticação:** JWT (django-ninja-jwt 5.4.4) - Email-based login
 - **Banco de Dados:** PostgreSQL 16 (produção) / SQLite (desenvolvimento)
 - **Gerenciador de Pacotes:** UV (ultra-rápido, escrito em Rust)
 - **Identificação:** UUID v4 (público) + BigAutoField (interno)
-- **Documentação API:** drf-spectacular (OpenAPI 3.0)
+- **Documentação API:** Django Ninja (OpenAPI 3.0 via nativo)
 
 ### Frontend
 
