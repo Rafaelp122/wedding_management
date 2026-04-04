@@ -1,8 +1,8 @@
 # ADR-012: Geração Automática da Camada de API do Frontend via Orval
 
-**Status:** Aceito  
-**Data:** Março 2026  
-**Decisor:** Rafael  
+**Status:** Aceito
+**Data:** Março 2026
+**Decisor:** Rafael
 **Contexto:** Eliminar código manual de clients HTTP, tipos TypeScript e hooks React Query no frontend
 
 ---
