@@ -10,7 +10,7 @@ PYTHON := python manage.py
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-.PHONY: help setup up dev build down clean migrate makemigrations superuser shell reqs back-install openapi orval sync-api test lint format check env-setup secret-key fix-perms
+.PHONY: help setup up dev logs build down clean migrate makemigrations superuser shell reqs back-install openapi orval sync-api test test-cov lint mypy format check check-backend check-frontend check-ci env-setup secret-key fix-perms
 # Default target
 help:
 	@echo "=========================================================================="
@@ -21,6 +21,7 @@ help:
 	@echo "  make setup               - 🚀 Setup completo (env + build + superuser)"
 	@echo "  make up                  - Inicia containers e aplica migrations"
 	@echo "  make dev                 - 🔥 Modo desenvolvimento (watch + logs)"
+	@echo "  make logs                - Exibe logs dos serviços"
 	@echo "  make down                - Para e remove todos os containers"
 	@echo "  make build               - Reconstrói e inicia os containers"
 	@echo "  make clean               - Limpeza total (containers, volumes, redes)"
@@ -39,9 +40,14 @@ help:
 	@echo "  make orval               - Gera os hooks do frontend (Requer openapi.json)"
 	@echo ""
 	@echo "🧹 QUALIDADE & MANUTENÇÃO"
-	@echo "  make check               - ✅ Roda lint + testes + openapi (CI gate)"
+	@echo "  make check-backend       - ✅ Lint + mypy + testes + openapi (backend)"
+	@echo "  make check-frontend      - ✅ Lint + type-check + testes (frontend)"
+	@echo "  make check-ci            - ✅ Gate local espelhando CI"
+	@echo "  make check               - Alias para make check-backend"
 	@echo "  make test                - Executa testes com pytest"
+	@echo "  make test-cov            - Executa testes com cobertura"
 	@echo "  make lint                - Analisa código com Ruff"
+	@echo "  make mypy                - Valida tipagem estática no backend"
 	@echo "  make format              - Formata código com Ruff"
 	@echo "=========================================================================="
 
@@ -64,6 +70,9 @@ up:
 dev:
 	$(DC) up -d
 	$(EXEC_BACK) $(PYTHON) migrate
+	$(DC) logs -f
+
+logs:
 	$(DC) logs -f
 
 build:
@@ -123,15 +132,30 @@ sync-api: openapi orval
 test:
 	$(EXEC_BACK) uv run pytest -v
 
+test-cov:
+	$(EXEC_BACK) uv run pytest --cov=apps --cov-report=term -v
+
 lint:
 	$(EXEC_BACK) uv run ruff check .
+
+mypy:
+	$(EXEC_BACK) uv run mypy . --show-error-codes --no-color-output
 
 format:
 	$(EXEC_BACK) uv run ruff format .
 	$(EXEC_BACK) uv run ruff check . --fix
 
-check: lint test openapi
-	@echo "✅ Pipeline de qualidade passou!"
+check-backend: lint mypy test openapi
+	@echo "✅ Pipeline de qualidade do backend passou!"
+
+check-frontend:
+	cd frontend && npm ci && npm run lint && npm run type-check && npm test
+	@echo "✅ Pipeline de qualidade do frontend passou!"
+
+check-ci: check-backend check-frontend
+	@echo "✅ Gate local espelhando CI passou!"
+
+check: check-backend
 
 # ============================================================================
 # Utilities

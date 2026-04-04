@@ -1,6 +1,6 @@
 # 💍 Wedding Management System
 
-Sistema completo de gestão de casamentos com arquitetura moderna **React SPA + Django REST API**.
+Sistema completo de gestão de casamentos com arquitetura moderna **React SPA + Django Ninja API**.
 
 Backend organizado por **domínios de negócio** (finances, logistics, scheduler) para melhor separação de responsabilidades.
 
@@ -28,8 +28,8 @@ make superuser
 **URLs:**
 
 - Frontend: http://localhost:5173
-- API: http://localhost:8000/api/
-- Swagger Docs: http://localhost:8000/api/docs/
+- API: http://localhost:8000/api/v1/
+- Swagger Docs: http://localhost:8000/api/v1/docs
 - Admin: http://localhost:8000/admin/
 
 ---
@@ -78,7 +78,7 @@ make superuser
 
 ```
 wedding_management/
-├── backend/                  # Django REST API
+├── backend/                  # Django Ninja API
 │   ├── apps/
 │   │   ├── core/            # Models Base + Managers
 │   │   ├── users/           # Autenticação
@@ -129,20 +129,23 @@ make logs            # Ver logs de todos os containers
 make migrate         # Aplicar migrações no banco
 make superuser       # Criar usuário admin
 make test            # Executar testes
+make test-cov        # Executar testes com cobertura
+make mypy            # Checagem de tipagem estática
+make check-backend   # Gate de qualidade do backend
+make check-frontend  # Gate de qualidade do frontend
+make check-ci        # Gate local espelhando CI
 make shell           # Django shell
 ```
 
 ### Desenvolvimento Local (sem Docker)
 
 ```bash
-# Setup inicial
-make local-install   # Configura .venv + instala dependências
-source backend/.venv/bin/activate
+# Backend
+cd backend && uv sync --group dev
+cd backend && uv run python manage.py runserver
 
-# Comandos diários
-make local-run       # Inicia Django (http://localhost:8000)
-make front-dev       # Inicia Vite (http://localhost:5173)
-make local-migrate   # Aplica migrações
+# Frontend
+cd frontend && npm ci && npm run dev
 ```
 
 > 📖 **Lista completa de comandos:** [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
@@ -160,6 +163,7 @@ O projeto usa **pre-commit hooks** obrigatórios (instalados automaticamente):
 ```bash
 make lint            # Verificar problemas
 make format          # Formatar código
+make mypy            # Verificar tipagem
 make test            # Executar testes
 make test-cov        # Testes com cobertura
 ```

@@ -99,11 +99,10 @@ make logs            # Ver logs de todos os serviços
 ### Local (sem Docker)
 
 ```bash
-make local-install   # Setup inicial (.venv + dependências)
-source backend/.venv/bin/activate
-make local-run       # Inicia Django
-make local-migrate   # Aplica migrações
-make front-dev       # Inicia Vite
+cd backend && uv sync --group dev
+cd backend && uv run python manage.py migrate
+cd backend && uv run python manage.py runserver
+cd frontend && npm ci && npm run dev
 ```
 
 ### Gerenciamento de Pacotes
@@ -113,7 +112,7 @@ make front-dev       # Inicia Vite
 make back-install pkg=requests
 
 # Frontend - adicionar pacote npm
-make front-install pkg=lodash
+cd frontend && npm install lodash
 
 # Atualizar lockfile após editar pyproject.toml
 make reqs
@@ -124,7 +123,7 @@ make reqs
 ```bash
 make makemigrations  # Criar migrações
 make migrate         # Aplicar migrações
-make db-reset        # ⚠️ APAGA TUDO E RECRIA
+make clean           # ⚠️ Remove containers/volumes e exige nova subida
 ```
 
 ### Qualidade de Código
@@ -132,8 +131,12 @@ make db-reset        # ⚠️ APAGA TUDO E RECRIA
 ```bash
 make lint            # Verificar problemas (Ruff)
 make format          # Formatar código automaticamente
+make mypy            # Verificar tipagem estática (mypy)
 make test            # Executar testes
 make test-cov        # Testes com cobertura
+make check-backend   # Gate de backend (lint + mypy + testes + openapi)
+make check-frontend  # Gate de frontend (lint + type-check + testes)
+make check-ci        # Gate local espelhando CI
 ```
 
 ---
