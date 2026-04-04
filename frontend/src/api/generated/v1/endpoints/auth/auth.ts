@@ -13,6 +13,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ErrorResponse,
   TokenOut,
   TokenPayloadIn,
   TokenRefreshInputSchema,
@@ -51,7 +52,7 @@ export const authObtainToken = (
 };
 
 export const getAuthObtainTokenMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -92,13 +93,13 @@ export type AuthObtainTokenMutationResult = NonNullable<
   Awaited<ReturnType<typeof authObtainToken>>
 >;
 export type AuthObtainTokenMutationBody = TokenPayloadIn;
-export type AuthObtainTokenMutationError = ErrorType<unknown>;
+export type AuthObtainTokenMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Obtain Token
  */
 export const useAuthObtainToken = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -131,7 +132,7 @@ export const authRefreshToken = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<void>(
+  return customInstance<TokenRefreshOutputSchema>(
     {
       url: `/api/v1/auth/refresh/`,
       method: "POST",
@@ -144,7 +145,7 @@ export const authRefreshToken = (
 };
 
 export const getAuthRefreshTokenMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -185,13 +186,13 @@ export type AuthRefreshTokenMutationResult = NonNullable<
   Awaited<ReturnType<typeof authRefreshToken>>
 >;
 export type AuthRefreshTokenMutationBody = TokenRefreshInputSchema;
-export type AuthRefreshTokenMutationError = ErrorType<unknown>;
+export type AuthRefreshTokenMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Refresh Token
  */
 export const useAuthRefreshToken = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -237,7 +238,7 @@ export const authVerifyToken = (
 };
 
 export const getAuthVerifyTokenMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -278,13 +279,13 @@ export type AuthVerifyTokenMutationResult = NonNullable<
   Awaited<ReturnType<typeof authVerifyToken>>
 >;
 export type AuthVerifyTokenMutationBody = TokenVerifyInputSchema;
-export type AuthVerifyTokenMutationError = ErrorType<unknown>;
+export type AuthVerifyTokenMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Verify Token
  */
 export const useAuthVerifyToken = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {

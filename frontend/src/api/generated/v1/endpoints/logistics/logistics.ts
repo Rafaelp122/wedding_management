@@ -24,6 +24,7 @@ import type {
   ContractIn,
   ContractOut,
   ContractPatchIn,
+  ErrorResponse,
   ItemIn,
   ItemOut,
   ItemPatchIn,
@@ -229,7 +230,7 @@ export const logisticsSuppliersCreate = (
 };
 
 export const getLogisticsSuppliersCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -270,13 +271,13 @@ export type LogisticsSuppliersCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsSuppliersCreate>>
 >;
 export type LogisticsSuppliersCreateMutationBody = SupplierIn;
-export type LogisticsSuppliersCreateMutationError = ErrorType<unknown>;
+export type LogisticsSuppliersCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Supplier
  */
 export const useLogisticsSuppliersCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -321,7 +322,7 @@ export const getLogisticsSuppliersReadQueryKey = (uuid: string) => {
 
 export const getLogisticsSuppliersReadQueryOptions = <
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -359,11 +360,11 @@ export const getLogisticsSuppliersReadQueryOptions = <
 export type LogisticsSuppliersReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof logisticsSuppliersRead>>
 >;
-export type LogisticsSuppliersReadQueryError = ErrorType<unknown>;
+export type LogisticsSuppliersReadQueryError = ErrorType<ErrorResponse>;
 
 export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -390,7 +391,7 @@ export function useLogisticsSuppliersRead<
 };
 export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -417,7 +418,7 @@ export function useLogisticsSuppliersRead<
 };
 export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -440,7 +441,7 @@ export function useLogisticsSuppliersRead<
 
 export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -490,7 +491,7 @@ export const logisticsSuppliersPartialUpdate = (
 };
 
 export const getLogisticsSuppliersPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -531,13 +532,14 @@ export type LogisticsSuppliersPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsSuppliersPartialUpdate>>
 >;
 export type LogisticsSuppliersPartialUpdateMutationBody = SupplierPatchIn;
-export type LogisticsSuppliersPartialUpdateMutationError = ErrorType<unknown>;
+export type LogisticsSuppliersPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Supplier
  */
 export const useLogisticsSuppliersPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -577,7 +579,7 @@ export const logisticsSuppliersDelete = (
 };
 
 export const getLogisticsSuppliersDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -618,13 +620,13 @@ export type LogisticsSuppliersDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsSuppliersDelete>>
 >;
 
-export type LogisticsSuppliersDeleteMutationError = ErrorType<unknown>;
+export type LogisticsSuppliersDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Supplier
  */
 export const useLogisticsSuppliersDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -834,7 +836,7 @@ export const logisticsContractsCreate = (
 };
 
 export const getLogisticsContractsCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -875,13 +877,13 @@ export type LogisticsContractsCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsContractsCreate>>
 >;
 export type LogisticsContractsCreateMutationBody = ContractIn;
-export type LogisticsContractsCreateMutationError = ErrorType<unknown>;
+export type LogisticsContractsCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Contract
  */
 export const useLogisticsContractsCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -926,7 +928,7 @@ export const getLogisticsContractsReadQueryKey = (uuid: string) => {
 
 export const getLogisticsContractsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -964,11 +966,11 @@ export const getLogisticsContractsReadQueryOptions = <
 export type LogisticsContractsReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof logisticsContractsRead>>
 >;
-export type LogisticsContractsReadQueryError = ErrorType<unknown>;
+export type LogisticsContractsReadQueryError = ErrorType<ErrorResponse>;
 
 export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -995,7 +997,7 @@ export function useLogisticsContractsRead<
 };
 export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1022,7 +1024,7 @@ export function useLogisticsContractsRead<
 };
 export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1045,7 +1047,7 @@ export function useLogisticsContractsRead<
 
 export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1095,7 +1097,7 @@ export const logisticsContractsPartialUpdate = (
 };
 
 export const getLogisticsContractsPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1136,13 +1138,14 @@ export type LogisticsContractsPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsContractsPartialUpdate>>
 >;
 export type LogisticsContractsPartialUpdateMutationBody = ContractPatchIn;
-export type LogisticsContractsPartialUpdateMutationError = ErrorType<unknown>;
+export type LogisticsContractsPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Contract
  */
 export const useLogisticsContractsPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1182,7 +1185,7 @@ export const logisticsContractsDelete = (
 };
 
 export const getLogisticsContractsDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1223,13 +1226,13 @@ export type LogisticsContractsDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsContractsDelete>>
 >;
 
-export type LogisticsContractsDeleteMutationError = ErrorType<unknown>;
+export type LogisticsContractsDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Contract
  */
 export const useLogisticsContractsDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1440,7 +1443,7 @@ export const logisticsItemsCreate = (
 };
 
 export const getLogisticsItemsCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1481,13 +1484,13 @@ export type LogisticsItemsCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsItemsCreate>>
 >;
 export type LogisticsItemsCreateMutationBody = ItemIn;
-export type LogisticsItemsCreateMutationError = ErrorType<unknown>;
+export type LogisticsItemsCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Item
  */
 export const useLogisticsItemsCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1532,7 +1535,7 @@ export const getLogisticsItemsReadQueryKey = (uuid: string) => {
 
 export const getLogisticsItemsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1570,11 +1573,11 @@ export const getLogisticsItemsReadQueryOptions = <
 export type LogisticsItemsReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof logisticsItemsRead>>
 >;
-export type LogisticsItemsReadQueryError = ErrorType<unknown>;
+export type LogisticsItemsReadQueryError = ErrorType<ErrorResponse>;
 
 export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -1601,7 +1604,7 @@ export function useLogisticsItemsRead<
 };
 export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1628,7 +1631,7 @@ export function useLogisticsItemsRead<
 };
 export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1651,7 +1654,7 @@ export function useLogisticsItemsRead<
 
 export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1701,7 +1704,7 @@ export const logisticsItemsPartialUpdate = (
 };
 
 export const getLogisticsItemsPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1742,13 +1745,13 @@ export type LogisticsItemsPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsItemsPartialUpdate>>
 >;
 export type LogisticsItemsPartialUpdateMutationBody = ItemPatchIn;
-export type LogisticsItemsPartialUpdateMutationError = ErrorType<unknown>;
+export type LogisticsItemsPartialUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Item
  */
 export const useLogisticsItemsPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1789,7 +1792,7 @@ export const logisticsItemsDelete = (
 };
 
 export const getLogisticsItemsDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1830,13 +1833,13 @@ export type LogisticsItemsDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsItemsDelete>>
 >;
 
-export type LogisticsItemsDeleteMutationError = ErrorType<unknown>;
+export type LogisticsItemsDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Item
  */
 export const useLogisticsItemsDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {

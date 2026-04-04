@@ -41,6 +41,11 @@ export const AuthRefreshTokenBody = zod.object({
   refresh: zod.string(),
 });
 
+export const AuthRefreshTokenResponse = zod.object({
+  refresh: zod.string(),
+  access: zod.union([zod.string(), zod.null()]),
+});
+
 /**
  * Verifica se um token ainda é válido e não expirou.
 

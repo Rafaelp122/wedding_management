@@ -27,6 +27,7 @@ import type {
   BudgetIn,
   BudgetOut,
   BudgetPatchIn,
+  ErrorResponse,
   ExpenseIn,
   ExpenseOut,
   ExpensePatchIn,
@@ -235,7 +236,7 @@ export const financesBudgetsCreate = (
 };
 
 export const getFinancesBudgetsCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -276,13 +277,13 @@ export type FinancesBudgetsCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesBudgetsCreate>>
 >;
 export type FinancesBudgetsCreateMutationBody = BudgetIn;
-export type FinancesBudgetsCreateMutationError = ErrorType<unknown>;
+export type FinancesBudgetsCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Budget
  */
 export const useFinancesBudgetsCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -327,7 +328,7 @@ export const getFinancesBudgetsReadQueryKey = (uuid: string) => {
 
 export const getFinancesBudgetsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof financesBudgetsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -365,11 +366,11 @@ export const getFinancesBudgetsReadQueryOptions = <
 export type FinancesBudgetsReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof financesBudgetsRead>>
 >;
-export type FinancesBudgetsReadQueryError = ErrorType<unknown>;
+export type FinancesBudgetsReadQueryError = ErrorType<ErrorResponse>;
 
 export function useFinancesBudgetsRead<
   TData = Awaited<ReturnType<typeof financesBudgetsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -396,7 +397,7 @@ export function useFinancesBudgetsRead<
 };
 export function useFinancesBudgetsRead<
   TData = Awaited<ReturnType<typeof financesBudgetsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -423,7 +424,7 @@ export function useFinancesBudgetsRead<
 };
 export function useFinancesBudgetsRead<
   TData = Awaited<ReturnType<typeof financesBudgetsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -446,7 +447,7 @@ export function useFinancesBudgetsRead<
 
 export function useFinancesBudgetsRead<
   TData = Awaited<ReturnType<typeof financesBudgetsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -497,7 +498,7 @@ export const financesBudgetsPartialUpdate = (
 };
 
 export const getFinancesBudgetsPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -538,13 +539,14 @@ export type FinancesBudgetsPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesBudgetsPartialUpdate>>
 >;
 export type FinancesBudgetsPartialUpdateMutationBody = BudgetPatchIn;
-export type FinancesBudgetsPartialUpdateMutationError = ErrorType<unknown>;
+export type FinancesBudgetsPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Budget
  */
 export const useFinancesBudgetsPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -585,7 +587,7 @@ export const financesBudgetsDelete = (
 };
 
 export const getFinancesBudgetsDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -626,13 +628,13 @@ export type FinancesBudgetsDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesBudgetsDelete>>
 >;
 
-export type FinancesBudgetsDeleteMutationError = ErrorType<unknown>;
+export type FinancesBudgetsDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Budget
  */
 export const useFinancesBudgetsDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -843,7 +845,7 @@ export const financesCategoriesCreate = (
 };
 
 export const getFinancesCategoriesCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -884,13 +886,13 @@ export type FinancesCategoriesCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesCategoriesCreate>>
 >;
 export type FinancesCategoriesCreateMutationBody = BudgetCategoryIn;
-export type FinancesCategoriesCreateMutationError = ErrorType<unknown>;
+export type FinancesCategoriesCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Category
  */
 export const useFinancesCategoriesCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -936,7 +938,7 @@ export const getFinancesCategoriesReadQueryKey = (uuid: string) => {
 
 export const getFinancesCategoriesReadQueryOptions = <
   TData = Awaited<ReturnType<typeof financesCategoriesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -974,11 +976,11 @@ export const getFinancesCategoriesReadQueryOptions = <
 export type FinancesCategoriesReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof financesCategoriesRead>>
 >;
-export type FinancesCategoriesReadQueryError = ErrorType<unknown>;
+export type FinancesCategoriesReadQueryError = ErrorType<ErrorResponse>;
 
 export function useFinancesCategoriesRead<
   TData = Awaited<ReturnType<typeof financesCategoriesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -1005,7 +1007,7 @@ export function useFinancesCategoriesRead<
 };
 export function useFinancesCategoriesRead<
   TData = Awaited<ReturnType<typeof financesCategoriesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1032,7 +1034,7 @@ export function useFinancesCategoriesRead<
 };
 export function useFinancesCategoriesRead<
   TData = Awaited<ReturnType<typeof financesCategoriesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1055,7 +1057,7 @@ export function useFinancesCategoriesRead<
 
 export function useFinancesCategoriesRead<
   TData = Awaited<ReturnType<typeof financesCategoriesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1106,7 +1108,7 @@ export const financesCategoriesPartialUpdate = (
 };
 
 export const getFinancesCategoriesPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1147,13 +1149,14 @@ export type FinancesCategoriesPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesCategoriesPartialUpdate>>
 >;
 export type FinancesCategoriesPartialUpdateMutationBody = BudgetCategoryPatchIn;
-export type FinancesCategoriesPartialUpdateMutationError = ErrorType<unknown>;
+export type FinancesCategoriesPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Category
  */
 export const useFinancesCategoriesPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1194,7 +1197,7 @@ export const financesCategoriesDelete = (
 };
 
 export const getFinancesCategoriesDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1235,13 +1238,13 @@ export type FinancesCategoriesDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesCategoriesDelete>>
 >;
 
-export type FinancesCategoriesDeleteMutationError = ErrorType<unknown>;
+export type FinancesCategoriesDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Category
  */
 export const useFinancesCategoriesDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1452,7 +1455,7 @@ export const financesExpensesCreate = (
 };
 
 export const getFinancesExpensesCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1493,13 +1496,13 @@ export type FinancesExpensesCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesExpensesCreate>>
 >;
 export type FinancesExpensesCreateMutationBody = ExpenseIn;
-export type FinancesExpensesCreateMutationError = ErrorType<unknown>;
+export type FinancesExpensesCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Expense
  */
 export const useFinancesExpensesCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1544,7 +1547,7 @@ export const getFinancesExpensesReadQueryKey = (uuid: string) => {
 
 export const getFinancesExpensesReadQueryOptions = <
   TData = Awaited<ReturnType<typeof financesExpensesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1582,11 +1585,11 @@ export const getFinancesExpensesReadQueryOptions = <
 export type FinancesExpensesReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof financesExpensesRead>>
 >;
-export type FinancesExpensesReadQueryError = ErrorType<unknown>;
+export type FinancesExpensesReadQueryError = ErrorType<ErrorResponse>;
 
 export function useFinancesExpensesRead<
   TData = Awaited<ReturnType<typeof financesExpensesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -1613,7 +1616,7 @@ export function useFinancesExpensesRead<
 };
 export function useFinancesExpensesRead<
   TData = Awaited<ReturnType<typeof financesExpensesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1640,7 +1643,7 @@ export function useFinancesExpensesRead<
 };
 export function useFinancesExpensesRead<
   TData = Awaited<ReturnType<typeof financesExpensesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1663,7 +1666,7 @@ export function useFinancesExpensesRead<
 
 export function useFinancesExpensesRead<
   TData = Awaited<ReturnType<typeof financesExpensesRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -1713,7 +1716,7 @@ export const financesExpensesPartialUpdate = (
 };
 
 export const getFinancesExpensesPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1754,13 +1757,14 @@ export type FinancesExpensesPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesExpensesPartialUpdate>>
 >;
 export type FinancesExpensesPartialUpdateMutationBody = ExpensePatchIn;
-export type FinancesExpensesPartialUpdateMutationError = ErrorType<unknown>;
+export type FinancesExpensesPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Expense
  */
 export const useFinancesExpensesPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -1800,7 +1804,7 @@ export const financesExpensesDelete = (
 };
 
 export const getFinancesExpensesDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1841,13 +1845,13 @@ export type FinancesExpensesDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesExpensesDelete>>
 >;
 
-export type FinancesExpensesDeleteMutationError = ErrorType<unknown>;
+export type FinancesExpensesDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Expense
  */
 export const useFinancesExpensesDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -2061,7 +2065,7 @@ export const financesInstallmentsCreate = (
 };
 
 export const getFinancesInstallmentsCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2102,13 +2106,13 @@ export type FinancesInstallmentsCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesInstallmentsCreate>>
 >;
 export type FinancesInstallmentsCreateMutationBody = InstallmentIn;
-export type FinancesInstallmentsCreateMutationError = ErrorType<unknown>;
+export type FinancesInstallmentsCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Installment
  */
 export const useFinancesInstallmentsCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -2153,7 +2157,7 @@ export const getFinancesInstallmentsReadQueryKey = (uuid: string) => {
 
 export const getFinancesInstallmentsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof financesInstallmentsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -2191,11 +2195,11 @@ export const getFinancesInstallmentsReadQueryOptions = <
 export type FinancesInstallmentsReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof financesInstallmentsRead>>
 >;
-export type FinancesInstallmentsReadQueryError = ErrorType<unknown>;
+export type FinancesInstallmentsReadQueryError = ErrorType<ErrorResponse>;
 
 export function useFinancesInstallmentsRead<
   TData = Awaited<ReturnType<typeof financesInstallmentsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -2222,7 +2226,7 @@ export function useFinancesInstallmentsRead<
 };
 export function useFinancesInstallmentsRead<
   TData = Awaited<ReturnType<typeof financesInstallmentsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -2249,7 +2253,7 @@ export function useFinancesInstallmentsRead<
 };
 export function useFinancesInstallmentsRead<
   TData = Awaited<ReturnType<typeof financesInstallmentsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -2272,7 +2276,7 @@ export function useFinancesInstallmentsRead<
 
 export function useFinancesInstallmentsRead<
   TData = Awaited<ReturnType<typeof financesInstallmentsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -2322,7 +2326,7 @@ export const financesInstallmentsPartialUpdate = (
 };
 
 export const getFinancesInstallmentsPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2363,13 +2367,14 @@ export type FinancesInstallmentsPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesInstallmentsPartialUpdate>>
 >;
 export type FinancesInstallmentsPartialUpdateMutationBody = InstallmentPatchIn;
-export type FinancesInstallmentsPartialUpdateMutationError = ErrorType<unknown>;
+export type FinancesInstallmentsPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Installment
  */
 export const useFinancesInstallmentsPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -2409,7 +2414,7 @@ export const financesInstallmentsDelete = (
 };
 
 export const getFinancesInstallmentsDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2450,13 +2455,13 @@ export type FinancesInstallmentsDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof financesInstallmentsDelete>>
 >;
 
-export type FinancesInstallmentsDeleteMutationError = ErrorType<unknown>;
+export type FinancesInstallmentsDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Installment
  */
 export const useFinancesInstallmentsDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {

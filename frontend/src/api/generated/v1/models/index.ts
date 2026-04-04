@@ -23,6 +23,7 @@ export * from "./contractRequest";
 export * from "./contractStatusEnum";
 export * from "./emailTokenObtainPair";
 export * from "./emailTokenObtainPairRequest";
+export * from "./errorResponse";
 export * from "./event";
 export * from "./eventIn";
 export * from "./eventOut";

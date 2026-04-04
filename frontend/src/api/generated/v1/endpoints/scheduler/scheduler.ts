@@ -21,6 +21,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ErrorResponse,
   EventIn,
   EventOut,
   EventPatchIn,
@@ -226,7 +227,7 @@ export const schedulerEventsCreate = (
 };
 
 export const getSchedulerEventsCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -267,13 +268,13 @@ export type SchedulerEventsCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof schedulerEventsCreate>>
 >;
 export type SchedulerEventsCreateMutationBody = EventIn;
-export type SchedulerEventsCreateMutationError = ErrorType<unknown>;
+export type SchedulerEventsCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Event
  */
 export const useSchedulerEventsCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -320,7 +321,7 @@ export const getSchedulerEventsReadQueryKey = (uuid: string) => {
 
 export const getSchedulerEventsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof schedulerEventsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -358,11 +359,11 @@ export const getSchedulerEventsReadQueryOptions = <
 export type SchedulerEventsReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof schedulerEventsRead>>
 >;
-export type SchedulerEventsReadQueryError = ErrorType<unknown>;
+export type SchedulerEventsReadQueryError = ErrorType<ErrorResponse>;
 
 export function useSchedulerEventsRead<
   TData = Awaited<ReturnType<typeof schedulerEventsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -389,7 +390,7 @@ export function useSchedulerEventsRead<
 };
 export function useSchedulerEventsRead<
   TData = Awaited<ReturnType<typeof schedulerEventsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -416,7 +417,7 @@ export function useSchedulerEventsRead<
 };
 export function useSchedulerEventsRead<
   TData = Awaited<ReturnType<typeof schedulerEventsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -439,7 +440,7 @@ export function useSchedulerEventsRead<
 
 export function useSchedulerEventsRead<
   TData = Awaited<ReturnType<typeof schedulerEventsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -491,7 +492,7 @@ export const schedulerEventsPartialUpdate = (
 };
 
 export const getSchedulerEventsPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -532,13 +533,14 @@ export type SchedulerEventsPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof schedulerEventsPartialUpdate>>
 >;
 export type SchedulerEventsPartialUpdateMutationBody = EventPatchIn;
-export type SchedulerEventsPartialUpdateMutationError = ErrorType<unknown>;
+export type SchedulerEventsPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Event
  */
 export const useSchedulerEventsPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -581,7 +583,7 @@ export const schedulerEventsDelete = (
 };
 
 export const getSchedulerEventsDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -622,13 +624,13 @@ export type SchedulerEventsDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof schedulerEventsDelete>>
 >;
 
-export type SchedulerEventsDeleteMutationError = ErrorType<unknown>;
+export type SchedulerEventsDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Event
  */
 export const useSchedulerEventsDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {

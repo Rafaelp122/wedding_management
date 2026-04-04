@@ -21,6 +21,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ErrorResponse,
   PagedWeddingOut,
   WeddingIn,
   WeddingOut,
@@ -203,7 +204,7 @@ export const weddingsCreate = (
 };
 
 export const getWeddingsCreateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -244,13 +245,13 @@ export type WeddingsCreateMutationResult = NonNullable<
   Awaited<ReturnType<typeof weddingsCreate>>
 >;
 export type WeddingsCreateMutationBody = WeddingIn;
-export type WeddingsCreateMutationError = ErrorType<unknown>;
+export type WeddingsCreateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Create Wedding
  */
 export const useWeddingsCreate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -295,7 +296,7 @@ export const getWeddingsReadQueryKey = (uuid: string) => {
 
 export const getWeddingsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof weddingsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -328,11 +329,11 @@ export const getWeddingsReadQueryOptions = <
 export type WeddingsReadQueryResult = NonNullable<
   Awaited<ReturnType<typeof weddingsRead>>
 >;
-export type WeddingsReadQueryError = ErrorType<unknown>;
+export type WeddingsReadQueryError = ErrorType<ErrorResponse>;
 
 export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options: {
@@ -355,7 +356,7 @@ export function useWeddingsRead<
 };
 export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -378,7 +379,7 @@ export function useWeddingsRead<
 };
 export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -397,7 +398,7 @@ export function useWeddingsRead<
 
 export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   uuid: string,
   options?: {
@@ -446,7 +447,7 @@ export const weddingsPartialUpdate = (
 };
 
 export const getWeddingsPartialUpdateMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -487,13 +488,13 @@ export type WeddingsPartialUpdateMutationResult = NonNullable<
   Awaited<ReturnType<typeof weddingsPartialUpdate>>
 >;
 export type WeddingsPartialUpdateMutationBody = WeddingPatchIn;
-export type WeddingsPartialUpdateMutationError = ErrorType<unknown>;
+export type WeddingsPartialUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Partial Update Wedding
  */
 export const useWeddingsPartialUpdate = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -537,7 +538,7 @@ export const weddingsDelete = (
 };
 
 export const getWeddingsDeleteMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -578,13 +579,13 @@ export type WeddingsDeleteMutationResult = NonNullable<
   Awaited<ReturnType<typeof weddingsDelete>>
 >;
 
-export type WeddingsDeleteMutationError = ErrorType<unknown>;
+export type WeddingsDeleteMutationError = ErrorType<ErrorResponse>;
 
 /**
  * @summary Delete Wedding
  */
 export const useWeddingsDelete = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
