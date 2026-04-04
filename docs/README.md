@@ -6,16 +6,6 @@
 
 ---
 
-## 🎯 Visão Geral
-
-Sistema web para planejamento e gestão financeira de casamentos, com foco em:
-
-- **Controle financeiro** (orçamento, contratos, parcelas)
-- **Logística** (fornecedores, tarefas, cronograma)
-- **Multi-tenant** (1 casamento = 1 tenant isolado)
-
----
-
 ## 📖 Estrutura da Documentação
 
 Nossa documentação segue o princípio **"O QUÊ → POR QUE → COMO"**:
@@ -39,7 +29,10 @@ docs/
     ├── 007-hybrid-keys.md
     ├── 008-soft-delete.md
     ├── 009-multitenancy.md
-    └── 010-tolerance-zero.md
+    ├── 010-tolerance-zero.md
+    ├── 011-basemodel-save-full-clean.md
+    ├── 012-orval-contract-driven-frontend.md
+    └── 013-migrate-drf-to-ninja.md
 ```
 
 ---
@@ -182,13 +175,13 @@ docs/
 
 ---
 
-### 3. [ARCHITECTURE.md](ARCHITECTURE.md) (~500 linhas)
+### 3. [ARCHITECTURE.md](ARCHITECTURE.md)
 
 **COMO construir (stack, padrões, infraestrutura)**
 
 - **Visão geral:** Diagrama de arquitetura (Frontend → Backend → Database/Storage)
 - **Stack tecnológico:**
-  - Backend: Django 5.2 + DRF 3.16 (Docker local, Cloud Run produção)
+  - Backend: Django 5.2 + Django Ninja 1.6 (Docker local, Cloud Run produção)
   - Frontend: React 19 + Vite 7 + TypeScript 5
   - Database: PostgreSQL (Docker) / SQLite (dev local)
   - Storage: Cloudflare R2 (planejado)
@@ -351,30 +344,6 @@ docs/
 
 1. **Leia [ARCHITECTURE.md](ARCHITECTURE.md):** Visão geral
 2. **Aprofunde no ADR específico:** Contexto e trade-offs
-
----
-
-## 📊 Métricas da Documentação
-
-| Documento            | Linhas   | Atualização | Status    |
-| -------------------- | -------- | ----------- | --------- |
-| REQUIREMENTS.md      | ~584     | 01/03/2026  | ✅ v6.0   |
-| BUSINESS_RULES.md    | ~853     | 01/03/2026  | ✅ v2.1   |
-| ARCHITECTURE.md      | ~970     | 01/03/2026  | ✅ v1.1   |
-| FULL_AUDIT.md        | ~612     | 01/03/2026  | ✅ v1.1   |
-| ENVIRONMENT.md       | ~128     | 01/03/2026  | ✅ v1.0   |
-| TROUBLESHOOTING.md   | ~220     | 01/03/2026  | ✅ v1.1   |
-| ADR/001-cloud-run    | 180      | 08/02/2026  | ✅ Aceito |
-| ADR/002-neon         | 200      | 08/02/2026  | ✅ Aceito |
-| ADR/003-r2           | 120      | 08/02/2026  | ✅ Aceito |
-| ADR/004-presigned    | 200      | 08/02/2026  | ✅ Aceito |
-| ADR/005-oidc         | 180      | 08/02/2026  | ✅ Aceito |
-| ADR/006-service      | 220      | 08/02/2026  | ✅ Aceito |
-| ADR/007-hybrid-keys  | 180      | 08/02/2026  | ✅ Aceito |
-| ADR/008-soft-delete  | 200      | 08/02/2026  | ✅ Aceito |
-| ADR/009-multitenancy | 200      | 08/02/2026  | ✅ Aceito |
-| ADR/010-tolerance    | 220      | 08/02/2026  | ✅ Aceito |
-| **TOTAL**            | **3832** | -           | -         |
 
 ---
 
