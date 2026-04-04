@@ -1,16 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import type { Wedding } from "@/api/generated/v1/models";
-import type { WeddingStatusEnum } from "@/api/generated/v1/models";
+import type { WeddingOut } from "@/api/generated/v1/models";
 import { Badge } from "@/components/ui/badge";
 
-const STATUS_LABELS: Record<WeddingStatusEnum, string> = {
+const STATUS_LABELS: Record<string, string> = {
   IN_PROGRESS: "Em Andamento",
   COMPLETED: "Concluído",
   CANCELED: "Cancelado",
 };
 
-export function RecentWeddings({ weddings }: { weddings: Wedding[] }) {
+export function RecentWeddings({ weddings }: { weddings: WeddingOut[] }) {
   return (
     <Card className="col-span-1 lg:col-span-4">
       <CardHeader>

@@ -41,7 +41,7 @@ export default function DashboardPage() {
   // 2. Extração correta dos dados da paginação do Django
   // 'count' é o total no banco, 'results' é o array de casamentos da página atual
   const totalInDatabase = data?.data.count ?? 0;
-  const weddingsArray = data?.data.results ?? [];
+  const weddingsArray = data?.data.items ?? [];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

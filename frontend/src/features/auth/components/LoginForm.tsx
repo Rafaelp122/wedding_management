@@ -5,12 +5,12 @@ import { toast } from "sonner";
 import { Heart } from "lucide-react";
 
 import { useAuthStore } from "@/stores/authStore";
-import { useAuthTokenCreate } from "@/api/generated/v1/endpoints/auth/auth";
+import { useAuthObtainToken } from "@/api/generated/v1/endpoints/auth/auth";
 import type {
   EmailTokenObtainPairRequest,
   EmailTokenObtainPair,
 } from "@/api/generated/v1/models";
-import { AuthTokenCreateBody } from "@/api/generated/v1/zod/auth/auth";
+import { AuthObtainTokenBody } from "@/api/generated/v1/zod/auth/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,10 +36,10 @@ import type { AxiosResponse } from "axios";
 export function LoginForm() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
-  const { mutate, isPending } = useAuthTokenCreate<ErrorType>();
+  const { mutate, isPending } = useAuthObtainToken<ErrorType>();
 
   const form = useForm<EmailTokenObtainPairRequest>({
-    resolver: zodResolver(AuthTokenCreateBody),
+    resolver: zodResolver(AuthObtainTokenBody),
     defaultValues: { email: "", password: "" },
   });
 
@@ -55,7 +55,7 @@ export function LoginForm() {
             navigate("/dashboard");
           }
         },
-        onError: (error) => {
+        onError: (error: ErrorType) => {
           const message =
             error.response?.data?.detail || "E-mail ou senha incorretos.";
           toast.error(message);
