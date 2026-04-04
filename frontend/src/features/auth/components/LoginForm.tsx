@@ -6,6 +6,7 @@ import { Heart } from "lucide-react";
 
 import { useAuthStore } from "@/stores/authStore";
 import { useAuthObtainToken } from "@/api/generated/v1/endpoints/auth/auth";
+import { getApiErrorInfo } from "@/api/error-utils";
 import type {
   EmailTokenObtainPairRequest,
   EmailTokenObtainPair,
@@ -56,8 +57,10 @@ export function LoginForm() {
           }
         },
         onError: (error: ErrorType) => {
-          const message =
-            error.response?.data?.detail || "E-mail ou senha incorretos.";
+          const { message } = getApiErrorInfo(
+            error,
+            "E-mail ou senha incorretos.",
+          );
           toast.error(message);
         },
       },

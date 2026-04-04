@@ -1,13 +1,35 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { RouterProvider } from "react-router-dom"; // O substituto do BrowserRouter
+import { toast } from "sonner";
+
+import { getApiErrorInfo } from "@/api/error-utils";
 import { router } from "./router"; // Importando sua nova configuração
 import { Toaster } from "@/components/ui/sonner";
 import "./index.css";
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      const { status, message } = getApiErrorInfo(
+        error,
+        "Não foi possível carregar os dados solicitados.",
+      );
+
+      // 401 já entra no fluxo de refresh/logout do Axios.
+      if (status === 401) {
+        return;
+      }
+
+      toast.error(message);
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,

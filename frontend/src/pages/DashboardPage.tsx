@@ -1,5 +1,6 @@
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { StatsCards } from "@/features/dashboard/components/StatsCards";
+import { getApiErrorInfo } from "@/api/error-utils";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
@@ -26,14 +27,16 @@ export default function DashboardPage() {
   }
 
   if (error) {
+    const { message } = getApiErrorInfo(
+      error,
+      "Não foi possível carregar os dados do painel.",
+    );
+
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Erro</AlertTitle>
-        <AlertDescription>
-          Não foi possível carregar os dados do painel. Verifique a conexão com
-          o servidor.
-        </AlertDescription>
+        <AlertDescription>{message}</AlertDescription>
       </Alert>
     );
   }

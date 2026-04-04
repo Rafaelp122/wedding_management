@@ -91,7 +91,7 @@ AXIOS_INSTANCE.interceptors.response.use(
         }
 
         const { data } = await Axios.post(
-          "/api/v1/auth/token/refresh/",
+          "/api/v1/auth/refresh/",
           { refresh: refreshToken },
           { baseURL, timeout: 5000 },
         );
