@@ -1,7 +1,9 @@
+from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
+from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.logistics.schemas import (
     ContractIn,
     ContractOut,
@@ -31,7 +33,7 @@ items_router = Router(tags=["Logistics"])
     "/", response=list[SupplierOut], operation_id="logistics_suppliers_list"
 )
 @paginate
-def list_suppliers(request):
+def list_suppliers(request: HttpRequest):
     """
     Lista todos os fornecedores cadastrados pelo Planner logado.
     """
@@ -39,9 +41,11 @@ def list_suppliers(request):
 
 
 @suppliers_router.get(
-    "/{uuid:uuid}/", response=SupplierOut, operation_id="logistics_suppliers_read"
+    "/{uuid:uuid}/",
+    response={200: SupplierOut, **READ_ERROR_RESPONSES},
+    operation_id="logistics_suppliers_read",
 )
-def retrieve_supplier(request, uuid: UUID4):
+def retrieve_supplier(request: HttpRequest, uuid: UUID4):
     """
     Retorna os detalhes de um fornecedor específico.
     """
@@ -49,9 +53,11 @@ def retrieve_supplier(request, uuid: UUID4):
 
 
 @suppliers_router.post(
-    "/", response={201: SupplierOut}, operation_id="logistics_suppliers_create"
+    "/",
+    response={201: SupplierOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_suppliers_create",
 )
-def create_supplier(request, payload: SupplierIn):
+def create_supplier(request: HttpRequest, payload: SupplierIn):
     """
     Cadastra um novo fornecedor no sistema.
     """
@@ -61,10 +67,12 @@ def create_supplier(request, payload: SupplierIn):
 
 @suppliers_router.patch(
     "/{uuid:uuid}/",
-    response=SupplierOut,
+    response={200: SupplierOut, **MUTATION_ERROR_RESPONSES},
     operation_id="logistics_suppliers_partial_update",
 )
-def partial_update_supplier(request, uuid: UUID4, payload: SupplierPatchIn):
+def partial_update_supplier(
+    request: HttpRequest, uuid: UUID4, payload: SupplierPatchIn
+):
     """
     Atualiza informações específicas de um fornecedor (nome, contato, categorias).
     """
@@ -77,9 +85,11 @@ def partial_update_supplier(request, uuid: UUID4, payload: SupplierPatchIn):
 
 
 @suppliers_router.delete(
-    "/{uuid:uuid}/", response={204: None}, operation_id="logistics_suppliers_delete"
+    "/{uuid:uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_suppliers_delete",
 )
-def delete_supplier(request, uuid: UUID4):
+def delete_supplier(request: HttpRequest, uuid: UUID4):
     """
     Remove o cadastro de um fornecedor do sistema.
     """
@@ -95,7 +105,7 @@ def delete_supplier(request, uuid: UUID4):
     "/", response=list[ContractOut], operation_id="logistics_contracts_list"
 )
 @paginate
-def list_contracts(request):
+def list_contracts(request: HttpRequest):
     """
     Lista os contratos de fornecedores associados aos casamentos do Planner.
     """
@@ -103,9 +113,11 @@ def list_contracts(request):
 
 
 @contracts_router.get(
-    "/{uuid:uuid}/", response=ContractOut, operation_id="logistics_contracts_read"
+    "/{uuid:uuid}/",
+    response={200: ContractOut, **READ_ERROR_RESPONSES},
+    operation_id="logistics_contracts_read",
 )
-def retrieve_contract(request, uuid: UUID4):
+def retrieve_contract(request: HttpRequest, uuid: UUID4):
     """
     Exibe as cláusulas e informações completas de um contrato.
     """
@@ -113,9 +125,11 @@ def retrieve_contract(request, uuid: UUID4):
 
 
 @contracts_router.post(
-    "/", response={201: ContractOut}, operation_id="logistics_contracts_create"
+    "/",
+    response={201: ContractOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_create",
 )
-def create_contract(request, payload: ContractIn):
+def create_contract(request: HttpRequest, payload: ContractIn):
     """
     Associa um fornecedor a um casamento através de um novo contrato logístico.
     """
@@ -125,10 +139,12 @@ def create_contract(request, payload: ContractIn):
 
 @contracts_router.patch(
     "/{uuid:uuid}/",
-    response=ContractOut,
+    response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
     operation_id="logistics_contracts_partial_update",
 )
-def partial_update_contract(request, uuid: UUID4, payload: ContractPatchIn):
+def partial_update_contract(
+    request: HttpRequest, uuid: UUID4, payload: ContractPatchIn
+):
     """
     Altera o status, valores agregados ou observações de um contrato existente na base.
     """
@@ -140,9 +156,11 @@ def partial_update_contract(request, uuid: UUID4, payload: ContractPatchIn):
 
 
 @contracts_router.delete(
-    "/{uuid:uuid}/", response={204: None}, operation_id="logistics_contracts_delete"
+    "/{uuid:uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_delete",
 )
-def delete_contract(request, uuid: UUID4):
+def delete_contract(request: HttpRequest, uuid: UUID4):
     """
     Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.
     """
@@ -156,7 +174,7 @@ def delete_contract(request, uuid: UUID4):
 # ==============================================================================
 @items_router.get("/", response=list[ItemOut], operation_id="logistics_items_list")
 @paginate
-def list_items(request):
+def list_items(request: HttpRequest):
     """
     Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
     """
@@ -164,17 +182,23 @@ def list_items(request):
 
 
 @items_router.get(
-    "/{uuid:uuid}/", response=ItemOut, operation_id="logistics_items_read"
+    "/{uuid:uuid}/",
+    response={200: ItemOut, **READ_ERROR_RESPONSES},
+    operation_id="logistics_items_read",
 )
-def retrieve_item(request, uuid: UUID4):
+def retrieve_item(request: HttpRequest, uuid: UUID4):
     """
     Mostra os detalhes nominais de um item logístico específico.
     """
     return ItemService.get(user=request.user, uuid=uuid)
 
 
-@items_router.post("/", response={201: ItemOut}, operation_id="logistics_items_create")
-def create_item(request, payload: ItemIn):
+@items_router.post(
+    "/",
+    response={201: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_create",
+)
+def create_item(request: HttpRequest, payload: ItemIn):
     """
     Adiciona um recurso físico no painel de acompanhamento.
     Parte do planejamento logístico de um evento.
@@ -184,9 +208,11 @@ def create_item(request, payload: ItemIn):
 
 
 @items_router.patch(
-    "/{uuid:uuid}/", response=ItemOut, operation_id="logistics_items_partial_update"
+    "/{uuid:uuid}/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_partial_update",
 )
-def partial_update_item(request, uuid: UUID4, payload: ItemPatchIn):
+def partial_update_item(request: HttpRequest, uuid: UUID4, payload: ItemPatchIn):
     """
     Atualiza quantidades ou informações de apoio do lote do item em questão.
     """
@@ -196,9 +222,11 @@ def partial_update_item(request, uuid: UUID4, payload: ItemPatchIn):
 
 
 @items_router.delete(
-    "/{uuid:uuid}/", response={204: None}, operation_id="logistics_items_delete"
+    "/{uuid:uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_delete",
 )
-def delete_item(request, uuid: UUID4):
+def delete_item(request: HttpRequest, uuid: UUID4):
     """
     Exclui permanentemente o indicativo do item.
     Remove das listas logísticas rastreadas pelo Planner.

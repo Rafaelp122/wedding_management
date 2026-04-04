@@ -13,6 +13,17 @@ class ApplicationError(Exception):
         super().__init__(self.detail)
 
 
+class ObjectNotFoundError(ApplicationError):
+    """
+    Status 404: Recurso não encontrado.
+    Usada para substituir o get_object_or_404 na Service Layer.
+    """
+
+    status_code = 404
+    default_detail = "O recurso solicitado não foi encontrado."
+    default_code = "not_found"
+
+
 class BusinessRuleViolation(ApplicationError):
     """
     Para falhas de lógica (ex: ADR-010 Tolerância Zero).

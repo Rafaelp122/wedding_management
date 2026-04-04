@@ -1,7 +1,9 @@
+from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
+from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.schemas import (
     BudgetCategoryIn,
     BudgetCategoryOut,
@@ -32,7 +34,7 @@ installments_router = Router(tags=["Finances"])
 # --- BUDGET ENDPOINTS ---
 @budgets_router.get("/", response=list[BudgetOut], operation_id="finances_budgets_list")
 @paginate
-def list_budgets(request):
+def list_budgets(request: HttpRequest):
     """
     Lista as estatísticas de orçamento geral de todos os casamentos.
     """
@@ -40,9 +42,11 @@ def list_budgets(request):
 
 
 @budgets_router.get(
-    "/{uuid}/", response=BudgetOut, operation_id="finances_budgets_read"
+    "/{uuid}/",
+    response={200: BudgetOut, **READ_ERROR_RESPONSES},
+    operation_id="finances_budgets_read",
 )
-def get_budget(request, uuid: UUID4):
+def get_budget(request: HttpRequest, uuid: UUID4):
     """
     Retorna os totais e os saldos remanescentes autorizados de um projeto macro.
     """
@@ -50,9 +54,11 @@ def get_budget(request, uuid: UUID4):
 
 
 @budgets_router.post(
-    "/", response={201: BudgetOut}, operation_id="finances_budgets_create"
+    "/",
+    response={201: BudgetOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_budgets_create",
 )
-def create_budget(request, payload: BudgetIn):
+def create_budget(request: HttpRequest, payload: BudgetIn):
     """
     Dá pontapé inicial para a planilha contábil centralizada.
     Atrelada às métricas cerimoniais.
@@ -61,9 +67,11 @@ def create_budget(request, payload: BudgetIn):
 
 
 @budgets_router.patch(
-    "/{uuid}/", response=BudgetOut, operation_id="finances_budgets_partial_update"
+    "/{uuid}/",
+    response={200: BudgetOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_budgets_partial_update",
 )
-def partial_update_budget(request, uuid: UUID4, payload: BudgetPatchIn):
+def partial_update_budget(request: HttpRequest, uuid: UUID4, payload: BudgetPatchIn):
     """
     Atualiza métricas mestres de gasto e painéis globais.
     Contorna referências numéricas totais.
@@ -75,9 +83,11 @@ def partial_update_budget(request, uuid: UUID4, payload: BudgetPatchIn):
 
 
 @budgets_router.delete(
-    "/{uuid}/", response={204: None}, operation_id="finances_budgets_delete"
+    "/{uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_budgets_delete",
 )
-def delete_budget(request, uuid: UUID4):
+def delete_budget(request: HttpRequest, uuid: UUID4):
     """
     Remove toda e qualquer anotação da malha financeira.
     Varre as despesas em ação de reverso total absoluto.
@@ -92,7 +102,7 @@ def delete_budget(request, uuid: UUID4):
     "/", response=list[BudgetCategoryOut], operation_id="finances_categories_list"
 )
 @paginate
-def list_categories(request):
+def list_categories(request: HttpRequest):
     """
     Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
     """
@@ -100,9 +110,11 @@ def list_categories(request):
 
 
 @budget_categories_router.get(
-    "/{uuid}/", response=BudgetCategoryOut, operation_id="finances_categories_read"
+    "/{uuid}/",
+    response={200: BudgetCategoryOut, **READ_ERROR_RESPONSES},
+    operation_id="finances_categories_read",
 )
-def get_category(request, uuid: UUID4):
+def get_category(request: HttpRequest, uuid: UUID4):
     """
     Acessa os detalhamentos da categoria isolada de forma simples e visual.
     Garante a segurança contábil sem vazar detalhes restritos a terceiros.
@@ -111,9 +123,11 @@ def get_category(request, uuid: UUID4):
 
 
 @budget_categories_router.post(
-    "/", response={201: BudgetCategoryOut}, operation_id="finances_categories_create"
+    "/",
+    response={201: BudgetCategoryOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_categories_create",
 )
-def create_category(request, payload: BudgetCategoryIn):
+def create_category(request: HttpRequest, payload: BudgetCategoryIn):
     """
     Abre mais um bloco de centro de custo em conta específica da festa.
     Associa devidamente ao orçamento atrelado em tela.
@@ -123,10 +137,12 @@ def create_category(request, payload: BudgetCategoryIn):
 
 @budget_categories_router.patch(
     "/{uuid}/",
-    response=BudgetCategoryOut,
+    response={200: BudgetCategoryOut, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_categories_partial_update",
 )
-def partial_update_category(request, uuid: UUID4, payload: BudgetCategoryPatchIn):
+def partial_update_category(
+    request: HttpRequest, uuid: UUID4, payload: BudgetCategoryPatchIn
+):
     """
     Corrige o título, ou altera o valor dos gastos planejados.
     Evita sobrescrições acidentais errôneas em outras rotas.
@@ -138,9 +154,11 @@ def partial_update_category(request, uuid: UUID4, payload: BudgetCategoryPatchIn
 
 
 @budget_categories_router.delete(
-    "/{uuid}/", response={204: None}, operation_id="finances_categories_delete"
+    "/{uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_categories_delete",
 )
-def delete_category(request, uuid: UUID4):
+def delete_category(request: HttpRequest, uuid: UUID4):
     """
     Fecha um agrupamento no orçamento permanentemente.
     Exclui anotações de faturas de modo destrutivo para balanceamento.
@@ -155,7 +173,7 @@ def delete_category(request, uuid: UUID4):
     "/", response=list[ExpenseOut], operation_id="finances_expenses_list"
 )
 @paginate
-def list_expenses(request):
+def list_expenses(request: HttpRequest):
     """
     Lista todas as compras e despachos que saíram dos painéis orçamentários.
     """
@@ -163,9 +181,11 @@ def list_expenses(request):
 
 
 @expenses_router.get(
-    "/{uuid}/", response=ExpenseOut, operation_id="finances_expenses_read"
+    "/{uuid}/",
+    response={200: ExpenseOut, **READ_ERROR_RESPONSES},
+    operation_id="finances_expenses_read",
 )
-def get_expense(request, uuid: UUID4):
+def get_expense(request: HttpRequest, uuid: UUID4):
     """
     Retorna recibo unitário simplificado nominal registrado no controle base.
     """
@@ -173,9 +193,11 @@ def get_expense(request, uuid: UUID4):
 
 
 @expenses_router.post(
-    "/", response={201: ExpenseOut}, operation_id="finances_expenses_create"
+    "/",
+    response={201: ExpenseOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_expenses_create",
 )
-def create_expense(request, payload: ExpenseIn):
+def create_expense(request: HttpRequest, payload: ExpenseIn):
     """
     Aprova lançamento final nos tetos das divisões e categorias.
     Consome o limite orçamentário previsto inicial geral da categoria.
@@ -184,9 +206,11 @@ def create_expense(request, payload: ExpenseIn):
 
 
 @expenses_router.patch(
-    "/{uuid}/", response=ExpenseOut, operation_id="finances_expenses_partial_update"
+    "/{uuid}/",
+    response={200: ExpenseOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_expenses_partial_update",
 )
-def partial_update_expense(request, uuid: UUID4, payload: ExpensePatchIn):
+def partial_update_expense(request: HttpRequest, uuid: UUID4, payload: ExpensePatchIn):
     """
     Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
     """
@@ -197,9 +221,11 @@ def partial_update_expense(request, uuid: UUID4, payload: ExpensePatchIn):
 
 
 @expenses_router.delete(
-    "/{uuid}/", response={204: None}, operation_id="finances_expenses_delete"
+    "/{uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_expenses_delete",
 )
-def delete_expense(request, uuid: UUID4):
+def delete_expense(request: HttpRequest, uuid: UUID4):
     """
     Deleta uma compra revertendo seu efeito, estornando em painel os gastos.
     """
@@ -213,7 +239,7 @@ def delete_expense(request, uuid: UUID4):
     "/", response=list[InstallmentOut], operation_id="finances_installments_list"
 )
 @paginate
-def list_installments(request):
+def list_installments(request: HttpRequest):
     """
     Lista faturas fragmentadas originárias para os fluxos pendentes.
     Faturas isoladas ligadas a pagamentos unificados.
@@ -222,9 +248,11 @@ def list_installments(request):
 
 
 @installments_router.get(
-    "/{uuid}/", response=InstallmentOut, operation_id="finances_installments_read"
+    "/{uuid}/",
+    response={200: InstallmentOut, **READ_ERROR_RESPONSES},
+    operation_id="finances_installments_read",
 )
-def get_installment(request, uuid: UUID4):
+def get_installment(request: HttpRequest, uuid: UUID4):
     """
     Revela notas fragmentais e guias pendentes programados do recebimento.
     """
@@ -232,9 +260,11 @@ def get_installment(request, uuid: UUID4):
 
 
 @installments_router.post(
-    "/", response={201: InstallmentOut}, operation_id="finances_installments_create"
+    "/",
+    response={201: InstallmentOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_installments_create",
 )
-def create_installment(request, payload: InstallmentIn):
+def create_installment(request: HttpRequest, payload: InstallmentIn):
     """
     Grava pendências parciais atestando dependências de transações.
     """
@@ -243,10 +273,12 @@ def create_installment(request, payload: InstallmentIn):
 
 @installments_router.patch(
     "/{uuid}/",
-    response=InstallmentOut,
+    response={200: InstallmentOut, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_installments_partial_update",
 )
-def partial_update_installment(request, uuid: UUID4, payload: InstallmentPatchIn):
+def partial_update_installment(
+    request: HttpRequest, uuid: UUID4, payload: InstallmentPatchIn
+):
     """
     Edita temporalmente ou encerra status validando com pagamento de guia as etapas.
     """
@@ -257,9 +289,11 @@ def partial_update_installment(request, uuid: UUID4, payload: InstallmentPatchIn
 
 
 @installments_router.delete(
-    "/{uuid}/", response={204: None}, operation_id="finances_installments_delete"
+    "/{uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_installments_delete",
 )
-def delete_installment(request, uuid: UUID4):
+def delete_installment(request: HttpRequest, uuid: UUID4):
     """
     Exclui registro pendente restabelecendo ordem das cobranças integrando-as.
     """

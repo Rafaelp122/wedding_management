@@ -2,9 +2,11 @@
 Main Django Ninja API configuration.
 """
 
+from django.http import HttpRequest
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 
+from apps.core.exceptions import ApplicationError
 from apps.finances.api import (
     budget_categories_router,
     budgets_router,
@@ -25,6 +27,16 @@ api = NinjaExtraAPI(
     docs_url="/docs/",
     auth=JWTAuth(),
 )
+
+
+@api.exception_handler(ApplicationError)
+def application_error_handler(request: HttpRequest, exc: ApplicationError):
+    return api.create_response(
+        request,
+        {"detail": exc.detail, "code": exc.code},
+        status=exc.status_code,
+    )
+
 
 # Registra o router de autenticação customizado (retorna user data)
 api.add_router("/auth/", auth_router, auth=None)

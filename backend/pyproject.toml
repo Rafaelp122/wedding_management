@@ -68,6 +68,9 @@ exclude = [
 select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ", "S"]
 ignore = ["E203", "RUF012"]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["ninja.Depends", "Depends"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["apps", "config"]
 lines-after-imports = 2

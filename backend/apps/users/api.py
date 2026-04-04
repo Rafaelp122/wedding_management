@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
 from ninja_jwt.schema import (
@@ -8,14 +9,21 @@ from ninja_jwt.schema import (
 )
 from ninja_jwt.tokens import RefreshToken
 
+from apps.core.constants import MUTATION_ERROR_RESPONSES
+from apps.core.schemas import ErrorResponse
 from apps.users.schemas import TokenOut, TokenPayloadIn, UserDataOut
 
 
 router = Router(tags=["auth"])
 
 
-@router.post("/token/", response=TokenOut, auth=None, operation_id="auth_obtain_token")
-def obtain_token(request, payload: TokenPayloadIn):
+@router.post(
+    "/token/",
+    response={200: TokenOut, 401: ErrorResponse, **MUTATION_ERROR_RESPONSES},
+    auth=None,
+    operation_id="auth_obtain_token",
+)
+def obtain_token(request: HttpRequest, payload: TokenPayloadIn):
     """
     Autentica o usuário e retorna o token de acesso.
 
@@ -45,10 +53,14 @@ def obtain_token(request, payload: TokenPayloadIn):
 @router.post(
     "/refresh/",
     auth=None,
-    response=TokenRefreshOutputSchema,
+    response={
+        200: TokenRefreshOutputSchema,
+        401: ErrorResponse,
+        **MUTATION_ERROR_RESPONSES,
+    },
     operation_id="auth_refresh_token",
 )
-def refresh_token(request, payload: TokenRefreshInputSchema):
+def refresh_token(request: HttpRequest, payload: TokenRefreshInputSchema):
     """
     Gera um novo token de acesso usando um refresh token.
 
@@ -60,11 +72,15 @@ def refresh_token(request, payload: TokenRefreshInputSchema):
 
 @router.post(
     "/verify/",
-    response=TokenRefreshOutputSchema,
+    response={
+        200: TokenRefreshOutputSchema,
+        401: ErrorResponse,
+        **MUTATION_ERROR_RESPONSES,
+    },
     auth=None,
     operation_id="auth_verify_token",
 )
-def verify_token(request, payload: TokenVerifyInputSchema):
+def verify_token(request: HttpRequest, payload: TokenVerifyInputSchema):
     """
     Verifica se um token ainda é válido e não expirou.
 

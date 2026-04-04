@@ -1,7 +1,10 @@
+from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
+from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.weddings.deps import get_current_wedding
 from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
 from apps.weddings.services import WeddingService
 
@@ -12,7 +15,7 @@ router = Router(tags=["Weddings"])
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")
 @paginate
-def list_weddings(request):
+def list_weddings(request: HttpRequest):
     """
     Lista todos os casamentos gerenciados pelo Planner logado.
 
@@ -22,20 +25,27 @@ def list_weddings(request):
     return WeddingService.list(user=request.user)
 
 
-@router.get("/{uuid:uuid}/", response=WeddingOut, operation_id="weddings_read")
-def retrieve_wedding(request, uuid: UUID4):
+@router.get(
+    "/{uuid:uuid}/",
+    response={200: WeddingOut, **READ_ERROR_RESPONSES},
+    operation_id="weddings_read",
+)
+def retrieve_wedding(request: HttpRequest, uuid: UUID4):
     """
     Retorna os detalhes completos de um casamento específico.
 
     Realiza a busca pelo UUID e valida se o registro pertence ao usuário.
     Caso não exista ou pertença a outro Planner, retorna um erro 404.
     """
-    wedding = WeddingService.get(user=request.user, uuid=uuid)
-    return wedding
+    return get_current_wedding(request, uuid)
 
 
-@router.post("/", response={201: WeddingOut}, operation_id="weddings_create")
-def create_wedding(request, payload: WeddingIn):
+@router.post(
+    "/",
+    response={201: WeddingOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="weddings_create",
+)
+def create_wedding(request: HttpRequest, payload: WeddingIn):
     """
     Cria um novo casamento e inicializa sua estrutura financeira.
 
@@ -48,16 +58,23 @@ def create_wedding(request, payload: WeddingIn):
 
 
 @router.patch(
-    "/{uuid:uuid}/", response=WeddingOut, operation_id="weddings_partial_update"
+    "/{uuid:uuid}/",
+    response={200: WeddingOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="weddings_partial_update",
 )
-def partial_update_wedding(request, uuid: UUID4, payload: WeddingPatchIn):
+def partial_update_wedding(
+    request: HttpRequest,
+    uuid: UUID4,
+    payload: WeddingPatchIn,
+):
     """
     Atualiza informações específicas de um casamento.
 
     Permite modificar campos como nomes dos noivos, data e local sem afetar o restante.
     Os dados são validados pelo Service antes da persistência.
     """
-    wedding = WeddingService.get(user=request.user, uuid=uuid)
+    wedding = get_current_wedding(request, uuid)
+
     # Pega só os campos enviados (não nulos na requisição, exclude_unset)
     data = payload.model_dump(exclude_unset=True)
 
@@ -67,8 +84,12 @@ def partial_update_wedding(request, uuid: UUID4, payload: WeddingPatchIn):
     return updated_wedding
 
 
-@router.delete("/{uuid:uuid}/", response={204: None}, operation_id="weddings_delete")
-def delete_wedding(request, uuid: UUID4):
+@router.delete(
+    "/{uuid:uuid}/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="weddings_delete",
+)
+def delete_wedding(request: HttpRequest, uuid: UUID4):
     """
     Remove um casamento e limpa todos os dados vinculados (Cascata).
 
@@ -76,6 +97,7 @@ def delete_wedding(request, uuid: UUID4):
     - Todo o histórico financeiro (orçamentos e despesas).
     - Cronogramas, contratos e fornecedores vinculados exclusivamente a este evento.
     """
-    wedding = WeddingService.get(user=request.user, uuid=uuid)
+    wedding = get_current_wedding(request, uuid)
+
     WeddingService.delete(user=request.user, instance=wedding)
     return 204, None

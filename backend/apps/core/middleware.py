@@ -1,4 +1,7 @@
 import uuid
+from collections.abc import Callable
+
+from django.http import HttpRequest, HttpResponse
 
 from .logging import _thread_locals
 
@@ -9,10 +12,10 @@ class RequestIDMiddleware:
     Sem isto, debugar problemas em concorrência é apenas adivinhação.
     """
 
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest) -> HttpResponse:
         # 1. Tenta obter do Header (se vier de um Gateway/Proxy) ou gera um novo UUID
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
 
