@@ -19,6 +19,16 @@ class SupplierService:
     """
 
     @staticmethod
+    def list(user):
+        return Supplier.objects.all().for_user(user)
+
+    @staticmethod
+    def get(user, uuid) -> Supplier:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(Supplier.objects.all().for_user(user), uuid=uuid)
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Supplier:
         logger.info(f"Iniciando criação de Fornecedor para planner_id={user.id}")
@@ -51,6 +61,12 @@ class SupplierService:
 
         logger.info(f"Fornecedor uuid={instance.uuid} atualizado com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Supplier, data: dict) -> Supplier:
+        """Alias estrutural."""
+        return SupplierService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

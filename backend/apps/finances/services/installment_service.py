@@ -19,6 +19,25 @@ class InstallmentService:
     """
 
     @staticmethod
+    def list(user):
+        return (
+            Installment.objects.select_related("expense", "wedding")
+            .all()
+            .for_user(user)
+        )
+
+    @staticmethod
+    def get(user, uuid) -> Installment:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(
+            Installment.objects.select_related("expense", "wedding")
+            .all()
+            .for_user(user),
+            uuid=uuid,
+        )
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Installment:
         logger.info(f"Iniciando criação de Parcela para planner_id={user.id}")
@@ -103,6 +122,11 @@ class InstallmentService:
 
         logger.info(f"Parcela uuid={instance.uuid} atualizada com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Installment, data: dict) -> Installment:
+        return InstallmentService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

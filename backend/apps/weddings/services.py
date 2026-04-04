@@ -2,6 +2,7 @@ import logging
 
 from django.db import transaction
 from django.db.models import ProtectedError
+from django.shortcuts import get_object_or_404
 
 from apps.core.exceptions import DomainIntegrityError
 from apps.finances.services.budget_category_service import BudgetCategoryService
@@ -18,6 +19,14 @@ class WeddingService:
     Camada de serviço para gerenciar a lógica de negócio de casamentos.
     Orquestra a criação atómica do ecossistema inicial (Wedding + Budget + Categories).
     """
+
+    @staticmethod
+    def list(user):
+        return Wedding.objects.all().for_user(user)
+
+    @staticmethod
+    def get(user, uuid) -> Wedding:
+        return get_object_or_404(Wedding.objects.all().for_user(user), uuid=uuid)
 
     @staticmethod
     @transaction.atomic
@@ -69,6 +78,12 @@ class WeddingService:
 
         logger.info(f"Casamento uuid={instance.uuid} atualizado.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Wedding, data: dict) -> Wedding:
+        """Alias para atualização parcial para padronização."""
+        return WeddingService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

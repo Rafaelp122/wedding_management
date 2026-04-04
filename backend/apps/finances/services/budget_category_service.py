@@ -17,6 +17,25 @@ class BudgetCategoryService:
     """
 
     @staticmethod
+    def list(user):
+        return (
+            BudgetCategory.objects.select_related("budget", "wedding")
+            .all()
+            .for_user(user)
+        )
+
+    @staticmethod
+    def get(user, uuid) -> BudgetCategory:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(
+            BudgetCategory.objects.select_related("budget", "wedding")
+            .all()
+            .for_user(user),
+            uuid=uuid,
+        )
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> BudgetCategory:
         logger.info(
@@ -74,6 +93,11 @@ class BudgetCategoryService:
 
         logger.info(f"Categoria uuid={instance.uuid} atualizada com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: BudgetCategory, data: dict) -> BudgetCategory:
+        return BudgetCategoryService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

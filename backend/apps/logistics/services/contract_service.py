@@ -19,6 +19,21 @@ class ContractService:
     """
 
     @staticmethod
+    def list(user):
+        return (
+            Contract.objects.select_related("supplier", "wedding").all().for_user(user)
+        )
+
+    @staticmethod
+    def get(user, uuid) -> Contract:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(
+            Contract.objects.select_related("supplier", "wedding").all().for_user(user),
+            uuid=uuid,
+        )
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Contract:
         logger.info(f"Iniciando criação de Contrato para planner_id={user.id}")
@@ -109,6 +124,11 @@ class ContractService:
 
         logger.info(f"Contrato uuid={instance.uuid} atualizado com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Contract, data: dict) -> Contract:
+        return ContractService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

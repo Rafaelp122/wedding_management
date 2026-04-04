@@ -18,6 +18,18 @@ class BudgetService:
     """
 
     @staticmethod
+    def list(user):
+        return Budget.objects.select_related("wedding").all().for_user(user)
+
+    @staticmethod
+    def get(user, uuid) -> Budget:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(
+            Budget.objects.select_related("wedding").all().for_user(user), uuid=uuid
+        )
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Budget:
         logger.info(f"Iniciando criação de Orçamento Mestre para planner_id={user.id}")
@@ -80,6 +92,11 @@ class BudgetService:
 
         logger.info(f"Orçamento uuid={instance.uuid} atualizado com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Budget, data: dict) -> Budget:
+        return BudgetService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

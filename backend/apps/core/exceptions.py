@@ -1,27 +1,16 @@
-from rest_framework import status
-from rest_framework.exceptions import APIException
-
-
-class ApplicationError(APIException):
+class ApplicationError(Exception):
     """
     Exceção base para toda a arquitetura.
-    O Handler global só vai formatar elegantemente os erros que herdarem disto.
     """
 
-    status_code = status.HTTP_400_BAD_REQUEST
+    status_code = 400
     default_detail = "Ocorreu um erro na aplicação."
     default_code = "application_error"
 
     def __init__(self, detail=None, code=None):
-        if detail is not None:
-            self.detail = detail
-        else:
-            self.detail = self.default_detail
-
-        if code is not None:
-            self.code = code
-        else:
-            self.code = self.default_code
+        self.detail = detail if detail is not None else self.default_detail
+        self.code = code if code is not None else self.default_code
+        super().__init__(self.detail)
 
 
 class BusinessRuleViolation(ApplicationError):
@@ -30,7 +19,7 @@ class BusinessRuleViolation(ApplicationError):
     Status 422: O formato está certo, mas a regra de negócio impede o processamento.
     """
 
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = 422
     default_detail = "Violação de regra de negócio."
     default_code = "business_rule_violation"
 
@@ -41,6 +30,6 @@ class DomainIntegrityError(ApplicationError):
     Status 409: Conflito de estado no servidor.
     """
 
-    status_code = status.HTTP_409_CONFLICT
+    status_code = 409
     default_detail = "Erro de integridade ou conflito de dados."
     default_code = "domain_integrity_error"

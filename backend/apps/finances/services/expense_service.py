@@ -19,6 +19,25 @@ class ExpenseService:
     """
 
     @staticmethod
+    def list(user):
+        return (
+            Expense.objects.select_related("category", "contract", "wedding")
+            .all()
+            .for_user(user)
+        )
+
+    @staticmethod
+    def get(user, uuid) -> Expense:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(
+            Expense.objects.select_related("category", "contract", "wedding")
+            .all()
+            .for_user(user),
+            uuid=uuid,
+        )
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Expense:
         logger.info(f"Iniciando criação de Despesa para planner_id={user.id}")
@@ -127,6 +146,11 @@ class ExpenseService:
 
         logger.info(f"Despesa uuid={instance.uuid} atualizada com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Expense, data: dict) -> Expense:
+        return ExpenseService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

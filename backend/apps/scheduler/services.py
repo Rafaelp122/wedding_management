@@ -18,6 +18,19 @@ class EventService:
     """
 
     @staticmethod
+    def list(user):
+        return Event.objects.select_related("wedding", "planner").all().for_user(user)
+
+    @staticmethod
+    def get(user, uuid) -> Event:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(
+            Event.objects.select_related("wedding", "planner").all().for_user(user),
+            uuid=uuid,
+        )
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Event:
         logger.info(f"Iniciando criação de Evento para planner_id={user.id}")
@@ -79,6 +92,11 @@ class EventService:
 
         logger.info(f"Evento uuid={instance.uuid} atualizado com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Event, data: dict) -> Event:
+        return EventService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic

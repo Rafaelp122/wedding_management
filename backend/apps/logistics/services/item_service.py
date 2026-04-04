@@ -18,11 +18,37 @@ class ItemService:
     """
 
     @staticmethod
+    def list(user):
+        return (
+            Item.objects.select_related(
+                "wedding", "budget_category", "contract", "contract__supplier"
+            )
+            .all()
+            .for_user(user)
+        )
+
+    @staticmethod
+    def get(user, uuid) -> Item:
+        from django.shortcuts import get_object_or_404
+
+        return get_object_or_404(
+            Item.objects.select_related(
+                "wedding", "budget_category", "contract", "contract__supplier"
+            )
+            .all()
+            .for_user(user),
+            uuid=uuid,
+        )
+
+    @staticmethod
     @transaction.atomic
     def create(user, data: dict) -> Item:
         logger.info(f"Iniciando criação de Item logístico para planner_id={user.id}")
 
         # 1. Resolução Segura de Dependências (Suporta Instância ou UUID do DRF)
+        data.pop(
+            "wedding", None
+        )  # O schema Pydantic / DRF envia, mas já está na Categoria
         category_input = data.pop("budget_category", None)
 
         if isinstance(category_input, BudgetCategory):
@@ -117,6 +143,11 @@ class ItemService:
 
         logger.info(f"Item uuid={instance.uuid} atualizado com sucesso.")
         return instance
+
+    @staticmethod
+    @transaction.atomic
+    def partial_update(user, instance: Item, data: dict) -> Item:
+        return ItemService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
