@@ -7,12 +7,14 @@ serviços contratados.
 Referências: RF07-RF08
 """
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
 
 from .contract import Contract
+from .supplier import Supplier
 
 
 class Item(BaseModel, WeddingOwnedMixin):
@@ -62,12 +64,11 @@ class Item(BaseModel, WeddingOwnedMixin):
         verbose_name_plural = "Itens"
         ordering = ["-created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.quantity}x)"
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
-        from django.core.exceptions import ValidationError
 
         # RF07.1: A trava contra cross-contamination de orçamentos
         if self.budget_category.wedding != self.wedding:
@@ -76,6 +77,6 @@ class Item(BaseModel, WeddingOwnedMixin):
             )
 
     @property
-    def supplier(self):
+    def supplier(self) -> Supplier | None:
         """Fornecedor vem do contrato associado."""
         return self.contract.supplier if self.contract else None

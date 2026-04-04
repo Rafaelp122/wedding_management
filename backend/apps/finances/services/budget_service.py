@@ -1,9 +1,12 @@
 import logging
+from typing import Any
+from uuid import UUID
 
 from django.db import IntegrityError, transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.types import AuthContextUser
 from apps.finances.models import Budget
 from apps.weddings.models import Wedding
 
@@ -18,20 +21,20 @@ class BudgetService:
     """
 
     @staticmethod
-    def list(user):
-        return Budget.objects.select_related("wedding").all().for_user(user)
+    def list(user: AuthContextUser) -> QuerySet[Budget]:
+        return Budget.objects.for_user(user).select_related("wedding")
 
     @staticmethod
-    def get(user, uuid) -> Budget:
+    def get(user: AuthContextUser, uuid: UUID | str) -> Budget:
         from django.shortcuts import get_object_or_404
 
         return get_object_or_404(
-            Budget.objects.select_related("wedding").all().for_user(user), uuid=uuid
+            Budget.objects.for_user(user).select_related("wedding"), uuid=uuid
         )
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> Budget:
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Budget:
         logger.info(f"Iniciando criação de Orçamento Mestre para planner_id={user.id}")
 
         # 1. Resolução Segura do Casamento (Suporta Instância ou UUID)
@@ -41,7 +44,7 @@ class BudgetService:
             wedding = wedding_input
         else:
             try:
-                wedding = Wedding.objects.all().for_user(user).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_user(user).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de criar orçamento para casamento "
@@ -75,7 +78,7 @@ class BudgetService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: Budget, data: dict) -> Budget:
+    def update(user: AuthContextUser, instance: Budget, data: dict[str, Any]) -> Budget:
         logger.info(
             f"Atualizando Orçamento uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -95,15 +98,17 @@ class BudgetService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: Budget, data: dict) -> Budget:
+    def partial_update(
+        user: AuthContextUser, instance: Budget, data: dict[str, Any]
+    ) -> Budget:
         return BudgetService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: Budget) -> None:
+    def delete(user: AuthContextUser, instance: Budget) -> None:
         logger.info(
             f"Tentativa de deleção do Orçamento uuid={instance.uuid} por "
-            "planner_id={user.id}"
+            f"planner_id={user.id}"
         )
 
         try:

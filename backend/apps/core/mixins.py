@@ -24,7 +24,7 @@ class WeddingOwnedMixin(models.Model):
     class Meta:
         abstract = True
 
-    def clean(self):
+    def clean(self) -> None:
         """
         Garante que chaves estrangeiras pertençam ao mesmo casamento.
         Isso impede que um Item do Casamento A seja usado em uma Despesa do Casamento B.

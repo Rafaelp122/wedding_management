@@ -1,9 +1,12 @@
 import logging
+from typing import Any
+from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.types import AuthContextUser
 from apps.finances.models import BudgetCategory, Expense
 from apps.logistics.models import Contract
 
@@ -19,27 +22,25 @@ class ExpenseService:
     """
 
     @staticmethod
-    def list(user):
-        return (
-            Expense.objects.select_related("category", "contract", "wedding")
-            .all()
-            .for_user(user)
+    def list(user: AuthContextUser) -> QuerySet[Expense]:
+        return Expense.objects.for_user(user).select_related(
+            "category", "contract", "wedding"
         )
 
     @staticmethod
-    def get(user, uuid) -> Expense:
+    def get(user: AuthContextUser, uuid: UUID | str) -> Expense:
         from django.shortcuts import get_object_or_404
 
         return get_object_or_404(
-            Expense.objects.select_related("category", "contract", "wedding")
-            .all()
-            .for_user(user),
+            Expense.objects.for_user(user).select_related(
+                "category", "contract", "wedding"
+            ),
             uuid=uuid,
         )
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> Expense:
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Expense:
         logger.info(f"Iniciando criação de Despesa para planner_id={user.id}")
 
         # 1. Resolução Segura de Categoria (Suporta Instância ou UUID)
@@ -49,8 +50,8 @@ class ExpenseService:
             category = category_input
         else:
             try:
-                category = (
-                    BudgetCategory.objects.all().for_user(user).get(uuid=category_input)
+                category = BudgetCategory.objects.for_user(user).get(
+                    uuid=category_input
                 )
             except BudgetCategory.DoesNotExist as e:
                 logger.warning(
@@ -70,9 +71,7 @@ class ExpenseService:
                 contract = contract_input
             else:
                 try:
-                    contract = (
-                        Contract.objects.all().for_user(user).get(uuid=contract_input)
-                    )
+                    contract = Contract.objects.for_user(user).get(uuid=contract_input)
                 except Contract.DoesNotExist as e:
                     logger.warning(
                         f"Tentativa de uso de contrato inválido/negado: "
@@ -103,7 +102,9 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: Expense, data: dict) -> Expense:
+    def update(
+        user: AuthContextUser, instance: Expense, data: dict[str, Any]
+    ) -> Expense:
         logger.info(
             f"Atualizando Despesa uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -121,10 +122,8 @@ class ExpenseService:
                     instance.contract = contract_input
                 else:
                     try:
-                        instance.contract = (
-                            Contract.objects.all()
-                            .for_user(user)
-                            .get(uuid=contract_input)
+                        instance.contract = Contract.objects.for_user(user).get(
+                            uuid=contract_input
                         )
                     except Contract.DoesNotExist as e:
                         raise BusinessRuleViolation(
@@ -149,12 +148,14 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: Expense, data: dict) -> Expense:
+    def partial_update(
+        user: AuthContextUser, instance: Expense, data: dict[str, Any]
+    ) -> Expense:
         return ExpenseService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: Expense) -> None:
+    def delete(user: AuthContextUser, instance: Expense) -> None:
         logger.info(
             f"Tentativa de deleção da Despesa uuid={instance.uuid} "
             f"por planner_id={user.id}"

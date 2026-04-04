@@ -1,12 +1,20 @@
 import logging
+from typing import Any
+from uuid import UUID
 
+from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
-from django.db.models import ProtectedError
-from django.shortcuts import get_object_or_404
+from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import DomainIntegrityError
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
+from apps.core.types import AuthContextUser
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.services.budget_service import BudgetService
+from apps.users.models import User
 
 from .models import Wedding
 
@@ -21,18 +29,34 @@ class WeddingService:
     """
 
     @staticmethod
-    def list(user):
-        return Wedding.objects.all().for_user(user)
+    def _require_user(user: AuthContextUser) -> User:
+        if isinstance(user, AnonymousUser):
+            raise BusinessRuleViolation(
+                detail="Autenticação obrigatória para executar esta operação.",
+                code="authentication_required",
+            )
+        return user
 
     @staticmethod
-    def get(user, uuid) -> Wedding:
-        return get_object_or_404(Wedding.objects.all().for_user(user), uuid=uuid)
+    def list(user: AuthContextUser) -> QuerySet[Wedding]:
+        return Wedding.objects.for_user(user)
+
+    @staticmethod
+    def get(user: AuthContextUser, uuid: UUID | str) -> Wedding:
+        wedding = Wedding.objects.for_user(user).filter(uuid=uuid).first()
+        if wedding is None:
+            raise ObjectNotFoundError(
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            )
+        return wedding
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> Wedding:
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Wedding:
+        planner = WeddingService._require_user(user)
         logger.info(
-            f"Iniciando criação atómica de ecossistema para planner_id={user.id}"
+            f"Iniciando criação atómica de ecossistema para planner_id={planner.id}"
         )
 
         # 1. Extração de campos virtuais (não pertencem ao modelo Wedding)
@@ -40,18 +64,20 @@ class WeddingService:
         total_estimated = data.pop("total_estimated", None)
 
         # 2. Instanciação e Validação do Casamento
-        wedding = Wedding(planner=user, **data)
+        wedding = Wedding(planner=planner, **data)
         wedding.save()
 
         # 3. Orquestração Financeira: Criar Orçamento Mestre
         # Passamos a instância 'wedding' diretamente para evitar queries extras
         budget = BudgetService.create(
-            user=user,
+            user=planner,
             data={"wedding": wedding, "total_estimated": total_estimated or 0},
         )
 
         # 4. Orquestração Financeira: Gerar Categorias Padrão (Blueprint)
-        BudgetCategoryService.setup_defaults(user=user, wedding=wedding, budget=budget)
+        BudgetCategoryService.setup_defaults(
+            user=planner, wedding=wedding, budget=budget
+        )
 
         logger.info(
             f"Casamento criado com sucesso: uuid={wedding.uuid} com Orçamento e "
@@ -61,9 +87,12 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: Wedding, data: dict) -> Wedding:
+    def update(
+        user: AuthContextUser, instance: Wedding, data: dict[str, Any]
+    ) -> Wedding:
+        planner = WeddingService._require_user(user)
         logger.info(
-            f"Atualizando casamento uuid={instance.uuid} por planner_id={user.id}"
+            f"Atualizando casamento uuid={instance.uuid} por planner_id={planner.id}"
         )
 
         # Defesa contra campos financeiros que não pertencem ao Wedding
@@ -81,16 +110,19 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: Wedding, data: dict) -> Wedding:
+    def partial_update(
+        user: AuthContextUser, instance: Wedding, data: dict[str, Any]
+    ) -> Wedding:
         """Alias para atualização parcial para padronização."""
         return WeddingService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: Wedding) -> None:
+    def delete(user: AuthContextUser, instance: Wedding) -> None:
+        planner = WeddingService._require_user(user)
         logger.info(
             f"Tentativa de deleção do casamento uuid={instance.uuid} por "
-            f"planner_id={user.id}"
+            f"planner_id={planner.id}"
         )
 
         try:
@@ -99,7 +131,7 @@ class WeddingService:
             instance.delete()
             logger.warning(
                 f"Casamento uuid={instance.uuid} e dependências removidos por "
-                f"planner_id={user.id}"
+                f"planner_id={planner.id}"
             )
 
         except ProtectedError as e:

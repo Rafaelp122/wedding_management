@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
@@ -15,7 +17,7 @@ router = Router(tags=["Weddings"])
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")
 @paginate
-def list_weddings(request: HttpRequest):
+def list_weddings(request: HttpRequest) -> Any:
     """
     Lista todos os casamentos gerenciados pelo Planner logado.
 
@@ -30,7 +32,7 @@ def list_weddings(request: HttpRequest):
     response={200: WeddingOut, **READ_ERROR_RESPONSES},
     operation_id="weddings_read",
 )
-def retrieve_wedding(request: HttpRequest, uuid: UUID4):
+def retrieve_wedding(request: HttpRequest, uuid: UUID4) -> Any:
     """
     Retorna os detalhes completos de um casamento específico.
 
@@ -45,7 +47,7 @@ def retrieve_wedding(request: HttpRequest, uuid: UUID4):
     response={201: WeddingOut, **MUTATION_ERROR_RESPONSES},
     operation_id="weddings_create",
 )
-def create_wedding(request: HttpRequest, payload: WeddingIn):
+def create_wedding(request: HttpRequest, payload: WeddingIn) -> Any:
     """
     Cria um novo casamento e inicializa sua estrutura financeira.
 
@@ -66,7 +68,7 @@ def partial_update_wedding(
     request: HttpRequest,
     uuid: UUID4,
     payload: WeddingPatchIn,
-):
+) -> Any:
     """
     Atualiza informações específicas de um casamento.
 
@@ -89,7 +91,7 @@ def partial_update_wedding(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="weddings_delete",
 )
-def delete_wedding(request: HttpRequest, uuid: UUID4):
+def delete_wedding(request: HttpRequest, uuid: UUID4) -> Any:
     """
     Remove um casamento e limpa todos os dados vinculados (Cascata).
 

@@ -7,6 +7,7 @@ documentação.
 Referências: RF10, RF13
 """
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
@@ -65,15 +66,14 @@ class Contract(BaseModel, WeddingOwnedMixin):
         verbose_name_plural = "Contratos"
         ordering = ["-created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"Contrato {self.id} - {self.supplier.name} ({self.wedding}) "
             f"- R$ {self.total_amount}"
         )
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
-        from django.core.exceptions import ValidationError
 
         # Não existe contrato assinado sem dinheiro e sem papel
         if self.status == self.StatusChoices.SIGNED:

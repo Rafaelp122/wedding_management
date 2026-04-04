@@ -1,10 +1,15 @@
 import logging
+from typing import Any
+from uuid import UUID
 
+from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import DomainIntegrityError
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.types import AuthContextUser
 from apps.logistics.models import Supplier
+from apps.users.models import User
 
 
 logger = logging.getLogger(__name__)
@@ -19,22 +24,32 @@ class SupplierService:
     """
 
     @staticmethod
-    def list(user):
-        return Supplier.objects.all().for_user(user)
+    def _require_user(user: AuthContextUser) -> User:
+        if isinstance(user, AnonymousUser):
+            raise BusinessRuleViolation(
+                detail="Autenticação obrigatória para executar esta operação.",
+                code="authentication_required",
+            )
+        return user
 
     @staticmethod
-    def get(user, uuid) -> Supplier:
+    def list(user: AuthContextUser) -> QuerySet[Supplier]:
+        return Supplier.objects.for_user(user)
+
+    @staticmethod
+    def get(user: AuthContextUser, uuid: UUID | str) -> Supplier:
         from django.shortcuts import get_object_or_404
 
-        return get_object_or_404(Supplier.objects.all().for_user(user), uuid=uuid)
+        return get_object_or_404(Supplier.objects.for_user(user), uuid=uuid)
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> Supplier:
-        logger.info(f"Iniciando criação de Fornecedor para planner_id={user.id}")
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Supplier:
+        planner = SupplierService._require_user(user)
+        logger.info(f"Iniciando criação de Fornecedor para planner_id={planner.id}")
 
         # 1. Instanciação em Memória (O Fornecedor é PlannerOwned, transversal)
-        supplier = Supplier(planner=user, **data)
+        supplier = Supplier(planner=planner, **data)
 
         # 2. Validação Estrita no Model (CNPJ único, formatação de telefone, etc.)
         supplier.save()
@@ -44,7 +59,9 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: Supplier, data: dict) -> Supplier:
+    def update(
+        user: AuthContextUser, instance: Supplier, data: dict[str, Any]
+    ) -> Supplier:
         logger.info(
             f"Atualizando Fornecedor uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -64,13 +81,15 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: Supplier, data: dict) -> Supplier:
+    def partial_update(
+        user: AuthContextUser, instance: Supplier, data: dict[str, Any]
+    ) -> Supplier:
         """Alias estrutural."""
         return SupplierService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: Supplier) -> None:
+    def delete(user: AuthContextUser, instance: Supplier) -> None:
         logger.info(
             f"Tentativa de deleção do Fornecedor uuid={instance.uuid} por "
             f"planner_id={user.id}"

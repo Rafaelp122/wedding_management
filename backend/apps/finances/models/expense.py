@@ -43,7 +43,7 @@ class Expense(BaseModel, WeddingOwnedMixin):
         verbose_name_plural = "Despesas"
         ordering = ["-created_at"]
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
 
         # 1. TOLERÂNCIA ZERO: A soma das parcelas deve ser EXATA

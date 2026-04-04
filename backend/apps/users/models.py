@@ -4,6 +4,8 @@ Define o modelo User personalizado usando email como identificador único
 e o CustomUserManager para gerenciar a criação de usuários e superusuários.
 """
 
+from typing import Any, cast
+
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -24,7 +26,9 @@ class CustomUserManager(BaseUserManager):
     Superusuários sempre são criados ativos com permissões totais.
     """
 
-    def _create_user(self, email, password, **extra_fields):
+    def _create_user(
+        self, email: str, password: str | None, **extra_fields: Any
+    ) -> "User":
         """Método interno para criar e salvar um usuário com email e senha.
 
         Args:
@@ -41,12 +45,14 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError("O e-mail é obrigatório.")
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = cast("User", self.model(email=email, **extra_fields))
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(
+        self, email: str, password: str | None = None, **extra_fields: Any
+    ) -> "User":
         """Cria e salva um usuário regular com email e senha.
 
         Por padrão, cria usuários com is_active=False, exigindo ativação
@@ -65,7 +71,9 @@ class CustomUserManager(BaseUserManager):
         )  # Só faça isso se tiver o fluxo de ativação pronto!
         return self._create_user(email, password, **extra_fields)
 
-    def create_superuser(self, email, password=None, **extra_fields):
+    def create_superuser(
+        self, email: str, password: str | None = None, **extra_fields: Any
+    ) -> "User":
         """Cria e salva um superusuário com permissões administrativas.
 
         Força is_staff=True, is_superuser=True e is_active=True para garantir
@@ -114,13 +122,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = "Usuários"
         ordering = ["-date_joined"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.get_full_name()} ({self.email})"
 
-    def get_full_name(self):
+    def get_full_name(self) -> str:
         """Retorna o nome completo."""
         return f"{self.first_name} {self.last_name}".strip()
 
-    def get_short_name(self):
+    def get_short_name(self) -> str:
         """Retorna apenas o primeiro nome."""
         return self.first_name

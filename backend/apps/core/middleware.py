@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import Callable
+from typing import Any, cast
 
 from django.http import HttpRequest, HttpResponse
 
@@ -23,7 +24,7 @@ class RequestIDMiddleware:
         _thread_locals.request_id = request_id
 
         # 3. Adiciona ao objeto request caso precises dele numa View ou Service
-        request.request_id = request_id
+        cast(Any, request).request_id = request_id
 
         # Passa o controlo para a próxima camada (View/Service)
         response = self.get_response(request)

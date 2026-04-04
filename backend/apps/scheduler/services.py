@@ -1,10 +1,19 @@
 import logging
+from typing import Any
+from uuid import UUID
 
+from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
+from apps.core.types import AuthContextUser
 from apps.scheduler.models import Event
+from apps.users.models import User
 from apps.weddings.models import Wedding
 
 
@@ -18,22 +27,38 @@ class EventService:
     """
 
     @staticmethod
-    def list(user):
-        return Event.objects.select_related("wedding", "planner").all().for_user(user)
+    def _require_user(user: AuthContextUser) -> User:
+        if isinstance(user, AnonymousUser):
+            raise BusinessRuleViolation(
+                detail="Autenticação obrigatória para executar esta operação.",
+                code="authentication_required",
+            )
+        return user
 
     @staticmethod
-    def get(user, uuid) -> Event:
-        from django.shortcuts import get_object_or_404
+    def list(user: AuthContextUser) -> QuerySet[Event]:
+        return Event.objects.for_user(user).select_related("wedding", "planner")
 
-        return get_object_or_404(
-            Event.objects.select_related("wedding", "planner").all().for_user(user),
-            uuid=uuid,
+    @staticmethod
+    def get(user: AuthContextUser, uuid: UUID | str) -> Event:
+        event = (
+            Event.objects.for_user(user)
+            .select_related("wedding", "planner")
+            .filter(uuid=uuid)
+            .first()
         )
+        if event is None:
+            raise ObjectNotFoundError(
+                detail="Evento não encontrado ou acesso negado.",
+                code="event_not_found_or_denied",
+            )
+        return event
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> Event:
-        logger.info(f"Iniciando criação de Evento para planner_id={user.id}")
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Event:
+        planner = EventService._require_user(user)
+        logger.info(f"Iniciando criação de Evento para planner_id={planner.id}")
 
         # 1. Resolução Segura de Dependências
         # O DRF pode enviar a instância já resolvida ou apenas o UUID. Tratamos ambos.
@@ -44,11 +69,11 @@ class EventService:
         else:
             try:
                 # Isolamento multitenant forçado na busca da dependência
-                wedding = Wedding.objects.all().for_user(user).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_user(user).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de agendamento em casamento inválido ou "
-                    f"negado: {wedding_input} por planner_id={user.id}"
+                    f"negado: {wedding_input} por planner_id={planner.id}"
                 )
                 raise BusinessRuleViolation(
                     detail="Casamento não encontrado ou você não tem permissão para "
@@ -57,7 +82,7 @@ class EventService:
                 ) from e
 
         # 2. Instanciação em Memória (NÃO salva no banco ainda)
-        event = Event(planner=user, wedding=wedding, **data)
+        event = Event(planner=planner, wedding=wedding, **data)
 
         # 3. Validação Estrita do Domínio
         # Aqui o Model garante que start_time < end_time e previne conflitos.
@@ -74,8 +99,11 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: Event, data: dict) -> Event:
-        logger.info(f"Atualizando Evento uuid={instance.uuid} por planner_id={user.id}")
+    def update(user: AuthContextUser, instance: Event, data: dict[str, Any]) -> Event:
+        planner = EventService._require_user(user)
+        logger.info(
+            f"Atualizando Evento uuid={instance.uuid} por planner_id={planner.id}"
+        )
 
         # Proteção contra sequestro de dados:
         # Impedimos que um evento seja movido para outro casamento/planner após criado.
@@ -95,21 +123,24 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: Event, data: dict) -> Event:
+    def partial_update(
+        user: AuthContextUser, instance: Event, data: dict[str, Any]
+    ) -> Event:
         return EventService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: Event) -> None:
+    def delete(user: AuthContextUser, instance: Event) -> None:
+        planner = EventService._require_user(user)
         logger.info(
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
-            f"planner_id={user.id}"
+            f"planner_id={planner.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Evento uuid={instance.uuid} DESTRUÍDO por planner_id={user.id}"
+                f"Evento uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
             )
 
         except ProtectedError as e:

@@ -60,6 +60,6 @@ class Event(BaseModel, WeddingOwnedMixin):
             models.Index(fields=["start_time"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         # Exibe o título do evento no admin e nas representações de texto
         return self.title

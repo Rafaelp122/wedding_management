@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
@@ -14,7 +16,7 @@ router = Router(tags=["Scheduler"])
 
 @router.get("/", response=list[EventOut], operation_id="scheduler_events_list")
 @paginate
-def list_events(request: HttpRequest):
+def list_events(request: HttpRequest) -> Any:
     """
     Lista todos os eventos do cronograma do Planner logado.
 
@@ -29,7 +31,7 @@ def list_events(request: HttpRequest):
     response={200: EventOut, **READ_ERROR_RESPONSES},
     operation_id="scheduler_events_read",
 )
-def get_event(request: HttpRequest, uuid: UUID4):
+def get_event(request: HttpRequest, uuid: UUID4) -> Any:
     """
     Retorna os detalhes completos de um evento específico no cronograma.
 
@@ -43,7 +45,7 @@ def get_event(request: HttpRequest, uuid: UUID4):
     response={201: EventOut, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_create",
 )
-def create_event(request: HttpRequest, payload: EventIn):
+def create_event(request: HttpRequest, payload: EventIn) -> Any:
     """
     Adiciona um novo evento ou tarefa ao cronograma.
 
@@ -59,7 +61,9 @@ def create_event(request: HttpRequest, payload: EventIn):
     response={200: EventOut, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_partial_update",
 )
-def partial_update_event(request: HttpRequest, uuid: UUID4, payload: EventPatchIn):
+def partial_update_event(
+    request: HttpRequest, uuid: UUID4, payload: EventPatchIn
+) -> Any:
     """
     Atualiza informações específicas de um evento do cronograma.
 
@@ -76,7 +80,7 @@ def partial_update_event(request: HttpRequest, uuid: UUID4, payload: EventPatchI
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_delete",
 )
-def delete_event(request: HttpRequest, uuid: UUID4):
+def delete_event(request: HttpRequest, uuid: UUID4) -> Any:
     """
     Remove um compromisso ou evento do cronograma.
 

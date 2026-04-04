@@ -88,11 +88,11 @@ class Supplier(BaseModel, PlannerOwnedMixin):
             models.Index(fields=["city", "state"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     @property
-    def full_address(self):
+    def full_address(self) -> str:
         """Retorna endereço completo formatado."""
         parts = [self.address, self.city]
         if self.state:

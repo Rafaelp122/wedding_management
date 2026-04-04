@@ -52,5 +52,5 @@ class Budget(BaseModel, WeddingOwnedMixin):
         verbose_name_plural = "Orçamentos"
         ordering = ["-created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"

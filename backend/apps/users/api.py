@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from django.contrib.auth import authenticate
 from django.http import HttpRequest
 from ninja import Router
@@ -23,7 +25,7 @@ router = Router(tags=["auth"])
     auth=None,
     operation_id="auth_obtain_token",
 )
-def obtain_token(request: HttpRequest, payload: TokenPayloadIn):
+def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
     """
     Autentica o usuário e retorna o token de acesso.
 
@@ -36,7 +38,7 @@ def obtain_token(request: HttpRequest, payload: TokenPayloadIn):
     if user is None:
         raise HttpError(401, "Credenciais inválidas ou conta desativada.")
 
-    refresh = RefreshToken.for_user(user)
+    refresh = cast(Any, RefreshToken.for_user(user))
 
     return TokenOut(
         access=str(refresh.access_token),
@@ -60,7 +62,9 @@ def obtain_token(request: HttpRequest, payload: TokenPayloadIn):
     },
     operation_id="auth_refresh_token",
 )
-def refresh_token(request: HttpRequest, payload: TokenRefreshInputSchema):
+def refresh_token(
+    request: HttpRequest, payload: TokenRefreshInputSchema
+) -> TokenRefreshOutputSchema:
     """
     Gera um novo token de acesso usando um refresh token.
 
@@ -80,7 +84,9 @@ def refresh_token(request: HttpRequest, payload: TokenRefreshInputSchema):
     auth=None,
     operation_id="auth_verify_token",
 )
-def verify_token(request: HttpRequest, payload: TokenVerifyInputSchema):
+def verify_token(
+    request: HttpRequest, payload: TokenVerifyInputSchema
+) -> TokenRefreshOutputSchema:
     """
     Verifica se um token ainda é válido e não expirou.
 

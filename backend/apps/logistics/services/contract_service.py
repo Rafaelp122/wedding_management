@@ -1,9 +1,12 @@
 import logging
+from typing import Any
+from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.types import AuthContextUser
 from apps.logistics.models import Contract, Supplier
 from apps.weddings.models import Wedding
 
@@ -19,23 +22,21 @@ class ContractService:
     """
 
     @staticmethod
-    def list(user):
-        return (
-            Contract.objects.select_related("supplier", "wedding").all().for_user(user)
-        )
+    def list(user: AuthContextUser) -> QuerySet[Contract]:
+        return Contract.objects.for_user(user).select_related("supplier", "wedding")
 
     @staticmethod
-    def get(user, uuid) -> Contract:
+    def get(user: AuthContextUser, uuid: UUID | str) -> Contract:
         from django.shortcuts import get_object_or_404
 
         return get_object_or_404(
-            Contract.objects.select_related("supplier", "wedding").all().for_user(user),
+            Contract.objects.for_user(user).select_related("supplier", "wedding"),
             uuid=uuid,
         )
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> Contract:
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Contract:
         logger.info(f"Iniciando criação de Contrato para planner_id={user.id}")
 
         # 1. Resolução Segura de Dependências (Suporta Instância ou UUID)
@@ -47,7 +48,7 @@ class ContractService:
             wedding = wedding_input
         else:
             try:
-                wedding = Wedding.objects.all().for_user(user).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_user(user).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de casamento inválido/negado: {wedding_input}"
@@ -62,9 +63,7 @@ class ContractService:
             supplier = supplier_input
         else:
             try:
-                supplier = (
-                    Supplier.objects.all().for_user(user).get(uuid=supplier_input)
-                )
+                supplier = Supplier.objects.for_user(user).get(uuid=supplier_input)
             except Supplier.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de fornecedor inválido/negado: {supplier_input}"
@@ -86,7 +85,9 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: Contract, data: dict) -> Contract:
+    def update(
+        user: AuthContextUser, instance: Contract, data: dict[str, Any]
+    ) -> Contract:
         logger.info(
             f"Atualizando Contrato uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -102,8 +103,8 @@ class ContractService:
                 instance.supplier = supplier_input
             else:
                 try:
-                    instance.supplier = (
-                        Supplier.objects.all().for_user(user).get(uuid=supplier_input)
+                    instance.supplier = Supplier.objects.for_user(user).get(
+                        uuid=supplier_input
                     )
                 except Supplier.DoesNotExist as e:
                     raise BusinessRuleViolation(
@@ -127,19 +128,21 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: Contract, data: dict) -> Contract:
+    def partial_update(
+        user: AuthContextUser, instance: Contract, data: dict[str, Any]
+    ) -> Contract:
         return ContractService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: Contract) -> None:
+    def delete(user: AuthContextUser, instance: Contract) -> None:
         logger.info(
             f"Tentativa de deleção do Contrato uuid={instance.uuid} por "
             f"planner_id={user.id}"
         )
 
         # Desvinculação de itens logísticos órfãos
-        instance.item_records.update(contract=None)
+        instance.items.update(contract=None)
 
         try:
             instance.delete()

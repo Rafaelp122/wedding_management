@@ -1,10 +1,14 @@
 import logging
+from typing import Any
+from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.types import AuthContextUser
 from apps.finances.models import Budget, BudgetCategory
+from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -17,27 +21,21 @@ class BudgetCategoryService:
     """
 
     @staticmethod
-    def list(user):
-        return (
-            BudgetCategory.objects.select_related("budget", "wedding")
-            .all()
-            .for_user(user)
-        )
+    def list(user: AuthContextUser) -> QuerySet[BudgetCategory]:
+        return BudgetCategory.objects.for_user(user).select_related("budget", "wedding")
 
     @staticmethod
-    def get(user, uuid) -> BudgetCategory:
+    def get(user: AuthContextUser, uuid: UUID | str) -> BudgetCategory:
         from django.shortcuts import get_object_or_404
 
         return get_object_or_404(
-            BudgetCategory.objects.select_related("budget", "wedding")
-            .all()
-            .for_user(user),
+            BudgetCategory.objects.for_user(user).select_related("budget", "wedding"),
             uuid=uuid,
         )
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> BudgetCategory:
+    def create(user: AuthContextUser, data: dict[str, Any]) -> BudgetCategory:
         logger.info(
             f"Iniciando criação de Categoria de Orçamento para planner_id={user.id}"
         )
@@ -50,7 +48,7 @@ class BudgetCategoryService:
         else:
             try:
                 # Segurança estrita: Garante posse do planner sobre o orçamento
-                budget = Budget.objects.all().for_user(user).get(uuid=budget_input)
+                budget = Budget.objects.for_user(user).get(uuid=budget_input)
             except Budget.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de orçamento inválido/negado: {budget_input}"
@@ -74,7 +72,9 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: BudgetCategory, data: dict) -> BudgetCategory:
+    def update(
+        user: AuthContextUser, instance: BudgetCategory, data: dict[str, Any]
+    ) -> BudgetCategory:
         logger.info(
             f"Atualizando Categoria uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -96,12 +96,14 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: BudgetCategory, data: dict) -> BudgetCategory:
+    def partial_update(
+        user: AuthContextUser, instance: BudgetCategory, data: dict[str, Any]
+    ) -> BudgetCategory:
         return BudgetCategoryService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: BudgetCategory) -> None:
+    def delete(user: AuthContextUser, instance: BudgetCategory) -> None:
         logger.info(
             f"Tentativa de deleção da Categoria uuid={instance.uuid} "
             f"por planner_id={user.id}"
@@ -128,7 +130,7 @@ class BudgetCategoryService:
             ) from e
 
     @staticmethod
-    def setup_defaults(user, wedding, budget):
+    def setup_defaults(user: AuthContextUser, wedding: Wedding, budget: Budget) -> None:
         """
         Cria as categorias iniciais obrigatórias para um novo casamento.
 

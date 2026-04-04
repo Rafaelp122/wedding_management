@@ -9,6 +9,7 @@ Referência: RF03
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -44,12 +45,11 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
         unique_together = [["budget", "name"]]
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.wedding})"
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
-        from django.core.exceptions import ValidationError
 
         # TRAVA DE SEGURANÇA: Garante que o orçamento e a categoria são do mesmo casamento # noqa
         if self.budget.wedding != self.wedding:

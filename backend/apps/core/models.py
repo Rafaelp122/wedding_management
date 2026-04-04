@@ -1,4 +1,5 @@
-import uuid
+from typing import Any, Self
+from uuid import UUID, uuid4
 
 from django.db import models
 
@@ -11,9 +12,7 @@ class BaseModel(models.Model):
     """
 
     id = models.BigAutoField(primary_key=True, editable=False)
-    uuid = models.UUIDField(
-        default=uuid.uuid4, unique=True, editable=False, db_index=True
-    )
+    uuid = models.UUIDField(default=uuid4, unique=True, editable=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -22,7 +21,7 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-    def save(self, *args, skip_clean=False, **kwargs):
+    def save(self, *args: Any, skip_clean: bool = False, **kwargs: Any) -> None:
         """Garante a execução das validações do clean() antes de persistir (ADR-011).
 
         Args:
@@ -35,6 +34,6 @@ class BaseModel(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_by_uuid(cls, uuid_value):
+    def get_by_uuid(cls, uuid_value: UUID | str) -> Self | None:
         """Busca rápida por identificador público."""
         return cls.objects.filter(uuid=uuid_value).first()

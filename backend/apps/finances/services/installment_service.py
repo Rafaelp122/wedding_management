@@ -1,10 +1,13 @@
 import logging
+from typing import Any
+from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.types import AuthContextUser
 from apps.finances.models import Expense, Installment
 
 
@@ -19,27 +22,21 @@ class InstallmentService:
     """
 
     @staticmethod
-    def list(user):
-        return (
-            Installment.objects.select_related("expense", "wedding")
-            .all()
-            .for_user(user)
-        )
+    def list(user: AuthContextUser) -> QuerySet[Installment]:
+        return Installment.objects.for_user(user).select_related("expense", "wedding")
 
     @staticmethod
-    def get(user, uuid) -> Installment:
+    def get(user: AuthContextUser, uuid: UUID | str) -> Installment:
         from django.shortcuts import get_object_or_404
 
         return get_object_or_404(
-            Installment.objects.select_related("expense", "wedding")
-            .all()
-            .for_user(user),
+            Installment.objects.for_user(user).select_related("expense", "wedding"),
             uuid=uuid,
         )
 
     @staticmethod
     @transaction.atomic
-    def create(user, data: dict) -> Installment:
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Installment:
         logger.info(f"Iniciando criação de Parcela para planner_id={user.id}")
 
         # 1. Resolução Segura de Dependências
@@ -48,7 +45,7 @@ class InstallmentService:
             expense = expense_input
         else:
             try:
-                expense = Expense.objects.all().for_user(user).get(uuid=expense_input)
+                expense = Expense.objects.for_user(user).get(uuid=expense_input)
             except Expense.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de despesa inválida/negada: {expense_input}"
@@ -89,7 +86,9 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def update(user, instance: Installment, data: dict) -> Installment:
+    def update(
+        user: AuthContextUser, instance: Installment, data: dict[str, Any]
+    ) -> Installment:
         logger.info(
             f"Atualizando Parcela uuid={instance.uuid} por planner_id={user.id}"
         )
@@ -125,12 +124,14 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(user, instance: Installment, data: dict) -> Installment:
+    def partial_update(
+        user: AuthContextUser, instance: Installment, data: dict[str, Any]
+    ) -> Installment:
         return InstallmentService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user, instance: Installment) -> None:
+    def delete(user: AuthContextUser, instance: Installment) -> None:
         logger.info(
             f"Tentativa de deleção da Parcela uuid={instance.uuid} "
             f"por planner_id={user.id}"

@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -6,7 +8,7 @@ from apps.core.models import BaseModel
 from apps.users.models import User
 
 
-def validate_future_date(value):
+def validate_future_date(value: date) -> None:
     if value < timezone.now().date():
         raise ValidationError("A data do casamento não pode ser no passado.")
 
@@ -46,10 +48,10 @@ class Wedding(BaseModel):
             models.Index(fields=["status"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.groom_name} & {self.bride_name}"
 
-    def clean(self):
+    def clean(self) -> None:
         """Validações de negócio."""
         super().clean()
 

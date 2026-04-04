@@ -7,7 +7,7 @@ class ApplicationError(Exception):
     default_detail = "Ocorreu um erro na aplicação."
     default_code = "application_error"
 
-    def __init__(self, detail=None, code=None):
+    def __init__(self, detail: str | None = None, code: str | None = None) -> None:
         self.detail = detail if detail is not None else self.default_detail
         self.code = code if code is not None else self.default_code
         super().__init__(self.detail)

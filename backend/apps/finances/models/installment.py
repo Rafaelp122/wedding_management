@@ -47,10 +47,10 @@ class Installment(BaseModel, WeddingOwnedMixin):
             models.Index(fields=["status", "due_date"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Parcela {self.installment_number} - {self.expense.description} ({self.status})"  # noqa
 
-    def clean(self):
+    def clean(self) -> None:
         """Validações de consistência paid_date ↔ status."""
         super().clean()
         from django.core.exceptions import ValidationError
