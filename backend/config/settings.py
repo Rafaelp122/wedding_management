@@ -41,10 +41,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third-party apps
-    "rest_framework",
-    "rest_framework_simplejwt",
+    "ninja",
+    "ninja_jwt",
+    "ninja_extra",
     "corsheaders",
-    "drf_spectacular",
     # Project apps - Core
     "apps.core",
     "apps.users",
@@ -160,7 +160,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # JWT Configuration
-SIMPLE_JWT = {
+NINJA_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME_MINUTES", "15"))
     ),
@@ -173,6 +173,8 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 # Internationalization
@@ -200,59 +202,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Django REST Framework
-REST_FRAMEWORK = {
-    "EXCEPTION_HANDLER": "apps.core.exception_handler.custom_exception_handler",
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
-    "DATE_FORMAT": "%Y-%m-%d",
-}
-
-# drf-spectacular Configuration (RNF06 - OpenAPI/Swagger)
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Wedding Management API",
-    "DESCRIPTION": "Sistema completo de gestão de casamentos com API REST",
-    "VERSION": "1.0.0 (v1)",
-    "SERVE_INCLUDE_SCHEMA": False,
-    "COMPONENT_SPLIT_REQUEST": True,
-    "SCHEMA_PATH_PREFIX": r"/api/v1",
-    "SERVERS": [
-        {"url": "http://localhost:8000", "description": "Development"},
-    ],
-    "TAGS": [
-        {"name": "auth", "description": "Tokens de acesso e renovação (JWT)"},
-        {"name": "Users", "description": "Gestão de perfis e usuários (RF02)"},
-        {"name": "Weddings", "description": "Gestão do Casamento (Core)"},
-        {
-            "name": "Finances",
-            "description": "Orçamentos, Despesas e Fluxo de Caixa (RF03/04/05)",
-        },
-        {
-            "name": "Logistics",
-            "description": "Fornecedores, Contratos e Itens (RF06-RF10)",
-        },
-        {"name": "Scheduler", "description": "Agenda e Eventos (RF11/12)"},
-    ],
-    "CONTACT": {
-        "name": "Wedding Management Team",
-        "email": "contato@weddingmanagement.com",
-    },
-    "LICENSE": {
-        "name": "Proprietary",
-    },
-}
 
 # Logging configuration
 LOGGING = {
