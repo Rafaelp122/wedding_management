@@ -43,6 +43,8 @@ dev = [
     "ipython>=9.8.0,<10.0",
     # Code Quality & Linting
     "ruff>=0.15.2,<0.16",
+    "mypy>=1.18.2,<2.0",
+    "django-stubs>=5.2.7,<6.0",
     "pre-commit>=3.7.1,<3.8",
     "detect-secrets>=1.5.0",
     "bandit>=1.9.3,<2.0",
@@ -89,6 +91,48 @@ quote-style = "double"
 indent-style = "space"
 # Forçar line-ending para evitar problemas de buffer no Windows/Linux
 line-ending = "lf"
+
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+python_version = "3.12"
+exclude = ["migrations"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+[[tool.mypy.overrides]]
+module = [
+    "apps.*.admin",
+    "apps.*.tests.factories",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "apps.weddings.services",
+    "apps.scheduler.services",
+    "apps.finances.services.*",
+    "apps.logistics.services.*",
+    "apps.users.api",
+    "apps.weddings.api",
+    "apps.scheduler.api",
+    "apps.logistics.api",
+    "apps.finances.api",
+    "apps.weddings.deps",
+    "apps.core.exceptions",
+    "apps.core.mixins",
+    "apps.core.models",
+    "apps.users.models",
+    "apps.weddings.models",
+    "apps.scheduler.models",
+    "apps.finances.models.*",
+    "apps.logistics.models.*",
+]
+disallow_untyped_defs = true
+check_untyped_defs = true
 
 
 # ==============================================================================
