@@ -10,7 +10,7 @@ PYTHON := python manage.py
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-.PHONY: help setup up dev logs build down clean migrate makemigrations superuser shell reqs back-install openapi orval sync-api test test-cov lint mypy format check check-backend check-frontend check-ci env-setup secret-key fix-perms
+.PHONY: help setup up dev logs build down clean frontend-refresh-deps migrate makemigrations superuser shell reqs back-install openapi orval sync-api test test-cov lint mypy format check check-backend check-frontend check-ci env-setup secret-key fix-perms
 # Default target
 help:
 	@echo "=========================================================================="
@@ -35,6 +35,7 @@ help:
 	@echo "  make back-install        - Instala pacote Python (pkg=nome)"
 	@echo ""
 	@echo "⚛️  FRONTEND & API SYNC"
+	@echo "  make frontend-refresh-deps - ♻️  Recria frontend e sincroniza node_modules"
 	@echo "  make sync-api            - 🔄 Gera OpenAPI + Hooks do Orval (Frontend)"
 	@echo "  make openapi             - Gera o arquivo openapi.json a partir do Ninja"
 	@echo "  make orval               - Gera os hooks do frontend (Requer openapi.json)"
@@ -79,6 +80,13 @@ build:
 	@echo "🔨 Reconstruindo e iniciando..."
 	$(DC) up --build -d
 	$(EXEC_BACK) $(PYTHON) migrate
+
+frontend-refresh-deps:
+	@echo "♻️  Recriando frontend com node_modules limpo..."
+	$(DC) up -d --force-recreate --renew-anon-volumes frontend
+	@echo "📦 Sincronizando dependências do frontend no container..."
+	$(DC) exec frontend npm install
+	@echo "✅ Dependências do frontend sincronizadas com sucesso!"
 
 down:
 	$(DC) down
