@@ -659,6 +659,188 @@ export const useFinancesBudgetsDelete = <
   );
 };
 /**
+ * Retorna o orçamento de um casamento específico.
+
+Implementa o padrão Lazy Loading:
+- Se o Budget já existe, retorna ele
+- Se não existe, cria automaticamente com total_estimated=0 e categorias padrão
+
+Este endpoint permite que o frontend acesse o orçamento sem se preocupar
+se ele foi criado ou não durante a criação do casamento.
+ * @summary Get Budget For Wedding
+ */
+export const financesBudgetsForWedding = (
+  weddingUuid: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<BudgetOut>(
+    {
+      url: `/api/v1/finances/budgets/for-wedding/${weddingUuid}/`,
+      method: "GET",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getFinancesBudgetsForWeddingQueryKey = (weddingUuid: string) => {
+  return [`/api/v1/finances/budgets/for-wedding/${weddingUuid}/`] as const;
+};
+
+export const getFinancesBudgetsForWeddingQueryOptions = <
+  TData = Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  weddingUuid: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getFinancesBudgetsForWeddingQueryKey(weddingUuid);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof financesBudgetsForWedding>>
+  > = ({ signal }) =>
+    financesBudgetsForWedding(weddingUuid, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!weddingUuid,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type FinancesBudgetsForWeddingQueryResult = NonNullable<
+  Awaited<ReturnType<typeof financesBudgetsForWedding>>
+>;
+export type FinancesBudgetsForWeddingQueryError = ErrorType<ErrorResponse>;
+
+export function useFinancesBudgetsForWedding<
+  TData = Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  weddingUuid: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+          TError,
+          Awaited<ReturnType<typeof financesBudgetsForWedding>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useFinancesBudgetsForWedding<
+  TData = Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  weddingUuid: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+          TError,
+          Awaited<ReturnType<typeof financesBudgetsForWedding>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useFinancesBudgetsForWedding<
+  TData = Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  weddingUuid: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Budget For Wedding
+ */
+
+export function useFinancesBudgetsForWedding<
+  TData = Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  weddingUuid: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof financesBudgetsForWedding>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getFinancesBudgetsForWeddingQueryOptions(
+    weddingUuid,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
  * @summary List Categories
  */

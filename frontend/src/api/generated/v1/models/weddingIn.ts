@@ -15,5 +15,4 @@ export interface WeddingIn {
   date: string;
   location: string;
   expected_guests?: number | null;
-  total_estimated: number | string;
 }

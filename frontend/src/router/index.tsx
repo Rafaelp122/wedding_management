@@ -14,6 +14,14 @@ const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ComingSoonPage = lazy(() => import("../pages/ComingSoonPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
+// Feature: Weddings
+const WeddingsListPage = lazy(
+  () => import("@/features/weddings/pages/WeddingsListPage"),
+);
+const WeddingDetailPage = lazy(
+  () => import("@/features/weddings/pages/WeddingDetailPage"),
+);
+
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
@@ -65,10 +73,15 @@ export const router = createBrowserRouter([
         path: "/weddings",
         element: (
           <Suspense fallback={<LoadingScreen />}>
-            <ComingSoonPage
-              title="Casamentos"
-              description="A gestão detalhada de casamentos será disponibilizada em breve."
-            />
+            <WeddingsListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/weddings/:uuid",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <WeddingDetailPage />
           </Suspense>
         ),
       },

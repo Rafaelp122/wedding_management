@@ -126,6 +126,34 @@ export const FinancesBudgetsDeleteParams = zod.object({
 });
 
 /**
+ * Retorna o orçamento de um casamento específico.
+
+Implementa o padrão Lazy Loading:
+- Se o Budget já existe, retorna ele
+- Se não existe, cria automaticamente com total_estimated=0 e categorias padrão
+
+Este endpoint permite que o frontend acesse o orçamento sem se preocupar
+se ele foi criado ou não durante a criação do casamento.
+ * @summary Get Budget For Wedding
+ */
+export const FinancesBudgetsForWeddingParams = zod.object({
+  wedding_uuid: zod.string(),
+});
+
+export const financesBudgetsForWeddingResponseTotalEstimatedRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
+
+export const FinancesBudgetsForWeddingResponse = zod.object({
+  uuid: zod.string(),
+  wedding: zod.string(),
+  total_estimated: zod
+    .string()
+    .regex(financesBudgetsForWeddingResponseTotalEstimatedRegExp),
+  notes: zod.union([zod.string(), zod.null()]).optional(),
+});
+
+/**
  * Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
  * @summary List Categories
  */

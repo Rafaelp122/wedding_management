@@ -53,10 +53,6 @@ Ao criar um casamento, o Service Layer automaticamente:
 - Cria um **Budget (Orçamento)** inicial zerado para o evento.
  * @summary Create Wedding
  */
-export const weddingsCreateBodyTotalEstimatedTwoRegExp = new RegExp(
-  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
-);
-
 export const WeddingsCreateBody = zod
   .object({
     groom_name: zod.string(),
@@ -64,10 +60,6 @@ export const WeddingsCreateBody = zod
     date: zod.iso.date(),
     location: zod.string(),
     expected_guests: zod.union([zod.number(), zod.null()]).optional(),
-    total_estimated: zod.union([
-      zod.number(),
-      zod.string().regex(weddingsCreateBodyTotalEstimatedTwoRegExp),
-    ]),
   })
   .describe(
     "Schema puro e explícito para CRIAÇÃO de Casamento.\nDesacoplado de Modelos.",

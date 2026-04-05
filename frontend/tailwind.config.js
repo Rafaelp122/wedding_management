@@ -1,6 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-import animate from "tailwindcss-animate";
-
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -42,7 +40,7 @@ export default {
         },
         // --- CRÍTICO PARA A SIDEBAR ---
         sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
+          DEFAULT: "hsl(var(--sidebar))",
           foreground: "hsl(var(--sidebar-foreground))",
           primary: "hsl(var(--sidebar-primary))",
           "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
@@ -73,5 +71,4 @@ export default {
       },
     },
   },
-  plugins: [animate],
 };

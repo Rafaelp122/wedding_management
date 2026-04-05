@@ -5,6 +5,7 @@ import {
   FileText,
   DollarSign,
   Package,
+  Receipt,
 } from "lucide-react";
 import {
   Sidebar,
@@ -21,8 +22,9 @@ const menuItems = [
   { title: "Casamentos", path: "/weddings", icon: Heart },
   { title: "Agenda", path: "/scheduler", icon: Calendar },
   { title: "Contratos", path: "/logistics/contracts", icon: FileText },
-  { title: "Financeiro", path: "/finances/budgets", icon: DollarSign },
-  { title: "Itens/Estoque", path: "/logistics/items", icon: Package },
+  { title: "Itens", path: "/logistics/items", icon: Package },
+  { title: "Orçamentos", path: "/finances/budgets", icon: DollarSign },
+  { title: "Despesas", path: "/finances/expenses", icon: Receipt },
 ];
 
 export function AppSidebar() {
