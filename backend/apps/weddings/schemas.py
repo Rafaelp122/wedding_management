@@ -1,5 +1,4 @@
 import datetime
-from decimal import Decimal
 
 from ninja import Schema
 from pydantic import UUID4
@@ -16,7 +15,6 @@ class WeddingIn(Schema):
     date: datetime.date
     location: str
     expected_guests: int | None = None
-    total_estimated: Decimal
 
 
 class WeddingPatchIn(Schema):

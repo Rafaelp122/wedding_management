@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
 
 from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory
@@ -42,6 +45,25 @@ class TestWeddingNinjaAPI:
         data = response.json()
         assert "uuid" in data
         assert Wedding.objects.filter(planner=user).count() == 1
+
+    def test_create_wedding_with_past_date_returns_422(self, auth_client):
+        payload = {
+            "groom_name": "Noivo",
+            "bride_name": "Noiva",
+            "date": (timezone.now().date() - timedelta(days=1)).isoformat(),
+            "location": "Salão Teste",
+            "expected_guests": 100,
+            "total_estimated": "10000.00",
+        }
+
+        response = auth_client.post(
+            "/api/v1/weddings/", data=payload, content_type="application/json"
+        )
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "wedding_validation_error"
+        assert "A data do casamento não pode ser no passado." in body["detail"]
 
     def test_unauthenticated_access_denied(self, client):
         response = client.get("/api/v1/weddings/")

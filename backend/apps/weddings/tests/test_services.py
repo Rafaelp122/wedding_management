@@ -2,10 +2,9 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 
-from apps.core.exceptions import DomainIntegrityError
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.tests.factories import BudgetFactory
 from apps.logistics.tests.factories import ContractFactory
@@ -16,47 +15,27 @@ from apps.weddings.tests.factories import WeddingFactory
 
 @pytest.mark.django_db
 class TestWeddingService:
-    def test_create_wedding_complete_onboarding_success(self, user, wedding_payload):
+    def test_create_wedding_does_not_create_financial_data_eagerly(
+        self, user, wedding_payload
+    ):
         """
-        RF03/RF04: Garante que ao criar um casamento, o sistema orquestra:
-        1. A criação do Wedding.
-        2. A criação do Budget mestre.
-        3. A geração automática das 6 categorias padrão.
+        Com lazy loading ativo, criar casamento NÃO deve criar Budget/Categorias.
         """
-        # 1. Setup: Gerar payload via fixture (dicionário)
-        # Passamos um valor fixo de budget para facilitar a asserção
-        expected_budget = Decimal("75000.50")
-        wedding_payload["total_estimated"] = expected_budget
+        # Setup: inclui campo legado para garantir que seja ignorado com segurança
+        wedding_payload["total_estimated"] = Decimal("75000.50")
 
-        # 2. Execução: Chamar o serviço
+        # Execução
         wedding = WeddingService.create(user=user, data=wedding_payload)
 
-        # 3. Asserções: Validação do Casamento
+        # Asserções: Wedding criado
         assert Wedding.objects.count() == 1
         assert wedding.planner == user
         assert wedding.bride_name == wedding_payload["bride_name"]
         assert wedding.status == Wedding.StatusChoices.IN_PROGRESS
 
-        # 4. Asserções: Validação do Orçamento (Orquestração BudgetService)
-        budget = Budget.objects.get(wedding=wedding)
-        assert budget.total_estimated == expected_budget
-
-        # 5. Asserções: Validação das Categorias (Orquestração setup_defaults)
-        categories = BudgetCategory.objects.filter(wedding=wedding)
-        assert categories.count() == 6
-
-        # Verifica se nomes esperados estão lá
-        expected_names = [
-            "Espaço e Buffet",
-            "Decoração e Flores",
-            "Fotografia e Vídeo",
-            "Música e Iluminação",
-            "Assessoria",
-            "Trajes e Beleza",
-        ]
-        db_category_names = list(categories.values_list("name", flat=True))
-        for name in expected_names:
-            assert name in db_category_names
+        # Asserções: camada financeira fica vazia até chamada lazy
+        assert Budget.objects.count() == 0
+        assert BudgetCategory.objects.count() == 0
 
     def test_update_wedding_ignores_budget_field(self, user):
         """
@@ -94,8 +73,7 @@ class TestWeddingService:
         wedding_payload["bride_name"] = ""
 
         # 2. Execução e Asserção de Erro
-        # O full_clean() do Django deve lançar ValidationError
-        with pytest.raises(DjangoValidationError):
+        with pytest.raises(BusinessRuleViolation, match="não pode estar vazio"):
             WeddingService.create(user=user, data=wedding_payload)
 
         # 3. Validação de Banco de Dados Limpo
@@ -115,22 +93,21 @@ class TestWeddingService:
         # datas passadas)
         wedding_payload["date"] = timezone.now().date() - timedelta(days=1)
 
-        with pytest.raises(DjangoValidationError):
+        with pytest.raises(BusinessRuleViolation, match="não pode ser no passado"):
             WeddingService.create(user=user, data=wedding_payload)
 
         assert Wedding.objects.count() == 0
 
-    def test_create_wedding_rollback_on_budget_failure(self, user, wedding_payload):
-        """Cenário 3: Rollback total se o serviço financeiro falhar."""
+    def test_create_wedding_does_not_call_budget_service(self, user, wedding_payload):
+        """Com lazy loading, create de Wedding não deve acionar BudgetService."""
         with patch(
             "apps.finances.services.budget_service.BudgetService.create"
         ) as mock_budget:
-            mock_budget.side_effect = Exception("Erro financeiro")
+            wedding = WeddingService.create(user=user, data=wedding_payload)
 
-            with pytest.raises(Exception, match="Erro financeiro"):
-                WeddingService.create(user=user, data=wedding_payload)
-
-        assert Wedding.objects.count() == 0
+        assert wedding.uuid is not None
+        assert Wedding.objects.count() == 1
+        mock_budget.assert_not_called()
         assert Budget.objects.count() == 0
         assert BudgetCategory.objects.count() == 0
 
@@ -162,11 +139,11 @@ class TestWeddingService:
 
         # 3. Asserções (O coração do teste)
         assert wedding_a.planner == planner_a
-        assert Budget.objects.get(wedding=wedding_a).total_estimated == 10000
+        assert Wedding.objects.all().for_user(planner_a).count() == 1
+        assert Wedding.objects.all().for_user(planner_b).count() == 1
 
         # 4. O Teste de Ouro: Isolamento via Manager
         # Se o Manager .for_user() estiver correto, o Planner A nunca verá o Casamento B
-        assert Wedding.objects.all().for_user(planner_a).count() == 1
         assert (
             Wedding.objects.all()
             .for_user(planner_a)
@@ -230,11 +207,10 @@ class TestWeddingService:
         Cenário 7: Deleção total (Hard Delete) funciona quando não há travas.
         Garante que Orçamento e Categorias são limpos (Cascade).
         """
-        # 1. Setup: Usar o payload da fixture.
-        # Se você quiser garantir o valor de 50000, basta atualizar o dicionário.
+        # 1. Setup: Criar casamento sem efeitos financeiros automáticos.
         payload = {**wedding_payload, "total_estimated": Decimal("50000.00")}
 
-        # O serviço cria o ecossistema (Wedding + Budget + Categorias)
+        # O serviço cria apenas o Wedding; a camada financeira é lazy.
         wedding = WeddingService.create(user=user, data=payload)
 
         # 2. Execução: Deletar o casamento

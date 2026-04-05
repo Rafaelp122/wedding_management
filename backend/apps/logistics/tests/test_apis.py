@@ -1,5 +1,6 @@
 import pytest
 
+from apps.finances.services.budget_service import BudgetService
 from apps.logistics.services.contract_service import ContractService
 from apps.logistics.services.item_service import ItemService
 from apps.logistics.services.supplier_service import SupplierService
@@ -31,7 +32,8 @@ def seed_data(user, django_user_model):
             "status": "DRAFT",
         },
     )
-    cat_meu = my_wedding.budget.categories.first()
+    my_budget = BudgetService.get_or_create_for_wedding(user, my_wedding.uuid)
+    cat_meu = my_budget.categories.first()
     my_item = ItemService.create(
         user,
         {
@@ -72,7 +74,10 @@ def seed_data(user, django_user_model):
             "status": "DRAFT",
         },
     )
-    cat_outro = other_wedding.budget.categories.first()
+    other_budget = BudgetService.get_or_create_for_wedding(
+        other_user, other_wedding.uuid
+    )
+    cat_outro = other_budget.categories.first()
     ItemService.create(
         other_user,
         {

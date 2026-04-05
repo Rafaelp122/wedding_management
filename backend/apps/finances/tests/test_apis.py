@@ -1,5 +1,6 @@
 import pytest
 
+from apps.finances.services.budget_service import BudgetService
 from apps.finances.services.expense_service import ExpenseService
 from apps.weddings.services import WeddingService
 
@@ -16,7 +17,7 @@ def seed_data(user, django_user_model):
             "date": "2026-10-11",
         },
     )
-    my_budget = my_wedding.budget
+    my_budget = BudgetService.get_or_create_for_wedding(user, my_wedding.uuid)
     my_category = my_budget.categories.first()
     my_expense = ExpenseService.create(
         user,
@@ -39,7 +40,9 @@ def seed_data(user, django_user_model):
             "date": "2026-10-11",
         },
     )
-    other_budget = other_wedding.budget
+    other_budget = BudgetService.get_or_create_for_wedding(
+        other_user, other_wedding.uuid
+    )
     other_category = other_budget.categories.first()
     ExpenseService.create(
         other_user,

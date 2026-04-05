@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
@@ -12,8 +13,6 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.types import AuthContextUser
-from apps.finances.services.budget_category_service import BudgetCategoryService
-from apps.finances.services.budget_service import BudgetService
 from apps.users.models import User
 
 from .models import Wedding
@@ -25,7 +24,9 @@ logger = logging.getLogger(__name__)
 class WeddingService:
     """
     Camada de serviço para gerenciar a lógica de negócio de casamentos.
-    Orquestra a criação atómica do ecossistema inicial (Wedding + Budget + Categories).
+
+    Nota: Budget e suas categorias são criados sob demanda (lazy loading)
+    através do BudgetService.get_or_create_for_wedding().
     """
 
     @staticmethod
@@ -55,34 +56,28 @@ class WeddingService:
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Wedding:
         planner = WeddingService._require_user(user)
-        logger.info(
-            f"Iniciando criação atómica de ecossistema para planner_id={planner.id}"
-        )
+        logger.info(f"Criando casamento para planner_id={planner.id}")
 
-        # 1. Extração de campos virtuais (não pertencem ao modelo Wedding)
-        # o frontend envia "total_estimated" mas o modelo Wedding não o possui
-        total_estimated = data.pop("total_estimated", None)
+        # Limpeza: Remove campos que não pertencem ao modelo Wedding
+        data.pop("total_estimated", None)
 
-        # 2. Instanciação e Validação do Casamento
+        # Instanciação e Validação do Casamento
         wedding = Wedding(planner=planner, **data)
-        wedding.save()
+        try:
+            wedding.save()
+        except DjangoValidationError as e:
+            logger.warning(
+                "Falha de validação ao criar casamento para planner_id=%s: %s",
+                planner.id,
+                e,
+            )
+            detail = "; ".join(e.messages) if e.messages else str(e)
+            raise BusinessRuleViolation(
+                detail=detail,
+                code="wedding_validation_error",
+            ) from e
 
-        # 3. Orquestração Financeira: Criar Orçamento Mestre
-        # Passamos a instância 'wedding' diretamente para evitar queries extras
-        budget = BudgetService.create(
-            user=planner,
-            data={"wedding": wedding, "total_estimated": total_estimated or 0},
-        )
-
-        # 4. Orquestração Financeira: Gerar Categorias Padrão (Blueprint)
-        BudgetCategoryService.setup_defaults(
-            user=planner, wedding=wedding, budget=budget
-        )
-
-        logger.info(
-            f"Casamento criado com sucesso: uuid={wedding.uuid} com Orçamento e "
-            f"Categorias."
-        )
+        logger.info(f"Casamento criado com sucesso: uuid={wedding.uuid}")
         return wedding
 
     @staticmethod
@@ -103,7 +98,21 @@ class WeddingService:
             setattr(instance, field, value)
 
         # Validação estrita (regras de negócio do Model)
-        instance.save()
+        try:
+            instance.save()
+        except DjangoValidationError as e:
+            logger.warning(
+                "Falha de validação ao atualizar casamento uuid=%s por "
+                "planner_id=%s: %s",
+                instance.uuid,
+                planner.id,
+                e,
+            )
+            detail = "; ".join(e.messages) if e.messages else str(e)
+            raise BusinessRuleViolation(
+                detail=detail,
+                code="wedding_validation_error",
+            ) from e
 
         logger.info(f"Casamento uuid={instance.uuid} atualizado.")
         return instance

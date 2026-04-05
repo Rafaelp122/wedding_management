@@ -55,6 +55,25 @@ def get_budget(request: HttpRequest, uuid: UUID4) -> Any:
     return BudgetService.get(request.user, uuid)
 
 
+@budgets_router.get(
+    "/for-wedding/{wedding_uuid}/",
+    response={200: BudgetOut, **READ_ERROR_RESPONSES},
+    operation_id="finances_budgets_for_wedding",
+)
+def get_budget_for_wedding(request: HttpRequest, wedding_uuid: UUID4) -> Any:
+    """
+    Retorna o orçamento de um casamento específico.
+
+    Implementa o padrão Lazy Loading:
+    - Se o Budget já existe, retorna ele
+    - Se não existe, cria automaticamente com total_estimated=0 e categorias padrão
+
+    Este endpoint permite que o frontend acesse o orçamento sem se preocupar
+    se ele foi criado ou não durante a criação do casamento.
+    """
+    return BudgetService.get_or_create_for_wedding(request.user, wedding_uuid)
+
+
 @budgets_router.post(
     "/",
     response={201: BudgetOut, **MUTATION_ERROR_RESPONSES},

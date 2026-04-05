@@ -127,3 +127,66 @@ class BudgetService:
                 "categorias e despesas vinculadas a ele.",
                 code="budget_protected_error",
             ) from e
+
+    @staticmethod
+    @transaction.atomic
+    def get_or_create_for_wedding(
+        user: AuthContextUser, wedding_uuid: UUID | str
+    ) -> Budget:
+        """
+        Retorna o Budget existente ou cria um novo para o Wedding especificado.
+
+        Este método implementa o padrão Lazy Loading para Budget:
+        - O Budget só é criado quando realmente necessário (primeira visualização)
+        - Evita dados fake (total_estimated=0) no momento da criação do Wedding
+        - Cria automaticamente as categorias padrão junto com o Budget
+
+        Args:
+            user: Usuário autenticado (Planner)
+            wedding_uuid: UUID do casamento
+
+        Returns:
+            Budget: Instância existente ou recém-criada
+
+        Raises:
+            BusinessRuleViolation: Se o casamento não existir ou acesso negado
+        """
+        from apps.finances.services.budget_category_service import BudgetCategoryService
+        from apps.weddings.models import Wedding
+
+        # 1. Validação de Acesso: Garante que o Wedding pertence ao usuário
+        try:
+            wedding = Wedding.objects.for_user(user).get(uuid=wedding_uuid)
+        except Wedding.DoesNotExist as e:
+            logger.warning(
+                f"Tentativa de criar orçamento para casamento inválido/negado: "
+                f"{wedding_uuid} por planner_id={user.id}"
+            )
+            raise BusinessRuleViolation(
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            ) from e
+
+        # 2. Get or Create: Usa get_or_create do Django (thread-safe)
+        budget, created = Budget.objects.get_or_create(
+            wedding=wedding,
+            defaults={"total_estimated": 0},
+        )
+
+        # 3. Setup Inicial: Cria categorias padrão se Budget foi recém-criado
+        if created:
+            logger.info(
+                f"Budget criado sob demanda para wedding={wedding.uuid}, "
+                f"criando categorias padrão..."
+            )
+            BudgetCategoryService.setup_defaults(
+                user=user, wedding=wedding, budget=budget
+            )
+            logger.info(
+                f"Budget uuid={budget.uuid} + categorias criados para "
+                f"wedding={wedding.uuid}"
+            )
+        else:
+            logger.debug(f"Budget existente retornado: uuid={budget.uuid}")
+
+        return budget
