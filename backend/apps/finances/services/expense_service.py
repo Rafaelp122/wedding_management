@@ -5,7 +5,11 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.auth import require_user
+from apps.core.exceptions import (
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.core.types import AuthContextUser
 from apps.finances.models import BudgetCategory, Expense
 from apps.logistics.models import Contract
@@ -29,19 +33,20 @@ class ExpenseService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Expense:
-        from django.shortcuts import get_object_or_404
-
-        return get_object_or_404(
-            Expense.objects.for_user(user).select_related(
-                "category", "contract", "wedding"
-            ),
-            uuid=uuid,
-        )
+        try:
+            return (
+                Expense.objects.for_user(user)
+                .select_related("category", "contract", "wedding")
+                .get(uuid=uuid)
+            )
+        except Expense.DoesNotExist as e:
+            raise ObjectNotFoundError(detail="Despesa não encontrada.") from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Expense:
-        logger.info(f"Iniciando criação de Despesa para planner_id={user.id}")
+        planner = require_user(user)
+        logger.info(f"Iniciando criação de Despesa para planner_id={planner.id}")
 
         # 1. Resolução Segura de Categoria (Suporta Instância ou UUID)
         category_input = data.pop("category", None)
@@ -50,14 +55,14 @@ class ExpenseService:
             category = category_input
         else:
             try:
-                category = BudgetCategory.objects.for_user(user).get(
+                category = BudgetCategory.objects.for_user(planner).get(
                     uuid=category_input
                 )
             except BudgetCategory.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de categoria inválida/negada: {category_input}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Categoria não encontrada ou acesso negado.",
                     code="budget_category_not_found_or_denied",
                 ) from e
@@ -71,13 +76,15 @@ class ExpenseService:
                 contract = contract_input
             else:
                 try:
-                    contract = Contract.objects.for_user(user).get(uuid=contract_input)
+                    contract = Contract.objects.for_user(planner).get(
+                        uuid=contract_input
+                    )
                 except Contract.DoesNotExist as e:
                     logger.warning(
                         f"Tentativa de uso de contrato inválido/negado: "
                         f"{contract_input}"
                     )
-                    raise BusinessRuleViolation(
+                    raise ObjectNotFoundError(
                         detail="Contrato não encontrado ou acesso negado.",
                         code="contract_not_found_or_denied",
                     ) from e
@@ -105,8 +112,9 @@ class ExpenseService:
     def update(
         user: AuthContextUser, instance: Expense, data: dict[str, Any]
     ) -> Expense:
+        planner = require_user(user)
         logger.info(
-            f"Atualizando Despesa uuid={instance.uuid} por planner_id={user.id}"
+            f"Atualizando Despesa uuid={instance.uuid} por planner_id={planner.id}"
         )
 
         # Bloqueio de sequestro de contexto
@@ -122,11 +130,11 @@ class ExpenseService:
                     instance.contract = contract_input
                 else:
                     try:
-                        instance.contract = Contract.objects.for_user(user).get(
+                        instance.contract = Contract.objects.for_user(planner).get(
                             uuid=contract_input
                         )
                     except Contract.DoesNotExist as e:
-                        raise BusinessRuleViolation(
+                        raise ObjectNotFoundError(
                             detail="Contrato inválido ou acesso negado.",
                             code="contract_not_found_or_denied",
                         ) from e
@@ -156,15 +164,16 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Expense) -> None:
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção da Despesa uuid={instance.uuid} "
-            f"por planner_id={user.id}"
+            f"por planner_id={planner.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Despesa uuid={instance.uuid} DESTRUÍDA por planner_id={user.id}"
+                f"Despesa uuid={instance.uuid} DESTRUÍDA por planner_id={planner.id}"
             )
 
         except ProtectedError as e:

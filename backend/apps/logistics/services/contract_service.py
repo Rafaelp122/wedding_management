@@ -5,7 +5,11 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.auth import require_user
+from apps.core.exceptions import (
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.core.types import AuthContextUser
 from apps.logistics.models import Contract, Supplier
 from apps.weddings.models import Wedding
@@ -27,17 +31,20 @@ class ContractService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Contract:
-        from django.shortcuts import get_object_or_404
-
-        return get_object_or_404(
-            Contract.objects.for_user(user).select_related("supplier", "wedding"),
-            uuid=uuid,
-        )
+        try:
+            return (
+                Contract.objects.for_user(user)
+                .select_related("supplier", "wedding")
+                .get(uuid=uuid)
+            )
+        except Contract.DoesNotExist as e:
+            raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Contract:
-        logger.info(f"Iniciando criação de Contrato para planner_id={user.id}")
+        planner = require_user(user)
+        logger.info(f"Iniciando criação de Contrato para planner_id={planner.id}")
 
         # 1. Resolução Segura de Dependências (Suporta Instância ou UUID)
         wedding_input = data.pop("wedding", None)
@@ -48,12 +55,12 @@ class ContractService:
             wedding = wedding_input
         else:
             try:
-                wedding = Wedding.objects.for_user(user).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de casamento inválido/negado: {wedding_input}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Casamento não encontrado ou acesso negado.",
                     code="wedding_not_found_or_denied",
                 ) from e
@@ -63,12 +70,12 @@ class ContractService:
             supplier = supplier_input
         else:
             try:
-                supplier = Supplier.objects.for_user(user).get(uuid=supplier_input)
+                supplier = Supplier.objects.for_user(planner).get(uuid=supplier_input)
             except Supplier.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de fornecedor inválido/negado: {supplier_input}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Fornecedor não encontrado ou acesso negado.",
                     code="supplier_not_found_or_denied",
                 ) from e
@@ -88,8 +95,9 @@ class ContractService:
     def update(
         user: AuthContextUser, instance: Contract, data: dict[str, Any]
     ) -> Contract:
+        planner = require_user(user)
         logger.info(
-            f"Atualizando Contrato uuid={instance.uuid} por planner_id={user.id}"
+            f"Atualizando Contrato uuid={instance.uuid} por planner_id={planner.id}"
         )
 
         # Proteção contra sequestro de propriedade
@@ -103,11 +111,11 @@ class ContractService:
                 instance.supplier = supplier_input
             else:
                 try:
-                    instance.supplier = Supplier.objects.for_user(user).get(
+                    instance.supplier = Supplier.objects.for_user(planner).get(
                         uuid=supplier_input
                     )
                 except Supplier.DoesNotExist as e:
-                    raise BusinessRuleViolation(
+                    raise ObjectNotFoundError(
                         detail="Fornecedor inválido ou acesso negado.",
                         code="supplier_not_found_or_denied",
                     ) from e
@@ -136,9 +144,10 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Contract) -> None:
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção do Contrato uuid={instance.uuid} por "
-            f"planner_id={user.id}"
+            f"planner_id={planner.id}"
         )
 
         # Desvinculação de itens logísticos órfãos
@@ -147,7 +156,7 @@ class ContractService:
         try:
             instance.delete()
             logger.warning(
-                f"Contrato uuid={instance.uuid} DESTRUÍDO por planner_id={user.id}"
+                f"Contrato uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
             )
 
         except ProtectedError as e:

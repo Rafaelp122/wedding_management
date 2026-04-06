@@ -2,18 +2,16 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
+from apps.core.auth import require_user
 from apps.core.exceptions import (
-    BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.core.types import AuthContextUser
 from apps.scheduler.models import Event
-from apps.users.models import User
 from apps.weddings.models import Wedding
 
 
@@ -25,15 +23,6 @@ class EventService:
     Camada de serviço para gestão de compromissos e calendário.
     Garante isolamento total (Multitenancy), auditoria e integridade de agendamento.
     """
-
-    @staticmethod
-    def _require_user(user: AuthContextUser) -> User:
-        if isinstance(user, AnonymousUser):
-            raise BusinessRuleViolation(
-                detail="Autenticação obrigatória para executar esta operação.",
-                code="authentication_required",
-            )
-        return user
 
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Event]:
@@ -57,7 +46,7 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Event:
-        planner = EventService._require_user(user)
+        planner = require_user(user)
         logger.info(f"Iniciando criação de Evento para planner_id={planner.id}")
 
         # 1. Resolução Segura de Dependências
@@ -69,13 +58,13 @@ class EventService:
         else:
             try:
                 # Isolamento multitenant forçado na busca da dependência
-                wedding = Wedding.objects.for_user(user).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de agendamento em casamento inválido ou "
                     f"negado: {wedding_input} por planner_id={planner.id}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Casamento não encontrado ou você não tem permissão para "
                     "acessá-lo.",
                     code="wedding_not_found_or_denied",
@@ -100,7 +89,7 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def update(user: AuthContextUser, instance: Event, data: dict[str, Any]) -> Event:
-        planner = EventService._require_user(user)
+        planner = require_user(user)
         logger.info(
             f"Atualizando Evento uuid={instance.uuid} por planner_id={planner.id}"
         )
@@ -131,7 +120,7 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Event) -> None:
-        planner = EventService._require_user(user)
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
             f"planner_id={planner.id}"

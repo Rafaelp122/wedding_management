@@ -6,7 +6,6 @@ from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.weddings.deps import get_current_wedding
 from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
 from apps.weddings.services import WeddingService
 
@@ -39,7 +38,7 @@ def retrieve_wedding(request: HttpRequest, uuid: UUID4) -> Any:
     Realiza a busca pelo UUID e valida se o registro pertence ao usuário.
     Caso não exista ou pertença a outro Planner, retorna um erro 404.
     """
-    return get_current_wedding(request, uuid)
+    return WeddingService.get(user=request.user, uuid=uuid)
 
 
 @router.post(
@@ -75,7 +74,7 @@ def partial_update_wedding(
     Permite modificar campos como nomes dos noivos, data e local sem afetar o restante.
     Os dados são validados pelo Service antes da persistência.
     """
-    wedding = get_current_wedding(request, uuid)
+    wedding = WeddingService.get(user=request.user, uuid=uuid)
 
     # Pega só os campos enviados (não nulos na requisição, exclude_unset)
     data = payload.model_dump(exclude_unset=True)
@@ -99,7 +98,7 @@ def delete_wedding(request: HttpRequest, uuid: UUID4) -> Any:
     - Todo o histórico financeiro (orçamentos e despesas).
     - Cronogramas, contratos e fornecedores vinculados exclusivamente a este evento.
     """
-    wedding = get_current_wedding(request, uuid)
+    wedding = WeddingService.get(user=request.user, uuid=uuid)
 
     WeddingService.delete(user=request.user, instance=wedding)
     return 204, None

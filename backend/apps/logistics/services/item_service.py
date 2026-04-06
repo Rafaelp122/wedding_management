@@ -5,7 +5,11 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.auth import require_user
+from apps.core.exceptions import (
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.core.types import AuthContextUser
 from apps.finances.models import BudgetCategory
 from apps.logistics.models import Contract, Item
@@ -28,19 +32,22 @@ class ItemService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Item:
-        from django.shortcuts import get_object_or_404
-
-        return get_object_or_404(
-            Item.objects.for_user(user).select_related(
-                "wedding", "budget_category", "contract", "contract__supplier"
-            ),
-            uuid=uuid,
-        )
+        try:
+            return (
+                Item.objects.for_user(user)
+                .select_related(
+                    "wedding", "budget_category", "contract", "contract__supplier"
+                )
+                .get(uuid=uuid)
+            )
+        except Item.DoesNotExist as e:
+            raise ObjectNotFoundError(detail="Item de logística não encontrado.") from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Item:
-        logger.info(f"Iniciando criação de Item logístico para planner_id={user.id}")
+        planner = require_user(user)
+        logger.info(f"Iniciando criação de Item logístico para planner_id={planner.id}")
 
         # 1. Resolução Segura de Dependências (Suporta Instância ou UUID do DRF)
         data.pop(
@@ -52,14 +59,14 @@ class ItemService:
             category = category_input
         else:
             try:
-                category = BudgetCategory.objects.for_user(user).get(
+                category = BudgetCategory.objects.for_user(planner).get(
                     uuid=category_input
                 )
             except BudgetCategory.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de categoria inválida/negada: {category_input}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Categoria de orçamento não encontrada ou acesso negado.",
                     code="budget_category_not_found_or_denied",
                 ) from e
@@ -73,13 +80,15 @@ class ItemService:
                 contract = contract_input
             else:
                 try:
-                    contract = Contract.objects.for_user(user).get(uuid=contract_input)
+                    contract = Contract.objects.for_user(planner).get(
+                        uuid=contract_input
+                    )
                 except Contract.DoesNotExist as e:
                     logger.warning(
                         f"Tentativa de uso de contrato inválido/negado: "
                         f"{contract_input}"
                     )
-                    raise BusinessRuleViolation(
+                    raise ObjectNotFoundError(
                         detail="Contrato não encontrado ou acesso negado.",
                         code="contract_not_found_or_denied",
                     ) from e
@@ -101,7 +110,10 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def update(user: AuthContextUser, instance: Item, data: dict[str, Any]) -> Item:
-        logger.info(f"Atualizando Item uuid={instance.uuid} por planner_id={user.id}")
+        planner = require_user(user)
+        logger.info(
+            f"Atualizando Item uuid={instance.uuid} por planner_id={planner.id}"
+        )
 
         # Bloqueio de troca de contexto base
         data.pop("planner", None)
@@ -116,11 +128,11 @@ class ItemService:
                     instance.contract = contract_input
                 else:
                     try:
-                        instance.contract = Contract.objects.for_user(user).get(
+                        instance.contract = Contract.objects.for_user(planner).get(
                             uuid=contract_input
                         )
                     except Contract.DoesNotExist as e:
-                        raise BusinessRuleViolation(
+                        raise ObjectNotFoundError(
                             detail="Contrato inválido ou acesso negado.",
                             code="contract_not_found_or_denied",
                         ) from e
@@ -147,15 +159,16 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Item) -> None:
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção do Item uuid={instance.uuid} por "
-            f"planner_id={user.id}"
+            f"planner_id={planner.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Item uuid={instance.uuid} DESTRUÍDO por planner_id={user.id}"
+                f"Item uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
             )
 
         except ProtectedError as e:

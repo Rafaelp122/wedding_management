@@ -2,14 +2,16 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.auth import require_user
+from apps.core.exceptions import (
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.core.types import AuthContextUser
 from apps.logistics.models import Supplier
-from apps.users.models import User
 
 
 logger = logging.getLogger(__name__)
@@ -24,28 +26,20 @@ class SupplierService:
     """
 
     @staticmethod
-    def _require_user(user: AuthContextUser) -> User:
-        if isinstance(user, AnonymousUser):
-            raise BusinessRuleViolation(
-                detail="Autenticação obrigatória para executar esta operação.",
-                code="authentication_required",
-            )
-        return user
-
-    @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Supplier]:
         return Supplier.objects.for_user(user)
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Supplier:
-        from django.shortcuts import get_object_or_404
-
-        return get_object_or_404(Supplier.objects.for_user(user), uuid=uuid)
+        try:
+            return Supplier.objects.for_user(user).get(uuid=uuid)
+        except Supplier.DoesNotExist as e:
+            raise ObjectNotFoundError(detail="Fornecedor não encontrado.") from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Supplier:
-        planner = SupplierService._require_user(user)
+        planner = require_user(user)
         logger.info(f"Iniciando criação de Fornecedor para planner_id={planner.id}")
 
         # 1. Instanciação em Memória (O Fornecedor é PlannerOwned, transversal)
@@ -62,8 +56,9 @@ class SupplierService:
     def update(
         user: AuthContextUser, instance: Supplier, data: dict[str, Any]
     ) -> Supplier:
+        planner = require_user(user)
         logger.info(
-            f"Atualizando Fornecedor uuid={instance.uuid} por planner_id={user.id}"
+            f"Atualizando Fornecedor uuid={instance.uuid} por planner_id={planner.id}"
         )
 
         # Proteção: Impedimos o sequestro/mudança de dono via API
@@ -90,15 +85,16 @@ class SupplierService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Supplier) -> None:
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção do Fornecedor uuid={instance.uuid} por "
-            f"planner_id={user.id}"
+            f"planner_id={planner.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Fornecedor uuid={instance.uuid} DESTRUÍDO por planner_id={user.id}"
+                f"Fornecedor uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
             )
 
         except ProtectedError as e:

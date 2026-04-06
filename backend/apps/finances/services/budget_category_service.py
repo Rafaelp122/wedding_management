@@ -5,7 +5,11 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.auth import require_user
+from apps.core.exceptions import (
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.core.types import AuthContextUser
 from apps.finances.models import Budget, BudgetCategory
 from apps.weddings.models import Wedding
@@ -26,18 +30,23 @@ class BudgetCategoryService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> BudgetCategory:
-        from django.shortcuts import get_object_or_404
-
-        return get_object_or_404(
-            BudgetCategory.objects.for_user(user).select_related("budget", "wedding"),
-            uuid=uuid,
-        )
+        try:
+            return (
+                BudgetCategory.objects.for_user(user)
+                .select_related("budget", "wedding")
+                .get(uuid=uuid)
+            )
+        except BudgetCategory.DoesNotExist as e:
+            raise ObjectNotFoundError(
+                detail="Categoria de orçamento não encontrada."
+            ) from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> BudgetCategory:
+        planner = require_user(user)
         logger.info(
-            f"Iniciando criação de Categoria de Orçamento para planner_id={user.id}"
+            f"Iniciando criação de Categoria de Orçamento para planner_id={planner.id}"
         )
 
         # 1. Resolução Segura do Orçamento Pai (Suporta Instância ou UUID)
@@ -48,12 +57,12 @@ class BudgetCategoryService:
         else:
             try:
                 # Segurança estrita: Garante posse do planner sobre o orçamento
-                budget = Budget.objects.for_user(user).get(uuid=budget_input)
+                budget = Budget.objects.for_user(planner).get(uuid=budget_input)
             except Budget.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de orçamento inválido/negado: {budget_input}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Orçamento mestre não encontrado ou acesso negado.",
                     code="budget_not_found_or_denied",
                 ) from e
@@ -75,8 +84,9 @@ class BudgetCategoryService:
     def update(
         user: AuthContextUser, instance: BudgetCategory, data: dict[str, Any]
     ) -> BudgetCategory:
+        planner = require_user(user)
         logger.info(
-            f"Atualizando Categoria uuid={instance.uuid} por planner_id={user.id}"
+            f"Atualizando Categoria uuid={instance.uuid} por planner_id={planner.id}"
         )
 
         # Proteção contra sequestro/mudança de árvore financeira
@@ -104,15 +114,16 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: BudgetCategory) -> None:
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção da Categoria uuid={instance.uuid} "
-            f"por planner_id={user.id}"
+            f"por planner_id={planner.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Categoria uuid={instance.uuid} DESTRUÍDA por planner_id={user.id}"
+                f"Categoria uuid={instance.uuid} DESTRUÍDA por planner_id={planner.id}"
             )
 
         except ProtectedError as e:

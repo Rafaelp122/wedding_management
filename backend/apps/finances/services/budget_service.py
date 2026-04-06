@@ -5,7 +5,11 @@ from uuid import UUID
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.auth import require_user
+from apps.core.exceptions import (
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.core.types import AuthContextUser
 from apps.finances.models import Budget
 from apps.weddings.models import Wedding
@@ -26,16 +30,20 @@ class BudgetService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Budget:
-        from django.shortcuts import get_object_or_404
-
-        return get_object_or_404(
-            Budget.objects.for_user(user).select_related("wedding"), uuid=uuid
-        )
+        try:
+            return (
+                Budget.objects.for_user(user).select_related("wedding").get(uuid=uuid)
+            )
+        except Budget.DoesNotExist as e:
+            raise ObjectNotFoundError(detail="Orçamento não encontrado.") from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Budget:
-        logger.info(f"Iniciando criação de Orçamento Mestre para planner_id={user.id}")
+        planner = require_user(user)
+        logger.info(
+            f"Iniciando criação de Orçamento Mestre para planner_id={planner.id}"
+        )
 
         # 1. Resolução Segura do Casamento (Suporta Instância ou UUID)
         wedding_input = data.pop("wedding", None)
@@ -44,13 +52,13 @@ class BudgetService:
             wedding = wedding_input
         else:
             try:
-                wedding = Wedding.objects.for_user(user).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de criar orçamento para casamento "
                     f"inválido/negado: {wedding_input}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Casamento não encontrado ou acesso negado.",
                     code="wedding_not_found_or_denied",
                 ) from e
@@ -79,8 +87,9 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def update(user: AuthContextUser, instance: Budget, data: dict[str, Any]) -> Budget:
+        planner = require_user(user)
         logger.info(
-            f"Atualizando Orçamento uuid={instance.uuid} por planner_id={user.id}"
+            f"Atualizando Orçamento uuid={instance.uuid} por planner_id={planner.id}"
         )
 
         # Proteção contra sequestro de propriedade e realocação
@@ -106,15 +115,16 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Budget) -> None:
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção do Orçamento uuid={instance.uuid} por "
-            f"planner_id={user.id}"
+            f"planner_id={planner.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Orçamento uuid={instance.uuid} DESTRUÍDO por planner_id={user.id}"
+                f"Orçamento uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
             )
 
         except ProtectedError as e:
@@ -154,15 +164,17 @@ class BudgetService:
         from apps.finances.services.budget_category_service import BudgetCategoryService
         from apps.weddings.models import Wedding
 
+        planner = require_user(user)
+
         # 1. Validação de Acesso: Garante que o Wedding pertence ao usuário
         try:
-            wedding = Wedding.objects.for_user(user).get(uuid=wedding_uuid)
+            wedding = Wedding.objects.for_user(planner).get(uuid=wedding_uuid)
         except Wedding.DoesNotExist as e:
             logger.warning(
                 f"Tentativa de criar orçamento para casamento inválido/negado: "
-                f"{wedding_uuid} por planner_id={user.id}"
+                f"{wedding_uuid} por planner_id={planner.id}"
             )
-            raise BusinessRuleViolation(
+            raise ObjectNotFoundError(
                 detail="Casamento não encontrado ou acesso negado.",
                 code="wedding_not_found_or_denied",
             ) from e

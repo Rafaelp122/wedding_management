@@ -2,18 +2,17 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
+from apps.core.auth import require_user
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.core.types import AuthContextUser
-from apps.users.models import User
 
 from .models import Wedding
 
@@ -28,15 +27,6 @@ class WeddingService:
     Nota: Budget e suas categorias são criados sob demanda (lazy loading)
     através do BudgetService.get_or_create_for_wedding().
     """
-
-    @staticmethod
-    def _require_user(user: AuthContextUser) -> User:
-        if isinstance(user, AnonymousUser):
-            raise BusinessRuleViolation(
-                detail="Autenticação obrigatória para executar esta operação.",
-                code="authentication_required",
-            )
-        return user
 
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Wedding]:
@@ -55,7 +45,7 @@ class WeddingService:
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Wedding:
-        planner = WeddingService._require_user(user)
+        planner = require_user(user)
         logger.info(f"Criando casamento para planner_id={planner.id}")
 
         # Limpeza: Remove campos que não pertencem ao modelo Wedding
@@ -85,7 +75,7 @@ class WeddingService:
     def update(
         user: AuthContextUser, instance: Wedding, data: dict[str, Any]
     ) -> Wedding:
-        planner = WeddingService._require_user(user)
+        planner = require_user(user)
         logger.info(
             f"Atualizando casamento uuid={instance.uuid} por planner_id={planner.id}"
         )
@@ -128,7 +118,7 @@ class WeddingService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Wedding) -> None:
-        planner = WeddingService._require_user(user)
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção do casamento uuid={instance.uuid} por "
             f"planner_id={planner.id}"

@@ -6,7 +6,12 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.auth import require_user
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.core.types import AuthContextUser
 from apps.finances.models import Expense, Installment
 
@@ -27,17 +32,20 @@ class InstallmentService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Installment:
-        from django.shortcuts import get_object_or_404
-
-        return get_object_or_404(
-            Installment.objects.for_user(user).select_related("expense", "wedding"),
-            uuid=uuid,
-        )
+        try:
+            return (
+                Installment.objects.for_user(user)
+                .select_related("expense", "wedding")
+                .get(uuid=uuid)
+            )
+        except Installment.DoesNotExist as e:
+            raise ObjectNotFoundError(detail="Parcela não encontrada.") from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Installment:
-        logger.info(f"Iniciando criação de Parcela para planner_id={user.id}")
+        planner = require_user(user)
+        logger.info(f"Iniciando criação de Parcela para planner_id={planner.id}")
 
         # 1. Resolução Segura de Dependências
         expense_input = data.pop("expense", None)
@@ -45,12 +53,12 @@ class InstallmentService:
             expense = expense_input
         else:
             try:
-                expense = Expense.objects.for_user(user).get(uuid=expense_input)
+                expense = Expense.objects.for_user(planner).get(uuid=expense_input)
             except Expense.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de despesa inválida/negada: {expense_input}"
                 )
-                raise BusinessRuleViolation(
+                raise ObjectNotFoundError(
                     detail="Despesa não encontrada ou acesso negado.",
                     code="expense_not_found_or_denied",
                 ) from e
@@ -89,8 +97,9 @@ class InstallmentService:
     def update(
         user: AuthContextUser, instance: Installment, data: dict[str, Any]
     ) -> Installment:
+        planner = require_user(user)
         logger.info(
-            f"Atualizando Parcela uuid={instance.uuid} por planner_id={user.id}"
+            f"Atualizando Parcela uuid={instance.uuid} por planner_id={planner.id}"
         )
 
         # Proteção de campos estruturais
@@ -132,9 +141,10 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, instance: Installment) -> None:
+        planner = require_user(user)
         logger.info(
             f"Tentativa de deleção da Parcela uuid={instance.uuid} "
-            f"por planner_id={user.id}"
+            f"por planner_id={planner.id}"
         )
         expense = instance.expense
 
@@ -145,7 +155,7 @@ class InstallmentService:
             expense.full_clean()
 
             logger.warning(
-                f"Parcela uuid={instance.uuid} DESTRUÍDA por planner_id={user.id}"
+                f"Parcela uuid={instance.uuid} DESTRUÍDA por planner_id={planner.id}"
             )
 
         except DjangoValidationError as e:
