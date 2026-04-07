@@ -198,7 +198,7 @@ class TestWeddingService:
         with pytest.raises(
             DomainIntegrityError, match="Não é possível apagar este casamento"
         ):
-            WeddingService.delete(user=user, instance=wedding)
+            WeddingService.delete(user=user, uuid=wedding.uuid)
 
         assert Wedding.objects.filter(uuid=wedding.uuid).exists()
 
@@ -214,7 +214,7 @@ class TestWeddingService:
         wedding = WeddingService.create(user=user, data=payload)
 
         # 2. Execução: Deletar o casamento
-        WeddingService.delete(user=user, instance=wedding)
+        WeddingService.delete(user=user, uuid=wedding.uuid)
 
         # 3. Asserções: O banco de dados deve estar limpo
         assert Wedding.objects.count() == 0

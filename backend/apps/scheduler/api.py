@@ -1,11 +1,11 @@
-from typing import Any
-
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.scheduler.models import Event
 from apps.scheduler.schemas import EventIn, EventOut, EventPatchIn
 from apps.scheduler.services import EventService
 
@@ -16,7 +16,7 @@ router = Router(tags=["Scheduler"])
 
 @router.get("/", response=list[EventOut], operation_id="scheduler_events_list")
 @paginate
-def list_events(request: HttpRequest) -> Any:
+def list_events(request: HttpRequest) -> QuerySet[Event]:
     """
     Lista todos os eventos do cronograma do Planner logado.
 
@@ -31,7 +31,7 @@ def list_events(request: HttpRequest) -> Any:
     response={200: EventOut, **READ_ERROR_RESPONSES},
     operation_id="scheduler_events_read",
 )
-def get_event(request: HttpRequest, uuid: UUID4) -> Any:
+def get_event(request: HttpRequest, uuid: UUID4) -> Event:
     """
     Retorna os detalhes completos de um evento específico no cronograma.
 
@@ -45,7 +45,7 @@ def get_event(request: HttpRequest, uuid: UUID4) -> Any:
     response={201: EventOut, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_create",
 )
-def create_event(request: HttpRequest, payload: EventIn) -> Any:
+def create_event(request: HttpRequest, payload: EventIn) -> tuple[int, Event]:
     """
     Adiciona um novo evento ou tarefa ao cronograma.
 
@@ -63,15 +63,14 @@ def create_event(request: HttpRequest, payload: EventIn) -> Any:
 )
 def partial_update_event(
     request: HttpRequest, uuid: UUID4, payload: EventPatchIn
-) -> Any:
+) -> Event:
     """
     Atualiza informações específicas de um evento do cronograma.
 
     Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
     """
-    instance = EventService.get(request.user, uuid)
     return EventService.partial_update(
-        request.user, instance, payload.dict(exclude_unset=True)
+        request.user, uuid, payload.dict(exclude_unset=True)
     )
 
 
@@ -80,13 +79,12 @@ def partial_update_event(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_delete",
 )
-def delete_event(request: HttpRequest, uuid: UUID4) -> Any:
+def delete_event(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove um compromisso ou evento do cronograma.
 
     Deleta a tarefa permanentemente.
     Desativa também os alertas e lembretes associados a ela.
     """
-    instance = EventService.get(request.user, uuid)
-    EventService.delete(request.user, instance)
+    EventService.delete(request.user, uuid)
     return 204, None

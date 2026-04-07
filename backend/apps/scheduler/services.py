@@ -113,13 +113,23 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def partial_update(
-        user: AuthContextUser, instance: Event, data: dict[str, Any]
+        user: AuthContextUser, uuid: UUID | str, data: dict[str, Any]
     ) -> Event:
+        """
+        Atualização parcial de um evento.
+        Busca a instância internamente antes de atualizar.
+        """
+        instance = EventService.get(user, uuid)
         return EventService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, instance: Event) -> None:
+    def delete(user: AuthContextUser, uuid: UUID | str) -> None:
+        """
+        Deleta um evento.
+        Busca a instância internamente antes de deletar.
+        """
+        instance = EventService.get(user, uuid)
         planner = require_user(user)
         logger.info(
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
