@@ -155,6 +155,7 @@ export const FinancesBudgetsForWeddingResponse = zod.object({
 
 /**
  * Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
+Permite filtrar apenas as categorias de um casamento específico.
  * @summary List Categories
  */
 export const financesCategoriesListQueryLimitDefault = 100;
@@ -163,6 +164,7 @@ export const financesCategoriesListQueryOffsetDefault = 0;
 export const financesCategoriesListQueryOffsetMin = 0;
 
 export const FinancesCategoriesListQueryParams = zod.object({
+  wedding_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(financesCategoriesListQueryLimitDefault),
   offset: zod
     .number()
