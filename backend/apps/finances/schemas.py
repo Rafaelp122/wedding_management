@@ -1,8 +1,13 @@
 from datetime import date
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from ninja import Schema
 from pydantic import UUID4, Field
+
+
+if TYPE_CHECKING:
+    from apps.finances.models.expense import Expense
 
 
 # --- BUDGET SCHEMAS ---
@@ -76,7 +81,7 @@ class ExpenseOut(Schema):
     actual_amount: Decimal
 
     @staticmethod
-    def resolve_contract(obj):
+    def resolve_contract(obj: "Expense") -> UUID4 | None:
         return obj.contract.uuid if getattr(obj, "contract", None) else None
 
 
