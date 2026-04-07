@@ -7,6 +7,8 @@ from pydantic import UUID4, Field
 
 
 if TYPE_CHECKING:
+    from apps.finances.models.budget import Budget
+    from apps.finances.models.budget_category import BudgetCategory
     from apps.finances.models.expense import Expense
 
 
@@ -26,7 +28,13 @@ class BudgetOut(Schema):
     uuid: UUID4
     wedding: UUID4 = Field(alias="wedding.uuid")
     total_estimated: Decimal
+    total_overall_spent: Decimal = Field(default=Decimal("0.00"))
     notes: str | None = None
+
+    @staticmethod
+    def resolve_total_overall_spent(obj: "Budget") -> Decimal:
+        """Expõe o computed property ``Budget.total_overall_spent`` no payload JSON."""
+        return obj.total_overall_spent
 
 
 # --- BUDGET CATEGORY SCHEMAS ---
@@ -52,6 +60,12 @@ class BudgetCategoryOut(Schema):
     name: str
     description: str | None = None
     allocated_budget: Decimal
+    total_spent: Decimal = Field(default=Decimal("0.00"))
+
+    @staticmethod
+    def resolve_total_spent(obj: "BudgetCategory") -> Decimal:
+        """Expõe o computed property ``BudgetCategory.total_spent`` no payload JSON."""
+        return obj.total_spent
 
 
 # --- EXPENSE SCHEMAS ---

@@ -21,11 +21,16 @@ budget_categories_router = Router(tags=["Finances"])
     "/", response=list[BudgetCategoryOut], operation_id="finances_categories_list"
 )
 @paginate
-def list_categories(request: HttpRequest) -> QuerySet[BudgetCategory]:
+def list_categories(
+    request: HttpRequest, wedding_id: UUID4 | None = None
+) -> QuerySet[BudgetCategory]:
     """
     Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
+
+    ``wedding_id`` é repassado ao service que detém a regra de filtragem;
+    esta rota não conhece a lógica de tenancy.
     """
-    return BudgetCategoryService.list(request.user)
+    return BudgetCategoryService.list(request.user, wedding_id=wedding_id)
 
 
 @budget_categories_router.get(

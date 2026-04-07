@@ -25,8 +25,41 @@ class BudgetCategoryService:
     """
 
     @staticmethod
-    def list(user: AuthContextUser) -> QuerySet[BudgetCategory]:
-        return BudgetCategory.objects.for_user(user).select_related("budget", "wedding")
+    def list(
+        user: AuthContextUser, wedding_id: UUID | None = None
+    ) -> QuerySet[BudgetCategory]:
+        """
+        Lista categorias de orçamento de um planner.
+
+        Nota de Arquitetura — ``wedding_id``:
+        O parâmetro opcional ``wedding_id`` é uma conveniência de filtragem
+        contextual, **não** um mecanismo de segurança. A multitenancy é
+        garantida em todos os casos por ``BudgetCategory.objects.for_user``
+        (herdado via ``WeddingOwnedMixin``), que isola os dados pelo ``planner``
+        autenticado.
+
+        Por que este filtro vive aqui e não na rota?
+        ──────────────────────────────────────────────
+        A regra de negócio é "cada casamento tem suas categorias isoladas".
+        Filtrar por casamento é, portanto, lógica de domínio — não deve ser
+        responsabilidade da camada de API (rotas) conhecer esse contexto.
+        A rota apenas delega o parâmetro de query ao service, que decide como
+        aplicá-lo sobre o queryset já protegido por tenancy.
+
+        Args:
+            user: Usuário autenticado (Planner).
+            wedding_id: Quando informado, restringe as categorias a um
+                casamento específico. O UUID do wedding é validado
+                implicitamente pelo .for_user() — se o usuário não tem acesso
+                ao casamento, o queryset retorna vazio.
+
+        Returns:
+            Queryset de ``BudgetCategory``, sempre escopado ao planner.
+        """
+        qs = BudgetCategory.objects.for_user(user).select_related("budget", "wedding")
+        if wedding_id:
+            qs = qs.filter(wedding__uuid=wedding_id)
+        return qs
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> BudgetCategory:

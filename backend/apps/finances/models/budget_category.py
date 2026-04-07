@@ -48,6 +48,21 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
     def __str__(self) -> str:
         return f"{self.name} ({self.wedding})"
 
+    @property
+    def total_spent(self) -> Decimal:
+        """
+        Retorna o total gasto nesta categoria específica
+        (soma do ``actual_amount`` de todas as despesas vinculadas).
+
+        Computed property — não persiste no banco. O valor é sempre consistente
+        com o estado atual das despesas e parcelas.
+        """
+        from django.db.models import Sum
+
+        return self.expenses.aggregate(total=Sum("actual_amount"))["total"] or Decimal(
+            "0.00"
+        )
+
     def clean(self) -> None:
         super().clean()
 
@@ -56,3 +71,15 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
             raise ValidationError(
                 "O orçamento pai deve pertencer ao mesmo casamento desta categoria."
             )
+
+        # TRAVA DE SEGURANÇA: A soma do que foi alocado nesta e nas demais
+        # categorias não pode ultrapassar o teto do orçamento mestre.
+        if self.pk or self.budget_id:
+            budget_total = self.budget.total_estimated
+            siblings = self.budget.categories.exclude(pk=self.pk or None)
+            allocated_siblings = sum(cat.allocated_budget for cat in siblings)
+            if allocated_siblings + self.allocated_budget > budget_total:
+                raise ValidationError(
+                    f"A soma das categorias alocadas ({allocated_siblings + self.allocated_budget}) "  # noqa
+                    f"excede o teto do orçamento ({budget_total})."
+                )

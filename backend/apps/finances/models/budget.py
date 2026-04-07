@@ -54,3 +54,20 @@ class Budget(BaseModel, WeddingOwnedMixin):
 
     def __str__(self) -> str:
         return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"
+
+    @property
+    def total_overall_spent(self) -> Decimal:
+        """
+        Retorna o total gasto em todas as categorias deste orçamento
+        (soma do ``actual_amount`` de todas as despesas vinculadas).
+
+        Computed property em vez de field persistente — evita dados obsoletos
+        no banco e garante consistência com as parcelas já pagas.
+        O custo de um ``SUM`` é aceitável porque a tela de budget raramente
+        é renderizada (uma vez por visita à página de detalhes).
+        """
+        from django.db.models import Sum
+
+        return self.categories.aggregate(total=Sum("expenses__actual_amount"))[
+            "total"
+        ] or Decimal("0.00")
