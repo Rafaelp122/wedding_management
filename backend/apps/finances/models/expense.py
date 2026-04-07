@@ -46,20 +46,13 @@ class Expense(BaseModel, WeddingOwnedMixin):
     def clean(self) -> None:
         super().clean()
 
-        # 1. TOLERÂNCIA ZERO: A soma das parcelas deve ser EXATA
+        # TOLERÂNCIA ZERO: A soma das parcelas deve ser EXATA
         if self.pk and self.actual_amount:
             total_installments = self.installments.aggregate(models.Sum("amount"))[
                 "amount__sum"
             ] or Decimal("0.00")
-            if total_installments != self.actual_amount:  # Removido o abs > 0.01
+            if total_installments != self.actual_amount:
                 raise ValidationError(
                     f"ERRO DE INTEGRIDADE: A soma das parcelas (R${total_installments}) "  # noqa
                     f"não bate com o valor total (R${self.actual_amount})."
                 )
-
-        # 2. VÍNCULO COM CONTRATO: A despesa não pode divergir do papel assinado
-        if self.contract and self.actual_amount != self.contract.total_amount:
-            raise ValidationError(
-                f"DIVERGÊNCIA: O valor da despesa (R${self.actual_amount}) deve ser "
-                f"igual ao valor do contrato vinculado (R${self.contract.total_amount})."  # noqa
-            )

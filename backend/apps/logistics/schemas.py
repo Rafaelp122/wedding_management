@@ -1,4 +1,5 @@
 import datetime
+from datetime import date
 from decimal import Decimal
 
 from ninja import Field, Schema
@@ -41,24 +42,30 @@ class SupplierOut(Schema):
 class ContractIn(Schema):
     wedding: UUID4
     supplier: UUID4
+    budget_category: UUID4
     total_amount: Decimal
-    status: str
+    status: str = "DRAFT"
+    description: str = ""
 
 
 class ContractPatchIn(Schema):
     wedding: UUID4 | None = None
     supplier: UUID4 | None = None
+    budget_category: UUID4 | None = None
     total_amount: Decimal | None = None
     status: str | None = None
 
 
 class ContractOut(Schema):
     uuid: UUID4
-    # Dot notation is native to Django Ninja schemas for extracting attributes
     wedding: UUID4 = Field(alias="wedding.uuid")
     supplier: UUID4 = Field(alias="supplier.uuid")
+    budget_category: UUID4 | None = Field(None, alias="budget_category.uuid")
     total_amount: Decimal
     status: str
+    description: str
+    expiration_date: date | None = None
+    signed_date: date | None = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
 
@@ -68,26 +75,27 @@ class ContractOut(Schema):
 # ==============================================================================
 class ItemIn(Schema):
     wedding: UUID4
-    budget_category: UUID4
     contract: UUID4 | None = None
     name: str
-    quantity: int
+    description: str = ""
+    quantity: int = 1
 
 
 class ItemPatchIn(Schema):
     wedding: UUID4 | None = None
-    budget_category: UUID4 | None = None
     contract: UUID4 | None = None
     name: str | None = None
+    description: str | None = None
     quantity: int | None = None
 
 
 class ItemOut(Schema):
     uuid: UUID4
     wedding: UUID4 = Field(alias="wedding.uuid")
-    budget_category: UUID4 = Field(alias="budget_category.uuid")
     contract: UUID4 | None = Field(None, alias="contract.uuid")
     name: str
+    description: str
     quantity: int
+    acquisition_status: str
     created_at: datetime.datetime
     updated_at: datetime.datetime

@@ -11,7 +11,6 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.types import AuthContextUser
-from apps.finances.models import BudgetCategory
 from apps.logistics.models import Contract, Item
 
 
@@ -21,13 +20,13 @@ logger = logging.getLogger(__name__)
 class ItemService:
     """
     Camada de serviço para gestão de itens de logística.
-    Garante a integridade entre categorias de orçamento, contratos e casamentos.
+    Garante a integridade entre contratos e casamentos.
     """
 
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Item]:
         return Item.objects.for_user(user).select_related(
-            "wedding", "budget_category", "contract", "contract__supplier"
+            "wedding", "contract", "contract__supplier"
         )
 
     @staticmethod
@@ -35,9 +34,7 @@ class ItemService:
         try:
             return (
                 Item.objects.for_user(user)
-                .select_related(
-                    "wedding", "budget_category", "contract", "contract__supplier"
-                )
+                .select_related("wedding", "contract", "contract__supplier")
                 .get(uuid=uuid)
             )
         except Item.DoesNotExist as e:
@@ -49,40 +46,24 @@ class ItemService:
         planner = require_user(user)
         logger.info(f"Iniciando criação de Item logístico para planner_id={planner.id}")
 
-        # 1. Resolução Segura de Dependências (Suporta Instância ou UUID do DRF)
-        data.pop(
-            "wedding", None
-        )  # O schema Pydantic / DRF envia, mas já está na Categoria
-        category_input = data.pop("budget_category", None)
+        # 1. Resolução do Casamento (Item é WeddingOwnedMixin)
+        wedding_input = data.pop("wedding", None)
+        wedding = None
 
-        if isinstance(category_input, BudgetCategory):
-            category = category_input
-        else:
-            try:
-                category = BudgetCategory.objects.for_user(planner).get(
-                    uuid=category_input
-                )
-            except BudgetCategory.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de uso de categoria inválida/negada: {category_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Categoria de orçamento não encontrada ou acesso negado.",
-                    code="budget_category_not_found_or_denied",
-                ) from e
-
-        # 2. Tratamento opcional de contrato
+        # 2. Tratamento de contrato
         contract = None
         contract_input = data.pop("contract", None)
 
         if contract_input:
             if isinstance(contract_input, Contract):
                 contract = contract_input
+                wedding = contract.wedding
             else:
                 try:
                     contract = Contract.objects.for_user(planner).get(
                         uuid=contract_input
                     )
+                    wedding = contract.wedding
                 except Contract.DoesNotExist as e:
                     logger.warning(
                         f"Tentativa de uso de contrato inválido/negado: "
@@ -92,16 +73,20 @@ class ItemService:
                         detail="Contrato não encontrado ou acesso negado.",
                         code="contract_not_found_or_denied",
                     ) from e
+        elif isinstance(wedding_input, UUID | str) or isinstance(wedding_input, str):
+            from apps.weddings.models import Wedding
 
-        # 3. Injeção automática de contexto e Instanciação
-        item = Item(
-            wedding=category.wedding,
-            budget_category=category,
-            contract=contract,
-            **data,
-        )
+            try:
+                wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
+            except Wedding.DoesNotExist as e:
+                raise ObjectNotFoundError(
+                    detail="Casamento não encontrado ou acesso negado.",
+                    code="wedding_not_found_or_denied",
+                ) from e
 
-        # 4. Validação de consistência (Model assume o controle)
+        # 3. Instanciação
+        item = Item(wedding=wedding, contract=contract, **data)
+
         item.save()
 
         logger.info(f"Item criado com sucesso: uuid={item.uuid}")
@@ -115,12 +100,9 @@ class ItemService:
             f"Atualizando Item uuid={instance.uuid} por planner_id={planner.id}"
         )
 
-        # Bloqueio de troca de contexto base
         data.pop("planner", None)
         data.pop("wedding", None)
-        data.pop("budget_category", None)
 
-        # Tratamento de troca de contrato (com suporte a null/desvinculação)
         if "contract" in data:
             contract_input = data.pop("contract")
             if contract_input:
@@ -139,11 +121,9 @@ class ItemService:
             else:
                 instance.contract = None
 
-        # Atualização dos campos restantes
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # Validação final de consistência (Cross-Wedding check no Mixin)
         instance.save()
 
         logger.info(f"Item uuid={instance.uuid} atualizado com sucesso.")

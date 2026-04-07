@@ -14,7 +14,6 @@ Destaques Técnicos:
 from decimal import Decimal
 
 import factory
-from django.utils import timezone
 
 from apps.logistics.models import Contract, Item, Supplier
 from apps.users.tests.factories import UserFactory
@@ -61,31 +60,16 @@ class ContractFactory(factory.django.DjangoModelFactory):
         planner=factory.SelfAttribute("..wedding.planner"),
     )
 
-    # Corrigido: Nome do campo no model é 'description'
+    budget_category = factory.SubFactory(
+        "apps.finances.tests.factories.BudgetCategoryFactory",
+    )
+
     description = factory.Faker("paragraph")
     total_amount = Decimal("5000.00")
 
-    # Se usar SIGNED, precisamos satisfazer o clean() do Model
-    status = Contract.StatusChoices.SIGNED
-    signed_date = factory.LazyFunction(timezone.now)
+    # DRAFT por default (evita side effects de Expense via RelatedFactory)
+    status = Contract.StatusChoices.DRAFT
 
-    # Gera um arquivo PDF fake para passar na validação do clean()
-    pdf_file = factory.django.FileField(
-        filename="contrato_fake.pdf", content=b"fake content"
-    )
-
-    # Mantemos o RelatedFactory para a Expense (Despesa)
-    # factory_related_name="contract" vincula a Expense ao Contract criado aqui
-    expense_rel = factory.RelatedFactory(
-        "apps.finances.tests.factories.ExpenseFactory",
-        factory_related_name="contract",
-        # Forçamos a despesa a usar o MESMO wedding do contrato
-        wedding=factory.SelfAttribute("..wedding"),
-        estimated_amount=factory.SelfAttribute("..total_amount"),
-        actual_amount=factory.SelfAttribute("..total_amount"),
-    )
-
-    # Campos adicionais do modelo
     expiration_date = factory.Faker("future_date")
     alert_days_before = 30
 
@@ -99,10 +83,6 @@ class ItemFactory(factory.django.DjangoModelFactory):
     wedding = factory.SubFactory(WeddingFactory)
     contract = factory.SubFactory(
         ContractFactory, wedding=factory.SelfAttribute("..wedding")
-    )
-    budget_category = factory.SubFactory(
-        "apps.finances.tests.factories.BudgetCategoryFactory",
-        wedding=factory.SelfAttribute("..wedding"),
     )
 
     name = factory.Faker("word")

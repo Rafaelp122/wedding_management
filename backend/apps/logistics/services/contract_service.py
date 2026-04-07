@@ -11,6 +11,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.types import AuthContextUser
+from apps.finances.models import BudgetCategory
 from apps.logistics.models import Contract, Supplier
 from apps.weddings.models import Wedding
 
@@ -27,14 +28,16 @@ class ContractService:
 
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Contract]:
-        return Contract.objects.for_user(user).select_related("supplier", "wedding")
+        return Contract.objects.for_user(user).select_related(
+            "supplier", "wedding", "budget_category"
+        )
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Contract:
         try:
             return (
                 Contract.objects.for_user(user)
-                .select_related("supplier", "wedding")
+                .select_related("supplier", "wedding", "budget_category")
                 .get(uuid=uuid)
             )
         except Contract.DoesNotExist as e:
@@ -80,8 +83,27 @@ class ContractService:
                     code="supplier_not_found_or_denied",
                 ) from e
 
+        # Resolução da Categoria de Orçamento
+        budget_cat_input = data.pop("budget_category", None)
+        budget_category = None
+        if budget_cat_input:
+            if isinstance(budget_cat_input, BudgetCategory):
+                budget_category = budget_cat_input
+            else:
+                try:
+                    budget_category = BudgetCategory.objects.for_user(planner).get(
+                        uuid=budget_cat_input
+                    )
+                except BudgetCategory.DoesNotExist as e:
+                    raise ObjectNotFoundError(
+                        detail="Categoria de orçamento não encontrada.",
+                        code="budget_category_not_found_or_denied",
+                    ) from e
+
         # 2. Instanciação em Memória
-        contract = Contract(wedding=wedding, supplier=supplier, **data)
+        contract = Contract(
+            wedding=wedding, supplier=supplier, budget_category=budget_category, **data
+        )
 
         # 3. Validação Estrita (O Model aplica as suas regras, incluindo checagem de
         # datas)
@@ -118,6 +140,24 @@ class ContractService:
                     raise ObjectNotFoundError(
                         detail="Fornecedor inválido ou acesso negado.",
                         code="supplier_not_found_or_denied",
+                    ) from e
+
+        # Troca de Categoria de Orçamento (com validação multitenant)
+        budget_cat_input = data.pop("budget_category", None)
+        if budget_cat_input is not None:
+            if isinstance(budget_cat_input, BudgetCategory):
+                instance.budget_category = budget_cat_input
+            elif budget_cat_input == "":
+                instance.budget_category = None
+            else:
+                try:
+                    instance.budget_category = BudgetCategory.objects.for_user(
+                        planner
+                    ).get(uuid=budget_cat_input)
+                except BudgetCategory.DoesNotExist as e:
+                    raise ObjectNotFoundError(
+                        detail="Categoria de orçamento inválida ou acesso negado.",
+                        code="budget_category_not_found_or_denied",
                     ) from e
 
         # Atualização dinâmica de campos

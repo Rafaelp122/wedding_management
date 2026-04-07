@@ -28,6 +28,16 @@ class Contract(BaseModel, WeddingOwnedMixin):
         verbose_name="Fornecedor",
     )
 
+    # Vincula o contrato a uma categoria de orçamento para rastreabilidade financeira
+    budget_category = models.ForeignKey(
+        "finances.BudgetCategory",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="contracts",
+        verbose_name="Categoria Orçamentária",
+    )
+
     # O VALOR DE FACE: Essencial para o Controle Máximo
     total_amount = models.DecimalField(
         max_digits=10,

@@ -34,11 +34,12 @@ def seed_data(user, django_user_model):
     )
     my_budget = BudgetService.get_or_create_for_wedding(user, my_wedding.uuid)
     cat_meu = my_budget.categories.first()
+    # Contract created with my_contract.uuid - update it with budget_category
+    ContractService.update(user, my_contract, {"budget_category": cat_meu})
     my_item = ItemService.create(
         user,
         {
             "wedding": my_wedding.uuid,
-            "budget_category": cat_meu.uuid,
             "contract": my_contract.uuid,
             "name": "Item Meu",
             "quantity": 1,
@@ -78,11 +79,11 @@ def seed_data(user, django_user_model):
         other_user, other_wedding.uuid
     )
     cat_outro = other_budget.categories.first()
+    ContractService.update(other_user, other_contract, {"budget_category": cat_outro})
     ItemService.create(
         other_user,
         {
             "wedding": other_wedding.uuid,
-            "budget_category": cat_outro.uuid,
             "contract": other_contract.uuid,
             "name": "Item Alheio",
             "quantity": 1,

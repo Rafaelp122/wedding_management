@@ -7,7 +7,7 @@ from .models import Contract, Item, Supplier
 class ItemInline(admin.TabularInline):
     model = Item
     extra = 0
-    fields = ["name", "quantity", "budget_category", "acquisition_status"]
+    fields = ["name", "quantity", "acquisition_status"]
     show_change_link = True
 
 
@@ -25,11 +25,10 @@ class ItemAdmin(admin.ModelAdmin):
         "name",
         "wedding",
         "supplier",
-        "budget_category",
         "quantity",
         "acquisition_status",
     ]
-    list_filter = ["acquisition_status", "wedding", "budget_category"]
+    list_filter = ["acquisition_status", "wedding"]
     search_fields = [
         "name",
         "description",
@@ -44,9 +43,10 @@ class ContractAdmin(admin.ModelAdmin):
     list_display = [
         "wedding",
         "supplier",
-        "status",  # Adicionado para controle
-        "total_amount",  # Adicionado para controle
-        "signed_date",  # Adicionado para controle
+        "budget_category",
+        "status",
+        "total_amount",
+        "signed_date",
     ]
     list_filter = ["status", "expiration_date", "wedding"]
     search_fields = ["wedding__groom_name", "wedding__bride_name", "supplier__name"]

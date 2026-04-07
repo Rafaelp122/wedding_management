@@ -7,7 +7,6 @@ serviços contratados.
 Referências: RF07-RF08
 """
 
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
@@ -50,14 +49,6 @@ class Item(BaseModel, WeddingOwnedMixin):
         verbose_name="Status de Entrega/Logística",
     )
 
-    # Ligação necessária para o Dashboard Financeiro saber onde este item 'mora'
-    budget_category = models.ForeignKey(
-        "finances.BudgetCategory",
-        on_delete=models.CASCADE,
-        related_name="items",
-        verbose_name="Categoria Orçamental",
-    )
-
     class Meta:
         app_label = "logistics"
         verbose_name = "Item"
@@ -66,15 +57,6 @@ class Item(BaseModel, WeddingOwnedMixin):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.quantity}x)"
-
-    def clean(self) -> None:
-        super().clean()
-
-        # RF07.1: A trava contra cross-contamination de orçamentos
-        if self.budget_category.wedding != self.wedding:
-            raise ValidationError(
-                "A categoria de orçamento selecionada não pertence a este casamento."
-            )
 
     @property
     def supplier(self) -> Supplier | None:
