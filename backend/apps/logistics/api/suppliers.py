@@ -1,11 +1,11 @@
-from typing import Any
-
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.logistics.models.supplier import Supplier
 from apps.logistics.schemas import SupplierIn, SupplierOut, SupplierPatchIn
 from apps.logistics.services.supplier_service import SupplierService
 
@@ -17,7 +17,7 @@ suppliers_router = Router(tags=["Logistics"])
     "/", response=list[SupplierOut], operation_id="logistics_suppliers_list"
 )
 @paginate
-def list_suppliers(request: HttpRequest) -> Any:
+def list_suppliers(request: HttpRequest) -> QuerySet[Supplier]:
     """
     Lista todos os fornecedores cadastrados pelo Planner logado.
     """
@@ -29,7 +29,7 @@ def list_suppliers(request: HttpRequest) -> Any:
     response={200: SupplierOut, **READ_ERROR_RESPONSES},
     operation_id="logistics_suppliers_read",
 )
-def retrieve_supplier(request: HttpRequest, uuid: UUID4) -> Any:
+def retrieve_supplier(request: HttpRequest, uuid: UUID4) -> Supplier:
     """
     Retorna os detalhes de um fornecedor específico.
     """
@@ -41,7 +41,7 @@ def retrieve_supplier(request: HttpRequest, uuid: UUID4) -> Any:
     response={201: SupplierOut, **MUTATION_ERROR_RESPONSES},
     operation_id="logistics_suppliers_create",
 )
-def create_supplier(request: HttpRequest, payload: SupplierIn) -> Any:
+def create_supplier(request: HttpRequest, payload: SupplierIn) -> tuple[int, Supplier]:
     """
     Cadastra um novo fornecedor no sistema.
     """
@@ -56,7 +56,7 @@ def create_supplier(request: HttpRequest, payload: SupplierIn) -> Any:
 )
 def partial_update_supplier(
     request: HttpRequest, uuid: UUID4, payload: SupplierPatchIn
-) -> Any:
+) -> Supplier:
     """
     Atualiza informações específicas de um fornecedor (nome, contato, categorias).
     """
@@ -72,7 +72,7 @@ def partial_update_supplier(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="logistics_suppliers_delete",
 )
-def delete_supplier(request: HttpRequest, uuid: UUID4) -> Any:
+def delete_supplier(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove o cadastro de um fornecedor do sistema.
     """

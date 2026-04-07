@@ -1,11 +1,11 @@
-from typing import Any
-
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.finances.models.installment import Installment
 from apps.finances.schemas import InstallmentIn, InstallmentOut, InstallmentPatchIn
 from apps.finances.services.installment_service import InstallmentService
 
@@ -17,7 +17,7 @@ installments_router = Router(tags=["Finances"])
     "/", response=list[InstallmentOut], operation_id="finances_installments_list"
 )
 @paginate
-def list_installments(request: HttpRequest) -> Any:
+def list_installments(request: HttpRequest) -> QuerySet[Installment]:
     """
     Lista faturas fragmentadas originárias para os fluxos pendentes.
     Faturas isoladas ligadas a pagamentos unificados.
@@ -30,7 +30,7 @@ def list_installments(request: HttpRequest) -> Any:
     response={200: InstallmentOut, **READ_ERROR_RESPONSES},
     operation_id="finances_installments_read",
 )
-def get_installment(request: HttpRequest, uuid: UUID4) -> Any:
+def get_installment(request: HttpRequest, uuid: UUID4) -> Installment:
     """
     Revela notas fragmentais e guias pendentes programados do recebimento.
     """
@@ -42,7 +42,9 @@ def get_installment(request: HttpRequest, uuid: UUID4) -> Any:
     response={201: InstallmentOut, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_installments_create",
 )
-def create_installment(request: HttpRequest, payload: InstallmentIn) -> Any:
+def create_installment(
+    request: HttpRequest, payload: InstallmentIn
+) -> tuple[int, Installment]:
     """
     Grava pendências parciais atestando dependências de transações.
     """
@@ -56,7 +58,7 @@ def create_installment(request: HttpRequest, payload: InstallmentIn) -> Any:
 )
 def partial_update_installment(
     request: HttpRequest, uuid: UUID4, payload: InstallmentPatchIn
-) -> Any:
+) -> Installment:
     """
     Edita temporalmente ou encerra status validando com pagamento de guia as etapas.
     """
@@ -71,7 +73,7 @@ def partial_update_installment(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_installments_delete",
 )
-def delete_installment(request: HttpRequest, uuid: UUID4) -> Any:
+def delete_installment(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Exclui registro pendente restabelecendo ordem das cobranças integrando-as.
     """

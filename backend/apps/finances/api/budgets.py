@@ -1,11 +1,11 @@
-from typing import Any
-
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.finances.models.budget import Budget
 from apps.finances.schemas import BudgetIn, BudgetOut, BudgetPatchIn
 from apps.finances.services.budget_service import BudgetService
 
@@ -15,7 +15,7 @@ budgets_router = Router(tags=["Finances"])
 
 @budgets_router.get("/", response=list[BudgetOut], operation_id="finances_budgets_list")
 @paginate
-def list_budgets(request: HttpRequest) -> Any:
+def list_budgets(request: HttpRequest) -> QuerySet[Budget]:
     """
     Lista as estatísticas de orçamento geral de todos os casamentos.
     """
@@ -27,7 +27,7 @@ def list_budgets(request: HttpRequest) -> Any:
     response={200: BudgetOut, **READ_ERROR_RESPONSES},
     operation_id="finances_budgets_read",
 )
-def get_budget(request: HttpRequest, uuid: UUID4) -> Any:
+def get_budget(request: HttpRequest, uuid: UUID4) -> Budget:
     """
     Retorna os totais e os saldos remanescentes autorizados de um projeto macro.
     """
@@ -39,7 +39,7 @@ def get_budget(request: HttpRequest, uuid: UUID4) -> Any:
     response={200: BudgetOut, **READ_ERROR_RESPONSES},
     operation_id="finances_budgets_for_wedding",
 )
-def get_budget_for_wedding(request: HttpRequest, wedding_uuid: UUID4) -> Any:
+def get_budget_for_wedding(request: HttpRequest, wedding_uuid: UUID4) -> Budget:
     """
     Retorna o orçamento de um casamento específico.
 
@@ -58,7 +58,7 @@ def get_budget_for_wedding(request: HttpRequest, wedding_uuid: UUID4) -> Any:
     response={201: BudgetOut, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_budgets_create",
 )
-def create_budget(request: HttpRequest, payload: BudgetIn) -> Any:
+def create_budget(request: HttpRequest, payload: BudgetIn) -> tuple[int, Budget]:
     """
     Dá pontapé inicial para a planilha contábil centralizada.
     Atrelada às métricas cerimoniais.
@@ -73,7 +73,7 @@ def create_budget(request: HttpRequest, payload: BudgetIn) -> Any:
 )
 def partial_update_budget(
     request: HttpRequest, uuid: UUID4, payload: BudgetPatchIn
-) -> Any:
+) -> Budget:
     """
     Atualiza métricas mestres de gasto e painéis globais.
     Contorna referências numéricas totais.
@@ -89,7 +89,7 @@ def partial_update_budget(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_budgets_delete",
 )
-def delete_budget(request: HttpRequest, uuid: UUID4) -> Any:
+def delete_budget(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove toda e qualquer anotação da malha financeira.
     Varre as despesas em ação de reverso total absoluto.

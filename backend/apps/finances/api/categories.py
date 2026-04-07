@@ -1,11 +1,11 @@
-from typing import Any
-
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.finances.models.budget_category import BudgetCategory
 from apps.finances.schemas import (
     BudgetCategoryIn,
     BudgetCategoryOut,
@@ -21,7 +21,7 @@ budget_categories_router = Router(tags=["Finances"])
     "/", response=list[BudgetCategoryOut], operation_id="finances_categories_list"
 )
 @paginate
-def list_categories(request: HttpRequest) -> Any:
+def list_categories(request: HttpRequest) -> QuerySet[BudgetCategory]:
     """
     Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
     """
@@ -33,7 +33,7 @@ def list_categories(request: HttpRequest) -> Any:
     response={200: BudgetCategoryOut, **READ_ERROR_RESPONSES},
     operation_id="finances_categories_read",
 )
-def get_category(request: HttpRequest, uuid: UUID4) -> Any:
+def get_category(request: HttpRequest, uuid: UUID4) -> BudgetCategory:
     """
     Acessa os detalhamentos da categoria isolada de forma simples e visual.
     Garante a segurança contábil sem vazar detalhes restritos a terceiros.
@@ -46,7 +46,9 @@ def get_category(request: HttpRequest, uuid: UUID4) -> Any:
     response={201: BudgetCategoryOut, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_categories_create",
 )
-def create_category(request: HttpRequest, payload: BudgetCategoryIn) -> Any:
+def create_category(
+    request: HttpRequest, payload: BudgetCategoryIn
+) -> tuple[int, BudgetCategory]:
     """
     Abre mais um bloco de centro de custo em conta específica da festa.
     Associa devidamente ao orçamento atrelado em tela.
@@ -61,7 +63,7 @@ def create_category(request: HttpRequest, payload: BudgetCategoryIn) -> Any:
 )
 def partial_update_category(
     request: HttpRequest, uuid: UUID4, payload: BudgetCategoryPatchIn
-) -> Any:
+) -> BudgetCategory:
     """
     Corrige o título, ou altera o valor dos gastos planejados.
     Evita sobrescrições acidentais errôneas em outras rotas.
@@ -77,7 +79,7 @@ def partial_update_category(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_categories_delete",
 )
-def delete_category(request: HttpRequest, uuid: UUID4) -> Any:
+def delete_category(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Fecha um agrupamento no orçamento permanentemente.
     Exclui anotações de faturas de modo destrutivo para balanceamento.

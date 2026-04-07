@@ -1,11 +1,11 @@
-from typing import Any
-
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.finances.models.expense import Expense
 from apps.finances.schemas import ExpenseIn, ExpenseOut, ExpensePatchIn
 from apps.finances.services.expense_service import ExpenseService
 
@@ -17,7 +17,7 @@ expenses_router = Router(tags=["Finances"])
     "/", response=list[ExpenseOut], operation_id="finances_expenses_list"
 )
 @paginate
-def list_expenses(request: HttpRequest) -> Any:
+def list_expenses(request: HttpRequest) -> QuerySet[Expense]:
     """
     Lista todas as compras e despachos que saíram dos painéis orçamentários.
     """
@@ -29,7 +29,7 @@ def list_expenses(request: HttpRequest) -> Any:
     response={200: ExpenseOut, **READ_ERROR_RESPONSES},
     operation_id="finances_expenses_read",
 )
-def get_expense(request: HttpRequest, uuid: UUID4) -> Any:
+def get_expense(request: HttpRequest, uuid: UUID4) -> Expense:
     """
     Retorna recibo unitário simplificado nominal registrado no controle base.
     """
@@ -41,7 +41,7 @@ def get_expense(request: HttpRequest, uuid: UUID4) -> Any:
     response={201: ExpenseOut, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_expenses_create",
 )
-def create_expense(request: HttpRequest, payload: ExpenseIn) -> Any:
+def create_expense(request: HttpRequest, payload: ExpenseIn) -> tuple[int, Expense]:
     """
     Aprova lançamento final nos tetos das divisões e categorias.
     Consome o limite orçamentário previsto inicial geral da categoria.
@@ -56,7 +56,7 @@ def create_expense(request: HttpRequest, payload: ExpenseIn) -> Any:
 )
 def partial_update_expense(
     request: HttpRequest, uuid: UUID4, payload: ExpensePatchIn
-) -> Any:
+) -> Expense:
     """
     Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
     """
@@ -71,7 +71,7 @@ def partial_update_expense(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_expenses_delete",
 )
-def delete_expense(request: HttpRequest, uuid: UUID4) -> Any:
+def delete_expense(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Deleta uma compra revertendo seu efeito, estornando em painel os gastos.
     """
