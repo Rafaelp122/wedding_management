@@ -48,6 +48,16 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
     def __str__(self) -> str:
         return f"{self.name} ({self.wedding})"
 
+    @property
+    def total_spent(self) -> Decimal:
+        """
+        Retorna o total gasto atrelado a esta categoria específica.
+        """
+        from django.db.models import Sum
+        return self.expenses.aggregate(
+            total=Sum("actual_amount")
+        )["total"] or Decimal("0.00")
+
     def clean(self) -> None:
         super().clean()
 

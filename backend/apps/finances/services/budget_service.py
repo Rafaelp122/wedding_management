@@ -188,16 +188,16 @@ class BudgetService:
         # 3. Setup Inicial: Cria categorias padrão se Budget foi recém-criado
         if created:
             logger.info(
-                f"Budget criado sob demanda para wedding={wedding.uuid}, "
-                f"criando categorias padrão..."
+                f"Budget criado sob demanda para wedding={wedding.uuid}. "
+                f"Categorias padrão não serão mais geradas automaticamente conforme solicitado pelo usuário."
             )
-            BudgetCategoryService.setup_defaults(
-                user=user, wedding=wedding, budget=budget
-            )
-            logger.info(
-                f"Budget uuid={budget.uuid} + categorias criados para "
-                f"wedding={wedding.uuid}"
-            )
+            # BudgetCategoryService.setup_defaults(
+            #     user=user, wedding=wedding, budget=budget
+            # )
+            # logger.info(
+            #     f"Budget uuid={budget.uuid} + categorias criados para "
+            #     f"wedding={wedding.uuid}"
+            # )
         else:
             logger.debug(f"Budget existente retornado: uuid={budget.uuid}")
 

@@ -21,16 +21,17 @@ budget_categories_router = Router(tags=["Finances"])
     "/", response=list[BudgetCategoryOut], operation_id="finances_categories_list"
 )
 @paginate
-def list_categories(request: HttpRequest) -> Any:
+def list_categories(request: HttpRequest, wedding_id: UUID4 | None = None) -> Any:
     """
     Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
+    Permite filtrar apenas as categorias de um casamento específico.
     """
-    return BudgetCategoryService.list(request.user)
-
-
+    qs = BudgetCategoryService.list(request.user)
+    if wedding_id:
+        qs = qs.filter(wedding__uuid=wedding_id)
+    return qs
 @budget_categories_router.get(
-    "/{uuid}/",
-    response={200: BudgetCategoryOut, **READ_ERROR_RESPONSES},
+    "/{uuid}/",    response={200: BudgetCategoryOut, **READ_ERROR_RESPONSES},
     operation_id="finances_categories_read",
 )
 def get_category(request: HttpRequest, uuid: UUID4) -> Any:

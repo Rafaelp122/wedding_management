@@ -54,3 +54,13 @@ class Budget(BaseModel, WeddingOwnedMixin):
 
     def __str__(self) -> str:
         return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"
+
+    @property
+    def total_spent(self) -> Decimal:
+        """
+        Retorna o valor total gasto sumariando as despesas de todas as categorias.
+        """
+        from django.db.models import Sum
+        return self.categories.aggregate(
+            total=Sum("expenses__actual_amount")
+        )["total"] or Decimal("0.00")

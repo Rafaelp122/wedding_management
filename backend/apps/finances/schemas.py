@@ -21,6 +21,7 @@ class BudgetOut(Schema):
     uuid: UUID4
     wedding: UUID4 = Field(alias="wedding.uuid")
     total_estimated: Decimal
+    total_spent: Decimal = Field(default=Decimal("0.00"))
     notes: str | None = None
 
 
@@ -47,6 +48,7 @@ class BudgetCategoryOut(Schema):
     name: str
     description: str | None = None
     allocated_budget: Decimal
+    total_spent: Decimal = Field(default=Decimal("0.00"))
 
 
 # --- EXPENSE SCHEMAS ---
