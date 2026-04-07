@@ -60,9 +60,7 @@ class ContractFactory(factory.django.DjangoModelFactory):
         planner=factory.SelfAttribute("..wedding.planner"),
     )
 
-    budget_category = factory.SubFactory(
-        "apps.finances.tests.factories.BudgetCategoryFactory",
-    )
+    budget_category = None
 
     description = factory.Faker("paragraph")
     total_amount = Decimal("5000.00")

@@ -22,8 +22,9 @@ class BudgetCategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BudgetCategory
 
-    budget = factory.SubFactory(BudgetFactory)
-    # wedding is inherited from WeddingOwnedMixin — set explicitly when calling
+    budget = factory.SubFactory(
+        BudgetFactory, wedding=factory.SelfAttribute("..wedding")
+    )
     name = factory.Iterator(
         ["Buffet", "Decoração", "Fotografia", "Música", "Espaço", "Convites"]
     )

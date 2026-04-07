@@ -15,6 +15,15 @@ from apps.core.models import BaseModel
 
 
 class Contract(BaseModel, WeddingOwnedMixin):
+    # Override WeddingOwnedMixin.wedding from CASCADE → PROTECT
+    wedding = None  # replaces inherited FK (handled below)
+
+    wedding = models.ForeignKey(
+        "weddings.Wedding",
+        on_delete=models.PROTECT,
+        related_name="%(class)s_records",
+    )
+
     class StatusChoices(models.TextChoices):
         DRAFT = "DRAFT", "Rascunho"
         PENDING = "PENDING", "Pendente"  # Aguardando assinaturas externas
