@@ -89,3 +89,18 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 0
+
+    def test_partial_update_expense_returns_422_on_business_rule_violation(
+        self, auth_client, seed_data
+    ):
+        expense_uuid = seed_data["my_expense"].uuid
+
+        response = auth_client.patch(
+            f"/api/v1/finances/expenses/{expense_uuid}/",
+            data={"actual_amount": "10.00"},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 422
+        payload = response.json()
+        assert payload["code"] == "expense_validation_error"

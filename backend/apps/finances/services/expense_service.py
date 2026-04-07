@@ -2,11 +2,13 @@ import logging
 from typing import Any
 from uuid import UUID
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.auth import require_user
 from apps.core.exceptions import (
+    BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
@@ -102,7 +104,19 @@ class ExpenseService:
         # Wedding.
         # Expense.clean() validará se o valor não entra em conflito com o
         # Contrato.
-        expense.save()
+        try:
+            expense.save()
+        except DjangoValidationError as e:
+            logger.warning(
+                "Falha de validação ao criar despesa para planner_id=%s: %s",
+                planner.id,
+                e,
+            )
+            detail = "; ".join(e.messages) if e.messages else str(e)
+            raise BusinessRuleViolation(
+                detail=detail,
+                code="expense_validation_error",
+            ) from e
 
         logger.info(f"Despesa criada com sucesso: uuid={expense.uuid}")
         return expense
@@ -149,7 +163,20 @@ class ExpenseService:
         # parcelas (Installments) pagas, o full_clean() DEVE ser programado no Model
         # para explodir e bloquear a ação se violar a Tolerância Zero
         # (ADR-010).
-        instance.save()
+        try:
+            instance.save()
+        except DjangoValidationError as e:
+            logger.warning(
+                "Falha de validação ao atualizar despesa uuid=%s por planner_id=%s: %s",
+                instance.uuid,
+                planner.id,
+                e,
+            )
+            detail = "; ".join(e.messages) if e.messages else str(e)
+            raise BusinessRuleViolation(
+                detail=detail,
+                code="expense_validation_error",
+            ) from e
 
         logger.info(f"Despesa uuid={instance.uuid} atualizada com sucesso.")
         return instance
