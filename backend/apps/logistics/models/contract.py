@@ -16,8 +16,6 @@ from apps.core.models import BaseModel
 
 class Contract(BaseModel, WeddingOwnedMixin):
     # Override WeddingOwnedMixin.wedding from CASCADE → PROTECT
-    wedding = None  # replaces inherited FK (handled below)
-
     wedding = models.ForeignKey(
         "weddings.Wedding",
         on_delete=models.PROTECT,

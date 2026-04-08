@@ -76,7 +76,11 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
         # categorias não pode ultrapassar o teto do orçamento mestre.
         if self.pk or self.budget_id:
             budget_total = self.budget.total_estimated
-            siblings = self.budget.categories.exclude(pk=self.pk or None)
+            siblings = (
+                self.budget.categories.exclude(pk=self.pk)
+                if self.pk is not None
+                else self.budget.categories.all()
+            )
             allocated_siblings = sum(cat.allocated_budget for cat in siblings)
             if allocated_siblings + self.allocated_budget > budget_total:
                 raise ValidationError(

@@ -133,10 +133,14 @@ export const LogisticsContractsListResponse = zod.object({
       uuid: zod.string(),
       wedding: zod.string(),
       supplier: zod.string(),
+      budget_category: zod.union([zod.string(), zod.null()]).optional(),
       total_amount: zod
         .string()
         .regex(logisticsContractsListResponseItemsItemTotalAmountRegExp),
       status: zod.string(),
+      description: zod.string(),
+      expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+      signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
       created_at: zod.iso.datetime({}),
       updated_at: zod.iso.datetime({}),
     }),
@@ -151,15 +155,21 @@ export const LogisticsContractsListResponse = zod.object({
 export const logisticsContractsCreateBodyTotalAmountTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const logisticsContractsCreateBodyStatusDefault = `DRAFT`;
+export const logisticsContractsCreateBodyDescriptionDefault = ``;
 
 export const LogisticsContractsCreateBody = zod.object({
   wedding: zod.string(),
   supplier: zod.string(),
+  budget_category: zod.string(),
   total_amount: zod.union([
     zod.number(),
     zod.string().regex(logisticsContractsCreateBodyTotalAmountTwoRegExp),
   ]),
-  status: zod.string(),
+  status: zod.string().default(logisticsContractsCreateBodyStatusDefault),
+  description: zod
+    .string()
+    .default(logisticsContractsCreateBodyDescriptionDefault),
 });
 
 /**
@@ -178,10 +188,14 @@ export const LogisticsContractsReadResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   supplier: zod.string(),
+  budget_category: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .string()
     .regex(logisticsContractsReadResponseTotalAmountRegExp),
   status: zod.string(),
+  description: zod.string(),
+  expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
 });
@@ -200,6 +214,7 @@ export const logisticsContractsPartialUpdateBodyTotalAmountTwoRegExp =
 export const LogisticsContractsPartialUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   supplier: zod.union([zod.string(), zod.null()]).optional(),
+  budget_category: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .union([
       zod.number(),
@@ -219,10 +234,14 @@ export const LogisticsContractsPartialUpdateResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   supplier: zod.string(),
+  budget_category: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .string()
     .regex(logisticsContractsPartialUpdateResponseTotalAmountRegExp),
   status: zod.string(),
+  description: zod.string(),
+  expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
 });
@@ -257,10 +276,11 @@ export const LogisticsItemsListResponse = zod.object({
     zod.object({
       uuid: zod.string(),
       wedding: zod.string(),
-      budget_category: zod.string(),
       contract: zod.union([zod.string(), zod.null()]).optional(),
       name: zod.string(),
+      description: zod.string(),
       quantity: zod.number(),
+      acquisition_status: zod.string(),
       created_at: zod.iso.datetime({}),
       updated_at: zod.iso.datetime({}),
     }),
@@ -273,12 +293,15 @@ export const LogisticsItemsListResponse = zod.object({
 Parte do planejamento logístico de um evento.
  * @summary Create Item
  */
+export const logisticsItemsCreateBodyDescriptionDefault = ``;
+export const logisticsItemsCreateBodyQuantityDefault = 1;
+
 export const LogisticsItemsCreateBody = zod.object({
   wedding: zod.string(),
-  budget_category: zod.string(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.string(),
-  quantity: zod.number(),
+  description: zod.string().default(logisticsItemsCreateBodyDescriptionDefault),
+  quantity: zod.number().default(logisticsItemsCreateBodyQuantityDefault),
 });
 
 /**
@@ -292,10 +315,11 @@ export const LogisticsItemsReadParams = zod.object({
 export const LogisticsItemsReadResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
-  budget_category: zod.string(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.string(),
+  description: zod.string(),
   quantity: zod.number(),
+  acquisition_status: zod.string(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
 });
@@ -310,19 +334,20 @@ export const LogisticsItemsPartialUpdateParams = zod.object({
 
 export const LogisticsItemsPartialUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
-  budget_category: zod.union([zod.string(), zod.null()]).optional(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod.union([zod.string(), zod.null()]).optional(),
   quantity: zod.union([zod.number(), zod.null()]).optional(),
 });
 
 export const LogisticsItemsPartialUpdateResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
-  budget_category: zod.string(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.string(),
+  description: zod.string(),
   quantity: zod.number(),
+  acquisition_status: zod.string(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
 });

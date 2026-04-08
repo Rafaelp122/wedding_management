@@ -8,8 +8,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useAuthObtainToken } from "@/api/generated/v1/endpoints/auth/auth";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type {
-  EmailTokenObtainPairRequest,
-  EmailTokenObtainPair,
+  TokenPayloadIn,
+  TokenOut,
 } from "@/api/generated/v1/models";
 import { AuthObtainTokenBody } from "@/api/generated/v1/zod/auth/auth";
 
@@ -39,16 +39,16 @@ export function LoginForm() {
   const login = useAuthStore((state) => state.login);
   const { mutate, isPending } = useAuthObtainToken<ErrorType>();
 
-  const form = useForm<EmailTokenObtainPairRequest>({
+  const form = useForm<TokenPayloadIn>({
     resolver: zodResolver(AuthObtainTokenBody),
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = (data: EmailTokenObtainPairRequest) => {
+  const onSubmit = (data: TokenPayloadIn) => {
     mutate(
       { data },
       {
-        onSuccess: (response: AxiosResponse<EmailTokenObtainPair>) => {
+        onSuccess: (response: AxiosResponse<TokenOut>) => {
           const { access, refresh, user } = response.data;
           if (access && refresh && user) {
             login(access, refresh, user);

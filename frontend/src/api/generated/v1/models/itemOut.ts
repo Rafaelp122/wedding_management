@@ -8,10 +8,11 @@
 export interface ItemOut {
   uuid: string;
   wedding: string;
-  budget_category: string;
   contract?: string | null;
   name: string;
+  description: string;
   quantity: number;
+  acquisition_status: string;
   created_at: string;
   updated_at: string;
 }

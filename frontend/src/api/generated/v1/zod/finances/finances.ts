@@ -25,6 +25,9 @@ export const FinancesBudgetsListQueryParams = zod.object({
 
 export const financesBudgetsListResponseItemsItemTotalEstimatedRegExp =
   new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const financesBudgetsListResponseItemsItemTotalOverallSpentDefault = `0.00`;
+export const financesBudgetsListResponseItemsItemTotalOverallSpentRegExp =
+  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
 
 export const FinancesBudgetsListResponse = zod.object({
   items: zod.array(
@@ -34,6 +37,10 @@ export const FinancesBudgetsListResponse = zod.object({
       total_estimated: zod
         .string()
         .regex(financesBudgetsListResponseItemsItemTotalEstimatedRegExp),
+      total_overall_spent: zod
+        .string()
+        .regex(financesBudgetsListResponseItemsItemTotalOverallSpentRegExp)
+        .default(financesBudgetsListResponseItemsItemTotalOverallSpentDefault),
       notes: zod.union([zod.string(), zod.null()]).optional(),
     }),
   ),
@@ -69,6 +76,10 @@ export const FinancesBudgetsReadParams = zod.object({
 export const financesBudgetsReadResponseTotalEstimatedRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const financesBudgetsReadResponseTotalOverallSpentDefault = `0.00`;
+export const financesBudgetsReadResponseTotalOverallSpentRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
 
 export const FinancesBudgetsReadResponse = zod.object({
   uuid: zod.string(),
@@ -76,6 +87,10 @@ export const FinancesBudgetsReadResponse = zod.object({
   total_estimated: zod
     .string()
     .regex(financesBudgetsReadResponseTotalEstimatedRegExp),
+  total_overall_spent: zod
+    .string()
+    .regex(financesBudgetsReadResponseTotalOverallSpentRegExp)
+    .default(financesBudgetsReadResponseTotalOverallSpentDefault),
   notes: zod.union([zod.string(), zod.null()]).optional(),
 });
 
@@ -106,6 +121,9 @@ export const FinancesBudgetsPartialUpdateBody = zod.object({
 
 export const financesBudgetsPartialUpdateResponseTotalEstimatedRegExp =
   new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const financesBudgetsPartialUpdateResponseTotalOverallSpentDefault = `0.00`;
+export const financesBudgetsPartialUpdateResponseTotalOverallSpentRegExp =
+  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
 
 export const FinancesBudgetsPartialUpdateResponse = zod.object({
   uuid: zod.string(),
@@ -113,6 +131,10 @@ export const FinancesBudgetsPartialUpdateResponse = zod.object({
   total_estimated: zod
     .string()
     .regex(financesBudgetsPartialUpdateResponseTotalEstimatedRegExp),
+  total_overall_spent: zod
+    .string()
+    .regex(financesBudgetsPartialUpdateResponseTotalOverallSpentRegExp)
+    .default(financesBudgetsPartialUpdateResponseTotalOverallSpentDefault),
   notes: zod.union([zod.string(), zod.null()]).optional(),
 });
 
@@ -143,6 +165,9 @@ export const FinancesBudgetsForWeddingParams = zod.object({
 export const financesBudgetsForWeddingResponseTotalEstimatedRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const financesBudgetsForWeddingResponseTotalOverallSpentDefault = `0.00`;
+export const financesBudgetsForWeddingResponseTotalOverallSpentRegExp =
+  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
 
 export const FinancesBudgetsForWeddingResponse = zod.object({
   uuid: zod.string(),
@@ -150,12 +175,18 @@ export const FinancesBudgetsForWeddingResponse = zod.object({
   total_estimated: zod
     .string()
     .regex(financesBudgetsForWeddingResponseTotalEstimatedRegExp),
+  total_overall_spent: zod
+    .string()
+    .regex(financesBudgetsForWeddingResponseTotalOverallSpentRegExp)
+    .default(financesBudgetsForWeddingResponseTotalOverallSpentDefault),
   notes: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 /**
  * Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
-Permite filtrar apenas as categorias de um casamento específico.
+
+``wedding_id`` é repassado ao service que detém a regra de filtragem;
+esta rota não conhece a lógica de tenancy.
  * @summary List Categories
  */
 export const financesCategoriesListQueryLimitDefault = 100;
@@ -174,6 +205,9 @@ export const FinancesCategoriesListQueryParams = zod.object({
 
 export const financesCategoriesListResponseItemsItemAllocatedBudgetRegExp =
   new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const financesCategoriesListResponseItemsItemTotalSpentDefault = `0.00`;
+export const financesCategoriesListResponseItemsItemTotalSpentRegExp =
+  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
 
 export const FinancesCategoriesListResponse = zod.object({
   items: zod.array(
@@ -186,6 +220,10 @@ export const FinancesCategoriesListResponse = zod.object({
       allocated_budget: zod
         .string()
         .regex(financesCategoriesListResponseItemsItemAllocatedBudgetRegExp),
+      total_spent: zod
+        .string()
+        .regex(financesCategoriesListResponseItemsItemTotalSpentRegExp)
+        .default(financesCategoriesListResponseItemsItemTotalSpentDefault),
     }),
   ),
   count: zod.number(),
@@ -224,6 +262,10 @@ export const FinancesCategoriesReadParams = zod.object({
 export const financesCategoriesReadResponseAllocatedBudgetRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const financesCategoriesReadResponseTotalSpentDefault = `0.00`;
+export const financesCategoriesReadResponseTotalSpentRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
 
 export const FinancesCategoriesReadResponse = zod.object({
   uuid: zod.string(),
@@ -234,6 +276,10 @@ export const FinancesCategoriesReadResponse = zod.object({
   allocated_budget: zod
     .string()
     .regex(financesCategoriesReadResponseAllocatedBudgetRegExp),
+  total_spent: zod
+    .string()
+    .regex(financesCategoriesReadResponseTotalSpentRegExp)
+    .default(financesCategoriesReadResponseTotalSpentDefault),
 });
 
 /**
@@ -271,6 +317,9 @@ export const FinancesCategoriesPartialUpdateBody = zod.object({
 
 export const financesCategoriesPartialUpdateResponseAllocatedBudgetRegExp =
   new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const financesCategoriesPartialUpdateResponseTotalSpentDefault = `0.00`;
+export const financesCategoriesPartialUpdateResponseTotalSpentRegExp =
+  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
 
 export const FinancesCategoriesPartialUpdateResponse = zod.object({
   uuid: zod.string(),
@@ -281,6 +330,10 @@ export const FinancesCategoriesPartialUpdateResponse = zod.object({
   allocated_budget: zod
     .string()
     .regex(financesCategoriesPartialUpdateResponseAllocatedBudgetRegExp),
+  total_spent: zod
+    .string()
+    .regex(financesCategoriesPartialUpdateResponseTotalSpentRegExp)
+    .default(financesCategoriesPartialUpdateResponseTotalSpentDefault),
 });
 
 /**

@@ -8,6 +8,7 @@
 export interface ContractPatchIn {
   wedding?: string | null;
   supplier?: string | null;
+  budget_category?: string | null;
   total_amount?: number | string | null;
   status?: string | null;
 }

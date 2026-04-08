@@ -7,8 +7,8 @@
 
 export interface ItemIn {
   wedding: string;
-  budget_category: string;
   contract?: string | null;
   name: string;
-  quantity: number;
+  description?: string;
+  quantity?: number;
 }

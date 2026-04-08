@@ -96,7 +96,10 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_contract(obj: "Expense") -> UUID4 | None:
-        return obj.contract.uuid if getattr(obj, "contract", None) else None
+        contract = obj.contract
+        if contract is None:
+            return None
+        return contract.uuid
 
 
 # --- INSTALLMENT SCHEMAS ---

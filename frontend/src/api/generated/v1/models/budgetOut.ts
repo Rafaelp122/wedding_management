@@ -10,5 +10,7 @@ export interface BudgetOut {
   wedding: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_estimated: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_overall_spent?: string;
   notes?: string | null;
 }

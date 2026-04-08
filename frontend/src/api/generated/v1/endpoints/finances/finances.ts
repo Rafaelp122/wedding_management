@@ -842,7 +842,9 @@ export function useFinancesBudgetsForWedding<
 
 /**
  * Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
-Permite filtrar apenas as categorias de um casamento específico.
+
+``wedding_id`` é repassado ao service que detém a regra de filtragem;
+esta rota não conhece a lógica de tenancy.
  * @summary List Categories
  */
 export const financesCategoriesList = (

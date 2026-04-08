@@ -161,7 +161,6 @@ class BudgetService:
         Raises:
             BusinessRuleViolation: Se o casamento não existir ou acesso negado
         """
-        from apps.finances.services.budget_category_service import BudgetCategoryService
         from apps.weddings.models import Wedding
 
         planner = require_user(user)
@@ -187,17 +186,23 @@ class BudgetService:
 
         # 3. Setup Inicial: Cria categorias padrão se Budget foi recém-criado
         if created:
+            from apps.finances.services.budget_category_service import (
+                BudgetCategoryService,
+            )
+
             logger.info(
                 f"Budget criado sob demanda para wedding={wedding.uuid}. "
-                f"Categorias padrão não serão mais geradas automaticamente conforme solicitado pelo usuário."
+                f"Criando categorias padrão."
             )
-            # BudgetCategoryService.setup_defaults(
-            #     user=user, wedding=wedding, budget=budget
-            # )
-            # logger.info(
-            #     f"Budget uuid={budget.uuid} + categorias criados para "
-            #     f"wedding={wedding.uuid}"
-            # )
+            BudgetCategoryService.setup_defaults(
+                user=user,
+                wedding=wedding,
+                budget=budget,
+            )
+            logger.info(
+                f"Budget uuid={budget.uuid} + categorias criados para "
+                f"wedding={wedding.uuid}"
+            )
         else:
             logger.debug(f"Budget existente retornado: uuid={budget.uuid}")
 

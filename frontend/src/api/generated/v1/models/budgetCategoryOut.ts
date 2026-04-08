@@ -13,4 +13,6 @@ export interface BudgetCategoryOut {
   description?: string | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   allocated_budget: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_spent?: string;
 }
