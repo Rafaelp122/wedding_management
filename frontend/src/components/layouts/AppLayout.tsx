@@ -14,17 +14,17 @@ import { AppSidebar } from "../app-sidebar";
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/weddings": "Casamentos",
-  "/scheduler": "Agenda",
-  "/logistics/contracts": "Contratos",
-  "/logistics/items": "Itens & Estoque",
-  "/finances/budgets": "Orçamentos",
-  "/finances/expenses": "Despesas",
+  "/agenda": "Agenda",
+  "/suppliers": "Fornecedores",
+  "/settings": "Configurações",
 };
 
 export const AppLayout = () => {
   const user = useAuthStore((state) => state.user);
   const { pathname } = useLocation();
-  const pageTitle = PAGE_TITLES[pathname] ?? "Painel de Controle";
+  const pageTitle = pathname.startsWith("/weddings/")
+    ? "Detalhes do Casamento"
+    : PAGE_TITLES[pathname] ?? "Painel de Controle";
 
   return (
     <SidebarProvider>

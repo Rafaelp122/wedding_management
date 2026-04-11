@@ -2,10 +2,8 @@ import {
   LayoutDashboard,
   Heart,
   Calendar,
-  FileText,
-  DollarSign,
-  Package,
-  Receipt,
+  Handshake,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,11 +18,9 @@ import { NavUser } from "./nav-user";
 const menuItems = [
   { title: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
   { title: "Casamentos", path: "/weddings", icon: Heart },
-  { title: "Agenda", path: "/scheduler", icon: Calendar },
-  { title: "Contratos", path: "/logistics/contracts", icon: FileText },
-  { title: "Itens", path: "/logistics/items", icon: Package },
-  { title: "Orçamentos", path: "/finances/budgets", icon: DollarSign },
-  { title: "Despesas", path: "/finances/expenses", icon: Receipt },
+  { title: "Fornecedores", path: "/suppliers", icon: Handshake },
+  { title: "Agenda", path: "/agenda", icon: Calendar },
+  { title: "Configurações", path: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {

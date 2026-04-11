@@ -13,6 +13,8 @@ const LoginPage = lazy(() => import("../pages/LoginPage"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ComingSoonPage = lazy(() => import("../pages/ComingSoonPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
+const AgendaPage = lazy(() => import("@/features/scheduler/pages/AgendaPage"));
+const SuppliersPage = lazy(() => import("@/features/suppliers/pages/SuppliersPage"));
 
 // Feature: Weddings
 const WeddingsListPage = lazy(
@@ -86,56 +88,28 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/scheduler",
+        path: "/agenda",
         element: (
           <Suspense fallback={<LoadingScreen />}>
-            <ComingSoonPage
-              title="Agenda"
-              description="A visualização completa da agenda será disponibilizada em breve."
-            />
+            <AgendaPage />
           </Suspense>
         ),
       },
       {
-        path: "/logistics/contracts",
+        path: "/suppliers",
         element: (
           <Suspense fallback={<LoadingScreen />}>
-            <ComingSoonPage
-              title="Contratos"
-              description="O módulo de contratos está em preparação e ficará disponível em breve."
-            />
+            <SuppliersPage />
           </Suspense>
         ),
       },
       {
-        path: "/logistics/items",
+        path: "/settings",
         element: (
           <Suspense fallback={<LoadingScreen />}>
             <ComingSoonPage
-              title="Itens & Estoque"
-              description="O controle de itens e estoque será disponibilizado em breve."
-            />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/finances/budgets",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <ComingSoonPage
-              title="Financeiro"
-              description="A área financeira detalhada será disponibilizada em breve."
-            />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/finances/expenses",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <ComingSoonPage
-              title="Despesas"
-              description="A gestão detalhada de despesas será disponibilizada em breve."
+              title="Configurações"
+              description="Preferências da conta, organização e integrações ficarão disponíveis aqui."
             />
           </Suspense>
         ),
