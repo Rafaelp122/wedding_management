@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { WeddingOut } from "@/api/generated/v1/models";
+import { getWeddingStatusInfo } from "../utils/weddingStatus";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, MapPin, Users, Clock } from "lucide-react";
@@ -9,15 +10,8 @@ interface WeddingOverviewProps {
   wedding: WeddingOut;
 }
 
-const STATUS_CONFIG = {
-  IN_PROGRESS: { label: "Em Andamento", variant: "default" as const },
-  COMPLETED: { label: "Concluído", variant: "secondary" as const },
-  CANCELED: { label: "Cancelado", variant: "destructive" as const },
-};
-
 export function WeddingOverview({ wedding }: WeddingOverviewProps) {
-  const statusConfig = STATUS_CONFIG[wedding.status as keyof typeof STATUS_CONFIG] ||
-    STATUS_CONFIG.IN_PROGRESS;
+  const statusInfo = getWeddingStatusInfo(wedding.status);
 
   const formattedDate = format(new Date(wedding.date), "dd 'de' MMMM 'de' yyyy", {
     locale: ptBR,
@@ -35,7 +29,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
           <h2 className="text-3xl font-bold">
             {wedding.groom_name} & {wedding.bride_name}
           </h2>
-          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+          <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
         </div>
         <p className="text-muted-foreground">
           Casamento criado em {createdAt}
@@ -127,7 +121,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
             </div>
 
             <div className="text-muted-foreground">Status</div>
-            <div>{statusConfig.label}</div>
+            <div>{statusInfo.label}</div>
           </div>
         </CardContent>
       </Card>

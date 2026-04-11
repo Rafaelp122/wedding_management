@@ -1,13 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import type { WeddingOut } from "@/api/generated/v1/models";
+import { formatDateBR } from "@/features/shared/utils/formatters";
+import { getWeddingStatusLabel } from "@/features/weddings/utils/weddingStatus";
 import { Badge } from "@/components/ui/badge";
-
-const STATUS_LABELS: Record<string, string> = {
-  IN_PROGRESS: "Em Andamento",
-  COMPLETED: "Concluído",
-  CANCELED: "Cancelado",
-};
 
 export function RecentWeddings({ weddings }: { weddings: WeddingOut[] }) {
   return (
@@ -32,7 +28,7 @@ export function RecentWeddings({ weddings }: { weddings: WeddingOut[] }) {
                     {wedding.groom_name} & {wedding.bride_name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(wedding.date).toLocaleDateString("pt-BR")}
+                    {formatDateBR(wedding.date)}
                   </p>
                 </div>
                 <Badge
@@ -40,7 +36,7 @@ export function RecentWeddings({ weddings }: { weddings: WeddingOut[] }) {
                     wedding.status === "COMPLETED" ? "default" : "secondary"
                   }
                 >
-                  {STATUS_LABELS[wedding.status ?? "IN_PROGRESS"]}
+                  {getWeddingStatusLabel(wedding.status)}
                 </Badge>
               </div>
             ))

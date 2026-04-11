@@ -19,7 +19,7 @@ const menuItems = [
   { title: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
   { title: "Casamentos", path: "/weddings", icon: Heart },
   { title: "Fornecedores", path: "/suppliers", icon: Handshake },
-  { title: "Agenda", path: "/agenda", icon: Calendar },
+  { title: "Scheduler", path: "/scheduler", icon: Calendar },
   { title: "Configurações", path: "/settings", icon: Settings },
 ];
 

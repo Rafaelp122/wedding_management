@@ -2,7 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 
 const features = [
   { title: "Controle Financeiro", desc: "Gestão de pagamentos em tempo real." },
-  { title: "Agenda Inteligente", desc: "Cronogramas automatizados." },
+  { title: "Scheduler Inteligente", desc: "Cronogramas automatizados." },
   { title: "Gestão de Itens", desc: "Inventário completo de logística." },
 ];
 

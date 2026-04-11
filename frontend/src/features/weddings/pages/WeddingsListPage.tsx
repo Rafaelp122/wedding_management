@@ -3,11 +3,13 @@ import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings"
 import { WeddingsTable } from "../components/WeddingsTable";
 import { WeddingFilters } from "../components/WeddingFilters";
 import { CreateWeddingDialog } from "../components/CreateWeddingDialog";
+import {
+  ListPageErrorState,
+  ListPageLoadingState,
+} from "@/features/shared/components/PageState";
 import { getApiErrorInfo } from "@/api/error-utils";
 
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Plus } from "lucide-react";
 
@@ -21,15 +23,7 @@ export default function WeddingsListPage() {
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
+    return <ListPageLoadingState />;
   }
 
   // Error state
@@ -39,23 +33,7 @@ export default function WeddingsListPage() {
       "Não foi possível carregar a lista de casamentos.",
     );
 
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Erro ao carregar dados</AlertTitle>
-        <AlertDescription>
-          {message}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="mt-4"
-          >
-            Tentar Novamente
-          </Button>
-        </AlertDescription>
-      </Alert>
-    );
+    return <ListPageErrorState message={message} onRetry={refetch} />;
   }
 
   // Extrair dados da paginação

@@ -14,7 +14,7 @@ import { AppSidebar } from "../app-sidebar";
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/weddings": "Casamentos",
-  "/agenda": "Agenda",
+  "/scheduler": "Scheduler",
   "/suppliers": "Fornecedores",
   "/settings": "Configurações",
 };

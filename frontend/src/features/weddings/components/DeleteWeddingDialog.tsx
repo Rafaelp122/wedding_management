@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 interface DeleteWeddingDialogProps {
@@ -77,7 +78,7 @@ export function DeleteWeddingDialog({
                 <li>Orçamentos e categorias</li>
                 <li>Despesas e parcelas</li>
                 <li>Contratos vinculados</li>
-                <li>Eventos da agenda</li>
+                <li>Eventos do scheduler</li>
               </ul>
             </AlertDescription>
           </Alert>
@@ -89,9 +90,8 @@ export function DeleteWeddingDialog({
             <p className="text-sm font-semibold bg-muted p-2 rounded">
               {weddingName}
             </p>
-            <input
+            <Input
               type="text"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Digite o nome aqui..."
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}

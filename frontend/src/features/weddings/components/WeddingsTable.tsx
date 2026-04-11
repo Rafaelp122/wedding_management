@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { getWeddingStatusInfo } from "../utils/weddingStatus";
 import type { WeddingOut } from "@/api/generated/v1/models";
 import { EditWeddingDialog } from "./EditWeddingDialog";
 import { DeleteWeddingDialog } from "./DeleteWeddingDialog";
@@ -13,44 +14,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { TableRowActionsMenu } from "@/features/shared/components/TableRowActionsMenu";
+import { formatDateBR } from "@/features/shared/utils/formatters";
+import { Eye, Edit, Trash2 } from "lucide-react";
 
 interface WeddingsTableProps {
   weddings: WeddingOut[];
   onRefetch: () => void;
 }
 
-const STATUS_LABELS: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" }
-> = {
-  IN_PROGRESS: { label: "Em Andamento", variant: "default" },
-  COMPLETED: { label: "Concluído", variant: "secondary" },
-  CANCELED: { label: "Cancelado", variant: "destructive" },
-};
-
 export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
   const [editingWedding, setEditingWedding] = useState<WeddingOut | null>(null);
   const [deletingWedding, setDeletingWedding] = useState<WeddingOut | null>(
     null,
   );
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  };
 
   return (
     <>
@@ -68,15 +49,20 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
           </TableHeader>
           <TableBody>
             {weddings.map((wedding) => {
-              const statusInfo =
-                STATUS_LABELS[wedding.status] || STATUS_LABELS.IN_PROGRESS;
+              const statusInfo = getWeddingStatusInfo(wedding.status);
 
               return (
                 <TableRow key={wedding.uuid}>
                   <TableCell className="font-medium">
                     {wedding.groom_name} & {wedding.bride_name}
                   </TableCell>
-                  <TableCell>{formatDate(wedding.date)}</TableCell>
+                  <TableCell>
+                    {formatDateBR(wedding.date, {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </TableCell>
                   <TableCell>{wedding.location}</TableCell>
                   <TableCell>
                     {wedding.expected_guests ?? (
@@ -89,38 +75,26 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Abrir menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link to={`/weddings/${wedding.uuid}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Ver Detalhes
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setEditingWedding(wedding)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeletingWedding(wedding)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Deletar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <TableRowActionsMenu>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/weddings/${wedding.uuid}`}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver Detalhes
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setEditingWedding(wedding)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeletingWedding(wedding)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Deletar
+                      </DropdownMenuItem>
+                    </TableRowActionsMenu>
                   </TableCell>
                 </TableRow>
               );

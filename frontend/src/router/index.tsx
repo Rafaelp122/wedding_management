@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { ProtectedRoute } from "./guards/ProtectedRoute";
 import { PublicRoute } from "./guards/PublicRoute";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
@@ -9,11 +9,13 @@ import { LoadingScreen } from "@/components/ui/loadingScreen";
 
 // Implementa o Lazy Loading para separar os bundles
 const LandingPage = lazy(() => import("../pages/LandingPage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
+const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ComingSoonPage = lazy(() => import("../pages/ComingSoonPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
-const AgendaPage = lazy(() => import("@/features/scheduler/pages/AgendaPage"));
+const SchedulerPage = lazy(
+  () => import("@/features/scheduler/pages/SchedulerPage"),
+);
 const SuppliersPage = lazy(() => import("@/features/suppliers/pages/SuppliersPage"));
 
 // Feature: Weddings
@@ -22,6 +24,10 @@ const WeddingsListPage = lazy(
 );
 const WeddingDetailPage = lazy(
   () => import("@/features/weddings/pages/WeddingDetailPage"),
+);
+
+const withLoading = (element: ReactNode) => (
+  <Suspense fallback={<LoadingScreen />}>{element}</Suspense>
 );
 
 export const router = createBrowserRouter([
@@ -33,9 +39,7 @@ export const router = createBrowserRouter([
         path: "/",
         element: (
           <PublicRoute>
-            <Suspense fallback={<LoadingScreen />}>
-              <LandingPage />
-            </Suspense>
+            {withLoading(<LandingPage />)}
           </PublicRoute>
         ),
       },
@@ -43,9 +47,7 @@ export const router = createBrowserRouter([
         path: "/login",
         element: (
           <PublicRoute>
-            <Suspense fallback={<LoadingScreen />}>
-              <LoginPage />
-            </Suspense>
+            {withLoading(<LoginPage />)}
           </PublicRoute>
         ),
       },
@@ -65,72 +67,42 @@ export const router = createBrowserRouter([
       },
       {
         path: "/dashboard",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <DashboardPage />
-          </Suspense>
-        ),
+        element: withLoading(<DashboardPage />),
       },
       {
         path: "/weddings",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <WeddingsListPage />
-          </Suspense>
-        ),
+        element: withLoading(<WeddingsListPage />),
       },
       {
         path: "/weddings/:uuid",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <WeddingDetailPage />
-          </Suspense>
-        ),
+        element: withLoading(<WeddingDetailPage />),
       },
       {
-        path: "/agenda",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <AgendaPage />
-          </Suspense>
-        ),
+        path: "/scheduler",
+        element: withLoading(<SchedulerPage />),
       },
       {
         path: "/suppliers",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <SuppliersPage />
-          </Suspense>
-        ),
+        element: withLoading(<SuppliersPage />),
       },
       {
         path: "/settings",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <ComingSoonPage
-              title="Configurações"
-              description="Preferências da conta, organização e integrações ficarão disponíveis aqui."
-            />
-          </Suspense>
+        element: withLoading(
+          <ComingSoonPage
+            title="Configurações"
+            description="Preferências da conta, organização e integrações ficarão disponíveis aqui."
+          />,
         ),
       },
       {
         path: "*",
-        element: (
-          <Suspense fallback={<LoadingScreen />}>
-            <NotFoundPage />
-          </Suspense>
-        ),
+        element: withLoading(<NotFoundPage />),
       },
       // Adiciona rotas futuras com Lazy Loading aqui
     ],
   },
   {
     path: "*",
-    element: (
-      <Suspense fallback={<LoadingScreen />}>
-        <NotFoundPage />
-      </Suspense>
-    ),
+    element: withLoading(<NotFoundPage />),
   },
 ]);

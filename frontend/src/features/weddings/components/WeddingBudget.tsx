@@ -1,32 +1,19 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { getApiErrorInfo } from "@/api/error-utils";
 import {
   useFinancesBudgetsForWedding,
   useFinancesBudgetsPartialUpdate,
   useFinancesCategoriesList,
 } from "@/api/generated/v1/endpoints/finances/finances";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, DollarSign, Save, TrendingUp, X } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { WeddingBudgetCategoriesCard } from "./WeddingBudgetCategoriesCard";
+import { WeddingBudgetNotesCard } from "./WeddingBudgetNotesCard";
+import { WeddingBudgetSummaryCard } from "./WeddingBudgetSummaryCard";
 
 interface WeddingBudgetProps {
   weddingUuid: string;
@@ -70,8 +57,12 @@ export function WeddingBudget({ weddingUuid }: WeddingBudgetProps) {
       toast.success("Orçamento atualizado com sucesso!");
       setIsEditing(false);
       queryClient.invalidateQueries();
-    } catch {
-      toast.error("Falha ao atualizar orçamento.");
+    } catch (error) {
+      const { message } = getApiErrorInfo(
+        error,
+        "Falha ao atualizar orçamento.",
+      );
+      toast.error(message);
     }
   };
 
@@ -88,15 +79,13 @@ export function WeddingBudget({ weddingUuid }: WeddingBudgetProps) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Erro ao carregar orçamento do casamento.
-        </AlertDescription>
+        <AlertDescription>Erro ao carregar orçamento do casamento.</AlertDescription>
       </Alert>
     );
   }
 
   const totalAllocated = categories.reduce(
-    (acc, cat) => acc + Number(cat.allocated_budget || 0),
+    (acc, category) => acc + Number(category.allocated_budget || 0),
     0,
   );
   const totalSpent = Number(budget.total_overall_spent || 0);
@@ -113,185 +102,24 @@ export function WeddingBudget({ weddingUuid }: WeddingBudgetProps) {
 
   return (
     <div className="space-y-6">
-      {/* Resumo do Orçamento */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Orçamento Total
-              </CardTitle>
-              <CardDescription>
-                Tabela de gastos planejados e alocados do evento
-              </CardDescription>
-            </div>
-            {!isEditing && (
-              <Button variant="outline" size="sm" onClick={handleEditInit}>
-                Editar Teto
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isEditing ? (
-            <div className="flex items-end gap-4 bg-muted/50 p-4 rounded-lg">
-              <div className="grid gap-2 flex-1">
-                <Label htmlFor="total">Novo Valor Estimado (R$)</Label>
-                <Input
-                  id="total"
-                  type="number"
-                  step="0.01"
-                  value={editTotal}
-                  onChange={(e) => setEditTotal(e.target.value)}
-                  className="max-w-xs bg-background"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={updateBudgetMutation.isPending}
-                >
-                  {updateBudgetMutation.isPending ? (
-                    "Salvando..."
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" /> Salvar
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIsEditing(false)}
-                >
-                  <X className="w-4 h-4 mr-2" /> Cancelar
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Teto Estimado
-                </p>
-                <p className="text-3xl font-bold">
-                  R${" "}
-                  {totalEstimated.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Total Alocado
-                </p>
-                <p className="text-3xl font-semibold text-primary">
-                  R${" "}
-                  {totalAllocated.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Status de Gastos
-                </p>
-                <div className="h-4 w-full bg-secondary rounded-full overflow-hidden mt-3">
-                  <div
-                    className={`h-full ${progressColor} transition-all duration-500`}
-                    style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-right mt-1 text-muted-foreground">
-                  R${" "}
-                  {totalSpent.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  ({progressPercentage.toFixed(1)}%) gasto
-                </p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <WeddingBudgetSummaryCard
+        isEditing={isEditing}
+        editTotal={editTotal}
+        isSaving={updateBudgetMutation.isPending}
+        totalEstimated={totalEstimated}
+        totalAllocated={totalAllocated}
+        totalSpent={totalSpent}
+        progressPercentage={progressPercentage}
+        progressColor={progressColor}
+        onEditTotalChange={setEditTotal}
+        onStartEdit={handleEditInit}
+        onSave={handleSave}
+        onCancelEdit={() => setIsEditing(false)}
+      />
 
-      {/* Lista de Categorias */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Categorias de Custo
-          </CardTitle>
-          <CardDescription>
-            Divisão do teto orçamentário por centro de custos (áreas do
-            casamento)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {categories.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="mb-2">Nenhuma categoria encontrada.</p>
-              <p className="text-xs">
-                Adicione categorias para começar a gerenciar o orçamento.
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Descrição / Notas</TableHead>
-                  <TableHead className="text-right">
-                    Orçamento Alocado
-                  </TableHead>
-                  <TableHead className="text-right">Total Gasto</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((cat) => (
-                  <TableRow key={cat.uuid}>
-                    <TableCell className="font-medium">{cat.name}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {cat.description || "N/A"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      R${" "}
-                      {Number(cat.allocated_budget).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </TableCell>{" "}
-                    <TableCell className="text-right">
-                      R${" "}
-                      {Number(cat.total_spent || 0).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </TableCell>{" "}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <WeddingBudgetCategoriesCard categories={categories} />
 
-      {/* Informações gerais do projeto */}
-      {budget.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Observações Globais</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm whitespace-pre-wrap">{budget.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+      {budget.notes && <WeddingBudgetNotesCard notes={budget.notes} />}
     </div>
   );
 }
