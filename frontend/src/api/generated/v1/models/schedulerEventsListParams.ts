@@ -6,6 +6,7 @@
  */
 
 export type SchedulerEventsListParams = {
+  wedding_id?: string | null;
   /**
    * @minimum 1
    */

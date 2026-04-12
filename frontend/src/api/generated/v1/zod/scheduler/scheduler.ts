@@ -19,6 +19,7 @@ export const schedulerEventsListQueryOffsetDefault = 0;
 export const schedulerEventsListQueryOffsetMin = 0;
 
 export const SchedulerEventsListQueryParams = zod.object({
+  wedding_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(schedulerEventsListQueryLimitDefault),
   offset: zod
     .number()

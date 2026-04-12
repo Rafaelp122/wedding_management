@@ -355,6 +355,7 @@ export const financesExpensesListQueryOffsetDefault = 0;
 export const financesExpensesListQueryOffsetMin = 0;
 
 export const FinancesExpensesListQueryParams = zod.object({
+  wedding_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(financesExpensesListQueryLimitDefault),
   offset: zod
     .number()
