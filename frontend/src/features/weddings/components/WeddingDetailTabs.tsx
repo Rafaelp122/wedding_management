@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeddingBudget } from "./WeddingBudget";
 import { WeddingOverview } from "./WeddingOverview";
+import { WeddingVendorsItemsTab } from "./WeddingVendorsItemsTab";
 
 interface WeddingDetailTabsProps {
   wedding: WeddingOut;
@@ -82,11 +83,7 @@ export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="vendors-items" className="space-y-4">
-        <PlaceholderTabAlert
-          icon={Package}
-          title="Fornecedores e itens deste casamento"
-          description="Aqui ficará o workspace operacional para vincular fornecedores, contratos e itens diretamente a este casamento."
-        />
+        <WeddingVendorsItemsTab weddingUuid={wedding.uuid} />
       </TabsContent>
 
       <TabsContent value="expenses" className="space-y-4">
