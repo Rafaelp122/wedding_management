@@ -15,11 +15,12 @@ items_router = Router(tags=["Logistics"])
 
 @items_router.get("/", response=list[ItemOut], operation_id="logistics_items_list")
 @paginate
-def list_items(request: HttpRequest) -> QuerySet[Item]:
+def list_items(request: HttpRequest, wedding_id: UUID4 | None = None) -> QuerySet[Item]:
     """
     Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
+    Permite filtrar por casamento.
     """
-    return ItemService.list(user=request.user)
+    return ItemService.list(user=request.user, wedding_id=wedding_id)
 
 
 @items_router.get(

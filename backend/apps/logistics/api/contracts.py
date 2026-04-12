@@ -17,11 +17,14 @@ contracts_router = Router(tags=["Logistics"])
     "/", response=list[ContractOut], operation_id="logistics_contracts_list"
 )
 @paginate
-def list_contracts(request: HttpRequest) -> QuerySet[Contract]:
+def list_contracts(
+    request: HttpRequest, wedding_id: UUID4 | None = None
+) -> QuerySet[Contract]:
     """
     Lista os contratos de fornecedores associados aos casamentos do Planner.
+    Permite filtrar por casamento.
     """
-    return ContractService.list(user=request.user)
+    return ContractService.list(user=request.user, wedding_id=wedding_id)
 
 
 @contracts_router.get(

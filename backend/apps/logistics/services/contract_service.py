@@ -27,10 +27,15 @@ class ContractService:
     """
 
     @staticmethod
-    def list(user: AuthContextUser) -> QuerySet[Contract]:
-        return Contract.objects.for_user(user).select_related(
+    def list(
+        user: AuthContextUser, wedding_id: UUID | str | None = None
+    ) -> QuerySet[Contract]:
+        qs = Contract.objects.for_user(user).select_related(
             "supplier", "wedding", "budget_category"
         )
+        if wedding_id:
+            qs = qs.filter(wedding__uuid=wedding_id)
+        return qs
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Contract:
