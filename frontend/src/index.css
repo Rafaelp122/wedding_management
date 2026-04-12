@@ -6,67 +6,111 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 240 10% 3.9%; /* Zinc 950 approx */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --popover-foreground: 240 10% 3.9%;
+
+    /* --- PALETA SIM, ACEITO! --- */
+    --primary: 291 64% 42%;         /* #9C27B0 - Roxo Base */
+    --primary-foreground: 291 100% 97%; /* #F8F0FC - Fundo Suave */
+    --primary-hover: 291 66% 35%;    /* #831E94 - Hover */
+    --primary-dark: 291 68% 28%;     /* #6C177A - Texto Escuro */
+
+    --secondary: 240 4.8% 95.9%;     /* Zinc 100 approx */
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%; /* Zinc 500 */
+
+    --accent: 291 64% 95%;          /* Lavanda muito claro */
+    --accent-foreground: 291 64% 42%;
+
+    --destructive: 340 82% 52%;      /* #E91E63 - Danger Base */
+    --destructive-foreground: 340 100% 97%; /* #FCE4EC - Fundo Suave */
+    --destructive-dark: 340 77% 43%;  /* #C2185B - Texto Escuro */
+
+    --success: 174 100% 29%;         /* #009688 - Success Base */
+    --success-foreground: 174 33% 92%; /* #E0F2F1 - Fundo Suave */
+    --success-dark: 174 100% 21%;    /* #00796B - Texto Escuro */
+
+    --warning: 45 100% 51%;          /* #FFC107 - Warning Base */
+    --warning-foreground: 45 100% 94%;  /* #FFF8E1 - Fundo Suave */
+    --warning-dark: 38 100% 50%;     /* #FFA000 - Texto Escuro */
+
+    --info: 199 98% 48%;             /* #03A9F4 - Info Base */
+    --info-foreground: 199 100% 94%;    /* #E1F5FE - Fundo Suave */
+    --info-dark: 201 98% 41%;        /* #0288D1 - Texto Escuro */
+
+    --border: 240 5.9% 90%;          /* Zinc 200 approx */
+    --input: 240 5.9% 90%;
+    --ring: 291 64% 42%;             /* Usando Primary como Ring */
     --radius: 0.5rem;
 
     /* Sidebar Variables */
     --sidebar: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 291 64% 42%;
+    --sidebar-primary-foreground: 291 100% 97%;
     --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent-foreground: 291 64% 42%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 291 64% 42%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    /* --- INVERSÃO PROPORCIONAL SIM, ACEITO! --- */
+    --primary: 291 70% 60%;
+    --primary-foreground: 291 68% 28%; /* Era o Dark do Light Mode */
+    --primary-hover: 291 70% 70%;
+    --primary-dark: 291 100% 97%;    /* Era o Foreground do Light Mode */
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 340 75% 60%;
+    --destructive-foreground: 340 77% 43%;
+    --destructive-dark: 340 100% 97%;
+
+    --success: 174 65% 50%;
+    --success-foreground: 174 100% 21%;
+    --success-dark: 174 33% 92%;
+
+    --warning: 45 90% 60%;
+    --warning-foreground: 38 100% 50%;
+    --warning-dark: 45 100% 94%;
+
+    --info: 199 90% 60%;
+    --info-foreground: 201 98% 41%;
+    --info-dark: 199 100% 94%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 291 70% 60%;
 
     /* Sidebar Dark */
     --sidebar: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 291 70% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 291 70% 60%;
   }
 }
 
@@ -79,14 +123,32 @@
   --color-popover-foreground: hsl(var(--popover-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-dark: hsl(var(--primary-dark));
+
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
+
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-dark: hsl(var(--destructive-dark));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-dark: hsl(var(--success-dark));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-dark: hsl(var(--warning-dark));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-info-dark: hsl(var(--info-dark));
+
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));

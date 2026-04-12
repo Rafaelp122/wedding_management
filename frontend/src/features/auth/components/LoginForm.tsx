@@ -68,10 +68,10 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-lg border-t-4 border-t-pink-500">
+    <Card className="w-full max-w-md shadow-lg border-t-4 border-t-primary">
       <CardHeader className="space-y-1 flex flex-col items-center">
-        <div className="bg-pink-100 p-3 rounded-full mb-2">
-          <Heart className="h-6 w-6 text-pink-600 fill-pink-600" />
+        <div className="bg-primary-foreground p-3 rounded-full mb-2">
+          <Heart className="h-6 w-6 text-primary fill-primary" />
         </div>
         <CardTitle className="text-2xl font-bold text-center">
           Wedding Admin
@@ -114,7 +114,7 @@ export function LoginForm() {
             />
             <Button
               type="submit"
-              className="w-full bg-pink-600 hover:bg-pink-700"
+              className="w-full"
               disabled={isPending}
             >
               {isPending ? "Validando..." : "Entrar no Painel"}

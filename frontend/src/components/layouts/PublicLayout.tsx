@@ -14,7 +14,7 @@ export const PublicLayout = () => {
             to="/"
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
-            <Heart className="h-6 w-6 text-pink-500 fill-pink-500" />
+            <Heart className="h-6 w-6 text-primary fill-primary" />
             <span className="text-xl font-bold tracking-tight">
               WeddingSystem
             </span>

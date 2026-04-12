@@ -19,25 +19,25 @@ export function StatsCards({
       title: "Total de Casamentos",
       value: totalWeddings,
       icon: Heart,
-      color: "text-pink-600",
+      color: "text-primary",
     },
     {
       title: "Este Mês",
       value: weddingsThisMonth ?? "—",
       icon: Calendar,
-      color: "text-blue-600",
+      color: "text-info",
     },
     {
       title: "Tarefas Pendentes",
       value: pendingTasks ?? "—",
       icon: Users,
-      color: "text-orange-600",
+      color: "text-warning",
     },
     {
       title: "Orçamento Sob Gestão",
       value: totalRevenue ?? "—",
       icon: DollarSign,
-      color: "text-green-600",
+      color: "text-success",
     },
   ];
 
