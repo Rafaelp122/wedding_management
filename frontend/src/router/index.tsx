@@ -8,15 +8,20 @@ import { GlobalError } from "@/components/ui/globalError";
 import { LoadingScreen } from "@/components/ui/loadingScreen";
 
 // Implementa o Lazy Loading para separar os bundles
-const LandingPage = lazy(() => import("../pages/LandingPage"));
+const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"));
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
-const DashboardPage = lazy(() => import("../pages/DashboardPage"));
+const DashboardPage = lazy(
+  () => import("@/features/dashboard/pages/DashboardPage"),
+);
 const ComingSoonPage = lazy(() => import("../pages/ComingSoonPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const SchedulerPage = lazy(
   () => import("@/features/scheduler/pages/SchedulerPage"),
 );
 const SuppliersPage = lazy(() => import("@/features/suppliers/pages/SuppliersPage"));
+const SupplierDetailPage = lazy(
+  () => import("@/features/suppliers/pages/SupplierDetailPage"),
+);
 
 // Feature: Weddings
 const WeddingsListPage = lazy(
@@ -84,6 +89,10 @@ export const router = createBrowserRouter([
       {
         path: "/suppliers",
         element: withLoading(<SuppliersPage />),
+      },
+      {
+        path: "/suppliers/:uuid",
+        element: withLoading(<SupplierDetailPage />),
       },
       {
         path: "/settings",

@@ -80,20 +80,6 @@ class BudgetService:
                 "existente em vez de criar outro.",
                 code="budget_already_exists",
             ) from e
-        except Exception as e:
-            from django.core.exceptions import ValidationError as DjangoValidationError
-
-            if isinstance(e, DjangoValidationError):
-                logger.error(
-                    f"Falha de validação: Casamento uuid={wedding.uuid} já possui "
-                    f"orçamento ou outro erro de validação."
-                )
-                raise DomainIntegrityError(
-                    detail="Este casamento já possui um orçamento definido. Atualize o "
-                    "existente em vez de criar outro.",
-                    code="budget_already_exists",
-                ) from e
-            raise e
 
         logger.info(f"Orçamento criado com sucesso: uuid={budget.uuid}")
         return budget

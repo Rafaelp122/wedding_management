@@ -17,6 +17,7 @@ import { WeddingOverview } from "./WeddingOverview";
 import { WeddingVendorsItemsTab } from "./WeddingVendorsItemsTab";
 import { WeddingExpensesTab } from "./WeddingExpensesTab";
 import { WeddingTimelineTab } from "./WeddingTimelineTab";
+import { WeddingChecklistTab } from "./WeddingChecklistTab";
 
 interface WeddingDetailTabsProps {
   wedding: WeddingOut;
@@ -97,11 +98,7 @@ export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="checklist" className="space-y-4">
-        <PlaceholderTabAlert
-          icon={ListChecks}
-          title="Em breve"
-          description="O checklist personalizado de tarefas do casamento será disponibilizado aqui."
-        />
+        <WeddingChecklistTab weddingUuid={wedding.uuid} />
       </TabsContent>
 
       <TabsContent value="guests" className="space-y-4">

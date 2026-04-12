@@ -24,7 +24,9 @@ export const AppLayout = () => {
   const { pathname } = useLocation();
   const pageTitle = pathname.startsWith("/weddings/")
     ? "Detalhes do Casamento"
-    : PAGE_TITLES[pathname] ?? "Painel de Controle";
+    : pathname.startsWith("/suppliers/")
+      ? "Detalhes do Fornecedor"
+      : PAGE_TITLES[pathname] ?? "Painel de Controle";
 
   return (
     <SidebarProvider>

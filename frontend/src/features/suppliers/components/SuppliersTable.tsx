@@ -1,4 +1,5 @@
 import { Edit, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import type { SupplierOut } from "@/api/generated/v1/models";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,8 @@ interface SuppliersTableProps {
 }
 
 export function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTableProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -40,7 +43,11 @@ export function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTablePr
         </TableHeader>
         <TableBody>
           {suppliers.map((supplier) => (
-            <TableRow key={supplier.uuid}>
+            <TableRow
+              key={supplier.uuid}
+              className="cursor-pointer"
+              onClick={() => navigate(`/suppliers/${supplier.uuid}`)}
+            >
               <TableCell className="font-medium">{supplier.name}</TableCell>
               <TableCell>{supplier.email || "—"}</TableCell>
               <TableCell>{supplier.phone || "—"}</TableCell>
@@ -51,7 +58,7 @@ export function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTablePr
                 </Badge>
               </TableCell>
               <TableCell>{formatDateBR(supplier.created_at)}</TableCell>
-              <TableCell>
+              <TableCell onClick={(event) => event.stopPropagation()}>
                 <TableRowActionsMenu>
                   <DropdownMenuItem onClick={() => onEdit(supplier)}>
                     <Edit className="mr-2 h-4 w-4" />

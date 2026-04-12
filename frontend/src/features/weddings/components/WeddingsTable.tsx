@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getWeddingStatusInfo } from "../utils/weddingStatus";
 import type { WeddingOut } from "@/api/generated/v1/models";
 import { EditWeddingDialog } from "./EditWeddingDialog";
@@ -28,6 +28,7 @@ interface WeddingsTableProps {
 }
 
 export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
+  const navigate = useNavigate();
   const [editingWedding, setEditingWedding] = useState<WeddingOut | null>(null);
   const [deletingWedding, setDeletingWedding] = useState<WeddingOut | null>(
     null,
@@ -52,7 +53,11 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
               const statusInfo = getWeddingStatusInfo(wedding.status);
 
               return (
-                <TableRow key={wedding.uuid}>
+                <TableRow
+                  key={wedding.uuid}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/weddings/${wedding.uuid}`)}
+                >
                   <TableCell className="font-medium">
                     {wedding.groom_name} & {wedding.bride_name}
                   </TableCell>
@@ -74,7 +79,7 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
                       {statusInfo.label}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(event) => event.stopPropagation()}>
                     <TableRowActionsMenu>
                       <DropdownMenuItem asChild>
                         <Link to={`/weddings/${wedding.uuid}`}>
