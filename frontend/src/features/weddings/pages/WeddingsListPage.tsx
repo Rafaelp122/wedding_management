@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingsPage } from "../hooks/useWeddingsPage";
 import { WeddingsTable } from "../components/WeddingsTable";
 import { WeddingFilters } from "../components/WeddingFilters";
 import { CreateWeddingDialog } from "../components/CreateWeddingDialog";
@@ -14,19 +13,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Plus } from "lucide-react";
 
 export default function WeddingsListPage() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    createDialogOpen,
+    setCreateDialogOpen,
+    filteredWeddings,
+    totalCount,
+    isLoading,
+    error,
+    refetch,
+  } = useWeddingsPage();
 
-  // Fetch weddings com React Query (gerado pelo Orval)
-  const { data, isLoading, error, refetch } = useWeddingsList();
-
-  // Loading state
   if (isLoading) {
     return <ListPageLoadingState />;
   }
 
-  // Error state
   if (error) {
     const { message } = getApiErrorInfo(
       error,
@@ -35,24 +39,6 @@ export default function WeddingsListPage() {
 
     return <ListPageErrorState message={message} onRetry={refetch} />;
   }
-
-  // Extrair dados da paginação
-  const weddings = data?.data.items ?? [];
-  const totalCount = data?.data.count ?? 0;
-
-  // Filtrar localmente (busca e status)
-  const filteredWeddings = weddings.filter((wedding) => {
-    const matchesSearch =
-      search === "" ||
-      wedding.groom_name.toLowerCase().includes(search.toLowerCase()) ||
-      wedding.bride_name.toLowerCase().includes(search.toLowerCase()) ||
-      wedding.location.toLowerCase().includes(search.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || wedding.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">

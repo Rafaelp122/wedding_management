@@ -7,12 +7,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import type { WeddingStatusFilter } from "../utils/weddingStatus";
 
 interface WeddingFiltersProps {
   search: string;
   onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (value: string) => void;
+  statusFilter: WeddingStatusFilter;
+  onStatusFilterChange: (value: WeddingStatusFilter) => void;
 }
 
 export function WeddingFilters({
@@ -35,7 +36,7 @@ export function WeddingFilters({
       </div>
 
       {/* Filtro de Status */}
-      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+      <Select value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as WeddingStatusFilter)}>
         <SelectTrigger className="w-full md:w-50">
           <SelectValue placeholder="Filtrar por status" />
         </SelectTrigger>

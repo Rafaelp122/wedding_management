@@ -24,3 +24,5 @@ export function getWeddingStatusInfo(status?: string): WeddingStatusInfo {
 export function getWeddingStatusLabel(status?: string): string {
   return getWeddingStatusInfo(status).label;
 }
+
+export type WeddingStatusFilter = "all" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
