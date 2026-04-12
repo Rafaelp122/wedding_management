@@ -28,10 +28,15 @@ class ExpenseService:
     """
 
     @staticmethod
-    def list(user: AuthContextUser) -> QuerySet[Expense]:
-        return Expense.objects.for_user(user).select_related(
+    def list(
+        user: AuthContextUser, wedding_id: UUID | str | None = None
+    ) -> QuerySet[Expense]:
+        qs = Expense.objects.for_user(user).select_related(
             "category", "contract", "wedding"
         )
+        if wedding_id:
+            qs = qs.filter(wedding__uuid=wedding_id)
+        return qs
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Expense:

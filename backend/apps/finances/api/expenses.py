@@ -17,11 +17,13 @@ expenses_router = Router(tags=["Finances"])
     "/", response=list[ExpenseOut], operation_id="finances_expenses_list"
 )
 @paginate
-def list_expenses(request: HttpRequest) -> QuerySet[Expense]:
+def list_expenses(
+    request: HttpRequest, wedding_id: UUID4 | None = None
+) -> QuerySet[Expense]:
     """
     Lista todas as compras e despachos que saíram dos painéis orçamentários.
     """
-    return ExpenseService.list(request.user)
+    return ExpenseService.list(request.user, wedding_id=wedding_id)
 
 
 @expenses_router.get(
