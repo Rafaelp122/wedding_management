@@ -6,6 +6,7 @@
  */
 
 export type LogisticsItemsListParams = {
+  wedding_id?: string | null;
   /**
    * @minimum 1
    */

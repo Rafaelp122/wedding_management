@@ -652,6 +652,7 @@ export const useLogisticsSuppliersDelete = <
 };
 /**
  * Lista os contratos de fornecedores associados aos casamentos do Planner.
+Permite filtrar por casamento.
  * @summary List Contracts
  */
 export const logisticsContractsList = (
@@ -1258,6 +1259,7 @@ export const useLogisticsContractsDelete = <
 };
 /**
  * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
+Permite filtrar por casamento.
  * @summary List Items
  */
 export const logisticsItemsList = (

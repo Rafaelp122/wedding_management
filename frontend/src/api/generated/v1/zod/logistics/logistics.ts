@@ -109,6 +109,7 @@ export const LogisticsSuppliersDeleteParams = zod.object({
 
 /**
  * Lista os contratos de fornecedores associados aos casamentos do Planner.
+Permite filtrar por casamento.
  * @summary List Contracts
  */
 export const logisticsContractsListQueryLimitDefault = 100;
@@ -117,6 +118,7 @@ export const logisticsContractsListQueryOffsetDefault = 0;
 export const logisticsContractsListQueryOffsetMin = 0;
 
 export const LogisticsContractsListQueryParams = zod.object({
+  wedding_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(logisticsContractsListQueryLimitDefault),
   offset: zod
     .number()
@@ -256,6 +258,7 @@ export const LogisticsContractsDeleteParams = zod.object({
 
 /**
  * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
+Permite filtrar por casamento.
  * @summary List Items
  */
 export const logisticsItemsListQueryLimitDefault = 100;
@@ -264,6 +267,7 @@ export const logisticsItemsListQueryOffsetDefault = 0;
 export const logisticsItemsListQueryOffsetMin = 0;
 
 export const LogisticsItemsListQueryParams = zod.object({
+  wedding_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(logisticsItemsListQueryLimitDefault),
   offset: zod
     .number()
