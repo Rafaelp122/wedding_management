@@ -6,7 +6,7 @@
   "files.trimTrailingWhitespace": true,
 
   // --- Python Config ---
-  "python.languageServer": "Pylance",
+  "python.languageServer": "Jedi",
   "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
   "python.terminal.activateEnvironment": true,
   "python.analysis.extraPaths": [
