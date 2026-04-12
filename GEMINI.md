@@ -1,4 +1,4 @@
-# CLAUDE.md - Wedding Management Context
+# GEMINI.md - Wedding Management Context
 
 CRITICAL: This project follows the rules defined in `ENGINEERING.md`. Read that file first to understand the architectural and workflow mandates.
 
@@ -11,9 +11,11 @@ CRITICAL: This project follows the rules defined in `ENGINEERING.md`. Read that 
 - **Lint/Format**: `make lint` or `cd backend && ruff check .`
 - **Generate API Client**: `make orval` or `cd frontend && npx orval`
 
-## AI Behavior (Claude)
+## AI Behavior (Gemini)
 
-- Be concise and direct.
-- Omits greetings and explanations of basic concepts.
-- Provide code in Markdown blocks with specified language.
-- Prioritize Makefile commands for infrastructure tasks.
+- Adopt a professional, direct, and concise tone (minimal filler).
+- Use `run_shell_command` with an explanation for modifying tasks.
+- Prioritize **Research -> Strategy -> Execution** lifecycle.
+- Never compromise on idiomatic quality or type safety (TypeScript/Zod).
+- Follow Conventional Commits strictly.
+- Always check `ENGINEERING.md` before making architectural decisions.
