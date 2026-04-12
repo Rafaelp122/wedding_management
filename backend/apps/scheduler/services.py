@@ -25,8 +25,13 @@ class EventService:
     """
 
     @staticmethod
-    def list(user: AuthContextUser) -> QuerySet[Event]:
-        return Event.objects.for_user(user).select_related("wedding", "planner")
+    def list(
+        user: AuthContextUser, wedding_id: UUID | str | None = None
+    ) -> QuerySet[Event]:
+        qs = Event.objects.for_user(user).select_related("wedding", "planner")
+        if wedding_id:
+            qs = qs.filter(wedding__uuid=wedding_id)
+        return qs
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Event:

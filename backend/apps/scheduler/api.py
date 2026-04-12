@@ -16,14 +16,16 @@ router = Router(tags=["Scheduler"])
 
 @router.get("/", response=list[EventOut], operation_id="scheduler_events_list")
 @paginate
-def list_events(request: HttpRequest) -> QuerySet[Event]:
+def list_events(
+    request: HttpRequest, wedding_id: UUID4 | None = None
+) -> QuerySet[Event]:
     """
     Lista todos os eventos do cronograma do Planner logado.
 
     Retorna tanto tarefas isoladas quanto eventos atrelados aos diferentes casamentos.
     Garante que o usuário veja apenas os eventos de sua propriedade.
     """
-    return EventService.list(request.user)
+    return EventService.list(request.user, wedding_id=wedding_id)
 
 
 @router.get(

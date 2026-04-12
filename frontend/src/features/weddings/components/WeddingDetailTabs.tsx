@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeddingBudget } from "./WeddingBudget";
 import { WeddingOverview } from "./WeddingOverview";
 import { WeddingVendorsItemsTab } from "./WeddingVendorsItemsTab";
+import { WeddingExpensesTab } from "./WeddingExpensesTab";
+import { WeddingTimelineTab } from "./WeddingTimelineTab";
 
 interface WeddingDetailTabsProps {
   wedding: WeddingOut;
@@ -87,19 +89,11 @@ export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="expenses" className="space-y-4">
-        <PlaceholderTabAlert
-          icon={Receipt}
-          title="Despesas do casamento"
-          description="Esta aba concentrará despesas e parcelas vinculadas ao evento selecionado."
-        />
+        <WeddingExpensesTab weddingUuid={wedding.uuid} />
       </TabsContent>
 
       <TabsContent value="timeline" className="space-y-4">
-        <PlaceholderTabAlert
-          icon={Calendar}
-          title="Em breve"
-          description="O cronograma específico deste casamento será exibido aqui."
-        />
+        <WeddingTimelineTab weddingUuid={wedding.uuid} />
       </TabsContent>
 
       <TabsContent value="checklist" className="space-y-4">
