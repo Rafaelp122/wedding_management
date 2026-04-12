@@ -26,7 +26,12 @@ import type {
   EventOut,
   EventPatchIn,
   PagedEventOut,
+  PagedTaskOut,
   SchedulerEventsListParams,
+  SchedulerTasksListParams,
+  TaskIn,
+  TaskOut,
+  TaskPatchIn,
 } from "../../models";
 
 import { customInstance } from "../../../../custom-instance";
@@ -651,6 +656,444 @@ export const useSchedulerEventsDelete = <
 > => {
   return useMutation(
     getSchedulerEventsDeleteMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Lista tarefas e checklist.
+ * @summary List Tasks
+ */
+export const schedulerTasksList = (
+  params?: SchedulerTasksListParams,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<PagedTaskOut>(
+    { url: `/api/v1/scheduler/tasks/`, method: "GET", params, signal },
+    options,
+  );
+};
+
+export const getSchedulerTasksListQueryKey = (
+  params?: SchedulerTasksListParams,
+) => {
+  return [`/api/v1/scheduler/tasks/`, ...(params ? [params] : [])] as const;
+};
+
+export const getSchedulerTasksListQueryOptions = <
+  TData = Awaited<ReturnType<typeof schedulerTasksList>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SchedulerTasksListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof schedulerTasksList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getSchedulerTasksListQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof schedulerTasksList>>
+  > = ({ signal }) => schedulerTasksList(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof schedulerTasksList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SchedulerTasksListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof schedulerTasksList>>
+>;
+export type SchedulerTasksListQueryError = ErrorType<unknown>;
+
+export function useSchedulerTasksList<
+  TData = Awaited<ReturnType<typeof schedulerTasksList>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SchedulerTasksListParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof schedulerTasksList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof schedulerTasksList>>,
+          TError,
+          Awaited<ReturnType<typeof schedulerTasksList>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSchedulerTasksList<
+  TData = Awaited<ReturnType<typeof schedulerTasksList>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SchedulerTasksListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof schedulerTasksList>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof schedulerTasksList>>,
+          TError,
+          Awaited<ReturnType<typeof schedulerTasksList>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSchedulerTasksList<
+  TData = Awaited<ReturnType<typeof schedulerTasksList>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SchedulerTasksListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof schedulerTasksList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Tasks
+ */
+
+export function useSchedulerTasksList<
+  TData = Awaited<ReturnType<typeof schedulerTasksList>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SchedulerTasksListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof schedulerTasksList>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSchedulerTasksListQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Cria uma nova tarefa no checklist.
+ * @summary Create Task
+ */
+export const schedulerTasksCreate = (
+  taskIn: TaskIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<TaskOut>(
+    {
+      url: `/api/v1/scheduler/tasks/`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: taskIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getSchedulerTasksCreateMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof schedulerTasksCreate>>,
+    TError,
+    { data: TaskIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof schedulerTasksCreate>>,
+  TError,
+  { data: TaskIn },
+  TContext
+> => {
+  const mutationKey = ["schedulerTasksCreate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof schedulerTasksCreate>>,
+    { data: TaskIn }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return schedulerTasksCreate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SchedulerTasksCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof schedulerTasksCreate>>
+>;
+export type SchedulerTasksCreateMutationBody = TaskIn;
+export type SchedulerTasksCreateMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create Task
+ */
+export const useSchedulerTasksCreate = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof schedulerTasksCreate>>,
+      TError,
+      { data: TaskIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof schedulerTasksCreate>>,
+  TError,
+  { data: TaskIn },
+  TContext
+> => {
+  return useMutation(
+    getSchedulerTasksCreateMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
+ * @summary Partial Update Task
+ */
+export const schedulerTasksPartialUpdate = (
+  uuid: string,
+  taskPatchIn: TaskPatchIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<TaskOut>(
+    {
+      url: `/api/v1/scheduler/tasks/${uuid}/`,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      data: taskPatchIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getSchedulerTasksPartialUpdateMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+    TError,
+    { uuid: string; data: TaskPatchIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+  TError,
+  { uuid: string; data: TaskPatchIn },
+  TContext
+> => {
+  const mutationKey = ["schedulerTasksPartialUpdate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+    { uuid: string; data: TaskPatchIn }
+  > = (props) => {
+    const { uuid, data } = props ?? {};
+
+    return schedulerTasksPartialUpdate(uuid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SchedulerTasksPartialUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>
+>;
+export type SchedulerTasksPartialUpdateMutationBody = TaskPatchIn;
+export type SchedulerTasksPartialUpdateMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Partial Update Task
+ */
+export const useSchedulerTasksPartialUpdate = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+      TError,
+      { uuid: string; data: TaskPatchIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+  TError,
+  { uuid: string; data: TaskPatchIn },
+  TContext
+> => {
+  return useMutation(
+    getSchedulerTasksPartialUpdateMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Remove uma tarefa permanentemente.
+ * @summary Delete Task
+ */
+export const schedulerTasksDelete = (
+  uuid: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<void>(
+    { url: `/api/v1/scheduler/tasks/${uuid}/`, method: "DELETE", signal },
+    options,
+  );
+};
+
+export const getSchedulerTasksDeleteMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof schedulerTasksDelete>>,
+    TError,
+    { uuid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof schedulerTasksDelete>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  const mutationKey = ["schedulerTasksDelete"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof schedulerTasksDelete>>,
+    { uuid: string }
+  > = (props) => {
+    const { uuid } = props ?? {};
+
+    return schedulerTasksDelete(uuid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SchedulerTasksDeleteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof schedulerTasksDelete>>
+>;
+
+export type SchedulerTasksDeleteMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Delete Task
+ */
+export const useSchedulerTasksDelete = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof schedulerTasksDelete>>,
+      TError,
+      { uuid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof schedulerTasksDelete>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  return useMutation(
+    getSchedulerTasksDeleteMutationOptions(options),
     queryClient,
   );
 };

@@ -175,3 +175,94 @@ Desativa também os alertas e lembretes associados a ela.
 export const SchedulerEventsDeleteParams = zod.object({
   uuid: zod.string(),
 });
+
+/**
+ * Lista tarefas e checklist.
+ * @summary List Tasks
+ */
+export const schedulerTasksListQueryLimitDefault = 100;
+
+export const schedulerTasksListQueryOffsetDefault = 0;
+export const schedulerTasksListQueryOffsetMin = 0;
+
+export const SchedulerTasksListQueryParams = zod.object({
+  wedding_id: zod.union([zod.string(), zod.null()]).optional(),
+  limit: zod.number().min(1).default(schedulerTasksListQueryLimitDefault),
+  offset: zod
+    .number()
+    .min(schedulerTasksListQueryOffsetMin)
+    .default(schedulerTasksListQueryOffsetDefault),
+});
+
+export const SchedulerTasksListResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      uuid: zod.string(),
+      planner_id: zod.number(),
+      wedding: zod.string(),
+      title: zod.string(),
+      description: zod.union([zod.string(), zod.null()]).optional(),
+      due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+      is_completed: zod.boolean(),
+    }),
+  ),
+  count: zod.number(),
+});
+
+/**
+ * Cria uma nova tarefa no checklist.
+ * @summary Create Task
+ */
+export const schedulerTasksCreateBodyTitleMax = 255;
+
+export const schedulerTasksCreateBodyIsCompletedDefault = false;
+
+export const SchedulerTasksCreateBody = zod.object({
+  wedding: zod.string(),
+  title: zod.string().max(schedulerTasksCreateBodyTitleMax),
+  description: zod.union([zod.string(), zod.null()]).optional(),
+  due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  is_completed: zod
+    .boolean()
+    .default(schedulerTasksCreateBodyIsCompletedDefault),
+});
+
+/**
+ * Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
+ * @summary Partial Update Task
+ */
+export const SchedulerTasksPartialUpdateParams = zod.object({
+  uuid: zod.string(),
+});
+
+export const schedulerTasksPartialUpdateBodyTitleOneMax = 255;
+
+export const SchedulerTasksPartialUpdateBody = zod.object({
+  title: zod
+    .union([
+      zod.string().max(schedulerTasksPartialUpdateBodyTitleOneMax),
+      zod.null(),
+    ])
+    .optional(),
+  description: zod.union([zod.string(), zod.null()]).optional(),
+  due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  is_completed: zod.union([zod.boolean(), zod.null()]).optional(),
+});
+
+export const SchedulerTasksPartialUpdateResponse = zod.object({
+  uuid: zod.string(),
+  planner_id: zod.number(),
+  wedding: zod.string(),
+  title: zod.string(),
+  description: zod.union([zod.string(), zod.null()]).optional(),
+  due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  is_completed: zod.boolean(),
+});
+
+/**
+ * Remove uma tarefa permanentemente.
+ * @summary Delete Task
+ */
+export const SchedulerTasksDeleteParams = zod.object({
+  uuid: zod.string(),
+});

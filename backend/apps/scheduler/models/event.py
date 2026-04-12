@@ -17,12 +17,10 @@ class Event(BaseModel, WeddingOwnedMixin):
         TASTING = "degustacao", "Degustação"
         OTHER = "outro", "Outro"
 
-    # Usuário responsável (planner)
     planner = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="event_records"
     )
 
-    # Informações principais do evento
     title = models.CharField(max_length=255, verbose_name="Título")
     location = models.CharField(max_length=255, blank=True, verbose_name="Local")
     description = models.TextField(blank=True, verbose_name="Descrição")
@@ -33,11 +31,9 @@ class Event(BaseModel, WeddingOwnedMixin):
         verbose_name="Tipo de Evento",
     )
 
-    # Datas e horários do evento
     start_time = models.DateTimeField(verbose_name="Início do Evento")
     end_time = models.DateTimeField(verbose_name="Fim do Evento", null=True, blank=True)
 
-    # RF12: Lembretes automáticos
     reminder_enabled = models.BooleanField(
         default=False,
         verbose_name="Lembrete Ativo",
@@ -61,5 +57,4 @@ class Event(BaseModel, WeddingOwnedMixin):
         ]
 
     def __str__(self) -> str:
-        # Exibe o título do evento no admin e nas representações de texto
         return self.title

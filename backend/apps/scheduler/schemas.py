@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from ninja import Schema
 from pydantic import UUID4, Field, model_validator
@@ -70,3 +70,28 @@ class EventOut(Schema):
     end_time: datetime | None = None
     reminder_enabled: bool
     reminder_minutes_before: int
+
+
+class TaskIn(Schema):
+    wedding: UUID4
+    title: str = Field(..., max_length=255)
+    description: str | None = None
+    due_date: date | None = None
+    is_completed: bool = False
+
+
+class TaskPatchIn(Schema):
+    title: str | None = Field(None, max_length=255)
+    description: str | None = None
+    due_date: date | None = None
+    is_completed: bool | None = None
+
+
+class TaskOut(Schema):
+    uuid: UUID4
+    planner_id: int = Field(alias="planner.id")
+    wedding: UUID4 = Field(alias="wedding.uuid")
+    title: str
+    description: str | None = None
+    due_date: date | None = None
+    is_completed: bool

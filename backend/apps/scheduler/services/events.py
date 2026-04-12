@@ -6,10 +6,7 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.auth import require_user
-from apps.core.exceptions import (
-    DomainIntegrityError,
-    ObjectNotFoundError,
-)
+from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.core.types import AuthContextUser
 from apps.scheduler.models import Event
 from apps.weddings.models import Wedding
@@ -54,15 +51,12 @@ class EventService:
         planner = require_user(user)
         logger.info(f"Iniciando criação de Evento para planner_id={planner.id}")
 
-        # 1. Resolução Segura de Dependências
-        # O DRF pode enviar a instância já resolvida ou apenas o UUID. Tratamos ambos.
         wedding_input = data.pop("wedding", None)
 
         if isinstance(wedding_input, Wedding):
             wedding = wedding_input
         else:
             try:
-                # Isolamento multitenant forçado na busca da dependência
                 wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
@@ -75,15 +69,8 @@ class EventService:
                     code="wedding_not_found_or_denied",
                 ) from e
 
-        # 2. Instanciação em Memória (NÃO salva no banco ainda)
         event = Event(planner=planner, wedding=wedding, **data)
-
-        # 3. Validação Estrita do Domínio
-        # Aqui o Model garante que start_time < end_time e previne conflitos.
         event.save()
-
-        # TODO (RF12): Integração com Celery para agendar notificações de lembrete
-        # NotificationService.schedule_event_reminder(event)
 
         logger.info(
             f"Evento criado com sucesso: uuid={event.uuid} no casamento "
@@ -99,18 +86,13 @@ class EventService:
             f"Atualizando Evento uuid={instance.uuid} por planner_id={planner.id}"
         )
 
-        # Proteção contra sequestro de dados:
-        # Impedimos que um evento seja movido para outro casamento/planner após criado.
         data.pop("wedding", None)
         data.pop("planner", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # Validação estrita do Model para garantir que as novas datas não quebram regras
         instance.save()
-
-        # TODO: Se as datas mudaram, reagendar a task no Celery
 
         logger.info(f"Evento uuid={instance.uuid} atualizado com sucesso.")
         return instance
@@ -120,20 +102,12 @@ class EventService:
     def partial_update(
         user: AuthContextUser, uuid: UUID | str, data: dict[str, Any]
     ) -> Event:
-        """
-        Atualização parcial de um evento.
-        Busca a instância internamente antes de atualizar.
-        """
         instance = EventService.get(user, uuid)
         return EventService.update(user, instance, data)
 
     @staticmethod
     @transaction.atomic
     def delete(user: AuthContextUser, uuid: UUID | str) -> None:
-        """
-        Deleta um evento.
-        Busca a instância internamente antes de deletar.
-        """
         instance = EventService.get(user, uuid)
         planner = require_user(user)
         logger.info(

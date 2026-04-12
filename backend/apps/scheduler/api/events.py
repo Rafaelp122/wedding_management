@@ -10,11 +10,10 @@ from apps.scheduler.schemas import EventIn, EventOut, EventPatchIn
 from apps.scheduler.services import EventService
 
 
-# --- ROUTERS ---
-router = Router(tags=["Scheduler"])
+events_router = Router(tags=["Scheduler"])
 
 
-@router.get("/", response=list[EventOut], operation_id="scheduler_events_list")
+@events_router.get("/", response=list[EventOut], operation_id="scheduler_events_list")
 @paginate
 def list_events(
     request: HttpRequest, wedding_id: UUID4 | None = None
@@ -28,7 +27,7 @@ def list_events(
     return EventService.list(request.user, wedding_id=wedding_id)
 
 
-@router.get(
+@events_router.get(
     "/{uuid}/",
     response={200: EventOut, **READ_ERROR_RESPONSES},
     operation_id="scheduler_events_read",
@@ -42,7 +41,7 @@ def get_event(request: HttpRequest, uuid: UUID4) -> Event:
     return EventService.get(request.user, uuid)
 
 
-@router.post(
+@events_router.post(
     "/",
     response={201: EventOut, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_create",
@@ -58,7 +57,7 @@ def create_event(request: HttpRequest, payload: EventIn) -> tuple[int, Event]:
     return 201, EventService.create(request.user, payload.dict())
 
 
-@router.patch(
+@events_router.patch(
     "/{uuid}/",
     response={200: EventOut, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_partial_update",
@@ -76,7 +75,7 @@ def partial_update_event(
     )
 
 
-@router.delete(
+@events_router.delete(
     "/{uuid}/",
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="scheduler_events_delete",
