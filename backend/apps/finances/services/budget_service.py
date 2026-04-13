@@ -2,6 +2,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, QuerySet
 
@@ -69,8 +70,13 @@ class BudgetService:
         # 3. Validação e Persistência
         try:
             budget.save()
-        except IntegrityError as e:
-            # O banco apita se já existir um Budget para este Wedding (OneToOneField)
+        except (IntegrityError, ValidationError) as e:
+            # full_clean() ou o banco apitam se já existir um Budget (OneToOne)
+
+            # Se for ValidationError, verificamos se é o erro de unicidade
+            if isinstance(e, ValidationError) and "wedding" not in e.message_dict:
+                raise e
+
             logger.error(
                 f"Conflito de integridade: Casamento uuid={wedding.uuid} já possui "
                 f"orçamento."
