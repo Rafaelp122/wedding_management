@@ -23,12 +23,12 @@ export function WeddingChecklistTable({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {tasks.map((task) => (
         <Card
           key={task.uuid}
           className={cn(
-            "flex flex-row items-start space-x-3 p-4 transition-colors",
+            "flex flex-row items-start gap-3 p-4 transition-colors",
             task.is_completed && "bg-muted/50"
           )}
         >
@@ -39,7 +39,7 @@ export function WeddingChecklistTable({
             onCheckedChange={() => onToggle(task.uuid, task.is_completed)}
             className="mt-1"
           />
-          <div className="space-y-1 leading-none">
+          <div className="flex flex-col gap-1 leading-none">
             <label
               htmlFor={`task-${task.uuid}`}
               className={cn(

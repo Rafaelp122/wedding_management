@@ -61,10 +61,10 @@ export function WeddingBudgetCategoriesCard({
                   <TableCell className="text-muted-foreground text-sm">
                     {category.description || "N/A"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right tabular-nums">
                     R$ {formatCurrencyBR(Number(category.allocated_budget))}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right tabular-nums">
                     R$ {formatCurrencyBR(Number(category.total_spent || 0))}
                   </TableCell>
                 </TableRow>

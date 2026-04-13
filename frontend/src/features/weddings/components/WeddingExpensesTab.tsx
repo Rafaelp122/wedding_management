@@ -22,7 +22,7 @@ export function WeddingExpensesTab({ weddingUuid }: WeddingExpensesTabProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <Skeleton className="h-[300px] w-full rounded-md" />
       </div>
     );
@@ -31,7 +31,7 @@ export function WeddingExpensesTab({ weddingUuid }: WeddingExpensesTabProps) {
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="size-4" />
         <AlertDescription>
           Não foi possível carregar as despesas deste casamento.
         </AlertDescription>
@@ -40,11 +40,11 @@ export function WeddingExpensesTab({ weddingUuid }: WeddingExpensesTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-primary" />
+            <Receipt className="size-5 text-primary" />
             Despesas Registradas
           </CardTitle>
           <CardDescription>

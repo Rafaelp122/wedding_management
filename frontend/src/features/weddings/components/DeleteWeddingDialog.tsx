@@ -60,7 +60,7 @@ export function DeleteWeddingDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="size-5" />
             Deletar Casamento
           </DialogTitle>
           <DialogDescription>
@@ -69,12 +69,12 @@ export function DeleteWeddingDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <Alert variant="destructive">
             <AlertDescription>
               <strong>Atenção:</strong> Ao deletar este casamento, os seguintes
               dados também serão removidos:
-              <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
+              <ul className="mt-2 list-disc list-inside flex flex-col gap-1 text-sm">
                 <li>Orçamentos e categorias</li>
                 <li>Despesas e parcelas</li>
                 <li>Contratos vinculados</li>
@@ -83,7 +83,7 @@ export function DeleteWeddingDialog({
             </AlertDescription>
           </Alert>
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">
               Para confirmar, digite o nome do casamento:
             </p>
@@ -116,7 +116,7 @@ export function DeleteWeddingDialog({
             onClick={handleDelete}
             disabled={!isConfirmed || isPending}
           >
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
             Deletar Permanentemente
           </Button>
         </DialogFooter>

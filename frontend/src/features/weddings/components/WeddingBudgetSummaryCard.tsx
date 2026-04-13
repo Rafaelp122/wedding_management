@@ -96,7 +96,7 @@ export function WeddingBudgetSummaryCard({
               <p className="text-sm font-medium text-muted-foreground mb-1">
                 Teto Estimado
               </p>
-              <p className="text-3xl font-bold">
+              <p className="text-3xl font-bold tabular-nums">
                 R$ {formatCurrencyBR(totalEstimated)}
               </p>
             </div>
@@ -104,7 +104,7 @@ export function WeddingBudgetSummaryCard({
               <p className="text-sm font-medium text-muted-foreground mb-1">
                 Total Alocado
               </p>
-              <p className="text-3xl font-semibold text-primary">
+              <p className="text-3xl font-semibold text-primary tabular-nums">
                 R$ {formatCurrencyBR(totalAllocated)}
               </p>
             </div>
@@ -118,7 +118,7 @@ export function WeddingBudgetSummaryCard({
                   style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                 />
               </div>
-              <p className="text-xs text-right mt-1 text-muted-foreground">
+              <p className="text-xs text-right mt-1 text-muted-foreground tabular-nums">
                 R$ {formatCurrencyBR(totalSpent)} ({progressPercentage.toFixed(1)}
                 %) gasto
               </p>

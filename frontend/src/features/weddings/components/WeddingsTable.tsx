@@ -83,12 +83,12 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
                     <TableRowActionsMenu>
                       <DropdownMenuItem asChild>
                         <Link to={`/weddings/${wedding.uuid}`}>
-                          <Eye className="mr-2 h-4 w-4" />
+                          <Eye className="mr-2 size-4" />
                           Ver Detalhes
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setEditingWedding(wedding)}>
-                        <Edit className="mr-2 h-4 w-4" />
+                        <Edit className="mr-2 size-4" />
                         Editar
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -96,7 +96,7 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
                         className="text-destructive focus:text-destructive"
                         onClick={() => setDeletingWedding(wedding)}
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
+                        <Trash2 className="mr-2 size-4" />
                         Deletar
                       </DropdownMenuItem>
                     </TableRowActionsMenu>
