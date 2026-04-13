@@ -12,7 +12,7 @@ export function RecentWeddings({ weddings }: { weddings: WeddingOut[] }) {
         <CardTitle>Próximos Casamentos</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           {weddings.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nenhum casamento agendado.
@@ -23,7 +23,7 @@ export function RecentWeddings({ weddings }: { weddings: WeddingOut[] }) {
                 key={wedding.uuid}
                 className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
               >
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   <p className="text-sm font-medium leading-none">
                     {wedding.groom_name} & {wedding.bride_name}
                   </p>
