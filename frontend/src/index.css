@@ -12,20 +12,20 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    /* --- PALETA SIM, ACEITO! --- */
-    --primary: 291 64% 42%;         /* #9C27B0 - Roxo Base */
-    --primary-foreground: 291 100% 97%; /* #F8F0FC - Fundo Suave */
-    --primary-hover: 291 66% 35%;    /* #831E94 - Hover */
-    --primary-dark: 291 68% 28%;     /* #6C177A - Texto Escuro */
+    /* --- PALETA SIM, ACEITO! (Refinada - Violet Eye-Friendly) --- */
+    --primary: 262 83% 58%;          /* #7C3AED - Violet 600 */
+    --primary-foreground: 210 20% 98%; /* Quase branco */
+    --primary-hover: 262 80% 50%;    /* Violet 700 approx */
+    --primary-dark: 263 70% 22%;     /* Violet 950 */
 
-    --secondary: 240 4.8% 95.9%;     /* Zinc 100 approx */
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 262 50% 98%;        /* Fundo bem leve arroxeado */
+    --secondary-foreground: 262 70% 22%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%; /* Zinc 500 */
+    --muted: 262 30% 96%;
+    --muted-foreground: 262 10% 46%;
 
-    --accent: 291 64% 95%;          /* Lavanda muito claro */
-    --accent-foreground: 291 64% 42%;
+    --accent: 262 80% 96%;
+    --accent-foreground: 262 83% 58%;
 
     --destructive: 340 82% 52%;      /* #E91E63 - Danger Base */
     --destructive-foreground: 340 100% 97%; /* #FCE4EC - Fundo Suave */
@@ -67,20 +67,20 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    /* --- INVERSÃO PROPORCIONAL SIM, ACEITO! --- */
-    --primary: 291 70% 60%;
-    --primary-foreground: 291 68% 28%; /* Era o Dark do Light Mode */
-    --primary-hover: 291 70% 70%;
-    --primary-dark: 291 100% 97%;    /* Era o Foreground do Light Mode */
+    /* --- INVERSÃO PROPORCIONAL SIM, ACEITO! (Violet) --- */
+    --primary: 262 80% 70%;
+    --primary-foreground: 263 70% 22%;
+    --primary-hover: 262 80% 80%;
+    --primary-dark: 210 20% 98%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 262 30% 12%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 262 30% 12%;
+    --muted-foreground: 262 10% 64%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 262 30% 15%;
+    --accent-foreground: 210 20% 98%;
 
     --destructive: 340 75% 60%;
     --destructive-foreground: 340 77% 43%;
