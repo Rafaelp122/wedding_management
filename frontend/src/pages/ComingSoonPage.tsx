@@ -10,7 +10,7 @@ export default function ComingSoonPage({
   description,
 }: ComingSoonPageProps) {
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="flex flex-col gap-8 animate-in fade-in duration-500">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
         <p className="text-muted-foreground">Módulo em desenvolvimento.</p>

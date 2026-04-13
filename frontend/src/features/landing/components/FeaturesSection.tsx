@@ -15,7 +15,7 @@ export function FeaturesSection() {
             key={i}
             className="flex flex-col items-center p-6 border rounded-xl bg-card shadow-sm"
           >
-            <CheckCircle2 className="h-10 w-10 text-primary mb-4" />
+            <CheckCircle2 className="size-10 text-primary mb-4" />
             <h3 className="text-xl font-bold mb-2">{f.title}</h3>
             <p className="text-muted-foreground text-center">{f.desc}</p>
           </div>

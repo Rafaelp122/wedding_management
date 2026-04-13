@@ -69,9 +69,9 @@ export function LoginForm() {
 
   return (
     <Card className="w-full max-w-md shadow-lg border-t-4 border-t-primary">
-      <CardHeader className="space-y-1 flex flex-col items-center">
+      <CardHeader className="flex flex-col items-center gap-1">
         <div className="bg-primary-foreground p-3 rounded-full mb-2">
-          <Heart className="h-6 w-6 text-primary fill-primary" />
+          <Heart className="size-6 text-primary fill-primary" />
         </div>
         <CardTitle className="text-2xl font-bold text-center">
           Wedding Admin
@@ -80,7 +80,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <FormField
               control={form.control}
               name="email"

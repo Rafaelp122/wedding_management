@@ -9,7 +9,7 @@ export default function NotFoundPage() {
         <CardHeader>
           <CardTitle className="text-3xl">Página não encontrada</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
             O caminho solicitado não existe ou ainda não foi disponibilizado.
           </p>
