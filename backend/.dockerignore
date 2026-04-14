@@ -23,3 +23,22 @@ media/
 .env.local
 Dockerfile
 docker-compose*.yml
+
+# Caches de ferramentas e testes
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache/
+
+# Testes e arquivos de CI
+tests/
+**/tests/
+conftest.py
+.github/
+.gitlab-ci.yml
+.pre-commit-config.yaml
+.secrets.baseline

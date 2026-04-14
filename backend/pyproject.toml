@@ -16,6 +16,7 @@ dependencies = [
     "python-dotenv>=1.0.1,<2.0",
     # Production Server
     "gunicorn>=23.0.0,<24.0",
+    "uvicorn[standard]>=0.34.0,<0.35",
     "python-json-logger>=4.0.0",
     "django-ninja>=1.6.2",
     "django-ninja-jwt>=5.4.4",
