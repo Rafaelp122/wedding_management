@@ -1,109 +1,137 @@
-name: '🔎 Gemini Review'
+name: "🔎 Gemini Review"
 
 on:
   workflow_call:
     inputs:
       additional_context:
-        type: 'string'
-        description: 'Any additional context from the request'
+        type: "string"
+        description: "Any additional context from the request"
         required: false
 
 concurrency:
-  group: '${{ github.workflow }}-review-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}'
+  group: "${{ github.workflow }}-review-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}"
   cancel-in-progress: true
 
 defaults:
   run:
-    shell: 'bash'
+    shell: "bash"
 
 jobs:
   review:
-    runs-on: 'ubuntu-latest'
-    timeout-minutes: 7
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 15
     permissions:
-      contents: 'read'
-      id-token: 'write'
-      issues: 'write'
-      pull-requests: 'write'
+      contents: "read"
+      id-token: "write"
+      issues: "write"
+      pull-requests: "write"
+
+    env:
+      # CONFIGURAÇÕES CENTRALIZADAS (PROMPT E MCP)
+      GEMINI_PROMPT: |-
+        Você é um Revisor de Código Sênior focado em qualidade e conformidade arquitetural. Sua missão é garantir que este Pull Request adira ESTREITAMENTE às regras definidas no arquivo 'ENGINEERING.md' do projeto.
+
+        ### Contexto Adicional:
+        ${{ inputs.additional_context }}
+
+        ### Procedimento:
+        1. Use 'run_shell_command' com 'cat ENGINEERING.md' para carregar as diretrizes atuais.
+        2. Use 'pull_request_read' para analisar as mudanças e o contexto do PR.
+        3. Analise o código buscando violações das 'Architectural Rules' (ex: Service Layer, Multi-tenancy, Orval usage) e 'Workflow Conventions'.
+
+        ### Critérios de Decisão:
+        1. VIOLAÇÕES CRÍTICAS (Segurança, Arquitetura ou Bugs graves):
+           - Ação: Use 'issue_create' para abrir uma issue técnica e 'add_item_to_project' para movê-la para 'Todo'.
+
+        2. MELHORIAS E FEEDBACK (Problemas menores ou sugestões):
+           - Ação: Comente diretamente no PR via 'add_comment_to_pending_review'.
+
+        Seja direto, técnico e aja como um guardião da arquitetura. Finalize com aprovação se estiver em conformidade.
+
     steps:
-      - name: 'Mint identity token'
-        id: 'mint_identity_token'
+      - name: "Mint identity token"
+        id: "mint_identity_token"
         if: |-
           ${{ vars.APP_ID }}
-        uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
+        uses: "actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf" # ratchet:actions/create-github-app-token@v2
         with:
-          app-id: '${{ vars.APP_ID }}'
-          private-key: '${{ secrets.APP_PRIVATE_KEY }}'
-          permission-contents: 'read'
-          permission-issues: 'write'
-          permission-pull-requests: 'write'
+          app-id: "${{ vars.APP_ID }}"
+          private-key: "${{ secrets.APP_PRIVATE_KEY }}"
+          permission-contents: "read"
+          permission-issues: "write"
+          permission-pull-requests: "write"
 
-      - name: 'Checkout repository'
-        uses: 'actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8' # ratchet:actions/checkout@v6
+      - name: "Checkout repository"
+        uses: "actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8" # ratchet:actions/checkout@v6
 
-      - name: 'Run Gemini pull request review'
-        uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
-        id: 'gemini_pr_review'
-        env:
-          GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
-          ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
-          ISSUE_BODY: '${{ github.event.pull_request.body || github.event.issue.body }}'
-          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
-          REPOSITORY: '${{ github.repository }}'
-          ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
+      - name: "🚀 Review (Tentativa 1: Gemini 3 Flash)"
+        id: rev_1
+        continue-on-error: true
+        uses: "google-github-actions/run-gemini-cli@v0"
         with:
-          gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION }}'
-          gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT }}'
-          gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
-          gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
-          gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
-          gemini_cli_version: '${{ vars.GEMINI_CLI_VERSION }}'
-          gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
-          gemini_model: '${{ vars.GEMINI_MODEL }}'
-          google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
-          use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
-          use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
-          upload_artifacts: '${{ vars.UPLOAD_ARTIFACTS }}'
-          workflow_name: 'gemini-review'
+          # Infra Original
+          gcp_location: "${{ vars.GOOGLE_CLOUD_LOCATION }}"
+          gcp_project_id: "${{ vars.GOOGLE_CLOUD_PROJECT }}"
+          gcp_service_account: "${{ vars.SERVICE_ACCOUNT_EMAIL }}"
+          gcp_workload_identity_provider: "${{ vars.GCP_WIF_PROVIDER }}"
+          gemini_api_key: "${{ secrets.GEMINI_API_KEY }}"
+          google_api_key: "${{ secrets.GOOGLE_API_KEY }}"
+          use_gemini_code_assist: "${{ vars.GOOGLE_GENAI_USE_GCA }}"
+          use_vertex_ai: "${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}"
+          # Configurações de Fallback
+          gemini_model: "gemini-3-flash"
+          prompt: "${{ env.GEMINI_PROMPT }}"
           settings: |-
             {
-              "model": {
-                "maxSessionTurns": 25
-              },
-              "telemetry": {
-                "enabled": true,
-                "target": "local",
-                "outfile": ".gemini/telemetry.log"
-              },
+              "model": { "maxSessionTurns": 15 },
               "mcpServers": {
                 "github": {
                   "command": "docker",
-                  "args": [
-                    "run",
-                    "-i",
-                    "--rm",
-                    "-e",
-                    "GITHUB_PERSONAL_ACCESS_TOKEN",
-                    "ghcr.io/github/github-mcp-server:v0.27.0"
-                  ],
-                  "includeTools": [
-                    "add_comment_to_pending_review",
-                    "pull_request_read",
-                    "pull_request_review_write"
-                  ],
-                  "env": {
-                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-                  }
+                  "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server:v0.27.0"],
+                  "includeTools": ["add_comment_to_pending_review", "pull_request_read", "pull_request_review_write", "issue_create", "add_item_to_project"],
+                  "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}" }
                 }
-              },
-              "tools": {
-                "core": [
-                  "run_shell_command(cat)",
-                  "run_shell_command(echo)",
-                  "run_shell_command(grep)",
-                  "run_shell_command(head)",
-                  "run_shell_command(tail)"
-                ]
               }
             }
-          prompt: '/gemini-review'
+
+      - name: "🔄 Fallback 1 (Tentativa 2: Gemini 3.1 Flash Lite)"
+        id: rev_2
+        if: steps.rev_1.outcome == 'failure'
+        continue-on-error: true
+        uses: "google-github-actions/run-gemini-cli@v0"
+        with:
+          gemini_api_key: "${{ secrets.GEMINI_API_KEY }}"
+          gemini_model: "gemini-3.1-flash-lite"
+          prompt: "${{ env.GEMINI_PROMPT }}"
+          settings: |-
+            {
+              "model": { "maxSessionTurns": 15 },
+              "mcpServers": {
+                "github": {
+                  "command": "docker",
+                  "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server:v0.27.0"],
+                  "includeTools": ["add_comment_to_pending_review", "pull_request_read", "pull_request_review_write", "issue_create", "add_item_to_project"],
+                  "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}" }
+                }
+              }
+            }
+
+      - name: "🛡️ Fallback Final (Tentativa 3: Gemma 3 27B)"
+        if: steps.rev_2.outcome == 'failure'
+        uses: "google-github-actions/run-gemini-cli@v0"
+        with:
+          gemini_api_key: "${{ secrets.GEMINI_API_KEY }}"
+          gemini_model: "gemma-3-27b"
+          prompt: "${{ env.GEMINI_PROMPT }}"
+          settings: |-
+            {
+              "model": { "maxSessionTurns": 10 },
+              "mcpServers": {
+                "github": {
+                  "command": "docker",
+                  "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server:v0.27.0"],
+                  "includeTools": ["add_comment_to_pending_review", "pull_request_read", "pull_request_review_write", "issue_create", "add_item_to_project"],
+                  "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}" }
+                }
+              }
+            }
