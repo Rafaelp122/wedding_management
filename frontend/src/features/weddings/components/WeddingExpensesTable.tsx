@@ -39,7 +39,7 @@ export function WeddingExpensesTable({ expenses }: WeddingExpensesTableProps) {
               <TableCell className="font-medium text-xs text-muted-foreground uppercase">
                 {expense.category.substring(0, 8)}
               </TableCell>
-              <TableCell className="max-w-[200px] truncate" title={expense.description}>
+              <TableCell className="max-w-50 truncate" title={expense.description}>
                 {expense.description || "N/A"}
               </TableCell>
               <TableCell className="text-right">

@@ -30,9 +30,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
   const { data: tasksResponse } = useSchedulerTasksList({
     wedding_id: wedding.uuid,
   });
-  const { data: suppliersResponse } = useLogisticsSuppliersList({
-    wedding_id: wedding.uuid,
-  });
+  const { data: suppliersResponse } = useLogisticsSuppliersList();
 
   const budget = budgetResponse?.data;
   const tasks = tasksResponse?.data?.items || [];
@@ -44,24 +42,40 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
   const diffTime = eventDate.getTime() - today.getTime();
   const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
-  const budgetPercentage = budget?.total_estimated
-    ? Math.round((budget.total_spent / budget.total_estimated) * 100)
-    : 0;
+  const budgetPercentage =
+    budget && Number(budget.total_estimated) > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            Math.round(
+              (Number(budget.total_overall_spent || 0) /
+                Number(budget.total_estimated)) *
+                100,
+            ),
+          ),
+        )
+      : 0;
 
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.status === "done").length;
+  const completedTasks = tasks.filter((t) => t.is_completed).length;
   const tasksPercentage =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const totalSuppliers = suppliers.length;
-  const signedSuppliers = suppliers.filter(
-    (s) => s.contract_status === "signed",
-  ).length;
+  const signedSuppliers = suppliers.filter((s) => s.is_active).length;
   const suppliersPercentage =
-    totalSuppliers > 0 ? Math.round((signedSuppliers / totalSuppliers) * 100) : 0;
+    totalSuppliers > 0
+      ? Math.round((signedSuppliers / totalSuppliers) * 100)
+      : 0;
 
   const urgentTasks = tasks
-    .filter((t) => t.status !== "done" && t.priority === "high")
+    .filter((t) => !t.is_completed)
+    .sort((a, b) => {
+      const dateA = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+      const dateB = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+      return dateA - dateB;
+    })
     .slice(0, 3);
 
   // Temporary mock for upcoming payments as they are not yet fully available in a consolidated way

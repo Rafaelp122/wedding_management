@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { StatsCards } from "@/features/dashboard/components/StatsCards";
 import { RecentWeddings } from "@/features/dashboard/components/RecentWeddings";
@@ -33,11 +33,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            <Skeleton className="h-[400px] lg:col-span-2 rounded-xl shadow-sm" />
-            <Skeleton className="h-[400px] rounded-xl shadow-sm" />
+            <Skeleton className="h-100 lg:col-span-2 rounded-xl shadow-sm" />
+            <Skeleton className="h-100 rounded-xl shadow-sm" />
           </div>
 
-          <Skeleton className="h-[350px] w-full rounded-xl shadow-sm" />
+          <Skeleton className="h-87.5 w-full rounded-xl shadow-sm" />
         </div>
       </div>
     );
