@@ -44,10 +44,16 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
 
   const budgetPercentage =
     budget && Number(budget.total_estimated) > 0
-      ? Math.round(
-          (Number(budget.total_overall_spent || 0) /
-            Number(budget.total_estimated)) *
-            100,
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            Math.round(
+              (Number(budget.total_overall_spent || 0) /
+                Number(budget.total_estimated)) *
+                100,
+            ),
+          ),
         )
       : 0;
 
@@ -65,6 +71,11 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
 
   const urgentTasks = tasks
     .filter((t) => !t.is_completed)
+    .sort((a, b) => {
+      const dateA = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+      const dateB = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+      return dateA - dateB;
+    })
     .slice(0, 3);
 
   // Temporary mock for upcoming payments as they are not yet fully available in a consolidated way
