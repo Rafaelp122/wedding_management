@@ -1,1 +1,24 @@
-{ "version": "2.0.0", "tasks": [ { "label": "🟢 Run Backend", "type": "shell", "command": "cd backend && uv run python manage.py runserver", "isBackground": true, "presentation": { "group": "wedding", "panel": "shared" } }, { "label": "🔵 Run Frontend", "type": "shell", "command": "cd frontend && npm install && npm run dev", "isBackground": true, "presentation": { "group": "wedding", "panel": "shared" } }, { "label": "🚀 Run Full Project", "dependsOn": ["🟢 Run Backend", "🔵 Run Frontend"], "group": { "kind": "build", "isDefault": true } } ] }
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🟢 Run Backend",
+      "type": "shell",
+      "command": "cd backend && uv run python manage.py runserver",
+      "isBackground": true,
+      "presentation": { "group": "wedding", "panel": "shared" }
+    },
+    {
+      "label": "🔵 Run Frontend",
+      "type": "shell",
+      "command": "cd frontend && npm install && npm run dev",
+      "isBackground": true,
+      "presentation": { "group": "wedding", "panel": "shared" }
+    },
+    {
+      "label": "🚀 Run Full Project",
+      "dependsOn": ["🟢 Run Backend", "🔵 Run Frontend"],
+      "group": { "kind": "build", "isDefault": true }
+    }
+  ]
+}
