@@ -39,7 +39,7 @@ export function WeddingMonthlyChart({ weddings }: WeddingMonthlyChartProps) {
         <CardTitle className="text-base font-semibold">Eventos por Mês</CardTitle>
         <CardDescription>Distribuição de casamentos ao longo de {currentYear}</CardDescription>
       </CardHeader>
-      <CardContent className="h-[300px] w-full pt-4">
+      <CardContent className="h-75 w-full pt-4">
         {hasData ? (
           <ChartContainer config={chartConfig} className="h-full w-full">
             <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
