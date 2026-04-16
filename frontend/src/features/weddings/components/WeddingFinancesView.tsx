@@ -65,10 +65,11 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
     );
   }
 
-  const formatCurrency = (value: number) => formatCurrencyBR(value);
+  const formatCurrency = (value: number) => `R$ ${formatCurrencyBR(value)}`;
 
   const budgetUsage =
     totalEstimated > 0 ? Math.round((totalSpent / totalEstimated) * 100) : 0;
+  const clampedBudgetUsage = Math.min(100, Math.max(0, budgetUsage));
 
   const chartData = categories.map((cat) => ({
     name: cat.name,
@@ -137,7 +138,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
                   {budgetUsage}%
                 </span>
               </div>
-              <Progress value={budgetUsage} className="h-1.5" />
+              <Progress value={clampedBudgetUsage} className="h-1.5" />
             </div>
           </CardContent>
         </Card>
@@ -280,23 +281,14 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
           {expenses.length > 0 ? (
             expenses.slice(0, 10).map((expense) => {
-              // ExpenseOut doesn't have a date field in the generated model, using current date as fallback
-              const date = new Date();
-              const formattedDay = date.getDate().toString().padStart(2, "0");
-              const formattedMonth = date
-                .toLocaleString("pt-BR", { month: "short" })
-                .toUpperCase();
-
               return (
                 <div
                   key={expense.uuid}
                   className="px-6 py-4 flex items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 text-xs font-medium text-zinc-400 dark:text-zinc-500 text-center">
-                      {formattedDay}
-                      <br />
-                      {formattedMonth}
+                    <div className="w-10 h-10 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-zinc-400" />
                     </div>
                     <div className="w-2 h-2 rounded-full bg-green-500" />
                     <div>
