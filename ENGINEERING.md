@@ -2,32 +2,48 @@
 
 This file serves as the Single Source of Truth for all AI agents and developers working on this project.
 
-## Tech Stack
+## 🚀 Tech Stack
 
 - **Backend**: Python 3.12+, Django, Django Ninja (Strict: No DRF).
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Shadcn UI.
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, shadcn/ui.
 - **Tools**: Orval (Contract-driven API), Docker, Makefile, uv (Python pkg manager).
+- **Infrastructure**: PostgreSQL (Neon), Cloud Run, R2 (Storage via ADR-004).
 
-## Architectural Rules (Strict)
+## 🏗 Architectural Rules (Strict)
 
 ### Backend (apps/)
-
-- **Service Layer Pattern**: Endpoints in `api.py` must only call functions in `services.py`.
-- **Multi-tenancy**: Every service must explicitly receive `user=request.user` for filtering.
-- **Operations**: Always define `operation_id` in routers (e.g., `weddings_list`).
-- **Data Integrity**: Models inherit from `BaseModel` which executes `full_clean()` on `save()`.
-- **Deletion**: Hard delete is the default. Do not implement soft delete.
-- **Error Handling**: Use `MUTATION_ERROR_RESPONSES` and `READ_ERROR_RESPONSES` from core.
+- **Service Layer Pattern**: Endpoints in `api.py` MUST ONLY call functions in `services.py`. Lógica de negócio nunca fica na API.
+- **Multi-tenancy**: Todo serviço deve explicitamente receber `user=request.user` para filtragem obrigatória (ver ADR-009).
+- **Data Integrity**: Models herdam de `BaseModel` que executa `full_clean()` no `save()` (ver ADR-011).
+- **Operations**: Sempre defina `operation_id` nos routers (ex: `weddings_list`) para geração correta do Orval.
+- **Typing**: O projeto usa tipagem estática rigorosa. O `mypy` deve passar sem erros.
 
 ### Frontend (src/)
+- **Feature-Based Architecture**: Organizado por features em `src/features/<feature_name>/`.
+  - Estrutura: `/components`, `/hooks`, `/pages`, `/types.ts`, `/utils`.
+- **shadcn/ui**:
+  - Componentes de UI base residem em `src/components/ui/`.
+  - Componentes de negócio residem na pasta da feature.
+  - Priorize composição e Tailwind em vez de alterar arquivos da pasta `ui` diretamente.
+- **API Consumption**: PROIBIDO usar `fetch` ou `axios` manualmente. Use exclusivamente hooks gerados pelo Orval em `src/api/generated/`.
+- **Forms**: Use `react-hook-form` integrado com `zod` para validação.
+- **Icons**: Use exclusivamente `lucide-react`.
 
-- **Feature-Based Architecture**: Organized by features in `src/features/<feature_name>/`.
-  - Structure: `/components`, `/hooks`, `/pages`, `/types.ts`, `/utils`.
-- **API Consumption**: FORBIDDEN to use `fetch` or `axios` manually. Use exclusively Orval-generated hooks in `src/api/generated/`.
-- **Typing**: Strict TypeScript in all components and hooks.
+## 🧪 Testing Standards (Mandatory)
 
-## Workflow Conventions
+### 🐍 Backend (Pytest)
+- **Factories Over DB**: É PROIBIDO o uso de `.objects.create()` em testes. Use as classes em `backend/apps/*/tests/factories.py`.
+- **Isolation**: Testes de serviço devem ser unitários/isolados. Use Factories para dados de apoio.
+- **Coverage**: Toda função em `services.py` deve ter pelo menos um teste de sucesso e um de falha (exceção esperada).
 
-- **Commits**: Follow Conventional Commits (e.g., `feat(weddings): add list endpoint`).
-- **State Management**: Global state via Zustand in `src/stores/`.
-- **Style**: Follow Ruff (Python) and ESLint (TS) standards.
+### ⚛️ Frontend (Vitest & RTL)
+- **User-Centric**: Teste o comportamento do usuário. Priorize queries de acessibilidade (`getByRole`, `getByLabelText`).
+- **Mocking**: Mocke os hooks do Orval usando `vi.mock`. Não faça chamadas reais de API em testes.
+- **Data**: Use `faker` para gerar payloads de teste e mocks de API consistentes.
+
+## 🔄 Workflow Conventions
+
+- **Commits**: Siga o padrão Conventional Commits (ex: `feat(weddings): add list endpoint`).
+- **ADRs**: Mudanças estruturais DEVEM gerar um novo arquivo em `docs/ADR/` seguindo a numeração sequencial.
+- **Lint/Format**: Execute `make lint` ou `ruff check .` antes de qualquer push. O pre-commit deve estar ativo.
+- **Secrets**: Nunca commite segredos. Usamos `detect-secrets` para prevenir vazamentos.
