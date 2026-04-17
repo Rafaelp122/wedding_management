@@ -79,7 +79,7 @@ jobs:
           use_gemini_code_assist: "${{ vars.GOOGLE_GENAI_USE_GCA }}"
           use_vertex_ai: "${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}"
           # Configurações de Fallback
-          gemini_model: "gemini-3-flash"
+          gemini_model: "gemini-3-flash-preview"
           prompt: "${{ env.GEMINI_PROMPT }}"
           settings: |-
             {
@@ -101,7 +101,7 @@ jobs:
         uses: "google-github-actions/run-gemini-cli@v0"
         with:
           gemini_api_key: "${{ secrets.GEMINI_API_KEY }}"
-          gemini_model: "gemini-3.1-flash-lite"
+          gemini_model: "gemini-3.1-flash-lite-preview"
           prompt: "${{ env.GEMINI_PROMPT }}"
           settings: |-
             {
@@ -116,12 +116,12 @@ jobs:
               }
             }
 
-      - name: "🛡️ Fallback Final (Tentativa 3: Gemma 3 27B)"
+      - name: "🛡️ Fallback Final (Tentativa 3: Gemma 3 31B)"
         if: steps.rev_2.outcome == 'failure'
         uses: "google-github-actions/run-gemini-cli@v0"
         with:
           gemini_api_key: "${{ secrets.GEMINI_API_KEY }}"
-          gemini_model: "gemma-3-27b"
+          gemini_model: "gemma-4-31b-it"
           prompt: "${{ env.GEMINI_PROMPT }}"
           settings: |-
             {
