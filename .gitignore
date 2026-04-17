@@ -94,6 +94,7 @@ pnpm-debug.log*
 .yarn
 frontend/dist/
 frontend/dist-ssr/
+frontend/coverage/
 .DS_Store
 Thumbs.db
 logs
