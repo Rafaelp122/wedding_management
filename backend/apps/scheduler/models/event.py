@@ -1,11 +1,10 @@
 from django.db import models
 
-from apps.core.mixins import WeddingOwnedMixin
+from apps.core.mixins import PlannerOwnedMixin, WeddingOwnedMixin
 from apps.core.models import BaseModel
-from apps.users.models import User
 
 
-class Event(BaseModel, WeddingOwnedMixin):
+class Event(BaseModel, PlannerOwnedMixin, WeddingOwnedMixin):
     """Modelo que representa um evento/compromisso no calendário."""
 
     class TypeChoices(models.TextChoices):
@@ -16,10 +15,6 @@ class Event(BaseModel, WeddingOwnedMixin):
         VISIT = "visita", "Visita Técnica"
         TASTING = "degustacao", "Degustação"
         OTHER = "outro", "Outro"
-
-    planner = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="event_records"
-    )
 
     title = models.CharField(max_length=255, verbose_name="Título")
     location = models.CharField(max_length=255, blank=True, verbose_name="Local")

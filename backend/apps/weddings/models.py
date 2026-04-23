@@ -4,8 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from apps.core.mixins import PlannerOwnedMixin
 from apps.core.models import BaseModel
-from apps.users.models import User
 
 
 def validate_future_date(value: date) -> None:
@@ -13,15 +13,12 @@ def validate_future_date(value: date) -> None:
         raise ValidationError("A data do casamento não pode ser no passado.")
 
 
-class Wedding(BaseModel):
+class Wedding(BaseModel, PlannerOwnedMixin):
     class StatusChoices(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "Em Andamento"
         COMPLETED = "COMPLETED", "Concluído"
         CANCELED = "CANCELED", "Cancelado"
 
-    planner = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="wedding_records"
-    )
     groom_name = models.CharField(max_length=100)
     bride_name = models.CharField(max_length=100)
     date = models.DateField(validators=[validate_future_date])

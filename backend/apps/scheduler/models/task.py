@@ -1,16 +1,11 @@
 from django.db import models
 
-from apps.core.mixins import WeddingOwnedMixin
+from apps.core.mixins import PlannerOwnedMixin, WeddingOwnedMixin
 from apps.core.models import BaseModel
-from apps.users.models import User
 
 
-class Task(BaseModel, WeddingOwnedMixin):
+class Task(BaseModel, PlannerOwnedMixin, WeddingOwnedMixin):
     """Modelo que representa um item no checklist do casamento."""
-
-    planner = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="task_records"
-    )
 
     title = models.CharField(max_length=255, verbose_name="Título da Tarefa")
     description = models.TextField(blank=True, verbose_name="Descrição detalhada")
