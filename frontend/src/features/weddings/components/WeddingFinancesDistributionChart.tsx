@@ -19,15 +19,10 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { parseDecimal } from "@/features/shared/utils/formatters";
-
-interface CategoryData {
-  name: string;
-  allocated_budget?: string | null;
-  total_spent?: string | null;
-}
+import type { BudgetCategoryOut } from "@/api/generated/v1/models";
 
 interface WeddingFinancesDistributionChartProps {
-  categories: CategoryData[];
+  categories: BudgetCategoryOut[];
 }
 
 export function WeddingFinancesDistributionChart({

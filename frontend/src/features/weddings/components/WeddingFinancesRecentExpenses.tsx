@@ -8,16 +8,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrencyBR } from "@/features/shared/utils/formatters";
-
-interface ExpenseData {
-  uuid: string;
-  description: string;
-  category: string;
-  actual_amount: string | number;
-}
+import type { ExpenseOut } from "@/api/generated/v1/models";
 
 interface WeddingFinancesRecentExpensesProps {
-  expenses: ExpenseData[];
+  expenses: ExpenseOut[];
 }
 
 export function WeddingFinancesRecentExpenses({
