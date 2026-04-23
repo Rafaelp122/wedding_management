@@ -11,17 +11,19 @@ _ModelT = TypeVar("_ModelT", bound=models.Model)
 class BaseQuerySet(models.QuerySet[_ModelT]):
     def for_user(self, user: AuthContextUser) -> "BaseQuerySet[_ModelT]":
         """Filtra registos baseando-se na posse (Planner ou Wedding)."""
-        # Escudo contra AnonymousUser (usado pelo drf-spectacular) ---
+        # Escudo contra AnonymousUser
         if not user.is_authenticated:
             return self.none()
 
-        model = self.model
-        field_names = [f.name for f in model._meta.get_fields()]
+        from apps.core.mixins import PlannerOwnedMixin, WeddingOwnedMixin
 
-        if "wedding" in field_names:
+        model = self.model
+
+        if issubclass(model, WeddingOwnedMixin):
             return self.filter(wedding__planner=user)
-        if "planner" in field_names:
+        if issubclass(model, PlannerOwnedMixin):
             return self.filter(planner=user)
+
         return self
 
 

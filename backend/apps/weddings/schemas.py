@@ -10,6 +10,8 @@ class WeddingIn(Schema):
     Desacoplado de Modelos.
     """
 
+    model_config = {"extra": "ignore"}
+
     groom_name: str
     bride_name: str
     date: datetime.date
@@ -21,6 +23,8 @@ class WeddingPatchIn(Schema):
     """
     Schema puro e explícito para ATUALIZAÇÃO de Casamento.
     """
+
+    model_config = {"extra": "ignore"}
 
     groom_name: str | None = None
     bride_name: str | None = None

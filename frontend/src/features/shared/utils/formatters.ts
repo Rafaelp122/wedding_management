@@ -35,3 +35,12 @@ export function formatDateTimeBR(value: string): string {
 export function formatCurrencyBR(value: number): string {
   return currencyFormatter.format(value);
 }
+
+export function parseDecimal(value?: string | null): number {
+  if (!value) {
+    return 0;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}

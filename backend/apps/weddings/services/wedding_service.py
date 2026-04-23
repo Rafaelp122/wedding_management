@@ -14,7 +14,7 @@ from apps.core.exceptions import (
 )
 from apps.core.types import AuthContextUser
 
-from .models import Wedding
+from ..models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -48,11 +48,14 @@ class WeddingService:
         planner = require_user(user)
         logger.info(f"Criando casamento para planner_id={planner.id}")
 
-        # Limpeza: Remove campos que não pertencem ao modelo Wedding
-        data.pop("total_estimated", None)
+        # Filtra apenas os campos que pertencem ao modelo Wedding (Segurança e Robustez)
+        # Isso permite que o Service receba dados extras do Schema ou de Testes
+        # sem falhar na instanciação do Model.
+        valid_fields = {f.name for f in Wedding._meta.concrete_fields}
+        model_data = {k: v for k, v in data.items() if k in valid_fields}
 
         # Instanciação e Validação do Casamento
-        wedding = Wedding(planner=planner, **data)
+        wedding = Wedding(planner=planner, **model_data)
         try:
             wedding.save()
         except DjangoValidationError as e:
@@ -80,12 +83,10 @@ class WeddingService:
             f"Atualizando casamento uuid={instance.uuid} por planner_id={planner.id}"
         )
 
-        # Defesa contra campos financeiros que não pertencem ao Wedding
-        data.pop("total_estimated", None)
-        data.pop("planner", None)
-
+        valid_fields = {f.name for f in Wedding._meta.concrete_fields}
         for field, value in data.items():
-            setattr(instance, field, value)
+            if field in valid_fields:
+                setattr(instance, field, value)
 
         # Validação estrita (regras de negócio do Model)
         try:
