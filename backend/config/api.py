@@ -7,9 +7,18 @@ from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 
 from apps.core.exceptions import ApplicationError
-from apps.finances.api import FinancesController
-from apps.logistics.api import LogisticsController
-from apps.scheduler.api import SchedulerController
+from apps.finances.api import (
+    BudgetCategoryController,
+    BudgetController,
+    ExpenseController,
+    InstallmentController,
+)
+from apps.logistics.api import (
+    ContractController,
+    ItemController,
+    SupplierController,
+)
+from apps.scheduler.api import EventController, TaskController
 from apps.users.api import router as auth_router
 from apps.weddings.api import WeddingController
 
@@ -36,10 +45,19 @@ def application_error_handler(request: HttpRequest, exc: ApplicationError):
 # Registra o router de autenticação customizado (retorna user data)
 api.add_router("/auth/", auth_router, auth=None)
 
-# Registra os controllers e routers das apps
+# Registra os controllers das apps
 api.register_controllers(
     WeddingController,
-    LogisticsController,
-    FinancesController,
-    SchedulerController,
+    # Finanças
+    BudgetController,
+    BudgetCategoryController,
+    ExpenseController,
+    InstallmentController,
+    # Logística
+    SupplierController,
+    ContractController,
+    ItemController,
+    # Agenda
+    EventController,
+    TaskController,
 )
