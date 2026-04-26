@@ -15,3 +15,14 @@ MUTATION_ERROR_RESPONSES = {
     409: ErrorResponse,
     422: ErrorResponse,
 }
+
+
+# Categorias padrão de orçamento criadas automaticamente ao inicializar um casamento
+DEFAULT_BUDGET_CATEGORIES = [
+    "Espaço e Buffet",
+    "Decoração e Flores",
+    "Fotografia e Vídeo",
+    "Assessoria",
+    "Música e Entretenimento",
+    "Vestuário e Acessórios",
+]
