@@ -264,7 +264,7 @@ Ver [ADR-003](ADR/003-why-r2.md) e [ADR-004](ADR/004-presigned-urls.md).
 
 ## 3. Padrões de Código e Arquitetura
 
-### 3.1 Service Layer Pattern
+### 3.1 Service Layer & Controller Pattern
 
 **Separação de responsabilidades:**
 
@@ -278,49 +278,30 @@ def create_expense(request, payload: ExpenseIn):
         Installment.objects.create(...)
     return expense
 
-# ✅ CORRETO: Lógica no service
-@router.post("/expenses")
-def create_expense(request, payload: ExpenseIn):
-    return ExpenseService.create_with_installments(payload.dict())
+# ✅ CORRETO: Controller delegando para Service Puro
+@api_controller("/expenses")
+class ExpenseController:
+    @route.post("/")
+    def create_expense(self, payload: ExpenseIn):
+        # A segurança (user/auth) é gerida pelo controller/dependência
+        return ExpenseService.create(user=self.context.request.user, data=payload.model_dump())
 
-# apps/finances/services.py
-class ExpenseService:
-    @staticmethod
-    @transaction.atomic
-    def create_with_installments(data: dict) -> Expense:
-        """
-        Cria expense e gera installments com tolerância zero.
+    @route.patch("/{expense_uuid}/")
+    def update_expense(self, expense_uuid: UUID, payload: ExpensePatchIn):
+        # 1. Autorização Determinística (Busca + Validação de Posse)
+        expense = get_expense(self.context.request, expense_uuid)
 
-        Validações:
-        - Soma de parcelas = valor total
-        - Contract amount = Expense amount (se vinculado)
-        - Categoria pertence ao mesmo wedding
-        """
-        expense = Expense.objects.create(**data)
-
-        # Cálculo com tolerância zero (BR-F01)
-        amounts = calculate_installments(
-            expense.actual_amount,
-            expense.installments_count
-        )
-
-        for idx, amount in enumerate(amounts, start=1):
-            Installment.objects.create(
-                expense=expense,
-                amount=amount,
-                due_date=expense.created_at.date() + timedelta(days=30 * idx)
-            )
-
-        return expense
+        # 2. Negócio Puro (Service recebe instância pronta)
+        return ExpenseService.update(instance=expense, data=payload.model_dump(exclude_unset=True))
 ```
 
 **Vantagens:**
 
-- ✅ Testável: Service pode ser testado isoladamente
-- ✅ Reutilizável: Chamado de views, tasks, management commands
-- ✅ Manutenível: Lógica de negócio em um único lugar
+- ✅ **Services Puros:** Focados apenas em regras de negócio, sem conhecimento de HTTP ou autorização por UUID.
+- ✅ **Segurança por Design:** A autorização é centralizada em funções de dependência (ex: `get_expense`) e auditada via testes de AST.
+- ✅ **Testabilidade:** Unit tests de serviços não exigem mockar requests ou estados complexos de banco de dados para autorização.
 
-Ver [ADR-006](ADR/006-service-layer.md).
+Ver [ADR-006](ADR/006-service-layer.md) e [ADR-015](ADR/015-controller-dependency-injection.md).
 
 ---
 
