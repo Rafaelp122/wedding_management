@@ -1,3 +1,4 @@
+import builtins
 import logging
 from typing import Any
 from uuid import UUID
@@ -5,7 +6,6 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
@@ -29,32 +29,9 @@ class BudgetCategoryService:
         user: AuthContextUser, wedding_id: UUID | None = None
     ) -> QuerySet[BudgetCategory]:
         """
-        Lista categorias de orçamento de um planner.
-
-        Nota de Arquitetura — ``wedding_id``:
-        O parâmetro opcional ``wedding_id`` é uma conveniência de filtragem
-        contextual, **não** um mecanismo de segurança. A multitenancy é
-        garantida em todos os casos por ``BudgetCategory.objects.for_user``
-        (herdado via ``WeddingOwnedMixin``), que isola os dados pelo ``planner``
-        autenticado.
-
-        Por que este filtro vive aqui e não na rota?
-        ──────────────────────────────────────────────
-        A regra de negócio é "cada casamento tem suas categorias isoladas".
-        Filtrar por casamento é, portanto, lógica de domínio — não deve ser
-        responsabilidade da camada de API (rotas) conhecer esse contexto.
-        A rota apenas delega o parâmetro de query ao service, que decide como
-        aplicá-lo sobre o queryset já protegido por tenancy.
-
-        Args:
-            user: Usuário autenticado (Planner).
-            wedding_id: Quando informado, restringe as categorias a um
-                casamento específico. O UUID do wedding é validado
-                implicitamente pelo .for_user() — se o usuário não tem acesso
-                ao casamento, o queryset retorna vazio.
-
-        Returns:
-            Queryset de ``BudgetCategory``, sempre escopado ao planner.
+        Lista categorias de orçamento de um planner,
+        opcionalmente filtradas por casamento.
+        A multitenancy é garantida pelo manager .for_user().
         """
         qs = BudgetCategory.objects.for_user(user).select_related("budget", "wedding")
         if wedding_id:
@@ -63,6 +40,9 @@ class BudgetCategoryService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> BudgetCategory:
+        """
+        Recupera uma categoria específica validando a posse.
+        """
         try:
             return (
                 BudgetCategory.objects.for_user(user)
@@ -71,139 +51,71 @@ class BudgetCategoryService:
             )
         except BudgetCategory.DoesNotExist as e:
             raise ObjectNotFoundError(
-                detail="Categoria de orçamento não encontrada."
+                detail="Categoria de orçamento não encontrada.",
+                code="budget_category_not_found",
             ) from e
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> BudgetCategory:
-        planner = require_user(user)
-        logger.info(
-            f"Iniciando criação de Categoria de Orçamento para planner_id={planner.id}"
-        )
+        from .budget_service import BudgetService
 
-        # 1. Resolução Segura do Orçamento Pai (Suporta Instância ou UUID)
-        budget_input = data.pop("budget", None)
+        logger.info("Criando categoria de orçamento")
 
-        if isinstance(budget_input, Budget):
-            budget = budget_input
-        else:
-            try:
-                # Segurança estrita: Garante posse do planner sobre o orçamento
-                budget = Budget.objects.for_user(planner).get(uuid=budget_input)
-            except Budget.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de uso de orçamento inválido/negado: {budget_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Orçamento mestre não encontrado ou acesso negado.",
-                    code="budget_not_found_or_denied",
-                ) from e
+        # O schema envia 'budget' (UUID), resolvemos a instância com segurança
+        budget_input = data.pop("budget")
+        budget = BudgetService.get(budget_input, user)
+        wedding = budget.wedding
 
-        # 2. Injeção de Contexto e Instanciação
-        category = BudgetCategory(wedding=budget.wedding, budget=budget, **data)
-
-        # 3. Delegação de Validação ao Model
-        # O método _validate_budget_ceiling que estava aqui DEVE ser movido
-        # para dentro de BudgetCategory.clean(). Se o teto estourar, o Model
-        # levantará ValidationError, e nosso Handler Global cuidará disso.
+        category = BudgetCategory(wedding=wedding, budget=budget, **data)
         category.save()
 
-        logger.info(f"Categoria de Orçamento criada com sucesso: uuid={category.uuid}")
         return category
 
     @staticmethod
     @transaction.atomic
-    def update(
-        user: AuthContextUser, instance: BudgetCategory, data: dict[str, Any]
-    ) -> BudgetCategory:
-        planner = require_user(user)
-        logger.info(
-            f"Atualizando Categoria uuid={instance.uuid} por planner_id={planner.id}"
-        )
+    def update(instance: BudgetCategory, data: dict[str, Any]) -> BudgetCategory:
+        logger.info(f"Atualizando categoria uuid={instance.uuid}")
 
-        # Proteção contra sequestro/mudança de árvore financeira
-        data.pop("budget", None)
+        # Proteção: não se muda casamento ou orçamento de uma categoria
         data.pop("wedding", None)
-        data.pop("planner", None)
+        data.pop("budget", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # A revalidação do teto financeiro com o novo 'allocated_budget'
-        # ocorre automaticamente dentro do full_clean() do Model.
         instance.save()
-
-        logger.info(f"Categoria uuid={instance.uuid} atualizada com sucesso.")
         return instance
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, instance: BudgetCategory, data: dict[str, Any]
-    ) -> BudgetCategory:
-        return BudgetCategoryService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
-    def delete(user: AuthContextUser, instance: BudgetCategory) -> None:
-        planner = require_user(user)
-        logger.info(
-            f"Tentativa de deleção da Categoria uuid={instance.uuid} "
-            f"por planner_id={planner.id}"
-        )
+    def delete(instance: BudgetCategory) -> None:
+        logger.info(f"Deletando categoria uuid={instance.uuid}")
 
         try:
             instance.delete()
-            logger.warning(
-                f"Categoria uuid={instance.uuid} DESTRUÍDA por planner_id={planner.id}"
-            )
-
         except ProtectedError as e:
-            # Substitui a checagem manual .exists() pela trava real do banco de dados
-            logger.error(
-                f"Falha de integridade ao deletar Categoria uuid={instance.uuid}: "
-                "Possui despesas ativas."
-            )
             raise DomainIntegrityError(
-                detail=(
-                    "Não é possível apagar esta categoria pois já existem "
-                    "despesas vinculadas a ela. Remova as despesas primeiro."
-                ),
-                code="category_protected_error",
+                detail="Não é possível apagar esta categoria pois existem contratos "
+                "ou despesas vinculadas a ela.",
+                code="budget_category_protected",
             ) from e
 
     @staticmethod
-    def setup_defaults(user: AuthContextUser, wedding: Wedding, budget: Budget) -> None:
-        """
-        Cria as categorias iniciais obrigatórias para um novo casamento.
-
-        Usa bulk_create para inserir todas as categorias em uma única query,
-        evitando o overhead de full_clean() + validate_unique() + INSERT
-        individual para cada uma das 6 categorias padrão.
-
-        Isso é seguro porque os dados são hardcoded e controlados internamente,
-        sem input do usuário.
-        """
-        DEFAULT_CATEGORIES = [
-            "Espaço e Buffet",
-            "Decoração e Flores",
-            "Fotografia e Vídeo",
-            "Música e Iluminação",
-            "Assessoria",
-            "Trajes e Beleza",
-        ]
+    @transaction.atomic
+    def setup_defaults(
+        wedding: Wedding, budget: Budget
+    ) -> builtins.list["BudgetCategory"]:
+        from apps.core.constants import DEFAULT_BUDGET_CATEGORIES
 
         logger.info(f"Gerando categorias padrão para o casamento {wedding.uuid}")
 
-        categories = [
-            BudgetCategory(
-                wedding=wedding,
-                budget=budget,
-                name=name,
-                allocated_budget=0,
+        categories = []
+        for name in DEFAULT_BUDGET_CATEGORIES:
+            cat = BudgetCategory(
+                wedding=wedding, budget=budget, name=name, allocated_budget=0
             )
-            for name in DEFAULT_CATEGORIES
-        ]
+            cat.save()
+            categories.append(cat)
 
-        BudgetCategory.objects.bulk_create(categories)
+        return categories

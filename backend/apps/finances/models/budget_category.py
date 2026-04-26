@@ -81,9 +81,12 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
                 if self.pk is not None
                 else self.budget.categories.all()
             )
-            allocated_siblings = sum(cat.allocated_budget for cat in siblings)
-            if allocated_siblings + self.allocated_budget > budget_total:
+            # Garantimos que None é tratado como 0 na soma
+            allocated_siblings = sum(cat.allocated_budget or 0 for cat in siblings)
+            current_allocated = self.allocated_budget or 0
+
+            if allocated_siblings + current_allocated > budget_total:
                 raise ValidationError(
-                    f"A soma das categorias alocadas ({allocated_siblings + self.allocated_budget}) "  # noqa
+                    f"A soma das categorias alocadas ({allocated_siblings + current_allocated}) "  # noqa
                     f"excede o teto do orçamento ({budget_total})."
                 )

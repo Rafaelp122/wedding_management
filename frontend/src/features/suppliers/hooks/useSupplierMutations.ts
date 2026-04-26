@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   useLogisticsSuppliersCreate,
   useLogisticsSuppliersDelete,
-  useLogisticsSuppliersPartialUpdate,
+  useLogisticsSuppliersUpdate,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 import type { SupplierOut } from "@/api/generated/v1/models";
 import { getApiErrorInfo } from "@/api/error-utils";
@@ -33,7 +33,7 @@ export function useSupplierMutations({
   refetchSuppliers,
 }: UseSupplierMutationsParams) {
   const createSupplierMutation = useLogisticsSuppliersCreate();
-  const updateSupplierMutation = useLogisticsSuppliersPartialUpdate();
+  const updateSupplierMutation = useLogisticsSuppliersUpdate();
   const deleteSupplierMutation = useLogisticsSuppliersDelete();
 
   const handleSaveSupplier = async () => {
@@ -56,7 +56,7 @@ export function useSupplierMutations({
         }
 
         await updateSupplierMutation.mutateAsync({
-          uuid: formState.uuid,
+          supplierUuid: formState.uuid,
           data: payload,
         });
         toast.success("Fornecedor atualizado com sucesso!");
@@ -79,7 +79,9 @@ export function useSupplierMutations({
     }
 
     try {
-      await deleteSupplierMutation.mutateAsync({ uuid: supplierToDelete.uuid });
+      await deleteSupplierMutation.mutateAsync({
+        supplierUuid: supplierToDelete.uuid,
+      });
       toast.success("Fornecedor removido com sucesso!");
       setSupplierToDelete(null);
       await refetchSuppliers();

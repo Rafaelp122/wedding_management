@@ -36,9 +36,6 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Lista todos os casamentos gerenciados pelo Planner logado.
-
-Retorna apenas os registros criados pelo usuário autenticado.
-Garante o isolamento de dados entre diferentes Planners (Multi-tenancy).
  * @summary List Weddings
  */
 export const weddingsList = (
@@ -180,10 +177,6 @@ export function useWeddingsList<
 
 /**
  * Cria um novo casamento e inicializa sua estrutura financeira.
-
-Ao criar um casamento, o Service Layer automaticamente:
-- Associa o Planner logado como dono do registro.
-- Cria um **Budget (Orçamento)** inicial zerado para o evento.
  * @summary Create Wedding
  */
 export const weddingsCreate = (
@@ -274,31 +267,28 @@ export const useWeddingsCreate = <
 };
 /**
  * Retorna os detalhes completos de um casamento específico.
-
-Realiza a busca pelo UUID e valida se o registro pertence ao usuário.
-Caso não exista ou pertença a outro Planner, retorna um erro 404.
  * @summary Retrieve Wedding
  */
 export const weddingsRead = (
-  uuid: string,
+  weddingUuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<WeddingOut>(
-    { url: `/api/v1/weddings/${uuid}/`, method: "GET", signal },
+    { url: `/api/v1/weddings/${weddingUuid}/`, method: "GET", signal },
     options,
   );
 };
 
-export const getWeddingsReadQueryKey = (uuid: string) => {
-  return [`/api/v1/weddings/${uuid}/`] as const;
+export const getWeddingsReadQueryKey = (weddingUuid: string) => {
+  return [`/api/v1/weddings/${weddingUuid}/`] as const;
 };
 
 export const getWeddingsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof weddingsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  uuid: string,
+  weddingUuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof weddingsRead>>, TError, TData>
@@ -308,16 +298,17 @@ export const getWeddingsReadQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getWeddingsReadQueryKey(uuid);
+  const queryKey =
+    queryOptions?.queryKey ?? getWeddingsReadQueryKey(weddingUuid);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof weddingsRead>>> = ({
     signal,
-  }) => weddingsRead(uuid, requestOptions, signal);
+  }) => weddingsRead(weddingUuid, requestOptions, signal);
 
   return {
     queryKey,
     queryFn,
-    enabled: !!uuid,
+    enabled: !!weddingUuid,
     ...queryOptions,
   } as UseQueryOptions<
     Awaited<ReturnType<typeof weddingsRead>>,
@@ -335,7 +326,7 @@ export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  uuid: string,
+  weddingUuid: string,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof weddingsRead>>, TError, TData>
@@ -358,7 +349,7 @@ export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  uuid: string,
+  weddingUuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof weddingsRead>>, TError, TData>
@@ -381,7 +372,7 @@ export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  uuid: string,
+  weddingUuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof weddingsRead>>, TError, TData>
@@ -400,7 +391,7 @@ export function useWeddingsRead<
   TData = Awaited<ReturnType<typeof weddingsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  uuid: string,
+  weddingUuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof weddingsRead>>, TError, TData>
@@ -411,7 +402,7 @@ export function useWeddingsRead<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getWeddingsReadQueryOptions(uuid, options);
+  const queryOptions = getWeddingsReadQueryOptions(weddingUuid, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -423,20 +414,17 @@ export function useWeddingsRead<
 
 /**
  * Atualiza informações específicas de um casamento.
-
-Permite modificar campos como nomes dos noivos, data e local sem afetar o restante.
-Os dados são validados pelo Service antes da persistência.
- * @summary Partial Update Wedding
+ * @summary Update Wedding
  */
-export const weddingsPartialUpdate = (
-  uuid: string,
+export const weddingsUpdate = (
+  weddingUuid: string,
   weddingPatchIn: WeddingPatchIn,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<WeddingOut>(
     {
-      url: `/api/v1/weddings/${uuid}/`,
+      url: `/api/v1/weddings/${weddingUuid}/`,
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       data: weddingPatchIn,
@@ -446,24 +434,24 @@ export const weddingsPartialUpdate = (
   );
 };
 
-export const getWeddingsPartialUpdateMutationOptions = <
+export const getWeddingsUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+    Awaited<ReturnType<typeof weddingsUpdate>>,
     TError,
-    { uuid: string; data: WeddingPatchIn },
+    { weddingUuid: string; data: WeddingPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+  Awaited<ReturnType<typeof weddingsUpdate>>,
   TError,
-  { uuid: string; data: WeddingPatchIn },
+  { weddingUuid: string; data: WeddingPatchIn },
   TContext
 > => {
-  const mutationKey = ["weddingsPartialUpdate"];
+  const mutationKey = ["weddingsUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -473,66 +461,59 @@ export const getWeddingsPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof weddingsPartialUpdate>>,
-    { uuid: string; data: WeddingPatchIn }
+    Awaited<ReturnType<typeof weddingsUpdate>>,
+    { weddingUuid: string; data: WeddingPatchIn }
   > = (props) => {
-    const { uuid, data } = props ?? {};
+    const { weddingUuid, data } = props ?? {};
 
-    return weddingsPartialUpdate(uuid, data, requestOptions);
+    return weddingsUpdate(weddingUuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type WeddingsPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof weddingsPartialUpdate>>
+export type WeddingsUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof weddingsUpdate>>
 >;
-export type WeddingsPartialUpdateMutationBody = WeddingPatchIn;
-export type WeddingsPartialUpdateMutationError = ErrorType<ErrorResponse>;
+export type WeddingsUpdateMutationBody = WeddingPatchIn;
+export type WeddingsUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Wedding
+ * @summary Update Wedding
  */
-export const useWeddingsPartialUpdate = <
+export const useWeddingsUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+      Awaited<ReturnType<typeof weddingsUpdate>>,
       TError,
-      { uuid: string; data: WeddingPatchIn },
+      { weddingUuid: string; data: WeddingPatchIn },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+  Awaited<ReturnType<typeof weddingsUpdate>>,
   TError,
-  { uuid: string; data: WeddingPatchIn },
+  { weddingUuid: string; data: WeddingPatchIn },
   TContext
 > => {
-  return useMutation(
-    getWeddingsPartialUpdateMutationOptions(options),
-    queryClient,
-  );
+  return useMutation(getWeddingsUpdateMutationOptions(options), queryClient);
 };
 /**
  * Remove um casamento e limpa todos os dados vinculados (Cascata).
-
-**Atenção:** Esta ação é irreversível e deleta automaticamente:
-- Todo o histórico financeiro (orçamentos e despesas).
-- Cronogramas, contratos e fornecedores vinculados exclusivamente a este evento.
  * @summary Delete Wedding
  */
 export const weddingsDelete = (
-  uuid: string,
+  weddingUuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<void>(
-    { url: `/api/v1/weddings/${uuid}/`, method: "DELETE", signal },
+    { url: `/api/v1/weddings/${weddingUuid}/`, method: "DELETE", signal },
     options,
   );
 };
@@ -544,14 +525,14 @@ export const getWeddingsDeleteMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof weddingsDelete>>,
     TError,
-    { uuid: string },
+    { weddingUuid: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof weddingsDelete>>,
   TError,
-  { uuid: string },
+  { weddingUuid: string },
   TContext
 > => {
   const mutationKey = ["weddingsDelete"];
@@ -565,11 +546,11 @@ export const getWeddingsDeleteMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof weddingsDelete>>,
-    { uuid: string }
+    { weddingUuid: string }
   > = (props) => {
-    const { uuid } = props ?? {};
+    const { weddingUuid } = props ?? {};
 
-    return weddingsDelete(uuid, requestOptions);
+    return weddingsDelete(weddingUuid, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -592,7 +573,7 @@ export const useWeddingsDelete = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof weddingsDelete>>,
       TError,
-      { uuid: string },
+      { weddingUuid: string },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -601,7 +582,7 @@ export const useWeddingsDelete = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof weddingsDelete>>,
   TError,
-  { uuid: string },
+  { weddingUuid: string },
   TContext
 > => {
   return useMutation(getWeddingsDeleteMutationOptions(options), queryClient);

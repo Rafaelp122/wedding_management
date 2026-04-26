@@ -7,6 +7,14 @@ import threading
 _thread_locals = threading.local()
 
 
+def set_request_id(request_id: str) -> None:
+    _thread_locals.request_id = request_id
+
+
+def get_request_id() -> str | None:
+    return getattr(_thread_locals, "request_id", None)
+
+
 class RequestIDFilter(logging.Filter):
     """
     Injeta a variável 'request_id' no record do logger.

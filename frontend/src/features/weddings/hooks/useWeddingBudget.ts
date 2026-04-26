@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { getApiErrorInfo } from "@/api/error-utils";
 import {
   useFinancesBudgetsForWedding,
-  useFinancesBudgetsPartialUpdate,
+  useFinancesBudgetsUpdate,
   useFinancesCategoriesList,
 } from "@/api/generated/v1/endpoints/finances/finances";
 
@@ -23,7 +23,7 @@ export function useWeddingBudget(weddingUuid: string) {
   const { data: categoriesResponse, isLoading: isLoadingCategories } =
     useFinancesCategoriesList({ wedding_id: weddingUuid });
 
-  const updateBudgetMutation = useFinancesBudgetsPartialUpdate();
+  const updateBudgetMutation = useFinancesBudgetsUpdate();
 
   const budget = budgetResponse?.data;
   const categories = categoriesResponse?.data?.items || [];
@@ -57,7 +57,7 @@ export function useWeddingBudget(weddingUuid: string) {
     if (!budget) return;
     try {
       await updateBudgetMutation.mutateAsync({
-        uuid: budget.uuid,
+        budgetUuid: budget.uuid,
         data: {
           total_estimated: editTotal,
         },
