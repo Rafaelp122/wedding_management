@@ -41,7 +41,10 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Item:
-        from apps.core.dependencies import resolve_wedding_for_user
+        from apps.core.dependencies import (
+            resolve_contract_for_user,
+            resolve_wedding_for_user,
+        )
 
         logger.info("Iniciando criação de Item")
 
@@ -49,8 +52,23 @@ class ItemService:
         wedding_input = data.pop("wedding")
         wedding = resolve_wedding_for_user(user, wedding_input)
 
+        # 2. Resolução do Contrato (Opcional)
+        contract = None
+        if "contract" in data:
+            contract_input = data.pop("contract")
+            if contract_input:
+                contract = resolve_contract_for_user(user, contract_input)
+                # Garantia de integridade: contrato deve pertencer ao mesmo wedding
+                if contract.wedding_id != wedding.id:
+                    from apps.core.exceptions import BusinessRuleViolation
+
+                    raise BusinessRuleViolation(
+                        detail="Este contrato pertence a outro casamento.",
+                        code="invalid_contract_wedding",
+                    )
+
         # 3. Instanciação e Persistência
-        item = Item(wedding=wedding, **data)
+        item = Item(wedding=wedding, contract=contract, **data)
         item.save()
 
         logger.info(f"Item criado com sucesso: uuid={item.uuid}")
@@ -58,11 +76,29 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Item, data: dict[str, Any]) -> Item:
+    def update(user: AuthContextUser, instance: Item, data: dict[str, Any]) -> Item:
+        from apps.core.dependencies import resolve_contract_for_user
+
         logger.info(f"Atualizando Item uuid={instance.uuid}")
 
         # Bloqueio de troca de casamento
         data.pop("wedding", None)
+
+        # Tratamento de troca de contrato
+        if "contract" in data:
+            contract_input = data.pop("contract")
+            if contract_input:
+                contract = resolve_contract_for_user(user, contract_input)
+                if contract.wedding_id != instance.wedding_id:
+                    from apps.core.exceptions import BusinessRuleViolation
+
+                    raise BusinessRuleViolation(
+                        detail="Este contrato pertence a outro casamento.",
+                        code="invalid_contract_wedding",
+                    )
+                instance.contract = contract
+            else:
+                instance.contract = None
 
         for field, value in data.items():
             setattr(instance, field, value)

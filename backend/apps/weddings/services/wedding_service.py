@@ -39,7 +39,7 @@ class WeddingService:
         except DjangoValidationError as e:
             logger.warning(
                 "Falha de validação ao criar casamento para planner_id=%s: %s",
-                user.id,
+                planner.id,
                 e,
             )
             detail = "; ".join(e.messages) if e.messages else str(e)

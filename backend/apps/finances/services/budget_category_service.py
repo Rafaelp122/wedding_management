@@ -58,17 +58,14 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> BudgetCategory:
-        from apps.core.dependencies import resolve_wedding_for_user
-
         from .budget_service import BudgetService
 
         logger.info("Criando categoria de orçamento")
 
-        wedding_input = data.pop("wedding")
-        wedding = resolve_wedding_for_user(user, wedding_input)
-
-        # O orçamento deve ser resolvido para o casamento (Lazy Loading)
-        budget = BudgetService.get_or_create_for_wedding(user, wedding.uuid)
+        # O schema envia 'budget' (UUID), resolvemos a instância com segurança
+        budget_input = data.pop("budget")
+        budget = BudgetService.get(budget_input, user)
+        wedding = budget.wedding
 
         category = BudgetCategory(wedding=wedding, budget=budget, **data)
         category.save()

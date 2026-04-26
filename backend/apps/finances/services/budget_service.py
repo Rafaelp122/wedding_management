@@ -27,19 +27,19 @@ class BudgetService:
         return Budget.objects.for_user(user).select_related("wedding")
 
     @staticmethod
-    def get(instance_or_uuid: Any, user: AuthContextUser | None = None) -> Budget:
+    def get(instance_or_uuid: Any, user: AuthContextUser) -> Budget:
         """
-        Recupera um orçamento.
-        Se receber UUID, exige user para garantir multitenancy.
+        Recupera um orçamento. Exige user para garantir multitenancy.
         """
         if isinstance(instance_or_uuid, Budget):
             return instance_or_uuid
 
         try:
-            qs = Budget.objects.all()
-            if user:
-                qs = Budget.objects.for_user(user)
-            return qs.select_related("wedding").get(uuid=instance_or_uuid)
+            return (
+                Budget.objects.for_user(user)
+                .select_related("wedding")
+                .get(uuid=instance_or_uuid)
+            )
         except Budget.DoesNotExist as e:
             raise ObjectNotFoundError(detail="Orçamento não encontrado.") from e
 
