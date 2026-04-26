@@ -83,17 +83,26 @@ def test_all_controller_methods_have_operation_id():
                 for dec in node.decorator_list:
                     dec_name = ""
 
+                    is_route_method = False
+
                     if isinstance(dec, ast.Attribute):
                         dec_name = dec.attr
+                        if isinstance(dec.value, ast.Name) and dec.value.id == "route":
+                            is_route_method = True
                     elif isinstance(dec, ast.Call):
                         if isinstance(dec.func, ast.Attribute):
                             dec_name = dec.func.attr
+                            if (
+                                isinstance(dec.func.value, ast.Name)
+                                and dec.func.value.id == "route"
+                            ):
+                                is_route_method = True
                         elif isinstance(dec.func, ast.Name):
                             dec_name = dec.func.id
                     elif isinstance(dec, ast.Name):
                         dec_name = dec.id
 
-                    if dec_name in route_decorators:
+                    if dec_name in route_decorators or is_route_method:
                         # Verifica se 'operation_id' está nos keywords do decorador
                         has_operation_id = False
                         if isinstance(dec, ast.Call):
