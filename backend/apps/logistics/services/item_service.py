@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
@@ -20,7 +21,7 @@ class ItemService:
 
     @staticmethod
     def list(
-        user: AuthContextUser, wedding_id: str | Any | None = None
+        user: AuthContextUser, wedding_id: UUID | str | None = None
     ) -> QuerySet[Item]:
         qs = Item.objects.for_user(user).select_related("contract", "wedding")
         if wedding_id:
@@ -28,7 +29,7 @@ class ItemService:
         return qs
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: str | Any) -> Item:
+    def get(user: AuthContextUser, uuid: UUID | str) -> Item:
         try:
             return (
                 Item.objects.for_user(user)

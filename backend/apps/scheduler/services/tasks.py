@@ -54,12 +54,12 @@ class TaskService:
         data.pop("wedding", None)
         data.pop("planner", None)
 
-        for field, value in data.items():
-            setattr(instance, field, value)
-
-        task_status = data.get("is_completed")
+        task_status = data.pop("is_completed", None)
         if task_status is not None:
             instance.is_completed = task_status
+
+        for field, value in data.items():
+            setattr(instance, field, value)
 
         instance.save()
         return instance
