@@ -53,7 +53,7 @@ class SchedulerController(ControllerBase):
         operation_id="scheduler_events_create",
     )
     def create_event(self, payload: EventIn):
-        return 201, EventService.create(self.context.request.user, payload.dict())
+        return 201, EventService.create(self.context.request.user, payload.model_dump())
 
     @http_patch(
         "/events/{event_uuid}/",
@@ -62,7 +62,7 @@ class SchedulerController(ControllerBase):
     )
     def update_event(self, event_uuid: UUID4, payload: EventPatchIn):
         instance = get_event(self.context.request, event_uuid)
-        return EventService.update(instance, payload.dict(exclude_unset=True))
+        return EventService.update(instance, payload.model_dump(exclude_unset=True))
 
     @http_delete(
         "/events/{event_uuid}/",
@@ -95,7 +95,7 @@ class SchedulerController(ControllerBase):
         operation_id="scheduler_tasks_create",
     )
     def create_task(self, payload: TaskIn):
-        return 201, TaskService.create(self.context.request.user, payload.dict())
+        return 201, TaskService.create(self.context.request.user, payload.model_dump())
 
     @http_patch(
         "/tasks/{task_uuid}/",
@@ -104,7 +104,7 @@ class SchedulerController(ControllerBase):
     )
     def update_task(self, task_uuid: UUID4, payload: TaskPatchIn):
         instance = get_task(self.context.request, task_uuid)
-        return TaskService.update(instance, payload.dict(exclude_unset=True))
+        return TaskService.update(instance, payload.model_dump(exclude_unset=True))
 
     @http_delete(
         "/tasks/{task_uuid}/",

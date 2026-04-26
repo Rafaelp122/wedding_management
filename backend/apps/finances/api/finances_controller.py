@@ -80,7 +80,7 @@ class FinanceController(ControllerBase):
     def create_budget(self, payload: BudgetIn):
         from apps.core.dependencies import resolve_wedding_for_user
 
-        data = payload.dict()
+        data = payload.model_dump()
         data["wedding"] = resolve_wedding_for_user(
             self.context.request.user, data["wedding"]
         )
@@ -93,7 +93,7 @@ class FinanceController(ControllerBase):
     )
     def update_budget(self, budget_uuid: UUID4, payload: BudgetPatchIn):
         instance = get_budget(self.context.request, budget_uuid)
-        return BudgetService.update(instance, payload.dict(exclude_unset=True))
+        return BudgetService.update(instance, payload.model_dump(exclude_unset=True))
 
     @http_delete(
         "/budgets/{budget_uuid}/",
@@ -135,7 +135,7 @@ class FinanceController(ControllerBase):
     )
     def create_category(self, payload: BudgetCategoryIn):
         return 201, BudgetCategoryService.create(
-            self.context.request.user, payload.dict()
+            self.context.request.user, payload.model_dump()
         )
 
     @http_patch(
@@ -145,7 +145,9 @@ class FinanceController(ControllerBase):
     )
     def update_category(self, category_uuid: UUID4, payload: BudgetCategoryPatchIn):
         instance = get_budget_category(self.context.request, category_uuid)
-        return BudgetCategoryService.update(instance, payload.dict(exclude_unset=True))
+        return BudgetCategoryService.update(
+            instance, payload.model_dump(exclude_unset=True)
+        )
 
     @http_delete(
         "/categories/{category_uuid}/",
@@ -180,7 +182,9 @@ class FinanceController(ControllerBase):
         operation_id="finances_expenses_create",
     )
     def create_expense(self, payload: ExpenseIn):
-        return 201, ExpenseService.create(self.context.request.user, payload.dict())
+        return 201, ExpenseService.create(
+            self.context.request.user, payload.model_dump()
+        )
 
     @http_patch(
         "/expenses/{expense_uuid}/",
@@ -190,7 +194,7 @@ class FinanceController(ControllerBase):
     def update_expense(self, expense_uuid: UUID4, payload: ExpensePatchIn):
         instance = get_expense(self.context.request, expense_uuid)
         return ExpenseService.update(
-            self.context.request.user, instance, payload.dict(exclude_unset=True)
+            self.context.request.user, instance, payload.model_dump(exclude_unset=True)
         )
 
     @http_delete(
@@ -228,7 +232,9 @@ class FinanceController(ControllerBase):
         operation_id="finances_installments_create",
     )
     def create_installment(self, payload: InstallmentIn):
-        return 201, InstallmentService.create(self.context.request.user, payload.dict())
+        return 201, InstallmentService.create(
+            self.context.request.user, payload.model_dump()
+        )
 
     @http_patch(
         "/installments/{installment_uuid}/",
@@ -237,7 +243,9 @@ class FinanceController(ControllerBase):
     )
     def update_installment(self, installment_uuid: UUID4, payload: InstallmentPatchIn):
         instance = get_installment(self.context.request, installment_uuid)
-        return InstallmentService.update(instance, payload.dict(exclude_unset=True))
+        return InstallmentService.update(
+            instance, payload.model_dump(exclude_unset=True)
+        )
 
     @http_delete(
         "/installments/{installment_uuid}/",
