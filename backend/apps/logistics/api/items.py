@@ -43,11 +43,12 @@ class ItemController(ControllerBase):
     @route.patch(
         "/{item_uuid}/",
         response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
-        operation_id="logistics_items_partial_update",
+        operation_id="logistics_items_update",
     )
-    def partial_update_item(self, item_uuid: UUID4, payload: ItemPatchIn) -> Item:
+    def update_item(self, item_uuid: UUID4, payload: ItemPatchIn) -> Item:
         item = get_item(self.context.request, item_uuid)
         return ItemService.update(
+            user=self.context.request.user,
             instance=item,
             data=payload.model_dump(exclude_unset=True),
         )

@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useSchedulerTasksList,
-  useSchedulerTasksPartialUpdate,
+  useSchedulerTasksUpdate,
   getSchedulerTasksListQueryKey,
 } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 
@@ -16,8 +16,8 @@ export function useWeddingChecklist(weddingUuid: string) {
 
   const tasks = tasksResponse?.data?.items || [];
 
-  const { mutate: updateTask, isPending: isUpdating } =
-    useSchedulerTasksPartialUpdate({
+  const { mutate: updateTask, isPending: isUpdating } = useSchedulerTasksUpdate(
+    {
       mutation: {
         onSuccess: () => {
           queryClient.invalidateQueries({
@@ -25,11 +25,12 @@ export function useWeddingChecklist(weddingUuid: string) {
           });
         },
       },
-    });
+    },
+  );
 
   const toggleTaskCompletion = (uuid: string, currentStatus: boolean) => {
     updateTask({
-      uuid,
+      taskUuid: uuid,
       data: { is_completed: !currentStatus },
     });
   };

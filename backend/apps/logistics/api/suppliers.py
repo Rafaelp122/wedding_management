@@ -43,9 +43,9 @@ class SupplierController(ControllerBase):
     @route.patch(
         "/{supplier_uuid}/",
         response={200: SupplierOut, **MUTATION_ERROR_RESPONSES},
-        operation_id="logistics_suppliers_partial_update",
+        operation_id="logistics_suppliers_update",
     )
-    def partial_update_supplier(
+    def update_supplier(
         self, supplier_uuid: UUID4, payload: SupplierPatchIn
     ) -> Supplier:
         supplier = get_supplier(self.context.request, supplier_uuid)

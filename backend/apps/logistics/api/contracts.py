@@ -18,8 +18,10 @@ class ContractController(ControllerBase):
 
     @route.get("/", response=list[ContractOut], operation_id="logistics_contracts_list")
     @paginate
-    def list_contracts(self) -> QuerySet[Contract]:
-        return ContractService.list(user=self.context.request.user)
+    def list_contracts(self, wedding_id: UUID4 | None = None) -> QuerySet[Contract]:
+        return ContractService.list(
+            user=self.context.request.user, wedding_id=wedding_id
+        )
 
     @route.get(
         "/{contract_uuid}/",
@@ -43,9 +45,9 @@ class ContractController(ControllerBase):
     @route.patch(
         "/{contract_uuid}/",
         response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
-        operation_id="logistics_contracts_partial_update",
+        operation_id="logistics_contracts_update",
     )
-    def partial_update_contract(
+    def update_contract(
         self, contract_uuid: UUID4, payload: ContractPatchIn
     ) -> Contract:
         contract = get_contract(self.context.request, contract_uuid)
