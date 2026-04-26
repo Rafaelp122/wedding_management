@@ -83,7 +83,7 @@ export const getFinancesBudgetsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesBudgetsPartialUpdateResponseMock = (
+export const getFinancesBudgetsUpdateResponseMock = (
   overrideResponse: Partial<Extract<BudgetOut, object>> = {},
 ): BudgetOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -186,7 +186,7 @@ export const getFinancesCategoriesReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesCategoriesPartialUpdateResponseMock = (
+export const getFinancesCategoriesUpdateResponseMock = (
   overrideResponse: Partial<Extract<BudgetCategoryOut, object>> = {},
 ): BudgetCategoryOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -270,7 +270,7 @@ export const getFinancesExpensesReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesExpensesPartialUpdateResponseMock = (
+export const getFinancesExpensesUpdateResponseMock = (
   overrideResponse: Partial<Extract<ExpenseOut, object>> = {},
 ): ExpenseOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -376,7 +376,7 @@ export const getFinancesInstallmentsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesInstallmentsPartialUpdateResponseMock = (
+export const getFinancesInstallmentsUpdateResponseMock = (
   overrideResponse: Partial<Extract<InstallmentOut, object>> = {},
 ): InstallmentOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -460,7 +460,7 @@ export const getFinancesBudgetsReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/finances/budgets/:uuid/",
+    "*/api/v1/finances/budgets/:budgetUuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -475,7 +475,7 @@ export const getFinancesBudgetsReadMockHandler = (
   );
 };
 
-export const getFinancesBudgetsPartialUpdateMockHandler = (
+export const getFinancesBudgetsUpdateMockHandler = (
   overrideResponse?:
     | BudgetOut
     | ((
@@ -484,14 +484,14 @@ export const getFinancesBudgetsPartialUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/finances/budgets/:uuid/",
+    "*/api/v1/finances/budgets/:budgetUuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesBudgetsPartialUpdateResponseMock(),
+          : getFinancesBudgetsUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -508,7 +508,7 @@ export const getFinancesBudgetsDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/finances/budgets/:uuid/",
+    "*/api/v1/finances/budgets/:budgetUuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -601,7 +601,7 @@ export const getFinancesCategoriesReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/finances/categories/:uuid/",
+    "*/api/v1/finances/categories/:categoryUuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -616,7 +616,7 @@ export const getFinancesCategoriesReadMockHandler = (
   );
 };
 
-export const getFinancesCategoriesPartialUpdateMockHandler = (
+export const getFinancesCategoriesUpdateMockHandler = (
   overrideResponse?:
     | BudgetCategoryOut
     | ((
@@ -625,14 +625,14 @@ export const getFinancesCategoriesPartialUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/finances/categories/:uuid/",
+    "*/api/v1/finances/categories/:categoryUuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesCategoriesPartialUpdateResponseMock(),
+          : getFinancesCategoriesUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -649,7 +649,7 @@ export const getFinancesCategoriesDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/finances/categories/:uuid/",
+    "*/api/v1/finances/categories/:categoryUuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -718,7 +718,7 @@ export const getFinancesExpensesReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/finances/expenses/:uuid/",
+    "*/api/v1/finances/expenses/:expenseUuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -733,7 +733,7 @@ export const getFinancesExpensesReadMockHandler = (
   );
 };
 
-export const getFinancesExpensesPartialUpdateMockHandler = (
+export const getFinancesExpensesUpdateMockHandler = (
   overrideResponse?:
     | ExpenseOut
     | ((
@@ -742,14 +742,14 @@ export const getFinancesExpensesPartialUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/finances/expenses/:uuid/",
+    "*/api/v1/finances/expenses/:expenseUuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesExpensesPartialUpdateResponseMock(),
+          : getFinancesExpensesUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -766,7 +766,7 @@ export const getFinancesExpensesDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/finances/expenses/:uuid/",
+    "*/api/v1/finances/expenses/:expenseUuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -835,7 +835,7 @@ export const getFinancesInstallmentsReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/finances/installments/:uuid/",
+    "*/api/v1/finances/installments/:installmentUuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -850,7 +850,7 @@ export const getFinancesInstallmentsReadMockHandler = (
   );
 };
 
-export const getFinancesInstallmentsPartialUpdateMockHandler = (
+export const getFinancesInstallmentsUpdateMockHandler = (
   overrideResponse?:
     | InstallmentOut
     | ((
@@ -859,14 +859,14 @@ export const getFinancesInstallmentsPartialUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/finances/installments/:uuid/",
+    "*/api/v1/finances/installments/:installmentUuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesInstallmentsPartialUpdateResponseMock(),
+          : getFinancesInstallmentsUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -883,7 +883,7 @@ export const getFinancesInstallmentsDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/finances/installments/:uuid/",
+    "*/api/v1/finances/installments/:installmentUuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -898,22 +898,22 @@ export const getFinancesMock = () => [
   getFinancesBudgetsListMockHandler(),
   getFinancesBudgetsCreateMockHandler(),
   getFinancesBudgetsReadMockHandler(),
-  getFinancesBudgetsPartialUpdateMockHandler(),
+  getFinancesBudgetsUpdateMockHandler(),
   getFinancesBudgetsDeleteMockHandler(),
   getFinancesBudgetsForWeddingMockHandler(),
   getFinancesCategoriesListMockHandler(),
   getFinancesCategoriesCreateMockHandler(),
   getFinancesCategoriesReadMockHandler(),
-  getFinancesCategoriesPartialUpdateMockHandler(),
+  getFinancesCategoriesUpdateMockHandler(),
   getFinancesCategoriesDeleteMockHandler(),
   getFinancesExpensesListMockHandler(),
   getFinancesExpensesCreateMockHandler(),
   getFinancesExpensesReadMockHandler(),
-  getFinancesExpensesPartialUpdateMockHandler(),
+  getFinancesExpensesUpdateMockHandler(),
   getFinancesExpensesDeleteMockHandler(),
   getFinancesInstallmentsListMockHandler(),
   getFinancesInstallmentsCreateMockHandler(),
   getFinancesInstallmentsReadMockHandler(),
-  getFinancesInstallmentsPartialUpdateMockHandler(),
+  getFinancesInstallmentsUpdateMockHandler(),
   getFinancesInstallmentsDeleteMockHandler(),
 ];

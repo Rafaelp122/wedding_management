@@ -53,9 +53,9 @@ class WeddingController(ControllerBase):
     @route.patch(
         "/{wedding_uuid}/",
         response={200: WeddingOut, **MUTATION_ERROR_RESPONSES},
-        operation_id="weddings_partial_update",
+        operation_id="weddings_update",
     )
-    def partial_update_wedding(
+    def update_wedding(
         self,
         wedding_uuid: UUID4,
         payload: WeddingPatchIn,

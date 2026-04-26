@@ -7,7 +7,6 @@
 import * as zod from "zod";
 
 /**
- * Lista todos os fornecedores cadastrados pelo Planner logado.
  * @summary List Suppliers
  */
 export const logisticsSuppliersListQueryLimitDefault = 100;
@@ -40,7 +39,6 @@ export const LogisticsSuppliersListResponse = zod.object({
 });
 
 /**
- * Cadastra um novo fornecedor no sistema.
  * @summary Create Supplier
  */
 export const logisticsSuppliersCreateBodyIsActiveDefault = true;
@@ -54,11 +52,10 @@ export const LogisticsSuppliersCreateBody = zod.object({
 });
 
 /**
- * Retorna os detalhes de um fornecedor específico.
  * @summary Retrieve Supplier
  */
 export const LogisticsSuppliersReadParams = zod.object({
-  uuid: zod.string(),
+  supplier_uuid: zod.string(),
 });
 
 export const LogisticsSuppliersReadResponse = zod.object({
@@ -73,14 +70,13 @@ export const LogisticsSuppliersReadResponse = zod.object({
 });
 
 /**
- * Atualiza informações específicas de um fornecedor (nome, contato, categorias).
- * @summary Partial Update Supplier
+ * @summary Update Supplier
  */
-export const LogisticsSuppliersPartialUpdateParams = zod.object({
-  uuid: zod.string(),
+export const LogisticsSuppliersUpdateParams = zod.object({
+  supplier_uuid: zod.string(),
 });
 
-export const LogisticsSuppliersPartialUpdateBody = zod.object({
+export const LogisticsSuppliersUpdateBody = zod.object({
   name: zod.union([zod.string(), zod.null()]).optional(),
   cnpj: zod.union([zod.string(), zod.null()]).optional(),
   phone: zod.union([zod.string(), zod.null()]).optional(),
@@ -88,7 +84,7 @@ export const LogisticsSuppliersPartialUpdateBody = zod.object({
   is_active: zod.union([zod.boolean(), zod.null()]).optional(),
 });
 
-export const LogisticsSuppliersPartialUpdateResponse = zod.object({
+export const LogisticsSuppliersUpdateResponse = zod.object({
   uuid: zod.string(),
   name: zod.string(),
   cnpj: zod.string(),
@@ -100,16 +96,13 @@ export const LogisticsSuppliersPartialUpdateResponse = zod.object({
 });
 
 /**
- * Remove o cadastro de um fornecedor do sistema.
  * @summary Delete Supplier
  */
 export const LogisticsSuppliersDeleteParams = zod.object({
-  uuid: zod.string(),
+  supplier_uuid: zod.string(),
 });
 
 /**
- * Lista os contratos de fornecedores associados aos casamentos do Planner.
-Permite filtrar por casamento.
  * @summary List Contracts
  */
 export const logisticsContractsListQueryLimitDefault = 100;
@@ -151,7 +144,6 @@ export const LogisticsContractsListResponse = zod.object({
 });
 
 /**
- * Associa um fornecedor a um casamento através de um novo contrato logístico.
  * @summary Create Contract
  */
 export const logisticsContractsCreateBodyTotalAmountTwoRegExp = new RegExp(
@@ -175,11 +167,10 @@ export const LogisticsContractsCreateBody = zod.object({
 });
 
 /**
- * Exibe as cláusulas e informações completas de um contrato.
  * @summary Retrieve Contract
  */
 export const LogisticsContractsReadParams = zod.object({
-  uuid: zod.string(),
+  contract_uuid: zod.string(),
 });
 
 export const logisticsContractsReadResponseTotalAmountRegExp = new RegExp(
@@ -203,43 +194,42 @@ export const LogisticsContractsReadResponse = zod.object({
 });
 
 /**
- * Altera o status, valores agregados ou observações de um contrato existente na base.
- * @summary Partial Update Contract
+ * @summary Update Contract
  */
-export const LogisticsContractsPartialUpdateParams = zod.object({
-  uuid: zod.string(),
+export const LogisticsContractsUpdateParams = zod.object({
+  contract_uuid: zod.string(),
 });
 
-export const logisticsContractsPartialUpdateBodyTotalAmountTwoRegExp =
-  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const logisticsContractsUpdateBodyTotalAmountTwoRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
 
-export const LogisticsContractsPartialUpdateBody = zod.object({
+export const LogisticsContractsUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   supplier: zod.union([zod.string(), zod.null()]).optional(),
   budget_category: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .union([
       zod.number(),
-      zod
-        .string()
-        .regex(logisticsContractsPartialUpdateBodyTotalAmountTwoRegExp),
+      zod.string().regex(logisticsContractsUpdateBodyTotalAmountTwoRegExp),
       zod.null(),
     ])
     .optional(),
   status: zod.union([zod.string(), zod.null()]).optional(),
 });
 
-export const logisticsContractsPartialUpdateResponseTotalAmountRegExp =
-  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const logisticsContractsUpdateResponseTotalAmountRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
 
-export const LogisticsContractsPartialUpdateResponse = zod.object({
+export const LogisticsContractsUpdateResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   supplier: zod.string(),
   budget_category: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .string()
-    .regex(logisticsContractsPartialUpdateResponseTotalAmountRegExp),
+    .regex(logisticsContractsUpdateResponseTotalAmountRegExp),
   status: zod.string(),
   description: zod.string(),
   expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
@@ -249,16 +239,13 @@ export const LogisticsContractsPartialUpdateResponse = zod.object({
 });
 
 /**
- * Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.
  * @summary Delete Contract
  */
 export const LogisticsContractsDeleteParams = zod.object({
-  uuid: zod.string(),
+  contract_uuid: zod.string(),
 });
 
 /**
- * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
-Permite filtrar por casamento.
  * @summary List Items
  */
 export const logisticsItemsListQueryLimitDefault = 100;
@@ -293,8 +280,6 @@ export const LogisticsItemsListResponse = zod.object({
 });
 
 /**
- * Adiciona um recurso físico no painel de acompanhamento.
-Parte do planejamento logístico de um evento.
  * @summary Create Item
  */
 export const logisticsItemsCreateBodyDescriptionDefault = ``;
@@ -309,11 +294,10 @@ export const LogisticsItemsCreateBody = zod.object({
 });
 
 /**
- * Mostra os detalhes nominais de um item logístico específico.
  * @summary Retrieve Item
  */
 export const LogisticsItemsReadParams = zod.object({
-  uuid: zod.string(),
+  item_uuid: zod.string(),
 });
 
 export const LogisticsItemsReadResponse = zod.object({
@@ -329,14 +313,13 @@ export const LogisticsItemsReadResponse = zod.object({
 });
 
 /**
- * Atualiza quantidades ou informações de apoio do lote do item em questão.
- * @summary Partial Update Item
+ * @summary Update Item
  */
-export const LogisticsItemsPartialUpdateParams = zod.object({
-  uuid: zod.string(),
+export const LogisticsItemsUpdateParams = zod.object({
+  item_uuid: zod.string(),
 });
 
-export const LogisticsItemsPartialUpdateBody = zod.object({
+export const LogisticsItemsUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.union([zod.string(), zod.null()]).optional(),
@@ -344,7 +327,7 @@ export const LogisticsItemsPartialUpdateBody = zod.object({
   quantity: zod.union([zod.number(), zod.null()]).optional(),
 });
 
-export const LogisticsItemsPartialUpdateResponse = zod.object({
+export const LogisticsItemsUpdateResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
@@ -357,10 +340,8 @@ export const LogisticsItemsPartialUpdateResponse = zod.object({
 });
 
 /**
- * Exclui permanentemente o indicativo do item.
-Remove das listas logísticas rastreadas pelo Planner.
  * @summary Delete Item
  */
 export const LogisticsItemsDeleteParams = zod.object({
-  uuid: zod.string(),
+  item_uuid: zod.string(),
 });
