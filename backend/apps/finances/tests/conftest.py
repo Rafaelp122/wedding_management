@@ -1,15 +1,13 @@
 """
 Configuração Local de Testes: App Finances.
-
-Este ficheiro regista as factories financeiras. Como as finanças são o coração
-do sistema, estas fixtures permitem validar cálculos de impostos, parcelamento
-e fluxos de caixa.
 """
-
-from decimal import Decimal
 
 import pytest
 from pytest_factoryboy import register
+
+from apps.finances.services.budget_service import BudgetService
+from apps.finances.services.expense_service import ExpenseService
+from apps.weddings.services import WeddingService
 
 from .factories import (
     BudgetCategoryFactory,
@@ -27,19 +25,65 @@ register(InstallmentFactory)
 
 
 @pytest.fixture
-def budget_setup(db, budget_factory, budget_category_factory):
+def finance_seed(db, user, django_user_model):
     """
-    Fixture que prepara um cenário financeiro básico:
-    Um orçamento com uma categoria já alocada.
+    Cenário completo de isolamento financeiro (Multitenancy).
+    Cria dados para o usuário autenticado e para um usuário alheio.
     """
-    budget = budget_factory.create(total_estimated=Decimal("30000.00"))
-    category = budget_category_factory.create(
-        wedding=budget.wedding, name="Decoração", allocated_budget=Decimal("5000.00")
+    # Planner alvo (Meu)
+    my_wedding = WeddingService.create(
+        user,
+        {
+            "bride_name": "Minha",
+            "groom_name": "Noiva",
+            "location": "A",
+            "date": "2026-10-11",
+        },
     )
-    return budget, category
+    my_budget = BudgetService.get_or_create_for_wedding(user, my_wedding.uuid)
+    my_category = my_budget.categories.first()
+    my_expense = ExpenseService.create(
+        user,
+        {
+            "category": my_category,
+            "description": "Despesa A",
+            "estimated_amount": "100.00",
+            "actual_amount": "0.00",
+        },
+    )
 
+    # Planner alheio (Outro)
+    other_user = django_user_model.objects.create_user(
+        email="other@test.com", password="123"
+    )
+    other_wedding = WeddingService.create(
+        other_user,
+        {
+            "bride_name": "Outra",
+            "groom_name": "Outro",
+            "location": "B",
+            "date": "2026-10-11",
+        },
+    )
+    other_budget = BudgetService.get_or_create_for_wedding(
+        other_user, other_wedding.uuid
+    )
+    other_category = other_budget.categories.first()
+    other_expense = ExpenseService.create(
+        other_user,
+        {
+            "category": other_category,
+            "description": "Despesa B",
+            "estimated_amount": "200.00",
+            "actual_amount": "0.00",
+        },
+    )
 
-@pytest.fixture
-def simple_expense(db, expense_factory):
-    """Fixture que devolve uma despesa de R$ 1000,00 pronta para ser parcelada."""
-    return expense_factory.create(actual_amount=Decimal("1000.00"))
+    return {
+        "my_budget": my_budget,
+        "my_category": my_category,
+        "my_expense": my_expense,
+        "other_user": other_user,
+        "other_budget": other_budget,
+        "other_expense": other_expense,
+    }
