@@ -110,7 +110,7 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def delete(instance: Item) -> None:
-        logger.info(f"Deletando Item uuid={instance.uuid}")
+        logger.info("Deletando Item uuid=%s", instance.uuid)
 
         try:
             instance.delete()

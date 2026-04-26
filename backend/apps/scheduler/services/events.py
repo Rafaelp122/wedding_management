@@ -43,7 +43,7 @@ class EventService:
         event = Event(planner=planner, wedding=wedding, **data)
         event.save()
 
-        logger.info(f"Evento criado com sucesso: uuid={event.uuid}")
+        logger.info("Evento criado com sucesso: uuid=%s", event.uuid)
         return event
 
     @staticmethod

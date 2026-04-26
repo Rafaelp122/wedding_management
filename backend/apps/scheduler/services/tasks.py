@@ -67,7 +67,7 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def delete(instance: Task) -> None:
-        logger.info(f"Deletando Tarefa uuid={instance.uuid}")
+        logger.info("Deletando Tarefa uuid=%s", instance.uuid)
 
         try:
             instance.delete()
