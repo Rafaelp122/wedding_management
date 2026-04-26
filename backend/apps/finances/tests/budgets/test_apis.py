@@ -1,6 +1,6 @@
 import pytest
 
-from apps.finances.models import Budget
+from apps.finances.tests.factories import BudgetFactory
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -30,9 +30,8 @@ class TestBudgetAPI:
         """Valida o fluxo vital de lazy loading via API."""
         wedding = WeddingFactory(planner=user)
         # O wedding recém-criado não tem budget
-        response = auth_client.get(
-            f"/api/v1/finances/budgets/for-wedding/{wedding.uuid}/"
-        )
+        url = f"/api/v1/finances/budgets/for-wedding/{wedding.uuid}/"
+        response = auth_client.get(url)
         assert response.status_code == 200
         # O Django Ninja converte Decimal p/ string ou int dependendo da config.
         # Ajustamos para aceitar o valor numérico bruto.
@@ -44,7 +43,7 @@ class TestBudgetAPI:
         response = auth_client.patch(
             f"/api/v1/finances/budgets/{budget.uuid}/",
             data={"total_estimated": "75000.00"},
-            content_type="application/json",
+            content_type="application/json"
         )
         assert response.status_code == 200
         assert float(response.json()["total_estimated"]) == 75000.00
@@ -57,15 +56,15 @@ class TestBudgetAPI:
         response = auth_client.patch(
             f"/api/v1/finances/budgets/{other_budget.uuid}/",
             data={"total_estimated": "999.00"},
-            content_type="application/json",
+            content_type="application/json"
         )
         assert response.status_code == 404
 
     def test_delete_budget_success(self, auth_client, user):
         """Cenário feliz de deleção. Usamos um budget vazio para evitar 409."""
         wedding = WeddingFactory(planner=user)
-        # Forçamos a criação direta sem despesas
-        budget = Budget.objects.create(wedding=wedding, total_estimated=1000)
+        # Usamos a Factory para criar um budget isolado e limpo
+        budget = BudgetFactory(wedding=wedding, total_estimated=1000)
 
         response = auth_client.delete(f"/api/v1/finances/budgets/{budget.uuid}/")
         assert response.status_code == 204

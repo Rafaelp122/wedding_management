@@ -3,8 +3,12 @@ from decimal import Decimal
 import pytest
 from django.core.exceptions import ValidationError
 
-from apps.finances.models import Expense, Installment
-from apps.finances.tests.factories import BudgetCategoryFactory
+from apps.finances.models import Expense
+from apps.finances.tests.factories import (
+    BudgetCategoryFactory,
+    ExpenseFactory,
+    InstallmentFactory,
+)
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -22,24 +26,22 @@ class TestExpenseModel:
         wedding = WeddingFactory(planner=user)
         category = BudgetCategoryFactory(wedding=wedding)
 
-        # 1. Cria despesa de 1000
-        expense = Expense.objects.create(
+        # 1. Cria despesa de 1000 usando a Factory (mais limpo e centralizado)
+        expense = ExpenseFactory(
             wedding=wedding,
             category=category,
             description="Teste",
-            estimated_amount=Decimal("1000.00"),
-            actual_amount=Decimal("1000.00"),
+            actual_amount=Decimal("1000.00")
         )
 
         # 2. Cria parcela de 1000 (Soma bate)
-        Installment.objects.create(
-            wedding=wedding,
+        InstallmentFactory(
             expense=expense,
             amount=Decimal("1000.00"),
-            due_date="2026-12-01",
-            installment_number=1,
+            installment_number=1
         )
-        expense.full_clean()  # Deve passar
+
+        expense.full_clean() # Deve passar
 
         # 3. Altera o valor total da despesa para 1200 sem mexer na parcela
         expense.actual_amount = Decimal("1200.00")
