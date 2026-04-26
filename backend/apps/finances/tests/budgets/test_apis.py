@@ -43,7 +43,7 @@ class TestBudgetAPI:
         response = auth_client.patch(
             f"/api/v1/finances/budgets/{budget.uuid}/",
             data={"total_estimated": "75000.00"},
-            content_type="application/json"
+            content_type="application/json",
         )
         assert response.status_code == 200
         assert float(response.json()["total_estimated"]) == 75000.00
@@ -56,7 +56,7 @@ class TestBudgetAPI:
         response = auth_client.patch(
             f"/api/v1/finances/budgets/{other_budget.uuid}/",
             data={"total_estimated": "999.00"},
-            content_type="application/json"
+            content_type="application/json",
         )
         assert response.status_code == 404
 

@@ -31,17 +31,15 @@ class TestExpenseModel:
             wedding=wedding,
             category=category,
             description="Teste",
-            actual_amount=Decimal("1000.00")
+            actual_amount=Decimal("1000.00"),
         )
 
         # 2. Cria parcela de 1000 (Soma bate)
         InstallmentFactory(
-            expense=expense,
-            amount=Decimal("1000.00"),
-            installment_number=1
+            expense=expense, amount=Decimal("1000.00"), installment_number=1
         )
 
-        expense.full_clean() # Deve passar
+        expense.full_clean()  # Deve passar
 
         # 3. Altera o valor total da despesa para 1200 sem mexer na parcela
         expense.actual_amount = Decimal("1200.00")
