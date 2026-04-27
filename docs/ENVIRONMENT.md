@@ -1,171 +1,100 @@
-# 🔐 Guia de Configuração de Ambiente
+# 🔧 Guia de Configuração de Ambiente
 
-> **Nunca commite o arquivo `.env` no Git!**
+Este documento é um **How-to Guide** que descreve como preparar, rodar e manter o ambiente de desenvolvimento do Wedding Management System.
 
-## Configuração Inicial
+---
 
+## 🏗️ Opção 1: Rodando com Docker (Recomendado)
+
+O Docker garante que o banco de dados, o backend e o frontend rodem em um ambiente isolado idêntico à produção.
+
+### Passo 1: Configurar Variáveis
 ```bash
-cp .env.example .env  # Crie o arquivo de ambiente
-make secret-key       # Gere uma SECRET_KEY segura
-nano .env             # Edite e adicione a SECRET_KEY
+cp .env.example .env
+make secret-key  # Adicione o valor gerado em SECRET_KEY no seu .env
 ```
 
-**Importante:** O sistema usa **email** como login, não username.
-
----
-
-## Variáveis de Ambiente
-
-### Obrigatórias
-
-| Variável     | Descrição                                           | Como gerar        |
-| ------------ | --------------------------------------------------- | ----------------- |
-| `SECRET_KEY` | Chave criptográfica Django                          | `make secret-key` |
-| `DB_HOST`    | Host do banco (`db` para Docker, `localhost` local) | -                 |
-
-### Opcionais (Desenvolvimento)
-
-| Variável                        | Padrão                      | Descrição                                   |
-| ------------------------------- | --------------------------- | ------------------------------------------- |
-| `DEBUG`                         | `True`                      | Modo debug (**SEMPRE `False` em produção**) |
-| `DB_NAME`                       | `wedding_db`                | Nome do banco de dados                      |
-| `DB_USER`                       | `wedding_user`              | Usuário do PostgreSQL                       |
-| `DB_PASSWORD`                   | `wedding_pass`              | Senha do PostgreSQL                         |
-| `DB_PORT`                       | `5432`                      | Porta do PostgreSQL                         |
-| `ACCESS_TOKEN_LIFETIME_MINUTES` | `15`                        | Duração do JWT (minutos)                    |
-| `REFRESH_TOKEN_LIFETIME_DAYS`   | `7`                         | Duração do refresh token (dias)             |
-| `CORS_ALLOWED_ORIGINS`          | `http://localhost:5173,...` | Origens permitidas (separadas por vírgula)  |
-
-### Produção Apenas
-
-| Variável              | Descrição                            |
-| --------------------- | ------------------------------------ |
-| `ALLOWED_HOSTS`       | Domínios permitidos (ex: `app.com`)  |
-| `EMAIL_HOST`          | Servidor SMTP (ex: `smtp.gmail.com`) |
-| `EMAIL_HOST_USER`     | Email remetente                      |
-| `EMAIL_HOST_PASSWORD` | Senha ou App Password                |
-| `SENTRY_DSN`          | URL do Sentry para logs de erro      |
-
----
-
-## Exemplos de Configuração
-
-### Docker (Desenvolvimento)
-
-```dotenv
-SECRET_KEY=sua-chave-gerada-aqui
-DEBUG=True
-DB_HOST=db
+### Passo 2: Subir os Containers
+```bash
+make up
 ```
 
-### Local (sem Docker)
-
-```dotenv
-SECRET_KEY=sua-chave-gerada-aqui
-DEBUG=True
-DB_ENGINE=django.db.backends.sqlite3
-DB_NAME=db.sqlite3
-DB_HOST=localhost
-```
-
-### Produção
-
-```dotenv
-SECRET_KEY=chave-super-segura-64-caracteres
-DEBUG=False
-ALLOWED_HOSTS=seudominio.com,api.seudominio.com
-DB_HOST=db-server.example.com
-DB_PASSWORD=senha-forte-aleatoria
-EMAIL_HOST=smtp.gmail.com
-EMAIL_HOST_USER=noreply@seudominio.com
-EMAIL_HOST_PASSWORD=app-password-aqui
-SENTRY_DSN=https://your-sentry-dsn
+### Passo 3: Migrar e Iniciar Dados
+```bash
+make migrate
+make superuser
 ```
 
 ---
 
-## Comandos de Gestão
+## 💻 Opção 2: Rodando Localmente (Bare Metal)
 
-### Docker
+Útil para desenvolvimento focado em debugging ou quando você não quer usar Docker.
 
+### Backend (Python)
+Requer `uv` instalado ([instalar uv](https://github.com/astral-sh/uv)).
 ```bash
-make up              # Inicia sistema completo
-make migrate         # Aplica migrações
-make superuser       # Cria usuário admin
-make shell           # Abre Django shell
-make logs            # Ver logs de todos os serviços
+cd backend
+uv sync --group dev
+uv run python manage.py migrate
+uv run python manage.py runserver
 ```
 
-### Local (sem Docker)
-
+### Frontend (Node)
 ```bash
-cd backend && uv sync --group dev
-cd backend && uv run python manage.py migrate
-cd backend && uv run python manage.py runserver
-cd frontend && npm ci && npm run dev
-```
-
-### Gerenciamento de Pacotes
-
-```bash
-# Backend - adicionar pacote Python
-make back-install pkg=requests
-
-# Frontend - adicionar pacote npm
-cd frontend && npm install lodash
-
-# Atualizar lockfile após editar pyproject.toml
-make reqs
-```
-
-### Banco de Dados
-
-```bash
-make makemigrations  # Criar migrações
-make migrate         # Aplicar migrações
-make clean           # ⚠️ Remove containers/volumes e exige nova subida
-```
-
-### Qualidade de Código
-
-```bash
-make lint            # Verificar problemas (Ruff)
-make format          # Formatar código automaticamente
-make mypy            # Verificar tipagem estática (mypy)
-make test            # Executar testes
-make test-cov        # Testes com cobertura
-make check-backend   # Gate de backend (lint + mypy + testes + openapi)
-make check-frontend  # Gate de frontend (lint + type-check + testes)
-make check-ci        # Gate local espelhando CI
+cd frontend
+npm ci
+npm run dev
 ```
 
 ---
 
-## Segurança e Boas Práticas
+## 📋 Referência de Comandos (Makefile)
 
-### ✅ Checklist Pré-Deploy
+O projeto utiliza um `Makefile` para automatizar tarefas repetitivas.
 
-- [ ] `DEBUG=False`
-- [ ] `SECRET_KEY` única e complexa (64+ caracteres)
-- [ ] `ALLOWED_HOSTS` configurado com domínios reais
-- [ ] Banco de dados com senha forte
-- [ ] CORS restrito a domínios específicos
-- [ ] Email SMTP configurado
-- [ ] Monitoramento (Sentry) ativado
-- [ ] Backups automáticos configurados
-
-### ⚠️ Nunca Faça
-
-- Commitar `.env` no Git
-- Usar `DEBUG=True` em produção
-- Deixar `ALLOWED_HOSTS=*`
-- Usar senhas fracas no banco de dados
-- Expor SECRET_KEY em logs ou mensagens de erro
+| Comando | Descrição |
+|---|---|
+| `make up` | Inicia todos os serviços via Docker. |
+| `make down` | Para e remove os containers. |
+| `make logs` | Exibe logs de todos os serviços. |
+| `make migrate` | Aplica as migrações do banco de dados. |
+| `make test` | Executa a suíte de testes com Pytest. |
+| `make lint` | Executa o linter e formatter (Ruff). |
+| `make check-ci` | Executa o gate completo de qualidade (Lint + Mypy + Testes). |
+| `make sync-api` | Sincroniza o contrato OpenAPI e regera o cliente Frontend (Orval). |
 
 ---
 
-## Referências
+## 🔐 Variáveis de Ambiente (.env)
 
-- [Django Deployment Checklist](https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/)
-- [12 Factor App](https://12factor.net/)
-- [OWASP Django Security](https://cheatsheetseries.owasp.org/cheatsheets/Django_Security_Cheat_Sheet.html)
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `SECRET_KEY` | - | Chave de segurança do Django. |
+| `DEBUG` | `True` | Ativa o modo debug do Django. |
+| `DB_HOST` | `db` | Host do banco (use `localhost` se rodar fora do Docker). |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Origens permitidas para o Frontend. |
+
+---
+
+## 🆘 Troubleshooting Comum
+
+### 1. Erro de Conexão com o Banco
+Se você vir `connection refused`, certifique-se de que o container `db` está UP:
+```bash
+docker compose ps
+```
+
+### 2. Mudanças no Banco não Refletidas
+Se você alterou um modelo, lembre-se de gerar e aplicar as migrações:
+```bash
+make makemigrations
+make migrate
+```
+
+### 3. Frontend não encontra a API
+Verifique se a variável `VITE_API_URL` no frontend aponta para a porta correta (geralmente `http://localhost:8000`).
+
+---
+
+**Dúvidas técnicas?** Consulte o documento de **[Arquitetura](ARCHITECTURE.md)**.

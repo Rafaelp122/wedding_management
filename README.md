@@ -1,175 +1,65 @@
 # 💍 Wedding Management System
 
-Sistema completo de gestão de casamentos com arquitetura moderna **React SPA + Django Ninja API**.
+Sistema completo de gestão de eventos (com foco em casamentos) utilizando **React SPA + Django Ninja API**.
 
-Backend organizado por **domínios de negócio** (finances, logistics, scheduler) para melhor separação de responsabilidades.
+Este projeto demonstra uma arquitetura profissional **SaaS B2B**, permitindo o gerenciamento de múltiplos eventos sob o guarda-chuva de uma agência (Company).
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2.10-green.svg)](https://www.djangoproject.com/)
 [![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.2-purple.svg)](https://vitejs.dev/)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Tutorial)
 
+Siga estes 3 passos para rodar o projeto em sua máquina local usando Docker:
+
+### 1. Preparar o Ambiente
+Crie o arquivo de variáveis de ambiente a partir do exemplo:
 ```bash
-# 1. Configure o ambiente
-cp .env.example .env  # Edite DATABASE_URL, SECRET_KEY, etc.
+cp .env.example .env
+```
 
-# 2. Inicie o sistema (Docker)
+### 2. Iniciar os Containers
+O projeto utiliza Docker Compose para orquestrar o Backend, Frontend e Banco de Dados:
+```bash
 make up
+```
 
-# 3. Crie um superusuário
+### 3. Criar Acesso Inicial
+Crie um superusuário para acessar o painel administrativo e a API:
+```bash
 make superuser
 ```
 
-**URLs:**
-
-- Frontend: http://localhost:5173
-- API: http://localhost:8000/api/v1/
-- Swagger Docs: http://localhost:8000/api/v1/docs
-- Admin: http://localhost:8000/admin/
+**Pronto! Acesse o sistema:**
+- **Frontend:** [http://localhost:5173](http://localhost:5173)
+- **Documentação da API (Swagger):** [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs)
 
 ---
 
-## 📋 Documentação
+## 📖 Documentação Centralizada
 
-- [Requisitos Funcionais e Não Funcionais](docs/REQUIREMENTS.md)
-- [Guia Completo de Configuração](docs/ENVIRONMENT.md)
-- [Arquitetura e Padrões de Código](docs/ARCHITECTURE.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
+Nossa documentação é organizada pelo framework **Diátaxis**:
 
----
-
-## 🛠 Stack Tecnológica
-
-### Backend
-
-- **Framework:** Django 5.2.10 + Django Ninja 1.6.2
-- **Autenticação:** JWT (django-ninja-jwt 5.4.4) - Email-based login
-- **Banco de Dados:** PostgreSQL 16 (produção) / SQLite (desenvolvimento)
-- **Gerenciador de Pacotes:** UV (ultra-rápido, escrito em Rust)
-- **Identificação:** UUID v4 (público) + BigAutoField (interno)
-- **Documentação API:** Django Ninja (OpenAPI 3.0 via nativo)
-
-### Frontend
-
-- **Framework:** React 19.2 + TypeScript 5
-- **Build Tool:** Vite 7.3.1
-- **Roteamento:** React Router v7
-- **Estado Global:** Zustand 5.x com persist middleware
-- **Data Fetching:** TanStack Query 5.x (React Query)
-- **HTTP Client:** Axios 1.13
-- **Estilização:** Tailwind CSS v4.1
-- **UI Components:** shadcn/ui + Lucide React icons
-
-### DevOps
-
-- **Containers:** Docker + Docker Compose (BuildKit habilitado)
-- **Build Strategy:** Multi-stage builds (4 stages)
-- **Code Quality:** Ruff 0.7.4 (linter + formatter), Pre-commit hooks
-- **Testing:** Pytest 8.3 + pytest-django + factory-boy
+| Documento | Conteúdo |
+|---|---|
+| **[Guia de Ambiente](docs/ENVIRONMENT.md)** | Comandos `make`, variáveis `.env` e Troubleshooting. |
+| **[Regras de Negócio](docs/BUSINESS_RULES.md)** | Lógica financeira e validações críticas. |
+| **[Arquitetura Técnica](docs/ARCHITECTURE.md)** | Padrões de código, infraestrutura e segurança. |
+| **[ADR (Decisões)](docs/ADR/)** | Registro histórico de decisões arquiteturais. |
 
 ---
 
-## 📁 Estrutura do Projeto
+## 🏗️ Destaques da Engenharia
 
-```
-wedding_management/
-├── backend/                  # Django Ninja API
-│   ├── apps/
-│   │   ├── core/            # Models Base + Managers
-│   │   ├── users/           # Autenticação
-│   │   ├── weddings/        # Wedding (núcleo)
-│   │   ├── finances/        # Budget, BudgetCategory, Expense, Installment
-│   │   ├── logistics/       # Supplier, Item, Contract
-│   │   └── scheduler/       # Agenda e Eventos
-│   ├── config/              # Settings e URLs principais
-│   └── manage.py
-│
-├── frontend/                # React SPA
-│   ├── src/
-│   │   ├── components/      # Componentes UI
-│   │   ├── pages/           # Telas do sistema
-│   │   ├── services/        # Comunicação com API (Axios)
-│   │   ├── stores/          # Estado Global (Zustand)
-│   │   └── types/           # Interfaces TypeScript
-│   └── package.json
-│
-├── docs/                    # Documentação técnica
-├── .env                     # Variáveis de ambiente
-├── Makefile                 # Automação de comandos
-└── docker-compose.yml       # Orquestração de containers
-```
-
----
-
-## 🎯 Status do Projeto
-
-✅ Autenticação JWT com email
-✅ CRUD de Fornecedores
-✅ Gestão de Casamentos e Orçamentos
-✅ Módulo Financeiro com Parcelas
-✅ Módulo de Contratos
-🚧 Frontend (em desenvolvimento)
-📋 Sistema de Notificações (planejado)
-
----
-
-## 💻 Comandos Essenciais
-
-### Docker (Recomendado)
-
-```bash
-make up              # Iniciar todos os serviços
-make down            # Parar containers
-make logs            # Ver logs de todos os containers
-make migrate         # Aplicar migrações no banco
-make superuser       # Criar usuário admin
-make test            # Executar testes
-make test-cov        # Executar testes com cobertura
-make mypy            # Checagem de tipagem estática
-make check-backend   # Gate de qualidade do backend
-make check-frontend  # Gate de qualidade do frontend
-make check-ci        # Gate local espelhando CI
-make shell           # Django shell
-```
-
-### Desenvolvimento Local (sem Docker)
-
-```bash
-# Backend
-cd backend && uv sync --group dev
-cd backend && uv run python manage.py runserver
-
-# Frontend
-cd frontend && npm ci && npm run dev
-```
-
-> 📖 **Lista completa de comandos:** [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
-
----
-
-## 🧪 Qualidade de Código
-
-O projeto usa **pre-commit hooks** obrigatórios (instalados automaticamente):
-
-- ✅ Ruff linter + formatter
-- ✅ Trailing whitespace check
-- ✅ YAML validator
-
-```bash
-make lint            # Verificar problemas
-make format          # Formatar código
-make mypy            # Verificar tipagem
-make test            # Executar testes
-make test-cov        # Testes com cobertura
-```
+- **Isolamento B2B:** Multi-tenancy denormalizado por Empresa (`Company`).
+- **Precisão Financeira:** Sistema de tolerância zero para parcelamento e contratos.
+- **Contract-Driven API:** Sincronização automática entre Backend e Frontend via OpenAPI + Orval.
+- **Service Layer:** Lógica de negócio 100% isolada das Views HTTP.
 
 ---
 
 ## 📝 Licença
-
 Projeto Integrador - FIRJAN SENAI São Gonçalo

@@ -1,6 +1,8 @@
 # ADR-009: Multitenancy Denormalizado
 
-**Status:** Aceito
+> ⚠️ **Nota:** Esta estratégia foi evoluída para suportar Tenancy por Empresa (B2B). Veja a **[ADR-016](016-event-company-architecture.md)** para os padrões atuais.
+
+**Status:** Aceito (Evoluído pela ADR-016)
 **Data:** Janeiro 2025
 **Decisor:** Rafael
 **Contexto:** Estratégia de isolamento de dados entre casamentos
