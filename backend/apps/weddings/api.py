@@ -6,7 +6,7 @@ from ninja_extra import ControllerBase, api_controller, route
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.core.dependencies import get_wedding
+from apps.weddings.dependencies import get_wedding
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
 from apps.weddings.services import WeddingService

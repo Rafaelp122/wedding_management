@@ -14,7 +14,7 @@ from ninja_extra.permissions import IsAuthenticated
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.core.dependencies import (
+from apps.finances.dependencies import (
     get_budget,
     get_budget_category,
     get_expense,
@@ -78,13 +78,9 @@ class FinanceController(ControllerBase):
         operation_id="finances_budgets_create",
     )
     def create_budget(self, payload: BudgetIn):
-        from apps.core.dependencies import resolve_wedding_for_user
-
-        data = payload.model_dump()
-        data["wedding"] = resolve_wedding_for_user(
-            self.context.request.user, data["wedding"]
+        return 201, BudgetService.create(
+            self.context.request.user, payload.model_dump()
         )
-        return 201, BudgetService.create(data)
 
     @http_patch(
         "/budgets/{budget_uuid}/",

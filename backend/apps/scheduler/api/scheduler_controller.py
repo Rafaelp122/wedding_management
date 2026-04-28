@@ -14,7 +14,7 @@ from ninja_extra.permissions import IsAuthenticated
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.core.dependencies import get_event, get_task
+from apps.scheduler.dependencies import get_event, get_task
 from apps.scheduler.models import Event, Task
 from apps.scheduler.schemas import (
     EventIn,
@@ -112,6 +112,6 @@ class SchedulerController(ControllerBase):
         operation_id="scheduler_tasks_delete",
     )
     def delete_task(self, task_uuid: UUID4):
-        instance = get_task(request=self.context.request, task_uuid=task_uuid)
+        instance = get_task(self.context.request, task_uuid)
         TaskService.delete(instance)
         return 204, None

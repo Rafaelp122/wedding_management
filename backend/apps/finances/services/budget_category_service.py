@@ -6,10 +6,7 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import (
-    DomainIntegrityError,
-    ObjectNotFoundError,
-)
+from apps.core.exceptions import DomainIntegrityError
 from apps.core.types import AuthContextUser
 from apps.finances.models import Budget, BudgetCategory
 from apps.weddings.models import Wedding
@@ -43,17 +40,7 @@ class BudgetCategoryService:
         """
         Recupera uma categoria específica validando a posse.
         """
-        try:
-            return (
-                BudgetCategory.objects.for_user(user)
-                .select_related("budget", "wedding")
-                .get(uuid=uuid)
-            )
-        except BudgetCategory.DoesNotExist as e:
-            raise ObjectNotFoundError(
-                detail="Categoria de orçamento não encontrada.",
-                code="budget_category_not_found",
-            ) from e
+        return BudgetCategory.objects.resolve(user, uuid)
 
     @staticmethod
     @transaction.atomic

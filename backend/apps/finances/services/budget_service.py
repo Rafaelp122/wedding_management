@@ -1,16 +1,15 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import (
-    DomainIntegrityError,
-    ObjectNotFoundError,
-)
+from apps.core.exceptions import DomainIntegrityError
 from apps.core.types import AuthContextUser
 from apps.finances.models import Budget
+from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -27,30 +26,20 @@ class BudgetService:
         return Budget.objects.for_user(user).select_related("wedding")
 
     @staticmethod
-    def get(instance_or_uuid: Any, user: AuthContextUser) -> Budget:
+    def get(instance_or_uuid: Budget | UUID | str, user: AuthContextUser) -> Budget:
         """
         Recupera um orçamento. Exige user para garantir multitenancy.
         """
-        if isinstance(instance_or_uuid, Budget):
-            return instance_or_uuid
-
-        try:
-            return (
-                Budget.objects.for_user(user)
-                .select_related("wedding")
-                .get(uuid=instance_or_uuid)
-            )
-        except Budget.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Orçamento não encontrado.") from e
+        return Budget.objects.resolve(user, instance_or_uuid)
 
     @staticmethod
     @transaction.atomic
-    def create(data: dict[str, Any]) -> Budget:
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Budget:
         logger.info("Iniciando criação de Orçamento Mestre")
 
-        wedding = data.pop("wedding")
-        # Se for UUID e não tivermos o wedding resolvido, o service vai explodir.
-        # Mas o Controller deve garantir que 'wedding' seja uma instância.
+        # Resolvemos o recurso pai (Wedding) vindo do JSON body
+        wedding_id = data.pop("wedding")
+        wedding = Wedding.objects.resolve(user, wedding_id)
 
         budget = Budget(wedding=wedding, **data)
 
@@ -95,13 +84,14 @@ class BudgetService:
 
     @staticmethod
     @transaction.atomic
-    def get_or_create_for_wedding(user: AuthContextUser, wedding_id: Any) -> Budget:
-        from apps.core.dependencies import resolve_wedding_for_user
+    def get_or_create_for_wedding(
+        user: AuthContextUser, wedding_id: Wedding | UUID | str
+    ) -> Budget:
         from apps.finances.services.budget_category_service import (
             BudgetCategoryService,
         )
 
-        wedding = resolve_wedding_for_user(user, wedding_id)
+        wedding = Wedding.objects.resolve(user, wedding_id)
 
         budget, created = Budget.objects.get_or_create(
             wedding=wedding,

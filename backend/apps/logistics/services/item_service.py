@@ -5,9 +5,10 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
+from apps.core.exceptions import DomainIntegrityError
 from apps.core.types import AuthContextUser
-from apps.logistics.models import Item
+from apps.logistics.models import Contract, Item
+from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -30,35 +31,23 @@ class ItemService:
 
     @staticmethod
     def get(user: AuthContextUser, uuid: UUID | str) -> Item:
-        try:
-            return (
-                Item.objects.for_user(user)
-                .select_related("contract", "wedding")
-                .get(uuid=uuid)
-            )
-        except Item.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Item não encontrado.") from e
+        return Item.objects.resolve(user, uuid)
 
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Item:
-        from apps.core.dependencies import (
-            resolve_contract_for_user,
-            resolve_wedding_for_user,
-        )
-
         logger.info("Iniciando criação de Item")
 
         # 1. Resolução do Casamento
         wedding_input = data.pop("wedding")
-        wedding = resolve_wedding_for_user(user, wedding_input)
+        wedding = Wedding.objects.resolve(user, wedding_input)
 
         # 2. Resolução do Contrato (Opcional)
         contract = None
         if "contract" in data:
             contract_input = data.pop("contract")
             if contract_input:
-                contract = resolve_contract_for_user(user, contract_input)
+                contract = Contract.objects.resolve(user, contract_input)
                 # Garantia de integridade: contrato deve pertencer ao mesmo wedding
                 if contract.wedding_id != wedding.id:
                     from apps.core.exceptions import BusinessRuleViolation
@@ -78,8 +67,6 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def update(user: AuthContextUser, instance: Item, data: dict[str, Any]) -> Item:
-        from apps.core.dependencies import resolve_contract_for_user
-
         logger.info(f"Atualizando Item uuid={instance.uuid}")
 
         # Bloqueio de troca de casamento
@@ -89,7 +76,7 @@ class ItemService:
         if "contract" in data:
             contract_input = data.pop("contract")
             if contract_input:
-                contract = resolve_contract_for_user(user, contract_input)
+                contract = Contract.objects.resolve(user, contract_input)
                 if contract.wedding_id != instance.wedding_id:
                     from apps.core.exceptions import BusinessRuleViolation
 

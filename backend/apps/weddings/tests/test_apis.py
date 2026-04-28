@@ -129,7 +129,7 @@ class TestWeddingNinjaAPI:
 @pytest.mark.security
 def test_get_wedding_dependency_logic(rf, user):
     """Testa diretamente a função auxiliar de autorização."""
-    from apps.core.dependencies import get_wedding
+    from apps.weddings.dependencies import get_wedding
 
     request = rf.get("/")
     request.user = user

@@ -6,12 +6,10 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import (
-    BusinessRuleViolation,
-    DomainIntegrityError,
-)
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.core.types import AuthContextUser
-from apps.finances.models import Expense
+from apps.finances.models import BudgetCategory, Expense
+from apps.logistics.models import Contract
 
 
 logger = logging.getLogger(__name__)
@@ -41,22 +39,17 @@ class ExpenseService:
         Cria uma despesa.
         Resolve dependências internas (Category/Contract) usando o user.
         """
-        from apps.core.dependencies import (
-            resolve_budget_category_for_user,
-            resolve_contract_for_user,
-        )
-
         logger.info("Iniciando criação de Despesa")
 
         # 1. Resolução Segura de Categoria
         category_input = data.pop("category")
-        category = resolve_budget_category_for_user(user, category_input)
+        category = BudgetCategory.objects.resolve(user, category_input)
 
         # 2. Resolução de Contrato (Opcional)
         contract = None
         contract_input = data.pop("contract", None)
         if contract_input:
-            contract = resolve_contract_for_user(user, contract_input)
+            contract = Contract.objects.resolve(user, contract_input)
 
         # 3. Injeção de Contexto e Instanciação
         expense = Expense(
@@ -86,8 +79,6 @@ class ExpenseService:
     def update(
         user: AuthContextUser, instance: Expense, data: dict[str, Any]
     ) -> Expense:
-        from apps.core.dependencies import resolve_contract_for_user
-
         logger.info(f"Atualizando Despesa uuid={instance.uuid}")
 
         # Bloqueio de sequestro de contexto
@@ -99,7 +90,7 @@ class ExpenseService:
         if "contract" in data:
             contract_input = data.pop("contract")
             instance.contract = (
-                resolve_contract_for_user(user, contract_input)
+                Contract.objects.resolve(user, contract_input)
                 if contract_input
                 else None
             )

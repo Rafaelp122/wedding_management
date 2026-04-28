@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
@@ -25,6 +26,10 @@ class WeddingService:
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Wedding]:
         return Wedding.objects.for_user(user)
+
+    @staticmethod
+    def get(user: AuthContextUser, uuid: Wedding | UUID | str) -> Wedding:
+        return Wedding.objects.resolve(user, uuid)
 
     @staticmethod
     @transaction.atomic

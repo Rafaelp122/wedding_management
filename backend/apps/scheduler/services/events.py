@@ -9,6 +9,7 @@ from apps.core.auth import require_user
 from apps.core.exceptions import DomainIntegrityError
 from apps.core.types import AuthContextUser
 from apps.scheduler.models import Event
+from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -32,13 +33,11 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Event:
-        from apps.core.dependencies import resolve_wedding_for_user
-
         planner = require_user(user)
         logger.info("Iniciando criação de Evento")
 
         wedding_input = data.pop("wedding")
-        wedding = resolve_wedding_for_user(user, wedding_input)
+        wedding = Wedding.objects.resolve(user, wedding_input)
 
         event = Event(planner=planner, wedding=wedding, **data)
         event.save()

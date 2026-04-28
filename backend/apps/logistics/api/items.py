@@ -6,7 +6,7 @@ from ninja_extra import ControllerBase, api_controller, route
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.core.dependencies import get_item
+from apps.logistics.dependencies import get_item
 from apps.logistics.models.item import Item
 from apps.logistics.schemas import ItemIn, ItemOut, ItemPatchIn
 from apps.logistics.services.item_service import ItemService

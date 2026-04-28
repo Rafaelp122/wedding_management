@@ -6,7 +6,7 @@ from ninja_extra import ControllerBase, api_controller, route
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.core.dependencies import get_contract
+from apps.logistics.dependencies import get_contract
 from apps.logistics.models.contract import Contract
 from apps.logistics.schemas import ContractIn, ContractOut, ContractPatchIn
 from apps.logistics.services.contract_service import ContractService

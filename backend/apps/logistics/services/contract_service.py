@@ -5,16 +5,11 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.auth import require_user
-from apps.core.dependencies import (
-    resolve_budget_category_for_user,
-    resolve_supplier_for_user,
-    resolve_wedding_for_user,
-)
-from apps.core.exceptions import (
-    DomainIntegrityError,
-)
+from apps.core.exceptions import DomainIntegrityError
 from apps.core.types import AuthContextUser
-from apps.logistics.models import Contract
+from apps.finances.models import BudgetCategory
+from apps.logistics.models import Contract, Supplier
+from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -40,13 +35,13 @@ class ContractService:
         planner = require_user(user)
         logger.info(f"Iniciando criação de Contrato para planner_id={planner.id}")
 
-        # Resolução de dependências via Resolvers centralizados (Pureza de Segurança)
-        wedding = resolve_wedding_for_user(planner, data.pop("wedding"))
-        supplier = resolve_supplier_for_user(planner, data.pop("supplier"))
+        # Resolução de dependências via Resolvers genéricos (Pureza de Segurança)
+        wedding = Wedding.objects.resolve(planner, data.pop("wedding"))
+        supplier = Supplier.objects.resolve(planner, data.pop("supplier"))
 
         category_uuid = data.pop("budget_category", None)
         budget_category = (
-            resolve_budget_category_for_user(planner, category_uuid)
+            BudgetCategory.objects.resolve(planner, category_uuid)
             if category_uuid
             else None
         )
@@ -76,13 +71,13 @@ class ContractService:
 
         # Resolução de Fornecedor se fornecido no payload
         if "supplier" in data:
-            instance.supplier = resolve_supplier_for_user(planner, data.pop("supplier"))
+            instance.supplier = Supplier.objects.resolve(planner, data.pop("supplier"))
 
         # Resolução de Categoria de Orçamento se fornecido no payload
         if "budget_category" in data:
             category_uuid = data.pop("budget_category")
             instance.budget_category = (
-                resolve_budget_category_for_user(planner, category_uuid)
+                BudgetCategory.objects.resolve(planner, category_uuid)
                 if category_uuid
                 else None
             )

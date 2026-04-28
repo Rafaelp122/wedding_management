@@ -1,13 +1,12 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.auth import require_user
-from apps.core.exceptions import (
-    DomainIntegrityError,
-)
+from apps.core.exceptions import DomainIntegrityError
 from apps.core.types import AuthContextUser
 from apps.logistics.models import Supplier
 
@@ -26,6 +25,10 @@ class SupplierService:
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Supplier]:
         return Supplier.objects.for_user(user)
+
+    @staticmethod
+    def get(user: AuthContextUser, uuid: Supplier | UUID | str) -> Supplier:
+        return Supplier.objects.resolve(user, uuid)
 
     @staticmethod
     @transaction.atomic

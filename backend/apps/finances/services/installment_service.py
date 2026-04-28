@@ -5,12 +5,9 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import (
-    BusinessRuleViolation,
-    DomainIntegrityError,
-)
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.core.types import AuthContextUser
-from apps.finances.models import Installment
+from apps.finances.models import Expense, Installment
 
 
 logger = logging.getLogger(__name__)
@@ -29,13 +26,11 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def create(user: AuthContextUser, data: dict[str, Any]) -> Installment:
-        from apps.core.dependencies import resolve_expense_for_user
-
         logger.info("Iniciando criação de Parcela")
 
         # 1. Resolução Segura de Dependências
         expense_input = data.pop("expense")
-        expense = resolve_expense_for_user(user, expense_input)
+        expense = Expense.objects.resolve(user, expense_input)
 
         # 2. Injeção de Contexto e Instanciação
         installment = Installment(wedding=expense.wedding, expense=expense, **data)

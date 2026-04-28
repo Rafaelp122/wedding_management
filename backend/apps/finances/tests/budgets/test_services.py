@@ -38,7 +38,7 @@ class TestBudgetService:
 
         msg = "já possui um orçamento definido"
         with pytest.raises(DomainIntegrityError, match=msg):
-            BudgetService.create({"wedding": wedding, "total_estimated": 100})
+            BudgetService.create(user, {"wedding": wedding, "total_estimated": 100})
 
     def test_delete_budget_protected_error(self, user):
         wedding = WeddingFactory(planner=user)
