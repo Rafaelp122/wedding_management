@@ -1,90 +1,79 @@
 import ast
-import inspect
+import os
+from pathlib import Path
+from typing import List
 
 import pytest
 
-from apps.events.api.event_controller import EventController
-from apps.events.api.wedding_controller import WeddingController
-from apps.finances.api.budget_controller import BudgetController
-from apps.finances.api.category_controller import CategoryController
-from apps.finances.api.expense_controller import ExpenseController
-from apps.finances.api.installment_controller import InstallmentController
-from apps.logistics.api.contracts import ContractController
-from apps.logistics.api.items import ItemController
-from apps.logistics.api.suppliers import SupplierController
-from apps.scheduler.api.scheduler_controller import SchedulerController
+
+def _get_controller_files() -> List[Path]:
+    """Descobre todos os arquivos de controlador seguindo a convenção apps/*/api/*.py"""
+    base_path = Path(__file__).parent.parent.parent.parent
+    return list(base_path.glob("**/api/*.py"))
 
 
-def _assert_get_resource_called(controller_class, uuid_param: str, getter_fn_name: str):
-    """Verifica se todo método com uuid_param chama a função getter correta."""
-    try:
-        source_file = inspect.getfile(controller_class)
-        with open(source_file) as f:
-            source = f.read()
-    except (TypeError, OSError):
-        pytest.fail(
-            "Não foi possível localizar o arquivo fonte para "
-            f"{controller_class.__name__}"
-        )
+def _audit_file_security(file_path: Path):
+    """Analisa um arquivo Python e garante a segurança em todos os métodos de classe."""
+    with open(file_path, "r", encoding="utf-8") as f:
+        source = f.read()
 
     tree = ast.parse(source)
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == controller_class.__name__:
+        # Procuramos por classes (nossos controladores)
+        if isinstance(node, ast.ClassDef):
+            # Ignora AuthController pois não lida com recursos por UUID de tenant
+            if node.name == "AuthController":
+                continue
+
             for item in node.body:
+                # Procuramos por métodos (nossos endpoints)
                 if not isinstance(item, ast.FunctionDef):
                     continue
 
-                args = [a.arg for a in item.args.args]
-                if uuid_param not in args:
+                # Identifica parâmetros que são UUIDs (pela convenção de sufixo _uuid)
+                uuid_params = [
+                    a.arg for a in item.args.args if a.arg.endswith("_uuid")
+                ]
+                if not uuid_params:
                     continue
 
-                calls = [
-                    n.func.id
-                    for n in ast.walk(item)
-                    if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
-                ]
+                # Extrai todas as chamadas dentro do método
+                all_calls = []
+                for n in ast.walk(item):
+                    if isinstance(n, ast.Call):
+                        if isinstance(n.func, ast.Name):
+                            all_calls.append(n.func.id)
+                        elif isinstance(n.func, ast.Attribute):
+                            all_calls.append(n.func.attr)
 
-                attr_calls = [
-                    n.func.attr
-                    for n in ast.walk(item)
-                    if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
-                ]
+                for uuid_param in uuid_params:
+                    # Convenção: event_uuid deve chamar get_event() ou .resolve()
+                    resource_name = uuid_param.replace("_uuid", "")
+                    expected_getter = f"get_{resource_name}"
 
-                all_calls = calls + attr_calls
+                    # Mapeamentos especiais
+                    special_mappings = {"category": "get_budget_category"}
+                    if resource_name in special_mappings:
+                        expected_getter = special_mappings[resource_name]
 
-                # No caso de EventService.resolve, o getter_fn_name pode ser
-                # 'get_event' ou 'resolve' dependendo de como a dependência é
-                # injetada. Como os novos controllers usam EventService.resolve
-                # diretamente, vamos checar ambos.
-                valid_getters = [getter_fn_name, "resolve"]
-                found = any(g in all_calls for g in valid_getters)
+                    # Proteção: Deve chamar o getter gerado ou o método .resolve() do Manager
+                    has_protection = (
+                        expected_getter in all_calls or "resolve" in all_calls
+                    )
 
-                assert found, (
-                    f"{controller_class.__name__}.{item.name}() possui "
-                    f"'{uuid_param}' mas não chama {valid_getters}()"
-                )
+                    assert has_protection, (
+                        f"VULNERABILIDADE IDOR: No arquivo {file_path.name}, o método "
+                        f"{node.name}.{item.name}() recebe '{uuid_param}' "
+                        f"mas não chama {expected_getter}() ou .resolve()."
+                    )
 
 
-@pytest.mark.parametrize(
-    "controller, uuid_field, getter",
-    [
-        (EventController, "event_uuid", "get_event"),
-        (WeddingController, "event_uuid", "get_event"),
-        (SupplierController, "supplier_uuid", "get_supplier"),
-        (ContractController, "contract_uuid", "get_contract"),
-        (ItemController, "item_uuid", "get_item"),
-        (BudgetController, "budget_uuid", "get_budget"),
-        (CategoryController, "category_uuid", "get_budget_category"),
-        (ExpenseController, "expense_uuid", "get_expense"),
-        (InstallmentController, "installment_uuid", "get_installment"),
-        (SchedulerController, "event_uuid", "get_event"),
-        (SchedulerController, "task_uuid", "get_task"),
-    ],
-)
-def test_controller_resource_resolution_security(controller, uuid_field, getter):
+@pytest.mark.parametrize("controller_file", _get_controller_files())
+def test_all_controllers_enforce_resource_security(controller_file):
     """
-    AUDITORIA DE SEGURANÇA (AST): Garante que todo endpoint que recebe um UUID
-    faz a resolução obrigatória de posse (evita IDOR).
+    AUDITORIA DE SEGURANÇA AUTOMATIZADA:
+    Varre todos os arquivos da pasta 'api' de todos os apps e garante
+    que ninguém esqueceu de validar a posse de um recurso UUID.
     """
-    _assert_get_resource_called(controller, uuid_field, getter)
+    _audit_file_security(controller_file)

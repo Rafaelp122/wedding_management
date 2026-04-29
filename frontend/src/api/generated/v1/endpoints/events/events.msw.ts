@@ -29,7 +29,10 @@ export const getEventsListWeddingsResponseMock = (
     event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
     date: faker.date.past().toISOString().slice(0, 10),
     location: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
+    expected_guests: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
     status: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     wedding_detail: faker.helpers.arrayElement([
@@ -55,7 +58,10 @@ export const getEventsCreateWeddingResponseMock = (
   event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
   date: faker.date.past().toISOString().slice(0, 10),
   location: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
+  expected_guests: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   wedding_detail: faker.helpers.arrayElement([
@@ -79,7 +85,10 @@ export const getEventsUpdateWeddingResponseMock = (
   event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
   date: faker.date.past().toISOString().slice(0, 10),
   location: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
+  expected_guests: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   wedding_detail: faker.helpers.arrayElement([
@@ -107,7 +116,10 @@ export const getEventsListResponseMock = (
     event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
     date: faker.date.past().toISOString().slice(0, 10),
     location: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
+    expected_guests: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
     status: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   })),
@@ -123,7 +135,10 @@ export const getEventsRetrieveResponseMock = (): WeddingOut | EventOut =>
       event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       date: faker.date.past().toISOString().slice(0, 10),
       location: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
+      expected_guests: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([faker.number.int(), null]),
+        undefined,
+      ]),
       status: faker.string.alpha({ length: { min: 10, max: 20 } }),
       created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
       wedding_detail: faker.helpers.arrayElement([
@@ -143,7 +158,10 @@ export const getEventsRetrieveResponseMock = (): WeddingOut | EventOut =>
       event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
       date: faker.date.past().toISOString().slice(0, 10),
       location: faker.string.alpha({ length: { min: 10, max: 20 } }),
-      expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
+      expected_guests: faker.helpers.arrayElement([
+        faker.helpers.arrayElement([faker.number.int(), null]),
+        undefined,
+      ]),
       status: faker.string.alpha({ length: { min: 10, max: 20 } }),
       created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     },
@@ -157,7 +175,10 @@ export const getEventsUpdateGenericResponseMock = (
   event_type: faker.string.alpha({ length: { min: 10, max: 20 } }),
   date: faker.date.past().toISOString().slice(0, 10),
   location: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
+  expected_guests: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   ...overrideResponse,

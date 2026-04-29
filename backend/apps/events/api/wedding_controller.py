@@ -1,7 +1,6 @@
 from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import ControllerBase, api_controller, http_get, http_patch, http_post
-from ninja_extra.permissions import IsAuthenticated
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
@@ -10,7 +9,7 @@ from ..schemas import WeddingIn, WeddingOut
 from ..services.event_service import EventService
 
 
-@api_controller("/events/weddings", tags=["Events"], permissions=[IsAuthenticated])
+@api_controller("/events/weddings", tags=["Events"])
 class WeddingController(ControllerBase):
     """
     CONTROLADOR ESPECIALIZADO DE CASAMENTOS.

@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import (
@@ -8,17 +10,17 @@ from ninja_extra import (
     http_patch,
     http_post,
 )
-from ninja_extra.permissions import IsAuthenticated
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.events.models import Event
 from apps.finances.dependencies import get_budget
 from apps.finances.models import Budget
 from apps.finances.schemas import BudgetIn, BudgetOut, BudgetPatchIn
 from apps.finances.services.budget_service import BudgetService
 
 
-@api_controller("/finances/budgets", tags=["Finances"], permissions=[IsAuthenticated])
+@api_controller("/finances/budgets", tags=["Finances"])
 class BudgetController(ControllerBase):
     @http_get("/", response=list[BudgetOut], operation_id="finances_budgets_list")
     @paginate
@@ -47,8 +49,12 @@ class BudgetController(ControllerBase):
         assert self.context  # noqa: S101
         assert self.context.request  # noqa: S101
         assert self.context.request.user  # noqa: S101
+
+        # Proteção contra IDOR: Garante que o evento pertence ao usuário
+        event = Event.objects.resolve(self.context.request.user, event_uuid)
+
         return BudgetService.get_or_create_for_event(
-            self.context.request.user, event_uuid
+            self.context.request.user, event.uuid
         )
 
     @http_post(

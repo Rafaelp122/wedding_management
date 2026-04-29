@@ -388,8 +388,9 @@ export const useEventsUpdateWedding = <
 };
 /**
  * LISTAGEM GERAL (BASE):
-Retorna uma lista de todos os eventos da empresa (Tenant) sem os detalhes específicos.
-Ideal para visões de Dashboard, Calendário e Cronogramas onde a performance é prioridade.
+Retorna uma lista de todos os eventos da empresa (Tenant) sem os
+detalhes específicos. Ideal para visões de Dashboard, Calendário e
+Cronogramas onde a performance é prioridade.
  * @summary List Events
  */
 export const eventsList = (
@@ -531,8 +532,9 @@ export function useEventsList<
 
 /**
  * DETALHE INDIVIDUAL (POLIMÓRFICO):
-Busca um evento específico. O retorno é polimórfico: se o evento for um Casamento,
-o JSON incluirá o objeto 'wedding_detail'. Se for genérico, retornará apenas a base.
+Busca um evento específico. O retorno é polimórfico: se o evento
+for um Casamento, o JSON incluirá o objeto 'wedding_detail'.
+Se for genérico, retornará apenas a base.
  * @summary Retrieve Event
  */
 export const eventsRetrieve = (
@@ -680,8 +682,9 @@ export function useEventsRetrieve<
 
 /**
  * ATUALIZAÇÃO RASA (PATCH):
-Permite alterar campos que existem em qualquer evento (nome, data, local, status).
-Este endpoint ignora campos específicos de especializações (ex: nomes de noivos).
+Permite alterar campos que existem em qualquer evento
+(nome, data, local, status). Este endpoint ignora campos
+específicos de especializações (ex: nomes de noivos).
  * @summary Update Event
  */
 export const eventsUpdateGeneric = (

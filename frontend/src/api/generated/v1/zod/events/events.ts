@@ -32,7 +32,7 @@ export const EventsListWeddingsResponse = zod.object({
         event_type: zod.string(),
         date: zod.iso.date(),
         location: zod.string(),
-        expected_guests: zod.union([zod.number(), zod.null()]),
+        expected_guests: zod.union([zod.number(), zod.null()]).optional(),
         status: zod.string(),
         created_at: zod.iso.datetime({}),
         wedding_detail: zod
@@ -121,7 +121,7 @@ export const EventsUpdateWeddingResponse = zod
     event_type: zod.string(),
     date: zod.iso.date(),
     location: zod.string(),
-    expected_guests: zod.union([zod.number(), zod.null()]),
+    expected_guests: zod.union([zod.number(), zod.null()]).optional(),
     status: zod.string(),
     created_at: zod.iso.datetime({}),
     wedding_detail: zod
@@ -138,8 +138,9 @@ export const EventsUpdateWeddingResponse = zod
 
 /**
  * LISTAGEM GERAL (BASE):
-Retorna uma lista de todos os eventos da empresa (Tenant) sem os detalhes específicos.
-Ideal para visões de Dashboard, Calendário e Cronogramas onde a performance é prioridade.
+Retorna uma lista de todos os eventos da empresa (Tenant) sem os
+detalhes específicos. Ideal para visões de Dashboard, Calendário e
+Cronogramas onde a performance é prioridade.
  * @summary List Events
  */
 export const eventsListQueryLimitDefault = 100;
@@ -163,7 +164,7 @@ export const EventsListResponse = zod.object({
       event_type: zod.string(),
       date: zod.iso.date(),
       location: zod.string(),
-      expected_guests: zod.union([zod.number(), zod.null()]),
+      expected_guests: zod.union([zod.number(), zod.null()]).optional(),
       status: zod.string(),
       created_at: zod.iso.datetime({}),
     }),
@@ -173,8 +174,9 @@ export const EventsListResponse = zod.object({
 
 /**
  * DETALHE INDIVIDUAL (POLIMÓRFICO):
-Busca um evento específico. O retorno é polimórfico: se o evento for um Casamento,
-o JSON incluirá o objeto 'wedding_detail'. Se for genérico, retornará apenas a base.
+Busca um evento específico. O retorno é polimórfico: se o evento
+for um Casamento, o JSON incluirá o objeto 'wedding_detail'.
+Se for genérico, retornará apenas a base.
  * @summary Retrieve Event
  */
 export const EventsRetrieveParams = zod.object({
@@ -189,7 +191,7 @@ export const EventsRetrieveResponse = zod.union([
       event_type: zod.string(),
       date: zod.iso.date(),
       location: zod.string(),
-      expected_guests: zod.union([zod.number(), zod.null()]),
+      expected_guests: zod.union([zod.number(), zod.null()]).optional(),
       status: zod.string(),
       created_at: zod.iso.datetime({}),
       wedding_detail: zod
@@ -209,7 +211,7 @@ export const EventsRetrieveResponse = zod.union([
     event_type: zod.string(),
     date: zod.iso.date(),
     location: zod.string(),
-    expected_guests: zod.union([zod.number(), zod.null()]),
+    expected_guests: zod.union([zod.number(), zod.null()]).optional(),
     status: zod.string(),
     created_at: zod.iso.datetime({}),
   }),
@@ -217,8 +219,9 @@ export const EventsRetrieveResponse = zod.union([
 
 /**
  * ATUALIZAÇÃO RASA (PATCH):
-Permite alterar campos que existem em qualquer evento (nome, data, local, status).
-Este endpoint ignora campos específicos de especializações (ex: nomes de noivos).
+Permite alterar campos que existem em qualquer evento
+(nome, data, local, status). Este endpoint ignora campos
+específicos de especializações (ex: nomes de noivos).
  * @summary Update Event
  */
 export const EventsUpdateGenericParams = zod.object({
@@ -239,7 +242,7 @@ export const EventsUpdateGenericResponse = zod.object({
   event_type: zod.string(),
   date: zod.iso.date(),
   location: zod.string(),
-  expected_guests: zod.union([zod.number(), zod.null()]),
+  expected_guests: zod.union([zod.number(), zod.null()]).optional(),
   status: zod.string(),
   created_at: zod.iso.datetime({}),
 });

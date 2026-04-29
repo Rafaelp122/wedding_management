@@ -16,7 +16,7 @@ export interface WeddingOut {
   event_type: string;
   date: string;
   location: string;
-  expected_guests: number | null;
+  expected_guests?: number | null;
   status: string;
   created_at: string;
   wedding_detail?: WeddingDetailOut | null;

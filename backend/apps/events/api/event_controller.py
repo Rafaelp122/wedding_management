@@ -7,7 +7,6 @@ from ninja_extra import (
     http_get,
     http_patch,
 )
-from ninja_extra.permissions import IsAuthenticated
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
@@ -16,7 +15,7 @@ from ..schemas import AnyEventOut, EventOut, EventPatchIn
 from ..services.event_service import EventService
 
 
-@api_controller("/events", tags=["Events"], permissions=[IsAuthenticated])
+@api_controller("/events", tags=["Events"])
 class EventController(ControllerBase):
     """
     CONTROLADOR GENÉRICO DE EVENTOS.
