@@ -4,10 +4,10 @@ import pytest
 from django.db.models import ProtectedError
 
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
+from apps.events.tests.factories import EventFactory
 from apps.logistics.models import Item
 from apps.logistics.services.item_service import ItemService
 from apps.logistics.tests.factories import ItemFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -16,17 +16,18 @@ class TestItemService:
     """Testes de lógica de negócio para ItemService - Foco em Cobertura."""
 
     def test_list_items_with_filter(self, user):
-        wedding = WeddingFactory(planner=user)
-        ItemFactory(wedding=wedding)
-        # Outro wedding do mesmo planner
-        other_wedding = WeddingFactory(planner=user)
-        ItemFactory(wedding=other_wedding)
+        event = EventFactory(company=user.company)
+        ItemFactory(event=event)
+        # Outro event do mesmo planner
+        other_event = EventFactory(company=user.company)
+        ItemFactory(event=other_event)
 
-        qs = ItemService.list(user, wedding_id=wedding.uuid)
+        qs = ItemService.list(user, event_id=event.uuid)
         assert qs.count() == 1
 
     def test_get_item_logic(self, user):
-        item = ItemFactory(wedding__planner=user)
+        event = EventFactory(company=user.company)
+        item = ItemFactory(event=event)
 
         # Caso 1: Sucesso
         fetched = ItemService.get(user, item.uuid)
@@ -39,7 +40,8 @@ class TestItemService:
             ItemService.get(user, uuid4())
 
     def test_delete_item_protected_error(self, user):
-        item = ItemFactory(wedding__planner=user)
+        event = EventFactory(company=user.company)
+        item = ItemFactory(event=event)
 
         with pytest.raises(DomainIntegrityError):
             with patch.object(Item, "delete", side_effect=ProtectedError("Erro", [])):

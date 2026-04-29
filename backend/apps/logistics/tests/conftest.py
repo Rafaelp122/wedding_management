@@ -8,7 +8,7 @@ de contratação, conformidade de fornecedores e inventário do evento.
 import pytest
 from pytest_factoryboy import register
 
-from apps.weddings.tests.factories import WeddingFactory
+from apps.events.tests.factories import EventFactory
 
 from .factories import ContractFactory, ItemFactory, SupplierFactory
 
@@ -21,17 +21,15 @@ register(ItemFactory)
 
 @pytest.fixture
 def active_contract(
-    db, supplier_factory, wedding_factory, budget_category_factory, contract_factory
+    db, supplier_factory, event_factory, budget_category_factory, contract_factory
 ):
     """Fixture que devolve um contrato assinado e pronto para execução."""
-    wedding = wedding_factory.create()
-    supplier = supplier_factory.create(planner=wedding.planner)
-    budget_cat = budget_category_factory.create(
-        budget__wedding=wedding, wedding=wedding
-    )
+    event = event_factory.create()
+    supplier = supplier_factory.create(company=event.company)
+    budget_cat = budget_category_factory.create(budget__event=event, event=event)
     return contract_factory.create(
         status="SIGNED",
-        wedding=wedding,
+        event=event,
         supplier=supplier,
         budget_category=budget_cat,
         description="Contrato de teste",
@@ -42,17 +40,17 @@ def active_contract(
 def supplier_with_items(db, supplier_factory, contract_factory, item_factory):
     """
     Fixture complexa que cria um fornecedor com um contrato e 3 itens.
-    Garante que todos pertencem ao mesmo contexto de utilizador/casamento.
+    Garante que todos pertencem ao mesmo contexto de utilizador/evento.
     """
     supplier = supplier_factory.create()
 
-    # Criamos um casamento para este Planner (utilizador do fornecedor)
-    wedding = WeddingFactory(planner=supplier.planner)
+    # Criamos um evento para este Company (empresa do fornecedor)
+    event = EventFactory(company=supplier.company)
 
-    # Criamos o contrato vinculado a este casamento e fornecedor
-    contract = contract_factory.create(supplier=supplier, wedding=wedding)
+    # Criamos o contrato vinculado a este evento e fornecedor
+    contract = contract_factory.create(supplier=supplier, event=event)
 
     # Criamos os itens vinculados ao contrato
-    items = item_factory.create_batch(3, contract=contract, wedding=wedding)
+    items = item_factory.create_batch(3, contract=contract, event=event)
 
     return supplier, contract, items

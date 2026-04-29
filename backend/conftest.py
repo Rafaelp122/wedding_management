@@ -2,6 +2,8 @@
 Configuração Global de Testes (Pytest).
 """
 
+from unittest.mock import patch
+
 import factory
 import pytest
 from django.test import Client
@@ -9,6 +11,13 @@ from ninja_jwt.tokens import RefreshToken
 from pytest_factoryboy import register
 
 from apps.users.tests.factories import AdminFactory, UserFactory
+
+
+# Desativa o signal de criação de budget para evitar conflitos nos testes
+@pytest.fixture(autouse=True)
+def mute_signals():
+    with patch("apps.events.signals.handle_event_creation") as mock_signal:
+        yield mock_signal
 
 
 # 1. Registo Global de Factories

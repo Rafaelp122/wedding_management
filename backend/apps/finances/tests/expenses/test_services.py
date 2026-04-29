@@ -7,11 +7,11 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
 )
+from apps.events.tests.factories import EventFactory
 from apps.finances.models import Expense
 from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import BudgetCategoryFactory, ExpenseFactory
 from apps.logistics.tests.factories import ContractFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -20,20 +20,20 @@ class TestExpenseService:
     """Testes de lógica de negócio para ExpenseService - Foco em Cobertura."""
 
     def test_list_expenses_with_filter(self, user):
-        wedding = WeddingFactory(planner=user)
-        cat = BudgetCategoryFactory(wedding=wedding)
-        ExpenseFactory(wedding=wedding, category=cat)
-        # Outro wedding do mesmo planner
-        other_wedding = WeddingFactory(planner=user)
-        ExpenseFactory(wedding=other_wedding)
+        event = EventFactory(company=user.company)
+        cat = BudgetCategoryFactory(event=event)
+        ExpenseFactory(event=event, category=cat)
+        # Outro event do mesmo planner
+        other_event = EventFactory(company=user.company)
+        ExpenseFactory(event=other_event)
 
-        qs = ExpenseService.list(user, wedding_id=wedding.uuid)
+        qs = ExpenseService.list(user, event_id=event.uuid)
         assert qs.count() == 1
 
     def test_create_expense_with_contract(self, user):
-        wedding = WeddingFactory(planner=user)
-        cat = BudgetCategoryFactory(wedding=wedding)
-        contract = ContractFactory(wedding=wedding)
+        event = EventFactory(company=user.company)
+        cat = BudgetCategoryFactory(event=event)
+        contract = ContractFactory(event=event)
 
         data = {
             "category": cat.uuid,
@@ -45,7 +45,7 @@ class TestExpenseService:
         assert expense.contract == contract
 
     def test_create_expense_validation_error(self, user):
-        cat = BudgetCategoryFactory(wedding__planner=user)
+        cat = BudgetCategoryFactory(event__company=user.company)
         # 100.00 de valor real sem parcelas fere a Tolerância Zero (ADR-010)
         data = {
             "category": cat.uuid,
@@ -58,8 +58,8 @@ class TestExpenseService:
 
     def test_update_expense_contract(self, user):
         # actual_amount=0 é agora o default na factory
-        expense = ExpenseFactory(wedding__planner=user, contract=None)
-        new_contract = ContractFactory(wedding=expense.wedding)
+        expense = ExpenseFactory(event__company=user.company, contract=None)
+        new_contract = ContractFactory(event=expense.event)
 
         # 1. Vincular contrato
         updated = ExpenseService.update(user, expense, {"contract": new_contract.uuid})
@@ -70,7 +70,7 @@ class TestExpenseService:
         assert updated.contract is None
 
     def test_delete_expense_protected_error(self, user):
-        expense = ExpenseFactory(wedding__planner=user)
+        expense = ExpenseFactory(event__company=user.company)
 
         with pytest.raises(
             DomainIntegrityError, match="Não é possível apagar esta despesa"

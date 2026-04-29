@@ -5,10 +5,10 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import DomainIntegrityError
-from apps.core.types import AuthContextUser
 from apps.logistics.models import Supplier
+from apps.users.auth import require_user
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class SupplierService:
         logger.info(f"Iniciando criação de Fornecedor para planner_id={planner.id}")
 
         # O full_clean() é chamado automaticamente no save() do BaseModel
-        supplier = Supplier(planner=planner, **data)
+        supplier = Supplier(company=planner.company, **data)
         supplier.save()
 
         logger.info(f"Fornecedor criado com sucesso: uuid={supplier.uuid}")

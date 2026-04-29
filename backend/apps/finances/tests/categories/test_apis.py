@@ -8,7 +8,7 @@ class TestCategoryAPI:
 
     @pytest.mark.multitenancy
     def test_list_categories_isolation(self, auth_client, finance_seed):
-        """Garante que o planner só vê categorias dos seus casamentos."""
+        """Garante que o planner só vê categorias dos seus eventos."""
         response = auth_client.get("/api/v1/finances/categories/")
         assert response.status_code == 200
         data = response.json()

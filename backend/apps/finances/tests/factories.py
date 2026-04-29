@@ -6,15 +6,15 @@ from decimal import Decimal
 
 import factory
 
+from apps.events.tests.factories import EventFactory
 from apps.finances.models import Budget, BudgetCategory, Expense, Installment
-from apps.weddings.tests.factories import WeddingFactory
 
 
 class BudgetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Budget
 
-    wedding = factory.SubFactory(WeddingFactory)
+    event = factory.SubFactory(EventFactory)
     total_estimated = Decimal("50000.00")
 
 
@@ -22,12 +22,10 @@ class BudgetCategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BudgetCategory
 
-    # Precisamos do wedding aqui para que o SelfAttribute funcione
-    wedding = factory.SubFactory(WeddingFactory)
+    # Precisamos do event aqui para que o SelfAttribute funcione
+    event = factory.SubFactory(EventFactory)
 
-    budget = factory.SubFactory(
-        BudgetFactory, wedding=factory.SelfAttribute("..wedding")
-    )
+    budget = factory.SubFactory(BudgetFactory, event=factory.SelfAttribute("..event"))
     name = factory.Iterator(
         ["Buffet", "Decoração", "Fotografia", "Música", "Espaço", "Convites"]
     )
@@ -38,16 +36,16 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Expense
 
-    wedding = factory.SubFactory(WeddingFactory)
+    event = factory.SubFactory(EventFactory)
 
     category = factory.SubFactory(
         BudgetCategoryFactory,
-        wedding=factory.SelfAttribute("..wedding"),
+        event=factory.SelfAttribute("..event"),
     )
 
     contract = factory.SubFactory(
         "apps.logistics.tests.factories.ContractFactory",
-        wedding=factory.SelfAttribute("..wedding"),
+        event=factory.SelfAttribute("..event"),
     )
 
     actual_amount = Decimal("0.00")
@@ -61,8 +59,8 @@ class InstallmentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Installment
 
-    # O wedding vem da despesa
-    wedding = factory.SelfAttribute("expense.wedding")
+    # O event vem da despesa
+    event = factory.SelfAttribute("expense.event")
     expense = factory.SubFactory(ExpenseFactory)
     installment_number = factory.Sequence(lambda n: n + 1)
     amount = Decimal("500.00")

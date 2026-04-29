@@ -3,13 +3,13 @@ from decimal import Decimal
 import pytest
 from django.core.exceptions import ValidationError
 
+from apps.events.tests.factories import EventFactory
 from apps.finances.models import Expense
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -23,12 +23,12 @@ class TestExpenseModel:
 
     def test_tolerancia_zero_math_integrity(self, user):
         """Regra Crítica: Soma das parcelas deve ser EXATA ao valor total."""
-        wedding = WeddingFactory(planner=user)
-        category = BudgetCategoryFactory(wedding=wedding)
+        event = EventFactory(company=user.company)
+        category = BudgetCategoryFactory(event=event)
 
         # 1. Cria despesa de 1000 usando a Factory (mais limpo e centralizado)
         expense = ExpenseFactory(
-            wedding=wedding,
+            event=event,
             category=category,
             description="Teste",
             actual_amount=Decimal("1000.00"),

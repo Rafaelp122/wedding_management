@@ -4,11 +4,11 @@ import pytest
 from django.db.models import ProtectedError
 
 from apps.core.exceptions import DomainIntegrityError
+from apps.events.tests.factories import EventFactory
 from apps.finances.tests.factories import BudgetCategoryFactory
 from apps.logistics.models import Contract
 from apps.logistics.services.contract_service import ContractService
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -17,23 +17,23 @@ class TestContractService:
     """Testes de lógica de negócio para o ContractService - Foco em Cobertura."""
 
     def test_list_contracts_with_filter(self, user):
-        wedding = WeddingFactory(planner=user)
-        ContractFactory(wedding=wedding)
-        ContractFactory(wedding=wedding)
-        # Outro wedding do mesmo planner. Passamos o wedding via factory.
-        other_wedding = WeddingFactory(planner=user)
-        ContractFactory(wedding=other_wedding)
+        event = EventFactory(company=user.company)
+        ContractFactory(event=event)
+        ContractFactory(event=event)
+        # Outro event do mesmo planner. Passamos o event via factory.
+        other_event = EventFactory(company=user.company)
+        ContractFactory(event=other_event)
 
-        qs = ContractService.list(user, wedding_id=wedding.uuid)
+        qs = ContractService.list(user, event_id=event.uuid)
         assert qs.count() == 2
 
     def test_create_contract_with_category(self, user):
-        wedding = WeddingFactory(planner=user)
-        supplier = SupplierFactory(planner=user)
-        category = BudgetCategoryFactory(wedding=wedding)
+        event = EventFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        category = BudgetCategoryFactory(event=event)
 
         data = {
-            "wedding": wedding.uuid,
+            "event": event.uuid,
             "supplier": supplier.uuid,
             "budget_category": category.uuid,
             "total_amount": 1000,
@@ -42,9 +42,10 @@ class TestContractService:
         assert contract.budget_category == category
 
     def test_update_contract_full(self, user):
-        contract = ContractFactory(wedding__planner=user, pdf_file="old.pdf")
-        new_supplier = SupplierFactory(planner=user)
-        new_category = BudgetCategoryFactory(wedding=contract.wedding)
+        event = EventFactory(company=user.company)
+        contract = ContractFactory(event=event, pdf_file="old.pdf")
+        new_supplier = SupplierFactory(company=user.company)
+        new_category = BudgetCategoryFactory(event=contract.event)
 
         data = {
             "supplier": new_supplier.uuid,
@@ -60,7 +61,8 @@ class TestContractService:
         assert updated.pdf_file == "old.pdf"  # Não mudou para None
 
     def test_delete_contract_protected_error(self, user):
-        contract = ContractFactory(wedding__planner=user)
+        event = EventFactory(company=user.company)
+        contract = ContractFactory(event=event)
 
         # Simulamos um erro de proteção injetando uma falha no delete real
         with pytest.raises(DomainIntegrityError):

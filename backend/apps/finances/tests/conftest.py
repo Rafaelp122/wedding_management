@@ -5,9 +5,9 @@ Configuração Local de Testes: App Finances.
 import pytest
 from pytest_factoryboy import register
 
+from apps.events.services.event_service import EventService
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.services.expense_service import ExpenseService
-from apps.weddings.services import WeddingService
 
 from .factories import (
     BudgetCategoryFactory,
@@ -30,49 +30,58 @@ def finance_seed(db, user, django_user_model):
     Cenário completo de isolamento financeiro (Multitenancy).
     Cria dados para o usuário autenticado e para um usuário alheio.
     """
-    # Planner alvo (Meu)
-    my_wedding = WeddingService.create(
+    # 1. Meu Tenant (Usuário autenticado)
+    my_event = EventService.create(
         user,
         {
-            "bride_name": "Minha",
-            "groom_name": "Noiva",
-            "location": "A",
+            "name": "Meu Casamento de Teste",
+            "event_type": "WEDDING",
+            "location": "Local A",
             "date": "2026-10-11",
+            "wedding_detail": {
+                "bride_name": "Minha",
+                "groom_name": "Noiva",
+            },
         },
     )
-    my_budget = BudgetService.get_or_create_for_wedding(user, my_wedding.uuid)
+    # O Budget já é criado automaticamente pelo SIGNAL wedding_created
+    my_budget = BudgetService.get_or_create_for_event(user, my_event.uuid)
     my_category = my_budget.categories.first()
     my_expense = ExpenseService.create(
         user,
         {
-            "category": my_category,
+            "category": my_category.uuid,
             "description": "Despesa A",
             "estimated_amount": "100.00",
             "actual_amount": "0.00",
         },
     )
 
-    # Planner alheio (Outro)
+    # 2. Outro Tenant (Usuário alheio)
     other_user = django_user_model.objects.create_user(
-        email="other@test.com", password="123"
+        email="other_finance@test.com", password="123"
     )
-    other_wedding = WeddingService.create(
+    # O other_user ganha uma Company automaticamente via SIGNAL (create_user_company)
+
+    other_event = EventService.create(
         other_user,
         {
-            "bride_name": "Outra",
-            "groom_name": "Outro",
-            "location": "B",
+            "name": "Evento Alheio",
+            "event_type": "WEDDING",
+            "location": "Local B",
             "date": "2026-10-11",
+            "wedding_detail": {
+                "bride_name": "Outra",
+                "groom_name": "Outro",
+            },
         },
     )
-    other_budget = BudgetService.get_or_create_for_wedding(
-        other_user, other_wedding.uuid
-    )
+    other_budget = BudgetService.get_or_create_for_event(other_user, other_event.uuid)
     other_category = other_budget.categories.first()
     other_expense = ExpenseService.create(
         other_user,
         {
-            "category": other_category,
+            "category": other_category.uuid,
             "description": "Despesa B",
             "estimated_amount": "200.00",
             "actual_amount": "0.00",

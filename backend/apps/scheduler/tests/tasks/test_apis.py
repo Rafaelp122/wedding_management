@@ -1,7 +1,7 @@
 import pytest
 
-from apps.scheduler.tests.factories import TaskFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.events.tests.factories import EventFactory
+from apps.scheduler.tests.appointment_factories import TaskFactory
 
 
 @pytest.mark.django_db
@@ -12,8 +12,8 @@ class TestTaskAPI:
     @pytest.mark.multitenancy
     def test_list_tasks_isolation(self, auth_client, user):
         """Garante que um planner só vê tarefas dos seus casamentos."""
-        my_wedding = WeddingFactory(planner=user)
-        TaskFactory(wedding=my_wedding, title="Minha Tarefa")
+        my_event = EventFactory(company=user.company)
+        TaskFactory(event=my_event, title="Minha Tarefa")
 
         # Tarefa de outro planner
         TaskFactory(title="Tarefa Alheia")
@@ -34,9 +34,9 @@ class TestTaskAPI:
 
     def test_create_task_success(self, auth_client, user):
         """Cenário feliz de criação via API."""
-        wedding = WeddingFactory(planner=user)
+        event = EventFactory(company=user.company)
         payload = {
-            "wedding": str(wedding.uuid),
+            "event": str(event.uuid),
             "title": "Degustação",
             "due_date": "2026-10-10",
         }

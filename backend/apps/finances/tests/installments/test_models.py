@@ -1,9 +1,9 @@
 import pytest
 from django.core.exceptions import ValidationError
 
+from apps.events.tests.factories import EventFactory
 from apps.finances.models import Installment
 from apps.finances.tests.factories import ExpenseFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -22,12 +22,12 @@ class TestInstallmentModel:
 
     def test_clean_validates_paid_date_consistency(self, user):
         """Garante que status PAGO e paid_date andam juntos."""
-        wedding = WeddingFactory(planner=user)
+        event = EventFactory(company=user.company)
         # Usamos uma instância real da factory para garantir consistência de Tenancy
-        expense = ExpenseFactory(wedding=wedding)
+        expense = ExpenseFactory(event=event)
 
         installment = Installment(
-            wedding=wedding,
+            event=event,
             expense=expense,
             status=Installment.StatusChoices.PAID,
             paid_date=None,  # ERRO
@@ -39,11 +39,11 @@ class TestInstallmentModel:
         """Garante que status PENDENTE não aceite paid_date."""
         from datetime import date
 
-        wedding = WeddingFactory(planner=user)
-        expense = ExpenseFactory(wedding=wedding)
+        event = EventFactory(company=user.company)
+        expense = ExpenseFactory(event=event)
 
         installment = Installment(
-            wedding=wedding,
+            event=event,
             expense=expense,
             status=Installment.StatusChoices.PENDING,
             paid_date=date.today(),  # ERRO

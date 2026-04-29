@@ -19,6 +19,6 @@ class TestSupplierModel:
         assert supplier.full_address == "Rua A, 10, São Paulo, SP"
 
     def test_name_max_length(self, user):
-        supplier = SupplierFactory.build(planner=user, name="A" * 256)
+        supplier = SupplierFactory.build(company=user.company, name="A" * 256)
         with pytest.raises(ValidationError):
             supplier.full_clean()

@@ -13,8 +13,8 @@ class TestSupplierAPI:
     @pytest.mark.multitenancy
     def test_list_suppliers_isolation(self, auth_client, user):
         """Garante que um planner só vê seus próprios fornecedores."""
-        SupplierFactory(planner=user, name="Meu Fornecedor")
-        SupplierFactory(name="Outro")  # Planner aleatório
+        SupplierFactory(company=user.company, name="Meu Fornecedor")
+        SupplierFactory(name="Outro")  # Company aleatória
 
         response = auth_client.get("/api/v1/logistics/suppliers/")
         assert response.status_code == 200
@@ -50,7 +50,7 @@ class TestSupplierAPI:
 
     def test_update_supplier_success(self, auth_client, user):
         """Cenário feliz de atualização."""
-        supplier = SupplierFactory(planner=user, name="Antigo")
+        supplier = SupplierFactory(company=user.company, name="Antigo")
         response = auth_client.patch(
             f"/api/v1/logistics/suppliers/{supplier.uuid}/",
             data={"name": "Novo Nome"},
@@ -73,7 +73,7 @@ class TestSupplierAPI:
 
     def test_delete_supplier_success(self, auth_client, user):
         """Cenário feliz de deleção."""
-        supplier = SupplierFactory(planner=user)
+        supplier = SupplierFactory(company=user.company)
         response = auth_client.delete(f"/api/v1/logistics/suppliers/{supplier.uuid}/")
         assert response.status_code == 204
 

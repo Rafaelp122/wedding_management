@@ -1,7 +1,7 @@
 import pytest
 
+from apps.events.tests.factories import EventFactory
 from apps.finances.tests.factories import BudgetFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -26,11 +26,11 @@ class TestBudgetAPI:
         response = auth_client.get(f"/api/v1/finances/budgets/{other_budget.uuid}/")
         assert response.status_code == 404
 
-    def test_get_budget_for_wedding_lazy_loading(self, auth_client, user):
+    def test_get_budget_for_event_lazy_loading(self, auth_client, user):
         """Valida o fluxo vital de lazy loading via API."""
-        wedding = WeddingFactory(planner=user)
-        # O wedding recém-criado não tem budget
-        url = f"/api/v1/finances/budgets/for-wedding/{wedding.uuid}/"
+        event = EventFactory(company=user.company)
+        # O event recém-criado não tem budget
+        url = f"/api/v1/finances/budgets/for-event/{event.uuid}/"
         response = auth_client.get(url)
         assert response.status_code == 200
         # O Django Ninja converte Decimal p/ string ou int dependendo da config.
@@ -62,9 +62,9 @@ class TestBudgetAPI:
 
     def test_delete_budget_success(self, auth_client, user):
         """Cenário feliz de deleção. Usamos um budget vazio para evitar 409."""
-        wedding = WeddingFactory(planner=user)
+        event = EventFactory(company=user.company)
         # Usamos a Factory para criar um budget isolado e limpo
-        budget = BudgetFactory(wedding=wedding, total_estimated=1000)
+        budget = BudgetFactory(event=event, total_estimated=1000)
 
         response = auth_client.delete(f"/api/v1/finances/budgets/{budget.uuid}/")
         assert response.status_code == 204

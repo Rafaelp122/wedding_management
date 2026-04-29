@@ -1,7 +1,7 @@
 import pytest
 
 from apps.scheduler.models.task import Task
-from apps.scheduler.tests.factories import TaskFactory
+from apps.scheduler.tests.appointment_factories import TaskFactory
 
 
 @pytest.mark.django_db

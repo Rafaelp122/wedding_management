@@ -15,7 +15,7 @@ class TestSupplierService:
 
     def test_list_suppliers_isolation(self, user):
         """Domínio: Garante filtragem por planner na listagem."""
-        SupplierFactory(planner=user)
+        SupplierFactory(company=user.company)
         SupplierFactory()
 
         qs = SupplierService.list(user=user)
@@ -26,24 +26,24 @@ class TestSupplierService:
         data = {"name": "Fornecedor Teste", "email": "test@example.com"}
         supplier = SupplierService.create(user=user, data=data)
 
-        assert supplier.planner == user
+        assert supplier.company == user.company
         assert supplier.name == "Fornecedor Teste"
 
     def test_update_supplier_success(self, user):
         """Domínio: Atualização de campos simples."""
-        supplier = SupplierFactory(planner=user, name="Antigo")
+        supplier = SupplierFactory(company=user.company, name="Antigo")
         SupplierService.update(instance=supplier, data={"name": "Novo"})
         assert supplier.name == "Novo"
 
     def test_delete_supplier_success(self, user):
         """Domínio: Deleção física do registro."""
-        supplier = SupplierFactory(planner=user)
+        supplier = SupplierFactory(company=user.company)
         SupplierService.delete(instance=supplier)
         assert Supplier.objects.filter(uuid=supplier.uuid).count() == 0
 
     def test_delete_supplier_protected_by_contract(self, user):
         """Domínio: Regra de proteção contra deleção se houver contratos."""
-        supplier = SupplierFactory(planner=user)
+        supplier = SupplierFactory(company=user.company)
         ContractFactory(supplier=supplier)
 
         with pytest.raises(DomainIntegrityError):

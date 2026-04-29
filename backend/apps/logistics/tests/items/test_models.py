@@ -1,8 +1,8 @@
 import pytest
 
+from apps.events.tests.factories import EventFactory
 from apps.logistics.models import Item
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -15,9 +15,9 @@ class TestItemModel:
         assert str(item) == "Cadeira de Ferro (100x)"
 
     def test_item_supplier_property(self, user):
-        wedding = WeddingFactory(planner=user)
-        supplier = SupplierFactory(planner=user, name="Locadora A")
-        contract = ContractFactory(supplier=supplier, wedding=wedding)
-        item = ItemFactory(contract=contract, wedding=wedding)
+        event = EventFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company, name="Locadora A")
+        contract = ContractFactory(supplier=supplier, event=event)
+        item = ItemFactory(contract=contract, event=event)
 
         assert item.supplier == supplier

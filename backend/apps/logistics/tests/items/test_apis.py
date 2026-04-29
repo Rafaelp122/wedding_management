@@ -1,7 +1,7 @@
 import pytest
 
+from apps.events.tests.factories import EventFactory
 from apps.logistics.tests.factories import ItemFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -11,9 +11,9 @@ class TestItemAPI:
 
     @pytest.mark.multitenancy
     def test_list_items_isolation(self, auth_client, user):
-        """Garante que um planner só vê itens dos SEUS casamentos."""
-        my_wedding = WeddingFactory(planner=user)
-        ItemFactory(wedding=my_wedding, name="Meu Item")
+        """Garante que um planner só vê itens dos SEUS eventos."""
+        my_event = EventFactory(company=user.company)
+        ItemFactory(event=my_event, name="Meu Item")
 
         # Item de outro planner
         ItemFactory(name="Item Alheio")
@@ -34,8 +34,8 @@ class TestItemAPI:
 
     def test_create_item_success(self, auth_client, user):
         """Cenário feliz de criação."""
-        wedding = WeddingFactory(planner=user)
-        payload = {"wedding": str(wedding.uuid), "name": "Mesa Redonda", "quantity": 10}
+        event = EventFactory(company=user.company)
+        payload = {"event": str(event.uuid), "name": "Mesa Redonda", "quantity": 10}
         response = auth_client.post(
             "/api/v1/logistics/items/", data=payload, content_type="application/json"
         )
