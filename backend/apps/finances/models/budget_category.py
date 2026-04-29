@@ -13,11 +13,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
+from apps.events.mixins import EventOwnedMixin
 
 
-class BudgetCategory(BaseModel, WeddingOwnedMixin):
+class BudgetCategory(BaseModel, EventOwnedMixin):
     """
     Categorias de gastos (RF03).
     Permite o agrupamento logístico e financeiro vinculando despesas a um orçamento.
@@ -46,7 +46,7 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
         ordering = ["name"]
 
     def __str__(self) -> str:
-        return f"{self.name} ({self.wedding})"
+        return f"{self.name} ({self.event})"
 
     @property
     def total_spent(self) -> Decimal:
@@ -67,7 +67,7 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
         super().clean()
 
         # TRAVA DE SEGURANÇA: Garante que o orçamento e a categoria são do mesmo casamento # noqa
-        if self.budget.wedding != self.wedding:
+        if self.budget.event != self.event:
             raise ValidationError(
                 "O orçamento pai deve pertencer ao mesmo casamento desta categoria."
             )

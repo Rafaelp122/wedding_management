@@ -12,28 +12,28 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
+from apps.events.mixins import EventOwnedMixin
 
 
-class Budget(BaseModel, WeddingOwnedMixin):
+class Budget(BaseModel, EventOwnedMixin):
     """
     Orçamento mestre (RF03).
     Define o teto financeiro global do casamento.
 
     Nota de Arquitetura:
     Mantemos o OneToOneField explicitamente definido aqui, sobrescrevendo a
-    ForeignKey padrão que o WeddingOwnedMixin forneceria.
+    ForeignKey padrão que o EventOwnedMixin forneceria.
     Isso é feito por dois motivos:
     1. Garantir a unicidade (ADR-003): Cada casamento deve ter exatamente UM orçamento
        mestre.
-    2. Compatibilidade com o BaseViewSet: Ao herdar de WeddingOwnedMixin, o ViewSet
+    2. Compatibilidade com o BaseViewSet: Ao herdar de EventOwnedMixin, o ViewSet
        continua identificando o modelo como "pertencente a um casamento" e aplica
        automaticamente os filtros de Multitenancy (Segurança por Design).
     """
 
-    wedding = models.OneToOneField(
-        "weddings.Wedding",
+    event = models.OneToOneField(
+        "events.Event",
         on_delete=models.CASCADE,
         related_name="budget",
         verbose_name="Casamento",
@@ -53,7 +53,7 @@ class Budget(BaseModel, WeddingOwnedMixin):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"
+        return f"Orçamento: {self.event} - R$ {self.total_estimated}"
 
     @property
     def total_overall_spent(self) -> Decimal:

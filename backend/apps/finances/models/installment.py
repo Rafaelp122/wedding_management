@@ -9,11 +9,11 @@ Referência: RF04
 
 from django.db import models
 
-from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
+from apps.events.mixins import EventOwnedMixin
 
 
-class Installment(BaseModel, WeddingOwnedMixin):
+class Installment(BaseModel, EventOwnedMixin):
     """
     Parcelamento (RF04).
     Representa uma fatia financeira de uma Despesa.

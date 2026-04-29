@@ -11,11 +11,11 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
+from apps.events.mixins import EventOwnedMixin
 
 
-class Expense(BaseModel, WeddingOwnedMixin):
+class Expense(BaseModel, EventOwnedMixin):
     """
     Compromisso financeiro real (RF03/RF04).
     Liga o financeiro à logística (Contract).

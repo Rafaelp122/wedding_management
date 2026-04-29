@@ -1,10 +1,12 @@
-import secrets
+import logging
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from apps.events.tests.factories import EventFactory
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
+    ExpenseFactory,
     InstallmentFactory,
 )
 from apps.logistics.tests.factories import (
@@ -12,83 +14,54 @@ from apps.logistics.tests.factories import (
     ItemFactory,
     SupplierFactory,
 )
-from apps.scheduler.tests.factories import EventFactory
+from apps.scheduler.tests.appointment_factories import AppointmentFactory
+from apps.users.models import User
 
-# Importação das fábricas
-from apps.users.tests.factories import AdminFactory, UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Popula o banco com quantidades customizáveis de usuários e casamentos"
-
-    def add_arguments(self, parser):
-        # Define o número de Planners (Usuários)
-        parser.add_argument(
-            "--planners",
-            type=int,
-            default=2,
-            help="Número de Planners (usuários) a serem criados",
-        )
-        # Define o número de Casamentos por Planner
-        parser.add_argument(
-            "--weddings",
-            type=int,
-            default=2,
-            help="Número de casamentos por cada Planner",
-        )
+    help = "Gera dados iniciais para desenvolvimento (Faker/FactoryBoy)"
 
     @transaction.atomic
-    def handle(self, *args, **kwargs):
-        num_planners = kwargs["planners"]
-        num_weddings = kwargs["weddings"]
+    def handle(self, *args, **options):
+        self.stdout.write("Iniciando seed de dados...")
 
-        self.stdout.write(
-            self.style.MIGRATE_LABEL(
-                f"Iniciando seed: {num_planners} planners com {num_weddings} "
-                "casamentos cada..."
-            )
+        # 1. Cria usuário e a Company (via signal)
+        user, created = User.objects.get_or_create(
+            email="organizador@exemplo.com",
+            defaults={
+                "first_name": "Rafael",
+                "last_name": "Organizador",
+                "is_active": True,
+            },
+        )
+        if created:
+            user.set_password("admin123")
+            user.save()
+
+        company = user.company
+        self.stdout.write(f"Usuário e Empresa '{company}' prontos.")
+
+        # 2. Cria Eventos (Casamentos)
+        event = EventFactory(company=company)
+        self.stdout.write(f"Evento '{event.name}' criado.")
+
+        # 3. Cria Infraestrutura Financeira e Logística
+        # Budget e Categories são criados via Service, mas aqui usamos Factories para volume
+        category = BudgetCategoryFactory(event=event)
+        supplier = SupplierFactory(company=company)
+        contract = ContractFactory(
+            event=event, supplier=supplier, budget_category=category
         )
 
-        # 1. Superusuário
-        if (
-            not AdminFactory._get_manager(AdminFactory._meta.model)
-            .filter(is_superuser=True)
-            .exists()
-        ):
-            AdminFactory.create(email="admin@admin.com", name="Admin Master")
+        # 4. Cria Operacional
+        ExpenseFactory(event=event, category=category, contract=contract)
+        InstallmentFactory(event=event)
+        ItemFactory(event=event, contract=contract)
 
-        # 2. Criar Planners baseado no parâmetro
-        planners = UserFactory.create_batch(num_planners)
+        # 5. Cria Agenda
+        AppointmentFactory(company=company, event=event)
 
-        for planner in planners:
-            # Criar um pool de fornecedores para o planner
-            suppliers = SupplierFactory.create_batch(5, planner=planner)
-
-            # 3. Criar Casamentos baseado no parâmetro
-            weddings = WeddingFactory.create_batch(num_weddings, planner=planner)
-
-            for wedding in weddings:
-                # Gerar estrutura financeira e logística básica
-                BudgetCategoryFactory.create_batch(3, wedding=wedding)
-
-                for _ in range(3):
-                    supplier = secrets.choice(suppliers)
-
-                    contract = ContractFactory.create(
-                        wedding=wedding, supplier=supplier
-                    )
-                    ItemFactory.create_batch(2, contract=contract, wedding=wedding)
-
-                    if hasattr(contract, "expense"):
-                        InstallmentFactory.create_batch(3, expense=contract.expense)
-
-                # Agenda
-                EventFactory.create_batch(4, wedding=wedding)
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Sucesso! Criados {num_planners} planners e "
-                f"{num_planners * num_weddings} casamentos no total."
-            )
-        )
+        self.stdout.write(self.style.SUCCESS("Seed finalizado com sucesso!"))

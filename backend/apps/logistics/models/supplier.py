@@ -9,11 +9,11 @@ Referência: RF09
 from django.core.validators import MaxLengthValidator
 from django.db import models
 
-from apps.core.mixins import PlannerOwnedMixin
 from apps.core.models import BaseModel
+from apps.tenants.mixins import CompanyOwnedMixin
 
 
-class Supplier(BaseModel, PlannerOwnedMixin):
+class Supplier(BaseModel, CompanyOwnedMixin):
     """
     Fornecedores de produtos e serviços para casamentos (RF09).
     Centraliza informações de contato e histórico de relacionamento.
@@ -83,7 +83,7 @@ class Supplier(BaseModel, PlannerOwnedMixin):
         verbose_name_plural = "Fornecedores"
         ordering = ["name"]
         indexes = [
-            models.Index(fields=["planner", "name"]),
+            models.Index(fields=["company", "name"]),
             models.Index(fields=["is_active"]),
             models.Index(fields=["city", "state"]),
         ]

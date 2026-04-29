@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     # Project apps - Core
     "apps.core",
     "apps.users",
-    "apps.weddings",
+    "apps.tenants",
+    "apps.events",
     # Project apps - Dominios
     "apps.finances",
     "apps.logistics",

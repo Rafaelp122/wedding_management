@@ -10,14 +10,14 @@ Referências: RF10, RF13
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
+from apps.events.mixins import EventOwnedMixin
 
 
-class Contract(BaseModel, WeddingOwnedMixin):
-    # Override WeddingOwnedMixin.wedding from CASCADE → PROTECT
-    wedding = models.ForeignKey(
-        "weddings.Wedding",
+class Contract(BaseModel, EventOwnedMixin):
+    # Override EventOwnedMixin.event from CASCADE → PROTECT
+    event = models.ForeignKey(
+        "events.Event",
         on_delete=models.PROTECT,
         related_name="%(class)s_records",
     )
@@ -85,7 +85,7 @@ class Contract(BaseModel, WeddingOwnedMixin):
 
     def __str__(self) -> str:
         return (
-            f"Contrato {self.id} - {self.supplier.name} ({self.wedding}) "
+            f"Contrato {self.id} - {self.supplier.name} ({self.event}) "
             f"- R$ {self.total_amount}"
         )
 

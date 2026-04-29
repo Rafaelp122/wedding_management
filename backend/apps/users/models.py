@@ -103,7 +103,15 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField("E-mail", unique=True, max_length=255)
 
-    # NOVOS CAMPOS EXPLÍCITOS
+    company = models.ForeignKey(
+        "tenants.Company",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="members",
+        verbose_name="Empresa",
+    )
+
     first_name = models.CharField("Primeiro Nome", max_length=150)
     last_name = models.CharField("Sobrenome", max_length=150)
 

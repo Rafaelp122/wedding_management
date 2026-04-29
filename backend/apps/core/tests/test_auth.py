@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from apps.core.auth import require_user
 from apps.core.exceptions import BusinessRuleViolation
+from apps.users.auth import require_user
 
 
 @pytest.mark.unit
