@@ -55,8 +55,12 @@ class TestEventService:
 
     def test_service_create_transaction_rollback_on_error(self, user, event_payload):
         """Garante atomicidade: nada é salvo se houver erro no processo."""
-        with patch.object(Event, "save", side_effect=Exception("Database Crash")):
-            with pytest.raises(Exception):
+
+        class DatabaseError(Exception):
+            pass
+
+        with patch.object(Event, "save", side_effect=DatabaseError("Database Crash")):
+            with pytest.raises(DatabaseError):
                 EventService.create(user=user, data=event_payload)
 
         assert Event.objects.count() == 0
@@ -90,7 +94,10 @@ class TestEventService:
         assert Event.objects.count() == 0
 
     def test_create_wedding_dispatches_signal(self, user, event_payload):
-        """Efeito Colateral: BudgetService deve ser chamado via Signal ao criar casamento."""
+        """
+        Efeito Colateral: BudgetService deve ser chamado via Signal
+        ao criar casamento.
+        """
         with patch(
             "apps.finances.services.budget_service.BudgetService.setup_initial_budget"
         ) as mock_setup:

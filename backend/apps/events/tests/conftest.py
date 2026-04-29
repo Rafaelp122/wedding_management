@@ -36,7 +36,8 @@ def event(db, wedding_factory):
 @pytest.fixture
 def event_payload():
     """
-    Retorna um dicionário que simula exatamente o JSON enviado pelo Frontend para Casamentos.
+    Retorna um dicionário que simula exatamente o JSON enviado
+    pelo Frontend para Casamentos.
     """
     return {
         "name": "Casamento de Teste Payload",

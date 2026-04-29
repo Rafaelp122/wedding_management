@@ -23,7 +23,8 @@ def _assert_get_resource_called(controller_class, uuid_param: str, getter_fn_nam
             source = f.read()
     except (TypeError, OSError):
         pytest.fail(
-            f"Não foi possível localizar o arquivo fonte para {controller_class.__name__}"
+            "Não foi possível localizar o arquivo fonte para "
+            f"{controller_class.__name__}"
         )
 
     tree = ast.parse(source)
@@ -52,9 +53,10 @@ def _assert_get_resource_called(controller_class, uuid_param: str, getter_fn_nam
 
                 all_calls = calls + attr_calls
 
-                # No caso de EventService.resolve, o getter_fn_name pode ser 'get_event' ou 'resolve'
-                # Dependendo de como a dependência é injetada.
-                # Como os novos controllers usam EventService.resolve diretamente, vamos checar ambos.
+                # No caso de EventService.resolve, o getter_fn_name pode ser
+                # 'get_event' ou 'resolve' dependendo de como a dependência é
+                # injetada. Como os novos controllers usam EventService.resolve
+                # diretamente, vamos checar ambos.
                 valid_getters = [getter_fn_name, "resolve"]
                 found = any(g in all_calls for g in valid_getters)
 

@@ -28,6 +28,8 @@ class AuthController(ControllerBase):
         """
         Autentica o usuário e retorna o token de acesso.
         """
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
         user = authenticate(
             self.context.request, username=payload.email, password=payload.password
         )
@@ -58,6 +60,8 @@ class AuthController(ControllerBase):
         """
         Cria uma nova conta de usuário com Tenant Silencioso.
         """
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
         if User.objects.filter(email=payload.email).exists():
             raise HttpError(400, "Este email já está cadastrado.")
 
@@ -90,6 +94,7 @@ class AuthController(ControllerBase):
         self, payload: TokenRefreshInputSchema
     ) -> TokenRefreshOutputSchema:
         """Gera um novo token de acesso usando um refresh token."""
+        assert self.context  # noqa: S101
         return payload.to_response_schema()
 
     @http_post(
@@ -104,4 +109,5 @@ class AuthController(ControllerBase):
     )
     def verify_token(self, payload: TokenVerifyInputSchema) -> TokenRefreshOutputSchema:
         """Verifica se um token ainda é válido."""
+        assert self.context  # noqa: S101
         return payload.to_response_schema()

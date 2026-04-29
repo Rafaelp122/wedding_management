@@ -16,7 +16,8 @@ def validate_future_date(value: date) -> None:
 class Event(BaseModel, CompanyOwnedMixin):
     """
     Entidade principal de um Evento B2B (ADR-016).
-    Um evento pertence a uma Company e pode ter detalhes específicos (ex: WeddingDetail).
+    Um evento pertence a uma Company e pode ter detalhes específicos
+    (ex: WeddingDetail).
     """
 
     class StatusChoices(models.TextChoices):

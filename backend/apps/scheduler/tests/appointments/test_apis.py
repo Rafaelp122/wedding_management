@@ -4,7 +4,10 @@ import pytest
 @pytest.mark.django_db
 @pytest.mark.api
 class TestAppointmentAPI:
-    """Testes de integração para a API de Compromissos - Conforme TESTING_STANDARDS.md."""
+    """
+    Testes de integração para a API de Compromissos.
+    Conforme TESTING_STANDARDS.md.
+    """
 
     @pytest.mark.multitenancy
     def test_list_appointments_isolation(self, auth_client, scheduler_seed):

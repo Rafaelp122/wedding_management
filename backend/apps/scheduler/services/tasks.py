@@ -67,6 +67,9 @@ class TaskService:
             instance.delete()
         except ProtectedError as e:
             raise DomainIntegrityError(
-                detail="Não é possível apagar esta tarefa pois existem registros vinculados a ela.",
+                detail=(
+                    "Não é possível apagar esta tarefa pois existem "
+                    "registros vinculados a ela."
+                ),
                 code="task_protected_error",
             ) from e

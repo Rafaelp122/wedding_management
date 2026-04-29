@@ -143,6 +143,9 @@ class EventService:
             instance.delete()
         except ProtectedError as e:
             raise DomainIntegrityError(
-                detail="Não é possível excluir o evento pois existem contratos ou itens vinculados.",
+                detail=(
+                    "Não é possível excluir o evento pois existem "
+                    "contratos ou itens vinculados."
+                ),
                 code="event_protected_error",
             ) from e

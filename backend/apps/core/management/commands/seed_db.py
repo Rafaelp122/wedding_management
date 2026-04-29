@@ -49,7 +49,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Evento '{event.name}' criado.")
 
         # 3. Cria Infraestrutura Financeira e Logística
-        # Budget e Categories são criados via Service, mas aqui usamos Factories para volume
+        # Budget e Categories são criados via Service,
+        # mas aqui usamos Factories para volume
         category = BudgetCategoryFactory(event=event)
         supplier = SupplierFactory(company=company)
         contract = ContractFactory(

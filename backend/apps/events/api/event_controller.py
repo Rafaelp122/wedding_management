@@ -37,8 +37,9 @@ class EventController(ControllerBase):
     def list_events(self) -> QuerySet:
         """
         LISTAGEM GERAL (BASE):
-        Retorna uma lista de todos os eventos da empresa (Tenant) sem os detalhes específicos.
-        Ideal para visões de Dashboard, Calendário e Cronogramas onde a performance é prioridade.
+        Retorna uma lista de todos os eventos da empresa (Tenant) sem os
+        detalhes específicos. Ideal para visões de Dashboard, Calendário e
+        Cronogramas onde a performance é prioridade.
         """
         assert self.context  # noqa: S101
         assert self.context.request  # noqa: S101
@@ -53,8 +54,9 @@ class EventController(ControllerBase):
     def retrieve_event(self, event_uuid: UUID4):
         """
         DETALHE INDIVIDUAL (POLIMÓRFICO):
-        Busca um evento específico. O retorno é polimórfico: se o evento for um Casamento,
-        o JSON incluirá o objeto 'wedding_detail'. Se for genérico, retornará apenas a base.
+        Busca um evento específico. O retorno é polimórfico: se o evento
+        for um Casamento, o JSON incluirá o objeto 'wedding_detail'.
+        Se for genérico, retornará apenas a base.
         """
         assert self.context  # noqa: S101
         assert self.context.request  # noqa: S101
@@ -69,8 +71,9 @@ class EventController(ControllerBase):
     def update_event(self, event_uuid: UUID4, payload: EventPatchIn):
         """
         ATUALIZAÇÃO RASA (PATCH):
-        Permite alterar campos que existem em qualquer evento (nome, data, local, status).
-        Este endpoint ignora campos específicos de especializações (ex: nomes de noivos).
+        Permite alterar campos que existem em qualquer evento
+        (nome, data, local, status). Este endpoint ignora campos
+        específicos de especializações (ex: nomes de noivos).
         """
         assert self.context  # noqa: S101
         assert self.context.request  # noqa: S101

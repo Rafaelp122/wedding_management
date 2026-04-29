@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from ninja import Schema
 from pydantic import UUID4, Field
@@ -19,15 +19,15 @@ class EventIn(Schema):
     event_type: str = Field(default="WEDDING")
     date: date
     location: str = Field(..., max_length=255)
-    expected_guests: int | None = None
+    expected_guests: Optional[int] = None  # noqa: UP045
 
 
 class EventPatchIn(Schema):
-    name: str | None = None
-    date: date | None = None
-    location: str | None = None
-    expected_guests: int | None = None
-    status: str | None = None
+    name: Optional[str] = None  # noqa: UP045
+    date: Optional[date] = None  # noqa: UP045
+    location: Optional[str] = None  # noqa: UP045
+    expected_guests: Optional[int] = None  # noqa: UP045
+    status: Optional[str] = None  # noqa: UP045
 
 
 class EventOut(Schema):
@@ -36,7 +36,7 @@ class EventOut(Schema):
     event_type: str
     date: date
     location: str
-    expected_guests: int | None
+    expected_guests: Optional[int] = None  # noqa: UP045
     status: str
     created_at: datetime
 
@@ -63,14 +63,14 @@ class WeddingDetailOut(Schema):
 class WeddingOut(EventOut):
     """Herda de EventOut e expõe o detalhe 1:1."""
 
-    wedding_detail: WeddingDetailOut | None = None
+    wedding_detail: Optional[WeddingDetailOut] = None  # noqa: UP045
 
     @staticmethod
-    def resolve_wedding_detail(obj: Event) -> WeddingDetail | None:
+    def resolve_wedding_detail(obj: Event) -> Optional[WeddingDetail]:  # noqa: UP045
         # Tentamos acessar o related_name definido no OneToOneField
         return getattr(obj, "wedding_detail", None)
 
 
 # --- POLYMORPHIC TYPES ---
 
-AnyEventOut = Union[WeddingOut, EventOut]
+AnyEventOut = Union[WeddingOut, EventOut]  # noqa: UP007
