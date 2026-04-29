@@ -33,11 +33,13 @@ Reestruturar o núcleo do sistema para adotar uma hierarquia de Tenancy por Orga
 - Atributos específicos de nicho serão movidos para modelos de detalhamento (ex: `WeddingDetail`) vinculados via `OneToOneField` ao `Event`.
 - O isolamento operacional (Financeiro, Logística) usará o `EventOwnedMixin`.
 
-### 3. Camada de Serviços Especializada
-Adotaremos uma estrutura de serviços baseada em herança para separar a lógica genérica da específica:
-- **`EventService` (Base)**: Orquestra ações comuns a todos os eventos (listagem, transições de status genéricas, cancelamento).
-- **`WeddingService` (Especializado)**: Herda de `EventService` e implementa lógica exclusiva de casamentos (criação atômica de `Event` + `WeddingDetail`, validações de noivos, regras de contratação específicas).
-- **Benefício**: APIs genéricas (ex: mudar status) não precisam conhecer o tipo do evento, enquanto APIs específicas (ex: criar casamento) utilizam o serviço correto.
+### 3. Orquestração via Strategy Pattern e Controllers Especializados
+Adotaremos uma estrutura de serviços e controladores baseada em delegação para separar a lógica genérica da específica:
+- **`EventService` (Orquestrador)**: Gerencia o ciclo de vida base e delega ações específicas para `Handlers` especializados (ex: `WeddingHandler`). Isso evita a fragilidade da herança de métodos estáticos.
+- **Controllers por Especialidade**: 
+  - `EventController` (`/events/`): Retorna apenas a base genérica (`EventOut`) para dashboards e calendários.
+  - `WeddingController` (`/events/weddings/`): Retorna o domínio completo (`WeddingOut`) para gestão rica.
+- **Benefício**: APIs genéricas permanecem rápidas e fáceis de tipar no frontend, enquanto APIs específicas garantem a integridade dos detalhes de nicho.
 
 ### 4. Resolução de Conflitos no Scheduler
 - O modelo `scheduler.Event` (compromissos de calendário/agenda) será renomeado para `scheduler.Appointment`.

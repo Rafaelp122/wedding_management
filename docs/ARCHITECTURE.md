@@ -57,30 +57,43 @@ O sistema utiliza um modelo de **Multi-tenancy Híbrido** para suportar agência
 ## 3. Padrões de Código e Arquitetura
 
 ### 3.1 Camada de Serviços (Service Layer)
-Utilizamos herança de serviços para lidar com múltiplos tipos de eventos sem duplicar lógica:
+Utilizamos o **Strategy Pattern (Handlers)** para lidar com múltiplos tipos de eventos sem herança rígida, garantindo o princípio Open/Closed:
 
 ```python
-# EventService (Base) -> Cuida do que é comum (Status, Datas)
-# WeddingService (Sub) -> Cuida do que é específico (Noivos, Cerimônia)
+# EventService (Orquestrador) -> Delega para Handlers especializados
+# WeddingHandler (Especializado) -> Cuida do que é específico de Casamentos
 ```
 
 ### 3.2 Mixins de Isolamento (Tenancy)
 
-**CompanyOwnedMixin:**
-Utilizado para dados que a agência compartilha globalmente.
+Os mixins de isolamento foram movidos para seus respectivos apps de domínio para evitar acoplamento circular no `core`:
+
+**CompanyOwnedMixin (apps.tenants.mixins):**
+Utilizado para dados que a agência compartilha globalmente (Ex: Fornecedores).
 ```python
 class CompanyOwnedMixin(models.Model):
     company = models.ForeignKey('tenants.Company', on_delete=models.CASCADE)
 ```
 
-**EventOwnedMixin:**
-Utilizado para dados operacionais restritos a um projeto.
+**EventOwnedMixin (apps.events.mixins):**
+Utilizado para dados operacionais restritos a um projeto específico (Ex: Despesas).
 ```python
 class EventOwnedMixin(models.Model):
     event = models.ForeignKey('events.Event', on_delete=models.CASCADE)
 ```
 
-### 3.3 Chaves Híbridas
+### 3.3 Event-Driven Architecture (Signals)
+Para evitar o acoplamento forte entre os domínios (ex: `events` precisar conhecer as regras de `finances`), utilizamos o padrão **Publisher/Subscriber** nativo do Django (Signals). 
+
+**Efeitos Colaterais Documentados (Side-Effects):**
+*   **Tenant Silencioso (`users` ➔ `tenants`):** 
+    Ao criar um novo usuário (`User`), o signal `create_user_company` gera automaticamente uma `Company` e a vincula a este usuário.
+*   **Orçamento Automático (`events` ➔ `finances`):** 
+    Ao criar um Evento Especializado (ex: `WEDDING`), o signal `wedding_created` notifica o módulo financeiro, que imediatamente gera um `Budget` vazio e as `BudgetCategory` padrões para aquele evento.
+
+> ⚠️ **Atenção em Testes:** Como os Signals rodam no mesmo processo, em testes que criam dados via Factories, é comum haver conflitos de integridade (ex: tentar criar um orçamento via factory quando o Signal já o criou). O uso de Mock (`patch`) ou a adequação do payload na factory (ex: `event_type="OTHER"`) são necessários para isolar os testes.
+
+### 3.4 Chaves Híbridas
 - **Interno:** `BigAutoField` para performance em JOINs.
 - **Público:** `UUID4` para segurança e URLs amigáveis na API.
 
