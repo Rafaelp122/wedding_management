@@ -1,12 +1,10 @@
 import ast
-import os
 from pathlib import Path
-from typing import List
 
 import pytest
 
 
-def _get_controller_files() -> List[Path]:
+def _get_controller_files() -> list[Path]:
     """Descobre todos os arquivos de controlador seguindo a convenção apps/*/api/*.py"""
     base_path = Path(__file__).parent.parent.parent.parent
     return list(base_path.glob("**/api/*.py"))
@@ -14,7 +12,7 @@ def _get_controller_files() -> List[Path]:
 
 def _audit_file_security(file_path: Path):
     """Analisa um arquivo Python e garante a segurança em todos os métodos de classe."""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         source = f.read()
 
     tree = ast.parse(source)
@@ -32,9 +30,7 @@ def _audit_file_security(file_path: Path):
                     continue
 
                 # Identifica parâmetros que são UUIDs (pela convenção de sufixo _uuid)
-                uuid_params = [
-                    a.arg for a in item.args.args if a.arg.endswith("_uuid")
-                ]
+                uuid_params = [a.arg for a in item.args.args if a.arg.endswith("_uuid")]
                 if not uuid_params:
                     continue
 
@@ -57,7 +53,8 @@ def _audit_file_security(file_path: Path):
                     if resource_name in special_mappings:
                         expected_getter = special_mappings[resource_name]
 
-                    # Proteção: Deve chamar o getter gerado ou o método .resolve() do Manager
+                    # Proteção: Deve chamar o getter gerado ou o método
+                    # .resolve() do Manager
                     has_protection = (
                         expected_getter in all_calls or "resolve" in all_calls
                     )

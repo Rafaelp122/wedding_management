@@ -1,5 +1,3 @@
-from typing import Any
-
 from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import (
