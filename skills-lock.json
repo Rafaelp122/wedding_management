@@ -21,6 +21,12 @@
       "sourceType": "github",
       "computedHash": "698bf93a84dae18fd7bd0b1d35c21427307fde78fbdf4624be9726f5f98189ca"
     },
+    "react-testing-library": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.experimental/react-testing-library/SKILL.md",
+      "computedHash": "a4f9b64d36073864bcf07010702d37c035fe5d9f798c2bfbe4456f96f3de624c"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",

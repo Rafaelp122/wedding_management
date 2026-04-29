@@ -36,7 +36,7 @@ Reestruturar o núcleo do sistema para adotar uma hierarquia de Tenancy por Orga
 ### 3. Orquestração via Strategy Pattern e Controllers Especializados
 Adotaremos uma estrutura de serviços e controladores baseada em delegação para separar a lógica genérica da específica:
 - **`EventService` (Orquestrador)**: Gerencia o ciclo de vida base e delega ações específicas para `Handlers` especializados (ex: `WeddingHandler`). Isso evita a fragilidade da herança de métodos estáticos.
-- **Controllers por Especialidade**: 
+- **Controllers por Especialidade**:
   - `EventController` (`/events/`): Retorna apenas a base genérica (`EventOut`) para dashboards e calendários.
   - `WeddingController` (`/events/weddings/`): Retorna o domínio completo (`WeddingOut`) para gestão rica.
 - **Benefício**: APIs genéricas permanecem rápidas e fáceis de tipar no frontend, enquanto APIs específicas garantem a integridade dos detalhes de nicho.

@@ -83,12 +83,12 @@ class EventOwnedMixin(models.Model):
 ```
 
 ### 3.3 Event-Driven Architecture (Signals)
-Para evitar o acoplamento forte entre os domínios (ex: `events` precisar conhecer as regras de `finances`), utilizamos o padrão **Publisher/Subscriber** nativo do Django (Signals). 
+Para evitar o acoplamento forte entre os domínios (ex: `events` precisar conhecer as regras de `finances`), utilizamos o padrão **Publisher/Subscriber** nativo do Django (Signals).
 
 **Efeitos Colaterais Documentados (Side-Effects):**
-*   **Tenant Silencioso (`users` ➔ `tenants`):** 
+*   **Tenant Silencioso (`users` ➔ `tenants`):**
     Ao criar um novo usuário (`User`), o signal `create_user_company` gera automaticamente uma `Company` e a vincula a este usuário.
-*   **Orçamento Automático (`events` ➔ `finances`):** 
+*   **Orçamento Automático (`events` ➔ `finances`):**
     Ao criar um Evento Especializado (ex: `WEDDING`), o signal `wedding_created` notifica o módulo financeiro, que imediatamente gera um `Budget` vazio e as `BudgetCategory` padrões para aquele evento.
 
 > ⚠️ **Atenção em Testes:** Como os Signals rodam no mesmo processo, em testes que criam dados via Factories, é comum haver conflitos de integridade (ex: tentar criar um orçamento via factory quando o Signal já o criou). O uso de Mock (`patch`) ou a adequação do payload na factory (ex: `event_type="OTHER"`) são necessários para isolar os testes.
