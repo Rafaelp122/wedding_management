@@ -7,9 +7,9 @@ from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import DomainIntegrityError
-from apps.core.types import AuthContextUser
+from apps.events.models import Event
 from apps.finances.models import Budget
-from apps.weddings.models import Wedding
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class BudgetService:
 
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Budget]:
-        return Budget.objects.for_user(user).select_related("wedding")
+        return Budget.objects.for_user(user).select_related("event")
 
     @staticmethod
     def get(instance_or_uuid: Budget | UUID | str, user: AuthContextUser) -> Budget:
@@ -37,16 +37,16 @@ class BudgetService:
     def create(user: AuthContextUser, data: dict[str, Any]) -> Budget:
         logger.info("Iniciando criação de Orçamento Mestre")
 
-        # Resolvemos o recurso pai (Wedding) vindo do JSON body
-        wedding_id = data.pop("wedding")
-        wedding = Wedding.objects.resolve(user, wedding_id)
+        # Resolvemos o recurso pai (Event) vindo do JSON body
+        event_id = data.pop("event")
+        event = Event.objects.resolve(user, event_id)
 
-        budget = Budget(wedding=wedding, **data)
+        budget = Budget(event=event, **data)
 
         try:
             budget.save()
         except (IntegrityError, ValidationError) as e:
-            if isinstance(e, ValidationError) and "wedding" not in e.message_dict:
+            if isinstance(e, ValidationError) and "event" not in e.message_dict:
                 raise e
 
             raise DomainIntegrityError(
@@ -61,7 +61,7 @@ class BudgetService:
     def update(instance: Budget, data: dict[str, Any]) -> Budget:
         logger.info(f"Atualizando Orçamento uuid={instance.uuid}")
 
-        data.pop("wedding", None)
+        data.pop("event", None)
         data.pop("planner", None)
 
         for field, value in data.items():
@@ -84,24 +84,32 @@ class BudgetService:
 
     @staticmethod
     @transaction.atomic
-    def get_or_create_for_wedding(
-        user: AuthContextUser, wedding_id: Wedding | UUID | str
-    ) -> Budget:
+    def setup_initial_budget(event: Event) -> Budget:
+        """
+        Criação técnica inicial de orçamento (usado por Signals).
+        Não requer user pois a instância do evento já é confiável neste ponto.
+        """
         from apps.finances.services.budget_category_service import (
             BudgetCategoryService,
         )
 
-        wedding = Wedding.objects.resolve(user, wedding_id)
-
         budget, created = Budget.objects.get_or_create(
-            wedding=wedding,
+            event=event,
             defaults={"total_estimated": 0},
         )
 
         if created:
             BudgetCategoryService.setup_defaults(
-                wedding=wedding,
+                event=event,
                 budget=budget,
             )
 
         return budget
+
+    @staticmethod
+    @transaction.atomic
+    def get_or_create_for_event(
+        user: AuthContextUser, event_id: Event | UUID | str
+    ) -> Budget:
+        event = Event.objects.resolve(user, event_id)
+        return BudgetService.setup_initial_budget(event)
