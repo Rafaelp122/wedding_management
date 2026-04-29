@@ -12,7 +12,7 @@ export function useWeddingChecklist(weddingUuid: string) {
     data: tasksResponse,
     isLoading,
     error,
-  } = useSchedulerTasksList({ wedding_id: weddingUuid });
+  } = useSchedulerTasksList({ event_id: weddingUuid });
 
   const tasks = tasksResponse?.data?.items || [];
 
@@ -21,7 +21,7 @@ export function useWeddingChecklist(weddingUuid: string) {
       mutation: {
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: getSchedulerTasksListQueryKey({ wedding_id: weddingUuid }),
+            queryKey: getSchedulerTasksListQueryKey({ event_id: weddingUuid }),
           });
         },
       },

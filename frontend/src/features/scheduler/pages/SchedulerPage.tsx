@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useSchedulerEventsList } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useSchedulerAppointmentsList } from "@/api/generated/v1/endpoints/scheduler/scheduler";
+import { useEventsListWeddings } from "@/api/generated/v1/endpoints/events/events";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { SchedulerEventsTable } from "../components/SchedulerEventsTable";
 import { SchedulerSummaryCards } from "../components/SchedulerSummaryCards";
@@ -14,12 +14,12 @@ export default function SchedulerPage() {
     data: eventsResponse,
     isLoading: isLoadingEvents,
     error: eventsError,
-  } = useSchedulerEventsList({ limit: 300 });
+  } = useSchedulerAppointmentsList({ limit: 300 });
   const {
     data: weddingsResponse,
     isLoading: isLoadingWeddings,
     error: weddingsError,
-  } = useWeddingsList({ limit: 200 });
+  } = useEventsListWeddings({ limit: 200 });
 
   const events = useMemo(() => eventsResponse?.data.items ?? [], [eventsResponse]);
   const weddings = useMemo(
@@ -35,7 +35,7 @@ export default function SchedulerPage() {
       new Map(
         weddings.map((wedding) => [
           wedding.uuid,
-          `${wedding.groom_name} & ${wedding.bride_name}`,
+          `${wedding.wedding_detail?.groom_name} & ${wedding.wedding_detail?.bride_name}`,
         ]),
       ),
     [weddings],
@@ -60,12 +60,9 @@ export default function SchedulerPage() {
       return startsAt >= now && startsAt <= next7Days;
     }).length;
 
-    const withReminder = events.filter((event) => event.reminder_enabled).length;
-
     return {
       total: events.length,
       upcoming,
-      withReminder,
     };
   }, [events]);
 

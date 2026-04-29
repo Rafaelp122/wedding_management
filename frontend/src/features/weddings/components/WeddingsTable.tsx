@@ -59,7 +59,7 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
                   onClick={() => navigate(`/weddings/${wedding.uuid}`)}
                 >
                   <TableCell className="font-medium">
-                    {wedding.groom_name} & {wedding.bride_name}
+                    {wedding.wedding_detail?.groom_name} & {wedding.wedding_detail?.bride_name}
                   </TableCell>
                   <TableCell>
                     {formatDateBR(wedding.date, {

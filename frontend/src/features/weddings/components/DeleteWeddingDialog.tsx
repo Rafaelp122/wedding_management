@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { useWeddingsDelete } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useEventsDelete } from "@/api/generated/v1/endpoints/events/events";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { WeddingOut } from "@/api/generated/v1/models";
 
@@ -31,11 +31,11 @@ export function DeleteWeddingDialog({
   onSuccess,
 }: DeleteWeddingDialogProps) {
   const [confirmText, setConfirmText] = useState("");
-  const { mutate, isPending } = useWeddingsDelete();
+  const { mutate, isPending } = useEventsDelete();
 
   const handleDelete = () => {
     mutate(
-      { weddingUuid: wedding.uuid },
+      { eventUuid: wedding.uuid },
       {
         onSuccess: () => {
           toast.success("Casamento deletado com sucesso!");
@@ -52,7 +52,7 @@ export function DeleteWeddingDialog({
     );
   };
 
-  const weddingName = `${wedding.groom_name} & ${wedding.bride_name}`;
+  const weddingName = `${wedding.wedding_detail?.groom_name} & ${wedding.wedding_detail?.bride_name}`;
   const isConfirmed = confirmText === weddingName;
 
   return (

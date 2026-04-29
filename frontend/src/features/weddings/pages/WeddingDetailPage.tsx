@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useEventsRetrieve } from "@/api/generated/v1/endpoints/events/events";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 export default function WeddingDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
 
-  const { data: response, isLoading, error } = useWeddingsRead(uuid!);
+  const { data: response, isLoading, error } = useEventsRetrieve(uuid!);
 
   const wedding = response?.data;
 

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { getApiErrorInfo } from "@/api/error-utils";
 import {
-  useFinancesBudgetsForWedding,
+  useFinancesBudgetsForEvent,
   useFinancesBudgetsUpdate,
   useFinancesCategoriesList,
 } from "@/api/generated/v1/endpoints/finances/finances";
@@ -18,10 +18,10 @@ export function useWeddingBudget(weddingUuid: string) {
     data: budgetResponse,
     isLoading: isLoadingBudget,
     error: budgetError,
-  } = useFinancesBudgetsForWedding(weddingUuid);
+  } = useFinancesBudgetsForEvent(weddingUuid);
 
   const { data: categoriesResponse, isLoading: isLoadingCategories } =
-    useFinancesCategoriesList({ wedding_id: weddingUuid });
+    useFinancesCategoriesList({ event_id: weddingUuid });
 
   const updateBudgetMutation = useFinancesBudgetsUpdate();
 

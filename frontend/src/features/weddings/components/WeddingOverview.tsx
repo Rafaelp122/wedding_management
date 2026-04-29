@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { WeddingOut } from "@/api/generated/v1/models";
-import { useFinancesBudgetsForWedding } from "@/api/generated/v1/endpoints/finances/finances";
+import { useFinancesBudgetsForEvent } from "@/api/generated/v1/endpoints/finances/finances";
 import { useSchedulerTasksList } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { useLogisticsSuppliersList } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,9 +26,9 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
   const statusInfo = getWeddingStatusInfo(wedding.status);
 
   // Fetching data for metrics
-  const { data: budgetResponse } = useFinancesBudgetsForWedding(wedding.uuid);
+  const { data: budgetResponse } = useFinancesBudgetsForEvent(wedding.uuid);
   const { data: tasksResponse } = useSchedulerTasksList({
-    wedding_id: wedding.uuid,
+    event_id: wedding.uuid,
   });
   const { data: suppliersResponse } = useLogisticsSuppliersList();
 
@@ -101,7 +101,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
-            {wedding.groom_name} & {wedding.bride_name}
+            {wedding.wedding_detail?.groom_name} & {wedding.wedding_detail?.bride_name}
           </h2>
           <p className="text-muted-foreground mt-1">
             {new Intl.DateTimeFormat("pt-BR", {

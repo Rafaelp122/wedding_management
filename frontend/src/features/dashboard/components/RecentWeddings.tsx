@@ -34,7 +34,7 @@ export function RecentWeddings({ weddings, title = "Próximos Casamentos" }: Rec
               >
                 <div className="flex flex-col gap-1">
                   <p className="text-sm font-bold text-violet-950 dark:text-violet-100 group-hover:text-primary transition-colors">
-                    {wedding.groom_name} & {wedding.bride_name}
+                    {wedding.wedding_detail?.groom_name} & {wedding.wedding_detail?.bride_name}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatDateBR(wedding.date)} • {wedding.location}

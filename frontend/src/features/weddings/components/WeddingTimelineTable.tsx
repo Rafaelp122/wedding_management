@@ -1,4 +1,4 @@
-import type { EventOut } from "@/api/generated/v1/models";
+import type { AppointmentOut } from "@/api/generated/v1/models";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 interface WeddingTimelineTableProps {
-  events: EventOut[];
+  events: AppointmentOut[];
 }
 
 export function WeddingTimelineTable({ events }: WeddingTimelineTableProps) {

@@ -5,7 +5,7 @@ export function useWeddingExpenses(weddingUuid: string) {
     data: expensesResponse,
     isLoading,
     error,
-  } = useFinancesExpensesList({ wedding_id: weddingUuid });
+  } = useFinancesExpensesList({ event_id: weddingUuid });
 
   const expenses = expensesResponse?.data?.items || [];
 

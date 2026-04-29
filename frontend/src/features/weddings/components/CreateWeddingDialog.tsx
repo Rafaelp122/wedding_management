@@ -1,12 +1,17 @@
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useWeddingsCreate } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { WeddingsCreateBody } from "@/api/generated/v1/zod/weddings/weddings";
+import { useEventsCreateWedding } from "@/api/generated/v1/endpoints/events/events";
+import { EventsCreateWeddingBody } from "@/api/generated/v1/zod/events/events";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { z } from "zod";
 
-type CreateWeddingFormData = z.infer<typeof WeddingsCreateBody>;
+type CreateWeddingFormData = {
+  groom_name: string;
+  bride_name: string;
+  date: string;
+  location: string;
+  expected_guests?: number;
+};
 
 import {
   Dialog,
@@ -30,10 +35,9 @@ export function CreateWeddingDialog({
   onOpenChange,
   onSuccess,
 }: CreateWeddingDialogProps) {
-  const { mutate, isPending } = useWeddingsCreate();
+  const { mutate, isPending } = useEventsCreateWedding();
 
   const form = useForm<CreateWeddingFormData>({
-    resolver: zodResolver(WeddingsCreateBody),
     defaultValues: {
       groom_name: "",
       bride_name: "",
@@ -44,8 +48,20 @@ export function CreateWeddingDialog({
   });
 
   const onSubmit = (data: CreateWeddingFormData) => {
+    const payload: z.infer<typeof EventsCreateWeddingBody> = {
+      name: `${data.groom_name} & ${data.bride_name}`,
+      event_type: "WEDDING",
+      date: data.date,
+      location: data.location,
+      expected_guests: data.expected_guests,
+      wedding_detail: {
+        groom_name: data.groom_name,
+        bride_name: data.bride_name,
+      },
+    };
+
     mutate(
-      { data },
+      { data: payload },
       {
         onSuccess: () => {
           toast.success("Casamento criado com sucesso!");

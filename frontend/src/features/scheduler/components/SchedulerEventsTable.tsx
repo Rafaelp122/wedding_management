@@ -1,6 +1,6 @@
-import { Bell, Calendar, Clock } from "lucide-react";
+import { Calendar } from "lucide-react";
 
-import type { EventOut } from "@/api/generated/v1/models";
+import type { AppointmentOut } from "@/api/generated/v1/models";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -28,7 +28,7 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 interface SchedulerEventsTableProps {
-  events: EventOut[];
+  events: AppointmentOut[];
   weddingsByUuid: Map<string, string>;
 }
 
@@ -57,13 +57,12 @@ export function SchedulerEventsTable({
                 <TableHead>Tipo</TableHead>
                 <TableHead>Início</TableHead>
                 <TableHead>Fim</TableHead>
-                <TableHead>Lembrete</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {events.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     Nenhum evento cadastrado até o momento.
                   </TableCell>
                 </TableRow>
@@ -71,7 +70,7 @@ export function SchedulerEventsTable({
                 events.map((event) => (
                   <TableRow key={event.uuid}>
                     <TableCell className="font-medium">{event.title}</TableCell>
-                    <TableCell>{weddingsByUuid.get(event.wedding) ?? event.wedding}</TableCell>
+                    <TableCell>{weddingsByUuid.get(event.event_uuid!) ?? event.event_uuid}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">
                         {EVENT_LABELS[event.event_type] ?? event.event_type}
@@ -80,19 +79,6 @@ export function SchedulerEventsTable({
                     <TableCell>{formatDateTimeBR(event.start_time)}</TableCell>
                     <TableCell>
                       {event.end_time ? formatDateTimeBR(event.end_time) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {event.reminder_enabled ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <Bell className="h-3 w-3" />
-                          {event.reminder_minutes_before} min
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          Sem lembrete
-                        </span>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))

@@ -8,13 +8,13 @@ export function useWeddingVendorsItems(weddingUuid: string) {
     data: contractsData,
     isLoading: isLoadingContracts,
     error: contractsError,
-  } = useLogisticsContractsList({ wedding_id: weddingUuid });
+  } = useLogisticsContractsList({ event_id: weddingUuid });
 
   const {
     data: itemsData,
     isLoading: isLoadingItems,
     error: itemsError,
-  } = useLogisticsItemsList({ wedding_id: weddingUuid });
+  } = useLogisticsItemsList({ event_id: weddingUuid });
 
   const contracts = contractsData?.data?.items ?? [];
   const items = itemsData?.data?.items ?? [];

@@ -1,13 +1,18 @@
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useWeddingsUpdate } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { WeddingsUpdateBody } from "@/api/generated/v1/zod/weddings/weddings";
+import { useEventsUpdateWedding } from "@/api/generated/v1/endpoints/events/events";
+import { EventsUpdateWeddingBody } from "@/api/generated/v1/zod/events/events";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { WeddingOut } from "@/api/generated/v1/models";
 import type { z } from "zod";
 
-type UpdateWeddingFormData = z.infer<typeof WeddingsUpdateBody>;
+type UpdateWeddingFormData = {
+  groom_name: string;
+  bride_name: string;
+  date: string;
+  location: string;
+  expected_guests?: number;
+};
 
 import {
   Dialog,
@@ -33,13 +38,12 @@ export function EditWeddingDialog({
   onOpenChange,
   onSuccess,
 }: EditWeddingDialogProps) {
-  const { mutate, isPending } = useWeddingsUpdate();
+  const { mutate, isPending } = useEventsUpdateWedding();
 
   const form = useForm<UpdateWeddingFormData>({
-    resolver: zodResolver(WeddingsUpdateBody),
     defaultValues: {
-      groom_name: wedding.groom_name || "",
-      bride_name: wedding.bride_name || "",
+      groom_name: wedding.wedding_detail?.groom_name || "",
+      bride_name: wedding.wedding_detail?.bride_name || "",
       date: wedding.date || "",
       location: wedding.location || "",
       expected_guests: wedding.expected_guests ?? undefined,
@@ -47,8 +51,20 @@ export function EditWeddingDialog({
   });
 
   const onSubmit = (data: UpdateWeddingFormData) => {
+    const payload: z.infer<typeof EventsUpdateWeddingBody> = {
+      name: `${data.groom_name} & ${data.bride_name}`,
+      event_type: "WEDDING",
+      date: data.date,
+      location: data.location,
+      expected_guests: data.expected_guests,
+      wedding_detail: {
+        groom_name: data.groom_name,
+        bride_name: data.bride_name,
+      },
+    };
+
     mutate(
-      { weddingUuid: wedding.uuid, data },
+      { eventUuid: wedding.uuid, data: payload },
       {
         onSuccess: () => {
           toast.success("Casamento atualizado com sucesso!");

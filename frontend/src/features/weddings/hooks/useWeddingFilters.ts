@@ -12,8 +12,8 @@ export function useWeddingFilters(
     return weddings.filter((wedding) => {
       const matchesSearch =
         search === "" ||
-        wedding.groom_name.toLowerCase().includes(search.toLowerCase()) ||
-        wedding.bride_name.toLowerCase().includes(search.toLowerCase()) ||
+        wedding.wedding_detail?.groom_name.toLowerCase().includes(search.toLowerCase()) ||
+        wedding.wedding_detail?.bride_name.toLowerCase().includes(search.toLowerCase()) ||
         wedding.location.toLowerCase().includes(search.toLowerCase());
 
       const matchesStatus =

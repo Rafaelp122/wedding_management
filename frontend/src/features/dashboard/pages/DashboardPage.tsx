@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useEventsListWeddings } from "@/api/generated/v1/endpoints/events/events";
 import { StatsCards } from "@/features/dashboard/components/StatsCards";
 import { RecentWeddings } from "@/features/dashboard/components/RecentWeddings";
 import { WeddingMonthlyChart } from "@/features/dashboard/components/WeddingMonthlyChart";
@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const { data, isLoading, error } = useWeddingsList();
+  const { data, isLoading, error } = useEventsListWeddings();
 
   if (isLoading) {
     return (

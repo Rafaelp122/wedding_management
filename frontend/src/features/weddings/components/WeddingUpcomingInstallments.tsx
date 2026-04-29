@@ -31,10 +31,10 @@ export function WeddingUpcomingInstallments({
   });
 
   const installments = response?.data?.items || [];
-  // Filtramos as que pertencem a este casamento especificamente se o campo wedding bater com o UUID
+  // Filtramos as que pertencem a este casamento especificamente se o campo event bater com o UUID
   // ou confiamos no filtro do backend.
   const filteredInstallments = installments.filter(
-    (i) => i.wedding === weddingUuid && i.status === "pending"
+    (i) => i.event === weddingUuid && i.status === "pending"
   );
 
   if (isLoading) {

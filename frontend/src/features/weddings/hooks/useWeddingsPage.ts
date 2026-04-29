@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useEventsListWeddings } from "@/api/generated/v1/endpoints/events/events";
 
 import { useWeddingFilters } from "./useWeddingFilters";
 import type { WeddingStatusFilter } from "../utils/weddingStatus";
@@ -15,7 +15,7 @@ export function useWeddingsPage() {
     isLoading,
     error,
     refetch,
-  } = useWeddingsList();
+  } = useEventsListWeddings();
 
   const weddings = useMemo(
     () => weddingsResponse?.data.items ?? [],

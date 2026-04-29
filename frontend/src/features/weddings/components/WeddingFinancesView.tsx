@@ -20,7 +20,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   } = useWeddingBudget(weddingUuid);
 
   const { data: expensesResponse, isLoading: isExpensesLoading } =
-    useFinancesExpensesList({ wedding_id: weddingUuid, limit: 20 });
+    useFinancesExpensesList({ event_id: weddingUuid, limit: 20 });
 
   if (isBudgetLoading || isExpensesLoading) {
     return (
