@@ -4,12 +4,12 @@ from typing import Any
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import DomainIntegrityError
-from apps.core.types import AuthContextUser
+from apps.events.models import Event
 from apps.finances.models import BudgetCategory
 from apps.logistics.models import Contract, Supplier
-from apps.weddings.models import Wedding
+from apps.users.auth import require_user
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,12 @@ class ContractService:
     """
 
     @staticmethod
-    def list(user: AuthContextUser, wedding_id: Any = None) -> QuerySet[Contract]:
+    def list(user: AuthContextUser, event_id: Any = None) -> QuerySet[Contract]:
         qs = Contract.objects.for_user(user).select_related(
-            "supplier", "wedding", "budget_category"
+            "supplier", "event", "budget_category"
         )
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
+        if event_id:
+            qs = qs.filter(event__uuid=event_id)
         return qs
 
     @staticmethod
@@ -36,7 +36,7 @@ class ContractService:
         logger.info(f"Iniciando criação de Contrato para planner_id={planner.id}")
 
         # Resolução de dependências via Resolvers genéricos (Pureza de Segurança)
-        wedding = Wedding.objects.resolve(planner, data.pop("wedding"))
+        event = Event.objects.resolve(planner, data.pop("event"))
         supplier = Supplier.objects.resolve(planner, data.pop("supplier"))
 
         category_uuid = data.pop("budget_category", None)
@@ -47,7 +47,7 @@ class ContractService:
         )
 
         contract = Contract(
-            wedding=wedding, supplier=supplier, budget_category=budget_category, **data
+            event=event, supplier=supplier, budget_category=budget_category, **data
         )
         contract.save()
 
@@ -66,7 +66,7 @@ class ContractService:
         logger.info(f"Atualizando Contrato uuid={instance.uuid}")
 
         # Proteção contra sequestro de contexto
-        data.pop("wedding", None)
+        data.pop("event", None)
         data.pop("planner", None)
 
         # Resolução de Fornecedor se fornecido no payload

@@ -6,8 +6,8 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
-from apps.core.types import AuthContextUser
 from apps.finances.models import Expense, Installment
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class InstallmentService:
 
     @staticmethod
     def list(user: AuthContextUser) -> QuerySet[Installment]:
-        return Installment.objects.for_user(user).select_related("expense", "wedding")
+        return Installment.objects.for_user(user).select_related("expense", "event")
 
     @staticmethod
     @transaction.atomic
@@ -33,7 +33,7 @@ class InstallmentService:
         expense = Expense.objects.resolve(user, expense_input)
 
         # 2. Injeção de Contexto e Instanciação
-        installment = Installment(wedding=expense.wedding, expense=expense, **data)
+        installment = Installment(event=expense.event, expense=expense, **data)
 
         # 3. Validação Estrita da Parcela
         installment.save()
@@ -61,7 +61,7 @@ class InstallmentService:
 
         # Proteção de campos estruturais
         data.pop("expense", None)
-        data.pop("wedding", None)
+        data.pop("event", None)
         data.pop("planner", None)
 
         for field, value in data.items():

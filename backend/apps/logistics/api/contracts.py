@@ -18,10 +18,11 @@ class ContractController(ControllerBase):
 
     @route.get("/", response=list[ContractOut], operation_id="logistics_contracts_list")
     @paginate
-    def list_contracts(self, wedding_id: UUID4 | None = None) -> QuerySet[Contract]:
-        return ContractService.list(
-            user=self.context.request.user, wedding_id=wedding_id
-        )
+    def list_contracts(self, event_id: UUID4 | None = None) -> QuerySet[Contract]:
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        assert self.context.request.user  # noqa: S101
+        return ContractService.list(user=self.context.request.user, event_id=event_id)
 
     @route.get(
         "/{contract_uuid}/",
@@ -29,6 +30,8 @@ class ContractController(ControllerBase):
         operation_id="logistics_contracts_read",
     )
     def retrieve_contract(self, contract_uuid: UUID4) -> Contract:
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
         return get_contract(self.context.request, contract_uuid)
 
     @route.post(
@@ -37,6 +40,9 @@ class ContractController(ControllerBase):
         operation_id="logistics_contracts_create",
     )
     def create_contract(self, payload: ContractIn) -> tuple[int, Contract]:
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        assert self.context.request.user  # noqa: S101
         contract = ContractService.create(
             user=self.context.request.user, data=payload.model_dump()
         )
@@ -50,6 +56,9 @@ class ContractController(ControllerBase):
     def update_contract(
         self, contract_uuid: UUID4, payload: ContractPatchIn
     ) -> Contract:
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        assert self.context.request.user  # noqa: S101
         contract = get_contract(self.context.request, contract_uuid)
         return ContractService.update(
             user=self.context.request.user,
@@ -63,6 +72,8 @@ class ContractController(ControllerBase):
         operation_id="logistics_contracts_delete",
     )
     def delete_contract(self, contract_uuid: UUID4) -> tuple[int, None]:
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
         contract = get_contract(self.context.request, contract_uuid)
         ContractService.delete(instance=contract)
         return 204, None

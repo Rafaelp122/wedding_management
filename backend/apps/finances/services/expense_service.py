@@ -7,9 +7,9 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
-from apps.core.types import AuthContextUser
 from apps.finances.models import BudgetCategory, Expense
 from apps.logistics.models import Contract
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
@@ -23,13 +23,13 @@ class ExpenseService:
 
     @staticmethod
     def list(
-        user: AuthContextUser, wedding_id: UUID | str | None = None
+        user: AuthContextUser, event_id: UUID | str | None = None
     ) -> QuerySet[Expense]:
         qs = Expense.objects.for_user(user).select_related(
-            "category", "contract", "wedding"
+            "category", "contract", "event"
         )
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
+        if event_id:
+            qs = qs.filter(event__uuid=event_id)
         return qs
 
     @staticmethod
@@ -53,7 +53,7 @@ class ExpenseService:
 
         # 3. Injeção de Contexto e Instanciação
         expense = Expense(
-            wedding=category.wedding,
+            event=category.event,
             category=category,
             contract=contract,
             **data,
@@ -83,7 +83,7 @@ class ExpenseService:
 
         # Bloqueio de sequestro de contexto
         data.pop("planner", None)
-        data.pop("wedding", None)
+        data.pop("event", None)
         data.pop("category", None)
 
         # Tratamento de troca ou desvinculação de contrato

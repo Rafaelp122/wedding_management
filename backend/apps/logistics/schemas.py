@@ -40,7 +40,7 @@ class SupplierOut(Schema):
 # CONTRACT SCHEMAS
 # ==============================================================================
 class ContractIn(Schema):
-    wedding: UUID4
+    event: UUID4
     supplier: UUID4
     budget_category: UUID4
     total_amount: Decimal
@@ -49,7 +49,7 @@ class ContractIn(Schema):
 
 
 class ContractPatchIn(Schema):
-    wedding: UUID4 | None = None
+    event: UUID4 | None = None
     supplier: UUID4 | None = None
     budget_category: UUID4 | None = None
     total_amount: Decimal | None = None
@@ -58,7 +58,7 @@ class ContractPatchIn(Schema):
 
 class ContractOut(Schema):
     uuid: UUID4
-    wedding: UUID4 = Field(alias="wedding.uuid")
+    event: UUID4 = Field(alias="event.uuid")
     supplier: UUID4 = Field(alias="supplier.uuid")
     budget_category: UUID4 | None = Field(None, alias="budget_category.uuid")
     total_amount: Decimal
@@ -74,7 +74,7 @@ class ContractOut(Schema):
 # ITEM SCHEMAS
 # ==============================================================================
 class ItemIn(Schema):
-    wedding: UUID4
+    event: UUID4
     contract: UUID4 | None = None
     name: str
     description: str = ""
@@ -82,7 +82,7 @@ class ItemIn(Schema):
 
 
 class ItemPatchIn(Schema):
-    wedding: UUID4 | None = None
+    event: UUID4 | None = None
     contract: UUID4 | None = None
     name: str | None = None
     description: str | None = None
@@ -91,7 +91,7 @@ class ItemPatchIn(Schema):
 
 class ItemOut(Schema):
     uuid: UUID4
-    wedding: UUID4 = Field(alias="wedding.uuid")
+    event: UUID4 = Field(alias="event.uuid")
     contract: UUID4 | None = Field(None, alias="contract.uuid")
     name: str
     description: str

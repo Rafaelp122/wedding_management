@@ -6,9 +6,9 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import DomainIntegrityError
-from apps.core.types import AuthContextUser
+from apps.events.models import Event
 from apps.logistics.models import Contract, Item
-from apps.weddings.models import Wedding
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
@@ -22,11 +22,11 @@ class ItemService:
 
     @staticmethod
     def list(
-        user: AuthContextUser, wedding_id: UUID | str | None = None
+        user: AuthContextUser, event_id: UUID | str | None = None
     ) -> QuerySet[Item]:
-        qs = Item.objects.for_user(user).select_related("contract", "wedding")
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
+        qs = Item.objects.for_user(user).select_related("contract", "event")
+        if event_id:
+            qs = qs.filter(event__uuid=event_id)
         return qs
 
     @staticmethod
@@ -39,8 +39,8 @@ class ItemService:
         logger.info("Iniciando criação de Item")
 
         # 1. Resolução do Casamento
-        wedding_input = data.pop("wedding")
-        wedding = Wedding.objects.resolve(user, wedding_input)
+        event_input = data.pop("event")
+        event = Event.objects.resolve(user, event_input)
 
         # 2. Resolução do Contrato (Opcional)
         contract = None
@@ -48,17 +48,17 @@ class ItemService:
             contract_input = data.pop("contract")
             if contract_input:
                 contract = Contract.objects.resolve(user, contract_input)
-                # Garantia de integridade: contrato deve pertencer ao mesmo wedding
-                if contract.wedding_id != wedding.id:
+                # Garantia de integridade: contrato deve pertencer ao mesmo event
+                if contract.event_id != event.id:
                     from apps.core.exceptions import BusinessRuleViolation
 
                     raise BusinessRuleViolation(
                         detail="Este contrato pertence a outro casamento.",
-                        code="invalid_contract_wedding",
+                        code="invalid_contract_event",
                     )
 
         # 3. Instanciação e Persistência
-        item = Item(wedding=wedding, contract=contract, **data)
+        item = Item(event=event, contract=contract, **data)
         item.save()
 
         logger.info(f"Item criado com sucesso: uuid={item.uuid}")
@@ -70,19 +70,19 @@ class ItemService:
         logger.info(f"Atualizando Item uuid={instance.uuid}")
 
         # Bloqueio de troca de casamento
-        data.pop("wedding", None)
+        data.pop("event", None)
 
         # Tratamento de troca de contrato
         if "contract" in data:
             contract_input = data.pop("contract")
             if contract_input:
                 contract = Contract.objects.resolve(user, contract_input)
-                if contract.wedding_id != instance.wedding_id:
+                if contract.event_id != instance.event_id:
                     from apps.core.exceptions import BusinessRuleViolation
 
                     raise BusinessRuleViolation(
                         detail="Este contrato pertence a outro casamento.",
-                        code="invalid_contract_wedding",
+                        code="invalid_contract_event",
                     )
                 instance.contract = contract
             else:

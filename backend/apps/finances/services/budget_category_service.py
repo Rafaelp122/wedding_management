@@ -7,9 +7,9 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import DomainIntegrityError
-from apps.core.types import AuthContextUser
+from apps.events.models import Event
 from apps.finances.models import Budget, BudgetCategory
-from apps.weddings.models import Wedding
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
@@ -23,16 +23,16 @@ class BudgetCategoryService:
 
     @staticmethod
     def list(
-        user: AuthContextUser, wedding_id: UUID | None = None
+        user: AuthContextUser, event_id: UUID | None = None
     ) -> QuerySet[BudgetCategory]:
         """
         Lista categorias de orçamento de um planner,
         opcionalmente filtradas por casamento.
         A multitenancy é garantida pelo manager .for_user().
         """
-        qs = BudgetCategory.objects.for_user(user).select_related("budget", "wedding")
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
+        qs = BudgetCategory.objects.for_user(user).select_related("budget", "event")
+        if event_id:
+            qs = qs.filter(event__uuid=event_id)
         return qs
 
     @staticmethod
@@ -52,9 +52,9 @@ class BudgetCategoryService:
         # O schema envia 'budget' (UUID), resolvemos a instância com segurança
         budget_input = data.pop("budget")
         budget = BudgetService.get(budget_input, user)
-        wedding = budget.wedding
+        event = budget.event
 
-        category = BudgetCategory(wedding=wedding, budget=budget, **data)
+        category = BudgetCategory(event=event, budget=budget, **data)
         category.save()
 
         return category
@@ -65,7 +65,7 @@ class BudgetCategoryService:
         logger.info(f"Atualizando categoria uuid={instance.uuid}")
 
         # Proteção: não se muda casamento ou orçamento de uma categoria
-        data.pop("wedding", None)
+        data.pop("event", None)
         data.pop("budget", None)
 
         for field, value in data.items():
@@ -90,17 +90,15 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def setup_defaults(
-        wedding: Wedding, budget: Budget
-    ) -> builtins.list["BudgetCategory"]:
+    def setup_defaults(event: Event, budget: Budget) -> builtins.list["BudgetCategory"]:
         from apps.core.constants import DEFAULT_BUDGET_CATEGORIES
 
-        logger.info(f"Gerando categorias padrão para o casamento {wedding.uuid}")
+        logger.info(f"Gerando categorias padrão para o casamento {event.uuid}")
 
         categories = []
         for name in DEFAULT_BUDGET_CATEGORIES:
             cat = BudgetCategory(
-                wedding=wedding, budget=budget, name=name, allocated_budget=0
+                event=event, budget=budget, name=name, allocated_budget=0
             )
             cat.save()
             categories.append(cat)

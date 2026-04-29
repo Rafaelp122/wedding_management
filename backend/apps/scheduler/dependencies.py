@@ -2,12 +2,12 @@ from uuid import UUID
 
 from django.http import HttpRequest
 
-from apps.scheduler.models import Event, Task
+from apps.scheduler.models import Appointment, Task
 
 
-def get_event(request: HttpRequest, uuid: UUID) -> Event:
-    """Injeta a instância de Event (Agenda) validada para o usuário logado."""
-    return Event.objects.resolve(request.user, uuid)
+def get_appointment(request: HttpRequest, uuid: UUID) -> Appointment:
+    """Injeta a instância de Appointment (Agenda) validada para o usuário logado."""
+    return Appointment.objects.resolve(request.user, uuid)
 
 
 def get_task(request: HttpRequest, uuid: UUID) -> Task:

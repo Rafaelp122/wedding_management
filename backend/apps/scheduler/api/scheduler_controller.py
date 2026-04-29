@@ -1,5 +1,3 @@
-from typing import Any
-
 from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import (
@@ -10,83 +8,113 @@ from ninja_extra import (
     http_patch,
     http_post,
 )
-from ninja_extra.permissions import IsAuthenticated
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.scheduler.dependencies import get_event, get_task
-from apps.scheduler.models import Event, Task
+from apps.scheduler.dependencies import get_appointment, get_task
+from apps.scheduler.models import Appointment, Task
 from apps.scheduler.schemas import (
-    EventIn,
-    EventOut,
-    EventPatchIn,
+    AppointmentIn,
+    AppointmentOut,
+    AppointmentPatchIn,
     TaskIn,
     TaskOut,
     TaskPatchIn,
 )
-from apps.scheduler.services.events import EventService
+from apps.scheduler.services.appointments import AppointmentService
 from apps.scheduler.services.tasks import TaskService
 
 
-@api_controller("/scheduler", tags=["Scheduler"], permissions=[IsAuthenticated])
+@api_controller("/scheduler", tags=["Scheduler"])
 class SchedulerController(ControllerBase):
-    context: Any
+    """
+    Controlador para Gestão de Agenda e Tarefas (RF07 / RF08).
+    """
 
-    # --- EVENTS ---
-
-    @http_get("/events/", response=list[EventOut], operation_id="scheduler_events_list")
-    @paginate
-    def list_events(self, wedding_id: UUID4 | None = None) -> QuerySet[Event]:
-        return EventService.list(self.context.request.user, wedding_id=wedding_id)
+    # --- APPOINTMENTS (RF07) ---
 
     @http_get(
-        "/events/{event_uuid}/",
-        response={200: EventOut, **READ_ERROR_RESPONSES},
-        operation_id="scheduler_events_read",
+        "/appointments/",
+        response={200: list[AppointmentOut], **READ_ERROR_RESPONSES},
+        operation_id="scheduler_appointments_list",
     )
-    def get_event(self, event_uuid: UUID4):
-        return get_event(self.context.request, event_uuid)
+    @paginate
+    def list_appointments(self, event_id: UUID4 | None = None) -> QuerySet[Appointment]:
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        assert self.context.request.user  # noqa: S101
+        return AppointmentService.list(self.context.request.user, event_id)
+
+    @http_get(
+        "/appointments/{appointment_uuid}/",
+        response={200: AppointmentOut, **READ_ERROR_RESPONSES},
+        operation_id="scheduler_appointments_retrieve",
+    )
+    def retrieve_appointment(self, appointment_uuid: UUID4):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        return get_appointment(self.context.request, appointment_uuid)
 
     @http_post(
-        "/events/",
-        response={201: EventOut, **MUTATION_ERROR_RESPONSES},
-        operation_id="scheduler_events_create",
+        "/appointments/",
+        response={201: AppointmentOut, **MUTATION_ERROR_RESPONSES},
+        operation_id="scheduler_appointments_create",
     )
-    def create_event(self, payload: EventIn):
-        return 201, EventService.create(self.context.request.user, payload.model_dump())
+    def create_appointment(self, payload: AppointmentIn):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        assert self.context.request.user  # noqa: S101
+        return 201, AppointmentService.create(
+            self.context.request.user, payload.model_dump()
+        )
 
     @http_patch(
-        "/events/{event_uuid}/",
-        response={200: EventOut, **MUTATION_ERROR_RESPONSES},
-        operation_id="scheduler_events_update",
+        "/appointments/{appointment_uuid}/",
+        response={200: AppointmentOut, **MUTATION_ERROR_RESPONSES},
+        operation_id="scheduler_appointments_update",
     )
-    def update_event(self, event_uuid: UUID4, payload: EventPatchIn):
-        instance = get_event(self.context.request, event_uuid)
-        return EventService.update(instance, payload.model_dump(exclude_unset=True))
+    def update_appointment(self, appointment_uuid: UUID4, payload: AppointmentPatchIn):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        instance = get_appointment(self.context.request, appointment_uuid)
+        return AppointmentService.update(
+            instance, payload.model_dump(exclude_unset=True)
+        )
 
     @http_delete(
-        "/events/{event_uuid}/",
+        "/appointments/{appointment_uuid}/",
         response={204: None, **MUTATION_ERROR_RESPONSES},
-        operation_id="scheduler_events_delete",
+        operation_id="scheduler_appointments_delete",
     )
-    def delete_event(self, event_uuid: UUID4):
-        instance = get_event(self.context.request, event_uuid)
-        EventService.delete(instance)
+    def delete_appointment(self, appointment_uuid: UUID4):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        instance = get_appointment(self.context.request, appointment_uuid)
+        AppointmentService.delete(instance)
         return 204, None
 
-    # --- TASKS ---
+    # --- TASKS (RF08) ---
 
-    @http_get("/tasks/", response=list[TaskOut], operation_id="scheduler_tasks_list")
+    @http_get(
+        "/tasks/",
+        response={200: list[TaskOut], **READ_ERROR_RESPONSES},
+        operation_id="scheduler_tasks_list",
+    )
     @paginate
-    def list_tasks(self, wedding_id: UUID4 | None = None) -> QuerySet[Task]:
-        return TaskService.list(self.context.request.user, wedding_id=wedding_id)
+    def list_tasks(self, event_id: UUID4 | None = None) -> QuerySet[Task]:
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        assert self.context.request.user  # noqa: S101
+        return TaskService.list(self.context.request.user, event_id)
 
     @http_get(
         "/tasks/{task_uuid}/",
         response={200: TaskOut, **READ_ERROR_RESPONSES},
-        operation_id="scheduler_tasks_read",
+        operation_id="scheduler_tasks_retrieve",
     )
-    def get_task(self, task_uuid: UUID4):
+    def retrieve_task(self, task_uuid: UUID4):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
         return get_task(self.context.request, task_uuid)
 
     @http_post(
@@ -95,6 +123,9 @@ class SchedulerController(ControllerBase):
         operation_id="scheduler_tasks_create",
     )
     def create_task(self, payload: TaskIn):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
+        assert self.context.request.user  # noqa: S101
         return 201, TaskService.create(self.context.request.user, payload.model_dump())
 
     @http_patch(
@@ -103,6 +134,8 @@ class SchedulerController(ControllerBase):
         operation_id="scheduler_tasks_update",
     )
     def update_task(self, task_uuid: UUID4, payload: TaskPatchIn):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
         instance = get_task(self.context.request, task_uuid)
         return TaskService.update(instance, payload.model_dump(exclude_unset=True))
 
@@ -112,6 +145,8 @@ class SchedulerController(ControllerBase):
         operation_id="scheduler_tasks_delete",
     )
     def delete_task(self, task_uuid: UUID4):
+        assert self.context  # noqa: S101
+        assert self.context.request  # noqa: S101
         instance = get_task(self.context.request, task_uuid)
         TaskService.delete(instance)
         return 204, None

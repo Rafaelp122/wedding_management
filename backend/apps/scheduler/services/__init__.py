@@ -1,5 +1,5 @@
-from .events import EventService
+from .appointments import AppointmentService
 from .tasks import TaskService
 
 
-__all__ = ["EventService", "TaskService"]
+__all__ = ["AppointmentService", "TaskService"]

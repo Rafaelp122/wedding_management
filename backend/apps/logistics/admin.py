@@ -23,17 +23,17 @@ class SupplierAdmin(admin.ModelAdmin):
 class ItemAdmin(admin.ModelAdmin):
     list_display = [
         "name",
-        "wedding",
+        "event",
         "supplier",
         "quantity",
         "acquisition_status",
     ]
-    list_filter = ["acquisition_status", "wedding"]
+    list_filter = ["acquisition_status", "event"]
     search_fields = [
         "name",
         "description",
-        "wedding__groom_name",
-        "wedding__bride_name",
+        "event__groom_name",
+        "event__bride_name",
     ]
     readonly_fields = ["created_at", "updated_at"]
 
@@ -41,15 +41,15 @@ class ItemAdmin(admin.ModelAdmin):
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
     list_display = [
-        "wedding",
+        "event",
         "supplier",
         "budget_category",
         "status",
         "total_amount",
         "signed_date",
     ]
-    list_filter = ["status", "expiration_date", "wedding"]
-    search_fields = ["wedding__groom_name", "wedding__bride_name", "supplier__name"]
+    list_filter = ["status", "expiration_date", "event"]
+    search_fields = ["event__groom_name", "event__bride_name", "supplier__name"]
     readonly_fields = [
         "uuid",
         "created_at",

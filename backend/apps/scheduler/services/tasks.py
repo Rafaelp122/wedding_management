@@ -5,29 +5,24 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import DomainIntegrityError
-from apps.core.types import AuthContextUser
+from apps.events.models import Event
 from apps.scheduler.models import Task
-from apps.weddings.models import Wedding
+from apps.users.auth import require_user
+from apps.users.types import AuthContextUser
 
 
 logger = logging.getLogger(__name__)
 
 
 class TaskService:
-    """
-    Camada de serviço para gestão de tarefas (checklist).
-    Purificada: Recebe instâncias resolvidas ou usa resolvers internos.
-    """
-
     @staticmethod
     def list(
-        user: AuthContextUser, wedding_id: UUID | str | None = None
+        user: AuthContextUser, event_id: UUID | str | None = None
     ) -> QuerySet[Task]:
-        qs = Task.objects.for_user(user).select_related("wedding", "planner")
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
+        qs = Task.objects.for_user(user).select_related("event")
+        if event_id:
+            qs = qs.filter(event__uuid=event_id)
         return qs
 
     @staticmethod
@@ -36,10 +31,10 @@ class TaskService:
         planner = require_user(user)
         logger.info("Iniciando criação de Tarefa")
 
-        wedding_input = data.pop("wedding")
-        wedding = Wedding.objects.resolve(user, wedding_input)
+        event_input = data.pop("event")
+        event = Event.objects.resolve(user, event_input)
 
-        task = Task(planner=planner, wedding=wedding, **data)
+        task = Task(company=planner.company, event=event, **data)
         task.save()
 
         logger.info(f"Tarefa criada com sucesso: uuid={task.uuid}")
@@ -50,8 +45,8 @@ class TaskService:
     def update(instance: Task, data: dict[str, Any]) -> Task:
         logger.info(f"Atualizando Tarefa uuid={instance.uuid}")
 
-        data.pop("wedding", None)
-        data.pop("planner", None)
+        data.pop("event", None)
+        data.pop("company", None)
 
         task_status = data.pop("is_completed", None)
         if task_status is not None:
@@ -72,7 +67,6 @@ class TaskService:
             instance.delete()
         except ProtectedError as e:
             raise DomainIntegrityError(
-                detail="Não é possível apagar esta tarefa pois existem registros "
-                "vinculados a ela.",
+                detail="Não é possível apagar esta tarefa pois existem registros vinculados a ela.",
                 code="task_protected_error",
             ) from e

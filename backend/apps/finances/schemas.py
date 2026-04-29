@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 # --- BUDGET SCHEMAS ---
 class BudgetIn(Schema):
-    wedding: UUID4
+    event: UUID4
     total_estimated: Decimal
     notes: str | None = None
 
@@ -26,7 +26,7 @@ class BudgetPatchIn(Schema):
 
 class BudgetOut(Schema):
     uuid: UUID4
-    wedding: UUID4 = Field(alias="wedding.uuid")
+    event: UUID4 = Field(alias="event.uuid")
     total_estimated: Decimal
     total_overall_spent: Decimal = Field(default=Decimal("0.00"))
     notes: str | None = None
@@ -53,9 +53,7 @@ class BudgetCategoryPatchIn(Schema):
 
 class BudgetCategoryOut(Schema):
     uuid: UUID4
-    wedding: UUID4 = Field(
-        alias="wedding.uuid"
-    )  # Read-Only logic keeps it in the output
+    event: UUID4 = Field(alias="event.uuid")  # Read-Only logic keeps it in the output
     budget: UUID4 = Field(alias="budget.uuid")
     name: str
     description: str | None = None
@@ -87,7 +85,7 @@ class ExpensePatchIn(Schema):
 
 class ExpenseOut(Schema):
     uuid: UUID4
-    wedding: UUID4 = Field(alias="wedding.uuid")
+    event: UUID4 = Field(alias="event.uuid")
     category: UUID4 = Field(alias="category.uuid")
     contract: UUID4 | None = None
     description: str
@@ -122,7 +120,7 @@ class InstallmentPatchIn(Schema):
 
 class InstallmentOut(Schema):
     uuid: UUID4
-    wedding: UUID4 = Field(alias="wedding.uuid")
+    event: UUID4 = Field(alias="event.uuid")
     expense: UUID4 = Field(alias="expense.uuid")
     installment_number: int
     amount: Decimal

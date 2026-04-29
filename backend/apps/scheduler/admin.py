@@ -1,21 +1,17 @@
 from django.contrib import admin
 
-from .models import Event
+from .models import Appointment, Task
 
 
-# Configuração do modelo Event no painel administrativo do Django
-@admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
-    """Define como o modelo Event será exibido e filtrado no admin."""
-
-    # Campos exibidos na listagem
-    list_display = ("id", "title", "start_time", "event_type", "wedding", "planner")
-
-    # Campos pesquisáveis
+@admin.register(Appointment)
+class AppointmentAdmin(admin.ModelAdmin):
+    list_display = ("title", "company", "event_type", "start_time", "end_time")
+    list_filter = ("event_type", "company", "start_time")
     search_fields = ("title", "description", "location")
 
-    # Filtros laterais
-    list_filter = ("event_type", "wedding", "planner", "start_time")
 
-    # Exibe hierarquia de datas no topo da página
-    date_hierarchy = "start_time"
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ("title", "company", "event_id", "is_completed", "due_date")
+    list_filter = ("is_completed", "company", "due_date")
+    search_fields = ("title", "description")

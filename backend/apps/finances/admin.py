@@ -21,10 +21,10 @@ class ExpenseInline(admin.TabularInline):
 
 @admin.register(Budget)
 class BudgetAdmin(admin.ModelAdmin):
-    # AJUSTE: search_fields corrigido para o novo modelo de Wedding
-    list_display = ["wedding", "created_at"]
+    # AJUSTE: search_fields corrigido para o novo modelo de Event
+    list_display = ["event", "created_at"]
     list_filter = ["created_at"]
-    search_fields = ["wedding__groom_name", "wedding__bride_name"]
+    search_fields = ["event__groom_name", "event__bride_name"]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [BudgetCategoryInline]
 
@@ -39,8 +39,8 @@ class BudgetCategoryAdmin(admin.ModelAdmin):
     # AJUSTE: search_fields corrigido
     search_fields = [
         "name",
-        "budget__wedding__groom_name",
-        "budget__wedding__bride_name",
+        "budget__event__groom_name",
+        "budget__event__bride_name",
     ]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [ExpenseInline]
@@ -68,8 +68,8 @@ class ExpenseAdmin(admin.ModelAdmin):
     search_fields = [
         "description",
         "category__name",
-        "wedding__groom_name",
-        "wedding__bride_name",
+        "event__groom_name",
+        "event__bride_name",
     ]
     readonly_fields = ["uuid", "created_at", "updated_at"]
     inlines = [InstallmentInline]
