@@ -22,7 +22,7 @@ def list_installments(request: HttpRequest) -> QuerySet[Installment]:
     Lista faturas fragmentadas originárias para os fluxos pendentes.
     Faturas isoladas ligadas a pagamentos unificados.
     """
-    return InstallmentService.list(request.user)
+    return InstallmentService.list(request.user.company)
 
 
 @installments_router.get(
@@ -34,7 +34,7 @@ def get_installment(request: HttpRequest, uuid: UUID4) -> Installment:
     """
     Revela notas fragmentais e guias pendentes programados do recebimento.
     """
-    return InstallmentService.get(request.user, uuid)
+    return InstallmentService.get(request.user.company, uuid)
 
 
 @installments_router.post(
@@ -48,7 +48,7 @@ def create_installment(
     """
     Grava pendências parciais atestando dependências de transações.
     """
-    return 201, InstallmentService.create(request.user, payload.dict())
+    return 201, InstallmentService.create(request.user.company, payload.dict())
 
 
 @installments_router.patch(
@@ -62,9 +62,9 @@ def update_installment(
     """
     Edita temporalmente ou encerra status validando com pagamento de guia as etapas.
     """
-    instance = InstallmentService.get(request.user, uuid)
+    instance = InstallmentService.get(request.user.company, uuid)
     return InstallmentService.update(
-        request.user, instance, payload.dict(exclude_unset=True)
+        request.user.company, instance, payload.dict(exclude_unset=True)
     )
 
 
@@ -77,6 +77,6 @@ def delete_installment(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Exclui registro pendente restabelecendo ordem das cobranças integrando-as.
     """
-    instance = InstallmentService.get(request.user, uuid)
-    InstallmentService.delete(request.user, instance)
+    instance = InstallmentService.get(request.user.company, uuid)
+    InstallmentService.delete(request.user.company, instance)
     return 204, None

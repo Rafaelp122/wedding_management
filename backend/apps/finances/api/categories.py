@@ -30,7 +30,7 @@ def list_categories(
     ``wedding_id`` é repassado ao service que detém a regra de filtragem;
     esta rota não conhece a lógica de tenancy.
     """
-    return BudgetCategoryService.list(request.user, wedding_id=wedding_id)
+    return BudgetCategoryService.list(request.user.company, wedding_id=wedding_id)
 
 
 @budget_categories_router.get(
@@ -43,7 +43,7 @@ def get_category(request: HttpRequest, uuid: UUID4) -> BudgetCategory:
     Acessa os detalhamentos da categoria isolada de forma simples e visual.
     Garante a segurança contábil sem vazar detalhes restritos a terceiros.
     """
-    return BudgetCategoryService.get(request.user, uuid)
+    return BudgetCategoryService.get(request.user.company, uuid)
 
 
 @budget_categories_router.post(
@@ -58,7 +58,7 @@ def create_category(
     Abre mais um bloco de centro de custo em conta específica da festa.
     Associa devidamente ao orçamento atrelado em tela.
     """
-    return 201, BudgetCategoryService.create(request.user, payload.dict())
+    return 201, BudgetCategoryService.create(request.user.company, payload.dict())
 
 
 @budget_categories_router.patch(
@@ -73,9 +73,9 @@ def update_category(
     Corrige o título, ou altera o valor dos gastos planejados.
     Evita sobrescrições acidentais errôneas em outras rotas.
     """
-    instance = BudgetCategoryService.get(request.user, uuid)
+    instance = BudgetCategoryService.get(request.user.company, uuid)
     return BudgetCategoryService.update(
-        request.user, instance, payload.dict(exclude_unset=True)
+        request.user.company, instance, payload.dict(exclude_unset=True)
     )
 
 
@@ -89,6 +89,6 @@ def delete_category(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     Fecha um agrupamento no orçamento permanentemente.
     Exclui anotações de faturas de modo destrutivo para balanceamento.
     """
-    instance = BudgetCategoryService.get(request.user, uuid)
-    BudgetCategoryService.delete(request.user, instance)
+    instance = BudgetCategoryService.get(request.user.company, uuid)
+    BudgetCategoryService.delete(request.user.company, instance)
     return 204, None

@@ -9,7 +9,7 @@ from apps.weddings.services import WeddingService
 def seed_data(user, django_user_model):
     # Planner alvo
     my_wedding = WeddingService.create(
-        user,
+        user.company,
         {
             "bride_name": "Minha",
             "groom_name": "Noz",
@@ -17,10 +17,10 @@ def seed_data(user, django_user_model):
             "date": "2026-10-11",
         },
     )
-    my_budget = BudgetService.get_or_create_for_wedding(user, my_wedding.uuid)
+    my_budget = BudgetService.get_or_create_for_wedding(user.company, my_wedding.uuid)
     my_category = my_budget.categories.first()
     my_expense = ExpenseService.create(
-        user,
+        user.company,
         {
             "category": my_category,
             "description": "Despesa A",
@@ -32,20 +32,20 @@ def seed_data(user, django_user_model):
     # Planner alheio
     other_user = django_user_model.objects.create_user(email="b@b.com", password="123")
     other_wedding = WeddingService.create(
-        other_user,
+        other_user.company,
         {
             "bride_name": "Outra",
-            "groom_name": "Outro",
+            "groom_name": "Noz",
             "location": "B",
-            "date": "2026-10-11",
+            "date": "2026-10-12",
         },
     )
     other_budget = BudgetService.get_or_create_for_wedding(
-        other_user, other_wedding.uuid
+        other_user.company, other_wedding.uuid
     )
     other_category = other_budget.categories.first()
     ExpenseService.create(
-        other_user,
+        other_user.company,
         {
             "category": other_category,
             "description": "Despesa B",

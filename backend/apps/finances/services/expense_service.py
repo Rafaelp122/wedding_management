@@ -6,15 +6,14 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.types import AuthContextUser
 from apps.finances.models import BudgetCategory, Expense
 from apps.logistics.models import Contract
+from apps.tenants.models import Company
 
 
 logger = logging.getLogger(__name__)
@@ -29,9 +28,9 @@ class ExpenseService:
 
     @staticmethod
     def list(
-        user: AuthContextUser, wedding_id: UUID | str | None = None
+        company: Company, wedding_id: UUID | str | None = None
     ) -> QuerySet[Expense]:
-        qs = Expense.objects.for_user(user).select_related(
+        qs = Expense.objects.for_tenant(company).select_related(
             "category", "contract", "wedding"
         )
         if wedding_id:
@@ -39,10 +38,10 @@ class ExpenseService:
         return qs
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: UUID | str) -> Expense:
+    def get(company: Company, uuid: UUID | str) -> Expense:
         try:
             return (
-                Expense.objects.for_user(user)
+                Expense.objects.for_tenant(company)
                 .select_related("category", "contract", "wedding")
                 .get(uuid=uuid)
             )
@@ -51,9 +50,8 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> Expense:
-        planner = require_user(user)
-        logger.info(f"Iniciando criação de Despesa para planner_id={planner.id}")
+    def create(company: Company, data: dict[str, Any]) -> Expense:
+        logger.info(f"Iniciando criação de Despesa para company_id={company.id}")
 
         # 1. Resolução Segura de Categoria (Suporta Instância ou UUID)
         category_input = data.pop("category", None)
@@ -62,7 +60,7 @@ class ExpenseService:
             category = category_input
         else:
             try:
-                category = BudgetCategory.objects.for_user(planner).get(
+                category = BudgetCategory.objects.for_tenant(company).get(
                     uuid=category_input
                 )
             except BudgetCategory.DoesNotExist as e:
@@ -83,7 +81,7 @@ class ExpenseService:
                 contract = contract_input
             else:
                 try:
-                    contract = Contract.objects.for_user(planner).get(
+                    contract = Contract.objects.for_tenant(company).get(
                         uuid=contract_input
                     )
                 except Contract.DoesNotExist as e:
@@ -98,6 +96,7 @@ class ExpenseService:
 
         # 3. Injeção de Contexto (ADR-009) e Instanciação
         expense = Expense(
+            company=company,
             wedding=category.wedding,
             category=category,
             contract=contract,
@@ -105,16 +104,12 @@ class ExpenseService:
         )
 
         # 4. Validação Estrita no Model
-        # WeddingOwnedMixin validará se a Categoria e o Contrato pertencem ao mesmo
-        # Wedding.
-        # Expense.clean() validará se o valor não entra em conflito com o
-        # Contrato.
         try:
             expense.save()
         except DjangoValidationError as e:
             logger.warning(
-                "Falha de validação ao criar despesa para planner_id=%s: %s",
-                planner.id,
+                "Falha de validação ao criar despesa para company_id=%s: %s",
+                company.id,
                 e,
             )
             detail = "; ".join(e.messages) if e.messages else str(e)
@@ -128,16 +123,13 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def update(
-        user: AuthContextUser, instance: Expense, data: dict[str, Any]
-    ) -> Expense:
-        planner = require_user(user)
+    def update(company: Company, instance: Expense, data: dict[str, Any]) -> Expense:
         logger.info(
-            f"Atualizando Despesa uuid={instance.uuid} por planner_id={planner.id}"
+            f"Atualizando Despesa uuid={instance.uuid} por company_id={company.id}"
         )
 
         # Bloqueio de sequestro de contexto
-        data.pop("planner", None)
+        data.pop("company", None)
         data.pop("wedding", None)
         data.pop("category", None)
 
@@ -149,7 +141,7 @@ class ExpenseService:
                     instance.contract = contract_input
                 else:
                     try:
-                        instance.contract = Contract.objects.for_user(planner).get(
+                        instance.contract = Contract.objects.for_tenant(company).get(
                             uuid=contract_input
                         )
                     except Contract.DoesNotExist as e:
@@ -164,17 +156,13 @@ class ExpenseService:
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # Se o utilizador alterar o 'actual_amount' da despesa, e esta já tiver
-        # parcelas (Installments) pagas, o full_clean() DEVE ser programado no Model
-        # para explodir e bloquear a ação se violar a Tolerância Zero
-        # (ADR-010).
         try:
             instance.save()
         except DjangoValidationError as e:
             logger.warning(
-                "Falha de validação ao atualizar despesa uuid=%s por planner_id=%s: %s",
+                "Falha de validação ao atualizar despesa uuid=%s por company_id=%s: %s",
                 instance.uuid,
-                planner.id,
+                company.id,
                 e,
             )
             detail = "; ".join(e.messages) if e.messages else str(e)
@@ -183,28 +171,24 @@ class ExpenseService:
                 code="expense_validation_error",
             ) from e
 
-        logger.info(f"Despesa uuid={instance.uuid} atualizada com sucesso.")
+        logger.info(f"Despesa uuid={instance.uuid} atualizado com sucesso.")
         return instance
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, instance: Expense) -> None:
-        planner = require_user(user)
+    def delete(company: Company, instance: Expense) -> None:
         logger.info(
             f"Tentativa de deleção da Despesa uuid={instance.uuid} "
-            f"por planner_id={planner.id}"
+            f"por company_id={company.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Despesa uuid={instance.uuid} DESTRUÍDA por planner_id={planner.id}"
+                f"Despesa uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
             )
 
         except ProtectedError as e:
-            # Mesmo que penses que as parcelas têm CASCADE, a rede de segurança
-            # é obrigatória. Amanhã alguém muda o Model para PROTECT e o teu código
-            # rebenta.
             logger.error(
                 f"Falha de integridade ao deletar Despesa uuid={instance.uuid}"
             )

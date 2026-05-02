@@ -10,10 +10,10 @@ Referência: RF04
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.tenants.models import TenantModel
 
 
-class Installment(BaseModel, WeddingOwnedMixin):
+class Installment(TenantModel, WeddingOwnedMixin):
     """
     Parcelamento (RF04).
     Representa uma fatia financeira de uma Despesa.
@@ -44,6 +44,7 @@ class Installment(BaseModel, WeddingOwnedMixin):
         unique_together = [["expense", "installment_number"]]
         ordering = ["due_date"]
         indexes = [
+            models.Index(fields=["company", "wedding"]),
             models.Index(fields=["status", "due_date"]),
         ]
 

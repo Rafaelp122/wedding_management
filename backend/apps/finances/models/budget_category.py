@@ -14,10 +14,10 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.tenants.models import TenantModel
 
 
-class BudgetCategory(BaseModel, WeddingOwnedMixin):
+class BudgetCategory(TenantModel, WeddingOwnedMixin):
     """
     Categorias de gastos (RF03).
     Permite o agrupamento logístico e financeiro vinculando despesas a um orçamento.
@@ -42,8 +42,12 @@ class BudgetCategory(BaseModel, WeddingOwnedMixin):
         app_label = "finances"
         verbose_name = "Categoria de Orçamento"
         verbose_name_plural = "Categorias de Orçamento"
-        unique_together = [["budget", "name"]]
         ordering = ["name"]
+        indexes = [
+            models.Index(fields=["company", "budget"]),
+            models.Index(fields=["name"]),
+        ]
+        unique_together = [["budget", "name"]]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.wedding})"

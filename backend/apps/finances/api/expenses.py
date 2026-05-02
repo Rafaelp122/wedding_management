@@ -23,7 +23,7 @@ def list_expenses(
     """
     Lista todas as compras e despachos que saíram dos painéis orçamentários.
     """
-    return ExpenseService.list(request.user, wedding_id=wedding_id)
+    return ExpenseService.list(request.user.company, wedding_id=wedding_id)
 
 
 @expenses_router.get(
@@ -35,7 +35,7 @@ def get_expense(request: HttpRequest, uuid: UUID4) -> Expense:
     """
     Retorna recibo unitário simplificado nominal registrado no controle base.
     """
-    return ExpenseService.get(request.user, uuid)
+    return ExpenseService.get(request.user.company, uuid)
 
 
 @expenses_router.post(
@@ -48,7 +48,7 @@ def create_expense(request: HttpRequest, payload: ExpenseIn) -> tuple[int, Expen
     Aprova lançamento final nos tetos das divisões e categorias.
     Consome o limite orçamentário previsto inicial geral da categoria.
     """
-    return 201, ExpenseService.create(request.user, payload.dict())
+    return 201, ExpenseService.create(request.user.company, payload.dict())
 
 
 @expenses_router.patch(
@@ -62,9 +62,9 @@ def update_expense(
     """
     Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
     """
-    instance = ExpenseService.get(request.user, uuid)
+    instance = ExpenseService.get(request.user.company, uuid)
     return ExpenseService.update(
-        request.user, instance, payload.dict(exclude_unset=True)
+        request.user.company, instance, payload.dict(exclude_unset=True)
     )
 
 
@@ -77,6 +77,6 @@ def delete_expense(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Deleta uma compra revertendo seu efeito, estornando em painel os gastos.
     """
-    instance = ExpenseService.get(request.user, uuid)
-    ExpenseService.delete(request.user, instance)
+    instance = ExpenseService.get(request.user.company, uuid)
+    ExpenseService.delete(request.user.company, instance)
     return 204, None

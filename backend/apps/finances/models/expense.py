@@ -12,10 +12,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.tenants.models import TenantModel
 
 
-class Expense(BaseModel, WeddingOwnedMixin):
+class Expense(TenantModel, WeddingOwnedMixin):
     """
     Compromisso financeiro real (RF03/RF04).
     Liga o financeiro à logística (Contract).
@@ -42,6 +42,10 @@ class Expense(BaseModel, WeddingOwnedMixin):
         verbose_name = "Despesa"
         verbose_name_plural = "Despesas"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["company", "wedding"]),
+            models.Index(fields=["category"]),
+        ]
 
     def clean(self) -> None:
         super().clean()
