@@ -74,13 +74,13 @@ export const LogisticsSuppliersReadResponse = zod.object({
 
 /**
  * Atualiza informações específicas de um fornecedor (nome, contato, categorias).
- * @summary Partial Update Supplier
+ * @summary Update Supplier
  */
-export const LogisticsSuppliersPartialUpdateParams = zod.object({
+export const LogisticsSuppliersUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const LogisticsSuppliersPartialUpdateBody = zod.object({
+export const LogisticsSuppliersUpdateBody = zod.object({
   name: zod.union([zod.string(), zod.null()]).optional(),
   cnpj: zod.union([zod.string(), zod.null()]).optional(),
   phone: zod.union([zod.string(), zod.null()]).optional(),
@@ -88,7 +88,7 @@ export const LogisticsSuppliersPartialUpdateBody = zod.object({
   is_active: zod.union([zod.boolean(), zod.null()]).optional(),
 });
 
-export const LogisticsSuppliersPartialUpdateResponse = zod.object({
+export const LogisticsSuppliersUpdateResponse = zod.object({
   uuid: zod.string(),
   name: zod.string(),
   cnpj: zod.string(),
@@ -204,42 +204,42 @@ export const LogisticsContractsReadResponse = zod.object({
 
 /**
  * Altera o status, valores agregados ou observações de um contrato existente na base.
- * @summary Partial Update Contract
+ * @summary Update Contract
  */
-export const LogisticsContractsPartialUpdateParams = zod.object({
+export const LogisticsContractsUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const logisticsContractsPartialUpdateBodyTotalAmountTwoRegExp =
-  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const logisticsContractsUpdateBodyTotalAmountTwoRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
 
-export const LogisticsContractsPartialUpdateBody = zod.object({
+export const LogisticsContractsUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   supplier: zod.union([zod.string(), zod.null()]).optional(),
   budget_category: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .union([
       zod.number(),
-      zod
-        .string()
-        .regex(logisticsContractsPartialUpdateBodyTotalAmountTwoRegExp),
+      zod.string().regex(logisticsContractsUpdateBodyTotalAmountTwoRegExp),
       zod.null(),
     ])
     .optional(),
   status: zod.union([zod.string(), zod.null()]).optional(),
 });
 
-export const logisticsContractsPartialUpdateResponseTotalAmountRegExp =
-  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const logisticsContractsUpdateResponseTotalAmountRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
 
-export const LogisticsContractsPartialUpdateResponse = zod.object({
+export const LogisticsContractsUpdateResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   supplier: zod.string(),
   budget_category: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .string()
-    .regex(logisticsContractsPartialUpdateResponseTotalAmountRegExp),
+    .regex(logisticsContractsUpdateResponseTotalAmountRegExp),
   status: zod.string(),
   description: zod.string(),
   expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
@@ -330,13 +330,13 @@ export const LogisticsItemsReadResponse = zod.object({
 
 /**
  * Atualiza quantidades ou informações de apoio do lote do item em questão.
- * @summary Partial Update Item
+ * @summary Update Item
  */
-export const LogisticsItemsPartialUpdateParams = zod.object({
+export const LogisticsItemsUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const LogisticsItemsPartialUpdateBody = zod.object({
+export const LogisticsItemsUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.union([zod.string(), zod.null()]).optional(),
@@ -344,7 +344,7 @@ export const LogisticsItemsPartialUpdateBody = zod.object({
   quantity: zod.union([zod.number(), zod.null()]).optional(),
 });
 
-export const LogisticsItemsPartialUpdateResponse = zod.object({
+export const LogisticsItemsUpdateResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   contract: zod.union([zod.string(), zod.null()]).optional(),

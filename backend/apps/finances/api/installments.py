@@ -54,16 +54,16 @@ def create_installment(
 @installments_router.patch(
     "/{uuid}/",
     response={200: InstallmentOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="finances_installments_partial_update",
+    operation_id="finances_installments_update",
 )
-def partial_update_installment(
+def update_installment(
     request: HttpRequest, uuid: UUID4, payload: InstallmentPatchIn
 ) -> Installment:
     """
     Edita temporalmente ou encerra status validando com pagamento de guia as etapas.
     """
     instance = InstallmentService.get(request.user, uuid)
-    return InstallmentService.partial_update(
+    return InstallmentService.update(
         request.user, instance, payload.dict(exclude_unset=True)
     )
 

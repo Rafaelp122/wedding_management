@@ -188,13 +188,6 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, instance: Expense, data: dict[str, Any]
-    ) -> Expense:
-        return ExpenseService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, instance: Expense) -> None:
         planner = require_user(user)
         logger.info(

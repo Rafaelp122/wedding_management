@@ -99,14 +99,6 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, uuid: UUID | str, data: dict[str, Any]
-    ) -> Event:
-        instance = EventService.get(user, uuid)
-        return EventService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, uuid: UUID | str) -> None:
         instance = EventService.get(user, uuid)
         planner = require_user(user)

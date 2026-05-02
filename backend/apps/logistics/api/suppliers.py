@@ -52,9 +52,9 @@ def create_supplier(request: HttpRequest, payload: SupplierIn) -> tuple[int, Sup
 @suppliers_router.patch(
     "/{uuid:uuid}/",
     response={200: SupplierOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="logistics_suppliers_partial_update",
+    operation_id="logistics_suppliers_update",
 )
-def partial_update_supplier(
+def update_supplier(
     request: HttpRequest, uuid: UUID4, payload: SupplierPatchIn
 ) -> Supplier:
     """
@@ -62,9 +62,7 @@ def partial_update_supplier(
     """
     supplier = SupplierService.get(user=request.user, uuid=uuid)
     data = payload.model_dump(exclude_unset=True)
-    return SupplierService.partial_update(
-        user=request.user, instance=supplier, data=data
-    )
+    return SupplierService.update(user=request.user, instance=supplier, data=data)
 
 
 @suppliers_router.delete(

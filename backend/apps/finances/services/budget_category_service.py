@@ -139,13 +139,6 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, instance: BudgetCategory, data: dict[str, Any]
-    ) -> BudgetCategory:
-        return BudgetCategoryService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, instance: BudgetCategory) -> None:
         planner = require_user(user)
         logger.info(

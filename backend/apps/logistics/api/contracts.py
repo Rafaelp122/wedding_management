@@ -55,9 +55,9 @@ def create_contract(request: HttpRequest, payload: ContractIn) -> tuple[int, Con
 @contracts_router.patch(
     "/{uuid:uuid}/",
     response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="logistics_contracts_partial_update",
+    operation_id="logistics_contracts_update",
 )
-def partial_update_contract(
+def update_contract(
     request: HttpRequest, uuid: UUID4, payload: ContractPatchIn
 ) -> Contract:
     """
@@ -65,9 +65,7 @@ def partial_update_contract(
     """
     contract = ContractService.get(user=request.user, uuid=uuid)
     data = payload.model_dump(exclude_unset=True)
-    return ContractService.partial_update(
-        user=request.user, instance=contract, data=data
-    )
+    return ContractService.update(user=request.user, instance=contract, data=data)
 
 
 @contracts_router.delete(

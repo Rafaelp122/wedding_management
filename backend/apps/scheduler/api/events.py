@@ -60,19 +60,16 @@ def create_event(request: HttpRequest, payload: EventIn) -> tuple[int, Event]:
 @events_router.patch(
     "/{uuid}/",
     response={200: EventOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="scheduler_events_partial_update",
+    operation_id="scheduler_events_update",
 )
-def partial_update_event(
-    request: HttpRequest, uuid: UUID4, payload: EventPatchIn
-) -> Event:
+def update_event(request: HttpRequest, uuid: UUID4, payload: EventPatchIn) -> Event:
     """
     Atualiza informações específicas de um evento do cronograma.
 
     Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
     """
-    return EventService.partial_update(
-        request.user, uuid, payload.dict(exclude_unset=True)
-    )
+    instance = EventService.get(request.user, uuid)
+    return EventService.update(request.user, instance, payload.dict(exclude_unset=True))
 
 
 @events_router.delete(

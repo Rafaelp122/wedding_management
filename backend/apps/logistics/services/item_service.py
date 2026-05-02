@@ -136,13 +136,6 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, instance: Item, data: dict[str, Any]
-    ) -> Item:
-        return ItemService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, instance: Item) -> None:
         planner = require_user(user)
         logger.info(

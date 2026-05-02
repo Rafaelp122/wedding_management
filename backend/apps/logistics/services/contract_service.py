@@ -181,13 +181,6 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, instance: Contract, data: dict[str, Any]
-    ) -> Contract:
-        return ContractService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, instance: Contract) -> None:
         planner = require_user(user)
         logger.info(

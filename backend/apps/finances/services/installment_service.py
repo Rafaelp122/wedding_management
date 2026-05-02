@@ -133,13 +133,6 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, instance: Installment, data: dict[str, Any]
-    ) -> Installment:
-        return InstallmentService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, instance: Installment) -> None:
         planner = require_user(user)
         logger.info(

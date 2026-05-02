@@ -62,7 +62,7 @@ export const getWeddingsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getWeddingsPartialUpdateResponseMock = (
+export const getWeddingsUpdateResponseMock = (
   overrideResponse: Partial<Extract<WeddingOut, object>> = {},
 ): WeddingOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -149,7 +149,7 @@ export const getWeddingsReadMockHandler = (
   );
 };
 
-export const getWeddingsPartialUpdateMockHandler = (
+export const getWeddingsUpdateMockHandler = (
   overrideResponse?:
     | WeddingOut
     | ((
@@ -165,7 +165,7 @@ export const getWeddingsPartialUpdateMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getWeddingsPartialUpdateResponseMock(),
+          : getWeddingsUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -197,6 +197,6 @@ export const getWeddingsMock = () => [
   getWeddingsListMockHandler(),
   getWeddingsCreateMockHandler(),
   getWeddingsReadMockHandler(),
-  getWeddingsPartialUpdateMockHandler(),
+  getWeddingsUpdateMockHandler(),
   getWeddingsDeleteMockHandler(),
 ];

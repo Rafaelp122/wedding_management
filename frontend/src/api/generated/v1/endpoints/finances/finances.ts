@@ -477,9 +477,9 @@ export function useFinancesBudgetsRead<
 /**
  * Atualiza métricas mestres de gasto e painéis globais.
 Contorna referências numéricas totais.
- * @summary Partial Update Budget
+ * @summary Update Budget
  */
-export const financesBudgetsPartialUpdate = (
+export const financesBudgetsUpdate = (
   uuid: string,
   budgetPatchIn: BudgetPatchIn,
   options?: SecondParameter<typeof customInstance>,
@@ -497,24 +497,24 @@ export const financesBudgetsPartialUpdate = (
   );
 };
 
-export const getFinancesBudgetsPartialUpdateMutationOptions = <
+export const getFinancesBudgetsUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesBudgetsPartialUpdate>>,
+    Awaited<ReturnType<typeof financesBudgetsUpdate>>,
     TError,
     { uuid: string; data: BudgetPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof financesBudgetsPartialUpdate>>,
+  Awaited<ReturnType<typeof financesBudgetsUpdate>>,
   TError,
   { uuid: string; data: BudgetPatchIn },
   TContext
 > => {
-  const mutationKey = ["financesBudgetsPartialUpdate"];
+  const mutationKey = ["financesBudgetsUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -524,34 +524,33 @@ export const getFinancesBudgetsPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesBudgetsPartialUpdate>>,
+    Awaited<ReturnType<typeof financesBudgetsUpdate>>,
     { uuid: string; data: BudgetPatchIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
-    return financesBudgetsPartialUpdate(uuid, data, requestOptions);
+    return financesBudgetsUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type FinancesBudgetsPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesBudgetsPartialUpdate>>
+export type FinancesBudgetsUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesBudgetsUpdate>>
 >;
-export type FinancesBudgetsPartialUpdateMutationBody = BudgetPatchIn;
-export type FinancesBudgetsPartialUpdateMutationError =
-  ErrorType<ErrorResponse>;
+export type FinancesBudgetsUpdateMutationBody = BudgetPatchIn;
+export type FinancesBudgetsUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Budget
+ * @summary Update Budget
  */
-export const useFinancesBudgetsPartialUpdate = <
+export const useFinancesBudgetsUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesBudgetsPartialUpdate>>,
+      Awaited<ReturnType<typeof financesBudgetsUpdate>>,
       TError,
       { uuid: string; data: BudgetPatchIn },
       TContext
@@ -560,13 +559,13 @@ export const useFinancesBudgetsPartialUpdate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof financesBudgetsPartialUpdate>>,
+  Awaited<ReturnType<typeof financesBudgetsUpdate>>,
   TError,
   { uuid: string; data: BudgetPatchIn },
   TContext
 > => {
   return useMutation(
-    getFinancesBudgetsPartialUpdateMutationOptions(options),
+    getFinancesBudgetsUpdateMutationOptions(options),
     queryClient,
   );
 };
@@ -1272,9 +1271,9 @@ export function useFinancesCategoriesRead<
 /**
  * Corrige o título, ou altera o valor dos gastos planejados.
 Evita sobrescrições acidentais errôneas em outras rotas.
- * @summary Partial Update Category
+ * @summary Update Category
  */
-export const financesCategoriesPartialUpdate = (
+export const financesCategoriesUpdate = (
   uuid: string,
   budgetCategoryPatchIn: BudgetCategoryPatchIn,
   options?: SecondParameter<typeof customInstance>,
@@ -1292,24 +1291,24 @@ export const financesCategoriesPartialUpdate = (
   );
 };
 
-export const getFinancesCategoriesPartialUpdateMutationOptions = <
+export const getFinancesCategoriesUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesCategoriesPartialUpdate>>,
+    Awaited<ReturnType<typeof financesCategoriesUpdate>>,
     TError,
     { uuid: string; data: BudgetCategoryPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof financesCategoriesPartialUpdate>>,
+  Awaited<ReturnType<typeof financesCategoriesUpdate>>,
   TError,
   { uuid: string; data: BudgetCategoryPatchIn },
   TContext
 > => {
-  const mutationKey = ["financesCategoriesPartialUpdate"];
+  const mutationKey = ["financesCategoriesUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1319,34 +1318,33 @@ export const getFinancesCategoriesPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesCategoriesPartialUpdate>>,
+    Awaited<ReturnType<typeof financesCategoriesUpdate>>,
     { uuid: string; data: BudgetCategoryPatchIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
-    return financesCategoriesPartialUpdate(uuid, data, requestOptions);
+    return financesCategoriesUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type FinancesCategoriesPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesCategoriesPartialUpdate>>
+export type FinancesCategoriesUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesCategoriesUpdate>>
 >;
-export type FinancesCategoriesPartialUpdateMutationBody = BudgetCategoryPatchIn;
-export type FinancesCategoriesPartialUpdateMutationError =
-  ErrorType<ErrorResponse>;
+export type FinancesCategoriesUpdateMutationBody = BudgetCategoryPatchIn;
+export type FinancesCategoriesUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Category
+ * @summary Update Category
  */
-export const useFinancesCategoriesPartialUpdate = <
+export const useFinancesCategoriesUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesCategoriesPartialUpdate>>,
+      Awaited<ReturnType<typeof financesCategoriesUpdate>>,
       TError,
       { uuid: string; data: BudgetCategoryPatchIn },
       TContext
@@ -1355,13 +1353,13 @@ export const useFinancesCategoriesPartialUpdate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof financesCategoriesPartialUpdate>>,
+  Awaited<ReturnType<typeof financesCategoriesUpdate>>,
   TError,
   { uuid: string; data: BudgetCategoryPatchIn },
   TContext
 > => {
   return useMutation(
-    getFinancesCategoriesPartialUpdateMutationOptions(options),
+    getFinancesCategoriesUpdateMutationOptions(options),
     queryClient,
   );
 };
@@ -1880,9 +1878,9 @@ export function useFinancesExpensesRead<
 
 /**
  * Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
- * @summary Partial Update Expense
+ * @summary Update Expense
  */
-export const financesExpensesPartialUpdate = (
+export const financesExpensesUpdate = (
   uuid: string,
   expensePatchIn: ExpensePatchIn,
   options?: SecondParameter<typeof customInstance>,
@@ -1900,24 +1898,24 @@ export const financesExpensesPartialUpdate = (
   );
 };
 
-export const getFinancesExpensesPartialUpdateMutationOptions = <
+export const getFinancesExpensesUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesExpensesPartialUpdate>>,
+    Awaited<ReturnType<typeof financesExpensesUpdate>>,
     TError,
     { uuid: string; data: ExpensePatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof financesExpensesPartialUpdate>>,
+  Awaited<ReturnType<typeof financesExpensesUpdate>>,
   TError,
   { uuid: string; data: ExpensePatchIn },
   TContext
 > => {
-  const mutationKey = ["financesExpensesPartialUpdate"];
+  const mutationKey = ["financesExpensesUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1927,34 +1925,33 @@ export const getFinancesExpensesPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesExpensesPartialUpdate>>,
+    Awaited<ReturnType<typeof financesExpensesUpdate>>,
     { uuid: string; data: ExpensePatchIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
-    return financesExpensesPartialUpdate(uuid, data, requestOptions);
+    return financesExpensesUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type FinancesExpensesPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesExpensesPartialUpdate>>
+export type FinancesExpensesUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesExpensesUpdate>>
 >;
-export type FinancesExpensesPartialUpdateMutationBody = ExpensePatchIn;
-export type FinancesExpensesPartialUpdateMutationError =
-  ErrorType<ErrorResponse>;
+export type FinancesExpensesUpdateMutationBody = ExpensePatchIn;
+export type FinancesExpensesUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Expense
+ * @summary Update Expense
  */
-export const useFinancesExpensesPartialUpdate = <
+export const useFinancesExpensesUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesExpensesPartialUpdate>>,
+      Awaited<ReturnType<typeof financesExpensesUpdate>>,
       TError,
       { uuid: string; data: ExpensePatchIn },
       TContext
@@ -1963,13 +1960,13 @@ export const useFinancesExpensesPartialUpdate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof financesExpensesPartialUpdate>>,
+  Awaited<ReturnType<typeof financesExpensesUpdate>>,
   TError,
   { uuid: string; data: ExpensePatchIn },
   TContext
 > => {
   return useMutation(
-    getFinancesExpensesPartialUpdateMutationOptions(options),
+    getFinancesExpensesUpdateMutationOptions(options),
     queryClient,
   );
 };
@@ -2490,9 +2487,9 @@ export function useFinancesInstallmentsRead<
 
 /**
  * Edita temporalmente ou encerra status validando com pagamento de guia as etapas.
- * @summary Partial Update Installment
+ * @summary Update Installment
  */
-export const financesInstallmentsPartialUpdate = (
+export const financesInstallmentsUpdate = (
   uuid: string,
   installmentPatchIn: InstallmentPatchIn,
   options?: SecondParameter<typeof customInstance>,
@@ -2510,24 +2507,24 @@ export const financesInstallmentsPartialUpdate = (
   );
 };
 
-export const getFinancesInstallmentsPartialUpdateMutationOptions = <
+export const getFinancesInstallmentsUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesInstallmentsPartialUpdate>>,
+    Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
     TError,
     { uuid: string; data: InstallmentPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof financesInstallmentsPartialUpdate>>,
+  Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
   TError,
   { uuid: string; data: InstallmentPatchIn },
   TContext
 > => {
-  const mutationKey = ["financesInstallmentsPartialUpdate"];
+  const mutationKey = ["financesInstallmentsUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -2537,34 +2534,33 @@ export const getFinancesInstallmentsPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesInstallmentsPartialUpdate>>,
+    Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
     { uuid: string; data: InstallmentPatchIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
-    return financesInstallmentsPartialUpdate(uuid, data, requestOptions);
+    return financesInstallmentsUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type FinancesInstallmentsPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesInstallmentsPartialUpdate>>
+export type FinancesInstallmentsUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesInstallmentsUpdate>>
 >;
-export type FinancesInstallmentsPartialUpdateMutationBody = InstallmentPatchIn;
-export type FinancesInstallmentsPartialUpdateMutationError =
-  ErrorType<ErrorResponse>;
+export type FinancesInstallmentsUpdateMutationBody = InstallmentPatchIn;
+export type FinancesInstallmentsUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Installment
+ * @summary Update Installment
  */
-export const useFinancesInstallmentsPartialUpdate = <
+export const useFinancesInstallmentsUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesInstallmentsPartialUpdate>>,
+      Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
       TError,
       { uuid: string; data: InstallmentPatchIn },
       TContext
@@ -2573,13 +2569,13 @@ export const useFinancesInstallmentsPartialUpdate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof financesInstallmentsPartialUpdate>>,
+  Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
   TError,
   { uuid: string; data: InstallmentPatchIn },
   TContext
 > => {
   return useMutation(
-    getFinancesInstallmentsPartialUpdateMutationOptions(options),
+    getFinancesInstallmentsUpdateMutationOptions(options),
     queryClient,
   );
 };

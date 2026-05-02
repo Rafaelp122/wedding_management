@@ -476,9 +476,9 @@ export function useSchedulerEventsRead<
  * Atualiza informações específicas de um evento do cronograma.
 
 Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
- * @summary Partial Update Event
+ * @summary Update Event
  */
-export const schedulerEventsPartialUpdate = (
+export const schedulerEventsUpdate = (
   uuid: string,
   eventPatchIn: EventPatchIn,
   options?: SecondParameter<typeof customInstance>,
@@ -496,24 +496,24 @@ export const schedulerEventsPartialUpdate = (
   );
 };
 
-export const getSchedulerEventsPartialUpdateMutationOptions = <
+export const getSchedulerEventsUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof schedulerEventsPartialUpdate>>,
+    Awaited<ReturnType<typeof schedulerEventsUpdate>>,
     TError,
     { uuid: string; data: EventPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof schedulerEventsPartialUpdate>>,
+  Awaited<ReturnType<typeof schedulerEventsUpdate>>,
   TError,
   { uuid: string; data: EventPatchIn },
   TContext
 > => {
-  const mutationKey = ["schedulerEventsPartialUpdate"];
+  const mutationKey = ["schedulerEventsUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -523,34 +523,33 @@ export const getSchedulerEventsPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof schedulerEventsPartialUpdate>>,
+    Awaited<ReturnType<typeof schedulerEventsUpdate>>,
     { uuid: string; data: EventPatchIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
-    return schedulerEventsPartialUpdate(uuid, data, requestOptions);
+    return schedulerEventsUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type SchedulerEventsPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof schedulerEventsPartialUpdate>>
+export type SchedulerEventsUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof schedulerEventsUpdate>>
 >;
-export type SchedulerEventsPartialUpdateMutationBody = EventPatchIn;
-export type SchedulerEventsPartialUpdateMutationError =
-  ErrorType<ErrorResponse>;
+export type SchedulerEventsUpdateMutationBody = EventPatchIn;
+export type SchedulerEventsUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Event
+ * @summary Update Event
  */
-export const useSchedulerEventsPartialUpdate = <
+export const useSchedulerEventsUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof schedulerEventsPartialUpdate>>,
+      Awaited<ReturnType<typeof schedulerEventsUpdate>>,
       TError,
       { uuid: string; data: EventPatchIn },
       TContext
@@ -559,13 +558,13 @@ export const useSchedulerEventsPartialUpdate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof schedulerEventsPartialUpdate>>,
+  Awaited<ReturnType<typeof schedulerEventsUpdate>>,
   TError,
   { uuid: string; data: EventPatchIn },
   TContext
 > => {
   return useMutation(
-    getSchedulerEventsPartialUpdateMutationOptions(options),
+    getSchedulerEventsUpdateMutationOptions(options),
     queryClient,
   );
 };
@@ -918,9 +917,9 @@ export const useSchedulerTasksCreate = <
 };
 /**
  * Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
- * @summary Partial Update Task
+ * @summary Update Task
  */
-export const schedulerTasksPartialUpdate = (
+export const schedulerTasksUpdate = (
   uuid: string,
   taskPatchIn: TaskPatchIn,
   options?: SecondParameter<typeof customInstance>,
@@ -938,24 +937,24 @@ export const schedulerTasksPartialUpdate = (
   );
 };
 
-export const getSchedulerTasksPartialUpdateMutationOptions = <
+export const getSchedulerTasksUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+    Awaited<ReturnType<typeof schedulerTasksUpdate>>,
     TError,
     { uuid: string; data: TaskPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+  Awaited<ReturnType<typeof schedulerTasksUpdate>>,
   TError,
   { uuid: string; data: TaskPatchIn },
   TContext
 > => {
-  const mutationKey = ["schedulerTasksPartialUpdate"];
+  const mutationKey = ["schedulerTasksUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -965,33 +964,33 @@ export const getSchedulerTasksPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+    Awaited<ReturnType<typeof schedulerTasksUpdate>>,
     { uuid: string; data: TaskPatchIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
-    return schedulerTasksPartialUpdate(uuid, data, requestOptions);
+    return schedulerTasksUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type SchedulerTasksPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>
+export type SchedulerTasksUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof schedulerTasksUpdate>>
 >;
-export type SchedulerTasksPartialUpdateMutationBody = TaskPatchIn;
-export type SchedulerTasksPartialUpdateMutationError = ErrorType<ErrorResponse>;
+export type SchedulerTasksUpdateMutationBody = TaskPatchIn;
+export type SchedulerTasksUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Task
+ * @summary Update Task
  */
-export const useSchedulerTasksPartialUpdate = <
+export const useSchedulerTasksUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+      Awaited<ReturnType<typeof schedulerTasksUpdate>>,
       TError,
       { uuid: string; data: TaskPatchIn },
       TContext
@@ -1000,13 +999,13 @@ export const useSchedulerTasksPartialUpdate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof schedulerTasksPartialUpdate>>,
+  Awaited<ReturnType<typeof schedulerTasksUpdate>>,
   TError,
   { uuid: string; data: TaskPatchIn },
   TContext
 > => {
   return useMutation(
-    getSchedulerTasksPartialUpdateMutationOptions(options),
+    getSchedulerTasksUpdateMutationOptions(options),
     queryClient,
   );
 };

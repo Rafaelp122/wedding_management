@@ -54,16 +54,16 @@ def create_expense(request: HttpRequest, payload: ExpenseIn) -> tuple[int, Expen
 @expenses_router.patch(
     "/{uuid}/",
     response={200: ExpenseOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="finances_expenses_partial_update",
+    operation_id="finances_expenses_update",
 )
-def partial_update_expense(
+def update_expense(
     request: HttpRequest, uuid: UUID4, payload: ExpensePatchIn
 ) -> Expense:
     """
     Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
     """
     instance = ExpenseService.get(request.user, uuid)
-    return ExpenseService.partial_update(
+    return ExpenseService.update(
         request.user, instance, payload.dict(exclude_unset=True)
     )
 

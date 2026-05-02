@@ -127,7 +127,7 @@ export const getSchedulerEventsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getSchedulerEventsPartialUpdateResponseMock = (
+export const getSchedulerEventsUpdateResponseMock = (
   overrideResponse: Partial<Extract<EventOut, object>> = {},
 ): EventOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -218,7 +218,7 @@ export const getSchedulerTasksCreateResponseMock = (
   ...overrideResponse,
 });
 
-export const getSchedulerTasksPartialUpdateResponseMock = (
+export const getSchedulerTasksUpdateResponseMock = (
   overrideResponse: Partial<Extract<TaskOut, object>> = {},
 ): TaskOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -315,7 +315,7 @@ export const getSchedulerEventsReadMockHandler = (
   );
 };
 
-export const getSchedulerEventsPartialUpdateMockHandler = (
+export const getSchedulerEventsUpdateMockHandler = (
   overrideResponse?:
     | EventOut
     | ((
@@ -331,7 +331,7 @@ export const getSchedulerEventsPartialUpdateMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getSchedulerEventsPartialUpdateResponseMock(),
+          : getSchedulerEventsUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -408,7 +408,7 @@ export const getSchedulerTasksCreateMockHandler = (
   );
 };
 
-export const getSchedulerTasksPartialUpdateMockHandler = (
+export const getSchedulerTasksUpdateMockHandler = (
   overrideResponse?:
     | TaskOut
     | ((
@@ -424,7 +424,7 @@ export const getSchedulerTasksPartialUpdateMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getSchedulerTasksPartialUpdateResponseMock(),
+          : getSchedulerTasksUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -456,10 +456,10 @@ export const getSchedulerMock = () => [
   getSchedulerEventsListMockHandler(),
   getSchedulerEventsCreateMockHandler(),
   getSchedulerEventsReadMockHandler(),
-  getSchedulerEventsPartialUpdateMockHandler(),
+  getSchedulerEventsUpdateMockHandler(),
   getSchedulerEventsDeleteMockHandler(),
   getSchedulerTasksListMockHandler(),
   getSchedulerTasksCreateMockHandler(),
-  getSchedulerTasksPartialUpdateMockHandler(),
+  getSchedulerTasksUpdateMockHandler(),
   getSchedulerTasksDeleteMockHandler(),
 ];
