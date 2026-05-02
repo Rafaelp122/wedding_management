@@ -25,11 +25,11 @@ class TestWeddingService:
         wedding_payload["total_estimated"] = Decimal("75000.50")
 
         # Execução
-        wedding = WeddingService.create(user=user, data=wedding_payload)
+        wedding = WeddingService.create(company=user.company, data=wedding_payload)
 
         # Asserções: Wedding criado
         assert Wedding.objects.count() == 1
-        assert wedding.planner == user
+        assert wedding.company == user.company
         assert wedding.bride_name == wedding_payload["bride_name"]
         assert wedding.status == Wedding.StatusChoices.IN_PROGRESS
 
@@ -44,7 +44,7 @@ class TestWeddingService:
         """
         # Setup: Casamento já existente
 
-        wedding = WeddingFactory(planner=user, bride_name="Antiga")
+        wedding = WeddingFactory(company=user.company, bride_name="Antiga")
         BudgetFactory(wedding=wedding)
 
         update_data = {
@@ -54,7 +54,7 @@ class TestWeddingService:
 
         # Execução
         updated_wedding = WeddingService.update(
-            instance=wedding, user=user, data=update_data
+            instance=wedding, company=user.company, data=update_data
         )
 
         # Asserção
@@ -74,7 +74,7 @@ class TestWeddingService:
 
         # 2. Execução e Asserção de Erro
         with pytest.raises(BusinessRuleViolation, match="não pode estar vazio"):
-            WeddingService.create(user=user, data=wedding_payload)
+            WeddingService.create(company=user.company, data=wedding_payload)
 
         # 3. Validação de Banco de Dados Limpo
         # Nada deve ter sido criado devido à falha precoce
@@ -94,7 +94,7 @@ class TestWeddingService:
         wedding_payload["date"] = timezone.now().date() - timedelta(days=1)
 
         with pytest.raises(BusinessRuleViolation, match="não pode ser no passado"):
-            WeddingService.create(user=user, data=wedding_payload)
+            WeddingService.create(company=user.company, data=wedding_payload)
 
         assert Wedding.objects.count() == 0
 
@@ -103,7 +103,7 @@ class TestWeddingService:
         with patch(
             "apps.finances.services.budget_service.BudgetService.create"
         ) as mock_budget:
-            wedding = WeddingService.create(user=user, data=wedding_payload)
+            wedding = WeddingService.create(company=user.company, data=wedding_payload)
 
         assert wedding.uuid is not None
         assert Wedding.objects.count() == 1
@@ -134,19 +134,19 @@ class TestWeddingService:
         }
 
         # 2. Execução
-        wedding_a = WeddingService.create(user=planner_a, data=payload_a)
-        wedding_b = WeddingService.create(user=planner_b, data=payload_b)
+        wedding_a = WeddingService.create(company=planner_a.company, data=payload_a)
+        wedding_b = WeddingService.create(company=planner_b.company, data=payload_b)
 
         # 3. Asserções (O coração do teste)
-        assert wedding_a.planner == planner_a
-        assert Wedding.objects.all().for_user(planner_a).count() == 1
-        assert Wedding.objects.all().for_user(planner_b).count() == 1
+        assert wedding_a.company == planner_a.company
+        assert Wedding.objects.all().for_tenant(planner_a.company).count() == 1
+        assert Wedding.objects.all().for_tenant(planner_b.company).count() == 1
 
-        # 4. O Teste de Ouro: Isolamento via Manager
-        # Se o Manager .for_user() estiver correto, o Planner A nunca verá o Casamento B
+        # 4. O Teste de Ouro: Isolamento via Manager. Se o Manager .for_tenant()
+        # estiver correto, o Planner A nunca verá o Casamento B.
         assert (
             Wedding.objects.all()
-            .for_user(planner_a)
+            .for_tenant(planner_a.company)
             .filter(uuid=wedding_b.uuid)
             .exists()
             is False
@@ -160,7 +160,7 @@ class TestWeddingService:
         initial_value = Decimal("50000.00")
 
         # O casamento nasce limpo, sem efeitos colaterais
-        wedding = WeddingFactory(planner=user)
+        wedding = WeddingFactory(company=user.company)
 
         # O orçamento é criado explicitamente para este teste
         BudgetFactory(wedding=wedding, total_estimated=initial_value)
@@ -173,7 +173,7 @@ class TestWeddingService:
 
         # 3. Execução
         updated_wedding = WeddingService.update(
-            instance=wedding, user=user, data=update_data
+            instance=wedding, company=user.company, data=update_data
         )
 
         # 4. Asserções
@@ -187,7 +187,7 @@ class TestWeddingService:
         Valida a proteção contra perda de dados financeiros/logísticos.
         """
         # 1. Cria o casamento e orçamento
-        wedding = WeddingFactory(planner=user)
+        wedding = WeddingFactory(company=user.company)
         BudgetFactory(wedding=wedding)
 
         # 2. Cria o contrato passando apenas o wedding principal.
@@ -198,7 +198,7 @@ class TestWeddingService:
         with pytest.raises(
             DomainIntegrityError, match="Não é possível apagar este casamento"
         ):
-            WeddingService.delete(user=user, uuid=wedding.uuid)
+            WeddingService.delete(company=user.company, uuid=wedding.uuid)
 
         assert Wedding.objects.filter(uuid=wedding.uuid).exists()
 
@@ -211,10 +211,10 @@ class TestWeddingService:
         payload = {**wedding_payload, "total_estimated": Decimal("50000.00")}
 
         # O serviço cria apenas o Wedding; a camada financeira é lazy.
-        wedding = WeddingService.create(user=user, data=payload)
+        wedding = WeddingService.create(company=user.company, data=payload)
 
         # 2. Execução: Deletar o casamento
-        WeddingService.delete(user=user, uuid=wedding.uuid)
+        WeddingService.delete(company=user.company, uuid=wedding.uuid)
 
         # 3. Asserções: O banco de dados deve estar limpo
         assert Wedding.objects.count() == 0

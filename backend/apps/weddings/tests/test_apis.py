@@ -10,7 +10,7 @@ from apps.weddings.tests.factories import WeddingFactory
 @pytest.mark.django_db
 class TestWeddingNinjaAPI:
     def test_list_weddings_isolation(self, auth_client, user):
-        WeddingFactory(planner=user, bride_name="Noiva do User")
+        WeddingFactory(company=user.company, bride_name="Noiva do User")
         WeddingFactory(bride_name="Noiva Alheia")
 
         response = auth_client.get("/api/v1/weddings/")
@@ -44,7 +44,7 @@ class TestWeddingNinjaAPI:
         assert response.status_code == 201
         data = response.json()
         assert "uuid" in data
-        assert Wedding.objects.filter(planner=user).count() == 1
+        assert Wedding.objects.filter(company=user.company).count() == 1
 
     def test_create_wedding_with_past_date_returns_422(self, auth_client):
         payload = {

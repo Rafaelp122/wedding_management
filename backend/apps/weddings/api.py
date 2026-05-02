@@ -23,7 +23,7 @@ def list_weddings(request: HttpRequest) -> QuerySet[Wedding]:
     Retorna apenas os registros criados pelo usuário autenticado.
     Garante o isolamento de dados entre diferentes Planners (Multi-tenancy).
     """
-    return WeddingService.list(user=request.user)
+    return WeddingService.list(company=request.user.company)
 
 
 @router.get(
@@ -38,7 +38,7 @@ def retrieve_wedding(request: HttpRequest, uuid: UUID4) -> Wedding:
     Realiza a busca pelo UUID e valida se o registro pertence ao usuário.
     Caso não exista ou pertença a outro Planner, retorna um erro 404.
     """
-    return WeddingService.get(user=request.user, uuid=uuid)
+    return WeddingService.get(company=request.user.company, uuid=uuid)
 
 
 @router.post(
@@ -54,7 +54,9 @@ def create_wedding(request: HttpRequest, payload: WeddingIn) -> tuple[int, Weddi
     - Associa o Planner logado como dono do registro.
     - Cria um **Budget (Orçamento)** inicial zerado para o evento.
     """
-    wedding = WeddingService.create(user=request.user, data=payload.model_dump())
+    wedding = WeddingService.create(
+        company=request.user.company, data=payload.model_dump()
+    )
     return 201, wedding
 
 
@@ -77,9 +79,9 @@ def update_wedding(
     # Pega só os campos enviados (não nulos na requisição, exclude_unset)
     data = payload.model_dump(exclude_unset=True)
 
-    instance = WeddingService.get(user=request.user, uuid=uuid)
+    instance = WeddingService.get(company=request.user.company, uuid=uuid)
     updated_wedding = WeddingService.update(
-        user=request.user, instance=instance, data=data
+        company=request.user.company, instance=instance, data=data
     )
     return updated_wedding
 
@@ -97,5 +99,5 @@ def delete_wedding(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     - Todo o histórico financeiro (orçamentos e despesas).
     - Cronogramas, contratos e fornecedores vinculados exclusivamente a este evento.
     """
-    WeddingService.delete(user=request.user, uuid=uuid)
+    WeddingService.delete(company=request.user.company, uuid=uuid)
     return 204, None

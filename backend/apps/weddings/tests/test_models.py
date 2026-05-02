@@ -32,13 +32,13 @@ class TestWeddingModelMetadata:
         today = date.today()
 
         # Casamento mais distante (deve ser o 1º da lista)
-        w_future = WeddingFactory(planner=user, date=today + timedelta(days=60))
+        w_future = WeddingFactory(company=user.company, date=today + timedelta(days=60))
 
         # Casamento intermediário (deve ser o 2º)
-        w_mid = WeddingFactory(planner=user, date=today + timedelta(days=30))
+        w_mid = WeddingFactory(company=user.company, date=today + timedelta(days=30))
 
         # Casamento mais próximo (deve ser o 3º)
-        w_soon = WeddingFactory(planner=user, date=today + timedelta(days=5))
+        w_soon = WeddingFactory(company=user.company, date=today + timedelta(days=5))
 
         # 2. Execução: Buscar todos
         # Como definimos ordering = ["-date"] no Meta, o Django já deve sortear
@@ -63,7 +63,7 @@ class TestWeddingDateValidator:
         """Garante que data no futuro passa."""
         future_date = timezone.now().date() + timedelta(days=30)
         wedding = Wedding(
-            planner=user,
+            company=user.company,
             date=future_date,
             groom_name="Noivo Teste",
             bride_name="Noiva Teste",
@@ -74,7 +74,7 @@ class TestWeddingDateValidator:
     def test_wedding_date_today_passes(self, user):
         """Garante que data de hoje passa."""
         today = timezone.now().date()
-        wedding = WeddingFactory.build(planner=user, date=today)
+        wedding = WeddingFactory.build(company=user.company, date=today)
         wedding.full_clean()
 
     def test_wedding_date_past_fails(self, user):
@@ -83,7 +83,7 @@ class TestWeddingDateValidator:
         Este é o teste que estava falhando.
         """
         yesterday = timezone.now().date() - timedelta(days=1)
-        wedding = WeddingFactory.build(planner=user, date=yesterday)
+        wedding = WeddingFactory.build(company=user.company, date=yesterday)
 
         # Agora chamamos o full_clean explicitamente dentro do raises
         with pytest.raises(ValidationError) as excinfo:
@@ -108,10 +108,10 @@ class TestWeddingBusinessRules:
         # Ontem
         past_date = timezone.now().date() - timedelta(days=1)
 
-        # Usamos .build(planner=user) para que o objeto tenha um planner
+        # Usamos .build(company=user.company) para que o objeto tenha um planner
         # caso a lógica do clean() ou do Mixin venha a precisar dele.
         wedding = WeddingFactory.build(
-            planner=user, date=past_date, status=Wedding.StatusChoices.COMPLETED
+            company=user.company, date=past_date, status=Wedding.StatusChoices.COMPLETED
         )
 
         # Não deve lançar erro
@@ -124,7 +124,7 @@ class TestWeddingBusinessRules:
         # Daqui a um ano
         future_date = timezone.now().date() + timedelta(days=365)
         wedding = Wedding(
-            planner=user,
+            company=user.company,
             date=future_date,
             status=Wedding.StatusChoices.COMPLETED,
             groom_name="X",
@@ -147,12 +147,16 @@ class TestWeddingBusinessRules:
 
         # Testando IN_PROGRESS
         wedding_progress = WeddingFactory.build(
-            planner=user, date=future_date, status=Wedding.StatusChoices.IN_PROGRESS
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.IN_PROGRESS,
         )
         wedding_progress.clean()  # Deve passar
 
         # Testando CANCELED
         wedding_canceled = WeddingFactory.build(
-            planner=user, date=future_date, status=Wedding.StatusChoices.CANCELED
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.CANCELED,
         )
         wedding_canceled.clean()  # Deve passar

@@ -21,14 +21,19 @@ from apps.weddings.models import Wedding
 class WeddingFactory(factory.django.DjangoModelFactory):
     """
     Fábrica para o modelo Wedding.
-    Garante que cada casamento tenha um planner (User) associado.
+    Garante que cada casamento tenha uma empresa (Tenant) associada.
     """
 
     class Meta:
         model = Wedding
+        exclude = ("user_context",)
 
-    # Cria automaticamente um utilizador (Planner) se nenhum for passado
-    planner = factory.SubFactory(UserFactory)
+    # Vincula à empresa do usuário. Como o Signal de User cria uma empresa
+    # automaticamente, pegamos a empresa do usuário criado.
+    company = factory.LazyAttribute(lambda o: o.user_context.company)
+
+    # Campo auxiliar para facilitar o setup de testes que passam o usuário
+    user_context = factory.SubFactory(UserFactory)
 
     # Dados gerados pelo Faker (pt_BR conforme definido no conftest global)
     groom_name = factory.Faker("first_name_male")
