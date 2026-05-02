@@ -39,7 +39,7 @@ Foca na integridade do banco de dados e comportamentos básicos do objeto.
 Onde reside a lógica de negócio complexa. É a camada mais importante para garantir a correção do sistema.
 - **O que testar**:
   - Fluxos completos de criação, atualização e deleção.
-  - **Isolamento (Multitenancy)**: Garantir que um usuário não acesse dados de outro através do manager `.for_user(user)`.
+  - **Isolamento (Multitenancy)**: Garantir que um usuário não acesse dados de outro através do manager `.for_tenant(company)`.
   - **Fail Fast**: Validar que o serviço interrompe a execução (levanta exceção) ao receber dados inválidos antes de tocar no banco.
   - **Efeitos Colaterais**: Validar se processos em segundo plano ou *lazy loading* estão funcionando conforme esperado usando mocks.
 
