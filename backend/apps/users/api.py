@@ -21,7 +21,12 @@ from .services.registration_service import RegistrationService
 router = Router(tags=["auth"])
 
 
-@router.post("/register/", response={201: UserOut}, auth=None)
+@router.post(
+    "/register/",
+    response={201: UserOut, **MUTATION_ERROR_RESPONSES},
+    auth=None,
+    operation_id="auth_register_user",
+)
 def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
     """
     Cria um novo usuário e um workspace dedicado (Tenant Pragmático).

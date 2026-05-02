@@ -25,7 +25,7 @@ def active_contract(
 ):
     """Fixture que devolve um contrato assinado e pronto para execução."""
     wedding = wedding_factory.create()
-    supplier = supplier_factory.create(user_context=wedding.user_context)
+    supplier = supplier_factory.create(company=wedding.company)
     budget_cat = budget_category_factory.create(
         budget__wedding=wedding, wedding=wedding, company=wedding.company
     )
@@ -47,7 +47,7 @@ def supplier_with_items(db, supplier_factory, contract_factory, item_factory):
     supplier = supplier_factory.create()
 
     # Criamos um casamento para este Planner (utilizador do fornecedor)
-    wedding = WeddingFactory(user_context=supplier.user_context)
+    wedding = WeddingFactory(company=supplier.company)
 
     # Criamos o contrato vinculado a este casamento e fornecedor
     contract = contract_factory.create(supplier=supplier, wedding=wedding)

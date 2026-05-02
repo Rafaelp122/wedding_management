@@ -11,7 +11,7 @@ import type { RequestHandlerOptions } from "msw";
 
 import type { TokenOut, TokenRefreshOutputSchema, UserOut } from "../../models";
 
-export const getAppsUsersApiRegisterUserResponseMock = (
+export const getAuthRegisterUserResponseMock = (
   overrideResponse: Partial<Extract<UserOut, object>> = {},
 ): UserOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -64,7 +64,7 @@ export const getAuthVerifyTokenResponseMock = (
   ...overrideResponse,
 });
 
-export const getAppsUsersApiRegisterUserMockHandler = (
+export const getAuthRegisterUserMockHandler = (
   overrideResponse?:
     | UserOut
     | ((
@@ -80,7 +80,7 @@ export const getAppsUsersApiRegisterUserMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getAppsUsersApiRegisterUserResponseMock(),
+          : getAuthRegisterUserResponseMock(),
         { status: 201 },
       );
     },
@@ -160,7 +160,7 @@ export const getAuthVerifyTokenMockHandler = (
   );
 };
 export const getAuthMock = () => [
-  getAppsUsersApiRegisterUserMockHandler(),
+  getAuthRegisterUserMockHandler(),
   getAuthObtainTokenMockHandler(),
   getAuthRefreshTokenMockHandler(),
   getAuthVerifyTokenMockHandler(),
