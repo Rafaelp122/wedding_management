@@ -14,7 +14,7 @@ class TenantService:
 
     @staticmethod
     @transaction.atomic
-    def create_pragmatic_company(display_name: str) -> Company:
+    def create_company(display_name: str) -> Company:
         """
         Cria uma Company com base no nome do usuário ou email.
         Retorna a instância da empresa salva.

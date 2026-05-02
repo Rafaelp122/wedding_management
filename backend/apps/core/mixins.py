@@ -14,12 +14,20 @@ class WeddingOwnedMixin(models.Model):
 
     def clean(self) -> None:
         """
-        Garante que chaves estrangeiras pertençam ao mesmo casamento.
-        Isso impede que um Item do Casamento A seja usado em uma Despesa do Casamento B.
+        Valida a integridade do isolamento de dados (Multitenancy).
+        Garante que chaves estrangeiras pertençam ao mesmo casamento E à mesma empresa.
         """
         super().clean()
 
-        # Lógica genérica de validação de consistência
+        # 1. Blindagem Vertical: Garante que o recurso pertence à mesma empresa que o casamento
+        # Isso impede que o Casamento A da Empresa 1 seja usado em um recurso da Empresa 2.
+        if hasattr(self, "company_id") and self.wedding_id:
+            if self.company_id != self.wedding.company_id:
+                raise ValidationError(
+                    {"wedding": "Este casamento pertence a outra organização."}
+                )
+
+        # 2. Lógica genérica de validação de consistência horizontal (entre casamentos)
         for field in self._meta.concrete_fields:
             if isinstance(field, models.ForeignKey):
                 related_obj = getattr(self, field.name)

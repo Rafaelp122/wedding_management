@@ -46,6 +46,17 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError("O e-mail é obrigatório.")
         email = self.normalize_email(email)
+
+        # Se a empresa não foi fornecida (ex: em testes ou criação inicial),
+        # nós criamos uma automaticamente para cumprir o requisito de null=False.
+        if "company" not in extra_fields:
+            from apps.tenants.services.tenant_service import TenantService
+
+            # Tenta extrair um nome para a empresa, ou usa o email
+            display_name = extra_fields.get("first_name", email)
+            company = TenantService.create_company(display_name)
+            extra_fields["company"] = company
+
         user = cast("User", self.model(email=email, **extra_fields))
         user.set_password(password)
         user.save(using=self._db)
@@ -88,8 +99,7 @@ class CustomUserManager(BaseUserManager):
         # Garante a existência da empresa administrativa para superusuários
         from apps.tenants.services.tenant_service import TenantService
 
-        company = TenantService.get_or_create_admin_workspace()
-        extra_fields["company"] = company
+        extra_fields["company"] = TenantService.get_or_create_admin_workspace()
 
         return self._create_user(email, password, **extra_fields)
 

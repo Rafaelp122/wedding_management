@@ -29,7 +29,7 @@ class RegistrationService:
 
         # 1. Criação da Empresa (Lógica delegada ao domínio Tenant)
         display_name = f"{first_name} {last_name}".strip() or email
-        company = TenantService.create_pragmatic_company(display_name)
+        company = TenantService.create_company(display_name)
 
         # 2. Criação do Usuário (Lógica delegada ao domínio User)
         # O CustomUserManager será usado aqui, garantindo o hash da senha

@@ -252,7 +252,7 @@ class TestBudgetServiceCritical:
         some_uuid = uuid4()
 
         # Todas as operações devem falhar com usuário anônimo
-        with pytest.raises(AttributeError):
+        with pytest.raises(TypeError):
             BudgetService.get_or_create_for_wedding(anonymous_user, some_uuid)
 
 
