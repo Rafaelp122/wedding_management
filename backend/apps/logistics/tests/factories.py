@@ -16,7 +16,6 @@ from decimal import Decimal
 import factory
 
 from apps.logistics.models import Contract, Item, Supplier
-from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -26,8 +25,8 @@ class SupplierFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Supplier
 
-    # Supplier herda de PlannerOwnedMixin, portanto pertence a um User (Planner)
-    planner = factory.SubFactory(UserFactory)
+    # Criamos ou usamos uma empresa existente
+    company = factory.SubFactory("apps.tenants.tests.factories.CompanyFactory")
 
     name = factory.Faker("company")
     cnpj = factory.LazyAttribute(
@@ -54,10 +53,11 @@ class ContractFactory(factory.django.DjangoModelFactory):
 
     wedding = factory.SubFactory("apps.weddings.tests.factories.WeddingFactory")
 
-    # Sincroniza o planner do fornecedor com o do casamento
+    # Sincroniza a empresa entre contrato, casamento e fornecedor
+    company = factory.SelfAttribute("wedding.company")
     supplier = factory.SubFactory(
         "apps.logistics.tests.factories.SupplierFactory",
-        planner=factory.SelfAttribute("..wedding.planner"),
+        company=factory.SelfAttribute("..company"),
     )
 
     budget_category = None
@@ -79,6 +79,7 @@ class ItemFactory(factory.django.DjangoModelFactory):
         model = Item
 
     wedding = factory.SubFactory(WeddingFactory)
+    company = factory.SelfAttribute("wedding.company")
     contract = factory.SubFactory(
         ContractFactory, wedding=factory.SelfAttribute("..wedding")
     )

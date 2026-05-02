@@ -21,7 +21,7 @@ def list_suppliers(request: HttpRequest) -> QuerySet[Supplier]:
     """
     Lista todos os fornecedores cadastrados pelo Planner logado.
     """
-    return SupplierService.list(user=request.user)
+    return SupplierService.list(company=request.user.company)
 
 
 @suppliers_router.get(
@@ -33,7 +33,7 @@ def retrieve_supplier(request: HttpRequest, uuid: UUID4) -> Supplier:
     """
     Retorna os detalhes de um fornecedor específico.
     """
-    return SupplierService.get(user=request.user, uuid=uuid)
+    return SupplierService.get(company=request.user.company, uuid=uuid)
 
 
 @suppliers_router.post(
@@ -45,7 +45,9 @@ def create_supplier(request: HttpRequest, payload: SupplierIn) -> tuple[int, Sup
     """
     Cadastra um novo fornecedor no sistema.
     """
-    supplier = SupplierService.create(user=request.user, data=payload.model_dump())
+    supplier = SupplierService.create(
+        company=request.user.company, data=payload.model_dump()
+    )
     return 201, supplier
 
 
@@ -60,9 +62,11 @@ def update_supplier(
     """
     Atualiza informações específicas de um fornecedor (nome, contato, categorias).
     """
-    supplier = SupplierService.get(user=request.user, uuid=uuid)
+    supplier = SupplierService.get(company=request.user.company, uuid=uuid)
     data = payload.model_dump(exclude_unset=True)
-    return SupplierService.update(user=request.user, instance=supplier, data=data)
+    return SupplierService.update(
+        company=request.user.company, instance=supplier, data=data
+    )
 
 
 @suppliers_router.delete(
@@ -74,6 +78,6 @@ def delete_supplier(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove o cadastro de um fornecedor do sistema.
     """
-    supplier = SupplierService.get(user=request.user, uuid=uuid)
-    SupplierService.delete(user=request.user, instance=supplier)
+    supplier = SupplierService.get(company=request.user.company, uuid=uuid)
+    SupplierService.delete(company=request.user.company, instance=supplier)
     return 204, None

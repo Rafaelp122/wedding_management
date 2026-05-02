@@ -5,13 +5,12 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.types import AuthContextUser
 from apps.logistics.models import Contract, Item
+from apps.tenants.models import Company
 
 
 logger = logging.getLogger(__name__)
@@ -24,10 +23,8 @@ class ItemService:
     """
 
     @staticmethod
-    def list(
-        user: AuthContextUser, wedding_id: UUID | str | None = None
-    ) -> QuerySet[Item]:
-        qs = Item.objects.for_user(user).select_related(
+    def list(company: Company, wedding_id: UUID | str | None = None) -> QuerySet[Item]:
+        qs = Item.objects.for_tenant(company).select_related(
             "wedding", "contract", "contract__supplier"
         )
         if wedding_id:
@@ -35,10 +32,10 @@ class ItemService:
         return qs
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: UUID | str) -> Item:
+    def get(company: Company, uuid: UUID | str) -> Item:
         try:
             return (
-                Item.objects.for_user(user)
+                Item.objects.for_tenant(company)
                 .select_related("wedding", "contract", "contract__supplier")
                 .get(uuid=uuid)
             )
@@ -47,9 +44,8 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> Item:
-        planner = require_user(user)
-        logger.info(f"Iniciando criação de Item logístico para planner_id={planner.id}")
+    def create(company: Company, data: dict[str, Any]) -> Item:
+        logger.info(f"Iniciando criação de Item logístico para company_id={company.id}")
 
         # 1. Resolução do Casamento (Item é WeddingOwnedMixin)
         wedding_input = data.pop("wedding", None)
@@ -65,7 +61,7 @@ class ItemService:
                 wedding = contract.wedding
             else:
                 try:
-                    contract = Contract.objects.for_user(planner).get(
+                    contract = Contract.objects.for_tenant(company).get(
                         uuid=contract_input
                     )
                     wedding = contract.wedding
@@ -82,7 +78,7 @@ class ItemService:
             from apps.weddings.models import Wedding
 
             try:
-                wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 raise ObjectNotFoundError(
                     detail="Casamento não encontrado ou acesso negado.",
@@ -90,7 +86,7 @@ class ItemService:
                 ) from e
 
         # 3. Instanciação
-        item = Item(wedding=wedding, contract=contract, **data)
+        item = Item(company=company, wedding=wedding, contract=contract, **data)
 
         item.save()
 
@@ -99,13 +95,12 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def update(user: AuthContextUser, instance: Item, data: dict[str, Any]) -> Item:
-        planner = require_user(user)
+    def update(company: Company, instance: Item, data: dict[str, Any]) -> Item:
         logger.info(
-            f"Atualizando Item uuid={instance.uuid} por planner_id={planner.id}"
+            f"Atualizando Item uuid={instance.uuid} por company_id={company.id}"
         )
 
-        data.pop("planner", None)
+        data.pop("company", None)
         data.pop("wedding", None)
 
         if "contract" in data:
@@ -115,7 +110,7 @@ class ItemService:
                     instance.contract = contract_input
                 else:
                     try:
-                        instance.contract = Contract.objects.for_user(planner).get(
+                        instance.contract = Contract.objects.for_tenant(company).get(
                             uuid=contract_input
                         )
                     except Contract.DoesNotExist as e:
@@ -136,17 +131,16 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, instance: Item) -> None:
-        planner = require_user(user)
+    def delete(company: Company, instance: Item) -> None:
         logger.info(
             f"Tentativa de deleção do Item uuid={instance.uuid} por "
-            f"planner_id={planner.id}"
+            f"company_id={company.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Item uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
+                f"Item uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
             )
 
         except ProtectedError as e:

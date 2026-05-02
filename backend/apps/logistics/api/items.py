@@ -20,7 +20,7 @@ def list_items(request: HttpRequest, wedding_id: UUID4 | None = None) -> QuerySe
     Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
     Permite filtrar por casamento.
     """
-    return ItemService.list(user=request.user, wedding_id=wedding_id)
+    return ItemService.list(company=request.user.company, wedding_id=wedding_id)
 
 
 @items_router.get(
@@ -32,7 +32,7 @@ def retrieve_item(request: HttpRequest, uuid: UUID4) -> Item:
     """
     Mostra os detalhes nominais de um item logístico específico.
     """
-    return ItemService.get(user=request.user, uuid=uuid)
+    return ItemService.get(company=request.user.company, uuid=uuid)
 
 
 @items_router.post(
@@ -45,7 +45,7 @@ def create_item(request: HttpRequest, payload: ItemIn) -> tuple[int, Item]:
     Adiciona um recurso físico no painel de acompanhamento.
     Parte do planejamento logístico de um evento.
     """
-    item = ItemService.create(user=request.user, data=payload.model_dump())
+    item = ItemService.create(company=request.user.company, data=payload.model_dump())
     return 201, item
 
 
@@ -58,9 +58,9 @@ def update_item(request: HttpRequest, uuid: UUID4, payload: ItemPatchIn) -> Item
     """
     Atualiza quantidades ou informações de apoio do lote do item em questão.
     """
-    item = ItemService.get(user=request.user, uuid=uuid)
+    item = ItemService.get(company=request.user.company, uuid=uuid)
     data = payload.model_dump(exclude_unset=True)
-    return ItemService.update(user=request.user, instance=item, data=data)
+    return ItemService.update(company=request.user.company, instance=item, data=data)
 
 
 @items_router.delete(
@@ -73,6 +73,6 @@ def delete_item(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     Exclui permanentemente o indicativo do item.
     Remove das listas logísticas rastreadas pelo Planner.
     """
-    item = ItemService.get(user=request.user, uuid=uuid)
-    ItemService.delete(user=request.user, instance=item)
+    item = ItemService.get(company=request.user.company, uuid=uuid)
+    ItemService.delete(company=request.user.company, instance=item)
     return 204, None

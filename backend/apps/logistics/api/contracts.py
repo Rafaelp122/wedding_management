@@ -24,7 +24,7 @@ def list_contracts(
     Lista os contratos de fornecedores associados aos casamentos do Planner.
     Permite filtrar por casamento.
     """
-    return ContractService.list(user=request.user, wedding_id=wedding_id)
+    return ContractService.list(company=request.user.company, wedding_id=wedding_id)
 
 
 @contracts_router.get(
@@ -36,7 +36,7 @@ def retrieve_contract(request: HttpRequest, uuid: UUID4) -> Contract:
     """
     Exibe as cláusulas e informações completas de um contrato.
     """
-    return ContractService.get(user=request.user, uuid=uuid)
+    return ContractService.get(company=request.user.company, uuid=uuid)
 
 
 @contracts_router.post(
@@ -48,7 +48,9 @@ def create_contract(request: HttpRequest, payload: ContractIn) -> tuple[int, Con
     """
     Associa um fornecedor a um casamento através de um novo contrato logístico.
     """
-    contract = ContractService.create(user=request.user, data=payload.model_dump())
+    contract = ContractService.create(
+        company=request.user.company, data=payload.model_dump()
+    )
     return 201, contract
 
 
@@ -63,9 +65,11 @@ def update_contract(
     """
     Altera o status, valores agregados ou observações de um contrato existente na base.
     """
-    contract = ContractService.get(user=request.user, uuid=uuid)
+    contract = ContractService.get(company=request.user.company, uuid=uuid)
     data = payload.model_dump(exclude_unset=True)
-    return ContractService.update(user=request.user, instance=contract, data=data)
+    return ContractService.update(
+        company=request.user.company, instance=contract, data=data
+    )
 
 
 @contracts_router.delete(
@@ -77,6 +81,6 @@ def delete_contract(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.
     """
-    contract = ContractService.get(user=request.user, uuid=uuid)
-    ContractService.delete(user=request.user, instance=contract)
+    contract = ContractService.get(company=request.user.company, uuid=uuid)
+    ContractService.delete(company=request.user.company, instance=contract)
     return 204, None

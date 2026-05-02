@@ -11,7 +11,7 @@ from apps.weddings.services import WeddingService
 def seed_data(user, django_user_model):
     # Planner alvo
     my_wedding = WeddingService.create(
-        user,
+        user.company,
         {
             "bride_name": "Minha",
             "groom_name": "Noz",
@@ -20,11 +20,11 @@ def seed_data(user, django_user_model):
         },
     )
     my_supplier = SupplierService.create(
-        user,
+        user.company,
         {"name": "Fornecedor Meu", "cnpj": "0", "phone": "0", "email": "a@email.com"},
     )
     my_contract = ContractService.create(
-        user,
+        user.company,
         {
             "wedding": my_wedding,
             "supplier": my_supplier,
@@ -32,12 +32,12 @@ def seed_data(user, django_user_model):
             "status": "DRAFT",
         },
     )
-    my_budget = BudgetService.get_or_create_for_wedding(user, my_wedding.uuid)
+    my_budget = BudgetService.get_or_create_for_wedding(user.company, my_wedding.uuid)
     cat_meu = my_budget.categories.first()
     # Contract created with my_contract.uuid - update it with budget_category
-    ContractService.update(user, my_contract, {"budget_category": cat_meu})
+    ContractService.update(user.company, my_contract, {"budget_category": cat_meu})
     my_item = ItemService.create(
-        user,
+        user.company,
         {
             "wedding": my_wedding.uuid,
             "contract": my_contract.uuid,
@@ -49,39 +49,41 @@ def seed_data(user, django_user_model):
     # Planner alheio
     other_user = django_user_model.objects.create_user(email="a@a.com", password="123")
     other_wedding = WeddingService.create(
-        other_user,
+        other_user.company,
         {
             "bride_name": "Outra",
-            "groom_name": "Outro",
-            "location": "Outro",
+            "groom_name": "Noz",
+            "location": "Local",
             "date": "2026-10-10",
         },
     )
     other_supplier = SupplierService.create(
-        other_user,
-        {
-            "name": "Fornecedor Alheio",
-            "cnpj": "1",
-            "phone": "1",
-            "email": "b@email.com",
-        },
+        other_user.company,
+        {"name": "Outro", "cnpj": "1", "phone": "1", "email": "b@email.com"},
     )
     other_contract = ContractService.create(
-        other_user,
+        other_user.company,
         {
             "wedding": other_wedding,
             "supplier": other_supplier,
-            "total_amount": "200.00",
+            "total_amount": "100.00",
             "status": "DRAFT",
         },
     )
-    other_budget = BudgetService.get_or_create_for_wedding(
-        other_user, other_wedding.uuid
-    )
-    cat_outro = other_budget.categories.first()
-    ContractService.update(other_user, other_contract, {"budget_category": cat_outro})
     ItemService.create(
-        other_user,
+        other_user.company,
+        {
+            "wedding": other_wedding.uuid,
+            "contract": other_contract.uuid,
+            "name": "Item Outro",
+            "quantity": 1,
+        },
+    )
+    ContractService.update(
+        other_user.company, other_contract, {"budget_category": None}
+    )
+    ItemService.create(
+        other_user.company,
         {
             "wedding": other_wedding.uuid,
             "contract": other_contract.uuid,
