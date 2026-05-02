@@ -11,7 +11,7 @@ from django.db import models
 from apps.core.models import BaseModel
 
 
-class TestModel(BaseModel):
+class BaseModelStub(BaseModel):
     """Modelo de teste para validar BaseModel."""
 
     name = models.CharField(max_length=100)
@@ -28,17 +28,17 @@ class TestBaseModelValidation:
     def test_base_model_save_calls_full_clean_by_default(self):
         """Teste CRÍTICO: save() chama full_clean() por padrão."""
         # Criar instância com dados válidos
-        instance = TestModel(name="Teste Válido", email="test@example.com")
+        instance = BaseModelStub(name="Teste Válido", email="test@example.com")
 
         # Deve salvar sem erros
         instance.save()
 
-        assert TestModel.objects.filter(email="test@example.com").exists()
+        assert BaseModelStub.objects.filter(email="test@example.com").exists()
 
     def test_base_model_save_raises_validation_error_on_invalid_data(self):
         """Teste CRÍTICO: save() falha com dados inválidos."""
         # Tentar salvar com email inválido
-        instance = TestModel(name="Teste", email="email-invalido")
+        instance = BaseModelStub(name="Teste", email="email-invalido")
 
         # Deve lançar ValidationError
         with pytest.raises(ValidationError) as exc_info:
@@ -49,13 +49,13 @@ class TestBaseModelValidation:
     def test_base_model_save_with_skip_clean_bypasses_validation(self):
         """Teste CRÍTICO: skip_clean=True permite salvar sem validação."""
         # Criar instância com email inválido
-        instance = TestModel(name="Teste", email="email-invalido")
+        instance = BaseModelStub(name="Teste", email="email-invalido")
 
         # Com skip_clean=True, deve salvar (útil para fixtures/migrations)
         instance.save(skip_clean=True)
 
         # Verificar que foi salvo apesar do email inválido
-        assert TestModel.objects.filter(name="Teste").exists()
+        assert BaseModelStub.objects.filter(name="Teste").exists()
 
         # Nota: O banco de dados pode rejeitar dependendo das constraints
         # Este teste valida o comportamento do código Python
@@ -63,11 +63,11 @@ class TestBaseModelValidation:
     def test_base_model_get_by_uuid(self):
         """Teste CRÍTICO: Método get_by_uuid funciona corretamente."""
         # Criar instância
-        instance = TestModel(name="Teste UUID", email="uuid@example.com")
+        instance = BaseModelStub(name="Teste UUID", email="uuid@example.com")
         instance.save()
 
         # Buscar pelo UUID
-        found = TestModel.get_by_uuid(instance.uuid)
+        found = BaseModelStub.get_by_uuid(instance.uuid)
 
         assert found is not None
         assert found.id == instance.id
@@ -78,17 +78,17 @@ class TestBaseModelValidation:
         import uuid
 
         non_existent_uuid = uuid.uuid4()
-        result = TestModel.get_by_uuid(non_existent_uuid)
+        result = BaseModelStub.get_by_uuid(non_existent_uuid)
 
         assert result is None
 
     def test_base_model_get_by_uuid_with_string_uuid(self):
         """Teste CRÍTICO: get_by_uuid aceita string UUID."""
-        instance = TestModel(name="Teste String UUID", email="string@example.com")
+        instance = BaseModelStub(name="Teste String UUID", email="string@example.com")
         instance.save()
 
         # Buscar usando string
-        found = TestModel.get_by_uuid(str(instance.uuid))
+        found = BaseModelStub.get_by_uuid(str(instance.uuid))
 
         assert found is not None
         assert found.id == instance.id
@@ -116,7 +116,7 @@ class TestBaseModelValidation:
 
         from django.utils import timezone
 
-        instance = TestModel(name="Timestamps", email="timestamps@example.com")
+        instance = BaseModelStub(name="Timestamps", email="timestamps@example.com")
 
         # Antes de salvar
         assert instance.created_at is None
@@ -150,18 +150,18 @@ class TestBaseModelValidation:
 
     def test_base_model_inheritance_works_correctly(self):
         """Teste CRÍTICO: Modelos que herdam de BaseModel funcionam."""
-        # Testar que TestModel herda corretamente
-        assert issubclass(TestModel, BaseModel)
-        assert issubclass(TestModel, models.Model)
+        # Testar que BaseModelStub herda corretamente
+        assert issubclass(BaseModelStub, BaseModel)
+        assert issubclass(BaseModelStub, models.Model)
 
-        # Verificar que TestModel tem os campos de BaseModel
+        # Verificar que BaseModelStub tem os campos de BaseModel
         for field_name in ["id", "uuid", "created_at", "updated_at"]:
-            assert hasattr(TestModel, field_name)
+            assert hasattr(BaseModelStub, field_name)
 
     def test_base_model_validation_integration_with_services(self):
         """Teste CRÍTICO: Validação integra com Service Layer."""
         # Este teste simula como os serviços usam a validação
-        instance = TestModel(name="", email="test@example.com")  # Nome vazio
+        instance = BaseModelStub(name="", email="test@example.com")  # Nome vazio
 
         # Simular o que WeddingService.create faz:
         # 1. Cria instância
