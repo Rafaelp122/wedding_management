@@ -4,6 +4,7 @@ Define o modelo User personalizado usando email como identificador único
 e o CustomUserManager para gerenciar a criação de usuários e superusuários.
 """
 
+import uuid
 from typing import Any, cast
 
 from django.contrib.auth.models import (
@@ -78,14 +79,6 @@ class CustomUserManager(BaseUserManager):
 
         Força is_staff=True, is_superuser=True e is_active=True para garantir
         acesso total ao sistema.
-
-        Args:
-            email (str): Endereço de email do superusuário.
-            password (str, optional): Senha do superusuário.
-            **extra_fields: Campos adicionais do modelo User.
-
-        Returns:
-            User: Instância do superusuário criado.
         """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -96,12 +89,23 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get("last_name") is None:
             extra_fields["last_name"] = "Sistema"
 
-        # O Django já valida isso, mas manter o check simples não dói
         return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField("E-mail", unique=True, max_length=255)
+    uuid = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True, db_index=True
+    )
+
+    company = models.ForeignKey(
+        "tenants.Company",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+        verbose_name="Empresa",
+    )
 
     # NOVOS CAMPOS EXPLÍCITOS
     first_name = models.CharField("Primeiro Nome", max_length=150)
@@ -110,6 +114,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField("Status da Equipe", default=False)
     is_active = models.BooleanField("Ativo", default=False)
     date_joined = models.DateTimeField("Data de Cadastro", default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = CustomUserManager()
 
