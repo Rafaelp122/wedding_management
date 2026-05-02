@@ -14,11 +14,13 @@ import type {
 
 import type {
   ErrorResponse,
+  RegisterIn,
   TokenOut,
   TokenPayloadIn,
   TokenRefreshInputSchema,
   TokenRefreshOutputSchema,
   TokenVerifyInputSchema,
+  UserOut,
 } from "../../models";
 
 import { customInstance } from "../../../../custom-instance";
@@ -26,6 +28,99 @@ import type { ErrorType } from "../../../../custom-instance";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * Cria um novo usuário e um workspace dedicado (Tenant Pragmático).
+ * @summary Register User
+ */
+export const appsUsersApiRegisterUser = (
+  registerIn: RegisterIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<UserOut>(
+    {
+      url: `/api/v1/auth/register/`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: registerIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getAppsUsersApiRegisterUserMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof appsUsersApiRegisterUser>>,
+    TError,
+    { data: RegisterIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof appsUsersApiRegisterUser>>,
+  TError,
+  { data: RegisterIn },
+  TContext
+> => {
+  const mutationKey = ["appsUsersApiRegisterUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof appsUsersApiRegisterUser>>,
+    { data: RegisterIn }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return appsUsersApiRegisterUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AppsUsersApiRegisterUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof appsUsersApiRegisterUser>>
+>;
+export type AppsUsersApiRegisterUserMutationBody = RegisterIn;
+export type AppsUsersApiRegisterUserMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Register User
+ */
+export const useAppsUsersApiRegisterUser = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof appsUsersApiRegisterUser>>,
+      TError,
+      { data: RegisterIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof appsUsersApiRegisterUser>>,
+  TError,
+  { data: RegisterIn },
+  TContext
+> => {
+  return useMutation(
+    getAppsUsersApiRegisterUserMutationOptions(options),
+    queryClient,
+  );
+};
 /**
  * Autentica o usuário e retorna o token de acesso.
 

@@ -7,6 +7,26 @@
 import * as zod from "zod";
 
 /**
+ * Cria um novo usuário e um workspace dedicado (Tenant Pragmático).
+ * @summary Register User
+ */
+export const appsUsersApiRegisterUserBodyFirstNameDefault = ``;
+export const appsUsersApiRegisterUserBodyLastNameDefault = ``;
+
+export const AppsUsersApiRegisterUserBody = zod
+  .object({
+    email: zod.email(),
+    password: zod.string(),
+    first_name: zod
+      .string()
+      .default(appsUsersApiRegisterUserBodyFirstNameDefault),
+    last_name: zod
+      .string()
+      .default(appsUsersApiRegisterUserBodyLastNameDefault),
+  })
+  .describe("Schema para entrada de novos usuários (Owners).");
+
+/**
  * Autentica o usuário e retorna o token de acesso.
 
 Valida o email e senha no banco de dados.

@@ -31,7 +31,7 @@ export const SchedulerEventsListResponse = zod.object({
   items: zod.array(
     zod.object({
       uuid: zod.string(),
-      planner_id: zod.number(),
+      company_id: zod.string(),
       wedding: zod.string(),
       title: zod.string(),
       location: zod.union([zod.string(), zod.null()]).optional(),
@@ -96,7 +96,7 @@ export const SchedulerEventsReadParams = zod.object({
 
 export const SchedulerEventsReadResponse = zod.object({
   uuid: zod.string(),
-  planner_id: zod.number(),
+  company_id: zod.string(),
   wedding: zod.string(),
   title: zod.string(),
   location: zod.union([zod.string(), zod.null()]).optional(),
@@ -150,7 +150,7 @@ export const SchedulerEventsUpdateBody = zod.object({
 
 export const SchedulerEventsUpdateResponse = zod.object({
   uuid: zod.string(),
-  planner_id: zod.number(),
+  company_id: zod.string(),
   wedding: zod.string(),
   title: zod.string(),
   location: zod.union([zod.string(), zod.null()]).optional(),
@@ -195,7 +195,7 @@ export const SchedulerTasksListResponse = zod.object({
   items: zod.array(
     zod.object({
       uuid: zod.string(),
-      planner_id: zod.number(),
+      company_id: zod.string(),
       wedding: zod.string(),
       title: zod.string(),
       description: zod.union([zod.string(), zod.null()]).optional(),
@@ -245,7 +245,7 @@ export const SchedulerTasksUpdateBody = zod.object({
 
 export const SchedulerTasksUpdateResponse = zod.object({
   uuid: zod.string(),
-  planner_id: zod.number(),
+  company_id: zod.string(),
   wedding: zod.string(),
   title: zod.string(),
   description: zod.union([zod.string(), zod.null()]).optional(),

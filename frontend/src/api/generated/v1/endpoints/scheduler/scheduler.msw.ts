@@ -24,7 +24,7 @@ export const getSchedulerEventsListResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    planner_id: faker.number.int(),
+    company_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
     wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
     location: faker.helpers.arrayElement([
@@ -61,7 +61,7 @@ export const getSchedulerEventsCreateResponseMock = (
   overrideResponse: Partial<Extract<EventOut, object>> = {},
 ): EventOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  planner_id: faker.number.int(),
+  company_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   location: faker.helpers.arrayElement([
@@ -96,7 +96,7 @@ export const getSchedulerEventsReadResponseMock = (
   overrideResponse: Partial<Extract<EventOut, object>> = {},
 ): EventOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  planner_id: faker.number.int(),
+  company_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   location: faker.helpers.arrayElement([
@@ -131,7 +131,7 @@ export const getSchedulerEventsUpdateResponseMock = (
   overrideResponse: Partial<Extract<EventOut, object>> = {},
 ): EventOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  planner_id: faker.number.int(),
+  company_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   location: faker.helpers.arrayElement([
@@ -170,7 +170,7 @@ export const getSchedulerTasksListResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    planner_id: faker.number.int(),
+    company_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
     wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
     description: faker.helpers.arrayElement([
@@ -197,7 +197,7 @@ export const getSchedulerTasksCreateResponseMock = (
   overrideResponse: Partial<Extract<TaskOut, object>> = {},
 ): TaskOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  planner_id: faker.number.int(),
+  company_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   description: faker.helpers.arrayElement([
@@ -222,7 +222,7 @@ export const getSchedulerTasksUpdateResponseMock = (
   overrideResponse: Partial<Extract<TaskOut, object>> = {},
 ): TaskOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  planner_id: faker.number.int(),
+  company_id: faker.string.alpha({ length: { min: 10, max: 20 } }),
   wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
   title: faker.string.alpha({ length: { min: 10, max: 20 } }),
   description: faker.helpers.arrayElement([

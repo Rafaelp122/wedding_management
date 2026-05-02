@@ -18,7 +18,7 @@ from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserDataOut, UserOut
 from .services.registration_service import RegistrationService
 
 
-router = Router(tags=["Autenticação"])
+router = Router(tags=["auth"])
 
 
 @router.post("/register/", response={201: UserOut}, auth=None)

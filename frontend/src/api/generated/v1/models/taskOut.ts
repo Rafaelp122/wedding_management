@@ -7,7 +7,7 @@
 
 export interface TaskOut {
   uuid: string;
-  planner_id: number;
+  company_id: string;
   wedding: string;
   title: string;
   description?: string | null;

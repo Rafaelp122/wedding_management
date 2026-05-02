@@ -7,7 +7,7 @@
 
 export interface EventOut {
   uuid: string;
-  planner_id: number;
+  company_id: string;
   wedding: string;
   title: string;
   location?: string | null;
