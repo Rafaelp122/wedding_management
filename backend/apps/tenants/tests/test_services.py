@@ -1,6 +1,8 @@
 import pytest
+
 from apps.tenants.models import Company
 from apps.tenants.services.tenant_service import TenantService
+
 
 @pytest.mark.django_db
 class TestTenantService:

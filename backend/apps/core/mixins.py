@@ -19,8 +19,9 @@ class WeddingOwnedMixin(models.Model):
         """
         super().clean()
 
-        # 1. Blindagem Vertical: Garante que o recurso pertence à mesma empresa que o casamento
-        # Isso impede que o Casamento A da Empresa 1 seja usado em um recurso da Empresa 2.
+        # 1. Blindagem Vertical: Garante que o recurso pertence à mesma empresa
+        # que o casamento. Isso impede que o Casamento A da Empresa 1 seja
+        # usado em um recurso da Empresa 2.
         if hasattr(self, "company_id") and self.wedding_id:
             if self.company_id != self.wedding.company_id:
                 raise ValidationError(

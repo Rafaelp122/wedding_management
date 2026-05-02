@@ -1,10 +1,14 @@
 import logging
+
 from django.db import IntegrityError, transaction
+
 from apps.core.exceptions import DomainIntegrityError
 from apps.tenants.services.tenant_service import TenantService
 from apps.users.models import User
 
+
 logger = logging.getLogger(__name__)
+
 
 class RegistrationService:
     """
