@@ -22,9 +22,6 @@ class BudgetCategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BudgetCategory
 
-    # Precisamos do wedding aqui para que o SelfAttribute funcione
-    wedding = factory.SubFactory(WeddingFactory)
-
     budget = factory.SubFactory(
         BudgetFactory, wedding=factory.SelfAttribute("..wedding")
     )
@@ -42,7 +39,10 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
 
     category = factory.SubFactory(
         BudgetCategoryFactory,
-        wedding=factory.SelfAttribute("..wedding"),
+        budget=factory.SubFactory(
+            BudgetFactory,
+            wedding=factory.SelfAttribute("..wedding"),
+        ),
     )
 
     contract = factory.SubFactory(
@@ -50,7 +50,7 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
         wedding=factory.SelfAttribute("..wedding"),
     )
 
-    actual_amount = Decimal("0.00")
+    actual_amount = Decimal("1000.00")
     description = factory.Faker("sentence")
     estimated_amount = factory.Faker(
         "pydecimal", left_digits=5, right_digits=2, positive=True
@@ -61,8 +61,6 @@ class InstallmentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Installment
 
-    # O wedding vem da despesa
-    wedding = factory.SelfAttribute("expense.wedding")
     expense = factory.SubFactory(ExpenseFactory)
     installment_number = factory.Sequence(lambda n: n + 1)
     amount = Decimal("500.00")

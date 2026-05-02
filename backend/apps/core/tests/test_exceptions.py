@@ -15,7 +15,6 @@ from apps.core.exceptions import (
 )
 
 
-@pytest.mark.unit
 class TestExceptionHierarchy:
     """Testes para a hierarquia de exceções da aplicação."""
 

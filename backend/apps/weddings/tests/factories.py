@@ -35,7 +35,7 @@ class WeddingFactory(factory.django.DjangoModelFactory):
     bride_name = factory.Faker("first_name_female")
 
     # Define uma data no futuro para evitar erro na regra BR-W01
-    date = factory.Faker("date_between", start_date="+1d", end_date="+1y")
+    date = factory.Faker("future_date")
     location = factory.Faker("address")
     expected_guests = factory.Iterator([50, 100, 150, 200])
 

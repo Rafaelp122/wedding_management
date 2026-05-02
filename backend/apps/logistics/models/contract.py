@@ -30,7 +30,7 @@ class Contract(BaseModel, WeddingOwnedMixin):
 
     supplier = models.ForeignKey(
         "logistics.Supplier",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="contracts",
         verbose_name="Fornecedor",
     )

@@ -7,6 +7,10 @@
 import * as zod from "zod";
 
 /**
+ * Lista todos os eventos do cronograma do Planner logado.
+
+Retorna tanto tarefas isoladas quanto eventos atrelados aos diferentes casamentos.
+Garante que o usuário veja apenas os eventos de sua propriedade.
  * @summary List Events
  */
 export const schedulerEventsListQueryLimitDefault = 100;
@@ -43,6 +47,11 @@ export const SchedulerEventsListResponse = zod.object({
 });
 
 /**
+ * Adiciona um novo evento ou tarefa ao cronograma.
+
+O Service realiza validações como:
+- Garantir que a data de término não seja anterior à data de início.
+- Validar os minutos para o disparo de lembretes (reminder).
  * @summary Create Event
  */
 export const schedulerEventsCreateBodyTitleMax = 255;
@@ -76,10 +85,13 @@ export const SchedulerEventsCreateBody = zod.object({
 });
 
 /**
+ * Retorna os detalhes completos de um evento específico no cronograma.
+
+Realiza a busca pelo UUID garantindo que o evento pertence ao Planner logado.
  * @summary Get Event
  */
 export const SchedulerEventsReadParams = zod.object({
-  event_uuid: zod.string(),
+  uuid: zod.string(),
 });
 
 export const SchedulerEventsReadResponse = zod.object({
@@ -97,33 +109,39 @@ export const SchedulerEventsReadResponse = zod.object({
 });
 
 /**
- * @summary Update Event
+ * Atualiza informações específicas de um evento do cronograma.
+
+Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
+ * @summary Partial Update Event
  */
-export const SchedulerEventsUpdateParams = zod.object({
-  event_uuid: zod.string(),
+export const SchedulerEventsPartialUpdateParams = zod.object({
+  uuid: zod.string(),
 });
 
-export const schedulerEventsUpdateBodyTitleOneMax = 255;
+export const schedulerEventsPartialUpdateBodyTitleOneMax = 255;
 
-export const schedulerEventsUpdateBodyLocationOneMax = 255;
+export const schedulerEventsPartialUpdateBodyLocationOneMax = 255;
 
-export const schedulerEventsUpdateBodyEventTypeOneMax = 50;
+export const schedulerEventsPartialUpdateBodyEventTypeOneMax = 50;
 
-export const SchedulerEventsUpdateBody = zod.object({
+export const SchedulerEventsPartialUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   title: zod
-    .union([zod.string().max(schedulerEventsUpdateBodyTitleOneMax), zod.null()])
+    .union([
+      zod.string().max(schedulerEventsPartialUpdateBodyTitleOneMax),
+      zod.null(),
+    ])
     .optional(),
   location: zod
     .union([
-      zod.string().max(schedulerEventsUpdateBodyLocationOneMax),
+      zod.string().max(schedulerEventsPartialUpdateBodyLocationOneMax),
       zod.null(),
     ])
     .optional(),
   description: zod.union([zod.string(), zod.null()]).optional(),
   event_type: zod
     .union([
-      zod.string().max(schedulerEventsUpdateBodyEventTypeOneMax),
+      zod.string().max(schedulerEventsPartialUpdateBodyEventTypeOneMax),
       zod.null(),
     ])
     .optional(),
@@ -133,7 +151,7 @@ export const SchedulerEventsUpdateBody = zod.object({
   reminder_minutes_before: zod.union([zod.number(), zod.null()]).optional(),
 });
 
-export const SchedulerEventsUpdateResponse = zod.object({
+export const SchedulerEventsPartialUpdateResponse = zod.object({
   uuid: zod.string(),
   planner_id: zod.number(),
   wedding: zod.string(),
@@ -148,13 +166,18 @@ export const SchedulerEventsUpdateResponse = zod.object({
 });
 
 /**
+ * Remove um compromisso ou evento do cronograma.
+
+Deleta a tarefa permanentemente.
+Desativa também os alertas e lembretes associados a ela.
  * @summary Delete Event
  */
 export const SchedulerEventsDeleteParams = zod.object({
-  event_uuid: zod.string(),
+  uuid: zod.string(),
 });
 
 /**
+ * Lista tarefas e checklist.
  * @summary List Tasks
  */
 export const schedulerTasksListQueryLimitDefault = 100;
@@ -187,6 +210,7 @@ export const SchedulerTasksListResponse = zod.object({
 });
 
 /**
+ * Cria uma nova tarefa no checklist.
  * @summary Create Task
  */
 export const schedulerTasksCreateBodyTitleMax = 255;
@@ -204,41 +228,28 @@ export const SchedulerTasksCreateBody = zod.object({
 });
 
 /**
- * @summary Get Task
+ * Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
+ * @summary Partial Update Task
  */
-export const SchedulerTasksReadParams = zod.object({
-  task_uuid: zod.string(),
-});
-
-export const SchedulerTasksReadResponse = zod.object({
+export const SchedulerTasksPartialUpdateParams = zod.object({
   uuid: zod.string(),
-  planner_id: zod.number(),
-  wedding: zod.string(),
-  title: zod.string(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
-  due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
-  is_completed: zod.boolean(),
 });
 
-/**
- * @summary Update Task
- */
-export const SchedulerTasksUpdateParams = zod.object({
-  task_uuid: zod.string(),
-});
+export const schedulerTasksPartialUpdateBodyTitleOneMax = 255;
 
-export const schedulerTasksUpdateBodyTitleOneMax = 255;
-
-export const SchedulerTasksUpdateBody = zod.object({
+export const SchedulerTasksPartialUpdateBody = zod.object({
   title: zod
-    .union([zod.string().max(schedulerTasksUpdateBodyTitleOneMax), zod.null()])
+    .union([
+      zod.string().max(schedulerTasksPartialUpdateBodyTitleOneMax),
+      zod.null(),
+    ])
     .optional(),
   description: zod.union([zod.string(), zod.null()]).optional(),
   due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   is_completed: zod.union([zod.boolean(), zod.null()]).optional(),
 });
 
-export const SchedulerTasksUpdateResponse = zod.object({
+export const SchedulerTasksPartialUpdateResponse = zod.object({
   uuid: zod.string(),
   planner_id: zod.number(),
   wedding: zod.string(),
@@ -249,8 +260,9 @@ export const SchedulerTasksUpdateResponse = zod.object({
 });
 
 /**
+ * Remove uma tarefa permanentemente.
  * @summary Delete Task
  */
 export const SchedulerTasksDeleteParams = zod.object({
-  task_uuid: zod.string(),
+  uuid: zod.string(),
 });

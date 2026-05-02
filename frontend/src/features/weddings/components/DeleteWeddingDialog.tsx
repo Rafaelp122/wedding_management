@@ -35,7 +35,7 @@ export function DeleteWeddingDialog({
 
   const handleDelete = () => {
     mutate(
-      { weddingUuid: wedding.uuid },
+      { uuid: wedding.uuid },
       {
         onSuccess: () => {
           toast.success("Casamento deletado com sucesso!");

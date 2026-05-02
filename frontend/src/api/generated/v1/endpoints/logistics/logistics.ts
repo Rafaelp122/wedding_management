@@ -45,6 +45,7 @@ import type { ErrorType } from "../../../../custom-instance";
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * Lista todos os fornecedores cadastrados pelo Planner logado.
  * @summary List Suppliers
  */
 export const logisticsSuppliersList = (
@@ -208,6 +209,7 @@ export function useLogisticsSuppliersList<
 }
 
 /**
+ * Cadastra um novo fornecedor no sistema.
  * @summary Create Supplier
  */
 export const logisticsSuppliersCreate = (
@@ -300,32 +302,29 @@ export const useLogisticsSuppliersCreate = <
   );
 };
 /**
+ * Retorna os detalhes de um fornecedor específico.
  * @summary Retrieve Supplier
  */
 export const logisticsSuppliersRead = (
-  supplierUuid: string,
+  uuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<SupplierOut>(
-    {
-      url: `/api/v1/logistics/suppliers/${supplierUuid}/`,
-      method: "GET",
-      signal,
-    },
+    { url: `/api/v1/logistics/suppliers/${uuid}/`, method: "GET", signal },
     options,
   );
 };
 
-export const getLogisticsSuppliersReadQueryKey = (supplierUuid: string) => {
-  return [`/api/v1/logistics/suppliers/${supplierUuid}/`] as const;
+export const getLogisticsSuppliersReadQueryKey = (uuid: string) => {
+  return [`/api/v1/logistics/suppliers/${uuid}/`] as const;
 };
 
 export const getLogisticsSuppliersReadQueryOptions = <
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  supplierUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -340,17 +339,16 @@ export const getLogisticsSuppliersReadQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getLogisticsSuppliersReadQueryKey(supplierUuid);
+    queryOptions?.queryKey ?? getLogisticsSuppliersReadQueryKey(uuid);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof logisticsSuppliersRead>>
-  > = ({ signal }) =>
-    logisticsSuppliersRead(supplierUuid, requestOptions, signal);
+  > = ({ signal }) => logisticsSuppliersRead(uuid, requestOptions, signal);
 
   return {
     queryKey,
     queryFn,
-    enabled: !!supplierUuid,
+    enabled: !!uuid,
     ...queryOptions,
   } as UseQueryOptions<
     Awaited<ReturnType<typeof logisticsSuppliersRead>>,
@@ -368,7 +366,7 @@ export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  supplierUuid: string,
+  uuid: string,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -395,7 +393,7 @@ export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  supplierUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -422,7 +420,7 @@ export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  supplierUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -445,7 +443,7 @@ export function useLogisticsSuppliersRead<
   TData = Awaited<ReturnType<typeof logisticsSuppliersRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  supplierUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -460,10 +458,7 @@ export function useLogisticsSuppliersRead<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getLogisticsSuppliersReadQueryOptions(
-    supplierUuid,
-    options,
-  );
+  const queryOptions = getLogisticsSuppliersReadQueryOptions(uuid, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -474,17 +469,18 @@ export function useLogisticsSuppliersRead<
 }
 
 /**
- * @summary Update Supplier
+ * Atualiza informações específicas de um fornecedor (nome, contato, categorias).
+ * @summary Partial Update Supplier
  */
-export const logisticsSuppliersUpdate = (
-  supplierUuid: string,
+export const logisticsSuppliersPartialUpdate = (
+  uuid: string,
   supplierPatchIn: SupplierPatchIn,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<SupplierOut>(
     {
-      url: `/api/v1/logistics/suppliers/${supplierUuid}/`,
+      url: `/api/v1/logistics/suppliers/${uuid}/`,
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       data: supplierPatchIn,
@@ -494,24 +490,24 @@ export const logisticsSuppliersUpdate = (
   );
 };
 
-export const getLogisticsSuppliersUpdateMutationOptions = <
+export const getLogisticsSuppliersPartialUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof logisticsSuppliersUpdate>>,
+    Awaited<ReturnType<typeof logisticsSuppliersPartialUpdate>>,
     TError,
-    { supplierUuid: string; data: SupplierPatchIn },
+    { uuid: string; data: SupplierPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof logisticsSuppliersUpdate>>,
+  Awaited<ReturnType<typeof logisticsSuppliersPartialUpdate>>,
   TError,
-  { supplierUuid: string; data: SupplierPatchIn },
+  { uuid: string; data: SupplierPatchIn },
   TContext
 > => {
-  const mutationKey = ["logisticsSuppliersUpdate"];
+  const mutationKey = ["logisticsSuppliersPartialUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -521,65 +517,63 @@ export const getLogisticsSuppliersUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof logisticsSuppliersUpdate>>,
-    { supplierUuid: string; data: SupplierPatchIn }
+    Awaited<ReturnType<typeof logisticsSuppliersPartialUpdate>>,
+    { uuid: string; data: SupplierPatchIn }
   > = (props) => {
-    const { supplierUuid, data } = props ?? {};
+    const { uuid, data } = props ?? {};
 
-    return logisticsSuppliersUpdate(supplierUuid, data, requestOptions);
+    return logisticsSuppliersPartialUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type LogisticsSuppliersUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof logisticsSuppliersUpdate>>
+export type LogisticsSuppliersPartialUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsSuppliersPartialUpdate>>
 >;
-export type LogisticsSuppliersUpdateMutationBody = SupplierPatchIn;
-export type LogisticsSuppliersUpdateMutationError = ErrorType<ErrorResponse>;
+export type LogisticsSuppliersPartialUpdateMutationBody = SupplierPatchIn;
+export type LogisticsSuppliersPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
- * @summary Update Supplier
+ * @summary Partial Update Supplier
  */
-export const useLogisticsSuppliersUpdate = <
+export const useLogisticsSuppliersPartialUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof logisticsSuppliersUpdate>>,
+      Awaited<ReturnType<typeof logisticsSuppliersPartialUpdate>>,
       TError,
-      { supplierUuid: string; data: SupplierPatchIn },
+      { uuid: string; data: SupplierPatchIn },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof logisticsSuppliersUpdate>>,
+  Awaited<ReturnType<typeof logisticsSuppliersPartialUpdate>>,
   TError,
-  { supplierUuid: string; data: SupplierPatchIn },
+  { uuid: string; data: SupplierPatchIn },
   TContext
 > => {
   return useMutation(
-    getLogisticsSuppliersUpdateMutationOptions(options),
+    getLogisticsSuppliersPartialUpdateMutationOptions(options),
     queryClient,
   );
 };
 /**
+ * Remove o cadastro de um fornecedor do sistema.
  * @summary Delete Supplier
  */
 export const logisticsSuppliersDelete = (
-  supplierUuid: string,
+  uuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<void>(
-    {
-      url: `/api/v1/logistics/suppliers/${supplierUuid}/`,
-      method: "DELETE",
-      signal,
-    },
+    { url: `/api/v1/logistics/suppliers/${uuid}/`, method: "DELETE", signal },
     options,
   );
 };
@@ -591,14 +585,14 @@ export const getLogisticsSuppliersDeleteMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof logisticsSuppliersDelete>>,
     TError,
-    { supplierUuid: string },
+    { uuid: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof logisticsSuppliersDelete>>,
   TError,
-  { supplierUuid: string },
+  { uuid: string },
   TContext
 > => {
   const mutationKey = ["logisticsSuppliersDelete"];
@@ -612,11 +606,11 @@ export const getLogisticsSuppliersDeleteMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof logisticsSuppliersDelete>>,
-    { supplierUuid: string }
+    { uuid: string }
   > = (props) => {
-    const { supplierUuid } = props ?? {};
+    const { uuid } = props ?? {};
 
-    return logisticsSuppliersDelete(supplierUuid, requestOptions);
+    return logisticsSuppliersDelete(uuid, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -639,7 +633,7 @@ export const useLogisticsSuppliersDelete = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof logisticsSuppliersDelete>>,
       TError,
-      { supplierUuid: string },
+      { uuid: string },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -648,7 +642,7 @@ export const useLogisticsSuppliersDelete = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof logisticsSuppliersDelete>>,
   TError,
-  { supplierUuid: string },
+  { uuid: string },
   TContext
 > => {
   return useMutation(
@@ -657,6 +651,8 @@ export const useLogisticsSuppliersDelete = <
   );
 };
 /**
+ * Lista os contratos de fornecedores associados aos casamentos do Planner.
+Permite filtrar por casamento.
  * @summary List Contracts
  */
 export const logisticsContractsList = (
@@ -820,6 +816,7 @@ export function useLogisticsContractsList<
 }
 
 /**
+ * Associa um fornecedor a um casamento através de um novo contrato logístico.
  * @summary Create Contract
  */
 export const logisticsContractsCreate = (
@@ -912,32 +909,29 @@ export const useLogisticsContractsCreate = <
   );
 };
 /**
+ * Exibe as cláusulas e informações completas de um contrato.
  * @summary Retrieve Contract
  */
 export const logisticsContractsRead = (
-  contractUuid: string,
+  uuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<ContractOut>(
-    {
-      url: `/api/v1/logistics/contracts/${contractUuid}/`,
-      method: "GET",
-      signal,
-    },
+    { url: `/api/v1/logistics/contracts/${uuid}/`, method: "GET", signal },
     options,
   );
 };
 
-export const getLogisticsContractsReadQueryKey = (contractUuid: string) => {
-  return [`/api/v1/logistics/contracts/${contractUuid}/`] as const;
+export const getLogisticsContractsReadQueryKey = (uuid: string) => {
+  return [`/api/v1/logistics/contracts/${uuid}/`] as const;
 };
 
 export const getLogisticsContractsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  contractUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -952,17 +946,16 @@ export const getLogisticsContractsReadQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getLogisticsContractsReadQueryKey(contractUuid);
+    queryOptions?.queryKey ?? getLogisticsContractsReadQueryKey(uuid);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof logisticsContractsRead>>
-  > = ({ signal }) =>
-    logisticsContractsRead(contractUuid, requestOptions, signal);
+  > = ({ signal }) => logisticsContractsRead(uuid, requestOptions, signal);
 
   return {
     queryKey,
     queryFn,
-    enabled: !!contractUuid,
+    enabled: !!uuid,
     ...queryOptions,
   } as UseQueryOptions<
     Awaited<ReturnType<typeof logisticsContractsRead>>,
@@ -980,7 +973,7 @@ export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  contractUuid: string,
+  uuid: string,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -1007,7 +1000,7 @@ export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  contractUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1034,7 +1027,7 @@ export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  contractUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1057,7 +1050,7 @@ export function useLogisticsContractsRead<
   TData = Awaited<ReturnType<typeof logisticsContractsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  contractUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1072,10 +1065,7 @@ export function useLogisticsContractsRead<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getLogisticsContractsReadQueryOptions(
-    contractUuid,
-    options,
-  );
+  const queryOptions = getLogisticsContractsReadQueryOptions(uuid, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -1086,17 +1076,18 @@ export function useLogisticsContractsRead<
 }
 
 /**
- * @summary Update Contract
+ * Altera o status, valores agregados ou observações de um contrato existente na base.
+ * @summary Partial Update Contract
  */
-export const logisticsContractsUpdate = (
-  contractUuid: string,
+export const logisticsContractsPartialUpdate = (
+  uuid: string,
   contractPatchIn: ContractPatchIn,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<ContractOut>(
     {
-      url: `/api/v1/logistics/contracts/${contractUuid}/`,
+      url: `/api/v1/logistics/contracts/${uuid}/`,
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       data: contractPatchIn,
@@ -1106,24 +1097,24 @@ export const logisticsContractsUpdate = (
   );
 };
 
-export const getLogisticsContractsUpdateMutationOptions = <
+export const getLogisticsContractsPartialUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof logisticsContractsUpdate>>,
+    Awaited<ReturnType<typeof logisticsContractsPartialUpdate>>,
     TError,
-    { contractUuid: string; data: ContractPatchIn },
+    { uuid: string; data: ContractPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof logisticsContractsUpdate>>,
+  Awaited<ReturnType<typeof logisticsContractsPartialUpdate>>,
   TError,
-  { contractUuid: string; data: ContractPatchIn },
+  { uuid: string; data: ContractPatchIn },
   TContext
 > => {
-  const mutationKey = ["logisticsContractsUpdate"];
+  const mutationKey = ["logisticsContractsPartialUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1133,65 +1124,63 @@ export const getLogisticsContractsUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof logisticsContractsUpdate>>,
-    { contractUuid: string; data: ContractPatchIn }
+    Awaited<ReturnType<typeof logisticsContractsPartialUpdate>>,
+    { uuid: string; data: ContractPatchIn }
   > = (props) => {
-    const { contractUuid, data } = props ?? {};
+    const { uuid, data } = props ?? {};
 
-    return logisticsContractsUpdate(contractUuid, data, requestOptions);
+    return logisticsContractsPartialUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type LogisticsContractsUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof logisticsContractsUpdate>>
+export type LogisticsContractsPartialUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsContractsPartialUpdate>>
 >;
-export type LogisticsContractsUpdateMutationBody = ContractPatchIn;
-export type LogisticsContractsUpdateMutationError = ErrorType<ErrorResponse>;
+export type LogisticsContractsPartialUpdateMutationBody = ContractPatchIn;
+export type LogisticsContractsPartialUpdateMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
- * @summary Update Contract
+ * @summary Partial Update Contract
  */
-export const useLogisticsContractsUpdate = <
+export const useLogisticsContractsPartialUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof logisticsContractsUpdate>>,
+      Awaited<ReturnType<typeof logisticsContractsPartialUpdate>>,
       TError,
-      { contractUuid: string; data: ContractPatchIn },
+      { uuid: string; data: ContractPatchIn },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof logisticsContractsUpdate>>,
+  Awaited<ReturnType<typeof logisticsContractsPartialUpdate>>,
   TError,
-  { contractUuid: string; data: ContractPatchIn },
+  { uuid: string; data: ContractPatchIn },
   TContext
 > => {
   return useMutation(
-    getLogisticsContractsUpdateMutationOptions(options),
+    getLogisticsContractsPartialUpdateMutationOptions(options),
     queryClient,
   );
 };
 /**
+ * Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.
  * @summary Delete Contract
  */
 export const logisticsContractsDelete = (
-  contractUuid: string,
+  uuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<void>(
-    {
-      url: `/api/v1/logistics/contracts/${contractUuid}/`,
-      method: "DELETE",
-      signal,
-    },
+    { url: `/api/v1/logistics/contracts/${uuid}/`, method: "DELETE", signal },
     options,
   );
 };
@@ -1203,14 +1192,14 @@ export const getLogisticsContractsDeleteMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof logisticsContractsDelete>>,
     TError,
-    { contractUuid: string },
+    { uuid: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof logisticsContractsDelete>>,
   TError,
-  { contractUuid: string },
+  { uuid: string },
   TContext
 > => {
   const mutationKey = ["logisticsContractsDelete"];
@@ -1224,11 +1213,11 @@ export const getLogisticsContractsDeleteMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof logisticsContractsDelete>>,
-    { contractUuid: string }
+    { uuid: string }
   > = (props) => {
-    const { contractUuid } = props ?? {};
+    const { uuid } = props ?? {};
 
-    return logisticsContractsDelete(contractUuid, requestOptions);
+    return logisticsContractsDelete(uuid, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -1251,7 +1240,7 @@ export const useLogisticsContractsDelete = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof logisticsContractsDelete>>,
       TError,
-      { contractUuid: string },
+      { uuid: string },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -1260,7 +1249,7 @@ export const useLogisticsContractsDelete = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof logisticsContractsDelete>>,
   TError,
-  { contractUuid: string },
+  { uuid: string },
   TContext
 > => {
   return useMutation(
@@ -1269,6 +1258,8 @@ export const useLogisticsContractsDelete = <
   );
 };
 /**
+ * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
+Permite filtrar por casamento.
  * @summary List Items
  */
 export const logisticsItemsList = (
@@ -1432,6 +1423,8 @@ export function useLogisticsItemsList<
 }
 
 /**
+ * Adiciona um recurso físico no painel de acompanhamento.
+Parte do planejamento logístico de um evento.
  * @summary Create Item
  */
 export const logisticsItemsCreate = (
@@ -1524,28 +1517,29 @@ export const useLogisticsItemsCreate = <
   );
 };
 /**
+ * Mostra os detalhes nominais de um item logístico específico.
  * @summary Retrieve Item
  */
 export const logisticsItemsRead = (
-  itemUuid: string,
+  uuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<ItemOut>(
-    { url: `/api/v1/logistics/items/${itemUuid}/`, method: "GET", signal },
+    { url: `/api/v1/logistics/items/${uuid}/`, method: "GET", signal },
     options,
   );
 };
 
-export const getLogisticsItemsReadQueryKey = (itemUuid: string) => {
-  return [`/api/v1/logistics/items/${itemUuid}/`] as const;
+export const getLogisticsItemsReadQueryKey = (uuid: string) => {
+  return [`/api/v1/logistics/items/${uuid}/`] as const;
 };
 
 export const getLogisticsItemsReadQueryOptions = <
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  itemUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1560,16 +1554,16 @@ export const getLogisticsItemsReadQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getLogisticsItemsReadQueryKey(itemUuid);
+    queryOptions?.queryKey ?? getLogisticsItemsReadQueryKey(uuid);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof logisticsItemsRead>>
-  > = ({ signal }) => logisticsItemsRead(itemUuid, requestOptions, signal);
+  > = ({ signal }) => logisticsItemsRead(uuid, requestOptions, signal);
 
   return {
     queryKey,
     queryFn,
-    enabled: !!itemUuid,
+    enabled: !!uuid,
     ...queryOptions,
   } as UseQueryOptions<
     Awaited<ReturnType<typeof logisticsItemsRead>>,
@@ -1587,7 +1581,7 @@ export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  itemUuid: string,
+  uuid: string,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -1614,7 +1608,7 @@ export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  itemUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1641,7 +1635,7 @@ export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  itemUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1664,7 +1658,7 @@ export function useLogisticsItemsRead<
   TData = Awaited<ReturnType<typeof logisticsItemsRead>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  itemUuid: string,
+  uuid: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1679,7 +1673,7 @@ export function useLogisticsItemsRead<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getLogisticsItemsReadQueryOptions(itemUuid, options);
+  const queryOptions = getLogisticsItemsReadQueryOptions(uuid, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -1690,17 +1684,18 @@ export function useLogisticsItemsRead<
 }
 
 /**
- * @summary Update Item
+ * Atualiza quantidades ou informações de apoio do lote do item em questão.
+ * @summary Partial Update Item
  */
-export const logisticsItemsUpdate = (
-  itemUuid: string,
+export const logisticsItemsPartialUpdate = (
+  uuid: string,
   itemPatchIn: ItemPatchIn,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<ItemOut>(
     {
-      url: `/api/v1/logistics/items/${itemUuid}/`,
+      url: `/api/v1/logistics/items/${uuid}/`,
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       data: itemPatchIn,
@@ -1710,24 +1705,24 @@ export const logisticsItemsUpdate = (
   );
 };
 
-export const getLogisticsItemsUpdateMutationOptions = <
+export const getLogisticsItemsPartialUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof logisticsItemsUpdate>>,
+    Awaited<ReturnType<typeof logisticsItemsPartialUpdate>>,
     TError,
-    { itemUuid: string; data: ItemPatchIn },
+    { uuid: string; data: ItemPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof logisticsItemsUpdate>>,
+  Awaited<ReturnType<typeof logisticsItemsPartialUpdate>>,
   TError,
-  { itemUuid: string; data: ItemPatchIn },
+  { uuid: string; data: ItemPatchIn },
   TContext
 > => {
-  const mutationKey = ["logisticsItemsUpdate"];
+  const mutationKey = ["logisticsItemsPartialUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -1737,61 +1732,63 @@ export const getLogisticsItemsUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof logisticsItemsUpdate>>,
-    { itemUuid: string; data: ItemPatchIn }
+    Awaited<ReturnType<typeof logisticsItemsPartialUpdate>>,
+    { uuid: string; data: ItemPatchIn }
   > = (props) => {
-    const { itemUuid, data } = props ?? {};
+    const { uuid, data } = props ?? {};
 
-    return logisticsItemsUpdate(itemUuid, data, requestOptions);
+    return logisticsItemsPartialUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type LogisticsItemsUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof logisticsItemsUpdate>>
+export type LogisticsItemsPartialUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsItemsPartialUpdate>>
 >;
-export type LogisticsItemsUpdateMutationBody = ItemPatchIn;
-export type LogisticsItemsUpdateMutationError = ErrorType<ErrorResponse>;
+export type LogisticsItemsPartialUpdateMutationBody = ItemPatchIn;
+export type LogisticsItemsPartialUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Update Item
+ * @summary Partial Update Item
  */
-export const useLogisticsItemsUpdate = <
+export const useLogisticsItemsPartialUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof logisticsItemsUpdate>>,
+      Awaited<ReturnType<typeof logisticsItemsPartialUpdate>>,
       TError,
-      { itemUuid: string; data: ItemPatchIn },
+      { uuid: string; data: ItemPatchIn },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof logisticsItemsUpdate>>,
+  Awaited<ReturnType<typeof logisticsItemsPartialUpdate>>,
   TError,
-  { itemUuid: string; data: ItemPatchIn },
+  { uuid: string; data: ItemPatchIn },
   TContext
 > => {
   return useMutation(
-    getLogisticsItemsUpdateMutationOptions(options),
+    getLogisticsItemsPartialUpdateMutationOptions(options),
     queryClient,
   );
 };
 /**
+ * Exclui permanentemente o indicativo do item.
+Remove das listas logísticas rastreadas pelo Planner.
  * @summary Delete Item
  */
 export const logisticsItemsDelete = (
-  itemUuid: string,
+  uuid: string,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<void>(
-    { url: `/api/v1/logistics/items/${itemUuid}/`, method: "DELETE", signal },
+    { url: `/api/v1/logistics/items/${uuid}/`, method: "DELETE", signal },
     options,
   );
 };
@@ -1803,14 +1800,14 @@ export const getLogisticsItemsDeleteMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof logisticsItemsDelete>>,
     TError,
-    { itemUuid: string },
+    { uuid: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof logisticsItemsDelete>>,
   TError,
-  { itemUuid: string },
+  { uuid: string },
   TContext
 > => {
   const mutationKey = ["logisticsItemsDelete"];
@@ -1824,11 +1821,11 @@ export const getLogisticsItemsDeleteMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof logisticsItemsDelete>>,
-    { itemUuid: string }
+    { uuid: string }
   > = (props) => {
-    const { itemUuid } = props ?? {};
+    const { uuid } = props ?? {};
 
-    return logisticsItemsDelete(itemUuid, requestOptions);
+    return logisticsItemsDelete(uuid, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -1851,7 +1848,7 @@ export const useLogisticsItemsDelete = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof logisticsItemsDelete>>,
       TError,
-      { itemUuid: string },
+      { uuid: string },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -1860,7 +1857,7 @@ export const useLogisticsItemsDelete = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof logisticsItemsDelete>>,
   TError,
-  { itemUuid: string },
+  { uuid: string },
   TContext
 > => {
   return useMutation(

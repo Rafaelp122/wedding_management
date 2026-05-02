@@ -62,7 +62,7 @@ export const getWeddingsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getWeddingsUpdateResponseMock = (
+export const getWeddingsPartialUpdateResponseMock = (
   overrideResponse: Partial<Extract<WeddingOut, object>> = {},
 ): WeddingOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -134,7 +134,7 @@ export const getWeddingsReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/weddings/:weddingUuid/",
+    "*/api/v1/weddings/:uuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -149,7 +149,7 @@ export const getWeddingsReadMockHandler = (
   );
 };
 
-export const getWeddingsUpdateMockHandler = (
+export const getWeddingsPartialUpdateMockHandler = (
   overrideResponse?:
     | WeddingOut
     | ((
@@ -158,14 +158,14 @@ export const getWeddingsUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/weddings/:weddingUuid/",
+    "*/api/v1/weddings/:uuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getWeddingsUpdateResponseMock(),
+          : getWeddingsPartialUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -182,7 +182,7 @@ export const getWeddingsDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/weddings/:weddingUuid/",
+    "*/api/v1/weddings/:uuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -197,6 +197,6 @@ export const getWeddingsMock = () => [
   getWeddingsListMockHandler(),
   getWeddingsCreateMockHandler(),
   getWeddingsReadMockHandler(),
-  getWeddingsUpdateMockHandler(),
+  getWeddingsPartialUpdateMockHandler(),
   getWeddingsDeleteMockHandler(),
 ];

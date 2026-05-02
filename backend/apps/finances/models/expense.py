@@ -43,9 +43,6 @@ class Expense(BaseModel, WeddingOwnedMixin):
         verbose_name_plural = "Despesas"
         ordering = ["-created_at"]
 
-    def __str__(self) -> str:
-        return self.description
-
     def clean(self) -> None:
         super().clean()
 

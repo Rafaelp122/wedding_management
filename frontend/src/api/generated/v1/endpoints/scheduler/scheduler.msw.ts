@@ -127,7 +127,7 @@ export const getSchedulerEventsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getSchedulerEventsUpdateResponseMock = (
+export const getSchedulerEventsPartialUpdateResponseMock = (
   overrideResponse: Partial<Extract<EventOut, object>> = {},
 ): EventOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -218,32 +218,7 @@ export const getSchedulerTasksCreateResponseMock = (
   ...overrideResponse,
 });
 
-export const getSchedulerTasksReadResponseMock = (
-  overrideResponse: Partial<Extract<TaskOut, object>> = {},
-): TaskOut => ({
-  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  planner_id: faker.number.int(),
-  wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  title: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  description: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
-  ]),
-  due_date: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 10),
-      null,
-    ]),
-    undefined,
-  ]),
-  is_completed: faker.datatype.boolean(),
-  ...overrideResponse,
-});
-
-export const getSchedulerTasksUpdateResponseMock = (
+export const getSchedulerTasksPartialUpdateResponseMock = (
   overrideResponse: Partial<Extract<TaskOut, object>> = {},
 ): TaskOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -325,7 +300,7 @@ export const getSchedulerEventsReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/scheduler/events/:eventUuid/",
+    "*/api/v1/scheduler/events/:uuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -340,7 +315,7 @@ export const getSchedulerEventsReadMockHandler = (
   );
 };
 
-export const getSchedulerEventsUpdateMockHandler = (
+export const getSchedulerEventsPartialUpdateMockHandler = (
   overrideResponse?:
     | EventOut
     | ((
@@ -349,14 +324,14 @@ export const getSchedulerEventsUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/scheduler/events/:eventUuid/",
+    "*/api/v1/scheduler/events/:uuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getSchedulerEventsUpdateResponseMock(),
+          : getSchedulerEventsPartialUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -373,7 +348,7 @@ export const getSchedulerEventsDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/scheduler/events/:eventUuid/",
+    "*/api/v1/scheduler/events/:uuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -433,31 +408,7 @@ export const getSchedulerTasksCreateMockHandler = (
   );
 };
 
-export const getSchedulerTasksReadMockHandler = (
-  overrideResponse?:
-    | TaskOut
-    | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
-      ) => Promise<TaskOut> | TaskOut),
-  options?: RequestHandlerOptions,
-) => {
-  return http.get(
-    "*/api/v1/scheduler/tasks/:taskUuid/",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-      return HttpResponse.json(
-        overrideResponse !== undefined
-          ? typeof overrideResponse === "function"
-            ? await overrideResponse(info)
-            : overrideResponse
-          : getSchedulerTasksReadResponseMock(),
-        { status: 200 },
-      );
-    },
-    options,
-  );
-};
-
-export const getSchedulerTasksUpdateMockHandler = (
+export const getSchedulerTasksPartialUpdateMockHandler = (
   overrideResponse?:
     | TaskOut
     | ((
@@ -466,14 +417,14 @@ export const getSchedulerTasksUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/scheduler/tasks/:taskUuid/",
+    "*/api/v1/scheduler/tasks/:uuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getSchedulerTasksUpdateResponseMock(),
+          : getSchedulerTasksPartialUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -490,7 +441,7 @@ export const getSchedulerTasksDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/scheduler/tasks/:taskUuid/",
+    "*/api/v1/scheduler/tasks/:uuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -505,11 +456,10 @@ export const getSchedulerMock = () => [
   getSchedulerEventsListMockHandler(),
   getSchedulerEventsCreateMockHandler(),
   getSchedulerEventsReadMockHandler(),
-  getSchedulerEventsUpdateMockHandler(),
+  getSchedulerEventsPartialUpdateMockHandler(),
   getSchedulerEventsDeleteMockHandler(),
   getSchedulerTasksListMockHandler(),
   getSchedulerTasksCreateMockHandler(),
-  getSchedulerTasksReadMockHandler(),
-  getSchedulerTasksUpdateMockHandler(),
+  getSchedulerTasksPartialUpdateMockHandler(),
   getSchedulerTasksDeleteMockHandler(),
 ];

@@ -6,9 +6,10 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.auth import require_user
-from apps.core.exceptions import DomainIntegrityError
+from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.core.types import AuthContextUser
 from apps.scheduler.models import Event
+from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class EventService:
     """
     Camada de serviço para gestão de compromissos e calendário.
-    Purificada: Recebe instâncias resolvidas ou usa resolvers internos.
+    Garante isolamento total (Multitenancy), auditoria e integridade de agendamento.
     """
 
     @staticmethod
@@ -30,26 +31,60 @@ class EventService:
         return qs
 
     @staticmethod
-    @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> Event:
-        from apps.core.dependencies import resolve_wedding_for_user
-
-        planner = require_user(user)
-        logger.info("Iniciando criação de Evento")
-
-        wedding_input = data.pop("wedding")
-        wedding = resolve_wedding_for_user(user, wedding_input)
-
-        event = Event(planner=planner, wedding=wedding, **data)
-        event.save()
-
-        logger.info("Evento criado com sucesso: uuid=%s", event.uuid)
+    def get(user: AuthContextUser, uuid: UUID | str) -> Event:
+        event = (
+            Event.objects.for_user(user)
+            .select_related("wedding", "planner")
+            .filter(uuid=uuid)
+            .first()
+        )
+        if event is None:
+            raise ObjectNotFoundError(
+                detail="Evento não encontrado ou acesso negado.",
+                code="event_not_found_or_denied",
+            )
         return event
 
     @staticmethod
     @transaction.atomic
-    def update(instance: Event, data: dict[str, Any]) -> Event:
-        logger.info(f"Atualizando Evento uuid={instance.uuid}")
+    def create(user: AuthContextUser, data: dict[str, Any]) -> Event:
+        planner = require_user(user)
+        logger.info(f"Iniciando criação de Evento para planner_id={planner.id}")
+
+        wedding_input = data.pop("wedding", None)
+
+        if isinstance(wedding_input, Wedding):
+            wedding = wedding_input
+        else:
+            try:
+                wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
+            except Wedding.DoesNotExist as e:
+                logger.warning(
+                    f"Tentativa de agendamento em casamento inválido ou "
+                    f"negado: {wedding_input} por planner_id={planner.id}"
+                )
+                raise ObjectNotFoundError(
+                    detail="Casamento não encontrado ou você não tem permissão para "
+                    "acessá-lo.",
+                    code="wedding_not_found_or_denied",
+                ) from e
+
+        event = Event(planner=planner, wedding=wedding, **data)
+        event.save()
+
+        logger.info(
+            f"Evento criado com sucesso: uuid={event.uuid} no casamento "
+            f"uuid={wedding.uuid}"
+        )
+        return event
+
+    @staticmethod
+    @transaction.atomic
+    def update(user: AuthContextUser, instance: Event, data: dict[str, Any]) -> Event:
+        planner = require_user(user)
+        logger.info(
+            f"Atualizando Evento uuid={instance.uuid} por planner_id={planner.id}"
+        )
 
         data.pop("wedding", None)
         data.pop("planner", None)
@@ -58,16 +93,36 @@ class EventService:
             setattr(instance, field, value)
 
         instance.save()
+
+        logger.info(f"Evento uuid={instance.uuid} atualizado com sucesso.")
         return instance
 
     @staticmethod
     @transaction.atomic
-    def delete(instance: Event) -> None:
-        logger.info(f"Deletando Evento uuid={instance.uuid}")
+    def partial_update(
+        user: AuthContextUser, uuid: UUID | str, data: dict[str, Any]
+    ) -> Event:
+        instance = EventService.get(user, uuid)
+        return EventService.update(user, instance, data)
+
+    @staticmethod
+    @transaction.atomic
+    def delete(user: AuthContextUser, uuid: UUID | str) -> None:
+        instance = EventService.get(user, uuid)
+        planner = require_user(user)
+        logger.info(
+            f"Tentativa de deleção do Evento uuid={instance.uuid} por "
+            f"planner_id={planner.id}"
+        )
 
         try:
             instance.delete()
+            logger.warning(
+                f"Evento uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
+            )
+
         except ProtectedError as e:
+            logger.error(f"Falha de integridade ao deletar evento uuid={instance.uuid}")
             raise DomainIntegrityError(
                 detail="Não é possível apagar este evento pois existem registros "
                 "vinculados a ele.",

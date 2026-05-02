@@ -182,7 +182,7 @@ Opções relevantes:
 ## Fluxo de Trabalho Diário
 
 ```
-1. Alterar Schema/Endpoint/Controller no backend
+1. Alterar Schema/Endpoint/Router no backend
 2. Rodar: make sync-api
 3. Verificar os diffs em generated/ (novos tipos, campos, hooks)
 4. Usar os hooks atualizados no frontend

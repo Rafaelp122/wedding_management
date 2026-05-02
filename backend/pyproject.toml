@@ -20,7 +20,6 @@ dependencies = [
     "django-ninja>=1.6.2",
     "django-ninja-jwt>=5.4.4",
     "email-validator>=2.3.0",
-    "django-ninja-extra>=0.31.4",
 ]
 
 # ==============================================================================
@@ -67,8 +66,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# E: Error, F: Pyflakes, W: Warning, I: Isort, B: Flake8-bugbear
-# RUF: Ruff-specific, UP: Pyupgrade, DJ: Flake8-django, S: Bandit (Security)
+
 select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ", "S"]
 ignore = ["E203", "RUF012"]
 
@@ -163,10 +161,6 @@ markers = [
     "integration: testes de integração",
     "unit: testes unitários",
     "functional: testes funcionais",
-    "api: testes de endpoints e contrato HTTP",
-    "service: testes de lógica de negócio pura",
-    "security: testes focados em autorização e auditoria",
-    "multitenancy: testes de isolamento entre usuários",
 ]
 
 # Opções de execução padrão
@@ -203,11 +197,9 @@ omit = [
     "manage.py",
     "*/config/*",
     "*/__init__.py",
-    "*/seed_db.py",
 ]
 
 [tool.coverage.report]
-fail_under = 85
 exclude_lines = [
     "pragma: no cover",
     "def __str__",

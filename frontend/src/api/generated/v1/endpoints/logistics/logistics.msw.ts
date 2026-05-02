@@ -66,7 +66,7 @@ export const getLogisticsSuppliersReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getLogisticsSuppliersUpdateResponseMock = (
+export const getLogisticsSuppliersPartialUpdateResponseMock = (
   overrideResponse: Partial<Extract<SupplierOut, object>> = {},
 ): SupplierOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -191,7 +191,7 @@ export const getLogisticsContractsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getLogisticsContractsUpdateResponseMock = (
+export const getLogisticsContractsPartialUpdateResponseMock = (
   overrideResponse: Partial<Extract<ContractOut, object>> = {},
 ): ContractOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -295,7 +295,7 @@ export const getLogisticsItemsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getLogisticsItemsUpdateResponseMock = (
+export const getLogisticsItemsPartialUpdateResponseMock = (
   overrideResponse: Partial<Extract<ItemOut, object>> = {},
 ): ItemOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -373,7 +373,7 @@ export const getLogisticsSuppliersReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/logistics/suppliers/:supplierUuid/",
+    "*/api/v1/logistics/suppliers/:uuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -388,7 +388,7 @@ export const getLogisticsSuppliersReadMockHandler = (
   );
 };
 
-export const getLogisticsSuppliersUpdateMockHandler = (
+export const getLogisticsSuppliersPartialUpdateMockHandler = (
   overrideResponse?:
     | SupplierOut
     | ((
@@ -397,14 +397,14 @@ export const getLogisticsSuppliersUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/logistics/suppliers/:supplierUuid/",
+    "*/api/v1/logistics/suppliers/:uuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getLogisticsSuppliersUpdateResponseMock(),
+          : getLogisticsSuppliersPartialUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -421,7 +421,7 @@ export const getLogisticsSuppliersDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/logistics/suppliers/:supplierUuid/",
+    "*/api/v1/logistics/suppliers/:uuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -490,7 +490,7 @@ export const getLogisticsContractsReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/logistics/contracts/:contractUuid/",
+    "*/api/v1/logistics/contracts/:uuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -505,7 +505,7 @@ export const getLogisticsContractsReadMockHandler = (
   );
 };
 
-export const getLogisticsContractsUpdateMockHandler = (
+export const getLogisticsContractsPartialUpdateMockHandler = (
   overrideResponse?:
     | ContractOut
     | ((
@@ -514,14 +514,14 @@ export const getLogisticsContractsUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/logistics/contracts/:contractUuid/",
+    "*/api/v1/logistics/contracts/:uuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getLogisticsContractsUpdateResponseMock(),
+          : getLogisticsContractsPartialUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -538,7 +538,7 @@ export const getLogisticsContractsDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/logistics/contracts/:contractUuid/",
+    "*/api/v1/logistics/contracts/:uuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -607,7 +607,7 @@ export const getLogisticsItemsReadMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
-    "*/api/v1/logistics/items/:itemUuid/",
+    "*/api/v1/logistics/items/:uuid/",
     async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
@@ -622,7 +622,7 @@ export const getLogisticsItemsReadMockHandler = (
   );
 };
 
-export const getLogisticsItemsUpdateMockHandler = (
+export const getLogisticsItemsPartialUpdateMockHandler = (
   overrideResponse?:
     | ItemOut
     | ((
@@ -631,14 +631,14 @@ export const getLogisticsItemsUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/logistics/items/:itemUuid/",
+    "*/api/v1/logistics/items/:uuid/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getLogisticsItemsUpdateResponseMock(),
+          : getLogisticsItemsPartialUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -655,7 +655,7 @@ export const getLogisticsItemsDeleteMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.delete(
-    "*/api/v1/logistics/items/:itemUuid/",
+    "*/api/v1/logistics/items/:uuid/",
     async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
       if (typeof overrideResponse === "function") {
         await overrideResponse(info);
@@ -670,16 +670,16 @@ export const getLogisticsMock = () => [
   getLogisticsSuppliersListMockHandler(),
   getLogisticsSuppliersCreateMockHandler(),
   getLogisticsSuppliersReadMockHandler(),
-  getLogisticsSuppliersUpdateMockHandler(),
+  getLogisticsSuppliersPartialUpdateMockHandler(),
   getLogisticsSuppliersDeleteMockHandler(),
   getLogisticsContractsListMockHandler(),
   getLogisticsContractsCreateMockHandler(),
   getLogisticsContractsReadMockHandler(),
-  getLogisticsContractsUpdateMockHandler(),
+  getLogisticsContractsPartialUpdateMockHandler(),
   getLogisticsContractsDeleteMockHandler(),
   getLogisticsItemsListMockHandler(),
   getLogisticsItemsCreateMockHandler(),
   getLogisticsItemsReadMockHandler(),
-  getLogisticsItemsUpdateMockHandler(),
+  getLogisticsItemsPartialUpdateMockHandler(),
   getLogisticsItemsDeleteMockHandler(),
 ];

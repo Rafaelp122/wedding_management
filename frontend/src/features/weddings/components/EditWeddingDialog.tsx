@@ -1,13 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useWeddingsUpdate } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { WeddingsUpdateBody } from "@/api/generated/v1/zod/weddings/weddings";
+import { useWeddingsPartialUpdate } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { WeddingsPartialUpdateBody } from "@/api/generated/v1/zod/weddings/weddings";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { WeddingOut } from "@/api/generated/v1/models";
 import type { z } from "zod";
 
-type UpdateWeddingFormData = z.infer<typeof WeddingsUpdateBody>;
+type UpdateWeddingFormData = z.infer<typeof WeddingsPartialUpdateBody>;
 
 import {
   Dialog,
@@ -33,10 +33,10 @@ export function EditWeddingDialog({
   onOpenChange,
   onSuccess,
 }: EditWeddingDialogProps) {
-  const { mutate, isPending } = useWeddingsUpdate();
+  const { mutate, isPending } = useWeddingsPartialUpdate();
 
   const form = useForm<UpdateWeddingFormData>({
-    resolver: zodResolver(WeddingsUpdateBody),
+    resolver: zodResolver(WeddingsPartialUpdateBody),
     defaultValues: {
       groom_name: wedding.groom_name || "",
       bride_name: wedding.bride_name || "",
@@ -48,7 +48,7 @@ export function EditWeddingDialog({
 
   const onSubmit = (data: UpdateWeddingFormData) => {
     mutate(
-      { weddingUuid: wedding.uuid, data },
+      { uuid: wedding.uuid, data },
       {
         onSuccess: () => {
           toast.success("Casamento atualizado com sucesso!");
@@ -77,10 +77,7 @@ export function EditWeddingDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <WeddingFormFields form={form} />
             <WeddingDialogActions
               isPending={isPending}

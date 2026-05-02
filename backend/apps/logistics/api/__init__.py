@@ -1,6 +1,10 @@
-from .contracts import ContractController
-from .items import ItemController
-from .suppliers import SupplierController
+from .contracts import contracts_router
+from .items import items_router
+from .suppliers import suppliers_router
 
 
-__all__ = ["ContractController", "ItemController", "SupplierController"]
+__all__ = [
+    "contracts_router",
+    "items_router",
+    "suppliers_router",
+]

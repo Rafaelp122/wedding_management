@@ -8,6 +8,9 @@ import * as zod from "zod";
 
 /**
  * Lista todos os casamentos gerenciados pelo Planner logado.
+
+Retorna apenas os registros criados pelo usuário autenticado.
+Garante o isolamento de dados entre diferentes Planners (Multi-tenancy).
  * @summary List Weddings
  */
 export const weddingsListQueryLimitDefault = 100;
@@ -44,6 +47,10 @@ export const WeddingsListResponse = zod.object({
 
 /**
  * Cria um novo casamento e inicializa sua estrutura financeira.
+
+Ao criar um casamento, o Service Layer automaticamente:
+- Associa o Planner logado como dono do registro.
+- Cria um **Budget (Orçamento)** inicial zerado para o evento.
  * @summary Create Wedding
  */
 export const WeddingsCreateBody = zod
@@ -60,10 +67,13 @@ export const WeddingsCreateBody = zod
 
 /**
  * Retorna os detalhes completos de um casamento específico.
+
+Realiza a busca pelo UUID e valida se o registro pertence ao usuário.
+Caso não exista ou pertença a outro Planner, retorna um erro 404.
  * @summary Retrieve Wedding
  */
 export const WeddingsReadParams = zod.object({
-  wedding_uuid: zod.string(),
+  uuid: zod.string(),
 });
 
 export const WeddingsReadResponse = zod
@@ -82,13 +92,16 @@ export const WeddingsReadResponse = zod
 
 /**
  * Atualiza informações específicas de um casamento.
- * @summary Update Wedding
+
+Permite modificar campos como nomes dos noivos, data e local sem afetar o restante.
+Os dados são validados pelo Service antes da persistência.
+ * @summary Partial Update Wedding
  */
-export const WeddingsUpdateParams = zod.object({
-  wedding_uuid: zod.string(),
+export const WeddingsPartialUpdateParams = zod.object({
+  uuid: zod.string(),
 });
 
-export const WeddingsUpdateBody = zod
+export const WeddingsPartialUpdateBody = zod
   .object({
     groom_name: zod.union([zod.string(), zod.null()]).optional(),
     bride_name: zod.union([zod.string(), zod.null()]).optional(),
@@ -98,7 +111,7 @@ export const WeddingsUpdateBody = zod
   })
   .describe("Schema puro e explícito para ATUALIZAÇÃO de Casamento.");
 
-export const WeddingsUpdateResponse = zod
+export const WeddingsPartialUpdateResponse = zod
   .object({
     uuid: zod.string(),
     groom_name: zod.string(),
@@ -114,8 +127,12 @@ export const WeddingsUpdateResponse = zod
 
 /**
  * Remove um casamento e limpa todos os dados vinculados (Cascata).
+
+**Atenção:** Esta ação é irreversível e deleta automaticamente:
+- Todo o histórico financeiro (orçamentos e despesas).
+- Cronogramas, contratos e fornecedores vinculados exclusivamente a este evento.
  * @summary Delete Wedding
  */
 export const WeddingsDeleteParams = zod.object({
-  wedding_uuid: zod.string(),
+  uuid: zod.string(),
 });

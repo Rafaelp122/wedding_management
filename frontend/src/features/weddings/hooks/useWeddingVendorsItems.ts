@@ -1,7 +1,4 @@
-import {
-  useLogisticsContractsList,
-  useLogisticsItemsList,
-} from "@/api/generated/v1/endpoints/logistics/logistics";
+import { useLogisticsContractsList, useLogisticsItemsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 
 export function useWeddingVendorsItems(weddingUuid: string) {
   const {
