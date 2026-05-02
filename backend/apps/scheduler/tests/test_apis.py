@@ -8,7 +8,7 @@ from apps.weddings.services import WeddingService
 def seed_data(user, django_user_model):
     # Planner alvo
     my_wedding = WeddingService.create(
-        user,
+        user.company,
         {
             "bride_name": "Minha",
             "groom_name": "Noz",
@@ -17,7 +17,7 @@ def seed_data(user, django_user_model):
         },
     )
     my_event = EventService.create(
-        user,
+        user.company,
         {
             "wedding": my_wedding,
             "title": "Reunião A",
@@ -30,7 +30,7 @@ def seed_data(user, django_user_model):
     # Planner alheio
     other_user = django_user_model.objects.create_user(email="b@b.com", password="123")
     other_wedding = WeddingService.create(
-        other_user,
+        other_user.company,
         {
             "bride_name": "Outra",
             "groom_name": "Outro",
@@ -39,13 +39,13 @@ def seed_data(user, django_user_model):
         },
     )
     EventService.create(
-        other_user,
+        other_user.company,
         {
             "wedding": other_wedding,
             "title": "Reunião B",
             "event_type": "reuniao",
-            "start_time": "2026-10-11T12:00:00Z",
-            "end_time": "2026-10-11T13:00:00Z",
+            "start_time": "2026-10-11T10:00:00Z",
+            "end_time": "2026-10-11T11:00:00Z",
         },
     )
 

@@ -19,7 +19,7 @@ def list_tasks(request: HttpRequest, wedding_id: UUID4 | None = None) -> QuerySe
     """
     Lista tarefas e checklist.
     """
-    return TaskService.list(request.user, wedding_id=wedding_id)
+    return TaskService.list(request.user.company, wedding_id=wedding_id)
 
 
 @tasks_router.post(
@@ -31,7 +31,7 @@ def create_task(request: HttpRequest, payload: TaskIn) -> tuple[int, Task]:
     """
     Cria uma nova tarefa no checklist.
     """
-    return 201, TaskService.create(request.user, payload.dict())
+    return 201, TaskService.create(request.user.company, payload.dict())
 
 
 @tasks_router.patch(
@@ -43,8 +43,10 @@ def update_task(request: HttpRequest, uuid: UUID4, payload: TaskPatchIn) -> Task
     """
     Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
     """
-    instance = TaskService.get(request.user, uuid)
-    return TaskService.update(request.user, instance, payload.dict(exclude_unset=True))
+    instance = TaskService.get(request.user.company, uuid)
+    return TaskService.update(
+        request.user.company, instance, payload.dict(exclude_unset=True)
+    )
 
 
 @tasks_router.delete(
@@ -56,5 +58,5 @@ def delete_task(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove uma tarefa permanentemente.
     """
-    TaskService.delete(request.user, uuid)
+    TaskService.delete(request.user.company, uuid)
     return 204, None

@@ -26,9 +26,9 @@ class EventFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Event
 
-    # Garante que o planner do evento seja o dono do casamento vinculado
+    # Garante que a empresa do evento seja a mesma do casamento vinculado
     wedding = factory.SubFactory(WeddingFactory)
-    planner = factory.SelfAttribute("..wedding.planner")
+    company = factory.SelfAttribute("wedding.company")
 
     title = factory.Faker("sentence", nb_words=4)
     location = factory.Faker("address")

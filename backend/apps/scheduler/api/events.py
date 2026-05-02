@@ -24,7 +24,7 @@ def list_events(
     Retorna tanto tarefas isoladas quanto eventos atrelados aos diferentes casamentos.
     Garante que o usuário veja apenas os eventos de sua propriedade.
     """
-    return EventService.list(request.user, wedding_id=wedding_id)
+    return EventService.list(request.user.company, wedding_id=wedding_id)
 
 
 @events_router.get(
@@ -38,7 +38,7 @@ def get_event(request: HttpRequest, uuid: UUID4) -> Event:
 
     Realiza a busca pelo UUID garantindo que o evento pertence ao Planner logado.
     """
-    return EventService.get(request.user, uuid)
+    return EventService.get(request.user.company, uuid)
 
 
 @events_router.post(
@@ -54,7 +54,7 @@ def create_event(request: HttpRequest, payload: EventIn) -> tuple[int, Event]:
     - Garantir que a data de término não seja anterior à data de início.
     - Validar os minutos para o disparo de lembretes (reminder).
     """
-    return 201, EventService.create(request.user, payload.dict())
+    return 201, EventService.create(request.user.company, payload.dict())
 
 
 @events_router.patch(
@@ -68,8 +68,10 @@ def update_event(request: HttpRequest, uuid: UUID4, payload: EventPatchIn) -> Ev
 
     Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
     """
-    instance = EventService.get(request.user, uuid)
-    return EventService.update(request.user, instance, payload.dict(exclude_unset=True))
+    instance = EventService.get(request.user.company, uuid)
+    return EventService.update(
+        request.user.company, instance, payload.dict(exclude_unset=True)
+    )
 
 
 @events_router.delete(
@@ -84,5 +86,5 @@ def delete_event(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     Deleta a tarefa permanentemente.
     Desativa também os alertas e lembretes associados a ela.
     """
-    EventService.delete(request.user, uuid)
+    EventService.delete(request.user.company, uuid)
     return 204, None
