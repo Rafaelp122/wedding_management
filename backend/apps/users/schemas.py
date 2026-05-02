@@ -1,11 +1,29 @@
 from ninja import Schema
-from pydantic import UUID4
+from pydantic import UUID4, EmailStr
+
+
+class TokenPayloadIn(Schema):
+    email: EmailStr
+    password: str
+
+
+class UserDataOut(Schema):
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+
+
+class TokenOut(Schema):
+    access: str
+    refresh: str
+    user: UserDataOut
 
 
 class RegisterIn(Schema):
     """Schema para entrada de novos usuários (Owners)."""
 
-    email: str
+    email: EmailStr
     password: str
     first_name: str = ""
     last_name: str = ""
