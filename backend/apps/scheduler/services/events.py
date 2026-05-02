@@ -5,10 +5,9 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
-from apps.core.types import AuthContextUser
 from apps.scheduler.models import Event
+from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
 
@@ -22,19 +21,17 @@ class EventService:
     """
 
     @staticmethod
-    def list(
-        user: AuthContextUser, wedding_id: UUID | str | None = None
-    ) -> QuerySet[Event]:
-        qs = Event.objects.for_user(user).select_related("wedding", "planner")
+    def list(company: Company, wedding_id: UUID | str | None = None) -> QuerySet[Event]:
+        qs = Event.objects.for_tenant(company).select_related("wedding")
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
         return qs
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: UUID | str) -> Event:
+    def get(company: Company, uuid: UUID | str) -> Event:
         event = (
-            Event.objects.for_user(user)
-            .select_related("wedding", "planner")
+            Event.objects.for_tenant(company)
+            .select_related("wedding")
             .filter(uuid=uuid)
             .first()
         )
@@ -47,9 +44,8 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> Event:
-        planner = require_user(user)
-        logger.info(f"Iniciando criação de Evento para planner_id={planner.id}")
+    def create(company: Company, data: dict[str, Any]) -> Event:
+        logger.info(f"Iniciando criação de Evento para company_id={company.id}")
 
         wedding_input = data.pop("wedding", None)
 
@@ -57,11 +53,11 @@ class EventService:
             wedding = wedding_input
         else:
             try:
-                wedding = Wedding.objects.for_user(planner).get(uuid=wedding_input)
+                wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_input)
             except Wedding.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de agendamento em casamento inválido ou "
-                    f"negado: {wedding_input} por planner_id={planner.id}"
+                    f"negado: {wedding_input} por company_id={company.id}"
                 )
                 raise ObjectNotFoundError(
                     detail="Casamento não encontrado ou você não tem permissão para "
@@ -69,7 +65,7 @@ class EventService:
                     code="wedding_not_found_or_denied",
                 ) from e
 
-        event = Event(planner=planner, wedding=wedding, **data)
+        event = Event(company=company, wedding=wedding, **data)
         event.save()
 
         logger.info(
@@ -80,14 +76,13 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def update(user: AuthContextUser, instance: Event, data: dict[str, Any]) -> Event:
-        planner = require_user(user)
+    def update(company: Company, instance: Event, data: dict[str, Any]) -> Event:
         logger.info(
-            f"Atualizando Evento uuid={instance.uuid} por planner_id={planner.id}"
+            f"Atualizando Evento uuid={instance.uuid} por company_id={company.id}"
         )
 
         data.pop("wedding", None)
-        data.pop("planner", None)
+        data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
@@ -99,18 +94,17 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, uuid: UUID | str) -> None:
-        instance = EventService.get(user, uuid)
-        planner = require_user(user)
+    def delete(company: Company, uuid: UUID | str) -> None:
+        instance = EventService.get(company, uuid)
         logger.info(
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
-            f"planner_id={planner.id}"
+            f"company_id={company.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Evento uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
+                f"Evento uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
             )
 
         except ProtectedError as e:

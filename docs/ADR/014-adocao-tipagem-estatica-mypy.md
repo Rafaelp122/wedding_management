@@ -83,7 +83,7 @@ Adotar tipagem estática com mypy + django-stubs como padrão de qualidade obrig
 
 1. AuthContextUser consolidado para representar o contexto de autenticação no domínio.
 2. Narrowing explícito em operações que exigem usuário autenticado (ex.: criação/edição com ownership).
-3. Tipagem de QuerySet e Managers base para manter consistência em for_user.
+3. Tipagem de QuerySet e Managers base para manter consistência em for_tenant.
 4. Tipagem de retorno em handlers de API para evitar funções implícitas.
 5. Ajustes em nomes/imports para evitar conflitos com campos de model em tempo de import do plugin.
 

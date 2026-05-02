@@ -4,8 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from apps.core.mixins import PlannerOwnedMixin
-from apps.core.models import BaseModel
+from apps.tenants.models import TenantModel
 
 
 def validate_future_date(value: date) -> None:
@@ -13,7 +12,7 @@ def validate_future_date(value: date) -> None:
         raise ValidationError("A data do casamento não pode ser no passado.")
 
 
-class Wedding(BaseModel, PlannerOwnedMixin):
+class Wedding(TenantModel):
     class StatusChoices(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "Em Andamento"
         COMPLETED = "COMPLETED", "Concluído"
@@ -40,7 +39,7 @@ class Wedding(BaseModel, PlannerOwnedMixin):
         verbose_name_plural = "Casamentos"
         ordering = ["-date"]
         indexes = [
-            models.Index(fields=["planner", "status"]),
+            models.Index(fields=["company", "status"]),
             models.Index(fields=["date"]),
             models.Index(fields=["status"]),
         ]

@@ -14,11 +14,13 @@ import type {
 
 import type {
   ErrorResponse,
+  RegisterIn,
   TokenOut,
   TokenPayloadIn,
   TokenRefreshInputSchema,
   TokenRefreshOutputSchema,
   TokenVerifyInputSchema,
+  UserOut,
 } from "../../models";
 
 import { customInstance } from "../../../../custom-instance";
@@ -26,6 +28,96 @@ import type { ErrorType } from "../../../../custom-instance";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+/**
+ * Cria um novo usuário e um workspace dedicado (Tenant Pragmático).
+ * @summary Register User
+ */
+export const authRegisterUser = (
+  registerIn: RegisterIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<UserOut>(
+    {
+      url: `/api/v1/auth/register/`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: registerIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getAuthRegisterUserMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authRegisterUser>>,
+    TError,
+    { data: RegisterIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authRegisterUser>>,
+  TError,
+  { data: RegisterIn },
+  TContext
+> => {
+  const mutationKey = ["authRegisterUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authRegisterUser>>,
+    { data: RegisterIn }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authRegisterUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthRegisterUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authRegisterUser>>
+>;
+export type AuthRegisterUserMutationBody = RegisterIn;
+export type AuthRegisterUserMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Register User
+ */
+export const useAuthRegisterUser = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authRegisterUser>>,
+      TError,
+      { data: RegisterIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authRegisterUser>>,
+  TError,
+  { data: RegisterIn },
+  TContext
+> => {
+  return useMutation(getAuthRegisterUserMutationOptions(options), queryClient);
+};
 /**
  * Autentica o usuário e retorna o token de acesso.
 

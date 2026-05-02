@@ -1,9 +1,14 @@
 from apps.core.exceptions import BusinessRuleViolation
-from apps.core.types import AuthContextUser
-from apps.users.models import User
+
+from .models import User
+from .types import AuthContextUser
 
 
 def require_user(user: AuthContextUser) -> User:
+    """
+    Garante que o usuário está autenticado e retorna a instância de User.
+    Lança BusinessRuleViolation caso contrário.
+    """
     if not user.is_authenticated:
         raise BusinessRuleViolation(
             detail="Autenticação obrigatória para executar esta operação.",

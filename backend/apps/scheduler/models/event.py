@@ -1,10 +1,10 @@
 from django.db import models
 
-from apps.core.mixins import PlannerOwnedMixin, WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.core.mixins import WeddingOwnedMixin
+from apps.tenants.models import TenantModel
 
 
-class Event(BaseModel, PlannerOwnedMixin, WeddingOwnedMixin):
+class Event(TenantModel, WeddingOwnedMixin):
     """Modelo que representa um evento/compromisso no calendário."""
 
     class TypeChoices(models.TextChoices):
@@ -45,7 +45,7 @@ class Event(BaseModel, PlannerOwnedMixin, WeddingOwnedMixin):
         verbose_name_plural = "Eventos"
         ordering = ["start_time"]
         indexes = [
-            models.Index(fields=["planner", "start_time"]),
+            models.Index(fields=["company", "start_time"]),
             models.Index(fields=["wedding", "start_time"]),
             models.Index(fields=["event_type"]),
             models.Index(fields=["start_time"]),

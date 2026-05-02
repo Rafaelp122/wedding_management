@@ -80,9 +80,10 @@ make superuser
 wedding_management/
 ├── backend/                  # Django Ninja API
 │   ├── apps/
-│   │   ├── core/            # Models Base + Managers
-│   │   ├── users/           # Autenticação
-│   │   ├── weddings/        # Wedding (núcleo)
+│   │   ├── core/            # Models Base + Managers Técnicos
+│   │   ├── tenants/         # Gestão de Empresas (Multi-tenancy)
+│   │   ├── users/           # Usuários e Autenticação
+│   │   ├── weddings/        # Wedding (núcleo do domínio)
 │   │   ├── finances/        # Budget, BudgetCategory, Expense, Installment
 │   │   ├── logistics/       # Supplier, Item, Contract
 │   │   └── scheduler/       # Agenda e Eventos

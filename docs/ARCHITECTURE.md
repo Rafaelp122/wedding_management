@@ -102,11 +102,12 @@ gunicorn>=23.0.0,<24.0          # WSGI server
 ```
 backend/apps/
 ├── core/           # BaseModel, Mixins, Managers, Schemas Base
-├── users/          # Authentication, JWT
+├── tenants/        # Company entity, TenantModel, TenantManager
+├── users/          # Authentication, JWT, User model
 ├── weddings/       # Wedding entity (raiz do domínio)
 ├── finances/       # Budget, BudgetCategory, Expense, Installment
 ├── logistics/      # Supplier, Item, Contract
-└── scheduler/      # Event
+└── scheduler/      # Event, Task
 ```
 
 ---
@@ -183,7 +184,12 @@ DATABASES = {
 **Índices Estratégicos:**
 
 ```sql
--- Multitenancy (usado em 99% das queries)
+-- Multitenancy (Vertical Isolation - Usado em 100% das queries)
+CREATE INDEX idx_company_id ON finances_expense(company_id);
+CREATE INDEX idx_company_id ON logistics_item(company_id);
+CREATE INDEX idx_company_uuid_composite ON weddings_wedding(company_id, uuid);
+
+-- Contextual Isolation (Horizontal - Wedding Context)
 CREATE INDEX idx_wedding_id ON finances_expense(wedding_id);
 CREATE INDEX idx_wedding_id ON logistics_item(wedding_id);
 
@@ -324,64 +330,53 @@ Ver [ADR-006](ADR/006-service-layer.md).
 
 ---
 
-### 3.2 Mixins Abstratos
+### 3.2 Modelagem Base e Multi-tenancy
 
-**BaseModel:**
+O sistema utiliza uma hierarquia de classes abstratas para garantir consistência técnica e segurança de dados.
+
+**BaseModel (Técnico):**
 
 ```python
 # apps/core/models.py
 class BaseModel(models.Model):
     """Base abstrata com chave híbrida (BigInt + UUID4) e timestamps."""
-    id = models.BigAutoField(primary_key=True)  # Interno (JOINs)
-    uuid = models.UUIDField(
-        default=uuid.uuid4,   # UUID v4 (aleatório)
-        unique=True,
-        db_index=True,
-        editable=False
-    )  # Público (API)
-
+    id = models.BigAutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    objects = BaseManager()  # Manager com for_user()
 
     class Meta:
         abstract = True
 ```
 
-**WeddingOwnedMixin:**
+**TenantModel (Segurança SaaS):**
+
+```python
+# apps/tenants/models.py
+class TenantModel(BaseModel):
+    """
+    Garante o isolamento vertical (entre empresas).
+    Todo dado de domínio deve herdar desta classe.
+    """
+    company = models.ForeignKey('tenants.Company', on_delete=models.CASCADE)
+    objects = TenantManager() # Filtro automático .for_tenant()
+
+    class Meta:
+        abstract = True
+```
+
+**WeddingOwnedMixin (Contexto de Negócio):**
 
 ```python
 class WeddingOwnedMixin(models.Model):
     """
-    Denormalização: wedding_id em cada entidade para:
-    - Queries rápidas (sem JOINs complexos)
-    - Isolamento automático via manager
-    - Segurança por design
-
-    NÃO herda de BaseModel — é um mixin complementar.
-    Models usam: class MyModel(BaseModel, WeddingOwnedMixin)
+    Denormalização para isolamento horizontal (dentro da mesma empresa).
+    Garante que itens do Casamento A não apareçam no Casamento B.
     """
-    wedding = models.ForeignKey(
-        'weddings.Wedding',
-        on_delete=models.CASCADE,
-        related_name='%(class)s_records',
-    )
+    wedding = models.ForeignKey('weddings.Wedding', on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
-
-    def clean(self):
-        """Valida que FKs apontem para o mesmo wedding."""
-        super().clean()
-        for field in self._meta.get_fields():  # ⚠️ Bug latente: deveria usar concrete_fields
-            if isinstance(field, models.ForeignKey):
-                related_obj = getattr(self, field.name)
-                if related_obj and hasattr(related_obj, 'wedding_id'):
-                    if related_obj.wedding_id != self.wedding_id:
-                        raise ValidationError(
-                            {field.name: 'Este recurso pertence a outro casamento.'}
-                        )
 ```
 
 ---
@@ -923,6 +918,7 @@ logger.info(
 8. [ADR-008: Soft Delete Seletivo](ADR/008-soft-delete.md)
 9. [ADR-009: Multitenancy Denormalizado](ADR/009-multitenancy.md)
 10. [ADR-010: Tolerância Zero em Cálculos](ADR/010-tolerance-zero.md)
+11. [ADR-016: Multi-tenancy Pragmático](ADR/016-pragmatic-multi-tenancy.md)
 
 ---
 

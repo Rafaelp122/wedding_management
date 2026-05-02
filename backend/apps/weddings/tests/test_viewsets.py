@@ -11,7 +11,7 @@ class TestWeddingViewSet:
         Garante que o Planner só veja os SEUS casamentos na listagem.
         """
         # Setup: Casamento do usuário logado e de outro planner
-        WeddingFactory(planner=user, bride_name="Noiva do User")
+        WeddingFactory(company=user.company, bride_name="Noiva do User")
         WeddingFactory(bride_name="Noiva Alheia")  # Planner diferente via factory
 
         url = "/api/v1/weddings/"
@@ -56,7 +56,7 @@ class TestWeddingViewSet:
         assert response.status_code == 201
         # Verifica se o Service foi chamado (pela presença do UUID e Budget)
         assert "uuid" in response.json()
-        assert Wedding.objects.filter(planner=user).count() == 1
+        assert Wedding.objects.filter(company=user.company).count() == 1
 
     def test_unauthenticated_access_denied(self, client):
         """

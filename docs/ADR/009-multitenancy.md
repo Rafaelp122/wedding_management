@@ -1,5 +1,7 @@
 # ADR-009: Multitenancy Denormalizado
 
+> **Nota:** Este ADR descreve o isolamento **horizontal** (entre casamentos). A partir de Maio de 2026, ele foi suplementado pelo [ADR-016: Multi-tenancy Pragmático](016-pragmatic-multi-tenancy.md), que introduz a camada de isolamento **vertical** (entre organizações/empresas) através do `TenantModel`.
+
 **Status:** Aceito
 **Data:** Janeiro 2025
 **Decisor:** Rafael

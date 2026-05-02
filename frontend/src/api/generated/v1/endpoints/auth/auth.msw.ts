@@ -9,7 +9,24 @@ import { faker } from "@faker-js/faker";
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type { TokenOut, TokenRefreshOutputSchema } from "../../models";
+import type { TokenOut, TokenRefreshOutputSchema, UserOut } from "../../models";
+
+export const getAuthRegisterUserResponseMock = (
+  overrideResponse: Partial<Extract<UserOut, object>> = {},
+): UserOut => ({
+  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  first_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  last_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  company_slug: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
 
 export const getAuthObtainTokenResponseMock = (
   overrideResponse: Partial<Extract<TokenOut, object>> = {},
@@ -46,6 +63,30 @@ export const getAuthVerifyTokenResponseMock = (
   ]),
   ...overrideResponse,
 });
+
+export const getAuthRegisterUserMockHandler = (
+  overrideResponse?:
+    | UserOut
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<UserOut> | UserOut),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/api/v1/auth/register/",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getAuthRegisterUserResponseMock(),
+        { status: 201 },
+      );
+    },
+    options,
+  );
+};
 
 export const getAuthObtainTokenMockHandler = (
   overrideResponse?:
@@ -119,6 +160,7 @@ export const getAuthVerifyTokenMockHandler = (
   );
 };
 export const getAuthMock = () => [
+  getAuthRegisterUserMockHandler(),
   getAuthObtainTokenMockHandler(),
   getAuthRefreshTokenMockHandler(),
   getAuthVerifyTokenMockHandler(),

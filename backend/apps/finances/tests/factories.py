@@ -15,6 +15,7 @@ class BudgetFactory(factory.django.DjangoModelFactory):
         model = Budget
 
     wedding = factory.SubFactory(WeddingFactory)
+    company = factory.SelfAttribute("wedding.company")
     total_estimated = Decimal("50000.00")
 
 
@@ -22,6 +23,8 @@ class BudgetCategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BudgetCategory
 
+    wedding = factory.SelfAttribute("budget.wedding")
+    company = factory.SelfAttribute("wedding.company")
     budget = factory.SubFactory(
         BudgetFactory, wedding=factory.SelfAttribute("..wedding")
     )
@@ -36,6 +39,7 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
         model = Expense
 
     wedding = factory.SubFactory(WeddingFactory)
+    company = factory.SelfAttribute("wedding.company")
 
     category = factory.SubFactory(
         BudgetCategoryFactory,
@@ -61,6 +65,8 @@ class InstallmentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Installment
 
+    wedding = factory.SelfAttribute("expense.wedding")
+    company = factory.SelfAttribute("wedding.company")
     expense = factory.SubFactory(ExpenseFactory)
     installment_number = factory.Sequence(lambda n: n + 1)
     amount = Decimal("500.00")

@@ -6,13 +6,12 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.types import AuthContextUser
+from apps.tenants.models import Company
 
 from ..models import Wedding
 
@@ -29,12 +28,12 @@ class WeddingService:
     """
 
     @staticmethod
-    def list(user: AuthContextUser) -> QuerySet[Wedding]:
-        return Wedding.objects.for_user(user)
+    def list(company: Company) -> QuerySet[Wedding]:
+        return Wedding.objects.for_tenant(company)
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: UUID | str) -> Wedding:
-        wedding = Wedding.objects.for_user(user).filter(uuid=uuid).first()
+    def get(company: Company, uuid: UUID | str) -> Wedding:
+        wedding = Wedding.objects.for_tenant(company).filter(uuid=uuid).first()
         if wedding is None:
             raise ObjectNotFoundError(
                 detail="Casamento não encontrado ou acesso negado.",
@@ -44,24 +43,21 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> Wedding:
-        planner = require_user(user)
-        logger.info(f"Criando casamento para planner_id={planner.id}")
+    def create(company: Company, data: dict[str, Any]) -> Wedding:
+        logger.info(f"Criando casamento para company_id={company.id}")
 
-        # Filtra apenas os campos que pertencem ao modelo Wedding (Segurança e Robustez)
-        # Isso permite que o Service receba dados extras do Schema ou de Testes
-        # sem falhar na instanciação do Model.
+        # Filtra apenas os campos que pertencem ao modelo Wedding
         valid_fields = {f.name for f in Wedding._meta.concrete_fields}
         model_data = {k: v for k, v in data.items() if k in valid_fields}
 
         # Instanciação e Validação do Casamento
-        wedding = Wedding(planner=planner, **model_data)
+        wedding = Wedding(company=company, **model_data)
         try:
             wedding.save()
         except DjangoValidationError as e:
             logger.warning(
-                "Falha de validação ao criar casamento para planner_id=%s: %s",
-                planner.id,
+                "Falha de validação ao criar casamento para company_id=%s: %s",
+                company.id,
                 e,
             )
             detail = "; ".join(e.messages) if e.messages else str(e)
@@ -75,12 +71,9 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def update(
-        user: AuthContextUser, instance: Wedding, data: dict[str, Any]
-    ) -> Wedding:
-        planner = require_user(user)
+    def update(company: Company, instance: Wedding, data: dict[str, Any]) -> Wedding:
         logger.info(
-            f"Atualizando casamento uuid={instance.uuid} por planner_id={planner.id}"
+            f"Atualizando casamento uuid={instance.uuid} pela company_id={company.id}"
         )
 
         valid_fields = {f.name for f in Wedding._meta.concrete_fields}
@@ -88,15 +81,15 @@ class WeddingService:
             if field in valid_fields:
                 setattr(instance, field, value)
 
-        # Validação estrita (regras de negócio do Model)
+        # Validação estrita
         try:
             instance.save()
         except DjangoValidationError as e:
             logger.warning(
-                "Falha de validação ao atualizar casamento uuid=%s por "
-                "planner_id=%s: %s",
+                "Falha de validação ao atualizar casamento uuid=%s pela "
+                "company_id=%s: %s",
                 instance.uuid,
-                planner.id,
+                company.id,
                 e,
             )
             detail = "; ".join(e.messages) if e.messages else str(e)
@@ -110,25 +103,21 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, uuid: UUID | str) -> None:
+    def delete(company: Company, uuid: UUID | str) -> None:
         """
         Deleta um casamento.
-        Busca a instância internamente antes de deletar.
         """
-        instance = WeddingService.get(user, uuid)
-        planner = require_user(user)
+        instance = WeddingService.get(company, uuid)
         logger.info(
-            f"Tentativa de deleção do casamento uuid={instance.uuid} por "
-            f"planner_id={planner.id}"
+            f"Tentativa de deleção do casamento uuid={instance.uuid} pela "
+            f"company_id={company.id}"
         )
 
         try:
-            # O Django cuidará do CASCADE para o Budget e Categorias,
-            # a menos que haja PROTECT em contratos/despesas.
             instance.delete()
             logger.warning(
-                f"Casamento uuid={instance.uuid} e dependências removidos por "
-                f"planner_id={planner.id}"
+                f"Casamento uuid={instance.uuid} e dependências removidos pela "
+                f"company_id={company.id}"
             )
 
         except ProtectedError as e:

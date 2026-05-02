@@ -32,7 +32,8 @@ docs/
     ├── 010-tolerance-zero.md
     ├── 011-basemodel-save-full-clean.md
     ├── 012-orval-contract-driven-frontend.md
-    └── 013-migrate-drf-to-ninja.md
+    ├── 013-migrate-drf-to-ninja.md
+    └── 016-pragmatic-multi-tenancy.md
 ```
 
 ---
@@ -190,7 +191,7 @@ docs/
 
 - **Padrões de código:**
   - Service Layer (lógica de negócio isolada)
-  - Mixins (BaseModel, WeddingOwnedMixin, PlannerOwnedMixin)
+  - Mixins (BaseModel, TenantModel, WeddingOwnedMixin)
   - Validação em cascata (Model → Serializer → Service)
 
 - **Infraestrutura:**

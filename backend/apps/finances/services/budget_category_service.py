@@ -5,13 +5,12 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.types import AuthContextUser
 from apps.finances.models import Budget, BudgetCategory
+from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
 
@@ -26,46 +25,23 @@ class BudgetCategoryService:
 
     @staticmethod
     def list(
-        user: AuthContextUser, wedding_id: UUID | None = None
+        company: Company, wedding_id: UUID | None = None
     ) -> QuerySet[BudgetCategory]:
         """
-        Lista categorias de orçamento de um planner.
-
-        Nota de Arquitetura — ``wedding_id``:
-        O parâmetro opcional ``wedding_id`` é uma conveniência de filtragem
-        contextual, **não** um mecanismo de segurança. A multitenancy é
-        garantida em todos os casos por ``BudgetCategory.objects.for_user``
-        (herdado via ``WeddingOwnedMixin``), que isola os dados pelo ``planner``
-        autenticado.
-
-        Por que este filtro vive aqui e não na rota?
-        ──────────────────────────────────────────────
-        A regra de negócio é "cada casamento tem suas categorias isoladas".
-        Filtrar por casamento é, portanto, lógica de domínio — não deve ser
-        responsabilidade da camada de API (rotas) conhecer esse contexto.
-        A rota apenas delega o parâmetro de query ao service, que decide como
-        aplicá-lo sobre o queryset já protegido por tenancy.
-
-        Args:
-            user: Usuário autenticado (Planner).
-            wedding_id: Quando informado, restringe as categorias a um
-                casamento específico. O UUID do wedding é validado
-                implicitamente pelo .for_user() — se o usuário não tem acesso
-                ao casamento, o queryset retorna vazio.
-
-        Returns:
-            Queryset de ``BudgetCategory``, sempre escopado ao planner.
+        Lista categorias de orçamento de uma empresa.
         """
-        qs = BudgetCategory.objects.for_user(user).select_related("budget", "wedding")
+        qs = BudgetCategory.objects.for_tenant(company).select_related(
+            "budget", "wedding"
+        )
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
         return qs
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: UUID | str) -> BudgetCategory:
+    def get(company: Company, uuid: UUID | str) -> BudgetCategory:
         try:
             return (
-                BudgetCategory.objects.for_user(user)
+                BudgetCategory.objects.for_tenant(company)
                 .select_related("budget", "wedding")
                 .get(uuid=uuid)
             )
@@ -76,10 +52,9 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> BudgetCategory:
-        planner = require_user(user)
+    def create(company: Company, data: dict[str, Any]) -> BudgetCategory:
         logger.info(
-            f"Iniciando criação de Categoria de Orçamento para planner_id={planner.id}"
+            f"Iniciando criação de Categoria de Orçamento para company_id={company.id}"
         )
 
         # 1. Resolução Segura do Orçamento Pai (Suporta Instância ou UUID)
@@ -89,8 +64,8 @@ class BudgetCategoryService:
             budget = budget_input
         else:
             try:
-                # Segurança estrita: Garante posse do planner sobre o orçamento
-                budget = Budget.objects.for_user(planner).get(uuid=budget_input)
+                # Segurança estrita: Garante posse da empresa sobre o orçamento
+                budget = Budget.objects.for_tenant(company).get(uuid=budget_input)
             except Budget.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de orçamento inválido/negado: {budget_input}"
@@ -101,12 +76,11 @@ class BudgetCategoryService:
                 ) from e
 
         # 2. Injeção de Contexto e Instanciação
-        category = BudgetCategory(wedding=budget.wedding, budget=budget, **data)
+        category = BudgetCategory(
+            company=company, wedding=budget.wedding, budget=budget, **data
+        )
 
         # 3. Delegação de Validação ao Model
-        # O método _validate_budget_ceiling que estava aqui DEVE ser movido
-        # para dentro de BudgetCategory.clean(). Se o teto estourar, o Model
-        # levantará ValidationError, e nosso Handler Global cuidará disso.
         category.save()
 
         logger.info(f"Categoria de Orçamento criada com sucesso: uuid={category.uuid}")
@@ -115,23 +89,20 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def update(
-        user: AuthContextUser, instance: BudgetCategory, data: dict[str, Any]
+        company: Company, instance: BudgetCategory, data: dict[str, Any]
     ) -> BudgetCategory:
-        planner = require_user(user)
         logger.info(
-            f"Atualizando Categoria uuid={instance.uuid} por planner_id={planner.id}"
+            f"Atualizando Categoria uuid={instance.uuid} por company_id={company.id}"
         )
 
         # Proteção contra sequestro/mudança de árvore financeira
         data.pop("budget", None)
         data.pop("wedding", None)
-        data.pop("planner", None)
+        data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # A revalidação do teto financeiro com o novo 'allocated_budget'
-        # ocorre automaticamente dentro do full_clean() do Model.
         instance.save()
 
         logger.info(f"Categoria uuid={instance.uuid} atualizada com sucesso.")
@@ -139,21 +110,19 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, instance: BudgetCategory) -> None:
-        planner = require_user(user)
+    def delete(company: Company, instance: BudgetCategory) -> None:
         logger.info(
             f"Tentativa de deleção da Categoria uuid={instance.uuid} "
-            f"por planner_id={planner.id}"
+            f"por company_id={company.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Categoria uuid={instance.uuid} DESTRUÍDA por planner_id={planner.id}"
+                f"Categoria uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
             )
 
         except ProtectedError as e:
-            # Substitui a checagem manual .exists() pela trava real do banco de dados
             logger.error(
                 f"Falha de integridade ao deletar Categoria uuid={instance.uuid}: "
                 "Possui despesas ativas."
@@ -167,16 +136,9 @@ class BudgetCategoryService:
             ) from e
 
     @staticmethod
-    def setup_defaults(user: AuthContextUser, wedding: Wedding, budget: Budget) -> None:
+    def setup_defaults(company: Company, wedding: Wedding, budget: Budget) -> None:
         """
         Cria as categorias iniciais obrigatórias para um novo casamento.
-
-        Usa bulk_create para inserir todas as categorias em uma única query,
-        evitando o overhead de full_clean() + validate_unique() + INSERT
-        individual para cada uma das 6 categorias padrão.
-
-        Isso é seguro porque os dados são hardcoded e controlados internamente,
-        sem input do usuário.
         """
         DEFAULT_CATEGORIES = [
             "Espaço e Buffet",
@@ -191,6 +153,7 @@ class BudgetCategoryService:
 
         categories = [
             BudgetCategory(
+                company=company,
                 wedding=wedding,
                 budget=budget,
                 name=name,

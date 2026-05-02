@@ -13,10 +13,31 @@ from ninja_jwt.tokens import RefreshToken
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.core.schemas import ErrorResponse
-from apps.users.schemas import TokenOut, TokenPayloadIn, UserDataOut
+
+from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserDataOut, UserOut
+from .services.registration_service import RegistrationService
 
 
 router = Router(tags=["auth"])
+
+
+@router.post(
+    "/register/",
+    response={201: UserOut, **MUTATION_ERROR_RESPONSES},
+    auth=None,
+    operation_id="auth_register_user",
+)
+def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
+    """
+    Cria um novo usuário e um workspace dedicado (Tenant Pragmático).
+    """
+    user = RegistrationService.register_new_owner(
+        email=payload.email,
+        password=payload.password,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+    )
+    return 201, user
 
 
 @router.post(

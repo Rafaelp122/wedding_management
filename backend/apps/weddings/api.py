@@ -1,10 +1,10 @@
 from django.db.models import QuerySet
-from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.users.types import AuthRequest
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
 from apps.weddings.services import WeddingService
@@ -16,14 +16,14 @@ router = Router(tags=["Weddings"])
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")
 @paginate
-def list_weddings(request: HttpRequest) -> QuerySet[Wedding]:
+def list_weddings(request: AuthRequest) -> QuerySet[Wedding]:
     """
     Lista todos os casamentos gerenciados pelo Planner logado.
 
     Retorna apenas os registros criados pelo usuário autenticado.
     Garante o isolamento de dados entre diferentes Planners (Multi-tenancy).
     """
-    return WeddingService.list(user=request.user)
+    return WeddingService.list(company=request.user.company)
 
 
 @router.get(
@@ -31,14 +31,14 @@ def list_weddings(request: HttpRequest) -> QuerySet[Wedding]:
     response={200: WeddingOut, **READ_ERROR_RESPONSES},
     operation_id="weddings_read",
 )
-def retrieve_wedding(request: HttpRequest, uuid: UUID4) -> Wedding:
+def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     """
     Retorna os detalhes completos de um casamento específico.
 
     Realiza a busca pelo UUID e valida se o registro pertence ao usuário.
     Caso não exista ou pertença a outro Planner, retorna um erro 404.
     """
-    return WeddingService.get(user=request.user, uuid=uuid)
+    return WeddingService.get(company=request.user.company, uuid=uuid)
 
 
 @router.post(
@@ -46,7 +46,7 @@ def retrieve_wedding(request: HttpRequest, uuid: UUID4) -> Wedding:
     response={201: WeddingOut, **MUTATION_ERROR_RESPONSES},
     operation_id="weddings_create",
 )
-def create_wedding(request: HttpRequest, payload: WeddingIn) -> tuple[int, Wedding]:
+def create_wedding(request: AuthRequest, payload: WeddingIn) -> tuple[int, Wedding]:
     """
     Cria um novo casamento e inicializa sua estrutura financeira.
 
@@ -54,7 +54,9 @@ def create_wedding(request: HttpRequest, payload: WeddingIn) -> tuple[int, Weddi
     - Associa o Planner logado como dono do registro.
     - Cria um **Budget (Orçamento)** inicial zerado para o evento.
     """
-    wedding = WeddingService.create(user=request.user, data=payload.model_dump())
+    wedding = WeddingService.create(
+        company=request.user.company, data=payload.model_dump()
+    )
     return 201, wedding
 
 
@@ -64,7 +66,7 @@ def create_wedding(request: HttpRequest, payload: WeddingIn) -> tuple[int, Weddi
     operation_id="weddings_update",
 )
 def update_wedding(
-    request: HttpRequest,
+    request: AuthRequest,
     uuid: UUID4,
     payload: WeddingPatchIn,
 ) -> Wedding:
@@ -77,9 +79,9 @@ def update_wedding(
     # Pega só os campos enviados (não nulos na requisição, exclude_unset)
     data = payload.model_dump(exclude_unset=True)
 
-    instance = WeddingService.get(user=request.user, uuid=uuid)
+    instance = WeddingService.get(company=request.user.company, uuid=uuid)
     updated_wedding = WeddingService.update(
-        user=request.user, instance=instance, data=data
+        company=request.user.company, instance=instance, data=data
     )
     return updated_wedding
 
@@ -89,7 +91,7 @@ def update_wedding(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="weddings_delete",
 )
-def delete_wedding(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
+def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove um casamento e limpa todos os dados vinculados (Cascata).
 
@@ -97,5 +99,5 @@ def delete_wedding(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
     - Todo o histórico financeiro (orçamentos e despesas).
     - Cronogramas, contratos e fornecedores vinculados exclusivamente a este evento.
     """
-    WeddingService.delete(user=request.user, uuid=uuid)
+    WeddingService.delete(company=request.user.company, uuid=uuid)
     return 204, None

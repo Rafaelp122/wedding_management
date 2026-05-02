@@ -1,10 +1,10 @@
 from django.db import models
 
-from apps.core.mixins import PlannerOwnedMixin, WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.core.mixins import WeddingOwnedMixin
+from apps.tenants.models import TenantModel
 
 
-class Task(BaseModel, PlannerOwnedMixin, WeddingOwnedMixin):
+class Task(TenantModel, WeddingOwnedMixin):
     """Modelo que representa um item no checklist do casamento."""
 
     title = models.CharField(max_length=255, verbose_name="Título da Tarefa")
@@ -17,7 +17,7 @@ class Task(BaseModel, PlannerOwnedMixin, WeddingOwnedMixin):
         verbose_name_plural = "Tarefas"
         ordering = ["is_completed", "due_date", "created_at"]
         indexes = [
-            models.Index(fields=["planner", "is_completed"]),
+            models.Index(fields=["company", "is_completed"]),
             models.Index(fields=["wedding", "is_completed"]),
             models.Index(fields=["due_date"]),
         ]

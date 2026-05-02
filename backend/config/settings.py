@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Project apps - Core
     "apps.core",
+    "apps.tenants",
     "apps.users",
     "apps.weddings",
     # Project apps - Dominios

@@ -60,7 +60,7 @@ class EventPatchIn(Schema):
 
 class EventOut(Schema):
     uuid: UUID4
-    planner_id: int = Field(alias="planner.id")
+    company_id: UUID4 = Field(alias="company.uuid")
     wedding: UUID4 = Field(alias="wedding.uuid")
     title: str
     location: str | None = None
@@ -89,7 +89,7 @@ class TaskPatchIn(Schema):
 
 class TaskOut(Schema):
     uuid: UUID4
-    planner_id: int = Field(alias="planner.id")
+    company_id: UUID4 = Field(alias="company.uuid")
     wedding: UUID4 = Field(alias="wedding.uuid")
     title: str
     description: str | None = None

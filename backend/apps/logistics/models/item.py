@@ -10,13 +10,13 @@ Referências: RF07-RF08
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.tenants.models import TenantModel
 
 from .contract import Contract
 from .supplier import Supplier
 
 
-class Item(BaseModel, WeddingOwnedMixin):
+class Item(TenantModel, WeddingOwnedMixin):
     """
     Item de logística (RF07-RF08).
     Representa a necessidade física ou o serviço contratado.
@@ -54,6 +54,10 @@ class Item(BaseModel, WeddingOwnedMixin):
         verbose_name = "Item"
         verbose_name_plural = "Itens"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["company", "wedding"]),
+            models.Index(fields=["acquisition_status"]),
+        ]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.quantity}x)"

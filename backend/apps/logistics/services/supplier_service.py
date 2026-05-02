@@ -5,13 +5,12 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.types import AuthContextUser
 from apps.logistics.models import Supplier
+from apps.tenants.models import Company
 
 
 logger = logging.getLogger(__name__)
@@ -20,32 +19,31 @@ logger = logging.getLogger(__name__)
 class SupplierService:
     """
     Camada de serviço para gestão de fornecedores.
-    Centraliza a lógica de catálogo transversal ao Planner (RF09).
+    Centraliza a lógica de catálogo transversal à Company (RF09).
     Garante auditoria, validação estrita via Model e tratamento de integridade
     referencial.
     """
 
     @staticmethod
-    def list(user: AuthContextUser) -> QuerySet[Supplier]:
-        return Supplier.objects.for_user(user)
+    def list(company: Company) -> QuerySet[Supplier]:
+        return Supplier.objects.for_tenant(company)
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: UUID | str) -> Supplier:
+    def get(company: Company, uuid: UUID | str) -> Supplier:
         try:
-            return Supplier.objects.for_user(user).get(uuid=uuid)
+            return Supplier.objects.for_tenant(company).get(uuid=uuid)
         except Supplier.DoesNotExist as e:
             raise ObjectNotFoundError(detail="Fornecedor não encontrado.") from e
 
     @staticmethod
     @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> Supplier:
-        planner = require_user(user)
-        logger.info(f"Iniciando criação de Fornecedor para planner_id={planner.id}")
+    def create(company: Company, data: dict[str, Any]) -> Supplier:
+        logger.info(f"Iniciando criação de Fornecedor para company_id={company.id}")
 
-        # 1. Instanciação em Memória (O Fornecedor é PlannerOwned, transversal)
-        supplier = Supplier(planner=planner, **data)
+        # 1. Instanciação em Memória
+        supplier = Supplier(company=company, **data)
 
-        # 2. Validação Estrita no Model (CNPJ único, formatação de telefone, etc.)
+        # 2. Validação Estrita no Model
         supplier.save()
 
         logger.info(f"Fornecedor criado com sucesso: uuid={supplier.uuid}")
@@ -53,22 +51,17 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def update(
-        user: AuthContextUser, instance: Supplier, data: dict[str, Any]
-    ) -> Supplier:
-        planner = require_user(user)
+    def update(company: Company, instance: Supplier, data: dict[str, Any]) -> Supplier:
         logger.info(
-            f"Atualizando Fornecedor uuid={instance.uuid} por planner_id={planner.id}"
+            f"Atualizando Fornecedor uuid={instance.uuid} por company_id={company.id}"
         )
 
         # Proteção: Impedimos o sequestro/mudança de dono via API
-        data.pop("planner", None)
+        data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
 
-        # O full_clean() aqui é vital para re-validar regras de negócio
-        # (ex: CNPJ duplicado)
         instance.save()
 
         logger.info(f"Fornecedor uuid={instance.uuid} atualizado com sucesso.")
@@ -76,17 +69,17 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, instance: Supplier) -> None:
-        planner = require_user(user)
+    def delete(company: Company, instance: Supplier) -> None:
         logger.info(
-            f"Tentativa de deleção do Fornecedor uuid={instance.uuid} por "
-            f"planner_id={planner.id}"
+            f"Tentativa de deleção do Fornecedor uuid={instance.uuid} pela "
+            f"company_id={company.id}"
         )
 
         try:
             instance.delete()
             logger.warning(
-                f"Fornecedor uuid={instance.uuid} DESTRUÍDO por planner_id={planner.id}"
+                f"Fornecedor uuid={instance.uuid} DESTRUÍDO pela "
+                f"company_id={company.id}"
             )
 
         except ProtectedError as e:

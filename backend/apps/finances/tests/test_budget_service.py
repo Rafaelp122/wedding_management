@@ -33,13 +33,13 @@ class TestBudgetServiceCritical:
         Cenário 2: Budget já existe → retorna existente
         """
         # Setup: Criar wedding sem budget
-        wedding = WeddingFactory(planner=user)
+        wedding = WeddingFactory(company=user.company)
 
         # Verificar que NÃO existe budget inicialmente
         assert Budget.objects.filter(wedding=wedding).count() == 0
 
         # Teste 1: Primeira chamada cria budget
-        budget1 = BudgetService.get_or_create_for_wedding(user, wedding.uuid)
+        budget1 = BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
 
         # Verificações
         assert Budget.objects.filter(wedding=wedding).count() == 1
@@ -51,7 +51,7 @@ class TestBudgetServiceCritical:
         assert categories.count() > 0  # Pelo menos uma categoria padrão
 
         # Teste 2: Segunda chamada retorna mesmo budget (não cria novo)
-        budget2 = BudgetService.get_or_create_for_wedding(user, wedding.uuid)
+        budget2 = BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
 
         assert budget2.id == budget1.id  # Mesmo objeto
         assert Budget.objects.filter(wedding=wedding).count() == 1  # Ainda apenas 1
@@ -66,11 +66,11 @@ class TestBudgetServiceCritical:
         user_b = UserFactory()
 
         # User A cria wedding
-        wedding_a = WeddingFactory(planner=user_a)
+        wedding_a = WeddingFactory(user_context=user_a)
 
         # User B tenta acessar budget do wedding de User A
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.get_or_create_for_wedding(user_b, wedding_a.uuid)
+            BudgetService.get_or_create_for_wedding(user_b.company, wedding_a.uuid)
 
         assert "não encontrado ou acesso negado" in str(exc_info.value.detail).lower()
 
@@ -88,7 +88,7 @@ class TestBudgetServiceCritical:
         invalid_uuid = uuid4()
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.get_or_create_for_wedding(user, invalid_uuid)
+            BudgetService.get_or_create_for_wedding(user.company, invalid_uuid)
 
         assert "não encontrado ou acesso negado" in str(exc_info.value.detail).lower()
 
@@ -98,7 +98,7 @@ class TestBudgetServiceCritical:
 
         Se criação de categorias falhar, NADA deve ser persistido (rollback completo).
         """
-        wedding = WeddingFactory(planner=user)
+        wedding = WeddingFactory(company=user.company)
 
         # Mock BudgetCategoryService.setup_defaults para falhar
         with patch.object(BudgetCategoryService, "setup_defaults") as mock_setup:
@@ -110,7 +110,7 @@ class TestBudgetServiceCritical:
             with pytest.raises(
                 Exception, match="Falha simulada na criação de categorias"
             ):
-                BudgetService.get_or_create_for_wedding(user, wedding.uuid)
+                BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
 
         # Verificar rollback: NADA foi persistido
         assert Budget.objects.filter(wedding=wedding).count() == 0
@@ -122,9 +122,9 @@ class TestBudgetServiceCritical:
 
         Verifica que as categorias essenciais existem após criação do budget.
         """
-        wedding = WeddingFactory(planner=user)
+        wedding = WeddingFactory(company=user.company)
 
-        budget = BudgetService.get_or_create_for_wedding(user, wedding.uuid)
+        budget = BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
 
         # Verificar categorias foram criadas
         categories = BudgetCategory.objects.filter(budget=budget)
@@ -152,12 +152,14 @@ class TestBudgetServiceCritical:
         user_b = UserFactory()
 
         # User A cria wedding e budget
-        wedding_a = WeddingFactory(planner=user_a)
-        budget_a = BudgetService.get_or_create_for_wedding(user_a, wedding_a.uuid)
+        wedding_a = WeddingFactory(user_context=user_a)
+        budget_a = BudgetService.get_or_create_for_wedding(
+            user_a.company, wedding_a.uuid
+        )
 
         # User B tenta acessar budget de User A
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.get(user_b, budget_a.uuid)
+            BudgetService.get(user_b.company, budget_a.uuid)
 
         assert "Orçamento não encontrado" in str(exc_info.value.detail)
 
@@ -171,19 +173,23 @@ class TestBudgetServiceCritical:
         user_b = UserFactory()
 
         # Cada usuário cria seu próprio wedding e budget
-        wedding_a = WeddingFactory(planner=user_a)
-        wedding_b = WeddingFactory(planner=user_b)
+        wedding_a = WeddingFactory(user_context=user_a)
+        wedding_b = WeddingFactory(user_context=user_b)
 
-        budget_a = BudgetService.get_or_create_for_wedding(user_a, wedding_a.uuid)
-        budget_b = BudgetService.get_or_create_for_wedding(user_b, wedding_b.uuid)
+        budget_a = BudgetService.get_or_create_for_wedding(
+            user_a.company, wedding_a.uuid
+        )
+        budget_b = BudgetService.get_or_create_for_wedding(
+            user_b.company, wedding_b.uuid
+        )
 
         # User A vê apenas seu budget
-        budgets_a = BudgetService.list(user_a)
+        budgets_a = BudgetService.list(user_a.company)
         assert budgets_a.count() == 1
         assert budgets_a.first().uuid == budget_a.uuid
 
         # User B vê apenas seu budget
-        budgets_b = BudgetService.list(user_b)
+        budgets_b = BudgetService.list(user_b.company)
         assert budgets_b.count() == 1
         assert budgets_b.first().uuid == budget_b.uuid
 
@@ -193,11 +199,11 @@ class TestBudgetServiceCritical:
 
         OneToOne relationship deve ser respeitada.
         """
-        wedding = WeddingFactory(planner=user)
+        wedding = WeddingFactory(company=user.company)
 
         # Criar primeiro budget
         budget1_data = {"wedding": wedding.uuid, "total_estimated": Decimal("50000.00")}
-        BudgetService.create(user, budget1_data)
+        BudgetService.create(user.company, budget1_data)
 
         # Tentar criar segundo budget para mesmo wedding
         budget2_data = {"wedding": wedding.uuid, "total_estimated": Decimal("75000.00")}
@@ -205,7 +211,7 @@ class TestBudgetServiceCritical:
         from apps.core.exceptions import DomainIntegrityError
 
         with pytest.raises(DomainIntegrityError) as exc_info:
-            BudgetService.create(user, budget2_data)
+            BudgetService.create(user.company, budget2_data)
 
         assert "já possui um orçamento definido" in str(exc_info.value.detail)
 
@@ -228,7 +234,7 @@ class TestBudgetServiceCritical:
         budget_data = {"wedding": invalid_uuid, "total_estimated": Decimal("50000.00")}
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.create(user, budget_data)
+            BudgetService.create(user.company, budget_data)
 
         assert "não encontrado ou acesso negado" in str(exc_info.value.detail).lower()
 
@@ -246,10 +252,8 @@ class TestBudgetServiceCritical:
         some_uuid = uuid4()
 
         # Todas as operações devem falhar com usuário anônimo
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(TypeError):
             BudgetService.get_or_create_for_wedding(anonymous_user, some_uuid)
-
-        assert "autenticação" in str(exc_info.value).lower()
 
 
 @pytest.mark.django_db
@@ -273,14 +277,14 @@ class TestBudgetServiceIntegration:
         }
 
         # Criar wedding
-        wedding = WeddingService.create(user, wedding_payload)
+        wedding = WeddingService.create(user.company, wedding_payload)
 
         # Verificar que wedding foi criado mas budget NÃO
         assert wedding is not None
         assert Budget.objects.filter(wedding=wedding).count() == 0
 
         # Primeira chamada cria budget
-        budget = BudgetService.get_or_create_for_wedding(user, wedding.uuid)
+        budget = BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
         assert budget is not None
         assert Budget.objects.filter(wedding=wedding).count() == 1
 
@@ -293,14 +297,14 @@ class TestBudgetServiceIntegration:
         from apps.weddings.services import WeddingService
 
         # Criar wedding e budget
-        wedding = WeddingFactory(planner=user)
-        BudgetService.get_or_create_for_wedding(user, wedding.uuid)
+        wedding = WeddingFactory(company=user.company)
+        BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
 
         # Verificar que ambos existem
         assert Budget.objects.filter(wedding=wedding).count() == 1
 
         # Deletar wedding (deve cascadear para budget)
-        WeddingService.delete(user, wedding.uuid)
+        WeddingService.delete(user.company, wedding.uuid)
 
         # Verificar que ambos foram deletados
         assert Budget.objects.filter(wedding=wedding).count() == 0

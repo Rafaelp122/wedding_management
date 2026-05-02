@@ -4,6 +4,7 @@ Define o modelo User personalizado usando email como identificador único
 e o CustomUserManager para gerenciar a criação de usuários e superusuários.
 """
 
+import uuid
 from typing import Any, cast
 
 from django.contrib.auth.models import (
@@ -45,6 +46,17 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError("O e-mail é obrigatório.")
         email = self.normalize_email(email)
+
+        # Se a empresa não foi fornecida (ex: em testes ou criação inicial),
+        # nós criamos uma automaticamente para cumprir o requisito de null=False.
+        if "company" not in extra_fields:
+            from apps.tenants.services.tenant_service import TenantService
+
+            # Tenta extrair um nome para a empresa, ou usa o email
+            display_name = extra_fields.get("first_name", email)
+            company = TenantService.create_company(display_name)
+            extra_fields["company"] = company
+
         user = cast("User", self.model(email=email, **extra_fields))
         user.set_password(password)
         user.save(using=self._db)
@@ -74,19 +86,7 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(
         self, email: str, password: str | None = None, **extra_fields: Any
     ) -> "User":
-        """Cria e salva um superusuário com permissões administrativas.
-
-        Força is_staff=True, is_superuser=True e is_active=True para garantir
-        acesso total ao sistema.
-
-        Args:
-            email (str): Endereço de email do superusuário.
-            password (str, optional): Senha do superusuário.
-            **extra_fields: Campos adicionais do modelo User.
-
-        Returns:
-            User: Instância do superusuário criado.
-        """
+        """Cria e salva um superusuário vinculado ao Workspace Administrativo."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -96,12 +96,26 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get("last_name") is None:
             extra_fields["last_name"] = "Sistema"
 
-        # O Django já valida isso, mas manter o check simples não dói
+        # Garante a existência da empresa administrativa para superusuários
+        from apps.tenants.services.tenant_service import TenantService
+
+        extra_fields["company"] = TenantService.get_or_create_admin_workspace()
+
         return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField("E-mail", unique=True, max_length=255)
+    uuid = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True, db_index=True
+    )
+
+    company = models.ForeignKey(
+        "tenants.Company",
+        on_delete=models.PROTECT,  # Protege empresa de ser deletada com usuários ativos
+        related_name="users",
+        verbose_name="Empresa",
+    )
 
     # NOVOS CAMPOS EXPLÍCITOS
     first_name = models.CharField("Primeiro Nome", max_length=150)
@@ -110,6 +124,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField("Status da Equipe", default=False)
     is_active = models.BooleanField("Ativo", default=False)
     date_joined = models.DateTimeField("Data de Cadastro", default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = CustomUserManager()
 

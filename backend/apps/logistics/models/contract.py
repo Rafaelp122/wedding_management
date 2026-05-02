@@ -11,10 +11,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.tenants.models import TenantModel
 
 
-class Contract(BaseModel, WeddingOwnedMixin):
+class Contract(TenantModel, WeddingOwnedMixin):
     # Override WeddingOwnedMixin.wedding from CASCADE → PROTECT
     wedding = models.ForeignKey(
         "weddings.Wedding",
@@ -82,6 +82,10 @@ class Contract(BaseModel, WeddingOwnedMixin):
         verbose_name = "Contrato"
         verbose_name_plural = "Contratos"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["company", "wedding"]),
+            models.Index(fields=["status"]),
+        ]
 
     def __str__(self) -> str:
         return (

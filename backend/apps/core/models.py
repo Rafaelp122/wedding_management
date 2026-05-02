@@ -3,8 +3,6 @@ from uuid import UUID, uuid4
 
 from django.db import models
 
-from .managers import BaseManager
-
 
 class BaseModel(models.Model):
     """
@@ -15,8 +13,6 @@ class BaseModel(models.Model):
     uuid = models.UUIDField(default=uuid4, unique=True, editable=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    objects = BaseManager()
 
     class Meta:
         abstract = True
@@ -36,4 +32,4 @@ class BaseModel(models.Model):
     @classmethod
     def get_by_uuid(cls, uuid_value: UUID | str) -> Self | None:
         """Busca rápida por identificador público."""
-        return cls.objects.filter(uuid=uuid_value).first()
+        return cls.objects.filter(uuid=uuid_value).first()  # type: ignore[attr-defined]

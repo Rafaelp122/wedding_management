@@ -50,7 +50,7 @@ queryset = Wedding.objects.filter(planner=request.user)
 
 **Motivo:** Segurança e privacidade (LGPD).
 
-**Status:** ✅ Implementado via routers do Ninja + Managers (`for_user()`) + Service Layer
+**Status:** ✅ Implementado via routers do Ninja + Managers (`for_tenant()`) + Service Layer
 
 ### **BR-F01: Integridade de Parcelas (Tolerância Zero)**
 
@@ -287,7 +287,7 @@ contract_a = Contract.objects.create(wedding=wedding_a, supplier=supplier)
 contract_b = Contract.objects.create(wedding=wedding_b, supplier=supplier)
 ```
 
-**Status:** ✅ Implementado via `PlannerOwnedMixin`
+**Status:** ✅ Implementado via `TenantModel` (App Tenants)
 
 ---
 
@@ -657,7 +657,7 @@ Contract.objects.filter(wedding__planner=request.user)
 Wedding.objects.all()  # Vê casamentos de outros planners
 ```
 
-**Status:** ✅ Implementado via routers do Ninja + Managers (`for_user()`) + Service Layer
+**Status:** ✅ Implementado via routers do Ninja + Managers (`for_tenant()`) + Service Layer
 
 ---
 

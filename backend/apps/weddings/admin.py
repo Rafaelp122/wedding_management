@@ -13,9 +13,9 @@ class WeddingAdmin(admin.ModelAdmin):
         "location",
         "expected_guests",
         "status",
-        "planner",
+        "company",
     ]
-    list_filter = ["status", "date", "planner"]
+    list_filter = ["status", "date", "company"]
     search_fields = ["groom_name", "bride_name", "location"]
     date_hierarchy = "date"
     readonly_fields = ["created_at", "updated_at"]
@@ -25,7 +25,7 @@ class WeddingAdmin(admin.ModelAdmin):
             "Informações do Casamento",
             {
                 "fields": [
-                    "planner",
+                    "company",
                     "groom_name",
                     "bride_name",
                     "date",

@@ -6,14 +6,13 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.auth import require_user
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.types import AuthContextUser
 from apps.finances.models import Expense, Installment
+from apps.tenants.models import Company
 
 
 logger = logging.getLogger(__name__)
@@ -27,14 +26,16 @@ class InstallmentService:
     """
 
     @staticmethod
-    def list(user: AuthContextUser) -> QuerySet[Installment]:
-        return Installment.objects.for_user(user).select_related("expense", "wedding")
+    def list(company: Company) -> QuerySet[Installment]:
+        return Installment.objects.for_tenant(company).select_related(
+            "expense", "wedding"
+        )
 
     @staticmethod
-    def get(user: AuthContextUser, uuid: UUID | str) -> Installment:
+    def get(company: Company, uuid: UUID | str) -> Installment:
         try:
             return (
-                Installment.objects.for_user(user)
+                Installment.objects.for_tenant(company)
                 .select_related("expense", "wedding")
                 .get(uuid=uuid)
             )
@@ -43,9 +44,8 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def create(user: AuthContextUser, data: dict[str, Any]) -> Installment:
-        planner = require_user(user)
-        logger.info(f"Iniciando criação de Parcela para planner_id={planner.id}")
+    def create(company: Company, data: dict[str, Any]) -> Installment:
+        logger.info(f"Iniciando criação de Parcela para company_id={company.id}")
 
         # 1. Resolução Segura de Dependências
         expense_input = data.pop("expense", None)
@@ -53,7 +53,7 @@ class InstallmentService:
             expense = expense_input
         else:
             try:
-                expense = Expense.objects.for_user(planner).get(uuid=expense_input)
+                expense = Expense.objects.for_tenant(company).get(uuid=expense_input)
             except Expense.DoesNotExist as e:
                 logger.warning(
                     f"Tentativa de uso de despesa inválida/negada: {expense_input}"
@@ -64,15 +64,14 @@ class InstallmentService:
                 ) from e
 
         # 2. Injeção de Contexto e Instanciação
-        # NOTA: O cálculo de status (OVERDUE, PENDING, PAID) foi expulso do Service.
-        # Ele DEVE estar no método clean() do Model Installment.
-        installment = Installment(wedding=expense.wedding, expense=expense, **data)
+        installment = Installment(
+            company=company, wedding=expense.wedding, expense=expense, **data
+        )
 
         # 3. Validação Estrita da Parcela
         installment.save()
 
         # 4. Checagem de Ricochete (Tolerância Zero)
-        # O full_clean() da Despesa verifica se a matemática global foi quebrada.
         try:
             expense.full_clean()
         except DjangoValidationError as e:
@@ -95,22 +94,19 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def update(
-        user: AuthContextUser, instance: Installment, data: dict[str, Any]
+        company: Company, instance: Installment, data: dict[str, Any]
     ) -> Installment:
-        planner = require_user(user)
         logger.info(
-            f"Atualizando Parcela uuid={instance.uuid} por planner_id={planner.id}"
+            f"Atualizando Parcela uuid={instance.uuid} por company_id={company.id}"
         )
 
         # Proteção de campos estruturais
         data.pop("expense", None)
         data.pop("wedding", None)
-        data.pop("planner", None)
+        data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
-
-        # Status auto-update deve ser garantido pelo Model (clean/save).
 
         instance.save()
 
@@ -133,11 +129,10 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def delete(user: AuthContextUser, instance: Installment) -> None:
-        planner = require_user(user)
+    def delete(company: Company, instance: Installment) -> None:
         logger.info(
             f"Tentativa de deleção da Parcela uuid={instance.uuid} "
-            f"por planner_id={planner.id}"
+            f"por company_id={company.id}"
         )
         expense = instance.expense
 
@@ -148,7 +143,7 @@ class InstallmentService:
             expense.full_clean()
 
             logger.warning(
-                f"Parcela uuid={instance.uuid} DESTRUÍDA por planner_id={planner.id}"
+                f"Parcela uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
             )
 
         except DjangoValidationError as e:
@@ -156,8 +151,6 @@ class InstallmentService:
                 f"Deleção de parcela quebrou integridade matemática da despesa "
                 f"uuid={expense.uuid}"
             )
-            # Graças ao @transaction.atomic, se cair aqui, o delete da parcela é anulado
-            # (rollback).
             raise DomainIntegrityError(
                 detail=(
                     "Não é possível apagar esta parcela isoladamente pois isso "

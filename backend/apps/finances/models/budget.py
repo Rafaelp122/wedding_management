@@ -13,10 +13,10 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.core.models import BaseModel
+from apps.tenants.models import TenantModel
 
 
-class Budget(BaseModel, WeddingOwnedMixin):
+class Budget(TenantModel, WeddingOwnedMixin):
     """
     Orçamento mestre (RF03).
     Define o teto financeiro global do casamento.
@@ -51,6 +51,9 @@ class Budget(BaseModel, WeddingOwnedMixin):
         verbose_name = "Orçamento"
         verbose_name_plural = "Orçamentos"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["company", "wedding"]),
+        ]
 
     def __str__(self) -> str:
         return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"
