@@ -32,4 +32,4 @@ class BaseModel(models.Model):
     @classmethod
     def get_by_uuid(cls, uuid_value: UUID | str) -> Self | None:
         """Busca rápida por identificador público."""
-        return cls.objects.filter(uuid=uuid_value).first()
+        return cls.objects.filter(uuid=uuid_value).first()  # type: ignore[attr-defined]

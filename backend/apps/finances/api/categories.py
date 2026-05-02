@@ -1,5 +1,4 @@
 from django.db.models import QuerySet
-from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
@@ -12,6 +11,7 @@ from apps.finances.schemas import (
     BudgetCategoryPatchIn,
 )
 from apps.finances.services.budget_category_service import BudgetCategoryService
+from apps.users.types import AuthRequest
 
 
 budget_categories_router = Router(tags=["Finances"])
@@ -22,7 +22,7 @@ budget_categories_router = Router(tags=["Finances"])
 )
 @paginate
 def list_categories(
-    request: HttpRequest, wedding_id: UUID4 | None = None
+    request: AuthRequest, wedding_id: UUID4 | None = None
 ) -> QuerySet[BudgetCategory]:
     """
     Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
@@ -38,7 +38,7 @@ def list_categories(
     response={200: BudgetCategoryOut, **READ_ERROR_RESPONSES},
     operation_id="finances_categories_read",
 )
-def get_category(request: HttpRequest, uuid: UUID4) -> BudgetCategory:
+def get_category(request: AuthRequest, uuid: UUID4) -> BudgetCategory:
     """
     Acessa os detalhamentos da categoria isolada de forma simples e visual.
     Garante a segurança contábil sem vazar detalhes restritos a terceiros.
@@ -52,7 +52,7 @@ def get_category(request: HttpRequest, uuid: UUID4) -> BudgetCategory:
     operation_id="finances_categories_create",
 )
 def create_category(
-    request: HttpRequest, payload: BudgetCategoryIn
+    request: AuthRequest, payload: BudgetCategoryIn
 ) -> tuple[int, BudgetCategory]:
     """
     Abre mais um bloco de centro de custo em conta específica da festa.
@@ -67,7 +67,7 @@ def create_category(
     operation_id="finances_categories_update",
 )
 def update_category(
-    request: HttpRequest, uuid: UUID4, payload: BudgetCategoryPatchIn
+    request: AuthRequest, uuid: UUID4, payload: BudgetCategoryPatchIn
 ) -> BudgetCategory:
     """
     Corrige o título, ou altera o valor dos gastos planejados.
@@ -84,7 +84,7 @@ def update_category(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="finances_categories_delete",
 )
-def delete_category(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
+def delete_category(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Fecha um agrupamento no orçamento permanentemente.
     Exclui anotações de faturas de modo destrutivo para balanceamento.

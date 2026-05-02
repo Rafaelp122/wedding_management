@@ -10,47 +10,36 @@ logger = logging.getLogger(__name__)
 
 
 class TenantService:
-    """Serviço responsável pela gestão de tenants e vinculação de usuários."""
+    """Serviço responsável pela gestão de tenants (Workspaces/Empresas)."""
 
     @staticmethod
-    def create_organization_for_user(user) -> Company:
+    @transaction.atomic
+    def create_pragmatic_company(display_name: str) -> Company:
         """
-        Cria uma Company para o usuário baseado em seu perfil.
-        Garante a atomicidade da operação.
+        Cria uma Company com base no nome do usuário ou email.
+        Retorna a instância da empresa salva.
         """
-        if user.company:
-            return user.company
+        company_name = f"Workspace de {display_name}"
 
-        full_name = user.get_full_name()
-        display_name = full_name if full_name else user.email
+        # Geramos um slug único e curto para evitar colisões
+        import uuid as uuid_lib
 
-        if user.is_superuser:
-            name = "Workspace Administrativo"
-            base_slug = "admin-workspace"
-        else:
-            name = f"Workspace de {display_name}"
-            base_slug = slugify(display_name)[:40]
+        base_slug = slugify(display_name)[:40]
+        unique_slug = f"{base_slug}-{str(uuid_lib.uuid4())[:8]}"
 
-        # Garante unicidade com o UUID do usuário
-        unique_slug = f"{base_slug}-{str(user.uuid)[:8]}"
+        company = Company.objects.create(
+            name=company_name, slug=unique_slug, is_active=True
+        )
+        logger.info(f"Tenant pragmático criado: {company.slug}")
+        return company
 
-        with transaction.atomic():
-            company, created = Company.objects.get_or_create(
-                slug=unique_slug if not user.is_superuser else base_slug,
-                defaults={"name": name},
-            )
-
-            # Vinculação via update para evitar trigger de signals de save recursivos
-            from apps.users.models import User
-
-            User.objects.filter(pk=user.pk).update(company=company)
-
-            # Atualiza a instância em memória para uso imediato (ex: em testes)
-            user.company = company
-
-            if created:
-                logger.info(
-                    f"Tenant '{company.slug}' criado para o usuário {user.email}"
-                )
-
-            return company
+    @staticmethod
+    @transaction.atomic
+    def get_or_create_admin_workspace() -> Company:
+        """Garante a existência do workspace administrativo para superusuários."""
+        company, created = Company.objects.get_or_create(
+            slug="admin-workspace", defaults={"name": "Workspace Administrativo"}
+        )
+        if created:
+            logger.info("Workspace Administrativo criado via setup automático.")
+        return company

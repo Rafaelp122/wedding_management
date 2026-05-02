@@ -1,10 +1,10 @@
 from django.db.models import QuerySet
-from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.users.types import AuthRequest
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
 from apps.weddings.services import WeddingService
@@ -16,7 +16,7 @@ router = Router(tags=["Weddings"])
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")
 @paginate
-def list_weddings(request: HttpRequest) -> QuerySet[Wedding]:
+def list_weddings(request: AuthRequest) -> QuerySet[Wedding]:
     """
     Lista todos os casamentos gerenciados pelo Planner logado.
 
@@ -31,7 +31,7 @@ def list_weddings(request: HttpRequest) -> QuerySet[Wedding]:
     response={200: WeddingOut, **READ_ERROR_RESPONSES},
     operation_id="weddings_read",
 )
-def retrieve_wedding(request: HttpRequest, uuid: UUID4) -> Wedding:
+def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     """
     Retorna os detalhes completos de um casamento específico.
 
@@ -46,7 +46,7 @@ def retrieve_wedding(request: HttpRequest, uuid: UUID4) -> Wedding:
     response={201: WeddingOut, **MUTATION_ERROR_RESPONSES},
     operation_id="weddings_create",
 )
-def create_wedding(request: HttpRequest, payload: WeddingIn) -> tuple[int, Wedding]:
+def create_wedding(request: AuthRequest, payload: WeddingIn) -> tuple[int, Wedding]:
     """
     Cria um novo casamento e inicializa sua estrutura financeira.
 
@@ -66,7 +66,7 @@ def create_wedding(request: HttpRequest, payload: WeddingIn) -> tuple[int, Weddi
     operation_id="weddings_update",
 )
 def update_wedding(
-    request: HttpRequest,
+    request: AuthRequest,
     uuid: UUID4,
     payload: WeddingPatchIn,
 ) -> Wedding:
@@ -91,7 +91,7 @@ def update_wedding(
     response={204: None, **MUTATION_ERROR_RESPONSES},
     operation_id="weddings_delete",
 )
-def delete_wedding(request: HttpRequest, uuid: UUID4) -> tuple[int, None]:
+def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove um casamento e limpa todos os dados vinculados (Cascata).
 

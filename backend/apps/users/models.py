@@ -75,11 +75,7 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(
         self, email: str, password: str | None = None, **extra_fields: Any
     ) -> "User":
-        """Cria e salva um superusuário com permissões administrativas.
-
-        Força is_staff=True, is_superuser=True e is_active=True para garantir
-        acesso total ao sistema.
-        """
+        """Cria e salva um superusuário vinculado ao Workspace Administrativo."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -88,6 +84,12 @@ class CustomUserManager(BaseUserManager):
             extra_fields["first_name"] = "Admin"
         if extra_fields.get("last_name") is None:
             extra_fields["last_name"] = "Sistema"
+
+        # Garante a existência da empresa administrativa para superusuários
+        from apps.tenants.services.tenant_service import TenantService
+
+        company = TenantService.get_or_create_admin_workspace()
+        extra_fields["company"] = company
 
         return self._create_user(email, password, **extra_fields)
 
@@ -100,9 +102,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     company = models.ForeignKey(
         "tenants.Company",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,  # Protege empresa de ser deletada com usuários ativos
         related_name="users",
         verbose_name="Empresa",
     )
