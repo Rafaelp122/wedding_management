@@ -37,17 +37,14 @@ def create_task(request: HttpRequest, payload: TaskIn) -> tuple[int, Task]:
 @tasks_router.patch(
     "/{uuid}/",
     response={200: TaskOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="scheduler_tasks_partial_update",
+    operation_id="scheduler_tasks_update",
 )
-def partial_update_task(
-    request: HttpRequest, uuid: UUID4, payload: TaskPatchIn
-) -> Task:
+def update_task(request: HttpRequest, uuid: UUID4, payload: TaskPatchIn) -> Task:
     """
     Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
     """
-    return TaskService.partial_update(
-        request.user, uuid, payload.dict(exclude_unset=True)
-    )
+    instance = TaskService.get(request.user, uuid)
+    return TaskService.update(request.user, instance, payload.dict(exclude_unset=True))
 
 
 @tasks_router.delete(

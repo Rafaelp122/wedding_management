@@ -64,9 +64,9 @@ def create_category(
 @budget_categories_router.patch(
     "/{uuid}/",
     response={200: BudgetCategoryOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="finances_categories_partial_update",
+    operation_id="finances_categories_update",
 )
-def partial_update_category(
+def update_category(
     request: HttpRequest, uuid: UUID4, payload: BudgetCategoryPatchIn
 ) -> BudgetCategory:
     """
@@ -74,7 +74,7 @@ def partial_update_category(
     Evita sobrescrições acidentais errôneas em outras rotas.
     """
     instance = BudgetCategoryService.get(request.user, uuid)
-    return BudgetCategoryService.partial_update(
+    return BudgetCategoryService.update(
         request.user, instance, payload.dict(exclude_unset=True)
     )
 

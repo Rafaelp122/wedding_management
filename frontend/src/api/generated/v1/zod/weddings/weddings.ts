@@ -95,13 +95,13 @@ export const WeddingsReadResponse = zod
 
 Permite modificar campos como nomes dos noivos, data e local sem afetar o restante.
 Os dados são validados pelo Service antes da persistência.
- * @summary Partial Update Wedding
+ * @summary Update Wedding
  */
-export const WeddingsPartialUpdateParams = zod.object({
+export const WeddingsUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const WeddingsPartialUpdateBody = zod
+export const WeddingsUpdateBody = zod
   .object({
     groom_name: zod.union([zod.string(), zod.null()]).optional(),
     bride_name: zod.union([zod.string(), zod.null()]).optional(),
@@ -111,7 +111,7 @@ export const WeddingsPartialUpdateBody = zod
   })
   .describe("Schema puro e explícito para ATUALIZAÇÃO de Casamento.");
 
-export const WeddingsPartialUpdateResponse = zod
+export const WeddingsUpdateResponse = zod
   .object({
     uuid: zod.string(),
     groom_name: zod.string(),

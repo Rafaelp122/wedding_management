@@ -61,9 +61,9 @@ def create_wedding(request: HttpRequest, payload: WeddingIn) -> tuple[int, Weddi
 @router.patch(
     "/{uuid:uuid}/",
     response={200: WeddingOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="weddings_partial_update",
+    operation_id="weddings_update",
 )
-def partial_update_wedding(
+def update_wedding(
     request: HttpRequest,
     uuid: UUID4,
     payload: WeddingPatchIn,
@@ -77,8 +77,9 @@ def partial_update_wedding(
     # Pega só os campos enviados (não nulos na requisição, exclude_unset)
     data = payload.model_dump(exclude_unset=True)
 
-    updated_wedding = WeddingService.partial_update(
-        user=request.user, uuid=uuid, data=data
+    instance = WeddingService.get(user=request.user, uuid=uuid)
+    updated_wedding = WeddingService.update(
+        user=request.user, instance=instance, data=data
     )
     return updated_wedding
 

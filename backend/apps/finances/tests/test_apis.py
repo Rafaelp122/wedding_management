@@ -90,7 +90,7 @@ class TestFinancesNinjaAPI:
         data = response.json()
         assert len(data["items"]) == 0
 
-    def test_partial_update_expense_returns_422_on_business_rule_violation(
+    def test_update_expense_returns_422_on_business_rule_violation(
         self, auth_client, seed_data
     ):
         expense_uuid = seed_data["my_expense"].uuid

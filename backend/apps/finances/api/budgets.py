@@ -69,17 +69,15 @@ def create_budget(request: HttpRequest, payload: BudgetIn) -> tuple[int, Budget]
 @budgets_router.patch(
     "/{uuid}/",
     response={200: BudgetOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="finances_budgets_partial_update",
+    operation_id="finances_budgets_update",
 )
-def partial_update_budget(
-    request: HttpRequest, uuid: UUID4, payload: BudgetPatchIn
-) -> Budget:
+def update_budget(request: HttpRequest, uuid: UUID4, payload: BudgetPatchIn) -> Budget:
     """
     Atualiza métricas mestres de gasto e painéis globais.
     Contorna referências numéricas totais.
     """
     instance = BudgetService.get(request.user, uuid)
-    return BudgetService.partial_update(
+    return BudgetService.update(
         request.user, instance, payload.dict(exclude_unset=True)
     )
 

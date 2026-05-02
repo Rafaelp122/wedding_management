@@ -112,36 +112,33 @@ export const SchedulerEventsReadResponse = zod.object({
  * Atualiza informações específicas de um evento do cronograma.
 
 Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
- * @summary Partial Update Event
+ * @summary Update Event
  */
-export const SchedulerEventsPartialUpdateParams = zod.object({
+export const SchedulerEventsUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const schedulerEventsPartialUpdateBodyTitleOneMax = 255;
+export const schedulerEventsUpdateBodyTitleOneMax = 255;
 
-export const schedulerEventsPartialUpdateBodyLocationOneMax = 255;
+export const schedulerEventsUpdateBodyLocationOneMax = 255;
 
-export const schedulerEventsPartialUpdateBodyEventTypeOneMax = 50;
+export const schedulerEventsUpdateBodyEventTypeOneMax = 50;
 
-export const SchedulerEventsPartialUpdateBody = zod.object({
+export const SchedulerEventsUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   title: zod
-    .union([
-      zod.string().max(schedulerEventsPartialUpdateBodyTitleOneMax),
-      zod.null(),
-    ])
+    .union([zod.string().max(schedulerEventsUpdateBodyTitleOneMax), zod.null()])
     .optional(),
   location: zod
     .union([
-      zod.string().max(schedulerEventsPartialUpdateBodyLocationOneMax),
+      zod.string().max(schedulerEventsUpdateBodyLocationOneMax),
       zod.null(),
     ])
     .optional(),
   description: zod.union([zod.string(), zod.null()]).optional(),
   event_type: zod
     .union([
-      zod.string().max(schedulerEventsPartialUpdateBodyEventTypeOneMax),
+      zod.string().max(schedulerEventsUpdateBodyEventTypeOneMax),
       zod.null(),
     ])
     .optional(),
@@ -151,7 +148,7 @@ export const SchedulerEventsPartialUpdateBody = zod.object({
   reminder_minutes_before: zod.union([zod.number(), zod.null()]).optional(),
 });
 
-export const SchedulerEventsPartialUpdateResponse = zod.object({
+export const SchedulerEventsUpdateResponse = zod.object({
   uuid: zod.string(),
   planner_id: zod.number(),
   wedding: zod.string(),
@@ -229,27 +226,24 @@ export const SchedulerTasksCreateBody = zod.object({
 
 /**
  * Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
- * @summary Partial Update Task
+ * @summary Update Task
  */
-export const SchedulerTasksPartialUpdateParams = zod.object({
+export const SchedulerTasksUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const schedulerTasksPartialUpdateBodyTitleOneMax = 255;
+export const schedulerTasksUpdateBodyTitleOneMax = 255;
 
-export const SchedulerTasksPartialUpdateBody = zod.object({
+export const SchedulerTasksUpdateBody = zod.object({
   title: zod
-    .union([
-      zod.string().max(schedulerTasksPartialUpdateBodyTitleOneMax),
-      zod.null(),
-    ])
+    .union([zod.string().max(schedulerTasksUpdateBodyTitleOneMax), zod.null()])
     .optional(),
   description: zod.union([zod.string(), zod.null()]).optional(),
   due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   is_completed: zod.union([zod.boolean(), zod.null()]).optional(),
 });
 
-export const SchedulerTasksPartialUpdateResponse = zod.object({
+export const SchedulerTasksUpdateResponse = zod.object({
   uuid: zod.string(),
   planner_id: zod.number(),
   wedding: zod.string(),

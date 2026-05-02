@@ -110,18 +110,6 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, uuid: UUID | str, data: dict[str, Any]
-    ) -> Wedding:
-        """
-        Atualização parcial de um casamento.
-        Busca a instância internamente antes de atualizar.
-        """
-        instance = WeddingService.get(user, uuid)
-        return WeddingService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, uuid: UUID | str) -> None:
         """
         Deleta um casamento.

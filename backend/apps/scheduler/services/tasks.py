@@ -99,14 +99,6 @@ class TaskService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, uuid: UUID | str, data: dict[str, Any]
-    ) -> Task:
-        instance = TaskService.get(user, uuid)
-        return TaskService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, uuid: UUID | str) -> None:
         instance = TaskService.get(user, uuid)
         planner = require_user(user)

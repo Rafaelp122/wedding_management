@@ -426,9 +426,9 @@ export function useWeddingsRead<
 
 Permite modificar campos como nomes dos noivos, data e local sem afetar o restante.
 Os dados são validados pelo Service antes da persistência.
- * @summary Partial Update Wedding
+ * @summary Update Wedding
  */
-export const weddingsPartialUpdate = (
+export const weddingsUpdate = (
   uuid: string,
   weddingPatchIn: WeddingPatchIn,
   options?: SecondParameter<typeof customInstance>,
@@ -446,24 +446,24 @@ export const weddingsPartialUpdate = (
   );
 };
 
-export const getWeddingsPartialUpdateMutationOptions = <
+export const getWeddingsUpdateMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+    Awaited<ReturnType<typeof weddingsUpdate>>,
     TError,
     { uuid: string; data: WeddingPatchIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+  Awaited<ReturnType<typeof weddingsUpdate>>,
   TError,
   { uuid: string; data: WeddingPatchIn },
   TContext
 > => {
-  const mutationKey = ["weddingsPartialUpdate"];
+  const mutationKey = ["weddingsUpdate"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -473,33 +473,33 @@ export const getWeddingsPartialUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+    Awaited<ReturnType<typeof weddingsUpdate>>,
     { uuid: string; data: WeddingPatchIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
-    return weddingsPartialUpdate(uuid, data, requestOptions);
+    return weddingsUpdate(uuid, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type WeddingsPartialUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof weddingsPartialUpdate>>
+export type WeddingsUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof weddingsUpdate>>
 >;
-export type WeddingsPartialUpdateMutationBody = WeddingPatchIn;
-export type WeddingsPartialUpdateMutationError = ErrorType<ErrorResponse>;
+export type WeddingsUpdateMutationBody = WeddingPatchIn;
+export type WeddingsUpdateMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Partial Update Wedding
+ * @summary Update Wedding
  */
-export const useWeddingsPartialUpdate = <
+export const useWeddingsUpdate = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+      Awaited<ReturnType<typeof weddingsUpdate>>,
       TError,
       { uuid: string; data: WeddingPatchIn },
       TContext
@@ -508,15 +508,12 @@ export const useWeddingsPartialUpdate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof weddingsPartialUpdate>>,
+  Awaited<ReturnType<typeof weddingsUpdate>>,
   TError,
   { uuid: string; data: WeddingPatchIn },
   TContext
 > => {
-  return useMutation(
-    getWeddingsPartialUpdateMutationOptions(options),
-    queryClient,
-  );
+  return useMutation(getWeddingsUpdateMutationOptions(options), queryClient);
 };
 /**
  * Remove um casamento e limpa todos os dados vinculados (Cascata).

@@ -76,14 +76,6 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def partial_update(
-        user: AuthContextUser, instance: Supplier, data: dict[str, Any]
-    ) -> Supplier:
-        """Alias estrutural."""
-        return SupplierService.update(user, instance, data)
-
-    @staticmethod
-    @transaction.atomic
     def delete(user: AuthContextUser, instance: Supplier) -> None:
         planner = require_user(user)
         logger.info(

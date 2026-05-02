@@ -83,7 +83,7 @@ export const getFinancesBudgetsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesBudgetsPartialUpdateResponseMock = (
+export const getFinancesBudgetsUpdateResponseMock = (
   overrideResponse: Partial<Extract<BudgetOut, object>> = {},
 ): BudgetOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -186,7 +186,7 @@ export const getFinancesCategoriesReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesCategoriesPartialUpdateResponseMock = (
+export const getFinancesCategoriesUpdateResponseMock = (
   overrideResponse: Partial<Extract<BudgetCategoryOut, object>> = {},
 ): BudgetCategoryOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -270,7 +270,7 @@ export const getFinancesExpensesReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesExpensesPartialUpdateResponseMock = (
+export const getFinancesExpensesUpdateResponseMock = (
   overrideResponse: Partial<Extract<ExpenseOut, object>> = {},
 ): ExpenseOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -376,7 +376,7 @@ export const getFinancesInstallmentsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesInstallmentsPartialUpdateResponseMock = (
+export const getFinancesInstallmentsUpdateResponseMock = (
   overrideResponse: Partial<Extract<InstallmentOut, object>> = {},
 ): InstallmentOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -475,7 +475,7 @@ export const getFinancesBudgetsReadMockHandler = (
   );
 };
 
-export const getFinancesBudgetsPartialUpdateMockHandler = (
+export const getFinancesBudgetsUpdateMockHandler = (
   overrideResponse?:
     | BudgetOut
     | ((
@@ -491,7 +491,7 @@ export const getFinancesBudgetsPartialUpdateMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesBudgetsPartialUpdateResponseMock(),
+          : getFinancesBudgetsUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -616,7 +616,7 @@ export const getFinancesCategoriesReadMockHandler = (
   );
 };
 
-export const getFinancesCategoriesPartialUpdateMockHandler = (
+export const getFinancesCategoriesUpdateMockHandler = (
   overrideResponse?:
     | BudgetCategoryOut
     | ((
@@ -632,7 +632,7 @@ export const getFinancesCategoriesPartialUpdateMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesCategoriesPartialUpdateResponseMock(),
+          : getFinancesCategoriesUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -733,7 +733,7 @@ export const getFinancesExpensesReadMockHandler = (
   );
 };
 
-export const getFinancesExpensesPartialUpdateMockHandler = (
+export const getFinancesExpensesUpdateMockHandler = (
   overrideResponse?:
     | ExpenseOut
     | ((
@@ -749,7 +749,7 @@ export const getFinancesExpensesPartialUpdateMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesExpensesPartialUpdateResponseMock(),
+          : getFinancesExpensesUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -850,7 +850,7 @@ export const getFinancesInstallmentsReadMockHandler = (
   );
 };
 
-export const getFinancesInstallmentsPartialUpdateMockHandler = (
+export const getFinancesInstallmentsUpdateMockHandler = (
   overrideResponse?:
     | InstallmentOut
     | ((
@@ -866,7 +866,7 @@ export const getFinancesInstallmentsPartialUpdateMockHandler = (
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesInstallmentsPartialUpdateResponseMock(),
+          : getFinancesInstallmentsUpdateResponseMock(),
         { status: 200 },
       );
     },
@@ -898,22 +898,22 @@ export const getFinancesMock = () => [
   getFinancesBudgetsListMockHandler(),
   getFinancesBudgetsCreateMockHandler(),
   getFinancesBudgetsReadMockHandler(),
-  getFinancesBudgetsPartialUpdateMockHandler(),
+  getFinancesBudgetsUpdateMockHandler(),
   getFinancesBudgetsDeleteMockHandler(),
   getFinancesBudgetsForWeddingMockHandler(),
   getFinancesCategoriesListMockHandler(),
   getFinancesCategoriesCreateMockHandler(),
   getFinancesCategoriesReadMockHandler(),
-  getFinancesCategoriesPartialUpdateMockHandler(),
+  getFinancesCategoriesUpdateMockHandler(),
   getFinancesCategoriesDeleteMockHandler(),
   getFinancesExpensesListMockHandler(),
   getFinancesExpensesCreateMockHandler(),
   getFinancesExpensesReadMockHandler(),
-  getFinancesExpensesPartialUpdateMockHandler(),
+  getFinancesExpensesUpdateMockHandler(),
   getFinancesExpensesDeleteMockHandler(),
   getFinancesInstallmentsListMockHandler(),
   getFinancesInstallmentsCreateMockHandler(),
   getFinancesInstallmentsReadMockHandler(),
-  getFinancesInstallmentsPartialUpdateMockHandler(),
+  getFinancesInstallmentsUpdateMockHandler(),
   getFinancesInstallmentsDeleteMockHandler(),
 ];

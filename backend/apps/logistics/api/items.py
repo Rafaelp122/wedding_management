@@ -52,17 +52,15 @@ def create_item(request: HttpRequest, payload: ItemIn) -> tuple[int, Item]:
 @items_router.patch(
     "/{uuid:uuid}/",
     response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="logistics_items_partial_update",
+    operation_id="logistics_items_update",
 )
-def partial_update_item(
-    request: HttpRequest, uuid: UUID4, payload: ItemPatchIn
-) -> Item:
+def update_item(request: HttpRequest, uuid: UUID4, payload: ItemPatchIn) -> Item:
     """
     Atualiza quantidades ou informações de apoio do lote do item em questão.
     """
     item = ItemService.get(user=request.user, uuid=uuid)
     data = payload.model_dump(exclude_unset=True)
-    return ItemService.partial_update(user=request.user, instance=item, data=data)
+    return ItemService.update(user=request.user, instance=item, data=data)
 
 
 @items_router.delete(
