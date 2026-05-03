@@ -67,7 +67,10 @@ class TestItemSupplierProperty:
 
 @pytest.mark.django_db
 class TestItemAcquisitionStatus:
-    """Testes das transições de status de aquisição (BR-L04: independente de pagamento)."""
+    """
+    Testes das transições de status de aquisição
+    (BR-L04: independente de pagamento).
+    """
 
     def test_item_can_be_pending(self, user):
         """Item criado como PENDING é válido."""

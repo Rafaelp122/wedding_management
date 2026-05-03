@@ -54,7 +54,9 @@ class TestBudgetCategoryModelMetadata:
 
         BudgetCategoryFactory(budget=budget, wedding=wedding, name="Decoração")
 
-        with pytest.raises(Exception):
+        from django.core.exceptions import ValidationError
+
+        with pytest.raises(ValidationError):
             BudgetCategoryFactory(budget=budget, wedding=wedding, name="Decoração")
 
     def test_budget_category_allocated_budget_not_negative(self, user):

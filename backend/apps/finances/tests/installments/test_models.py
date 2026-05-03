@@ -79,7 +79,9 @@ class TestInstallmentModelMetadata:
             expense=expense, installment_number=1, amount=Decimal("500.00")
         )
 
-        with pytest.raises(Exception):
+        from django.core.exceptions import ValidationError
+
+        with pytest.raises(ValidationError):
             InstallmentFactory(
                 expense=expense, installment_number=1, amount=Decimal("0.00")
             )

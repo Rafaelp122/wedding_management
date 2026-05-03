@@ -15,9 +15,9 @@ class TestSupplierModelMetadata:
 
     def test_supplier_ordering_by_name(self):
         """Ordenação padrão deve ser alfabética por name."""
-        s1 = SupplierFactory.create(name="Zeta")
-        s2 = SupplierFactory.create(name="Alfa")
-        s3 = SupplierFactory.create(name="Beta")
+        SupplierFactory.create(name="Zeta")
+        SupplierFactory.create(name="Alfa")
+        SupplierFactory.create(name="Beta")
 
         suppliers = list(Supplier.objects.all())
         assert suppliers[0].name == "Alfa"

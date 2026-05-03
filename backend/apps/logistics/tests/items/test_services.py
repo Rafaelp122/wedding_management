@@ -57,7 +57,7 @@ class TestItemServiceCreate:
 
     def test_create_item_with_contract_instance(self, user):
         """create() aceita instância de Contract."""
-        wedding, contract = _setup_item_context(user)
+        _, contract = _setup_item_context(user)
 
         data = {
             "contract": contract,
