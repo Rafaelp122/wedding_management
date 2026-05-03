@@ -197,11 +197,11 @@ class TestContractServiceDelete:
         item.refresh_from_db()
         assert item.contract is None
 
-    def test_delete_contract_with_expenses_fails(self, user):
-        """Contrato com Expense vinculada não pode ser deletado.
-        Expense.contract é OneToOneField com on_delete=SET_NULL,
-        mas o serviço valida antes e bloqueia. O ProtectedError vem
-        de Installments vinculados à Expense."""
+    def test_delete_contract_with_expenses_succeeds(self, user):
+        """Contrato com Expense vinculada pode ser deletado (SET_NULL).
+        Diferente de amarras de integridade pesada, o vínculo Contrato-Despesa
+        é flexível: deletar o contrato apenas deixa a despesa sem referência,
+        preservando o rastro financeiro (parcelas)."""
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(wedding=wedding, supplier=supplier)
         budget = BudgetFactory(wedding=wedding)
@@ -213,9 +213,6 @@ class TestContractServiceDelete:
             actual_amount=Decimal("500.00"),
         )
 
-        # Contrato é deletável mesmo com Expense (SET_NULL),
-        # a menos que existam installments vinculados
-        # Vamos verificar que a deleção funciona nesse caso
         ContractService.delete(user.company, contract)
 
         assert Contract.objects.filter(uuid=contract.uuid).count() == 0

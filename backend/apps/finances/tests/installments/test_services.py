@@ -148,6 +148,30 @@ class TestInstallmentServiceCreate:
 class TestInstallmentServiceAutoGeneration:
     """Testes de geração automática de parcelas."""
 
+    def test_auto_generate_installments_success(self, user):
+        """Sucesso: gera parcelas que somam exatamente o total da despesa."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        first_date = date.today() + timedelta(days=30)
+
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 3, first_date
+        )
+
+        assert len(installments) == 3
+        # 1000 / 3 = 333.33 -> 333.33 + 333.33 + 333.34 = 1000.00
+        assert installments[0].amount == Decimal("333.33")
+        assert installments[1].amount == Decimal("333.33")
+        assert installments[2].amount == Decimal("333.34")
+
+        # Verificar datas (30 dias entre cada)
+        assert installments[0].due_date == first_date
+        assert installments[1].due_date == first_date + timedelta(days=30)
+        assert installments[2].due_date == first_date + timedelta(days=60)
+
+        # Verificar persistência e soma total
+        total_sum = sum(i.amount for i in Installment.objects.filter(expense=expense))
+        assert total_sum == Decimal("1000.00")
+
     def test_auto_generate_invalid_num_installments(self, user):
         expense = _setup_expense(user, actual_amount=Decimal("100.00"))
         with pytest.raises(BusinessRuleViolation) as exc:
@@ -157,7 +181,7 @@ class TestInstallmentServiceAutoGeneration:
         assert exc.value.code == "invalid_installment_number"
 
     def test_auto_generate_invalid_expense_amount(self, user):
-        expense = _setup_expense(user, actual_amount=Decimal("0.00"))
+        expense = _setup_expense(user, actual_amount=Decimal("100.00"))
         # Burlar validação do model para forçar o erro no service
         expense.actual_amount = Decimal("0.00")
         with pytest.raises(BusinessRuleViolation) as exc:

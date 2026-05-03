@@ -170,8 +170,8 @@ class TestItemServiceDelete:
 
         assert Item.objects.filter(uuid=item.uuid).count() == 0
 
-    def test_delete_item_protected_error(self, user):
-        """Item com dependências protegidas levanta DomainIntegrityError."""
+    def test_delete_item_metadata_check(self, user):
+        """Verifica que metadados do item não impedem deleção simples."""
         wedding, contract = _setup_item_context(user)
         item = ItemFactory(contract=contract, wedding=wedding)
 

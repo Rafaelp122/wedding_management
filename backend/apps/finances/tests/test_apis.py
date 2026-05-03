@@ -125,4 +125,3 @@ class TestFinancesAPIErrorHandling:
     def test_get_expense_not_found(self, auth_client):
         response = auth_client.get(f"/api/v1/finances/expenses/{uuid4()}/")
         assert response.status_code == 404
-

@@ -125,7 +125,6 @@ class TestExpenseServiceCreate:
 
 
 @pytest.mark.django_db
-@pytest.mark.django_db
 class TestExpenseServiceUpdate:
     """Testes de atualização de despesas via ExpenseService."""
 
