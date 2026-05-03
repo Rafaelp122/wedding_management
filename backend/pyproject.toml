@@ -67,8 +67,12 @@ exclude = [
 
 [tool.ruff.lint]
 
-select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ", "S"]
+select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ", "S", "C90"]
 ignore = ["E203", "RUF012"]
+
+[tool.ruff.lint.mccabe]
+# Define o limite máximo de complexidade (o padrão geralmente é 10)
+max-complexity = 10
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["ninja.Depends", "Depends"]

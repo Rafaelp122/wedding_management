@@ -171,6 +171,17 @@ docker system prune -a         # Limpar containers/images antigos
 
 ---
 
+## Erros de API e Orval (Frontend)
+
+| Sintoma | Causa provável | Solução |
+|---|---|---|
+| Hook retorna `unknown` ou tipo genérico | Schema OpenAPI incompleto | Verificar o dict de resposta do endpoint no backend e rodar `make sync-api` |
+| Import não encontrado após novo endpoint | `make sync-api` não foi rodado | Rodar `make sync-api` |
+| Tipo gerado não reflete campo adicionado | Cache do Orval ou `openapi.json` desatualizado | Rodar `make sync-api` (regenera tudo) |
+| Erro de runtime mas tipo está correto | `openapi.json` divergiu da implementação real | Verificar se o backend está rodando e rodar `make sync-api` |
+
+---
+
 ## Comandos de Diagnóstico
 
 ```bash

@@ -1,5 +1,7 @@
 # Wedding Management - Engineering Context (Shared)
 
+> **⚠️ ATENÇÃO: Este arquivo é de uso exclusivo para agentes de IA.** Ele fornece contexto técnico e regras estritas para garantir a consistência do código. Desenvolvedores humanos devem consultar a documentação em `docs/`.
+
 This file serves as the Single Source of Truth for all AI agents and developers working on this project.
 
 ## 🚀 Tech Stack
@@ -13,7 +15,7 @@ This file serves as the Single Source of Truth for all AI agents and developers 
 
 ### Backend (apps/)
 - **Service Layer Pattern**: Endpoints in `api.py` MUST ONLY call functions in `services.py`. Lógica de negócio nunca fica na API.
-- **Multi-tenancy**: Todo serviço deve explicitamente receber `user=request.user` para filtragem obrigatória (ver ADR-009).
+- **Multi-tenancy**: Todo serviço deve explicitamente receber `company` e usar `Model.objects.for_tenant(company)` para filtragem obrigatória (ver ADR-009 e ADR-016).
 - **Data Integrity**: Models herdam de `BaseModel` que executa `full_clean()` no `save()` (ver ADR-011).
 - **Operations**: Sempre defina `operation_id` nos routers (ex: `weddings_list`) para geração correta do Orval.
 - **Typing**: O projeto usa tipagem estática rigorosa. O `mypy` deve passar sem erros.

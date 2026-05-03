@@ -57,10 +57,10 @@ Valida o contrato de entrada e saída e a integração com o protocolo HTTP.
 Nunca crie objetos manualmente com `Model.objects.create()`. Use sempre as factories:
 ```python
 # Correto
-wedding = WeddingFactory(planner=user, bride_name="Maria")
+wedding = WeddingFactory(company=user.company, bride_name="Maria")
 
 # Evite
-wedding = Wedding.objects.create(planner=user, bride_name="Maria", date="2026-01-01")
+wedding = Wedding.objects.create(company=user.company, bride_name="Maria", date="2026-01-01")
 ```
 
 ### 4.2 Isolamento de Dados (Multitenancy)
@@ -74,7 +74,7 @@ Use mocks para isolar componentes que não fazem parte do teste atual, especialm
 ```python
 def test_create_wedding_no_side_effects(user, wedding_payload):
     with patch("apps.finances.services.BudgetService.create") as mock_budget:
-        WeddingService.create(user=user, data=wedding_payload)
+        WeddingService.create(company=user.company, data=wedding_payload)
 
     mock_budget.assert_not_called()
 ```

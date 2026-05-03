@@ -1,171 +1,92 @@
 # 🔐 Guia de Configuração de Ambiente
 
-> **Nunca commite o arquivo `.env` no Git!**
-
-## Configuração Inicial
-
-```bash
-cp .env.example .env  # Crie o arquivo de ambiente
-make secret-key       # Gere uma SECRET_KEY segura
-nano .env             # Edite e adicione a SECRET_KEY
-```
-
-**Importante:** O sistema usa **email** como login, não username.
+Este guia detalha como configurar seu ambiente de desenvolvimento local e as variáveis necessárias para produção. Para um início rápido, consulte o **[Quick Start no README.md](../../README.md#quick-start-resumo)**.
 
 ---
 
-## Variáveis de Ambiente
+## ⚙️ Configuração Inicial
+
+1. **Clonar e Configurar Variáveis:**
+   ```bash
+   cp .env.example .env  # Crie o arquivo de ambiente
+   make secret-key       # Gere uma SECRET_KEY segura
+   ```
+
+2. **Gerenciamento de Login:**
+   O sistema utiliza **email** como identificador único (login), não username.
+
+---
+
+## 📄 Variáveis de Ambiente (.env)
 
 ### Obrigatórias
-
-| Variável     | Descrição                                           | Como gerar        |
-| ------------ | --------------------------------------------------- | ----------------- |
-| `SECRET_KEY` | Chave criptográfica Django                          | `make secret-key` |
-| `DB_HOST`    | Host do banco (`db` para Docker, `localhost` local) | -                 |
+| Variável | Descrição |
+| :--- | :--- |
+| `SECRET_KEY` | Chave criptográfica do Django. Gere com `make secret-key`. |
+| `DB_HOST` | Host do banco (`db` para Docker, `localhost` para local). |
 
 ### Opcionais (Desenvolvimento)
+| Variável | Padrão | Descrição |
+| :--- | :--- | :--- |
+| `DEBUG` | `True` | Ativa modo debug. **NUNCA use True em produção.** |
+| `DB_NAME` | `wedding_db` | Nome do banco de dados. |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Origens permitidas para o frontend. |
 
-| Variável                        | Padrão                      | Descrição                                   |
-| ------------------------------- | --------------------------- | ------------------------------------------- |
-| `DEBUG`                         | `True`                      | Modo debug (**SEMPRE `False` em produção**) |
-| `DB_NAME`                       | `wedding_db`                | Nome do banco de dados                      |
-| `DB_USER`                       | `wedding_user`              | Usuário do PostgreSQL                       |
-| `DB_PASSWORD`                   | `wedding_pass`              | Senha do PostgreSQL                         |
-| `DB_PORT`                       | `5432`                      | Porta do PostgreSQL                         |
-| `ACCESS_TOKEN_LIFETIME_MINUTES` | `15`                        | Duração do JWT (minutos)                    |
-| `REFRESH_TOKEN_LIFETIME_DAYS`   | `7`                         | Duração do refresh token (dias)             |
-| `CORS_ALLOWED_ORIGINS`          | `http://localhost:5173,...` | Origens permitidas (separadas por vírgula)  |
-
-### Produção Apenas
-
-| Variável              | Descrição                            |
-| --------------------- | ------------------------------------ |
-| `ALLOWED_HOSTS`       | Domínios permitidos (ex: `app.com`)  |
-| `EMAIL_HOST`          | Servidor SMTP (ex: `smtp.gmail.com`) |
-| `EMAIL_HOST_USER`     | Email remetente                      |
-| `EMAIL_HOST_PASSWORD` | Senha ou App Password                |
-| `SENTRY_DSN`          | URL do Sentry para logs de erro      |
+### Produção (Exemplos)
+| Variável | Descrição |
+| :--- | :--- |
+| `ALLOWED_HOSTS` | Domínios permitidos (ex: `app.meusistema.com`). |
+| `SENTRY_DSN` | URL para monitoramento de erros. |
+| `R2_BUCKET` | Nome do bucket no Cloudflare R2 para uploads. |
 
 ---
 
-## Exemplos de Configuração
+## 🛠 Comandos de Gestão (Makefile)
 
-### Docker (Desenvolvimento)
+O projeto utiliza um `Makefile` para automatizar tarefas comuns.
 
-```dotenv
-SECRET_KEY=sua-chave-gerada-aqui
-DEBUG=True
-DB_HOST=db
-```
-
-### Local (sem Docker)
-
-```dotenv
-SECRET_KEY=sua-chave-gerada-aqui
-DEBUG=True
-DB_ENGINE=django.db.backends.sqlite3
-DB_NAME=db.sqlite3
-DB_HOST=localhost
-```
-
-### Produção
-
-```dotenv
-SECRET_KEY=chave-super-segura-64-caracteres
-DEBUG=False
-ALLOWED_HOSTS=seudominio.com,api.seudominio.com
-DB_HOST=db-server.example.com
-DB_PASSWORD=senha-forte-aleatoria
-EMAIL_HOST=smtp.gmail.com
-EMAIL_HOST_USER=noreply@seudominio.com
-EMAIL_HOST_PASSWORD=app-password-aqui
-SENTRY_DSN=https://your-sentry-dsn
-```
-
----
-
-## Comandos de Gestão
-
-### Docker
-
+### Docker (Fluxo Recomendado)
 ```bash
-make up              # Inicia sistema completo
-make migrate         # Aplica migrações
-make superuser       # Cria usuário admin
-make shell           # Abre Django shell
-make logs            # Ver logs de todos os serviços
+make up              # Inicia containers em background
+make down            # Para e remove containers
+make migrate         # Aplica migrações no banco
+make superuser       # Cria um administrador
+make logs            # Ver logs em tempo real
 ```
 
-### Local (sem Docker)
-
+### Desenvolvimento Local (sem Docker)
+Se preferir rodar sem containers, você precisará do **[UV](https://docs.astral.sh/uv/)** instalado:
 ```bash
+# Backend
 cd backend && uv sync --group dev
-cd backend && uv run python manage.py migrate
-cd backend && uv run python manage.py runserver
+uv run python manage.py runserver
+
+# Frontend
 cd frontend && npm ci && npm run dev
 ```
 
-### Gerenciamento de Pacotes
-
+### Qualidade e Testes
 ```bash
-# Backend - adicionar pacote Python
-make back-install pkg=requests
-
-# Frontend - adicionar pacote npm
-cd frontend && npm install lodash
-
-# Atualizar lockfile após editar pyproject.toml
-make reqs
-```
-
-### Banco de Dados
-
-```bash
-make makemigrations  # Criar migrações
-make migrate         # Aplicar migrações
-make clean           # ⚠️ Remove containers/volumes e exige nova subida
-```
-
-### Qualidade de Código
-
-```bash
-make lint            # Verificar problemas (Ruff)
-make format          # Formatar código automaticamente
-make mypy            # Verificar tipagem estática (mypy)
-make test            # Executar testes
-make test-cov        # Testes com cobertura
-make check-backend   # Gate de backend (lint + mypy + testes + openapi)
-make check-frontend  # Gate de frontend (lint + type-check + testes)
-make check-ci        # Gate local espelhando CI
+make lint            # Verifica erros de estilo (Ruff)
+make format          # Corrige formatação automaticamente
+make mypy            # Verifica tipagem estática
+make test            # Executa a suíte de testes (Pytest)
+make check-ci        # Executa todos os checks locais (espelha o CI)
 ```
 
 ---
 
-## Segurança e Boas Práticas
+## 🛡️ Segurança: Checklist Pré-Deploy
 
-### ✅ Checklist Pré-Deploy
-
-- [ ] `DEBUG=False`
-- [ ] `SECRET_KEY` única e complexa (64+ caracteres)
-- [ ] `ALLOWED_HOSTS` configurado com domínios reais
-- [ ] Banco de dados com senha forte
-- [ ] CORS restrito a domínios específicos
-- [ ] Email SMTP configurado
-- [ ] Monitoramento (Sentry) ativado
-- [ ] Backups automáticos configurados
-
-### ⚠️ Nunca Faça
-
-- Commitar `.env` no Git
-- Usar `DEBUG=True` em produção
-- Deixar `ALLOWED_HOSTS=*`
-- Usar senhas fracas no banco de dados
-- Expor SECRET_KEY em logs ou mensagens de erro
+- [ ] `DEBUG=False` configurado.
+- [ ] `SECRET_KEY` com pelo menos 64 caracteres.
+- [ ] `ALLOWED_HOSTS` restrito aos domínios oficiais.
+- [ ] Banco de dados utiliza senha forte e não a padrão.
+- [ ] Monitoramento (Sentry) configurado.
+- [ ] **Checklist completo em [docs/ARCHITECTURE.md](ARCHITECTURE.md#segurança)**.
 
 ---
 
-## Referências
-
-- [Django Deployment Checklist](https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/)
-- [12 Factor App](https://12factor.net/)
-- [OWASP Django Security](https://cheatsheetseries.owasp.org/cheatsheets/Django_Security_Cheat_Sheet.html)
+**Última atualização:** 1 de março de 2026
+**Responsável:** Rafael
+**Versão:** 2.0 (Foco em How-to/Referência)
