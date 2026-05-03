@@ -112,7 +112,7 @@ ACTIVE → EXPIRED (automático se expiration_date passou)
 | UC01 | Gerenciar Casamentos | ⭐⭐ | ⭐⭐⭐⭐⭐ | **1** |
 | UC03 | Gerenciar Despesas | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | **2** |
 | UC04 | Gerenciar Parcelas | ⭐⭐ | ⭐⭐⭐⭐⭐ | **3** |
-| UC10 | Dashboard do Casamento | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | **4** |
+| UC10 | Dashboard Global | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | **4** |
 | UC02 | Gerenciar Categorias | ⭐⭐ | ⭐⭐⭐⭐☆ | **5** |
 | UC05 | Gerenciar Fornecedores | ⭐⭐ | ⭐⭐⭐⭐☆ | **6** |
 | UC08 | Gerenciar Cronograma | ⭐⭐⭐ | ⭐⭐⭐⭐☆ | **7** |
@@ -135,7 +135,7 @@ UC04 → Registrar Pagamento de Parcelas
 
 ### Sprint 3-4 (Valor para o Cerimonialista)
 ```
-UC10 → Dashboard do Casamento
+UC10 → Dashboard Global
 UC05 → Gerenciar Fornecedores
 UC08 → Gerenciar Cronograma
 ✦ Sincronização Documento → Despesa (UC07 → UC03)
@@ -155,4 +155,3 @@ UC11 → Exportar Relatórios
 **Última atualização:** 2 de maio de 2026
 **Versão:** 1.1
 **Próximo:** [01-dashboard-global.md](./01-dashboard-global.md)
-oard-global.md)
