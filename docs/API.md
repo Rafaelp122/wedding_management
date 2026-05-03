@@ -195,9 +195,4 @@ Se o TypeScript **não** reclamar após uma mudança no backend, significa que o
 
 ## Troubleshooting
 
-| Sintoma | Causa provável | Solução |
-|---|---|---|
-| Hook retorna `unknown` ou tipo genérico | Schema OpenAPI incompleto | Verificar o dict de resposta do endpoint no backend e rodar `make sync-api` |
-| Import não encontrado após novo endpoint | `make sync-api` não foi rodado | Rodar `make sync-api` |
-| Tipo gerado não reflete campo adicionado | Cache do Orval ou `openapi.json` desatualizado | Rodar `make sync-api` (regenera tudo) |
-| Erro de runtime mas tipo está correto | `openapi.json` divergiu da implementação real | Verificar se o backend está rodando e rodar `make sync-api` |
+Para problemas comuns com a geração de tipos ou consumo da API, consulte o **[Guia de Troubleshooting](TROUBLESHOOTING.md#erros-de-api-e-orval-frontend)**.

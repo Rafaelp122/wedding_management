@@ -12,7 +12,7 @@ A complete wedding management system with a modern **React SPA + Django Ninja AP
 
 ### Backend (apps/)
 - **Service Layer**: API endpoints in `api.py` MUST ONLY delegate to functions in `services.py`.
-- **Multi-tenancy**: Every service function MUST receive `user=request.user` for explicit data filtering.
+- **Multi-tenancy**: Every service function MUST receive `company` and use `Model.objects.for_tenant(company)` for explicit data filtering.
 - **Data Integrity**: Models must inherit from `BaseModel` (triggers `full_clean()` on `save()`).
 - **Typing**: Strict type hinting is required. `mypy` must pass.
 

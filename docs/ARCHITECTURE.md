@@ -18,7 +18,7 @@
 │  │  - Tailwind CSS v4 (styling)                         │   │
 │  │  - Zustand 5 (state management)                      │   │
 │  │  - TanStack Query 5 (data fetching)                  │   │
-│  │  - Axios (HTTP client)                               │   │
+│  │  - Axios (HTTP transport — gerenciado pelo Orval, não usar diretamente)                               │   │
 │  └──────────────────────────────────────────────────────┘   │
 │                           ↕ HTTPS (JWT)                      │
 │  ┌──────────────────────────────────────────────────────┐   │
@@ -659,50 +659,42 @@ SIMPLE_JWT = {
 
 ### 5.2 OIDC para Service-to-Service
 
+> 📋 **Planejado** — A implementação de OIDC para jobs do Cloud Scheduler
+> será adicionada antes do deploy em produção. O código abaixo é ilustrativo
+> da arquitetura planejada, adaptado para Django Ninja.
+
 **Cloud Scheduler → Cloud Run:**
 
 ```python
-# apps/core/decorators.py
-from google.auth.transport import requests
+# apps/core/auth.py
+from ninja.security import HttpBearer
 from google.oauth2 import id_token
+from google.auth.transport import requests
 
-def require_oidc_auth(view_func):
-    """
-    Valida token OIDC do Cloud Scheduler.
-    Rejeita qualquer outro token (incluindo JWT de usuários).
-    """
-    def wrapper(request, *args, **kwargs):
-        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-
-        if not auth_header.startswith('Bearer '):
-            raise PermissionDenied('Missing OIDC token')
-
-        token = auth_header.replace('Bearer ', '')
-
+class OIDCBearer(HttpBearer):
+    """Autenticação OIDC para jobs do Cloud Scheduler."""
+    def authenticate(self, request, token):
         try:
             claim = id_token.verify_oauth2_token(
                 token,
                 requests.Request(),
                 settings.CLOUD_RUN_SERVICE_URL
             )
+            if claim.get('email') != settings.SCHEDULER_SERVICE_ACCOUNT:
+                return None
+            return claim
+        except Exception:
+            return None
 
-            # Validar service account específico
-            if claim['email'] != settings.SCHEDULER_SERVICE_ACCOUNT:
-                raise PermissionDenied('Unauthorized service account')
-
-        except Exception as e:
-            raise PermissionDenied(f'Invalid OIDC token: {e}')
-
-        return view_func(request, *args, **kwargs)
-
-    return wrapper
-
-# Usage
-@api_view(['POST'])
-@require_oidc_auth
+# Uso no endpoint Ninja
+@router.post("/tasks/check-overdue", auth=OIDCBearer())
 def check_overdue(request):
-    """Endpoint chamado APENAS pelo Cloud Scheduler"""
-    # ...
+    """Endpoint chamado APENAS pelo Cloud Scheduler via OIDC."""
+    overdue_count = Installment.objects.filter(
+        due_date__lt=timezone.now().date(),
+        status='PENDING'
+    ).update(status='OVERDUE')
+    return {"overdue_count": overdue_count}
 ```
 
 Ver [ADR-005](ADR/005-oidc-scheduler.md).
@@ -720,14 +712,24 @@ Ver [ADR-005](ADR/005-oidc-scheduler.md).
 
 ### 6.1 Database Query Optimization
 
-**Paginação obrigatória:**
+**Paginação via Django Ninja:**
+
+Django Ninja oferece paginação nativa integrada aos routers:
 
 ```python
-# settings.py
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-}
+# api.py
+from ninja.pagination import paginate, PageNumberPagination
+
+@router.get("/", response=List[SomeSchema])
+@paginate(PageNumberPagination, page_size=10)
+def list_items(request):
+    return SomeModel.objects.all()
+```
+
+Ou via configuração global em `settings.py`:
+
+```python
+NINJA_PAGINATION_PER_PAGE = 10
 ```
 
 **Eager loading:**
