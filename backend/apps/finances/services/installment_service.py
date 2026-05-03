@@ -103,7 +103,11 @@ class InstallmentService:
             )
         )
 
-        Installment.objects.bulk_create(installments)
+        # Usar .save() em vez de bulk_create para garantir que full_clean()
+        # e hooks do BaseModel/Tolerância Zero sejam executados (ADR-011)
+        for inst in installments:
+            inst.save()
+
         return installments
 
     @staticmethod

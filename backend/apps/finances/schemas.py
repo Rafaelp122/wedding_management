@@ -75,6 +75,9 @@ class ExpenseIn(Schema):
     description: str = Field(..., max_length=255)
     estimated_amount: Decimal
     actual_amount: Decimal
+    # Campos para geração automática de parcelas (opcionais)
+    num_installments: int | None = Field(None, gt=0)
+    first_due_date: date | None = None
 
 
 class ExpensePatchIn(Schema):
