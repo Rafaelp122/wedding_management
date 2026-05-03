@@ -260,7 +260,7 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 - [ ] **Auto-geração de eventos PAYMENT** — ao criar uma parcela (ou em lote diário), criar/atualizar evento de tipo `PAYMENT` no scheduler com `start_time = installment.due_date` e `title = "Pagamento: {expense.description} - Parcela {n}"`. Evento é read-only no calendário (BR-S01).
   - **Ref:** BR-S01
-  - **Arquivo:** `backend/apps/finances/services/installment_service.py` + `backend/apps/scheduler/services/event_service.py`
+  - **Arquivo:** `backend/apps/finances/services/installment_service.py` + `backend/apps/scheduler/services/events.py`
 
 - [ ] **Recorrência de eventos** — campo `recurrence_rule` (RF3339 ou escolhas: NONE/WEEKLY/BIWEEKLY/MONTHLY) no modelo `Event`. Lógica de expansão na listagem ou no create.
   - **Ref:** UC08 fluxo alternativo "Evento Recorrente"

@@ -40,12 +40,13 @@ Sidebar (Global)
 ├── 📊 Dashboard Global       → 01-dashboard-global.md
 ├── 💒 Casamentos             → 02-casamentos.md
 │     └── [Clica no casamento]
-│           ├── 📋 Geral       → Dashboard do casamento (UC10)
+│           ├── 📋 Geral       → Dashboard do casamento
 │           ├── 💰 Financeiro  → 03-financeiro.md (UC02, UC03, UC04)
 │           ├── 📦 Logística   → 04-logistica.md (UC05, UC06, UC07)
 │           └── 📅 Cronograma  → 05-calendario.md (UC08)
 ├── 🤝 Fornecedores           → 04-logistica.md (UC05 - visão global)
-└── 📅 Calendário             → 05-calendario.md (UC08 - visão global)
+├── 📅 Calendário             → 05-calendario.md (UC08 - visão global)
+└── 📊 Relatórios             → 06-relatorios.md (UC11)
 ```
 
 ---
@@ -81,8 +82,8 @@ Global (Dashboard)
 
 ### Casamento
 ```
-CREATED → IN_PROGRESS → COMPLETED
-                      → CANCELED
+IN_PROGRESS → COMPLETED
+            → CANCELED
 ```
 
 ### Parcela
@@ -154,3 +155,4 @@ UC11 → Exportar Relatórios
 **Última atualização:** 2 de maio de 2026
 **Versão:** 1.1
 **Próximo:** [01-dashboard-global.md](./01-dashboard-global.md)
+oard-global.md)

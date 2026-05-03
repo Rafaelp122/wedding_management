@@ -11,8 +11,8 @@ Este documento centraliza as regras que regem o comportamento do sistema. Estas 
 - **Objetivo:** Prevenir o fechamento acidental de casamentos ainda em andamento.
 
 ### **BR-W02: Isolamento de Dados (Multi-tenancy)**
-- **Regra:** Cada cerimonialista (Planner) possui acesso exclusivo apenas aos casamentos e dados criados por sua conta.
-- **Objetivo:** Garantir a privacidade e segurança dos dados entre diferentes clientes (LGPD).
+- **Regra:** O acesso aos casamentos e demais dados é isolado por empresa (`company`/tenant). Usuários da mesma empresa compartilham os dados do seu tenant, enquanto usuários de empresas diferentes não podem acessar os dados entre si.
+- **Objetivo:** Garantir a privacidade e segurança dos dados entre diferentes empresas/clientes (LGPD), respeitando o compartilhamento interno dentro do mesmo tenant.
 
 ---
 

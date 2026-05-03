@@ -2,7 +2,7 @@
 
 > **⚠️ ATENÇÃO: Este arquivo é de uso exclusivo para agentes de IA.** Ele fornece contexto técnico e regras estritas para garantir a consistência do código. Desenvolvedores humanos devem consultar a documentação em `docs/`.
 
-This file serves as the Single Source of Truth for all AI agents and developers working on this project.
+This file serves as the Single Source of Truth for AI agents working on this project; human developers should rely on `docs/` for human-facing guidance.
 
 ## 🚀 Tech Stack
 

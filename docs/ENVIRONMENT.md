@@ -1,6 +1,6 @@
 # 🔐 Guia de Configuração de Ambiente
 
-Este guia detalha como configurar seu ambiente de desenvolvimento local e as variáveis necessárias para produção. Para um início rápido, consulte o **[Quick Start no README.md](../../README.md#quick-start-resumo)**.
+Este guia detalha como configurar seu ambiente de desenvolvimento local e as variáveis necessárias para produção. Para um início rápido, consulte o **[Quick Start no README.md](../README.md#quick-start-resumo)**.
 
 ---
 

@@ -148,8 +148,8 @@ Ao clicar em um casamento, a primeira aba exibe:
 ## Diagrama de Transições de Status
 
 ```
-CREATED → IN_PROGRESS → COMPLETED
-                      → CANCELED
+IN_PROGRESS → COMPLETED
+            → CANCELED
 ```
 
 ---

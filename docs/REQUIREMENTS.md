@@ -12,7 +12,7 @@ O sistema visa eliminar a fragmentação de dados e erros de cálculo em cerimon
 ## 2. Requisitos Funcionais (RF)
 
 ### 2.1 Módulo Core & Multitenancy
-- **RF01 (Isolamento de Dados):** O sistema deve garantir que um Planner acesse apenas seus próprios casamentos e dados.
+- **RF01 (Isolamento de Dados):** O sistema deve garantir que o usuário acesse apenas os casamentos e dados pertencentes à sua empresa (tenant), impedindo o acesso a dados de outras empresas.
 - **RF02 (Gestão de Casamentos):** O sistema deve permitir o CRUD de casamentos, com data, nomes dos noivos e status.
 
 ### 2.2 Módulo Financeiro
