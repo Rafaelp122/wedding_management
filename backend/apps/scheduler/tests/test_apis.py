@@ -28,7 +28,11 @@ def seed_data(user, django_user_model):
     )
 
     # Planner alheio
-    other_user = django_user_model.objects.create_user(email="b@b.com", password="123")
+    from apps.users.tests.factories import UserFactory
+
+    other_user = UserFactory(email="b@b.com")
+    other_user.set_password("123")
+    other_user.save()
     other_wedding = WeddingService.create(
         other_user.company,
         {

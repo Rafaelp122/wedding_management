@@ -9,12 +9,13 @@ import pytest
 from pytest_factoryboy import register
 
 # Mantendo as importações relativas como solicitado
-from .factories import EventFactory, MeetingFactory
+from .factories import EventFactory, MeetingFactory, TaskFactory
 
 
 # Registo das factories como fixtures (ex: event_factory)
 register(EventFactory)
 register(MeetingFactory)
+register(TaskFactory)
 
 
 @pytest.fixture
