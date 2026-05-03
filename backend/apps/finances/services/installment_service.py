@@ -1,4 +1,6 @@
+import builtins
 import logging
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -41,6 +43,82 @@ class InstallmentService:
             )
         except Installment.DoesNotExist as e:
             raise ObjectNotFoundError(detail="Parcela não encontrada.") from e
+
+    @staticmethod
+    @transaction.atomic
+    def auto_generate_installments(
+        company: Company,
+        expense: Expense,
+        num_installments: int,
+        first_due_date: date,
+    ) -> builtins.list[Installment]:
+        """
+        Gera automaticamente as parcelas de uma despesa com ajuste na última
+        parcela (Tolerância Zero).
+        """
+        from datetime import timedelta
+
+        # Bloqueio de reentrada/duplicação (Copilot Review Fix)
+        if expense.installments.exists():
+            raise BusinessRuleViolation(
+                detail=(
+                    "Esta despesa já possui parcelas geradas. Remova-as "
+                    "antes de gerar novas."
+                ),
+                code="installments_already_exist",
+            )
+
+        if num_installments <= 0:
+            raise BusinessRuleViolation(
+                detail="O número de parcelas deve ser maior que zero.",
+                code="invalid_installment_number",
+            )
+
+        if not expense.actual_amount or expense.actual_amount <= 0:
+            raise BusinessRuleViolation(
+                detail="A despesa precisa ter um valor maior que zero para "
+                "parcelamento.",
+                code="invalid_expense_amount",
+            )
+
+        base_amount = round(expense.actual_amount / num_installments, 2)
+        installments = []
+
+        current_due_date = first_due_date
+
+        for i in range(1, num_installments):
+            installments.append(
+                Installment(
+                    company=company,
+                    wedding=expense.wedding,
+                    expense=expense,
+                    installment_number=i,
+                    amount=base_amount,
+                    due_date=current_due_date,
+                    status=Installment.StatusChoices.PENDING,
+                )
+            )
+            current_due_date += timedelta(days=30)
+
+        last_amount = expense.actual_amount - (base_amount * (num_installments - 1))
+        installments.append(
+            Installment(
+                company=company,
+                wedding=expense.wedding,
+                expense=expense,
+                installment_number=num_installments,
+                amount=last_amount,
+                due_date=current_due_date,
+                status=Installment.StatusChoices.PENDING,
+            )
+        )
+
+        # Usar .save() em vez de bulk_create para garantir que full_clean()
+        # e hooks do BaseModel/Tolerância Zero sejam executados (ADR-011)
+        for inst in installments:
+            inst.save()
+
+        return installments
 
     @staticmethod
     @transaction.atomic

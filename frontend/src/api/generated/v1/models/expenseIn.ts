@@ -12,4 +12,6 @@ export interface ExpenseIn {
   description: string;
   estimated_amount: number | string;
   actual_amount: number | string;
+  num_installments?: number | null;
+  first_due_date?: string | null;
 }

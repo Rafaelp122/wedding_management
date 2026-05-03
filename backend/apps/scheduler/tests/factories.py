@@ -16,7 +16,7 @@ from datetime import timedelta
 import factory
 from django.utils import timezone
 
-from apps.scheduler.models import Event
+from apps.scheduler.models import Event, Task
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -65,3 +65,18 @@ class MeetingFactory(EventFactory):
 
     event_type = Event.TypeChoices.MEETING
     title = factory.Sequence(lambda n: f"Reunião de Alinhamento {n}")
+
+
+class TaskFactory(factory.django.DjangoModelFactory):
+    """Fábrica para Tarefas de Checklist."""
+
+    class Meta:
+        model = Task
+
+    wedding = factory.SubFactory(WeddingFactory)
+    company = factory.SelfAttribute("wedding.company")
+
+    title = factory.Faker("sentence", nb_words=3)
+    description = factory.Faker("paragraph")
+    due_date = factory.Faker("future_date")
+    is_completed = False

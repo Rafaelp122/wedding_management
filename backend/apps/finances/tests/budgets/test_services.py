@@ -17,6 +17,7 @@ from apps.core.exceptions import ObjectNotFoundError
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.services.budget_service import BudgetService
+from apps.finances.tests.factories import BudgetFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -308,3 +309,73 @@ class TestBudgetServiceIntegration:
 
         # Verificar que ambos foram deletados
         assert Budget.objects.filter(wedding=wedding).count() == 0
+
+    def test_budget_create_with_wedding_instance(self, user):
+        """
+        BudgetService.create() aceita instância de Wedding, não só UUID.
+        """
+        wedding = WeddingFactory(company=user.company)
+
+        budget = BudgetService.create(
+            user.company,
+            {"wedding": wedding, "total_estimated": Decimal("30000.00")},
+        )
+
+        assert budget.wedding == wedding
+        assert budget.total_estimated == Decimal("30000.00")
+
+    def test_budget_update_success(self, user):
+        """
+        BudgetService.update() permite alterar total_estimated e notes.
+        """
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
+
+        updated = BudgetService.update(
+            user.company,
+            budget,
+            {"total_estimated": Decimal("80000.00"), "notes": "Nova observação"},
+        )
+
+        assert updated.total_estimated == Decimal("80000.00")
+        assert updated.notes == "Nova observação"
+
+    def test_budget_update_cannot_change_wedding(self, user):
+        """
+        Wedding é bloqueado no update — campo estrutural.
+        """
+        wedding1 = WeddingFactory(company=user.company)
+        wedding2 = WeddingFactory(company=user.company)
+        budget = BudgetService.get_or_create_for_wedding(user.company, wedding1.uuid)
+
+        updated = BudgetService.update(user.company, budget, {"wedding": wedding2.uuid})
+
+        assert updated.wedding == wedding1
+
+    def test_budget_delete_success(self, user):
+        """
+        BudgetService.delete() remove o orçamento se não houver categorias.
+        """
+        from apps.finances.models import Budget as BudgetModel
+
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetFactory(
+            wedding=wedding,
+            total_estimated=Decimal("10000.00"),
+        )
+
+        BudgetService.delete(user.company, budget)
+
+        assert BudgetModel.objects.filter(uuid=budget.uuid).count() == 0
+
+    def test_budget_delete_cascades_to_categories(self, user):
+        """
+        Budget com categorias: CASCADE deleta categorias junto.
+        BudgetCategory.on_delete=CASCADE para Budget, sem proteção.
+        """
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetService.get_or_create_for_wedding(user.company, wedding.uuid)
+
+        BudgetService.delete(user.company, budget)
+
+        assert Budget.objects.filter(uuid=budget.uuid).count() == 0

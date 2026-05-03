@@ -402,6 +402,7 @@ export const financesExpensesCreateBodyEstimatedAmountTwoRegExp = new RegExp(
 export const financesExpensesCreateBodyActualAmountTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const financesExpensesCreateBodyNumInstallmentsOneExclusiveMin = 0;
 
 export const FinancesExpensesCreateBody = zod.object({
   category: zod.string(),
@@ -415,6 +416,13 @@ export const FinancesExpensesCreateBody = zod.object({
     zod.number(),
     zod.string().regex(financesExpensesCreateBodyActualAmountTwoRegExp),
   ]),
+  num_installments: zod
+    .union([
+      zod.number().gt(financesExpensesCreateBodyNumInstallmentsOneExclusiveMin),
+      zod.null(),
+    ])
+    .optional(),
+  first_due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
 });
 
 /**

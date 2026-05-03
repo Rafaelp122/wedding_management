@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 
 from apps.finances.services.budget_service import BudgetService
@@ -30,7 +32,11 @@ def seed_data(user, django_user_model):
     )
 
     # Planner alheio
-    other_user = django_user_model.objects.create_user(email="b@b.com", password="123")
+    from apps.users.tests.factories import UserFactory
+
+    other_user = UserFactory(email="b@b.com")
+    other_user.set_password("123")
+    other_user.save()
     other_wedding = WeddingService.create(
         other_user.company,
         {
@@ -104,3 +110,18 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 422
         payload = response.json()
         assert payload["code"] == "expense_validation_error"
+
+
+@pytest.mark.django_db
+class TestFinancesAPIErrorHandling:
+    def test_get_budget_not_found(self, auth_client):
+        response = auth_client.get(f"/api/v1/finances/budgets/{uuid4()}/")
+        assert response.status_code == 404
+
+    def test_get_category_not_found(self, auth_client):
+        response = auth_client.get(f"/api/v1/finances/categories/{uuid4()}/")
+        assert response.status_code == 404
+
+    def test_get_expense_not_found(self, auth_client):
+        response = auth_client.get(f"/api/v1/finances/expenses/{uuid4()}/")
+        assert response.status_code == 404

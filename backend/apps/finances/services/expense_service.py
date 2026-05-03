@@ -94,6 +94,21 @@ class ExpenseService:
                         code="contract_not_found_or_denied",
                     ) from e
 
+        num_installments = data.pop("num_installments", None)
+        first_due_date = data.pop("first_due_date", None)
+
+        # Validação cruzada de parcelamento (Copilot Review Fix)
+        if (num_installments or first_due_date) and not (
+            num_installments and first_due_date
+        ):
+            raise BusinessRuleViolation(
+                detail=(
+                    "Para gerar parcelas, você deve informar o número de "
+                    "parcelas E a data do primeiro vencimento."
+                ),
+                code="incomplete_installment_params",
+            )
+
         # 3. Injeção de Contexto (ADR-009) e Instanciação
         expense = Expense(
             company=company,
@@ -117,6 +132,17 @@ class ExpenseService:
                 detail=detail,
                 code="expense_validation_error",
             ) from e
+
+        # 5. Geração automática de parcelas
+        if num_installments and first_due_date:
+            from apps.finances.services.installment_service import InstallmentService
+
+            InstallmentService.auto_generate_installments(
+                company=company,
+                expense=expense,
+                num_installments=num_installments,
+                first_due_date=first_due_date,
+            )
 
         logger.info(f"Despesa criada com sucesso: uuid={expense.uuid}")
         return expense
