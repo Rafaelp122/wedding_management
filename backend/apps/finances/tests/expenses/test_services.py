@@ -123,6 +123,22 @@ class TestExpenseServiceCreate:
 
         assert "expense_validation_error" in str(exc_info.value.code)
 
+    def test_create_expense_incomplete_installment_params(self, user):
+        """Erro ao enviar apenas um dos parâmetros de parcelamento."""
+        category = _setup_category(user)
+        data = {
+            "category": category.uuid,
+            "description": "Buffet",
+            "estimated_amount": Decimal("1000.00"),
+            "actual_amount": Decimal("1000.00"),
+            "num_installments": 3,
+            # Faltando first_due_date
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            ExpenseService.create(user.company, data)
+        assert exc.value.code == "incomplete_installment_params"
+
 
 @pytest.mark.django_db
 class TestExpenseServiceUpdate:

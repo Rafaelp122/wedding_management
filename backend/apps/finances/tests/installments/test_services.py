@@ -172,6 +172,17 @@ class TestInstallmentServiceAutoGeneration:
         total_sum = sum(i.amount for i in Installment.objects.filter(expense=expense))
         assert total_sum == Decimal("1000.00")
 
+    def test_auto_generate_installments_already_exists(self, user):
+        """Bloqueia geração se despesa já possui parcelas."""
+        expense = _setup_expense(user, actual_amount=Decimal("100.00"))
+        InstallmentFactory(expense=expense, amount=Decimal("100.00"))
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.auto_generate_installments(
+                user.company, expense, 2, date.today()
+            )
+        assert exc.value.code == "installments_already_exist"
+
     def test_auto_generate_invalid_num_installments(self, user):
         expense = _setup_expense(user, actual_amount=Decimal("100.00"))
         with pytest.raises(BusinessRuleViolation) as exc:

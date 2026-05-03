@@ -97,6 +97,18 @@ class ExpenseService:
         num_installments = data.pop("num_installments", None)
         first_due_date = data.pop("first_due_date", None)
 
+        # Validação cruzada de parcelamento (Copilot Review Fix)
+        if (num_installments or first_due_date) and not (
+            num_installments and first_due_date
+        ):
+            raise BusinessRuleViolation(
+                detail=(
+                    "Para gerar parcelas, você deve informar o número de "
+                    "parcelas E a data do primeiro vencimento."
+                ),
+                code="incomplete_installment_params",
+            )
+
         # 3. Injeção de Contexto (ADR-009) e Instanciação
         expense = Expense(
             company=company,

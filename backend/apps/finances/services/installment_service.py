@@ -58,6 +58,16 @@ class InstallmentService:
         """
         from datetime import timedelta
 
+        # Bloqueio de reentrada/duplicação (Copilot Review Fix)
+        if expense.installments.exists():
+            raise BusinessRuleViolation(
+                detail=(
+                    "Esta despesa já possui parcelas geradas. Remova-as "
+                    "antes de gerar novas."
+                ),
+                code="installments_already_exist",
+            )
+
         if num_installments <= 0:
             raise BusinessRuleViolation(
                 detail="O número de parcelas deve ser maior que zero.",
