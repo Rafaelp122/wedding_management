@@ -6,6 +6,8 @@
  */
 
 export type FinancesInstallmentsListParams = {
+  wedding_id?: string | null;
+  expense_id?: string | null;
   /**
    * @minimum 1
    */

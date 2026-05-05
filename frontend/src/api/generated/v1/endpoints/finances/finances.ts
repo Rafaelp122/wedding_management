@@ -24,7 +24,6 @@ import type {
   BudgetCategoryIn,
   BudgetCategoryOut,
   BudgetCategoryPatchIn,
-  BudgetIn,
   BudgetOut,
   BudgetPatchIn,
   ErrorResponse,
@@ -35,9 +34,8 @@ import type {
   FinancesCategoriesListParams,
   FinancesExpensesListParams,
   FinancesInstallmentsListParams,
-  InstallmentIn,
+  InstallmentAdjustIn,
   InstallmentOut,
-  InstallmentPatchIn,
   PagedBudgetCategoryOut,
   PagedBudgetOut,
   PagedExpenseOut,
@@ -213,100 +211,6 @@ export function useFinancesBudgetsList<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * Dá pontapé inicial para a planilha contábil centralizada.
-Atrelada às métricas cerimoniais.
- * @summary Create Budget
- */
-export const financesBudgetsCreate = (
-  budgetIn: BudgetIn,
-  options?: SecondParameter<typeof customInstance>,
-  signal?: AbortSignal,
-) => {
-  return customInstance<BudgetOut>(
-    {
-      url: `/api/v1/finances/budgets/`,
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      data: budgetIn,
-      signal,
-    },
-    options,
-  );
-};
-
-export const getFinancesBudgetsCreateMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesBudgetsCreate>>,
-    TError,
-    { data: BudgetIn },
-    TContext
-  >;
-  request?: SecondParameter<typeof customInstance>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof financesBudgetsCreate>>,
-  TError,
-  { data: BudgetIn },
-  TContext
-> => {
-  const mutationKey = ["financesBudgetsCreate"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesBudgetsCreate>>,
-    { data: BudgetIn }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return financesBudgetsCreate(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type FinancesBudgetsCreateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesBudgetsCreate>>
->;
-export type FinancesBudgetsCreateMutationBody = BudgetIn;
-export type FinancesBudgetsCreateMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Create Budget
- */
-export const useFinancesBudgetsCreate = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesBudgetsCreate>>,
-      TError,
-      { data: BudgetIn },
-      TContext
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof financesBudgetsCreate>>,
-  TError,
-  { data: BudgetIn },
-  TContext
-> => {
-  return useMutation(
-    getFinancesBudgetsCreateMutationOptions(options),
-    queryClient,
-  );
-};
 /**
  * Retorna os totais e os saldos remanescentes autorizados de um projeto macro.
  * @summary Get Budget
@@ -570,102 +474,7 @@ export const useFinancesBudgetsUpdate = <
   );
 };
 /**
- * Remove toda e qualquer anotação da malha financeira.
-Varre as despesas em ação de reverso total absoluto.
- * @summary Delete Budget
- */
-export const financesBudgetsDelete = (
-  uuid: string,
-  options?: SecondParameter<typeof customInstance>,
-  signal?: AbortSignal,
-) => {
-  return customInstance<void>(
-    { url: `/api/v1/finances/budgets/${uuid}/`, method: "DELETE", signal },
-    options,
-  );
-};
-
-export const getFinancesBudgetsDeleteMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesBudgetsDelete>>,
-    TError,
-    { uuid: string },
-    TContext
-  >;
-  request?: SecondParameter<typeof customInstance>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof financesBudgetsDelete>>,
-  TError,
-  { uuid: string },
-  TContext
-> => {
-  const mutationKey = ["financesBudgetsDelete"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesBudgetsDelete>>,
-    { uuid: string }
-  > = (props) => {
-    const { uuid } = props ?? {};
-
-    return financesBudgetsDelete(uuid, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type FinancesBudgetsDeleteMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesBudgetsDelete>>
->;
-
-export type FinancesBudgetsDeleteMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Delete Budget
- */
-export const useFinancesBudgetsDelete = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesBudgetsDelete>>,
-      TError,
-      { uuid: string },
-      TContext
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof financesBudgetsDelete>>,
-  TError,
-  { uuid: string },
-  TContext
-> => {
-  return useMutation(
-    getFinancesBudgetsDeleteMutationOptions(options),
-    queryClient,
-  );
-};
-/**
- * Retorna o orçamento de um casamento específico.
-
-Implementa o padrão Lazy Loading:
-- Se o Budget já existe, retorna ele
-- Se não existe, cria automaticamente com total_estimated=0 e categorias padrão
-
-Este endpoint permite que o frontend acesse o orçamento sem se preocupar
-se ele foi criado ou não durante a criação do casamento.
+ * Retorna o orçamento de um casamento específico (lazy-create).
  * @summary Get Budget For Wedding
  */
 export const financesBudgetsForWedding = (
@@ -2058,8 +1867,7 @@ export const useFinancesExpensesDelete = <
   );
 };
 /**
- * Lista faturas fragmentadas originárias para os fluxos pendentes.
-Faturas isoladas ligadas a pagamentos unificados.
+ * Lista parcelas com filtro opcional por casamento e despesa.
  * @summary List Installments
  */
 export const financesInstallmentsList = (
@@ -2226,100 +2034,7 @@ export function useFinancesInstallmentsList<
 }
 
 /**
- * Grava pendências parciais atestando dependências de transações.
- * @summary Create Installment
- */
-export const financesInstallmentsCreate = (
-  installmentIn: InstallmentIn,
-  options?: SecondParameter<typeof customInstance>,
-  signal?: AbortSignal,
-) => {
-  return customInstance<InstallmentOut>(
-    {
-      url: `/api/v1/finances/installments/`,
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      data: installmentIn,
-      signal,
-    },
-    options,
-  );
-};
-
-export const getFinancesInstallmentsCreateMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesInstallmentsCreate>>,
-    TError,
-    { data: InstallmentIn },
-    TContext
-  >;
-  request?: SecondParameter<typeof customInstance>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof financesInstallmentsCreate>>,
-  TError,
-  { data: InstallmentIn },
-  TContext
-> => {
-  const mutationKey = ["financesInstallmentsCreate"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesInstallmentsCreate>>,
-    { data: InstallmentIn }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return financesInstallmentsCreate(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type FinancesInstallmentsCreateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesInstallmentsCreate>>
->;
-export type FinancesInstallmentsCreateMutationBody = InstallmentIn;
-export type FinancesInstallmentsCreateMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Create Installment
- */
-export const useFinancesInstallmentsCreate = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesInstallmentsCreate>>,
-      TError,
-      { data: InstallmentIn },
-      TContext
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof financesInstallmentsCreate>>,
-  TError,
-  { data: InstallmentIn },
-  TContext
-> => {
-  return useMutation(
-    getFinancesInstallmentsCreateMutationOptions(options),
-    queryClient,
-  );
-};
-/**
- * Revela notas fragmentais e guias pendentes programados do recebimento.
+ * Retorna os detalhes de uma parcela específica.
  * @summary Get Installment
  */
 export const financesInstallmentsRead = (
@@ -2486,132 +2201,43 @@ export function useFinancesInstallmentsRead<
 }
 
 /**
- * Edita temporalmente ou encerra status validando com pagamento de guia as etapas.
- * @summary Update Installment
+ * Marca uma parcela como paga (data de hoje).
+Bloqueia se já estiver paga (BR-F06).
+ * @summary Mark As Paid Installment
  */
-export const financesInstallmentsUpdate = (
+export const financesInstallmentsMarkAsPaid = (
   uuid: string,
-  installmentPatchIn: InstallmentPatchIn,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<InstallmentOut>(
     {
-      url: `/api/v1/finances/installments/${uuid}/`,
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      data: installmentPatchIn,
+      url: `/api/v1/finances/installments/${uuid}/mark-as-paid/`,
+      method: "POST",
       signal,
     },
     options,
   );
 };
 
-export const getFinancesInstallmentsUpdateMutationOptions = <
+export const getFinancesInstallmentsMarkAsPaidMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
-    TError,
-    { uuid: string; data: InstallmentPatchIn },
-    TContext
-  >;
-  request?: SecondParameter<typeof customInstance>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
-  TError,
-  { uuid: string; data: InstallmentPatchIn },
-  TContext
-> => {
-  const mutationKey = ["financesInstallmentsUpdate"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
-    { uuid: string; data: InstallmentPatchIn }
-  > = (props) => {
-    const { uuid, data } = props ?? {};
-
-    return financesInstallmentsUpdate(uuid, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type FinancesInstallmentsUpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesInstallmentsUpdate>>
->;
-export type FinancesInstallmentsUpdateMutationBody = InstallmentPatchIn;
-export type FinancesInstallmentsUpdateMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Update Installment
- */
-export const useFinancesInstallmentsUpdate = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
-      TError,
-      { uuid: string; data: InstallmentPatchIn },
-      TContext
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof financesInstallmentsUpdate>>,
-  TError,
-  { uuid: string; data: InstallmentPatchIn },
-  TContext
-> => {
-  return useMutation(
-    getFinancesInstallmentsUpdateMutationOptions(options),
-    queryClient,
-  );
-};
-/**
- * Exclui registro pendente restabelecendo ordem das cobranças integrando-as.
- * @summary Delete Installment
- */
-export const financesInstallmentsDelete = (
-  uuid: string,
-  options?: SecondParameter<typeof customInstance>,
-  signal?: AbortSignal,
-) => {
-  return customInstance<void>(
-    { url: `/api/v1/finances/installments/${uuid}/`, method: "DELETE", signal },
-    options,
-  );
-};
-
-export const getFinancesInstallmentsDeleteMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof financesInstallmentsDelete>>,
+    Awaited<ReturnType<typeof financesInstallmentsMarkAsPaid>>,
     TError,
     { uuid: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof financesInstallmentsDelete>>,
+  Awaited<ReturnType<typeof financesInstallmentsMarkAsPaid>>,
   TError,
   { uuid: string },
   TContext
 > => {
-  const mutationKey = ["financesInstallmentsDelete"];
+  const mutationKey = ["financesInstallmentsMarkAsPaid"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -2621,33 +2247,34 @@ export const getFinancesInstallmentsDeleteMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof financesInstallmentsDelete>>,
+    Awaited<ReturnType<typeof financesInstallmentsMarkAsPaid>>,
     { uuid: string }
   > = (props) => {
     const { uuid } = props ?? {};
 
-    return financesInstallmentsDelete(uuid, requestOptions);
+    return financesInstallmentsMarkAsPaid(uuid, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type FinancesInstallmentsDeleteMutationResult = NonNullable<
-  Awaited<ReturnType<typeof financesInstallmentsDelete>>
+export type FinancesInstallmentsMarkAsPaidMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesInstallmentsMarkAsPaid>>
 >;
 
-export type FinancesInstallmentsDeleteMutationError = ErrorType<ErrorResponse>;
+export type FinancesInstallmentsMarkAsPaidMutationError =
+  ErrorType<ErrorResponse>;
 
 /**
- * @summary Delete Installment
+ * @summary Mark As Paid Installment
  */
-export const useFinancesInstallmentsDelete = <
+export const useFinancesInstallmentsMarkAsPaid = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof financesInstallmentsDelete>>,
+      Awaited<ReturnType<typeof financesInstallmentsMarkAsPaid>>,
       TError,
       { uuid: string },
       TContext
@@ -2656,13 +2283,200 @@ export const useFinancesInstallmentsDelete = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof financesInstallmentsDelete>>,
+  Awaited<ReturnType<typeof financesInstallmentsMarkAsPaid>>,
   TError,
   { uuid: string },
   TContext
 > => {
   return useMutation(
-    getFinancesInstallmentsDeleteMutationOptions(options),
+    getFinancesInstallmentsMarkAsPaidMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Desmarca uma parcela paga, revertendo para PENDING ou OVERDUE.
+ * @summary Unmark As Paid Installment
+ */
+export const financesInstallmentsUnmarkAsPaid = (
+  uuid: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<InstallmentOut>(
+    {
+      url: `/api/v1/finances/installments/${uuid}/unmark-as-paid/`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getFinancesInstallmentsUnmarkAsPaidMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof financesInstallmentsUnmarkAsPaid>>,
+    TError,
+    { uuid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof financesInstallmentsUnmarkAsPaid>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  const mutationKey = ["financesInstallmentsUnmarkAsPaid"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof financesInstallmentsUnmarkAsPaid>>,
+    { uuid: string }
+  > = (props) => {
+    const { uuid } = props ?? {};
+
+    return financesInstallmentsUnmarkAsPaid(uuid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type FinancesInstallmentsUnmarkAsPaidMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesInstallmentsUnmarkAsPaid>>
+>;
+
+export type FinancesInstallmentsUnmarkAsPaidMutationError =
+  ErrorType<ErrorResponse>;
+
+/**
+ * @summary Unmark As Paid Installment
+ */
+export const useFinancesInstallmentsUnmarkAsPaid = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof financesInstallmentsUnmarkAsPaid>>,
+      TError,
+      { uuid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof financesInstallmentsUnmarkAsPaid>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  return useMutation(
+    getFinancesInstallmentsUnmarkAsPaidMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Ajusta data/valor de uma parcela futura não paga.
+Valida que due_date não pode ser anterior à parcela anterior.
+ * @summary Adjust Installment
+ */
+export const financesInstallmentsAdjust = (
+  uuid: string,
+  installmentAdjustIn: InstallmentAdjustIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<InstallmentOut>(
+    {
+      url: `/api/v1/finances/installments/${uuid}/adjust/`,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      data: installmentAdjustIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getFinancesInstallmentsAdjustMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof financesInstallmentsAdjust>>,
+    TError,
+    { uuid: string; data: InstallmentAdjustIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof financesInstallmentsAdjust>>,
+  TError,
+  { uuid: string; data: InstallmentAdjustIn },
+  TContext
+> => {
+  const mutationKey = ["financesInstallmentsAdjust"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof financesInstallmentsAdjust>>,
+    { uuid: string; data: InstallmentAdjustIn }
+  > = (props) => {
+    const { uuid, data } = props ?? {};
+
+    return financesInstallmentsAdjust(uuid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type FinancesInstallmentsAdjustMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesInstallmentsAdjust>>
+>;
+export type FinancesInstallmentsAdjustMutationBody = InstallmentAdjustIn;
+export type FinancesInstallmentsAdjustMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Adjust Installment
+ */
+export const useFinancesInstallmentsAdjust = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof financesInstallmentsAdjust>>,
+      TError,
+      { uuid: string; data: InstallmentAdjustIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof financesInstallmentsAdjust>>,
+  TError,
+  { uuid: string; data: InstallmentAdjustIn },
+  TContext
+> => {
+  return useMutation(
+    getFinancesInstallmentsAdjustMutationOptions(options),
     queryClient,
   );
 };

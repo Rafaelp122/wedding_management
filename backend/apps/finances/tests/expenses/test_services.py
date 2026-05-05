@@ -1,9 +1,11 @@
+from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
+from apps.finances.models import Installment
 from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
@@ -33,7 +35,8 @@ class TestExpenseServiceCreate:
 
         data = {
             "category": category.uuid,
-            "description": "Buffet Premium",
+            "name": "Buffet Premium",
+            "description": "Buffet completo",
             "estimated_amount": Decimal("10000.00"),
             "actual_amount": Decimal("10000.00"),
         }
@@ -42,7 +45,7 @@ class TestExpenseServiceCreate:
 
         assert expense.category == category
         assert expense.wedding == category.wedding
-        assert expense.description == "Buffet Premium"
+        assert expense.name == "Buffet Premium"
         assert expense.actual_amount == Decimal("10000.00")
 
     def test_create_expense_with_category_instance(self, user):
@@ -51,7 +54,7 @@ class TestExpenseServiceCreate:
 
         data = {
             "category": category,
-            "description": "Fotografia",
+            "name": "Fotografia",
             "estimated_amount": Decimal("5000.00"),
             "actual_amount": Decimal("5000.00"),
         }
@@ -67,7 +70,7 @@ class TestExpenseServiceCreate:
             user.company,
             {
                 "category": category.uuid,
-                "description": "Decoração",
+                "name": "Decoração",
                 "estimated_amount": Decimal("3000.00"),
                 "actual_amount": Decimal("3000.00"),
             },
@@ -79,7 +82,7 @@ class TestExpenseServiceCreate:
         """UUID de categoria inexistente levanta ObjectNotFoundError."""
         data = {
             "category": uuid4(),
-            "description": "Fantasminha",
+            "name": "Fantasminha",
             "estimated_amount": Decimal("100.00"),
             "actual_amount": Decimal("100.00"),
         }
@@ -97,7 +100,7 @@ class TestExpenseServiceCreate:
 
         data = {
             "category": category_b.uuid,
-            "description": "Invasão",
+            "name": "Invasão",
             "estimated_amount": Decimal("1000.00"),
             "actual_amount": Decimal("1000.00"),
         }
@@ -108,36 +111,35 @@ class TestExpenseServiceCreate:
         assert "budget_category_not_found_or_denied" in str(exc_info.value.code)
 
     def test_create_expense_validation_error(self, user):
-        """Dados inválidos levantam BusinessRuleViolation."""
+        """num_installments < 1 levanta BusinessRuleViolation."""
         category = _setup_category(user)
 
         data = {
             "category": category.uuid,
-            "description": "",
+            "name": "Buffet",
             "estimated_amount": Decimal("100.00"),
             "actual_amount": Decimal("100.00"),
+            "num_installments": 0,
         }
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ExpenseService.create(user.company, data)
 
-        assert "expense_validation_error" in str(exc_info.value.code)
+        assert "invalid_installment_number" in str(exc_info.value.code)
 
-    def test_create_expense_incomplete_installment_params(self, user):
-        """Erro ao enviar apenas um dos parâmetros de parcelamento."""
+    def test_create_expense_defaults_to_one_installment(self, user):
+        """Sem informar parcelamento, gera 1 parcela com vencimento hoje."""
         category = _setup_category(user)
         data = {
             "category": category.uuid,
-            "description": "Buffet",
+            "name": "Buffet",
             "estimated_amount": Decimal("1000.00"),
             "actual_amount": Decimal("1000.00"),
-            "num_installments": 3,
-            # Faltando first_due_date
         }
 
-        with pytest.raises(BusinessRuleViolation) as exc:
-            ExpenseService.create(user.company, data)
-        assert exc.value.code == "incomplete_installment_params"
+        expense = ExpenseService.create(user.company, data)
+        assert expense.installments.count() == 1
+        assert expense.installments.first().due_date == date.today()
 
 
 @pytest.mark.django_db
@@ -209,6 +211,56 @@ class TestExpenseServiceUpdate:
         )
 
         assert updated.company == user.company
+
+    def test_update_amount_auto_redistribute(self, user):
+        """Alterar actual_amount sem num_installments redistribui parcelas."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+        )
+
+        updated = ExpenseService.update(
+            user.company,
+            expense,
+            {"actual_amount": Decimal("1000.00")},
+        )
+
+        assert updated.actual_amount == Decimal("1000.00")
+        total = sum(i.amount for i in updated.installments.all())
+        assert total == Decimal("1000.00")
+
+    def test_update_amount_blocked_by_paid(self, user):
+        """Alterar actual_amount com parcelas PAID levanta erro."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            ExpenseService.update(
+                user.company,
+                expense,
+                {"actual_amount": Decimal("1000.00")},
+            )
+        assert exc.value.code == "amount_change_blocked_by_paid"
 
 
 @pytest.mark.django_db
@@ -307,7 +359,7 @@ class TestExpenseServiceContractIntegration:
         data = {
             "category": category.uuid,
             "contract": contract.uuid,
-            "description": "Despesa com contrato",
+            "name": "Despesa com contrato",
             "estimated_amount": Decimal("5000.00"),
             "actual_amount": Decimal("5000.00"),
         }
@@ -331,7 +383,7 @@ class TestExpenseServiceContractIntegration:
         data = {
             "category": category.uuid,
             "contract": contract,
-            "description": "Despesa com contrato instância",
+            "name": "Despesa com contrato",
             "estimated_amount": Decimal("3000.00"),
             "actual_amount": Decimal("3000.00"),
         }
