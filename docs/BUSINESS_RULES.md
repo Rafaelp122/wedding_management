@@ -52,8 +52,40 @@ Sendo `V` o valor total e `n` o número de parcelas:
 - **Objetivo:** Rastreabilidade completa do ciclo financeiro para auditoria e conciliação.
 
 ### **BR-F06: Imutabilidade de Parcelas Pagas**
-- **Regra:** Parcelas com status **PAGO** não podem ter seu valor alterado após o registro do pagamento.
+- **Regra:** Parcelas com status **PAGO** não podem ter seu valor, data de vencimento ou número alterados após serem marcadas como pagas.
 - **Objetivo:** Garantir integridade contábil e rastreabilidade de auditoria. Qualquer ajuste deve ser feito via estorno e nova parcela.
+
+### **BR-F07: Parcelamento Obrigatório**
+- **Regra:** Toda despesa deve ter no mínimo 1 (uma) parcela. O sistema gera automaticamente 1 parcela caso o número não seja informado na criação.
+- **Valor padrão:** `num_installments = 1`, `first_due_date = data atual`.
+- **Objetivo:** Garantir que toda despesa tenha ao menos um vencimento registrado, eliminando o conceito de "à vista sem controle".
+
+### **BR-F08: Redistribuição de Parcelas**
+- **Regra:** O número de parcelas de uma despesa pode ser alterado (remanejado) apenas se **nenhuma** parcela estiver marcada como paga (`PAID`). Se houver parcelas pagas, o remanejamento é bloqueado.
+- **Funcionamento:** O sistema deleta todas as parcelas existentes e as regera com o novo número informado, recalculando a Tolerância Zero (BR-F01). Tudo em uma transação atômica.
+- **Objetivo:** Permitir correção de planejamento sem comprometer a integridade de pagamentos já confirmados.
+
+### **BR-F09: Status Composto da Despesa**
+- **Regra:** O status de uma despesa é derivado automaticamente do estado de suas parcelas:
+  - `PENDING` (Pendente): nenhuma parcela marcada como paga.
+  - `PARTIALLY_PAID` (Parcial): ao menos uma parcela paga, mas não todas.
+  - `SETTLED` (Quitada): todas as parcelas marcadas como pagas.
+- **Cálculo:** O status é computado em tempo real via annotation no banco (não é persistido), garantindo consistência com o estado real das parcelas.
+- **Objetivo:** Fornecer visibilidade consolidada sem risco de divergência entre o status persistido e o estado real.
+
+### **BR-F11: Desmarcação de Parcela Paga**
+- **Regra:** Parcelas marcadas como pagas podem ser desmarcadas (revertidas). Ao desmarcar:
+  - `paid_date` é limpo (null)
+  - Se `due_date < hoje` → status volta para `OVERDUE`
+  - Caso contrário → status volta para `PENDING`
+- **Objetivo:** Permitir correção de marcação acidental sem perder rastreabilidade contábil.
+
+---
+
+### **BR-F10: Identificação da Despesa**
+- **Regra:** Toda despesa requer um **nome** (`name`) obrigatório. O campo **descrição** (`description`) é opcional e serve para detalhamento adicional.
+- **Motivo:** Separar identificação curta (nome) do detalhamento (descrição), evitando sobrecarga semântica de um campo único.
+- **Objetivo:** Melhorar a legibilidade nas listagens e tabelas, onde o nome aparece como identificador principal.
 
 ---
 
@@ -113,6 +145,6 @@ Sendo `V` o valor total e `n` o número de parcelas:
 
 ---
 
-**Última atualização:** 1 de março de 2026
+**Última atualização:** 4 de maio de 2026
 **Responsável:** Rafael
-**Versão:** 3.0 (Agnóstica de Código)
+**Versão:** 3.1 (Adicionadas BR-F07 a BR-F10 do Sprint 1)

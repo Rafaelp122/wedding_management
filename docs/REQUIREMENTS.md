@@ -17,9 +17,10 @@ O sistema visa eliminar a fragmentação de dados e erros de cálculo em cerimon
 
 ### 2.2 Módulo Financeiro
 - **RF03 (Categorias de Orçamento):** O sistema deve permitir organizar gastos em categorias customizáveis com valores orçados.
-- **RF04 (Gestão de Despesas):** O sistema deve registrar despesas vinculadas a fornecedores e categorias.
-- **RF05 (Parcelamento Inteligente):** O sistema deve gerar parcelas automaticamente, aplicando a regra de **Tolerância Zero** (ajuste de centavos na última parcela).
-- **RF06 (Controle de Pagamentos):** O sistema deve permitir marcar parcelas como pagas e monitorar parcelas vencidas (**OVERDUE**).
+- **RF04 (Gestão de Despesas):** O sistema deve registrar despesas com nome obrigatório, descrição opcional, vinculadas a categorias e contratos.
+- **RF05 (Parcelamento Inteligente):** O sistema deve gerar parcelas automaticamente (mínimo 1), aplicando a regra de **Tolerância Zero** (ajuste de centavos na última parcela).
+- **RF06 (Controle de Pagamentos):** O sistema deve permitir marcar parcelas como pagas, remanejar parcelas (se nenhuma paga), e monitorar parcelas vencidas (**OVERDUE**). O status da despesa é derivado automaticamente: `PENDING` → `PARTIALLY_PAID` → `SETTLED`.
+- **RF12 (Remanejamento de Parcelas):** O sistema deve permitir alterar o número de parcelas de uma despesa (redistribuição), desde que nenhuma parcela esteja marcada como paga.
 
 ### 2.3 Módulo Logístico
 - **RF07 (Gestão de Fornecedores):** O sistema deve manter um cadastro de fornecedores reaproveitável entre diferentes casamentos.
@@ -69,5 +70,5 @@ O sistema visa eliminar a fragmentação de dados e erros de cálculo em cerimon
 
 ---
 
-**Última atualização:** 1 de março de 2026
-**Versão:** 7.0 (Revisada - Requisitos Detalhados)
+**Última atualização:** 4 de maio de 2026
+**Versão:** 7.1 (RF04/RF05/RF06 atualizados + RF12 adicionado — Sprint 1)
