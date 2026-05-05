@@ -165,8 +165,8 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 - [x] **Menu ⋮ (dropdown)** — ações Editar/Excluir na tabela de despesas via `DropdownMenu` (três pontinhos).
   - **Arquivo:** `frontend/src/features/weddings/components/WeddingExpensesTable.tsx`
 
-- [x] **Sub-tabs Finanças** — aba Finanças ganhou sub-tabs: Resumo (cards/gráfico) e Despesas (tabela com ações).
-  - **Arquivo:** `frontend/src/features/weddings/components/WeddingDetailTabs.tsx`
+- [x] **Aba Finanças unificada** — cards de resumo + tabela de despesas com ações na mesma view, sem sub-tabs.
+  - **Arquivo:** `frontend/src/features/weddings/components/WeddingFinancesView.tsx`
 
 - [x] **Input `selectAll` no focus** — campos numéricos dos dialogs selecionam todo o texto ao receber foco (se valor = 0), facilitando digitação.
   - **Arquivos:** `CreateExpenseDialog.tsx`, `EditExpenseDialog.tsx`

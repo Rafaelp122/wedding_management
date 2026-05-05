@@ -238,6 +238,12 @@ export function ExpenseDetailDialog({
                   className="h-7 text-xs gap-1"
                   onClick={() => {
                     setNewNumInstallments(totalCount);
+                    const first = installments[0];
+                    setNewFirstDueDate(
+                      first
+                        ? first.due_date.slice(0, 10)
+                        : new Date().toISOString().slice(0, 10),
+                    );
                     setShowRedistribute(!showRedistribute);
                   }}
                 >

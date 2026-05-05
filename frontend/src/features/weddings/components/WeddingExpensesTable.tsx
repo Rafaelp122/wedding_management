@@ -81,8 +81,16 @@ export function WeddingExpensesTable({
               return (
                 <TableRow
                   key={expense.uuid}
+                  tabIndex={0}
+                  role="button"
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setDetailExpense(expense)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setDetailExpense(expense);
+                    }
+                  }}
                 >
                   <TableCell className="font-medium text-sm max-w-40 truncate">
                     {expense.name || expense.description || "N/A"}
@@ -116,6 +124,7 @@ export function WeddingExpensesTable({
                           variant="ghost"
                           size="sm"
                           className="h-7 w-7 p-0"
+                          aria-label="Ações da despesa"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <MoreHorizontal className="size-4" />

@@ -27,7 +27,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   } = useWeddingBudget(weddingUuid);
 
   const { data: expensesResponse, isLoading: isExpensesLoading } =
-    useFinancesExpensesList({ wedding_id: weddingUuid, limit: 20 });
+    useFinancesExpensesList({ wedding_id: weddingUuid });
 
   const handleExpenseCreated = () => {
     setCreateDialogOpen(false);
