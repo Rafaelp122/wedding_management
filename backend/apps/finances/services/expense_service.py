@@ -1,10 +1,22 @@
 import logging
+from datetime import date
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import (
+    Count,
+    ProtectedError,
+    Q,
+    QuerySet,
+    Sum,
+)
+from django.db.models import (
+    Value as V,
+)
+from django.db.models.functions import Coalesce
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -30,8 +42,30 @@ class ExpenseService:
     def list(
         company: Company, wedding_id: UUID | str | None = None
     ) -> QuerySet[Expense]:
-        qs = Expense.objects.for_tenant(company).select_related(
-            "category", "contract", "wedding"
+        qs = (
+            Expense.objects.for_tenant(company)
+            .select_related("category", "contract", "wedding")
+            .annotate(
+                installments_count=Count("installments"),
+                paid_installments_count=Count(
+                    "installments",
+                    filter=Q(installments__status="PAID"),
+                ),
+                total_paid=Coalesce(
+                    Sum(
+                        "installments__amount",
+                        filter=Q(installments__status="PAID"),
+                    ),
+                    V(Decimal("0.00")),
+                ),
+                total_pending=Coalesce(
+                    Sum(
+                        "installments__amount",
+                        filter=Q(installments__status__in=["PENDING", "OVERDUE"]),
+                    ),
+                    V(Decimal("0.00")),
+                ),
+            )
         )
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
@@ -43,6 +77,27 @@ class ExpenseService:
             return (
                 Expense.objects.for_tenant(company)
                 .select_related("category", "contract", "wedding")
+                .annotate(
+                    installments_count=Count("installments"),
+                    paid_installments_count=Count(
+                        "installments",
+                        filter=Q(installments__status="PAID"),
+                    ),
+                    total_paid=Coalesce(
+                        Sum(
+                            "installments__amount",
+                            filter=Q(installments__status="PAID"),
+                        ),
+                        V(Decimal("0.00")),
+                    ),
+                    total_pending=Coalesce(
+                        Sum(
+                            "installments__amount",
+                            filter=Q(installments__status__in=["PENDING", "OVERDUE"]),
+                        ),
+                        V(Decimal("0.00")),
+                    ),
+                )
                 .get(uuid=uuid)
             )
         except Expense.DoesNotExist as e:
@@ -95,18 +150,14 @@ class ExpenseService:
                     ) from e
 
         num_installments = data.pop("num_installments", None)
-        first_due_date = data.pop("first_due_date", None)
+        if num_installments is None:
+            num_installments = 1
+        first_due_date = data.pop("first_due_date", None) or date.today()
 
-        # Validação cruzada de parcelamento (Copilot Review Fix)
-        if (num_installments or first_due_date) and not (
-            num_installments and first_due_date
-        ):
+        if num_installments < 1:
             raise BusinessRuleViolation(
-                detail=(
-                    "Para gerar parcelas, você deve informar o número de "
-                    "parcelas E a data do primeiro vencimento."
-                ),
-                code="incomplete_installment_params",
+                detail="O número de parcelas deve ser pelo menos 1.",
+                code="invalid_installment_number",
             )
 
         # 3. Injeção de Contexto (ADR-009) e Instanciação
@@ -133,16 +184,15 @@ class ExpenseService:
                 code="expense_validation_error",
             ) from e
 
-        # 5. Geração automática de parcelas
-        if num_installments and first_due_date:
-            from apps.finances.services.installment_service import InstallmentService
+        # 5. Geração automática de parcelas (mínimo 1)
+        from apps.finances.services.installment_service import InstallmentService
 
-            InstallmentService.auto_generate_installments(
-                company=company,
-                expense=expense,
-                num_installments=num_installments,
-                first_due_date=first_due_date,
-            )
+        InstallmentService.auto_generate_installments(
+            company=company,
+            expense=expense,
+            num_installments=num_installments,
+            first_due_date=first_due_date,
+        )
 
         logger.info(f"Despesa criada com sucesso: uuid={expense.uuid}")
         return expense
@@ -178,9 +228,43 @@ class ExpenseService:
             else:
                 instance.contract = None
 
+        amount_changed = "actual_amount" in data
+        num_installments = data.pop("num_installments", None)
+        first_due_date = data.pop("first_due_date", None)
+
         # Atualização dinâmica dos campos
         for field, value in data.items():
             setattr(instance, field, value)
+
+        if amount_changed and num_installments is None:
+            # Auto-redistribute: usa mesmo número de parcelas com novo valor
+            if instance.installments.filter(status="PAID").exists():
+                raise BusinessRuleViolation(
+                    detail=(
+                        "Não é possível alterar o valor total pois existem "
+                        "parcelas marcadas como pagas. Crie uma nova despesa."
+                    ),
+                    code="amount_change_blocked_by_paid",
+                )
+            from apps.finances.services.installment_service import (
+                InstallmentService as IS,
+            )
+
+            IS.redistribute(
+                company=company,
+                expense=instance,
+                num_installments=instance.installments.count(),
+                first_due_date=(
+                    first_due_date
+                    or getattr(
+                        instance.installments.order_by("due_date").first(),
+                        "due_date",
+                        date.today(),
+                    )
+                ),
+            )
+        elif num_installments is not None:
+            _handle_redistribute(company, instance, num_installments, first_due_date)
 
         try:
             instance.save()
@@ -226,3 +310,33 @@ class ExpenseService:
                 ),
                 code="expense_protected_error",
             ) from e
+
+
+def _handle_redistribute(
+    company: Company,
+    expense: Expense,
+    num_installments: int,
+    first_due_date: date | None,
+) -> None:
+    if num_installments < 1:
+        raise BusinessRuleViolation(
+            detail="O número de parcelas deve ser pelo menos 1.",
+            code="invalid_installment_number",
+        )
+
+    if first_due_date:
+        first_due = first_due_date
+    else:
+        first_inst = expense.installments.order_by("due_date").first()
+        first_due = first_inst.due_date if first_inst else date.today()
+
+    from apps.finances.services.installment_service import (
+        InstallmentService,
+    )
+
+    InstallmentService.redistribute(
+        company=company,
+        expense=expense,
+        num_installments=num_installments,
+        first_due_date=first_due,
+    )
