@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 
@@ -9,6 +9,7 @@ export function useWeddingsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<WeddingStatusFilter>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const deferredSearch = useDeferredValue(search);
 
   const {
     data: weddingsResponse,
@@ -23,7 +24,7 @@ export function useWeddingsPage() {
   );
   const totalCount = weddingsResponse?.data.count ?? 0;
 
-  const filteredWeddings = useWeddingFilters(weddings, search, statusFilter);
+  const filteredWeddings = useWeddingFilters(weddings, deferredSearch, statusFilter);
 
   return {
     search,

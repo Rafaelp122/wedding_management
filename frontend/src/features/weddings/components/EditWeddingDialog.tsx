@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useWeddingsUpdate } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { WeddingsUpdateBody } from "@/api/generated/v1/zod/weddings/weddings";
 import { getApiErrorInfo } from "@/api/error-utils";
-import type { WeddingOut } from "@/api/generated/v1/models";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import type { z } from "zod";
 
 type UpdateWeddingFormData = z.infer<typeof WeddingsUpdateBody>;

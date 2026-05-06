@@ -20,7 +20,7 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 export const AppLayout = () => {
-  const user = useAuthStore((state) => state.user);
+  const firstName = useAuthStore((state) => state.user?.first_name);
   const { pathname } = useLocation();
   const pageTitle = pathname.startsWith("/weddings/")
     ? "Detalhes do Casamento"
@@ -42,7 +42,7 @@ export const AppLayout = () => {
 
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium hidden md:inline-block">
-              Olá, {user?.first_name}
+              Olá, {firstName}
             </span>
             <Button variant="outline" size="icon" className="rounded-full">
               <UserIcon className="h-4 w-4" />

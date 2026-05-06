@@ -1,4 +1,4 @@
-import type { ItemOut } from "@/api/generated/v1/models";
+import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import {
   Table,
   TableBody,

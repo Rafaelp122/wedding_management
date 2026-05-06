@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useWeddingsDelete } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { getApiErrorInfo } from "@/api/error-utils";
-import type { WeddingOut } from "@/api/generated/v1/models";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 import {
   Dialog,

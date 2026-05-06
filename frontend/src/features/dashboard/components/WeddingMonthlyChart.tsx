@@ -1,14 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
-import type { WeddingOut } from "@/api/generated/v1/models";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 interface WeddingMonthlyChartProps {
   weddings: WeddingOut[];
 }
+
+const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] as const;
 
 const chartConfig = {
   casamentos: {
@@ -18,20 +21,25 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function WeddingMonthlyChart({ weddings }: WeddingMonthlyChartProps) {
-  // Agrupar casamentos por mês para o ano atual
   const currentYear = new Date().getFullYear();
-  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-  const monthlyData = months.map((month, index) => {
-    const count = weddings.filter((w) => {
+  const { monthlyData, hasData } = useMemo(() => {
+    const counts = new Array(12).fill(0);
+    for (const w of weddings) {
       const date = new Date(w.date);
-      return date.getMonth() === index && date.getFullYear() === currentYear;
-    }).length;
-
-    return { name: month, casamentos: count };
-  });
-
-  const hasData = monthlyData.some(d => d.casamentos > 0);
+      if (date.getFullYear() === currentYear) {
+        counts[date.getMonth()]++;
+      }
+    }
+    const data = MONTHS.map((name, index) => ({
+      name,
+      casamentos: counts[index],
+    }));
+    return {
+      monthlyData: data,
+      hasData: counts.some((c) => c > 0),
+    };
+  }, [weddings, currentYear]);
 
   return (
     <Card className="lg:col-span-2">

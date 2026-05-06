@@ -6,7 +6,7 @@ import {
   useLogisticsSuppliersDelete,
   useLogisticsSuppliersUpdate,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
-import type { SupplierOut } from "@/api/generated/v1/models";
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { getApiErrorInfo } from "@/api/error-utils";
 
 import type { SupplierFormMode, SupplierFormState } from "../types";

@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { StatsCards } from "@/features/dashboard/components/StatsCards";
 import { RecentWeddings } from "@/features/dashboard/components/RecentWeddings";
-import { WeddingMonthlyChart } from "@/features/dashboard/components/WeddingMonthlyChart";
 import { UpcomingAppointments } from "@/features/dashboard/components/UpcomingAppointments";
 import { getApiErrorInfo } from "@/api/error-utils";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Calendar as CalendarIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+const WeddingMonthlyChart = lazy(
+  () =>
+    import("@/features/dashboard/components/WeddingMonthlyChart").then(
+      (m) => ({ default: m.WeddingMonthlyChart }),
+    ),
+);
 
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -102,7 +108,9 @@ export default function DashboardPage() {
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Chart Section */}
-          <WeddingMonthlyChart weddings={weddingsArray} />
+          <Suspense fallback={<Skeleton className="h-80 lg:col-span-2 rounded-xl shadow-sm" />}>
+            <WeddingMonthlyChart weddings={weddingsArray} />
+          </Suspense>
 
           {/* Side Column: Upcoming Events */}
           <UpcomingAppointments />
