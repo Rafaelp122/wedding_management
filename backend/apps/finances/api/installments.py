@@ -86,5 +86,7 @@ def adjust_installment(
     """
     instance = InstallmentService.get(request.user.company, uuid)
     return InstallmentService.adjust(
-        request.user.company, instance, payload.dict(exclude_unset=True)
+        request.user.company,
+        instance,
+        payload.dict(exclude_unset=True, exclude_none=True),
     )

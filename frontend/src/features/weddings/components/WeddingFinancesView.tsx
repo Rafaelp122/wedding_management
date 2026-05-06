@@ -2,7 +2,10 @@
 
 import { lazy, Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useFinancesExpensesList } from "@/api/generated/v1/endpoints/finances/finances";
+import {
+  useFinancesExpensesList,
+  getFinancesExpensesListQueryKey,
+} from "@/api/generated/v1/endpoints/finances/finances";
 import { useWeddingBudget } from "../hooks/useWeddingBudget";
 import { WeddingFinancesSummaryCards } from "./WeddingFinancesSummaryCards";
 import { WeddingFinancesDistributionChart } from "./WeddingFinancesDistributionChart";
@@ -34,7 +37,9 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
 
   const handleExpenseCreated = () => {
     setCreateDialogOpen(false);
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({
+      queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid }),
+    });
   };
 
   if (isBudgetLoading || isExpensesLoading) {

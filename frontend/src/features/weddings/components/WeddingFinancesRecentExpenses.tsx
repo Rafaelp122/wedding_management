@@ -68,16 +68,8 @@ export function WeddingFinancesRecentExpenses({
               return (
                 <div
                   key={expense.uuid}
-                  tabIndex={0}
-                  role="button"
                   className="px-6 py-4 flex items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
                   onClick={() => setSelectedExpense(expense)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setSelectedExpense(expense);
-                    }
-                  }}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center">

@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useWeddingExpenses } from "../hooks/useWeddingExpenses";
 import { WeddingExpensesTable } from "./WeddingExpensesTable";
 import { CreateExpenseDialog } from "./CreateExpenseDialog";
+import { getFinancesExpensesListQueryKey } from "@/api/generated/v1/endpoints/finances/finances";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +28,9 @@ export function WeddingExpensesTab({ weddingUuid }: WeddingExpensesTabProps) {
   const queryClient = useQueryClient();
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({
+      queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid }),
+    });
   };
 
   if (isLoading) {

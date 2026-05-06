@@ -3,6 +3,7 @@ Main Django Ninja API configuration.
 """
 
 from django.http import HttpRequest
+from ninja.errors import HttpError
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from pydantic import ValidationError as PydanticValidationError
@@ -47,7 +48,7 @@ def application_error_handler(request: HttpRequest, exc: ApplicationError):
 # Re-raise Pydantic validation errors para não mascarar erros 422 do Ninja.
 @api.exception_handler(Exception)
 def general_exception_handler(request: HttpRequest, exc: Exception):
-    if isinstance(exc, PydanticValidationError):
+    if isinstance(exc, (PydanticValidationError, HttpError)):
         raise exc
     return api.create_response(
         request,

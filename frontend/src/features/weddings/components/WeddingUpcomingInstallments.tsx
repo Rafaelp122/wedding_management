@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, AlertTriangle, Check } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useFinancesInstallmentsList,
   useFinancesInstallmentsMarkAsPaid,
+  getFinancesInstallmentsListQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
 import { formatCurrencyBR } from "@/features/shared/utils/formatters";
 import { getApiErrorInfo } from "@/api/error-utils";
@@ -35,6 +36,7 @@ export function WeddingUpcomingInstallments({
   const [payingUuid, setPayingUuid] = useState<string | null>(null);
 
   const { data: response, isLoading } = useFinancesInstallmentsList({
+    limit: 10,
     wedding_id: weddingUuid,
   });
 
@@ -68,10 +70,12 @@ export function WeddingUpcomingInstallments({
     setPayingUuid(uuid);
     try {
       await payMutation.mutateAsync({ uuid });
-      toast.success("Pagamento registrado com sucesso!");
-      queryClient.invalidateQueries();
+      toast.success("Parcela marcada como paga!");
+      queryClient.invalidateQueries({
+        queryKey: getFinancesInstallmentsListQueryKey({ wedding_id: weddingUuid }),
+      });
     } catch (error) {
-      const { message } = getApiErrorInfo(error, "Erro ao registrar pagamento.");
+      const { message } = getApiErrorInfo(error, "Erro ao marcar parcela.");
       toast.error(message);
     } finally {
       setPayingUuid(null);
@@ -93,7 +97,6 @@ export function WeddingUpcomingInstallments({
         <div className="divide-y divide-border">
           {installments.map((installment) => {
             const isOverdue = installment.status === "OVERDUE";
-            const isPaid = installment.status === "PAID";
 
             return (
               <div
@@ -105,19 +108,8 @@ export function WeddingUpcomingInstallments({
                     <span className="text-sm font-medium">
                       Parcela #{installment.installment_number}
                     </span>
-                    {isPaid ? (
-                      <Badge
-                        variant="default"
-                        className="text-[10px] h-4 bg-green-100 text-green-700 hover:bg-green-100"
-                      >
-                        <Check className="size-3 mr-0.5" />
-                        Pago
-                      </Badge>
-                    ) : isOverdue ? (
-                      <Badge
-                        variant="destructive"
-                        className="text-[10px] h-4"
-                      >
+                    {isOverdue ? (
+                      <Badge variant="destructive" className="text-[10px] h-4">
                         <AlertTriangle className="size-3 mr-0.5" />
                         Atrasado
                       </Badge>
@@ -134,9 +126,10 @@ export function WeddingUpcomingInstallments({
                         : "text-muted-foreground"
                     }`}
                   >
-                    {isPaid
-                      ? `Pago em ${format(new Date(installment.paid_date!), "dd 'de' MMM", { locale: ptBR })}`
-                      : `Vence em ${format(new Date(installment.due_date), "dd 'de' MMM", { locale: ptBR })}`}
+                    Vence em{" "}
+                    {format(new Date(installment.due_date), "dd 'de' MMM", {
+                      locale: ptBR,
+                    })}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -145,17 +138,15 @@ export function WeddingUpcomingInstallments({
                       R$ {formatCurrencyBR(Number(installment.amount))}
                     </p>
                   </div>
-                  {!isPaid ? (
-                    <Button
-                      size="sm"
-                      variant={isOverdue ? "destructive" : "default"}
-                      className="h-7 text-xs"
-                      onClick={() => handlePay(installment.uuid)}
-                      disabled={payingUuid === installment.uuid}
-                    >
-                      Pagar
-                    </Button>
-                  ) : null}
+                  <Button
+                    size="sm"
+                    variant={isOverdue ? "destructive" : "default"}
+                    className="h-7 text-xs"
+                    onClick={() => handlePay(installment.uuid)}
+                    disabled={payingUuid === installment.uuid}
+                  >
+                    Pagar
+                  </Button>
                 </div>
               </div>
             );

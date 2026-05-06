@@ -88,20 +88,16 @@ export function WeddingExpensesTable({
               return (
                 <TableRow
                   key={expense.uuid}
-                  tabIndex={0}
-                  role="button"
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setDetailExpense(expense)}
-                  onKeyDown={(e) => {
-                    if (e.target !== e.currentTarget) return;
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setDetailExpense(expense);
-                    }
-                  }}
+                  className="hover:bg-muted/50"
                 >
-                  <TableCell className="font-medium text-sm max-w-40 truncate">
-                    {expense.name || expense.description || "N/A"}
+                  <TableCell className="font-medium text-sm max-w-40 truncate p-0">
+                    <Button
+                      variant="link"
+                      className="h-auto w-full justify-start px-4 py-3 text-sm font-medium text-foreground hover:no-underline"
+                      onClick={() => setDetailExpense(expense)}
+                    >
+                      {expense.name || expense.description || "N/A"}
+                    </Button>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {expense.category_name || expense.category.substring(0, 8)}
