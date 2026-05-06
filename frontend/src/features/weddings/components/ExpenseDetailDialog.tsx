@@ -95,7 +95,7 @@ export function ExpenseDetailDialog({
   const [newNumInstallments, setNewNumInstallments] = useState<number>(
     expense.installments_count ?? 1,
   );
-  const [newFirstDueDate, setNewFirstDueDate] = useState<string>(
+  const [newFirstDueDate, setNewFirstDueDate] = useState<string>(() =>
     new Date().toISOString().slice(0, 10),
   );
 
@@ -196,7 +196,7 @@ export function ExpenseDetailDialog({
                     liveExpense.category.substring(0, 8)}
                 </span>
               </p>
-              {liveExpense.contract_description && (
+              {liveExpense.contract_description ? (
                 <p className="text-sm">
                   {/* TODO: link para detalhes do contrato */}
                   Contrato:{" "}
@@ -204,12 +204,12 @@ export function ExpenseDetailDialog({
                     {liveExpense.contract_description}
                   </span>
                 </p>
-              )}
-              {liveExpense.description && (
+              ) : null}
+              {liveExpense.description ? (
                 <p className="text-sm text-muted-foreground pt-1">
                   {liveExpense.description}
                 </p>
-              )}
+              ) : null}
             </div>
           </DialogDescription>
         </DialogHeader>
@@ -231,7 +231,7 @@ export function ExpenseDetailDialog({
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold">Parcelas</h4>
-              {!hasAnyPaid && (
+              {!hasAnyPaid ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -250,10 +250,10 @@ export function ExpenseDetailDialog({
                   <RefreshCw className="size-3" />
                   Remanejar
                 </Button>
-              )}
+              ) : null}
             </div>
 
-            {showRedistribute && (
+            {showRedistribute ? (
               <div className="rounded-md border bg-muted/30 p-3 mb-3 space-y-2">
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
@@ -292,13 +292,13 @@ export function ExpenseDetailDialog({
                     Aplicar
                   </Button>
                 </div>
-                {hasAnyPaid && (
+                {hasAnyPaid ? (
                   <p className="text-xs text-destructive">
                     Não é possível remanejar — há parcelas marcadas como pagas.
                   </p>
-                )}
+                ) : null}
               </div>
-            )}
+            ) : null}
 
             {isLoadingInstallments ? (
               <Skeleton className="h-32 w-full" />

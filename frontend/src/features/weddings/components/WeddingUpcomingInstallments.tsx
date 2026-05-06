@@ -105,7 +105,7 @@ export function WeddingUpcomingInstallments({
                     <span className="text-sm font-medium">
                       Parcela #{installment.installment_number}
                     </span>
-                    {isPaid && (
+                    {isPaid ? (
                       <Badge
                         variant="default"
                         className="text-[10px] h-4 bg-green-100 text-green-700 hover:bg-green-100"
@@ -113,8 +113,7 @@ export function WeddingUpcomingInstallments({
                         <Check className="size-3 mr-0.5" />
                         Pago
                       </Badge>
-                    )}
-                    {isOverdue && (
+                    ) : isOverdue ? (
                       <Badge
                         variant="destructive"
                         className="text-[10px] h-4"
@@ -122,8 +121,7 @@ export function WeddingUpcomingInstallments({
                         <AlertTriangle className="size-3 mr-0.5" />
                         Atrasado
                       </Badge>
-                    )}
-                    {!isPaid && !isOverdue && (
+                    ) : (
                       <Badge variant="outline" className="text-[10px] h-4">
                         Pendente
                       </Badge>
@@ -147,7 +145,7 @@ export function WeddingUpcomingInstallments({
                       R$ {formatCurrencyBR(Number(installment.amount))}
                     </p>
                   </div>
-                  {!isPaid && (
+                  {!isPaid ? (
                     <Button
                       size="sm"
                       variant={isOverdue ? "destructive" : "default"}
@@ -157,7 +155,7 @@ export function WeddingUpcomingInstallments({
                     >
                       Pagar
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );

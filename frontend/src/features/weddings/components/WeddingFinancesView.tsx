@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFinancesExpensesList } from "@/api/generated/v1/endpoints/finances/finances";
 import { useWeddingBudget } from "../hooks/useWeddingBudget";
@@ -9,7 +9,10 @@ import { WeddingFinancesDistributionChart } from "./WeddingFinancesDistributionC
 import { WeddingFinancesGroupsSummary } from "./WeddingFinancesGroupsSummary";
 import { WeddingFinancesRecentExpenses } from "./WeddingFinancesRecentExpenses";
 import { WeddingExpensesTable } from "./WeddingExpensesTable";
-import { CreateExpenseDialog } from "./CreateExpenseDialog";
+
+const CreateExpenseDialog = lazy(
+  () => import("./CreateExpenseDialog").then((m) => ({ default: m.CreateExpenseDialog })),
+);
 
 interface WeddingFinancesViewProps {
   weddingUuid: string;
@@ -81,12 +84,14 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         />
       </div>
 
-      <CreateExpenseDialog
-        weddingUuid={weddingUuid}
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={handleExpenseCreated}
-      />
+      <Suspense fallback={null}>
+        <CreateExpenseDialog
+          weddingUuid={weddingUuid}
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSuccess={handleExpenseCreated}
+        />
+      </Suspense>
     </div>
   );
 }

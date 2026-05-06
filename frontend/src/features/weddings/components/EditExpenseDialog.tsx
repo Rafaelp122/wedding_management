@@ -288,12 +288,12 @@ export function EditExpenseDialog({
               />
             </div>
 
-            {hasPaid && (
+            {hasPaid ? (
               <p className="text-xs text-muted-foreground">
                 Valores e parcelamento bloqueados — há parcelas marcadas como
                 pagas. Crie uma nova despesa se precisar alterar valores.
               </p>
-            )}
+            ) : null}
 
             <DialogFooter>
               <Button
@@ -305,7 +305,7 @@ export function EditExpenseDialog({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                 Salvar Alterações
               </Button>
             </DialogFooter>

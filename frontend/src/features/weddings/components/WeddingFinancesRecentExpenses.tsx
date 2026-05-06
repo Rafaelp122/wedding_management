@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { DollarSign, Plus } from "lucide-react";
 import {
   Card,
@@ -11,7 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyBR } from "@/features/shared/utils/formatters";
 import type { ExpenseOut } from "@/api/generated/v1/models";
-import { ExpenseDetailDialog } from "./ExpenseDetailDialog";
+
+const ExpenseDetailDialog = lazy(
+  () => import("./ExpenseDetailDialog").then((m) => ({ default: m.ExpenseDetailDialog })),
+);
 
 interface WeddingFinancesRecentExpensesProps {
   expenses: ExpenseOut[];
@@ -95,11 +98,11 @@ export function WeddingFinancesRecentExpenses({
                         {formatCurrency(Number(expense.actual_amount))}
                       </p>
                       <div className="flex items-center justify-end gap-2">
-                        {count > 0 && (
+                        {count > 0 ? (
                           <span className="text-xs text-zinc-400">
                             {expense.paid_installments_count}/{count} parcelas
                           </span>
-                        )}
+                        ) : null}
                         <Badge
                           variant={statusVariant[status] ?? "outline"}
                           className="text-[10px] h-4"
@@ -125,15 +128,17 @@ export function WeddingFinancesRecentExpenses({
         </div>
       </Card>
 
-      {selectedExpense && (
-        <ExpenseDetailDialog
-          expense={selectedExpense}
-          open={!!selectedExpense}
-          onOpenChange={(open) => {
-            if (!open) setSelectedExpense(null);
-          }}
-        />
-      )}
+      {selectedExpense ? (
+        <Suspense fallback={null}>
+          <ExpenseDetailDialog
+            expense={selectedExpense}
+            open={!!selectedExpense}
+            onOpenChange={(open) => {
+              if (!open) setSelectedExpense(null);
+            }}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 }

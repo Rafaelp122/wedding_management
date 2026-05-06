@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import type { ExpenseOut } from "@/api/generated/v1/models";
 import {
@@ -18,9 +18,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatCurrencyBR } from "@/features/shared/utils/formatters";
-import { EditExpenseDialog } from "./EditExpenseDialog";
-import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
-import { ExpenseDetailDialog } from "./ExpenseDetailDialog";
+
+const EditExpenseDialog = lazy(
+  () => import("./EditExpenseDialog").then((m) => ({ default: m.EditExpenseDialog })),
+);
+const DeleteExpenseDialog = lazy(
+  () => import("./DeleteExpenseDialog").then((m) => ({ default: m.DeleteExpenseDialog })),
+);
+const ExpenseDetailDialog = lazy(
+  () => import("./ExpenseDetailDialog").then((m) => ({ default: m.ExpenseDetailDialog })),
+);
 
 interface WeddingExpensesTableProps {
   expenses: ExpenseOut[];
@@ -159,44 +166,50 @@ export function WeddingExpensesTable({
         </Table>
       </div>
 
-      {editingExpense && (
-        <EditExpenseDialog
-          expense={editingExpense}
-          weddingUuid={weddingUuid}
-          open={!!editingExpense}
-          onOpenChange={(open) => {
-            if (!open) setEditingExpense(null);
-          }}
-          onSuccess={() => {
-            setEditingExpense(null);
-            onExpenseUpdated();
-          }}
-        />
-      )}
+      {editingExpense ? (
+        <Suspense fallback={null}>
+          <EditExpenseDialog
+            expense={editingExpense}
+            weddingUuid={weddingUuid}
+            open={!!editingExpense}
+            onOpenChange={(open) => {
+              if (!open) setEditingExpense(null);
+            }}
+            onSuccess={() => {
+              setEditingExpense(null);
+              onExpenseUpdated();
+            }}
+          />
+        </Suspense>
+      ) : null}
 
-      {deletingExpense && (
-        <DeleteExpenseDialog
-          expense={deletingExpense}
-          open={!!deletingExpense}
-          onOpenChange={(open) => {
-            if (!open) setDeletingExpense(null);
-          }}
-          onSuccess={() => {
-            setDeletingExpense(null);
-            onExpenseUpdated();
-          }}
-        />
-      )}
+      {deletingExpense ? (
+        <Suspense fallback={null}>
+          <DeleteExpenseDialog
+            expense={deletingExpense}
+            open={!!deletingExpense}
+            onOpenChange={(open) => {
+              if (!open) setDeletingExpense(null);
+            }}
+            onSuccess={() => {
+              setDeletingExpense(null);
+              onExpenseUpdated();
+            }}
+          />
+        </Suspense>
+      ) : null}
 
-      {detailExpense && (
-        <ExpenseDetailDialog
-          expense={detailExpense}
-          open={!!detailExpense}
-          onOpenChange={(open) => {
-            if (!open) setDetailExpense(null);
-          }}
-        />
-      )}
+      {detailExpense ? (
+        <Suspense fallback={null}>
+          <ExpenseDetailDialog
+            expense={detailExpense}
+            open={!!detailExpense}
+            onOpenChange={(open) => {
+              if (!open) setDetailExpense(null);
+            }}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 }
