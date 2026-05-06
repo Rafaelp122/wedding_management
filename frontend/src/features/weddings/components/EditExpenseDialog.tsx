@@ -62,6 +62,8 @@ export function EditExpenseDialog({
   });
   const contracts = contractsResponse?.data?.items || [];
 
+  const hasPaid = (expense.paid_installments_count ?? 0) > 0;
+
   const form = useForm<EditExpenseFormData>({
     resolver: zodResolver(FinancesExpensesUpdateBody),
     defaultValues: {
@@ -182,6 +184,7 @@ export function EditExpenseDialog({
                         type="number"
                         step="0.01"
                         min="0"
+                        disabled={hasPaid}
                         value={field.value ?? ""}
                         onBlur={field.onBlur}
                         name={field.name}
@@ -212,6 +215,7 @@ export function EditExpenseDialog({
                         type="number"
                         step="0.01"
                         min="0"
+                        disabled={hasPaid}
                         value={field.value ?? ""}
                         onBlur={field.onBlur}
                         name={field.name}
@@ -238,15 +242,13 @@ export function EditExpenseDialog({
                 name="num_installments"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Nº de Parcelas
-                    </FormLabel>
+                    <FormLabel>Nº de Parcelas</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min="1"
+                        disabled={hasPaid}
                         placeholder="Manter atual"
-                        {...field}
                         value={field.value ?? ""}
                         onChange={(e) =>
                           field.onChange(
@@ -271,7 +273,7 @@ export function EditExpenseDialog({
                     <FormControl>
                       <Input
                         type="date"
-                        {...field}
+                        disabled={hasPaid}
                         value={field.value ?? ""}
                         onChange={(e) =>
                           field.onChange(
@@ -285,6 +287,13 @@ export function EditExpenseDialog({
                 )}
               />
             </div>
+
+            {hasPaid && (
+              <p className="text-xs text-muted-foreground">
+                Valores e parcelamento bloqueados — há parcelas marcadas como
+                pagas. Crie uma nova despesa se precisar alterar valores.
+              </p>
+            )}
 
             <DialogFooter>
               <Button

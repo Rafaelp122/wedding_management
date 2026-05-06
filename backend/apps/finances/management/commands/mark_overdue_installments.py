@@ -24,7 +24,11 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Nenhuma parcela vencida encontrada."))
             return
 
-        updated = overdue_qs.update(status=Installment.StatusChoices.OVERDUE)
+        updated = 0
+        for installment in overdue_qs:
+            installment.status = Installment.StatusChoices.OVERDUE
+            installment.save()
+            updated += 1
         self.stdout.write(
             self.style.WARNING(
                 f"{updated} parcela(s) marcada(s) como OVERDUE "

@@ -228,7 +228,9 @@ class ExpenseService:
             else:
                 instance.contract = None
 
-        amount_changed = "actual_amount" in data
+        amount_changed = (
+            "actual_amount" in data and data["actual_amount"] != instance.actual_amount
+        )
         num_installments = data.pop("num_installments", None)
         first_due_date = data.pop("first_due_date", None)
 

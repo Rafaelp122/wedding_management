@@ -37,7 +37,6 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { selectOnFocus } from "@/features/shared/utils/selectOnFocus";
 import { Loader2 } from "lucide-react";
 
 type CreateExpenseFormData = z.infer<typeof FinancesExpensesCreateBody>;
@@ -74,8 +73,8 @@ export function CreateExpenseDialog({
       contract: null,
       name: "",
       description: null,
-      estimated_amount: 0,
-      actual_amount: 0,
+      estimated_amount: undefined,
+      actual_amount: undefined,
       num_installments: 1,
       first_due_date: new Date().toISOString().slice(0, 10),
     },
@@ -213,12 +212,14 @@ export function CreateExpenseDialog({
                         step="0.01"
                         min="0"
                         placeholder="0.00"
-                        {...field}
-                        onFocus={selectOnFocus}
+                        value={field.value ?? ""}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                         onChange={(e) =>
                           field.onChange(
                             e.target.value === ""
-                              ? 0
+                              ? undefined
                               : Number(e.target.value),
                           )
                         }
@@ -241,12 +242,14 @@ export function CreateExpenseDialog({
                         step="0.01"
                         min="0"
                         placeholder="0.00"
-                        {...field}
-                        onFocus={selectOnFocus}
+                        value={field.value ?? ""}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                         onChange={(e) =>
                           field.onChange(
                             e.target.value === ""
-                              ? 0
+                              ? undefined
                               : Number(e.target.value),
                           )
                         }

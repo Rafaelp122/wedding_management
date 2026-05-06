@@ -332,6 +332,24 @@ class InstallmentService:
                     code="due_date_before_previous_installment",
                 )
 
+            nxt = (
+                Installment.objects.for_tenant(company)
+                .filter(
+                    expense=instance.expense,
+                    installment_number__gt=instance.installment_number,
+                )
+                .order_by("installment_number")
+                .first()
+            )
+            if nxt and new_due_date > nxt.due_date:
+                raise BusinessRuleViolation(
+                    detail=(
+                        "A data de vencimento não pode ser posterior à "
+                        f"parcela #{nxt.installment_number} ({nxt.due_date})."
+                    ),
+                    code="due_date_after_next_installment",
+                )
+
         for field, value in data.items():
             setattr(instance, field, value)
 

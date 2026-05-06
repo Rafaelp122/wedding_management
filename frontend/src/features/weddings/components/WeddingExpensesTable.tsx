@@ -86,6 +86,7 @@ export function WeddingExpensesTable({
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setDetailExpense(expense)}
                   onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       setDetailExpense(expense);

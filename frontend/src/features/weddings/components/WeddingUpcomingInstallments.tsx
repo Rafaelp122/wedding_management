@@ -40,7 +40,9 @@ export function WeddingUpcomingInstallments({
 
   const payMutation = useFinancesInstallmentsMarkAsPaid();
 
-  const installments = response?.data?.items || [];
+  const installments = (response?.data?.items || []).filter(
+    (i) => i.status !== "PAID"
+  );
 
   if (isLoading) {
     return <Skeleton className="h-[200px] w-full" />;
