@@ -54,6 +54,7 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
         wedding=factory.SelfAttribute("..wedding"),
     )
 
+    name = factory.Faker("sentence", nb_words=3)
     actual_amount = Decimal("1000.00")
     description = factory.Faker("sentence")
     estimated_amount = factory.Faker(

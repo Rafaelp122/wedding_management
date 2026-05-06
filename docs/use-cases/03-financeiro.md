@@ -71,35 +71,48 @@
 
 ### Fluxo Principal: Criar Despesa com Parcelamento
 
-1. Cerimonialista acessa "Despesas" de uma categoria
+1. Cerimonialista acessa "Despesas" de um casamento (sub-tab Despesas)
 2. Clica em "Nova Despesa"
 3. Sistema exibe formulário:
-   - Descrição
-   - Categoria (pré-selecionada)
-   - Fornecedor (vinculado ou novo)
-   - Valor total (actual_amount)
-   - Número de parcelas
-   - Data de vencimento da primeira parcela
-   - Documento de referência (opcional - ver UC07)
+   - Nome da despesa (obrigatório) — identificador principal
+   - Descrição (opcional) — detalhamento adicional
+   - Categoria
+   - Contrato (opcional)
+   - Valor estimado
+   - Valor realizado
+   - Número de parcelas (mínimo 1, default 1)
+   - Data de vencimento da primeira parcela (default hoje)
 4. Cerimonialista preenche e confirma
-5. Sistema cria a Expense
+5. Sistema cria a Expense com 1+ parcelas
 6. Sistema **auto-gera as parcelas** com:
    - Cálculo exato do valor de cada parcela
-   - Ajuste automático na última parcela se houver resto
-   - Datas de vencimento sequenciais
-7. Sistema exibe despesa com parcelas geradas
-
-### Fluxo Alternativo: Despesa sem Vinculação (Avulsa)
-
-1. Cerimonialista cria despesa sem fornecedor ou documento
-2. Sistema permite (gastos avulsos como estacionamento, táxi)
-3. Parcelamento funciona da mesma forma
+   - Ajuste automático na última parcela se houver resto (BR-F01)
+   - Datas de vencimento sequenciais (30 dias entre cada)
+7. Sistema exibe despesa na tabela com status **Pendente**
 
 ### Fluxo Alternativo: Editar Despesa
 
-1. Cerimonialista altera valor ou número de parcelas
-2. Sistema valida: se alguma parcela já foi paga → recalcula apenas parcelas futuras
-3. Se todas pagas → não permite alteração (BR-FUT01)
+1. Cerimonialista clica em ⋮ → "Editar" na tabela de despesas
+2. Sistema exibe formulário pré-preenchido com: nome, descrição, contrato, valores
+3. Opcional: alterar número de parcelas → dispara remanejamento (ver UC04)
+4. Se houver parcelas pagas → campos de valor e parcelas são bloqueados
+
+### Fluxo Alternativo: Excluir Despesa
+
+1. Cerimonialista clica em ⋮ → "Excluir" na tabela
+2. Sistema exibe diálogo de confirmação exigindo digitar o nome da despesa
+3. Ao confirmar, todas as parcelas são removidas em cascata
+
+### Fluxo Alternativo: Visualizar Detalhes da Despesa
+
+1. Cerimonialista clica na linha da despesa na tabela
+2. Sistema abre modal com:
+   - Nome da despesa e status (Pendente/Parcial/Quitada)
+   - Categoria, contrato vinculado, descrição
+   - Barra de progresso: X/Y parcelas marcadas como pagas
+   - Tabela de parcelas com: número, valor, vencimento, status
+   - Botão "Marcar como Pago" em cada parcela pendente
+   - Botão "Remanejar" para alterar número de parcelas
 
 ### Fluxo Alternativo: Gerar Despesa a partir de Documento
 
@@ -117,8 +130,11 @@
 ### Regras de Negócio
 
 - `BR-F01`: Soma das parcelas = actual_amount (tolerância zero)
-- `BR-L03`: Auto-geração de parcelas com ajuste automático na última
-- `BR-FUT01`: Parcelas pagas são imutáveis
+- `BR-F07`: Toda despesa tem no mínimo 1 parcela
+- `BR-F08`: Remanejamento de parcelas só se nenhuma estiver paga
+- `BR-F09`: Status da despesa é derivado das parcelas (Pending → Partial → Settled)
+- `BR-F10`: Nome da despesa é obrigatório; descrição é opcional
+- `BR-F06`: Parcelas pagas são imutáveis
 - Expense vinculada a BudgetCategory e Wedding
 
 ---
@@ -133,33 +149,55 @@
 | **Prioridade** | ⭐⭐⭐⭐☆ Importante |
 | **Complexidade** | ⭐⭐⭐☆☆☆ |
 
-### Fluxo Principal: Registrar Pagamento
+### Fluxo Principal: Marcar Parcela como Paga
 
-1. Cerimonialista acessa parcelas de uma despesa
-2. Visualiza grid com: vencimento, valor, status, dias até vencer
-3. Clica "Pagar" em uma parcela
-4. Sistema marca parcela como `PAID`
-5. Sistema atualiza saldo da categoria
+1. Cerimonialista acessa o modal de detalhes da despesa
+2. Visualiza tabela de parcelas com: número, valor, vencimento, status
+3. Clica "Marcar como Pago" em uma parcela pendente/vencida
+4. Sistema marca parcela como `PAID` com `paid_date = hoje` (BR-F06)
+5. Sistema revalida Tolerância Zero na despesa pai
+6. Status da despesa é recalculado automaticamente:
+   - Todas pagas → `SETTLED` (Quitada)
+   - Algumas pagas → `PARTIALLY_PAID` (Parcial)
+7. Modal permanece aberto para o cerimonialista marcar outras parcelas
+
+### Fluxo Alternativo: Marcação em Lote (via lista de vencimentos)
+
+1. Cerimonialista visualiza o card "Próximos Vencimentos" no dashboard do casamento
+2. Clica "Marcar como Pago" diretamente em uma parcela listada
+3. Sistema processa e recarrega a lista
 
 ### Fluxo Alternativo: Parcela Vencida
 
-1. Parcela com data de vencimento passada e status ≠ PAID
-2. Sistema marca automaticamente como `OVERDUE`
-3. Cerimonialista recebe notificação (in-app + email)
-4. Cerimonialista pode pagar ou renegociar
+1. Comando `mark_overdue_installments` (execução diária) varre parcelas
+2. Parcela com `due_date < hoje` e `status = PENDING` → marcada `OVERDUE`
+3. No frontend, parcelas `OVERDUE` exibem badge vermelho + ícone de alerta
+4. Cerimonialista pode marcar como paga normalmente (pagamento em atraso)
 
-### Fluxo Alternativo: Ajustar Parcela
+### Fluxo Alternativo: Remanejar Parcelas
 
-1. Cerimonialista altera data de vencimento de parcela futura
-2. Sistema valida: não pode alterar para antes da parcela anterior
-3. Sistema permite alterar valor de parcela futura
-4. Se alterar valor: sistema recalcula parcelas seguintes
+1. Cerimonialista abre o modal de detalhes da despesa
+2. Clica em "Remanejar" ao lado do título "Parcelas"
+3. Sistema expande formulário inline: novo número de parcelas, nova data da 1ª
+4. **Validação:** se houver alguma parcela `PAID` → botão "Remanejar" não aparece
+5. Se nenhuma paga: cerimonialista preenche e clica "Aplicar"
+6. Sistema deleta parcelas existentes e regera com o novo número (BR-F08)
+7. Tudo em uma transação atômica
+
+### Fluxo Alternativo: Ajustar Parcela Individual
+
+1. Cerimonialista pode ajustar data/valor de uma parcela futura (não paga)
+2. `PATCH /installments/{uuid}/adjust/` — endpoint dedicado
+3. Validações:
+   - Parcela `PAID` não pode ser ajustada
+   - Data não pode ser anterior à parcela anterior
 
 ### Regras de Negócio
 
-- Parcelas `PAID` não podem ser alteradas
-- `OVERDUE` gera alerta automático (BR-FUT05)
-- Ordem cronológica das parcelas deve ser mantida
+- Parcelas `PAID` não podem ser alteradas (BR-F06)
+- `OVERDUE` gerado automaticamente via comando diário (BR-F05)
+- Remanejamento bloqueado se houver parcelas pagas (BR-F08)
+- Ordem cronológica das parcelas deve ser mantida no ajuste
 
 ---
 
@@ -208,7 +246,7 @@ PENDING → PAID
 
 ---
 
-**Última atualização:** 2 de maio de 2026
-**Versão:** 1.1 - Proteção de categoria + sincronização Documento→Despesa
+**Última atualização:** 4 de maio de 2026
+**Versão:** 1.2 - Sprint 1: CRUD despesas + marcar como pago + remanejar + name/description
 **Módulo:** Financeiro
 **Voltar:** [index.md](./index.md)

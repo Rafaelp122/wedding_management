@@ -82,58 +82,94 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 #### Backend
 
-- [ ] **Serviço `auto_generate_installments`** — função que recebe `expense`, `num_parcelas`, `first_due_date` e cria N parcelas com ajuste da última parcela (Tolerância Zero, BR-F01). Chamada dentro de `ExpenseService.create()` quando `num_installments > 0`.
+- [x] **Serviço `auto_generate_installments`** — função que recebe `expense`, `num_parcelas`, `first_due_date` e cria N parcelas com ajuste da última parcela (Tolerância Zero, BR-F01). Chamada dentro de `ExpenseService.create()` quando `num_installments > 0`.
   - **Ref:** UC03 fluxo principal, BR-F01
   - **Arquivo:** `backend/apps/finances/services/installment_service.py`
 
-- [ ] **Comando `mark_overdue_installments`** — varredura diária (Django management command) que marca como `OVERDUE` toda parcela com `due_date < today` e `status = PENDING`.
+- [x] **Comando `mark_overdue_installments`** — varredura diária (Django management command) que marca como `OVERDUE` toda parcela com `due_date < today` e `status = PENDING`.
   - **Ref:** BR-F05, UC04 fluxo alternativo "Parcela Vencida"
   - **Arquivo:** `backend/apps/finances/management/commands/mark_overdue_installments.py`
 
-- [ ] **`InstallmentService.pay()`** — método dedicado para pagamento (não PATCH genérico) que:
+- [x] **`InstallmentService.mark_as_paid()`** — método dedicado para marcar como pago (não PATCH genérico) que:
   1. Bloqueia alteração se `status = PAID` (BR-F06)
   2. Define `status = PAID`, `paid_date = today`
   3. Revalida Tolerância Zero na expense pai
   - **Ref:** BR-F06, UC04 fluxo principal
   - **Arquivo:** `backend/apps/finances/services/installment_service.py`
 
-- [ ] **Endpoint `POST /installments/{uuid}/pay/`** — endpoint de ação dedicado (não PATCH genérico), chama `InstallmentService.pay()`.
+- [x] **Endpoint `POST /installments/{uuid}/mark-as-paid/`** — endpoint de ação dedicado (não PATCH genérico), chama `InstallmentService.mark_as_paid()`.
   - **Arquivo:** `backend/apps/finances/api/installments.py`
 
-- [ ] **Endpoint `PATCH /installments/{uuid}/adjust/`** — endpoint de ajuste de data/valor para parcelas futuras (não pagas). Valida que `due_date` não pode ser anterior à parcela anterior (UC04).
+- [x] **Endpoint `PATCH /installments/{uuid}/adjust/`** — endpoint de ajuste de data/valor para parcelas futuras (não pagas). Valida que `due_date` não pode ser anterior à parcela anterior (UC04).
   - **Ref:** UC04 fluxo alternativo "Ajustar Parcela"
   - **Arquivo:** `backend/apps/finances/api/installments.py`
 
-- [ ] **Schemas de entrada** — adicionar `num_installments` e `first_due_date` ao `ExpenseIn` para permitir criação com parcelamento.
+- [x] **Schemas de entrada** — adicionar `num_installments` e `first_due_date` ao `ExpenseIn` para permitir criação com parcelamento.
   - **Arquivo:** `backend/apps/finances/schemas.py`
 
-- [ ] **Remover endpoints CRUD desnecessários** (ver seção 1.1):
+- [x] **Remover endpoints CRUD desnecessários** (ver seção 1.1):
   - `POST /budgets/` e `DELETE /budgets/{uuid}/` — Budget é lazy-create, nunca criado/deletado manualmente
   - `POST /installments/` e `DELETE /installments/{uuid}/` — parcelas são auto-geradas; DELETE quebra Tolerância Zero
-  - `PATCH /installments/{uuid}/` genérico — substituído por `POST .../pay/` e `PATCH .../adjust/`
+  - `PATCH /installments/{uuid}/` genérico — substituído por `POST .../mark-as-paid/` e `PATCH .../adjust/`
   - Manter apenas `GET /installments/` (list) e `GET /installments/{uuid}/` (read)
   - **Arquivo:** `backend/apps/finances/api/budgets.py`, `backend/apps/finances/api/installments.py`
 
-- [ ] **Atualizar `openapi.json` e regenerar Orval** — após remover endpoints, rodar `./manage.py export_openapi` e `npx orval` para que o frontend perca os hooks de CRUD removidos.
+- [x] **Atualizar `openapi.json` e regenerar Orval** — após remover endpoints, rodar `./manage.py export_openapi` e `npx orval` para que o frontend perca os hooks de CRUD removidos.
 
 #### Frontend
 
-- [ ] **Dialog `CreateExpenseDialog`** — formulário com: descrição, categoria (select), fornecedor (select, opcional), valor total, número de parcelas, vencimento da 1ª parcela. Ao submeter, chama `POST /expenses` com `num_installments`.
+- [x] **Dialog `CreateExpenseDialog`** — formulário com: nome, descrição (opcional), categoria (select), contrato (select, opcional), valor estimado, valor realizado, número de parcelas (min 1), vencimento da 1ª parcela. Ao submeter, chama `POST /expenses` com `num_installments`.
   - **Ref:** UC03 fluxo principal
   - **Arquivo:** `frontend/src/features/weddings/components/CreateExpenseDialog.tsx`
 
-- [ ] **Dialog `EditExpenseDialog`** — edição de despesa existente, respeitando bloqueios (parcelas pagas).
+- [x] **Dialog `EditExpenseDialog`** — edição de despesa existente, respeitando bloqueios (parcelas pagas). Permite alterar nome, descrição, contrato, valores e número de parcelas (remanejamento).
   - **Arquivo:** `frontend/src/features/weddings/components/EditExpenseDialog.tsx`
 
-- [ ] **Botão "Pagar" na lista de parcelas** — em `WeddingUpcomingInstallments`, cada parcela pendente ganha um botão "Pagar" que chama `POST /installments/{uuid}/pay/`. Toast de confirmação e refetch.
+- [x] **Botão "Marcar como Pago" na lista de parcelas** — em `WeddingUpcomingInstallments`, cada parcela pendente ganha um botão que chama `POST /installments/{uuid}/mark-as-paid/`. Toast de confirmação e refetch.
   - **Ref:** UC04 fluxo principal
   - **Arquivo:** `frontend/src/features/weddings/components/WeddingUpcomingInstallments.tsx`
 
-- [ ] **Filtro `wedding_id` nas parcelas** — adicionar o parâmetro `wedding_id` à chamada de API em vez do filtro client-side com `limit: 5` hardcoded.
+- [x] **Filtro `wedding_id` nas parcelas** — adicionar o parâmetro `wedding_id` à chamada de API em vez do filtro client-side com `limit: 5` hardcoded.
   - **Arquivo:** `frontend/src/features/weddings/components/WeddingUpcomingInstallments.tsx`
 
-- [ ] **Indicador visual de OVERDUE** — parcelas com status `OVERDUE` renderizadas com badge vermelho e ícone de alerta.
+- [x] **Indicador visual de OVERDUE** — parcelas com status `OVERDUE` renderizadas com badge vermelho e ícone de alerta.
   - **Ref:** UC04 fluxo alternativo
+
+#### Extras implementados (além do escopo original do Sprint 1)
+
+- [x] **Modelo `Expense`** — adicionado campo `name` (obrigatório); `description` alterado para `TextField` (opcional). Migration com data migration para copiar dados existentes.
+  - **Ref:** BR-F10
+  - **Arquivos:** `backend/apps/finances/models/expense.py`, `backend/apps/finances/migrations/0003_*.py`
+
+- [x] **`ExpenseOut` enriquecido** — schema retorna `category_name`, `contract_description`, `status` (derivado: `PENDING`/`PARTIALLY_PAID`/`SETTLED`), `installments_count`, `paid_installments_count`, `total_paid`, `total_pending`. Tudo via annotation no queryset para evitar N+1.
+  - **Arquivos:** `backend/apps/finances/schemas.py`, `backend/apps/finances/services/expense_service.py`
+
+- [x] **Mínimo de 1 parcela** — `ExpenseService.create()` força `num_installments=1` se não informado; `first_due_date` padrão = hoje. Regra de negócio: toda despesa tem ao menos 1 parcela (BR-F07).
+  - **Arquivo:** `backend/apps/finances/services/expense_service.py`
+
+- [x] **`InstallmentService.redistribute()`** — remaneja parcelas (deleta e regera) se nenhuma estiver `PAID`. Bloqueia com erro caso haja parcelas marcadas como pagas (BR-F08).
+  - **Arquivo:** `backend/apps/finances/services/installment_service.py`
+
+- [x] **`ExpenseService.update()`** — se `num_installments` for enviado e diferente do atual, chama `redistribute()`. Função auxiliar `_handle_redistribute()` extraída para manter complexidade baixa.
+  - **Arquivo:** `backend/apps/finances/services/expense_service.py`
+
+- [x] **Filtro `expense_id` nas parcelas** — `GET /installments/?expense_id={uuid}` para buscar parcelas de uma despesa específica.
+  - **Arquivos:** `backend/apps/finances/api/installments.py`, `backend/apps/finances/services/installment_service.py`
+
+- [x] **`DeleteExpenseDialog`** — confirmação com nome da despesa, alerta de cascata (parcelas removidas).
+  - **Arquivo:** `frontend/src/features/weddings/components/DeleteExpenseDialog.tsx`
+
+- [x] **`ExpenseDetailDialog`** — modal completo com barra de progresso, tabela de parcelas com "Marcar como Pago", status da despesa, remanejamento inline de parcelas.
+  - **Arquivo:** `frontend/src/features/weddings/components/ExpenseDetailDialog.tsx`
+
+- [x] **Menu ⋮ (dropdown)** — ações Editar/Excluir na tabela de despesas via `DropdownMenu` (três pontinhos).
+  - **Arquivo:** `frontend/src/features/weddings/components/WeddingExpensesTable.tsx`
+
+- [x] **Aba Finanças unificada** — cards de resumo + tabela de despesas com ações na mesma view, sem sub-tabs.
+  - **Arquivo:** `frontend/src/features/weddings/components/WeddingFinancesView.tsx`
+
+- [x] **Input `selectAll` no focus** — campos numéricos dos dialogs selecionam todo o texto ao receber foco (se valor = 0), facilitando digitação.
+  - **Arquivos:** `CreateExpenseDialog.tsx`, `EditExpenseDialog.tsx`
 
 ---
 
@@ -370,11 +406,13 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ### `backend/apps/finances/`
 
-- [ ] `services/installment_service.py`: `auto_generate_installments()`, `pay()`, `adjust()` (Sprint 1)
-- [ ] `management/commands/mark_overdue_installments.py`: comando diário (Sprint 1)
-- [ ] `api/installments.py`: endpoints `POST /{uuid}/pay/`, `PATCH /{uuid}/adjust/`; remover POST/DELETE/PATCH genérico (Sprint 1)
-- [ ] `api/budgets.py`: remover `POST /` e `DELETE /{uuid}/` (Sprint 1)
-- [ ] `schemas.py`: campos `num_installments`, `first_due_date` (Sprint 1)
+- [x] `services/installment_service.py`: `auto_generate_installments()`, `mark_as_paid()`, `adjust()`, `redistribute()` (Sprint 1)
+- [x] `management/commands/mark_overdue_installments.py`: comando diário (Sprint 1)
+- [x] `api/installments.py`: endpoints `POST /{uuid}/mark-as-paid/`, `PATCH /{uuid}/adjust/`; remover POST/DELETE/PATCH genérico; + filtro `expense_id` (Sprint 1)
+- [x] `api/budgets.py`: remover `POST /` e `DELETE /{uuid}/` (Sprint 1)
+- [x] `schemas.py`: campos `num_installments`, `first_due_date`; `ExpenseOut` enriquecido com `name`, `category_name`, `contract_description`, `status`, `installments_count`, `paid_installments_count`, `total_paid`, `total_pending` (Sprint 1)
+- [x] `models/expense.py`: campo `name` obrigatório, `description` opcional (Sprint 1)
+- [x] `services/expense_service.py`: `create()` força min 1 parcela; `update()` com redistribute via `_handle_redistribute()` (Sprint 1)
 - [ ] `api/expenses.py`: endpoint `POST /from-document/{uuid}/` (Sprint 3)
 - [ ] `models/expense.py`: validação BR-F02 (Sprint 3)
 - [ ] `models/budget_category.py`: validação BR-F04 (Sprint 6)
@@ -395,9 +433,14 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ### `frontend/src/features/weddings/`
 
-- [ ] `components/CreateExpenseDialog.tsx` (Sprint 1)
-- [ ] `components/EditExpenseDialog.tsx` (Sprint 1)
-- [ ] `components/WeddingUpcomingInstallments.tsx`: botão Pagar + filtro wedding_id + indicador OVERDUE (Sprint 1)
+- [x] `components/CreateExpenseDialog.tsx` — formulário com name, description, categoria, contrato, valores, parcelas (Sprint 1)
+- [x] `components/EditExpenseDialog.tsx` — edição de despesa + remanejamento de parcelas (Sprint 1)
+- [x] `components/DeleteExpenseDialog.tsx` — confirmação com nome da despesa (Sprint 1, extra)
+- [x] `components/ExpenseDetailDialog.tsx` — modal com parcelas, progresso, mark-as-paid, remanejar (Sprint 1, extra)
+- [x] `components/WeddingUpcomingInstallments.tsx`: botão "Marcar como Pago" + filtro wedding_id + indicador OVERDUE (Sprint 1)
+- [x] `components/WeddingExpensesTable.tsx`: colunas nome/categoria/parcelas/status + menu ⋮ (Editar/Excluir) + clique → modal (Sprint 1, extra)
+- [x] `components/WeddingDetailTabs.tsx`: sub-tabs Finanças (Resumo / Despesas) (Sprint 1, extra)
+- [x] `components/WeddingFinancesRecentExpenses.tsx`: mostra name + categoria + parcelas + status + clique → modal (Sprint 1, extra)
 - [ ] `components/CreateBudgetCategoryDialog.tsx` (Sprint 2)
 - [ ] `components/EditBudgetCategoryDialog.tsx` (Sprint 2)
 - [ ] `components/DeleteBudgetCategoryDialog.tsx` (Sprint 2)
@@ -477,6 +520,7 @@ Sprint 6 (Polish)
 
 ---
 
-**Versão:** 1.1 (revisada com análise de necessidade de CRUD por entidade)
+**Versão:** 1.2 (Sprint 1 concluído com extras documentados)
 **Criado em:** 3 de maio de 2026
+**Atualizado em:** 4 de maio de 2026
 **Responsável:** Rafael

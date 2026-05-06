@@ -72,20 +72,22 @@ class BudgetCategoryOut(Schema):
 class ExpenseIn(Schema):
     category: UUID4
     contract: UUID4 | None = None
-    description: str = Field(..., max_length=255)
+    name: str = Field(..., max_length=255)
+    description: str | None = None
     estimated_amount: Decimal
     actual_amount: Decimal
-    # Campos para geração automática de parcelas (opcionais)
     num_installments: int | None = Field(None, gt=0)
     first_due_date: date | None = None
 
 
 class ExpensePatchIn(Schema):
-    category: UUID4 | None = None
     contract: UUID4 | None = None
-    description: str | None = Field(None, max_length=255)
+    name: str | None = Field(None, max_length=255)
+    description: str | None = None
     estimated_amount: Decimal | None = None
     actual_amount: Decimal | None = None
+    num_installments: int | None = Field(None, gt=0)
+    first_due_date: date | None = None
 
 
 class ExpenseOut(Schema):
@@ -93,16 +95,72 @@ class ExpenseOut(Schema):
     wedding: UUID4 = Field(alias="wedding.uuid")
     category: UUID4 = Field(alias="category.uuid")
     contract: UUID4 | None = None
-    description: str
+    name: str
+    description: str = ""
     estimated_amount: Decimal
     actual_amount: Decimal
+    category_name: str = ""
+    contract_description: str | None = None
+    status: str = "PENDING"
+    installments_count: int = 0
+    paid_installments_count: int = 0
+    total_paid: Decimal = Decimal("0.00")
+    total_pending: Decimal = Decimal("0.00")
 
     @staticmethod
     def resolve_contract(obj: "Expense") -> UUID4 | None:
-        contract = obj.contract
-        if contract is None:
-            return None
-        return contract.uuid
+        c = obj.contract
+        return c.uuid if c else None
+
+    @staticmethod
+    def resolve_category_name(obj: "Expense") -> str:
+        return getattr(obj, "category_name", obj.category.name)
+
+    @staticmethod
+    def resolve_contract_description(obj: "Expense") -> str | None:
+        if obj.contract:
+            return getattr(obj, "contract_description", obj.contract.description)
+        return None
+
+    @staticmethod
+    def resolve_status(obj: "Expense") -> str:
+        total = getattr(obj, "installments_count", obj.installments.count())
+        paid = getattr(
+            obj,
+            "paid_installments_count",
+            obj.installments.filter(status="PAID").count(),
+        )
+        if total == 0:
+            return "PENDING"
+        if paid >= total:
+            return "SETTLED"
+        if paid > 0:
+            return "PARTIALLY_PAID"
+        return "PENDING"
+
+    @staticmethod
+    def resolve_installments_count(obj: "Expense") -> int:
+        return getattr(obj, "installments_count", obj.installments.count())
+
+    @staticmethod
+    def resolve_paid_installments_count(obj: "Expense") -> int:
+        return getattr(
+            obj,
+            "paid_installments_count",
+            obj.installments.filter(status="PAID").count(),
+        )
+
+    @staticmethod
+    def resolve_total_paid(obj: "Expense") -> Decimal:
+        from decimal import Decimal as D
+
+        return getattr(obj, "total_paid", D("0.00"))
+
+    @staticmethod
+    def resolve_total_pending(obj: "Expense") -> Decimal:
+        from decimal import Decimal as D
+
+        return getattr(obj, "total_pending", D("0.00"))
 
 
 # --- INSTALLMENT SCHEMAS ---
@@ -121,6 +179,11 @@ class InstallmentPatchIn(Schema):
     due_date: date | None = None
     paid_date: date | None = None
     notes: str | None = None
+
+
+class InstallmentAdjustIn(Schema):
+    amount: Decimal | None = None
+    due_date: date | None = None
 
 
 class InstallmentOut(Schema):

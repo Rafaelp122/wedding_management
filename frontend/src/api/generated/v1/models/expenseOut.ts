@@ -10,9 +10,19 @@ export interface ExpenseOut {
   wedding: string;
   category: string;
   contract?: string | null;
-  description: string;
+  name: string;
+  description?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   estimated_amount: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   actual_amount: string;
+  category_name?: string;
+  contract_description?: string | null;
+  status?: string;
+  installments_count?: number;
+  paid_installments_count?: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_paid?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_pending?: string;
 }

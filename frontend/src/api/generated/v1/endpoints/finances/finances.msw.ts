@@ -45,25 +45,6 @@ export const getFinancesBudgetsListResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesBudgetsCreateResponseMock = (
-  overrideResponse: Partial<Extract<BudgetOut, object>> = {},
-): BudgetOut => ({
-  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  total_estimated: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
-  total_overall_spent: faker.helpers.fromRegExp(
-    "^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$",
-  ),
-  notes: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
-
 export const getFinancesBudgetsReadResponseMock = (
   overrideResponse: Partial<Extract<BudgetOut, object>> = {},
 ): BudgetOut => ({
@@ -222,11 +203,25 @@ export const getFinancesExpensesListResponseMock = (
       ]),
       undefined,
     ]),
+    name: faker.string.alpha({ length: { min: 10, max: 20 } }),
     description: faker.string.alpha({ length: { min: 10, max: 20 } }),
     estimated_amount: faker.helpers.fromRegExp(
       "^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$",
     ),
     actual_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+    category_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    contract_description: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      undefined,
+    ]),
+    status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    installments_count: faker.number.int(),
+    paid_installments_count: faker.number.int(),
+    total_paid: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+    total_pending: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   })),
   count: faker.number.int(),
   ...overrideResponse,
@@ -245,9 +240,23 @@ export const getFinancesExpensesCreateResponseMock = (
     ]),
     undefined,
   ]),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   description: faker.string.alpha({ length: { min: 10, max: 20 } }),
   estimated_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   actual_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  category_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  contract_description: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  installments_count: faker.number.int(),
+  paid_installments_count: faker.number.int(),
+  total_paid: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  total_pending: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   ...overrideResponse,
 });
 
@@ -264,9 +273,23 @@ export const getFinancesExpensesReadResponseMock = (
     ]),
     undefined,
   ]),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   description: faker.string.alpha({ length: { min: 10, max: 20 } }),
   estimated_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   actual_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  category_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  contract_description: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  installments_count: faker.number.int(),
+  paid_installments_count: faker.number.int(),
+  total_paid: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  total_pending: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   ...overrideResponse,
 });
 
@@ -283,9 +306,23 @@ export const getFinancesExpensesUpdateResponseMock = (
     ]),
     undefined,
   ]),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
   description: faker.string.alpha({ length: { min: 10, max: 20 } }),
   estimated_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   actual_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  category_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  contract_description: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  installments_count: faker.number.int(),
+  paid_installments_count: faker.number.int(),
+  total_paid: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  total_pending: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   ...overrideResponse,
 });
 
@@ -322,33 +359,6 @@ export const getFinancesInstallmentsListResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesInstallmentsCreateResponseMock = (
-  overrideResponse: Partial<Extract<InstallmentOut, object>> = {},
-): InstallmentOut => ({
-  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  expense: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  installment_number: faker.number.int(),
-  amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
-  due_date: faker.date.past().toISOString().slice(0, 10),
-  paid_date: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.date.past().toISOString().slice(0, 10),
-      null,
-    ]),
-    undefined,
-  ]),
-  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  notes: faker.helpers.arrayElement([
-    faker.helpers.arrayElement([
-      faker.string.alpha({ length: { min: 10, max: 20 } }),
-      null,
-    ]),
-    undefined,
-  ]),
-  ...overrideResponse,
-});
-
 export const getFinancesInstallmentsReadResponseMock = (
   overrideResponse: Partial<Extract<InstallmentOut, object>> = {},
 ): InstallmentOut => ({
@@ -376,7 +386,61 @@ export const getFinancesInstallmentsReadResponseMock = (
   ...overrideResponse,
 });
 
-export const getFinancesInstallmentsUpdateResponseMock = (
+export const getFinancesInstallmentsMarkAsPaidResponseMock = (
+  overrideResponse: Partial<Extract<InstallmentOut, object>> = {},
+): InstallmentOut => ({
+  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  expense: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  installment_number: faker.number.int(),
+  amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  due_date: faker.date.past().toISOString().slice(0, 10),
+  paid_date: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 10),
+      null,
+    ]),
+    undefined,
+  ]),
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  notes: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getFinancesInstallmentsUnmarkAsPaidResponseMock = (
+  overrideResponse: Partial<Extract<InstallmentOut, object>> = {},
+): InstallmentOut => ({
+  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  expense: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  installment_number: faker.number.int(),
+  amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  due_date: faker.date.past().toISOString().slice(0, 10),
+  paid_date: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 10),
+      null,
+    ]),
+    undefined,
+  ]),
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  notes: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
+export const getFinancesInstallmentsAdjustResponseMock = (
   overrideResponse: Partial<Extract<InstallmentOut, object>> = {},
 ): InstallmentOut => ({
   uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -427,30 +491,6 @@ export const getFinancesBudgetsListMockHandler = (
   );
 };
 
-export const getFinancesBudgetsCreateMockHandler = (
-  overrideResponse?:
-    | BudgetOut
-    | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<BudgetOut> | BudgetOut),
-  options?: RequestHandlerOptions,
-) => {
-  return http.post(
-    "*/api/v1/finances/budgets/",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      return HttpResponse.json(
-        overrideResponse !== undefined
-          ? typeof overrideResponse === "function"
-            ? await overrideResponse(info)
-            : overrideResponse
-          : getFinancesBudgetsCreateResponseMock(),
-        { status: 201 },
-      );
-    },
-    options,
-  );
-};
-
 export const getFinancesBudgetsReadMockHandler = (
   overrideResponse?:
     | BudgetOut
@@ -494,27 +534,6 @@ export const getFinancesBudgetsUpdateMockHandler = (
           : getFinancesBudgetsUpdateResponseMock(),
         { status: 200 },
       );
-    },
-    options,
-  );
-};
-
-export const getFinancesBudgetsDeleteMockHandler = (
-  overrideResponse?:
-    | void
-    | ((
-        info: Parameters<Parameters<typeof http.delete>[1]>[0],
-      ) => Promise<void> | void),
-  options?: RequestHandlerOptions,
-) => {
-  return http.delete(
-    "*/api/v1/finances/budgets/:uuid/",
-    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 204 });
     },
     options,
   );
@@ -802,30 +821,6 @@ export const getFinancesInstallmentsListMockHandler = (
   );
 };
 
-export const getFinancesInstallmentsCreateMockHandler = (
-  overrideResponse?:
-    | InstallmentOut
-    | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<InstallmentOut> | InstallmentOut),
-  options?: RequestHandlerOptions,
-) => {
-  return http.post(
-    "*/api/v1/finances/installments/",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      return HttpResponse.json(
-        overrideResponse !== undefined
-          ? typeof overrideResponse === "function"
-            ? await overrideResponse(info)
-            : overrideResponse
-          : getFinancesInstallmentsCreateResponseMock(),
-        { status: 201 },
-      );
-    },
-    options,
-  );
-};
-
 export const getFinancesInstallmentsReadMockHandler = (
   overrideResponse?:
     | InstallmentOut
@@ -850,7 +845,55 @@ export const getFinancesInstallmentsReadMockHandler = (
   );
 };
 
-export const getFinancesInstallmentsUpdateMockHandler = (
+export const getFinancesInstallmentsMarkAsPaidMockHandler = (
+  overrideResponse?:
+    | InstallmentOut
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<InstallmentOut> | InstallmentOut),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/api/v1/finances/installments/:uuid/mark-as-paid/",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getFinancesInstallmentsMarkAsPaidResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getFinancesInstallmentsUnmarkAsPaidMockHandler = (
+  overrideResponse?:
+    | InstallmentOut
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<InstallmentOut> | InstallmentOut),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/api/v1/finances/installments/:uuid/unmark-as-paid/",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getFinancesInstallmentsUnmarkAsPaidResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getFinancesInstallmentsAdjustMockHandler = (
   overrideResponse?:
     | InstallmentOut
     | ((
@@ -859,47 +902,24 @@ export const getFinancesInstallmentsUpdateMockHandler = (
   options?: RequestHandlerOptions,
 ) => {
   return http.patch(
-    "*/api/v1/finances/installments/:uuid/",
+    "*/api/v1/finances/installments/:uuid/adjust/",
     async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
             ? await overrideResponse(info)
             : overrideResponse
-          : getFinancesInstallmentsUpdateResponseMock(),
+          : getFinancesInstallmentsAdjustResponseMock(),
         { status: 200 },
       );
     },
     options,
   );
 };
-
-export const getFinancesInstallmentsDeleteMockHandler = (
-  overrideResponse?:
-    | void
-    | ((
-        info: Parameters<Parameters<typeof http.delete>[1]>[0],
-      ) => Promise<void> | void),
-  options?: RequestHandlerOptions,
-) => {
-  return http.delete(
-    "*/api/v1/finances/installments/:uuid/",
-    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
-
-      return new HttpResponse(null, { status: 204 });
-    },
-    options,
-  );
-};
 export const getFinancesMock = () => [
   getFinancesBudgetsListMockHandler(),
-  getFinancesBudgetsCreateMockHandler(),
   getFinancesBudgetsReadMockHandler(),
   getFinancesBudgetsUpdateMockHandler(),
-  getFinancesBudgetsDeleteMockHandler(),
   getFinancesBudgetsForWeddingMockHandler(),
   getFinancesCategoriesListMockHandler(),
   getFinancesCategoriesCreateMockHandler(),
@@ -912,8 +932,8 @@ export const getFinancesMock = () => [
   getFinancesExpensesUpdateMockHandler(),
   getFinancesExpensesDeleteMockHandler(),
   getFinancesInstallmentsListMockHandler(),
-  getFinancesInstallmentsCreateMockHandler(),
   getFinancesInstallmentsReadMockHandler(),
-  getFinancesInstallmentsUpdateMockHandler(),
-  getFinancesInstallmentsDeleteMockHandler(),
+  getFinancesInstallmentsMarkAsPaidMockHandler(),
+  getFinancesInstallmentsUnmarkAsPaidMockHandler(),
+  getFinancesInstallmentsAdjustMockHandler(),
 ];

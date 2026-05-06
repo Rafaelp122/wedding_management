@@ -9,7 +9,8 @@ export interface ExpenseIn {
   category: string;
   contract?: string | null;
   /** @maxLength 255 */
-  description: string;
+  name: string;
+  description?: string | null;
   estimated_amount: number | string;
   actual_amount: number | string;
   num_installments?: number | null;

@@ -1,8 +1,11 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { useState } from "react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Card,
@@ -12,9 +15,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useFinancesInstallmentsList } from "@/api/generated/v1/endpoints/finances/finances";
-import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useFinancesInstallmentsList,
+  useFinancesInstallmentsMarkAsPaid,
+  getFinancesInstallmentsListQueryKey,
+} from "@/api/generated/v1/endpoints/finances/finances";
+import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { getApiErrorInfo } from "@/api/error-utils";
 
 interface WeddingUpcomingInstallmentsProps {
   weddingUuid: string;
@@ -23,25 +32,25 @@ interface WeddingUpcomingInstallmentsProps {
 export function WeddingUpcomingInstallments({
   weddingUuid,
 }: WeddingUpcomingInstallmentsProps) {
-  // Atualmente o endpoint de lista de parcelas não parece ter filtro por wedding_id no schema exposto
-  // mas assumimos que a API filtra por contexto do usuário ou o parâmetro será adicionado.
-  // Para este protótipo, vamos limitar a 5.
+  const queryClient = useQueryClient();
+  const [payingUuid, setPayingUuid] = useState<string | null>(null);
+
   const { data: response, isLoading } = useFinancesInstallmentsList({
-    limit: 5,
+    limit: 10,
+    wedding_id: weddingUuid,
   });
 
-  const installments = response?.data?.items || [];
-  // Filtramos as que pertencem a este casamento especificamente se o campo wedding bater com o UUID
-  // ou confiamos no filtro do backend.
-  const filteredInstallments = installments.filter(
-    (i) => i.wedding === weddingUuid && i.status === "pending"
+  const payMutation = useFinancesInstallmentsMarkAsPaid();
+
+  const installments = (response?.data?.items || []).filter(
+    (i) => i.status !== "PAID"
   );
 
   if (isLoading) {
     return <Skeleton className="h-[200px] w-full" />;
   }
 
-  if (filteredInstallments.length === 0) {
+  if (installments.length === 0) {
     return (
       <Card className="h-full">
         <CardHeader>
@@ -57,6 +66,22 @@ export function WeddingUpcomingInstallments({
     );
   }
 
+  const handlePay = async (uuid: string) => {
+    setPayingUuid(uuid);
+    try {
+      await payMutation.mutateAsync({ uuid });
+      toast.success("Parcela marcada como paga!");
+      queryClient.invalidateQueries({
+        queryKey: getFinancesInstallmentsListQueryKey({ wedding_id: weddingUuid }),
+      });
+    } catch (error) {
+      const { message } = getApiErrorInfo(error, "Erro ao marcar parcela.");
+      toast.error(message);
+    } finally {
+      setPayingUuid(null);
+    }
+  };
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -70,31 +95,62 @@ export function WeddingUpcomingInstallments({
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-border">
-          {filteredInstallments.map((installment) => (
-            <div
-              key={installment.uuid}
-              className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    Parcela #{installment.installment_number}
-                  </span>
-                  <Badge variant="outline" className="text-[10px] h-4">
-                    Pendente
-                  </Badge>
+          {installments.map((installment) => {
+            const isOverdue = installment.status === "OVERDUE";
+
+            return (
+              <div
+                key={installment.uuid}
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      Parcela #{installment.installment_number}
+                    </span>
+                    {isOverdue ? (
+                      <Badge variant="destructive" className="text-[10px] h-4">
+                        <AlertTriangle className="size-3 mr-0.5" />
+                        Atrasado
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] h-4">
+                        Pendente
+                      </Badge>
+                    )}
+                  </div>
+                  <p
+                    className={`text-xs ${
+                      isOverdue
+                        ? "text-destructive font-medium"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    Vence em{" "}
+                    {format(new Date(installment.due_date), "dd 'de' MMM", {
+                      locale: ptBR,
+                    })}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Vence em {format(new Date(installment.due_date), "dd 'de' MMM", { locale: ptBR })}
-                </p>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-bold">
+                      R$ {formatCurrencyBR(Number(installment.amount))}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={isOverdue ? "destructive" : "default"}
+                    className="h-7 text-xs"
+                    onClick={() => handlePay(installment.uuid)}
+                    disabled={payingUuid === installment.uuid}
+                  >
+                    Pagar
+                  </Button>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-bold">
-                  R$ {formatCurrencyBR(Number(installment.amount))}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

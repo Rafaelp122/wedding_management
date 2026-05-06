@@ -1,17 +1,30 @@
 "use client";
 
-import { useFinancesExpensesList } from "@/api/generated/v1/endpoints/finances/finances";
+import { lazy, Suspense, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useFinancesExpensesList,
+  getFinancesExpensesListQueryKey,
+} from "@/api/generated/v1/endpoints/finances/finances";
 import { useWeddingBudget } from "../hooks/useWeddingBudget";
 import { WeddingFinancesSummaryCards } from "./WeddingFinancesSummaryCards";
 import { WeddingFinancesDistributionChart } from "./WeddingFinancesDistributionChart";
 import { WeddingFinancesGroupsSummary } from "./WeddingFinancesGroupsSummary";
 import { WeddingFinancesRecentExpenses } from "./WeddingFinancesRecentExpenses";
+import { WeddingExpensesTable } from "./WeddingExpensesTable";
+
+const CreateExpenseDialog = lazy(
+  () => import("./CreateExpenseDialog").then((m) => ({ default: m.CreateExpenseDialog })),
+);
 
 interface WeddingFinancesViewProps {
   weddingUuid: string;
 }
 
 export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+
   const {
     categories,
     isLoading: isBudgetLoading,
@@ -20,7 +33,14 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   } = useWeddingBudget(weddingUuid);
 
   const { data: expensesResponse, isLoading: isExpensesLoading } =
-    useFinancesExpensesList({ wedding_id: weddingUuid, limit: 20 });
+    useFinancesExpensesList({ wedding_id: weddingUuid });
+
+  const handleExpenseCreated = () => {
+    setCreateDialogOpen(false);
+    queryClient.invalidateQueries({
+      queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid }),
+    });
+  };
 
   if (isBudgetLoading || isExpensesLoading) {
     return (
@@ -54,8 +74,29 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         </div>
       </div>
 
-      {/* Tabela de Despesas Recentes */}
-      <WeddingFinancesRecentExpenses expenses={expenses} />
+      {/* Despesas Recentes (cards) */}
+      <WeddingFinancesRecentExpenses
+        expenses={expenses.slice(0, 5)}
+        onAddExpense={() => setCreateDialogOpen(true)}
+      />
+
+      {/* Todas as Despesas (tabela com ações) */}
+      <div>
+        <WeddingExpensesTable
+          expenses={expenses}
+          weddingUuid={weddingUuid}
+          onExpenseUpdated={() => queryClient.invalidateQueries()}
+        />
+      </div>
+
+      <Suspense fallback={null}>
+        <CreateExpenseDialog
+          weddingUuid={weddingUuid}
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSuccess={handleExpenseCreated}
+        />
+      </Suspense>
     </div>
   );
 }

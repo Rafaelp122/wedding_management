@@ -301,6 +301,292 @@ class TestInstallmentServiceDelete:
 
 
 @pytest.mark.django_db
+class TestInstallmentServiceMarkAsPaid:
+    """Testes de mark_as_paid e unmark_as_paid."""
+
+    def test_mark_as_paid_success(self, user):
+        """Parcela PENDING é marcada como PAID com paid_date=today."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+        )
+
+        result = InstallmentService.mark_as_paid(user.company, installment)
+
+        assert result.status == Installment.StatusChoices.PAID
+        assert result.paid_date == date.today()
+
+    def test_mark_as_paid_already_paid(self, user):
+        """Parcela já PAID levanta BusinessRuleViolation."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.mark_as_paid(user.company, installment)
+        assert exc.value.code == "installment_already_paid"
+
+    def test_mark_as_paid_tolerance_zero_intact(self, user):
+        """Tolerância Zero permanece válida após marcar como paga."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+        )
+
+        InstallmentService.mark_as_paid(user.company, installment)
+        expense.refresh_from_db()
+        expense.full_clean()  # não deve lançar exceção
+
+    def test_unmark_as_paid_success(self, user):
+        """Parcela PAID é desmarcada voltando para PENDING."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        result = InstallmentService.unmark_as_paid(user.company, installment)
+
+        assert result.status == Installment.StatusChoices.PENDING
+        assert result.paid_date is None
+
+    def test_unmark_as_paid_overdue(self, user):
+        """Parcela PAID vencida volta para OVERDUE."""
+        from datetime import timedelta
+
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+            due_date=date.today() - timedelta(days=5),
+        )
+
+        result = InstallmentService.unmark_as_paid(user.company, installment)
+
+        assert result.status == Installment.StatusChoices.OVERDUE
+        assert result.paid_date is None
+
+    def test_unmark_as_paid_not_paid(self, user):
+        """Parcela não PAID levanta BusinessRuleViolation ao desmarcar."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.unmark_as_paid(user.company, installment)
+        assert exc.value.code == "installment_not_paid"
+
+
+@pytest.mark.django_db
+class TestInstallmentServiceRedistribute:
+    """Testes de redistribuição de parcelas."""
+
+    def test_redistribute_success(self, user):
+        """Redistribui 3 parcelas para 5 com novo valor total."""
+        expense = _setup_expense(user, actual_amount=Decimal("1500.00"))
+        InstallmentService.auto_generate_installments(
+            user.company,
+            expense,
+            3,
+            date.today(),
+        )
+
+        result = InstallmentService.redistribute(
+            user.company,
+            expense,
+            5,
+            date.today(),
+        )
+
+        assert len(result) == 5
+        total = sum(r.amount for r in result)
+        assert total == Decimal("1500.00")
+
+    def test_redistribute_reduce_installments(self, user):
+        """Redistribui 5 parcelas para 2."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        InstallmentService.auto_generate_installments(
+            user.company,
+            expense,
+            5,
+            date.today(),
+        )
+
+        result = InstallmentService.redistribute(
+            user.company,
+            expense,
+            2,
+            date.today(),
+        )
+
+        assert len(result) == 2
+        total = sum(r.amount for r in result)
+        assert total == Decimal("1000.00")
+        assert expense.installments.count() == 2
+
+    def test_redistribute_blocked_by_paid(self, user):
+        """Redistribuição bloqueada se há parcelas PAID."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        InstallmentService.auto_generate_installments(
+            user.company,
+            expense,
+            3,
+            date.today(),
+        )
+        first = expense.installments.first()
+        first.status = Installment.StatusChoices.PAID
+        first.paid_date = date.today()
+        first.save()
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.redistribute(
+                user.company,
+                expense,
+                4,
+                date.today(),
+            )
+        assert exc.value.code == "redistribute_blocked_by_paid"
+
+
+@pytest.mark.django_db
+class TestInstallmentServiceAdjust:
+    """Testes de ajuste de parcelas via InstallmentService.adjust()."""
+
+    def test_adjust_amount_success(self, user):
+        """Ajuste de valor de parcela pendente é permitido (soma mantida)."""
+        expense = _setup_expense(user, actual_amount=Decimal("900.00"))
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() + timedelta(days=30),
+        )
+        inst2 = InstallmentFactory(
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("400.00"),
+            due_date=date.today() + timedelta(days=60),
+        )
+
+        result = InstallmentService.adjust(
+            user.company, inst2, {"amount": Decimal("400.00")}
+        )
+
+        assert result.amount == Decimal("400.00")
+
+    def test_adjust_due_date_success(self, user):
+        """Ajuste de data de parcela pendente é permitido."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() + timedelta(days=30),
+        )
+
+        new_date = date.today() + timedelta(days=45)
+        result = InstallmentService.adjust(user.company, inst, {"due_date": new_date})
+
+        assert result.due_date == new_date
+
+    def test_adjust_blocked_by_paid(self, user):
+        """Parcela PAID não pode ser ajustada."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.adjust(user.company, inst, {"amount": Decimal("300.00")})
+        assert exc.value.code == "adjustment_on_paid_installment"
+
+    def test_adjust_due_date_before_previous(self, user):
+        """Data anterior à parcela anterior é rejeitada."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        first_date = date.today() + timedelta(days=30)
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=first_date,
+        )
+        inst2 = InstallmentFactory(
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("500.00"),
+            due_date=first_date + timedelta(days=30),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.adjust(
+                user.company,
+                inst2,
+                {"due_date": first_date - timedelta(days=5)},
+            )
+        assert exc.value.code == "due_date_before_previous_installment"
+
+    def test_adjust_due_date_after_next(self, user):
+        """Data posterior à parcela seguinte é rejeitada."""
+        expense = _setup_expense(user, actual_amount=Decimal("1500.00"))
+        first_date = date.today() + timedelta(days=30)
+        inst1 = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=first_date,
+        )
+        second_date = first_date + timedelta(days=30)
+        InstallmentFactory(
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("500.00"),
+            due_date=second_date,
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.adjust(
+                user.company,
+                inst1,
+                {"due_date": second_date + timedelta(days=5)},
+            )
+        assert exc.value.code == "due_date_after_next_installment"
+
+    def test_adjust_tolerance_zero_intact(self, user):
+        """Ajuste que quebra Tolerância Zero levanta BusinessRuleViolation."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        inst = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("500.00"),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.adjust(user.company, inst, {"amount": Decimal("300.00")})
+        assert exc.value.code == "expense_math_violation"
+
+
+@pytest.mark.django_db
 class TestInstallmentServiceListAndGet:
     """Testes de listagem e obtenção de parcelas."""
 

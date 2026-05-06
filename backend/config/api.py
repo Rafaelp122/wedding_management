@@ -3,8 +3,10 @@ Main Django Ninja API configuration.
 """
 
 from django.http import HttpRequest
+from ninja.errors import HttpError
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
+from pydantic import ValidationError as PydanticValidationError
 
 from apps.core.exceptions import ApplicationError
 from apps.finances.api import (
@@ -30,12 +32,28 @@ api = NinjaExtraAPI(
 )
 
 
+# --- Handler 1: O "Conversador" ---
+# Trata tudo que previsto na Service Layer
 @api.exception_handler(ApplicationError)
 def application_error_handler(request: HttpRequest, exc: ApplicationError):
     return api.create_response(
         request,
         {"detail": exc.detail, "code": exc.code},
         status=exc.status_code,
+    )
+
+
+# --- Handler 2: O "Segurança" ---
+# Trata o que NÃO foi previsto (bugs reais).
+# Re-raise Pydantic validation errors para não mascarar erros 422 do Ninja.
+@api.exception_handler(Exception)
+def general_exception_handler(request: HttpRequest, exc: Exception):
+    if isinstance(exc, (PydanticValidationError, HttpError)):
+        raise exc
+    return api.create_response(
+        request,
+        {"detail": "Erro interno do servidor.", "code": "internal_error"},
+        status=500,
     )
 
 

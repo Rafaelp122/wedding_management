@@ -28,10 +28,19 @@ class InstallmentService:
     """
 
     @staticmethod
-    def list(company: Company) -> QuerySet[Installment]:
-        return Installment.objects.for_tenant(company).select_related(
+    def list(
+        company: Company,
+        wedding_id: UUID | str | None = None,
+        expense_id: UUID | str | None = None,
+    ) -> QuerySet[Installment]:
+        qs = Installment.objects.for_tenant(company).select_related(
             "expense", "wedding"
         )
+        if wedding_id:
+            qs = qs.filter(wedding__uuid=wedding_id)
+        if expense_id:
+            qs = qs.filter(expense__uuid=expense_id)
+        return qs
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Installment:
@@ -122,6 +131,31 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
+    def redistribute(
+        company: Company,
+        expense: Expense,
+        num_installments: int,
+        first_due_date: date,
+    ) -> builtins.list[Installment]:
+        if expense.installments.filter(status="PAID").exists():
+            raise BusinessRuleViolation(
+                detail=(
+                    "Não é possível alterar o número de parcelas — existem "
+                    "parcelas já marcadas como pagas. Crie uma nova despesa."
+                ),
+                code="redistribute_blocked_by_paid",
+            )
+
+        expense.installments.all().delete()
+        return InstallmentService.auto_generate_installments(
+            company=company,
+            expense=expense,
+            num_installments=num_installments,
+            first_due_date=first_due_date,
+        )
+
+    @staticmethod
+    @transaction.atomic
     def create(company: Company, data: dict[str, Any]) -> Installment:
         logger.info(f"Iniciando criação de Parcela para company_id={company.id}")
 
@@ -203,6 +237,138 @@ class InstallmentService:
             ) from e
 
         logger.info(f"Parcela uuid={instance.uuid} atualizada com sucesso.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def mark_as_paid(company: Company, instance: Installment) -> Installment:
+        if instance.status == Installment.StatusChoices.PAID:
+            raise BusinessRuleViolation(
+                detail="Esta parcela já foi marcada como paga.",
+                code="installment_already_paid",
+            )
+
+        instance.status = Installment.StatusChoices.PAID
+        instance.paid_date = date.today()
+        instance.save()
+
+        try:
+            instance.expense.full_clean()
+        except DjangoValidationError as e:
+            logger.error(
+                f"Marcação de parcela quebrou Tolerância Zero na despesa "
+                f"uuid={instance.expense.uuid}"
+            )
+            raise BusinessRuleViolation(
+                detail="Marcar esta parcela como paga viola as regras matemáticas "
+                "da despesa (ADR-010).",
+                code="expense_math_violation",
+            ) from e
+
+        logger.info(f"Parcela uuid={instance.uuid} marcada como paga.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def unmark_as_paid(company: Company, instance: Installment) -> Installment:
+        if instance.status != Installment.StatusChoices.PAID:
+            raise BusinessRuleViolation(
+                detail="Apenas parcelas marcadas como pagas podem ser desmarcadas.",
+                code="installment_not_paid",
+            )
+
+        instance.paid_date = None
+        if instance.due_date < date.today():
+            instance.status = Installment.StatusChoices.OVERDUE
+        else:
+            instance.status = Installment.StatusChoices.PENDING
+        instance.save()
+
+        try:
+            instance.expense.full_clean()
+        except DjangoValidationError as e:
+            logger.error(
+                f"Desmarcação de parcela quebrou Tolerância Zero na despesa "
+                f"uuid={instance.expense.uuid}"
+            )
+            raise BusinessRuleViolation(
+                detail="Desmarcar esta parcela viola as regras matemáticas "
+                "da despesa (ADR-010).",
+                code="expense_math_violation",
+            ) from e
+
+        logger.info(f"Parcela uuid={instance.uuid} desmarcada como paga.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def adjust(
+        company: Company, instance: Installment, data: dict[str, Any]
+    ) -> Installment:
+        if instance.status == Installment.StatusChoices.PAID:
+            raise BusinessRuleViolation(
+                detail="Não é possível ajustar uma parcela já marcada como paga. "
+                "Reversão não suportada.",
+                code="adjustment_on_paid_installment",
+            )
+
+        new_due_date = data.get("due_date")
+        if new_due_date:
+            prev = (
+                Installment.objects.for_tenant(company)
+                .filter(
+                    expense=instance.expense,
+                    installment_number__lt=instance.installment_number,
+                )
+                .order_by("-installment_number")
+                .first()
+            )
+            if prev and new_due_date < prev.due_date:
+                raise BusinessRuleViolation(
+                    detail=(
+                        "A data de vencimento não pode ser anterior à "
+                        f"parcela #{prev.installment_number} ({prev.due_date})."
+                    ),
+                    code="due_date_before_previous_installment",
+                )
+
+            nxt = (
+                Installment.objects.for_tenant(company)
+                .filter(
+                    expense=instance.expense,
+                    installment_number__gt=instance.installment_number,
+                )
+                .order_by("installment_number")
+                .first()
+            )
+            if nxt and new_due_date > nxt.due_date:
+                raise BusinessRuleViolation(
+                    detail=(
+                        "A data de vencimento não pode ser posterior à "
+                        f"parcela #{nxt.installment_number} ({nxt.due_date})."
+                    ),
+                    code="due_date_after_next_installment",
+                )
+
+        for field, value in data.items():
+            setattr(instance, field, value)
+
+        instance.save()
+
+        try:
+            instance.expense.full_clean()
+        except DjangoValidationError as e:
+            logger.error(
+                f"Ajuste de parcela quebrou Tolerância Zero na despesa "
+                f"uuid={instance.expense.uuid}"
+            )
+            raise BusinessRuleViolation(
+                detail="O ajuste desta parcela viola as regras matemáticas da "
+                "despesa (ADR-010).",
+                code="expense_math_violation",
+            ) from e
+
+        logger.info(f"Parcela uuid={instance.uuid} ajustada com sucesso.")
         return instance
 
     @staticmethod

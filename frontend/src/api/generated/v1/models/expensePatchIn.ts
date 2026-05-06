@@ -6,9 +6,11 @@
  */
 
 export interface ExpensePatchIn {
-  category?: string | null;
   contract?: string | null;
+  name?: string | null;
   description?: string | null;
   estimated_amount?: number | string | null;
   actual_amount?: number | string | null;
+  num_installments?: number | null;
+  first_due_date?: string | null;
 }

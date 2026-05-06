@@ -5,7 +5,10 @@ from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.installment import Installment
-from apps.finances.schemas import InstallmentIn, InstallmentOut, InstallmentPatchIn
+from apps.finances.schemas import (
+    InstallmentAdjustIn,
+    InstallmentOut,
+)
 from apps.finances.services.installment_service import InstallmentService
 from apps.users.types import AuthRequest
 
@@ -17,12 +20,17 @@ installments_router = Router(tags=["Finances"])
     "/", response=list[InstallmentOut], operation_id="finances_installments_list"
 )
 @paginate
-def list_installments(request: AuthRequest) -> QuerySet[Installment]:
+def list_installments(
+    request: AuthRequest,
+    wedding_id: UUID4 | None = None,
+    expense_id: UUID4 | None = None,
+) -> QuerySet[Installment]:
     """
-    Lista faturas fragmentadas originárias para os fluxos pendentes.
-    Faturas isoladas ligadas a pagamentos unificados.
+    Lista parcelas com filtro opcional por casamento e despesa.
     """
-    return InstallmentService.list(request.user.company)
+    return InstallmentService.list(
+        request.user.company, wedding_id=wedding_id, expense_id=expense_id
+    )
 
 
 @installments_router.get(
@@ -32,51 +40,53 @@ def list_installments(request: AuthRequest) -> QuerySet[Installment]:
 )
 def get_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     """
-    Revela notas fragmentais e guias pendentes programados do recebimento.
+    Retorna os detalhes de uma parcela específica.
     """
     return InstallmentService.get(request.user.company, uuid)
 
 
 @installments_router.post(
-    "/",
-    response={201: InstallmentOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="finances_installments_create",
+    "/{uuid}/mark-as-paid/",
+    response={200: InstallmentOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_installments_mark_as_paid",
 )
-def create_installment(
-    request: AuthRequest, payload: InstallmentIn
-) -> tuple[int, Installment]:
+def mark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     """
-    Grava pendências parciais atestando dependências de transações.
+    Marca uma parcela como paga (data de hoje).
+    Bloqueia se já estiver paga (BR-F06).
     """
-    return 201, InstallmentService.create(request.user.company, payload.dict())
+    instance = InstallmentService.get(request.user.company, uuid)
+    return InstallmentService.mark_as_paid(request.user.company, instance)
+
+
+@installments_router.post(
+    "/{uuid}/unmark-as-paid/",
+    response={200: InstallmentOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_installments_unmark_as_paid",
+)
+def unmark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
+    """
+    Desmarca uma parcela paga, revertendo para PENDING ou OVERDUE.
+    """
+    instance = InstallmentService.get(request.user.company, uuid)
+    return InstallmentService.unmark_as_paid(request.user.company, instance)
 
 
 @installments_router.patch(
-    "/{uuid}/",
+    "/{uuid}/adjust/",
     response={200: InstallmentOut, **MUTATION_ERROR_RESPONSES},
-    operation_id="finances_installments_update",
+    operation_id="finances_installments_adjust",
 )
-def update_installment(
-    request: AuthRequest, uuid: UUID4, payload: InstallmentPatchIn
+def adjust_installment(
+    request: AuthRequest, uuid: UUID4, payload: InstallmentAdjustIn
 ) -> Installment:
     """
-    Edita temporalmente ou encerra status validando com pagamento de guia as etapas.
+    Ajusta data/valor de uma parcela futura não paga.
+    Valida que due_date não pode ser anterior à parcela anterior.
     """
     instance = InstallmentService.get(request.user.company, uuid)
-    return InstallmentService.update(
-        request.user.company, instance, payload.dict(exclude_unset=True)
+    return InstallmentService.adjust(
+        request.user.company,
+        instance,
+        payload.dict(exclude_unset=True, exclude_none=True),
     )
-
-
-@installments_router.delete(
-    "/{uuid}/",
-    response={204: None, **MUTATION_ERROR_RESPONSES},
-    operation_id="finances_installments_delete",
-)
-def delete_installment(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Exclui registro pendente restabelecendo ordem das cobranças integrando-as.
-    """
-    instance = InstallmentService.get(request.user.company, uuid)
-    InstallmentService.delete(request.user.company, instance)
-    return 204, None

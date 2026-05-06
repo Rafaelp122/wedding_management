@@ -31,7 +31,8 @@ class Expense(TenantModel, WeddingOwnedMixin):
         blank=True,
         related_name="expense",
     )
-    description = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, default="")
+    description = models.TextField(blank=True, default="")
     estimated_amount = models.DecimalField(max_digits=10, decimal_places=2)
     actual_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal("0.00")

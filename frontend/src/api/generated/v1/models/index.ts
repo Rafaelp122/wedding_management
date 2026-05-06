@@ -26,6 +26,7 @@ export * from "./financesCategoriesListParams";
 export * from "./financesExpensesListParams";
 export * from "./financesInstallmentsListParams";
 export * from "./input";
+export * from "./installmentAdjustIn";
 export * from "./installmentIn";
 export * from "./installmentOut";
 export * from "./installmentPatchIn";
