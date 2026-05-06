@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getWeddingStatusInfo } from "../utils/weddingStatus";
-import type { WeddingOut } from "@/api/generated/v1/models";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { EditWeddingDialog } from "./EditWeddingDialog";
 import { DeleteWeddingDialog } from "./DeleteWeddingDialog";
 

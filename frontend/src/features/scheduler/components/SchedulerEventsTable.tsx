@@ -1,6 +1,6 @@
 import { Bell, Calendar, Clock } from "lucide-react";
 
-import type { EventOut } from "@/api/generated/v1/models";
+import type { EventOut } from "@/api/generated/v1/models/eventOut";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
