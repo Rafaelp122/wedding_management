@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 // IMPORTANTE: Use o tipo real gerado pelo Orval
-import type { UserDataOut } from "@/api/generated/v1/models";
+import type { UserDataOut } from "@/api/generated/v1/models/userDataOut";
 
 interface AuthState {
   accessToken: string | null;
@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
         })),
     }),
     {
+      version: 1,
       name: "wedding-auth-storage", // Nome mais específico para evitar conflitos
     },
   ),

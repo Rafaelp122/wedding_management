@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useMemo } from "react";
 import { BarChart as BarChartIcon } from "lucide-react";
 import {
   Card,
@@ -19,7 +20,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { parseDecimal } from "@/features/shared/utils/formatters";
-import type { BudgetCategoryOut } from "@/api/generated/v1/models";
+import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 
 interface WeddingFinancesDistributionChartProps {
   categories: BudgetCategoryOut[];
@@ -28,11 +29,15 @@ interface WeddingFinancesDistributionChartProps {
 export function WeddingFinancesDistributionChart({
   categories,
 }: WeddingFinancesDistributionChartProps) {
-  const chartData = categories.map((cat) => ({
-    name: cat.name,
-    estimado: parseDecimal(cat.allocated_budget),
-    real: parseDecimal(cat.total_spent),
-  }));
+  const chartData = useMemo(
+    () =>
+      categories.map((cat) => ({
+        name: cat.name,
+        estimado: parseDecimal(cat.allocated_budget),
+        real: parseDecimal(cat.total_spent),
+      })),
+    [categories],
+  );
 
   return (
     <Card className="border-none shadow-sm">
