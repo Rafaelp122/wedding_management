@@ -8,10 +8,16 @@ import {
 } from "@/api/generated/v1/endpoints/finances/finances";
 import { useWeddingBudget } from "../hooks/useWeddingBudget";
 import { WeddingFinancesSummaryCards } from "./WeddingFinancesSummaryCards";
-import { WeddingFinancesDistributionChart } from "./WeddingFinancesDistributionChart";
 import { WeddingFinancesGroupsSummary } from "./WeddingFinancesGroupsSummary";
 import { WeddingFinancesRecentExpenses } from "./WeddingFinancesRecentExpenses";
 import { WeddingExpensesTable } from "./WeddingExpensesTable";
+
+const WeddingFinancesDistributionChart = lazy(
+  () =>
+    import("./WeddingFinancesDistributionChart").then((m) => ({
+      default: m.WeddingFinancesDistributionChart,
+    })),
+);
 
 const CreateExpenseDialog = lazy(
   () => import("./CreateExpenseDialog").then((m) => ({ default: m.CreateExpenseDialog })),
@@ -65,7 +71,9 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Gráfico de Distribuição */}
         <div className="lg:col-span-3">
-          <WeddingFinancesDistributionChart categories={categories} />
+          <Suspense fallback={<div className="h-80 rounded-xl bg-muted/20 animate-pulse" />}>
+            <WeddingFinancesDistributionChart categories={categories} />
+          </Suspense>
         </div>
 
         {/* Categorias e Alocação */}
@@ -85,7 +93,13 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         <WeddingExpensesTable
           expenses={expenses}
           weddingUuid={weddingUuid}
-          onExpenseUpdated={() => queryClient.invalidateQueries()}
+          onExpenseUpdated={() =>
+            queryClient.invalidateQueries({
+              queryKey: getFinancesExpensesListQueryKey({
+                wedding_id: weddingUuid,
+              }),
+            })
+          }
         />
       </div>
 
