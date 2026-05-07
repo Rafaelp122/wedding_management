@@ -106,6 +106,10 @@ exclude = ["migrations"]
 warn_unused_ignores = true
 warn_redundant_casts = true
 
+[[tool.mypy.overrides]]
+module = "environ"
+ignore_missing_imports = true
+
 [tool.django-stubs]
 django_settings_module = "config.settings.development"
 

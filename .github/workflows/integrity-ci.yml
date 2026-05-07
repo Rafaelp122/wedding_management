@@ -34,6 +34,8 @@ jobs:
       - name: Backend Lint (Ruff)
         run: cd backend && uv run ruff check . && uv run ruff format --check .
       - name: Backend Type Check (mypy)
+        env:
+          SECRET_KEY: dummy-ci-key-for-static-analysis-only # pragma: allowlist secret
         run: cd backend && uv run mypy . --show-error-codes --no-color-output
       - name: Frontend Lint & TypeCheck
         run: |
