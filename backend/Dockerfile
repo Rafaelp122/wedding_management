@@ -65,7 +65,9 @@ COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 COPY --chown=appuser:appuser . .
 
-RUN SECRET_KEY=${BUILD_SECRET_KEY} python manage.py collectstatic --noinput
+RUN DJANGO_SETTINGS_MODULE=config.settings.test \
+    SECRET_KEY=${BUILD_SECRET_KEY} \
+    python manage.py collectstatic --noinput
 
 USER appuser
 
