@@ -69,7 +69,7 @@ jobs:
       DB_NAME: wedding_db
       DB_USER: wedding_ci # pragma: allowlist secret
       DB_PASSWORD: wedding_ci # pragma: allowlist secret
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
       - uses: actions/checkout@v4
@@ -135,7 +135,7 @@ jobs:
       DB_NAME: wedding_db
       DB_USER: wedding_ci # pragma: allowlist secret
       DB_PASSWORD: wedding_ci # pragma: allowlist secret
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
       - uses: actions/checkout@v4
