@@ -35,7 +35,7 @@ services:
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=config.settings
+      - DJANGO_SETTINGS_MODULE=config.settings.development
     volumes:
       - ./backend:/app # Bind mount para Live Reload do código
       - /app/.venv # Volume anônimo protege venv do container
