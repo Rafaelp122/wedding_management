@@ -26,9 +26,9 @@ export function WeddingMonthlyChart({ weddings }: WeddingMonthlyChartProps) {
   const { monthlyData, hasData } = useMemo(() => {
     const counts = new Array(12).fill(0);
     for (const w of weddings) {
-      const date = new Date(w.date);
-      if (date.getFullYear() === currentYear) {
-        counts[date.getMonth()]++;
+      const [year, month] = w.date.split("-").map(Number);
+      if (year === currentYear) {
+        counts[month - 1]++;
       }
     }
     const data = MONTHS.map((name, index) => ({

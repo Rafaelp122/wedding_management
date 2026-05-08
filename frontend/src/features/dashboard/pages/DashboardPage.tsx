@@ -74,9 +74,9 @@ export default function DashboardPage() {
   const filteredWeddings = weddingsArray.filter((wedding) => {
     if (!activeFilter || activeFilter === "all") return true;
     if (activeFilter === "month") {
-      const date = new Date(wedding.date);
-      return date.getMonth() === new Date().getMonth() &&
-             date.getFullYear() === new Date().getFullYear();
+      const [year, month] = wedding.date.split("-").map(Number);
+      const now = new Date();
+      return month - 1 === now.getMonth() && year === now.getFullYear();
     }
     // "guests" e "budget" são métricas globais, mostramos todos por enquanto
     return true;

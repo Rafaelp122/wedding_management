@@ -4,6 +4,8 @@ import { lazy, Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useFinancesExpensesList,
+  getFinancesBudgetsForWeddingQueryKey,
+  getFinancesCategoriesListQueryKey,
   getFinancesExpensesListQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
 import { useWeddingBudget } from "../hooks/useWeddingBudget";
@@ -45,6 +47,14 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
     setCreateDialogOpen(false);
     queryClient.invalidateQueries({
       queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid }),
+    });
+    queryClient.invalidateQueries({
+      queryKey: getFinancesBudgetsForWeddingQueryKey(weddingUuid),
+    });
+    queryClient.invalidateQueries({
+      queryKey: getFinancesCategoriesListQueryKey({
+        wedding_id: weddingUuid,
+      }),
     });
   };
 
@@ -93,13 +103,21 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         <WeddingExpensesTable
           expenses={expenses}
           weddingUuid={weddingUuid}
-          onExpenseUpdated={() =>
+          onExpenseUpdated={() => {
             queryClient.invalidateQueries({
               queryKey: getFinancesExpensesListQueryKey({
                 wedding_id: weddingUuid,
               }),
-            })
-          }
+            });
+            queryClient.invalidateQueries({
+              queryKey: getFinancesBudgetsForWeddingQueryKey(weddingUuid),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getFinancesCategoriesListQueryKey({
+                wedding_id: weddingUuid,
+              }),
+            });
+          }}
         />
       </div>
 
