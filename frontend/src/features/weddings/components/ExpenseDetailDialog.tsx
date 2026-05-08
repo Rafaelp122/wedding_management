@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, AlertTriangle, Clock, RefreshCw, X } from "lucide-react";
 
-import type { ExpenseOut } from "@/api/generated/v1/models";
+import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import {
   useFinancesInstallmentsList,
   useFinancesInstallmentsMarkAsPaid,

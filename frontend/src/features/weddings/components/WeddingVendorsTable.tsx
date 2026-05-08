@@ -1,4 +1,4 @@
-import type { ContractOut } from "@/api/generated/v1/models";
+import type { ContractOut } from "@/api/generated/v1/models/contractOut";
 import {
   Table,
   TableBody,

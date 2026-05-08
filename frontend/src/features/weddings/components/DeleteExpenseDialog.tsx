@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useFinancesExpensesDelete } from "@/api/generated/v1/endpoints/finances/finances";
 import { getApiErrorInfo } from "@/api/error-utils";
-import type { ExpenseOut } from "@/api/generated/v1/models";
+import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
 import {
   Dialog,

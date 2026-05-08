@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { SupplierOut } from "@/api/generated/v1/models";
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import type { SupplierStatusFilter } from "../types";
 
 export function useSupplierFilters(

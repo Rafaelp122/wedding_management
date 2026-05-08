@@ -1,7 +1,7 @@
 import { Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import type { SupplierOut } from "@/api/generated/v1/models";
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenuItem,

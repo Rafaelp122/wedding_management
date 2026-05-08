@@ -17,7 +17,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
-import type { BudgetCategoryOut } from "@/api/generated/v1/models";
+import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 
 interface WeddingBudgetChartProps {
   categories: BudgetCategoryOut[];

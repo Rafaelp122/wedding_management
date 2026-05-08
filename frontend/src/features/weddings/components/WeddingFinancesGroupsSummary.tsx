@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrencyBR, parseDecimal } from "@/features/shared/utils/formatters";
-import type { BudgetCategoryOut } from "@/api/generated/v1/models";
+import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 
 interface WeddingFinancesGroupsSummaryProps {
   categories: BudgetCategoryOut[];

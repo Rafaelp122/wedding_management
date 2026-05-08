@@ -7,7 +7,7 @@ import { useFinancesExpensesUpdate } from "@/api/generated/v1/endpoints/finances
 import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { FinancesExpensesUpdateBody } from "@/api/generated/v1/zod/finances/finances";
 import { getApiErrorInfo } from "@/api/error-utils";
-import type { ExpenseOut } from "@/api/generated/v1/models";
+import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
 import {
   Dialog,

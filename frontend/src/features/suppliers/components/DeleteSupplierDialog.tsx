@@ -1,4 +1,4 @@
-import type { SupplierOut } from "@/api/generated/v1/models";
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

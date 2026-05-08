@@ -1,4 +1,4 @@
-import type { TaskOut } from "@/api/generated/v1/models";
+import type { TaskOut } from "@/api/generated/v1/models/taskOut";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";

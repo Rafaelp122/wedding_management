@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { SupplierOut } from "@/api/generated/v1/models";
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import {
   EMPTY_SUPPLIER_FORM_STATE,
   type SupplierFormMode,

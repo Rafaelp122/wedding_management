@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Heart, Calendar, DollarSign, Users, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,40 +18,43 @@ export function StatsCards({
   activeFilter,
   onFilterChange,
 }: StatsCardsProps) {
-  const stats = [
-    {
-      id: "all",
-      title: "Casamentos Ativos",
-      value: totalWeddings,
-      icon: Heart,
-      trend: "+20%",
-      trendColor: "text-green-600 bg-green-50",
-      color: "text-primary bg-primary/10",
-    },
-    {
-      id: "month",
-      title: "Eventos este Mês",
-      value: weddingsThisMonth ?? "0",
-      icon: Calendar,
-      color: "text-blue-600 bg-blue-50",
-    },
-    {
-      id: "guests",
-      title: "Convidados Gerenciados",
-      value: "2.450", // Mock por enquanto
-      icon: Users,
-      color: "text-orange-600 bg-orange-50",
-    },
-    {
-      id: "budget",
-      title: "Orçamento Sob Gestão",
-      value: totalRevenue ?? "R$ 0",
-      icon: DollarSign,
-      trend: "+15%",
-      trendColor: "text-green-600 bg-green-50",
-      color: "text-green-600 bg-green-50",
-    },
-  ];
+  const stats = useMemo(
+    () => [
+      {
+        id: "all",
+        title: "Casamentos Ativos",
+        value: totalWeddings,
+        icon: Heart,
+        trend: "+20%",
+        trendColor: "text-green-600 bg-green-50",
+        color: "text-primary bg-primary/10",
+      },
+      {
+        id: "month",
+        title: "Eventos este Mês",
+        value: weddingsThisMonth ?? "0",
+        icon: Calendar,
+        color: "text-blue-600 bg-blue-50",
+      },
+      {
+        id: "guests",
+        title: "Convidados Gerenciados",
+        value: "2.450",
+        icon: Users,
+        color: "text-orange-600 bg-orange-50",
+      },
+      {
+        id: "budget",
+        title: "Orçamento Sob Gestão",
+        value: totalRevenue ?? "R$ 0",
+        icon: DollarSign,
+        trend: "+15%",
+        trendColor: "text-green-600 bg-green-50",
+        color: "text-green-600 bg-green-50",
+      },
+    ],
+    [totalWeddings, weddingsThisMonth, totalRevenue],
+  );
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

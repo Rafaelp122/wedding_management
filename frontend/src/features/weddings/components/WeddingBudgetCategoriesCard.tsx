@@ -1,6 +1,6 @@
 import { TrendingUp } from "lucide-react";
 
-import type { BudgetCategoryOut } from "@/api/generated/v1/models";
+import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 import {
   Card,
   CardContent,

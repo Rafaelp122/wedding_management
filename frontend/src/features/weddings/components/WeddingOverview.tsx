@@ -9,13 +9,14 @@ import {
   Heart,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { WeddingOut } from "@/api/generated/v1/models";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { useFinancesBudgetsForWedding } from "@/api/generated/v1/endpoints/finances/finances";
 import { useSchedulerTasksList } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { useLogisticsSuppliersList } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getWeddingStatusInfo } from "../utils/weddingStatus";
 
 interface WeddingOverviewProps {
@@ -38,7 +39,10 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
 
   // Derived metrics
   const today = new Date();
-  const eventDate = new Date(wedding.date);
+  const [eventYear, eventMonth, eventDay] = wedding.date
+    .split("-")
+    .map(Number);
+  const eventDate = new Date(eventYear, eventMonth - 1, eventDay);
   const diffTime = eventDate.getTime() - today.getTime();
   const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
@@ -300,6 +304,3 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
     </div>
   );
 }
-
-// Importing Button locally since it was used in the mockup
-import { Button } from "@/components/ui/button";

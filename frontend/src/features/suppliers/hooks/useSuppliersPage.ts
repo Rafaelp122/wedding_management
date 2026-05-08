@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import {
   useLogisticsSuppliersList,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
-import type { SupplierOut } from "@/api/generated/v1/models";
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 
 import { useSupplierFilters } from "./useSupplierFilters";
 import { useSupplierFormDialogState } from "./useSupplierFormDialogState";
@@ -14,6 +14,7 @@ export function useSuppliersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<SupplierStatusFilter>("all");
   const [supplierToDelete, setSupplierToDelete] = useState<SupplierOut | null>(null);
+  const deferredSearch = useDeferredValue(search);
 
   const {
     data: suppliersResponse,
@@ -28,7 +29,7 @@ export function useSuppliersPage() {
   );
   const totalCount = suppliersResponse?.data.count ?? 0;
 
-  const filteredSuppliers = useSupplierFilters(suppliers, search, statusFilter);
+  const filteredSuppliers = useSupplierFilters(suppliers, deferredSearch, statusFilter);
 
   const {
     formOpen,

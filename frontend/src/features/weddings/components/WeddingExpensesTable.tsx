@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
-import type { ExpenseOut } from "@/api/generated/v1/models";
+import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import {
   Table,
   TableBody,

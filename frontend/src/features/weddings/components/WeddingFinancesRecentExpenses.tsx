@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyBR } from "@/features/shared/utils/formatters";
-import type { ExpenseOut } from "@/api/generated/v1/models";
+import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
 const ExpenseDetailDialog = lazy(
   () => import("./ExpenseDetailDialog").then((m) => ({ default: m.ExpenseDetailDialog })),

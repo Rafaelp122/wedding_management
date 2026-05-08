@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { WeddingOut } from "@/api/generated/v1/models";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import type { WeddingStatusFilter } from "../utils/weddingStatus";
 
 export function useWeddingFilters(

@@ -7,10 +7,8 @@ import { Heart } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAuthObtainToken } from "@/api/generated/v1/endpoints/auth/auth";
 import { getApiErrorInfo } from "@/api/error-utils";
-import type {
-  TokenPayloadIn,
-  TokenOut,
-} from "@/api/generated/v1/models";
+import type { TokenPayloadIn } from "@/api/generated/v1/models/tokenPayloadIn";
+import type { TokenOut } from "@/api/generated/v1/models/tokenOut";
 import { AuthObtainTokenBody } from "@/api/generated/v1/zod/auth/auth";
 
 import { Button } from "@/components/ui/button";
