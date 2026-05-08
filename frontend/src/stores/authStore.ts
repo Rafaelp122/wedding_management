@@ -52,8 +52,7 @@ export const useAuthStore = create<AuthState>()(
         })),
     }),
     {
-      version: 1,
-      name: "wedding-auth-storage", // Nome mais específico para evitar conflitos
+      name: "wedding-auth-storage",
     },
   ),
 );
