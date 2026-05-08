@@ -39,7 +39,10 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
 
   // Derived metrics
   const today = new Date();
-  const eventDate = new Date(wedding.date);
+  const [eventYear, eventMonth, eventDay] = wedding.date
+    .split("-")
+    .map(Number);
+  const eventDate = new Date(eventYear, eventMonth - 1, eventDay);
   const diffTime = eventDate.getTime() - today.getTime();
   const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
