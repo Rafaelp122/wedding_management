@@ -191,11 +191,12 @@ prod-build:
 	cd backend && docker build --target production --build-arg BUILD_SECRET_KEY=dummy-build-key-not-for-runtime -t wedding-backend:prod .
 
 prod-up:
-	@echo "🚀 Iniciando produção..."
+	@echo "🚀 Iniciando produção (HTTP local, SSL desativado)..."
 	docker run -d \
 		--name wedding_backend_prod \
 		--env-file .env \
 		-e DJANGO_SETTINGS_MODULE=config.settings.production \
+		-e SECURE_SSL_REDIRECT=False \
 		-p 8000:8000 \
 		wedding-backend:prod
 

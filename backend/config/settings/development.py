@@ -6,7 +6,7 @@ from .base import *
 
 
 DEBUG = env.bool("DEBUG", default=True)
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "0.0.0.0"])
 
 ENABLE_ZEAL = env.bool("ENABLE_ZEAL", default=True)
 
