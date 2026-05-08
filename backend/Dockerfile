@@ -30,10 +30,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     build-essential
 
-# Copia APENAS o necessário para instalar dependências (otimiza cache)
 COPY pyproject.toml uv.lock ./
 
-# Cria o venv de produção limpo
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev --all-extras
 
@@ -42,11 +40,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # ==============================================================================
 FROM builder AS development
 
-# Instala as dependências de dev em cima do que já existe
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --all-extras
 
 COPY . .
+
+ENV DJANGO_SETTINGS_MODULE=config.settings.development
+
 EXPOSE 8000
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
@@ -55,19 +55,21 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 # ==============================================================================
 FROM base AS production
 
-# 1. Cria o usuário primeiro
+ARG BUILD_SECRET_KEY
+
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
+
 RUN useradd -m -u 1000 appuser
 
-# 2. Copia o venv do builder
 COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
-# 3. Copia o código fonte
 COPY --chown=appuser:appuser . .
 
-USER appuser
+RUN DJANGO_SETTINGS_MODULE=config.settings.test \
+    SECRET_KEY=${BUILD_SECRET_KEY} \
+    python manage.py collectstatic --noinput
 
-# 4. Coleta estáticos (o Django está no path e o usuário tem permissão)
-RUN python manage.py collectstatic --noinput
+USER appuser
 
 EXPOSE 8000
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

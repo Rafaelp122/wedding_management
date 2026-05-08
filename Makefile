@@ -6,11 +6,12 @@ SHELL := /bin/bash
 DC := docker compose
 EXEC_BACK := $(DC) exec backend
 PYTHON := python manage.py
+DJANGO_SETTINGS_MODULE := config.settings.development
 # Otimização do BuildKit
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-.PHONY: help setup up dev logs build down clean frontend-refresh-deps migrate makemigrations superuser shell reqs back-install openapi orval sync-api test test-cov lint mypy format check check-backend check-frontend check-ci env-setup secret-key fix-perms
+.PHONY: help setup up dev logs build rebuild down clean frontend-refresh-deps migrate makemigrations superuser shell reqs back-install openapi orval sync-api test test-cov lint mypy format check check-backend check-frontend check-ci env-setup secret-key fix-perms prod-build prod-up prod-migrate prod-shell
 # Default target
 help:
 	@echo "=========================================================================="
@@ -18,12 +19,13 @@ help:
 	@echo "=========================================================================="
 	@echo ""
 	@echo "📦 DOCKER & ORQUESTRAÇÃO"
-	@echo "  make setup               - 🚀 Setup completo (env + build + superuser)"
+	@echo "  make setup               - 🚀 Setup completo (env + rebuild + superuser)"
 	@echo "  make up                  - Inicia containers e aplica migrations"
 	@echo "  make dev                 - 🔥 Modo desenvolvimento (watch + logs)"
 	@echo "  make logs                - Exibe logs dos serviços"
 	@echo "  make down                - Para e remove todos os containers"
 	@echo "  make build               - Reconstrói e inicia os containers"
+	@echo "  make rebuild             - ⚠️  Destrói TUDO (DB, venv, volumes) e reconstrói do zero"
 	@echo "  make clean               - Limpeza total (containers, volumes, redes)"
 	@echo ""
 	@echo "🐍 BACKEND (Django Ninja)"
@@ -39,6 +41,12 @@ help:
 	@echo "  make sync-api            - 🔄 Gera OpenAPI + Hooks do Orval (Frontend)"
 	@echo "  make openapi             - Gera o arquivo openapi.json a partir do Ninja"
 	@echo "  make orval               - Gera os hooks do frontend (Requer openapi.json)"
+	@echo ""
+	@echo "🚀 PRODUÇÃO"
+	@echo "  make prod-build          - Build da imagem de produção"
+	@echo "  make prod-up             - Sobe container de produção"
+	@echo "  make prod-migrate        - Executa migrations em produção"
+	@echo "  make prod-shell          - Shell no container de produção"
 	@echo ""
 	@echo "🧹 QUALIDADE & MANUTENÇÃO"
 	@echo "  make check-backend       - ✅ Lint + mypy + testes + openapi (backend)"
@@ -56,7 +64,7 @@ help:
 # Docker Commands
 # ============================================================================
 
-setup: env-setup build
+setup: env-setup rebuild
 	@echo "✨ Setup completo! Criando superusuário..."
 	$(MAKE) superuser
 
@@ -81,6 +89,16 @@ build:
 	$(DC) up --build -d
 	$(EXEC_BACK) $(PYTHON) migrate
 
+rebuild:
+	@echo "⚠️  Destruindo containers, volumes e redes..."
+	$(DC) down -v
+	@echo "🔨 Reconstruindo do zero..."
+	$(DC) up --build -d
+	@echo "⏳ Aguardando banco de dados..."
+	@until $(DC) exec db pg_isready -U $${DB_USER:-wedding_user} -d $${DB_NAME:-wedding_db} 2>/dev/null; do sleep 2; done
+	$(EXEC_BACK) $(PYTHON) migrate
+	@echo "✅ Rebuild completo!"
+
 frontend-refresh-deps:
 	@echo "♻️  Recriando frontend com node_modules limpo..."
 	$(DC) up -d --force-recreate --renew-anon-volumes frontend
@@ -96,7 +114,7 @@ clean:
 	docker system prune -f
 
 # ============================================================================
-# Backend Commands (Django Ninja)
+# Backend Commands (Django Ninja) - Desenvolvimento
 # ============================================================================
 
 migrate:
@@ -124,10 +142,9 @@ back-install:
 # Quality, Testing & API Sync (Orval)
 # ============================================================================
 
-# O Django Ninja usa 'export_schema' em vez do spectacular
 openapi:
 	@echo "📝 Gerando schema OpenAPI a partir do Django Ninja..."
-	cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json
+	cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --settings=$(DJANGO_SETTINGS_MODULE)
 	@echo "✅ openapi.json gerado na raiz do projeto."
 
 orval:
@@ -164,6 +181,31 @@ check-ci: check-backend check-frontend
 	@echo "✅ Gate local espelhando CI passou!"
 
 check: check-backend
+
+# ============================================================================
+# Produção
+# ============================================================================
+
+prod-build:
+	@echo "🏗️  Build da imagem de produção..."
+	cd backend && docker build --target production --build-arg BUILD_SECRET_KEY=dummy-build-key-not-for-runtime -t wedding-backend:prod .
+
+prod-up:
+	@echo "🚀 Iniciando produção (HTTP local, SSL desativado)..."
+	docker run -d \
+		--name wedding_backend_prod \
+		--env-file .env \
+		-e DJANGO_SETTINGS_MODULE=config.settings.production \
+		-e SECURE_SSL_REDIRECT=False \
+		-p 8000:8000 \
+		wedding-backend:prod
+
+prod-migrate:
+	@echo "🔄 Aplicando migrations em produção..."
+	docker exec wedding_backend_prod python manage.py migrate
+
+prod-shell:
+	docker exec -it wedding_backend_prod python manage.py shell
 
 # ============================================================================
 # Utilities

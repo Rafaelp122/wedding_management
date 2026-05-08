@@ -34,6 +34,8 @@ jobs:
       - name: Backend Lint (Ruff)
         run: cd backend && uv run ruff check . && uv run ruff format --check .
       - name: Backend Type Check (mypy)
+        env:
+          SECRET_KEY: dummy-ci-key-for-static-analysis-only # pragma: allowlist secret
         run: cd backend && uv run mypy . --show-error-codes --no-color-output
       - name: Frontend Lint & TypeCheck
         run: |
@@ -49,27 +51,8 @@ jobs:
     name: Backend Tests & Migrations
     needs: lint
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: wedding_db
-          POSTGRES_USER: wedding_ci # pragma: allowlist secret
-          POSTGRES_PASSWORD: wedding_ci # pragma: allowlist secret
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
-      DB_ENGINE: django.db.backends.postgresql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_NAME: wedding_db
-      DB_USER: wedding_ci # pragma: allowlist secret
-      DB_PASSWORD: wedding_ci # pragma: allowlist secret
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
       - uses: actions/checkout@v4
@@ -115,27 +98,8 @@ jobs:
     name: API Contract Sync
     needs: [backend-tests, frontend-tests]
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: wedding_db
-          POSTGRES_USER: wedding_ci # pragma: allowlist secret
-          POSTGRES_PASSWORD: wedding_ci # pragma: allowlist secret
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
-      DB_ENGINE: django.db.backends.postgresql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_NAME: wedding_db
-      DB_USER: wedding_ci # pragma: allowlist secret
-      DB_PASSWORD: wedding_ci # pragma: allowlist secret
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
       - uses: actions/checkout@v4
