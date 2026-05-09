@@ -6,8 +6,9 @@
  */
 
 export interface WeddingDashboardInstallmentOut {
+  uuid: string;
   installment_number: number;
-  amount: number;
+  amount: string;
   due_date: string;
   status: string;
 }

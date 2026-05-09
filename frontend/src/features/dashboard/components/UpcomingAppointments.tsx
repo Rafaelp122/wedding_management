@@ -12,24 +12,25 @@ export function UpcomingAppointments() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const cutoff = new Date(today);
-  cutoff.setDate(cutoff.getDate() + days);
+  cutoff.setDate(cutoff.getDate() + days + 1);
 
   const { data } = useSchedulerEventsList({ limit: 50 });
 
   const events = (data?.data?.items ?? [])
     .filter((event) => {
       const eventDate = new Date(event.start_time);
-      return eventDate >= today && eventDate <= cutoff;
+      return eventDate >= today && eventDate < cutoff;
     })
     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
     .slice(0, 5);
 
   const formatEventDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    date.setHours(0, 0, 0, 0);
+    const midnight = new Date(date);
+    midnight.setHours(0, 0, 0, 0);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((date.getTime() - now.getTime()) / 86400000);
+    const diffDays = Math.ceil((midnight.getTime() - now.getTime()) / 86400000);
     if (diffDays === 0) return "Hoje";
     if (diffDays === 1) return "Amanhã";
     return new Intl.DateTimeFormat("pt-BR", {

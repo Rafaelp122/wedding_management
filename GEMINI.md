@@ -1,6 +1,6 @@
 # GEMINI.md - Wedding Management Context
 
-CRITICAL: This project follows the rules defined in `AGENTS.MD`. Read that file first to understand the architectural and workflow mandates.
+CRITICAL: This project follows the rules defined in `AGENTS.md`. Read that file first to understand the architectural and workflow mandates.
 
 ## Build & Test Commands
 
@@ -18,4 +18,4 @@ CRITICAL: This project follows the rules defined in `AGENTS.MD`. Read that file 
 - Prioritize **Research -> Strategy -> Execution** lifecycle.
 - Never compromise on idiomatic quality or type safety (TypeScript/Zod).
 - Follow Conventional Commits strictly.
-- Always check `AGENTS.MD` before making architectural decisions.
+- Always check `AGENTS.md` before making architectural decisions.

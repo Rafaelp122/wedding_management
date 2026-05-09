@@ -7,7 +7,7 @@
 
 export interface WeddingDashboardCategoryOut {
   name: string;
-  allocated: number;
-  spent: number;
+  allocated: string;
+  spent: string;
   percentage: number;
 }

@@ -49,7 +49,11 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
               day: "2-digit",
               month: "long",
               year: "numeric",
-            }).format(new Date(wedding.date))}{" "}
+            }).format(new Date(
+              Number(wedding.date.split("-")[0]),
+              Number(wedding.date.split("-")[1]) - 1,
+              Number(wedding.date.split("-")[2]),
+            ))}{" "}
             • {wedding.location}
           </p>
         </div>
@@ -214,7 +218,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
               <div className="space-y-4">
                 {upcomingInstallments.map((inst) => (
                   <div
-                    key={inst.installment_number}
+                    key={inst.uuid}
                     className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                   >
                     <div>
@@ -230,7 +234,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">
-                        {formatCurrency(inst.amount)}
+                        {formatCurrency(Number(inst.amount))}
                       </p>
                       <p className="text-xs text-orange-500 mt-0.5 font-medium">
                         {inst.status === "OVERDUE" ? "Atrasado" : "Pendente"}

@@ -6,6 +6,7 @@
  */
 
 export interface WeddingDashboardTaskOut {
+  uuid: string;
   title: string;
   due_date?: string | null;
 }

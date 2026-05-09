@@ -61,6 +61,7 @@ export function EditBudgetCategoryDialog({
       {
         onSuccess: () => {
           toast.success("Categoria atualizada com sucesso!");
+          onOpenChange(false);
           onSuccess();
         },
         onError: (error) => {

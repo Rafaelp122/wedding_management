@@ -76,6 +76,7 @@ export function CreateBudgetCategoryDialog({
         onSuccess: () => {
           toast.success("Categoria criada com sucesso!");
           form.reset();
+          onOpenChange(false);
           onSuccess();
         },
         onError: (error) => {

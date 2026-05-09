@@ -45,14 +45,16 @@ export const DashboardWeddingResponse = zod.object({
   contracts_total: zod.number(),
   upcoming_installments: zod.array(
     zod.object({
+      uuid: zod.string(),
       installment_number: zod.number(),
-      amount: zod.number(),
+      amount: zod.string(),
       due_date: zod.iso.date(),
       status: zod.string(),
     }),
   ),
   urgent_tasks: zod.array(
     zod.object({
+      uuid: zod.string(),
       title: zod.string(),
       due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
     }),
@@ -60,8 +62,8 @@ export const DashboardWeddingResponse = zod.object({
   categories_summary: zod.array(
     zod.object({
       name: zod.string(),
-      allocated: zod.number(),
-      spent: zod.number(),
+      allocated: zod.string(),
+      spent: zod.string(),
       percentage: zod.number(),
     }),
   ),

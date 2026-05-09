@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from uuid import UUID
 
 from django.db.models import Count, Q, Sum
+from django.db.models.functions import Coalesce
 
 from apps.finances.models import Budget, BudgetCategory, Installment
 from apps.logistics.models import Contract
@@ -77,12 +78,14 @@ class DashboardService:
                 incomplete_tasks=Count(
                     "task_records",
                     filter=Q(task_records__is_completed=False),
+                    distinct=True,
                 ),
                 pending_installments=Count(
                     "installment_records",
                     filter=Q(
                         installment_records__status=Installment.StatusChoices.PENDING,
                     ),
+                    distinct=True,
                 ),
                 overdue_tasks=Count(
                     "task_records",
@@ -90,12 +93,14 @@ class DashboardService:
                         task_records__is_completed=False,
                         task_records__due_date__lt=today,
                     ),
+                    distinct=True,
                 ),
                 overdue_installments=Count(
                     "installment_records",
                     filter=Q(
                         installment_records__status=Installment.StatusChoices.OVERDUE,
                     ),
+                    distinct=True,
                 ),
             )
             .order_by("date")
@@ -177,8 +182,9 @@ class DashboardService:
 
         upcoming_installments = [
             {
+                "uuid": inst.uuid,
                 "installment_number": inst.installment_number,
-                "amount": float(inst.amount),
+                "amount": str(inst.amount),
                 "due_date": inst.due_date,
                 "status": inst.status,
             }
@@ -189,29 +195,31 @@ class DashboardService:
         urgent = tasks.filter(is_completed=False).order_by("due_date")[:3]
         urgent_tasks = [
             {
+                "uuid": t.uuid,
                 "title": t.title,
                 "due_date": t.due_date,
             }
             for t in urgent
         ]
 
-        # Categories summary
+        # Categories summary (annotate to avoid N+1)
         categories = (
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)
             .select_related("budget")
+            .annotate(_total_spent=Coalesce(Sum("expenses__actual_amount"), 0.0))
         )
 
         categories_summary = []
         for cat in categories:
-            spent = float(cat.total_spent)
+            spent = float(cat._total_spent)
             alloc = float(cat.allocated_budget)
             pct = round(spent / alloc * 100) if alloc > 0 else 0
             categories_summary.append(
                 {
                     "name": cat.name,
-                    "allocated": alloc,
-                    "spent": spent,
+                    "allocated": str(cat.allocated_budget),
+                    "spent": str(spent),
                     "percentage": min(pct, 100),
                 }
             )

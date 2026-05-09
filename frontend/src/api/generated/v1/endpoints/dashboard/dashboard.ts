@@ -47,7 +47,7 @@ export const getDashboardSummaryQueryKey = () => {
 
 export const getDashboardSummaryQueryOptions = <
   TData = Awaited<ReturnType<typeof dashboardSummary>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof dashboardSummary>>, TError, TData>
@@ -72,11 +72,11 @@ export const getDashboardSummaryQueryOptions = <
 export type DashboardSummaryQueryResult = NonNullable<
   Awaited<ReturnType<typeof dashboardSummary>>
 >;
-export type DashboardSummaryQueryError = ErrorType<unknown>;
+export type DashboardSummaryQueryError = ErrorType<ErrorResponse>;
 
 export function useDashboardSummary<
   TData = Awaited<ReturnType<typeof dashboardSummary>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   options: {
     query: Partial<
@@ -102,7 +102,7 @@ export function useDashboardSummary<
 };
 export function useDashboardSummary<
   TData = Awaited<ReturnType<typeof dashboardSummary>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   options?: {
     query?: Partial<
@@ -128,7 +128,7 @@ export function useDashboardSummary<
 };
 export function useDashboardSummary<
   TData = Awaited<ReturnType<typeof dashboardSummary>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   options?: {
     query?: Partial<
@@ -150,7 +150,7 @@ export function useDashboardSummary<
 
 export function useDashboardSummary<
   TData = Awaited<ReturnType<typeof dashboardSummary>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ErrorResponse>,
 >(
   options?: {
     query?: Partial<

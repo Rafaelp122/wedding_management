@@ -38,6 +38,7 @@ export function DeleteBudgetCategoryDialog({
       {
         onSuccess: () => {
           toast.success("Categoria removida com sucesso!");
+          onOpenChange(false);
           onSuccess();
         },
         onError: (error) => {

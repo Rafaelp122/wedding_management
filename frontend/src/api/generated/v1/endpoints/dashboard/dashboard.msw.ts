@@ -48,8 +48,9 @@ export const getDashboardWeddingResponseMock = (
     { length: faker.number.int({ min: 1, max: 10 }) },
     (_, i) => i + 1,
   ).map(() => ({
+    uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
     installment_number: faker.number.int(),
-    amount: faker.number.float({ fractionDigits: 2 }),
+    amount: faker.string.alpha({ length: { min: 10, max: 20 } }),
     due_date: faker.date.past().toISOString().slice(0, 10),
     status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   })),
@@ -57,6 +58,7 @@ export const getDashboardWeddingResponseMock = (
     { length: faker.number.int({ min: 1, max: 10 }) },
     (_, i) => i + 1,
   ).map(() => ({
+    uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
     title: faker.string.alpha({ length: { min: 10, max: 20 } }),
     due_date: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
@@ -71,8 +73,8 @@ export const getDashboardWeddingResponseMock = (
     (_, i) => i + 1,
   ).map(() => ({
     name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    allocated: faker.number.float({ fractionDigits: 2 }),
-    spent: faker.number.float({ fractionDigits: 2 }),
+    allocated: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    spent: faker.string.alpha({ length: { min: 10, max: 20 } }),
     percentage: faker.number.float({ fractionDigits: 2 }),
   })),
   ...overrideResponse,

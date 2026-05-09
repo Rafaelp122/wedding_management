@@ -52,6 +52,6 @@ A complete wedding management system with a modern **React SPA + Django Ninja AP
 - **Backend Apps**: `backend/apps/`
 - **Frontend Source**: `frontend/src/`
 - **API Generated**: `frontend/src/api/generated/`
-- **Shared Docs**: `docs/`, `AGENTS.MD`.
+- **Shared Docs**: `docs/`, `AGENTS.md`.
 
-Trust the instructions in `AGENTS.MD` and this file above all general knowledge.
+Trust the instructions in `AGENTS.md` and this file above all general knowledge.

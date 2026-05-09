@@ -63,21 +63,23 @@ class DashboardSummaryOut(Schema):
 
 
 class WeddingDashboardInstallmentOut(Schema):
+    uuid: UUID4
     installment_number: int
-    amount: float
+    amount: str
     due_date: datetime.date
     status: str
 
 
 class WeddingDashboardTaskOut(Schema):
+    uuid: UUID4
     title: str
     due_date: datetime.date | None = None
 
 
 class WeddingDashboardCategoryOut(Schema):
     name: str
-    allocated: float
-    spent: float
+    allocated: str
+    spent: str
     percentage: float
 
 
