@@ -1,8 +1,9 @@
 import logging
 from datetime import date, timedelta
+from decimal import Decimal
 from uuid import UUID
 
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import Coalesce
 
 from apps.finances.models import Budget, BudgetCategory, Installment
@@ -192,7 +193,12 @@ class DashboardService:
         ]
 
         # Urgent tasks (incomplete, due_date <= today or null, up to 3)
-        urgent = tasks.filter(is_completed=False).order_by("due_date")[:3]
+
+        urgent = (
+            tasks.filter(is_completed=False)
+            .filter(Q(due_date__lte=today) | Q(due_date__isnull=True))
+            .order_by(F("due_date").asc(nulls_last=True))[:3]
+        )
         urgent_tasks = [
             {
                 "uuid": t.uuid,
@@ -207,18 +213,20 @@ class DashboardService:
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)
             .select_related("budget")
-            .annotate(_total_spent=Coalesce(Sum("expenses__actual_amount"), 0.0))
+            .annotate(
+                _total_spent=Coalesce(Sum("expenses__actual_amount"), Decimal("0.00"))
+            )
         )
 
         categories_summary = []
         for cat in categories:
-            spent = float(cat._total_spent)
-            alloc = float(cat.allocated_budget)
-            pct = round(spent / alloc * 100) if alloc > 0 else 0
+            spent = cat._total_spent
+            alloc = cat.allocated_budget
+            pct = round(float(spent) / float(alloc) * 100) if alloc > 0 else 0
             categories_summary.append(
                 {
                     "name": cat.name,
-                    "allocated": str(cat.allocated_budget),
+                    "allocated": str(alloc),
                     "spent": str(spent),
                     "percentage": min(pct, 100),
                 }

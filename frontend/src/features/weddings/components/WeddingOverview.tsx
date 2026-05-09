@@ -175,7 +175,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
               <div className="space-y-4">
                 {urgentTasks.map((task) => (
                   <div
-                    key={`${task.title}-${task.due_date ?? ""}`}
+                    key={task.uuid}
                     className="flex items-start gap-4 p-4 rounded-lg border border-destructive/20 bg-destructive/5"
                   >
                     <div className="mt-0.5">
