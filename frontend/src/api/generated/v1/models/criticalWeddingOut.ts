@@ -5,14 +5,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface WeddingOut {
+export interface CriticalWeddingOut {
   uuid: string;
   groom_name: string;
   bride_name: string;
-  date: string;
-  location: string;
-  expected_guests: number | null;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  days_until: number;
+  incomplete_tasks: number;
+  pending_installments: number;
+  overdue_tasks: number;
+  overdue_installments: number;
 }
