@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -75,11 +75,12 @@ export function EditBudgetCategoryDialog({
   });
 
   const currentSpent = parseFloat(category.total_spent ?? "0");
-  const watchAllocated = form.watch("allocated_budget");
-  const valueBelowSpent =
-    watchAllocated !== null &&
-    watchAllocated !== undefined &&
-    watchAllocated < currentSpent;
+  const watchAllocated = useWatch({ control: form.control, name: "allocated_budget" });
+  const numericValue =
+    watchAllocated !== null && watchAllocated !== undefined
+      ? Number(watchAllocated)
+      : null;
+  const valueBelowSpent = numericValue !== null && numericValue < currentSpent;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
