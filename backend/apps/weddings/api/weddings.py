@@ -10,19 +10,12 @@ from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
 from apps.weddings.services import WeddingService
 
 
-# Utiliza django_auth para obrigar autenticação nos endpoints
 router = Router(tags=["Weddings"])
 
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")
 @paginate
 def list_weddings(request: AuthRequest) -> QuerySet[Wedding]:
-    """
-    Lista todos os casamentos gerenciados pelo Planner logado.
-
-    Retorna apenas os registros criados pelo usuário autenticado.
-    Garante o isolamento de dados entre diferentes Planners (Multi-tenancy).
-    """
     return WeddingService.list(company=request.user.company)
 
 
@@ -32,12 +25,6 @@ def list_weddings(request: AuthRequest) -> QuerySet[Wedding]:
     operation_id="weddings_read",
 )
 def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
-    """
-    Retorna os detalhes completos de um casamento específico.
-
-    Realiza a busca pelo UUID e valida se o registro pertence ao usuário.
-    Caso não exista ou pertença a outro Planner, retorna um erro 404.
-    """
     return WeddingService.get(company=request.user.company, uuid=uuid)
 
 
@@ -47,13 +34,6 @@ def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     operation_id="weddings_create",
 )
 def create_wedding(request: AuthRequest, payload: WeddingIn) -> tuple[int, Wedding]:
-    """
-    Cria um novo casamento e inicializa sua estrutura financeira.
-
-    Ao criar um casamento, o Service Layer automaticamente:
-    - Associa o Planner logado como dono do registro.
-    - Cria um **Budget (Orçamento)** inicial zerado para o evento.
-    """
     wedding = WeddingService.create(
         company=request.user.company, data=payload.model_dump()
     )
@@ -70,15 +50,7 @@ def update_wedding(
     uuid: UUID4,
     payload: WeddingPatchIn,
 ) -> Wedding:
-    """
-    Atualiza informações específicas de um casamento.
-
-    Permite modificar campos como nomes dos noivos, data e local sem afetar o restante.
-    Os dados são validados pelo Service antes da persistência.
-    """
-    # Pega só os campos enviados (não nulos na requisição, exclude_unset)
     data = payload.model_dump(exclude_unset=True)
-
     instance = WeddingService.get(company=request.user.company, uuid=uuid)
     updated_wedding = WeddingService.update(
         company=request.user.company, instance=instance, data=data
@@ -92,12 +64,5 @@ def update_wedding(
     operation_id="weddings_delete",
 )
 def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Remove um casamento e limpa todos os dados vinculados (Cascata).
-
-    **Atenção:** Esta ação é irreversível e deleta automaticamente:
-    - Todo o histórico financeiro (orçamentos e despesas).
-    - Cronogramas, contratos e fornecedores vinculados exclusivamente a este evento.
-    """
     WeddingService.delete(company=request.user.company, uuid=uuid)
     return 204, None

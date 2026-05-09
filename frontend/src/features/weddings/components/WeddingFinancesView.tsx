@@ -88,7 +88,20 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
 
         {/* Categorias e Alocação */}
         <div className="lg:col-span-2">
-          <WeddingFinancesGroupsSummary categories={categories} />
+          <WeddingFinancesGroupsSummary
+            categories={categories}
+            weddingUuid={weddingUuid}
+            onCategoryChanged={() => {
+              queryClient.invalidateQueries({
+                queryKey: getFinancesCategoriesListQueryKey({
+                  wedding_id: weddingUuid,
+                }),
+              });
+              queryClient.invalidateQueries({
+                queryKey: getFinancesBudgetsForWeddingQueryKey(weddingUuid),
+              });
+            }}
+          />
         </div>
       </div>
 

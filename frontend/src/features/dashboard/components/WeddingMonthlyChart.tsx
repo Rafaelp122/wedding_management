@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +7,7 @@ import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 interface WeddingMonthlyChartProps {
   weddings: WeddingOut[];
+  selectedYear: number;
 }
 
 const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] as const;
@@ -20,14 +19,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function WeddingMonthlyChart({ weddings }: WeddingMonthlyChartProps) {
-  const currentYear = new Date().getFullYear();
-
+export function WeddingMonthlyChart({ weddings, selectedYear }: WeddingMonthlyChartProps) {
   const { monthlyData, hasData } = useMemo(() => {
     const counts = new Array(12).fill(0);
     for (const w of weddings) {
       const [year, month] = w.date.split("-").map(Number);
-      if (year === currentYear) {
+      if (year === selectedYear) {
         counts[month - 1]++;
       }
     }
@@ -39,13 +36,13 @@ export function WeddingMonthlyChart({ weddings }: WeddingMonthlyChartProps) {
       monthlyData: data,
       hasData: counts.some((c) => c > 0),
     };
-  }, [weddings, currentYear]);
+  }, [weddings, selectedYear]);
 
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Eventos por Mês</CardTitle>
-        <CardDescription>Distribuição de casamentos ao longo de {currentYear}</CardDescription>
+        <CardTitle className="text-base font-semibold">Casamentos por Mês</CardTitle>
+        <CardDescription>Distribuição de casamentos ao longo de {selectedYear}</CardDescription>
       </CardHeader>
       <CardContent className="h-75 w-full pt-4">
         {hasData ? (
@@ -75,7 +72,7 @@ export function WeddingMonthlyChart({ weddings }: WeddingMonthlyChartProps) {
           </ChartContainer>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg bg-zinc-50/50">
-            <p className="text-sm italic">Nenhum evento agendado para {currentYear}.</p>
+            <p className="text-sm italic">Nenhum casamento agendado para {selectedYear}.</p>
           </div>
         )}
       </CardContent>

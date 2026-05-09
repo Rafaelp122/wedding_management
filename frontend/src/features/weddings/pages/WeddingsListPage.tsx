@@ -7,6 +7,8 @@ import {
   ListPageLoadingState,
 } from "@/features/shared/components/PageState";
 import { getApiErrorInfo } from "@/api/error-utils";
+import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +28,8 @@ export default function WeddingsListPage() {
     error,
     refetch,
   } = useWeddingsPage();
+
+  const queryClient = useQueryClient();
 
   if (isLoading) {
     return <ListPageLoadingState />;
@@ -96,6 +100,7 @@ export default function WeddingsListPage() {
         onOpenChange={setCreateDialogOpen}
         onSuccess={() => {
           refetch();
+          queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
           setCreateDialogOpen(false);
         }}
       />

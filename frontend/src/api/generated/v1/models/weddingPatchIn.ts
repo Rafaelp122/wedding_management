@@ -5,9 +5,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-/**
- * Schema puro e explícito para ATUALIZAÇÃO de Casamento.
- */
 export interface WeddingPatchIn {
   groom_name?: string | null;
   bride_name?: string | null;

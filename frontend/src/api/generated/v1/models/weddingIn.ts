@@ -5,10 +5,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-/**
- * Schema puro e explícito para CRIAÇÃO de Casamento.
-Desacoplado de Modelos.
- */
 export interface WeddingIn {
   groom_name: string;
   bride_name: string;

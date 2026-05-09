@@ -1,81 +1,61 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Heart, Calendar, DollarSign, Users, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Heart, DollarSign, Calendar, AlertTriangle } from "lucide-react";
+import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
 
 interface StatsCardsProps {
-  totalWeddings: number;
-  weddingsThisMonth?: number;
-  totalRevenue?: string;
-  activeFilter?: string | null;
-  onFilterChange?: (filter: string | null) => void;
+  summary?: DashboardSummaryOut;
 }
 
-export function StatsCards({
-  totalWeddings,
-  weddingsThisMonth,
-  totalRevenue,
-  activeFilter,
-  onFilterChange,
-}: StatsCardsProps) {
+const formatCurrency = (value: string) => {
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return "R$ 0";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
+export function StatsCards({ summary }: StatsCardsProps) {
   const stats = useMemo(
     () => [
       {
-        id: "all",
         title: "Casamentos Ativos",
-        value: totalWeddings,
+        value: summary?.active_weddings ?? 0,
         icon: Heart,
-        trend: "+20%",
-        trendColor: "text-green-600 bg-green-50",
-        color: "text-primary bg-primary/10",
+        color: "text-violet-600 bg-violet-50 dark:bg-violet-950/40",
       },
       {
-        id: "month",
-        title: "Eventos este Mês",
-        value: weddingsThisMonth ?? "0",
+        title: "Casamentos este Mês",
+        value: summary?.weddings_this_month ?? 0,
         icon: Calendar,
-        color: "text-blue-600 bg-blue-50",
+        color: "text-blue-600 bg-blue-50 dark:bg-blue-950/40",
       },
       {
-        id: "guests",
-        title: "Convidados Gerenciados",
-        value: "2.450",
-        icon: Users,
-        color: "text-orange-600 bg-orange-50",
-      },
-      {
-        id: "budget",
-        title: "Orçamento Sob Gestão",
-        value: totalRevenue ?? "R$ 0",
+        title: "Parcelas a Vencer (7d)",
+        value: formatCurrency(summary?.pending_installments_7d ?? "0"),
         icon: DollarSign,
-        trend: "+15%",
-        trendColor: "text-green-600 bg-green-50",
-        color: "text-green-600 bg-green-50",
+        color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40",
+      },
+      {
+        title: "Tarefas Atrasadas",
+        value: summary?.urgent_tasks_count ?? 0,
+        icon: AlertTriangle,
+        color: "text-red-600 bg-red-50 dark:bg-red-950/40",
       },
     ],
-    [totalWeddings, weddingsThisMonth, totalRevenue],
+    [summary],
   );
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => (
-        <Card
-          key={stat.id}
-          className={cn(
-            "shadow-sm border-zinc-200 dark:border-zinc-800 cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:shadow-md",
-            activeFilter === stat.id && "ring-2 ring-primary bg-primary/5"
-          )}
-          onClick={() => onFilterChange?.(activeFilter === stat.id ? null : stat.id)}
-        >
+      {stats.map((stat, i) => (
+        <Card key={i} className="shadow-sm border-zinc-200 dark:border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <div className={cn("p-2 rounded-lg transition-colors", stat.color)}>
+            <div className={`p-2 rounded-lg ${stat.color}`}>
               <stat.icon className="size-5" />
             </div>
-            {stat.trend && (
-              <span className={cn("flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums", stat.trendColor)}>
-                <TrendingUp className="size-3" /> {stat.trend}
-              </span>
-            )}
           </CardHeader>
           <CardContent className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>

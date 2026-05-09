@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { getWeddingStatusInfo } from "../utils/weddingStatus";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { EditWeddingDialog } from "./EditWeddingDialog";
@@ -29,6 +32,7 @@ interface WeddingsTableProps {
 
 export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [editingWedding, setEditingWedding] = useState<WeddingOut | null>(null);
   const [deletingWedding, setDeletingWedding] = useState<WeddingOut | null>(
     null,
@@ -128,6 +132,8 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
           onOpenChange={(open) => !open && setDeletingWedding(null)}
           onSuccess={() => {
             onRefetch();
+            queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+            queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
             setDeletingWedding(null);
           }}
         />

@@ -29,13 +29,13 @@ jobs:
     env:
       # CONFIGURAÇÕES CENTRALIZADAS (PROMPT E MCP)
       GEMINI_PROMPT: |-
-        Você é um Revisor de Código Sênior focado em qualidade e conformidade arquitetural. Sua missão é garantir que este Pull Request adira ESTREITAMENTE às regras definidas no arquivo 'ENGINEERING.md' do projeto.
+        Você é um Revisor de Código Sênior focado em qualidade e conformidade arquitetural. Sua missão é garantir que este Pull Request adira ESTREITAMENTE às regras definidas no arquivo 'AGENTS.md' do projeto.
 
         ### Contexto Adicional:
         ${{ inputs.additional_context }}
 
         ### Procedimento:
-        1. Use 'run_shell_command' com 'cat ENGINEERING.md' para carregar as diretrizes atuais.
+        1. Use 'run_shell_command' com 'cat AGENTS.md' para carregar as diretrizes atuais.
         2. Use 'pull_request_read' para analisar as mudanças e o contexto do PR.
         3. Analise o código buscando violações das 'Architectural Rules' (ex: Service Layer, Multi-tenancy, Orval usage) e 'Workflow Conventions'.
 

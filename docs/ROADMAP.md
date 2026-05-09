@@ -179,51 +179,74 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 #### Backend
 
-- [ ] **Endpoint de métricas agregadas do dashboard** — `GET /dashboard/summary/` retornando:
+- [x] **Refatoração `api.py` → `api/`** — extraído para `api/__init__.py`, `api/weddings.py` e `api/dashboard.py`, seguindo padrão do app `finances`.
+  - **Arquivos:** `backend/apps/weddings/api/__init__.py`, `backend/apps/weddings/api/weddings.py`, `backend/apps/weddings/api/dashboard.py`
+
+- [x] **Endpoint de métricas agregadas do dashboard** — `GET /dashboard/summary/` retornando:
   - `active_weddings`: count de weddings com status `IN_PROGRESS`
-  - `total_revenue`: soma de `total_estimated` dos budgets ativos
   - `pending_installments_7d`: soma dos valores de parcelas PENDING com vencimento em ≤ 7 dias
   - `events_this_week`: count de eventos nos próximos 7 dias
-  - `total_guests`: soma de `expected_guests` dos casamentos ativos
+  - `urgent_tasks_count`: count de tarefas com `due_date < today` e `!is_completed`
+  - `weddings_this_month`: count de weddings no mês atual
+  - `critical_weddings`: lista dos top 5 casamentos IN_PROGRESS ordenados por data mais próxima, anotados com `incomplete_tasks`, `pending_installments`, `overdue_tasks`, `overdue_installments`
   - **Ref:** UC10 fluxo principal
   - **Arquivo:** `backend/apps/weddings/services/dashboard_service.py` (novo)
 
-- [ ] **Router de dashboard** — expor o endpoint acima. Prefixo `/api/v1/dashboard/`.
+- [x] **Router de dashboard** — `GET /dashboard/summary/` + `GET /dashboard/wedding/{uuid}/`. Prefixo `/api/v1/dashboard/`.
   - **Arquivo:** `backend/apps/weddings/api/dashboard.py` (novo)
+
+- [x] **Endpoint do dashboard do casamento** — `GET /dashboard/wedding/{uuid}/` retorna métricas consolidadas de um casamento específico (days_until, budget%, tasks, contracts, upcoming installments, urgent tasks, categories summary). Substitui 4 chamadas de API por 1.
+  - **Arquivos:** `backend/apps/weddings/services/dashboard_service.py` (`get_wedding_overview()`), `backend/apps/weddings/api/dashboard.py`
 
 #### Frontend
 
-- [ ] **Hook `useDashboardSummary`** — consumir o novo endpoint agregado.
-  - **Arquivo:** `frontend/src/features/dashboard/hooks/useDashboardSummary.ts`
+- [x] **Hook `useDashboardSummary`** — consumir o novo endpoint agregado. Gerado automaticamente via Orval.
+  - **Arquivo:** `frontend/src/api/generated/v1/endpoints/dashboard/dashboard.ts`
 
-- [ ] **Remover mocks do `StatsCards`** — substituir `"2.450"` (convidados hardcoded) e `totalRevenue ?? "R$ 0"` por dados reais do hook.
+- [x] **Remover mocks do `StatsCards`** — substituir `"2.450"` (convidados hardcoded) e métricas calculadas no frontend por dados reais do hook `useDashboardSummary`. Cards vanity ("Convidados Gerenciados", "Orçamento Sob Gestão") removidos em favor de cards operacionais: Casamentos Ativos, Casamentos este Mês, Parcelas a Vencer (7d), Tarefas Atrasadas.
   - **Arquivo:** `frontend/src/features/dashboard/components/StatsCards.tsx`
 
-- [ ] **`UpcomingAppointments` com dados reais** — substituir array mock por chamada `useSchedulerEventsList` com filtro de próximos 7 dias. Botão "Ver agenda completa" deve linkar para `/scheduler`.
+- [x] **`UpcomingAppointments` com dados reais** — substituir array mock por chamada `useSchedulerEventsList` com filtro client-side de próximos 7 dias. Botão "Ver agenda completa" linka para `/scheduler`. Toggle 7d/14d/30d para ajustar o horizonte.
   - **Ref:** UC10
   - **Arquivo:** `frontend/src/features/dashboard/components/UpcomingAppointments.tsx`
 
-- [ ] **"Parcelas a Vencer (7d)" no dashboard** — card ou seção no dashboard mostrando parcelas dos próximos 7 dias com valores. Clicável, leva ao financeiro do casamento.
+- [x] **"Parcelas a Vencer" no dashboard** — seção mostrando parcelas dos próximos 7 dias com valores. Toggle 7d/14d/30d. Clicável, leva ao financeiro do casamento.
   - **Arquivo:** `frontend/src/features/dashboard/components/UpcomingInstallments.tsx` (novo)
 
-- [ ] **Crédito de `WeddingMonthlyChart`** — ok, já funcional.
+- [x] **"Casamentos que Precisam de Atenção"** — cards com noivos, dias até o evento, badge colorido por urgência, e motivo explícito (ex: "2 tarefas atrasadas • 1 parcela vencida"). Link direto pro casamento.
+  - **Arquivo:** `frontend/src/features/dashboard/components/CriticalWeddings.tsx` (novo)
 
-- [ ] **Dialog `CreateBudgetCategoryDialog`** — formulário com nome, valor orçado, descrição. Vinculado ao budget do casamento.
+- [x] **Dialog `CreateBudgetCategoryDialog`** — formulário com nome, valor orçado, descrição. Vinculado ao budget do casamento. Ações de editar/excluir inline via dropdown (⋮) no `WeddingFinancesGroupsSummary`.
   - **Ref:** UC02
   - **Arquivo:** `frontend/src/features/weddings/components/CreateBudgetCategoryDialog.tsx`
 
-- [ ] **Dialog `EditBudgetCategoryDialog`** — edição de categoria com alerta se valor novo < total já gasto (BR-F04 visual).
+- [x] **Dialog `EditBudgetCategoryDialog`** — edição de categoria com alerta se valor novo < total já gasto (BR-F04 visual).
   - **Ref:** UC02 fluxo alternativo "Editar Categoria"
   - **Arquivo:** `frontend/src/features/weddings/components/EditBudgetCategoryDialog.tsx`
 
-- [ ] **Dialog `DeleteBudgetCategoryDialog`** — confirmação com aviso se houver despesas vinculadas.
+- [x] **Dialog `DeleteBudgetCategoryDialog`** — confirmação com aviso se houver despesas vinculadas.
   - **Ref:** UC02 fluxo alternativo "Excluir Categoria"
   - **Arquivo:** `frontend/src/features/weddings/components/DeleteBudgetCategoryDialog.tsx`
 
-- [ ] **Consertar botões mortos:**
-  - `WeddingFinancesRecentExpenses`: botão "Adicionar Despesa" → abrir `CreateExpenseDialog`
-  - `WeddingFinancesGroupsSummary`: botão "Ver Todas Categorias" → navegar ou expandir lista
+- [x] **Consertar botões mortos:**
+  - `WeddingFinancesRecentExpenses`: botão "Adicionar Despesa" → abre `CreateExpenseDialog`
+  - `WeddingFinancesGroupsSummary`: botão "Ver Todas Categorias" → expande/colapsa lista
   - `WeddingOverview`: links "Ver planejamento" / "Ver finanças" → navegação por tab
+  - `WeddingOverview`: "Próximos Vencimentos" populado com dados reais (antes era array vazio fixo)
+
+- [x] **Refatoração `WeddingOverview`** — 4 chamadas de API (`useFinancesBudgetsForWedding`, `useSchedulerTasksList`, `useLogisticsSuppliersList`, `useFinancesInstallmentsList`) substituídas por 1 (`useDashboardWedding`). ~330 linhas → ~250. Lógica de cálculo movida para o backend.
+  - **Arquivo:** `frontend/src/features/weddings/components/WeddingOverview.tsx`
+
+- [x] **Navegação por ano** — seletor `← 2026 →` no header do dashboard. Filtra o gráfico de casamentos por mês. Cards KPIs sempre ancorados no presente.
+  - **Arquivo:** `frontend/src/features/dashboard/pages/DashboardPage.tsx`
+
+- [x] **Cache invalidation** — após criar ou deletar um casamento, queries `useDashboardSummary` e `useWeddingsList` são invalidadas globalmente. Corrige bug de dados stale no dashboard.
+  - **Arquivos:** `frontend/src/features/weddings/components/WeddingsTable.tsx`, `frontend/src/features/weddings/pages/WeddingsListPage.tsx`
+
+#### Adiado para futura implementação
+
+- [ ] **Navegação entre anos com dados do ano anterior/seguinte** — o seletor `← 2026 →` funciona, mas a UI atual só mostra o gráfico de barras do ano selecionado. Ideal seria um gráfico comparativo (ex: barras lado a lado de 2025 vs 2026) ou ao menos carregar dados de anos adjacentes sem descartar o atual. Exige redesign do `WeddingMonthlyChart` e possível endpoint backend que retorne múltiplos anos.
+  - **Arquivos:** `frontend/src/features/dashboard/components/WeddingMonthlyChart.tsx`, `frontend/src/features/dashboard/pages/DashboardPage.tsx`
 
 ---
 
@@ -398,8 +421,8 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ### `backend/apps/weddings/`
 
-- [ ] `services/dashboard_service.py`: endpoint de métricas agregadas (Sprint 2)
-- [ ] `api/dashboard.py`: router de dashboard (Sprint 2)
+- [x] `services/dashboard_service.py`: endpoint de métricas agregadas + métricas do casamento (Sprint 2)
+- [x] `api/dashboard.py`: router de dashboard (Sprint 2)
 - [ ] `services/wedding_service.py`: suporte a `template` na criação (Sprint 4)
 - [ ] `services/report_service.py`: geração de PDF e Excel (Sprint 5)
 - [ ] `models.py`: adicionar status `CREATED` (Sprint 6)
@@ -439,27 +462,28 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 - [x] `components/ExpenseDetailDialog.tsx` — modal com parcelas, progresso, mark-as-paid, remanejar (Sprint 1, extra)
 - [x] `components/WeddingUpcomingInstallments.tsx`: botão "Marcar como Pago" + filtro wedding_id + indicador OVERDUE (Sprint 1)
 - [x] `components/WeddingExpensesTable.tsx`: colunas nome/categoria/parcelas/status + menu ⋮ (Editar/Excluir) + clique → modal (Sprint 1, extra)
-- [x] `components/WeddingDetailTabs.tsx`: sub-tabs Finanças (Resumo / Despesas) (Sprint 1, extra)
 - [x] `components/WeddingFinancesRecentExpenses.tsx`: mostra name + categoria + parcelas + status + clique → modal (Sprint 1, extra)
-- [ ] `components/CreateBudgetCategoryDialog.tsx` (Sprint 2)
-- [ ] `components/EditBudgetCategoryDialog.tsx` (Sprint 2)
-- [ ] `components/DeleteBudgetCategoryDialog.tsx` (Sprint 2)
+- [x] `components/CreateBudgetCategoryDialog.tsx` (Sprint 2)
+- [x] `components/EditBudgetCategoryDialog.tsx` (Sprint 2)
+- [x] `components/DeleteBudgetCategoryDialog.tsx` (Sprint 2)
+- [x] `components/WeddingOverview.tsx`: refatorado para 1 chamada API (`useDashboardWedding`), links "Ver planejamento/finanças" funcionais, "Próximos Vencimentos" com dados reais (Sprint 2)
+- [x] `components/WeddingFinancesGroupsSummary.tsx`: botão "Ver Todas Categorias" funcional (toggle) + ações editar/excluir por categoria (Sprint 2)
 - [ ] `components/CreateItemDialog.tsx` (Sprint 3)
 - [ ] `components/ContractUploadDialog.tsx` (Sprint 3)
 - [ ] `components/WeddingVendorsTable.tsx`: resolver nomes + botão "Gerar Despesa" (Sprint 3)
 - [ ] `components/WeddingItemsTable.tsx`: troca de status (Sprint 3)
 - [ ] `components/CreateWeddingDialog.tsx`: seletor de template (Sprint 4)
-- [ ] `components/WeddingOverview.tsx`: botão "Exportar Relatório", links "Ver planejamento/finanças" funcionais (Sprint 2, Sprint 5)
+- [ ] `components/WeddingOverview.tsx`: botão "Exportar Relatório" (Sprint 5)
 - [ ] `components/WeddingFinancesSummaryCards.tsx`: remover texto hardcoded (Sprint 6)
-- [ ] `components/WeddingFinancesRecentExpenses.tsx`: botão "Adicionar Despesa" funcional (Sprint 2)
-- [ ] `components/WeddingFinancesGroupsSummary.tsx`: botão "Ver Todas Categorias" funcional (Sprint 2)
 
 ### `frontend/src/features/dashboard/`
 
-- [ ] `hooks/useDashboardSummary.ts` (Sprint 2)
-- [ ] `components/StatsCards.tsx`: dados reais (Sprint 2)
-- [ ] `components/UpcomingAppointments.tsx`: dados reais (Sprint 2)
-- [ ] `components/UpcomingInstallments.tsx`: parcelas a vencer (Sprint 2)
+- [x] `components/StatsCards.tsx`: dados reais via `useDashboardSummary`, cards operacionais (Sprint 2)
+- [x] `components/UpcomingAppointments.tsx`: dados reais + toggle 7d/14d/30d + link `/scheduler` (Sprint 2)
+- [x] `components/UpcomingInstallments.tsx`: parcelas a vencer + toggle 7d/14d/30d (Sprint 2)
+- [x] `components/CriticalWeddings.tsx`: cards com motivo explícito + link direto (Sprint 2, extra)
+- [x] `pages/DashboardPage.tsx`: integração completa + navegação por ano `← 2026 →` (Sprint 2)
+- [ ] Navegação entre anos com dados do ano anterior/seguinte (futuro)
 
 ### `frontend/src/features/scheduler/`
 
@@ -520,7 +544,7 @@ Sprint 6 (Polish)
 
 ---
 
-**Versão:** 1.2 (Sprint 1 concluído com extras documentados)
+**Versão:** 1.3 (Sprints 1 e 2 concluídos com extras documentados)
 **Criado em:** 3 de maio de 2026
-**Atualizado em:** 4 de maio de 2026
+**Atualizado em:** 9 de maio de 2026
 **Responsável:** Rafael

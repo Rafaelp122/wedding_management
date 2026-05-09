@@ -1,6 +1,6 @@
 # CLAUDE.md - Wedding Management Context
 
-CRITICAL: This project follows the rules defined in `ENGINEERING.md`. Read that file first to understand the architectural and workflow mandates.
+CRITICAL: This project follows the rules defined in `AGENTS.md`. Read that file first to understand the architectural and workflow mandates.
 
 ## Build & Test Commands
 

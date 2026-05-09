@@ -2,7 +2,7 @@ import {
   CalendarHeart,
   Wallet,
   CheckSquare,
-  Store,
+  FileText,
   AlertCircle,
   Clock,
   ArrowRight,
@@ -10,9 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import { useFinancesBudgetsForWedding } from "@/api/generated/v1/endpoints/finances/finances";
-import { useSchedulerTasksList } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { useLogisticsSuppliersList } from "@/api/generated/v1/endpoints/logistics/logistics";
+import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -25,83 +23,22 @@ interface WeddingOverviewProps {
 
 export function WeddingOverview({ wedding }: WeddingOverviewProps) {
   const statusInfo = getWeddingStatusInfo(wedding.status);
+  const { data } = useDashboardWedding(wedding.uuid);
+  const overview = data?.data;
 
-  // Fetching data for metrics
-  const { data: budgetResponse } = useFinancesBudgetsForWedding(wedding.uuid);
-  const { data: tasksResponse } = useSchedulerTasksList({
-    wedding_id: wedding.uuid,
-  });
-  const { data: suppliersResponse } = useLogisticsSuppliersList();
+  const urgentTasks = overview?.urgent_tasks ?? [];
+  const upcomingInstallments = overview?.upcoming_installments ?? [];
 
-  const budget = budgetResponse?.data;
-  const tasks = tasksResponse?.data?.items || [];
-  const suppliers = suppliersResponse?.data?.items || [];
-
-  // Derived metrics
-  const today = new Date();
-  const [eventYear, eventMonth, eventDay] = wedding.date
-    .split("-")
-    .map(Number);
-  const eventDate = new Date(eventYear, eventMonth - 1, eventDay);
-  const diffTime = eventDate.getTime() - today.getTime();
-  const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-
-  const budgetPercentage =
-    budget && Number(budget.total_estimated) > 0
-      ? Math.min(
-          100,
-          Math.max(
-            0,
-            Math.round(
-              (Number(budget.total_overall_spent || 0) /
-                Number(budget.total_estimated)) *
-                100,
-            ),
-          ),
-        )
-      : 0;
-
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.is_completed).length;
-  const tasksPercentage =
-    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-  const totalSuppliers = suppliers.length;
-  const signedSuppliers = suppliers.filter((s) => s.is_active).length;
-  const suppliersPercentage =
-    totalSuppliers > 0
-      ? Math.round((signedSuppliers / totalSuppliers) * 100)
-      : 0;
-
-  const urgentTasks = tasks
-    .filter((t) => !t.is_completed)
-    .sort((a, b) => {
-      const dateA = a.due_date ? new Date(a.due_date).getTime() : Infinity;
-      const dateB = b.due_date ? new Date(b.due_date).getTime() : Infinity;
-      return dateA - dateB;
-    })
-    .slice(0, 3);
-
-  // Temporary mock for upcoming payments as they are not yet fully available in a consolidated way
-  const upcomingPayments: Array<{
-    id: string;
-    supplier: string;
-    description: string;
-    amount: number;
-    dueDate: string;
-  }> = [];
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
       maximumFractionDigits: 0,
     }).format(value);
-  };
 
   return (
     <div className="space-y-6">
-      {/* Header com nomes e status */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
@@ -112,7 +49,11 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
               day: "2-digit",
               month: "long",
               year: "numeric",
-            }).format(eventDate)}{" "}
+            }).format(new Date(
+              Number(wedding.date.split("-")[0]),
+              Number(wedding.date.split("-")[1]) - 1,
+              Number(wedding.date.split("-")[2]),
+            ))}{" "}
             • {wedding.location}
           </p>
         </div>
@@ -121,9 +62,8 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
         </Badge>
       </div>
 
-      {/* Top Metrics Grid */}
+      {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Days Remaining */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center gap-3 pb-2 space-y-0">
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
@@ -134,14 +74,13 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="mt-auto">
-            <div className="text-3xl font-bold">{daysRemaining}</div>
+            <div className="text-3xl font-bold">{overview?.days_until_wedding ?? "—"}</div>
             <p className="text-xs text-muted-foreground mt-1">
               dias para o grande dia
             </p>
           </CardContent>
         </Card>
 
-        {/* Budget Health */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center gap-3 pb-2 space-y-0">
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
@@ -153,14 +92,13 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
           </CardHeader>
           <CardContent className="mt-auto">
             <div className="flex items-end justify-between mb-2">
-              <p className="text-2xl font-bold">{budgetPercentage}%</p>
+              <p className="text-2xl font-bold">{overview?.budget_percentage_used ?? 0}%</p>
               <p className="text-xs text-muted-foreground mb-1">utilizado</p>
             </div>
-            <Progress value={budgetPercentage} className="h-2" />
+            <Progress value={overview?.budget_percentage_used ?? 0} className="h-2" />
           </CardContent>
         </Card>
 
-        {/* Tasks Progress */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center gap-3 pb-2 space-y-0">
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
@@ -173,39 +111,51 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
           <CardContent className="mt-auto">
             <div className="flex items-end justify-between mb-2">
               <p className="text-2xl font-bold">
-                {completedTasks}/{totalTasks}
+                {overview?.tasks_completed ?? 0}/{overview?.tasks_total ?? 0}
               </p>
               <p className="text-xs text-muted-foreground mb-1">entregues</p>
             </div>
-            <Progress value={tasksPercentage} className="h-2" />
+            <Progress
+              value={
+                overview && overview.tasks_total > 0
+                  ? Math.round((overview.tasks_completed / overview.tasks_total) * 100)
+                  : 0
+              }
+              className="h-2"
+            />
           </CardContent>
         </Card>
 
-        {/* Suppliers Status */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center gap-3 pb-2 space-y-0">
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
-              <Store className="w-5 h-5" />
+              <FileText className="w-5 h-5" />
             </div>
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Fornecedores
+              Contratos
             </CardTitle>
           </CardHeader>
           <CardContent className="mt-auto">
             <div className="flex items-end justify-between mb-2">
               <p className="text-2xl font-bold">
-                {signedSuppliers}/{totalSuppliers}
+                {overview?.contracts_signed ?? 0}/{overview?.contracts_total ?? 0}
               </p>
-              <p className="text-xs text-muted-foreground mb-1">contratados</p>
+              <p className="text-xs text-muted-foreground mb-1">assinados</p>
             </div>
-            <Progress value={suppliersPercentage} className="h-2" />
+            <Progress
+              value={
+                overview && overview.contracts_total > 0
+                  ? Math.round((overview.contracts_signed / overview.contracts_total) * 100)
+                  : 0
+              }
+              className="h-2"
+            />
           </CardContent>
         </Card>
       </div>
 
-      {/* Two Column Layout for Actionable Items */}
+      {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Urgent Actions */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between pb-4 border-b bg-muted/30">
             <div className="flex items-center gap-2">
@@ -215,7 +165,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
               </CardTitle>
             </div>
             <Button asChild variant="ghost" size="sm" className="h-8 gap-1">
-              <Link to="#">
+              <Link to={`/weddings/${wedding.uuid}?tab=planning&subtab=checklist`}>
                 Ver planejamento <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
@@ -249,7 +199,6 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
           </CardContent>
         </Card>
 
-        {/* Right Column: Upcoming Payments */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between pb-4 border-b bg-muted/30">
             <div className="flex items-center gap-2">
@@ -259,34 +208,36 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
               </CardTitle>
             </div>
             <Button asChild variant="ghost" size="sm" className="h-8 gap-1">
-              <Link to="#">
+              <Link to={`/weddings/${wedding.uuid}?tab=finances`}>
                 Ver finanças <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
           </CardHeader>
           <CardContent className="p-6 flex-1">
-            {upcomingPayments.length > 0 ? (
+            {upcomingInstallments.length > 0 ? (
               <div className="space-y-4">
-                {upcomingPayments.map((payment) => (
+                {upcomingInstallments.map((inst) => (
                   <div
-                    key={payment.id}
+                    key={inst.uuid}
                     className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                   >
                     <div>
-                      <p className="text-sm font-medium">{payment.supplier}</p>
+                      <p className="text-sm font-medium">
+                        Parcela #{inst.installment_number}
+                      </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {payment.description}
+                        {new Intl.DateTimeFormat("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                        }).format(new Date(inst.due_date))}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">
-                        {formatCurrency(payment.amount)}
+                        {formatCurrency(Number(inst.amount))}
                       </p>
                       <p className="text-xs text-orange-500 mt-0.5 font-medium">
-                        {new Intl.DateTimeFormat("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                        }).format(new Date(payment.dueDate))}
+                        {inst.status === "OVERDUE" ? "Atrasado" : "Pendente"}
                       </p>
                     </div>
                   </div>
