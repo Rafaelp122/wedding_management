@@ -19,6 +19,7 @@ from apps.logistics.api import contracts_router, items_router, suppliers_router
 from apps.scheduler.api import events_router as scheduler_events_router
 from apps.scheduler.api import tasks_router as scheduler_tasks_router
 from apps.users.api import router as auth_router
+from apps.weddings.api import dashboard_router
 from apps.weddings.api import router as weddings_router
 
 
@@ -62,6 +63,7 @@ api.add_router("/auth/", auth_router, auth=None)
 
 # Registra os routers das apps
 api.add_router("/weddings/", weddings_router)
+api.add_router("/dashboard/", dashboard_router)
 api.add_router("/logistics/suppliers/", suppliers_router)
 api.add_router("/logistics/contracts/", contracts_router)
 api.add_router("/logistics/items/", items_router)
