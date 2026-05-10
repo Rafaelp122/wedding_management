@@ -113,17 +113,9 @@ def upload_contract_file(
     """
     Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
     """
-    from logging import getLogger
-
-    logger = getLogger(__name__)
-
-    contract = ContractService.get(company=request.user.company, uuid=uuid)
-    try:
-        contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
-        contract.save(update_fields=["pdf_file"])
-    except Exception as e:
-        logger.exception(f"Erro ao salvar arquivo no contrato {uuid}: {e}")
-        raise
+    contract = ContractService.upload_file(
+        company=request.user.company, uuid=uuid, uploaded_file=pdf_file
+    )
     return contract
 
 
@@ -136,9 +128,7 @@ def delete_contract_file(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove o arquivo vinculado ao contrato.
     """
-    contract = ContractService.get(company=request.user.company, uuid=uuid)
-    contract.pdf_file = None
-    contract.save()
+    ContractService.delete_file(company=request.user.company, uuid=uuid)
     return 204, None
 
 

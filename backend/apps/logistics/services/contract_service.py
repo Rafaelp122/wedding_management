@@ -272,6 +272,7 @@ class ContractService:
             f"{instance.status} -> {new_status}"
         )
 
+        # TODO(sprint/018): mover máquina de estados para Contract.clean()
         allowed_transitions: dict[str, list[str]] = {
             "DRAFT": ["PENDING", "CANCELED"],
             "PENDING": ["SIGNED", "DRAFT", "CANCELED"],
@@ -293,3 +294,27 @@ class ContractService:
 
         logger.info(f"Contrato uuid={instance.uuid} transitado para '{new_status}'.")
         return instance
+
+    @staticmethod
+    def upload_file(company: Company, uuid: UUID | str, uploaded_file: Any) -> Contract:
+        """
+        Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+        Salva no storage configurado e persiste a referência no modelo.
+        """
+        logger.info(f"Upload de arquivo para contrato uuid={uuid}")
+        contract = ContractService.get(company, uuid)
+        contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
+        contract.save(update_fields=["pdf_file"])
+        logger.info(f"Arquivo salvo no contrato uuid={uuid}")
+        return contract
+
+    @staticmethod
+    def delete_file(company: Company, uuid: UUID | str) -> None:
+        """
+        Remove o arquivo vinculado ao contrato.
+        """
+        logger.info(f"Removendo arquivo do contrato uuid={uuid}")
+        contract = ContractService.get(company, uuid)
+        contract.pdf_file = None
+        contract.save(update_fields=["pdf_file"])
+        logger.info(f"Arquivo removido do contrato uuid={uuid}")
