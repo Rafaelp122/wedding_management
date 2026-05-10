@@ -1,4 +1,4 @@
-import { useRef, useState, memo } from "react";
+import { useState, memo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -81,7 +81,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
   onSuccess,
   prefilledParentUuid,
 }: ContractUploadDialogProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { mutateAsync: createContract, isPending: isCreating } =
     useLogisticsContractsCreate();
   const { mutateAsync: createItem } = useLogisticsItemsCreate();
@@ -150,7 +150,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
       const contractUuid = (result as { data: { uuid: string } }).data.uuid;
 
       // 2. Upload do arquivo (se houver)
-      const file = fileInputRef.current?.files?.[0];
+      const file = selectedFile;
       if (file) {
         const formData = new FormData();
         formData.append("pdf_file", file);
@@ -397,10 +397,10 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
             <div className="space-y-1">
               <label className="text-sm font-medium">Documento (Opcional)</label>
               <Input
-                ref={fileInputRef}
                 type="file"
                 accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg,.txt"
                 className="text-sm"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
               />
               <p className="text-[11px] text-muted-foreground">
                 Formatos: PDF, Word, Excel, imagens
