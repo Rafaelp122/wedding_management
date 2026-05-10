@@ -70,7 +70,7 @@ class BudgetCategoryOut(Schema):
 
 # --- EXPENSE SCHEMAS ---
 class ExpenseIn(Schema):
-    category: UUID4
+    category: UUID4 = Field(...)
     contract: UUID4 | None = None
     name: str = Field(..., max_length=255)
     description: str | None = None
@@ -87,6 +87,16 @@ class ExpensePatchIn(Schema):
     estimated_amount: Decimal | None = None
     actual_amount: Decimal | None = None
     num_installments: int | None = Field(None, gt=0)
+    first_due_date: date | None = None
+
+
+class ExpenseFromDocumentOut(Schema):
+    name: str
+    description: str = ""
+    contract: UUID4
+    actual_amount: Decimal
+    category_uuid: UUID4 | None = None
+    num_installments: int | None = None
     first_due_date: date | None = None
 
 

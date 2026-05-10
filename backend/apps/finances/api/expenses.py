@@ -5,7 +5,12 @@ from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.expense import Expense
-from apps.finances.schemas import ExpenseIn, ExpenseOut, ExpensePatchIn
+from apps.finances.schemas import (
+    ExpenseFromDocumentOut,
+    ExpenseIn,
+    ExpenseOut,
+    ExpensePatchIn,
+)
 from apps.finances.services.expense_service import ExpenseService
 from apps.users.types import AuthRequest
 
@@ -80,3 +85,19 @@ def delete_expense(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     instance = ExpenseService.get(request.user.company, uuid)
     ExpenseService.delete(request.user.company, instance)
     return 204, None
+
+
+@expenses_router.post(
+    "/from-document/{uuid:uuid}/",
+    response={200: ExpenseFromDocumentOut, **READ_ERROR_RESPONSES},
+    operation_id="finances_expenses_from_document",
+)
+def from_document(request: AuthRequest, uuid: UUID4) -> ExpenseFromDocumentOut:
+    """
+    Retorna sugestão de payload para criar despesa a partir de um contrato.
+    Pré-preenche valores, descrição e fornecedor do documento de referência.
+    """
+    data = ExpenseService.from_document(
+        company=request.user.company, contract_uuid=uuid
+    )
+    return ExpenseFromDocumentOut(**data)
