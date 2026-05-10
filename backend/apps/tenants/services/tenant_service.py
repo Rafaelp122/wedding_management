@@ -1,4 +1,5 @@
 import logging
+import uuid as uuid_lib
 
 from django.db import transaction
 from django.utils.text import slugify
@@ -22,8 +23,6 @@ class TenantService:
         company_name = f"Workspace de {display_name}"
 
         # Geramos um slug único e curto para evitar colisões
-        import uuid as uuid_lib
-
         base_slug = slugify(display_name)[:40]
         unique_slug = f"{base_slug}-{str(uuid_lib.uuid4())[:8]}"
 

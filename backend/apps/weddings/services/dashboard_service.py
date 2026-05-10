@@ -11,6 +11,7 @@ from apps.logistics.models import Contract
 from apps.scheduler.models import Event, Task
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
+from apps.weddings.services.wedding_service import WeddingService
 
 
 logger = logging.getLogger(__name__)
@@ -134,8 +135,6 @@ class DashboardService:
 
     @staticmethod
     def get_wedding_overview(company: Company, wedding_uuid: UUID) -> dict:
-        from apps.weddings.services import WeddingService
-
         wedding = WeddingService.get(company, wedding_uuid)
         today = date.today()
         days_until = max(0, (wedding.date - today).days)
