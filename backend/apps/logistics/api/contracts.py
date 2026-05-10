@@ -1,13 +1,21 @@
 from django.db.models import QuerySet
-from ninja import Router
+from ninja import File, Router, UploadedFile
 from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.logistics.models.contract import Contract
-from apps.logistics.schemas import ContractIn, ContractOut, ContractPatchIn
+from apps.logistics.schemas import (
+    ContractIn,
+    ContractOut,
+    ContractPatchIn,
+    ContractStatusTransitionIn,
+)
 from apps.logistics.services.contract_service import ContractService
 from apps.users.types import AuthRequest
+
+
+PDF_FILE_REQUIRED = File(...)
 
 
 contracts_router = Router(tags=["Logistics"])
@@ -18,13 +26,21 @@ contracts_router = Router(tags=["Logistics"])
 )
 @paginate
 def list_contracts(
-    request: AuthRequest, wedding_id: UUID4 | None = None
+    request: AuthRequest,
+    wedding_id: UUID4 | None = None,
+    status: str | None = None,
+    supplier_id: UUID4 | None = None,
 ) -> QuerySet[Contract]:
     """
     Lista os contratos de fornecedores associados aos casamentos do Planner.
-    Permite filtrar por casamento.
+    Permite filtrar por casamento, status e fornecedor.
     """
-    return ContractService.list(company=request.user.company, wedding_id=wedding_id)
+    return ContractService.list(
+        company=request.user.company,
+        wedding_id=wedding_id,
+        status=status,
+        supplier_id=supplier_id,
+    )
 
 
 @contracts_router.get(
@@ -84,3 +100,62 @@ def delete_contract(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     contract = ContractService.get(company=request.user.company, uuid=uuid)
     ContractService.delete(company=request.user.company, instance=contract)
     return 204, None
+
+
+@contracts_router.post(
+    "/{uuid:uuid}/upload/",
+    response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_upload",
+)
+def upload_contract_file(
+    request: AuthRequest, uuid: UUID4, pdf_file: UploadedFile = PDF_FILE_REQUIRED
+) -> Contract:
+    """
+    Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+    """
+    from logging import getLogger
+
+    logger = getLogger(__name__)
+
+    contract = ContractService.get(company=request.user.company, uuid=uuid)
+    try:
+        contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
+        contract.save(update_fields=["pdf_file"])
+    except Exception as e:
+        logger.exception(f"Erro ao salvar arquivo no contrato {uuid}: {e}")
+        raise
+    return contract
+
+
+@contracts_router.delete(
+    "/{uuid:uuid}/upload/",
+    response={204: None, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_delete_upload",
+)
+def delete_contract_file(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
+    """
+    Remove o arquivo vinculado ao contrato.
+    """
+    contract = ContractService.get(company=request.user.company, uuid=uuid)
+    contract.pdf_file = None
+    contract.save()
+    return 204, None
+
+
+@contracts_router.post(
+    "/{uuid:uuid}/transition-status/",
+    response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_transition_status",
+)
+def transition_contract_status(
+    request: AuthRequest, uuid: UUID4, payload: ContractStatusTransitionIn
+) -> Contract:
+    """
+    Transita o status do contrato (DRAFT → PENDING → SIGNED → CANCELED).
+    """
+    contract = ContractService.get(company=request.user.company, uuid=uuid)
+    return ContractService.transition_status(
+        company=request.user.company,
+        instance=contract,
+        new_status=payload.status,
+    )

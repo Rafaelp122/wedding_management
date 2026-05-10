@@ -1,15 +1,27 @@
 import logging
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import (
+    Count,
+    F,
+    OuterRef,
+    ProtectedError,
+    QuerySet,
+    Subquery,
+    Sum,
+    Value,
+)
+from django.db.models.functions import Coalesce
 
 from apps.core.exceptions import (
+    BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.finances.models import BudgetCategory
+from apps.finances.models import Expense, Installment
 from apps.logistics.models import Contract, Supplier
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -27,13 +39,41 @@ class ContractService:
 
     @staticmethod
     def list(
-        company: Company, wedding_id: UUID | str | None = None
+        company: Company,
+        wedding_id: UUID | str | None = None,
+        status: str | None = None,
+        supplier_id: UUID | str | None = None,
     ) -> QuerySet[Contract]:
-        qs = Contract.objects.for_tenant(company).select_related(
-            "supplier", "wedding", "budget_category"
+        qs = (
+            Contract.objects.for_tenant(company)
+            .select_related("supplier", "wedding", "parent")
+            .annotate(
+                supplier_name=F("supplier__name"),
+                supplier_phone=F("supplier__phone"),
+                supplier_email=F("supplier__email"),
+                expense_id=Subquery(
+                    Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[:1]
+                ),
+                total_paid=Coalesce(
+                    Subquery(
+                        Installment.objects.filter(
+                            expense__contract=OuterRef("pk"), status="PAID"
+                        )
+                        .values("expense__contract")
+                        .annotate(s=Sum("amount"))
+                        .values("s")[:1]
+                    ),
+                    Value(Decimal("0.00")),
+                ),
+                addendums_count=Count("addendums"),
+            )
         )
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
+        if status:
+            qs = qs.filter(status=status)
+        if supplier_id:
+            qs = qs.filter(supplier__uuid=supplier_id)
         return qs
 
     @staticmethod
@@ -41,7 +81,8 @@ class ContractService:
         try:
             return (
                 Contract.objects.for_tenant(company)
-                .select_related("supplier", "wedding", "budget_category")
+                .select_related("supplier", "wedding", "parent", "expense")
+                .annotate(addendums_count=Count("addendums"))
                 .get(uuid=uuid)
             )
         except Contract.DoesNotExist as e:
@@ -86,29 +127,23 @@ class ContractService:
                     code="supplier_not_found_or_denied",
                 ) from e
 
-        # Resolução da Categoria de Orçamento
-        budget_cat_input = data.pop("budget_category", None)
-        budget_category = None
-        if budget_cat_input:
-            if isinstance(budget_cat_input, BudgetCategory):
-                budget_category = budget_cat_input
-            else:
-                try:
-                    budget_category = BudgetCategory.objects.for_tenant(company).get(
-                        uuid=budget_cat_input
-                    )
-                except BudgetCategory.DoesNotExist as e:
-                    raise ObjectNotFoundError(
-                        detail="Categoria de orçamento não encontrada.",
-                        code="budget_category_not_found_or_denied",
-                    ) from e
+        parent_input = data.pop("parent", None)
+        parent = None
+        if parent_input:
+            try:
+                parent = Contract.objects.for_tenant(company).get(uuid=parent_input)
+            except Contract.DoesNotExist as e:
+                raise ObjectNotFoundError(
+                    detail="Contrato pai não encontrado.",
+                    code="parent_contract_not_found",
+                ) from e
 
         # 2. Instanciação em Memória
         contract = Contract(
             company=company,
             wedding=wedding,
             supplier=supplier,
-            budget_category=budget_category,
+            parent=parent,
             **data,
         )
 
@@ -120,17 +155,57 @@ class ContractService:
         return contract
 
     @staticmethod
+    def _resolve_parent(
+        company: Company, instance: Contract, parent_input: Any
+    ) -> None:
+        parent: Contract | None = None
+        if isinstance(parent_input, Contract):
+            parent = parent_input
+        elif parent_input == "":
+            instance.parent = None
+            return
+        else:
+            try:
+                parent = Contract.objects.for_tenant(company).get(uuid=parent_input)
+            except Contract.DoesNotExist as e:
+                raise ObjectNotFoundError(
+                    detail="Contrato pai inválido ou acesso negado.",
+                    code="parent_contract_not_found_or_denied",
+                ) from e
+
+        if parent is not None:
+            if parent.pk == instance.pk:
+                raise BusinessRuleViolation(
+                    detail="Um contrato não pode ser pai de si mesmo.",
+                    code="contract_self_parent",
+                )
+            if parent.wedding_id != instance.wedding_id:
+                raise BusinessRuleViolation(
+                    detail="O contrato pai deve pertencer ao mesmo casamento.",
+                    code="contract_cross_wedding_parent",
+                )
+            # Prevent circular: parent can't be a descendant of instance
+            current = parent
+            while current.parent:
+                if current.parent.pk == instance.pk:
+                    raise BusinessRuleViolation(
+                        detail="Não é possível vincular um contrato pai que é "
+                        "descendente deste contrato.",
+                        code="contract_circular_parent",
+                    )
+                current = current.parent
+            instance.parent = parent
+
+    @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Contract, data: dict[str, Any]) -> Contract:
         logger.info(
             f"Atualizando Contrato uuid={instance.uuid} por company_id={company.id}"
         )
 
-        # Proteção contra sequestro de propriedade
         data.pop("wedding", None)
         data.pop("company", None)
 
-        # Troca de Fornecedor (com validação multitenant)
         supplier_input = data.pop("supplier", None)
         if supplier_input:
             if isinstance(supplier_input, Supplier):
@@ -146,25 +221,14 @@ class ContractService:
                         code="supplier_not_found_or_denied",
                     ) from e
 
-        # Troca de Categoria de Orçamento (com validação multitenant)
-        budget_cat_input = data.pop("budget_category", None)
-        if budget_cat_input is not None:
-            if isinstance(budget_cat_input, BudgetCategory):
-                instance.budget_category = budget_cat_input
-            elif budget_cat_input == "":
-                instance.budget_category = None
-            else:
-                try:
-                    instance.budget_category = BudgetCategory.objects.for_tenant(
-                        company
-                    ).get(uuid=budget_cat_input)
-                except BudgetCategory.DoesNotExist as e:
-                    raise ObjectNotFoundError(
-                        detail="Categoria de orçamento inválida ou acesso negado.",
-                        code="budget_category_not_found_or_denied",
-                    ) from e
+        parent_input = data.pop("parent", None)
+        if parent_input is not None:
+            ContractService._resolve_parent(company, instance, parent_input)
 
-        # Atualização dinâmica de campos
+        status_input = data.pop("status", None)
+        if status_input is not None and status_input != instance.status:
+            ContractService.transition_status(company, instance, status_input)
+
         for field, value in data.items():
             if field == "pdf_file" and value is None:
                 continue
@@ -191,13 +255,41 @@ class ContractService:
             logger.warning(
                 f"Contrato uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
             )
-
         except ProtectedError as e:
-            logger.error(
-                f"Falha de integridade ao deletar contrato uuid={instance.uuid}"
-            )
             raise DomainIntegrityError(
-                detail="Não é possível apagar este contrato pois existem registros "
-                "financeiros (parcelas) vinculados a ele. Apague as parcelas primeiro.",
-                code="contract_protected_error",
+                detail="Não é possível apagar este contrato pois existem "
+                "aditivos vinculados a ele. Remova os aditivos primeiro.",
+                code="contract_protected_by_addendums",
             ) from e
+
+    @staticmethod
+    @transaction.atomic
+    def transition_status(
+        company: Company, instance: Contract, new_status: str
+    ) -> Contract:
+        logger.info(
+            f"Transição de status do Contrato uuid={instance.uuid}: "
+            f"{instance.status} -> {new_status}"
+        )
+
+        allowed_transitions: dict[str, list[str]] = {
+            "DRAFT": ["PENDING", "CANCELED"],
+            "PENDING": ["SIGNED", "DRAFT", "CANCELED"],
+            "SIGNED": ["CANCELED"],
+            "CANCELED": ["DRAFT"],
+        }
+
+        current = instance.status
+        allowed = allowed_transitions.get(current, [])
+
+        if new_status not in allowed:
+            raise BusinessRuleViolation(
+                detail=f"Não é permitido transitar de '{current}' para '{new_status}'.",
+                code="contract_invalid_status_transition",
+            )
+
+        instance.status = new_status
+        instance.save()
+
+        logger.info(f"Contrato uuid={instance.uuid} transitado para '{new_status}'.")
+        return instance
