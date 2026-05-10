@@ -131,7 +131,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
     if (!itemName.trim()) return;
     setItemDrafts([
       ...itemDrafts,
-      { key: String(Date.now()), name: itemName.trim(), quantity: itemQty, acquisition_status: itemStatus },
+      { key: crypto.randomUUID(), name: itemName.trim(), quantity: itemQty, acquisition_status: itemStatus },
     ]);
     setItemName("");
     setItemQty(1);

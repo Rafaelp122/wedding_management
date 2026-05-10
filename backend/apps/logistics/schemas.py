@@ -124,7 +124,7 @@ class ContractOut(Schema):
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:
         total_paid = getattr(obj, "total_paid", None)
-        if total_paid and obj.total_amount:
+        if total_paid is not None and obj.total_amount:
             return int(total_paid / obj.total_amount * 100)
         return 0
 

@@ -115,8 +115,7 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
       queryClient.invalidateQueries({
         queryKey: ["/api/v1/logistics/contracts/"],
       });
-    } catch (err) {
-      console.error("Upload error:", err);
+    } catch (_err) {
       toast.error("Erro ao enviar documento.");
     } finally {
       setIsUploading(false);
@@ -134,8 +133,7 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
       queryClient.invalidateQueries({
         queryKey: ["/api/v1/logistics/contracts/"],
       });
-    } catch (err) {
-      console.error("Remove file error:", err);
+    } catch (_err) {
       toast.error("Erro ao remover documento.");
     } finally {
       setIsRemoving(false);
