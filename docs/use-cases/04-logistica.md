@@ -107,18 +107,14 @@ Sidebar → 🤝 Fornecedores → Listagem GLOBAL de todos os fornecedores da em
 | **Prioridade** | ⭐⭐⭐☆☆ Médio |
 | **Complexidade** | ⭐⭐⭐☆☆☆ |
 
-### Fluxo Principal: Upload de Documento
+### Fluxo Principal: Upload de Contrato
 
-1. Cerimonialista acessa "Documentos" dentro da aba Logística de um casamento
-2. Clica em "Upload"
-3. Sistema solicita arquivo PDF
-4. Cerimonialista seleciona PDF
-5. Sistema faz upload direto para R2 via presigned URL
-6. Sistema exibe preview do documento
-7. Cerimonialista preenche metadados opcionais:
-   - Valor de referência
-   - Data de vencimento
-8. Sistema salva documento vinculado à despesa
+1. Cerimonialista acessa "Contratos" dentro da aba Logística de um casamento
+2. Clica em "Novo Contrato"
+3. Sistema exibe formulário com: fornecedor, nome, descrição, valor, status, upload de arquivo
+4. Cerimonialista preenche e faz upload do arquivo (PDF, DOCX, XLSX, imagens)
+5. Sistema salva contrato e arquivo vinculado
+6. Sistema exibe nome do arquivo no detail do contrato
 
 ### Fluxo Alternativo: Documento sem Despesa
 
