@@ -34,6 +34,7 @@ class TestContractServiceCreate:
         data = {
             "wedding": wedding.uuid,
             "supplier": supplier.uuid,
+            "name": "Buffet Completo",
             "total_amount": Decimal("10000.00"),
             "description": "Buffet completo",
         }
@@ -52,28 +53,13 @@ class TestContractServiceCreate:
         data = {
             "wedding": wedding,
             "supplier": supplier,
+            "name": "Buffet Teste",
             "total_amount": Decimal("5000.00"),
         }
 
         contract = ContractService.create(user.company, data)
         assert contract.wedding == wedding
         assert contract.supplier == supplier
-
-    def test_create_contract_with_budget_category(self, user):
-        """Contrato pode ser vinculado a uma categoria de orçamento."""
-        wedding, supplier = _setup_contract_context(user)
-        budget = BudgetFactory(wedding=wedding)
-        category = BudgetCategoryFactory(budget=budget, wedding=wedding)
-
-        data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "total_amount": Decimal("5000.00"),
-            "budget_category": category.uuid,
-        }
-
-        contract = ContractService.create(user.company, data)
-        assert contract.budget_category == category
 
     def test_create_contract_wedding_not_found(self, user):
         """UUID de wedding inexistente levanta ObjectNotFoundError."""
@@ -165,19 +151,6 @@ class TestContractServiceUpdate:
 
         assert updated.supplier == supplier2
 
-    def test_update_contract_budget_category(self, user):
-        """Vincular/alterar budget_category é permitido."""
-        wedding, supplier = _setup_contract_context(user)
-        budget = BudgetFactory(wedding=wedding)
-        category = BudgetCategoryFactory(budget=budget, wedding=wedding)
-        contract = ContractFactory(wedding=wedding, supplier=supplier)
-
-        updated = ContractService.update(
-            user.company, contract, {"budget_category": category.uuid}
-        )
-
-        assert updated.budget_category == category
-
 
 @pytest.mark.django_db
 class TestContractServiceDelete:
@@ -210,7 +183,7 @@ class TestContractServiceDelete:
             wedding=wedding,
             category=category,
             contract=contract,
-            actual_amount=Decimal("500.00"),
+            actual_amount=contract.total_amount,
         )
 
         ContractService.delete(user.company, contract)
