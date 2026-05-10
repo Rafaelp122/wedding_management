@@ -15,7 +15,7 @@ O sistema tem uma fundação arquitetural sólida (multitenancy, service layer, 
 
 **Além disso, o backend expõe CRUD genérico para entidades que não deveriam ter CRUD.** O caso mais grave é `Installment`: parcelas nunca são criadas manualmente (UC03 diz que são auto-geradas), nunca são deletadas (quebra Tolerância Zero), e "pagar" é uma ação dedicada, não um PATCH genérico. O mesmo vale para `Budget`: criado lazy com o casamento, não se cria nem deleta manualmente.
 
-As automações cross-módulo — que são o diferencial do produto — não existem em nenhuma camada: geração automática de parcelas, marcação OVERDUE, templates de cronograma, bridge Documento→Despesa, sistema de alertas.
+As automações cross-módulo — que são o diferencial do produto — não existem em nenhuma camada: geração automática de parcelas, marcação OVERDUE, templates de cronograma, bridge Contrato→Despesa, sistema de alertas.
 
 **Este roadmap foca exclusivamente nas lacunas.** O que já funciona (CRUD de casamentos e fornecedores, multitenancy, auth JWT, base de modelos) não é repetido aqui.
 
@@ -569,7 +569,7 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ```
 Sprint 1 (Financeiro)
-  ├── auto_generate_installments ──► Sprint 3 (Documento→Despesa pode usar)
+  ├── auto_generate_installments ──► Sprint 3 (Contrato→Despesa pode usar)
   ├── mark_overdue_installments ──► Sprint 5 (Notificações de OVERDUE dependem disso)
   └── pay() + BR-F06 ────────────► (independente)
 
