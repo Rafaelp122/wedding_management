@@ -24,6 +24,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.finances.models import BudgetCategory, Expense
+from apps.finances.services.installment_service import InstallmentService
 from apps.logistics.models import Contract
 from apps.tenants.models import Company
 
@@ -104,6 +105,34 @@ class ExpenseService:
             raise ObjectNotFoundError(detail="Despesa não encontrada.") from e
 
     @staticmethod
+    def from_document(company: Company, contract_uuid: UUID | str) -> dict[str, Any]:
+        try:
+            contract = (
+                Contract.objects.for_tenant(company)
+                .select_related("supplier")
+                .get(uuid=contract_uuid)
+            )
+        except Contract.DoesNotExist as e:
+            raise ObjectNotFoundError(
+                detail="Contrato não encontrado ou acesso negado.",
+                code="contract_not_found_or_denied",
+            ) from e
+
+        return {
+            "name": (
+                contract.name
+                or contract.description
+                or f"Despesa - {contract.supplier.name}"
+            ),
+            "description": contract.description or "",
+            "contract": str(contract.uuid),
+            "actual_amount": contract.total_amount,
+            "category_uuid": None,
+            "num_installments": None,
+            "first_due_date": None,
+        }
+
+    @staticmethod
     @transaction.atomic
     def create(company: Company, data: dict[str, Any]) -> Expense:
         logger.info(f"Iniciando criação de Despesa para company_id={company.id}")
@@ -160,6 +189,18 @@ class ExpenseService:
                 code="invalid_installment_number",
             )
 
+        # BR-F02: snapshot inicial — despesa vinculada a contrato deve ter mesmo valor
+        actual_amount = data.get("actual_amount")
+        if contract and actual_amount and actual_amount != contract.total_amount:
+            raise BusinessRuleViolation(
+                detail=(
+                    f"BR-F02: O valor da despesa (R${actual_amount}) "
+                    f"deve ser igual ao valor do contrato "
+                    f"(R${contract.total_amount})."
+                ),
+                code="br_f02_violation",
+            )
+
         # 3. Injeção de Contexto (ADR-009) e Instanciação
         expense = Expense(
             company=company,
@@ -185,8 +226,6 @@ class ExpenseService:
             ) from e
 
         # 5. Geração automática de parcelas (mínimo 1)
-        from apps.finances.services.installment_service import InstallmentService
-
         InstallmentService.auto_generate_installments(
             company=company,
             expense=expense,
@@ -198,39 +237,64 @@ class ExpenseService:
         return expense
 
     @staticmethod
+    def _validate_br_f02(instance: Expense, data: dict[str, Any]) -> None:
+        """BR-F02: despesa vinculada a contrato deve ter mesmo valor."""
+        effective_contract = instance.contract
+        effective_amount = data.get("actual_amount", instance.actual_amount)
+        if effective_contract and effective_amount != effective_contract.total_amount:
+            raise BusinessRuleViolation(
+                detail=(
+                    f"BR-F02: O valor da despesa (R${effective_amount}) "
+                    f"deve ser igual ao valor do contrato "
+                    f"(R${effective_contract.total_amount})."
+                ),
+                code="br_f02_violation",
+            )
+
+    @staticmethod
+    def _resolve_contract(
+        company: Company, instance: Expense, contract_input: Any
+    ) -> None:
+        """Resolve contrato no update e atribui à instância."""
+        if contract_input:
+            if isinstance(contract_input, Contract):
+                instance.contract = contract_input
+            else:
+                try:
+                    instance.contract = Contract.objects.for_tenant(company).get(
+                        uuid=contract_input
+                    )
+                except Contract.DoesNotExist as e:
+                    raise ObjectNotFoundError(
+                        detail="Contrato inválido ou acesso negado.",
+                        code="contract_not_found_or_denied",
+                    ) from e
+        else:
+            instance.contract = None
+
+    @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Expense, data: dict[str, Any]) -> Expense:
         logger.info(
             f"Atualizando Despesa uuid={instance.uuid} por company_id={company.id}"
         )
 
-        # Bloqueio de sequestro de contexto
         data.pop("company", None)
         data.pop("wedding", None)
         data.pop("category", None)
 
-        # Tratamento de troca ou desvinculação de contrato
-        if "contract" in data:
-            contract_input = data.pop("contract")
-            if contract_input:
-                if isinstance(contract_input, Contract):
-                    instance.contract = contract_input
-                else:
-                    try:
-                        instance.contract = Contract.objects.for_tenant(company).get(
-                            uuid=contract_input
-                        )
-                    except Contract.DoesNotExist as e:
-                        raise ObjectNotFoundError(
-                            detail="Contrato inválido ou acesso negado.",
-                            code="contract_not_found_or_denied",
-                        ) from e
-            else:
-                instance.contract = None
+        contract_changed = "contract" in data
+        if contract_changed:
+            ExpenseService._resolve_contract(company, instance, data.pop("contract"))
 
         amount_changed = (
             "actual_amount" in data and data["actual_amount"] != instance.actual_amount
         )
+
+        # BR-F02: validar somente se contract ou actual_amount estão sendo alterados
+        if contract_changed or amount_changed:
+            ExpenseService._validate_br_f02(instance, data)
+
         num_installments = data.pop("num_installments", None)
         first_due_date = data.pop("first_due_date", None)
 
@@ -248,11 +312,7 @@ class ExpenseService:
                     ),
                     code="amount_change_blocked_by_paid",
                 )
-            from apps.finances.services.installment_service import (
-                InstallmentService as IS,
-            )
-
-            IS.redistribute(
+            InstallmentService.redistribute(
                 company=company,
                 expense=instance,
                 num_installments=instance.installments.count(),
@@ -266,7 +326,9 @@ class ExpenseService:
                 ),
             )
         elif num_installments is not None:
-            _handle_redistribute(company, instance, num_installments, first_due_date)
+            ExpenseService._handle_redistribute(
+                company, instance, num_installments, first_due_date
+            )
 
         try:
             instance.save()
@@ -313,32 +375,28 @@ class ExpenseService:
                 code="expense_protected_error",
             ) from e
 
+    @staticmethod
+    def _handle_redistribute(
+        company: Company,
+        expense: Expense,
+        num_installments: int,
+        first_due_date: date | None,
+    ) -> None:
+        if num_installments < 1:
+            raise BusinessRuleViolation(
+                detail="O número de parcelas deve ser pelo menos 1.",
+                code="invalid_installment_number",
+            )
 
-def _handle_redistribute(
-    company: Company,
-    expense: Expense,
-    num_installments: int,
-    first_due_date: date | None,
-) -> None:
-    if num_installments < 1:
-        raise BusinessRuleViolation(
-            detail="O número de parcelas deve ser pelo menos 1.",
-            code="invalid_installment_number",
+        if first_due_date:
+            first_due = first_due_date
+        else:
+            first_inst = expense.installments.order_by("due_date").first()
+            first_due = first_inst.due_date if first_inst else date.today()
+
+        InstallmentService.redistribute(
+            company=company,
+            expense=expense,
+            num_installments=num_installments,
+            first_due_date=first_due,
         )
-
-    if first_due_date:
-        first_due = first_due_date
-    else:
-        first_inst = expense.installments.order_by("due_date").first()
-        first_due = first_inst.due_date if first_inst else date.today()
-
-    from apps.finances.services.installment_service import (
-        InstallmentService,
-    )
-
-    InstallmentService.redistribute(
-        company=company,
-        expense=expense,
-        num_installments=num_installments,
-        first_due_date=first_due,
-    )

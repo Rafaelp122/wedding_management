@@ -49,3 +49,7 @@ This file serves as the Single Source of Truth for AI agents working on this pro
 - **ADRs**: Mudanças estruturais DEVEM gerar um novo arquivo em `docs/ADR/` seguindo a numeração sequencial.
 - **Lint/Format**: Execute `make lint` ou `ruff check .` antes de qualquer push. O pre-commit deve estar ativo.
 - **Secrets**: Nunca commite segredos. Usamos `detect-secrets` para prevenir vazamentos.
+
+## 🤖 AI Agent Guidelines
+
+- **Use subagentes sempre que necessário**: Para buscas complexas, exploração de codebase, análise multi-arquivo, ou tarefas que exijam contexto amplo, delegue aos subagentes disponíveis. Isso mantém a janela de contexto limpa e evita alucinações.

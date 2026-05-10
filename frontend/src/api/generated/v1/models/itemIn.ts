@@ -11,4 +11,5 @@ export interface ItemIn {
   name: string;
   description?: string;
   quantity?: number;
+  acquisition_status?: string;
 }

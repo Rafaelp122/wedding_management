@@ -15,7 +15,7 @@ O sistema tem uma fundação arquitetural sólida (multitenancy, service layer, 
 
 **Além disso, o backend expõe CRUD genérico para entidades que não deveriam ter CRUD.** O caso mais grave é `Installment`: parcelas nunca são criadas manualmente (UC03 diz que são auto-geradas), nunca são deletadas (quebra Tolerância Zero), e "pagar" é uma ação dedicada, não um PATCH genérico. O mesmo vale para `Budget`: criado lazy com o casamento, não se cria nem deleta manualmente.
 
-As automações cross-módulo — que são o diferencial do produto — não existem em nenhuma camada: geração automática de parcelas, marcação OVERDUE, templates de cronograma, bridge Documento→Despesa, sistema de alertas.
+As automações cross-módulo — que são o diferencial do produto — não existem em nenhuma camada: geração automática de parcelas, marcação OVERDUE, templates de cronograma, bridge Contrato→Despesa, sistema de alertas.
 
 **Este roadmap foca exclusivamente nas lacunas.** O que já funciona (CRUD de casamentos e fornecedores, multitenancy, auth JWT, base de modelos) não é repetido aqui.
 
@@ -66,7 +66,8 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 | 2 | UC10 | Dashboard | 50% mock/hardcoded, métricas falsas | 2d |
 | 2 | UC02 | Categorias | Read-only no frontend, sem CRUD | 1d |
 | 3 | UC06 | Itens | Read-only no frontend, sem troca de status | 1.5d |
-| 3 | UC07 | Documentos | Read-only, sem bridge Documento→Despesa, nomes não resolvidos | 3d |
+| 3 | UC07 | Contratos | Read-only, sem bridge Contrato→Despesa, nomes não resolvidos | 3d |
+| T | — | Testes (Sprint 3) | Sem cobertura de teste nos fluxos críticos; bugs em QA manual | 2d |
 | 4 | UC08 | Cronograma | Read-only, sem calendário visual, sem templates, sem eventos PAYMENT auto | 3d |
 | 5 | UC09 | Alertas | Inexistente (backend + frontend) | 4d |
 | 5 | UC11 | Relatórios | Inexistente | 3d |
@@ -250,56 +251,122 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ---
 
-### Sprint 3 — Logística + Bridge Documento→Despesa (UC06 + UC07)
+### Sprint 3 — Logística + Bridge Contrato→Despesa (UC06 + UC07)
 
-**Objetivo:** CRUD de itens, upload de documentos, e automação Documento→Despesa.
+**Objetivo:** CRUD de itens, upload de contratos, e automação Contrato→Despesa.
 
 #### Backend
 
-- [ ] **Endpoint `POST /expenses/from-document/{document_uuid}/`** — recebe UUID de um Contract, retorna payload pré-preenchido para criação de Expense:
-  ```json
-  {
-    "description": "<contract.description>",
-    "actual_amount": "<contract.total_amount>",
-    "supplier_uuid": "<contract.supplier.uuid>",
-    "category_uuid": null,
-    "num_installments": null,
-    "first_due_date": null
-  }
-  ```
-  - **Ref:** UC07 fluxo alternativo "Gerar Despesa a partir de Documento"
+- [x] **Endpoint `POST /expenses/from-document/{uuid}/`** — recebe UUID de um Contract, retorna payload pré-preenchido para criação de Expense.
+  - **Ref:** UC07 fluxo alternativo "Gerar Despesa a partir de Contrato"
   - **Arquivo:** `backend/apps/finances/api/expenses.py`
 
-- [ ] **Validação BR-F02** — `Expense.clean()`: se `contract` não for nulo, `actual_amount` deve ser igual a `contract.total_amount`. `BusinessRuleViolation` se diferente.
+- [x] **Validação BR-F02** — `ExpenseService.create()` e `update()`: se `contract` não for nulo, `actual_amount` deve ser igual a `contract.total_amount`. Validado apenas quando `contract` ou `actual_amount` estão sendo alterados.
   - **Ref:** BR-F02
-  - **Arquivo:** `backend/apps/finances/models/expense.py`
+  - **Arquivo:** `backend/apps/finances/services/expense_service.py`
 
-- [ ] **Presigned URL para upload (opcional)** — se R2 estiver disponível, migrar `Contract.pdf_file` de `FileField` local para presigned URL (ADR-004). Caso contrário, manter `FileField` funcional.
+- [ ] **Presigned URL para upload (opcional)** — se R2 estiver disponível, migrar `Contract.pdf_file` (ADR-004).
   - **Ref:** ADR-004, UC07
+
+- [x] **Upload de arquivo via `POST /contracts/{uuid}/upload/`** — endpoint multipart. Aceita PDF, DOCX, XLSX, imagens.
+  - **Arquivo:** `backend/apps/logistics/api/contracts.py`
+
+- [x] **Remoção de arquivo via `DELETE /contracts/{uuid}/upload/`** — limpa o campo `pdf_file`.
+  - **Arquivo:** `backend/apps/logistics/api/contracts.py`
+
+- [x] **State machines** — `Item.transition_acquisition_status()` (PENDING→IN_PROGRESS→DONE) e `Contract.transition_status()` (DRAFT→PENDING→SIGNED→CANCELED), com endpoints dedicados.
+  - **Arquivos:** `backend/apps/logistics/services/item_service.py`, `contract_service.py`
+
+- [x] **Filtros nos endpoints** — `GET /items/`: `status`, `search`, `contract_id`. `GET /contracts/`: `status`, `supplier_id`.
+  - **Arquivos:** `backend/apps/logistics/api/items.py`, `contracts.py`
+
+- [x] **`ContractOut` enriquecido** — `supplier_name`, `supplier_phone`, `supplier_email`, `has_linked_expense`, `progress_percent`, `expense_uuid`, `has_file`, `file_name`, `addendums_count`, `parent`.
+  - **Arquivo:** `backend/apps/logistics/schemas.py`
+
+- [x] **Aditivos de contrato** — FK `parent` (self-referential) com `PROTECT` e validação anti-circular + cross-wedding.
+  - **Arquivo:** `backend/apps/logistics/models/contract.py`
+
+- [x] **Campo `name` no Contract** — obrigatório, separado de `description` (opcional).
+  - **Arquivo:** `backend/apps/logistics/models/contract.py`
+
+- [x] **Remoção de `budget_category` FK** — desacoplamento Logistics → Finances.
+  - **Arquivos:** `backend/apps/logistics/models/contract.py`, `schemas.py`, `services/contract_service.py`
+
+- [x] **Proteção de deleção** — `ContractService.delete()` bloqueia remoção de contratos com aditivos.
+  - **Arquivo:** `backend/apps/logistics/services/contract_service.py`
 
 #### Frontend
 
-- [ ] **Dialog `CreateItemDialog`** — formulário com: nome, descrição, quantidade, contrato (select, opcional), status de aquisição.
-  - **Ref:** UC06 fluxo principal
-  - **Arquivo:** `frontend/src/features/weddings/components/CreateItemDialog.tsx`
+- [x] **Dialog `CreateItemDialog`** + **`EditItemDialog`** — formulário com nome, descrição, quantidade, contrato, status.
+  - **Arquivos:** `frontend/src/features/weddings/components/CreateItemDialog.tsx`, `EditItemDialog.tsx`
 
-- [ ] **Ação de troca de status do item** — dropdown ou botões para transitar `PENDING → IN_PROGRESS → DONE`.
-  - **Ref:** UC06 fluxo alternativo "Atualizar Status"
+- [x] **Status transitions no `WeddingItemsTable`** — Select inline PENDING→IN_PROGRESS→DONE + dropdown Editar/Excluir.
   - **Arquivo:** `frontend/src/features/weddings/components/WeddingItemsTable.tsx`
 
-- [ ] **Resolver nomes de fornecedores** — em `WeddingVendorsTable`, buscar nomes de suppliers via `useLogisticsSuppliersList` em vez de mostrar UUIDs brutos.
+- [x] **Resolver nomes de fornecedores** — `WeddingVendorsTable` mostra `supplier_name` + barra de progresso + deep links WhatsApp/Email.
   - **Arquivo:** `frontend/src/features/weddings/components/WeddingVendorsTable.tsx`
 
-- [ ] **Upload de PDF no frontend** — dialog ou área de drop para upload de contrato PDF.
-  - **Ref:** UC07 fluxo principal
-  - **Arquivo:** `frontend/src/features/weddings/components/ContractUploadDialog.tsx`
+- [x] **Upload de arquivo no frontend** — `ContractUploadDialog` com input file habilitado. `ContractDetailDialog` com upload condicional (enviar/remover).
+  - **Arquivos:** `ContractUploadDialog.tsx`, `ContractDetailDialog.tsx`
 
-- [ ] **Botão "Gerar Despesa" no documento** — na visualização de um contrato, botão que chama `POST /expenses/from-document/{uuid}/` e abre `CreateExpenseDialog` pré-preenchido.
-  - **Ref:** UC07 fluxo alternativo, automação cross-módulo
-  - **Arquivo:** `frontend/src/features/weddings/components/WeddingVendorsTable.tsx` (ação inline)
+- [x] **Botão "Gerar Despesa"** — dropdown (⋮) na tabela + botão no `ContractDetailDialog` (quando sem despesa vinculada).
+  - **Arquivos:** `WeddingVendorsTable.tsx`, `ContractDetailDialog.tsx`
 
-- [ ] **Disclaimer legal** — texto "Este sistema não substitui consultoria jurídica..." exibido antes do upload de documento.
-  - **Ref:** UC07
+- [x] **Disclaimer legal** — "Este sistema não substitui consultoria jurídica..." no `ContractUploadDialog`.
+  - **Arquivo:** `ContractUploadDialog.tsx`
+
+- [x] **`ContractDetailDialog`** — info, upload/remoção, itens inline, despesa, aditivos, atalho fornecedor.
+  - **Arquivo:** `ContractDetailDialog.tsx`
+
+- [x] **`EditContractDialog`** — edição de metadados (nome, fornecedor, valores, status, parent).
+  - **Arquivo:** `EditContractDialog.tsx`
+
+- [x] **`ContractUploadDialog` com 3 seções opcionais** — documento, itens, despesa (checkbox + parcelas).
+  - **Arquivo:** `ContractUploadDialog.tsx`
+
+- [x] **Aditivos na UI** — tabela indentada, seção no detail, criar aditivo via select parent.
+  - **Arquivos:** `WeddingVendorsTable.tsx`, `ContractDetailDialog.tsx`
+
+- [x] **`SupplierDetailDialog`** — modal reutilizável substituindo `SupplierDetailPage`.
+  - **Arquivo:** `frontend/src/features/suppliers/components/SupplierDetailDialog.tsx`
+
+- [x] **`ConfirmDeleteDialog`** — componente reutilizável com confirmação tipada.
+  - **Arquivo:** `frontend/src/components/ui/confirm-delete-dialog.tsx`
+
+- [x] **Navegação bidirecional** — Contrato↔Despesa (fecha um, abre outro), Contrato→Fornecedor (stacking).
+  - **Arquivo:** `WeddingVendorsItemsTab.tsx`
+
+- [x] **Progresso financeiro dinâmico** — `ContractDetailDialog` busca por UUID com `staleTime: 0`.
+  - **Arquivos:** `ContractDetailDialog.tsx`, `ExpenseDetailDialog.tsx`
+
+- [x] **`ExpenseDetailDialog` com link para contrato** — contrato clicável abre `ContractDetailDialog`.
+  - **Arquivo:** `ExpenseDetailDialog.tsx`
+
+---
+
+### Sprint T — Testes do Sprint 3 (Backend + Frontend)
+
+**Objetivo:** Cobrir com testes automatizados os fluxos críticos implementados no Sprint 3. Bugs de `stopPropagation`, `refetch`, e navegação entre modais encontrados em QA manual indicam que a complexidade cross-module ultrapassou a validação manual.
+
+#### Backend (Pytest + Factoryboy)
+
+- [ ] **State machines** — sucesso e falha nas transições de Item e Contract.
+- [ ] **BR-F02** — bloqueia valor divergente no create, bloqueia troca de contrato, permite alterar descrição.
+- [ ] **`from_document`** — retorna payload correto, UUID inexistente levanta erro.
+- [ ] **Upload/delete** — salva arquivo, limpa, `has_file` e `file_name` no ContractOut.
+- [ ] **Parent FK** — aditivo funciona, circular levanta erro, PROTECT bloqueia deleção.
+- [ ] **Filtros** — `status`, `search`, `contract_id`, `supplier_id`.
+
+#### Frontend (Vitest + RTL + faker)
+
+- [ ] **`WeddingVendorsTable`** — dropdown não dispara `onDetail`, linha clicável, aditivos indentados.
+- [ ] **`WeddingItemsTable`** — Select inline dispara `transitionStatus`, dropdown Editar/Excluir.
+- [ ] **`ContractDetailDialog`** — loading, not-found, seções de despesa/itens/aditivos, upload condicional.
+- [ ] **`ContractUploadDialog`** — submete form, checkbox despesa, itens inline, upload.
+- [ ] **`CreateItemDialog`** — submete com campos corretos.
+- [ ] **`ConfirmDeleteDialog`** — confirmação tipada habilita botão, callback dispara.
+- [ ] **`ExpenseDetailDialog`** — link contrato clicável, pagar/desmarcar parcela.
+- [ ] **`SupplierDetailDialog`** — renderiza dados, WhatsApp link.
 
 ---
 
@@ -436,13 +503,14 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 - [x] `schemas.py`: campos `num_installments`, `first_due_date`; `ExpenseOut` enriquecido com `name`, `category_name`, `contract_description`, `status`, `installments_count`, `paid_installments_count`, `total_paid`, `total_pending` (Sprint 1)
 - [x] `models/expense.py`: campo `name` obrigatório, `description` opcional (Sprint 1)
 - [x] `services/expense_service.py`: `create()` força min 1 parcela; `update()` com redistribute via `_handle_redistribute()` (Sprint 1)
-- [ ] `api/expenses.py`: endpoint `POST /from-document/{uuid}/` (Sprint 3)
-- [ ] `models/expense.py`: validação BR-F02 (Sprint 3)
+- [x] `api/expenses.py`: endpoint `POST /from-document/{uuid}/` (Sprint 3)
+- [x] `models/expense.py`: validação BR-F02 movida para service layer (Sprint 3) — validada em `create()` e `update()` quando `contract` ou `actual_amount` mudam
 - [ ] `models/budget_category.py`: validação BR-F04 (Sprint 6)
 
 ### `backend/apps/logistics/`
 
-- [ ] Upload presigned URL (R2) ou manter FileField funcional (Sprint 3)
+- [x] Upload de arquivos: `POST /contracts/{uuid}/upload/` e `DELETE /contracts/{uuid}/upload/` com `FileField` local (Sprint 3)
+- [ ] Presigned URL (R2) — opcional, ADR-004 (Sprint 3)
 
 ### `backend/apps/scheduler/`
 
@@ -501,7 +569,7 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ```
 Sprint 1 (Financeiro)
-  ├── auto_generate_installments ──► Sprint 3 (Documento→Despesa pode usar)
+  ├── auto_generate_installments ──► Sprint 3 (Contrato→Despesa pode usar)
   ├── mark_overdue_installments ──► Sprint 5 (Notificações de OVERDUE dependem disso)
   └── pay() + BR-F06 ────────────► (independente)
 
@@ -510,9 +578,14 @@ Sprint 2 (Dashboard + Categorias)
   └── BudgetCategory dialogs ──────► Sprint 3 (Itens usam categoria)
 
 Sprint 3 (Logística + Bridge)
-  ├── CreateItemDialog ────────────► (independente)
-  ├── Documento→Despesa ──────────► usa ExpenseService (Sprint 1)
-  └── resolve supplier names ─────► (independente)
+  ├── CreateItemDialog ────────► Sprint T (Testes cobrem)
+  ├── Contrato→Despesa ────────► usa ExpenseService (Sprint 1)
+  └── resolve supplier names ──► (independente)
+
+Sprint T (Testes do Sprint 3)
+  ├── Testes backend ──────────► validam state machines, BR-F02, upload, parent FK, filtros
+  ├── Testes frontend ─────────► validam dialogs, navegação, tabelas, confirmação de deleção
+  └── Sem dependências externas ► (usa factories e mocks existentes)
 
 Sprint 4 (Cronograma)
   ├── calendário visual ───────────► usa eventos CRUD (precisa existir)
@@ -532,6 +605,54 @@ Sprint 6 (Polish)
 
 ---
 
+## Sprint 3 — Resumo de Entregas
+
+### ✅ Concluído (planejado)
+
+| # | Item | Tipo |
+|---|------|------|
+| 1 | `POST /expenses/from-document/{uuid}/` | Backend |
+| 2 | BR-F02 na service layer (create + update) | Backend |
+| 3 | `CreateItemDialog` + `EditItemDialog` | Frontend |
+| 4 | Status transitions no `WeddingItemsTable` | Frontend |
+| 5 | Nomes de fornecedores no `WeddingVendorsTable` | Frontend |
+| 6 | Upload de arquivos (endpoint + input) | Back + Front |
+| 7 | Botão "Gerar Despesa" (tabela + detail) | Frontend |
+| 8 | Disclaimer legal | Frontend |
+
+### ➕ Além do planejado
+
+| # | Item |
+|---|------|
+| 1 | `Contract.name` — campo obrigatório separado de `description` |
+| 2 | Aditivos — FK `parent` (self-referential, PROTECT, anti-circular, cross-wedding) |
+| 3 | Aditivos na UI — tabela indentada, seção no detail, criar via select parent |
+| 4 | State machines — Item e Contract com endpoints `transition-status` |
+| 5 | Filtros — `status`, `search`, `contract_id`, `supplier_id` |
+| 6 | `ContractOut` enriquecido — 10 campos via annotation |
+| 7 | `ContractDetailDialog` — upload condicional, itens inline, despesa, aditivos, fornecedor |
+| 8 | `SupplierDetailDialog` — modal reutilizável (substituiu `SupplierDetailPage`) |
+| 9 | `ConfirmDeleteDialog` — componente reutilizável com confirmação tipada |
+| 10 | Navegação bidirecional contrato↔despesa, contrato→fornecedor |
+| 11 | Progresso financeiro dinâmico (`staleTime:0` + invalidate) |
+| 12 | `ContractUploadDialog` — 3 seções: documento, itens, despesa |
+| 13 | Deep links WhatsApp/Email em suppliers e contratos |
+| 14 | `DELETE /contracts/{uuid}/upload/` — remover arquivo |
+| 15 | Remoção de `budget_category` FK — desacoplamento Logistics → Finances |
+| 16 | `ProtectedError` + validação anti-circular no `parent` FK |
+| 17 | React.memo em 34 componentes + MetricCard extraction |
+
+### ⬜ Pendente
+
+| # | Item | Prioridade |
+|---|------|-----------|
+| 1 | Download do arquivo do contrato | Alta |
+| 2 | Presigned URL / R2 | Baixa |
+| 3 | Agregação visual do total (contrato + aditivos) | Média |
+| 4 | Testes (back + front) — Sprint T | Alta |
+
+---
+
 ## 6. Referências
 
 - [Casos de Uso](use-cases/index.md)
@@ -544,7 +665,7 @@ Sprint 6 (Polish)
 
 ---
 
-**Versão:** 1.3 (Sprints 1 e 2 concluídos com extras documentados)
+**Versão:** 1.5 (Sprint 3 concluído, Sprint T adicionado, extras documentados)
 **Criado em:** 3 de maio de 2026
 **Atualizado em:** 9 de maio de 2026
 **Responsável:** Rafael

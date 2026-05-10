@@ -5,7 +5,12 @@ from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.expense import Expense
-from apps.finances.schemas import ExpenseIn, ExpenseOut, ExpensePatchIn
+from apps.finances.schemas import (
+    ExpenseFromDocumentOut,
+    ExpenseIn,
+    ExpenseOut,
+    ExpensePatchIn,
+)
 from apps.finances.services.expense_service import ExpenseService
 from apps.users.types import AuthRequest
 
@@ -48,7 +53,7 @@ def create_expense(request: AuthRequest, payload: ExpenseIn) -> tuple[int, Expen
     Aprova lançamento final nos tetos das divisões e categorias.
     Consome o limite orçamentário previsto inicial geral da categoria.
     """
-    return 201, ExpenseService.create(request.user.company, payload.dict())
+    return 201, ExpenseService.create(request.user.company, payload.model_dump())
 
 
 @expenses_router.patch(
@@ -64,7 +69,7 @@ def update_expense(
     """
     instance = ExpenseService.get(request.user.company, uuid)
     return ExpenseService.update(
-        request.user.company, instance, payload.dict(exclude_unset=True)
+        request.user.company, instance, payload.model_dump(exclude_unset=True)
     )
 
 
@@ -80,3 +85,19 @@ def delete_expense(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     instance = ExpenseService.get(request.user.company, uuid)
     ExpenseService.delete(request.user.company, instance)
     return 204, None
+
+
+@expenses_router.post(
+    "/from-document/{uuid:uuid}/",
+    response={200: ExpenseFromDocumentOut, **READ_ERROR_RESPONSES},
+    operation_id="finances_expenses_from_document",
+)
+def from_document(request: AuthRequest, uuid: UUID4) -> ExpenseFromDocumentOut:
+    """
+    Retorna sugestão de payload para criar despesa a partir de um contrato.
+    Pré-preenche valores, descrição e fornecedor do documento de referência.
+    """
+    data = ExpenseService.from_document(
+        company=request.user.company, contract_uuid=uuid
+    )
+    return ExpenseFromDocumentOut(**data)

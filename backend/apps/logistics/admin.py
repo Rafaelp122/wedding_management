@@ -43,7 +43,6 @@ class ContractAdmin(admin.ModelAdmin):
     list_display = [
         "wedding",
         "supplier",
-        "budget_category",
         "status",
         "total_amount",
         "signed_date",

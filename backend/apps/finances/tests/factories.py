@@ -55,7 +55,9 @@ class ExpenseFactory(factory.django.DjangoModelFactory):
     )
 
     name = factory.Faker("sentence", nb_words=3)
-    actual_amount = Decimal("1000.00")
+    actual_amount = factory.LazyAttribute(
+        lambda o: o.contract.total_amount if o.contract else Decimal("5000.00")
+    )
     description = factory.Faker("sentence")
     estimated_amount = factory.Faker(
         "pydecimal", left_digits=5, right_digits=2, positive=True

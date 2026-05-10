@@ -9,13 +9,23 @@ export interface ContractOut {
   uuid: string;
   wedding: string;
   supplier: string;
-  budget_category?: string | null;
+  name?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_amount: string;
   status: string;
-  description: string;
+  description?: string;
   expiration_date?: string | null;
   signed_date?: string | null;
   created_at: string;
   updated_at: string;
+  supplier_name?: string;
+  supplier_phone?: string;
+  supplier_email?: string;
+  has_linked_expense?: boolean;
+  progress_percent?: number;
+  expense_uuid?: string | null;
+  parent?: string | null;
+  addendums_count?: number;
+  has_file?: boolean;
+  file_name?: string | null;
 }

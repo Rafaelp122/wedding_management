@@ -384,8 +384,8 @@ class TestExpenseServiceContractIntegration:
             "category": category.uuid,
             "contract": contract,
             "name": "Despesa com contrato",
-            "estimated_amount": Decimal("3000.00"),
-            "actual_amount": Decimal("3000.00"),
+            "estimated_amount": Decimal("5000.00"),
+            "actual_amount": Decimal("5000.00"),
         }
 
         expense = ExpenseService.create(user.company, data)
@@ -404,12 +404,12 @@ class TestExpenseServiceContractIntegration:
             wedding=category.wedding,
             category=category,
             contract=contract1,
-            actual_amount=Decimal("500.00"),
+            actual_amount=contract1.total_amount,
         )
         InstallmentFactory(
             expense=expense,
             installment_number=1,
-            amount=Decimal("500.00"),
+            amount=contract1.total_amount,
         )
 
         updated = ExpenseService.update(
@@ -430,12 +430,12 @@ class TestExpenseServiceContractIntegration:
             wedding=category.wedding,
             category=category,
             contract=contract,
-            actual_amount=Decimal("500.00"),
+            actual_amount=contract.total_amount,
         )
         InstallmentFactory(
             expense=expense,
             installment_number=1,
-            amount=Decimal("500.00"),
+            amount=contract.total_amount,
         )
 
         updated = ExpenseService.update(user.company, expense, {"contract": None})

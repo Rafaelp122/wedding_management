@@ -24,11 +24,14 @@ import type {
   ContractIn,
   ContractOut,
   ContractPatchIn,
+  ContractStatusTransitionIn,
   ErrorResponse,
   ItemIn,
   ItemOut,
   ItemPatchIn,
+  ItemStatusTransitionIn,
   LogisticsContractsListParams,
+  LogisticsContractsUploadBody,
   LogisticsItemsListParams,
   LogisticsSuppliersListParams,
   PagedContractOut,
@@ -651,7 +654,7 @@ export const useLogisticsSuppliersDelete = <
 };
 /**
  * Lista os contratos de fornecedores associados aos casamentos do Planner.
-Permite filtrar por casamento.
+Permite filtrar por casamento, status e fornecedor.
  * @summary List Contracts
  */
 export const logisticsContractsList = (
@@ -1256,8 +1259,292 @@ export const useLogisticsContractsDelete = <
   );
 };
 /**
+ * Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+ * @summary Upload Contract File
+ */
+export const logisticsContractsUpload = (
+  uuid: string,
+  logisticsContractsUploadBody: LogisticsContractsUploadBody,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  const formData = new FormData();
+  formData.append(`pdf_file`, logisticsContractsUploadBody.pdf_file);
+
+  return customInstance<ContractOut>(
+    {
+      url: `/api/v1/logistics/contracts/${uuid}/upload/`,
+      method: "POST",
+      data: formData,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getLogisticsContractsUploadMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logisticsContractsUpload>>,
+    TError,
+    { uuid: string; data: LogisticsContractsUploadBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logisticsContractsUpload>>,
+  TError,
+  { uuid: string; data: LogisticsContractsUploadBody },
+  TContext
+> => {
+  const mutationKey = ["logisticsContractsUpload"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logisticsContractsUpload>>,
+    { uuid: string; data: LogisticsContractsUploadBody }
+  > = (props) => {
+    const { uuid, data } = props ?? {};
+
+    return logisticsContractsUpload(uuid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogisticsContractsUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsContractsUpload>>
+>;
+export type LogisticsContractsUploadMutationBody = LogisticsContractsUploadBody;
+export type LogisticsContractsUploadMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Upload Contract File
+ */
+export const useLogisticsContractsUpload = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof logisticsContractsUpload>>,
+      TError,
+      { uuid: string; data: LogisticsContractsUploadBody },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof logisticsContractsUpload>>,
+  TError,
+  { uuid: string; data: LogisticsContractsUploadBody },
+  TContext
+> => {
+  return useMutation(
+    getLogisticsContractsUploadMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Remove o arquivo vinculado ao contrato.
+ * @summary Delete Contract File
+ */
+export const logisticsContractsDeleteUpload = (
+  uuid: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<void>(
+    {
+      url: `/api/v1/logistics/contracts/${uuid}/upload/`,
+      method: "DELETE",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getLogisticsContractsDeleteUploadMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logisticsContractsDeleteUpload>>,
+    TError,
+    { uuid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logisticsContractsDeleteUpload>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  const mutationKey = ["logisticsContractsDeleteUpload"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logisticsContractsDeleteUpload>>,
+    { uuid: string }
+  > = (props) => {
+    const { uuid } = props ?? {};
+
+    return logisticsContractsDeleteUpload(uuid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogisticsContractsDeleteUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsContractsDeleteUpload>>
+>;
+
+export type LogisticsContractsDeleteUploadMutationError =
+  ErrorType<ErrorResponse>;
+
+/**
+ * @summary Delete Contract File
+ */
+export const useLogisticsContractsDeleteUpload = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof logisticsContractsDeleteUpload>>,
+      TError,
+      { uuid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof logisticsContractsDeleteUpload>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  return useMutation(
+    getLogisticsContractsDeleteUploadMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Transita o status do contrato (DRAFT → PENDING → SIGNED → CANCELED).
+ * @summary Transition Contract Status
+ */
+export const logisticsContractsTransitionStatus = (
+  uuid: string,
+  contractStatusTransitionIn: ContractStatusTransitionIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<ContractOut>(
+    {
+      url: `/api/v1/logistics/contracts/${uuid}/transition-status/`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: contractStatusTransitionIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getLogisticsContractsTransitionStatusMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logisticsContractsTransitionStatus>>,
+    TError,
+    { uuid: string; data: ContractStatusTransitionIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logisticsContractsTransitionStatus>>,
+  TError,
+  { uuid: string; data: ContractStatusTransitionIn },
+  TContext
+> => {
+  const mutationKey = ["logisticsContractsTransitionStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logisticsContractsTransitionStatus>>,
+    { uuid: string; data: ContractStatusTransitionIn }
+  > = (props) => {
+    const { uuid, data } = props ?? {};
+
+    return logisticsContractsTransitionStatus(uuid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogisticsContractsTransitionStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsContractsTransitionStatus>>
+>;
+export type LogisticsContractsTransitionStatusMutationBody =
+  ContractStatusTransitionIn;
+export type LogisticsContractsTransitionStatusMutationError =
+  ErrorType<ErrorResponse>;
+
+/**
+ * @summary Transition Contract Status
+ */
+export const useLogisticsContractsTransitionStatus = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof logisticsContractsTransitionStatus>>,
+      TError,
+      { uuid: string; data: ContractStatusTransitionIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof logisticsContractsTransitionStatus>>,
+  TError,
+  { uuid: string; data: ContractStatusTransitionIn },
+  TContext
+> => {
+  return useMutation(
+    getLogisticsContractsTransitionStatusMutationOptions(options),
+    queryClient,
+  );
+};
+/**
  * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
-Permite filtrar por casamento.
+Permite filtrar por casamento, status de aquisição, busca textual e contrato.
  * @summary List Items
  */
 export const logisticsItemsList = (
@@ -1860,6 +2147,101 @@ export const useLogisticsItemsDelete = <
 > => {
   return useMutation(
     getLogisticsItemsDeleteMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Transita o status de aquisição de um item logístico (PENDING → IN_PROGRESS → DONE).
+ * @summary Transition Item Status
+ */
+export const logisticsItemsTransitionStatus = (
+  uuid: string,
+  itemStatusTransitionIn: ItemStatusTransitionIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<ItemOut>(
+    {
+      url: `/api/v1/logistics/items/${uuid}/transition-status/`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: itemStatusTransitionIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getLogisticsItemsTransitionStatusMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logisticsItemsTransitionStatus>>,
+    TError,
+    { uuid: string; data: ItemStatusTransitionIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logisticsItemsTransitionStatus>>,
+  TError,
+  { uuid: string; data: ItemStatusTransitionIn },
+  TContext
+> => {
+  const mutationKey = ["logisticsItemsTransitionStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logisticsItemsTransitionStatus>>,
+    { uuid: string; data: ItemStatusTransitionIn }
+  > = (props) => {
+    const { uuid, data } = props ?? {};
+
+    return logisticsItemsTransitionStatus(uuid, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogisticsItemsTransitionStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsItemsTransitionStatus>>
+>;
+export type LogisticsItemsTransitionStatusMutationBody = ItemStatusTransitionIn;
+export type LogisticsItemsTransitionStatusMutationError =
+  ErrorType<ErrorResponse>;
+
+/**
+ * @summary Transition Item Status
+ */
+export const useLogisticsItemsTransitionStatus = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof logisticsItemsTransitionStatus>>,
+      TError,
+      { uuid: string; data: ItemStatusTransitionIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof logisticsItemsTransitionStatus>>,
+  TError,
+  { uuid: string; data: ItemStatusTransitionIn },
+  TContext
+> => {
+  return useMutation(
+    getLogisticsItemsTransitionStatusMutationOptions(options),
     queryClient,
   );
 };

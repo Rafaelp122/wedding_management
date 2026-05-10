@@ -20,20 +20,14 @@ register(ItemFactory)
 
 
 @pytest.fixture
-def active_contract(
-    db, supplier_factory, wedding_factory, budget_category_factory, contract_factory
-):
+def active_contract(db, supplier_factory, wedding_factory, contract_factory):
     """Fixture que devolve um contrato assinado e pronto para execução."""
     wedding = wedding_factory.create()
     supplier = supplier_factory.create(company=wedding.company)
-    budget_cat = budget_category_factory.create(
-        budget__wedding=wedding, wedding=wedding, company=wedding.company
-    )
     return contract_factory.create(
         status="SIGNED",
         wedding=wedding,
         supplier=supplier,
-        budget_category=budget_cat,
         description="Contrato de teste",
     )
 

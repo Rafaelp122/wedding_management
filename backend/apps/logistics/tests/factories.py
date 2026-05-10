@@ -60,8 +60,7 @@ class ContractFactory(factory.django.DjangoModelFactory):
         company=factory.SelfAttribute("..company"),
     )
 
-    budget_category = None
-
+    name = factory.Faker("sentence", nb_words=3)
     description = factory.Faker("paragraph")
     total_amount = Decimal("5000.00")
 

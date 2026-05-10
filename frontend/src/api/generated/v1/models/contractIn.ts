@@ -8,8 +8,9 @@
 export interface ContractIn {
   wedding: string;
   supplier: string;
-  budget_category: string;
+  name: string;
   total_amount: number | string;
   status?: string;
   description?: string;
+  parent?: string | null;
 }

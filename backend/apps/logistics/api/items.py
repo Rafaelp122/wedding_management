@@ -5,7 +5,12 @@ from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.logistics.models.item import Item
-from apps.logistics.schemas import ItemIn, ItemOut, ItemPatchIn
+from apps.logistics.schemas import (
+    ItemIn,
+    ItemOut,
+    ItemPatchIn,
+    ItemStatusTransitionIn,
+)
 from apps.logistics.services.item_service import ItemService
 from apps.users.auth import require_user
 from apps.users.types import AuthRequest
@@ -16,13 +21,25 @@ items_router = Router(tags=["Logistics"])
 
 @items_router.get("/", response=list[ItemOut], operation_id="logistics_items_list")
 @paginate
-def list_items(request: AuthRequest, wedding_id: UUID4 | None = None) -> QuerySet[Item]:
+def list_items(
+    request: AuthRequest,
+    wedding_id: UUID4 | None = None,
+    status: str | None = None,
+    search: str | None = None,
+    contract_id: UUID4 | None = None,
+) -> QuerySet[Item]:
     """
     Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
-    Permite filtrar por casamento.
+    Permite filtrar por casamento, status de aquisição, busca textual e contrato.
     """
     user = require_user(request.user)
-    return ItemService.list(company=user.company, wedding_id=wedding_id)
+    return ItemService.list(
+        company=user.company,
+        wedding_id=wedding_id,
+        status=status,
+        search=search,
+        contract_id=contract_id,
+    )
 
 
 @items_router.get(
@@ -82,3 +99,23 @@ def delete_item(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     item = ItemService.get(company=user.company, uuid=uuid)
     ItemService.delete(company=user.company, instance=item)
     return 204, None
+
+
+@items_router.post(
+    "/{uuid:uuid}/transition-status/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_transition_status",
+)
+def transition_item_status(
+    request: AuthRequest, uuid: UUID4, payload: ItemStatusTransitionIn
+) -> Item:
+    """
+    Transita o status de aquisição de um item logístico (PENDING → IN_PROGRESS → DONE).
+    """
+    user = require_user(request.user)
+    item = ItemService.get(company=user.company, uuid=uuid)
+    return ItemService.transition_status(
+        company=user.company,
+        instance=item,
+        new_status=payload.acquisition_status,
+    )

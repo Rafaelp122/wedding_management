@@ -14,21 +14,20 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         today = date.today()
-        overdue_qs = Installment.objects.filter(
+        count = Installment.objects.filter(
             status=Installment.StatusChoices.PENDING,
             due_date__lt=today,
-        )
+        ).count()
 
-        count = overdue_qs.count()
         if count == 0:
             self.stdout.write(self.style.SUCCESS("Nenhuma parcela vencida encontrada."))
             return
 
-        updated = 0
-        for installment in overdue_qs:
-            installment.status = Installment.StatusChoices.OVERDUE
-            installment.save()
-            updated += 1
+        updated = Installment.objects.filter(
+            status=Installment.StatusChoices.PENDING,
+            due_date__lt=today,
+        ).update(status=Installment.StatusChoices.OVERDUE)
+
         self.stdout.write(
             self.style.WARNING(
                 f"{updated} parcela(s) marcada(s) como OVERDUE "

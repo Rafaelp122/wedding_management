@@ -12,6 +12,7 @@ import type { RequestHandlerOptions } from "msw";
 import type {
   BudgetCategoryOut,
   BudgetOut,
+  ExpenseFromDocumentOut,
   ExpenseOut,
   InstallmentOut,
   PagedBudgetCategoryOut,
@@ -323,6 +324,34 @@ export const getFinancesExpensesUpdateResponseMock = (
   paid_installments_count: faker.number.int(),
   total_paid: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
   total_pending: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  ...overrideResponse,
+});
+
+export const getFinancesExpensesFromDocumentResponseMock = (
+  overrideResponse: Partial<Extract<ExpenseFromDocumentOut, object>> = {},
+): ExpenseFromDocumentOut => ({
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  description: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  contract: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  actual_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  category_uuid: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  num_installments: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
+  first_due_date: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 10),
+      null,
+    ]),
+    undefined,
+  ]),
   ...overrideResponse,
 });
 
@@ -797,6 +826,30 @@ export const getFinancesExpensesDeleteMockHandler = (
   );
 };
 
+export const getFinancesExpensesFromDocumentMockHandler = (
+  overrideResponse?:
+    | ExpenseFromDocumentOut
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<ExpenseFromDocumentOut> | ExpenseFromDocumentOut),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/api/v1/finances/expenses/from-document/:uuid/",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getFinancesExpensesFromDocumentResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getFinancesInstallmentsListMockHandler = (
   overrideResponse?:
     | PagedInstallmentOut
@@ -931,6 +984,7 @@ export const getFinancesMock = () => [
   getFinancesExpensesReadMockHandler(),
   getFinancesExpensesUpdateMockHandler(),
   getFinancesExpensesDeleteMockHandler(),
+  getFinancesExpensesFromDocumentMockHandler(),
   getFinancesInstallmentsListMockHandler(),
   getFinancesInstallmentsReadMockHandler(),
   getFinancesInstallmentsMarkAsPaidMockHandler(),

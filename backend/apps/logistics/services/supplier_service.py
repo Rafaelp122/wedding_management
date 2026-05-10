@@ -26,7 +26,7 @@ class SupplierService:
 
     @staticmethod
     def list(company: Company) -> QuerySet[Supplier]:
-        return Supplier.objects.for_tenant(company)
+        return Supplier.objects.for_tenant(company).select_related("company")
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Supplier:

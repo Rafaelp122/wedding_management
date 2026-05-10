@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "build": {
+      "mode": "primary",
+      "model": "deepseek/deepseek-v4-pro",
+      "temperature": 0.2,
+      "prompt": "{file:./.opencode/prompts/build.txt}",
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push*": "ask"
+        }
+      }
+    },
+    "plan": {
+      "mode": "primary",
+      "model": "deepseek/deepseek-v4-pro",
+      "temperature": 0.1,
+      "permission": {
+        "edit": "ask",
+        "write": "ask",
+        "bash": "ask",
+        "task": {
+          "*": "deny"
+        }
+      }
+    }
+  }
+}
