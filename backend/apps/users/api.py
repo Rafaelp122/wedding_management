@@ -1,21 +1,19 @@
-from typing import Any, cast
+from typing import Any
 
-from django.contrib.auth import authenticate
 from django.http import HttpRequest
 from ninja import Router
-from ninja.errors import HttpError
 from ninja_jwt.schema import (
     TokenRefreshInputSchema,
     TokenRefreshOutputSchema,
     TokenVerifyInputSchema,
 )
-from ninja_jwt.tokens import RefreshToken
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.core.schemas import ErrorResponse
 
-from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserDataOut, UserOut
+from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserOut
 from .services.registration_service import RegistrationService
+from .services.token_service import TokenService
 
 
 router = Router(tags=["auth"])
@@ -54,22 +52,10 @@ def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
     Se a conta estiver inativa ou as credenciais forem inválidas, retorna erro 401.
     No sucesso, retorna os tokens JWT e os dados básicos do usuário logado.
     """
-    user = authenticate(request, username=payload.email, password=payload.password)
-
-    if user is None:
-        raise HttpError(401, "Credenciais inválidas ou conta desativada.")
-
-    refresh = cast(Any, RefreshToken.for_user(user))
-
-    return TokenOut(
-        access=str(refresh.access_token),
-        refresh=str(refresh),
-        user=UserDataOut(
-            id=user.id,
-            email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
-        ),
+    return TokenService.obtain(
+        email=payload.email,
+        password=payload.password,
+        request=request,
     )
 
 
