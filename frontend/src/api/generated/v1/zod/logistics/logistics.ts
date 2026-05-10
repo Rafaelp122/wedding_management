@@ -109,7 +109,7 @@ export const LogisticsSuppliersDeleteParams = zod.object({
 
 /**
  * Lista os contratos de fornecedores associados aos casamentos do Planner.
-Permite filtrar por casamento.
+Permite filtrar por casamento, status e fornecedor.
  * @summary List Contracts
  */
 export const logisticsContractsListQueryLimitDefault = 100;
@@ -119,6 +119,8 @@ export const logisticsContractsListQueryOffsetMin = 0;
 
 export const LogisticsContractsListQueryParams = zod.object({
   wedding_id: zod.union([zod.string(), zod.null()]).optional(),
+  status: zod.union([zod.string(), zod.null()]).optional(),
+  supplier_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(logisticsContractsListQueryLimitDefault),
   offset: zod
     .number()
@@ -126,8 +128,17 @@ export const LogisticsContractsListQueryParams = zod.object({
     .default(logisticsContractsListQueryOffsetDefault),
 });
 
+export const logisticsContractsListResponseItemsItemNameDefault = ``;
 export const logisticsContractsListResponseItemsItemTotalAmountRegExp =
   new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const logisticsContractsListResponseItemsItemDescriptionDefault = ``;
+export const logisticsContractsListResponseItemsItemSupplierNameDefault = ``;
+export const logisticsContractsListResponseItemsItemSupplierPhoneDefault = ``;
+export const logisticsContractsListResponseItemsItemSupplierEmailDefault = ``;
+export const logisticsContractsListResponseItemsItemHasLinkedExpenseDefault = false;
+export const logisticsContractsListResponseItemsItemProgressPercentDefault = 0;
+export const logisticsContractsListResponseItemsItemAddendumsCountDefault = 0;
+export const logisticsContractsListResponseItemsItemHasFileDefault = false;
 
 export const LogisticsContractsListResponse = zod.object({
   items: zod.array(
@@ -135,16 +146,46 @@ export const LogisticsContractsListResponse = zod.object({
       uuid: zod.string(),
       wedding: zod.string(),
       supplier: zod.string(),
-      budget_category: zod.union([zod.string(), zod.null()]).optional(),
+      name: zod
+        .string()
+        .default(logisticsContractsListResponseItemsItemNameDefault),
       total_amount: zod
         .string()
         .regex(logisticsContractsListResponseItemsItemTotalAmountRegExp),
       status: zod.string(),
-      description: zod.string(),
+      description: zod
+        .string()
+        .default(logisticsContractsListResponseItemsItemDescriptionDefault),
       expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
       signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
       created_at: zod.iso.datetime({}),
       updated_at: zod.iso.datetime({}),
+      supplier_name: zod
+        .string()
+        .default(logisticsContractsListResponseItemsItemSupplierNameDefault),
+      supplier_phone: zod
+        .string()
+        .default(logisticsContractsListResponseItemsItemSupplierPhoneDefault),
+      supplier_email: zod
+        .string()
+        .default(logisticsContractsListResponseItemsItemSupplierEmailDefault),
+      has_linked_expense: zod
+        .boolean()
+        .default(
+          logisticsContractsListResponseItemsItemHasLinkedExpenseDefault,
+        ),
+      progress_percent: zod
+        .number()
+        .default(logisticsContractsListResponseItemsItemProgressPercentDefault),
+      expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
+      parent: zod.union([zod.string(), zod.null()]).optional(),
+      addendums_count: zod
+        .number()
+        .default(logisticsContractsListResponseItemsItemAddendumsCountDefault),
+      has_file: zod
+        .boolean()
+        .default(logisticsContractsListResponseItemsItemHasFileDefault),
+      file_name: zod.union([zod.string(), zod.null()]).optional(),
     }),
   ),
   count: zod.number(),
@@ -163,7 +204,7 @@ export const logisticsContractsCreateBodyDescriptionDefault = ``;
 export const LogisticsContractsCreateBody = zod.object({
   wedding: zod.string(),
   supplier: zod.string(),
-  budget_category: zod.string(),
+  name: zod.string(),
   total_amount: zod.union([
     zod.number(),
     zod.string().regex(logisticsContractsCreateBodyTotalAmountTwoRegExp),
@@ -172,6 +213,7 @@ export const LogisticsContractsCreateBody = zod.object({
   description: zod
     .string()
     .default(logisticsContractsCreateBodyDescriptionDefault),
+  parent: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 /**
@@ -182,24 +224,57 @@ export const LogisticsContractsReadParams = zod.object({
   uuid: zod.string(),
 });
 
+export const logisticsContractsReadResponseNameDefault = ``;
 export const logisticsContractsReadResponseTotalAmountRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const logisticsContractsReadResponseDescriptionDefault = ``;
+export const logisticsContractsReadResponseSupplierNameDefault = ``;
+export const logisticsContractsReadResponseSupplierPhoneDefault = ``;
+export const logisticsContractsReadResponseSupplierEmailDefault = ``;
+export const logisticsContractsReadResponseHasLinkedExpenseDefault = false;
+export const logisticsContractsReadResponseProgressPercentDefault = 0;
+export const logisticsContractsReadResponseAddendumsCountDefault = 0;
+export const logisticsContractsReadResponseHasFileDefault = false;
 
 export const LogisticsContractsReadResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   supplier: zod.string(),
-  budget_category: zod.union([zod.string(), zod.null()]).optional(),
+  name: zod.string().default(logisticsContractsReadResponseNameDefault),
   total_amount: zod
     .string()
     .regex(logisticsContractsReadResponseTotalAmountRegExp),
   status: zod.string(),
-  description: zod.string(),
+  description: zod
+    .string()
+    .default(logisticsContractsReadResponseDescriptionDefault),
   expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
+  supplier_name: zod
+    .string()
+    .default(logisticsContractsReadResponseSupplierNameDefault),
+  supplier_phone: zod
+    .string()
+    .default(logisticsContractsReadResponseSupplierPhoneDefault),
+  supplier_email: zod
+    .string()
+    .default(logisticsContractsReadResponseSupplierEmailDefault),
+  has_linked_expense: zod
+    .boolean()
+    .default(logisticsContractsReadResponseHasLinkedExpenseDefault),
+  progress_percent: zod
+    .number()
+    .default(logisticsContractsReadResponseProgressPercentDefault),
+  expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
+  parent: zod.union([zod.string(), zod.null()]).optional(),
+  addendums_count: zod
+    .number()
+    .default(logisticsContractsReadResponseAddendumsCountDefault),
+  has_file: zod.boolean().default(logisticsContractsReadResponseHasFileDefault),
+  file_name: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 /**
@@ -217,7 +292,7 @@ export const logisticsContractsUpdateBodyTotalAmountTwoRegExp = new RegExp(
 export const LogisticsContractsUpdateBody = zod.object({
   wedding: zod.union([zod.string(), zod.null()]).optional(),
   supplier: zod.union([zod.string(), zod.null()]).optional(),
-  budget_category: zod.union([zod.string(), zod.null()]).optional(),
+  name: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
     .union([
       zod.number(),
@@ -226,26 +301,63 @@ export const LogisticsContractsUpdateBody = zod.object({
     ])
     .optional(),
   status: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod.union([zod.string(), zod.null()]).optional(),
+  parent: zod.union([zod.string(), zod.null()]).optional(),
 });
 
+export const logisticsContractsUpdateResponseNameDefault = ``;
 export const logisticsContractsUpdateResponseTotalAmountRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const logisticsContractsUpdateResponseDescriptionDefault = ``;
+export const logisticsContractsUpdateResponseSupplierNameDefault = ``;
+export const logisticsContractsUpdateResponseSupplierPhoneDefault = ``;
+export const logisticsContractsUpdateResponseSupplierEmailDefault = ``;
+export const logisticsContractsUpdateResponseHasLinkedExpenseDefault = false;
+export const logisticsContractsUpdateResponseProgressPercentDefault = 0;
+export const logisticsContractsUpdateResponseAddendumsCountDefault = 0;
+export const logisticsContractsUpdateResponseHasFileDefault = false;
 
 export const LogisticsContractsUpdateResponse = zod.object({
   uuid: zod.string(),
   wedding: zod.string(),
   supplier: zod.string(),
-  budget_category: zod.union([zod.string(), zod.null()]).optional(),
+  name: zod.string().default(logisticsContractsUpdateResponseNameDefault),
   total_amount: zod
     .string()
     .regex(logisticsContractsUpdateResponseTotalAmountRegExp),
   status: zod.string(),
-  description: zod.string(),
+  description: zod
+    .string()
+    .default(logisticsContractsUpdateResponseDescriptionDefault),
   expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
+  supplier_name: zod
+    .string()
+    .default(logisticsContractsUpdateResponseSupplierNameDefault),
+  supplier_phone: zod
+    .string()
+    .default(logisticsContractsUpdateResponseSupplierPhoneDefault),
+  supplier_email: zod
+    .string()
+    .default(logisticsContractsUpdateResponseSupplierEmailDefault),
+  has_linked_expense: zod
+    .boolean()
+    .default(logisticsContractsUpdateResponseHasLinkedExpenseDefault),
+  progress_percent: zod
+    .number()
+    .default(logisticsContractsUpdateResponseProgressPercentDefault),
+  expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
+  parent: zod.union([zod.string(), zod.null()]).optional(),
+  addendums_count: zod
+    .number()
+    .default(logisticsContractsUpdateResponseAddendumsCountDefault),
+  has_file: zod
+    .boolean()
+    .default(logisticsContractsUpdateResponseHasFileDefault),
+  file_name: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 /**
@@ -257,8 +369,151 @@ export const LogisticsContractsDeleteParams = zod.object({
 });
 
 /**
+ * Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+ * @summary Upload Contract File
+ */
+export const LogisticsContractsUploadParams = zod.object({
+  uuid: zod.string(),
+});
+
+export const LogisticsContractsUploadBody = zod.object({
+  pdf_file: zod.instanceof(File),
+});
+
+export const logisticsContractsUploadResponseNameDefault = ``;
+export const logisticsContractsUploadResponseTotalAmountRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
+export const logisticsContractsUploadResponseDescriptionDefault = ``;
+export const logisticsContractsUploadResponseSupplierNameDefault = ``;
+export const logisticsContractsUploadResponseSupplierPhoneDefault = ``;
+export const logisticsContractsUploadResponseSupplierEmailDefault = ``;
+export const logisticsContractsUploadResponseHasLinkedExpenseDefault = false;
+export const logisticsContractsUploadResponseProgressPercentDefault = 0;
+export const logisticsContractsUploadResponseAddendumsCountDefault = 0;
+export const logisticsContractsUploadResponseHasFileDefault = false;
+
+export const LogisticsContractsUploadResponse = zod.object({
+  uuid: zod.string(),
+  wedding: zod.string(),
+  supplier: zod.string(),
+  name: zod.string().default(logisticsContractsUploadResponseNameDefault),
+  total_amount: zod
+    .string()
+    .regex(logisticsContractsUploadResponseTotalAmountRegExp),
+  status: zod.string(),
+  description: zod
+    .string()
+    .default(logisticsContractsUploadResponseDescriptionDefault),
+  expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  created_at: zod.iso.datetime({}),
+  updated_at: zod.iso.datetime({}),
+  supplier_name: zod
+    .string()
+    .default(logisticsContractsUploadResponseSupplierNameDefault),
+  supplier_phone: zod
+    .string()
+    .default(logisticsContractsUploadResponseSupplierPhoneDefault),
+  supplier_email: zod
+    .string()
+    .default(logisticsContractsUploadResponseSupplierEmailDefault),
+  has_linked_expense: zod
+    .boolean()
+    .default(logisticsContractsUploadResponseHasLinkedExpenseDefault),
+  progress_percent: zod
+    .number()
+    .default(logisticsContractsUploadResponseProgressPercentDefault),
+  expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
+  parent: zod.union([zod.string(), zod.null()]).optional(),
+  addendums_count: zod
+    .number()
+    .default(logisticsContractsUploadResponseAddendumsCountDefault),
+  has_file: zod
+    .boolean()
+    .default(logisticsContractsUploadResponseHasFileDefault),
+  file_name: zod.union([zod.string(), zod.null()]).optional(),
+});
+
+/**
+ * Remove o arquivo vinculado ao contrato.
+ * @summary Delete Contract File
+ */
+export const LogisticsContractsDeleteUploadParams = zod.object({
+  uuid: zod.string(),
+});
+
+/**
+ * Transita o status do contrato (DRAFT → PENDING → SIGNED → CANCELED).
+ * @summary Transition Contract Status
+ */
+export const LogisticsContractsTransitionStatusParams = zod.object({
+  uuid: zod.string(),
+});
+
+export const LogisticsContractsTransitionStatusBody = zod.object({
+  status: zod.string(),
+});
+
+export const logisticsContractsTransitionStatusResponseNameDefault = ``;
+export const logisticsContractsTransitionStatusResponseTotalAmountRegExp =
+  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+export const logisticsContractsTransitionStatusResponseDescriptionDefault = ``;
+export const logisticsContractsTransitionStatusResponseSupplierNameDefault = ``;
+export const logisticsContractsTransitionStatusResponseSupplierPhoneDefault = ``;
+export const logisticsContractsTransitionStatusResponseSupplierEmailDefault = ``;
+export const logisticsContractsTransitionStatusResponseHasLinkedExpenseDefault = false;
+export const logisticsContractsTransitionStatusResponseProgressPercentDefault = 0;
+export const logisticsContractsTransitionStatusResponseAddendumsCountDefault = 0;
+export const logisticsContractsTransitionStatusResponseHasFileDefault = false;
+
+export const LogisticsContractsTransitionStatusResponse = zod.object({
+  uuid: zod.string(),
+  wedding: zod.string(),
+  supplier: zod.string(),
+  name: zod
+    .string()
+    .default(logisticsContractsTransitionStatusResponseNameDefault),
+  total_amount: zod
+    .string()
+    .regex(logisticsContractsTransitionStatusResponseTotalAmountRegExp),
+  status: zod.string(),
+  description: zod
+    .string()
+    .default(logisticsContractsTransitionStatusResponseDescriptionDefault),
+  expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  signed_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  created_at: zod.iso.datetime({}),
+  updated_at: zod.iso.datetime({}),
+  supplier_name: zod
+    .string()
+    .default(logisticsContractsTransitionStatusResponseSupplierNameDefault),
+  supplier_phone: zod
+    .string()
+    .default(logisticsContractsTransitionStatusResponseSupplierPhoneDefault),
+  supplier_email: zod
+    .string()
+    .default(logisticsContractsTransitionStatusResponseSupplierEmailDefault),
+  has_linked_expense: zod
+    .boolean()
+    .default(logisticsContractsTransitionStatusResponseHasLinkedExpenseDefault),
+  progress_percent: zod
+    .number()
+    .default(logisticsContractsTransitionStatusResponseProgressPercentDefault),
+  expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
+  parent: zod.union([zod.string(), zod.null()]).optional(),
+  addendums_count: zod
+    .number()
+    .default(logisticsContractsTransitionStatusResponseAddendumsCountDefault),
+  has_file: zod
+    .boolean()
+    .default(logisticsContractsTransitionStatusResponseHasFileDefault),
+  file_name: zod.union([zod.string(), zod.null()]).optional(),
+});
+
+/**
  * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
-Permite filtrar por casamento.
+Permite filtrar por casamento, status de aquisição, busca textual e contrato.
  * @summary List Items
  */
 export const logisticsItemsListQueryLimitDefault = 100;
@@ -268,6 +523,9 @@ export const logisticsItemsListQueryOffsetMin = 0;
 
 export const LogisticsItemsListQueryParams = zod.object({
   wedding_id: zod.union([zod.string(), zod.null()]).optional(),
+  status: zod.union([zod.string(), zod.null()]).optional(),
+  search: zod.union([zod.string(), zod.null()]).optional(),
+  contract_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(logisticsItemsListQueryLimitDefault),
   offset: zod
     .number()
@@ -299,6 +557,7 @@ Parte do planejamento logístico de um evento.
  */
 export const logisticsItemsCreateBodyDescriptionDefault = ``;
 export const logisticsItemsCreateBodyQuantityDefault = 1;
+export const logisticsItemsCreateBodyAcquisitionStatusDefault = `PENDING`;
 
 export const LogisticsItemsCreateBody = zod.object({
   wedding: zod.string(),
@@ -306,6 +565,9 @@ export const LogisticsItemsCreateBody = zod.object({
   name: zod.string(),
   description: zod.string().default(logisticsItemsCreateBodyDescriptionDefault),
   quantity: zod.number().default(logisticsItemsCreateBodyQuantityDefault),
+  acquisition_status: zod
+    .string()
+    .default(logisticsItemsCreateBodyAcquisitionStatusDefault),
 });
 
 /**
@@ -342,6 +604,7 @@ export const LogisticsItemsUpdateBody = zod.object({
   name: zod.union([zod.string(), zod.null()]).optional(),
   description: zod.union([zod.string(), zod.null()]).optional(),
   quantity: zod.union([zod.number(), zod.null()]).optional(),
+  acquisition_status: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 export const LogisticsItemsUpdateResponse = zod.object({
@@ -363,4 +626,28 @@ Remove das listas logísticas rastreadas pelo Planner.
  */
 export const LogisticsItemsDeleteParams = zod.object({
   uuid: zod.string(),
+});
+
+/**
+ * Transita o status de aquisição de um item logístico (PENDING → IN_PROGRESS → DONE).
+ * @summary Transition Item Status
+ */
+export const LogisticsItemsTransitionStatusParams = zod.object({
+  uuid: zod.string(),
+});
+
+export const LogisticsItemsTransitionStatusBody = zod.object({
+  acquisition_status: zod.string(),
+});
+
+export const LogisticsItemsTransitionStatusResponse = zod.object({
+  uuid: zod.string(),
+  wedding: zod.string(),
+  contract: zod.union([zod.string(), zod.null()]).optional(),
+  name: zod.string(),
+  description: zod.string(),
+  quantity: zod.number(),
+  acquisition_status: zod.string(),
+  created_at: zod.iso.datetime({}),
+  updated_at: zod.iso.datetime({}),
 });

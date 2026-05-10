@@ -7,6 +7,8 @@
 
 export type LogisticsContractsListParams = {
   wedding_id?: string | null;
+  status?: string | null;
+  supplier_id?: string | null;
   /**
    * @minimum 1
    */

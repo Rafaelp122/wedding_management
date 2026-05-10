@@ -11,4 +11,5 @@ export interface ItemPatchIn {
   name?: string | null;
   description?: string | null;
   quantity?: number | null;
+  acquisition_status?: string | null;
 }

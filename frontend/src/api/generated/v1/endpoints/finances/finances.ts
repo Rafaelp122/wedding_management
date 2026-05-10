@@ -27,6 +27,7 @@ import type {
   BudgetOut,
   BudgetPatchIn,
   ErrorResponse,
+  ExpenseFromDocumentOut,
   ExpenseIn,
   ExpenseOut,
   ExpensePatchIn,
@@ -1863,6 +1864,99 @@ export const useFinancesExpensesDelete = <
 > => {
   return useMutation(
     getFinancesExpensesDeleteMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Retorna sugestão de payload para criar despesa a partir de um contrato.
+Pré-preenche valores, descrição e fornecedor do documento de referência.
+ * @summary From Document
+ */
+export const financesExpensesFromDocument = (
+  uuid: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<ExpenseFromDocumentOut>(
+    {
+      url: `/api/v1/finances/expenses/from-document/${uuid}/`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getFinancesExpensesFromDocumentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof financesExpensesFromDocument>>,
+    TError,
+    { uuid: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof financesExpensesFromDocument>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  const mutationKey = ["financesExpensesFromDocument"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof financesExpensesFromDocument>>,
+    { uuid: string }
+  > = (props) => {
+    const { uuid } = props ?? {};
+
+    return financesExpensesFromDocument(uuid, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type FinancesExpensesFromDocumentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof financesExpensesFromDocument>>
+>;
+
+export type FinancesExpensesFromDocumentMutationError =
+  ErrorType<ErrorResponse>;
+
+/**
+ * @summary From Document
+ */
+export const useFinancesExpensesFromDocument = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof financesExpensesFromDocument>>,
+      TError,
+      { uuid: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof financesExpensesFromDocument>>,
+  TError,
+  { uuid: string },
+  TContext
+> => {
+  return useMutation(
+    getFinancesExpensesFromDocumentMutationOptions(options),
     queryClient,
   );
 };

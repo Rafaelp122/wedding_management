@@ -606,6 +606,33 @@ export const FinancesExpensesDeleteParams = zod.object({
 });
 
 /**
+ * Retorna sugestão de payload para criar despesa a partir de um contrato.
+Pré-preenche valores, descrição e fornecedor do documento de referência.
+ * @summary From Document
+ */
+export const FinancesExpensesFromDocumentParams = zod.object({
+  uuid: zod.string(),
+});
+
+export const financesExpensesFromDocumentResponseDescriptionDefault = ``;
+export const financesExpensesFromDocumentResponseActualAmountRegExp =
+  new RegExp("^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$");
+
+export const FinancesExpensesFromDocumentResponse = zod.object({
+  name: zod.string(),
+  description: zod
+    .string()
+    .default(financesExpensesFromDocumentResponseDescriptionDefault),
+  contract: zod.string(),
+  actual_amount: zod
+    .string()
+    .regex(financesExpensesFromDocumentResponseActualAmountRegExp),
+  category_uuid: zod.union([zod.string(), zod.null()]).optional(),
+  num_installments: zod.union([zod.number(), zod.null()]).optional(),
+  first_due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+});
+
+/**
  * Lista parcelas com filtro opcional por casamento e despesa.
  * @summary List Installments
  */
