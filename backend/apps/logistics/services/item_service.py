@@ -172,6 +172,7 @@ class ItemService:
             f"{instance.acquisition_status} -> {new_status}"
         )
 
+        # TODO(sprint/018): mover máquina de estados para Item.clean()
         allowed_transitions: dict[str, list[str]] = {
             "PENDING": ["IN_PROGRESS"],
             "IN_PROGRESS": ["DONE", "PENDING"],
