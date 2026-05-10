@@ -35,16 +35,6 @@ class Contract(TenantModel, WeddingOwnedMixin):
         verbose_name="Fornecedor",
     )
 
-    # Vincula o contrato a uma categoria de orçamento para rastreabilidade financeira
-    budget_category = models.ForeignKey(
-        "finances.BudgetCategory",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="contracts",
-        verbose_name="Categoria Orçamentária",
-    )
-
     # O VALOR DE FACE: Essencial para o Controle Máximo
     total_amount = models.DecimalField(
         max_digits=10,
@@ -53,7 +43,10 @@ class Contract(TenantModel, WeddingOwnedMixin):
         help_text="Valor exato que consta no documento assinado",
     )
 
-    description = models.TextField(blank=True, verbose_name="Descrição do Contrato")
+    name = models.CharField(max_length=255, verbose_name="Nome")
+    description = models.TextField(
+        blank=True, default="", verbose_name="Descrição do Contrato"
+    )
     status = models.CharField(
         max_length=20,
         choices=StatusChoices.choices,
@@ -77,6 +70,16 @@ class Contract(TenantModel, WeddingOwnedMixin):
         upload_to="contracts/%Y/%m/", null=True, blank=True, verbose_name="Arquivo PDF"
     )
 
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="addendums",
+        verbose_name="Contrato Original (Pai)",
+        help_text="Vincula este contrato como aditivo de um contrato principal.",
+    )
+
     class Meta:
         app_label = "logistics"
         verbose_name = "Contrato"
@@ -88,9 +91,9 @@ class Contract(TenantModel, WeddingOwnedMixin):
         ]
 
     def __str__(self) -> str:
+        name = self.name or "Contrato"
         return (
-            f"Contrato {self.id} - {self.supplier.name} ({self.wedding}) "
-            f"- R$ {self.total_amount}"
+            f"{name} - {self.supplier.name} ({self.wedding}) - R$ {self.total_amount}"
         )
 
     def clean(self) -> None:
