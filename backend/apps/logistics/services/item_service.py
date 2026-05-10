@@ -6,6 +6,7 @@ from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import (
+    BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
@@ -23,12 +24,24 @@ class ItemService:
     """
 
     @staticmethod
-    def list(company: Company, wedding_id: UUID | str | None = None) -> QuerySet[Item]:
+    def list(
+        company: Company,
+        wedding_id: UUID | str | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        contract_id: UUID | str | None = None,
+    ) -> QuerySet[Item]:
         qs = Item.objects.for_tenant(company).select_related(
             "wedding", "contract", "contract__supplier"
         )
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
+        if status:
+            qs = qs.filter(acquisition_status=status)
+        if search:
+            qs = qs.filter(name__icontains=search)
+        if contract_id:
+            qs = qs.filter(contract__uuid=contract_id)
         return qs
 
     @staticmethod
@@ -150,3 +163,32 @@ class ItemService:
                 "dependentes vinculados a ele.",
                 code="item_protected_error",
             ) from e
+
+    @staticmethod
+    @transaction.atomic
+    def transition_status(company: Company, instance: Item, new_status: str) -> Item:
+        logger.info(
+            f"Transição de status do Item uuid={instance.uuid}: "
+            f"{instance.acquisition_status} -> {new_status}"
+        )
+
+        allowed_transitions: dict[str, list[str]] = {
+            "PENDING": ["IN_PROGRESS"],
+            "IN_PROGRESS": ["DONE", "PENDING"],
+            "DONE": ["IN_PROGRESS"],
+        }
+
+        current = instance.acquisition_status
+        allowed = allowed_transitions.get(current, [])
+
+        if new_status not in allowed:
+            raise BusinessRuleViolation(
+                detail=f"Não é permitido transitar de '{current}' para '{new_status}'.",
+                code="item_invalid_status_transition",
+            )
+
+        instance.acquisition_status = new_status
+        instance.save()
+
+        logger.info(f"Item uuid={instance.uuid} transitado para '{new_status}'.")
+        return instance
