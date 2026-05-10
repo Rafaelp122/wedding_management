@@ -58,7 +58,7 @@ def create_category(
     Abre mais um bloco de centro de custo em conta específica da festa.
     Associa devidamente ao orçamento atrelado em tela.
     """
-    return 201, BudgetCategoryService.create(request.user.company, payload.dict())
+    return 201, BudgetCategoryService.create(request.user.company, payload.model_dump())
 
 
 @budget_categories_router.patch(
@@ -75,7 +75,7 @@ def update_category(
     """
     instance = BudgetCategoryService.get(request.user.company, uuid)
     return BudgetCategoryService.update(
-        request.user.company, instance, payload.dict(exclude_unset=True)
+        request.user.company, instance, payload.model_dump(exclude_unset=True)
     )
 
 

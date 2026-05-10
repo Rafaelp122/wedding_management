@@ -88,5 +88,5 @@ def adjust_installment(
     return InstallmentService.adjust(
         request.user.company,
         instance,
-        payload.dict(exclude_unset=True, exclude_none=True),
+        payload.model_dump(exclude_unset=True, exclude_none=True),
     )

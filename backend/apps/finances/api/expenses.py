@@ -53,7 +53,7 @@ def create_expense(request: AuthRequest, payload: ExpenseIn) -> tuple[int, Expen
     Aprova lançamento final nos tetos das divisões e categorias.
     Consome o limite orçamentário previsto inicial geral da categoria.
     """
-    return 201, ExpenseService.create(request.user.company, payload.dict())
+    return 201, ExpenseService.create(request.user.company, payload.model_dump())
 
 
 @expenses_router.patch(
@@ -69,7 +69,7 @@ def update_expense(
     """
     instance = ExpenseService.get(request.user.company, uuid)
     return ExpenseService.update(
-        request.user.company, instance, payload.dict(exclude_unset=True)
+        request.user.company, instance, payload.model_dump(exclude_unset=True)
     )
 
 
