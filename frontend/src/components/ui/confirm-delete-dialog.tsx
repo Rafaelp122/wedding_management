@@ -1,4 +1,4 @@
-import { useState, memo, useEffect } from "react";
+import { useState, memo } from "react";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 import {
@@ -39,12 +39,13 @@ export const ConfirmDeleteDialog = memo(function ConfirmDeleteDialog({
   const [confirmText, setConfirmText] = useState("");
   const isConfirmed = requireTypedConfirmation ? confirmText === itemName : true;
 
-  useEffect(() => {
-    if (open) setConfirmText("");
-  }, [open]);
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) setConfirmText("");
+    onOpenChange(nextOpen);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
