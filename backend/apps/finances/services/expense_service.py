@@ -24,6 +24,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.finances.models import BudgetCategory, Expense
+from apps.finances.services.installment_service import InstallmentService
 from apps.logistics.models import Contract
 from apps.tenants.models import Company
 
@@ -225,8 +226,6 @@ class ExpenseService:
             ) from e
 
         # 5. Geração automática de parcelas (mínimo 1)
-        from apps.finances.services.installment_service import InstallmentService
-
         InstallmentService.auto_generate_installments(
             company=company,
             expense=expense,
@@ -313,11 +312,7 @@ class ExpenseService:
                     ),
                     code="amount_change_blocked_by_paid",
                 )
-            from apps.finances.services.installment_service import (
-                InstallmentService as IS,
-            )
-
-            IS.redistribute(
+            InstallmentService.redistribute(
                 company=company,
                 expense=instance,
                 num_installments=instance.installments.count(),
@@ -331,7 +326,9 @@ class ExpenseService:
                 ),
             )
         elif num_installments is not None:
-            _handle_redistribute(company, instance, num_installments, first_due_date)
+            ExpenseService._handle_redistribute(
+                company, instance, num_installments, first_due_date
+            )
 
         try:
             instance.save()
@@ -378,32 +375,28 @@ class ExpenseService:
                 code="expense_protected_error",
             ) from e
 
+    @staticmethod
+    def _handle_redistribute(
+        company: Company,
+        expense: Expense,
+        num_installments: int,
+        first_due_date: date | None,
+    ) -> None:
+        if num_installments < 1:
+            raise BusinessRuleViolation(
+                detail="O número de parcelas deve ser pelo menos 1.",
+                code="invalid_installment_number",
+            )
 
-def _handle_redistribute(
-    company: Company,
-    expense: Expense,
-    num_installments: int,
-    first_due_date: date | None,
-) -> None:
-    if num_installments < 1:
-        raise BusinessRuleViolation(
-            detail="O número de parcelas deve ser pelo menos 1.",
-            code="invalid_installment_number",
+        if first_due_date:
+            first_due = first_due_date
+        else:
+            first_inst = expense.installments.order_by("due_date").first()
+            first_due = first_inst.due_date if first_inst else date.today()
+
+        InstallmentService.redistribute(
+            company=company,
+            expense=expense,
+            num_installments=num_installments,
+            first_due_date=first_due,
         )
-
-    if first_due_date:
-        first_due = first_due_date
-    else:
-        first_inst = expense.installments.order_by("due_date").first()
-        first_due = first_inst.due_date if first_inst else date.today()
-
-    from apps.finances.services.installment_service import (
-        InstallmentService,
-    )
-
-    InstallmentService.redistribute(
-        company=company,
-        expense=expense,
-        num_installments=num_installments,
-        first_due_date=first_due,
-    )
