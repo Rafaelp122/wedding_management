@@ -29,7 +29,7 @@ class WeddingService:
 
     @staticmethod
     def list(company: Company) -> QuerySet[Wedding]:
-        return Wedding.objects.for_tenant(company)
+        return Wedding.objects.for_tenant(company).select_related("company")
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Wedding:
