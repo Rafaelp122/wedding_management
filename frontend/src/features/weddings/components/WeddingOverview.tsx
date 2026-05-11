@@ -9,13 +9,15 @@ import {
   Heart,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMemo } from "react";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getWeddingStatusInfo } from "../utils/weddingStatus";
+import { getWeddingStatusInfo } from "@/features/shared/utils/weddingStatus";
+import { formatCurrencyBRCompact, formatDateBR } from "@/features/shared/utils/formatters";
 
 interface WeddingOverviewProps {
   wedding: WeddingOut;
@@ -29,12 +31,10 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
   const urgentTasks = overview?.urgent_tasks ?? [];
   const upcomingInstallments = overview?.upcoming_installments ?? [];
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const formattedDate = useMemo(
+    () => formatDateBR(wedding.date, { day: "2-digit", month: "long", year: "numeric" }),
+    [wedding.date],
+  );
 
   return (
     <div className="space-y-6">
@@ -45,15 +45,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
             {wedding.groom_name} & {wedding.bride_name}
           </h2>
           <p className="text-muted-foreground mt-1">
-            {new Intl.DateTimeFormat("pt-BR", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            }).format(new Date(
-              Number(wedding.date.split("-")[0]),
-              Number(wedding.date.split("-")[1]) - 1,
-              Number(wedding.date.split("-")[2]),
-            ))}{" "}
+            {formattedDate}{" "}
             • {wedding.location}
           </p>
         </div>
@@ -234,7 +226,7 @@ export function WeddingOverview({ wedding }: WeddingOverviewProps) {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold">
-                        {formatCurrency(Number(inst.amount))}
+                        {formatCurrencyBRCompact(Number(inst.amount), 0)}
                       </p>
                       <p className="text-xs text-orange-500 mt-0.5 font-medium">
                         {inst.status === "OVERDUE" ? "Atrasado" : "Pendente"}

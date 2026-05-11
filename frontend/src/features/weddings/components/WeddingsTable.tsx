@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { getWeddingStatusInfo } from "../utils/weddingStatus";
+import { getWeddingStatusInfo } from "@/features/shared/utils/weddingStatus";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { EditWeddingDialog } from "./EditWeddingDialog";
 import { DeleteWeddingDialog } from "./DeleteWeddingDialog";

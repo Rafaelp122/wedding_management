@@ -1,25 +1,14 @@
-import { useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Heart, DollarSign, Calendar, AlertTriangle } from "lucide-react";
 import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
+import { formatCurrencyBRCompact } from "@/features/shared/utils/formatters";
 
 interface StatsCardsProps {
   summary?: DashboardSummaryOut;
 }
 
-const formatCurrency = (value: string) => {
-  const num = parseFloat(value);
-  if (Number.isNaN(num)) return "R$ 0";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(num);
-};
-
 export function StatsCards({ summary }: StatsCardsProps) {
-  const stats = useMemo(
-    () => [
+  const stats = [
       {
         title: "Casamentos Ativos",
         value: summary?.active_weddings ?? 0,
@@ -34,7 +23,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
       },
       {
         title: "Parcelas a Vencer (7d)",
-        value: formatCurrency(summary?.pending_installments_7d ?? "0"),
+        value: formatCurrencyBRCompact(parseFloat(summary?.pending_installments_7d ?? "0"), 0),
         icon: DollarSign,
         color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40",
       },
@@ -44,9 +33,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
         icon: AlertTriangle,
         color: "text-red-600 bg-red-50 dark:bg-red-950/40",
       },
-    ],
-    [summary],
-  );
+    ];
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

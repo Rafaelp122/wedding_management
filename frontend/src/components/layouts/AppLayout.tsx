@@ -44,7 +44,7 @@ export const AppLayout = () => {
             <span className="text-sm font-medium hidden md:inline-block">
               Olá, {firstName}
             </span>
-            <Button variant="outline" size="icon" className="rounded-full">
+            <Button variant="outline" size="icon" className="rounded-full" aria-label="Perfil do usuário">
               <UserIcon className="h-4 w-4" />
             </Button>
           </div>
