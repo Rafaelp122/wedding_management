@@ -1,8 +1,8 @@
 import { AlertCircle, FileText, Package } from "lucide-react";
 
-import { useWeddingVendorsItems } from "../hooks/useWeddingVendorsItems";
-import { WeddingVendorsTable } from "./WeddingVendorsTable";
-import { WeddingItemsTable } from "./WeddingItemsTable";
+import { useWeddingVendorsItems } from "../hooks/useVendorsItems";
+import { WeddingVendorsTable } from "./items/VendorsTable";
+import { WeddingItemsTable } from "./items/ItemsTable";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";

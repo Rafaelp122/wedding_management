@@ -1,5 +1,3 @@
-"use client";
-
 import { lazy, Suspense, useState } from "react";
 import { DollarSign, Plus } from "lucide-react";
 import {
@@ -9,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBRCompact } from "@/features/shared/utils/formatters";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
 const ExpenseDetailDialog = lazy(
@@ -38,7 +36,6 @@ export function WeddingFinancesRecentExpenses({
   onAddExpense,
 }: WeddingFinancesRecentExpensesProps) {
   const [selectedExpense, setSelectedExpense] = useState<ExpenseOut | null>(null);
-  const formatCurrency = (value: number) => `R$ ${formatCurrencyBR(value)}`;
 
   return (
     <>
@@ -87,7 +84,7 @@ export function WeddingFinancesRecentExpenses({
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50 tabular-nums">
-                        {formatCurrency(Number(expense.actual_amount))}
+                        {formatCurrencyBRCompact(Number(expense.actual_amount))}
                       </p>
                       <div className="flex items-center justify-end gap-2">
                         {count > 0 ? (

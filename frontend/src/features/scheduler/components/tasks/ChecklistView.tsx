@@ -1,7 +1,7 @@
 import { AlertCircle, ListChecks } from "lucide-react";
 
-import { useWeddingChecklist } from "../hooks/useWeddingChecklist";
-import { WeddingChecklistTable } from "./WeddingChecklistTable";
+import { useWeddingChecklist } from "../../hooks/useChecklist";
+import { WeddingChecklistTable } from "./ChecklistTable";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";

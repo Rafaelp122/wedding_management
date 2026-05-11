@@ -4,9 +4,9 @@ import {
   ListPageLoadingState,
 } from "@/features/shared/components/PageState";
 
-import { DeleteSupplierDialog } from "../components/DeleteSupplierDialog";
-import { SupplierFormDialog } from "../components/SupplierFormDialog";
-import { SuppliersTable } from "../components/SuppliersTable";
+import { DeleteSupplierDialog } from "../components/suppliers/DeleteSupplierDialog";
+import { SupplierFormDialog } from "../components/suppliers/SupplierFormDialog";
+import { SuppliersTable } from "../components/suppliers/SuppliersTable";
 import { useSuppliersPage } from "../hooks/useSuppliersPage";
 import type { SupplierStatusFilter } from "../types";
 

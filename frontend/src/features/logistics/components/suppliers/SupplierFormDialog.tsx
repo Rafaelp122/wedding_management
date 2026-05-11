@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import type { SupplierFormMode, SupplierFormState } from "../types";
+import type { SupplierFormMode, SupplierFormState } from "../../types";
 
 import { Button } from "@/components/ui/button";
 import {

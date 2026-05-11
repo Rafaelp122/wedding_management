@@ -14,24 +14,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrencyBR, parseDecimal } from "@/features/shared/utils/formatters";
+import { formatCurrencyBRCompact, parseDecimal } from "@/features/shared/utils/formatters";
 import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 
 const CreateBudgetCategoryDialog = lazy(
   () =>
-    import("./CreateBudgetCategoryDialog").then((m) => ({
+    import("./budgets/CreateBudgetCategoryDialog").then((m) => ({
       default: m.CreateBudgetCategoryDialog,
     })),
 );
 const EditBudgetCategoryDialog = lazy(
   () =>
-    import("./EditBudgetCategoryDialog").then((m) => ({
+    import("./budgets/EditBudgetCategoryDialog").then((m) => ({
       default: m.EditBudgetCategoryDialog,
     })),
 );
 const DeleteBudgetCategoryDialog = lazy(
   () =>
-    import("./DeleteBudgetCategoryDialog").then((m) => ({
+    import("./budgets/DeleteBudgetCategoryDialog").then((m) => ({
       default: m.DeleteBudgetCategoryDialog,
     })),
 );
@@ -52,7 +52,6 @@ export function WeddingFinancesGroupsSummary({
   const [editingCategory, setEditingCategory] = useState<BudgetCategoryOut | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<BudgetCategoryOut | null>(null);
 
-  const formatCurrency = (value: number) => `R$ ${formatCurrencyBR(value)}`;
   const displayedCategories = showAll ? categories : categories.slice(0, 5);
 
   const handleSuccess = () => {
@@ -124,7 +123,7 @@ export function WeddingFinancesGroupsSummary({
                     </DropdownMenu>
                   </div>
                   <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                    {formatCurrency(spentAmount)}
+                    {formatCurrencyBRCompact(spentAmount)}
                   </span>
                 </div>
                 <div className="relative h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
@@ -135,7 +134,7 @@ export function WeddingFinancesGroupsSummary({
                 </div>
                 <div className="flex justify-between text-[10px] text-zinc-400 uppercase font-bold tracking-wider">
                   <span>{percentage}% do teto</span>
-                  <span>Teto: {formatCurrency(allocatedBudget)}</span>
+                  <span>Teto: {formatCurrencyBRCompact(allocatedBudget)}</span>
                 </div>
               </div>
             );

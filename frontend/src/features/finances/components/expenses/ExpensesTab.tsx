@@ -2,8 +2,8 @@ import { useState } from "react";
 import { AlertCircle, Receipt, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useWeddingExpenses } from "../hooks/useWeddingExpenses";
-import { WeddingExpensesTable } from "./WeddingExpensesTable";
+import { useWeddingExpenses } from "../../hooks/useExpenses";
+import { WeddingExpensesTable } from "./ExpensesTable";
 import { CreateExpenseDialog } from "./CreateExpenseDialog";
 import { getFinancesExpensesListQueryKey } from "@/api/generated/v1/endpoints/finances/finances";
 

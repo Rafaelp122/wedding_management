@@ -1,5 +1,3 @@
-"use client";
-
 import { lazy, Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,21 +6,21 @@ import {
   getFinancesCategoriesListQueryKey,
   getFinancesExpensesListQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
-import { useWeddingBudget } from "../hooks/useWeddingBudget";
-import { WeddingFinancesSummaryCards } from "./WeddingFinancesSummaryCards";
-import { WeddingFinancesGroupsSummary } from "./WeddingFinancesGroupsSummary";
-import { WeddingFinancesRecentExpenses } from "./WeddingFinancesRecentExpenses";
-import { WeddingExpensesTable } from "./WeddingExpensesTable";
+import { useWeddingBudget } from "../hooks/useBudget";
+import { WeddingFinancesSummaryCards } from "./FinancesSummaryCards";
+import { WeddingFinancesGroupsSummary } from "./FinancesGroupsSummary";
+import { WeddingFinancesRecentExpenses } from "./expenses/FinancesRecentExpenses";
+import { WeddingExpensesTable } from "./expenses/ExpensesTable";
 
 const WeddingFinancesDistributionChart = lazy(
   () =>
-    import("./WeddingFinancesDistributionChart").then((m) => ({
+    import("./FinancesDistributionChart").then((m) => ({
       default: m.WeddingFinancesDistributionChart,
     })),
 );
 
 const CreateExpenseDialog = lazy(
-  () => import("./CreateExpenseDialog").then((m) => ({ default: m.CreateExpenseDialog })),
+  () => import("./expenses/CreateExpenseDialog").then((m) => ({ default: m.CreateExpenseDialog })),
 );
 
 interface WeddingFinancesViewProps {

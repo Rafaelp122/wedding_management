@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -10,6 +10,7 @@ import {
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { LogisticsItemsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { getApiErrorInfo } from "@/api/error-utils";
+import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
 
 import {
   Dialog,
@@ -62,8 +63,7 @@ export const CreateItemDialog = memo(function CreateItemDialog({
   const contracts = contractsResponse?.data?.items ?? [];
 
   const form = useForm<CreateItemFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(LogisticsItemsCreateBody) as any,
+    resolver: zodResolver(LogisticsItemsCreateBody) as Resolver<CreateItemFormData>,
     defaultValues: {
       wedding: weddingUuid,
       contract: null,
@@ -197,9 +197,9 @@ export const CreateItemDialog = memo(function CreateItemDialog({
                   <FormLabel>Contrato (Opcional)</FormLabel>
                   <Select
                     onValueChange={(v) =>
-                      field.onChange(v === "__none__" ? null : v)
+                      field.onChange(v === SELECT_NONE_VALUE ? null : v)
                     }
-                    value={field.value ?? "__none__"}
+                    value={field.value ?? SELECT_NONE_VALUE}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -207,7 +207,7 @@ export const CreateItemDialog = memo(function CreateItemDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="__none__">Nenhum</SelectItem>
+                      <SelectItem value={SELECT_NONE_VALUE}>Nenhum</SelectItem>
                       {contracts.map((contract) => (
                         <SelectItem key={contract.uuid} value={contract.uuid}>
                           {contract.supplier_name ||

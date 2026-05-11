@@ -1,7 +1,7 @@
 import { AlertCircle, CalendarClock } from "lucide-react";
 
-import { useWeddingTimeline } from "../hooks/useWeddingTimeline";
-import { WeddingTimelineTable } from "./WeddingTimelineTable";
+import { useWeddingTimeline } from "../../hooks/useTimeline";
+import { WeddingTimelineTable } from "./TimelineTable";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";

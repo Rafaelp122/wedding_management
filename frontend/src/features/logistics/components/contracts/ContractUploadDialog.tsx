@@ -1,5 +1,5 @@
 import { useState, memo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -18,6 +18,7 @@ import {
 import { AXIOS_INSTANCE } from "@/api/axios-client";
 import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { getApiErrorInfo } from "@/api/error-utils";
+import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
 
 import {
   Dialog,
@@ -114,8 +115,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
   const categories = categoriesResponse?.data?.items ?? [];
 
   const form = useForm<CreateContractFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(LogisticsContractsCreateBody) as any,
+    resolver: zodResolver(LogisticsContractsCreateBody) as Resolver<CreateContractFormData>,
     defaultValues: {
       wedding: weddingUuid,
       supplier: "",
@@ -363,9 +363,9 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
                     ) : (
                       <Select
                         onValueChange={(v) =>
-                          field.onChange(v === "__none__" ? null : v)
+                          field.onChange(v === SELECT_NONE_VALUE ? null : v)
                         }
-                        value={field.value ?? "__none__"}
+                        value={field.value ?? SELECT_NONE_VALUE}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -373,7 +373,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="__none__">
+                          <SelectItem value={SELECT_NONE_VALUE}>
                             Nenhum (contrato novo)
                           </SelectItem>
                           {existingContracts.map((c) => (

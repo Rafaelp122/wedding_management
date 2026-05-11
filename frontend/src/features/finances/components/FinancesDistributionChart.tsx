@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Bar,
   BarChart,
@@ -10,7 +8,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { BarChart as BarChartIcon } from "lucide-react";
 import {
   Card,
@@ -26,7 +24,7 @@ interface WeddingFinancesDistributionChartProps {
   categories: BudgetCategoryOut[];
 }
 
-export function WeddingFinancesDistributionChart({
+export const WeddingFinancesDistributionChart = memo(function WeddingFinancesDistributionChart({
   categories,
 }: WeddingFinancesDistributionChartProps) {
   const chartData = useMemo(
@@ -98,5 +96,5 @@ export function WeddingFinancesDistributionChart({
         </ResponsiveContainer>
       </CardContent>
     </Card>
-  );
-}
+    );
+});

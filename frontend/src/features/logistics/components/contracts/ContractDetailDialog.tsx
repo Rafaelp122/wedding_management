@@ -151,7 +151,7 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
     isLoading: isItemsLoading,
   } = useLogisticsItemsList({
     contract_id: contractUuid ?? "",
-  } as Record<string, unknown>, {
+  }, {
     query: { enabled: !!contractUuid },
   });
 

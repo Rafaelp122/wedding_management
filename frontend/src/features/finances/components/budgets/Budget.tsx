@@ -2,10 +2,10 @@ import { AlertCircle } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWeddingBudget } from "../hooks/useWeddingBudget";
-import { WeddingBudgetCategoriesCard } from "./WeddingBudgetCategoriesCard";
-import { WeddingBudgetNotesCard } from "./WeddingBudgetNotesCard";
-import { WeddingBudgetSummaryCard } from "./WeddingBudgetSummaryCard";
+import { useWeddingBudget } from "../../hooks/useBudget";
+import { WeddingBudgetCategoriesCard } from "./BudgetCategoriesCard";
+import { WeddingBudgetNotesCard } from "./BudgetNotesCard";
+import { WeddingBudgetSummaryCard } from "./BudgetSummaryCard";
 
 interface WeddingBudgetProps {
   weddingUuid: string;

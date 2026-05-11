@@ -18,25 +18,25 @@ const WeddingOverview = lazy(
 );
 const WeddingFinancesView = lazy(
   () =>
-    import("./WeddingFinancesView").then((m) => ({
+    import("@/features/finances/components/FinancesView").then((m) => ({
       default: m.WeddingFinancesView,
     })),
 );
 const WeddingVendorsItemsTab = lazy(
   () =>
-    import("./WeddingVendorsItemsTab").then((m) => ({
+    import("@/features/logistics/components/VendorsItemsView").then((m) => ({
       default: m.WeddingVendorsItemsTab,
     })),
 );
 const WeddingTimelineTab = lazy(
   () =>
-    import("./WeddingTimelineTab").then((m) => ({
+    import("@/features/scheduler/components/events/TimelineView").then((m) => ({
       default: m.WeddingTimelineTab,
     })),
 );
 const WeddingChecklistTab = lazy(
   () =>
-    import("./WeddingChecklistTab").then((m) => ({
+    import("@/features/scheduler/components/tasks/ChecklistView").then((m) => ({
       default: m.WeddingChecklistTab,
     })),
 );

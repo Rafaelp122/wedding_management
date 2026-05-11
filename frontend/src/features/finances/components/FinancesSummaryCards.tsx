@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowUpRight, TrendingDown } from "lucide-react";
 import {
   Card,
@@ -9,7 +7,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBRCompact } from "@/features/shared/utils/formatters";
 
 interface WeddingFinancesSummaryCardsProps {
   totalEstimated: number;
@@ -20,8 +18,6 @@ export function WeddingFinancesSummaryCards({
   totalEstimated,
   totalSpent,
 }: WeddingFinancesSummaryCardsProps) {
-  const formatCurrency = (value: number) => `R$ ${formatCurrencyBR(value)}`;
-
   const budgetUsage =
     totalEstimated > 0 ? Math.round((totalSpent / totalEstimated) * 100) : 0;
   const clampedBudgetUsage = Math.min(100, Math.max(0, budgetUsage));
@@ -34,7 +30,7 @@ export function WeddingFinancesSummaryCards({
             Orçamento Total
           </CardDescription>
           <CardTitle className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-            {formatCurrency(totalEstimated)}
+            {formatCurrencyBRCompact(totalEstimated)}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -51,7 +47,7 @@ export function WeddingFinancesSummaryCards({
             Total Gasto
           </CardDescription>
           <CardTitle className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-            {formatCurrency(totalSpent)}
+            {formatCurrencyBRCompact(totalSpent)}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -68,7 +64,7 @@ export function WeddingFinancesSummaryCards({
             Saldo Disponível
           </CardDescription>
           <CardTitle className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-            {formatCurrency(totalEstimated - totalSpent)}
+            {formatCurrencyBRCompact(totalEstimated - totalSpent)}
           </CardTitle>
         </CardHeader>
         <CardContent>

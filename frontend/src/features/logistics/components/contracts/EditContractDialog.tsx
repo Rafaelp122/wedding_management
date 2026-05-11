@@ -12,6 +12,8 @@ import {
 import { LogisticsContractsUpdateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
+import type { ContractPatchIn } from "@/api/generated/v1/models/contractPatchIn";
+import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
 
 import {
   Dialog,
@@ -82,7 +84,7 @@ export const EditContractDialog = memo(function EditContractDialog({
   });
 
   const onSubmit = (data: EditContractFormData) => {
-    const payload: Record<string, unknown> = {};
+    const payload: ContractPatchIn = {};
     if (data.supplier !== contract.supplier) payload.supplier = data.supplier;
     if (data.name !== (contract.name || "")) payload.name = data.name;
     if (data.total_amount !== Number(contract.total_amount))
@@ -98,7 +100,7 @@ export const EditContractDialog = memo(function EditContractDialog({
     }
 
     mutate(
-      { uuid: contract.uuid, data: payload as EditContractFormData },
+      { uuid: contract.uuid, data: payload as ContractPatchIn },
       {
         onSuccess: () => {
           toast.success("Contrato atualizado com sucesso!");
@@ -245,9 +247,9 @@ export const EditContractDialog = memo(function EditContractDialog({
                     <FormLabel>Contrato Original — Aditivo (Opcional)</FormLabel>
                     <Select
                       onValueChange={(v) =>
-                        field.onChange(v === "__none__" ? null : v)
+                        field.onChange(v === SELECT_NONE_VALUE ? null : v)
                       }
-                      value={field.value ?? "__none__"}
+                      value={field.value ?? SELECT_NONE_VALUE}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -255,7 +257,7 @@ export const EditContractDialog = memo(function EditContractDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="__none__">
+                        <SelectItem value={SELECT_NONE_VALUE}>
                           Nenhum (contrato novo)
                         </SelectItem>
                         {existingContracts.map((c) => (

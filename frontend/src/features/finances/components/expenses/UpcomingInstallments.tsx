@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";

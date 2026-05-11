@@ -7,6 +7,8 @@ import {
   useFinancesBudgetsForWedding,
   useFinancesBudgetsUpdate,
   useFinancesCategoriesList,
+  getFinancesBudgetsForWeddingQueryKey,
+  getFinancesCategoriesListQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
 
 export function useWeddingBudget(weddingUuid: string) {
@@ -64,7 +66,12 @@ export function useWeddingBudget(weddingUuid: string) {
       });
       toast.success("Orçamento atualizado com sucesso!");
       setIsEditing(false);
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({
+        queryKey: getFinancesBudgetsForWeddingQueryKey(weddingUuid),
+      });
+      queryClient.invalidateQueries({
+        queryKey: getFinancesCategoriesListQueryKey({ wedding_id: weddingUuid }),
+      });
     } catch (error) {
       const { message } = getApiErrorInfo(
         error,

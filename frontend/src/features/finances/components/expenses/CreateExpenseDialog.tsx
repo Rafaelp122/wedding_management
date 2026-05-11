@@ -10,6 +10,7 @@ import {
 import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { FinancesExpensesCreateBody } from "@/api/generated/v1/zod/finances/finances";
 import { getApiErrorInfo } from "@/api/error-utils";
+import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
 
 import {
   Dialog,
@@ -156,9 +157,9 @@ export function CreateExpenseDialog({
                   <FormLabel>Contrato (Opcional)</FormLabel>
                   <Select
                     onValueChange={(v) =>
-                      field.onChange(v === "__none__" ? null : v)
+                      field.onChange(v === SELECT_NONE_VALUE ? null : v)
                     }
-                    value={field.value ?? "__none__"}
+                    value={field.value ?? SELECT_NONE_VALUE}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -166,7 +167,7 @@ export function CreateExpenseDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="__none__">Nenhum</SelectItem>
+                      <SelectItem value={SELECT_NONE_VALUE}>Nenhum</SelectItem>
                       {contracts.map((contract) => (
                         <SelectItem key={contract.uuid} value={contract.uuid}>
                           {contract.description ||

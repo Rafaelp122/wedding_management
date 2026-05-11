@@ -11,6 +11,8 @@ import {
 import { LogisticsItemsUpdateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
+import type { ItemPatchIn } from "@/api/generated/v1/models/itemPatchIn";
+import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
 
 import {
   Dialog,
@@ -76,7 +78,7 @@ export const EditItemDialog = memo(function EditItemDialog({
   });
 
   const onSubmit = (data: EditItemFormData) => {
-    const payload: Record<string, unknown> = {};
+    const payload: ItemPatchIn = {};
     if (data.name !== item.name) payload.name = data.name;
     if (data.description !== (item.description || ""))
       payload.description = data.description;
@@ -91,7 +93,7 @@ export const EditItemDialog = memo(function EditItemDialog({
     }
 
     mutate(
-      { uuid: item.uuid, data: payload as EditItemFormData },
+      { uuid: item.uuid, data: payload as ItemPatchIn },
       {
         onSuccess: () => {
           toast.success("Item atualizado com sucesso!");
@@ -207,9 +209,9 @@ export const EditItemDialog = memo(function EditItemDialog({
                   <FormLabel>Contrato (Opcional)</FormLabel>
                   <Select
                     onValueChange={(v) =>
-                      field.onChange(v === "__none__" ? null : v)
+                      field.onChange(v === SELECT_NONE_VALUE ? null : v)
                     }
-                    value={field.value ?? "__none__"}
+                    value={field.value ?? SELECT_NONE_VALUE}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -217,7 +219,7 @@ export const EditItemDialog = memo(function EditItemDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="__none__">Nenhum</SelectItem>
+                      <SelectItem value={SELECT_NONE_VALUE}>Nenhum</SelectItem>
                       {contracts.map((contract) => (
                         <SelectItem key={contract.uuid} value={contract.uuid}>
                           {contract.supplier_name ||

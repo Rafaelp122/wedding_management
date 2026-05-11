@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { selectOnFocus } from "@/features/shared/utils/selectOnFocus";
+import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
@@ -130,9 +131,9 @@ export function EditExpenseDialog({
                   <FormLabel>Contrato (Opcional)</FormLabel>
                   <Select
                     onValueChange={(v) =>
-                      field.onChange(v === "__none__" ? null : v)
+                      field.onChange(v === SELECT_NONE_VALUE ? null : v)
                     }
-                    value={field.value ?? "__none__"}
+                    value={field.value ?? SELECT_NONE_VALUE}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -140,7 +141,7 @@ export function EditExpenseDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="__none__">Nenhum</SelectItem>
+                      <SelectItem value={SELECT_NONE_VALUE}>Nenhum</SelectItem>
                       {contracts.map((contract) => (
                         <SelectItem key={contract.uuid} value={contract.uuid}>
                           {contract.description ||
