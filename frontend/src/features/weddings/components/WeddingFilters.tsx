@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
-import type { WeddingStatusFilter } from "../utils/weddingStatus";
+import type { WeddingStatusFilter } from "@/features/shared/utils/weddingStatus";
 
 interface WeddingFiltersProps {
   search: string;

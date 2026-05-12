@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -19,7 +19,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function WeddingMonthlyChart({ weddings, selectedYear }: WeddingMonthlyChartProps) {
+export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({ weddings, selectedYear }: WeddingMonthlyChartProps) {
   const { monthlyData, hasData } = useMemo(() => {
     const counts = new Array(12).fill(0);
     for (const w of weddings) {
@@ -77,5 +77,5 @@ export function WeddingMonthlyChart({ weddings, selectedYear }: WeddingMonthlyCh
         )}
       </CardContent>
     </Card>
-  );
-}
+    );
+});

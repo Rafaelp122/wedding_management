@@ -13,14 +13,14 @@ const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
 const DashboardPage = lazy(
   () => import("@/features/dashboard/pages/DashboardPage"),
 );
-const ComingSoonPage = lazy(() => import("../pages/ComingSoonPage"));
-const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
+const ComingSoonPage = lazy(() => import("@/features/shared/components/ComingSoon"));
+const NotFoundPage = lazy(() => import("@/features/shared/components/NotFound"));
 const SchedulerPage = lazy(
   () => import("@/features/scheduler/pages/SchedulerPage"),
 );
-const SuppliersPage = lazy(() => import("@/features/suppliers/pages/SuppliersPage"));
+const SuppliersPage = lazy(() => import("@/features/logistics/pages/SuppliersPage"));
 const SupplierDetailPage = lazy(
-  () => import("@/features/suppliers/pages/SupplierDetailPage"),
+  () => import("@/features/logistics/pages/SupplierDetailPage"),
 );
 
 // Feature: Weddings

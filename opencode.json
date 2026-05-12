@@ -5,7 +5,6 @@
       "mode": "primary",
       "model": "deepseek/deepseek-v4-pro",
       "temperature": 0.2,
-      "prompt": "{file:./.opencode/prompts/build.txt}",
       "permission": {
         "bash": {
           "*": "allow",

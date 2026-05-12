@@ -3,7 +3,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 
 import { useWeddingFilters } from "./useWeddingFilters";
-import type { WeddingStatusFilter } from "../utils/weddingStatus";
+import type { WeddingStatusFilter } from "@/features/shared/utils/weddingStatus";
 
 export function useWeddingsPage() {
   const [search, setSearch] = useState("");
