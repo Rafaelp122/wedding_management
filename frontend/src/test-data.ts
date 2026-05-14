@@ -83,6 +83,8 @@ export function createMockEvent(overrides?: Partial<EventOut>): EventOut {
     event_type: "MEETING",
     start_time: "2025-06-15T10:00:00Z",
     location: "Escritório",
+    reminder_enabled: false,
+    reminder_minutes_before: 30,
     ...overrides,
   };
 }
@@ -93,6 +95,7 @@ export function createMockBudgetCategory(
   return {
     uuid: "bc-1",
     wedding: "w-1",
+    budget: "b-1",
     name: "Buffet",
     description: "Comida e bebidas",
     allocated_budget: "5000.00",

@@ -19,7 +19,7 @@ beforeAll(() => {
       dispatchEvent: vi.fn(),
     })),
   });
-  global.ResizeObserver = vi.fn(function ResizeObserver() {
+  globalThis.ResizeObserver = vi.fn(function ResizeObserver() {
     return {
       observe: vi.fn(),
       unobserve: vi.fn(),

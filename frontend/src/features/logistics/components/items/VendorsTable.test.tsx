@@ -22,7 +22,7 @@ describe("WeddingVendorsTable", () => {
   it("shows N/A for missing description", () => {
     render(
       <WeddingVendorsTable
-        contracts={[createMockContract({ description: null, signed_date: null })]}
+        contracts={[createMockContract({ description: undefined, signed_date: undefined })]}
       />,
     );
 

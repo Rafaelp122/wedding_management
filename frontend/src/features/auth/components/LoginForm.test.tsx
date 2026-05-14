@@ -75,11 +75,9 @@ describe("LoginForm", () => {
       refresh: "refresh-token-xyz",
       user: {
         id: 1,
-        name: "Admin User",
         first_name: "Admin",
+        last_name: "User",
         email: "admin@test.com",
-        company_name: "Acme",
-        avatar_url: "",
       },
     };
     server.use(
@@ -130,7 +128,7 @@ describe("LoginForm", () => {
         await deferred;
         return HttpResponse.json({
           access: "at", refresh: "rt",
-          user: { id: 1, name: "Test", first_name: "T", email: "t@t.com", company_name: "A", avatar_url: "" },
+          user: { id: 1, first_name: "T", last_name: "User", email: "t@t.com" },
         });
       }),
     );

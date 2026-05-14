@@ -4,10 +4,9 @@ import type { UserDataOut } from "@/api/generated/v1/models/userDataOut";
 
 const mockUser: UserDataOut = {
   id: 1,
-  name: "Test User",
+  first_name: "Test",
+  last_name: "User",
   email: "test@email.com",
-  company_name: "Acme",
-  avatar_url: "",
 };
 
 function resetStore() {
@@ -89,15 +88,14 @@ describe("useAuthStore", () => {
   describe("updateUser", () => {
     it("merges partial user data", () => {
       useAuthStore.getState().login("access-1", "refresh-1", mockUser);
-      useAuthStore.getState().updateUser({ name: "Updated Name" });
-
+      useAuthStore.getState().updateUser({ first_name: "Updated" });
       const state = useAuthStore.getState();
-      expect(state.user?.name).toBe("Updated Name");
+      expect(state.user?.first_name).toBe("Updated");
       expect(state.user?.email).toBe("test@email.com");
     });
 
     it("does nothing when user is null", () => {
-      useAuthStore.getState().updateUser({ name: "Nope" });
+      useAuthStore.getState().updateUser({ first_name: "Nope" });
       expect(useAuthStore.getState().user).toBeNull();
     });
   });
