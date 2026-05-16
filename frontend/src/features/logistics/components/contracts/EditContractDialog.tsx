@@ -1,7 +1,6 @@
 import { memo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import type { z } from "zod";
 
 import {
@@ -10,38 +9,13 @@ import {
   useLogisticsSuppliersList,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { LogisticsContractsUpdateBody } from "@/api/generated/v1/zod/logistics/logistics";
-import { getApiErrorInfo } from "@/api/error-utils";
+import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
 import type { ContractPatchIn } from "@/api/generated/v1/models/contractPatchIn";
-import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { FormDialog } from "@/components/form-dialog";
+import { FormInput, FormSelect, FormSelectNullable, FormNumber, FormTextarea } from "@/components/form-fields";
+import { CONTRACT_STATUS_OPTIONS } from "@/features/logistics/constants";
 
 type EditContractFormData = z.infer<typeof LogisticsContractsUpdateBody>;
 
@@ -101,197 +75,79 @@ export const EditContractDialog = memo(function EditContractDialog({
 
     mutate(
       { uuid: contract.uuid, data: payload as ContractPatchIn },
-      {
-        onSuccess: () => {
-          toast.success("Contrato atualizado com sucesso!");
-          onSuccess();
-        },
-        onError: (error) => {
-          const { message } = getApiErrorInfo(
-            error,
-            "Erro ao atualizar contrato.",
-          );
-          toast.error(message);
-        },
-      },
+      createMutationCallbacks({
+        successMsg: "Contrato atualizado com sucesso!",
+        fallbackErrorMsg: "Erro ao atualizar contrato.",
+        onSuccess: () => onSuccess(),
+      }),
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>Editar Contrato</DialogTitle>
-          <DialogDescription>
-            Altere os metadados do contrato de fornecedor.
-          </DialogDescription>
-        </DialogHeader>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Editar Contrato"
+      description="Altere os metadados do contrato de fornecedor."
+      form={form}
+      onSubmit={form.handleSubmit(onSubmit)}
+      isPending={isPending}
+      submitLabel="Salvar"
+      maxWidth="520px"
+    >
+      <FormSelect
+        control={form.control}
+        name="supplier"
+        label="Fornecedor"
+        items={suppliers}
+        getItemKey={(s) => s.uuid}
+        getItemLabel={(s) => s.name}
+        placeholder="Selecione um fornecedor"
+      />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="supplier"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fornecedor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value ?? undefined}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um fornecedor" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {suppliers.map((s) => (
-                        <SelectItem key={s.uuid} value={s.uuid}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <FormInput
+        control={form.control}
+        name="name"
+        label="Nome do Contrato"
+      />
 
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Contrato</FormLabel>
-                  <FormControl>
-                    <Input {...field} value={field.value ?? ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <FormTextarea
+        control={form.control}
+        name="description"
+        label="Descrição"
+      />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} value={field.value ?? ""} rows={2} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <div className="grid grid-cols-2 gap-4">
+        <FormNumber
+          control={form.control}
+          name="total_amount"
+          label="Valor Total"
+        />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="total_amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor Total</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={field.value ?? ""}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === ""
-                              ? undefined
-                              : Number(e.target.value),
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <FormSelect
+          control={form.control}
+          name="status"
+          label="Status"
+          items={CONTRACT_STATUS_OPTIONS}
+          getItemKey={(opt) => opt.value}
+          getItemLabel={(opt) => opt.label}
+        />
+      </div>
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? undefined}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="DRAFT">Rascunho</SelectItem>
-                        <SelectItem value="PENDING">Pendente</SelectItem>
-                        <SelectItem value="SIGNED">Assinado</SelectItem>
-                        <SelectItem value="CANCELED">Cancelado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {existingContracts.length > 0 && (
-              <FormField
-                control={form.control}
-                name="parent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contrato Original — Aditivo (Opcional)</FormLabel>
-                    <Select
-                      onValueChange={(v) =>
-                        field.onChange(v === SELECT_NONE_VALUE ? null : v)
-                      }
-                      value={field.value ?? SELECT_NONE_VALUE}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Nenhum (contrato novo)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={SELECT_NONE_VALUE}>
-                          Nenhum (contrato novo)
-                        </SelectItem>
-                        {existingContracts.map((c) => (
-                          <SelectItem key={c.uuid} value={c.uuid}>
-                            {c.name || c.description || c.uuid.substring(0, 8)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isPending}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
-                Salvar
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      {existingContracts.length > 0 && (
+        <FormSelectNullable
+          control={form.control}
+          name="parent"
+          label="Contrato Original — Aditivo (Opcional)"
+          items={existingContracts}
+          getItemKey={(c) => c.uuid}
+          getItemLabel={(c) =>
+            c.name || c.description || c.uuid.substring(0, 8)
+          }
+          placeholder="Nenhum (contrato novo)"
+          noneLabel="Nenhum (contrato novo)"
+        />
+      )}
+    </FormDialog>
   );
 });
