@@ -21,7 +21,7 @@ import {
 import { getApiErrorInfo } from "@/api/error-utils";
 import { formatCurrencyBR, formatDateBR } from "@/features/shared/utils/formatters";
 import { useQueryClient } from "@tanstack/react-query";
-import { AXIOS_INSTANCE } from "@/api/axios-client";
+import { AXIOS_INSTANCE } from "@/api/axios-instance";
 
 import {
   Dialog,

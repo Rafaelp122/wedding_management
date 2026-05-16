@@ -1,12 +1,7 @@
 import { AxiosError } from "axios";
 
-import type { DjangoErrorResponse } from "@/types/api";
-
-export interface ApiErrorInfo {
-  status?: number;
-  code?: string;
-  message: string;
-}
+import type { DjangoErrorResponse } from "@/api/types/backend";
+import type { ApiErrorInfo } from "@/api/types/errors";
 
 const STATUS_MESSAGES: Record<number, string> = {
   401: "Sua sessão expirou. Faça login novamente.",

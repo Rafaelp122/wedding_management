@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getApiErrorInfo, type ApiErrorInfo } from "@/api/error-utils";
+import { getApiErrorInfo } from "@/api/error-utils";
+import type { ApiErrorInfo } from "@/api/types/errors";
 import { AxiosError } from "axios";
 
 function createAxiosError(
@@ -91,6 +92,13 @@ describe("getApiErrorInfo", () => {
       createAxiosError(400, { bride_name: ["Este campo é obrigatório"] }),
     );
     expect(result.message).toBe("Este campo é obrigatório");
+  });
+
+  it("returns first field error when field value is a string", () => {
+    const result = getApiErrorInfo(
+      createAxiosError(400, { email: "Endereço de email inválido" }),
+    );
+    expect(result.message).toBe("Endereço de email inválido");
   });
 
   it("skips detail/message/code fields in field error extraction", () => {

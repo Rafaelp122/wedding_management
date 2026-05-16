@@ -26,7 +26,6 @@ export default mergeConfig(
           "src/components/ui/**",
           "**/*.test.*",
           "**/*.spec.*",
-          "src/types/**",
           "src/test-data.ts",
           "src/main.tsx",
           "src/router/**",

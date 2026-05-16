@@ -15,7 +15,7 @@ import {
   useFinancesExpensesCreate,
   useFinancesCategoriesList,
 } from "@/api/generated/v1/endpoints/finances/finances";
-import { AXIOS_INSTANCE } from "@/api/axios-client";
+import { AXIOS_INSTANCE } from "@/api/axios-instance";
 import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";

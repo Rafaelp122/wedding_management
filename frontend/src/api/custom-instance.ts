@@ -1,9 +1,6 @@
-// src/api/mutator/custom-instance.ts
 import type { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
-import { type DjangoErrorResponse } from "../types/api";
-
-// Importando a instância configurada no outro arquivo
-import { AXIOS_INSTANCE } from "./axios-client";
+import type { DjangoErrorResponse } from "./types/backend";
+import { AXIOS_INSTANCE } from "./axios-instance";
 
 export const customInstance = async <T>(
   config: AxiosRequestConfig | string,
