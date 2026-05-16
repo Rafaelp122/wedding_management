@@ -1,10 +1,12 @@
-// src/api/mutator/custom-instance.ts
 import type { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
-import { type DjangoErrorResponse } from "../types/api";
+import type { DjangoErrorResponse } from "./types/backend";
+import { AXIOS_INSTANCE } from "./axios-instance";
 
-// Importando a instância configurada no outro arquivo
-import { AXIOS_INSTANCE } from "./axios-client";
-
+/**
+ * Wrapper fino sobre a instância Axios pré-configurada usado pelos hooks
+ * gerados pelo Orval. Aceita uma string de URL ou um objeto de
+ * configuração completo, mesclando opções adicionais na requisição final.
+ */
 export const customInstance = async <T>(
   config: AxiosRequestConfig | string,
   options?: AxiosRequestConfig,

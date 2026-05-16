@@ -13,7 +13,7 @@ export default defineConfig({
       mock: true,
       override: {
         mutator: {
-          path: "src/api/custom-instance.ts",
+          path: "src/api/api-client.ts",
           name: "customInstance",
         },
         query: {
