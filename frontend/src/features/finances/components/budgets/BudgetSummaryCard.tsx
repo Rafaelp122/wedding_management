@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBR } from "@/lib/formatters";
 
 interface WeddingBudgetSummaryCardProps {
   isEditing: boolean;

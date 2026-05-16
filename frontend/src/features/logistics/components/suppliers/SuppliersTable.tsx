@@ -15,8 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TableRowActionsMenu } from "@/features/shared/components/TableRowActionsMenu";
-import { formatDateBR } from "@/features/shared/utils/formatters";
+import { TableRowActionsMenu } from "@/components/table-row-actions-menu";
+import { formatDateBR } from "@/lib/formatters";
 
 interface SuppliersTableProps {
   suppliers: SupplierOut[];

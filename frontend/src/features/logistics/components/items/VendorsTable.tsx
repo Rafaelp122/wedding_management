@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrencyBR, formatDateBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 
 interface WeddingVendorsTableProps {
   contracts: ContractOut[];

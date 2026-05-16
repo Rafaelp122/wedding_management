@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDateBR } from "@/features/shared/utils/formatters";
+import { formatDateBR } from "@/lib/formatters";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function SupplierDetailPage() {

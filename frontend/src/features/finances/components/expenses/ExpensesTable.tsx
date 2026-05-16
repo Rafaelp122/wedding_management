@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBR } from "@/lib/formatters";
 
 const EditExpenseDialog = lazy(
   () => import("./EditExpenseDialog").then((m) => ({ default: m.EditExpenseDialog })),

@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBR } from "@/lib/formatters";
 
 interface WeddingBudgetCategoriesCardProps {
   categories: BudgetCategoryOut[];

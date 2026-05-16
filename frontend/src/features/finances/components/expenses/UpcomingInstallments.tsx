@@ -20,7 +20,7 @@ import {
   useFinancesInstallmentsMarkAsPaid,
   getFinancesInstallmentsListQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
-import { formatCurrencyBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBR } from "@/lib/formatters";
 import { getApiErrorInfo } from "@/api/error-utils";
 
 interface WeddingUpcomingInstallmentsProps {

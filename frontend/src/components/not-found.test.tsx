@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@/test-utils";
-import NotFoundPage from "@/features/shared/components/NotFound";
+import NotFoundPage from "@/components/not-found";
 
 describe("NotFoundPage", () => {
   it("renders not found message", () => {

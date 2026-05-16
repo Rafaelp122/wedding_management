@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateTimeBR } from "@/features/shared/utils/formatters";
+import { formatDateTimeBR } from "@/lib/formatters";
 
 const EVENT_LABELS: Record<string, string> = {
   reuniao: "Reunião",

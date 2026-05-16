@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getWeddingStatusInfo,
   getWeddingStatusLabel,
-} from "@/features/shared/utils/weddingStatus";
+} from "@/features/weddings/utils/wedding-status";
 
 describe("getWeddingStatusInfo", () => {
   it('returns "Em Andamento" for IN_PROGRESS status', () => {

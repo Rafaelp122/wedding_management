@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrencyBRCompact, parseDecimal } from "@/features/shared/utils/formatters";
+import { formatCurrencyBRCompact, parseDecimal } from "@/lib/formatters";
 import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 
 const CreateBudgetCategoryDialog = lazy(

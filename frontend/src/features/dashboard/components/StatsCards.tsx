@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Heart, DollarSign, Calendar, AlertTriangle } from "lucide-react";
 import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
-import { formatCurrencyBRCompact } from "@/features/shared/utils/formatters";
+import { formatCurrencyBRCompact } from "@/lib/formatters";
 
 interface StatsCardsProps {
   summary?: DashboardSummaryOut;

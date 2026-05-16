@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { selectOnFocus } from "@/features/shared/utils/selectOnFocus";
+import { selectOnFocus } from "@/lib/select-on-focus";
 
 describe("selectOnFocus", () => {
   it("selects input value when it is '0'", () => {
