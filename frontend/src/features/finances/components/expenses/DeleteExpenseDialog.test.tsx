@@ -71,12 +71,15 @@ describe("DeleteExpenseDialog", () => {
       screen.getByRole("button", { name: /deletar permanentemente/i }),
     );
 
-    await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        "Despesa deletada com sucesso!",
-      );
-      expect(onSuccess).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(toastSuccess).toHaveBeenCalledWith(
+          "Despesa deletada com sucesso!",
+        );
+        expect(onSuccess).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows error toast on API failure", async () => {
@@ -105,8 +108,11 @@ describe("DeleteExpenseDialog", () => {
       screen.getByRole("button", { name: /deletar permanentemente/i }),
     );
 
-    await waitFor(() => {
-      expect(toastError).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(toastError).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
   });
 });

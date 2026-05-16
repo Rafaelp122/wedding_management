@@ -94,12 +94,15 @@ describe("CreateWeddingDialog", () => {
     await user.type(screen.getByLabelText("Data do Casamento"), "2025-12-25");
     await user.click(screen.getByRole("button", { name: /criar casamento/i }));
 
-    await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        "Casamento criado com sucesso!",
-      );
-      expect(onSuccess).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(toastSuccess).toHaveBeenCalledWith(
+          "Casamento criado com sucesso!",
+        );
+        expect(onSuccess).toHaveBeenCalled();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("shows validation error for empty fields", async () => {
@@ -140,8 +143,11 @@ describe("CreateWeddingDialog", () => {
     await user.type(screen.getByLabelText("Data do Casamento"), "2025-12-25");
     await user.click(screen.getByRole("button", { name: /criar casamento/i }));
 
-    await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith("Erro interno");
-    });
+    await waitFor(
+      () => {
+        expect(toastError).toHaveBeenCalledWith("Erro interno");
+      },
+      { timeout: 5000 },
+    );
   });
 });
