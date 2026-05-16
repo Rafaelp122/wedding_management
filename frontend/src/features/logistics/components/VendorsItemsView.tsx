@@ -80,7 +80,8 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
         <CardContent>
           <WeddingVendorsTable
             contracts={contracts}
-            onContractClick={setDetailContractUuid}
+            isAddendum={(c) => !!c.parent}
+            onDetail={setDetailContractUuid}
           />
         </CardContent>
       </Card>

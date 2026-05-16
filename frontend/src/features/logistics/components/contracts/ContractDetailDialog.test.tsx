@@ -346,8 +346,9 @@ describe("ContractDetailDialog", () => {
     expect(screen.getByText(/1\.000,00/)).toBeInTheDocument();
     expect(screen.getByText(/2\.500,00/)).toBeInTheDocument();
 
-    // Addendum statuses
-    expect(screen.getByText("Assinado")).toBeInTheDocument(); // SIGNED
+    // Addendum statuses — multiple elements with "Assinado" (contract + addendum)
+    const assinadoBadges = screen.getAllByText("Assinado");
+    expect(assinadoBadges.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Rascunho")).toBeInTheDocument(); // DRAFT
   });
 
