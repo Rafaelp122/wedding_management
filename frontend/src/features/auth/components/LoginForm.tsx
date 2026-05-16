@@ -29,7 +29,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import type { ErrorType } from "@/api/custom-instance";
+import type { ErrorType } from "@/api/api-client";
 import type { AxiosResponse } from "axios";
 
 export function LoginForm() {

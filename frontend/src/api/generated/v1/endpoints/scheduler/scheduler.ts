@@ -34,8 +34,8 @@ import type {
   TaskPatchIn,
 } from "../../models";
 
-import { customInstance } from "../../../../custom-instance";
-import type { ErrorType } from "../../../../custom-instance";
+import { customInstance } from "../../../../api-client";
+import type { ErrorType } from "../../../../api-client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
