@@ -6,15 +6,15 @@ import { createMockSupplier } from "@/test-data";
 const mockSupplier = createMockSupplier({ uuid: "supplier-1" });
 
 describe("useSupplierFormDialogState", () => {
-  it("starts with dialog closed and empty form", () => {
+  it("starts with dialog closed and no supplier", () => {
     const { result } = renderHook(() => useSupplierFormDialogState());
 
     expect(result.current.formOpen).toBe(false);
     expect(result.current.formMode).toBe("create");
-    expect(result.current.formState.name).toBe("");
+    expect(result.current.editingSupplier).toBeNull();
   });
 
-  it("openCreateDialog resets form and opens dialog", () => {
+  it("openCreateDialog opens dialog in create mode", () => {
     const { result } = renderHook(() => useSupplierFormDialogState());
 
     act(() => {
@@ -23,10 +23,10 @@ describe("useSupplierFormDialogState", () => {
 
     expect(result.current.formOpen).toBe(true);
     expect(result.current.formMode).toBe("create");
-    expect(result.current.formState.name).toBe("");
+    expect(result.current.editingSupplier).toBeNull();
   });
 
-  it("openEditDialog fills form with supplier data", () => {
+  it("openEditDialog opens dialog with supplier data", () => {
     const { result } = renderHook(() => useSupplierFormDialogState());
 
     act(() => {
@@ -35,19 +35,7 @@ describe("useSupplierFormDialogState", () => {
 
     expect(result.current.formOpen).toBe(true);
     expect(result.current.formMode).toBe("edit");
-    expect(result.current.formState.name).toBe("Fornecedor Teste");
-    expect(result.current.formState.email).toBe("teste@fornecedor.com");
-    expect(result.current.formState.uuid).toBe("supplier-1");
-  });
-
-  it("openEditDialog maps is_active to status correctly", () => {
-    const { result } = renderHook(() => useSupplierFormDialogState());
-
-    act(() => {
-      result.current.openEditDialog({ ...mockSupplier, is_active: false });
-    });
-
-    expect(result.current.formState.status).toBe("inactive");
+    expect(result.current.editingSupplier).toEqual(mockSupplier);
   });
 
   it("setFormOpen can close the dialog", () => {

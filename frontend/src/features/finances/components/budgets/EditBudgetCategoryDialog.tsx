@@ -1,33 +1,15 @@
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import type { z } from "zod";
+import { AlertCircle } from "lucide-react";
 
 import { useFinancesCategoriesUpdate } from "@/api/generated/v1/endpoints/finances/finances";
 import { FinancesCategoriesUpdateBody } from "@/api/generated/v1/zod/finances/finances";
-import { getApiErrorInfo } from "@/api/error-utils";
+import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle } from "lucide-react";
+import { FormDialog } from "@/components/form-dialog";
+import { FormInput, FormNumber, FormTextarea } from "@/components/form-fields";
 
 type EditCategoryFormData = z.infer<typeof FinancesCategoriesUpdateBody>;
 
@@ -58,20 +40,14 @@ export function EditBudgetCategoryDialog({
   const handleSubmit = form.handleSubmit((data) => {
     mutate(
       { uuid: category.uuid, data },
-      {
+      createMutationCallbacks({
+        successMsg: "Categoria atualizada com sucesso!",
+        fallbackErrorMsg: "Falha ao atualizar categoria.",
         onSuccess: () => {
-          toast.success("Categoria atualizada com sucesso!");
           onOpenChange(false);
           onSuccess();
         },
-        onError: (error) => {
-          const { message } = getApiErrorInfo(
-            error,
-            "Falha ao atualizar categoria.",
-          );
-          toast.error(message);
-        },
-      },
+      }),
     );
   });
 
@@ -84,105 +60,51 @@ export function EditBudgetCategoryDialog({
   const valueBelowSpent = numericValue !== null && numericValue < currentSpent;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Editar Categoria</DialogTitle>
-          <DialogDescription>
-            Altere o nome ou valor orçado da categoria {category.name}.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Nome da categoria"
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="allocated_budget"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor Orçado (R$)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === ""
-                            ? null
-                            : parseFloat(e.target.value),
-                        )
-                      }
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Detalhes sobre esta categoria..."
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {valueBelowSpent && (
-              <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 text-sm">
-                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>
-                  O novo valor é menor que o total já gasto (R${" "}
-                  {currentSpent.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                  })}
-                  ).
-                </span>
-              </div>
-            )}
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isPending}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Editar Categoria"
+      description={`Altere o nome ou valor orçado da categoria ${category.name}.`}
+      form={form}
+      onSubmit={handleSubmit}
+      isPending={isPending}
+      submitLabel="Salvar"
+      maxWidth="425px"
+    >
+      <FormInput
+        control={form.control}
+        name="name"
+        label="Nome"
+        placeholder="Nome da categoria"
+      />
+
+      <FormNumber
+        control={form.control}
+        name="allocated_budget"
+        label="Valor Orçado (R$)"
+        placeholder="0,00"
+        transformEmptyTo={null}
+      />
+
+      <FormTextarea
+        control={form.control}
+        name="description"
+        label="Descrição (opcional)"
+        placeholder="Detalhes sobre esta categoria..."
+      />
+
+      {valueBelowSpent && (
+        <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 text-sm">
+          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+          <span>
+            O novo valor é menor que o total já gasto (R${" "}
+            {currentSpent.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+            })}
+            ).
+          </span>
+        </div>
+      )}
+    </FormDialog>
   );
 }

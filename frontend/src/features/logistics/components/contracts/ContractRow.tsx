@@ -1,12 +1,11 @@
 import { memo, useState } from "react";
 import { MessageCircle, Mail, MoreHorizontal } from "lucide-react";
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
-import { formatCurrencyBR, formatDateBR } from "@/features/shared/utils/formatters";
+import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 import {
   useLogisticsContractsDelete,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
-import { toast } from "sonner";
-import { getApiErrorInfo } from "@/api/error-utils";
+import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 
 import {
   TableCell,
@@ -22,20 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
-
-const STATUS_STYLES: Record<string, string> = {
-  DRAFT: "bg-gray-100 text-gray-700",
-  PENDING: "bg-yellow-100 text-yellow-800",
-  SIGNED: "bg-green-100 text-green-800",
-  CANCELED: "bg-red-100 text-red-800",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Rascunho",
-  PENDING: "Pendente",
-  SIGNED: "Assinado",
-  CANCELED: "Cancelado",
-};
+import { STATUS_STYLES, STATUS_LABELS } from "@/features/logistics/constants";
 
 interface ContractRowProps {
   contract: ContractOut;
@@ -69,17 +55,14 @@ export const ContractRow = memo(function ContractRow({
     if (!deletingContract) return;
     deleteContract(
       { uuid: deletingContract.uuid },
-      {
+      createMutationCallbacks({
+        successMsg: "Contrato deletado com sucesso!",
+        fallbackErrorMsg: "Erro ao deletar contrato.",
         onSuccess: () => {
-          toast.success("Contrato deletado com sucesso!");
           setDeletingContract(null);
           onRefresh();
         },
-        onError: (error) => {
-          const { message } = getApiErrorInfo(error, "Erro ao deletar contrato.");
-          toast.error(message);
-        },
-      },
+      }),
     );
   };
 

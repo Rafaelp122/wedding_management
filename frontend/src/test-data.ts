@@ -6,8 +6,6 @@ import type { EventOut } from "@/api/generated/v1/models/eventOut";
 import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
-import type { SupplierFormState } from "@/features/logistics/types";
-import { EMPTY_SUPPLIER_FORM_STATE } from "@/features/logistics/types";
 import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
 import type { CriticalWeddingOut } from "@/api/generated/v1/models/criticalWeddingOut";
 import type { InstallmentOut } from "@/api/generated/v1/models/installmentOut";
@@ -131,15 +129,6 @@ export function createMockItem(overrides?: Partial<ItemOut>): ItemOut {
     acquisition_status: "PENDING",
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
-    ...overrides,
-  };
-}
-
-export function createMockSupplierFormState(
-  overrides?: Partial<SupplierFormState>,
-): SupplierFormState {
-  return {
-    ...EMPTY_SUPPLIER_FORM_STATE,
     ...overrides,
   };
 }

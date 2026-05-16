@@ -1,35 +1,22 @@
 import { useState } from "react";
 
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
-import {
-  EMPTY_SUPPLIER_FORM_STATE,
-  type SupplierFormMode,
-  type SupplierFormState,
-} from "../types";
+import type { SupplierFormMode } from "../types";
 
 export function useSupplierFormDialogState() {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<SupplierFormMode>("create");
-  const [formState, setFormState] = useState<SupplierFormState>({
-    ...EMPTY_SUPPLIER_FORM_STATE,
-  });
+  const [editingSupplier, setEditingSupplier] = useState<SupplierOut | null>(null);
 
   const openCreateDialog = () => {
     setFormMode("create");
-    setFormState({ ...EMPTY_SUPPLIER_FORM_STATE });
+    setEditingSupplier(null);
     setFormOpen(true);
   };
 
   const openEditDialog = (supplier: SupplierOut) => {
     setFormMode("edit");
-    setFormState({
-      uuid: supplier.uuid,
-      name: supplier.name,
-      cnpj: supplier.cnpj,
-      phone: supplier.phone,
-      email: supplier.email,
-      status: supplier.is_active ? "active" : "inactive",
-    });
+    setEditingSupplier(supplier);
     setFormOpen(true);
   };
 
@@ -37,8 +24,7 @@ export function useSupplierFormDialogState() {
     formOpen,
     setFormOpen,
     formMode,
-    formState,
-    setFormState,
+    editingSupplier,
     openCreateDialog,
     openEditDialog,
   };

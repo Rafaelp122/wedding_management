@@ -1,18 +1,24 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { z } from "zod";
 
-import type { SupplierFormMode, SupplierFormState } from "../../types";
-
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  useLogisticsSuppliersCreate,
+  useLogisticsSuppliersUpdate,
+} from "@/api/generated/v1/endpoints/logistics/logistics";
+import { LogisticsSuppliersCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
+import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
+
+import { FormDialog } from "@/components/form-dialog";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -20,135 +26,156 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FormInput } from "@/components/form-fields";
+
+type SupplierFormData = z.infer<typeof LogisticsSuppliersCreateBody>;
 
 interface SupplierFormDialogProps {
   open: boolean;
-  mode: SupplierFormMode;
-  formState: SupplierFormState;
-  setFormState: Dispatch<SetStateAction<SupplierFormState>>;
-  isSaving: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: () => void;
+  mode: "create" | "edit";
+  supplier: SupplierOut | null;
+  onSuccess: () => void;
 }
 
 export function SupplierFormDialog({
   open,
-  mode,
-  formState,
-  setFormState,
-  isSaving,
   onOpenChange,
-  onSave,
+  mode,
+  supplier,
+  onSuccess,
 }: SupplierFormDialogProps) {
+  const createMutation = useLogisticsSuppliersCreate();
+  const updateMutation = useLogisticsSuppliersUpdate();
+  const isPending = mode === "create" ? createMutation.isPending : updateMutation.isPending;
+
+  const form = useForm({
+    resolver: zodResolver(LogisticsSuppliersCreateBody),
+    defaultValues: {
+      name: "",
+      cnpj: "",
+      phone: "",
+      email: "",
+      is_active: true,
+    } as SupplierFormData,
+  });
+
+  useEffect(() => {
+    if (open) {
+      if (mode === "edit" && supplier) {
+        form.reset({
+          name: supplier.name,
+          cnpj: supplier.cnpj,
+          phone: supplier.phone,
+          email: supplier.email,
+          is_active: supplier.is_active,
+        });
+      } else {
+        form.reset({
+          name: "",
+          cnpj: "",
+          phone: "",
+          email: "",
+          is_active: true,
+        });
+      }
+    }
+  }, [open, mode, supplier, form]);
+
+  const onSubmit = (data: SupplierFormData) => {
+    if (mode === "create") {
+      createMutation.mutate(
+        { data },
+        createMutationCallbacks({
+          successMsg: "Fornecedor criado com sucesso!",
+          fallbackErrorMsg: "Não foi possível salvar o fornecedor.",
+          onSuccess: () => {
+            form.reset();
+            onSuccess();
+          },
+        }),
+      );
+    } else if (supplier) {
+      updateMutation.mutate(
+        { uuid: supplier.uuid, data },
+        createMutationCallbacks({
+          successMsg: "Fornecedor atualizado com sucesso!",
+          fallbackErrorMsg: "Não foi possível salvar o fornecedor.",
+          onSuccess: () => onSuccess(),
+        }),
+      );
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Novo fornecedor" : "Editar fornecedor"}
-          </DialogTitle>
-          <DialogDescription>
-            Preencha os dados principais para manter o cadastro de fornecedores.
-          </DialogDescription>
-        </DialogHeader>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={mode === "create" ? "Novo fornecedor" : "Editar fornecedor"}
+      description="Preencha os dados principais para manter o cadastro de fornecedores."
+      form={form}
+      onSubmit={form.handleSubmit(onSubmit)}
+      isPending={isPending}
+      submitLabel="Salvar"
+    >
+      <FormInput
+        control={form.control}
+        name="name"
+        label="Nome"
+        placeholder="Nome do fornecedor"
+      />
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="supplier-name">Nome</Label>
-            <Input
-              id="supplier-name"
-              value={formState.name}
-              onChange={(event) =>
-                setFormState((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              placeholder="Nome do fornecedor"
-            />
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <FormInput
+          control={form.control}
+          name="email"
+          label="E-mail"
+          type="email"
+          placeholder="contato@fornecedor.com"
+        />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="supplier-email">E-mail</Label>
-              <Input
-                id="supplier-email"
-                type="email"
-                value={formState.email}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    email: event.target.value,
-                  }))
-                }
-                placeholder="contato@fornecedor.com"
-              />
-            </div>
+        <FormInput
+          control={form.control}
+          name="phone"
+          label="Telefone"
+          type="tel"
+          placeholder="(21) 99999-9999"
+        />
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="supplier-phone">Telefone</Label>
-              <Input
-                id="supplier-phone"
-                value={formState.phone}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    phone: event.target.value,
-                  }))
-                }
-                placeholder="(21) 99999-9999"
-              />
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <FormInput
+          control={form.control}
+          name="cnpj"
+          label="CNPJ"
+          placeholder="00.000.000/0000-00"
+        />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="supplier-cnpj">CNPJ</Label>
-              <Input
-                id="supplier-cnpj"
-                value={formState.cnpj}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    cnpj: event.target.value,
-                  }))
-                }
-                placeholder="00.000.000/0000-00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Status</Label>
+        <FormField
+          control={form.control}
+          name="is_active"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
               <Select
-                value={formState.status}
-                onValueChange={(value: "active" | "inactive") =>
-                  setFormState((current) => ({
-                    ...current,
-                    status: value,
-                  }))
-                }
+                onValueChange={(v) => field.onChange(v === "true")}
+                value={field.value ? "true" : "false"}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
                 <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
+                  <SelectItem value="true">Ativo</SelectItem>
+                  <SelectItem value="false">Inativo</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={onSave} disabled={isSaving}>
-            {isSaving ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </FormDialog>
   );
 }

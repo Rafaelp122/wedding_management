@@ -1,24 +1,16 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { useWeddingsUpdate } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { WeddingsUpdateBody } from "@/api/generated/v1/zod/weddings/weddings";
-import { getApiErrorInfo } from "@/api/error-utils";
-import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import type { z } from "zod";
 
-type UpdateWeddingFormData = z.infer<typeof WeddingsUpdateBody>;
+import { useWeddingsUpdate } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { WeddingsUpdateBody } from "@/api/generated/v1/zod/weddings/weddings";
+import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { WeddingDialogActions } from "./WeddingDialogActions";
+import { FormDialog } from "@/components/form-dialog";
 import { WeddingFormFields } from "./WeddingFormFields";
+
+type UpdateWeddingFormData = z.infer<typeof WeddingsUpdateBody>;
 
 interface EditWeddingDialogProps {
   wedding: WeddingOut;
@@ -49,44 +41,27 @@ export function EditWeddingDialog({
   const onSubmit = (data: UpdateWeddingFormData) => {
     mutate(
       { uuid: wedding.uuid, data },
-      {
-        onSuccess: () => {
-          toast.success("Casamento atualizado com sucesso!");
-          onSuccess();
-        },
-        onError: (error) => {
-          const { message } = getApiErrorInfo(
-            error,
-            "Erro ao atualizar casamento.",
-          );
-          toast.error(message);
-        },
-      },
+      createMutationCallbacks({
+        successMsg: "Casamento atualizado com sucesso!",
+        fallbackErrorMsg: "Erro ao atualizar casamento.",
+        onSuccess: () => onSuccess(),
+      }),
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Editar Casamento</DialogTitle>
-          <DialogDescription>
-            Atualize os dados do casamento. As alterações serão salvas
-            imediatamente.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <WeddingFormFields form={form} />
-            <WeddingDialogActions
-              isPending={isPending}
-              onCancel={() => onOpenChange(false)}
-              submitLabel="Salvar Alterações"
-            />
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Editar Casamento"
+      description="Atualize os dados do casamento. As alterações serão salvas imediatamente."
+      form={form}
+      onSubmit={form.handleSubmit(onSubmit)}
+      isPending={isPending}
+      submitLabel="Salvar Alterações"
+      maxWidth="600px"
+    >
+      <WeddingFormFields form={form} />
+    </FormDialog>
   );
 }
