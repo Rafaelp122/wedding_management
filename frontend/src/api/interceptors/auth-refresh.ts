@@ -4,6 +4,13 @@ import { useAuthStore } from "@/stores/authStore";
 import { normalizeError } from "@/api/utils/normalize-error";
 import { createQueue } from "@/api/utils/queue-manager";
 
+/**
+ * Reenvia uma requisição que estava na fila aguardando o refresh do token.
+ *
+ * Verifica novamente o sinal de abort — cobre a race condition em que
+ * `AbortController.abort()` é chamado entre a resolução da fila e a
+ * execução efetiva do retry.
+ */
 async function retryQueuedRequest(
   token: string,
   request: InternalAxiosRequestConfig,
@@ -18,6 +25,11 @@ async function retryQueuedRequest(
   return instance(request);
 }
 
+/**
+ * Chama o endpoint de refresh, persiste os novos tokens via callback,
+ * resolve as requisições enfileiradas e reenvia a requisição original
+ * com o access token atualizado.
+ */
 async function performRefresh(
   originalRequest: InternalAxiosRequestConfig,
   instance: AxiosInstance,
@@ -49,6 +61,22 @@ async function performRefresh(
   return instance(originalRequest);
 }
 
+/**
+ * Registra um interceptor de resposta que renova access tokens expirados
+ * de forma transparente.
+ *
+ * Fluxo:
+ * 1. Erros não-401 e requisições já reenviadas passam direto.
+ * 2. 401s concorrentes durante um refresh ativo entram na fila e são
+ *    reenviados quando o novo token chega.
+ * 3. O primeiro 401 dispara um POST para `/api/v1/auth/refresh/`. Em caso
+ *    de sucesso, os tokens são persistidos, a fila é drenada e a requisição
+ *    original é reenviada. Em caso de falha, todas as requisições da fila
+ *    são rejeitadas e o usuário é deslogado.
+ *
+ * O estado (`isRefreshing`, `queue`) pertence ao closure — cada instância
+ * Axios recebe o seu próprio via `createAxiosInstance()`.
+ */
 export function addAuthRefreshInterceptor(instance: AxiosInstance) {
   let isRefreshing = false;
   const queue = createQueue();
@@ -70,6 +98,7 @@ export function addAuthRefreshInterceptor(instance: AxiosInstance) {
       }
 
       if (isRefreshing) {
+        originalRequest._retry = true;
         return new Promise<string>((resolve, reject) => {
           queue.enqueue({ resolve, reject, config: originalRequest });
         })

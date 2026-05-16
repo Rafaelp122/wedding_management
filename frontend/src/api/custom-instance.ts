@@ -2,6 +2,11 @@ import type { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 import type { DjangoErrorResponse } from "./types/backend";
 import { AXIOS_INSTANCE } from "./axios-instance";
 
+/**
+ * Wrapper fino sobre a instância Axios pré-configurada usado pelos hooks
+ * gerados pelo Orval. Aceita uma string de URL ou um objeto de
+ * configuração completo, mesclando opções adicionais na requisição final.
+ */
 export const customInstance = async <T>(
   config: AxiosRequestConfig | string,
   options?: AxiosRequestConfig,

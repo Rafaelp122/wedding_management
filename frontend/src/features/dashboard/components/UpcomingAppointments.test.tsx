@@ -32,6 +32,6 @@ describe("UpcomingAppointments", () => {
 
     expect(
       screen.queryByText(/nenhum compromisso nos próximos 30 dias/i),
-    ).toBeDefined();
+    ).toBeInTheDocument();
   });
 });
