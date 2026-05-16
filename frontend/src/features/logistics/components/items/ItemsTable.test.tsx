@@ -12,13 +12,13 @@ describe("WeddingItemsTable", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders item rows", () => {
+  it("renders item rows with colored status badge", () => {
     render(<WeddingItemsTable items={[createMockItem()]} />);
 
     expect(screen.getByText("Cadeiras")).toBeInTheDocument();
     expect(screen.getByText("Cadeiras Tiffany")).toBeInTheDocument();
     expect(screen.getByText("150")).toBeInTheDocument();
-    expect(screen.getByText("PENDING")).toBeInTheDocument();
+    expect(screen.getByText("Pendente")).toBeInTheDocument();
   });
 
   it("shows N/A for missing description", () => {

@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { AlertCircle, FileText, Package, Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useWeddingVendorsItems } from "../hooks/useVendorsItems";
 import { WeddingVendorsTable } from "./items/VendorsTable";
 import { WeddingItemsTable } from "./items/ItemsTable";
 import { ContractDetailDialog } from "./contracts/ContractDetailDialog";
 import { ContractUploadDialog } from "./contracts/ContractUploadDialog";
+import { CreateItemDialog } from "./items/CreateItemDialog";
+import { EditItemDialog } from "./items/EditItemDialog";
+import type { ItemOut } from "@/api/generated/v1/models/itemOut";
+import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logistics/logistics";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,11 +28,18 @@ interface WeddingVendorsItemsTabProps {
 }
 
 export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabProps) {
+  const queryClient = useQueryClient();
   const { contracts, items, isLoading, error } = useWeddingVendorsItems(weddingUuid);
 
   const [detailContractUuid, setDetailContractUuid] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [prefilledParentUuid, setPrefilledParentUuid] = useState<string | null>(null);
+  const [createItemOpen, setCreateItemOpen] = useState(false);
+  const [editItem, setEditItem] = useState<ItemOut | null>(null);
+
+  const refreshItems = () => {
+    queryClient.invalidateQueries({ queryKey: getLogisticsItemsListQueryKey() });
+  };
 
   if (isLoading) {
     return (
@@ -88,16 +100,33 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            Itens Logísticos
-          </CardTitle>
-          <CardDescription>
-            Acompanhamento de recursos materiais, brindes e infraestrutura.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
+                Itens Logísticos
+              </CardTitle>
+              <CardDescription>
+                Acompanhamento de recursos materiais, brindes e infraestrutura.
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              onClick={() => setCreateItemOpen(true)}
+            >
+              <Plus className="size-3" />
+              Novo Item
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <WeddingItemsTable items={items} />
+          <WeddingItemsTable
+            items={items}
+            onEdit={setEditItem}
+            onRefresh={refreshItems}
+          />
         </CardContent>
       </Card>
 
@@ -125,6 +154,31 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
         }}
         prefilledParentUuid={prefilledParentUuid}
       />
+
+      <CreateItemDialog
+        weddingUuid={weddingUuid}
+        open={createItemOpen}
+        onOpenChange={setCreateItemOpen}
+        onSuccess={() => {
+          setCreateItemOpen(false);
+          refreshItems();
+        }}
+      />
+
+      {editItem && (
+        <EditItemDialog
+          item={editItem}
+          weddingUuid={weddingUuid}
+          open={!!editItem}
+          onOpenChange={(open) => {
+            if (!open) setEditItem(null);
+          }}
+          onSuccess={() => {
+            setEditItem(null);
+            refreshItems();
+          }}
+        />
+      )}
     </div>
   );
 }
