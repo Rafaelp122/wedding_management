@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@/test-utils";
+import { describe, expect, it, vi } from "vitest";
+import { render, screen, userEvent } from "@/test-utils";
 import { WeddingVendorsTable } from "@/features/logistics/components/items/VendorsTable";
 import { createMockContract } from "@/test-data";
 
@@ -47,5 +47,28 @@ describe("WeddingVendorsTable", () => {
     );
 
     expect(screen.getByText("15/01/2025")).toBeInTheDocument();
+  });
+
+  it("calls onContractClick when a row is clicked", async () => {
+    const onContractClick = vi.fn();
+    const contract = createMockContract();
+
+    render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onContractClick={onContractClick}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByText("Buffet contrato"));
+
+    expect(onContractClick).toHaveBeenCalledWith(contract.uuid);
+  });
+
+  it("does not crash when onContractClick is not provided", () => {
+    render(<WeddingVendorsTable contracts={[createMockContract()]} />);
+
+    expect(screen.getByText("ACTIVE")).toBeInTheDocument();
   });
 });

@@ -1,8 +1,11 @@
-import { AlertCircle, FileText, Package } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, FileText, Package, Plus } from "lucide-react";
 
 import { useWeddingVendorsItems } from "../hooks/useVendorsItems";
 import { WeddingVendorsTable } from "./items/VendorsTable";
 import { WeddingItemsTable } from "./items/ItemsTable";
+import { ContractDetailDialog } from "./contracts/ContractDetailDialog";
+import { ContractUploadDialog } from "./contracts/ContractUploadDialog";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface WeddingVendorsItemsTabProps {
   weddingUuid: string;
@@ -20,6 +24,10 @@ interface WeddingVendorsItemsTabProps {
 
 export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabProps) {
   const { contracts, items, isLoading, error } = useWeddingVendorsItems(weddingUuid);
+
+  const [detailContractUuid, setDetailContractUuid] = useState<string | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [prefilledParentUuid, setPrefilledParentUuid] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -43,23 +51,40 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
 
   return (
     <div className="space-y-6">
-      {/* Contratos de Fornecedores */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Contratos de Fornecedores
-          </CardTitle>
-          <CardDescription>
-            Fornecedores e serviços vinculados formalmente a este evento.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Contratos de Fornecedores
+              </CardTitle>
+              <CardDescription>
+                Fornecedores e serviços vinculados formalmente a este evento.
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              onClick={() => {
+                setPrefilledParentUuid(null);
+                setUploadOpen(true);
+              }}
+            >
+              <Plus className="size-3" />
+              Novo Contrato
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <WeddingVendorsTable contracts={contracts} />
+          <WeddingVendorsTable
+            contracts={contracts}
+            onContractClick={setDetailContractUuid}
+          />
         </CardContent>
       </Card>
 
-      {/* Itens Logísticos */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -74,6 +99,31 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
           <WeddingItemsTable items={items} />
         </CardContent>
       </Card>
+
+      <ContractDetailDialog
+        contractUuid={detailContractUuid}
+        weddingUuid={weddingUuid}
+        open={!!detailContractUuid}
+        onOpenChange={(open) => {
+          if (!open) setDetailContractUuid(null);
+        }}
+        onCreateAddendum={(parentUuid) => {
+          setPrefilledParentUuid(parentUuid);
+          setUploadOpen(true);
+          setDetailContractUuid(null);
+        }}
+      />
+
+      <ContractUploadDialog
+        weddingUuid={weddingUuid}
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        onSuccess={() => {
+          setUploadOpen(false);
+          setPrefilledParentUuid(null);
+        }}
+        prefilledParentUuid={prefilledParentUuid}
+      />
     </div>
   );
 }

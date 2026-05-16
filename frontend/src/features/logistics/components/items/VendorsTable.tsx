@@ -12,9 +12,10 @@ import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 
 interface WeddingVendorsTableProps {
   contracts: ContractOut[];
+  onContractClick?: (contractUuid: string) => void;
 }
 
-export function WeddingVendorsTable({ contracts }: WeddingVendorsTableProps) {
+export function WeddingVendorsTable({ contracts, onContractClick }: WeddingVendorsTableProps) {
   if (contracts.length === 0) {
     return (
       <div className="text-center py-6 text-muted-foreground border rounded-md">
@@ -37,10 +38,13 @@ export function WeddingVendorsTable({ contracts }: WeddingVendorsTableProps) {
         </TableHeader>
         <TableBody>
           {contracts.map((contract) => (
-            <TableRow key={contract.uuid}>
+            <TableRow
+              key={contract.uuid}
+              className={onContractClick ? "cursor-pointer hover:bg-muted/50" : ""}
+              onClick={() => onContractClick?.(contract.uuid)}
+            >
               <TableCell className="font-medium text-xs text-muted-foreground uppercase flex gap-1">
-                {contract.supplier.substring(0, 8)}
-                {/* O id do supplier será substituído pelo nome se integrarmos o Supplier endpoint mais a fundo ou ajustarmos a API para expor o nome */}
+                {contract.supplier_name || contract.supplier.substring(0, 8)}
               </TableCell>
               <TableCell className="max-w-[200px] truncate" title={contract.description}>
                 {contract.description || "N/A"}
