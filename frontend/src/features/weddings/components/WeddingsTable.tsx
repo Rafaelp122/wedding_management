@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { getWeddingStatusInfo } from "@/features/shared/utils/weddingStatus";
+import { getWeddingStatusInfo } from "@/features/weddings/utils/wedding-status";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { EditWeddingDialog } from "./EditWeddingDialog";
 import { DeleteWeddingDialog } from "./DeleteWeddingDialog";
@@ -21,8 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { TableRowActionsMenu } from "@/features/shared/components/TableRowActionsMenu";
-import { formatDateBR } from "@/features/shared/utils/formatters";
+import { TableRowActionsMenu } from "@/components/table-row-actions-menu";
+import { formatDateBR } from "@/lib/formatters";
 import { Eye, Edit, Trash2 } from "lucide-react";
 
 interface WeddingsTableProps {
