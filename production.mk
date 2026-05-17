@@ -10,6 +10,7 @@ prod-build:
 
 prod-up:
 	@echo "🚀 Iniciando produção (HTTP local, SSL desativado)..."
+	@docker rm -f wedding_backend_prod >/dev/null 2>&1 || true
 	docker run -d \
 		--name wedding_backend_prod \
 		--env-file .env \
