@@ -3,7 +3,7 @@ import { render, screen, userEvent } from "@/test-utils";
 import {
   ListPageLoadingState,
   ListPageErrorState,
-} from "@/features/shared/components/PageState";
+} from "@/components/page-states";
 
 describe("ListPageLoadingState", () => {
   it("renders skeleton placeholders", () => {

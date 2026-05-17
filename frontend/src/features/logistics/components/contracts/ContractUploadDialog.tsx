@@ -3,7 +3,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { AlertTriangle, Plus, Check, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 import {
   useLogisticsContractsCreate,
@@ -18,7 +18,8 @@ import {
 import { AXIOS_INSTANCE } from "@/api/axios-instance";
 import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { getApiErrorInfo } from "@/api/error-utils";
-import { SELECT_NONE_VALUE } from "@/features/shared/utils/constants";
+import { SELECT_NONE_VALUE } from "@/lib/constants";
+import { CONTRACT_STATUS_OPTIONS } from "@/features/logistics/constants";
 
 import {
   Dialog,
@@ -36,7 +37,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -45,27 +45,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 
+import { FormInput, FormSelect, FormNumber, FormTextarea } from "@/components/form-fields";
+import { ContractItemDrafts, type ItemDraft } from "./ContractItemDrafts";
+import { ContractCreateExpenseFields } from "./ContractCreateExpenseFields";
+
 type CreateContractFormData = z.infer<typeof LogisticsContractsCreateBody>;
-
-interface ItemDraft {
-  key: string;
-  name: string;
-  quantity: number;
-  acquisition_status: string;
-}
-
-const ITEM_STATUS_LABELS: Record<string, string> = {
-  PENDING: "Pendente",
-  IN_PROGRESS: "Em Andamento",
-  DONE: "Concluído",
-};
 
 interface ContractUploadDialogProps {
   weddingUuid: string;
@@ -88,18 +77,13 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
   const { mutateAsync: createItem } = useLogisticsItemsCreate();
   const { mutateAsync: createExpense } = useFinancesExpensesCreate();
 
-  const [createExpenseChecked, setCreateExpenseChecked] = useState(false);
+  const [itemDrafts, setItemDrafts] = useState<ItemDraft[]>([]);
+  const [expenseChecked, setExpenseChecked] = useState(false);
   const [expenseCategory, setExpenseCategory] = useState("");
-  const [numInstallments, setNumInstallments] = useState(1);
-  const [firstDueDate, setFirstDueDate] = useState(
+  const [expenseNumInstallments, setExpenseNumInstallments] = useState(1);
+  const [expenseFirstDueDate, setExpenseFirstDueDate] = useState(
     () => new Date().toISOString().slice(0, 10),
   );
-
-  const [itemDrafts, setItemDrafts] = useState<ItemDraft[]>([]);
-  const [showItemForm, setShowItemForm] = useState(false);
-  const [itemName, setItemName] = useState("");
-  const [itemQty, setItemQty] = useState(1);
-  const [itemStatus, setItemStatus] = useState("PENDING");
 
   const { data: suppliersResponse } = useLogisticsSuppliersList();
   const suppliers = suppliersResponse?.data?.items ?? [];
@@ -127,29 +111,11 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
     },
   });
 
-  const addDraft = () => {
-    if (!itemName.trim()) return;
-    setItemDrafts([
-      ...itemDrafts,
-      { key: crypto.randomUUID(), name: itemName.trim(), quantity: itemQty, acquisition_status: itemStatus },
-    ]);
-    setItemName("");
-    setItemQty(1);
-    setItemStatus("PENDING");
-    setShowItemForm(false);
-  };
-
-  const removeDraft = (key: string) => {
-    setItemDrafts(itemDrafts.filter((d) => d.key !== key));
-  };
-
   const onSubmit = async (data: CreateContractFormData) => {
     try {
-      // 1. Cria contrato
       const result = await createContract({ data });
       const contractUuid = (result as { data: { uuid: string } }).data.uuid;
 
-      // 2. Upload do arquivo (se houver)
       const file = selectedFile;
       if (file) {
         const formData = new FormData();
@@ -164,7 +130,6 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
         }
       }
 
-      // 3. Cria itens (se houver)
       for (const draft of itemDrafts) {
         try {
           await createItem({
@@ -181,8 +146,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
         }
       }
 
-      // 4. Cria despesa (se checkbox marcado)
-      if (createExpenseChecked && data.total_amount) {
+      if (expenseChecked && data.total_amount) {
         try {
           await createExpense({
             data: {
@@ -192,8 +156,8 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
               description: data.description || null,
               estimated_amount: Number(data.total_amount),
               actual_amount: Number(data.total_amount),
-              num_installments: numInstallments,
-              first_due_date: firstDueDate || null,
+              num_installments: expenseNumInstallments,
+              first_due_date: expenseFirstDueDate || null,
             },
           });
         } catch {
@@ -203,7 +167,6 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
 
       toast.success("Contrato criado com sucesso!");
       form.reset();
-      setCreateExpenseChecked(false);
       setItemDrafts([]);
       onSuccess();
     } catch (error) {
@@ -232,115 +195,44 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
+            <FormSelect
               control={form.control}
               name="supplier"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fornecedor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um fornecedor" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {suppliers.map((s) => (
-                        <SelectItem key={s.uuid} value={s.uuid}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Fornecedor"
+              items={suppliers}
+              getItemKey={(s) => s.uuid}
+              getItemLabel={(s) => s.name}
+              placeholder="Selecione um fornecedor"
             />
 
-            <FormField
+            <FormInput
               control={form.control}
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Contrato</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Ex: Buffet Completo" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Nome do Contrato"
+              placeholder="Ex: Buffet Completo"
             />
 
-            <FormField
+            <FormTextarea
               control={form.control}
               name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Descreva o objeto do contrato..."
-                      rows={2}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Descrição"
+              placeholder="Descreva o objeto do contrato..."
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
+              <FormNumber
                 control={form.control}
                 name="total_amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor Total</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={field.value ?? ""}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === ""
-                              ? undefined
-                              : Number(e.target.value),
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Valor Total"
               />
 
-              <FormField
+              <FormSelect
                 control={form.control}
                 name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="DRAFT">Rascunho</SelectItem>
-                        <SelectItem value="PENDING">Pendente</SelectItem>
-                        <SelectItem value="SIGNED">Assinado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Status"
+                items={CONTRACT_STATUS_OPTIONS.filter((o) => o.value !== "CANCELED")}
+                getItemKey={(o) => o.value}
+                getItemLabel={(o) => o.label}
               />
             </div>
 
@@ -393,7 +285,6 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
 
             <Separator />
 
-            {/* Documento */}
             <div className="space-y-1">
               <label className="text-sm font-medium">Documento (Opcional)</label>
               <Input
@@ -409,160 +300,22 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
 
             <Separator />
 
-            {/* Itens */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Itens (Opcional)</label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => setShowItemForm(!showItemForm)}
-                >
-                  <Plus className="size-3 mr-1" />
-                  Adicionar
-                </Button>
-              </div>
-
-              {showItemForm && (
-                <div className="flex gap-2 mb-3">
-                  <Input
-                    placeholder="Nome do item"
-                    value={itemName}
-                    onChange={(e) => setItemName(e.target.value)}
-                    className="h-8 text-sm flex-1"
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addDraft(); } }}
-                  />
-                  <Input
-                    type="number"
-                    min={1}
-                    value={itemQty}
-                    onChange={(e) => setItemQty(Math.max(1, Number(e.target.value) || 1))}
-                    className="h-8 text-sm w-16"
-                  />
-                  <Select value={itemStatus} onValueChange={setItemStatus}>
-                    <SelectTrigger className="h-8 text-sm w-28">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PENDING">Pendente</SelectItem>
-                      <SelectItem value="IN_PROGRESS">Em Andamento</SelectItem>
-                      <SelectItem value="DONE">Concluído</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-8 text-xs shrink-0"
-                    onClick={addDraft}
-                  >
-                    <Check className="size-3" />
-                  </Button>
-                </div>
-              )}
-
-              {itemDrafts.map((d) => (
-                <div
-                  key={d.key}
-                  className="flex items-center gap-2 text-sm py-1.5 border-b last:border-0"
-                >
-                  <span className="flex-1 truncate">{d.name}</span>
-                  <span className="w-10 text-center text-muted-foreground text-xs">
-                    {d.quantity}
-                  </span>
-                  <Badge className="text-[10px] h-5" variant="outline">
-                    {ITEM_STATUS_LABELS[d.acquisition_status] || d.acquisition_status}
-                  </Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-6"
-                    onClick={() => removeDraft(d.key)}
-                  >
-                    <X className="size-3" />
-                  </Button>
-                </div>
-              ))}
-
-              {itemDrafts.length === 0 && !showItemForm && (
-                <p className="text-xs text-muted-foreground">
-                  Nenhum item adicionado.
-                </p>
-              )}
-            </div>
+            <ContractItemDrafts
+              drafts={itemDrafts}
+              onDraftsChange={setItemDrafts}
+            />
 
             <Separator />
 
-            {/* Despesa */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="create-expense"
-                  checked={createExpenseChecked}
-                  onCheckedChange={(v) => setCreateExpenseChecked(!!v)}
-                />
-                <label
-                  htmlFor="create-expense"
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  Criar despesa a partir deste contrato
-                </label>
-              </div>
-
-              {createExpenseChecked && (
-                <div className="space-y-3 pl-6">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium">
-                      Categoria da Despesa
-                    </label>
-                    <Select
-                      value={expenseCategory}
-                      onValueChange={setExpenseCategory}
-                    >
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.uuid} value={c.uuid}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium">
-                        Nº de Parcelas
-                      </label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={numInstallments}
-                        onChange={(e) =>
-                          setNumInstallments(Math.max(1, Number(e.target.value) || 1))
-                        }
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium">
-                        Venc. 1ª Parcela
-                      </label>
-                      <Input
-                        type="date"
-                        value={firstDueDate}
-                        onChange={(e) => setFirstDueDate(e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ContractCreateExpenseFields
+              categories={categories}
+              onExpenseChange={(v) => {
+                setExpenseChecked(v.checked);
+                setExpenseCategory(v.category);
+                setExpenseNumInstallments(v.numInstallments);
+                setExpenseFirstDueDate(v.firstDueDate);
+              }}
+            />
 
             <DialogFooter>
               <Button
@@ -574,9 +327,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isCreating}>
-                {isCreating ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
+                {isCreating && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Criar Contrato
               </Button>
             </DialogFooter>

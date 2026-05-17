@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrencyBRCompact } from "@/features/shared/utils/formatters";
+import { formatCurrencyBRCompact } from "@/lib/formatters";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
 const ExpenseDetailDialog = lazy(

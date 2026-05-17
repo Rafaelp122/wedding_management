@@ -5,7 +5,7 @@ import { CreateWeddingDialog } from "../components/CreateWeddingDialog";
 import {
   ListPageErrorState,
   ListPageLoadingState,
-} from "@/features/shared/components/PageState";
+} from "@/components/page-states";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { useQueryClient } from "@tanstack/react-query";

@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderHook, act } from "@/test-utils";
 import { useSupplierMutations } from "@/features/logistics/hooks/useSupplierMutations";
-import { EMPTY_SUPPLIER_FORM_STATE } from "@/features/logistics/types";
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { createMockSupplier } from "@/test-data";
 import { server } from "@/mocks/server";
@@ -25,75 +24,22 @@ vi.mock("sonner", async (importOriginal) => {
 
 const mockSupplier = createMockSupplier();
 
-function renderMutationsHook({
-  formMode,
-  formState,
-  supplierToDelete = null,
-}: {
-  formMode: "create" | "edit";
-  formState: typeof EMPTY_SUPPLIER_FORM_STATE & { uuid?: string };
-  supplierToDelete?: SupplierOut | null;
-}) {
-  const setFormOpen = vi.fn();
+function renderMutationsHook(supplierToDelete: SupplierOut | null = mockSupplier) {
   const setSupplierToDelete = vi.fn();
   const refetchSuppliers = vi.fn().mockResolvedValue(undefined);
 
-  return renderHook(
-    () =>
-      useSupplierMutations({
-        formMode,
-        formState,
-        supplierToDelete,
-        setFormOpen,
-        setSupplierToDelete,
-        refetchSuppliers,
-      }),
+  return renderHook(() =>
+    useSupplierMutations({
+      supplierToDelete,
+      setSupplierToDelete,
+      refetchSuppliers,
+    }),
   );
 }
 
 describe("useSupplierMutations", () => {
-  it("shows error when form is invalid", async () => {
-    const { result } = renderMutationsHook({
-      formMode: "create",
-      formState: { ...EMPTY_SUPPLIER_FORM_STATE, name: "" },
-    });
-
-    await act(async () => {
-      await result.current.handleSaveSupplier();
-    });
-
-    expect(toastError).toHaveBeenCalledWith(
-      "Informe o nome do fornecedor.",
-    );
-  });
-
-  it("shows success toast on create", async () => {
-    const { result } = renderMutationsHook({
-      formMode: "create",
-      formState: {
-        name: "Novo Fornecedor",
-        cnpj: "12.345.678/0001-90",
-        phone: "(11) 99999-0000",
-        email: "novo@email.com",
-        status: "active",
-      },
-    });
-
-    await act(async () => {
-      await result.current.handleSaveSupplier();
-    });
-
-    expect(toastSuccess).toHaveBeenCalledWith(
-      "Fornecedor criado com sucesso!",
-    );
-  });
-
   it("shows success toast on delete", async () => {
-    const { result } = renderMutationsHook({
-      formMode: "create",
-      formState: { ...EMPTY_SUPPLIER_FORM_STATE },
-      supplierToDelete: mockSupplier,
-    });
+    const { result } = renderMutationsHook();
 
     await act(async () => {
       await result.current.handleDeleteSupplier();
@@ -105,11 +51,7 @@ describe("useSupplierMutations", () => {
   });
 
   it("does not attempt delete when supplierToDelete is null", async () => {
-    const { result } = renderMutationsHook({
-      formMode: "create",
-      formState: { ...EMPTY_SUPPLIER_FORM_STATE },
-      supplierToDelete: null,
-    });
+    const { result } = renderMutationsHook(null);
 
     await act(async () => {
       await result.current.handleDeleteSupplier();
@@ -119,29 +61,22 @@ describe("useSupplierMutations", () => {
     expect(toastError).not.toHaveBeenCalled();
   });
 
-  it("shows error toast on API failure when saving", async () => {
+  it("shows error toast on API failure when deleting", async () => {
     const { http, HttpResponse } = await import("msw");
     server.use(
-      http.post("*/api/v1/logistics/suppliers/", () =>
-        HttpResponse.json({ detail: "CNPJ duplicado" }, { status: 409 }),
+      http.delete("*/api/v1/logistics/suppliers/*", () =>
+        HttpResponse.json({ detail: "Fornecedor não encontrado" }, { status: 404 }),
       ),
     );
 
-    const { result } = renderMutationsHook({
-      formMode: "create",
-      formState: {
-        name: "Fornecedor Erro",
-        cnpj: "12.345.678/0001-90",
-        phone: "(11) 99999-0000",
-        email: "erro@email.com",
-        status: "active",
-      },
-    });
+    const { result } = renderMutationsHook();
 
     await act(async () => {
-      await result.current.handleSaveSupplier();
+      await result.current.handleDeleteSupplier();
     });
 
-    expect(toastError).toHaveBeenCalledWith("CNPJ duplicado");
+    expect(toastError).toHaveBeenCalledWith(
+      "Fornecedor não encontrado",
+    );
   });
 });

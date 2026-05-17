@@ -17,7 +17,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { parseDecimal } from "@/features/shared/utils/formatters";
+import { parseDecimal } from "@/lib/formatters";
 import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 
 interface WeddingFinancesDistributionChartProps {

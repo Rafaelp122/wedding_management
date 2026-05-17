@@ -3,7 +3,7 @@ import { memo } from "react";
 
 import { useLogisticsSuppliersRead } from "@/api/generated/v1/endpoints/logistics/logistics";
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
-import { formatDateBR } from "@/features/shared/utils/formatters";
+import { formatDateBR } from "@/lib/formatters";
 
 import {
   Dialog,

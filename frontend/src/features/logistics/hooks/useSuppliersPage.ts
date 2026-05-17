@@ -35,21 +35,16 @@ export function useSuppliersPage() {
     formOpen,
     setFormOpen,
     formMode,
-    formState,
-    setFormState,
+    editingSupplier,
     openCreateDialog,
     openEditDialog,
   } = useSupplierFormDialogState();
 
-  const { handleSaveSupplier, handleDeleteSupplier, isSaving, isDeleting } =
-    useSupplierMutations({
-      formMode,
-      formState,
-      supplierToDelete,
-      setFormOpen,
-      setSupplierToDelete,
-      refetchSuppliers: () => refetch(),
-    });
+  const { handleDeleteSupplier, isDeleting } = useSupplierMutations({
+    supplierToDelete,
+    setSupplierToDelete,
+    refetchSuppliers: () => refetch(),
+  });
 
   return {
     search,
@@ -59,8 +54,7 @@ export function useSuppliersPage() {
     formOpen,
     setFormOpen,
     formMode,
-    formState,
-    setFormState,
+    editingSupplier,
     supplierToDelete,
     setSupplierToDelete,
     filteredSuppliers,
@@ -68,11 +62,9 @@ export function useSuppliersPage() {
     isLoading,
     error,
     refetch,
-    isSaving,
     isDeleting,
     openCreateDialog,
     openEditDialog,
-    handleSaveSupplier,
     handleDeleteSupplier,
   };
 }

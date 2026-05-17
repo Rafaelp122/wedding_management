@@ -2,11 +2,11 @@ import { getApiErrorInfo } from "@/api/error-utils";
 import {
   ListPageErrorState,
   ListPageLoadingState,
-} from "@/features/shared/components/PageState";
+} from "@/components/page-states";
 
-import { DeleteSupplierDialog } from "../components/suppliers/DeleteSupplierDialog";
 import { SupplierFormDialog } from "../components/suppliers/SupplierFormDialog";
 import { SuppliersTable } from "../components/suppliers/SuppliersTable";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useSuppliersPage } from "../hooks/useSuppliersPage";
 import type { SupplierStatusFilter } from "../types";
 
@@ -31,8 +31,7 @@ export default function SuppliersPage() {
     formOpen,
     setFormOpen,
     formMode,
-    formState,
-    setFormState,
+    editingSupplier,
     supplierToDelete,
     setSupplierToDelete,
     filteredSuppliers,
@@ -40,11 +39,9 @@ export default function SuppliersPage() {
     isLoading,
     error,
     refetch,
-    isSaving,
     isDeleting,
     openCreateDialog,
     openEditDialog,
-    handleSaveSupplier,
     handleDeleteSupplier,
   } = useSuppliersPage();
 
@@ -131,19 +128,22 @@ export default function SuppliersPage() {
 
       <SupplierFormDialog
         open={formOpen}
-        mode={formMode}
-        formState={formState}
-        setFormState={setFormState}
-        isSaving={isSaving}
         onOpenChange={setFormOpen}
-        onSave={handleSaveSupplier}
+        mode={formMode}
+        supplier={editingSupplier}
+        onSuccess={() => refetch()}
       />
 
-      <DeleteSupplierDialog
-        supplier={supplierToDelete}
-        isDeleting={isDeleting}
-        onCancel={() => setSupplierToDelete(null)}
+      <ConfirmDeleteDialog
+        open={!!supplierToDelete}
+        onOpenChange={(open) => {
+          if (!open) setSupplierToDelete(null);
+        }}
+        title="Excluir fornecedor"
+        description="Esta ação não pode ser desfeita."
+        itemName={supplierToDelete?.name || ""}
         onConfirm={handleDeleteSupplier}
+        isPending={isDeleting}
       />
     </div>
   );

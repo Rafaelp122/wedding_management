@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import { formatDateBR } from "@/features/shared/utils/formatters";
-import { getWeddingStatusLabel } from "@/features/shared/utils/weddingStatus";
+import { formatDateBR } from "@/lib/formatters";
+import { getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight } from "lucide-react";
 

@@ -16,8 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getWeddingStatusInfo } from "@/features/shared/utils/weddingStatus";
-import { formatCurrencyBRCompact, formatDateBR } from "@/features/shared/utils/formatters";
+import { getWeddingStatusInfo } from "@/features/weddings/utils/wedding-status";
+import { formatCurrencyBRCompact, formatDateBR } from "@/lib/formatters";
 
 interface WeddingOverviewProps {
   wedding: WeddingOut;

@@ -13,8 +13,8 @@ const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
 const DashboardPage = lazy(
   () => import("@/features/dashboard/pages/DashboardPage"),
 );
-const ComingSoonPage = lazy(() => import("@/features/shared/components/ComingSoon"));
-const NotFoundPage = lazy(() => import("@/features/shared/components/NotFound"));
+const ComingSoonPage = lazy(() => import("@/components/coming-soon"));
+const NotFoundPage = lazy(() => import("@/components/not-found"));
 const SchedulerPage = lazy(
   () => import("@/features/scheduler/pages/SchedulerPage"),
 );

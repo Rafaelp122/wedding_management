@@ -7,7 +7,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { formatCurrencyBRCompact } from "@/features/shared/utils/formatters";
+import { formatCurrencyBRCompact } from "@/lib/formatters";
 
 interface WeddingFinancesSummaryCardsProps {
   totalEstimated: number;

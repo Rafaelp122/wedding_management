@@ -5,7 +5,7 @@ import {
   formatCurrencyBR,
   formatCurrencyBRCompact,
   parseDecimal,
-} from "@/features/shared/utils/formatters";
+} from "@/lib/formatters";
 
 describe("formatDateBR", () => {
   it("formats a valid date string to pt-BR", () => {
