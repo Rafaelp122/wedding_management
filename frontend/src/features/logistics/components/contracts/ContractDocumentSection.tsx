@@ -3,7 +3,11 @@ import { toast } from "sonner";
 import { Upload, Loader2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { AXIOS_INSTANCE } from "@/api/axios-instance";
+import {
+  useLogisticsContractsUpload,
+  useLogisticsContractsDeleteUpload,
+  getLogisticsContractsListQueryKey,
+} from "@/api/generated/v1/endpoints/logistics/logistics";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,46 +26,44 @@ export function ContractDocumentSection({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isRemoving, setIsRemoving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
-  const handleUpload = async () => {
+  const uploadMutation = useLogisticsContractsUpload();
+  const deleteUploadMutation = useLogisticsContractsDeleteUpload();
+
+  const handleUpload = () => {
     if (!selectedFile) return;
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("pdf_file", selectedFile);
-    try {
-      await AXIOS_INSTANCE.post(
-        `/api/v1/logistics/contracts/${contractUuid}/upload/`,
-        formData,
-      );
-      toast.success("Documento enviado com sucesso!");
-      queryClient.invalidateQueries({
-        queryKey: ["/api/v1/logistics/contracts/"],
-      });
-      setSelectedFile(null);
-    } catch {
-      toast.error("Erro ao enviar documento.");
-    } finally {
-      setIsUploading(false);
-    }
+    uploadMutation.mutate(
+      { uuid: contractUuid, data: { pdf_file: selectedFile } },
+      {
+        onSuccess: () => {
+          toast.success("Documento enviado com sucesso!");
+          queryClient.invalidateQueries({
+            queryKey: getLogisticsContractsListQueryKey(),
+          });
+          setSelectedFile(null);
+        },
+        onError: () => {
+          toast.error("Erro ao enviar documento.");
+        },
+      },
+    );
   };
 
-  const handleRemoveFile = async () => {
-    setIsRemoving(true);
-    try {
-      await AXIOS_INSTANCE.delete(
-        `/api/v1/logistics/contracts/${contractUuid}/upload/`,
-      );
-      toast.success("Documento removido.");
-      queryClient.invalidateQueries({
-        queryKey: ["/api/v1/logistics/contracts/"],
-      });
-    } catch {
-      toast.error("Erro ao remover documento.");
-    } finally {
-      setIsRemoving(false);
-    }
+  const handleRemoveFile = () => {
+    deleteUploadMutation.mutate(
+      { uuid: contractUuid },
+      {
+        onSuccess: () => {
+          toast.success("Documento removido.");
+          queryClient.invalidateQueries({
+            queryKey: getLogisticsContractsListQueryKey(),
+          });
+        },
+        onError: () => {
+          toast.error("Erro ao remover documento.");
+        },
+      },
+    );
   };
 
   return (
@@ -81,9 +83,9 @@ export function ContractDocumentSection({
               size="sm"
               className="h-7 text-xs"
               onClick={handleRemoveFile}
-              disabled={isRemoving}
+              disabled={deleteUploadMutation.isPending}
             >
-              {isRemoving ? (
+              {deleteUploadMutation.isPending ? (
                 <Loader2 className="size-3 mr-1 animate-spin" />
               ) : (
                 <X className="size-3 mr-1" />
@@ -107,9 +109,9 @@ export function ContractDocumentSection({
               size="sm"
               className="h-8 text-xs shrink-0"
               onClick={handleUpload}
-              disabled={isUploading || !selectedFile}
+              disabled={uploadMutation.isPending || !selectedFile}
             >
-              {isUploading ? (
+              {uploadMutation.isPending ? (
                 <Loader2 className="size-3 mr-1 animate-spin" />
               ) : (
                 <Upload className="size-3 mr-1" />

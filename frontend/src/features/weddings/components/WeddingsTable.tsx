@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
@@ -30,7 +30,7 @@ interface WeddingsTableProps {
   onRefetch: () => void;
 }
 
-export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
+export const WeddingsTable = memo(function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editingWedding, setEditingWedding] = useState<WeddingOut | null>(null);
@@ -140,4 +140,4 @@ export function WeddingsTable({ weddings, onRefetch }: WeddingsTableProps) {
       )}
     </>
   );
-}
+})

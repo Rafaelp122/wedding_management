@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { MessageCircle, Mail, MoreHorizontal } from "lucide-react";
 
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
@@ -37,7 +37,7 @@ interface WeddingVendorsTableProps {
   onRefresh?: () => void;
 }
 
-export function WeddingVendorsTable({
+export const WeddingVendorsTable = memo(function WeddingVendorsTable({
   contracts,
   isAddendum,
   onDetail,
@@ -224,4 +224,4 @@ export function WeddingVendorsTable({
       />
     </>
   );
-}
+})

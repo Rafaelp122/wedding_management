@@ -88,7 +88,7 @@ export function ContractItemsSection({
           variant="outline"
           size="sm"
           className="h-7 text-xs"
-          onClick={() => setShowInlineForm(!showInlineForm)}
+          onClick={() => setShowInlineForm((prev) => !prev)}
         >
           <Plus className="size-3 mr-1" />
           Adicionar Item

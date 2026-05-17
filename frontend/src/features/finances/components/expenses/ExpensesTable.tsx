@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, memo, Suspense, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import {
@@ -47,7 +47,7 @@ const statusLabel: Record<string, string> = {
   PENDING: "Pendente",
 };
 
-export function WeddingExpensesTable({
+export const WeddingExpensesTable = memo(function WeddingExpensesTable({
   expenses,
   weddingUuid,
   onExpenseUpdated,
@@ -208,4 +208,4 @@ export function WeddingExpensesTable({
       ) : null}
     </>
   );
-}
+})

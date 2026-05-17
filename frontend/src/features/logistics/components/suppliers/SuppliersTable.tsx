@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,7 +25,7 @@ interface SuppliersTableProps {
   onDelete: (supplier: SupplierOut) => void;
 }
 
-export function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTableProps) {
+export const SuppliersTable = memo(function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTableProps) {
   const navigate = useNavigate();
 
   return (
@@ -80,4 +81,4 @@ export function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTablePr
       </Table>
     </div>
   );
-}
+})

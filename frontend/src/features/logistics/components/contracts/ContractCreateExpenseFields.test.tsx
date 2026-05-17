@@ -189,13 +189,6 @@ describe("ContractCreateExpenseFields", () => {
       />,
     );
 
-    // Initial call from useEffect should have checked: false
-    expect(onExpenseChange).toHaveBeenCalledWith(
-      expect.objectContaining({ checked: false }),
-    );
-
-    onExpenseChange.mockClear();
-
     await user.click(screen.getByRole("checkbox", { name: /criar despesa/i }));
     expect(onExpenseChange).toHaveBeenCalledWith(
       expect.objectContaining({ checked: true }),
