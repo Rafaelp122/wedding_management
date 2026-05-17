@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,10 +43,6 @@ export function ContractCreateExpenseFields({
     },
     [onExpenseChange, category, numInstallments, firstDueDate, checked],
   );
-
-  useEffect(() => {
-    notify({});
-  }, [notify]);
 
   return (
     <div className="space-y-3">

@@ -163,7 +163,7 @@ export function ExpenseDetailDialog({
                   variant="ghost"
                   size="sm"
                   className="h-7 text-xs gap-1"
-                  onClick={() => setShowRedistribute(!showRedistribute)}
+                  onClick={() => setShowRedistribute((prev) => !prev)}
                 >
                   <RefreshCw className="size-3" />
                   Remanejar
