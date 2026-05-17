@@ -16,6 +16,7 @@ import type { ContractPatchIn } from "@/api/generated/v1/models/contractPatchIn"
 import { FormDialog } from "@/components/form-dialog";
 import { FormInput, FormSelect, FormSelectNullable, FormNumber, FormTextarea } from "@/components/form-fields";
 import { CONTRACT_STATUS_OPTIONS } from "@/features/logistics/constants";
+import { buildPatchPayload } from "@/lib/patch-payload";
 
 type EditContractFormData = z.infer<typeof LogisticsContractsUpdateBody>;
 
@@ -58,15 +59,31 @@ export const EditContractDialog = memo(function EditContractDialog({
   });
 
   const onSubmit = (data: EditContractFormData) => {
-    const payload: ContractPatchIn = {};
-    if (data.supplier !== contract.supplier) payload.supplier = data.supplier;
-    if (data.name !== (contract.name || "")) payload.name = data.name;
-    if (data.total_amount !== Number(contract.total_amount))
-      payload.total_amount = data.total_amount;
-    if (data.status !== contract.status) payload.status = data.status;
-    if (data.description !== (contract.description || ""))
-      payload.description = data.description;
-    if (data.parent !== contract.parent) payload.parent = data.parent;
+    const original: Record<string, unknown> = {
+      supplier: contract.supplier,
+      name: contract.name || "",
+      total_amount: Number(contract.total_amount),
+      status: contract.status,
+      description: contract.description || "",
+      parent: contract.parent ?? null,
+    };
+    const modified: Record<string, unknown> = {
+      supplier: data.supplier,
+      name: data.name,
+      total_amount: data.total_amount,
+      status: data.status,
+      description: data.description,
+      parent: data.parent ?? null,
+    };
+
+    const payload = buildPatchPayload(original, modified, [
+      "supplier",
+      "name",
+      "total_amount",
+      "status",
+      "description",
+      "parent",
+    ]);
 
     if (Object.keys(payload).length === 0) {
       onOpenChange(false);

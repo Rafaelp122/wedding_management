@@ -15,6 +15,7 @@ import type { ItemPatchIn } from "@/api/generated/v1/models/itemPatchIn";
 import { FormDialog } from "@/components/form-dialog";
 import { FormInput, FormSelect, FormSelectNullable, FormNumber, FormTextarea } from "@/components/form-fields";
 import { ACQUISITION_STATUS_OPTIONS } from "@/features/logistics/constants";
+import { buildPatchPayload } from "@/lib/patch-payload";
 
 type EditItemFormData = z.infer<typeof LogisticsItemsUpdateBody>;
 
@@ -52,14 +53,28 @@ export const EditItemDialog = memo(function EditItemDialog({
   });
 
   const onSubmit = (data: EditItemFormData) => {
-    const payload: ItemPatchIn = {};
-    if (data.name !== item.name) payload.name = data.name;
-    if (data.description !== (item.description || ""))
-      payload.description = data.description;
-    if (data.quantity !== item.quantity) payload.quantity = data.quantity;
-    if (data.contract !== item.contract) payload.contract = data.contract;
-    if (data.acquisition_status !== item.acquisition_status)
-      payload.acquisition_status = data.acquisition_status;
+    const original: Record<string, unknown> = {
+      name: item.name,
+      description: item.description || "",
+      quantity: item.quantity,
+      contract: item.contract ?? null,
+      acquisition_status: item.acquisition_status,
+    };
+    const modified: Record<string, unknown> = {
+      name: data.name,
+      description: data.description,
+      quantity: data.quantity,
+      contract: data.contract,
+      acquisition_status: data.acquisition_status,
+    };
+
+    const payload = buildPatchPayload(original, modified, [
+      "name",
+      "description",
+      "quantity",
+      "contract",
+      "acquisition_status",
+    ]);
 
     if (Object.keys(payload).length === 0) {
       onOpenChange(false);
