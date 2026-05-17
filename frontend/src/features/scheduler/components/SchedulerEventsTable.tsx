@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Bell, Calendar, Clock } from "lucide-react";
 
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
@@ -32,7 +33,7 @@ interface SchedulerEventsTableProps {
   weddingsByUuid: Map<string, string>;
 }
 
-export function SchedulerEventsTable({
+export const SchedulerEventsTable = memo(function SchedulerEventsTable({
   events,
   weddingsByUuid,
 }: SchedulerEventsTableProps) {
@@ -103,4 +104,4 @@ export function SchedulerEventsTable({
       </CardContent>
     </Card>
   );
-}
+})

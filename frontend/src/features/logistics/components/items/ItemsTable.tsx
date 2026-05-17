@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
@@ -32,7 +32,7 @@ interface WeddingItemsTableProps {
   onRefresh?: () => void;
 }
 
-export function WeddingItemsTable({ items, onEdit, onRefresh }: WeddingItemsTableProps) {
+export const WeddingItemsTable = memo(function WeddingItemsTable({ items, onEdit, onRefresh }: WeddingItemsTableProps) {
   const [deletingItem, setDeletingItem] = useState<ItemOut | null>(null);
   const { mutate: deleteItem, isPending: isDeleting } = useLogisticsItemsDelete();
 
@@ -137,4 +137,4 @@ export function WeddingItemsTable({ items, onEdit, onRefresh }: WeddingItemsTabl
       />
     </>
   );
-}
+})

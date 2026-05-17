@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { TaskOut } from "@/api/generated/v1/models/taskOut";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,7 +10,7 @@ interface WeddingChecklistTableProps {
   isUpdating: boolean;
 }
 
-export function WeddingChecklistTable({
+export const WeddingChecklistTable = memo(function WeddingChecklistTable({
   tasks,
   onToggle,
   isUpdating,
@@ -64,4 +65,4 @@ export function WeddingChecklistTable({
       ))}
     </div>
   );
-}
+})
