@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { AlertCircle, FileText, Package, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useWeddingVendorsItems } from "../hooks/useVendorsItems";
 import { WeddingVendorsTable } from "./items/VendorsTable";
 import { WeddingItemsTable } from "./items/ItemsTable";
-import { ContractDetailDialog } from "./contracts/ContractDetailDialog";
-import { ContractUploadDialog } from "./contracts/ContractUploadDialog";
 import { CreateItemDialog } from "./items/CreateItemDialog";
 import { EditItemDialog } from "./items/EditItemDialog";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logistics/logistics";
+
+const ContractDetailDialog = lazy(
+  () =>
+    import("./contracts/ContractDetailDialog").then((m) => ({
+      default: m.ContractDetailDialog,
+    })),
+);
+
+const ContractUploadDialog = lazy(
+  () =>
+    import("./contracts/ContractUploadDialog").then((m) => ({
+      default: m.ContractUploadDialog,
+    })),
+);
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -130,30 +142,34 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
         </CardContent>
       </Card>
 
-      <ContractDetailDialog
-        contractUuid={detailContractUuid}
-        weddingUuid={weddingUuid}
-        open={!!detailContractUuid}
-        onOpenChange={(open) => {
-          if (!open) setDetailContractUuid(null);
-        }}
-        onCreateAddendum={(parentUuid) => {
-          setPrefilledParentUuid(parentUuid);
-          setUploadOpen(true);
-          setDetailContractUuid(null);
-        }}
-      />
+      <Suspense fallback={null}>
+        <ContractDetailDialog
+          contractUuid={detailContractUuid}
+          weddingUuid={weddingUuid}
+          open={!!detailContractUuid}
+          onOpenChange={(open) => {
+            if (!open) setDetailContractUuid(null);
+          }}
+          onCreateAddendum={(parentUuid) => {
+            setPrefilledParentUuid(parentUuid);
+            setUploadOpen(true);
+            setDetailContractUuid(null);
+          }}
+        />
+      </Suspense>
 
-      <ContractUploadDialog
-        weddingUuid={weddingUuid}
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        onSuccess={() => {
-          setUploadOpen(false);
-          setPrefilledParentUuid(null);
-        }}
-        prefilledParentUuid={prefilledParentUuid}
-      />
+      <Suspense fallback={null}>
+        <ContractUploadDialog
+          weddingUuid={weddingUuid}
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+          onSuccess={() => {
+            setUploadOpen(false);
+            setPrefilledParentUuid(null);
+          }}
+          prefilledParentUuid={prefilledParentUuid}
+        />
+      </Suspense>
 
       <CreateItemDialog
         weddingUuid={weddingUuid}
