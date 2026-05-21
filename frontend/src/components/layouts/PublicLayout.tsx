@@ -26,7 +26,7 @@ export const PublicLayout = () => {
               <Link to="/login">Entrar</Link>
             </Button>
             <Button asChild>
-              <Link to="/login">Começar Agora</Link>
+              <Link to="/register">Começar Agora</Link>
             </Button>
           </nav>
         </div>

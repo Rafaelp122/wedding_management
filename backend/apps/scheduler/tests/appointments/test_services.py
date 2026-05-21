@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from django.utils import timezone
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.scheduler.models import Event
 from apps.scheduler.services.events import EventService
 from apps.scheduler.tests.factories import EventFactory
@@ -80,6 +80,39 @@ class TestEventServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
+    def test_create_payment_event_blocked(self, user):
+        """BR-S01: Eventos PAYMENT não podem ser criados manualmente."""
+        wedding = WeddingFactory(user_context=user)
+
+        data = {
+            "wedding": wedding.uuid,
+            "title": "Pagamento Manual",
+            "event_type": Event.TypeChoices.PAYMENT,
+            "start_time": timezone.now() + timedelta(days=30),
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.create(user.company, data)
+
+        assert exc_info.value.code == "payment_event_readonly"
+        assert Event.objects.count() == 0
+
+    def test_create_payment_event_internal_allowed(self, user):
+        """BR-S01: Chamadas internas (_caller_internal=True) podem criar PAYMENT."""
+        wedding = WeddingFactory(user_context=user)
+
+        data = {
+            "wedding": wedding.uuid,
+            "title": "Pagamento: Buffet - Parcela 1/3",
+            "event_type": Event.TypeChoices.PAYMENT,
+            "start_time": timezone.now() + timedelta(days=30),
+        }
+
+        event = EventService.create(user.company, data, _caller_internal=True)
+
+        assert event.event_type == Event.TypeChoices.PAYMENT
+        assert event.title == "Pagamento: Buffet - Parcela 1/3"
+
 
 @pytest.mark.django_db
 class TestEventServiceUpdate:
@@ -113,6 +146,65 @@ class TestEventServiceUpdate:
 
         assert updated.reminder_enabled is True
 
+    def test_update_cannot_change_event_type_to_payment(self, user):
+        """BR-S01: Não pode alterar event_type de um evento para PAYMENT."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.MEETING,
+            title="Reunião Normal",
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.update(
+                user.company, event, {"event_type": Event.TypeChoices.PAYMENT}
+            )
+
+        assert exc_info.value.code == "payment_event_readonly"
+
+    def test_update_payment_event_blocked(self, user):
+        """BR-S01: Eventos PAYMENT não podem ser editados manualmente."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.PAYMENT,
+            title="Pagamento: Buffet - Parcela 1/3",
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.update(user.company, event, {"title": "Novo título"})
+
+        assert exc_info.value.code == "payment_event_readonly"
+
+    def test_update_payment_event_all_fields_blocked(self, user):
+        """BR-S01: Nenhum campo de evento PAYMENT pode ser alterado."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.PAYMENT,
+            title="Pagamento: Decoração - Parcela 2/5",
+        )
+
+        with pytest.raises(BusinessRuleViolation):
+            EventService.update(
+                user.company, event, {"start_time": timezone.now() + timedelta(days=10)}
+            )
+
+    def test_update_non_payment_event_allowed(self, user):
+        """Eventos não-PAYMENT podem ser editados normalmente."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.MEETING,
+            title="Reunião com Buffet",
+        )
+
+        updated = EventService.update(
+            user.company, event, {"title": "Reunião com Buffet Atualizada"}
+        )
+
+        assert updated.title == "Reunião com Buffet Atualizada"
+
 
 @pytest.mark.django_db
 class TestEventServiceDelete:
@@ -131,6 +223,33 @@ class TestEventServiceDelete:
         """UUID inexistente levanta ObjectNotFoundError."""
         with pytest.raises(ObjectNotFoundError):
             EventService.delete(user.company, uuid4())
+
+    def test_delete_payment_event_blocked(self, user):
+        """BR-S01: Eventos PAYMENT não podem ser deletados manualmente."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.PAYMENT,
+            title="Pagamento: Buffet - Parcela 1/3",
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.delete(user.company, event.uuid)
+
+        assert exc_info.value.code == "payment_event_readonly"
+        assert Event.objects.filter(uuid=event.uuid).exists()
+
+    def test_delete_non_payment_event_allowed(self, user):
+        """Eventos não-PAYMENT podem ser deletados normalmente."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        EventService.delete(user.company, event.uuid)
+
+        assert Event.objects.filter(uuid=event.uuid).count() == 0
 
 
 @pytest.mark.django_db

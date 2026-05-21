@@ -350,23 +350,23 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 #### Backend (Pytest + Factoryboy)
 
-- [ ] **State machines** — sucesso e falha nas transições de Item e Contract.
-- [ ] **BR-F02** — bloqueia valor divergente no create, bloqueia troca de contrato, permite alterar descrição.
-- [ ] **`from_document`** — retorna payload correto, UUID inexistente levanta erro.
-- [ ] **Upload/delete** — salva arquivo, limpa, `has_file` e `file_name` no ContractOut.
-- [ ] **Parent FK** — aditivo funciona, circular levanta erro, PROTECT bloqueia deleção.
-- [ ] **Filtros** — `status`, `search`, `contract_id`, `supplier_id`.
+- [x] **State machines** — sucesso e falha nas transições de Item e Contract.
+- [x] **BR-F02** — bloqueia valor divergente no create, bloqueia troca de contrato, permite alterar descrição.
+- [x] **`from_document`** — retorna payload correto, UUID inexistente levanta erro.
+- [x] **Upload/delete** — salva arquivo, limpa, `has_file` e `file_name` no ContractOut.
+- [x] **Parent FK** — aditivo funciona, circular levanta erro, PROTECT bloqueia deleção.
+- [x] **Filtros** — `status`, `search`, `contract_id`, `supplier_id`.
 
 #### Frontend (Vitest + RTL + faker)
 
-- [ ] **`WeddingVendorsTable`** — dropdown não dispara `onDetail`, linha clicável, aditivos indentados.
-- [ ] **`WeddingItemsTable`** — Select inline dispara `transitionStatus`, dropdown Editar/Excluir.
-- [ ] **`ContractDetailDialog`** — loading, not-found, seções de despesa/itens/aditivos, upload condicional.
-- [ ] **`ContractUploadDialog`** — submete form, checkbox despesa, itens inline, upload.
-- [ ] **`CreateItemDialog`** — submete com campos corretos.
-- [ ] **`ConfirmDeleteDialog`** — confirmação tipada habilita botão, callback dispara.
-- [ ] **`ExpenseDetailDialog`** — link contrato clicável, pagar/desmarcar parcela.
-- [ ] **`SupplierDetailDialog`** — renderiza dados, WhatsApp link.
+- [x] **`WeddingVendorsTable`** — dropdown não dispara `onDetail`, linha clicável, aditivos indentados.
+- [x] **`WeddingItemsTable`** — Select inline dispara `transitionStatus`, dropdown Editar/Excluir.
+- [x] **`ContractDetailDialog`** — loading, not-found, seções de despesa/itens/aditivos, upload condicional.
+- [x] **`ContractUploadDialog`** — submete form, checkbox despesa, itens inline, upload.
+- [x] **`CreateItemDialog`** — submete com campos corretos.
+- [x] **`ConfirmDeleteDialog`** — confirmação tipada habilita botão, callback dispara.
+- [x] **`ExpenseDetailDialog`** — link contrato clicável, pagar/desmarcar parcela.
+- [x] **`SupplierDetailDialog`** — renderiza dados, WhatsApp link.
 
 ---
 
@@ -376,36 +376,36 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 #### Backend
 
-- [ ] **Templates de cronograma** — 3 templates (Religioso 12m, Praia 6m, Civil+Buffet 3m) como constantes ou fixtures. Cada template é uma lista de eventos com `title`, `event_type`, `offset_days` (dias antes do casamento).
+- [x] **Templates de cronograma** — 3 templates (Religioso 12m, Praia 6m, Civil+Buffet 3m) como constantes ou fixtures. Cada template é uma lista de eventos com `title`, `event_type`, `offset_days` (dias antes do casamento).
   - **Ref:** UC01 fluxo principal
   - **Arquivo:** `backend/apps/scheduler/services/templates.py` (novo)
 
-- [ ] **`WeddingService.create()` com template** — se `template` for informado no payload de criação do casamento, popular eventos automaticamente ajustando `start_time = wedding_date - offset_days`.
+- [x] **`WeddingService.create()` com template** — se `template` for informado no payload de criação do casamento, popular eventos automaticamente ajustando `start_time = wedding_date - offset_days`.
   - **Ref:** UC01 fluxo principal, automação cross-módulo
   - **Arquivo:** `backend/apps/weddings/services/wedding_service.py`
 
-- [ ] **Auto-geração de eventos PAYMENT** — ao criar uma parcela (ou em lote diário), criar/atualizar evento de tipo `PAYMENT` no scheduler com `start_time = installment.due_date` e `title = "Pagamento: {expense.description} - Parcela {n}"`. Evento é read-only no calendário (BR-S01).
+- [x] **Auto-geração de eventos PAYMENT** — ao criar uma parcela (ou em lote diário), criar/atualizar evento de tipo `PAYMENT` no scheduler com `start_time = installment.due_date` e `title = "Pagamento: {expense.description} - Parcela {n}"`. Evento é read-only no calendário (BR-S01).
   - **Ref:** BR-S01
   - **Arquivo:** `backend/apps/finances/services/installment_service.py` + `backend/apps/scheduler/services/events.py`
 
-- [ ] **Recorrência de eventos** — campo `recurrence_rule` (RF3339 ou escolhas: NONE/WEEKLY/BIWEEKLY/MONTHLY) no modelo `Event`. Lógica de expansão na listagem ou no create.
+- [x] **Recorrência de eventos** — campo `recurrence_rule` (RF3339 ou escolhas: NONE/WEEKLY/BIWEEKLY/MONTHLY) no modelo `Event`. Lógica de expansão na listagem ou no create.
   - **Ref:** UC08 fluxo alternativo "Evento Recorrente"
   - **Arquivo:** `backend/apps/scheduler/models/event.py`
 
 #### Frontend
 
-- [ ] **Componente de calendário visual** — substituir `SchedulerEventsTable` e `WeddingTimelineTable` por um calendário mensal/semanal (usando biblioteca como `react-big-calendar` ou componente customizado com grid de dias). Eventos coloridos por `wedding` e `event_type`.
+- [x] **Componente de calendário visual** — substituir `SchedulerEventsTable` e `WeddingTimelineTable` por um calendário mensal/semanal (usando biblioteca como `react-big-calendar` ou componente customizado com grid de dias). Eventos coloridos por `wedding` e `event_type`.
   - **Ref:** UC08 fluxo principal
   - **Arquivo:** `frontend/src/features/scheduler/components/SchedulerCalendar.tsx` (novo)
 
-- [ ] **Dialog `CreateEventDialog`** — formulário com: título, data/hora, tipo, descrição, lembrete, recorrência.
+- [x] **Dialog `CreateEventDialog`** — formulário com: título, data/hora, tipo, descrição, lembrete, recorrência.
   - **Ref:** UC08
   - **Arquivo:** `frontend/src/features/scheduler/components/CreateEventDialog.tsx`
 
-- [ ] **Dialog `EditEventDialog`** — bloqueado para eventos de tipo `PAYMENT` gerados automaticamente (BR-S01).
+- [x] **Dialog `EditEventDialog`** — bloqueado para eventos de tipo `PAYMENT` gerados automaticamente (BR-S01).
   - **Arquivo:** `frontend/src/features/scheduler/components/EditEventDialog.tsx`
 
-- [ ] **Seletor de template no `CreateWeddingDialog`** — dropdown com os 3 templates + "Começar do zero". Ao selecionar template, campo adicional é enviado no payload.
+- [x] **Seletor de template no `CreateWeddingDialog`** — dropdown com os 3 templates + "Começar do zero". Ao selecionar template, campo adicional é enviado no payload.
   - **Ref:** UC01 fluxo principal
   - **Arquivo:** `frontend/src/features/weddings/components/CreateWeddingDialog.tsx`
 
@@ -490,7 +490,7 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 - [x] `services/dashboard_service.py`: endpoint de métricas agregadas + métricas do casamento (Sprint 2)
 - [x] `api/dashboard.py`: router de dashboard (Sprint 2)
-- [ ] `services/wedding_service.py`: suporte a `template` na criação (Sprint 4)
+- [x] `services/wedding_service.py`: suporte a `template` na criação (Sprint 4)
 - [ ] `services/report_service.py`: geração de PDF e Excel (Sprint 5)
 - [ ] `models.py`: adicionar status `CREATED` (Sprint 6)
 
@@ -514,9 +514,9 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ### `backend/apps/scheduler/`
 
-- [ ] `services/templates.py`: 3 templates de cronograma (Sprint 4)
-- [ ] `services/event_service.py`: auto-geração de eventos PAYMENT (Sprint 4)
-- [ ] `models/event.py`: campo `recurrence_rule` (Sprint 4)
+- [x] `services/templates.py`: 3 templates de cronograma (Sprint 4)
+- [x] `services/event_service.py`: auto-geração de eventos PAYMENT (Sprint 4)
+- [x] `models/event.py`: campo `recurrence_rule` (Sprint 4)
 - [ ] `models/notification.py`: modelo Notification (Sprint 5)
 - [ ] `services/notification_service.py`: CRUD de notificações (Sprint 5)
 - [ ] `api/notifications.py`: endpoints de notificação (Sprint 5)
@@ -540,7 +540,7 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 - [ ] `components/ContractUploadDialog.tsx` (Sprint 3)
 - [ ] `components/WeddingVendorsTable.tsx`: resolver nomes + botão "Gerar Despesa" (Sprint 3)
 - [ ] `components/WeddingItemsTable.tsx`: troca de status (Sprint 3)
-- [ ] `components/CreateWeddingDialog.tsx`: seletor de template (Sprint 4)
+- [x] `components/CreateWeddingDialog.tsx`: seletor de template (Sprint 4)
 - [ ] `components/WeddingOverview.tsx`: botão "Exportar Relatório" (Sprint 5)
 - [ ] `components/WeddingFinancesSummaryCards.tsx`: remover texto hardcoded (Sprint 6)
 
@@ -555,9 +555,9 @@ Nem toda entidade do domínio precisa de Create, Read, Update e Delete. O backen
 
 ### `frontend/src/features/scheduler/`
 
-- [ ] `components/SchedulerCalendar.tsx`: calendário visual (Sprint 4)
-- [ ] `components/CreateEventDialog.tsx` (Sprint 4)
-- [ ] `components/EditEventDialog.tsx` (Sprint 4)
+- [x] `components/SchedulerCalendar.tsx`: calendário visual (Sprint 4)
+- [x] `components/CreateEventDialog.tsx` (Sprint 4)
+- [x] `components/EditEventDialog.tsx` (Sprint 4)
 
 ### `frontend/src/features/notifications/` (novo)
 
@@ -649,7 +649,6 @@ Sprint 6 (Polish)
 | 1 | Download do arquivo do contrato | Alta |
 | 2 | Presigned URL / R2 | Baixa |
 | 3 | Agregação visual do total (contrato + aditivos) | Média |
-| 4 | Testes (back + front) — Sprint T | Alta |
 
 ---
 
@@ -665,7 +664,7 @@ Sprint 6 (Polish)
 
 ---
 
-**Versão:** 1.5 (Sprint 3 concluído, Sprint T adicionado, extras documentados)
+**Versão:** 1.7 (Sprint 4 concluído)
 **Criado em:** 3 de maio de 2026
-**Atualizado em:** 9 de maio de 2026
+**Atualizado em:** 17 de maio de 2026
 **Responsável:** Rafael

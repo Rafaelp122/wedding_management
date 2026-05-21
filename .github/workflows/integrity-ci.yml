@@ -85,11 +85,11 @@ jobs:
           node-version-file: "frontend/.nvmrc"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
-      - name: Install & Test
+      - name: Install & Test (build + unit)
         run: |
           cd frontend
           npm ci
-          npm test
+          npm run test:ci
 
   # ----------------------------------------------------------------------------
   # JOB 4: CONTRACT VALIDATION

@@ -64,6 +64,10 @@ class InstallmentService:
         """
         Gera automaticamente as parcelas de uma despesa com ajuste na última
         parcela (Tolerância Zero).
+
+        Para cada parcela gerada, também cria um evento PAYMENT no scheduler
+        (BR-S01) para que o casal visualize os compromissos de pagamento no
+        calendário.
         """
         from datetime import timedelta
 
@@ -127,6 +131,9 @@ class InstallmentService:
         for inst in installments:
             inst.save()
 
+        # ── Auto-geração de Eventos PAYMENT (BR-S01) ──────────────────────
+        _create_payment_events(company, expense, installments)
+
         return installments
 
     @staticmethod
@@ -147,6 +154,7 @@ class InstallmentService:
             )
 
         expense.installments.all().delete()
+        _delete_payment_events_for_expense(company, expense)
         return InstallmentService.auto_generate_installments(
             company=company,
             expense=expense,
@@ -386,6 +394,8 @@ class InstallmentService:
             # Checagem de Ricochete após deleção
             expense.full_clean()
 
+            _delete_payment_event_for_single(company, instance)
+
             logger.warning(
                 f"Parcela uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
             )
@@ -410,3 +420,62 @@ class InstallmentService:
                 detail="Não é possível apagar esta parcela no momento.",
                 code="installment_protected_error",
             ) from e
+
+
+def _delete_payment_events_for_expense(company: Company, expense: Expense) -> None:
+    """Remove todos os eventos PAYMENT do scheduler vinculados a esta despesa."""
+    from apps.scheduler.models import Event as SchedulerEvent
+
+    SchedulerEvent.objects.for_tenant(company).filter(
+        wedding=expense.wedding,
+        event_type="pagamento",
+        title__startswith=f"Pagamento: {expense.name} -",
+    ).delete()
+
+
+def _delete_payment_event_for_single(company: Company, instance: Installment) -> None:
+    """Remove o evento PAYMENT vinculado a uma parcela específica."""
+    from apps.scheduler.models import Event as SchedulerEvent
+
+    SchedulerEvent.objects.for_tenant(company).filter(
+        wedding=instance.expense.wedding,
+        event_type="pagamento",
+        title__startswith=f"Pagamento: {instance.expense.name}",
+        title__icontains=f"Parcela {instance.installment_number}/",
+    ).delete()
+
+
+def _create_payment_events(
+    company: Company,
+    expense: Expense,
+    installments: builtins.list[Installment],
+) -> None:
+    """
+    Cria eventos PAYMENT no scheduler para cada parcela gerada.
+
+    Importação lazy do EventService para evitar circular imports.
+    Ref: BR-S01 — Eventos PAYMENT são read-only no calendário.
+    """
+    from datetime import datetime, time
+
+    from django.utils import timezone
+
+    from apps.scheduler.services import EventService
+
+    for inst in installments:
+        naive_start = datetime.combine(inst.due_date, time(hour=9, minute=0))
+        event_start = timezone.make_aware(naive_start)
+        EventService.create(
+            company,
+            {
+                "wedding": expense.wedding,
+                "title": (
+                    f"Pagamento: {expense.name} - Parcela "
+                    f"{inst.installment_number}/{len(installments)}"
+                ),
+                "event_type": "pagamento",
+                "start_time": event_start,
+                "description": (f"Valor: R$ {inst.amount:.2f} — {expense.name}"),
+            },
+            _caller_internal=True,
+        )

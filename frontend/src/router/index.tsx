@@ -10,6 +10,7 @@ import { LoadingScreen } from "@/components/ui/loadingScreen";
 // Implementa o Lazy Loading para separar os bundles
 const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"));
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
+const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
 const DashboardPage = lazy(
   () => import("@/features/dashboard/pages/DashboardPage"),
 );
@@ -53,6 +54,14 @@ export const router = createBrowserRouter([
         element: (
           <PublicRoute>
             {withLoading(<LoginPage />)}
+          </PublicRoute>
+        ),
+      },
+      {
+        path: "/register",
+        element: (
+          <PublicRoute>
+            {withLoading(<RegisterPage />)}
           </PublicRoute>
         ),
       },

@@ -2,7 +2,7 @@
 # Docker Commands
 # ==============================================================================
 
-.PHONY: up dev logs build rebuild frontend-refresh-deps down clean
+.PHONY: up dev logs build rebuild frontend-dev frontend-refresh-deps down clean
 
 up:
 	@echo "🚀 Iniciando containers..."
@@ -34,6 +34,12 @@ rebuild:
 	@until $(DC) exec db pg_isready -U $${DB_USER:-wedding_user} -d $${DB_NAME:-wedding_db} 2>/dev/null; do sleep 2; done
 	$(EXEC_BACK) $(PYTHON) migrate
 	@echo "✅ Rebuild completo!"
+
+frontend-dev:
+	@echo "🔥 Iniciando Vite dev server local (fora do Docker)..."
+	@echo "   Frontend: http://localhost:5173"
+	@echo "   ⚠️  Requer backend rodando (make up) e node_modules instalados"
+	cd frontend && npm run dev
 
 frontend-refresh-deps:
 	@echo "♻️  Recriando frontend com node_modules limpo..."

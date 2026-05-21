@@ -73,3 +73,11 @@ def list_weddings() -> list[Wedding]:
 - Após alterar qualquer API: rode `make sync-api` (exporta openapi.json + regenera hooks)
 - Antes de considerar pronto: `make lint`, `make mypy`, `make test`
 - Commits: Conventional Commits (`feat(weddings): add list endpoint`)
+
+### 🦾 Superpowers Skills
+
+Para tasks complexas, sugira ao usuário o comando `/superpowers`. Para uso diário:
+
+- **Antes de escrever código novo:** carregue a skill `test-driven-development` — escreva o teste, veja falhar, implemente o mínimo
+- **Ao encontrar bugs ou testes quebrados:** carregue `systematic-debugging` — investigue causa raiz antes de corrigir
+- **Antes de declarar tarefa concluída:** carregue `verification-before-completion` — rode verificações e mostre evidência

@@ -15,6 +15,7 @@ export interface EventIn {
   event_type: string;
   start_time: string;
   end_time?: string | null;
+  recurrence_rule?: string | null;
   reminder_enabled?: boolean;
   reminder_minutes_before?: number;
 }

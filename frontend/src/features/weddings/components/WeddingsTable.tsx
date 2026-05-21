@@ -2,6 +2,7 @@ import { memo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { getWeddingStatusInfo } from "@/features/weddings/utils/wedding-status";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
@@ -134,6 +135,7 @@ export const WeddingsTable = memo(function WeddingsTable({ weddings, onRefetch }
             onRefetch();
             queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
             queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
+            queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
             setDeletingWedding(null);
           }}
         />

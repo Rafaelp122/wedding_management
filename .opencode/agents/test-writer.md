@@ -76,3 +76,8 @@ await userEvent.click(button);
 2. Identifique os cenários de sucesso e falha
 3. Siga os patterns de teste existentes no projeto (procure `test_services.py` ou `*.test.tsx` similares)
 4. Escreva os testes e execute para verificar
+
+### 🦾 Superpowers Skills
+
+- **Sempre use `test-driven-development`:** escreva o teste primeiro, veja falhar, confirme que testa o comportamento correto
+- **Antes de declarar concluído:** carregue `verification-before-completion` — execute os testes e mostre o output

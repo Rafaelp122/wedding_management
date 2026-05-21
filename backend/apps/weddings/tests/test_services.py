@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -8,6 +9,7 @@ from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.tests.factories import BudgetFactory
 from apps.logistics.tests.factories import ContractFactory
+from apps.scheduler.models import Event
 from apps.weddings.models import Wedding
 from apps.weddings.services import WeddingService
 from apps.weddings.tests.factories import WeddingFactory
@@ -220,3 +222,105 @@ class TestWeddingService:
         assert Wedding.objects.count() == 0
         assert Budget.objects.count() == 0
         assert BudgetCategory.objects.count() == 0
+
+
+@pytest.mark.django_db
+class TestWeddingTemplateApplication:
+    """Testes de aplicação de templates de cronograma na criação do casamento."""
+
+    def test_create_wedding_with_religious_12m_template(self, user, wedding_payload):
+        """Template 'religious_12m' gera eventos com offset antes da data."""
+        wedding_payload["template"] = "religious_12m"
+
+        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+
+        events = Event.objects.filter(wedding=wedding).order_by("start_time")
+        assert len(events) == 10  # religious_12m tem 10 eventos
+
+        first_event = events.first()
+        assert first_event.title == "Definir local da cerimônia"
+        assert first_event.event_type == Event.TypeChoices.MEETING
+        assert first_event.start_time.date() == wedding.date - timedelta(days=365)
+
+        last_event = events.last()
+        assert last_event.title == "Reunião final com fornecedores"
+        assert last_event.start_time.date() == wedding.date - timedelta(days=7)
+
+    def test_create_wedding_with_beach_6m_template(self, user, wedding_payload):
+        """Template 'beach_6m' gera eventos corretamente."""
+        wedding_payload["template"] = "beach_6m"
+
+        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+
+        events = Event.objects.filter(wedding=wedding)
+        assert len(events) == 8
+        assert all(e.company == user.company for e in events)
+        assert all(e.wedding == wedding for e in events)
+
+    def test_create_wedding_with_civil_buffet_3m_template(self, user, wedding_payload):
+        """Template 'civil_buffet_3m' gera eventos corretamente."""
+        wedding_payload["template"] = "civil_buffet_3m"
+
+        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+
+        events = Event.objects.filter(wedding=wedding)
+        assert len(events) == 7
+
+    def test_create_wedding_with_no_template(self, user, wedding_payload):
+        """Sem template, nenhum evento é criado."""
+        wedding_payload.pop("template", None)
+
+        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+
+        events = Event.objects.filter(wedding=wedding)
+        assert events.count() == 0
+
+    def test_create_wedding_with_none_template_value(self, user, wedding_payload):
+        """Template=None não gera eventos."""
+        wedding_payload["template"] = None
+
+        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+
+        events = Event.objects.filter(wedding=wedding)
+        assert events.count() == 0
+
+    def test_create_wedding_with_invalid_template_raises(self, user, wedding_payload):
+        """Template inválido levanta BusinessRuleViolation."""
+        wedding_payload["template"] = "nonexistent_template"
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.create(company=user.company, data=wedding_payload)
+
+        assert "nonexistent_template" in str(exc_info.value.detail)
+        assert exc_info.value.code == "template_not_found"
+        assert Wedding.objects.count() == 0
+
+    def test_template_events_are_correctly_offset(self, user, wedding_payload):
+        """Cada evento tem offset_days correto em relação à data do casamento."""
+        wedding_payload["date"] = timezone.now().date() + timedelta(days=200)
+        wedding_payload["template"] = "religious_12m"
+
+        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+
+        events = Event.objects.filter(wedding=wedding).order_by("start_time")
+        offsets = [365, 330, 300, 270, 240, 180, 150, 90, 30, 7]
+
+        for event, offset in zip(events, offsets, strict=True):
+            expected_date = wedding.date - timedelta(days=offset)
+            assert event.start_time.date() == expected_date, (
+                f"Evento '{event.title}' deveria estar em {expected_date}, "
+                f"mas está em {event.start_time.date()} (offset esperado: {offset})"
+            )
+
+    def test_template_does_not_mutate_shared_data(self, user, wedding_payload):
+        """Aplicar o mesmo template duas vezes não corrompe os dados."""
+        wedding_payload["template"] = "beach_6m"
+
+        wedding1 = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding2 = WeddingService.create(company=user.company, data=wedding_payload)
+
+        events1 = Event.objects.filter(wedding=wedding1).count()
+        events2 = Event.objects.filter(wedding=wedding2).count()
+
+        assert events1 == 8
+        assert events2 == 8

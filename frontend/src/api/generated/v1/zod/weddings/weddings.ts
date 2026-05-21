@@ -48,6 +48,7 @@ export const WeddingsCreateBody = zod.object({
   date: zod.iso.date(),
   location: zod.string(),
   expected_guests: zod.union([zod.number(), zod.null()]).optional(),
+  template: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 /**

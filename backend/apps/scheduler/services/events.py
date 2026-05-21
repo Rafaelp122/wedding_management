@@ -5,7 +5,11 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.scheduler.models import Event
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -44,10 +48,26 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Event:
+    def create(
+        company: Company,
+        data: dict[str, Any],
+        *,
+        _caller_internal: bool = False,
+    ) -> Event:
         logger.info(f"Iniciando criação de Evento para company_id={company.id}")
 
         wedding_input = data.pop("wedding", None)
+
+        # BR-S01: Eventos de pagamento são gerados automaticamente
+        if not _caller_internal and data.get("event_type") == Event.TypeChoices.PAYMENT:
+            raise BusinessRuleViolation(
+                detail=(
+                    "Eventos de pagamento são gerados automaticamente e não podem "
+                    "ser criados manualmente. Use o módulo financeiro para criar "
+                    "despesas com parcelas."
+                ),
+                code="payment_event_readonly",
+            )
 
         if isinstance(wedding_input, Wedding):
             wedding = wedding_input
@@ -81,6 +101,26 @@ class EventService:
             f"Atualizando Evento uuid={instance.uuid} por company_id={company.id}"
         )
 
+        # BR-S01: Eventos PAYMENT são read-only
+        if instance.event_type == Event.TypeChoices.PAYMENT:
+            raise BusinessRuleViolation(
+                detail=(
+                    "Eventos de pagamento são gerados automaticamente e não podem "
+                    "ser editados manualmente. Acesse o módulo financeiro para ajustar."
+                ),
+                code="payment_event_readonly",
+            )
+
+        # BR-S01: Não é permitido alterar o tipo de um evento para PAYMENT
+        if data.get("event_type") == Event.TypeChoices.PAYMENT:
+            raise BusinessRuleViolation(
+                detail=(
+                    "Não é permitido alterar o tipo de um evento para 'pagamento'. "
+                    "Eventos de pagamento são gerados automaticamente."
+                ),
+                code="payment_event_readonly",
+            )
+
         data.pop("wedding", None)
         data.pop("company", None)
 
@@ -100,6 +140,16 @@ class EventService:
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
             f"company_id={company.id}"
         )
+
+        # BR-S01: Eventos PAYMENT não podem ser deletados manualmente
+        if instance.event_type == Event.TypeChoices.PAYMENT:
+            raise BusinessRuleViolation(
+                detail=(
+                    "Eventos de pagamento são gerados automaticamente e não podem ser "
+                    "deletados manualmente. Acesse o módulo financeiro para ajustar."
+                ),
+                code="payment_event_readonly",
+            )
 
         try:
             instance.delete()

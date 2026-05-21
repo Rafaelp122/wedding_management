@@ -11,4 +11,5 @@ export interface WeddingIn {
   date: string;
   location: string;
   expected_guests?: number | null;
+  template?: string | null;
 }

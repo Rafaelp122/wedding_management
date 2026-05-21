@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, time, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -66,6 +67,16 @@ class WeddingService:
                 code="wedding_validation_error",
             ) from e
 
+        # ── Template de Cronograma ────────────────────────────────────────
+        template_name = data.get("template")
+        if template_name is not None:
+            logger.info(
+                "Aplicando template '%s' ao casamento uuid=%s",
+                template_name,
+                wedding.uuid,
+            )
+            _apply_template_events(company, wedding, template_name)
+
         logger.info(f"Casamento criado com sucesso: uuid={wedding.uuid}")
         return wedding
 
@@ -130,3 +141,38 @@ class WeddingService:
                 "despesas vinculadas a ele.",
                 code="wedding_protected_error",
             ) from e
+
+
+def _apply_template_events(
+    company: Company, wedding: Wedding, template_name: str
+) -> None:
+    """
+    Aplica um template de cronograma ao casamento, criando eventos
+    com base no offset em dias antes da data do casamento.
+
+    Importação lazy do EventService para evitar circular imports.
+    """
+    from django.utils import timezone
+
+    from apps.scheduler.services import EventService
+    from apps.scheduler.services.templates import get_template_events
+
+    template_events = get_template_events(template_name)
+
+    for event_data in template_events:
+        offset_days = int(event_data["offset_days"])
+        naive_start = datetime.combine(
+            wedding.date - timedelta(days=offset_days),
+            time(hour=9, minute=0),
+        )
+        event_start = timezone.make_aware(naive_start)
+
+        EventService.create(
+            company,
+            {
+                "wedding": wedding,
+                "title": event_data["title"],
+                "event_type": event_data["event_type"],
+                "start_time": event_start,
+            },
+        )
