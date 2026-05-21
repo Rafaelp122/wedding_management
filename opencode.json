@@ -25,5 +25,10 @@
         }
       }
     }
+  },
+  "lsp": {
+    "typescript": {
+      "disabled": false
+    }
   }
 }
