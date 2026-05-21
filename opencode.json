@@ -28,6 +28,7 @@
   },
   "lsp": {
     "typescript": {
+      "command": ["npx", "typescript-language-server", "--stdio"],
       "disabled": false
     }
   }
