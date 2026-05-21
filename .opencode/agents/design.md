@@ -49,3 +49,7 @@ e memoráveis para o Wedding Management System.
 2. Use `shadcn/ui` components como base, componha com Tailwind
 3. Aplique a direção estética de forma consistente em todos os elementos
 4. Teste visualmente — o resultado deve ser memorável e coeso
+
+### 🦾 Superpowers Skills
+
+- **Antes de criar interfaces:** carregue `brainstorming` para explorar direção estética, validar com usuário, e escrever spec antes de codar

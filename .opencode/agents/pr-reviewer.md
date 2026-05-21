@@ -45,3 +45,8 @@ ANTES de revisar, leia AGENTS.md e os arquivos relevantes em docs/ADR/.
 
 **Final Verdict:** [Request Changes | Approve with comments | Approve]
 ```
+
+### 🦾 Superpowers Skills
+
+- **Para revisar código:** carregue `pr-reviewer` para consultar as regras de review específicas do projeto
+- **Se o autor responder ao seu feedback:** carregue `receiving-code-review` para processar contra-argumentos tecnicamente

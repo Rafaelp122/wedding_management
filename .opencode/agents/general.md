@@ -43,3 +43,9 @@ Leia `AGENTS.md` para as regras arquiteturais completas. Stack principal:
 3. Siga as convenções do projeto (leia código similar existente)
 4. Verifique seu trabalho (lint, typecheck, testes)
 5. Reporte o resultado de forma concisa
+
+### 🦾 Superpowers Skills
+
+- **Para features complexas:** sugira ao usuário o comando `/superpowers "descrição"` que ativa o pipeline completo
+- **Para debugging sistemático:** carregue `systematic-debugging` antes de propor fixes
+- **Antes de declarar concluído:** carregue `verification-before-completion`

@@ -2,7 +2,7 @@
 # Quality, Testing & API Sync (Orval)
 # ==============================================================================
 
-.PHONY: openapi orval sync-api test test-cov lint mypy format check-backend check-frontend check-ci check
+.PHONY: openapi orval sync-api test test-cov lint mypy format check-backend check-frontend check-frontend-dev check-ci check
 
 openapi:
 	@echo "📝 Gerando schema OpenAPI a partir do Django Ninja..."
@@ -36,8 +36,12 @@ check-backend: lint mypy test openapi
 	@echo "✅ Pipeline de qualidade do backend passou!"
 
 check-frontend:
-	cd frontend && npm ci && npm run lint && npm run type-check && npm test
+	cd frontend && npm ci && npm run lint && npm run type-check && npm test && npm run build
 	@echo "✅ Pipeline de qualidade do frontend passou!"
+
+check-frontend-dev:
+	cd frontend && npm ci && npm run lint && npm run type-check && npm test
+	@echo "✅ Pipeline dev do frontend passou (sem build de produção)! Rode min 1x 'make check-frontend' antes de push."
 
 check-ci: check-backend check-frontend
 	@echo "✅ Gate local espelhando CI passou!"

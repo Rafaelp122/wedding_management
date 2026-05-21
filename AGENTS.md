@@ -53,3 +53,22 @@ This file serves as the Single Source of Truth for AI agents working on this pro
 ## 🤖 AI Agent Guidelines
 
 - **Use subagentes sempre que necessário**: Para buscas complexas, exploração de codebase, análise multi-arquivo, ou tarefas que exijam contexto amplo, delegue aos subagentes disponíveis. Isso mantém a janela de contexto limpa e evita alucinações.
+
+## 🦾 Superpowers Workflow
+
+Skills de processo disponíveis em `.agents/skills/`. O agente DEVE carregá-las via `Skill` tool quando relevante.
+
+### Fluxo completo (para features, refactors, bugs complexos)
+Use o comando `/superpowers "descrição da tarefa"` para ativar o pipeline:
+brainstorming → spec → plano → implementação com TDD → revisão → finalização.
+
+### Skills individuais (uso diário)
+| Situação | Skill |
+|----------|-------|
+| Criar feature, componente, ou mudar comportamento | `brainstorming` |
+| Implementar feature ou corrigir bug | `test-driven-development` |
+| Encontrar bug, teste quebrado, comportamento inesperado | `systematic-debugging` |
+| Antes de declarar "pronto", commitar, ou criar PR | `verification-before-completion` |
+| Revisar PR ou diff | `pr-reviewer` |
+| Receber feedback de code review | `receiving-code-review` |
+| Finalizar branch (merge, PR, descarte) | `finishing-a-development-branch` |

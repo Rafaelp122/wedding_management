@@ -74,3 +74,11 @@ import { z } from "zod";
 - Mock Orval hooks com `vi.mock` — nunca faça chamadas reais
 - Use `@faker-js/faker` para dados de teste
 - Execute: `cd frontend && npm test` ou `docker compose exec frontend npm test`
+
+### 🦾 Superpowers Skills
+
+Para tasks complexas, sugira ao usuário o comando `/superpowers`. Para uso diário:
+
+- **Antes de escrever código novo:** carregue a skill `test-driven-development` — escreva o teste, veja falhar, implemente o mínimo
+- **Ao encontrar bugs ou testes quebrados:** carregue `systematic-debugging` — investigue causa raiz antes de corrigir
+- **Antes de declarar tarefa concluída:** carregue `verification-before-completion` — rode verificações e mostre evidência
