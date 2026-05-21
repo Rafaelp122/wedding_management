@@ -23,7 +23,14 @@ export function useWeddingBudget(weddingUuid: string) {
   } = useFinancesBudgetsForWedding(weddingUuid);
 
   const { data: categoriesResponse, isLoading: isLoadingCategories } =
-    useFinancesCategoriesList({ wedding_id: weddingUuid });
+    useFinancesCategoriesList(
+      { wedding_id: weddingUuid },
+      {
+        query: {
+          enabled: !!budgetResponse?.data,
+        },
+      },
+    );
 
   const updateBudgetMutation = useFinancesBudgetsUpdate();
 
