@@ -31,7 +31,7 @@ import type { ErrorType } from "@/api/api-client";
 const RegisterFormSchema = z
   .object({
     email: z.string().email(),
-    password: z.string().min(1),
+    password: z.string().min(8, "Mínimo 8 caracteres"),
     first_name: z.string().default(""),
     last_name: z.string().default(""),
     confirm_password: z.string().min(1, "Confirme sua senha"),

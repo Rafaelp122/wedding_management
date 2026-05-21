@@ -57,6 +57,10 @@ class EventPatchIn(Schema):
         ):
             raise ValueError("Os minutos do lembrete devem ser um valor positivo.")
 
+        # Model field is non-nullable with default; normalize None → "none"
+        if self.recurrence_rule is None:
+            self.recurrence_rule = "none"
+
         return self
 
 

@@ -105,7 +105,7 @@ export default function SchedulerPage() {
   const handleEditSuccess = useCallback(() => {
     setEditDialogOpen(false);
     setSelectedEvent(null);
-    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey({}) });
+    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
   }, [queryClient]);
 
   // Wedding options for the create event dialog (must be before handlers that use them)
@@ -147,7 +147,7 @@ export default function SchedulerPage() {
   const handleCreateSuccess = useCallback(() => {
     setCreateDialogOpen(false);
     setCreateDefaultStart(undefined);
-    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey({}) });
+    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
   }, [queryClient]);
 
   if (isLoading) {

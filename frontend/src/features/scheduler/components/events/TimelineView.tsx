@@ -30,7 +30,7 @@ export function WeddingTimelineTab({ weddingUuid }: WeddingTimelineTabProps) {
 
   const handleSuccess = useCallback(() => {
     setDialogOpen(false);
-    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey({}) });
+    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
   }, [queryClient]);
 
   if (isLoading) {

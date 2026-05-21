@@ -6,6 +6,8 @@ import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
 import { Info } from "lucide-react";
 
+dayjs.locale("pt-br");
+
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
 
 import {

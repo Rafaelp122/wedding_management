@@ -135,7 +135,7 @@ export const WeddingsTable = memo(function WeddingsTable({ weddings, onRefetch }
             onRefetch();
             queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
             queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
-            queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey({}) });
+            queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
             setDeletingWedding(null);
           }}
         />

@@ -75,7 +75,7 @@ export function CreateWeddingDialog({
         fallbackErrorMsg: "Erro ao criar casamento.",
         onSuccess: () => {
           form.reset();
-          queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey({}) });
+          queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
           queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
           onSuccess();
         },
