@@ -17,6 +17,7 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
+from apps.scheduler.models import Event
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -200,6 +201,45 @@ class TestInstallmentServiceAutoGeneration:
                 user.company, expense, 2, date.today()
             )
         assert exc.value.code == "invalid_expense_amount"
+
+    def test_auto_generate_creates_payment_events(self, user):
+        """BR-S01: auto_generate_installments cria eventos PAYMENT no scheduler."""
+        expense = _setup_expense(
+            user, actual_amount=Decimal("1500.00"), name="Buffet Infantil"
+        )
+        first_date = date.today() + timedelta(days=30)
+
+        InstallmentService.auto_generate_installments(
+            user.company, expense, 3, first_date
+        )
+
+        events = Event.objects.filter(wedding=expense.wedding).order_by("start_time")
+        assert len(events) == 3
+
+        for i, event in enumerate(events):
+            assert event.event_type == Event.TypeChoices.PAYMENT
+            assert "Pagamento" in event.title
+            assert "Buffet Infantil" in event.title
+            assert f"Parcela {i + 1}/3" in event.title
+            assert event.start_time.date() == first_date + timedelta(days=30 * i)
+            assert event.company == user.company
+            assert event.wedding == expense.wedding
+
+    def test_auto_generate_payment_event_values(self, user):
+        """Eventos PAYMENT contêm valor da parcela e nome da despesa."""
+        expense = _setup_expense(user, actual_amount=Decimal("250.00"), name="Flores")
+        first_date = date.today() + timedelta(days=15)
+
+        InstallmentService.auto_generate_installments(
+            user.company, expense, 2, first_date
+        )
+
+        events = Event.objects.filter(wedding=expense.wedding).order_by("start_time")
+        assert len(events) == 2
+
+        # Verificar que o valor R$ aparece na descrição
+        assert "125.00" in events[0].description
+        assert "Flores" in events[0].description
 
 
 @pytest.mark.django_db
@@ -458,6 +498,69 @@ class TestInstallmentServiceRedistribute:
                 date.today(),
             )
         assert exc.value.code == "redistribute_blocked_by_paid"
+
+    def test_redistribute_cleans_up_payment_events(self, user):
+        """Redistribuir parcelas remove eventos PAYMENT antigos e cria novos."""
+        from datetime import date as date_type
+
+        from apps.scheduler.models import Event as SchedulerEvent
+
+        expense = _setup_expense(
+            user, actual_amount=Decimal("1000.00"), name="Buffet Teste"
+        )
+        InstallmentService.auto_generate_installments(
+            user.company, expense, 3, date_type.today()
+        )
+
+        # Deveria ter criado 3 eventos PAYMENT
+        old_events_count = SchedulerEvent.objects.filter(
+            wedding=expense.wedding,
+            event_type="pagamento",
+        ).count()
+        assert old_events_count == 3
+
+        # Redistribuir para 2 parcelas
+        InstallmentService.redistribute(user.company, expense, 2, date_type.today())
+
+        # Eventos antigos removidos
+        old_events = SchedulerEvent.objects.filter(
+            wedding=expense.wedding,
+            event_type="pagamento",
+        )
+        assert old_events.count() == 2  # apenas os novos
+        assert all("Parcela" in e.title for e in old_events)
+
+    def test_delete_installment_cleans_up_payment_event(self, user):
+        """Deletar parcela individual remove seu evento PAYMENT."""
+        from datetime import date as date_type
+
+        from apps.scheduler.models import Event as SchedulerEvent
+
+        expense = _setup_expense(
+            user, actual_amount=Decimal("500.00"), name="Flores Teste"
+        )
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 2, date_type.today()
+        )
+
+        events_before = SchedulerEvent.objects.filter(
+            wedding=expense.wedding, event_type="pagamento"
+        ).count()
+        assert events_before == 2
+
+        # Forçar soma ajustada para permitir deleção (se a soma fechar)
+        # Deleção individual de 1 parcela quebra tolerância zero — ajustar antes
+        remaining = expense.installments.exclude(uuid=installments[0].uuid).first()
+        if remaining:
+            remaining.amount = expense.actual_amount
+            remaining.save()
+
+        InstallmentService.delete(user.company, installments[0])
+
+        events_after = SchedulerEvent.objects.filter(
+            wedding=expense.wedding, event_type="pagamento"
+        ).count()
+        assert events_after == 1
 
 
 @pytest.mark.django_db
