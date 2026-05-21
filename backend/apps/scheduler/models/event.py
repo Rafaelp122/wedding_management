@@ -16,6 +16,14 @@ class Event(TenantModel, WeddingOwnedMixin):
         TASTING = "degustacao", "Degustação"
         OTHER = "outro", "Outro"
 
+    class RecurrenceChoices(models.TextChoices):
+        """Regras de recorrência para eventos do calendário."""
+
+        NONE = "none", "Não recorrente"
+        WEEKLY = "semanal", "Semanal"
+        BIWEEKLY = "quinzenal", "Quinzenal"
+        MONTHLY = "mensal", "Mensal"
+
     title = models.CharField(max_length=255, verbose_name="Título")
     location = models.CharField(max_length=255, blank=True, verbose_name="Local")
     description = models.TextField(blank=True, verbose_name="Descrição")
@@ -28,6 +36,14 @@ class Event(TenantModel, WeddingOwnedMixin):
 
     start_time = models.DateTimeField(verbose_name="Início do Evento")
     end_time = models.DateTimeField(verbose_name="Fim do Evento", null=True, blank=True)
+
+    recurrence_rule = models.CharField(
+        max_length=20,
+        choices=RecurrenceChoices.choices,
+        default=RecurrenceChoices.NONE,
+        verbose_name="Regra de Recorrência",
+        help_text="Frequência com que o evento se repete",
+    )
 
     reminder_enabled = models.BooleanField(
         default=False,

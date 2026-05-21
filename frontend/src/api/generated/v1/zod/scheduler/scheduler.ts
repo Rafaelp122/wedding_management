@@ -39,6 +39,7 @@ export const SchedulerEventsListResponse = zod.object({
       event_type: zod.string(),
       start_time: zod.iso.datetime({}),
       end_time: zod.union([zod.iso.datetime({}), zod.null()]).optional(),
+      recurrence_rule: zod.string(),
       reminder_enabled: zod.boolean(),
       reminder_minutes_before: zod.number(),
     }),
@@ -60,6 +61,7 @@ export const schedulerEventsCreateBodyLocationOneMax = 255;
 
 export const schedulerEventsCreateBodyEventTypeMax = 50;
 
+export const schedulerEventsCreateBodyRecurrenceRuleDefault = `none`;
 export const schedulerEventsCreateBodyReminderEnabledDefault = false;
 export const schedulerEventsCreateBodyReminderMinutesBeforeDefault = 60;
 
@@ -76,6 +78,9 @@ export const SchedulerEventsCreateBody = zod.object({
   event_type: zod.string().max(schedulerEventsCreateBodyEventTypeMax),
   start_time: zod.iso.datetime({}),
   end_time: zod.union([zod.iso.datetime({}), zod.null()]).optional(),
+  recurrence_rule: zod
+    .union([zod.string(), zod.null()])
+    .default(schedulerEventsCreateBodyRecurrenceRuleDefault),
   reminder_enabled: zod
     .boolean()
     .default(schedulerEventsCreateBodyReminderEnabledDefault),
@@ -104,6 +109,7 @@ export const SchedulerEventsReadResponse = zod.object({
   event_type: zod.string(),
   start_time: zod.iso.datetime({}),
   end_time: zod.union([zod.iso.datetime({}), zod.null()]).optional(),
+  recurrence_rule: zod.string(),
   reminder_enabled: zod.boolean(),
   reminder_minutes_before: zod.number(),
 });
@@ -144,6 +150,7 @@ export const SchedulerEventsUpdateBody = zod.object({
     .optional(),
   start_time: zod.union([zod.iso.datetime({}), zod.null()]).optional(),
   end_time: zod.union([zod.iso.datetime({}), zod.null()]).optional(),
+  recurrence_rule: zod.union([zod.string(), zod.null()]).optional(),
   reminder_enabled: zod.union([zod.boolean(), zod.null()]).optional(),
   reminder_minutes_before: zod.union([zod.number(), zod.null()]).optional(),
 });
@@ -158,6 +165,7 @@ export const SchedulerEventsUpdateResponse = zod.object({
   event_type: zod.string(),
   start_time: zod.iso.datetime({}),
   end_time: zod.union([zod.iso.datetime({}), zod.null()]).optional(),
+  recurrence_rule: zod.string(),
   reminder_enabled: zod.boolean(),
   reminder_minutes_before: zod.number(),
 });

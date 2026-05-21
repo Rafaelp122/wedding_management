@@ -15,6 +15,7 @@ export interface EventOut {
   event_type: string;
   start_time: string;
   end_time?: string | null;
+  recurrence_rule: string;
   reminder_enabled: boolean;
   reminder_minutes_before: number;
 }

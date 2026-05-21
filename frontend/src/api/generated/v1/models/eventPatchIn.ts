@@ -13,6 +13,7 @@ export interface EventPatchIn {
   event_type?: string | null;
   start_time?: string | null;
   end_time?: string | null;
+  recurrence_rule?: string | null;
   reminder_enabled?: boolean | null;
   reminder_minutes_before?: number | null;
 }

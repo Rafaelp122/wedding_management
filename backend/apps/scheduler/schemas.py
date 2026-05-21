@@ -12,6 +12,7 @@ class EventIn(Schema):
     event_type: str = Field(..., max_length=50)
     start_time: datetime
     end_time: datetime | None = None
+    recurrence_rule: str | None = "none"
     reminder_enabled: bool = False
     reminder_minutes_before: int = 60
 
@@ -39,6 +40,7 @@ class EventPatchIn(Schema):
     event_type: str | None = Field(None, max_length=50)
     start_time: datetime | None = None
     end_time: datetime | None = None
+    recurrence_rule: str | None = None
     reminder_enabled: bool | None = None
     reminder_minutes_before: int | None = None
 
@@ -68,6 +70,7 @@ class EventOut(Schema):
     event_type: str
     start_time: datetime
     end_time: datetime | None = None
+    recurrence_rule: str
     reminder_enabled: bool
     reminder_minutes_before: int
 
