@@ -160,7 +160,7 @@ def _apply_template_events(
     template_events = get_template_events(template_name)
 
     for event_data in template_events:
-        offset_days = event_data.get("offset_days")
+        offset_days = int(event_data["offset_days"])
         naive_start = datetime.combine(
             wedding.date - timedelta(days=offset_days),
             time(hour=9, minute=0),
