@@ -1,9 +1,14 @@
-import { AlertCircle, CalendarClock } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertCircle, CalendarClock, Plus } from "lucide-react";
 
 import { useWeddingTimeline } from "../../hooks/useTimeline";
 import { WeddingTimelineTable } from "./TimelineTable";
+import { CreateEventDialog } from "./CreateEventDialog";
+import { getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -19,6 +24,14 @@ interface WeddingTimelineTabProps {
 
 export function WeddingTimelineTab({ weddingUuid }: WeddingTimelineTabProps) {
   const { events, isLoading, error } = useWeddingTimeline(weddingUuid);
+  const queryClient = useQueryClient();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleSuccess = useCallback(() => {
+    setDialogOpen(false);
+    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey({}) });
+  }, [queryClient]);
 
   if (isLoading) {
     return (
@@ -43,10 +56,20 @@ export function WeddingTimelineTab({ weddingUuid }: WeddingTimelineTabProps) {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarClock className="size-5 text-primary" />
-            Cronograma de Eventos
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="size-5 text-primary" />
+              <CardTitle>Cronograma de Eventos</CardTitle>
+            </div>
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Novo Evento
+            </Button>
+          </div>
           <CardDescription>
             Acompanhamento detalhado de reuniões, visitas e marcos importantes do evento.
           </CardDescription>
@@ -55,6 +78,13 @@ export function WeddingTimelineTab({ weddingUuid }: WeddingTimelineTabProps) {
           <WeddingTimelineTable events={events} />
         </CardContent>
       </Card>
+
+      <CreateEventDialog
+        weddingUuid={weddingUuid}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }
