@@ -111,5 +111,5 @@ logs
 *.sln
 *.sw?
 
-.gemini/
+!.gemini/
 gha-creds-*.json
