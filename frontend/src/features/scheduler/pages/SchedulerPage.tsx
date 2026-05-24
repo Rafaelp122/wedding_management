@@ -33,6 +33,7 @@ export default function SchedulerPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventOut | null>(null);
 
   const EVENTS_PAGE_SIZE = 10;
+  const CALENDAR_EVENTS_LIMIT = 500;
   const WEDDINGS_PAGE_SIZE = 100;
 
   const pagination = usePagination(EVENTS_PAGE_SIZE);
@@ -46,6 +47,11 @@ export default function SchedulerPage() {
     offset: pagination.offset,
   });
   const {
+    data: allEventsResponse,
+    isLoading: isLoadingAllEvents,
+    error: allEventsError,
+  } = useSchedulerEventsList({ limit: CALENDAR_EVENTS_LIMIT, offset: 0 });
+  const {
     data: weddingsResponse,
     isLoading: isLoadingWeddings,
     error: weddingsError,
@@ -53,6 +59,10 @@ export default function SchedulerPage() {
 
   const events = useMemo(() => eventsResponse?.data.items ?? [], [eventsResponse]);
   const eventsCount = eventsResponse?.data.count ?? 0;
+  const allEvents = useMemo(
+    () => allEventsResponse?.data.items ?? [],
+    [allEventsResponse],
+  );
   const weddings = useMemo(
     () => weddingsResponse?.data.items ?? [],
     [weddingsResponse],
@@ -64,8 +74,8 @@ export default function SchedulerPage() {
     eventsCount,
   );
 
-  const isLoading = isLoadingEvents || isLoadingWeddings;
-  const firstError = eventsError ?? weddingsError;
+  const isLoading = isLoadingEvents || isLoadingAllEvents || isLoadingWeddings;
+  const firstError = eventsError ?? allEventsError ?? weddingsError;
 
   const weddingsByUuid = useMemo(
     () =>
@@ -93,19 +103,21 @@ export default function SchedulerPage() {
     const next7Days = new Date();
     next7Days.setDate(now.getDate() + 7);
 
-    const upcoming = events.filter((event) => {
+    const upcoming = allEvents.filter((event) => {
       const startsAt = new Date(event.start_time);
       return startsAt >= now && startsAt <= next7Days;
     }).length;
 
-    const withReminder = events.filter((event) => event.reminder_enabled).length;
+    const withReminder = allEvents.filter(
+      (event) => event.reminder_enabled,
+    ).length;
 
     return {
-      total: events.length,
+      total: allEvents.length,
       upcoming,
       withReminder,
     };
-  }, [events]);
+  }, [allEvents]);
 
   // Handlers
   const handleSelectEvent = useCallback((event: EventOut) => {
@@ -240,7 +252,7 @@ export default function SchedulerPage() {
         />
       ) : (
         <SchedulerCalendar
-          events={events}
+          events={allEvents}
           weddingsByUuid={weddingsByUuid}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
