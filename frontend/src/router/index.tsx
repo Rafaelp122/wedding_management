@@ -20,9 +20,6 @@ const SchedulerPage = lazy(
   () => import("@/features/scheduler/pages/SchedulerPage"),
 );
 const SuppliersPage = lazy(() => import("@/features/logistics/pages/SuppliersPage"));
-const SupplierDetailPage = lazy(
-  () => import("@/features/logistics/pages/SupplierDetailPage"),
-);
 
 // Feature: Weddings
 const WeddingsListPage = lazy(
@@ -98,10 +95,6 @@ export const router = createBrowserRouter([
       {
         path: "/suppliers",
         element: withLoading(<SuppliersPage />),
-      },
-      {
-        path: "/suppliers/:uuid",
-        element: withLoading(<SupplierDetailPage />),
       },
       {
         path: "/settings",
