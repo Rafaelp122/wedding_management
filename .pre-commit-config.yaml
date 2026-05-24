@@ -11,13 +11,13 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$|^\.agents/|^\.claude/|^\.gemini/|^skills/
+        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$|^\.agents/|^\.claude/|^\.antigravity/|^skills/
       - id: end-of-file-fixer
-        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$|^\.agents/|^\.claude/|^\.gemini/|^skills/
+        exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$|^\.agents/|^\.claude/|^\.antigravity/|^skills/
       - id: check-yaml
       - id: check-added-large-files
         args: ['--maxkb=1000']
-        exclude: ^\.agents/|^\.claude/|^\.gemini/|^skills/
+        exclude: ^\.agents/|^\.claude/|^\.antigravity/|^skills/
       - id: check-merge-conflict
       - id: debug-statements
 
@@ -29,9 +29,9 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-        exclude: ^\.agents/|^\.claude/|^\.gemini/|^skills/
+        exclude: ^\.agents/|^\.claude/|^\.antigravity/|^skills/
       - id: ruff-format
-        exclude: ^\.agents/|^\.claude/|^\.gemini/|^skills/
+        exclude: ^\.agents/|^\.claude/|^\.antigravity/|^skills/
 
   # ----------------------------------------------------------------------------
   # 3. SEGURANÇA (Secrets)
@@ -41,7 +41,7 @@ repos:
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
-        exclude: .*/tests/.*|backend/uv.lock|^\.agents/|^\.claude/|^\.gemini/|^skills/|skills-lock\.json
+        exclude: .*/tests/.*|backend/uv.lock|^\.agents/|^\.claude/|^\.antigravity/|^skills/|skills-lock\.json
 
   # ----------------------------------------------------------------------------
   # 4. INTEGRIDADE LOCAL E LINTING O(1)
