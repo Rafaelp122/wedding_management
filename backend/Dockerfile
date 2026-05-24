@@ -43,6 +43,7 @@ FROM builder AS development
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --all-extras
 
+
 COPY . .
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.development
@@ -72,4 +73,4 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.test \
 USER appuser
 
 EXPOSE 8000
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--threads", "4", "--timeout", "60"]

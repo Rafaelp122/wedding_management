@@ -23,3 +23,8 @@ media/
 .env.local
 Dockerfile
 docker-compose*.yml
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
