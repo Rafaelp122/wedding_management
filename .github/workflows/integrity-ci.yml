@@ -150,15 +150,13 @@ jobs:
         with:
           project_id: gen-lang-client-0194045282
 
-      - name: Deploy to Cloud Run # pragma: allowlist secret
-        run: | # pragma: allowlist secret
+      - name: Deploy to Cloud Run
+        run: |
           gcloud run deploy wedding-backend \
-
             --project gen-lang-client-0194045282 \
             --source ./backend \
             --region us-central1 \
             --allow-unauthenticated \
             --concurrency 15 \
-            --set-build-env-vars="BUILD_SECRET_KEY=dummy-build-secret-key-for-collectstatic-32-chars" \
             --set-env-vars='^|^DATABASE_URL=${{ secrets.DATABASE_URL }}|SECRET_KEY=${{ secrets.SECRET_KEY }}|ALLOWED_HOSTS=api.simaceito.site,simaceito.site,www.simaceito.site,.run.app,localhost|DJANGO_SETTINGS_MODULE=config.settings.production|CORS_ALLOWED_ORIGINS=https://simaceito.site,https://www.simaceito.site' \
             --quiet

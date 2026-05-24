@@ -56,7 +56,7 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 # ==============================================================================
 FROM base AS production
 
-ARG BUILD_SECRET_KEY
+ARG BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
 
