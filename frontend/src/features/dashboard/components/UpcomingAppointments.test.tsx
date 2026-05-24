@@ -1,5 +1,6 @@
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
-import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { render, screen, server, userEvent, waitFor } from "@/test-utils";
 import { UpcomingAppointments } from "@/features/dashboard/components/UpcomingAppointments";
 
 describe("UpcomingAppointments", () => {
@@ -24,14 +25,42 @@ describe("UpcomingAppointments", () => {
     expect(link).toHaveAttribute("href", "/scheduler");
   });
 
-  it("allows changing period", async () => {
+  it("shows empty message when there are no events", async () => {
+    server.use(
+      http.get("*/api/v1/scheduler/events/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+    );
+
     render(<UpcomingAppointments />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/nenhum compromisso nos próximos 7 dias/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("allows changing period", async () => {
+    server.use(
+      http.get("*/api/v1/scheduler/events/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+    );
+
+    render(<UpcomingAppointments />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/nenhum compromisso nos próximos 7 dias/i),
+      ).toBeInTheDocument();
+    });
 
     const user = userEvent.setup();
     await user.click(screen.getByText("30d"));
 
     expect(
-      screen.queryByText(/nenhum compromisso nos próximos 30 dias/i),
+      screen.getByText(/nenhum compromisso nos próximos 30 dias/i),
     ).toBeInTheDocument();
   });
 });
