@@ -1,20 +1,7 @@
 ---
+name: test-writer
 description: Escreve testes pytest (backend) e Vitest (frontend) seguindo os padrões do projeto
-mode: subagent
-model: deepseek/deepseek-v4-flash
-temperature: 0.2
-tools:
-  write: true
-  edit: true
-  bash: true
-permission:
-  bash:
-    "make test*": "allow"
-    "make check-backend*": "allow"
-    "make check-frontend*": "allow"
-    "docker compose exec backend uv run pytest*": "allow"
-    "docker compose exec frontend npm test*": "allow"
-    "npm test*": "allow"
+kind: local
 ---
 
 You are a testing specialist for Wedding Management System.

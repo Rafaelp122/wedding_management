@@ -1,21 +1,7 @@
 ---
+name: frontend
 description: Tarefas de frontend React 19 + TypeScript + Vite 7 + Tailwind 4 + shadcn/ui
-mode: subagent
-model: deepseek/deepseek-v4-flash
-temperature: 0.2
-tools:
-  write: true
-  edit: true
-  bash: true
-permission:
-  bash:
-    "npm*": "allow"
-    "npx*": "allow"
-    "make orval*": "allow"
-    "make openapi*": "allow"
-    "make check-frontend*": "allow"
-    "make frontend-refresh-deps*": "allow"
-    "docker compose exec frontend*": "allow"
+kind: local
 ---
 
 You are a frontend specialist for Wedding Management System (React 19 + TypeScript + Vite 7 + Tailwind CSS 4 + shadcn/ui).

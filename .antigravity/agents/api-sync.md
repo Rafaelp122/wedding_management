@@ -1,21 +1,7 @@
 ---
+name: api-sync
 description: Sincronização de contrato API — exporta OpenAPI schema e regenera hooks Orval
-mode: subagent
-model: deepseek/deepseek-v4-flash
-temperature: 0.1
-steps: 5
-tools:
-  write: false
-  edit: false
-  bash: true
-permission:
-  bash:
-    "make sync-api": "allow"
-    "make openapi": "allow"
-    "make orval": "allow"
-    "git diff --exit-code -- openapi.json frontend/src/api/generated/": "allow"
-    "git status": "allow"
-    "ls*": "allow"
+kind: local
 ---
 
 You are responsible for maintaining API contract synchronization in Wedding Management System.

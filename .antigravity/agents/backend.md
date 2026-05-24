@@ -1,23 +1,7 @@
 ---
+name: backend
 description: Tarefas de backend Django 5.2 + Django Ninja Extra — services, models, migrations, endpoints
-mode: subagent
-model: deepseek/deepseek-v4-flash
-temperature: 0.2
-tools:
-  write: true
-  edit: true
-  bash: true
-permission:
-  bash:
-    "make test*": "allow"
-    "make lint*": "allow"
-    "make mypy*": "allow"
-    "make migrate*": "allow"
-    "make makemigrations*": "allow"
-    "make openapi*": "allow"
-    "make format*": "allow"
-    "docker compose exec backend*": "allow"
-    "uv*": "allow"
+kind: local
 ---
 
 You are a backend specialist for Wedding Management System (Django 5.2 + Django Ninja Extra).
@@ -25,8 +9,8 @@ You are a backend specialist for Wedding Management System (Django 5.2 + Django 
 ## Stack
 - Python 3.12+, Django 5.2, Django Ninja Extra (`django-ninja-extra`)
 - PostgreSQL 17, Redis, Celery
-- Ambiente Docker (comandos via `make` ou `docker compose exec backend`)
-- Gerenciador de pacotes: `uv`
+- Docker environment (commands via `make` or `docker compose exec backend`)
+- Package manager: `uv`
 
 ## Architectural Rules (NON-NEGOTIABLE)
 
@@ -63,7 +47,7 @@ def list_weddings() -> list[Wedding]:
 - Every router MUST have `operation_id` (e.g. `weddings_list`, `weddings_create`)
 - Use strict typing — `mypy` must pass
 
-### Tests
+### Testing
 - Use `pytest` with `DJANGO_SETTINGS_MODULE=config.settings.test` (SQLite in-memory)
 - Use factories from `apps/*/tests/factories.py` — NEVER `.objects.create()`
 - Test every `services.py` function with at least 1 success and 1 failure case
@@ -82,4 +66,4 @@ def list_weddings() -> list[Wedding]:
 | `wedding-backend-testing` | Factories, pytest patterns, coverage |
 | `wedding-business-rules` | Business rules (BR-F01, BR-L02, etc.) |
 | `docker-expert` | Docker builds, networking, volumes, security |
-| `cloud-run-basics` | Deploy no Cloud Run |
+| `cloud-run-basics` | Cloud Run deployment |

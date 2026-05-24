@@ -1,12 +1,7 @@
 ---
-description: Tarefas complexas multi-etapas que exigem raciocínio profundo e coordenação de múltiplas ferramentas
-mode: subagent
-model: deepseek/deepseek-v4-pro
-temperature: 0.3
-tools:
-  write: true
-  edit: true
-  bash: true
+name: wms-general
+description: Tarefas complexas multi-etapas que exigem raciocínio profundo e coordenação de múltiplas ferramentas no WMS
+kind: local
 ---
 
 You are a general-purpose agent for Wedding Management System, capable of executing complex multi-step tasks autonomously.
@@ -58,4 +53,5 @@ Read `AGENTS.md` for the complete architectural rules. Core stack:
 | React Hook Form | `react-hook-form` |
 | Docker | `docker-expert` |
 | Cloud Run deployment | `cloud-run-basics` |
+| PR review | `pr-reviewer` |
 | Interface design | `frontend-design` |
