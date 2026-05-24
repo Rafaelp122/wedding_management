@@ -8,14 +8,18 @@ import * as zod from "zod";
 
 /**
  * Lista todos os fornecedores cadastrados pelo Planner logado.
+Aceita filtros de busca textual e status.
  * @summary List Suppliers
  */
+export const logisticsSuppliersListQuerySearchDefault = ``;
 export const logisticsSuppliersListQueryLimitDefault = 100;
 
 export const logisticsSuppliersListQueryOffsetDefault = 0;
 export const logisticsSuppliersListQueryOffsetMin = 0;
 
 export const LogisticsSuppliersListQueryParams = zod.object({
+  search: zod.string().default(logisticsSuppliersListQuerySearchDefault),
+  is_active: zod.union([zod.boolean(), zod.null()]).optional(),
   limit: zod.number().min(1).default(logisticsSuppliersListQueryLimitDefault),
   offset: zod
     .number()

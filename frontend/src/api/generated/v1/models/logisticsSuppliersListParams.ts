@@ -6,6 +6,8 @@
  */
 
 export type LogisticsSuppliersListParams = {
+  search?: string;
+  is_active?: boolean | null;
   /**
    * @minimum 1
    */
