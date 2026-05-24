@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
   "agent": {
     "build": {
       "mode": "primary",
@@ -30,6 +31,17 @@
     "typescript": {
       "command": ["npx", "typescript-language-server", "--stdio"],
       "disabled": false
+    }
+  },
+  "mcp": {
+    "shadcn": {
+      "type": "local",
+      "command": [
+        "npx",
+        "shadcn@latest",
+        "mcp"
+      ],
+      "enabled": true
     }
   }
 }

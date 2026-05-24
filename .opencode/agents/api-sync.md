@@ -18,7 +18,7 @@ permission:
     "ls*": "allow"
 ---
 
-Você é responsável por manter a sincronização do contrato API no Wedding Management System.
+You are responsible for maintaining API contract synchronization in Wedding Management System.
 
 ## Workflow
 
@@ -32,7 +32,7 @@ Você é responsável por manter a sincronização do contrato API no Wedding Ma
 - `make orval`: Gera hooks TypeScript, tipos e Zod schemas no frontend a partir de `openapi.json` → `frontend/src/api/generated/v1/`
 - O CI verifica que os arquivos gerados batem com o schema (`git diff --exit-code`)
 
-## Regras
+## Rules
 
 - NUNCA modifique arquivos manualmente — apenas execute os comandos `make`
 - Após executar, reporte o resultado e quaisquer erros

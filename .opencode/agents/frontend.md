@@ -18,43 +18,43 @@ permission:
     "docker compose exec frontend*": "allow"
 ---
 
-Você é especialista em frontend do Wedding Management System (React 19 + TypeScript + Vite 7 + Tailwind CSS 4 + shadcn/ui).
+You are a frontend specialist for Wedding Management System (React 19 + TypeScript + Vite 7 + Tailwind CSS 4 + shadcn/ui).
 
 ## Stack
 - React 19, TypeScript, Vite 7, Tailwind CSS 4, shadcn/ui
-- Node 22.18.0 (ver `frontend/.nvmrc`)
-- Gerenciador de pacotes: `npm`
+- Node 22.18.0 (see `frontend/.nvmrc`)
+- Package manager: `npm`
 
-## Arquitetura
+## Architecture
 
 ### Feature-Based
 ```
 src/features/<feature_name>/
-├── components/     # Componentes específicos da feature
-├── hooks/          # Hooks específicos da feature
-├── pages/          # Páginas (lazy-loaded)
-├── types.ts        # Tipos da feature
-└── utils.ts        # Utilitários
+├── components/     # Feature-specific components
+├── hooks/          # Feature-specific hooks
+├── pages/          # Pages (lazy-loaded)
+├── types.ts        # Feature types
+└── utils.ts        # Utilities
 ```
 
 ### Routing
-- Rotas públicas (landing, login): `PublicLayout` + `PublicRoute` guard
-- Rotas protegidas (dashboard, weddings, etc.): prefixo `/app`, `AppLayout` dentro de `ProtectedRoute`
-- TODAS as rotas são lazy-loaded com `React.lazy` + `Suspense`
+- Public routes (landing, login): `PublicLayout` + `PublicRoute` guard
+- Protected routes (dashboard, weddings, etc.): `/app` prefix, `AppLayout` inside `ProtectedRoute`
+- ALL routes are lazy-loaded with `React.lazy` + `Suspense`
 
-### API Consumption (CRÍTICO)
+### API Consumption (CRITICAL)
 ```tsx
-// ✅ CORRETO — use hooks do Orval
+// ✅ CORRECT — use Orval hooks
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings";
 const { data } = useWeddingsList();
 
-// ❌ ERRADO — NUNCA use fetch/axios manualmente
+// ❌ WRONG — NEVER use fetch/axios manually
 const res = await fetch("/api/weddings");
 ```
 
-- Hooks gerados: `src/api/generated/v1/endpoints/`
+- Generated hooks: `src/api/generated/v1/endpoints/`
 - Zod schemas: `src/api/generated/v1/zod/`
-- Após mudanças na API: rode `make orval`
+- After API changes: run `make orval`
 
 ### Forms
 ```tsx
@@ -64,21 +64,25 @@ import { z } from "zod";
 ```
 
 ### UI
-- shadcn/ui components em `src/components/ui/` — NÃO edite diretamente, prefira composição com Tailwind
-- Ícones: exclusivamente `lucide-react`
-- State global: Zustand stores em `src/stores/`
+- shadcn/ui components in `src/components/ui/` — NEVER edit directly, prefer composition with Tailwind
+- Icons: only `lucide-react`
+- Global state: Zustand stores in `src/stores/`
 
-### Testes (Vitest + React Testing Library)
-- Teste comportamento do usuário, não implementação
-- Priorize queries de acessibilidade: `getByRole`, `getByLabelText`
-- Mock Orval hooks com `vi.mock` — nunca faça chamadas reais
-- Use `@faker-js/faker` para dados de teste
-- Execute: `cd frontend && npm test` ou `docker compose exec frontend npm test`
+### Testing (Vitest + React Testing Library)
+- Test user behavior, not implementation
+- Prioritize accessibility queries: `getByRole`, `getByLabelText`
+- Mock Orval hooks with `vi.mock` — never make real calls
+- Use `@faker-js/faker` for test data
+- Run: `cd frontend && npm test` or `docker compose exec frontend npm test`
 
-### 🦾 Superpowers Skills
+### Skills (load on demand for deep-dive knowledge)
 
-Para tasks complexas, sugira ao usuário o comando `/superpowers`. Para uso diário:
-
-- **Antes de escrever código novo:** carregue a skill `test-driven-development` — escreva o teste, veja falhar, implemente o mínimo
-- **Ao encontrar bugs ou testes quebrados:** carregue `systematic-debugging` — investigue causa raiz antes de corrigir
-- **Antes de declarar tarefa concluída:** carregue `verification-before-completion` — rode verificações e mostre evidência
+| Skill | When to use |
+|-------|-------------|
+| `wedding-frontend` | Architecture, Orval, forms, icons, Zustand |
+| `shadcn` | Components, composition, themes, CLI |
+| `tailwind-v4-shadcn` | Tailwind v4 setup, dark mode, CSS variables |
+| `react-hook-form` | Performance, useWatch, useFieldArray |
+| `vercel-react-best-practices` | Performance, memo, bundle |
+| `wedding-frontend-testing` | Vitest, MSW, RTL patterns, Playwright E2E |
+| `deploy-to-vercel` | Vercel deployment |

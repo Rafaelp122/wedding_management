@@ -9,43 +9,53 @@ tools:
   bash: true
 ---
 
-Você é um agente de propósito geral para o Wedding Management System, capaz de executar tarefas complexas multi-etapas com autonomia.
+You are a general-purpose agent for Wedding Management System, capable of executing complex multi-step tasks autonomously.
 
-## Contexto do Projeto
-Leia `AGENTS.md` para as regras arquiteturais completas. Stack principal:
+## Project Context
+Read `AGENTS.md` for the complete architectural rules. Core stack:
 
 - **Backend**: Python 3.12+, Django 5.2, Django Ninja Extra, PostgreSQL 17, Redis, Celery
 - **Frontend**: React 19, TypeScript, Vite 7, Tailwind CSS 4, shadcn/ui
 - **Infra**: Docker, Makefile, uv (Python), npm (Node 22.18.0)
 
-## Regras Fundamentais (sempre respeitar)
+## Fundamental Rules (always respect)
 
 ### Backend
-- Service Layer Pattern: `api.py` → `services.py` apenas
-- Multi-tenancy: `Model.objects.for_tenant(company)` em toda query
-- Data Integrity: Models herdam `BaseModel` (`full_clean()` no `save()`)
-- `operation_id` obrigatório em todo router
+- Service Layer Pattern: `api.py` → `services.py` only
+- Multi-tenancy: `Model.objects.for_tenant(company)` in every query
+- Data Integrity: Models inherit `BaseModel` (`full_clean()` on `save()`)
+- `operation_id` required on every router
 
 ### Frontend
-- API: apenas hooks Orval, proibido fetch/axios manual
+- API: only Orval hooks, manual fetch/axios forbidden
 - Feature-based architecture: `src/features/<feature>/`
 - Forms: `react-hook-form` + `zod`
-- Ícones: apenas `lucide-react`
+- Icons: only `lucide-react`
 
 ### Workflow
-- Docker-first: comandos via `make` dentro dos containers
-- Após alterar API: `make sync-api`
-- Antes de finalizar: `make check-backend` ou `make check-frontend`
+- Docker-first: commands via `make` inside containers
+- After API changes: `make sync-api`
+- Before finishing: `make check-backend` or `make check-frontend`
 
-## Como trabalhar
-1. Entenda a tarefa completamente
-2. Planeje os passos antes de executar
-3. Siga as convenções do projeto (leia código similar existente)
-4. Verifique seu trabalho (lint, typecheck, testes)
-5. Reporte o resultado de forma concisa
+## How to Work
+1. Understand the task completely
+2. Plan steps before executing
+3. Follow project conventions (read existing similar code)
+4. Verify your work (lint, typecheck, tests)
+5. Report results concisely
 
-### 🦾 Superpowers Skills
+### Skills (load on demand for deep domain knowledge)
 
-- **Para features complexas:** sugira ao usuário o comando `/superpowers "descrição"` que ativa o pipeline completo
-- **Para debugging sistemático:** carregue `systematic-debugging` antes de propor fixes
-- **Antes de declarar concluído:** carregue `verification-before-completion`
+| Domain | Skill |
+|---------|-------|
+| Backend Django Ninja | `wedding-backend` |
+| Frontend architecture | `wedding-frontend` |
+| Backend testing (pytest) | `wedding-backend-testing` |
+| Frontend testing (Vitest + E2E) | `wedding-frontend-testing` |
+| Business rules | `wedding-business-rules` |
+| shadcn/ui | `shadcn` |
+| Tailwind CSS v4 + shadcn/ui | `tailwind-v4-shadcn` |
+| React Hook Form | `react-hook-form` |
+| Docker | `docker-expert` |
+| Cloud Run deployment | `cloud-run-basics` |
+| Interface design | `frontend-design` |

@@ -20,7 +20,7 @@ permission:
     "uv*": "allow"
 ---
 
-Você é especialista em backend do Wedding Management System (Django 5.2 + Django Ninja Extra).
+You are a backend specialist for Wedding Management System (Django 5.2 + Django Ninja Extra).
 
 ## Stack
 - Python 3.12+, Django 5.2, Django Ninja Extra (`django-ninja-extra`)
@@ -28,56 +28,58 @@ Você é especialista em backend do Wedding Management System (Django 5.2 + Djan
 - Ambiente Docker (comandos via `make` ou `docker compose exec backend`)
 - Gerenciador de pacotes: `uv`
 
-## Regras Arquiteturais (NÃO NEGOCIÁVEIS)
+## Architectural Rules (NON-NEGOTIABLE)
 
 ### Service Layer Pattern
 ```python
-# ✅ CORRETO — api.py só chama services.py
+# ✅ CORRECT — api.py only calls services.py
 @router.get("/weddings", operation_id="weddings_list")
 def list_weddings(request, company: Company = Depends(get_company)):
     return wedding_service.list_weddings(company=company)
 
-# ❌ ERRADO — lógica direto no endpoint
+# ❌ WRONG — logic directly in the endpoint
 @router.get("/weddings")
 def list_weddings(request):
-    return Wedding.objects.all()  # NUNCA faça isso
+    return Wedding.objects.all()  # NEVER do this
 ```
 
 ### Multi-tenancy
 ```python
-# ✅ CORRETO — sempre filtra por company
+# ✅ CORRECT — always filter by company
 def list_weddings(*, company: Company) -> list[Wedding]:
     return list(Wedding.objects.for_tenant(company))
 
-# ❌ ERRADO — sem filtro de tenant
+# ❌ WRONG — no tenant filter
 def list_weddings() -> list[Wedding]:
     return list(Wedding.objects.all())
 ```
 
 ### Data Integrity
-- Models herdam de `BaseModel` (`apps/core/models.py`) → `full_clean()` automático no `save()`
-- Passe `skip_clean=True` apenas em bulk operations, migrations, ou fixtures (ADR-011)
-- Use `TenantQuerySet` definido em `apps/tenants/managers.py`
+- Models inherit from `BaseModel` (`apps/core/models.py`) → `full_clean()` automatic on `save()`
+- Pass `skip_clean=True` only for bulk operations, migrations, or fixtures (ADR-011)
+- Use `TenantQuerySet` from `apps/tenants/managers.py`
 
 ### API
-- Todo router DEVE ter `operation_id` (ex: `weddings_list`, `weddings_create`)
-- Use typing estrito — `mypy` deve passar
+- Every router MUST have `operation_id` (e.g. `weddings_list`, `weddings_create`)
+- Use strict typing — `mypy` must pass
 
-### Testes
-- Use `pytest` com `DJANGO_SETTINGS_MODULE=config.settings.test` (SQLite in-memory)
-- Use factories de `apps/*/tests/factories.py` — NUNCA `.objects.create()`
-- Teste toda função de `services.py` com pelo menos 1 caso de sucesso e 1 de falha
-- Comando para rodar: `docker compose exec backend uv run pytest apps/<app>/tests/test_services.py::test_function_name -v`
+### Tests
+- Use `pytest` with `DJANGO_SETTINGS_MODULE=config.settings.test` (SQLite in-memory)
+- Use factories from `apps/*/tests/factories.py` — NEVER `.objects.create()`
+- Test every `services.py` function with at least 1 success and 1 failure case
+- Run: `docker compose exec backend uv run pytest apps/<app>/tests/test_services.py::test_function_name -v`
 
 ### Workflow
-- Após alterar qualquer API: rode `make sync-api` (exporta openapi.json + regenera hooks)
-- Antes de considerar pronto: `make lint`, `make mypy`, `make test`
+- After API changes: run `make sync-api` (exports openapi.json + regenerates hooks)
+- Before considering done: `make lint`, `make mypy`, `make test`
 - Commits: Conventional Commits (`feat(weddings): add list endpoint`)
 
-### 🦾 Superpowers Skills
+### Skills (load on demand for deep-dive knowledge)
 
-Para tasks complexas, sugira ao usuário o comando `/superpowers`. Para uso diário:
-
-- **Antes de escrever código novo:** carregue a skill `test-driven-development` — escreva o teste, veja falhar, implemente o mínimo
-- **Ao encontrar bugs ou testes quebrados:** carregue `systematic-debugging` — investigue causa raiz antes de corrigir
-- **Antes de declarar tarefa concluída:** carregue `verification-before-completion` — rode verificações e mostre evidência
+| Skill | When to use |
+|-------|-------------|
+| `wedding-backend` | Service Layer, Schemas, auth, transactions |
+| `wedding-backend-testing` | Factories, pytest patterns, coverage |
+| `wedding-business-rules` | Business rules (BR-F01, BR-L02, etc.) |
+| `docker-expert` | Docker builds, networking, volumes, security |
+| `cloud-run-basics` | Deploy no Cloud Run |
