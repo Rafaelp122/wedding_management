@@ -43,6 +43,7 @@ FROM builder AS development
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --all-extras
 
+
 COPY . .
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.development
@@ -55,7 +56,7 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 # ==============================================================================
 FROM base AS production
 
-ARG BUILD_SECRET_KEY
+ARG BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
 
@@ -72,4 +73,4 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.test \
 USER appuser
 
 EXPOSE 8000
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--worker-class", "gthread", "--workers", "3", "--threads", "4", "--timeout", "60"]

@@ -121,3 +121,42 @@ jobs:
           cd ../frontend && npm ci && npm run generate:api
           # 3. Compara
           git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
+
+  # ----------------------------------------------------------------------------
+  # JOB 5: CONTINUOUS DEPLOYMENT (GCP Cloud Run)
+  # ----------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Cloud Run
+    needs: contract-sync
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          # Using Service Account JSON Key (Stored in GCP_SA_KEY GitHub Secret)
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: gen-lang-client-0194045282
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy wedding-backend \
+            --project gen-lang-client-0194045282 \
+            --source ./backend \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --concurrency 15 \
+            --set-env-vars='^|^DATABASE_URL=${{ secrets.DATABASE_URL }}|SECRET_KEY=${{ secrets.SECRET_KEY }}|ALLOWED_HOSTS=api.simaceito.site,simaceito.site,www.simaceito.site,.run.app,localhost|DJANGO_SETTINGS_MODULE=config.settings.production|CORS_ALLOWED_ORIGINS=https://simaceito.site,https://www.simaceito.site' \
+            --quiet

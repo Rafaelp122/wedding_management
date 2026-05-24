@@ -1,0 +1,48 @@
+# Ignorar arquivos do gcloud
+.gcloudignore
+
+# Ignorar controle de versão
+.git
+.gitignore
+
+# Ignorar ambientes virtuais e cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+.eggs/
+
+# Ignorar caches de ferramentas, testes e logs
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+*.log
+
+# Ignorar banco de dados local e arquivos de mídia/estáticos locais
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# Ignorar arquivos de configuração de IDEs e do sistema operacional
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# --- CRÍTICO: Ignorar arquivos de variáveis de ambiente locais ---
+.env
+.env.local
+.env.*
+
+# Ignorar arquivos do Docker que não precisam ser enviados
+Dockerfile
+docker-compose*.yml
