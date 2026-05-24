@@ -139,3 +139,92 @@ class TestLogisticsNinjaAPI:
         data = response.json()
         assert data["name"] == "Banda Ninja"
         assert "uuid" in data
+
+    def test_list_suppliers_filter_by_search(self, auth_client, user):
+        SupplierService.create(
+            user.company,
+            {
+                "name": "Buffet Estrela",
+                "cnpj": "1",
+                "phone": "1",
+                "email": "buffet@email.com",
+            },
+        )
+        SupplierService.create(
+            user.company,
+            {
+                "name": "Fotógrafo Sol",
+                "cnpj": "2",
+                "phone": "2",
+                "email": "foto@email.com",
+            },
+        )
+        SupplierService.create(
+            user.company,
+            {"name": "Outro", "cnpj": "3", "phone": "3", "email": "outro@email.com"},
+        )
+
+        response = auth_client.get("/api/v1/logistics/suppliers/?search=estrela")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert len(data["items"]) == 1
+        assert data["items"][0]["name"] == "Buffet Estrela"
+
+    def test_list_suppliers_filter_by_is_active(self, auth_client, user):
+        SupplierService.create(
+            user.company,
+            {
+                "name": "Ativo",
+                "cnpj": "1",
+                "phone": "1",
+                "email": "a@email.com",
+                "is_active": True,
+            },
+        )
+        SupplierService.create(
+            user.company,
+            {
+                "name": "Inativo",
+                "cnpj": "2",
+                "phone": "2",
+                "email": "b@email.com",
+                "is_active": False,
+            },
+        )
+
+        response = auth_client.get("/api/v1/logistics/suppliers/?is_active=false")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert data["items"][0]["name"] == "Inativo"
+
+    def test_list_suppliers_filter_by_search_and_status(self, auth_client, user):
+        SupplierService.create(
+            user.company,
+            {
+                "name": "A Buffet",
+                "cnpj": "1",
+                "phone": "1",
+                "email": "a@email.com",
+                "is_active": True,
+            },
+        )
+        SupplierService.create(
+            user.company,
+            {
+                "name": "B Buffet",
+                "cnpj": "2",
+                "phone": "2",
+                "email": "b@email.com",
+                "is_active": False,
+            },
+        )
+
+        response = auth_client.get(
+            "/api/v1/logistics/suppliers/?search=buffet&is_active=true"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert data["items"][0]["name"] == "A Buffet"

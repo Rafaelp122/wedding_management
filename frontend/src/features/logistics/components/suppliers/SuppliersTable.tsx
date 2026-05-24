@@ -1,6 +1,5 @@
 import { memo } from "react";
 import { Edit, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { Badge } from "@/components/ui/badge";
@@ -23,10 +22,15 @@ interface SuppliersTableProps {
   suppliers: SupplierOut[];
   onEdit: (supplier: SupplierOut) => void;
   onDelete: (supplier: SupplierOut) => void;
+  onDetail?: (uuid: string) => void;
 }
 
-export const SuppliersTable = memo(function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTableProps) {
-  const navigate = useNavigate();
+export const SuppliersTable = memo(function SuppliersTable({
+  suppliers,
+  onEdit,
+  onDelete,
+  onDetail,
+}: SuppliersTableProps) {
 
   return (
     <div className="rounded-md border">
@@ -46,8 +50,8 @@ export const SuppliersTable = memo(function SuppliersTable({ suppliers, onEdit, 
           {suppliers.map((supplier) => (
             <TableRow
               key={supplier.uuid}
-              className="cursor-pointer"
-              onClick={() => navigate(`/suppliers/${supplier.uuid}`)}
+              className={onDetail ? "cursor-pointer" : ""}
+              onClick={() => onDetail?.(supplier.uuid)}
             >
               <TableCell className="font-medium">{supplier.name}</TableCell>
               <TableCell>{supplier.email || "—"}</TableCell>

@@ -3,14 +3,6 @@ import { render, screen, userEvent } from "@/test-utils";
 import { SuppliersTable } from "@/features/logistics/components/suppliers/SuppliersTable";
 import { createMockSupplier } from "@/test-data";
 
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return {
-    ...actual,
-    useNavigate: () => vi.fn(),
-  };
-});
-
 const mockSuppliers = [
   createMockSupplier({ uuid: "s-1", name: "Buffet Gourmet", email: "buffet@email.com" }),
   createMockSupplier({ uuid: "s-2", name: "Fotógrafo Arte", email: "foto@email.com", is_active: false }),
@@ -77,5 +69,23 @@ describe("SuppliersTable", () => {
     await user.click(editOption);
 
     expect(onEdit).toHaveBeenCalledWith(mockSuppliers[0]);
+  });
+
+  it("calls onDetail when row is clicked", async () => {
+    const onDetail = vi.fn();
+    render(
+      <SuppliersTable
+        suppliers={mockSuppliers}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDetail={onDetail}
+      />,
+    );
+
+    const rows = screen.getAllByRole("row");
+    const user = userEvent.setup();
+    await user.click(rows[1]);
+
+    expect(onDetail).toHaveBeenCalledWith("s-1");
   });
 });

@@ -5,6 +5,8 @@ import { useSchedulerEventsList, getSchedulerEventsListQueryKey } from "@/api/ge
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
+import { getPaginationInfo, usePagination } from "@/hooks/use-pagination";
+import { DataPagination } from "@/components/data-pagination";
 import { SchedulerEventsTable } from "../components/SchedulerEventsTable";
 import { SchedulerCalendar } from "../components/SchedulerCalendar";
 import { SchedulerSummaryCards } from "../components/SchedulerSummaryCards";
@@ -30,31 +32,50 @@ export default function SchedulerPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventOut | null>(null);
 
-  const EVENTS_PAGE_SIZE = 100;
+  const EVENTS_PAGE_SIZE = 10;
+  const CALENDAR_EVENTS_LIMIT = 500;
+  const WEDDINGS_PAGE_SIZE = 100;
 
-  const [scheduleOffset, setScheduleOffset] = useState(0);
+  const pagination = usePagination(EVENTS_PAGE_SIZE);
 
   const {
     data: eventsResponse,
     isLoading: isLoadingEvents,
     error: eventsError,
-  } = useSchedulerEventsList({ limit: EVENTS_PAGE_SIZE, offset: scheduleOffset });
+  } = useSchedulerEventsList({
+    limit: pagination.limit,
+    offset: pagination.offset,
+  });
+  const {
+    data: allEventsResponse,
+    isLoading: isLoadingAllEvents,
+    error: allEventsError,
+  } = useSchedulerEventsList({ limit: CALENDAR_EVENTS_LIMIT, offset: 0 });
   const {
     data: weddingsResponse,
     isLoading: isLoadingWeddings,
     error: weddingsError,
-  } = useWeddingsList({ limit: EVENTS_PAGE_SIZE });
+  } = useWeddingsList({ limit: WEDDINGS_PAGE_SIZE });
 
   const events = useMemo(() => eventsResponse?.data.items ?? [], [eventsResponse]);
   const eventsCount = eventsResponse?.data.count ?? 0;
-  const hasMoreEvents = scheduleOffset + EVENTS_PAGE_SIZE < eventsCount;
+  const allEvents = useMemo(
+    () => allEventsResponse?.data.items ?? [],
+    [allEventsResponse],
+  );
   const weddings = useMemo(
     () => weddingsResponse?.data.items ?? [],
     [weddingsResponse],
   );
 
-  const isLoading = isLoadingEvents || isLoadingWeddings;
-  const firstError = eventsError ?? weddingsError;
+  const paginationInfo = getPaginationInfo(
+    pagination.page,
+    pagination.pageSize,
+    eventsCount,
+  );
+
+  const isLoading = isLoadingEvents || isLoadingAllEvents || isLoadingWeddings;
+  const firstError = eventsError ?? allEventsError ?? weddingsError;
 
   const weddingsByUuid = useMemo(
     () =>
@@ -82,19 +103,21 @@ export default function SchedulerPage() {
     const next7Days = new Date();
     next7Days.setDate(now.getDate() + 7);
 
-    const upcoming = events.filter((event) => {
+    const upcoming = allEvents.filter((event) => {
       const startsAt = new Date(event.start_time);
       return startsAt >= now && startsAt <= next7Days;
     }).length;
 
-    const withReminder = events.filter((event) => event.reminder_enabled).length;
+    const withReminder = allEvents.filter(
+      (event) => event.reminder_enabled,
+    ).length;
 
     return {
-      total: events.length,
+      total: allEvents.length,
       upcoming,
       withReminder,
     };
-  }, [events]);
+  }, [allEvents]);
 
   // Handlers
   const handleSelectEvent = useCallback((event: EventOut) => {
@@ -139,10 +162,6 @@ export default function SchedulerPage() {
     setCreateDefaultStart(undefined);
     setCreateDialogOpen(true);
   }, [weddingOptions]);
-
-  const handleLoadMore = useCallback(() => {
-    setScheduleOffset((prev) => prev + EVENTS_PAGE_SIZE);
-  }, []);
 
   const handleCreateSuccess = useCallback(() => {
     setCreateDialogOpen(false);
@@ -233,7 +252,7 @@ export default function SchedulerPage() {
         />
       ) : (
         <SchedulerCalendar
-          events={events}
+          events={allEvents}
           weddingsByUuid={weddingsByUuid}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
@@ -263,16 +282,16 @@ export default function SchedulerPage() {
         />
       )}
 
-      {/* Pagination */}
-      {hasMoreEvents && (
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <span>
-            Mostrando {scheduleOffset + events.length} de {eventsCount} eventos
-          </span>
-          <Button variant="outline" size="sm" onClick={handleLoadMore}>
-            Carregar mais
-          </Button>
-        </div>
+      {viewMode === "table" && (
+        <DataPagination
+          from={paginationInfo.from}
+          to={paginationInfo.to}
+          totalCount={eventsCount}
+          hasPrevious={paginationInfo.hasPrevious}
+          hasNext={paginationInfo.hasNext}
+          onPrevious={pagination.previousPage}
+          onNext={pagination.nextPage}
+        />
       )}
     </div>
   );

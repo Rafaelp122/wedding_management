@@ -15,8 +15,14 @@ router = Router(tags=["Weddings"])
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")
 @paginate
-def list_weddings(request: AuthRequest) -> QuerySet[Wedding]:
-    return WeddingService.list(company=request.user.company)
+def list_weddings(
+    request: AuthRequest,
+    search: str = "",
+    status: str = "",
+) -> QuerySet[Wedding]:
+    return WeddingService.list(
+        company=request.user.company, search=search, status=status
+    )
 
 
 @router.get(

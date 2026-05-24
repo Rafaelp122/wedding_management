@@ -3,7 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import ProtectedError, Q, QuerySet
 
 from apps.core.exceptions import (
     DomainIntegrityError,
@@ -25,8 +25,22 @@ class SupplierService:
     """
 
     @staticmethod
-    def list(company: Company) -> QuerySet[Supplier]:
-        return Supplier.objects.for_tenant(company).select_related("company")
+    def list(
+        company: Company,
+        search: str = "",
+        is_active: bool | None = None,
+    ) -> QuerySet[Supplier]:
+        qs = Supplier.objects.for_tenant(company).select_related("company")
+        if search:
+            qs = qs.filter(
+                Q(name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(phone__icontains=search)
+                | Q(cnpj__icontains=search)
+            )
+        if is_active is not None:
+            qs = qs.filter(is_active=is_active)
+        return qs
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Supplier:

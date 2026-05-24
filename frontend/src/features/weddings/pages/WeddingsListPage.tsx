@@ -6,6 +6,7 @@ import {
   ListPageErrorState,
   ListPageLoadingState,
 } from "@/components/page-states";
+import { DataPagination } from "@/components/data-pagination";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,8 +26,10 @@ export default function WeddingsListPage() {
     filteredWeddings,
     totalCount,
     isLoading,
+    isFetching,
     error,
     refetch,
+    pagination,
   } = useWeddingsPage();
 
   const queryClient = useQueryClient();
@@ -89,7 +92,19 @@ export default function WeddingsListPage() {
               </p>
             </div>
           ) : (
-            <WeddingsTable weddings={filteredWeddings} onRefetch={refetch} />
+            <>
+              <WeddingsTable weddings={filteredWeddings} onRefetch={refetch} />
+              <DataPagination
+                from={pagination.info.from}
+                to={pagination.info.to}
+                totalCount={totalCount}
+                hasPrevious={pagination.info.hasPrevious}
+                hasNext={pagination.info.hasNext}
+                isFetching={isFetching}
+                onPrevious={pagination.previousPage}
+                onNext={pagination.nextPage}
+              />
+            </>
           )}
         </CardContent>
       </Card>

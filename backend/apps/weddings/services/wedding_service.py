@@ -5,7 +5,7 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import ProtectedError, Q, QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -29,8 +29,17 @@ class WeddingService:
     """
 
     @staticmethod
-    def list(company: Company) -> QuerySet[Wedding]:
-        return Wedding.objects.for_tenant(company).select_related("company")
+    def list(company: Company, search: str = "", status: str = "") -> QuerySet[Wedding]:
+        qs = Wedding.objects.for_tenant(company).select_related("company")
+        if search:
+            qs = qs.filter(
+                Q(groom_name__icontains=search)
+                | Q(bride_name__icontains=search)
+                | Q(location__icontains=search)
+            )
+        if status:
+            qs = qs.filter(status=status)
+        return qs
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Wedding:

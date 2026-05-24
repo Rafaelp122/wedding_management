@@ -18,12 +18,19 @@ suppliers_router = Router(tags=["Logistics"])
     "/", response=list[SupplierOut], operation_id="logistics_suppliers_list"
 )
 @paginate
-def list_suppliers(request: AuthRequest) -> QuerySet[Supplier]:
+def list_suppliers(
+    request: AuthRequest,
+    search: str = "",
+    is_active: bool | None = None,
+) -> QuerySet[Supplier]:
     """
     Lista todos os fornecedores cadastrados pelo Planner logado.
+    Aceita filtros de busca textual e status.
     """
     user = require_user(request.user)
-    return SupplierService.list(company=user.company)
+    return SupplierService.list(
+        company=user.company, search=search, is_active=is_active
+    )
 
 
 @suppliers_router.get(

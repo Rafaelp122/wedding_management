@@ -49,6 +49,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
  * Lista todos os fornecedores cadastrados pelo Planner logado.
+Aceita filtros de busca textual e status.
  * @summary List Suppliers
  */
 export const logisticsSuppliersList = (

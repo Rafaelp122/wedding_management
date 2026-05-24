@@ -6,6 +6,8 @@
  */
 
 export type WeddingsListParams = {
+  search?: string;
+  status?: string;
   /**
    * @minimum 1
    */

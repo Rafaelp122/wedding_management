@@ -1,3 +1,4 @@
+import { lazy, Suspense, useState } from "react";
 import { getApiErrorInfo } from "@/api/error-utils";
 import {
   ListPageErrorState,
@@ -7,6 +8,7 @@ import {
 import { SupplierFormDialog } from "../components/suppliers/SupplierFormDialog";
 import { SuppliersTable } from "../components/suppliers/SuppliersTable";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { DataPagination } from "@/components/data-pagination";
 import { useSuppliersPage } from "../hooks/useSuppliersPage";
 import type { SupplierStatusFilter } from "../types";
 
@@ -22,7 +24,16 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, Plus, Search } from "lucide-react";
 
+const SupplierDetailDialog = lazy(
+  () =>
+    import("../components/suppliers/SupplierDetailDialog").then((m) => ({
+      default: m.SupplierDetailDialog,
+    })),
+);
+
 export default function SuppliersPage() {
+  const [detailUuid, setDetailUuid] = useState<string | null>(null);
+
   const {
     search,
     setSearch,
@@ -37,12 +48,14 @@ export default function SuppliersPage() {
     filteredSuppliers,
     totalCount,
     isLoading,
+    isFetching,
     error,
     refetch,
     isDeleting,
     openCreateDialog,
     openEditDialog,
     handleDeleteSupplier,
+    pagination,
   } = useSuppliersPage();
 
   if (isLoading) {
@@ -117,11 +130,24 @@ export default function SuppliersPage() {
               </p>
             </div>
           ) : (
-            <SuppliersTable
-              suppliers={filteredSuppliers}
-              onEdit={openEditDialog}
-              onDelete={setSupplierToDelete}
-            />
+            <>
+              <SuppliersTable
+                suppliers={filteredSuppliers}
+                onEdit={openEditDialog}
+                onDelete={setSupplierToDelete}
+                onDetail={setDetailUuid}
+              />
+              <DataPagination
+                from={pagination.info.from}
+                to={pagination.info.to}
+                totalCount={totalCount}
+                hasPrevious={pagination.info.hasPrevious}
+                hasNext={pagination.info.hasNext}
+                isFetching={isFetching}
+                onPrevious={pagination.previousPage}
+                onNext={pagination.nextPage}
+              />
+            </>
           )}
         </CardContent>
       </Card>
@@ -145,6 +171,16 @@ export default function SuppliersPage() {
         onConfirm={handleDeleteSupplier}
         isPending={isDeleting}
       />
+
+      <Suspense fallback={null}>
+        <SupplierDetailDialog
+          supplierUuid={detailUuid}
+          open={!!detailUuid}
+          onOpenChange={(open) => {
+            if (!open) setDetailUuid(null);
+          }}
+        />
+      </Suspense>
     </div>
   );
 }

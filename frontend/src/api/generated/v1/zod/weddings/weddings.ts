@@ -9,12 +9,16 @@ import * as zod from "zod";
 /**
  * @summary List Weddings
  */
+export const weddingsListQuerySearchDefault = ``;
+export const weddingsListQueryStatusDefault = ``;
 export const weddingsListQueryLimitDefault = 100;
 
 export const weddingsListQueryOffsetDefault = 0;
 export const weddingsListQueryOffsetMin = 0;
 
 export const WeddingsListQueryParams = zod.object({
+  search: zod.string().default(weddingsListQuerySearchDefault),
+  status: zod.string().default(weddingsListQueryStatusDefault),
   limit: zod.number().min(1).default(weddingsListQueryLimitDefault),
   offset: zod
     .number()

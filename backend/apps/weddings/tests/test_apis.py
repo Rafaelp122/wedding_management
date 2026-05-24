@@ -68,3 +68,65 @@ class TestWeddingNinjaAPI:
     def test_unauthenticated_access_denied(self, client):
         response = client.get("/api/v1/weddings/")
         assert response.status_code == 401
+
+    def test_list_weddings_filter_by_search(self, auth_client, user):
+        WeddingFactory(
+            company=user.company,
+            bride_name="Maria",
+            groom_name="João",
+            location="Praia",
+        )
+        WeddingFactory(
+            company=user.company,
+            bride_name="Ana",
+            groom_name="Carlos",
+            location="Igreja",
+        )
+
+        response = auth_client.get("/api/v1/weddings/?search=maria")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert data["items"][0]["bride_name"] == "Maria"
+
+    def test_list_weddings_filter_by_status(self, auth_client, user):
+        from apps.weddings.models import Wedding
+
+        WeddingFactory(
+            company=user.company,
+            bride_name="Ativa",
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+        WeddingFactory(
+            company=user.company,
+            bride_name="Cancelada",
+            status=Wedding.StatusChoices.CANCELED,
+        )
+
+        response = auth_client.get("/api/v1/weddings/?status=CANCELED")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert data["items"][0]["bride_name"] == "Cancelada"
+
+    def test_list_weddings_filter_by_search_and_status(self, auth_client, user):
+        from apps.weddings.models import Wedding
+
+        WeddingFactory(
+            company=user.company,
+            bride_name="Maria A",
+            groom_name="João",
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+        WeddingFactory(
+            company=user.company,
+            bride_name="Maria B",
+            groom_name="Pedro",
+            status=Wedding.StatusChoices.CANCELED,
+        )
+
+        response = auth_client.get("/api/v1/weddings/?search=maria&status=CANCELED")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert data["items"][0]["bride_name"] == "Maria B"
