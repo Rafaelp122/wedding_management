@@ -32,16 +32,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY pyproject.toml uv.lock ./
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev --all-extras
+RUN uv sync --frozen --no-install-project --no-dev --all-extras
 
 # ==============================================================================
 # STAGE 3: Development - O seu parquinho
 # ==============================================================================
 FROM builder AS development
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --all-extras
+RUN uv sync --frozen --no-install-project --all-extras
 
 
 COPY . .
