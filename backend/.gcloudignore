@@ -43,6 +43,5 @@ media/
 .env.local
 .env.*
 
-# Ignorar arquivos do Docker que não precisam ser enviados
-Dockerfile
+# Ignorar arquivos do Docker que não precisam ser enviados (manter o Dockerfile para o Cloud Build)
 docker-compose*.yml
