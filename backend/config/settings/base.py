@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "apps.core.middleware.RequestIDMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -132,7 +133,7 @@ USE_THOUSAND_SEPARATOR = True
 DECIMAL_SEPARATOR = ","
 THOUSAND_SEPARATOR = "."
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
