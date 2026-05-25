@@ -70,5 +70,5 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.test \
 
 USER appuser
 
-EXPOSE 8000
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--worker-class", "gthread", "--workers", "3", "--threads", "4", "--timeout", "60"]
+EXPOSE 8080
+CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --worker-class gthread --workers 3 --threads 4 --timeout 60"]
