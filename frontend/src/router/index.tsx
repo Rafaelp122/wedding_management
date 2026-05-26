@@ -7,8 +7,6 @@ import { AppLayout } from "@/components/layouts/AppLayout";
 import { GlobalError } from "@/components/ui/globalError";
 import { LoadingScreen } from "@/components/ui/loadingScreen";
 
-// Implementa o Lazy Loading para separar os bundles
-const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"));
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
 const DashboardPage = lazy(
@@ -40,11 +38,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: (
-          <PublicRoute>
-            {withLoading(<LandingPage />)}
-          </PublicRoute>
-        ),
+        element: <Navigate to="/login" replace />,
       },
       {
         path: "/login",
