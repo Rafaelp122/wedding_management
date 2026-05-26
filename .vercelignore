@@ -1,0 +1,12 @@
+# Ignore backend and cache files from Vercel CLI uploads
+backend/
+*venv*/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+node_modules/
+landing/node_modules/
+frontend/node_modules/
+dist/
+landing/dist/
+frontend/dist/

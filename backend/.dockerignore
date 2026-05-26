@@ -28,3 +28,11 @@ docker-compose*.yml
 .pytest_cache/
 .coverage
 htmlcov/
+conftest.py
+**/tests/
+.python-version
+.pre-commit-config.yaml
+*.ipynb
+*.pdf
+*.xlsx
+*.csv

@@ -1,0 +1,47 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import Modules from '../components/Modules.astro';
+import BudgetSimulator from '../components/BudgetSimulator';
+import Pricing from '../components/Pricing.astro';
+import FaqSection from '../components/FaqSection';
+import Footer from '../components/Footer.astro';
+import ToastAlert from '../components/ToastAlert';
+---
+
+<Layout>
+  <!-- Navegação Superior -->
+  <Header />
+
+  <main>
+    <!-- Secção Hero com Mockup -->
+    <Hero />
+
+    <!-- Módulos do Sistema -->
+    <Modules />
+
+    <!-- Simulador de Orçamento Interativo -->
+    <section id="simulador" class="py-20 px-6 max-w-7xl mx-auto">
+      <BudgetSimulator client:load />
+    </section>
+
+    <!-- Planos de Preço -->
+    <Pricing />
+
+    <!-- Secção FAQ (Perguntas Frequentes) -->
+    <section id="faq" class="py-20 px-6 max-w-4xl mx-auto space-y-12">
+      <div class="text-center space-y-4">
+        <h2 class="font-display text-3xl font-extrabold text-zinc-950 dark:text-white tracking-tight">Perguntas Frequentes</h2>
+        <p class="text-zinc-500 dark:text-zinc-400 text-sm">Respostas para dúvidas comuns sobre o funcionamento do Aura ERP no seu dia a dia.</p>
+      </div>
+      <FaqSection client:visible />
+    </section>
+  </main>
+
+  <!-- Rodapé -->
+  <Footer />
+
+  <!-- Componentes Interativos Globais -->
+  <ToastAlert client:load />
+</Layout>

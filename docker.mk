@@ -2,7 +2,7 @@
 # Docker Commands
 # ==============================================================================
 
-.PHONY: up dev logs build rebuild frontend-dev frontend-refresh-deps down clean
+.PHONY: up dev logs build rebuild frontend-dev frontend-refresh-deps landing-dev down clean
 
 up:
 	@echo "🚀 Iniciando containers..."
@@ -40,6 +40,11 @@ frontend-dev:
 	@echo "   Frontend: http://localhost:5173"
 	@echo "   ⚠️  Requer backend rodando (make up) e node_modules instalados"
 	cd frontend && npm run dev
+
+landing-dev:
+	@echo "🔥 Iniciando Astro dev server local (fora do Docker)..."
+	@echo "   Landing Page: http://localhost:4321"
+	cd landing && npm run dev
 
 frontend-refresh-deps:
 	@echo "♻️  Recriando frontend com node_modules limpo..."
