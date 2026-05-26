@@ -71,7 +71,7 @@ export default function BudgetSimulator() {
         <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-zinc-950 dark:text-white tracking-tight leading-none">
           Planeje a distribuição de faturamento em segundos.
         </h2>
-        <p className="text-zinc-550 dark:text-zinc-400 text-sm leading-relaxed font-medium">
+        <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed font-medium">
           Experimente uma demonstração da lógica integrada do Sim, Aceito! ERP. Selecione o número de convidados planejado e o estilo do evento para ver o algoritmo estimar o orçamento ideal e os primeiros marcos do checklist de tarefas do casal de forma 100% automatizada.
         </p>
 
@@ -105,7 +105,7 @@ export default function BudgetSimulator() {
                 className={`px-3 py-2 border rounded-xl text-xs font-bold btn-transition ${
                   style === 'praia'
                     ? 'border-aura-500 bg-aura-50 dark:bg-aura-900/20 text-aura-600 dark:text-aura-300'
-                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-655 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 }`}
               >
                 Praia
@@ -116,7 +116,7 @@ export default function BudgetSimulator() {
                 className={`px-3 py-2 border rounded-xl text-xs font-bold btn-transition ${
                   style === 'campo'
                     ? 'border-aura-500 bg-aura-50 dark:bg-aura-900/20 text-aura-600 dark:text-aura-300'
-                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-655 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 }`}
               >
                 Campo
@@ -127,7 +127,7 @@ export default function BudgetSimulator() {
                 className={`px-3 py-2 border rounded-xl text-xs font-bold btn-transition ${
                   style === 'classico'
                     ? 'border-aura-500 bg-aura-50 dark:bg-aura-900/20 text-aura-600 dark:text-aura-300'
-                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-655 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 }`}
               >
                 Clássico
@@ -170,13 +170,13 @@ export default function BudgetSimulator() {
 
           {/* Category Allocation bars computed */}
           <div className="space-y-3">
-            <h4 className="text-[10px] font-bold text-zinc-450 uppercase tracking-wider">Distribuição Recomendada por Setor</h4>
+            <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Distribuição Recomendada por Setor</h4>
 
             <div className="space-y-3 text-xs">
               {/* Category 1 */}
               <div className="space-y-1">
                 <div className="flex justify-between font-medium">
-                  <span className="text-zinc-655 dark:text-zinc-400 font-semibold">Locação do Espaço (30%)</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-semibold">Locação do Espaço (30%)</span>
                   <span className="font-mono font-bold text-zinc-900 dark:text-white">{formatBRL(spaceAlloc)}</span>
                 </div>
                 <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1 overflow-hidden">
@@ -186,7 +186,7 @@ export default function BudgetSimulator() {
               {/* Category 2 */}
               <div className="space-y-1">
                 <div className="flex justify-between font-medium">
-                  <span className="text-zinc-655 dark:text-zinc-400 font-semibold">Gastronomia & Buffet (40%)</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-semibold">Gastronomia & Buffet (40%)</span>
                   <span className="font-mono font-bold text-zinc-900 dark:text-white">{formatBRL(buffetAlloc)}</span>
                 </div>
                 <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1 overflow-hidden">
@@ -196,7 +196,7 @@ export default function BudgetSimulator() {
               {/* Category 3 */}
               <div className="space-y-1">
                 <div className="flex justify-between font-medium">
-                  <span className="text-zinc-655 dark:text-zinc-400 font-semibold">Decoração & Flores (30%)</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-semibold">Decoração & Flores (30%)</span>
                   <span className="font-mono font-bold text-zinc-900 dark:text-white">{formatBRL(decoAlloc)}</span>
                 </div>
                 <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1 overflow-hidden">

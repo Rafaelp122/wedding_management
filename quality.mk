@@ -44,10 +44,10 @@ check-frontend-dev:
 	@echo "✅ Pipeline dev do frontend passou (sem build de produção)! Rode min 1x 'make check-frontend' antes de push."
 
 check-landing:
-	cd landing && npx astro check && npm run build
+	cd landing && npm ci && npx astro check && npm run build
 	@echo "✅ Pipeline de qualidade da landing page passou!"
 
 check-ci: check-backend check-frontend check-landing
-	@echo "✅ Gate local espelhando CI passou!"
+	@echo "✅ Gate local de qualidade completo (backend + frontend + landing)!"
 
 check: check-backend

@@ -45,6 +45,7 @@ export default function ToastAlert() {
       </div>
       <button
         onClick={hideAlert}
+        aria-label="Fechar notificação"
         className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
       >
         <X className="w-4 h-4" />
