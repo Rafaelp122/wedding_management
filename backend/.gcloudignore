@@ -25,6 +25,14 @@ ENV/
 htmlcov/
 .coverage
 *.log
+conftest.py
+**/tests/
+.python-version
+.pre-commit-config.yaml
+*.ipynb
+*.pdf
+*.xlsx
+*.csv
 
 # Ignorar banco de dados local e arquivos de mídia/estáticos locais
 db.sqlite3

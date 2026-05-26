@@ -113,3 +113,4 @@ logs
 
 !.gemini/
 gha-creds-*.json
+.vercel
