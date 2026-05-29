@@ -38,9 +38,10 @@ Nossa documentação segue o princípio Diátaxis. Escolha sua rota de leitura c
 ## 🛠 Tech Stack (Resumo)
 
 - **Backend:** Django 5.2 + Django Ninja (API-First).
-- **Frontend:** React 19 + TypeScript + Tailwind CSS + shadcn/ui.
+- **Frontend (App):** React 19 + TypeScript + Tailwind CSS + shadcn/ui.
+- **Landing Page:** Astro 6 + React + Tailwind CSS (SEO-first).
 - **Database:** PostgreSQL (Neon).
-- **Infra:** Docker, Cloud Run, Cloudflare R2.
+- **Infra:** Docker, Cloud Run, Vercel, Cloudflare R2.
 
 > 📖 **Detalhes completos da Stack:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
@@ -63,7 +64,8 @@ make superuser        # Crie seu acesso admin
 ```
 wedding_management/
 ├── backend/                  # Django Ninja API
-├── frontend/                # React SPA
+├── frontend/                # React SPA (App principal)
+├── landing/                 # Landing page institucional (Astro + SEO)
 ├── docs/                    # Documentação técnica (Princípio Diátaxis)
 ├── .env                     # Variáveis de ambiente
 ├── Makefile                 # Automação de comandos

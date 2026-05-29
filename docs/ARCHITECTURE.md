@@ -13,14 +13,15 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      FRONTEND LAYER                          │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  React 19 + Vite 7 + TypeScript 5                    │   │
-│  │  - Tailwind CSS v4 (styling)                         │   │
-│  │  - Zustand 5 (state management)                      │   │
-│  │  - TanStack Query 5 (data fetching)                  │   │
-│  │  - Axios (HTTP transport — gerenciado pelo Orval, não usar diretamente)                               │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                           ↕ HTTPS (JWT)                      │
+│  ┌──────────────────────────┐  ┌──────────────────────────┐ │
+│  │  React SPA (App)        │  │  Astro Landing Page      │ │
+ │  │  React 19 + Vite 7      │  │  Astro 6 + React        │ │
+│  │  - Tailwind CSS v4      │  │  - Tailwind CSS v4      │ │
+│  │  - Zustand 5            │  │  - shadcn/ui            │ │
+│  │  - TanStack Query 5     │  │  - SEO-first SSG        │ │
+│  │  - Orval hooks          │  │  - simaceito.site       │ │
+│  └──────────────────────────┘  └──────────────────────────┘ │
+│                          ↕ HTTPS (JWT ou público)           │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  Vercel Edge Network (CDN Global)                    │   │
 │  └──────────────────────────────────────────────────────┘   │
@@ -160,6 +161,39 @@ frontend/src/
 ├── stores/           # Zustand stores
 └── types/            # TypeScript definitions
 ```
+
+---
+
+### 2.2.1 Landing Page (Astro)
+
+A landing page institucional foi separada do SPA principal para garantir **SEO otimizado** e independência de deploy:
+
+**Framework:**
+
+```json
+{
+  "astro": "^6.x",
+  "react": "^19.x",
+  "tailwindcss": "^4.x"
+}
+```
+
+**Estrutura:**
+
+```
+landing/
+├── src/
+│   ├── components/      # Componentes Astro/React
+│   ├── layouts/         # Layouts Astro
+│   ├── pages/           # Rotas SSG
+│   ├── styles/          # Estilos globais
+│   └── lib/             # Utilitários
+├── public/              # Assets estáticos
+├── astro.config.mjs     # Configuração Astro
+└── components.json      # shadcn/ui config
+```
+
+**Deploy:** Vercel (projeto separado do SPA), domínio `simaceito.site`.
 
 ---
 
@@ -502,7 +536,13 @@ Ver [ADR-001](ADR/001-why-cloud-run.md).
 
 ---
 
-### 4.2 Vercel (Frontend)
+### 4.2 Vercel (Frontend — App + Landing)
+
+O frontend está dividido em **dois projetos Vercel independentes**:
+
+#### 4.2.1 React SPA (App)
+
+**Domínio:** `app.simaceito.site`
 
 **Configuração:**
 
@@ -546,11 +586,34 @@ export default defineConfig({
 });
 ```
 
-**Custos do Hobby Tier:**
+#### 4.2.2 Astro Landing Page
+
+**Domínio:** `simaceito.site`
+
+**Configuração:**
+
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "astro",
+  "env": {
+    "PUBLIC_API_URL": "https://api.simaceito.site"
+  }
+}
+```
+
+**Benefícios da separação:**
+- SEO nativo (SSG via Astro sem cliente React pesado)
+- Deploy independente — landing não quebra em deploy do app
+- Bundle pequeno — sem TanStack Query, Zustand, Orval no carregamento inicial
+- Preview deployments por PR no Vercel sem afetar o app
+
+**Custos do Hobby Tier (ambos projetos):**
 
 - Build time: Ilimitado
-- Bandwidth: 100GB/mês
-- **Estimativa MVP:** 10GB/mês (R$ 0/mês)
+- Bandwidth: 100GB/mês (compartilhado entre projetos)
+- **Estimativa MVP:** 15GB/mês (R$ 0/mês)
 
 ---
 
