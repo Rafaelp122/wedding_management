@@ -15,10 +15,10 @@
 │                      FRONTEND LAYER                          │
 │  ┌──────────────────────────┐  ┌──────────────────────────┐ │
 │  │  React SPA (App)        │  │  Astro Landing Page      │ │
-│  │  React 19 + Vite 7      │  │  Astro 5 + React        │ │
+ │  │  React 19 + Vite 7      │  │  Astro 6 + React        │ │
 │  │  - Tailwind CSS v4      │  │  - Tailwind CSS v4      │ │
 │  │  - Zustand 5            │  │  - shadcn/ui            │ │
-│  │  - TanStack Query 5     │  │  - SEO-first SSR        │ │
+│  │  - TanStack Query 5     │  │  - SEO-first SSG        │ │
 │  │  - Orval hooks          │  │  - simaceito.site       │ │
 │  └──────────────────────────┘  └──────────────────────────┘ │
 │                          ↕ HTTPS (JWT ou público)           │
@@ -172,7 +172,7 @@ A landing page institucional foi separada do SPA principal para garantir **SEO o
 
 ```json
 {
-  "astro": "^5.x",
+  "astro": "^6.x",
   "react": "^19.x",
   "tailwindcss": "^4.x"
 }
@@ -185,7 +185,7 @@ landing/
 ├── src/
 │   ├── components/      # Componentes Astro/React
 │   ├── layouts/         # Layouts Astro
-│   ├── pages/           # Rotas SSR/SSG
+│   ├── pages/           # Rotas SSG
 │   ├── styles/          # Estilos globais
 │   └── lib/             # Utilitários
 ├── public/              # Assets estáticos
@@ -604,7 +604,7 @@ export default defineConfig({
 ```
 
 **Benefícios da separação:**
-- SEO nativo (SSR/SSG via Astro sem cliente React pesado)
+- SEO nativo (SSG via Astro sem cliente React pesado)
 - Deploy independente — landing não quebra em deploy do app
 - Bundle pequeno — sem TanStack Query, Zustand, Orval no carregamento inicial
 - Preview deployments por PR no Vercel sem afetar o app

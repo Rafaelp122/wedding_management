@@ -39,7 +39,7 @@ Nossa documentação segue o princípio Diátaxis. Escolha sua rota de leitura c
 
 - **Backend:** Django 5.2 + Django Ninja (API-First).
 - **Frontend (App):** React 19 + TypeScript + Tailwind CSS + shadcn/ui.
-- **Landing Page:** Astro 5 + React + Tailwind CSS (SEO-first).
+- **Landing Page:** Astro 6 + React + Tailwind CSS (SEO-first).
 - **Database:** PostgreSQL (Neon).
 - **Infra:** Docker, Cloud Run, Vercel, Cloudflare R2.
 
