@@ -1,5 +1,12 @@
 # 💍 Wedding Management System
 
+[![CI](https://github.com/Rafaelp122/wedding_management/actions/workflows/integrity-ci.yml/badge.svg)](https://github.com/Rafaelp122/wedding_management/actions/workflows/integrity-ci.yml)
+[![Website](https://img.shields.io/badge/website-simaceito.site-0ea5e9)](https://simaceito.site)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12+-3776AB)](https://python.org)
+[![Django](https://img.shields.io/badge/django-5.2-092E20)](https://djangoproject.com)
+[![React](https://img.shields.io/badge/react-19-61DAFB)](https://react.dev)
+
 Sistema completo de gestão de casamentos com arquitetura moderna **React SPA + Django Ninja API**.
 
 Este repositório centraliza o controle financeiro, logístico e de cronograma para cerimonialistas profissionais, garantindo integridade de dados e automação de processos.
@@ -74,4 +81,4 @@ wedding_management/
 ---
 
 ## 📝 Licença
-Projeto Integrador - FIRJAN SENAI São Gonçalo
+Este projeto está licenciado sob a [MIT License](LICENSE).
