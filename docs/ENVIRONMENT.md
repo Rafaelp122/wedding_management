@@ -61,8 +61,11 @@ Se preferir rodar sem containers, você precisará do **[UV](https://docs.astral
 cd backend && uv sync --group dev
 uv run python manage.py runserver
 
-# Frontend
+# Frontend — App principal (React SPA)
 cd frontend && npm ci && npm run dev
+
+# Landing page (Astro)
+cd landing && npm install && npm run dev
 ```
 
 ### Qualidade e Testes
