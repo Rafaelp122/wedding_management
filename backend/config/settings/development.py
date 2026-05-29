@@ -13,7 +13,7 @@ ENABLE_ZEAL = env.bool("ENABLE_ZEAL", default=True)
 if ENABLE_ZEAL:
     INSTALLED_APPS += ["zeal"]
     MIDDLEWARE = ["zeal.middleware.ZealotMiddleware", *MIDDLEWARE]
-    ZEAL_FAIL = True
+    ZEAL_FAIL = env.bool("ZEAL_FAIL", default=False)
     ZEAL_LOG = True
 
 DATABASES = {
