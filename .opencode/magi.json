@@ -25,6 +25,9 @@
     }
   },
   "review": {
+    "concurrency": {
+      "reviewers": 1
+    },
     "reviewers": [
       { "ref": "melchior-deepseek" },
       { "ref": "balthasar-qwen" },
