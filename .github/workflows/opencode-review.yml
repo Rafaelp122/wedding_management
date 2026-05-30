@@ -36,6 +36,7 @@ jobs:
         env:
           OPENCODE_GO_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # Use OpenCode Go provider model and API key
           model: opencode-go/deepseek-v4-pro
