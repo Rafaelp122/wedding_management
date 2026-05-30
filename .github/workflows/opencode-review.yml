@@ -31,13 +31,12 @@ jobs:
       - name: Run OpenCode Magi Consensus
         uses: anomalyco/opencode/github@latest
         env:
-          # Injete aqui as chaves necessárias para que o OpenCode acione os modelos do conselho via API (OpenRouter ou provedor correspondente)
+          OPENCODE_GO_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # O OpenCode exige um modelo principal de entrada no 'with', mas o comportamento de votação
-          # e o orquestrador do conselho serão regidos pelo seu arquivo local .opencode/magi.json
-          model: deepseek/deepseek-v4-pro
+          # Alterado para opencode-go para usar a chave e plano OpenCode Go
+          model: opencode-go/deepseek-v4-pro
           use_github_token: true
           prompt: |
             Inicie a orquestração do OpenCode Magi para este Pull Request.
