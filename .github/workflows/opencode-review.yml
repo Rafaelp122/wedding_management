@@ -1,0 +1,46 @@
+name: opencode-magi-review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  review:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
+      contains(github.event.comment.body, '/oc') ||
+      contains(github.event.comment.body, '/opencode')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # Required to evaluate full history in the git diff
+
+      - name: Run OpenCode Magi Consensus
+        uses: anomalyco/opencode/github@v1.15.12
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Use OpenCode Go provider model and API key
+          model: opencode-go/deepseek-v4-pro
+          prompt: |
+            Inicie a orquestração do OpenCode Magi para este Pull Request.
+            - Reúna a banca de revisores (Melchior, Balthasar e Casper).
+            - Execute o ciclo completo de revisão multi-agent por maioria de votos.
+            - Valide os apontamentos (Finding-level voting) antes de publicar.
