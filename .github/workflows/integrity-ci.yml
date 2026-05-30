@@ -12,15 +12,49 @@ on:
 
 jobs:
   # ----------------------------------------------------------------------------
+  # JOB 0: DETECT PATHS TO OPTIMIZE DEPLOYMENTS
+  # ----------------------------------------------------------------------------
+  detect-changes:
+    name: Detect Code Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      landing: ${{ steps.filter.outputs.landing }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Path Filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/integrity-ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/integrity-ci.yml'
+            landing:
+              - 'landing/**'
+              - '.github/workflows/integrity-ci.yml'
+
+  # ----------------------------------------------------------------------------
   # JOB 1: STATIC ANALYSIS (The "Fail Fast" Filter)
   # ----------------------------------------------------------------------------
   lint:
     name: Lint & Format Check
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node
+        if: needs.detect-changes.outputs.frontend == 'true'
         uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
@@ -28,16 +62,25 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install UV
+        if: needs.detect-changes.outputs.backend == 'true'
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
       - name: Backend Lint (Ruff)
+        if: needs.detect-changes.outputs.backend == 'true'
         run: cd backend && uv run ruff check . && uv run ruff format --check .
+
       - name: Backend Type Check (mypy)
+        if: needs.detect-changes.outputs.backend == 'true'
         env:
           SECRET_KEY: dummy-ci-key-for-static-analysis-only # pragma: allowlist secret
         run: cd backend && uv run mypy . --show-error-codes --no-color-output
+
       - name: Frontend Lint & TypeCheck
+        if: needs.detect-changes.outputs.frontend == 'true'
         run: |
           cd frontend
           npm ci
@@ -49,7 +92,8 @@ jobs:
   # ----------------------------------------------------------------------------
   backend-tests:
     name: Backend Tests & Migrations
-    needs: lint
+    needs: [detect-changes, lint]
+    if: needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
@@ -61,6 +105,7 @@ jobs:
         with:
           enable-cache: true
           python-version: "3.12"
+          cache-dependency-glob: "backend/uv.lock"
       - name: Django Integrity Check
         run: |
           cd backend
@@ -75,7 +120,8 @@ jobs:
   # ----------------------------------------------------------------------------
   frontend-tests:
     name: Frontend Unit Tests
-    needs: lint
+    needs: [detect-changes, lint]
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +142,14 @@ jobs:
   # ----------------------------------------------------------------------------
   contract-sync:
     name: API Contract Sync
-    needs: [backend-tests, frontend-tests]
+    needs: [detect-changes, backend-tests, frontend-tests]
+    if: |
+      always() &&
+      (needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true') &&
+      (needs.detect-changes.outputs.backend != 'true' || needs.backend-tests.result == 'success') &&
+      (needs.detect-changes.outputs.frontend != 'true' || needs.frontend-tests.result == 'success') &&
+      !cancelled() &&
+      !failure()
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
@@ -107,6 +160,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
       - uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
@@ -127,8 +182,11 @@ jobs:
   # ----------------------------------------------------------------------------
   deploy:
     name: Deploy to Cloud Run
-    needs: contract-sync
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [detect-changes, contract-sync]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -143,7 +201,6 @@ jobs:
         with:
           # Using Service Account JSON Key (Stored in GCP_SA_KEY GitHub Secret)
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -160,3 +217,99 @@ jobs:
             --concurrency 15 \
             --set-env-vars='^|^DATABASE_URL=${{ secrets.DATABASE_URL }}|SECRET_KEY=${{ secrets.SECRET_KEY }}|ALLOWED_HOSTS=api.simaceito.site,simaceito.site,www.simaceito.site,app.simaceito.site,.run.app,localhost|DJANGO_SETTINGS_MODULE=config.settings.production|CORS_ALLOWED_ORIGINS=https://simaceito.site,https://www.simaceito.site,https://app.simaceito.site' \
             --quiet
+
+  # ----------------------------------------------------------------------------
+  # JOB 6: VERCEL DEPLOY (Frontend React App)
+  # ----------------------------------------------------------------------------
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    needs: [detect-changes, contract-sync]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "frontend/.nvmrc"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
+      - name: Deploy Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
+  # ----------------------------------------------------------------------------
+  # JOB 7: VERCEL DEPLOY (Landing Page Astro)
+  # ----------------------------------------------------------------------------
+  deploy-landing:
+    name: Deploy Landing to Vercel
+    needs: [detect-changes, contract-sync]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.detect-changes.outputs.landing == 'true' &&
+      (needs.contract-sync.result == 'success' || needs.contract-sync.result == 'skipped') &&
+      !cancelled() &&
+      !failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: landing/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: landing
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: landing
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
+
+      - name: Deploy Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: landing
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
