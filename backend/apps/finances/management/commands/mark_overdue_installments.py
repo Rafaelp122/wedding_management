@@ -14,19 +14,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         today = date.today()
-        count = Installment.objects.filter(
-            status=Installment.StatusChoices.PENDING,
-            due_date__lt=today,
-        ).count()
-
-        if count == 0:
-            self.stdout.write(self.style.SUCCESS("Nenhuma parcela vencida encontrada."))
-            return
-
         updated = Installment.objects.filter(
             status=Installment.StatusChoices.PENDING,
             due_date__lt=today,
         ).update(status=Installment.StatusChoices.OVERDUE)
+
+        if updated == 0:
+            self.stdout.write(self.style.SUCCESS("Nenhuma parcela vencida encontrada."))
+            return
 
         self.stdout.write(
             self.style.WARNING(
