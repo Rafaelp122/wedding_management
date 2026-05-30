@@ -43,7 +43,7 @@ jobs:
               - '.github/workflows/integrity-ci.yml'
 
   # ----------------------------------------------------------------------------
-  # JOB 1: STATIC ANALYSIS (The "Fail Fast" Filter)
+  # JOB 1: STATIC ANALYSIS
   # ----------------------------------------------------------------------------
   lint:
     name: Lint & Format Check
@@ -88,12 +88,12 @@ jobs:
           npm run type-check
 
   # ----------------------------------------------------------------------------
-  # JOB 2: BACKEND INTEGRITY (Logic & DB)
+  # JOB 2: BACKEND INTEGRITY
   # ----------------------------------------------------------------------------
   backend-tests:
     name: Backend Tests & Migrations
     needs: [detect-changes, lint]
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: always() && needs.detect-changes.outputs.backend == 'true' && (needs.lint.result == 'success' || needs.lint.result == 'skipped')
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
@@ -116,12 +116,12 @@ jobs:
         run: cd backend && uv run pytest --cov=apps --cov-report=term -v
 
   # ----------------------------------------------------------------------------
-  # JOB 3: FRONTEND INTEGRITY (Unit Tests)
+  # JOB 3: FRONTEND INTEGRITY
   # ----------------------------------------------------------------------------
   frontend-tests:
     name: Frontend Unit Tests
     needs: [detect-changes, lint]
-    if: needs.detect-changes.outputs.frontend == 'true'
+    if: always() && needs.detect-changes.outputs.frontend == 'true' && (needs.lint.result == 'success' || needs.lint.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -138,7 +138,7 @@ jobs:
           npm run test:ci
 
   # ----------------------------------------------------------------------------
-  # JOB 4: CONTRACT VALIDATION
+  # JOB 4: CONTRACT VALIDATION (Apenas se AMBOS mudarem, ou se um deles mudar)
   # ----------------------------------------------------------------------------
   contract-sync:
     name: API Contract Sync
@@ -146,10 +146,8 @@ jobs:
     if: |
       always() &&
       (needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true') &&
-      (needs.detect-changes.outputs.backend != 'true' || needs.backend-tests.result == 'success') &&
-      (needs.detect-changes.outputs.frontend != 'true' || needs.frontend-tests.result == 'success') &&
-      !cancelled() &&
-      !failure()
+      (needs.backend-tests.result == 'success' || needs.backend-tests.result == 'skipped') &&
+      (needs.frontend-tests.result == 'success' || needs.frontend-tests.result == 'skipped')
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
@@ -170,11 +168,8 @@ jobs:
 
       - name: Validate OpenAPI & Orval Sync
         run: |
-          # 1. Gera Schema
           cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json
-          # 2. Gera Hooks React
           cd ../frontend && npm ci && npm run generate:api
-          # 3. Compara
           git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
 
   # ----------------------------------------------------------------------------
@@ -184,29 +179,25 @@ jobs:
     name: Deploy to Cloud Run
     needs: [detect-changes, contract-sync]
     if: |
+      always() &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.detect-changes.outputs.backend == 'true'
+      needs.detect-changes.outputs.backend == 'true' &&
+      (needs.contract-sync.result == 'success' || needs.contract-sync.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Google Auth
-        id: auth
         uses: google-github-actions/auth@v2
         with:
-          # Using Service Account JSON Key (Stored in GCP_SA_KEY GitHub Secret)
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: gen-lang-client-0194045282
-
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy wedding-backend \
@@ -225,91 +216,73 @@ jobs:
     name: Deploy Frontend to Vercel
     needs: [detect-changes, contract-sync]
     if: |
+      always() &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.detect-changes.outputs.frontend == 'true'
+      needs.detect-changes.outputs.frontend == 'true' &&
+      (needs.contract-sync.result == 'success' || needs.contract-sync.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install Vercel CLI
         run: npm install --global vercel
-
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: frontend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: frontend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-
       - name: Deploy Artifacts to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: frontend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
 
   # ----------------------------------------------------------------------------
-  # JOB 7: VERCEL DEPLOY (Landing Page Astro)
+  # JOB 7: VERCEL DEPLOY (Landing Page Astro) - INDEPENDENTE DE CONTRACT-SYNC
   # ----------------------------------------------------------------------------
   deploy-landing:
     name: Deploy Landing to Vercel
-    needs: [detect-changes, contract-sync]
+    needs: detect-changes
     if: |
-      always() &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.detect-changes.outputs.landing == 'true' &&
-      (needs.contract-sync.result == 'success' || needs.contract-sync.result == 'skipped') &&
-      !cancelled() &&
-      !failure()
+      needs.detect-changes.outputs.landing == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: landing/package-lock.json
-
       - name: Install Vercel CLI
         run: npm install --global vercel
-
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: landing
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
-
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: landing
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
-
       - name: Deploy Artifacts to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: landing
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
