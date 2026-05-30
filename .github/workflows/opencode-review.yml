@@ -1,5 +1,9 @@
 name: opencode-magi-review
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   issue_comment:
     types: [created]
@@ -15,10 +19,11 @@ jobs:
       contains(github.event.comment.body, '/oc') ||
       contains(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       id-token: write
-      contents: write       # Alterado para write caso o agente editor precise comitar correções automáticas
-      pull-requests: write  # Alterado para write para permitir que o conselho do Magi poste as revisões
+      contents: read         # Review-only permission (F4 recommendation)
+      pull-requests: write   # Allows the Magi committee to post review comments
       issues: write
 
     steps:
@@ -26,16 +31,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          fetch-depth: 0 # Mantido em 0 para garantir que o histórico completo de commits seja avaliado no diff
+          fetch-depth: 0 # Required to evaluate full history in the git diff
 
       - name: Run OpenCode Magi Consensus
-        uses: anomalyco/opencode/github@latest
+        uses: anomalyco/opencode/github@v1.15.12
         env:
           OPENCODE_GO_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Alterado para opencode-go para usar a chave e plano OpenCode Go
+          # Use OpenCode Go provider model and API key
           model: opencode-go/deepseek-v4-pro
           use_github_token: true
           prompt: |
