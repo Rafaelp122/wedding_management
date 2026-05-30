@@ -138,7 +138,7 @@ jobs:
           npm run test:ci
 
   # ----------------------------------------------------------------------------
-  # JOB 4: CONTRACT VALIDATION (Apenas se AMBOS mudarem, ou se um deles mudar)
+  # JOB 4: CONTRACT VALIDATION (Runs if either backend or frontend changed)
   # ----------------------------------------------------------------------------
   contract-sync:
     name: API Contract Sync
@@ -233,6 +233,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install Vercel CLI
         run: npm install --global vercel
+      # Note: Run Vercel CLI from repository root to prevent path doubling issues in monorepos.
+      # It relies on "Root Directory" configured in the Vercel Dashboard project settings.
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
@@ -250,7 +252,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
 
   # ----------------------------------------------------------------------------
-  # JOB 7: VERCEL DEPLOY (Landing Page Astro) - INDEPENDENTE DE CONTRACT-SYNC
+  # JOB 7: VERCEL DEPLOY (Landing Page Astro) - INDEPENDENT OF CONTRACT-SYNC
   # ----------------------------------------------------------------------------
   deploy-landing:
     name: Deploy Landing to Vercel
@@ -271,6 +273,8 @@ jobs:
           cache-dependency-path: landing/package-lock.json
       - name: Install Vercel CLI
         run: npm install --global vercel
+      # Note: Run Vercel CLI from repository root to prevent path doubling issues in monorepos.
+      # It relies on "Root Directory" configured in the Vercel Dashboard project settings.
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:

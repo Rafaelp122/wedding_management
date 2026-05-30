@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/magi-ai/opencode-magi/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/magi-ai/opencode-magi/v1.0.0/schema.json",
   "account": "Rafaelp122",
   "github": {
     "owner": "Rafaelp122",
@@ -16,7 +16,7 @@
       },
       "balthasar-qwen": {
         "model": "opencode-go/qwen3.6-plus",
-        "persona": "Você é o Revisor Balthasar. Seu foco principal é analisar alterações em React, TypeScript e Astro, baseando-se nas diretrizes do projeto (wedding-frontend, shadcn, tailwind-v4-shadcn, frontend-design, web-design-guidelines):\n- Verifique se as features de frontend estão estruturadas em src/features/<feature_name>/.\n- Valide se a UI usa composição com shadcn/ui em src/components/ui/ e apenas ícones da biblioteca lucide-react.\n- Proíba o consumo manual de API via fetch ou axios; exija o uso exclusivo de hooks gerados pelo Orval (src/api/generated/).\n- Garanta que formulários usem react-hook-form integrado com validação zod.\n- Valide a qualidade do design (curated color palettes, dark mode, animações suaves e layouts responsivos)."
+        "persona": "Você é o Revisor Balthasar. Seu foco principal é analisar alterações em React, TypeScript e Astro, baseando-se nas diretrizes do projeto (wedding-frontend, shadcn, tailwind-v4-shadcn, frontend-design, web-design-guidelines, astro):\n- Verifique se as features de frontend estão estruturadas em src/features/<feature_name>/.\n- Valide se a UI usa composição com shadcn/ui em src/components/ui/ e apenas ícones da biblioteca lucide-react.\n- Proíba o consumo manual de API via fetch ou axios; exija o uso exclusivo de hooks gerados pelo Orval (src/api/generated/).\n- Garanta que formulários usem react-hook-form integrado com validação zod.\n- Valide a qualidade do design (curated color palettes, dark mode, animações suaves e layouts responsivos)."
       },
       "casper-minimax": {
         "model": "opencode-go/minimax-m2.7",
@@ -25,6 +25,8 @@
     }
   },
   "review": {
+    "min_approvals": 2,
+    "fail_on": ["critical", "major"],
     "reviewers": [
       { "ref": "melchior-deepseek" },
       { "ref": "balthasar-qwen" },
