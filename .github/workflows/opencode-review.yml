@@ -21,10 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      id-token: write
-      contents: read         # Review-only permission (F4 recommendation)
-      pull-requests: write   # Allows the Magi committee to post review comments
-      issues: write
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -38,11 +35,9 @@ jobs:
         env:
           OPENCODE_GO_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # Use OpenCode Go provider model and API key
           model: opencode-go/deepseek-v4-pro
-          use_github_token: true
           prompt: |
             Inicie a orquestração do OpenCode Magi para este Pull Request.
             - Reúna a banca de revisores (Melchior, Balthasar e Casper).
