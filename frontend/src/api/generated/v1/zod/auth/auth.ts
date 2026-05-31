@@ -10,13 +10,15 @@ import * as zod from "zod";
  * Cria um novo usuário e um workspace dedicado (Tenant Pragmático).
  * @summary Register User
  */
+export const authRegisterUserBodyPasswordMin = 8;
+
 export const authRegisterUserBodyFirstNameDefault = ``;
 export const authRegisterUserBodyLastNameDefault = ``;
 
 export const AuthRegisterUserBody = zod
   .object({
     email: zod.email(),
-    password: zod.string(),
+    password: zod.string().min(authRegisterUserBodyPasswordMin),
     first_name: zod.string().default(authRegisterUserBodyFirstNameDefault),
     last_name: zod.string().default(authRegisterUserBodyLastNameDefault),
   })
