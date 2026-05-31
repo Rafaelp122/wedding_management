@@ -40,7 +40,30 @@ class TestAuthAPI:
         )
 
         assert response.status_code == 422
-        # Ninja standard schema validation error structure contains "detail"
         data = response.json()
         assert "detail" in data
-        assert any("password" in str(error.get("loc", [])) for error in data["detail"])
+        assert len(data["detail"]) == 1
+        error = data["detail"][0]
+        assert "password" in error["loc"]
+        assert "string_too_short" in error["type"]
+
+    def test_register_user_duplicate_email_fails(self, client, user):
+        """
+        Garante que a API rejeita registro de e-mail
+        já existente com 409 Conflict.
+        """
+        payload = {
+            "email": user.email,
+            "password": "valid_password_123",
+            "first_name": "Duplicate",
+            "last_name": "Email",
+        }
+
+        response = client.post(
+            "/api/v1/auth/register/", data=payload, content_type="application/json"
+        )
+
+        assert response.status_code == 409
+        data = response.json()
+        assert data["code"] == "email_already_exists"
+        assert "e-mail já está cadastrado" in data["detail"]

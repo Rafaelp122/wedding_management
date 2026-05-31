@@ -24,7 +24,7 @@ class RegisterIn(Schema):
     """Schema para entrada de novos usuários (Owners)."""
 
     email: EmailStr
-    password: str = Field(..., min_length=8)
+    password: str = Field(min_length=8)
     first_name: str = ""
     last_name: str = ""
 
