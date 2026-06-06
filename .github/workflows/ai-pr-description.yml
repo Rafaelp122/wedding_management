@@ -25,13 +25,33 @@ jobs:
         env:
           CURRENT_BODY: ${{ github.event.pull_request.body }}
         run: |
-          CLEAN=$(printf "%s" "$CURRENT_BODY" | tr -d '[:space:]')
-          if [ -z "$CLEAN" ]; then
-            echo "empty=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-            echo "PR body already has content, skipping generation."
-          fi
+          python3 -c '
+          import os, sys
+          body = os.environ.get("CURRENT_BODY", "")
+          if not body.strip():
+              print("empty=true")
+              with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                  f.write("empty=true\n")
+              sys.exit(0)
+
+          desc_part = body.split("## 🛠️ Checklist")[0] if "## 🛠️ Checklist" in body else body
+          lines = [line.strip() for line in desc_part.splitlines()]
+          clean_lines = []
+          for line in lines:
+              if not line:
+                  continue
+              if line.startswith("###") or line.startswith("<!--"):
+                  continue
+              if line == "-" or line == "-  " or line == "- ":
+                  continue
+              clean_lines.append(line)
+
+          clean_desc = "".join(clean_lines).strip()
+          is_empty = "true" if not clean_desc else "false"
+          print(f"Check results: empty={is_empty}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"empty={is_empty}\n")
+          '
 
       - name: Checkout repository
         if: steps.check.outputs.empty == 'true'
@@ -49,29 +69,29 @@ jobs:
         with:
           model: opencode-go/deepseek-v4-flash
           prompt: |
-            Sua única tarefa: gerar uma descrição para este Pull Request e atualizar o corpo do PR.
+            Sua única tarefa: preencher as seções de descrição do Pull Request e atualizar o corpo do PR.
 
             NÃO revise código. NÃO comente no PR. NÃO modifique arquivos. NÃO crie branches.
-            Apenas gere a descrição e edite o corpo do PR.
+            Apenas edite o corpo do PR.
 
-            Use exatamente este formato:
+            O corpo do PR atual é fornecido abaixo. Ele contém o template com checklists de qualidade e guias de uso que DEVEM SER PRESERVADOS.
 
-            ## O que muda
-            - (bullet points concisos, um por alteração relevante)
+            Corpo atual do PR:
+            """
+            ${{ github.event.pull_request.body }}
+            """
 
-            ## Por quê
-            - (motivação, contexto do problema resolvido)
+            Instruções:
+            1. Analise os commits e a diferença de código (diff) desta branch.
+            2. Gere as descrições em português nas seções correspondentes:
+               ### O que muda
+               - (bullet points concisos das mudanças de infra)
 
-            ## Como testar
-            - (passos práticos para validar as mudanças)
+               ### Por quê
+               - (contexto/motivação das alterações)
 
-            Regras para issues (Closes):
-            - Se o nome da branch contém um número (ex: feat/93-algo), adicione "Closes #93"
-            - Se commits contêm "closes #X", "fixes #X", "resolve #X", adicione "Closes #X"
-            - Se commits contêm referências soltas #X, adicione "Closes #X"
-            - NÃO invente issues. Apenas use números detectados na branch e commits.
-
-            Seja conciso. Máximo 20 linhas no total.
-            Escreva tudo em português.
-
-            Ao finalizar, execute `gh pr edit` passando o texto gerado para atualizar este PR.
+               ### Como testar
+               - (passos de teste no CI/local)
+            3. Preserve INTEGRALMENTE as seções de checklist ("## 🛠️ Checklist do Desenvolvedor") e de guia do assistente ("## 🤖 Interagindo com o OpenCode AI Assistant"), incluindo suas caixas de seleção (ex: - [ ] ou - [x] que o desenvolvedor já possa ter preenchido).
+            4. Escreva tudo em português. Conecte as descrições geradas mantendo o nível H3 (###) dos cabeçalhos.
+            5. Ao finalizar, monte o corpo do PR atualizado (descrições geradas + checklist preservado + guia preservado) e execute o comando `gh pr edit` passando esse corpo final para atualizar este Pull Request.
