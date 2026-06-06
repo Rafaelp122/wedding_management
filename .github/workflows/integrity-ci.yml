@@ -206,12 +206,10 @@ jobs:
   # JOB 5: CONTINUOUS DEPLOYMENT (GCP Cloud Run)
   # ----------------------------------------------------------------------------
   deploy:
-    name: Deploy to Cloud Run
+    name: Deploy to Cloud Run / Test Build
     needs: [detect-changes, contract-sync]
     if: |
       ! failure() && ! cancelled() &&
-      github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
       needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -221,16 +219,26 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Test Docker Build (PR)
+        if: github.event_name == 'pull_request'
+        run: cd backend && docker build --target production --build-arg BUILD_SECRET_KEY=dummy-build-key-not-for-runtime . # pragma: allowlist secret
+
       - name: Google Auth
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+
       - name: Set up Cloud SDK
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: gen-lang-client-0194045282
+
       - name: Deploy to Cloud Run
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -252,22 +260,34 @@ jobs:
     needs: [detect-changes, contract-sync]
     if: |
       ! failure() && ! cancelled() &&
-      github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
       needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+
+      - name: Set Vercel Env
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "type=production" >> "$GITHUB_OUTPUT"
+            echo "flag=--prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=preview" >> "$GITHUB_OUTPUT"
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Cache Vercel build
         uses: actions/cache@v4
         with:
@@ -275,20 +295,23 @@ jobs:
           key: ${{ runner.os }}-vercel-frontend-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-vercel-frontend-
+
       # Note: Run Vercel CLI from repository root to prevent path doubling issues in monorepos.
       # It relies on "Root Directory" configured in the Vercel Dashboard project settings.
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=${{ steps.env.outputs.type }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
       - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
       - name: Deploy Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
@@ -301,22 +324,34 @@ jobs:
     needs: [detect-changes, landing-check]
     if: |
       ! failure() && ! cancelled() &&
-      github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
       needs.detect-changes.outputs.landing == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: landing/package-lock.json
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+
+      - name: Set Vercel Env
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "type=production" >> "$GITHUB_OUTPUT"
+            echo "flag=--prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=preview" >> "$GITHUB_OUTPUT"
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Cache Vercel build
         uses: actions/cache@v4
         with:
@@ -324,20 +359,23 @@ jobs:
           key: ${{ runner.os }}-vercel-landing-${{ hashFiles('landing/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-vercel-landing-
+
       # Note: Run Vercel CLI from repository root to prevent path doubling issues in monorepos.
       # It relies on "Root Directory" configured in the Vercel Dashboard project settings.
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=${{ steps.env.outputs.type }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
+
       - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
+
       - name: Deploy Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
