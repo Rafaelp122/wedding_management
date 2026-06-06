@@ -22,6 +22,14 @@ repos:
       - id: debug-statements
 
   # ----------------------------------------------------------------------------
+  # 1.5. CI/CD WORKFLOW LINT (actionlint)
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
+
+  # ----------------------------------------------------------------------------
   # 2. QUALIDADE DE CÓDIGO PYTHON (Ruff)
   # ----------------------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -51,7 +59,7 @@ repos:
       # --- FRONTEND ---
       - id: frontend-lint
         name: ⚛️ React Lint (Fast)
-        entry: bash -c "cd frontend && npx eslint --fix"
+        entry: npx --prefix frontend eslint --fix
         language: system
         types_or: [javascript, jsx, ts, tsx]
         files: ^frontend/src/

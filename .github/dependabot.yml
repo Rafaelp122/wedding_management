@@ -1,0 +1,54 @@
+version: 2
+updates:
+  # 1. Monitorar o Backend Python (Django Ninja)
+  - package-ecosystem: "pip"
+    directory: "/backend" # Aponta direto para a pasta do backend onde estão o pyproject.toml ou requirements
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # 2. Monitorar o Frontend (React / Vite)
+  - package-ecosystem: "npm"
+    directory: "/frontend" # Aponta para onde está o package.json do painel administrativo
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # 3. Monitorar a Landing Page (Astro)
+  - package-ecosystem: "npm"
+    directory: "/landing" # Aponta para o package.json da sua landing page
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "landing-page"
+
+  # 4. Manter as próprias GitHub Actions seguras e atualizadas
+  - package-ecosystem: "github-actions"
+    directory: "/" # Actions ficam sempre na raiz do repositório
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "ci-cd"
+
+  # 5. Monitorar Imagens Docker (Dockerfile e docker-compose.yml)
+  - package-ecosystem: "docker"
+    directory: "/" # Varre a raiz e subpastas para Dockerfile e docker-compose
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
