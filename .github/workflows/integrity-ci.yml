@@ -27,7 +27,7 @@ jobs:
       landing: ${{ steps.filter.outputs.landing }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node
         if: needs.detect-changes.outputs.frontend == 'true'
@@ -105,7 +105,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Python & UV
         uses: astral-sh/setup-uv@v5
         with:
@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -154,7 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -183,7 +183,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Tools (UV & Node)
         uses: astral-sh/setup-uv@v5
         with:
@@ -218,7 +218,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Test Docker Build (PR)
         if: github.event_name == 'pull_request'
@@ -265,7 +265,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -329,7 +329,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         uses: actions/setup-node@v4
