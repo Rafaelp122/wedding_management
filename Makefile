@@ -209,7 +209,7 @@ format:
 # ==============================================================================
 prod-build:
 	@echo "🏗️  Build da imagem de produção..."
-	cd backend && docker build --target production --build-arg BUILD_SECRET_KEY=dummy-build-key-not-for-runtime -t wedding-backend:prod .
+	cd backend && docker build --target production --build-arg BUILD_SECRET_KEY=dummy-build-key-not-for-runtime -t wedding-backend:prod . # pragma: allowlist secret
 
 prod-up:
 	@echo "🚀 Iniciando produção (HTTP local, SSL desativado)..."
