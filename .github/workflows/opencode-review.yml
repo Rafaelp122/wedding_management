@@ -1,28 +1,21 @@
-name: opencode-magi-review
+name: opencode-review
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 on:
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
-    types: [created]
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, ready_for_review]
 
 jobs:
   review:
-    if: |
-      (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
-      contains(github.event.comment.body, '/oc') ||
-      contains(github.event.comment.body, '/opencode')
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
-      id-token: write
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -31,16 +24,25 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # Required to evaluate full history in the git diff
 
-      - name: Run OpenCode Magi Consensus
+      - name: Run OpenCode Reviewer
         uses: anomalyco/opencode/github@v1.15.12
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Use OpenCode Go provider model and API key
           model: opencode-go/deepseek-v4-pro
           prompt: |
-            Inicie a orquestração do OpenCode Magi para este Pull Request.
-            - Reúna a banca de revisores (Melchior, Balthasar e Casper).
-            - Execute o ciclo completo de revisão multi-agent por maioria de votos.
-            - Valide os apontamentos (Finding-level voting) antes de publicar.
+            Revise este pull request seguindo estritamente as regras de arquitetura, qualidade e testes do projeto:
+            1. Diretrizes gerais: `AGENTS.md`
+            2. Regras de Backend (Django Ninja, Service Layer, Multi-tenancy, Exceptions, Validações): `.agents/skills/wedding-backend/SKILL.md`
+            3. Regras de Frontend (React, Vite, Orval hooks, React Hook Form + Zod, Zustand): `.agents/skills/wedding-frontend/SKILL.md`
+            4. Regras de Negócio (Finanças, Logística, Scheduler): `.agents/skills/wedding-business-rules/SKILL.md`
+            5. Padrões de Testes:
+               - Backend (Pytest, factories, mocks): `.agents/skills/wedding-backend-testing/SKILL.md`
+               - Frontend (Vitest, RTL, MSW): `.agents/skills/wedding-frontend-testing/SKILL.md`
+
+            Foque em apontar:
+            - Desvios arquiteturais (ex: lógica fora de services.py, falta de filtro de tenant, endpoints sem operation_id).
+            - Falhas de segurança, concorrência ou performance (como queries N+1, secrets em código).
+            - Falta de testes obrigatórios ou desvios de padrões de escrita.
+            - Seja conciso e direto ao ponto ao fazer os apontamentos.

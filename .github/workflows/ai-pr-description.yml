@@ -1,0 +1,76 @@
+name: AI PR Description
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  generate:
+    name: AI Description Generator
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check if description needed
+        id: check
+        env:
+          CURRENT_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          CLEAN=$(printf "%s" "$CURRENT_BODY" | tr -d '[:space:]')
+          if [ -z "$CLEAN" ]; then
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+            echo "PR body already has content, skipping generation."
+          fi
+
+      - name: Checkout repository
+        if: steps.check.outputs.empty == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Generate PR Description
+        if: steps.check.outputs.empty == 'true'
+        uses: anomalyco/opencode/github@v1.15.12
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: opencode-go/deepseek-v4-flash
+          prompt: |
+            Sua única tarefa: gerar uma descrição para este Pull Request e atualizar o corpo do PR.
+
+            NÃO revise código. NÃO comente no PR. NÃO modifique arquivos. NÃO crie branches.
+            Apenas gere a descrição e edite o corpo do PR.
+
+            Use exatamente este formato:
+
+            ## O que muda
+            - (bullet points concisos, um por alteração relevante)
+
+            ## Por quê
+            - (motivação, contexto do problema resolvido)
+
+            ## Como testar
+            - (passos práticos para validar as mudanças)
+
+            Regras para issues (Closes):
+            - Se o nome da branch contém um número (ex: feat/93-algo), adicione "Closes #93"
+            - Se commits contêm "closes #X", "fixes #X", "resolve #X", adicione "Closes #X"
+            - Se commits contêm referências soltas #X, adicione "Closes #X"
+            - NÃO invente issues. Apenas use números detectados na branch e commits.
+
+            Seja conciso. Máximo 20 linhas no total.
+            Escreva tudo em português.
+
+            Ao finalizar, execute `gh pr edit` passando o texto gerado para atualizar este PR.

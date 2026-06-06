@@ -1,5 +1,8 @@
 name: Integrity CI
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -17,6 +20,7 @@ jobs:
   detect-changes:
     name: Detect Code Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -50,6 +54,7 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -93,8 +98,9 @@ jobs:
   backend-tests:
     name: Backend Tests & Migrations
     needs: [detect-changes, lint]
-    if: always() && needs.detect-changes.outputs.backend == 'true' && (needs.lint.result == 'success' || needs.lint.result == 'skipped')
+    if: ! failure() && ! cancelled() && needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
@@ -121,8 +127,9 @@ jobs:
   frontend-tests:
     name: Frontend Unit Tests
     needs: [detect-changes, lint]
-    if: always() && needs.detect-changes.outputs.frontend == 'true' && (needs.lint.result == 'success' || needs.lint.result == 'skipped')
+    if: ! failure() && ! cancelled() && needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -138,17 +145,40 @@ jobs:
           npm run test:ci
 
   # ----------------------------------------------------------------------------
+  # JOB 3.5: LANDING INTEGRITY
+  # ----------------------------------------------------------------------------
+  landing-check:
+    name: Landing Page Check
+    needs: detect-changes
+    if: ! failure() && ! cancelled() && needs.detect-changes.outputs.landing == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: landing/package-lock.json
+      - name: Install & Check (build + lint)
+        run: |
+          cd landing
+          npm ci
+          npx astro check
+          npm run build
+
+  # ----------------------------------------------------------------------------
   # JOB 4: CONTRACT VALIDATION (Runs if either backend or frontend changed)
   # ----------------------------------------------------------------------------
   contract-sync:
     name: API Contract Sync
     needs: [detect-changes, backend-tests, frontend-tests]
     if: |
-      always() &&
-      (needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true') &&
-      (needs.backend-tests.result == 'success' || needs.backend-tests.result == 'skipped') &&
-      (needs.frontend-tests.result == 'success' || needs.frontend-tests.result == 'skipped')
+      ! failure() && ! cancelled() &&
+      (needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
@@ -179,26 +209,31 @@ jobs:
     name: Deploy to Cloud Run
     needs: [detect-changes, contract-sync]
     if: |
-      always() &&
+      ! failure() && ! cancelled() &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.detect-changes.outputs.backend == 'true' &&
-      (needs.contract-sync.result == 'success' || needs.contract-sync.result == 'skipped')
+      needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
       - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: gen-lang-client-0194045282
       - name: Deploy to Cloud Run
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: |
           gcloud run deploy wedding-backend \
             --project gen-lang-client-0194045282 \
@@ -206,7 +241,7 @@ jobs:
             --region us-central1 \
             --allow-unauthenticated \
             --concurrency 15 \
-            --set-env-vars='^|^DATABASE_URL=${{ secrets.DATABASE_URL }}|SECRET_KEY=${{ secrets.SECRET_KEY }}|ALLOWED_HOSTS=api.simaceito.site,simaceito.site,www.simaceito.site,app.simaceito.site,.run.app,localhost|DJANGO_SETTINGS_MODULE=config.settings.production|CORS_ALLOWED_ORIGINS=https://simaceito.site,https://www.simaceito.site,https://app.simaceito.site' \
+            --set-env-vars='^|^DATABASE_URL='"${DATABASE_URL}"'|SECRET_KEY='"${SECRET_KEY}"'|ALLOWED_HOSTS=api.simaceito.site,simaceito.site,www.simaceito.site,app.simaceito.site,.run.app,localhost|DJANGO_SETTINGS_MODULE=config.settings.production|CORS_ALLOWED_ORIGINS=https://simaceito.site,https://www.simaceito.site,https://app.simaceito.site' \
             --quiet
 
   # ----------------------------------------------------------------------------
@@ -216,12 +251,12 @@ jobs:
     name: Deploy Frontend to Vercel
     needs: [detect-changes, contract-sync]
     if: |
-      always() &&
+      ! failure() && ! cancelled() &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.detect-changes.outputs.frontend == 'true' &&
-      (needs.contract-sync.result == 'success' || needs.contract-sync.result == 'skipped')
+      needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -232,7 +267,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
       - name: Install Vercel CLI
-        run: npm install --global vercel
+        run: npm install --global vercel@latest
+      - name: Cache Vercel build
+        uses: actions/cache@v4
+        with:
+          path: .vercel/cache
+          key: ${{ runner.os }}-vercel-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vercel-frontend-
       # Note: Run Vercel CLI from repository root to prevent path doubling issues in monorepos.
       # It relies on "Root Directory" configured in the Vercel Dashboard project settings.
       - name: Pull Vercel Environment Information
@@ -252,16 +294,18 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
 
   # ----------------------------------------------------------------------------
-  # JOB 7: VERCEL DEPLOY (Landing Page Astro) - INDEPENDENT OF CONTRACT-SYNC
+  # JOB 7: VERCEL DEPLOY (Landing Page Astro) - DEPENDS ON LANDING-CHECK
   # ----------------------------------------------------------------------------
   deploy-landing:
     name: Deploy Landing to Vercel
-    needs: detect-changes
+    needs: [detect-changes, landing-check]
     if: |
+      ! failure() && ! cancelled() &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
       needs.detect-changes.outputs.landing == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -272,7 +316,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: landing/package-lock.json
       - name: Install Vercel CLI
-        run: npm install --global vercel
+        run: npm install --global vercel@latest
+      - name: Cache Vercel build
+        uses: actions/cache@v4
+        with:
+          path: .vercel/cache
+          key: ${{ runner.os }}-vercel-landing-${{ hashFiles('landing/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vercel-landing-
       # Note: Run Vercel CLI from repository root to prevent path doubling issues in monorepos.
       # It relies on "Root Directory" configured in the Vercel Dashboard project settings.
       - name: Pull Vercel Environment Information
