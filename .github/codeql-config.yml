@@ -1,0 +1,5 @@
+name: "CodeQL Custom Configuration"
+
+paths-ignore:
+  - 'frontend/src/api/generated/**'
+  - '**/migrations/**'
