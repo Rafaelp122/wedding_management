@@ -29,6 +29,10 @@ import type { ErrorType } from "../../../../api-client";
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
+ * Aggregated dashboard KPIs for the authenticated company.
+
+Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
+overdue installments, pending contracts, and critical weddings.
  * @summary Dashboard Summary
  */
 export const dashboardSummary = (
@@ -177,6 +181,11 @@ export function useDashboardSummary<
 }
 
 /**
+ * Per-wedding dashboard view.
+
+Returns a ``WeddingDashboardOut`` with days until the event, budget usage,
+task completion stats, contract status, upcoming installments, urgent tasks,
+and category breakdown.
  * @summary Wedding Dashboard
  */
 export const dashboardWedding = (
