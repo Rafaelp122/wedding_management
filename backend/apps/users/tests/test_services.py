@@ -57,3 +57,22 @@ class TestRegistrationService:
 
         # Verifica que a empresa não foi criada ou foi revertida
         assert not Company.objects.filter(name__icontains=email).exists()
+
+    def test_register_new_owner_with_company_name(self):
+        """Garante que o nome da empresa é usado quando fornecido."""
+        email = "agencia@exemplo.com"
+        password = "password123"
+        first_name = "Helena"
+        last_name = "Costa"
+        company_name = "Aura Eventos"
+
+        user = RegistrationService.register_new_owner(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            company_name=company_name,
+        )
+
+        assert user.company is not None
+        assert user.company.name == company_name

@@ -117,7 +117,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="Empresa",
     )
 
-    # NOVOS CAMPOS EXPLÍCITOS
     first_name = models.CharField("Primeiro Nome", max_length=150)
     last_name = models.CharField("Sobrenome", max_length=150)
 
@@ -130,7 +129,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    # O comando createsuperuser agora pedirá os dois nomes
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
     class Meta:

@@ -27,6 +27,7 @@ class RegisterIn(Schema):
     password: str = Field(min_length=8)
     first_name: str = ""
     last_name: str = ""
+    company_name: str = ""
 
 
 class UserOut(Schema):
