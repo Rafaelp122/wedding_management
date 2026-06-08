@@ -41,10 +41,16 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   const { data: expensesResponse, isLoading: isExpensesLoading } =
     useFinancesExpensesList({ wedding_id: weddingUuid });
 
+  const { data: recentExpensesResponse } =
+    useFinancesExpensesList({ wedding_id: weddingUuid, limit: 5 });
+
   const handleExpenseCreated = () => {
     setCreateDialogOpen(false);
     queryClient.invalidateQueries({
       queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid }),
+    });
+    queryClient.invalidateQueries({
+      queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid, limit: 5 }),
     });
     queryClient.invalidateQueries({
       queryKey: getFinancesBudgetsForWeddingQueryKey(weddingUuid),
@@ -67,6 +73,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   }
 
   const expenses = expensesResponse?.data?.items || [];
+  const recentExpensesItems = recentExpensesResponse?.data?.items || [];
 
   return (
     <div className="space-y-8 pb-12">
@@ -105,7 +112,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
 
       {/* Despesas Recentes (cards) */}
       <WeddingFinancesRecentExpenses
-        expenses={expenses.slice(0, 5)}
+        expenses={recentExpensesItems}
         onAddExpense={() => setCreateDialogOpen(true)}
       />
 
@@ -118,6 +125,12 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
             queryClient.invalidateQueries({
               queryKey: getFinancesExpensesListQueryKey({
                 wedding_id: weddingUuid,
+              }),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getFinancesExpensesListQueryKey({
+                wedding_id: weddingUuid,
+                limit: 5,
               }),
             });
             queryClient.invalidateQueries({
