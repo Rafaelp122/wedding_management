@@ -35,23 +35,20 @@ describe("RegisterForm", () => {
   it("renders the registration form", () => {
     render(<RegisterForm />);
 
+    expect(screen.getByText("Comece o seu teste")).toBeInTheDocument();
+    expect(screen.getByText("Seu Nome Completo")).toBeInTheDocument();
+    expect(screen.getByText("Nome da sua Assessoria / Agência")).toBeInTheDocument();
+    expect(screen.getByText("E-mail de Trabalho")).toBeInTheDocument();
+    expect(screen.getByText("Confirmar Senha")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /criar conta/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Nome")).toBeInTheDocument();
-    expect(screen.getByLabelText("Sobrenome")).toBeInTheDocument();
-    expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
-    expect(screen.getByLabelText("Senha")).toBeInTheDocument();
-    expect(screen.getByLabelText("Confirmar Senha")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /criar conta/i }),
+      screen.getByRole("button", { name: /criar minha conta agora/i }),
     ).toBeInTheDocument();
   });
 
   it("has a link to login page", () => {
     render(<RegisterForm />);
 
-    const loginLink = screen.getByRole("link", { name: /faça login/i });
+    const loginLink = screen.getByRole("link", { name: /acessar painel/i });
     expect(loginLink).toBeInTheDocument();
     expect(loginLink).toHaveAttribute("href", "/login");
   });
@@ -60,21 +57,21 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /criar conta/i }));
+    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
 
-    await screen.findByText(/invalid/i);
-    expect(
-      screen.getByText(/invalid email/i),
-    ).toBeInTheDocument();
+    await screen.findByText(/invalid email/i);
   });
 
   it("shows error when passwords do not match", async () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Senha"), "12345678");
-    await user.type(screen.getByLabelText("Confirmar Senha"), "87654321");
-    await user.click(screen.getByRole("button", { name: /criar conta/i }));
+    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "teste@test.com");
+    const passwordInputs = screen.getAllByPlaceholderText("••••••••");
+    await user.type(passwordInputs[0], "12345678");
+    await user.type(passwordInputs[1], "87654321");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
 
     expect(
       await screen.findByText("Senhas não conferem"),
@@ -85,23 +82,22 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    const firstNameInput = screen.getByLabelText("Nome");
-    const lastNameInput = screen.getByLabelText("Sobrenome");
-    const emailInput = screen.getByLabelText("E-mail");
-    const passwordInput = screen.getByLabelText("Senha");
-    const confirmInput = screen.getByLabelText("Confirmar Senha");
+    const nameInput = screen.getByPlaceholderText("Helena Costa");
+    const agencyInput = screen.getByPlaceholderText("Sua Assessoria de Eventos");
+    const emailInput = screen.getByPlaceholderText("nome@agencia.com");
+    const passwordInputs = screen.getAllByPlaceholderText("••••••••");
 
-    await user.type(firstNameInput, "João");
-    await user.type(lastNameInput, "Silva");
+    await user.type(nameInput, "João");
+    await user.type(agencyInput, "Silva Eventos");
     await user.type(emailInput, "joao@test.com");
-    await user.type(passwordInput, "123456");
-    await user.type(confirmInput, "123456");
+    await user.type(passwordInputs[0], "12345678");
+    await user.type(passwordInputs[1], "12345678");
 
-    expect(firstNameInput).toHaveValue("João");
-    expect(lastNameInput).toHaveValue("Silva");
+    expect(nameInput).toHaveValue("João");
+    expect(agencyInput).toHaveValue("Silva Eventos");
     expect(emailInput).toHaveValue("joao@test.com");
-    expect(passwordInput).toHaveValue("123456");
-    expect(confirmInput).toHaveValue("123456");
+    expect(passwordInputs[0]).toHaveValue("12345678");
+    expect(passwordInputs[1]).toHaveValue("12345678");
   });
 
   it("submits and navigates to login on success", async () => {
@@ -112,19 +108,19 @@ describe("RegisterForm", () => {
       last_name: "Silva",
       company_slug: "joao-silva",
     };
-    server.use(
-      getAuthRegisterUserMockHandler(mockUser),
-    );
+    server.use(getAuthRegisterUserMockHandler(mockUser));
 
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Nome"), "João");
-    await user.type(screen.getByLabelText("Sobrenome"), "Silva");
-    await user.type(screen.getByLabelText("E-mail"), "joao@test.com");
-    await user.type(screen.getByLabelText("Senha"), "12345678");
-    await user.type(screen.getByLabelText("Confirmar Senha"), "12345678");
-    await user.click(screen.getByRole("button", { name: /criar conta/i }));
+    await user.type(screen.getByPlaceholderText("Helena Costa"), "João");
+    await user.type(screen.getByPlaceholderText("Sua Assessoria de Eventos"), "Silva");
+    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "joao@test.com");
+    const passwordInputs = screen.getAllByPlaceholderText("••••••••");
+    await user.type(passwordInputs[0], "12345678");
+    await user.type(passwordInputs[1], "12345678");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
 
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalledWith(
@@ -148,10 +144,12 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("E-mail"), "existing@test.com");
-    await user.type(screen.getByLabelText("Senha"), "12345678");
-    await user.type(screen.getByLabelText("Confirmar Senha"), "12345678");
-    await user.click(screen.getByRole("button", { name: /criar conta/i }));
+    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "existing@test.com");
+    const passwordInputs = screen.getAllByPlaceholderText("••••••••");
+    await user.type(passwordInputs[0], "12345678");
+    await user.type(passwordInputs[1], "12345678");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalled();
@@ -180,13 +178,16 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Nome"), "João");
-    await user.type(screen.getByLabelText("E-mail"), "joao@test.com");
-    await user.type(screen.getByLabelText("Senha"), "12345678");
-    await user.type(screen.getByLabelText("Confirmar Senha"), "12345678");
-    await user.click(screen.getByRole("button", { name: /criar conta/i }));
+    await user.type(screen.getByPlaceholderText("Helena Costa"), "João");
+    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "joao@test.com");
+    const passwordInputs = screen.getAllByPlaceholderText("••••••••");
+    await user.type(passwordInputs[0], "12345678");
+    await user.type(passwordInputs[1], "12345678");
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
 
-    await screen.findByText("Criando conta...");
+    await screen.findByText("Criando sua agência...");
     resolvePromise!();
   });
 });

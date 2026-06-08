@@ -32,29 +32,30 @@ const withLoading = (element: ReactNode) => (
 );
 
 export const router = createBrowserRouter([
+  // Auth routes — standalone with their own split-screen layout
+  {
+    path: "/login",
+    element: (
+      <PublicRoute>
+        {withLoading(<LoginPage />)}
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <PublicRoute>
+        {withLoading(<RegisterPage />)}
+      </PublicRoute>
+    ),
+  },
   {
     element: <PublicLayout />,
-    errorElement: <GlobalError />, // Protege a árvore de rotas públicas
+    errorElement: <GlobalError />,
     children: [
       {
         path: "/",
         element: <Navigate to="/login" replace />,
-      },
-      {
-        path: "/login",
-        element: (
-          <PublicRoute>
-            {withLoading(<LoginPage />)}
-          </PublicRoute>
-        ),
-      },
-      {
-        path: "/register",
-        element: (
-          <PublicRoute>
-            {withLoading(<RegisterPage />)}
-          </PublicRoute>
-        ),
       },
     ],
   },
@@ -64,7 +65,7 @@ export const router = createBrowserRouter([
         <AppLayout />
       </ProtectedRoute>
     ),
-    errorElement: <GlobalError />, // Protege a árvore de rotas da aplicação
+    errorElement: <GlobalError />,
     children: [
       {
         path: "/app",
@@ -103,7 +104,6 @@ export const router = createBrowserRouter([
         path: "*",
         element: withLoading(<NotFoundPage />),
       },
-      // Adiciona rotas futuras com Lazy Loading aqui
     ],
   },
   {

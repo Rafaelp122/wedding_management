@@ -35,11 +35,11 @@ describe("LoginForm", () => {
   it("renders the login form", () => {
     render(<LoginForm />);
 
-    expect(screen.getByText("Wedding Admin")).toBeInTheDocument();
-    expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
-    expect(screen.getByLabelText("Senha")).toBeInTheDocument();
+    expect(screen.getByText("Acesse sua plataforma")).toBeInTheDocument();
+    expect(screen.getByText("Endereço de E-mail")).toBeInTheDocument();
+    expect(screen.getByText("Senha de Acesso")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /entrar no painel/i }),
+      screen.getByRole("button", { name: /acessar painel aura/i }),
     ).toBeInTheDocument();
   });
 
@@ -47,7 +47,7 @@ describe("LoginForm", () => {
     render(<LoginForm />);
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /entrar no painel/i }));
+    await user.click(screen.getByRole("button", { name: /acessar painel aura/i }));
 
     await screen.findByText(/invalid/i);
     expect(
@@ -59,8 +59,8 @@ describe("LoginForm", () => {
     render(<LoginForm />);
 
     const user = userEvent.setup();
-    const emailInput = screen.getByLabelText("E-mail");
-    const passwordInput = screen.getByLabelText("Senha");
+    const emailInput = screen.getByPlaceholderText("helena@aura.com");
+    const passwordInput = screen.getByPlaceholderText("••••••••");
 
     await user.type(emailInput, "admin@test.com");
     await user.type(passwordInput, "123456");
@@ -87,9 +87,9 @@ describe("LoginForm", () => {
     render(<LoginForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("E-mail"), "admin@test.com");
-    await user.type(screen.getByLabelText("Senha"), "12345678");
-    await user.click(screen.getByRole("button", { name: /entrar no painel/i }));
+    await user.type(screen.getByPlaceholderText("helena@aura.com"), "admin@test.com");
+    await user.type(screen.getByPlaceholderText("••••••••"), "12345678");
+    await user.click(screen.getByRole("button", { name: /acessar painel aura/i }));
 
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalledWith("Bem-vindo, Admin!");
@@ -108,9 +108,9 @@ describe("LoginForm", () => {
     render(<LoginForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("E-mail"), "wrong@test.com");
-    await user.type(screen.getByLabelText("Senha"), "wrongpass");
-    await user.click(screen.getByRole("button", { name: /entrar no painel/i }));
+    await user.type(screen.getByPlaceholderText("helena@aura.com"), "wrong@test.com");
+    await user.type(screen.getByPlaceholderText("••••••••"), "wrongpass");
+    await user.click(screen.getByRole("button", { name: /acessar painel aura/i }));
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalled();
@@ -136,11 +136,11 @@ describe("LoginForm", () => {
     render(<LoginForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("E-mail"), "admin@test.com");
-    await user.type(screen.getByLabelText("Senha"), "12345678");
-    await user.click(screen.getByRole("button", { name: /entrar no painel/i }));
+    await user.type(screen.getByPlaceholderText("helena@aura.com"), "admin@test.com");
+    await user.type(screen.getByPlaceholderText("••••••••"), "12345678");
+    await user.click(screen.getByRole("button", { name: /acessar painel aura/i }));
 
-    await screen.findByText("Validando...");
+    await screen.findByText("Validando credenciais...");
     resolvePromise!();
   });
 });
