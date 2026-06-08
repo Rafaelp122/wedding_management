@@ -34,21 +34,27 @@ Se a conta estiver inativa ou as credenciais forem inválidas, retorna erro 401.
 No sucesso, retorna os tokens JWT e os dados básicos do usuário logado.
  * @summary Obtain Token
  */
-export const AuthObtainTokenBody = zod.object({
-  email: zod.email(),
-  password: zod.string(),
-});
+export const AuthObtainTokenBody = zod
+  .object({
+    email: zod.email(),
+    password: zod.string(),
+  })
+  .describe("Credenciais para autenticação (obtain token).");
 
-export const AuthObtainTokenResponse = zod.object({
-  access: zod.string(),
-  refresh: zod.string(),
-  user: zod.object({
-    id: zod.number(),
-    email: zod.string(),
-    first_name: zod.string(),
-    last_name: zod.string(),
-  }),
-});
+export const AuthObtainTokenResponse = zod
+  .object({
+    access: zod.string(),
+    refresh: zod.string(),
+    user: zod
+      .object({
+        id: zod.number(),
+        email: zod.string(),
+        first_name: zod.string(),
+        last_name: zod.string(),
+      })
+      .describe("Dados básicos do usuário retornados no token JWT."),
+  })
+  .describe("Resposta de autenticação com tokens JWT e dados do usuário.");
 
 /**
  * Gera um novo token de acesso usando um refresh token.

@@ -105,26 +105,64 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    """
+    Modelo de usuário customizado com autenticação por e-mail.
+
+    Cada usuário pertence a uma Company (tenant) e herda
+    o isolamento de dados via ``TenantModel`` nos modelos de domínio.
+    """
+
     email = models.EmailField("E-mail", unique=True, max_length=255)
     uuid = models.UUIDField(
-        default=uuid.uuid4, editable=False, unique=True, db_index=True
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        db_index=True,
+        help_text="Identificador público único do usuário.",
     )
 
     company = models.ForeignKey(
         "tenants.Company",
-        on_delete=models.PROTECT,  # Protege empresa de ser deletada com usuários ativos
+        on_delete=models.PROTECT,
         related_name="users",
         verbose_name="Empresa",
+        help_text="Empresa (tenant) à qual o usuário pertence.",
     )
 
-    first_name = models.CharField("Primeiro Nome", max_length=150)
-    last_name = models.CharField("Sobrenome", max_length=150)
+    first_name = models.CharField(
+        "Primeiro Nome",
+        max_length=150,
+        help_text="Nome próprio do usuário.",
+    )
+    last_name = models.CharField(
+        "Sobrenome",
+        max_length=150,
+        help_text="Sobrenome do usuário.",
+    )
 
-    is_staff = models.BooleanField("Status da Equipe", default=False)
-    is_active = models.BooleanField("Ativo", default=False)
-    date_joined = models.DateTimeField("Data de Cadastro", default=timezone.now)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    is_staff = models.BooleanField(
+        "Status da Equipe",
+        default=False,
+        help_text="Indica se o usuário pode acessar o admin do Django.",
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=False,
+        help_text="Indica se o usuário está ativo no sistema.",
+    )
+    date_joined = models.DateTimeField(
+        "Data de Cadastro",
+        default=timezone.now,
+        help_text="Data de criação da conta.",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp de criação do registro.",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Timestamp da última atualização do registro.",
+    )
 
     objects = CustomUserManager()
 
