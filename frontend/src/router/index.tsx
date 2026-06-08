@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { lazy, Suspense, type ReactNode } from "react";
 import { ProtectedRoute } from "./guards/ProtectedRoute";
 import { PublicRoute } from "./guards/PublicRoute";
-import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { GlobalError } from "@/components/ui/globalError";
 import { LoadingScreen } from "@/components/ui/loadingScreen";
@@ -50,14 +49,8 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    element: <PublicLayout />,
-    errorElement: <GlobalError />,
-    children: [
-      {
-        path: "/",
-        element: <Navigate to="/login" replace />,
-      },
-    ],
+    path: "/",
+    element: <Navigate to="/login" replace />,
   },
   {
     element: (
