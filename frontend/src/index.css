@@ -1,154 +1,147 @@
 @import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource-variable/jetbrains-mono";
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%; /* Zinc 950 approx */
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-
-    /* --- PALETA SIM, ACEITO! (Refinada - Violet Eye-Friendly) --- */
-    --primary: 262 83% 58%;          /* #7C3AED - Violet 600 */
-    --primary-foreground: 210 20% 98%; /* Quase branco */
-
-    --secondary: 262 50% 98%;        /* Fundo bem leve arroxeado */
-    --secondary-foreground: 262 70% 22%;
-
-    --muted: 262 30% 96%;
-    --muted-foreground: 262 10% 46%;
-
-    --accent: 262 80% 96%;
-    --accent-foreground: 262 83% 58%;
-
-    --destructive: 340 82% 52%;      /* #E91E63 - Danger Base */
-    --destructive-foreground: 340 100% 97%; /* #FCE4EC - Fundo Suave */
-
-    --success: 174 100% 29%;         /* #009688 - Success Base */
-    --success-foreground: 174 33% 92%; /* #E0F2F1 - Fundo Suave */
-
-    --warning: 45 100% 51%;          /* #FFC107 - Warning Base */
-    --warning-foreground: 45 100% 94%;  /* #FFF8E1 - Fundo Suave */
-
-    --info: 199 98% 48%;             /* #03A9F4 - Info Base */
-    --info-foreground: 199 100% 94%;    /* #E1F5FE - Fundo Suave */
-
-    --border: 240 5.9% 90%;          /* Zinc 200 approx */
-    --input: 240 5.9% 90%;
-    --ring: 291 64% 42%;             /* Usando Primary como Ring */
+    --background: #FAFAFB;
+    --foreground: #09090B;
+    --card: #FFFFFF;
+    --card-foreground: #09090B;
+    --popover: #FFFFFF;
+    --popover-foreground: #09090B;
+    --primary: #7C3AED;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F5F3FF;
+    --secondary-foreground: #4C1D95;
+    --muted: #F5F3FF;
+    --muted-foreground: #71717A;
+    --accent: #F5F3FF;
+    --accent-foreground: #7C3AED;
+    --destructive: #E91E63;
+    --destructive-foreground: #FFFFFF;
+    --success: #009688;
+    --success-foreground: #E0F2F1;
+    --warning: #FFC107;
+    --warning-foreground: #FFF8E1;
+    --info: #03A9F4;
+    --info-foreground: #E1F5FE;
+    --border: #E4E4E7;
+    --input: #E4E4E7;
+    --ring: #A78BFA;
     --radius: 0.5rem;
-
-    /* Sidebar Variables */
-    --sidebar: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 291 64% 42%;
-    --sidebar-primary-foreground: 291 100% 97%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 291 64% 42%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 291 64% 42%;
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #09090B;
+    --sidebar-primary: #7C3AED;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #F5F3FF;
+    --sidebar-accent-foreground: #7C3AED;
+    --sidebar-border: #E4E4E7;
+    --sidebar-ring: #A78BFA;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    /* --- INVERSÃO PROPORCIONAL SIM, ACEITO! (Violet) --- */
-    --primary: 262 80% 70%;
-    --primary-foreground: 263 70% 22%;
-
-    --secondary: 262 30% 12%;
-    --secondary-foreground: 210 20% 98%;
-
-    --muted: 262 30% 12%;
-    --muted-foreground: 262 10% 64%;
-
-    --accent: 262 30% 15%;
-    --accent-foreground: 210 20% 98%;
-
-    --destructive: 340 75% 60%;
-    --destructive-foreground: 340 77% 43%;
-
-    --success: 174 65% 50%;
-    --success-foreground: 174 100% 21%;
-
-    --warning: 45 90% 60%;
-    --warning-foreground: 38 100% 50%;
-
-    --info: 199 90% 60%;
-    --info-foreground: 201 98% 41%;
-
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 291 70% 60%;
-
-    /* Sidebar Dark */
-    --sidebar: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 291 70% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 291 70% 60%;
+    --background: #09090B;
+    --foreground: #FAFAFA;
+    --card: #18181B;
+    --card-foreground: #FAFAFA;
+    --popover: #18181B;
+    --popover-foreground: #FAFAFA;
+    --primary: #8B5CF6;
+    --primary-foreground: #FFFFFF;
+    --secondary: #27272A;
+    --secondary-foreground: #FAFAFA;
+    --muted: #27272A;
+    --muted-foreground: #A1A1AA;
+    --accent: #27272A;
+    --accent-foreground: #FAFAFA;
+    --destructive: #F87171;
+    --destructive-foreground: #7F1D1D;
+    --success: #34D399;
+    --success-foreground: #064E3B;
+    --warning: #FBBF24;
+    --warning-foreground: #78350F;
+    --info: #38BDF8;
+    --info-foreground: #0C4A6E;
+    --border: #27272A;
+    --input: #27272A;
+    --ring: #7C3AED;
+    --sidebar: #18181B;
+    --sidebar-foreground: #FAFAFA;
+    --sidebar-primary: #8B5CF6;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #27272A;
+    --sidebar-accent-foreground: #FAFAFA;
+    --sidebar-border: #27272A;
+    --sidebar-ring: #7C3AED;
   }
 }
 
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-
-  --color-success: hsl(var(--success));
-  --color-success-foreground: hsl(var(--success-foreground));
-
-  --color-warning: hsl(var(--warning));
-  --color-warning-foreground: hsl(var(--warning-foreground));
-
-  --color-info: hsl(var(--info));
-  --color-info-foreground: hsl(var(--info-foreground));
-
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-
-  --color-sidebar: hsl(var(--sidebar));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  /* --- DEFINIÇÕES DE ANIMAÇÃO --- */
+  --color-aura-50: #F5F3FF;
+  --color-aura-100: #EDE9FE;
+  --color-aura-200: #DDD6FE;
+  --color-aura-300: #C4B5FD;
+  --color-aura-400: #A78BFA;
+  --color-aura-500: #8B5CF6;
+  --color-aura-600: #7C3AED;
+  --color-aura-700: #6D28D9;
+  --color-aura-800: #5B21B6;
+  --color-aura-900: #4C1D95;
+
+  --color-surface-light: #FFFFFF;
+  --color-surface-dark: #09090B;
+  --color-surface-darkSecondary: #18181B;
+
+  --shadow-soft: 0 4px 20px -3px rgba(124, 58, 237, 0.08), 0 2px 6px -2px rgba(124, 58, 237, 0.04);
+  --shadow-glow: 0 0 25px -5px rgba(124, 58, 237, 0.4);
+
+  --font-display: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
+
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
 
@@ -175,6 +168,55 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #E4E4E7;
+    border-radius: 10px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #3F3F46;
+  }
+}
+
+/* CSS Chart Animations */
+.bar-grow {
+  transform-origin: bottom;
+  animation: growUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes growUp {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Subtle row hover glow */
+.table-row-hover {
+  transition: background-color 150ms ease-in-out;
+}
+.table-row-hover:hover {
+  background-color: var(--secondary);
+}
+.dark .table-row-hover:hover {
+  background-color: rgba(124, 58, 237, 0.08);
+}
+
+/* Micro-interactions */
+.btn-transition {
+  transition: all 150ms ease-in-out;
+}
+.layout-transition {
+  transition: all 200ms ease-out;
 }
