@@ -36,9 +36,12 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     expect(screen.getByText("Comece o seu teste")).toBeInTheDocument();
-    expect(screen.getByText("Seu Nome Completo")).toBeInTheDocument();
-    expect(screen.getByText("Nome da sua Assessoria / Agência")).toBeInTheDocument();
+    expect(screen.getByText("Nome")).toBeInTheDocument();
+    expect(screen.getByText("Sobrenome")).toBeInTheDocument();
     expect(screen.getByText("E-mail de Trabalho")).toBeInTheDocument();
+    expect(
+      screen.getByText("Nome da sua Assessoria / Agência"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Confirmar Senha")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /criar minha conta agora/i }),
@@ -57,7 +60,9 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
+    await user.click(
+      screen.getByRole("button", { name: /criar minha conta agora/i }),
+    );
 
     await screen.findByText(/invalid email/i);
   });
@@ -66,36 +71,44 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "teste@test.com");
+    await user.type(screen.getByPlaceholderText("Helena"), "Helena");
+    await user.type(screen.getByPlaceholderText("Costa"), "Costa");
+    await user.type(
+      screen.getByPlaceholderText("nome@agencia.com"),
+      "teste@test.com",
+    );
     const passwordInputs = screen.getAllByPlaceholderText("••••••••");
     await user.type(passwordInputs[0], "12345678");
     await user.type(passwordInputs[1], "87654321");
     await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
+    await user.click(
+      screen.getByRole("button", { name: /criar minha conta agora/i }),
+    );
 
-    expect(
-      await screen.findByText("Senhas não conferem"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Senhas não conferem")).toBeInTheDocument();
   });
 
   it("allows typing all fields", async () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    const nameInput = screen.getByPlaceholderText("Helena Costa");
-    const agencyInput = screen.getByPlaceholderText("Sua Assessoria de Eventos");
-    const emailInput = screen.getByPlaceholderText("nome@agencia.com");
+    const firstName = screen.getByPlaceholderText("Helena");
+    const lastName = screen.getByPlaceholderText("Costa");
+    const agency = screen.getByPlaceholderText("Sua Assessoria de Eventos");
+    const email = screen.getByPlaceholderText("nome@agencia.com");
     const passwordInputs = screen.getAllByPlaceholderText("••••••••");
 
-    await user.type(nameInput, "João");
-    await user.type(agencyInput, "Silva Eventos");
-    await user.type(emailInput, "joao@test.com");
+    await user.type(firstName, "Helena");
+    await user.type(lastName, "Costa");
+    await user.type(agency, "Aura Eventos");
+    await user.type(email, "helena@simaceito.com");
     await user.type(passwordInputs[0], "12345678");
     await user.type(passwordInputs[1], "12345678");
 
-    expect(nameInput).toHaveValue("João");
-    expect(agencyInput).toHaveValue("Silva Eventos");
-    expect(emailInput).toHaveValue("joao@test.com");
+    expect(firstName).toHaveValue("Helena");
+    expect(lastName).toHaveValue("Costa");
+    expect(agency).toHaveValue("Aura Eventos");
+    expect(email).toHaveValue("helena@simaceito.com");
     expect(passwordInputs[0]).toHaveValue("12345678");
     expect(passwordInputs[1]).toHaveValue("12345678");
   });
@@ -113,14 +126,23 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByPlaceholderText("Helena Costa"), "João");
-    await user.type(screen.getByPlaceholderText("Sua Assessoria de Eventos"), "Silva");
-    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "joao@test.com");
+    await user.type(screen.getByPlaceholderText("Helena"), "João");
+    await user.type(screen.getByPlaceholderText("Costa"), "Silva");
+    await user.type(
+      screen.getByPlaceholderText("Sua Assessoria de Eventos"),
+      "Silva Eventos",
+    );
+    await user.type(
+      screen.getByPlaceholderText("nome@agencia.com"),
+      "joao@test.com",
+    );
     const passwordInputs = screen.getAllByPlaceholderText("••••••••");
     await user.type(passwordInputs[0], "12345678");
     await user.type(passwordInputs[1], "12345678");
     await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
+    await user.click(
+      screen.getByRole("button", { name: /criar minha conta agora/i }),
+    );
 
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalledWith(
@@ -144,12 +166,17 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "existing@test.com");
+    await user.type(
+      screen.getByPlaceholderText("nome@agencia.com"),
+      "existing@test.com",
+    );
     const passwordInputs = screen.getAllByPlaceholderText("••••••••");
     await user.type(passwordInputs[0], "12345678");
     await user.type(passwordInputs[1], "12345678");
     await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
+    await user.click(
+      screen.getByRole("button", { name: /criar minha conta agora/i }),
+    );
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalled();
@@ -178,14 +205,18 @@ describe("RegisterForm", () => {
     render(<RegisterForm />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByPlaceholderText("Helena Costa"), "João");
-    await user.type(screen.getByPlaceholderText("nome@agencia.com"), "joao@test.com");
+    await user.type(screen.getByPlaceholderText("Helena"), "João");
+    await user.type(
+      screen.getByPlaceholderText("nome@agencia.com"),
+      "joao@test.com",
+    );
     const passwordInputs = screen.getAllByPlaceholderText("••••••••");
     await user.type(passwordInputs[0], "12345678");
     await user.type(passwordInputs[1], "12345678");
     await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: /criar minha conta agora/i }));
+    await user.click(
+      screen.getByRole("button", { name: /criar minha conta agora/i }),
+    );
 
     await screen.findByText("Criando sua agência...");
     resolvePromise!();
