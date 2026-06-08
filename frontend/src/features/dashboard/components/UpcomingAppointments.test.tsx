@@ -1,66 +1,66 @@
-import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
-import { render, screen, server, userEvent, waitFor } from "@/test-utils";
+import { render, screen, waitFor } from "@/test-utils";
 import { UpcomingAppointments } from "@/features/dashboard/components/UpcomingAppointments";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
 
 describe("UpcomingAppointments", () => {
-  it("shows header with period buttons", async () => {
+  it("renders header title", () => {
     render(<UpcomingAppointments />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("Próximos Compromissos"),
-      ).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("7d")).toBeInTheDocument();
-    expect(screen.getByText("14d")).toBeInTheDocument();
-    expect(screen.getByText("30d")).toBeInTheDocument();
+    expect(screen.getByText("Agenda")).toBeInTheDocument();
   });
 
-  it("has a link to scheduler page", () => {
+  it("has a link to scheduler page when no weddingUuid", () => {
     render(<UpcomingAppointments />);
-
-    const link = screen.getByRole("link", { name: /ver agenda completa/i });
+    const link = screen.getByRole("link", { name: /ver calendário/i });
     expect(link).toHaveAttribute("href", "/scheduler");
   });
 
-  it("shows empty message when there are no events", async () => {
+  it("has a link to wedding timeline when weddingUuid is provided", () => {
+    const uuid = "abc-123";
+    render(<UpcomingAppointments weddingUuid={uuid} />);
+    const link = screen.getByRole("link", { name: /ver calendário/i });
+    expect(link).toHaveAttribute(
+      "href",
+      `/weddings/${uuid}?tab=planning&subtab=timeline`,
+    );
+  });
+
+  it("shows loading skeletons initially", () => {
+    render(<UpcomingAppointments />);
+    const skeletons = document.querySelectorAll("[class*='animate-pulse']");
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it("shows empty state when no upcoming events", async () => {
     server.use(
-      http.get("*/api/v1/scheduler/events/", () => {
-        return HttpResponse.json({ items: [], count: 0 });
-      }),
+      http.get("*/api/v1/scheduler/events/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 5, offset: 0 }),
+      ),
     );
 
     render(<UpcomingAppointments />);
 
     await waitFor(() => {
       expect(
-        screen.getByText(/nenhum compromisso nos próximos 7 dias/i),
+        screen.getByText("Nenhum evento próximo."),
       ).toBeInTheDocument();
     });
   });
 
-  it("allows changing period", async () => {
+  it("shows wedding-specific empty state when weddingUuid is provided", async () => {
     server.use(
-      http.get("*/api/v1/scheduler/events/", () => {
-        return HttpResponse.json({ items: [], count: 0 });
-      }),
+      http.get("*/api/v1/scheduler/events/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 5, offset: 0 }),
+      ),
     );
 
-    render(<UpcomingAppointments />);
+    render(<UpcomingAppointments weddingUuid="abc-123" />);
 
     await waitFor(() => {
       expect(
-        screen.getByText(/nenhum compromisso nos próximos 7 dias/i),
+        screen.getByText("Nenhum evento agendado para este casamento."),
       ).toBeInTheDocument();
     });
-
-    const user = userEvent.setup();
-    await user.click(screen.getByText("30d"));
-
-    expect(
-      screen.getByText(/nenhum compromisso nos próximos 30 dias/i),
-    ).toBeInTheDocument();
   });
 });
