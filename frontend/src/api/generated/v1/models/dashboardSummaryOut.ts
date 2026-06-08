@@ -7,10 +7,10 @@
 import type { CriticalWeddingOut } from "./criticalWeddingOut";
 
 export interface DashboardSummaryOut {
-  active_weddings: number;
   pending_installments_7d: string;
-  events_this_week: number;
   urgent_tasks_count: number;
-  weddings_this_month: number;
+  overdue_installments_amount: string;
+  overdue_installments_count: number;
+  pending_contracts_count: number;
   critical_weddings: CriticalWeddingOut[];
 }

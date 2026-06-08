@@ -139,11 +139,11 @@ export function createMockDashboardSummary(
   overrides?: Partial<DashboardSummaryOut>,
 ): DashboardSummaryOut {
   return {
-    active_weddings: 12,
     pending_installments_7d: "5000.00",
-    events_this_week: 3,
     urgent_tasks_count: 2,
-    weddings_this_month: 4,
+    overdue_installments_amount: "12350.00",
+    overdue_installments_count: 2,
+    pending_contracts_count: 5,
     critical_weddings: [],
     ...overrides,
   };

@@ -10,11 +10,11 @@ import * as zod from "zod";
  * @summary Dashboard Summary
  */
 export const DashboardSummaryResponse = zod.object({
-  active_weddings: zod.number(),
   pending_installments_7d: zod.string(),
-  events_this_week: zod.number(),
   urgent_tasks_count: zod.number(),
-  weddings_this_month: zod.number(),
+  overdue_installments_amount: zod.string(),
+  overdue_installments_count: zod.number(),
+  pending_contracts_count: zod.number(),
   critical_weddings: zod.array(
     zod.object({
       uuid: zod.string(),

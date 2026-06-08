@@ -14,11 +14,13 @@ import type { DashboardSummaryOut, WeddingDashboardOut } from "../../models";
 export const getDashboardSummaryResponseMock = (
   overrideResponse: Partial<Extract<DashboardSummaryOut, object>> = {},
 ): DashboardSummaryOut => ({
-  active_weddings: faker.number.int(),
   pending_installments_7d: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  events_this_week: faker.number.int(),
   urgent_tasks_count: faker.number.int(),
-  weddings_this_month: faker.number.int(),
+  overdue_installments_amount: faker.string.alpha({
+    length: { min: 10, max: 20 },
+  }),
+  overdue_installments_count: faker.number.int(),
+  pending_contracts_count: faker.number.int(),
   critical_weddings: Array.from(
     { length: faker.number.int({ min: 1, max: 10 }) },
     (_, i) => i + 1,

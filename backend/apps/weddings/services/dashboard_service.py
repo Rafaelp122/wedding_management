@@ -8,7 +8,7 @@ from django.db.models.functions import Coalesce
 
 from apps.finances.models import Budget, BudgetCategory, Installment
 from apps.logistics.models import Contract
-from apps.scheduler.models import Event, Task
+from apps.scheduler.models import Task
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 from apps.weddings.services.wedding_service import WeddingService
@@ -24,12 +24,6 @@ class DashboardService:
         seven_days = today + timedelta(days=7)
         ninety_days = today + timedelta(days=90)
 
-        active_weddings = (
-            Wedding.objects.for_tenant(company)
-            .filter(status=Wedding.StatusChoices.IN_PROGRESS)
-            .count()
-        )
-
         pending_7d = (
             (
                 Installment.objects.for_tenant(company)
@@ -43,30 +37,29 @@ class DashboardService:
             or 0
         )
 
-        events_week = (
-            Event.objects.for_tenant(company)
-            .filter(
-                start_time__date__gte=today,
-                start_time__date__lte=seven_days,
-            )
-            .count()
-        )
-
         urgent_tasks_count = (
             Task.objects.for_tenant(company)
             .filter(is_completed=False, due_date__lte=today)
             .count()
         )
 
-        month_start = today.replace(day=1)
-        if today.month == 12:
-            month_end = today.replace(year=today.year + 1, month=1, day=1)
-        else:
-            month_end = today.replace(month=today.month + 1, day=1)
+        overdue_installments_qs = Installment.objects.for_tenant(company).filter(
+            Q(status=Installment.StatusChoices.OVERDUE)
+            | Q(status=Installment.StatusChoices.PENDING, due_date__lt=today)
+        )
+        overdue_installments_amount = overdue_installments_qs.aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
+        overdue_installments_count = overdue_installments_qs.count()
 
-        weddings_this_month = (
-            Wedding.objects.for_tenant(company)
-            .filter(date__gte=month_start, date__lt=month_end)
+        pending_contracts_count = (
+            Contract.objects.for_tenant(company)
+            .filter(
+                status__in=[
+                    Contract.StatusChoices.DRAFT,
+                    Contract.StatusChoices.PENDING,
+                ]
+            )
             .count()
         )
 
@@ -125,11 +118,11 @@ class DashboardService:
             )
 
         return {
-            "active_weddings": active_weddings,
-            "pending_installments_7d": str(pending_7d),
-            "events_this_week": events_week,
+            "pending_installments_7d": f"{pending_7d:.2f}",
             "urgent_tasks_count": urgent_tasks_count,
-            "weddings_this_month": weddings_this_month,
+            "overdue_installments_amount": f"{overdue_installments_amount:.2f}",
+            "overdue_installments_count": overdue_installments_count,
+            "pending_contracts_count": pending_contracts_count,
             "critical_weddings": critical_weddings,
         }
 

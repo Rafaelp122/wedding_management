@@ -1,17 +1,27 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
 from django.utils import timezone
 
-from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.finances.models import Budget, BudgetCategory
-from apps.finances.tests.factories import BudgetFactory
-from apps.logistics.tests.factories import ContractFactory
+from apps.finances.tests.factories import (
+    BudgetCategoryFactory,
+    BudgetFactory,
+    ExpenseFactory,
+    InstallmentFactory,
+)
+from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.scheduler.models import Event
+from apps.scheduler.tests.factories import TaskFactory
 from apps.weddings.models import Wedding
-from apps.weddings.services import WeddingService
+from apps.weddings.services import DashboardService, WeddingService
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -324,3 +334,154 @@ class TestWeddingTemplateApplication:
 
         assert events1 == 8
         assert events2 == 8
+
+
+@pytest.mark.django_db
+class TestDashboardService:
+    def test_get_summary_success(self, user):
+        """Calcula corretamente as estatísticas do painel incluindo novas métricas."""
+        # Setup supporting data
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense1 = ExpenseFactory(wedding=wedding, category=category, contract=None)
+
+        # 1. Overdue installment (amount: 1000.00)
+        InstallmentFactory(
+            expense=expense1,
+            amount=1000.00,
+            due_date=today - timedelta(days=5),
+            status="PENDING",
+        )
+
+        # 2. Upcoming installment in 7 days (amount: 2500.00)
+        InstallmentFactory(
+            expense=expense1,
+            amount=2500.00,
+            due_date=today + timedelta(days=3),
+            status="PENDING",
+        )
+
+        # 3. Urgent tasks
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+            due_date=today - timedelta(days=1),
+        )
+
+        # 4. Pending contract
+        supplier = SupplierFactory(company=user.company)
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="PENDING",
+            total_amount=5000.00,
+        )
+
+        summary = DashboardService.get_summary(company=user.company)
+
+        assert summary["overdue_installments_count"] == 1
+        assert summary["overdue_installments_amount"] == "1000.00"
+        assert summary["pending_installments_7d"] == "2500.00"
+        assert summary["urgent_tasks_count"] == 1
+        assert summary["pending_contracts_count"] == 1
+
+    def test_get_wedding_overview_success(self, user):
+        """Retorna corretamente o panorama detalhado de um casamento específico."""
+
+        today = date.today()
+        # Setup: casamento, orçamento, categoria, despesa, tarefa e contrato
+        wedding = WeddingFactory(company=user.company, date=today + timedelta(days=60))
+        budget = BudgetFactory(
+            wedding=wedding, company=user.company, total_estimated=10000.00
+        )
+        category = BudgetCategoryFactory(budget=budget, allocated_budget=5000.00)
+        expense = ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            company=user.company,
+            actual_amount=2000.00,
+            contract=None,
+        )
+
+        # 1. Tarefa
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=True,
+            due_date=today - timedelta(days=1),
+        )
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+            due_date=today - timedelta(days=2),  # tarefa urgente
+            title="Tarefa Urgente",
+        )
+
+        # 2. Contrato
+        supplier = SupplierFactory(company=user.company)
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="SIGNED",
+            total_amount=5000.00,
+            pdf_file="contracts/dummy.pdf",
+            signed_date=today,
+        )
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="PENDING",
+            total_amount=3000.00,
+        )
+
+        # 3. Parcela
+        InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=today + timedelta(days=5),
+            status="PENDING",
+            wedding=wedding,
+            company=user.company,
+        )
+
+        overview = DashboardService.get_wedding_overview(
+            company=user.company, wedding_uuid=wedding.uuid
+        )
+
+        assert overview["days_until_wedding"] == 60
+        assert (
+            overview["budget_percentage_used"] == 20.0
+        )  # 2000 spent / 10000 estimated
+        assert overview["tasks_completed"] == 1
+        assert overview["tasks_total"] == 2
+        assert overview["contracts_signed"] == 1
+        assert overview["contracts_total"] == 2
+        assert len(overview["upcoming_installments"]) == 1
+        assert len(overview["urgent_tasks"]) == 1
+        assert overview["urgent_tasks"][0]["title"] == "Tarefa Urgente"
+        assert len(overview["categories_summary"]) == 1
+        assert overview["categories_summary"][0]["name"] == category.name
+        assert (
+            overview["categories_summary"][0]["percentage"] == 40
+        )  # 2000 spent / 5000 allocated
+
+    def test_get_wedding_overview_not_found(self, user):
+        """
+        Tenta buscar casamento de outro tenant ou inexistente e falha
+        com ObjectNotFoundError.
+        """
+        from apps.tenants.tests.factories import CompanyFactory
+
+        other_company = CompanyFactory()
+        other_wedding = WeddingFactory(company=other_company)
+
+        with pytest.raises(ObjectNotFoundError):
+            DashboardService.get_wedding_overview(
+                company=user.company, wedding_uuid=other_wedding.uuid
+            )
