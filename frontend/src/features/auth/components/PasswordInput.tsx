@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from "lucide-react";
 import { forwardRef, useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface PasswordInputProps {
   id: string;
@@ -17,11 +18,11 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
 
     return (
       <div className="relative">
-        <input
+        <Input
           id={id}
           ref={ref}
           type={visible ? "text" : "password"}
-          className={`block w-full pl-3.5 pr-10 py-2.5 text-xs border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-900 rounded-xl text-zinc-955 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-aura-500/30 focus:border-aura-500 transition-all font-medium ${className}`}
+          className={`pr-10 text-xs border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium ${className}`}
           placeholder={placeholder}
           {...props}
         />

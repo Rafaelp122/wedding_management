@@ -11,6 +11,9 @@ import type { TokenPayloadIn } from "@/api/generated/v1/models/tokenPayloadIn";
 import type { TokenOut } from "@/api/generated/v1/models/tokenOut";
 import { AuthObtainTokenBody } from "@/api/generated/v1/zod/auth/auth";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -19,8 +22,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordInput } from "./PasswordInput";
+import { SocialButtons } from "./SocialButtons";
 
 import type { ErrorType } from "@/api/api-client";
 import type { AxiosResponse } from "axios";
@@ -80,10 +83,10 @@ export function LoginForm() {
                   Endereço de E-mail
                 </FormLabel>
                 <FormControl>
-                  <input
+                  <Input
                     type="email"
-                    className="block w-full px-3.5 py-2.5 text-xs border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-900 rounded-xl text-zinc-955 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-aura-500/30 focus:border-aura-500 transition-all font-medium"
-                    placeholder="helena@aura.com"
+                    className="text-xs border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
+                    placeholder="helena@simaceito.com"
                     {...field}
                   />
                 </FormControl>
@@ -127,10 +130,10 @@ export function LoginForm() {
             </label>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={isPending}
-            className="w-full mt-4 flex items-center justify-center gap-2 bg-aura-600 hover:bg-aura-700 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-all duration-250 shadow-lg shadow-aura-500/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full mt-4 bg-aura-600 hover:bg-aura-700 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-aura-500/20 active:scale-[0.98]"
           >
             {isPending ? (
               <>
@@ -138,9 +141,9 @@ export function LoginForm() {
                 Validando credenciais...
               </>
             ) : (
-              "Acessar Painel Aura"
+              "Acessar painel"
             )}
-          </button>
+          </Button>
         </form>
       </Form>
 
@@ -165,42 +168,6 @@ export function LoginForm() {
           </Link>
         </p>
       </div>
-    </div>
-  );
-}
-
-function SocialButtons() {
-  const handleGoogle = () =>
-    toast.info("Integração Google SSO em desenvolvimento.");
-
-  const handleApple = () =>
-    toast.info("Integração Apple ID em desenvolvimento.");
-
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      <button
-        type="button"
-        onClick={handleGoogle}
-        className="flex items-center justify-center gap-2 py-2.5 px-4 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors bg-transparent"
-      >
-        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-          <path
-            fill="#EA4335"
-            d="M12.24 10.285V14.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.578-7.859-8s3.53-8 7.86-8c2.46 0 4.105 1.025 5.047 1.926l3.245-3.125C18.265 1.77 15.483 1 12.24 1 5.92 1 12.24s4.92 11.24 11.24 11.24c6.6 0 11-4.64 11-11.24 0-.75-.08-1.33-.235-1.955H12.24z"
-          />
-        </svg>
-        Google
-      </button>
-      <button
-        type="button"
-        onClick={handleApple}
-        className="flex items-center justify-center gap-2 py-2.5 px-4 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors bg-transparent"
-      >
-        <svg className="w-4 h-4 shrink-0 fill-current" viewBox="0 0 24 24">
-          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.15.65-2.87 1.49-.62.71-1.16 1.85-1.01 2.96 1.1.09 2.19-.55 2.89-1.39z" />
-        </svg>
-        Apple ID
-      </button>
     </div>
   );
 }

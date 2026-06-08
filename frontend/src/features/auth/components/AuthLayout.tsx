@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -33,26 +33,12 @@ export function AuthLayout({
   return (
     <div className="bg-surface-light dark:bg-surface-dark text-zinc-900 dark:text-zinc-50 font-sans transition-colors duration-300 h-screen overflow-hidden flex flex-col justify-between">
       <header className="absolute top-0 inset-x-0 h-20 px-8 flex items-center justify-between z-30">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-aura-600 flex items-center justify-center shadow-glow">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 22v-7l-2-2a4 4 0 1 1 4 0l-2 2v7" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <span className="font-display font-bold text-lg tracking-tight text-zinc-950 dark:text-white">
-            Aura ERP
-          </span>
-        </Link>
+        <Logo
+          href="https://simaceito.site/"
+          iconClassName="w-8 h-8"
+          textClassName="font-display font-bold text-lg tracking-tight text-zinc-950 dark:text-white"
+          className="gap-3"
+        />
 
         <div className="flex items-center gap-2.5">
           <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 hidden sm:block">
@@ -60,9 +46,7 @@ export function AuthLayout({
           </span>
           <button
             type="button"
-            onClick={() =>
-              setTheme(theme === "dark" ? "light" : "dark")
-            }
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="group relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full bg-zinc-200 dark:bg-zinc-800 transition-colors duration-300 focus:outline-none"
             role="switch"
             aria-checked={theme === "dark"}
@@ -109,9 +93,7 @@ export function AuthLayout({
                   <h4 className="font-display font-bold text-sm text-zinc-900 dark:text-white">
                     {heroBoxTitle}
                   </h4>
-                  <p className="text-[10px] text-zinc-400">
-                    {heroBoxSubtitle}
-                  </p>
+                  <p className="text-[10px] text-zinc-400">{heroBoxSubtitle}</p>
                 </div>
                 <span className="bg-aura-500/10 text-aura-600 dark:text-aura-400 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
                   {heroBoxBadge}
@@ -140,12 +122,7 @@ export function AuthLayout({
           </div>
 
           <div className="w-full flex items-center justify-between text-[10px] text-zinc-450 dark:text-zinc-500 relative z-10">
-            <span>
-              © 2026 Aura Inc. Todos os direitos reservados.
-            </span>
-            <span className="font-mono text-[9px] uppercase tracking-wider">
-              Aura Core v1.2
-            </span>
+            <span>© 2026 Sim, Aceito! Todos os direitos reservados.</span>
           </div>
         </div>
       </div>
