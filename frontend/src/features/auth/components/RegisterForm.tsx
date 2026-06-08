@@ -53,6 +53,7 @@ export function RegisterForm() {
 
   const onSubmit = (data: RegisterFormData) => {
     // Remove confirm_password before sending to API
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirm_password, ...payload } = data;
     mutate(
       { data: payload },
