@@ -9,6 +9,10 @@ import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
 import type { CriticalWeddingOut } from "@/api/generated/v1/models/criticalWeddingOut";
 import type { InstallmentOut } from "@/api/generated/v1/models/installmentOut";
+import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
+import type { WeddingDashboardCategoryOut } from "@/api/generated/v1/models/weddingDashboardCategoryOut";
+import type { WeddingDashboardInstallmentOut } from "@/api/generated/v1/models/weddingDashboardInstallmentOut";
+import type { WeddingDashboardTaskOut } from "@/api/generated/v1/models/weddingDashboardTaskOut";
 
 export function createMockWedding(overrides?: Partial<WeddingOut>): WeddingOut {
   return {
@@ -139,11 +143,11 @@ export function createMockDashboardSummary(
   overrides?: Partial<DashboardSummaryOut>,
 ): DashboardSummaryOut {
   return {
-    active_weddings: 12,
     pending_installments_7d: "5000.00",
-    events_this_week: 3,
     urgent_tasks_count: 2,
-    weddings_this_month: 4,
+    overdue_installments_amount: "12350.00",
+    overdue_installments_count: 2,
+    pending_contracts_count: 5,
     critical_weddings: [],
     ...overrides,
   };
@@ -179,6 +183,62 @@ export function createMockInstallment(
     amount: "500.00",
     due_date: future.toISOString().slice(0, 10),
     status: "PENDING",
+    ...overrides,
+  };
+}
+
+export function createMockWeddingDashboardInstallment(
+  overrides?: Partial<WeddingDashboardInstallmentOut>,
+): WeddingDashboardInstallmentOut {
+  const today = new Date();
+  const future = new Date(today);
+  future.setDate(future.getDate() + 10);
+  return {
+    uuid: "wdi-1",
+    installment_number: 1,
+    amount: "500.00",
+    due_date: future.toISOString().slice(0, 10),
+    status: "PENDING",
+    ...overrides,
+  };
+}
+
+export function createMockWeddingDashboardTask(
+  overrides?: Partial<WeddingDashboardTaskOut>,
+): WeddingDashboardTaskOut {
+  return {
+    uuid: "wdt-1",
+    title: "Contratar Buffet",
+    due_date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+    ...overrides,
+  };
+}
+
+export function createMockWeddingDashboardCategory(
+  overrides?: Partial<WeddingDashboardCategoryOut>,
+): WeddingDashboardCategoryOut {
+  return {
+    name: "Buffet",
+    allocated: "10000.00",
+    spent: "5000.00",
+    percentage: 50,
+    ...overrides,
+  };
+}
+
+export function createMockWeddingDashboard(
+  overrides?: Partial<WeddingDashboardOut>,
+): WeddingDashboardOut {
+  return {
+    days_until_wedding: 120,
+    budget_percentage_used: 45.5,
+    tasks_completed: 8,
+    tasks_total: 20,
+    contracts_signed: 3,
+    contracts_total: 5,
+    upcoming_installments: [],
+    urgent_tasks: [],
+    categories_summary: [],
     ...overrides,
   };
 }

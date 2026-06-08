@@ -16,6 +16,11 @@ dashboard_router = Router(tags=["Dashboard"])
     operation_id="dashboard_summary",
 )
 def dashboard_summary(request: AuthRequest) -> dict:
+    """Aggregated dashboard KPIs for the authenticated company.
+
+    Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
+    overdue installments, pending contracts, and critical weddings.
+    """
     return DashboardService.get_summary(company=request.user.company)
 
 
@@ -25,6 +30,12 @@ def dashboard_summary(request: AuthRequest) -> dict:
     operation_id="dashboard_wedding",
 )
 def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict:
+    """Per-wedding dashboard view.
+
+    Returns a ``WeddingDashboardOut`` with days until the event, budget usage,
+    task completion stats, contract status, upcoming installments, urgent tasks,
+    and category breakdown.
+    """
     return DashboardService.get_wedding_overview(
         company=request.user.company,
         wedding_uuid=uuid,

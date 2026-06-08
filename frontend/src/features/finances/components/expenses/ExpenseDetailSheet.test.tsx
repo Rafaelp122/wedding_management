@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
-import { ExpenseDetailDialog } from "./ExpenseDetailDialog";
+import { ExpenseDetailSheet } from "./ExpenseDetailSheet";
 import { createMockExpense } from "@/test-data";
 
 // ---------------------------------------------------------------------------
@@ -45,7 +45,7 @@ vi.mock(
   },
 );
 
-describe("ExpenseDetailDialog", () => {
+describe("ExpenseDetailSheet", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -60,14 +60,14 @@ describe("ExpenseDetailDialog", () => {
   });
 
   // -----------------------------------------------------------------------
-  // 1. Renders expense name in the dialog title
+  // 1. Renders expense name in the sheet title
   // -----------------------------------------------------------------------
-  it("renders expense name in the dialog title", () => {
+  it("renders expense name in the sheet title", () => {
     const expense = createMockExpense({ name: "Buffet Principal" });
     mockExpensesRead.mockReturnValue({ data: { data: expense } });
 
     render(
-      <ExpenseDetailDialog expense={expense} open={true} onOpenChange={vi.fn()} />,
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
     );
 
     expect(screen.getByText("Buffet Principal")).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe("ExpenseDetailDialog", () => {
     mockExpensesRead.mockReturnValue({ data: { data: expense } });
 
     render(
-      <ExpenseDetailDialog expense={expense} open={true} onOpenChange={vi.fn()} />,
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
     );
 
     // The category name appears inside a <span> after "Categoria:"
@@ -99,7 +99,7 @@ describe("ExpenseDetailDialog", () => {
     mockExpensesRead.mockReturnValue({ data: { data: expense } });
 
     render(
-      <ExpenseDetailDialog expense={expense} open={true} onOpenChange={vi.fn()} />,
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
     );
 
     expect(screen.getByText(/contrato:/i)).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe("ExpenseDetailDialog", () => {
     mockExpensesRead.mockReturnValue({ data: { data: expense } });
 
     render(
-      <ExpenseDetailDialog expense={expense} open={true} onOpenChange={vi.fn()} />,
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
     );
 
     // constant.tsx maps PARTIALLY_PAID → "Parcial"
@@ -134,7 +134,7 @@ describe("ExpenseDetailDialog", () => {
     mockExpensesRead.mockReturnValue({ data: { data: expense } });
 
     render(
-      <ExpenseDetailDialog expense={expense} open={true} onOpenChange={vi.fn()} />,
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
     );
 
     // The text "1/3 marcadas como pagas"
@@ -154,7 +154,7 @@ describe("ExpenseDetailDialog", () => {
 
     const user = userEvent.setup();
     render(
-      <ExpenseDetailDialog expense={expense} open={true} onOpenChange={vi.fn()} />,
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
     );
 
     // Button is visible
@@ -187,7 +187,7 @@ describe("ExpenseDetailDialog", () => {
     mockExpensesRead.mockReturnValue({ data: { data: expense } });
 
     render(
-      <ExpenseDetailDialog expense={expense} open={true} onOpenChange={vi.fn()} />,
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
     );
 
     expect(
@@ -205,7 +205,7 @@ describe("ExpenseDetailDialog", () => {
     });
 
     render(
-      <ExpenseDetailDialog
+      <ExpenseDetailSheet
         expense={createMockExpense()}
         open={true}
         onOpenChange={vi.fn()}
@@ -239,7 +239,7 @@ describe("ExpenseDetailDialog", () => {
     });
 
     render(
-      <ExpenseDetailDialog
+      <ExpenseDetailSheet
         expense={createMockExpense()}
         open={true}
         onOpenChange={vi.fn()}

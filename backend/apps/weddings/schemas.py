@@ -52,11 +52,11 @@ class CriticalWeddingOut(Schema):
 
 
 class DashboardSummaryOut(Schema):
-    active_weddings: int
     pending_installments_7d: str
-    events_this_week: int
     urgent_tasks_count: int
-    weddings_this_month: int
+    overdue_installments_amount: str
+    overdue_installments_count: int
+    pending_contracts_count: int
     critical_weddings: list[CriticalWeddingOut]
 
 

@@ -7,14 +7,18 @@
 import * as zod from "zod";
 
 /**
+ * Aggregated dashboard KPIs for the authenticated company.
+
+Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
+overdue installments, pending contracts, and critical weddings.
  * @summary Dashboard Summary
  */
 export const DashboardSummaryResponse = zod.object({
-  active_weddings: zod.number(),
   pending_installments_7d: zod.string(),
-  events_this_week: zod.number(),
   urgent_tasks_count: zod.number(),
-  weddings_this_month: zod.number(),
+  overdue_installments_amount: zod.string(),
+  overdue_installments_count: zod.number(),
+  pending_contracts_count: zod.number(),
   critical_weddings: zod.array(
     zod.object({
       uuid: zod.string(),
@@ -30,6 +34,11 @@ export const DashboardSummaryResponse = zod.object({
 });
 
 /**
+ * Per-wedding dashboard view.
+
+Returns a ``WeddingDashboardOut`` with days until the event, budget usage,
+task completion stats, contract status, upcoming installments, urgent tasks,
+and category breakdown.
  * @summary Wedding Dashboard
  */
 export const DashboardWeddingParams = zod.object({

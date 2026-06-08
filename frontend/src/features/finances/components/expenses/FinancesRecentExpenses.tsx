@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrencyBRCompact } from "@/lib/formatters";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
-const ExpenseDetailDialog = lazy(
-  () => import("./ExpenseDetailDialog").then((m) => ({ default: m.ExpenseDetailDialog })),
+const ExpenseDetailSheet = lazy(
+  () => import("./ExpenseDetailSheet").then((m) => ({ default: m.ExpenseDetailSheet })),
 );
 
 interface WeddingFinancesRecentExpensesProps {
@@ -119,7 +119,7 @@ export function WeddingFinancesRecentExpenses({
 
       {selectedExpense ? (
         <Suspense fallback={null}>
-          <ExpenseDetailDialog
+          <ExpenseDetailSheet
             expense={selectedExpense}
             open={!!selectedExpense}
             onOpenChange={(open) => {

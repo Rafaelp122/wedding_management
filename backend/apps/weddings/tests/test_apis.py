@@ -130,3 +130,30 @@ class TestWeddingNinjaAPI:
         data = response.json()
         assert data["count"] == 1
         assert data["items"][0]["bride_name"] == "Maria B"
+
+    def test_dashboard_summary_api_success(self, auth_client, user):
+        WeddingFactory(company=user.company)
+
+        response = auth_client.get("/api/v1/dashboard/summary/")
+        assert response.status_code == 200
+        data = response.json()
+        assert "overdue_installments_count" in data
+        assert "pending_installments_7d" in data
+
+    def test_dashboard_wedding_api_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.get(f"/api/v1/dashboard/wedding/{wedding.uuid}/")
+        assert response.status_code == 200
+        data = response.json()
+        assert "days_until_wedding" in data
+        assert "budget_percentage_used" in data
+
+    def test_dashboard_wedding_api_unauthorized(self, auth_client):
+        from apps.tenants.tests.factories import CompanyFactory
+
+        other_company = CompanyFactory()
+        other_wedding = WeddingFactory(company=other_company)
+
+        response = auth_client.get(f"/api/v1/dashboard/wedding/{other_wedding.uuid}/")
+        assert response.status_code == 404

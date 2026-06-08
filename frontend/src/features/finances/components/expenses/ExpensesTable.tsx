@@ -25,8 +25,8 @@ const EditExpenseDialog = lazy(
 const DeleteExpenseDialog = lazy(
   () => import("./DeleteExpenseDialog").then((m) => ({ default: m.DeleteExpenseDialog })),
 );
-const ExpenseDetailDialog = lazy(
-  () => import("./ExpenseDetailDialog").then((m) => ({ default: m.ExpenseDetailDialog })),
+const ExpenseDetailSheet = lazy(
+  () => import("./ExpenseDetailSheet").then((m) => ({ default: m.ExpenseDetailSheet })),
 );
 
 interface WeddingExpensesTableProps {
@@ -197,7 +197,7 @@ export const WeddingExpensesTable = memo(function WeddingExpensesTable({
 
       {detailExpense ? (
         <Suspense fallback={null}>
-          <ExpenseDetailDialog
+          <ExpenseDetailSheet
             expense={detailExpense}
             open={!!detailExpense}
             onOpenChange={(open) => {

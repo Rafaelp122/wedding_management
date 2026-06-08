@@ -16,7 +16,7 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Dashboard Geral"),
+        screen.getByText(/Aqui está o panorama financeiro e de eventos para hoje/i),
       ).toBeInTheDocument();
     });
   });
@@ -25,9 +25,11 @@ describe("DashboardPage", () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      const currentYear = new Date().getFullYear().toString();
-      expect(screen.getByText(currentYear)).toBeInTheDocument();
-    });
+      expect(screen.getByText("Casamentos por Mês")).toBeInTheDocument();
+    }, { timeout: 5000 });
+
+    const currentYear = new Date().getFullYear().toString();
+    expect(screen.getByText(currentYear)).toBeInTheDocument();
   });
 
   it("shows stats cards after loading", async () => {
@@ -35,7 +37,7 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Casamentos Ativos"),
+        screen.getByText("Parcelas Vencidas"),
       ).toBeInTheDocument();
     });
   });
@@ -48,9 +50,9 @@ describe("DashboardPage", () => {
         screen.getByText("Casamentos por Mês"),
       ).toBeInTheDocument();
       expect(
-        screen.getByText("Próximos Compromissos"),
+        screen.getByText("Agenda"),
       ).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
   });
 
   it("shows error state when API fails", async () => {
@@ -76,10 +78,10 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Casamentos por Mês")).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
 
     const user = userEvent.setup();
-    const prevBtn = screen.getAllByRole("button", { name: "" })[0];
+    const prevBtn = screen.getByRole("button", { name: /ano anterior/i });
     await user.click(prevBtn);
 
     const lastYear = new Date().getFullYear() - 1;
