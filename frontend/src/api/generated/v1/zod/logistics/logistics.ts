@@ -27,14 +27,6 @@ export const LogisticsSuppliersListQueryParams = zod.object({
     .default(logisticsSuppliersListQueryOffsetDefault),
 });
 
-export const logisticsSuppliersListResponseItemsItemAddressDefault = ``;
-export const logisticsSuppliersListResponseItemsItemCityDefault = ``;
-export const logisticsSuppliersListResponseItemsItemStateDefault = ``;
-export const logisticsSuppliersListResponseItemsItemStateMax = 2;
-
-export const logisticsSuppliersListResponseItemsItemWebsiteDefault = ``;
-export const logisticsSuppliersListResponseItemsItemNotesDefault = ``;
-
 export const LogisticsSuppliersListResponse = zod.object({
   items: zod.array(
     zod.object({
@@ -44,22 +36,6 @@ export const LogisticsSuppliersListResponse = zod.object({
       phone: zod.string(),
       email: zod.string(),
       is_active: zod.boolean(),
-      address: zod
-        .string()
-        .default(logisticsSuppliersListResponseItemsItemAddressDefault),
-      city: zod
-        .string()
-        .default(logisticsSuppliersListResponseItemsItemCityDefault),
-      state: zod
-        .string()
-        .max(logisticsSuppliersListResponseItemsItemStateMax)
-        .default(logisticsSuppliersListResponseItemsItemStateDefault),
-      website: zod
-        .string()
-        .default(logisticsSuppliersListResponseItemsItemWebsiteDefault),
-      notes: zod
-        .string()
-        .default(logisticsSuppliersListResponseItemsItemNotesDefault),
       created_at: zod.iso.datetime({}),
       updated_at: zod.iso.datetime({}),
     }),
@@ -71,35 +47,17 @@ export const LogisticsSuppliersListResponse = zod.object({
  * Cadastra um novo fornecedor no sistema.
  * @summary Create Supplier
  */
-export const logisticsSuppliersCreateBodyIsActiveDefault = true;
-export const logisticsSuppliersCreateBodyAddressDefault = ``;
-export const logisticsSuppliersCreateBodyCityDefault = ``;
-export const logisticsSuppliersCreateBodyStateDefault = ``;
-export const logisticsSuppliersCreateBodyStateMax = 2;
-
-export const logisticsSuppliersCreateBodyWebsiteDefault = ``;
-export const logisticsSuppliersCreateBodyWebsiteRegExp = new RegExp(
-  "^(?:https?:\/\/\\S+)?$",
+export const logisticsSuppliersCreateBodyCnpjRegExp = new RegExp(
+  "^\\d{2}\\.\\d{3}\\.\\d{3}\/\\d{4}-\\d{2}$",
 );
-export const logisticsSuppliersCreateBodyNotesDefault = ``;
+export const logisticsSuppliersCreateBodyIsActiveDefault = true;
 
 export const LogisticsSuppliersCreateBody = zod.object({
   name: zod.string(),
-  cnpj: zod.string(),
+  cnpj: zod.string().regex(logisticsSuppliersCreateBodyCnpjRegExp),
   phone: zod.string(),
   email: zod.string(),
   is_active: zod.boolean().default(logisticsSuppliersCreateBodyIsActiveDefault),
-  address: zod.string().default(logisticsSuppliersCreateBodyAddressDefault),
-  city: zod.string().default(logisticsSuppliersCreateBodyCityDefault),
-  state: zod
-    .string()
-    .max(logisticsSuppliersCreateBodyStateMax)
-    .default(logisticsSuppliersCreateBodyStateDefault),
-  website: zod
-    .string()
-    .regex(logisticsSuppliersCreateBodyWebsiteRegExp)
-    .default(logisticsSuppliersCreateBodyWebsiteDefault),
-  notes: zod.string().default(logisticsSuppliersCreateBodyNotesDefault),
 });
 
 /**
@@ -110,14 +68,6 @@ export const LogisticsSuppliersReadParams = zod.object({
   uuid: zod.string(),
 });
 
-export const logisticsSuppliersReadResponseAddressDefault = ``;
-export const logisticsSuppliersReadResponseCityDefault = ``;
-export const logisticsSuppliersReadResponseStateDefault = ``;
-export const logisticsSuppliersReadResponseStateMax = 2;
-
-export const logisticsSuppliersReadResponseWebsiteDefault = ``;
-export const logisticsSuppliersReadResponseNotesDefault = ``;
-
 export const LogisticsSuppliersReadResponse = zod.object({
   uuid: zod.string(),
   name: zod.string(),
@@ -125,14 +75,6 @@ export const LogisticsSuppliersReadResponse = zod.object({
   phone: zod.string(),
   email: zod.string(),
   is_active: zod.boolean(),
-  address: zod.string().default(logisticsSuppliersReadResponseAddressDefault),
-  city: zod.string().default(logisticsSuppliersReadResponseCityDefault),
-  state: zod
-    .string()
-    .max(logisticsSuppliersReadResponseStateMax)
-    .default(logisticsSuppliersReadResponseStateDefault),
-  website: zod.string().default(logisticsSuppliersReadResponseWebsiteDefault),
-  notes: zod.string().default(logisticsSuppliersReadResponseNotesDefault),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
 });
@@ -145,35 +87,22 @@ export const LogisticsSuppliersUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const logisticsSuppliersUpdateBodyStateOneMax = 2;
-
-export const logisticsSuppliersUpdateBodyWebsiteDefault = ``;
+export const logisticsSuppliersUpdateBodyCnpjOneRegExp = new RegExp(
+  "^(\\d{2}\\.\\d{3}\\.\\d{3}\/\\d{4}-\\d{2})?$",
+);
 
 export const LogisticsSuppliersUpdateBody = zod.object({
   name: zod.union([zod.string(), zod.null()]).optional(),
-  cnpj: zod.union([zod.string(), zod.null()]).optional(),
-  phone: zod.union([zod.string(), zod.null()]).optional(),
-  email: zod.union([zod.string(), zod.null()]).optional(),
-  is_active: zod.union([zod.boolean(), zod.null()]).optional(),
-  address: zod.union([zod.string(), zod.null()]).optional(),
-  city: zod.union([zod.string(), zod.null()]).optional(),
-  state: zod
+  cnpj: zod
     .union([
-      zod.string().max(logisticsSuppliersUpdateBodyStateOneMax),
+      zod.string().regex(logisticsSuppliersUpdateBodyCnpjOneRegExp),
       zod.null(),
     ])
     .optional(),
-  website: zod.string().default(logisticsSuppliersUpdateBodyWebsiteDefault),
-  notes: zod.union([zod.string(), zod.null()]).optional(),
+  phone: zod.union([zod.string(), zod.null()]).optional(),
+  email: zod.union([zod.string(), zod.null()]).optional(),
+  is_active: zod.union([zod.boolean(), zod.null()]).optional(),
 });
-
-export const logisticsSuppliersUpdateResponseAddressDefault = ``;
-export const logisticsSuppliersUpdateResponseCityDefault = ``;
-export const logisticsSuppliersUpdateResponseStateDefault = ``;
-export const logisticsSuppliersUpdateResponseStateMax = 2;
-
-export const logisticsSuppliersUpdateResponseWebsiteDefault = ``;
-export const logisticsSuppliersUpdateResponseNotesDefault = ``;
 
 export const LogisticsSuppliersUpdateResponse = zod.object({
   uuid: zod.string(),
@@ -182,14 +111,6 @@ export const LogisticsSuppliersUpdateResponse = zod.object({
   phone: zod.string(),
   email: zod.string(),
   is_active: zod.boolean(),
-  address: zod.string().default(logisticsSuppliersUpdateResponseAddressDefault),
-  city: zod.string().default(logisticsSuppliersUpdateResponseCityDefault),
-  state: zod
-    .string()
-    .max(logisticsSuppliersUpdateResponseStateMax)
-    .default(logisticsSuppliersUpdateResponseStateDefault),
-  website: zod.string().default(logisticsSuppliersUpdateResponseWebsiteDefault),
-  notes: zod.string().default(logisticsSuppliersUpdateResponseNotesDefault),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
 });

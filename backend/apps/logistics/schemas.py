@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 # ==============================================================================
 class SupplierIn(Schema):
     name: str
-    cnpj: str
+    cnpj: str = Field(pattern=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$")
     phone: str
     email: str
     is_active: bool = True
@@ -29,7 +29,7 @@ class SupplierIn(Schema):
 
 class SupplierPatchIn(Schema):
     name: str | None = None
-    cnpj: str | None = None
+    cnpj: str | None = Field(None, pattern=r"^(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})?$")
     phone: str | None = None
     email: str | None = None
     is_active: bool | None = None

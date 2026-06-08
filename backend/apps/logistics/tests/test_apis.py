@@ -150,6 +150,20 @@ class TestLogisticsNinjaAPI:
         assert data["website"] == "https://bandaninja.com.br"
         assert data["notes"] == "Banda de casamento"
 
+    def test_create_supplier_invalid_cnpj_returns_422(self, auth_client):
+        payload = {
+            "name": "CNPJ Inválido",
+            "cnpj": "123",
+            "phone": "11999999999",
+            "email": "invalido@email.com",
+        }
+        response = auth_client.post(
+            "/api/v1/logistics/suppliers/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+
     def test_list_suppliers_filter_by_search(self, auth_client, user):
         SupplierService.create(
             user.company,
