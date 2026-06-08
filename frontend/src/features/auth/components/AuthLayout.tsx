@@ -3,6 +3,8 @@ import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { Logo } from "@/components/logo";
 
+const LANDING_URL = "https://simaceito.site/";
+
 interface AuthLayoutProps {
   children: ReactNode;
   heroQuote: string;
@@ -34,7 +36,7 @@ export function AuthLayout({
     <div className="bg-surface-light dark:bg-surface-dark text-zinc-900 dark:text-zinc-50 font-sans transition-colors duration-300 h-screen overflow-hidden flex flex-col justify-between">
       <header className="absolute top-0 inset-x-0 h-20 px-8 flex items-center justify-between z-30">
         <Logo
-          href="https://simaceito.site/"
+          href={LANDING_URL}
           iconClassName="w-8 h-8"
           textClassName="font-display font-bold text-lg tracking-tight text-zinc-950 dark:text-white"
           className="gap-3"

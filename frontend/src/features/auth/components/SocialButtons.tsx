@@ -8,6 +8,7 @@ export function SocialButtons() {
         type="button"
         variant="outline"
         className="w-full border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-transparent h-11"
+        // TODO(#128): Replace with Google OAuth flow
         onClick={() => toast.info("Integração Google SSO em desenvolvimento.")}
       >
         <svg className="w-4 h-4 shrink-0 mr-2" viewBox="0 0 24 24">
