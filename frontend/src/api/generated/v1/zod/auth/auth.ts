@@ -14,6 +14,7 @@ export const authRegisterUserBodyPasswordMin = 8;
 
 export const authRegisterUserBodyFirstNameDefault = ``;
 export const authRegisterUserBodyLastNameDefault = ``;
+export const authRegisterUserBodyCompanyNameDefault = ``;
 
 export const AuthRegisterUserBody = zod
   .object({
@@ -21,6 +22,7 @@ export const AuthRegisterUserBody = zod
     password: zod.string().min(authRegisterUserBodyPasswordMin),
     first_name: zod.string().default(authRegisterUserBodyFirstNameDefault),
     last_name: zod.string().default(authRegisterUserBodyLastNameDefault),
+    company_name: zod.string().default(authRegisterUserBodyCompanyNameDefault),
   })
   .describe("Schema para entrada de novos usuários (Owners).");
 
@@ -32,21 +34,27 @@ Se a conta estiver inativa ou as credenciais forem inválidas, retorna erro 401.
 No sucesso, retorna os tokens JWT e os dados básicos do usuário logado.
  * @summary Obtain Token
  */
-export const AuthObtainTokenBody = zod.object({
-  email: zod.email(),
-  password: zod.string(),
-});
+export const AuthObtainTokenBody = zod
+  .object({
+    email: zod.email(),
+    password: zod.string(),
+  })
+  .describe("Credenciais para autenticação (obtain token).");
 
-export const AuthObtainTokenResponse = zod.object({
-  access: zod.string(),
-  refresh: zod.string(),
-  user: zod.object({
-    id: zod.number(),
-    email: zod.string(),
-    first_name: zod.string(),
-    last_name: zod.string(),
-  }),
-});
+export const AuthObtainTokenResponse = zod
+  .object({
+    access: zod.string(),
+    refresh: zod.string(),
+    user: zod
+      .object({
+        id: zod.number(),
+        email: zod.string(),
+        first_name: zod.string(),
+        last_name: zod.string(),
+      })
+      .describe("Dados básicos do usuário retornados no token JWT."),
+  })
+  .describe("Resposta de autenticação com tokens JWT e dados do usuário.");
 
 /**
  * Gera um novo token de acesso usando um refresh token.

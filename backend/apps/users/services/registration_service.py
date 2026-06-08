@@ -19,7 +19,11 @@ class RegistrationService:
     @staticmethod
     @transaction.atomic
     def register_new_owner(
-        email: str, password: str, first_name: str = "", last_name: str = ""
+        email: str,
+        password: str,
+        first_name: str = "",
+        last_name: str = "",
+        company_name: str = "",
     ) -> User:
         """
         Realiza o onboarding completo de um novo profissional (Owner).
@@ -38,7 +42,7 @@ class RegistrationService:
 
         # 2. Criação da Empresa
         display_name = f"{first_name} {last_name}".strip() or email
-        company = TenantService.create_company(display_name)
+        company = TenantService.create_company(display_name, company_name=company_name)
 
         # 3. Criação do Usuário com captura de erro de integridade (Race conditions)
         try:

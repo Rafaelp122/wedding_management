@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Credenciais para autenticação (obtain token).
+ */
 export interface TokenPayloadIn {
   email: string;
   password: string;

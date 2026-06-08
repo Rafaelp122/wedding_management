@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Logo, RingsIcon } from "@/components/logo";
 
 const menuItems = [
   { title: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -31,21 +32,6 @@ const menuItems = [
   { title: "Cronograma Geral", path: "/scheduler", icon: Calendar },
   { title: "Configurações", path: "/settings", icon: Settings },
 ];
-
-const RingsIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="9" cy="13" r="5.5" />
-    <circle cx="15" cy="11" r="5.5" />
-  </svg>
-);
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
@@ -82,14 +68,7 @@ export function AppSidebar() {
           </Tooltip>
         ) : (
           <div className="flex items-center justify-between w-full px-3 h-10 animate-in fade-in duration-200">
-            <div className="flex items-center">
-              <div className="size-8 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(124,58,237,0.3)] shrink-0">
-                <RingsIcon className="size-[18px] text-primary-foreground" />
-              </div>
-              <span className="font-bold text-xl tracking-tight text-zinc-900 dark:text-white ml-3 truncate font-display">
-                Sim, Aceito!
-              </span>
-            </div>
+            <Logo />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

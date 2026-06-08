@@ -6,6 +6,9 @@
  */
 import type { UserDataOut } from "./userDataOut";
 
+/**
+ * Resposta de autenticação com tokens JWT e dados do usuário.
+ */
 export interface TokenOut {
   access: string;
   refresh: string;

@@ -1,4 +1,6 @@
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import DataError
 
 from apps.core.exceptions import DomainIntegrityError
 from apps.tenants.models import Company
@@ -48,7 +50,7 @@ class TestRegistrationService:
         email = "falha@exemplo.com"
 
         # Forçamos uma falha passando um dado inválido que o banco rejeitaria
-        with pytest.raises(Exception):  # noqa: B017
+        with pytest.raises((DataError, ValidationError)):
             RegistrationService.register_new_owner(
                 email=email,
                 password="123",
@@ -57,3 +59,22 @@ class TestRegistrationService:
 
         # Verifica que a empresa não foi criada ou foi revertida
         assert not Company.objects.filter(name__icontains=email).exists()
+
+    def test_register_new_owner_with_company_name(self):
+        """Garante que o nome da empresa é usado quando fornecido."""
+        email = "agencia@exemplo.com"
+        password = "password123"
+        first_name = "Helena"
+        last_name = "Costa"
+        company_name = "Aura Eventos"
+
+        user = RegistrationService.register_new_owner(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            company_name=company_name,
+        )
+
+        assert user.company is not None
+        assert user.company.name == company_name

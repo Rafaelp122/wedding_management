@@ -34,6 +34,7 @@ def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
         password=payload.password,
         first_name=payload.first_name,
         last_name=payload.last_name,
+        company_name=payload.company_name,
     )
     return 201, user
 

@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { lazy, Suspense, type ReactNode } from "react";
 import { ProtectedRoute } from "./guards/ProtectedRoute";
 import { PublicRoute } from "./guards/PublicRoute";
-import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { GlobalError } from "@/components/ui/globalError";
 import { LoadingScreen } from "@/components/ui/loadingScreen";
@@ -32,31 +31,26 @@ const withLoading = (element: ReactNode) => (
 );
 
 export const router = createBrowserRouter([
+  // Auth routes — standalone with their own split-screen layout
   {
-    element: <PublicLayout />,
-    errorElement: <GlobalError />, // Protege a árvore de rotas públicas
-    children: [
-      {
-        path: "/",
-        element: <Navigate to="/login" replace />,
-      },
-      {
-        path: "/login",
-        element: (
-          <PublicRoute>
-            {withLoading(<LoginPage />)}
-          </PublicRoute>
-        ),
-      },
-      {
-        path: "/register",
-        element: (
-          <PublicRoute>
-            {withLoading(<RegisterPage />)}
-          </PublicRoute>
-        ),
-      },
-    ],
+    path: "/login",
+    element: (
+      <PublicRoute>
+        {withLoading(<LoginPage />)}
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <PublicRoute>
+        {withLoading(<RegisterPage />)}
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/",
+    element: <Navigate to="/login" replace />,
   },
   {
     element: (
@@ -64,7 +58,7 @@ export const router = createBrowserRouter([
         <AppLayout />
       </ProtectedRoute>
     ),
-    errorElement: <GlobalError />, // Protege a árvore de rotas da aplicação
+    errorElement: <GlobalError />,
     children: [
       {
         path: "/app",
@@ -103,7 +97,6 @@ export const router = createBrowserRouter([
         path: "*",
         element: withLoading(<NotFoundPage />),
       },
-      // Adiciona rotas futuras com Lazy Loading aqui
     ],
   },
   {

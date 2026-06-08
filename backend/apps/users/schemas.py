@@ -3,11 +3,15 @@ from pydantic import UUID4, EmailStr, Field
 
 
 class TokenPayloadIn(Schema):
+    """Credenciais para autenticação (obtain token)."""
+
     email: EmailStr
     password: str
 
 
 class UserDataOut(Schema):
+    """Dados básicos do usuário retornados no token JWT."""
+
     id: int
     email: str
     first_name: str
@@ -15,6 +19,8 @@ class UserDataOut(Schema):
 
 
 class TokenOut(Schema):
+    """Resposta de autenticação com tokens JWT e dados do usuário."""
+
     access: str
     refresh: str
     user: UserDataOut
@@ -27,6 +33,7 @@ class RegisterIn(Schema):
     password: str = Field(min_length=8)
     first_name: str = ""
     last_name: str = ""
+    company_name: str = ""
 
 
 class UserOut(Schema):

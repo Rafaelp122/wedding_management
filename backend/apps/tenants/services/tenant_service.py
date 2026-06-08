@@ -15,20 +15,19 @@ class TenantService:
 
     @staticmethod
     @transaction.atomic
-    def create_company(display_name: str) -> Company:
+    def create_company(display_name: str, company_name: str = "") -> Company:
         """
         Cria uma Company com base no nome do usuário ou email.
+        Se company_name for fornecido, usa-o diretamente como nome da empresa.
         Retorna a instância da empresa salva.
         """
-        company_name = f"Workspace de {display_name}"
+        name = company_name.strip() if company_name else f"Workspace de {display_name}"
 
         # Geramos um slug único e curto para evitar colisões
         base_slug = slugify(display_name)[:40]
         unique_slug = f"{base_slug}-{str(uuid_lib.uuid4())[:8]}"
 
-        company = Company.objects.create(
-            name=company_name, slug=unique_slug, is_active=True
-        )
+        company = Company.objects.create(name=name, slug=unique_slug, is_active=True)
         logger.info(f"Tenant pragmático criado: {company.slug}")
         return company
 

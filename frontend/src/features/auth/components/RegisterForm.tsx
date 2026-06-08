@@ -2,14 +2,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Heart } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { useAuthRegisterUser } from "@/api/generated/v1/endpoints/auth/auth";
 import { getApiErrorInfo } from "@/api/error-utils";
+import { AuthRegisterUserBody } from "@/api/generated/v1/zod/auth/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -18,22 +20,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PasswordInput } from "./PasswordInput";
+import { SocialButtons } from "./SocialButtons";
 
 import type { ErrorType } from "@/api/api-client";
 
-const RegisterFormSchema = z
-  .object({
-    email: z.string().email(),
-    password: z.string().min(8, "Mínimo 8 caracteres"),
-    first_name: z.string().default(""),
-    last_name: z.string().default(""),
+const RegisterFormSchema = AuthRegisterUserBody.extend({
     confirm_password: z.string().min(1, "Confirme sua senha"),
   })
   .refine((data) => data.password === data.confirm_password, {
@@ -55,10 +47,12 @@ export function RegisterForm() {
       confirm_password: "",
       first_name: "",
       last_name: "",
+      company_name: "",
     },
   });
 
   const onSubmit = (data: RegisterFormData) => {
+    // Remove confirm_password before sending to API
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirm_password, ...payload } = data;
     mutate(
@@ -80,62 +74,34 @@ export function RegisterForm() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-lg border-t-4 border-t-primary">
-      <CardHeader className="flex flex-col items-center gap-1">
-        <div className="bg-primary-foreground p-3 rounded-full mb-2">
-          <Heart className="size-6 text-primary fill-primary" />
-        </div>
-        <CardTitle className="text-2xl font-bold text-center">
-          Criar Conta
-        </CardTitle>
-        <CardDescription>
-          Comece a gerenciar seus eventos em segundos
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="João" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sobrenome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Silva" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+    <div className="max-w-md w-full mx-auto space-y-6">
+      <div className="space-y-1.5">
+        <h1 className="font-display font-bold text-2xl sm:text-3xl text-zinc-950 dark:text-white tracking-tight leading-tight">
+          Comece o seu teste
+        </h1>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          14 dias grátis. Sem cartão de crédito. Ativação instantânea.
+        </p>
+      </div>
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-3.5"
+        >
+          <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
-              name="email"
+              name="first_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>E-mail</FormLabel>
+                  <FormLabel className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider">
+                    Nome
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      type="email"
-                      placeholder="seu@email.com"
+                      className="text-xs border-zinc-200 dark:border-zinc-855 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
+                      placeholder="Helena"
                       {...field}
                     />
                   </FormControl>
@@ -145,49 +111,154 @@ export function RegisterForm() {
             />
             <FormField
               control={form.control}
-              name="password"
+              name="last_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <FormLabel className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider">
+                    Sobrenome
+                  </FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
+                    <Input
+                      className="text-xs border-zinc-200 dark:border-zinc-855 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
+                      placeholder="Costa"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="confirm_password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirmar Senha</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Repita a senha" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isPending}
+          </div>
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider">
+                  E-mail de Trabalho
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    className="text-xs border-zinc-200 dark:border-zinc-855 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
+                    placeholder="nome@agencia.com"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="company_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider">
+                  Nome da sua Assessoria / Agência
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="text-xs border-zinc-200 dark:border-zinc-855 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
+                    placeholder="Sua Assessoria de Eventos"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider">
+                  Senha de Acesso
+                </FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    id="regPassword"
+                    placeholder="••••••••"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirm_password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider">
+                  Confirmar Senha
+                </FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    id="regConfirmPassword"
+                    placeholder="••••••••"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex items-center gap-2 pt-0.5">
+            <Checkbox id="agreeTerms" />
+            <label
+              htmlFor="agreeTerms"
+              className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium cursor-pointer"
             >
-              {isPending ? "Criando conta..." : "Criar Conta"}
-            </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              Já tem uma conta?{" "}
-              <Link
-                to="/login"
-                className="font-medium text-primary hover:underline"
-              >
-                Faça login
-              </Link>
-            </p>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              Eu concordo com os Termos de Uso e Política de Privacidade
+            </label>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="w-full mt-2 bg-aura-600 hover:bg-aura-700 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-aura-500/20 active:scale-[0.98]"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Criando sua agência...
+              </>
+            ) : (
+              "Criar minha conta agora"
+            )}
+          </Button>
+        </form>
+      </Form>
+
+      <div className="relative flex py-0.5 items-center">
+        <div className="flex-grow border-t border-zinc-150 dark:border-zinc-800/80" />
+        <span className="flex-shrink mx-4 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+          Ou continue com
+        </span>
+        <div className="flex-grow border-t border-zinc-150 dark:border-zinc-800/80" />
+      </div>
+
+      <SocialButtons />
+
+      <div className="text-center pt-1.5">
+        <p className="text-xs text-zinc-550 dark:text-zinc-450">
+          Já possui uma conta na plataforma?{" "}
+          <Link
+            to="/login"
+            className="font-bold text-aura-600 dark:text-aura-400 hover:underline"
+          >
+            Acessar Painel ↗
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 }

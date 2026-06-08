@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Dados básicos do usuário retornados no token JWT.
+ */
 export interface UserDataOut {
   id: number;
   email: string;
