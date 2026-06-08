@@ -14,6 +14,7 @@ export const authRegisterUserBodyPasswordMin = 8;
 
 export const authRegisterUserBodyFirstNameDefault = ``;
 export const authRegisterUserBodyLastNameDefault = ``;
+export const authRegisterUserBodyCompanyNameDefault = ``;
 
 export const AuthRegisterUserBody = zod
   .object({
@@ -21,6 +22,7 @@ export const AuthRegisterUserBody = zod
     password: zod.string().min(authRegisterUserBodyPasswordMin),
     first_name: zod.string().default(authRegisterUserBodyFirstNameDefault),
     last_name: zod.string().default(authRegisterUserBodyLastNameDefault),
+    company_name: zod.string().default(authRegisterUserBodyCompanyNameDefault),
   })
   .describe("Schema para entrada de novos usuários (Owners).");
 
