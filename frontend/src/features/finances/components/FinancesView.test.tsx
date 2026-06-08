@@ -50,8 +50,10 @@ describe("WeddingFinancesView", () => {
 
   beforeEach(() => {
     vi.mocked(useWeddingBudget).mockReturnValue(defaultBudgetData as any);
-    vi.mocked(useFinancesExpensesList).mockReturnValue(
-      defaultExpensesData as any,
+    vi.mocked(useFinancesExpensesList).mockImplementation(
+      (_params?: { wedding_id?: string | null; limit?: number; offset?: number }) => {
+        return defaultExpensesData as any;
+      },
     );
   });
 
@@ -161,7 +163,7 @@ describe("WeddingFinancesView", () => {
       status: "PARTIALLY_PAID",
     };
 
-    vi.mocked(useFinancesExpensesList).mockReturnValue({
+    const fullExpensesData = {
       data: {
         data: {
           items: [mockExpense],
@@ -169,7 +171,26 @@ describe("WeddingFinancesView", () => {
         },
       },
       isLoading: false,
-    } as any);
+    };
+
+    const recentExpensesData = {
+      data: {
+        data: {
+          items: [mockExpense],
+          count: 1,
+        },
+      },
+      isLoading: false,
+    };
+
+    vi.mocked(useFinancesExpensesList).mockImplementation(
+      (params?: { wedding_id?: string | null; limit?: number; offset?: number }) => {
+        if (params?.limit === 5) {
+          return recentExpensesData as any;
+        }
+        return fullExpensesData as any;
+      },
+    );
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
@@ -178,5 +199,9 @@ describe("WeddingFinancesView", () => {
       // Appears in both RecentExpenses card and ExpensesTable rows
       expect(matches.length).toBeGreaterThanOrEqual(2);
     });
+
+    expect(useFinancesExpensesList).toHaveBeenCalledWith(
+      expect.objectContaining({ wedding_id: "w-1", limit: 5 }),
+    );
   });
 });

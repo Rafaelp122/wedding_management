@@ -41,7 +41,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   const { data: expensesResponse, isLoading: isExpensesLoading } =
     useFinancesExpensesList({ wedding_id: weddingUuid });
 
-  const { data: recentExpensesResponse } =
+  const { data: recentExpensesResponse, isLoading: isRecentExpensesLoading } =
     useFinancesExpensesList({ wedding_id: weddingUuid, limit: 5 });
 
   const handleExpenseCreated = () => {
@@ -62,7 +62,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
     });
   };
 
-  if (isBudgetLoading || isExpensesLoading) {
+  if (isBudgetLoading || isExpensesLoading || isRecentExpensesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-zinc-500 animate-pulse">
