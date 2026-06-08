@@ -30,6 +30,8 @@ export const LogisticsSuppliersListQueryParams = zod.object({
 export const logisticsSuppliersListResponseItemsItemAddressDefault = ``;
 export const logisticsSuppliersListResponseItemsItemCityDefault = ``;
 export const logisticsSuppliersListResponseItemsItemStateDefault = ``;
+export const logisticsSuppliersListResponseItemsItemStateMax = 2;
+
 export const logisticsSuppliersListResponseItemsItemWebsiteDefault = ``;
 export const logisticsSuppliersListResponseItemsItemNotesDefault = ``;
 
@@ -50,6 +52,7 @@ export const LogisticsSuppliersListResponse = zod.object({
         .default(logisticsSuppliersListResponseItemsItemCityDefault),
       state: zod
         .string()
+        .max(logisticsSuppliersListResponseItemsItemStateMax)
         .default(logisticsSuppliersListResponseItemsItemStateDefault),
       website: zod
         .string()
@@ -72,7 +75,12 @@ export const logisticsSuppliersCreateBodyIsActiveDefault = true;
 export const logisticsSuppliersCreateBodyAddressDefault = ``;
 export const logisticsSuppliersCreateBodyCityDefault = ``;
 export const logisticsSuppliersCreateBodyStateDefault = ``;
+export const logisticsSuppliersCreateBodyStateMax = 2;
+
 export const logisticsSuppliersCreateBodyWebsiteDefault = ``;
+export const logisticsSuppliersCreateBodyWebsiteRegExp = new RegExp(
+  "^(?:https?:\/\/\\S+)?$",
+);
 export const logisticsSuppliersCreateBodyNotesDefault = ``;
 
 export const LogisticsSuppliersCreateBody = zod.object({
@@ -83,8 +91,14 @@ export const LogisticsSuppliersCreateBody = zod.object({
   is_active: zod.boolean().default(logisticsSuppliersCreateBodyIsActiveDefault),
   address: zod.string().default(logisticsSuppliersCreateBodyAddressDefault),
   city: zod.string().default(logisticsSuppliersCreateBodyCityDefault),
-  state: zod.string().default(logisticsSuppliersCreateBodyStateDefault),
-  website: zod.string().default(logisticsSuppliersCreateBodyWebsiteDefault),
+  state: zod
+    .string()
+    .max(logisticsSuppliersCreateBodyStateMax)
+    .default(logisticsSuppliersCreateBodyStateDefault),
+  website: zod
+    .string()
+    .regex(logisticsSuppliersCreateBodyWebsiteRegExp)
+    .default(logisticsSuppliersCreateBodyWebsiteDefault),
   notes: zod.string().default(logisticsSuppliersCreateBodyNotesDefault),
 });
 
@@ -99,6 +113,8 @@ export const LogisticsSuppliersReadParams = zod.object({
 export const logisticsSuppliersReadResponseAddressDefault = ``;
 export const logisticsSuppliersReadResponseCityDefault = ``;
 export const logisticsSuppliersReadResponseStateDefault = ``;
+export const logisticsSuppliersReadResponseStateMax = 2;
+
 export const logisticsSuppliersReadResponseWebsiteDefault = ``;
 export const logisticsSuppliersReadResponseNotesDefault = ``;
 
@@ -111,7 +127,10 @@ export const LogisticsSuppliersReadResponse = zod.object({
   is_active: zod.boolean(),
   address: zod.string().default(logisticsSuppliersReadResponseAddressDefault),
   city: zod.string().default(logisticsSuppliersReadResponseCityDefault),
-  state: zod.string().default(logisticsSuppliersReadResponseStateDefault),
+  state: zod
+    .string()
+    .max(logisticsSuppliersReadResponseStateMax)
+    .default(logisticsSuppliersReadResponseStateDefault),
   website: zod.string().default(logisticsSuppliersReadResponseWebsiteDefault),
   notes: zod.string().default(logisticsSuppliersReadResponseNotesDefault),
   created_at: zod.iso.datetime({}),
@@ -126,6 +145,10 @@ export const LogisticsSuppliersUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
+export const logisticsSuppliersUpdateBodyStateOneMax = 2;
+
+export const logisticsSuppliersUpdateBodyWebsiteDefault = ``;
+
 export const LogisticsSuppliersUpdateBody = zod.object({
   name: zod.union([zod.string(), zod.null()]).optional(),
   cnpj: zod.union([zod.string(), zod.null()]).optional(),
@@ -134,14 +157,21 @@ export const LogisticsSuppliersUpdateBody = zod.object({
   is_active: zod.union([zod.boolean(), zod.null()]).optional(),
   address: zod.union([zod.string(), zod.null()]).optional(),
   city: zod.union([zod.string(), zod.null()]).optional(),
-  state: zod.union([zod.string(), zod.null()]).optional(),
-  website: zod.union([zod.string(), zod.null()]).optional(),
+  state: zod
+    .union([
+      zod.string().max(logisticsSuppliersUpdateBodyStateOneMax),
+      zod.null(),
+    ])
+    .optional(),
+  website: zod.string().default(logisticsSuppliersUpdateBodyWebsiteDefault),
   notes: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 export const logisticsSuppliersUpdateResponseAddressDefault = ``;
 export const logisticsSuppliersUpdateResponseCityDefault = ``;
 export const logisticsSuppliersUpdateResponseStateDefault = ``;
+export const logisticsSuppliersUpdateResponseStateMax = 2;
+
 export const logisticsSuppliersUpdateResponseWebsiteDefault = ``;
 export const logisticsSuppliersUpdateResponseNotesDefault = ``;
 
@@ -154,7 +184,10 @@ export const LogisticsSuppliersUpdateResponse = zod.object({
   is_active: zod.boolean(),
   address: zod.string().default(logisticsSuppliersUpdateResponseAddressDefault),
   city: zod.string().default(logisticsSuppliersUpdateResponseCityDefault),
-  state: zod.string().default(logisticsSuppliersUpdateResponseStateDefault),
+  state: zod
+    .string()
+    .max(logisticsSuppliersUpdateResponseStateMax)
+    .default(logisticsSuppliersUpdateResponseStateDefault),
   website: zod.string().default(logisticsSuppliersUpdateResponseWebsiteDefault),
   notes: zod.string().default(logisticsSuppliersUpdateResponseNotesDefault),
   created_at: zod.iso.datetime({}),

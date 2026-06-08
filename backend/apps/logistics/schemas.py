@@ -22,8 +22,8 @@ class SupplierIn(Schema):
     is_active: bool = True
     address: str = ""
     city: str = ""
-    state: str = ""
-    website: str = ""
+    state: str = Field("", max_length=2)
+    website: str = Field("", pattern=r"^(?:https?://\S+)?$")
     notes: str = ""
 
 
@@ -35,8 +35,8 @@ class SupplierPatchIn(Schema):
     is_active: bool | None = None
     address: str | None = None
     city: str | None = None
-    state: str | None = None
-    website: str | None = None
+    state: str | None = Field(None, max_length=2)
+    website: str = ""
     notes: str | None = None
 
 
@@ -49,7 +49,7 @@ class SupplierOut(Schema):
     is_active: bool
     address: str = ""
     city: str = ""
-    state: str = ""
+    state: str = Field("", max_length=2)
     website: str = ""
     notes: str = ""
     created_at: datetime.datetime
