@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DollarSign, AlertTriangle, FileText, Clock } from "lucide-react";
 import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
@@ -44,12 +45,29 @@ export function StatsCards({ summary }: StatsCardsProps) {
   const overdueCount = summary?.overdue_installments_count ?? 0;
   const pendingContractsCount = summary?.pending_contracts_count ?? 0;
 
-  // Fetch lists to dynamically render details inside the sidebars
-  const { data: weddingsRes, isLoading: isLoadingWeddings } = useWeddingsList();
-  const { data: expensesRes, isLoading: isLoadingExpenses } = useFinancesExpensesList({ limit: 100 });
-  const { data: installmentsRes, isLoading: isLoadingInstallments } = useFinancesInstallmentsList({ limit: 100 });
-  const { data: tasksRes, isLoading: isLoadingTasks } = useSchedulerTasksList({ limit: 100 });
-  const { data: contractsRes, isLoading: isLoadingContracts } = useLogisticsContractsList({ limit: 100 });
+  // Lazy: only fetch supporting data when a Sheet is opened
+  const [hasOpenedSheet, setHasOpenedSheet] = useState(false);
+
+  const { data: weddingsRes, isLoading: isLoadingWeddings } = useWeddingsList(
+    undefined,
+    { query: { enabled: hasOpenedSheet } },
+  );
+  const { data: expensesRes, isLoading: isLoadingExpenses } = useFinancesExpensesList(
+    { limit: 100 },
+    { query: { enabled: hasOpenedSheet } },
+  );
+  const { data: installmentsRes, isLoading: isLoadingInstallments } = useFinancesInstallmentsList(
+    { limit: 100 },
+    { query: { enabled: hasOpenedSheet } },
+  );
+  const { data: tasksRes, isLoading: isLoadingTasks } = useSchedulerTasksList(
+    { limit: 100 },
+    { query: { enabled: hasOpenedSheet } },
+  );
+  const { data: contractsRes, isLoading: isLoadingContracts } = useLogisticsContractsList(
+    { limit: 100 },
+    { query: { enabled: hasOpenedSheet } },
+  );
 
   const isSharedLoading =
     isLoadingWeddings ||
@@ -118,7 +136,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
             <span>Próximos 7 dias</span>
           </div>
           {pendingAmount > 0 && (
-            <Sheet>
+            <Sheet onOpenChange={(open) => { if (open) setHasOpenedSheet(true); }}>
               <SheetTrigger asChild>
                 <button className="text-xs font-medium text-aura-600 dark:text-aura-400 underline cursor-pointer hover:text-aura-800 dark:hover:text-aura-300 bg-transparent border-0 p-0">
                   Ver Parcelas
@@ -195,7 +213,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
             <DollarSign className="w-5 h-5" />
           </div>
         </div>
-        
+
         <div className="flex items-center justify-between mt-4 relative z-10">
           <div className={`flex items-center text-xs font-medium w-max px-2 py-1 rounded border ${
             overdueCount > 0
@@ -205,7 +223,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
             <span>{overdueCount > 0 ? `Ação Necessária: ${overdueCount} pendência${overdueCount > 1 ? "s" : ""}` : "Nenhuma pendência"}</span>
           </div>
           {overdueCount > 0 && (
-            <Sheet>
+            <Sheet onOpenChange={(open) => { if (open) setHasOpenedSheet(true); }}>
               <SheetTrigger asChild>
                 <button className="text-xs font-medium text-destructive underline cursor-pointer hover:text-red-700 dark:hover:text-red-400 bg-transparent border-0 p-0">
                   Ver Parcelas
@@ -282,7 +300,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
             <AlertTriangle className="w-5 h-5" />
           </div>
         </div>
-        
+
         <div className="flex items-center justify-between mt-4 relative z-10">
           <div className={`flex items-center text-xs font-medium w-max px-2 py-1 rounded border ${
             urgentTasksCount > 0
@@ -292,7 +310,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
             <span>{urgentTasksCount > 0 ? `Ação Necessária: ${urgentTasksCount} pendência${urgentTasksCount > 1 ? "s" : ""}` : "Nenhuma pendência"}</span>
           </div>
           {urgentTasksCount > 0 && (
-            <Sheet>
+            <Sheet onOpenChange={(open) => { if (open) setHasOpenedSheet(true); }}>
               <SheetTrigger asChild>
                 <button className="text-xs font-medium text-destructive underline cursor-pointer hover:text-red-700 dark:hover:text-red-400 bg-transparent border-0 p-0">
                   Ver Tarefas
@@ -375,7 +393,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
             <span>{pendingContractsCount > 0 ? "Aguardando assinatura/sinal" : "Nenhum pendente"}</span>
           </div>
           {pendingContractsCount > 0 && (
-            <Sheet>
+            <Sheet onOpenChange={(open) => { if (open) setHasOpenedSheet(true); }}>
               <SheetTrigger asChild>
                 <button className="text-xs font-medium text-amber-600 dark:text-amber-400 underline cursor-pointer hover:text-amber-800 dark:hover:text-amber-300 bg-transparent border-0 p-0">
                   Ver Contratos

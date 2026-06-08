@@ -1,6 +1,7 @@
 import { LogOut, User as UserIcon, Moon, Sun, MoreVertical, Settings } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -18,8 +19,10 @@ export function NavUser() {
   const { user, logout } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const { state } = useSidebar();
+  const queryClient = useQueryClient();
 
   const handleLogout = () => {
+    queryClient.clear();
     logout();
     navigate("/login");
   };
@@ -155,5 +158,3 @@ export function NavUser() {
     </div>
   );
 }
-
-

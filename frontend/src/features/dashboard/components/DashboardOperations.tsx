@@ -60,9 +60,8 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
         queryClient.invalidateQueries({ queryKey: ["/api/v1/scheduler/tasks/"] });
         queryClient.invalidateQueries({ queryKey: ["/api/v1/dashboard/summary"] });
       },
-      onError: (err) => {
+      onError: () => {
         toast.error("Erro ao atualizar a tarefa.");
-        console.error(err);
       },
     },
   });

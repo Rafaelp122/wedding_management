@@ -20,22 +20,27 @@ logger = logging.getLogger(__name__)
 class DashboardService:
     @staticmethod
     def get_summary(company: Company) -> dict:
+        """Return aggregated dashboard KPIs for the given company.
+
+        Returns:
+            dict: Keys include ``pending_installments_7d`` (str),
+            ``urgent_tasks_count`` (int), ``overdue_installments_amount`` (str),
+            ``overdue_installments_count`` (int), ``pending_contracts_count`` (int),
+            and ``critical_weddings`` (list of dicts).
+        """
         today = date.today()
         seven_days = today + timedelta(days=7)
         ninety_days = today + timedelta(days=90)
 
         pending_7d = (
-            (
-                Installment.objects.for_tenant(company)
-                .filter(
-                    status=Installment.StatusChoices.PENDING,
-                    due_date__gte=today,
-                    due_date__lte=seven_days,
-                )
-                .aggregate(total=Sum("amount"))["total"]
+            Installment.objects.for_tenant(company)
+            .filter(
+                status=Installment.StatusChoices.PENDING,
+                due_date__gte=today,
+                due_date__lte=seven_days,
             )
-            or 0
-        )
+            .aggregate(total=Sum("amount"))["total"]
+        ) or Decimal("0.00")
 
         urgent_tasks_count = (
             Task.objects.for_tenant(company)
@@ -128,6 +133,17 @@ class DashboardService:
 
     @staticmethod
     def get_wedding_overview(company: Company, wedding_uuid: UUID) -> dict:
+        """Return per-wedding dashboard metrics.
+
+        Args:
+            company: The tenant company.
+            wedding_uuid: UUID of the wedding to retrieve the overview for.
+
+        Returns:
+            dict: Includes ``days_until_wedding``, ``budget_percentage_used``,
+            task/contract counts, ``upcoming_installments``, ``urgent_tasks``,
+            and ``categories_summary``.
+        """
         wedding = WeddingService.get(company, wedding_uuid)
         today = date.today()
         days_until = max(0, (wedding.date - today).days)

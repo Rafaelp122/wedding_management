@@ -46,7 +46,9 @@ export default function DashboardPage() {
   const firstName = useAuthStore((state) => state.user?.first_name);
 
   const { data, isLoading, error } = useWeddingsList();
-  const { data: summaryData } = useDashboardSummary();
+  const { data: summaryData } = useDashboardSummary({
+    query: { enabled: selectedWeddingUuid === "all" },
+  });
 
   const isWeddingSelected = selectedWeddingUuid !== "all";
 

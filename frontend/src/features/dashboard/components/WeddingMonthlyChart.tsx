@@ -53,12 +53,12 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
 
   // API calls for Cash Flow and Tasks
   const { data: installmentsRes, isLoading: isLoadingInstallments } = useFinancesInstallmentsList(
-    { limit: 1000 },
+    { limit: 200 },
     { query: { enabled: activeTab === "financeiro" } }
   );
 
   const { data: tasksRes, isLoading: isLoadingTasks } = useSchedulerTasksList(
-    { limit: 1000 },
+    { limit: 200 },
     { query: { enabled: activeTab === "tarefas" } }
   );
 
@@ -129,7 +129,7 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
       const total = weddingTasks.length;
       const completed = weddingTasks.filter((t) => t.is_completed).length;
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-      
+
       return {
         name: `${w.bride_name.split(" ")[0]} & ${w.groom_name.split(" ")[0]}`,
         concluido: percentage,
@@ -345,4 +345,3 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
     </Card>
   );
 });
-
