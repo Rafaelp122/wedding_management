@@ -51,7 +51,7 @@ describe("WeddingFinancesView", () => {
   beforeEach(() => {
     vi.mocked(useWeddingBudget).mockReturnValue(defaultBudgetData as any);
     vi.mocked(useFinancesExpensesList).mockImplementation(
-      (_params?: { wedding_id?: string | null; limit?: number; offset?: number }) => {
+      () => {
         return defaultExpensesData as any;
       },
     );
