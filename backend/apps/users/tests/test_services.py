@@ -1,4 +1,6 @@
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import DataError
 
 from apps.core.exceptions import DomainIntegrityError
 from apps.tenants.models import Company
@@ -48,7 +50,7 @@ class TestRegistrationService:
         email = "falha@exemplo.com"
 
         # Forçamos uma falha passando um dado inválido que o banco rejeitaria
-        with pytest.raises(Exception):  # noqa: B017
+        with pytest.raises((DataError, ValidationError)):
             RegistrationService.register_new_owner(
                 email=email,
                 password="123",
