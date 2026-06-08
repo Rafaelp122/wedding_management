@@ -9,8 +9,8 @@ describe("StatsCards", () => {
       <StatsCards summary={createMockDashboardSummary()} />,
     );
 
-    expect(screen.getByText("Casamentos Ativos")).toBeInTheDocument();
-    expect(screen.getByText("Casamentos este Mês")).toBeInTheDocument();
+    expect(screen.getByText("Parcelas Vencidas")).toBeInTheDocument();
+    expect(screen.getByText("Contratos Pendentes")).toBeInTheDocument();
     expect(screen.getByText(/Parcelas a Vencer/i)).toBeInTheDocument();
     expect(screen.getByText("Tarefas Atrasadas")).toBeInTheDocument();
   });
@@ -26,13 +26,24 @@ describe("StatsCards", () => {
     render(
       <StatsCards
         summary={createMockDashboardSummary({
-          active_weddings: 8,
           urgent_tasks_count: 3,
+          overdue_installments_amount: "12350.00",
+          overdue_installments_count: 2,
+          pending_contracts_count: 5,
         })}
       />,
     );
 
-    expect(screen.getByText("8")).toBeInTheDocument();
+    // Urgent tasks (Card 3)
     expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("Ação Necessária: 3 pendências")).toBeInTheDocument();
+
+    // Overdue payments (Card 2)
+    expect(screen.getByText("R$ 12.350,00")).toBeInTheDocument();
+    expect(screen.getByText("Ação Necessária: 2 pendências")).toBeInTheDocument();
+
+    // Pending contracts (Card 4)
+    expect(screen.getByText("5")).toBeInTheDocument();
+    expect(screen.getByText("Aguardando assinatura/sinal")).toBeInTheDocument();
   });
 });

@@ -89,6 +89,7 @@ export function UpcomingInstallments() {
                     {new Intl.DateTimeFormat("pt-BR", {
                       day: "2-digit",
                       month: "short",
+                      timeZone: "UTC",
                     }).format(new Date(inst.due_date))}
                   </p>
                 </div>
