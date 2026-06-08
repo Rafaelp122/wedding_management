@@ -6,10 +6,16 @@ Responsabilidade: Gestão de fornecedores de produtos e serviços para casamento
 Referência: RF09
 """
 
-from django.core.validators import MaxLengthValidator
+from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
 
 from apps.tenants.models import TenantModel
+
+
+cnpj_validator = RegexValidator(
+    regex=r"^(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})?$",
+    message="CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.",
+)
 
 
 class Supplier(TenantModel):
@@ -27,6 +33,7 @@ class Supplier(TenantModel):
     cnpj = models.CharField(
         max_length=18,
         blank=True,
+        validators=[cnpj_validator],
         verbose_name="CNPJ",
         help_text="Formato: 00.000.000/0000-00",
     )

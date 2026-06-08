@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.logistics.models import Contract, Supplier
@@ -38,6 +39,18 @@ class TestSupplierServiceCreate:
         assert supplier.state == "SP"
         assert supplier.website == "https://buffetmaster.com.br"
         assert supplier.notes == "Fornecedor premium"
+
+    def test_create_supplier_with_invalid_cnpj_raises_validation_error(self, user):
+        """CNPJ com formato inválido deve disparar ValidationError."""
+        data = {
+            "name": "Fornecedor Inválido",
+            "cnpj": "123",
+            "phone": "11999999999",
+            "email": "invalido@email.com",
+        }
+
+        with pytest.raises(ValidationError):
+            SupplierService.create(user.company, data)
 
 
 @pytest.mark.django_db
