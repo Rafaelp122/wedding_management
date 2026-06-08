@@ -20,6 +20,11 @@ class SupplierIn(Schema):
     phone: str
     email: str
     is_active: bool = True
+    address: str = ""
+    city: str = ""
+    state: str = ""
+    website: str = ""
+    notes: str = ""
 
 
 class SupplierPatchIn(Schema):
@@ -28,6 +33,11 @@ class SupplierPatchIn(Schema):
     phone: str | None = None
     email: str | None = None
     is_active: bool | None = None
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    website: str | None = None
+    notes: str | None = None
 
 
 class SupplierOut(Schema):
@@ -37,6 +47,11 @@ class SupplierOut(Schema):
     phone: str
     email: str
     is_active: bool
+    address: str = ""
+    city: str = ""
+    state: str = ""
+    website: str = ""
+    notes: str = ""
     created_at: datetime.datetime
     updated_at: datetime.datetime
 

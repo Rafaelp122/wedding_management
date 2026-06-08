@@ -11,4 +11,9 @@ export interface SupplierPatchIn {
   phone?: string | null;
   email?: string | null;
   is_active?: boolean | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  website?: string | null;
+  notes?: string | null;
 }
