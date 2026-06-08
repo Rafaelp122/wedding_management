@@ -11,4 +11,11 @@ export interface SupplierIn {
   phone: string;
   email: string;
   is_active?: boolean;
+  address?: string;
+  city?: string;
+  /** @maxLength 2 */
+  state?: string;
+  /** @pattern ^(?:https?://\S+)?$ */
+  website?: string;
+  notes?: string;
 }

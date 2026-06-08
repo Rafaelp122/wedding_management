@@ -21,6 +21,11 @@ class TestSupplierServiceCreate:
             "cnpj": "00.000.000/0001-00",
             "phone": "11999999999",
             "email": "buffet@master.com",
+            "address": "Rua das Flores, 123",
+            "city": "São Paulo",
+            "state": "SP",
+            "website": "https://buffetmaster.com.br",
+            "notes": "Fornecedor premium",
         }
 
         supplier = SupplierService.create(user.company, data)
@@ -28,6 +33,11 @@ class TestSupplierServiceCreate:
         assert supplier.company == user.company
         assert supplier.name == "Buffet Master"
         assert supplier.is_active is True
+        assert supplier.address == "Rua das Flores, 123"
+        assert supplier.city == "São Paulo"
+        assert supplier.state == "SP"
+        assert supplier.website == "https://buffetmaster.com.br"
+        assert supplier.notes == "Fornecedor premium"
 
 
 @pytest.mark.django_db
@@ -60,6 +70,28 @@ class TestSupplierServiceUpdate:
         updated = SupplierService.update(user.company, supplier, {"is_active": False})
 
         assert updated.is_active is False
+
+    def test_update_supplier_new_fields(self, user):
+        """Atualização dos campos address, city, state, website, notes."""
+        supplier = SupplierFactory(company=user.company)
+
+        updated = SupplierService.update(
+            user.company,
+            supplier,
+            {
+                "address": "Av. Paulista, 1000",
+                "city": "São Paulo",
+                "state": "SP",
+                "website": "https://example.com",
+                "notes": "Observação atualizada",
+            },
+        )
+
+        assert updated.address == "Av. Paulista, 1000"
+        assert updated.city == "São Paulo"
+        assert updated.state == "SP"
+        assert updated.website == "https://example.com"
+        assert updated.notes == "Observação atualizada"
 
 
 @pytest.mark.django_db

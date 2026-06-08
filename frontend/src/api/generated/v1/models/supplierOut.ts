@@ -12,6 +12,12 @@ export interface SupplierOut {
   phone: string;
   email: string;
   is_active: boolean;
+  address?: string;
+  city?: string;
+  /** @maxLength 2 */
+  state?: string;
+  website?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }

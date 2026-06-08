@@ -129,6 +129,11 @@ class TestLogisticsNinjaAPI:
             "phone": "11999999999",
             "email": "banda@ninja.com",
             "is_active": True,
+            "address": "Rua da Música, 456",
+            "city": "Rio de Janeiro",
+            "state": "RJ",
+            "website": "https://bandaninja.com.br",
+            "notes": "Banda de casamento",
         }
         response = auth_client.post(
             "/api/v1/logistics/suppliers/",
@@ -139,6 +144,11 @@ class TestLogisticsNinjaAPI:
         data = response.json()
         assert data["name"] == "Banda Ninja"
         assert "uuid" in data
+        assert data["address"] == "Rua da Música, 456"
+        assert data["city"] == "Rio de Janeiro"
+        assert data["state"] == "RJ"
+        assert data["website"] == "https://bandaninja.com.br"
+        assert data["notes"] == "Banda de casamento"
 
     def test_list_suppliers_filter_by_search(self, auth_client, user):
         SupplierService.create(
