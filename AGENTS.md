@@ -21,6 +21,7 @@
 
 - **Feature-Based Architecture**: Organize by features in `src/features/<feature_name>/`.
   - Structure: `/components`, `/hooks`, `/pages`, `/types.ts`, `/utils`.
+- **Design Guidelines**: Consult and follow the official design guidelines in `docs/DESIGN.md` for colors, layouts, typography, Dialog vs Sheet rules, and micro-interactions.
 - **shadcn/ui**:
   - Base UI components live in `src/components/ui/`.
   - Business components live in the feature folder.
@@ -53,6 +54,7 @@
 ## 🤖 AI Agent Guidelines
 
 - **Use subagents** for specialized tasks (backend, frontend, testing, design, review)
+- **Design Guidelines**: Before creating or modifying any UI component, page, or layout, read `docs/DESIGN.md` to ensure absolute consistency with the visual and interaction standards of the system.
 - **Load skills on demand** when you need deep domain knowledge:
 
 | Domain | Skill |
