@@ -21,7 +21,7 @@ def seed_data(user, django_user_model):
     )
     my_supplier = SupplierService.create(
         user.company,
-        {"name": "Fornecedor Meu", "cnpj": "0", "phone": "0", "email": "a@email.com"},
+        {"name": "Fornecedor Meu", "cnpj": "", "phone": "0", "email": "a@email.com"},
     )
     my_contract = ContractService.create(
         user.company,
@@ -61,7 +61,7 @@ def seed_data(user, django_user_model):
     )
     other_supplier = SupplierService.create(
         other_user.company,
-        {"name": "Outro", "cnpj": "1", "phone": "1", "email": "b@email.com"},
+        {"name": "Outro", "cnpj": "", "phone": "1", "email": "b@email.com"},
     )
     other_contract = ContractService.create(
         other_user.company,
@@ -155,7 +155,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             {
                 "name": "Buffet Estrela",
-                "cnpj": "1",
+                "cnpj": "",
                 "phone": "1",
                 "email": "buffet@email.com",
             },
@@ -164,14 +164,14 @@ class TestLogisticsNinjaAPI:
             user.company,
             {
                 "name": "Fotógrafo Sol",
-                "cnpj": "2",
+                "cnpj": "",
                 "phone": "2",
                 "email": "foto@email.com",
             },
         )
         SupplierService.create(
             user.company,
-            {"name": "Outro", "cnpj": "3", "phone": "3", "email": "outro@email.com"},
+            {"name": "Outro", "cnpj": "", "phone": "3", "email": "outro@email.com"},
         )
 
         response = auth_client.get("/api/v1/logistics/suppliers/?search=estrela")
@@ -186,7 +186,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             {
                 "name": "Ativo",
-                "cnpj": "1",
+                "cnpj": "",
                 "phone": "1",
                 "email": "a@email.com",
                 "is_active": True,
@@ -196,7 +196,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             {
                 "name": "Inativo",
-                "cnpj": "2",
+                "cnpj": "",
                 "phone": "2",
                 "email": "b@email.com",
                 "is_active": False,
@@ -214,7 +214,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             {
                 "name": "A Buffet",
-                "cnpj": "1",
+                "cnpj": "",
                 "phone": "1",
                 "email": "a@email.com",
                 "is_active": True,
@@ -224,7 +224,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             {
                 "name": "B Buffet",
-                "cnpj": "2",
+                "cnpj": "",
                 "phone": "2",
                 "email": "b@email.com",
                 "is_active": False,
