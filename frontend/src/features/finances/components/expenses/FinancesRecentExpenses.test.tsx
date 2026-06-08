@@ -4,12 +4,12 @@ import { WeddingFinancesRecentExpenses } from "./FinancesRecentExpenses";
 import { createMockExpense } from "@/test-data";
 
 // ---------------------------------------------------------------------------
-// Mock the lazy-loaded ExpenseDetailDialog so it renders synchronously.
+// Mock the lazy-loaded ExpenseDetailSheet so it renders synchronously.
 // Because vi.mock is hoisted, the dynamic import inside React.lazy resolves
 // to this component immediately under test.
 // ---------------------------------------------------------------------------
-vi.mock("./ExpenseDetailDialog", () => ({
-  ExpenseDetailDialog: ({
+vi.mock("./ExpenseDetailSheet", () => ({
+  ExpenseDetailSheet: ({
     expense,
     open,
     onOpenChange,
@@ -19,7 +19,7 @@ vi.mock("./ExpenseDetailDialog", () => ({
     onOpenChange: (open: boolean) => void;
   }) =>
     open ? (
-      <div data-testid="expense-detail-dialog">
+      <div data-testid="expense-detail-sheet">
         <span>{expense.name}</span>
         <button onClick={() => onOpenChange(false)}>close</button>
       </div>
@@ -123,7 +123,7 @@ describe("WeddingFinancesRecentExpenses", () => {
 
     // The mocked dialog should appear (use findBy because React.lazy
     // requires an extra render cycle even with the mock in place)
-    const dialog = await screen.findByTestId("expense-detail-dialog");
+    const dialog = await screen.findByTestId("expense-detail-sheet");
     expect(dialog).toBeInTheDocument();
 
     // Expense name is shown inside the dialog
@@ -141,14 +141,14 @@ describe("WeddingFinancesRecentExpenses", () => {
 
     // Open the dialog
     await user.click(screen.getByText("Buffet Premium"));
-    const dialog = await screen.findByTestId("expense-detail-dialog");
+    const dialog = await screen.findByTestId("expense-detail-sheet");
     expect(dialog).toBeInTheDocument();
 
     // Close by clicking the "close" button rendered inside the mock
     await user.click(within(dialog).getByRole("button", { name: /close/i }));
 
     expect(
-      screen.queryByTestId("expense-detail-dialog"),
+      screen.queryByTestId("expense-detail-sheet"),
     ).not.toBeInTheDocument();
   });
 

@@ -16,12 +16,12 @@ import { formatCurrencyBR } from "@/lib/formatters";
 import { getApiErrorInfo } from "@/api/error-utils";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -38,17 +38,17 @@ import { ExpenseInstallmentRow } from "./ExpenseInstallmentRow";
 import { ExpenseRedistributeForm } from "./ExpenseRedistributeForm";
 import { statusVariant, statusLabel } from "./constants";
 
-interface ExpenseDetailDialogProps {
+interface ExpenseDetailSheetProps {
   expense: ExpenseOut;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function ExpenseDetailDialog({
+export function ExpenseDetailSheet({
   expense,
   open,
   onOpenChange,
-}: ExpenseDetailDialogProps) {
+}: ExpenseDetailSheetProps) {
   const queryClient = useQueryClient();
   const [payingUuid, setPayingUuid] = useState<string | null>(null);
   const [showRedistribute, setShowRedistribute] = useState(false);
@@ -101,10 +101,10 @@ export function ExpenseDetailDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between pr-8">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-[600px] h-full overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center justify-between pr-8">
             <span className="truncate">
               {liveExpense.name || liveExpense.description || "N/A"}
             </span>
@@ -115,8 +115,8 @@ export function ExpenseDetailDialog({
             >
               {statusLabel[liveExpense.status ?? "PENDING"] ?? liveExpense.status}
             </Badge>
-          </DialogTitle>
-          <DialogDescription asChild>
+          </SheetTitle>
+          <SheetDescription asChild>
             <div className="space-y-1 pt-1">
               <p className="text-sm">
                 Categoria:{" "}
@@ -139,10 +139,10 @@ export function ExpenseDetailDialog({
                 </p>
               ) : null}
             </div>
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 mt-4">
           <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
@@ -214,7 +214,7 @@ export function ExpenseDetailDialog({
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
