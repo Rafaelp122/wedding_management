@@ -3,7 +3,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
+} from "@/components/ui/accordion";
 
 export default function FaqSection() {
   return (
@@ -17,7 +17,10 @@ export default function FaqSection() {
             Como funciona o parcelamento automático?
           </AccordionTrigger>
           <AccordionContent className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed pt-2">
-            Sempre que lança um contrato de fornecedor, pode escolher o número de faturas e o primeiro vencimento. O Sim, Aceito! ERP gera as parcelas sequenciais automaticamente no calendário financeiro para não ter de lançar uma a uma.
+            Sempre que lança um contrato de fornecedor, pode escolher o número
+            de faturas e o primeiro vencimento. O Sim, Aceito! gera as parcelas
+            sequenciais automaticamente no calendário financeiro para não ter de
+            lançar uma a uma.
           </AccordionContent>
         </AccordionItem>
 
@@ -29,7 +32,9 @@ export default function FaqSection() {
             Posso compartilhar as despesas diretamente com os noivos?
           </AccordionTrigger>
           <AccordionContent className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed pt-2">
-            Sim! Através da ferramenta de relatórios de um clique, pode gerar um resumo de fluxo de caixa limpo em formato PDF para que os noivos visualizem os pagamentos em dia de forma transparente.
+            Sim! Através da ferramenta de relatórios de um clique, pode gerar um
+            resumo de fluxo de caixa limpo em formato PDF para que os noivos
+            visualizem os pagamentos em dia de forma transparente.
           </AccordionContent>
         </AccordionItem>
 
@@ -41,7 +46,9 @@ export default function FaqSection() {
             Preciso pagar para testar?
           </AccordionTrigger>
           <AccordionContent className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed pt-2">
-            Não. Ao criar a sua conta hoje, recebe 14 dias de teste totalmente gratuito com todas as funcionalidades operacionais liberadas para testar com os seus casamentos reais.
+            Não. Ao criar a sua conta hoje, recebe 14 dias de teste totalmente
+            gratuito com todas as funcionalidades operacionais liberadas para
+            testar com os seus casamentos reais.
           </AccordionContent>
         </AccordionItem>
       </Accordion>
