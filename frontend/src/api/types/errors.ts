@@ -7,3 +7,14 @@ export interface ApiErrorInfo {
   code?: string;
   message: string;
 }
+
+/**
+ * Erro de validação individual retornado pelo Django Ninja (Pydantic).
+ * Formato: `{ type, loc, msg }` — status 422.
+ */
+export interface PydanticValidationItem {
+  type: string;
+  loc: (string | number)[];
+  msg: string;
+  input?: unknown;
+}

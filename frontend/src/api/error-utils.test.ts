@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { getApiErrorInfo } from "@/api/error-utils";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getApiErrorInfo, mapErrorsToForm } from "@/api/error-utils";
 import type { ApiErrorInfo } from "@/api/types/errors";
 import { AxiosError } from "axios";
 
@@ -36,6 +36,22 @@ describe("getApiErrorInfo", () => {
     expect(result.message).toBe("deu ruim");
   });
 
+  it("returns network error message for Network Error", () => {
+    const error = new AxiosError("Network Error", "ERR_NETWORK");
+    const result = getApiErrorInfo(error);
+    expect(result.message).toBe(
+      "Não foi possível conectar ao servidor. Por favor, tente novamente mais tarde.",
+    );
+  });
+
+  it("returns network error message when response is missing", () => {
+    const error = new AxiosError("Request failed", "ERR_BAD_REQUEST");
+    const result = getApiErrorInfo(error);
+    expect(result.message).toBe(
+      "Não foi possível conectar ao servidor. Por favor, tente novamente mais tarde.",
+    );
+  });
+
   it("returns status-based message for 401", () => {
     const result = getApiErrorInfo(createAxiosError(401));
     expect(result.status).toBe(401);
@@ -68,6 +84,28 @@ describe("getApiErrorInfo", () => {
       createAxiosError(400, { detail: "Invalid input" }),
     );
     expect(result.message).toBe("Invalid input");
+  });
+
+  it("returns Pydantic validation detail with field name", () => {
+    const result = getApiErrorInfo(
+      createAxiosError(422, {
+        detail: [
+          { type: "value_error", loc: ["body", "email"], msg: "Invalid email" },
+        ],
+      }),
+    );
+    expect(result.message).toBe("email: Invalid email");
+  });
+
+  it("returns Pydantic validation detail without body prefix", () => {
+    const result = getApiErrorInfo(
+      createAxiosError(422, {
+        detail: [
+          { type: "value_error", loc: ["body"], msg: "Request body required" },
+        ],
+      }),
+    );
+    expect(result.message).toBe("Request body required");
   });
 
   it("returns message field from response data", () => {
@@ -116,5 +154,119 @@ describe("getApiErrorInfo", () => {
   it("returns fallback for unknown status code", () => {
     const result = getApiErrorInfo(createAxiosError(418));
     expect(result.message).toBe("Não foi possível concluir a operação.");
+  });
+});
+
+describe("mapErrorsToForm", () => {
+  const mockSetError = vi.fn();
+
+  beforeEach(() => {
+    mockSetError.mockClear();
+  });
+
+  it("returns false for non-Axios errors", () => {
+    const result = mapErrorsToForm(new Error("boom"), mockSetError);
+    expect(result).toBe(false);
+    expect(mockSetError).not.toHaveBeenCalled();
+  });
+
+  it("returns false for Axios errors without response", () => {
+    const error = new AxiosError("Network Error", "ERR_NETWORK");
+    const result = mapErrorsToForm(error, mockSetError);
+    expect(result).toBe(false);
+    expect(mockSetError).not.toHaveBeenCalled();
+  });
+
+  it("maps Pydantic validation errors to form fields", () => {
+    const error = createAxiosError(422, {
+      detail: [
+        { type: "value_error", loc: ["body", "email"], msg: "Invalid email format" },
+        { type: "missing", loc: ["body", "password"], msg: "Field required" },
+      ],
+    });
+
+    const result = mapErrorsToForm(error, mockSetError);
+    expect(result).toBe(true);
+    expect(mockSetError).toHaveBeenCalledTimes(2);
+    expect(mockSetError).toHaveBeenCalledWith("email", {
+      type: "server",
+      message: "Invalid email format",
+    });
+    expect(mockSetError).toHaveBeenCalledWith("password", {
+      type: "server",
+      message: "Field required",
+    });
+  });
+
+  it("skips Pydantic errors with 'body' as field name", () => {
+    const error = createAxiosError(422, {
+      detail: [
+        { type: "missing", loc: ["body"], msg: "Request body required" },
+      ],
+    });
+
+    const result = mapErrorsToForm(error, mockSetError);
+    expect(result).toBe(false);
+    expect(mockSetError).not.toHaveBeenCalled();
+  });
+
+  it("maps Django field errors to form fields", () => {
+    const error = createAxiosError(400, {
+      email: ["Este campo é obrigatório"],
+      name: ["Nome muito curto"],
+    });
+
+    const result = mapErrorsToForm(error, mockSetError);
+    expect(result).toBe(true);
+    expect(mockSetError).toHaveBeenCalledWith("email", {
+      type: "server",
+      message: "Este campo é obrigatório",
+    });
+    expect(mockSetError).toHaveBeenCalledWith("name", {
+      type: "server",
+      message: "Nome muito curto",
+    });
+  });
+
+  it("skips reserved keys detail, message, code", () => {
+    const error = createAxiosError(400, {
+      detail: "General error",
+      message: "Error",
+      code: "ERR",
+      email: ["Invalid email"],
+    });
+
+    const result = mapErrorsToForm(error, mockSetError);
+    expect(result).toBe(true);
+    expect(mockSetError).toHaveBeenCalledTimes(1);
+    expect(mockSetError).toHaveBeenCalledWith("email", {
+      type: "server",
+      message: "Invalid email",
+    });
+  });
+
+  it("returns false when no mappable errors exist", () => {
+    const error = createAxiosError(400, {
+      detail: "Something went wrong",
+      message: "Error",
+      code: "ERR",
+    });
+
+    const result = mapErrorsToForm(error, mockSetError);
+    expect(result).toBe(false);
+    expect(mockSetError).not.toHaveBeenCalled();
+  });
+
+  it("handles string field errors", () => {
+    const error = createAxiosError(400, {
+      email: "Endereço de email inválido",
+    });
+
+    const result = mapErrorsToForm(error, mockSetError);
+    expect(result).toBe(true);
+    expect(mockSetError).toHaveBeenCalledWith("email", {
+      type: "server",
+      message: "Endereço de email inválido",
+    });
   });
 });

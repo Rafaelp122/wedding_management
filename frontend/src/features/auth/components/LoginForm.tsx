@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/authStore";
 import { useAuthObtainToken } from "@/api/generated/v1/endpoints/auth/auth";
-import { getApiErrorInfo } from "@/api/error-utils";
+import { getApiErrorInfo, mapErrorsToForm } from "@/api/error-utils";
 import type { TokenPayloadIn } from "@/api/generated/v1/models/tokenPayloadIn";
 import type { TokenOut } from "@/api/generated/v1/models/tokenOut";
 import { AuthObtainTokenBody } from "@/api/generated/v1/zod/auth/auth";
@@ -51,11 +51,14 @@ export function LoginForm() {
           }
         },
         onError: (error: ErrorType) => {
-          const { message } = getApiErrorInfo(
-            error,
-            "E-mail ou senha incorretos.",
-          );
-          toast.error(message);
+          const hasFieldErrors = mapErrorsToForm(error, form.setError);
+          if (!hasFieldErrors) {
+            const { message } = getApiErrorInfo(
+              error,
+              "E-mail ou senha incorretos.",
+            );
+            toast.error(message);
+          }
         },
       },
     );
@@ -159,7 +162,7 @@ export function LoginForm() {
 
       <div className="text-center pt-2">
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Sua agência é nova na Aura?{" "}
+          Sua agência é nova no Sim, Aceito!?{" "}
           <Link
             to="/register"
             className="font-bold text-aura-600 dark:text-aura-400 hover:underline"

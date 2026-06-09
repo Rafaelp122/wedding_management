@@ -13,13 +13,12 @@ import {
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
-interface FormDialogProps {
+interface FormDialogProps<T extends Record<string, unknown> = Record<string, unknown>> {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- UseFormReturn is invariant in practice
-  form: UseFormReturn<any>;
+  form: UseFormReturn<T>;
   onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void> | void;
   isPending: boolean;
   submitLabel: string;
@@ -36,7 +35,8 @@ const MAX_WIDTH_MAP: Record<string, string> = {
   "600px": "sm:max-w-[600px]",
 };
 
-export function FormDialog({
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Generic needed for UseFormReturn type inference
+export function FormDialog<T extends Record<string, unknown> = Record<string, unknown>>({
   open,
   onOpenChange,
   title,

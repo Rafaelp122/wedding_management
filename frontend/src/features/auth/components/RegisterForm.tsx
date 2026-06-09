@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { useAuthRegisterUser } from "@/api/generated/v1/endpoints/auth/auth";
-import { getApiErrorInfo } from "@/api/error-utils";
+import { getApiErrorInfo, mapErrorsToForm } from "@/api/error-utils";
 import { AuthRegisterUserBody } from "@/api/generated/v1/zod/auth/auth";
 
 import { Button } from "@/components/ui/button";
@@ -63,11 +63,14 @@ export function RegisterForm() {
           navigate("/login");
         },
         onError: (error: ErrorType) => {
-          const { message } = getApiErrorInfo(
-            error,
-            "Erro ao criar conta. Verifique os dados e tente novamente.",
-          );
-          toast.error(message);
+          const hasFieldErrors = mapErrorsToForm(error, form.setError);
+          if (!hasFieldErrors) {
+            const { message } = getApiErrorInfo(
+              error,
+              "Erro ao criar conta. Verifique os dados e tente novamente.",
+            );
+            toast.error(message);
+          }
         },
       },
     );
