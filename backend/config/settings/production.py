@@ -29,7 +29,7 @@ if SENTRY_DSN:
 
 
 DEBUG = False
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
 SESSION_COOKIE_SECURE = True
@@ -46,7 +46,7 @@ if env("DATABASE_URL", default=""):
     DATABASES = {"default": env.db("DATABASE_URL")}
     DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
     DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
-else:
+elif env("DB_NAME", default=""):
     DATABASES = {
         "default": {
             "ENGINE": env("DB_ENGINE", default="django.db.backends.postgresql"),
