@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import * as Sentry from "@sentry/react";
 import { lazy, Suspense, type ReactNode } from "react";
 import { ProtectedRoute } from "./guards/ProtectedRoute";
 import { PublicRoute } from "./guards/PublicRoute";
@@ -30,7 +31,9 @@ const withLoading = (element: ReactNode) => (
   <Suspense fallback={<LoadingScreen />}>{element}</Suspense>
 );
 
-export const router = createBrowserRouter([
+const sentryCreateBrowserRouter = Sentry.wrapCreateBrowserRouterV7(createBrowserRouter);
+
+export const router = sentryCreateBrowserRouter([
   // Auth routes — standalone with their own split-screen layout
   {
     path: "/login",

@@ -2,6 +2,9 @@
 Main Django Ninja API configuration.
 """
 
+import logging
+
+import sentry_sdk
 from django.http import HttpRequest
 from ninja.errors import HttpError
 from ninja_extra import NinjaExtraAPI
@@ -22,6 +25,8 @@ from apps.users.api import router as auth_router
 from apps.weddings.api import dashboard_router
 from apps.weddings.api import router as weddings_router
 
+
+logger = logging.getLogger(__name__)
 
 # Instância principal do Django Ninja
 # auth=JWTAuth() garante que todos os endpoints exigem Bearer JWT por padrão
@@ -51,11 +56,35 @@ def application_error_handler(request: HttpRequest, exc: ApplicationError):
 def general_exception_handler(request: HttpRequest, exc: Exception):
     if isinstance(exc, (PydanticValidationError, HttpError)):
         raise exc
+
+    logger.exception("Unhandled exception in API")
+    sentry_sdk.capture_exception(exc)
+
     return api.create_response(
         request,
         {"detail": "Erro interno do servidor.", "code": "internal_error"},
         status=500,
     )
+
+
+@api.get("/health", auth=None, operation_id="core_health_check")
+def health_check(request: HttpRequest):
+    """
+    Verifica a saúde do serviço e a conectividade com o banco de dados.
+    Pode ser pingado por serviços externos de monitoramento.
+    """
+    from django.db import connection
+    from django.db.utils import OperationalError
+
+    try:
+        connection.ensure_connection()
+        return {"status": "healthy", "database": "up"}
+    except OperationalError:
+        return api.create_response(
+            request,
+            {"status": "unhealthy", "database": "down"},
+            status=503,
+        )
 
 
 # Registra o router de autenticação customizado (retorna user data)
