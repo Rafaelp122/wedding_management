@@ -189,7 +189,7 @@ jobs:
   # ----------------------------------------------------------------------------
   contract-sync:
     name: API Contract Sync
-    needs: [detect-changes, backend-tests, frontend-tests]
+    needs: [detect-changes, lint]
     if: |
       success() &&
       (needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true')
