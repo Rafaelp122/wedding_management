@@ -65,6 +65,7 @@ export * from "./tokenRefreshOutputSchema";
 export * from "./tokenVerifyInputSchema";
 export * from "./userDataOut";
 export * from "./userOut";
+export * from "./verifyTokenOut";
 export * from "./weddingDashboardCategoryOut";
 export * from "./weddingDashboardInstallmentOut";
 export * from "./weddingDashboardOut";

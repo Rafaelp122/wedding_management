@@ -11,7 +11,7 @@ from ninja_jwt.schema import (
 from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.core.schemas import ErrorResponse
 
-from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserOut
+from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserOut, VerifyTokenOut
 from .services.registration_service import RegistrationService
 from .services.token_service import TokenService
 
@@ -56,7 +56,6 @@ def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
     return TokenService.obtain(
         email=payload.email,
         password=payload.password,
-        request=request,
     )
 
 
@@ -79,13 +78,13 @@ def refresh_token(
     Valida se o refresh token enviado ainda está no prazo de validade.
     Permite manter a sessão ativa sem o usuário precisar digitar a senha novamente.
     """
-    return payload.to_response_schema()
+    return TokenService.refresh(payload.refresh)
 
 
 @router.post(
     "/verify/",
     response={
-        200: TokenRefreshOutputSchema,
+        200: VerifyTokenOut,
         401: ErrorResponse,
         **MUTATION_ERROR_RESPONSES,
     },
@@ -94,11 +93,11 @@ def refresh_token(
 )
 def verify_token(
     request: HttpRequest, payload: TokenVerifyInputSchema
-) -> TokenRefreshOutputSchema:
+) -> VerifyTokenOut:
     """
     Verifica se um token ainda é válido e não expirou.
 
     Confere a assinatura do token JWT sem acessar o banco de dados.
     Ideal para o frontend checar o status do login antes de carregar uma página.
     """
-    return payload.to_response_schema()
+    return TokenService.verify(payload.token)

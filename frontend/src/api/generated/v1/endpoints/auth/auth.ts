@@ -21,6 +21,7 @@ import type {
   TokenRefreshOutputSchema,
   TokenVerifyInputSchema,
   UserOut,
+  VerifyTokenOut,
 } from "../../models";
 
 import { customInstance } from "../../../../api-client";
@@ -317,7 +318,7 @@ export const authVerifyToken = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<TokenRefreshOutputSchema>(
+  return customInstance<VerifyTokenOut>(
     {
       url: `/api/v1/auth/verify/`,
       method: "POST",

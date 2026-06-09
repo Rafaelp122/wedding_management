@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "ninja",
     "ninja_jwt",
+    "ninja_jwt.token_blacklist",
     "ninja_extra",
     "corsheaders",
     "apps.core",
@@ -117,7 +118,7 @@ NINJA_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(
         days=env.int("REFRESH_TOKEN_LIFETIME_DAYS", default=7)
     ),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
