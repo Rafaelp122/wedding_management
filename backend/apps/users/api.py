@@ -12,7 +12,7 @@ from ninja_jwt.schema import (
 from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.core.schemas import ErrorResponse
 
-from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserOut
+from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserOut, VerifyTokenOut
 from .services.registration_service import RegistrationService
 from .services.token_service import TokenService
 
@@ -91,7 +91,7 @@ def refresh_token(
 @router.post(
     "/verify/",
     response={
-        200: TokenRefreshOutputSchema,
+        200: VerifyTokenOut,
         401: ErrorResponse,
         **MUTATION_ERROR_RESPONSES,
     },
@@ -100,7 +100,7 @@ def refresh_token(
 )
 def verify_token(
     request: HttpRequest, payload: TokenVerifyInputSchema
-) -> TokenRefreshOutputSchema:
+) -> VerifyTokenOut:
     """
     Verifica se um token ainda é válido e não expirou.
 

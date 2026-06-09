@@ -36,6 +36,12 @@ class RegisterIn(Schema):
     company_name: str = ""
 
 
+class VerifyTokenOut(Schema):
+    """Resposta vazia para verificação de token bem-sucedida."""
+
+    pass
+
+
 class UserOut(Schema):
     """Schema de saída simplificado do usuário."""
 
