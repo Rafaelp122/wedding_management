@@ -1,6 +1,8 @@
 # 💍 Wedding Management System
 
 [![CI](https://github.com/Rafaelp122/wedding_management/actions/workflows/integrity-ci.yml/badge.svg)](https://github.com/Rafaelp122/wedding_management/actions/workflows/integrity-ci.yml)
+[![codecov - backend](https://codecov.io/gh/Rafaelp122/wedding_management/branch/main/graph/badge.svg?flag=backend)](https://codecov.io/gh/Rafaelp122/wedding_management)
+[![codecov - frontend](https://codecov.io/gh/Rafaelp122/wedding_management/branch/main/graph/badge.svg?flag=frontend)](https://codecov.io/gh/Rafaelp122/wedding_management)
 [![Website](https://img.shields.io/badge/website-simaceito.site-0ea5e9)](https://simaceito.site)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-3776AB)](https://python.org)
