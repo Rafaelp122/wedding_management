@@ -4,9 +4,14 @@ from typing import Any, cast
 from django.contrib.auth import authenticate
 from django.http import HttpRequest
 from ninja.errors import HttpError
+from ninja_jwt.schema import (
+    TokenRefreshInputSchema,
+    TokenRefreshOutputSchema,
+    TokenVerifyInputSchema,
+)
 from ninja_jwt.tokens import RefreshToken
 
-from apps.users.schemas import TokenOut, UserDataOut
+from apps.users.schemas import TokenOut, UserDataOut, VerifyTokenOut
 
 
 logger = logging.getLogger(__name__)
@@ -51,3 +56,35 @@ class TokenService:
 
         logger.info("Token gerado com sucesso para user uuid=%s", user.uuid)
         return token_out
+
+    @staticmethod
+    def refresh(refresh_token: str) -> TokenRefreshOutputSchema:
+        """
+        Gera um novo par de tokens a partir de um refresh token válido.
+
+        Se ROTATE_REFRESH_TOKENS estiver ativo (padrão), o refresh token
+        anterior é invalidado (blacklist) e um novo refresh é emitido.
+
+        Raises:
+            HttpError (401): Se o refresh token for inválido ou estiver
+                na blacklist.
+        """
+        logger.info("Tentativa de refresh de token")
+        schema = TokenRefreshInputSchema(refresh=refresh_token)
+        result = schema.to_response_schema()
+        logger.info("Token refresh bem-sucedido")
+        return result
+
+    @staticmethod
+    def verify(token: str) -> VerifyTokenOut:
+        """
+        Verifica se um token JWT é válido e não expirou.
+
+        Raises:
+            HttpError (401): Se o token for inválido ou expirado.
+        """
+        logger.info("Tentativa de verificação de token")
+        schema = TokenVerifyInputSchema(token=token)
+        schema.to_response_schema()  # levanta HttpError(401) se inválido
+        logger.info("Token verificado com sucesso")
+        return VerifyTokenOut()
