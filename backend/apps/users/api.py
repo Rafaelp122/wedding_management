@@ -56,7 +56,6 @@ def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
     return TokenService.obtain(
         email=payload.email,
         password=payload.password,
-        request=request,
     )
 
 

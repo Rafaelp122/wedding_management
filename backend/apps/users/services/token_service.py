@@ -1,8 +1,6 @@
 import logging
-from typing import Any, cast
 
 from django.contrib.auth import authenticate
-from django.http import HttpRequest
 from ninja.errors import HttpError
 from ninja_jwt.schema import (
     TokenRefreshInputSchema,
@@ -25,7 +23,7 @@ class TokenService:
     """
 
     @staticmethod
-    def obtain(email: str, password: str, request: HttpRequest) -> TokenOut:
+    def obtain(email: str, password: str) -> TokenOut:
         """
         Autentica o usuário por email/senha e retorna tokens JWT.
 
@@ -35,16 +33,15 @@ class TokenService:
         """
         logger.info("Tentativa de obtenção de token para email=%s", email)
 
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request=None, username=email, password=password)
 
         if user is None:
             logger.warning("Falha de autenticação para email=%s", email)
             raise HttpError(401, "Credenciais inválidas ou conta desativada.")
 
-        refresh = cast(Any, RefreshToken.for_user(user))
-
+        refresh = RefreshToken.for_user(user)
         token_out = TokenOut(
-            access=str(refresh.access_token),
+            access=str(refresh.access_token),  # type: ignore[attr-defined]
             refresh=str(refresh),
             user=UserDataOut(
                 id=user.id,
