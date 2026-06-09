@@ -20,6 +20,7 @@ export default mergeConfig(
       coverage: {
         provider: "v8",
         enabled: false,
+        reporter: ["text", "lcov"],
         include: ["src/**/*.{ts,tsx}"],
         exclude: [
           "src/api/generated/**",

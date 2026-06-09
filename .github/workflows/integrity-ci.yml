@@ -119,7 +119,15 @@ jobs:
           uv run python manage.py makemigrations --check --dry-run
           uv run python manage.py migrate --noinput
       - name: Pytest
-        run: cd backend && uv run pytest --cov=apps --cov-report=term -v
+        run: cd backend && uv run pytest --cov=apps --cov-report=term --cov-report=xml -v
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: backend/coverage.xml
+          flags: backend
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ----------------------------------------------------------------------------
   # JOB 3: FRONTEND INTEGRITY
@@ -143,6 +151,14 @@ jobs:
           cd frontend
           npm ci
           npm run test:ci
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ----------------------------------------------------------------------------
   # JOB 3.5: LANDING INTEGRITY
