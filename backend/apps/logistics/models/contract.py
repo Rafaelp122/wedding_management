@@ -8,6 +8,7 @@ Referências: RF10, RF13
 """
 
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
@@ -67,7 +68,16 @@ class Contract(TenantModel, WeddingOwnedMixin):
     )
 
     pdf_file = models.FileField(
-        upload_to="contracts/%Y/%m/", null=True, blank=True, verbose_name="Arquivo PDF"
+        upload_to="contracts/%Y/%m/",
+        null=True,
+        blank=True,
+        verbose_name="Arquivo PDF",
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=["pdf", "png", "jpg", "jpeg"],
+                message="Tipo de arquivo não suportado. Use PDF, PNG ou JPEG.",
+            )
+        ],
     )
 
     parent = models.ForeignKey(
@@ -98,6 +108,17 @@ class Contract(TenantModel, WeddingOwnedMixin):
 
     def clean(self) -> None:
         super().clean()
+
+        # Validação de tamanho do arquivo (10MB)
+        if self.pdf_file:
+            try:
+                file_size = self.pdf_file.size
+                if file_size is not None and file_size > 10 * 1024 * 1024:
+                    raise ValidationError(
+                        {"pdf_file": "Arquivo excede o limite de 10MB."}
+                    )
+            except FileNotFoundError:
+                pass
 
         # Não existe contrato assinado sem dinheiro e sem papel
         if self.status == self.StatusChoices.SIGNED:

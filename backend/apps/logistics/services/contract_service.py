@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -302,6 +303,24 @@ class ContractService:
         Salva no storage configurado e persiste a referência no modelo.
         """
         logger.info(f"Upload de arquivo para contrato uuid={uuid}")
+
+        # Fast-fail: validação de tipo MIME antes de qualquer I/O
+        allowed_content_types = [
+            "application/pdf",
+            "image/png",
+            "image/jpeg",
+        ]
+        file_content_type = getattr(uploaded_file, "content_type", None)
+        if file_content_type and file_content_type not in allowed_content_types:
+            raise ValidationError(
+                {"pdf_file": "Tipo de arquivo não suportado. Use PDF, PNG ou JPEG."}
+            )
+
+        # Fast-fail: validação de tamanho
+        max_size = 10 * 1024 * 1024  # 10MB
+        if uploaded_file.size and uploaded_file.size > max_size:
+            raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
+
         contract = ContractService.get(company, uuid)
         contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
         contract.save(update_fields=["pdf_file"])
