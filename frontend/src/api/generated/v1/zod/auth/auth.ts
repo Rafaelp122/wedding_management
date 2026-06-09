@@ -83,7 +83,6 @@ export const AuthVerifyTokenBody = zod.object({
   token: zod.string(),
 });
 
-export const AuthVerifyTokenResponse = zod.object({
-  refresh: zod.string(),
-  access: zod.union([zod.string(), zod.null()]),
-});
+export const AuthVerifyTokenResponse = zod
+  .looseObject({})
+  .describe("Resposta vazia para verificação de token bem-sucedida.");

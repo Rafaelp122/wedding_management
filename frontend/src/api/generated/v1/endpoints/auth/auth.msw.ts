@@ -9,7 +9,12 @@ import { faker } from "@faker-js/faker";
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type { TokenOut, TokenRefreshOutputSchema, UserOut } from "../../models";
+import type {
+  TokenOut,
+  TokenRefreshOutputSchema,
+  UserOut,
+  VerifyTokenOut,
+} from "../../models";
 
 export const getAuthRegisterUserResponseMock = (
   overrideResponse: Partial<Extract<UserOut, object>> = {},
@@ -54,15 +59,8 @@ export const getAuthRefreshTokenResponseMock = (
 });
 
 export const getAuthVerifyTokenResponseMock = (
-  overrideResponse: Partial<Extract<TokenRefreshOutputSchema, object>> = {},
-): TokenRefreshOutputSchema => ({
-  refresh: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  access: faker.helpers.arrayElement([
-    faker.string.alpha({ length: { min: 10, max: 20 } }),
-    null,
-  ]),
-  ...overrideResponse,
-});
+  overrideResponse: Partial<Extract<VerifyTokenOut, object>> = {},
+): VerifyTokenOut => ({ ...overrideResponse });
 
 export const getAuthRegisterUserMockHandler = (
   overrideResponse?:
@@ -138,10 +136,10 @@ export const getAuthRefreshTokenMockHandler = (
 
 export const getAuthVerifyTokenMockHandler = (
   overrideResponse?:
-    | TokenRefreshOutputSchema
+    | VerifyTokenOut
     | ((
         info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<TokenRefreshOutputSchema> | TokenRefreshOutputSchema),
+      ) => Promise<VerifyTokenOut> | VerifyTokenOut),
   options?: RequestHandlerOptions,
 ) => {
   return http.post(
