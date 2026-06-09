@@ -1,4 +1,5 @@
 import { useRouteError } from "react-router-dom";
+import * as Sentry from "@sentry/react";
 
 export const GlobalError = () => {
   const error = useRouteError();
@@ -6,6 +7,12 @@ export const GlobalError = () => {
 
   if (isDev) {
     console.error(error);
+  }
+
+  if (error instanceof Error) {
+    Sentry.captureException(error);
+  } else {
+    Sentry.captureMessage(`Non-Error route error: ${String(error)}`, "warning");
   }
 
   return (

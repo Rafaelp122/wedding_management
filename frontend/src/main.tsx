@@ -1,5 +1,8 @@
+import "./instrument"; // Must be first
+
 import React from "react";
 import ReactDOM from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import {
   QueryCache,
   QueryClient,
@@ -28,6 +31,14 @@ const queryClient = new QueryClient({
         return;
       }
 
+      // Reporta erros inesperados ao Sentry (404 e erros de rede são
+      // filtrados pelo beforeSend no instrument.ts).
+      if (error instanceof Error && status !== 404) {
+        Sentry.captureException(error, {
+          tags: { source: "react-query", http_status: String(status ?? 0) },
+        });
+      }
+
       toast.error(message);
     },
   }),
@@ -40,7 +51,10 @@ const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+ReactDOM.createRoot(document.getElementById("root")!, {
+  onUncaughtError: Sentry.reactErrorHandler(),
+  onRecoverableError: Sentry.reactErrorHandler(),
+}).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
