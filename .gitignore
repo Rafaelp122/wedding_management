@@ -47,6 +47,7 @@ instance/
 .webassets-cache
 .scrapy
 docs/_build/
+docs/superpowers/
 .pybuilder/
 target/
 .ipynb_checkpoints
