@@ -12,7 +12,7 @@ Sentry.init({
   environment: import.meta.env.MODE,
   sendDefaultPii: false,
 
-  tracePropagationTargets: ["localhost", /^\//, /wedding/],
+  tracePropagationTargets: ["localhost", /^\//, /^https:\/\/[a-z0-9-]+\.run\.app/],
 
   integrations: [
     Sentry.reactRouterV7BrowserTracingIntegration({
