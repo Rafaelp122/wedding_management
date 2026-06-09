@@ -51,31 +51,38 @@ deploy          deploy-frontend        deploy-landing
 
 | Stack | Ferramenta | Comando |
 |-------|-----------|---------|
-| Backend | Ruff | `ruff check . && ruff format --check .` |
-| Backend | mypy | `mypy . --show-error-codes` |
-| Frontend | ESLint + tsc | `npm run lint && npm run type-check` |
+| Backend | Ruff | `cd backend && uv run ruff check . && uv run ruff format --check .` |
+| Backend | mypy | `cd backend && uv run mypy . --show-error-codes --no-color-output` (precisa de `SECRET_KEY` no env) |
+| Frontend | ESLint + tsc | `cd frontend && npm ci && npm run lint && npm run type-check` |
 
 **Condição:** Roda se `backend == true` ou `frontend == true`.
 
 ### 2.3 `backend-tests`
-**Propósito:** Testes unitários + integridade de migrations.
+**Propósito:** Testes unitários + integridade de migrations + upload de coverage.
 
 ```bash
-python manage.py check                          # Django system checks
-python manage.py makemigrations --check --dry-run  # Detecta migrations faltantes
-python manage.py migrate --noinput              # Aplica migrations no SQLite
-pytest --cov=apps --cov-report=term --cov-report=xml
+# Django Integrity Check
+cd backend
+uv run python manage.py check
+uv run python manage.py makemigrations --check --dry-run
+uv run python manage.py migrate --noinput
+
+# Testes com cobertura
+uv run pytest --cov=apps --cov-report=term --cov-report=xml -v
+
+# Upload para Codecov (codecov/codecov-action@v5)
 ```
 
-**Ambiente:** `DJANGO_SETTINGS_MODULE=config.settings.test` (SQLite em memória).
+**Ambiente:** `DJANGO_SETTINGS_MODULE=config.settings.test`, `SECRET_KEY=django-ci-secret-key-not-for-production`.
 
 **Condição:** Roda se `backend == true` e `lint` passou.
 
 ### 2.4 `frontend-tests`
-**Propósito:** Testes unitários com Vitest + React Testing Library.
+**Propósito:** Testes unitários com Vitest + React Testing Library + upload de coverage.
 
 ```bash
-npm ci && npm run test:ci
+cd frontend && npm ci && npm run test:ci
+# Upload para Codecov (codecov/codecov-action@v5)
 ```
 
 **Condição:** Roda se `frontend == true` e `lint` passou.
@@ -84,8 +91,10 @@ npm ci && npm run test:ci
 **Propósito:** Verifica build da landing page Astro.
 
 ```bash
-npx astro check && npm run build
+cd landing && npm ci && npx astro check && npm run build
 ```
+
+**Node:** versão 22.
 
 **Condição:** Roda se `landing == true`.
 
@@ -94,10 +103,10 @@ npx astro check && npm run build
 
 ```bash
 # Gera openapi.json a partir dos endpoints Django Ninja
-python manage.py export_openapi_schema --api config.api.api --output ../openapi.json
+cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json
 
 # Regenera hooks Orval no frontend
-cd frontend && npm ci && npm run generate:api
+cd ../frontend && npm ci && npm run generate:api
 
 # Se houver diff, falha
 git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
@@ -202,12 +211,11 @@ git commit -m "fix(backend): add missing migration for <model>.<field>"
 ## 5. Workflow no Desenvolvedor
 
 ```bash
-# 1. Antes de push, rode localmente
-cd backend && make lint         # ruff + mypy
-cd frontend && npm run lint && npm run type-check
+# 1. Antes de push, rode localmente (necessário Docker rodando)
+make lint                      # ruff + mypy (backend) + ESLint + tsc (frontend)
 
 # 2. Se mexeu em API ou modelos
-make sync-api                  # Regenera openapi.json + hooks Orval
+make sync-api                  # export_openapi_schema + orval hooks
 
 # 3. Commit e push
 git add .
