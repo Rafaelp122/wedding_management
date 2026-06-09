@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from django.http import HttpRequest
@@ -15,6 +16,8 @@ from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserOut
 from .services.registration_service import RegistrationService
 from .services.token_service import TokenService
 
+
+logger = logging.getLogger(__name__)
 
 router = Router(tags=["auth"])
 
@@ -79,7 +82,10 @@ def refresh_token(
     Valida se o refresh token enviado ainda está no prazo de validade.
     Permite manter a sessão ativa sem o usuário precisar digitar a senha novamente.
     """
-    return payload.to_response_schema()
+    logger.info("Tentativa de refresh de token")
+    result = payload.to_response_schema()
+    logger.info("Token refresh bem-sucedido")
+    return result
 
 
 @router.post(
@@ -101,4 +107,7 @@ def verify_token(
     Confere a assinatura do token JWT sem acessar o banco de dados.
     Ideal para o frontend checar o status do login antes de carregar uma página.
     """
-    return payload.to_response_schema()
+    logger.info("Tentativa de verificação de token")
+    result = payload.to_response_schema()
+    logger.info("Token verificado com sucesso")
+    return result
