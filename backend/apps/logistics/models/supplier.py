@@ -6,7 +6,11 @@ Responsabilidade: Gestão de fornecedores de produtos e serviços para casamento
 Referência: RF09
 """
 
-from django.core.validators import MaxLengthValidator, RegexValidator
+from django.core.validators import (
+    MaxLengthValidator,
+    MinLengthValidator,
+    RegexValidator,
+)
 from django.db import models
 
 from apps.tenants.models import TenantModel
@@ -68,7 +72,7 @@ class Supplier(TenantModel):
         max_length=2,
         blank=True,
         verbose_name="Estado (UF)",
-        validators=[MaxLengthValidator(2)],
+        validators=[MinLengthValidator(2), MaxLengthValidator(2)],
     )
 
     # Gestão (RF09)

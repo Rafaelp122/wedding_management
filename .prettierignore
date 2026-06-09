@@ -1,0 +1,10 @@
+.vercelignore
+.vercel/
+backend/
+*venv*/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+node_modules/
+dist/
+openapi.json

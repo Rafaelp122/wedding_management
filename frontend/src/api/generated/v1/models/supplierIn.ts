@@ -14,7 +14,7 @@ export interface SupplierIn {
   is_active?: boolean;
   address?: string;
   city?: string;
-  /** @maxLength 2 */
+  /** @pattern ^$|^[A-Z]{2}$ */
   state?: string;
   /** @pattern ^(?:https?://\S+)?$ */
   website?: string;
