@@ -2,6 +2,7 @@ import uuid
 from collections.abc import Callable
 from typing import Any, cast
 
+import sentry_sdk
 from django.http import HttpRequest, HttpResponse
 
 from .logging import _thread_locals
@@ -26,10 +27,13 @@ class RequestIDMiddleware:
         # 3. Adiciona ao objeto request caso precises dele numa View ou Service
         cast(Any, request).request_id = request_id
 
+        # 4. Propaga para o Sentry como contexto estruturado
+        sentry_sdk.set_context("request", {"request_id": request_id})
+
         # Passa o controlo para a próxima camada (View/Service)
         response = self.get_response(request)
 
-        # 4. Devolve o ID no Header da resposta.
+        # 5. Devolve o ID no Header da resposta.
         # O Frontend (React) DEVE ler isto e mostrá-lo ao utilizador em caso de erro.
         response["X-Request-ID"] = request_id
 
