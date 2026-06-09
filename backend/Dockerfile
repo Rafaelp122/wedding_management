@@ -66,6 +66,8 @@ COPY --chown=appuser:appuser . .
 
 RUN DJANGO_SETTINGS_MODULE=config.settings.production \
     SECRET_KEY=${BUILD_SECRET_KEY} \
+    ALLOWED_HOSTS=dummy \
+    DATABASE_URL=sqlite:///:memory: \
     python manage.py collectstatic --noinput
 
 USER appuser
