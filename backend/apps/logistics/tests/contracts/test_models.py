@@ -5,6 +5,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from apps.core.validators import MaxFileSizeValidator
 from apps.logistics.models import Contract
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.weddings.tests.factories import WeddingFactory
@@ -244,3 +245,84 @@ class TestContractFileValidation:
             pdf_file=None,
         )
         contract.full_clean()
+
+
+@pytest.mark.django_db
+class TestContractPdfFileValidator:
+    """Testes específicos para o MaxFileSizeValidator no campo pdf_file."""
+
+    def test_validator_is_wired_on_field(self, user):
+        """MaxFileSizeValidator deve estar configurado no campo pdf_file."""
+        field = Contract._meta.get_field("pdf_file")
+
+        validators = [
+            v for v in field.validators if isinstance(v, MaxFileSizeValidator)
+        ]
+        assert len(validators) == 1
+        assert validators[0].max_size == 10 * 1024 * 1024
+
+    def test_oversized_file_raises_validation_error(self, user):
+        """Arquivo acima de 10MB deve falhar na validação do campo."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        oversized = SimpleUploadedFile(
+            name="big.pdf",
+            content=b"0" * (10 * 1024 * 1024 + 1),
+            content_type="application/pdf",
+        )
+        contract = Contract(
+            company=user.company,
+            wedding=wedding,
+            supplier=supplier,
+            name="Test",
+            total_amount=Decimal("5000.00"),
+            pdf_file=oversized,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            contract.full_clean()
+
+        assert "10MB" in str(exc_info.value)
+
+    def test_signed_without_pdf_raises_validation_error(self, user):
+        """Contrato SIGNED sem pdf_file deve falhar."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        contract = Contract(
+            company=user.company,
+            wedding=wedding,
+            supplier=supplier,
+            name="Test",
+            total_amount=Decimal("5000.00"),
+            status=Contract.StatusChoices.SIGNED,
+            pdf_file=None,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            contract.full_clean()
+
+        assert "ASSINADO" in str(exc_info.value) or "pdf" in str(exc_info.value).lower()
+
+    def test_signed_without_total_amount_raises_validation_error(self, user):
+        """Contrato SIGNED sem total_amount deve falhar."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        valid_file = SimpleUploadedFile(
+            name="contract.pdf",
+            content=b"pdf content",
+            content_type="application/pdf",
+        )
+        contract = Contract(
+            company=user.company,
+            wedding=wedding,
+            supplier=supplier,
+            name="Test",
+            status=Contract.StatusChoices.SIGNED,
+            total_amount=Decimal("0.00"),
+            pdf_file=valid_file,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            contract.full_clean()
+
+        assert "valor" in str(exc_info.value).lower()

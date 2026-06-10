@@ -1,3 +1,4 @@
+import hashlib
 import logging
 
 from django.contrib.auth import authenticate
@@ -31,12 +32,12 @@ class TokenService:
             HttpError (401): Se as credenciais forem inválidas ou a conta
                 estiver desativada.
         """
-        logger.info("Tentativa de obtenção de token para email=%s", email)
+        logger.info(f"Tentativa de obtenção de token para email={email}")
 
         user = authenticate(request=None, username=email, password=password)
 
         if user is None:
-            logger.warning("Falha de autenticação para email=%s", email)
+            logger.warning(f"Falha de autenticação para email={email}")
             raise HttpError(401, "Credenciais inválidas ou conta desativada.")
 
         refresh = RefreshToken.for_user(user)
@@ -51,7 +52,7 @@ class TokenService:
             ),
         )
 
-        logger.info("Token gerado com sucesso para user uuid=%s", user.uuid)
+        logger.info(f"Token gerado com sucesso para user uuid={user.uuid}")
         return token_out
 
     @staticmethod
@@ -66,10 +67,11 @@ class TokenService:
             HttpError (401): Se o refresh token for inválido ou estiver
                 na blacklist.
         """
-        logger.info("Tentativa de refresh de token")
+        token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
+        logger.info(f"Tentativa de refresh de token (fp={token_fp})")
         schema = TokenRefreshInputSchema(refresh=refresh_token)
         result = schema.to_response_schema()
-        logger.info("Token refresh bem-sucedido")
+        logger.info(f"Token refresh bem-sucedido (fp={token_fp})")
         return result
 
     @staticmethod
@@ -80,8 +82,9 @@ class TokenService:
         Raises:
             HttpError (401): Se o token for inválido ou expirado.
         """
-        logger.info("Tentativa de verificação de token")
+        token_fp = hashlib.sha256(token.encode()).hexdigest()[:12]
+        logger.info(f"Tentativa de verificação de token (fp={token_fp})")
         schema = TokenVerifyInputSchema(token=token)
         schema.to_response_schema()  # levanta HttpError(401) se inválido
-        logger.info("Token verificado com sucesso")
+        logger.info(f"Token verificado com sucesso (fp={token_fp})")
         return VerifyTokenOut()

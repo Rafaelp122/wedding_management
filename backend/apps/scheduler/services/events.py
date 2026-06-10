@@ -3,11 +3,10 @@ from typing import Any
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
-    DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.scheduler.models import Event
@@ -151,16 +150,7 @@ class EventService:
                 code="payment_event_readonly",
             )
 
-        try:
-            instance.delete()
-            logger.warning(
-                f"Evento uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
-            )
-
-        except ProtectedError as e:
-            logger.error(f"Falha de integridade ao deletar evento uuid={instance.uuid}")
-            raise DomainIntegrityError(
-                detail="Não é possível apagar este evento pois existem registros "
-                "vinculados a ele.",
-                code="event_protected_error",
-            ) from e
+        instance.delete()
+        logger.warning(
+            f"Evento uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
+        )

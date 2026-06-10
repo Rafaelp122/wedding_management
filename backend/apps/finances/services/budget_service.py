@@ -71,10 +71,12 @@ class BudgetService:
             # full_clean() ou o banco apitam se já existir um Budget (OneToOne)
 
             # Se for ValidationError, verificamos se é o erro de unicidade
-            if isinstance(e, ValidationError) and "wedding" not in e.message_dict:
+            if isinstance(e, ValidationError) and "wedding" not in getattr(
+                e, "message_dict", {}
+            ):
                 raise e
 
-            logger.error(
+            logger.exception(
                 f"Conflito de integridade: Casamento uuid={wedding.uuid} já possui "
                 f"orçamento."
             )
@@ -122,7 +124,7 @@ class BudgetService:
             )
 
         except ProtectedError as e:
-            logger.error(
+            logger.exception(
                 f"Falha de integridade ao deletar Orçamento uuid={instance.uuid}: "
                 "Protegido por relações filhas."
             )

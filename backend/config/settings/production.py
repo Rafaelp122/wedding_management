@@ -93,17 +93,22 @@ LOGGING = {
             "filters": ["request_id"],
         },
     },
+    "root": {
+        "level": "WARNING",
+        "handlers": ["console"],
+    },
     "loggers": {
         "django": {
             "handlers": ["console"],
             "level": "WARNING",
-            "propagate": True,
+            "propagate": False,
         },
         "wedding_management": {
             "handlers": ["console"],
             "level": env("LOG_LEVEL", default="INFO"),
             "propagate": False,
         },
+        "urllib3": {"level": "WARNING"},
     },
 }
 

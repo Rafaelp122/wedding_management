@@ -28,6 +28,7 @@ class DashboardService:
             ``overdue_installments_count`` (int), ``pending_contracts_count`` (int),
             and ``critical_weddings`` (list of dicts).
         """
+        logger.info(f"Computando resumo do dashboard para company_id={company.id}")
         today = date.today()
         seven_days = today + timedelta(days=7)
         ninety_days = today + timedelta(days=90)
@@ -122,6 +123,10 @@ class DashboardService:
                 }
             )
 
+        logger.info(
+            f"Dashboard resumo computado: company_id={company.id}, "
+            f"critical_weddings={len(critical_weddings)}"
+        )
         return {
             "pending_installments_7d": f"{pending_7d:.2f}",
             "urgent_tasks_count": urgent_tasks_count,
@@ -145,6 +150,10 @@ class DashboardService:
             and ``categories_summary``.
         """
         wedding = WeddingService.get(company, wedding_uuid)
+        logger.info(
+            f"Computando visão geral do casamento uuid={wedding_uuid} "
+            f"para company_id={company.id}"
+        )
         today = date.today()
         days_until = max(0, (wedding.date - today).days)
 
@@ -160,7 +169,7 @@ class DashboardService:
                 budget_pct = 0.0
         except Budget.DoesNotExist:
             budget_pct = 0.0
-            logger.warning("Budget not found for wedding %s", wedding_uuid)
+            logger.warning(f"Budget not found for wedding {wedding_uuid}")
 
         # Tasks
         tasks = Task.objects.for_tenant(company).filter(wedding=wedding)
@@ -240,6 +249,10 @@ class DashboardService:
                 }
             )
 
+        logger.info(
+            f"Visão geral do casamento uuid={wedding_uuid} computada: "
+            f"days_until={days_until}, budget_pct={budget_pct}"
+        )
         return {
             "days_until_wedding": days_until,
             "budget_percentage_used": budget_pct,
