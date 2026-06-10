@@ -388,10 +388,10 @@ class TestExpenseServiceFromDocument:
         """from_document() retorna dict com dados do contrato."""
         from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 
-        category = _setup_category(user)
+        wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(
-            wedding=category.wedding,
+            wedding=wedding,
             supplier=supplier,
             total_amount=Decimal("5000.00"),
             name="Buffet Premium",
@@ -408,10 +408,26 @@ class TestExpenseServiceFromDocument:
 
     def test_from_document_contract_not_found(self, user):
         """UUID de contrato inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError) as exc_info:
+        with pytest.raises(ObjectNotFoundError):
             ExpenseService.from_document(user.company, uuid4())
 
-        assert "contract_not_found_or_denied" in str(exc_info.value.code)
+    def test_from_document_multitenancy(self, user):
+        """Usuário A não pode acessar contrato do Usuário B."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        user_b = UserFactory()
+        wedding_b = WeddingFactory(company=user_b.company)
+        supplier_b = SupplierFactory(company=user_b.company)
+        contract_b = ContractFactory(
+            wedding=wedding_b,
+            supplier=supplier_b,
+            total_amount=Decimal("5000.00"),
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ExpenseService.from_document(user.company, contract_b.uuid)
+
+        assert exc_info.value.code == "contract_not_found_or_denied"
 
 
 @pytest.mark.django_db

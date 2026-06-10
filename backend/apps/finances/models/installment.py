@@ -7,6 +7,7 @@ de pagamento.
 Referência: RF04
 """
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
@@ -54,7 +55,6 @@ class Installment(TenantModel, WeddingOwnedMixin):
     def clean(self) -> None:
         """Validações de consistência paid_date ↔ status."""
         super().clean()
-        from django.core.exceptions import ValidationError
 
         if self.amount is not None and self.amount < 0:
             raise ValidationError(
