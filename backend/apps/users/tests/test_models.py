@@ -3,6 +3,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+from django.db import models as db_models
 
 from .factories import AdminFactory, UserFactory
 
@@ -90,3 +91,16 @@ class TestUserModel:
             password="pass",
         )
         assert user.email == "USER@domain.com"
+
+
+@pytest.mark.django_db
+class TestUserCompanyProtect:
+    """Testes da constraint on_delete=PROTECT no FK company."""
+
+    def test_delete_company_with_users_raises_protected_error(self):
+        """Não é possível deletar Company que possui Users vinculados."""
+        user = UserFactory()
+        company = user.company
+
+        with pytest.raises(db_models.ProtectedError):
+            company.delete()
