@@ -7,12 +7,17 @@ documentação.
 Referências: RF10, RF13
 """
 
+import logging
+
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
 from apps.tenants.models import TenantModel
+
+
+logger = logging.getLogger(__name__)
 
 
 class Contract(TenantModel, WeddingOwnedMixin):
@@ -72,6 +77,7 @@ class Contract(TenantModel, WeddingOwnedMixin):
         null=True,
         blank=True,
         verbose_name="Arquivo PDF",
+        help_text="Formatos aceitos: PDF, PNG, JPEG. Tamanho máximo: 10MB.",
         validators=[
             FileExtensionValidator(
                 allowed_extensions=["pdf", "png", "jpg", "jpeg"],
@@ -118,7 +124,12 @@ class Contract(TenantModel, WeddingOwnedMixin):
                         {"pdf_file": "Arquivo excede o limite de 10MB."}
                     )
             except FileNotFoundError:
-                pass
+                logger.warning(
+                    "Arquivo %s não encontrado no storage durante validação "
+                    "de tamanho do contrato uuid=%s.",
+                    self.pdf_file.name,
+                    self.uuid,
+                )
 
         # Não existe contrato assinado sem dinheiro e sem papel
         if self.status == self.StatusChoices.SIGNED:
