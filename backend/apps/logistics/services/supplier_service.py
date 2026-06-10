@@ -3,10 +3,9 @@ from typing import Any
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError, Q, QuerySet
+from django.db.models import Q, QuerySet
 
 from apps.core.exceptions import (
-    DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.logistics.models import Supplier
@@ -89,22 +88,7 @@ class SupplierService:
             f"company_id={company.id}"
         )
 
-        try:
-            instance.delete()
-            logger.warning(
-                f"Fornecedor uuid={instance.uuid} DESTRUÍDO pela "
-                f"company_id={company.id}"
-            )
-
-        except ProtectedError as e:
-            # Captura a trava do banco de dados (relacionamento com Contract) e formata
-            # para o Frontend
-            logger.exception(
-                f"Falha de integridade ao deletar Fornecedor uuid={instance.uuid}: "
-                f"Possui contratos ativos."
-            )
-            raise DomainIntegrityError(
-                detail="Não é possível apagar este fornecedor pois existem contratos "
-                "vinculados a ele. Remova ou reatribua os contratos primeiro.",
-                code="supplier_protected_error",
-            ) from e
+        instance.delete()
+        logger.warning(
+            f"Fornecedor uuid={instance.uuid} DESTRUÍDO pela company_id={company.id}"
+        )

@@ -3,9 +3,9 @@ from typing import Any
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import QuerySet
 
-from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
+from apps.core.exceptions import ObjectNotFoundError
 from apps.scheduler.models import Task
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -101,17 +101,7 @@ class TaskService:
             f"company_id={company.id}"
         )
 
-        try:
-            instance.delete()
-            logger.warning(
-                f"Tarefa uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
-            )
-        except ProtectedError as e:
-            logger.exception(
-                f"Falha de integridade ao deletar tarefa uuid={instance.uuid}"
-            )
-            raise DomainIntegrityError(
-                detail="Não é possível apagar esta tarefa pois existem registros "
-                "vinculados a ela.",
-                code="task_protected_error",
-            ) from e
+        instance.delete()
+        logger.warning(
+            f"Tarefa uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
+        )

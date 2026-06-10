@@ -6,7 +6,7 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -412,15 +412,6 @@ class InstallmentService:
                     "outras parcelas ou a despesa simultaneamente."
                 ),
                 code="installment_deletion_math_error",
-            ) from e
-
-        except ProtectedError as e:
-            logger.exception(
-                f"Falha estrutural ao deletar parcela uuid={instance.uuid}"
-            )
-            raise DomainIntegrityError(
-                detail="Não é possível apagar esta parcela no momento.",
-                code="installment_protected_error",
             ) from e
 
 

@@ -13,11 +13,15 @@ from unittest.mock import patch
 
 import pytest
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.services.budget_service import BudgetService
-from apps.finances.tests.factories import BudgetFactory
+from apps.finances.tests.factories import (
+    BudgetCategoryFactory,
+    BudgetFactory,
+    ExpenseFactory,
+)
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -379,3 +383,18 @@ class TestBudgetServiceIntegration:
         BudgetService.delete(user.company, budget)
 
         assert Budget.objects.filter(uuid=budget.uuid).count() == 0
+
+    def test_delete_budget_protected_by_expenses(self, user):
+        """Deleção de orçamento com despesas vinculadas deve falhar."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(budget=budget)
+        ExpenseFactory(
+            wedding=wedding, category=category, company=user.company, contract=None
+        )
+
+        with pytest.raises(DomainIntegrityError) as exc_info:
+            BudgetService.delete(user.company, budget)
+
+        assert "Não é possível apagar este orçamento" in str(exc_info.value)
+        assert Budget.objects.filter(uuid=budget.uuid).exists()

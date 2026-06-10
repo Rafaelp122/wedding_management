@@ -3,11 +3,10 @@ from typing import Any
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
-    DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.logistics.models import Contract, Item
@@ -150,21 +149,10 @@ class ItemService:
             f"company_id={company.id}"
         )
 
-        try:
-            instance.delete()
-            logger.warning(
-                f"Item uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
-            )
-
-        except ProtectedError as e:
-            logger.exception(
-                f"Falha de integridade ao deletar Item uuid={instance.uuid}"
-            )
-            raise DomainIntegrityError(
-                detail="Não é possível apagar este item pois existem registros "
-                "dependentes vinculados a ele.",
-                code="item_protected_error",
-            ) from e
+        instance.delete()
+        logger.warning(
+            f"Item uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
+        )
 
     @staticmethod
     @transaction.atomic

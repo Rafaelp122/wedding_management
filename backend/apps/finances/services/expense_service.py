@@ -8,7 +8,6 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import (
     Count,
-    ProtectedError,
     Q,
     QuerySet,
     Sum,
@@ -20,7 +19,6 @@ from django.db.models.functions import Coalesce
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
-    DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.finances.models import BudgetCategory, Expense
@@ -352,24 +350,10 @@ class ExpenseService:
             f"por company_id={company.id}"
         )
 
-        try:
-            instance.delete()
-            logger.warning(
-                f"Despesa uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
-            )
-
-        except ProtectedError as e:
-            logger.exception(
-                f"Falha de integridade ao deletar Despesa uuid={instance.uuid}"
-            )
-            raise DomainIntegrityError(
-                detail=(
-                    "Não é possível apagar esta despesa. Verifique se existem "
-                    "registos financeiros ou pagamentos processados que "
-                    "bloqueiem a exclusão."
-                ),
-                code="expense_protected_error",
-            ) from e
+        instance.delete()
+        logger.warning(
+            f"Despesa uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
+        )
 
     @staticmethod
     def _handle_redistribute(
