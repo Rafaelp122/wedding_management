@@ -7,14 +7,7 @@ vi.mock("@sentry/react", () => ({
   captureException: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
-  toast: {
-    error: vi.fn(),
-  },
-}));
-
 import * as Sentry from "@sentry/react";
-import { toast } from "sonner";
 
 function createMockInstance() {
   const handlers = {
@@ -80,7 +73,7 @@ describe("addConnectionErrorInterceptor", () => {
   });
 
   describe("error handler", () => {
-    it("captures network error to Sentry and shows toast", async () => {
+    it("captures network error to Sentry", async () => {
       const handlers = createMockInstance();
       const error = new AxiosError("Network Error", "ERR_NETWORK");
 
@@ -89,14 +82,10 @@ describe("addConnectionErrorInterceptor", () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(error, {
         tags: { source: "connection-error-interceptor" },
       });
-      expect(toast.error).toHaveBeenCalledWith(
-        "Não foi possível conectar ao servidor. Por favor, tente novamente mais tarde.",
-        { id: "network-error" },
-      );
       await expect(result).rejects.toBe(error);
     });
 
-    it("captures 502 error to Sentry and shows toast", async () => {
+    it("captures 502 error to Sentry", async () => {
       const handlers = createMockInstance();
       const error = new AxiosError(
         "Bad Gateway",
@@ -117,14 +106,10 @@ describe("addConnectionErrorInterceptor", () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(error, {
         tags: { source: "connection-error-interceptor" },
       });
-      expect(toast.error).toHaveBeenCalledWith(
-        "Não foi possível conectar ao servidor. Por favor, tente novamente mais tarde.",
-        { id: "network-error" },
-      );
       await expect(result).rejects.toBe(error);
     });
 
-    it("captures 503 error to Sentry and shows toast", async () => {
+    it("captures 503 error to Sentry", async () => {
       const handlers = createMockInstance();
       const error = new AxiosError(
         "Service Unavailable",
@@ -148,7 +133,7 @@ describe("addConnectionErrorInterceptor", () => {
       await expect(result).rejects.toBe(error);
     });
 
-    it("captures 504 error to Sentry and shows toast", async () => {
+    it("captures 504 error to Sentry", async () => {
       const handlers = createMockInstance();
       const error = new AxiosError(
         "Gateway Timeout",
@@ -191,7 +176,6 @@ describe("addConnectionErrorInterceptor", () => {
       const result = handlers.error?.(error);
 
       expect(Sentry.captureException).not.toHaveBeenCalled();
-      expect(toast.error).not.toHaveBeenCalled();
       await expect(result).rejects.toBe(error);
     });
 
