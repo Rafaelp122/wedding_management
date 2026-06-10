@@ -235,6 +235,132 @@ class TestWeddingService:
 
 
 @pytest.mark.django_db
+class TestWeddingServiceListAnnotations:
+    """Testes para as annotations do método list()."""
+
+    def test_list_includes_annotation_fields(self, user):
+        """list() retorna weddings com total_budget, overdue_installments e
+        incomplete_tasks populados."""
+        wedding = WeddingFactory(company=user.company)
+        BudgetFactory(wedding=wedding, company=user.company, total_estimated=50000)
+
+        qs = WeddingService.list(company=user.company)
+        result = qs.first()
+
+        assert result is not None
+        assert float(result.total_budget) == 50000.0
+        assert result.overdue_installments == 0
+        assert result.incomplete_tasks == 0
+
+    def test_list_total_budget_none_without_budget(self, user):
+        """total_budget é None quando o casamento não tem Budget."""
+        WeddingFactory(company=user.company)
+
+        qs = WeddingService.list(company=user.company)
+        result = qs.first()
+
+        assert result is not None
+        assert result.total_budget is None
+
+    def test_list_counts_overdue_and_incomplete(self, user):
+        """overdue_installments e incomplete_tasks refletem os dados reais."""
+        from datetime import date, timedelta
+
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+
+        budget = BudgetFactory(wedding=wedding, company=user.company)
+        category = BudgetCategoryFactory(
+            budget=budget, wedding=wedding, company=user.company
+        )
+        expense = ExpenseFactory(
+            wedding=wedding, category=category, contract=None, company=user.company
+        )
+
+        InstallmentFactory(
+            expense=expense,
+            wedding=wedding,
+            company=user.company,
+            amount=1000,
+            due_date=today - timedelta(days=10),
+            status="OVERDUE",
+        )
+
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+        )
+
+        qs = WeddingService.list(company=user.company)
+        result = qs.first()
+
+        assert result is not None
+        assert result.overdue_installments == 1
+        assert result.incomplete_tasks == 1
+
+    def test_list_multitenancy_isolates_annotations(self, user):
+        """Annotations respeitam o isolamento multi-tenant."""
+        from apps.users.tests.factories import UserFactory
+
+        other_user = UserFactory()
+        WeddingFactory(company=user.company)
+        WeddingFactory(company=other_user.company)
+
+        qs = WeddingService.list(company=user.company)
+
+        assert qs.count() == 1
+
+    def test_list_filters_by_search(self, user):
+        """list() filtra por groom_name, bride_name e location."""
+        WeddingFactory(
+            company=user.company,
+            groom_name="Xablau",
+            bride_name="Xablau",
+            location="Xablau",
+        )
+        WeddingFactory(
+            company=user.company,
+            groom_name="Ciclano",
+            bride_name="Fulana",
+            location="Belo Horizonte",
+        )
+
+        by_groom = WeddingService.list(company=user.company, search="Ciclano")
+        by_bride = WeddingService.list(company=user.company, search="Fulana")
+        by_location = WeddingService.list(company=user.company, search="Belo")
+        by_none = WeddingService.list(company=user.company, search="Inexistente")
+
+        assert by_groom.count() == 1
+        assert by_bride.count() == 1
+        assert by_location.count() == 1
+        assert by_none.count() == 0
+
+    def test_list_filters_by_status(self, user):
+        """list() filtra corretamente por status."""
+        from datetime import date, timedelta
+
+        WeddingFactory(company=user.company, status="IN_PROGRESS")
+        completed = WeddingFactory(company=user.company, status="IN_PROGRESS")
+        Wedding.objects.filter(pk=completed.pk).update(
+            status="COMPLETED", date=date.today() - timedelta(days=30)
+        )
+
+        in_progress = WeddingService.list(company=user.company, status="IN_PROGRESS")
+        completed_qs = WeddingService.list(company=user.company, status="COMPLETED")
+
+        assert in_progress.count() == 1
+        assert completed_qs.count() == 1
+
+    def test_list_raises_on_invalid_status(self, user):
+        """list() rejeita status inválido com BusinessRuleViolation."""
+        WeddingFactory(company=user.company)
+
+        with pytest.raises(BusinessRuleViolation, match="Status inválido"):
+            WeddingService.list(company=user.company, status="INVALIDO")
+
+
+@pytest.mark.django_db
 class TestWeddingTemplateApplication:
     """Testes de aplicação de templates de cronograma na criação do casamento."""
 

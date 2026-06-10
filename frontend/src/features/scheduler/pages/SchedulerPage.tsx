@@ -287,10 +287,13 @@ export default function SchedulerPage() {
           from={paginationInfo.from}
           to={paginationInfo.to}
           totalCount={eventsCount}
+          totalPages={paginationInfo.totalPages}
+          currentPage={paginationInfo.page}
           hasPrevious={paginationInfo.hasPrevious}
           hasNext={paginationInfo.hasNext}
           onPrevious={pagination.previousPage}
           onNext={pagination.nextPage}
+          onGoToPage={pagination.goToPage}
         />
       )}
     </div>

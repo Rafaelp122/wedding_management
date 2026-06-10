@@ -1,6 +1,6 @@
 import datetime
 
-from ninja import Schema
+from ninja import Field, Schema
 from pydantic import UUID4
 
 
@@ -23,6 +23,7 @@ class WeddingPatchIn(Schema):
     date: datetime.date | None = None
     location: str | None = None
     expected_guests: int | None = None
+    status: str | None = None
 
 
 class WeddingOut(Schema):
@@ -35,6 +36,9 @@ class WeddingOut(Schema):
     status: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    total_budget: float | None = Field(None, ge=0)
+    overdue_installments: int = Field(0, ge=0)
+    incomplete_tasks: int = Field(0, ge=0)
 
 
 # ── Global Dashboard ──

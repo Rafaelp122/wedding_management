@@ -14,9 +14,9 @@ describe("WeddingFilters", () => {
     );
 
     expect(
-      screen.getByPlaceholderText(/buscar por nome dos noivos/i),
+      screen.getByPlaceholderText(/buscar por noivos ou local/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Todos os status")).toBeInTheDocument();
+    expect(screen.getByText("Todos os Status")).toBeInTheDocument();
   });
 
   it("calls onSearchChange when typing", async () => {
@@ -32,7 +32,7 @@ describe("WeddingFilters", () => {
 
     const user = userEvent.setup();
     await user.type(
-      screen.getByPlaceholderText(/buscar por nome dos noivos/i),
+      screen.getByPlaceholderText(/buscar por noivos ou local/i),
       "joão",
     );
 
@@ -50,7 +50,7 @@ describe("WeddingFilters", () => {
     );
 
     expect(
-      screen.getByPlaceholderText(/buscar por nome dos noivos/i),
+      screen.getByPlaceholderText(/buscar por noivos ou local/i),
     ).toHaveValue("maria");
   });
 });

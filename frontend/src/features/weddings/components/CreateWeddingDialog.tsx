@@ -27,10 +27,10 @@ import {
 import { WeddingFormFields } from "./WeddingFormFields";
 
 const TEMPLATE_OPTIONS = [
-  { value: "none", label: "Começar do zero" },
-  { value: "religious_12m", label: "Religioso (12 meses)" },
-  { value: "beach_6m", label: "Praia (6 meses)" },
-  { value: "civil_buffet_3m", label: "Civil + Buffet (3 meses)" },
+  { value: "none", label: "Nenhum (Começar do zero)" },
+  { value: "religious_12m", label: "Casamento Clássico em Salão" },
+  { value: "beach_6m", label: "Casamento Campestre Premium" },
+  { value: "civil_buffet_3m", label: "Mini Wedding Intimista" },
 ] as const;
 
 type CreateWeddingFormData = z.infer<typeof WeddingsCreateBody>;

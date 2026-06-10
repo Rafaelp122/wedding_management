@@ -26,6 +26,14 @@ export const WeddingsListQueryParams = zod.object({
     .default(weddingsListQueryOffsetDefault),
 });
 
+export const weddingsListResponseItemsItemTotalBudgetOneMin = 0;
+
+export const weddingsListResponseItemsItemOverdueInstallmentsDefault = 0;
+export const weddingsListResponseItemsItemOverdueInstallmentsMin = 0;
+
+export const weddingsListResponseItemsItemIncompleteTasksDefault = 0;
+export const weddingsListResponseItemsItemIncompleteTasksMin = 0;
+
 export const WeddingsListResponse = zod.object({
   items: zod.array(
     zod.object({
@@ -38,6 +46,20 @@ export const WeddingsListResponse = zod.object({
       status: zod.string(),
       created_at: zod.iso.datetime({}),
       updated_at: zod.iso.datetime({}),
+      total_budget: zod
+        .union([
+          zod.number().min(weddingsListResponseItemsItemTotalBudgetOneMin),
+          zod.null(),
+        ])
+        .optional(),
+      overdue_installments: zod
+        .number()
+        .min(weddingsListResponseItemsItemOverdueInstallmentsMin)
+        .default(weddingsListResponseItemsItemOverdueInstallmentsDefault),
+      incomplete_tasks: zod
+        .number()
+        .min(weddingsListResponseItemsItemIncompleteTasksMin)
+        .default(weddingsListResponseItemsItemIncompleteTasksDefault),
     }),
   ),
   count: zod.number(),
@@ -62,6 +84,14 @@ export const WeddingsReadParams = zod.object({
   uuid: zod.string(),
 });
 
+export const weddingsReadResponseTotalBudgetOneMin = 0;
+
+export const weddingsReadResponseOverdueInstallmentsDefault = 0;
+export const weddingsReadResponseOverdueInstallmentsMin = 0;
+
+export const weddingsReadResponseIncompleteTasksDefault = 0;
+export const weddingsReadResponseIncompleteTasksMin = 0;
+
 export const WeddingsReadResponse = zod.object({
   uuid: zod.string(),
   groom_name: zod.string(),
@@ -72,6 +102,20 @@ export const WeddingsReadResponse = zod.object({
   status: zod.string(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
+  total_budget: zod
+    .union([
+      zod.number().min(weddingsReadResponseTotalBudgetOneMin),
+      zod.null(),
+    ])
+    .optional(),
+  overdue_installments: zod
+    .number()
+    .min(weddingsReadResponseOverdueInstallmentsMin)
+    .default(weddingsReadResponseOverdueInstallmentsDefault),
+  incomplete_tasks: zod
+    .number()
+    .min(weddingsReadResponseIncompleteTasksMin)
+    .default(weddingsReadResponseIncompleteTasksDefault),
 });
 
 /**
@@ -87,7 +131,16 @@ export const WeddingsUpdateBody = zod.object({
   date: zod.union([zod.iso.date(), zod.null()]).optional(),
   location: zod.union([zod.string(), zod.null()]).optional(),
   expected_guests: zod.union([zod.number(), zod.null()]).optional(),
+  status: zod.union([zod.string(), zod.null()]).optional(),
 });
+
+export const weddingsUpdateResponseTotalBudgetOneMin = 0;
+
+export const weddingsUpdateResponseOverdueInstallmentsDefault = 0;
+export const weddingsUpdateResponseOverdueInstallmentsMin = 0;
+
+export const weddingsUpdateResponseIncompleteTasksDefault = 0;
+export const weddingsUpdateResponseIncompleteTasksMin = 0;
 
 export const WeddingsUpdateResponse = zod.object({
   uuid: zod.string(),
@@ -99,6 +152,20 @@ export const WeddingsUpdateResponse = zod.object({
   status: zod.string(),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
+  total_budget: zod
+    .union([
+      zod.number().min(weddingsUpdateResponseTotalBudgetOneMin),
+      zod.null(),
+    ])
+    .optional(),
+  overdue_installments: zod
+    .number()
+    .min(weddingsUpdateResponseOverdueInstallmentsMin)
+    .default(weddingsUpdateResponseOverdueInstallmentsDefault),
+  incomplete_tasks: zod
+    .number()
+    .min(weddingsUpdateResponseIncompleteTasksMin)
+    .default(weddingsUpdateResponseIncompleteTasksDefault),
 });
 
 /**

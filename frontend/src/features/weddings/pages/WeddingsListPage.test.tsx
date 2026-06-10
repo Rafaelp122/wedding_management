@@ -28,12 +28,12 @@ describe("WeddingsListPage", () => {
     });
   });
 
-  it("shows filter fields after loading", async () => {
+  it("shows filter search field after loading", async () => {
     render(<WeddingsListPage />);
 
     await waitFor(() => {
       expect(
-        screen.getByPlaceholderText(/buscar por nome dos noivos/i),
+        screen.getByPlaceholderText(/buscar por noivos ou local/i),
       ).toBeInTheDocument();
     });
   });

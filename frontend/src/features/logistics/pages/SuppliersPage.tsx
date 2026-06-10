@@ -141,11 +141,14 @@ export default function SuppliersPage() {
                 from={pagination.info.from}
                 to={pagination.info.to}
                 totalCount={totalCount}
+                totalPages={pagination.info.totalPages}
+                currentPage={pagination.info.page}
                 hasPrevious={pagination.info.hasPrevious}
                 hasNext={pagination.info.hasNext}
                 isFetching={isFetching}
                 onPrevious={pagination.previousPage}
                 onNext={pagination.nextPage}
+                onGoToPage={pagination.goToPage}
               />
             </>
           )}

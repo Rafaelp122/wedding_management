@@ -15,4 +15,9 @@ export interface WeddingOut {
   status: string;
   created_at: string;
   updated_at: string;
+  total_budget?: number | null;
+  /** @minimum 0 */
+  overdue_installments?: number;
+  /** @minimum 0 */
+  incomplete_tasks?: number;
 }

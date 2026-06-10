@@ -8,12 +8,20 @@ import {
 
 import type { WeddingStatusFilter } from "@/features/weddings/utils/wedding-status";
 
+export const WEDDINGS_PAGE_SIZE = 5;
+
 export function useWeddingsPage() {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<WeddingStatusFilter>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const pagination = usePagination();
+  const pagination = usePagination(WEDDINGS_PAGE_SIZE);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const {
     data: weddingsResponse,
@@ -25,7 +33,7 @@ export function useWeddingsPage() {
     {
       limit: pagination.limit,
       offset: pagination.offset,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       status: statusFilter !== "all" ? statusFilter : undefined,
     },
     {
@@ -50,7 +58,7 @@ export function useWeddingsPage() {
   useEffect(() => {
     pagination.resetPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
   return {
     search,
@@ -68,6 +76,7 @@ export function useWeddingsPage() {
     pagination: {
       ...pagination,
       info: paginationInfo,
+      pageSize: WEDDINGS_PAGE_SIZE,
     },
   };
 }

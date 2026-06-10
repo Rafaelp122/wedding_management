@@ -2,6 +2,7 @@ import { useWeddingsPage } from "../hooks/useWeddingsPage";
 import { WeddingsTable } from "../components/WeddingsTable";
 import { WeddingFilters } from "../components/WeddingFilters";
 import { CreateWeddingDialog } from "../components/CreateWeddingDialog";
+import { EmptyWeddingsState } from "../components/EmptyWeddingsState";
 import {
   ListPageErrorState,
   ListPageLoadingState,
@@ -12,7 +13,6 @@ import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashbo
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Plus } from "lucide-react";
 
 export default function WeddingsListPage() {
@@ -48,13 +48,14 @@ export default function WeddingsListPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Casamentos</h2>
-          <p className="text-muted-foreground">
-            Gerencie todos os seus eventos de casamento
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+            Casamentos
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie e acompanhe todos os eventos ativos.
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
@@ -63,7 +64,6 @@ export default function WeddingsListPage() {
         </Button>
       </div>
 
-      {/* Filtros */}
       <WeddingFilters
         search={search}
         onSearchChange={setSearch}
@@ -71,51 +71,53 @@ export default function WeddingsListPage() {
         onStatusFilterChange={setStatusFilter}
       />
 
-      {/* Card com tabela */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {filteredWeddings.length} de {totalCount} casamentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredWeddings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold">
-                Nenhum casamento encontrado
-              </h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                {search || statusFilter !== "all"
-                  ? "Tente ajustar os filtros de busca"
-                  : "Clique em 'Novo Casamento' para começar"}
-              </p>
-            </div>
-          ) : (
-            <>
-              <WeddingsTable weddings={filteredWeddings} onRefetch={refetch} />
-              <DataPagination
-                from={pagination.info.from}
-                to={pagination.info.to}
-                totalCount={totalCount}
-                hasPrevious={pagination.info.hasPrevious}
-                hasNext={pagination.info.hasNext}
-                isFetching={isFetching}
-                onPrevious={pagination.previousPage}
-                onNext={pagination.nextPage}
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <div className="bg-card rounded-xl border shadow-soft overflow-hidden">
+        {filteredWeddings.length === 0 && totalCount === 0 ? (
+          <EmptyWeddingsState
+            onCreateClick={() => setCreateDialogOpen(true)}
+          />
+        ) : filteredWeddings.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold">
+              Nenhum casamento encontrado
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              Tente ajustar os filtros de busca
+            </p>
+          </div>
+        ) : (
+          <>
+            <WeddingsTable
+              weddings={filteredWeddings}
+              onRefetch={refetch}
+              pageSize={pagination.pageSize}
+            />
+            <DataPagination
+              from={pagination.info.from}
+              to={pagination.info.to}
+              totalCount={totalCount}
+              totalPages={pagination.info.totalPages}
+              currentPage={pagination.info.page}
+              hasPrevious={pagination.info.hasPrevious}
+              hasNext={pagination.info.hasNext}
+              isFetching={isFetching}
+              onPrevious={pagination.previousPage}
+              onNext={pagination.nextPage}
+              onGoToPage={pagination.goToPage}
+            />
+          </>
+        )}
+      </div>
 
-      {/* Dialog de criar casamento */}
       <CreateWeddingDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSuccess={() => {
           refetch();
-          queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+          queryClient.invalidateQueries({
+            queryKey: getDashboardSummaryQueryKey(),
+          });
           setCreateDialogOpen(false);
         }}
       />
