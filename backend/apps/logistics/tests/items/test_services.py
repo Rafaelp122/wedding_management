@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.logistics.models import Item
 from apps.logistics.services.item_service import ItemService
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
@@ -170,15 +170,6 @@ class TestItemServiceDelete:
 
         assert Item.objects.filter(uuid=item.uuid).count() == 0
 
-    def test_delete_item_metadata_check(self, user):
-        """Verifica que metadados do item não impedem deleção simples."""
-        wedding, contract = _setup_item_context(user)
-        item = ItemFactory(contract=contract, wedding=wedding)
-
-        ItemService.delete(user.company, item)
-
-        assert Item.objects.filter(uuid=item.uuid).count() == 0
-
 
 @pytest.mark.django_db
 class TestItemServiceListAndGet:
@@ -237,3 +228,56 @@ class TestItemServiceListAndGet:
 
         with pytest.raises(ObjectNotFoundError):
             ItemService.get(user_a.company, item_b.uuid)
+
+
+@pytest.mark.django_db
+class TestItemServiceTransitionStatus:
+    """Testes da máquina de estados de itens."""
+
+    def test_pending_to_in_progress(self, user):
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="PENDING"
+        )
+        result = ItemService.transition_status(user.company, item, "IN_PROGRESS")
+        assert result.acquisition_status == "IN_PROGRESS"
+
+    def test_in_progress_to_done(self, user):
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="IN_PROGRESS"
+        )
+        result = ItemService.transition_status(user.company, item, "DONE")
+        assert result.acquisition_status == "DONE"
+
+    def test_in_progress_to_pending(self, user):
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="IN_PROGRESS"
+        )
+        result = ItemService.transition_status(user.company, item, "PENDING")
+        assert result.acquisition_status == "PENDING"
+
+    def test_done_to_in_progress(self, user):
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="DONE"
+        )
+        result = ItemService.transition_status(user.company, item, "IN_PROGRESS")
+        assert result.acquisition_status == "IN_PROGRESS"
+
+    def test_pending_to_done_invalid(self, user):
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="PENDING"
+        )
+        with pytest.raises(BusinessRuleViolation):
+            ItemService.transition_status(user.company, item, "DONE")
+
+    def test_done_to_pending_invalid(self, user):
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="DONE"
+        )
+        with pytest.raises(BusinessRuleViolation):
+            ItemService.transition_status(user.company, item, "PENDING")
