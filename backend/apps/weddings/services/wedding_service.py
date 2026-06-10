@@ -57,7 +57,7 @@ class WeddingService:
                 filter=Q(task_records__is_completed=False),
                 distinct=True,
             ),
-        )
+        )  # type: ignore[assignment]
 
         return qs
 

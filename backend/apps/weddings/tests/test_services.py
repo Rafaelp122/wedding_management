@@ -248,9 +248,9 @@ class TestWeddingServiceListAnnotations:
         result = qs.first()
 
         assert result is not None
-        assert float(result.total_budget) == 50000.0  # type: ignore[attr-defined]
-        assert result.overdue_installments == 0  # type: ignore[attr-defined]
-        assert result.incomplete_tasks == 0  # type: ignore[attr-defined]
+        assert float(result.total_budget) == 50000.0
+        assert result.overdue_installments == 0
+        assert result.incomplete_tasks == 0
 
     def test_list_total_budget_none_without_budget(self, user):
         """total_budget é None quando o casamento não tem Budget."""
@@ -260,7 +260,7 @@ class TestWeddingServiceListAnnotations:
         result = qs.first()
 
         assert result is not None
-        assert result.total_budget is None  # type: ignore[attr-defined]
+        assert result.total_budget is None
 
     def test_list_counts_overdue_and_incomplete(self, user):
         """overdue_installments e incomplete_tasks refletem os dados reais."""
@@ -296,8 +296,8 @@ class TestWeddingServiceListAnnotations:
         result = qs.first()
 
         assert result is not None
-        assert result.overdue_installments == 1  # type: ignore[attr-defined]
-        assert result.incomplete_tasks == 1  # type: ignore[attr-defined]
+        assert result.overdue_installments == 1
+        assert result.incomplete_tasks == 1
 
     def test_list_multitenancy_isolates_annotations(self, user):
         """Annotations respeitam o isolamento multi-tenant."""
