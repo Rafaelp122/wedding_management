@@ -154,6 +154,25 @@ class TestContractServiceUpdate:
 
         assert updated.supplier == supplier2
 
+    def test_update_with_valid_status_transition(self, make_contract):
+        """update() com status válido chama transition_status internamente."""
+        contract = make_contract("DRAFT")
+
+        updated = ContractService.update(
+            contract.company, contract, {"status": "PENDING"}
+        )
+
+        assert updated.status == "PENDING"
+
+    def test_update_with_invalid_status_transition_raises_error(self, make_contract):
+        """update() com transição inválida propaga BusinessRuleViolation."""
+        contract = make_contract("DRAFT")
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.update(contract.company, contract, {"status": "SIGNED"})
+
+        assert "Não é permitido transitar" in str(exc_info.value)
+
 
 @pytest.mark.django_db
 class TestContractServiceDelete:
