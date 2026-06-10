@@ -162,6 +162,9 @@ class ItemService:
             f"{instance.acquisition_status} -> {new_status}"
         )
 
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(detail="Item não encontrado.")
+
         # TODO(sprint/018): mover máquina de estados para Item.clean()
         allowed_transitions: dict[str, list[str]] = {
             "PENDING": ["IN_PROGRESS"],

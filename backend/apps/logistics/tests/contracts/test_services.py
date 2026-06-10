@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
@@ -5,7 +6,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
@@ -152,6 +153,25 @@ class TestContractServiceUpdate:
         )
 
         assert updated.supplier == supplier2
+
+    def test_update_with_valid_status_transition(self, make_contract):
+        """update() com status válido chama transition_status internamente."""
+        contract = make_contract("DRAFT")
+
+        updated = ContractService.update(
+            contract.company, contract, {"status": "PENDING"}
+        )
+
+        assert updated.status == "PENDING"
+
+    def test_update_with_invalid_status_transition_raises_error(self, make_contract):
+        """update() com transição inválida propaga BusinessRuleViolation."""
+        contract = make_contract("DRAFT")
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.update(contract.company, contract, {"status": "SIGNED"})
+
+        assert "Não é permitido transitar" in str(exc_info.value)
 
 
 @pytest.mark.django_db
@@ -308,3 +328,204 @@ class TestContractServiceUploadFile:
 
         assert result.pdf_file.name.endswith(".pdf")
         assert result.uuid == contract.uuid
+
+
+@pytest.mark.django_db
+class TestContractServiceTransitionStatus:
+    """Testes da máquina de estados de contratos."""
+
+    def test_draft_to_pending(self, make_contract):
+        contract = make_contract("DRAFT")
+        result = ContractService.transition_status(
+            contract.company, contract, "PENDING"
+        )
+        assert result.status == "PENDING"
+
+    def test_draft_to_canceled(self, make_contract):
+        contract = make_contract("DRAFT")
+        result = ContractService.transition_status(
+            contract.company, contract, "CANCELED"
+        )
+        assert result.status == "CANCELED"
+
+    def test_pending_to_signed(self, make_contract):
+        contract = make_contract("PENDING")
+        contract.pdf_file = SimpleUploadedFile(
+            "test.pdf", b"pdf content", content_type="application/pdf"
+        )
+        contract.signed_date = date.today()
+        contract.total_amount = Decimal("5000.00")
+        contract.save()
+        result = ContractService.transition_status(contract.company, contract, "SIGNED")
+        assert result.status == "SIGNED"
+
+    def test_pending_to_draft(self, make_contract):
+        contract = make_contract("PENDING")
+        result = ContractService.transition_status(contract.company, contract, "DRAFT")
+        assert result.status == "DRAFT"
+
+    def test_pending_to_canceled(self, make_contract):
+        contract = make_contract("PENDING")
+        result = ContractService.transition_status(
+            contract.company, contract, "CANCELED"
+        )
+        assert result.status == "CANCELED"
+
+    def test_signed_to_canceled(self, user):
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            status="SIGNED",
+            total_amount=Decimal("5000.00"),
+            signed_date=date.today(),
+            pdf_file="contracts/dummy.pdf",
+        )
+        result = ContractService.transition_status(
+            contract.company, contract, "CANCELED"
+        )
+        assert result.status == "CANCELED"
+
+    def test_canceled_to_draft(self, make_contract):
+        contract = make_contract("CANCELED")
+        result = ContractService.transition_status(contract.company, contract, "DRAFT")
+        assert result.status == "DRAFT"
+
+    def test_invalid_transition_raises_error(self, make_contract):
+        contract = make_contract("DRAFT")
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.transition_status(contract.company, contract, "SIGNED")
+        assert "Não é permitido transitar" in str(exc_info.value)
+
+    def test_signed_to_draft_invalid(self, user):
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            status="SIGNED",
+            total_amount=Decimal("5000.00"),
+            signed_date=date.today(),
+            pdf_file="contracts/dummy.pdf",
+        )
+        with pytest.raises(BusinessRuleViolation):
+            ContractService.transition_status(contract.company, contract, "DRAFT")
+
+    def test_canceled_to_signed_invalid(self, make_contract):
+        contract = make_contract("CANCELED")
+        with pytest.raises(BusinessRuleViolation):
+            ContractService.transition_status(contract.company, contract, "SIGNED")
+
+    def test_transition_status_multitenancy(self, make_contract):
+        """Transição com company diferente deve falhar — ou o service
+        deve validar que instance pertence à company passada."""
+        contract = make_contract("DRAFT")
+        other_user = UserFactory()
+
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.transition_status(other_user.company, contract, "PENDING")
+
+
+@pytest.mark.django_db
+class TestContractServiceDeleteFile:
+    """Testes de remoção de arquivo de contrato."""
+
+    def test_delete_file_success(self, contract_with_file):
+        assert contract_with_file.pdf_file.name
+
+        ContractService.delete_file(contract_with_file.company, contract_with_file.uuid)
+
+        contract_with_file.refresh_from_db()
+        assert contract_with_file.pdf_file.name == ""
+
+    def test_delete_file_contract_not_found(self, user):
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.delete_file(user.company, uuid4())
+
+    def test_delete_file_multitenancy(self, contract_with_file, user):
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.delete_file(other_user.company, contract_with_file.uuid)
+
+
+@pytest.mark.django_db
+class TestContractServiceResolveParent:
+    """Testes de vinculação de contrato pai via update()."""
+
+    def test_update_parent_success(self, user):
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            status="SIGNED",
+            total_amount=Decimal("5000.00"),
+            signed_date=date.today(),
+            pdf_file="contracts/dummy.pdf",
+        )
+        child = ContractFactory(wedding=wedding, supplier=supplier, status="DRAFT")
+        ContractService.update(child.company, child, {"parent": str(parent.uuid)})
+
+        child.refresh_from_db()
+        assert child.parent == parent
+
+    def test_update_parent_self_raises_error(self, make_contract):
+        contract = make_contract("DRAFT")
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.update(
+                contract.company, contract, {"parent": str(contract.uuid)}
+            )
+        assert "não pode ser pai de si mesmo" in str(exc_info.value)
+
+    def test_update_parent_cross_wedding_raises_error(self, user):
+        parent = ContractFactory(
+            wedding__company=user.company,
+            status="SIGNED",
+            total_amount=Decimal("5000.00"),
+            signed_date=date.today(),
+            pdf_file="contracts/dummy.pdf",
+        )
+        child_wedding = WeddingFactory(company=user.company)
+        child_supplier = SupplierFactory(company=user.company)
+        child = ContractFactory(
+            wedding=child_wedding, supplier=child_supplier, status="DRAFT"
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.update(child.company, child, {"parent": str(parent.uuid)})
+        assert "deve pertencer ao mesmo casamento" in str(exc_info.value)
+
+    def test_update_parent_circular_raises_error(self, user):
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        ancestor = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            status="SIGNED",
+            total_amount=Decimal("5000.00"),
+            signed_date=date.today(),
+            pdf_file="contracts/dummy.pdf",
+        )
+        intermediate = ContractFactory(
+            wedding=ancestor.wedding,
+            supplier=ancestor.supplier,
+            parent=ancestor,
+            status="DRAFT",
+        )
+        child = ContractFactory(
+            wedding=ancestor.wedding,
+            supplier=ancestor.supplier,
+            parent=intermediate,
+            status="DRAFT",
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.update(
+                ancestor.company, ancestor, {"parent": str(child.uuid)}
+            )
+        assert "descendente" in str(exc_info.value)
+
+    def test_update_parent_not_found_raises_error(self, make_contract):
+        contract = make_contract("DRAFT")
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.update(contract.company, contract, {"parent": str(uuid4())})

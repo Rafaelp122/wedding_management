@@ -273,6 +273,9 @@ class ContractService:
             f"{instance.status} -> {new_status}"
         )
 
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(detail="Contrato não encontrado.")
+
         # TODO(sprint/018): mover máquina de estados para Contract.clean()
         allowed_transitions: dict[str, list[str]] = {
             "DRAFT": ["PENDING", "CANCELED"],

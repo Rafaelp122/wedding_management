@@ -1,52 +1,70 @@
 """
 Configuração Local de Testes: App Logistics.
 
-Este ficheiro regista as factories de logística. Permite validar fluxos
-de contratação, conformidade de fornecedores e inventário do evento.
+Fornece fixtures parametrizáveis para criar contratos em qualquer estado,
+hierarquias de aditivos e contratos com arquivos anexados.
 """
 
+from datetime import date
+from decimal import Decimal
+
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from pytest_factoryboy import register
 
+from apps.logistics.models import Contract
 from apps.weddings.tests.factories import WeddingFactory
 
 from .factories import ContractFactory, ItemFactory, SupplierFactory
 
 
-# Registo das factories logísticas
 register(SupplierFactory)
 register(ContractFactory)
 register(ItemFactory)
 
 
 @pytest.fixture
-def active_contract(db, supplier_factory, wedding_factory, contract_factory):
-    """Fixture que devolve um contrato assinado e pronto para execução."""
-    wedding = wedding_factory.create()
-    supplier = supplier_factory.create(company=wedding.company)
-    return contract_factory.create(
-        status="SIGNED",
-        wedding=wedding,
-        supplier=supplier,
-        description="Contrato de teste",
-    )
+def make_contract(user):
+    """Factory fixture: cria contrato em qualquer status com wedding + supplier."""
+
+    def _make(status=Contract.StatusChoices.DRAFT, **kwargs):
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        return ContractFactory(
+            wedding=wedding, supplier=supplier, status=status, **kwargs
+        )
+
+    return _make
 
 
 @pytest.fixture
-def supplier_with_items(db, supplier_factory, contract_factory, item_factory):
-    """
-    Fixture complexa que cria um fornecedor com um contrato e 3 itens.
-    Garante que todos pertencem ao mesmo contexto de utilizador/casamento.
-    """
-    supplier = supplier_factory.create()
+def contract_with_addendum(user):
+    """Contrato pai SIGNED com um aditivo DRAFT vinculado."""
+    parent = ContractFactory(
+        wedding__company=user.company,
+        status="SIGNED",
+        total_amount=Decimal("5000.00"),
+        signed_date=date.today(),
+        pdf_file="contracts/dummy.pdf",
+    )
+    addendum = ContractFactory(
+        wedding=parent.wedding,
+        supplier=parent.supplier,
+        parent=parent,
+        status="DRAFT",
+        total_amount=Decimal("1000.00"),
+    )
+    return parent, addendum
 
-    # Criamos um casamento para este Planner (utilizador do fornecedor)
-    wedding = WeddingFactory(company=supplier.company)
 
-    # Criamos o contrato vinculado a este casamento e fornecedor
-    contract = contract_factory.create(supplier=supplier, wedding=wedding)
-
-    # Criamos os itens vinculados ao contrato
-    items = item_factory.create_batch(3, contract=contract, wedding=wedding)
-
-    return supplier, contract, items
+@pytest.fixture
+def contract_with_file(user):
+    """Contrato DRAFT com pdf_file válido salvo no storage."""
+    wedding = WeddingFactory(company=user.company)
+    supplier = SupplierFactory(company=user.company)
+    contract = ContractFactory(wedding=wedding, supplier=supplier, pdf_file=None)
+    contract.pdf_file = SimpleUploadedFile(
+        "test.pdf", b"pdf content", content_type="application/pdf"
+    )
+    contract.save()
+    return contract
