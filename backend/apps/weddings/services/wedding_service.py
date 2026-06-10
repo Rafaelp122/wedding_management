@@ -5,13 +5,14 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import ProtectedError, Q, QuerySet
+from django.db.models import Count, OuterRef, ProtectedError, Q, QuerySet, Subquery
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.finances.models import Budget
 from apps.tenants.models import Company
 
 from ..models import Wedding
@@ -39,6 +40,25 @@ class WeddingService:
             )
         if status:
             qs = qs.filter(status=status)
+
+        qs = qs.annotate(
+            total_budget=Subquery(
+                Budget.objects.filter(wedding=OuterRef("pk")).values("total_estimated")[
+                    :1
+                ]
+            ),
+            overdue_installments=Count(
+                "installment_records",
+                filter=Q(installment_records__status="OVERDUE"),
+                distinct=True,
+            ),
+            incomplete_tasks=Count(
+                "task_records",
+                filter=Q(task_records__is_completed=False),
+                distinct=True,
+            ),
+        )
+
         return qs
 
     @staticmethod

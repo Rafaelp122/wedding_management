@@ -235,6 +235,84 @@ class TestWeddingService:
 
 
 @pytest.mark.django_db
+class TestWeddingServiceListAnnotations:
+    """Testes para as annotations do método list()."""
+
+    def test_list_includes_annotation_fields(self, user):
+        """list() retorna weddings com total_budget, overdue_installments e
+        incomplete_tasks populados."""
+        wedding = WeddingFactory(company=user.company)
+        BudgetFactory(wedding=wedding, company=user.company, total_estimated=50000)
+
+        qs = WeddingService.list(company=user.company)
+        result = qs.first()
+
+        assert result is not None
+        assert float(result.total_budget) == 50000.0  # type: ignore[attr-defined]
+        assert result.overdue_installments == 0  # type: ignore[attr-defined]
+        assert result.incomplete_tasks == 0  # type: ignore[attr-defined]
+
+    def test_list_total_budget_none_without_budget(self, user):
+        """total_budget é None quando o casamento não tem Budget."""
+        WeddingFactory(company=user.company)
+
+        qs = WeddingService.list(company=user.company)
+        result = qs.first()
+
+        assert result is not None
+        assert result.total_budget is None  # type: ignore[attr-defined]
+
+    def test_list_counts_overdue_and_incomplete(self, user):
+        """overdue_installments e incomplete_tasks refletem os dados reais."""
+        from datetime import date, timedelta
+
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+
+        budget = BudgetFactory(wedding=wedding, company=user.company)
+        category = BudgetCategoryFactory(
+            budget=budget, wedding=wedding, company=user.company
+        )
+        expense = ExpenseFactory(
+            wedding=wedding, category=category, contract=None, company=user.company
+        )
+
+        InstallmentFactory(
+            expense=expense,
+            wedding=wedding,
+            company=user.company,
+            amount=1000,
+            due_date=today - timedelta(days=10),
+            status="OVERDUE",
+        )
+
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+        )
+
+        qs = WeddingService.list(company=user.company)
+        result = qs.first()
+
+        assert result is not None
+        assert result.overdue_installments == 1  # type: ignore[attr-defined]
+        assert result.incomplete_tasks == 1  # type: ignore[attr-defined]
+
+    def test_list_multitenancy_isolates_annotations(self, user):
+        """Annotations respeitam o isolamento multi-tenant."""
+        from apps.users.tests.factories import UserFactory
+
+        other_user = UserFactory()
+        WeddingFactory(company=user.company)
+        WeddingFactory(company=other_user.company)
+
+        qs = WeddingService.list(company=user.company)
+
+        assert qs.count() == 1
+
+
+@pytest.mark.django_db
 class TestWeddingTemplateApplication:
     """Testes de aplicação de templates de cronograma na criação do casamento."""
 
