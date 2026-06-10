@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from django.utils import timezone
@@ -27,14 +28,23 @@ from apps.weddings.tests.factories import WeddingFactory
 
 @pytest.mark.django_db
 class TestWeddingService:
+    def test_get_wedding_success(self, user):
+        """get() com uuid existente deve retornar o Wedding correto."""
+        wedding = WeddingFactory(company=user.company, bride_name="Noiva Get")
+
+        result = WeddingService.get(company=user.company, uuid=wedding.uuid)
+
+        assert result.uuid == wedding.uuid
+        assert result.bride_name == "Noiva Get"
+        assert result.company == user.company
+
     def test_get_wedding_not_found_raises_object_not_found(self, user):
         """get() com uuid inexistente deve levantar ObjectNotFoundError."""
-        from uuid import uuid4
-
-        with pytest.raises(
-            ObjectNotFoundError, match="Casamento não encontrado ou acesso negado"
-        ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
             WeddingService.get(company=user.company, uuid=uuid4())
+
+        assert "Casamento não encontrado ou acesso negado" in str(exc_info.value)
+        assert exc_info.value.code == "wedding_not_found_or_denied"
 
     def test_update_wedding_with_empty_bride_name_raises_business_rule_violation(
         self, user
@@ -79,7 +89,8 @@ class TestWeddingService:
         # Setup: Casamento já existente
 
         wedding = WeddingFactory(company=user.company, bride_name="Antiga")
-        BudgetFactory(wedding=wedding)
+        initial_value = Decimal("50000.00")
+        BudgetFactory(wedding=wedding, total_estimated=initial_value)
 
         update_data = {
             "bride_name": "Nova Maria",
@@ -95,7 +106,7 @@ class TestWeddingService:
         assert updated_wedding.bride_name == "Nova Maria"
         # O valor do orçamento NÃO deve ter mudado se buscarmos no banco
         budget = Budget.objects.get(wedding=updated_wedding)
-        assert budget.total_estimated != Decimal("999999.99")
+        assert budget.total_estimated == initial_value
 
     def test_create_wedding_fail_fast_validation_error(self, user, wedding_payload):
         """
