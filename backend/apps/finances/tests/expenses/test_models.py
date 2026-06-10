@@ -42,6 +42,13 @@ class TestExpenseModelMetadata:
         assert expenses[0] == e2
         assert expenses[1] == e1
 
+    def test_expense_str_representation(self, user):
+        """__str__ deve conter o nome da despesa."""
+        _, category = _setup_expense(user)
+        expense = _make_expense(user, category, name="Buffet Premium")
+        result = str(expense)
+        assert "Buffet Premium" in result
+
 
 @pytest.mark.django_db
 class TestExpenseToleranceZero:

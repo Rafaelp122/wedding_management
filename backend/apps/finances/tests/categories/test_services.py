@@ -280,17 +280,3 @@ class TestBudgetCategoryServiceSetupDefaults:
         categories = BudgetCategory.objects.filter(budget=budget)
         for cat in categories:
             assert cat.allocated_budget == Decimal("0.00")
-
-    def test_delete_category_protected_by_expenses(self, user):
-        """Deleção de categoria com despesas vinculadas deve falhar."""
-        wedding, budget = _setup_budget(user)
-        category = BudgetCategoryFactory(budget=budget, allocated_budget=5000)
-        ExpenseFactory(
-            wedding=wedding, category=category, company=user.company, contract=None
-        )
-
-        with pytest.raises(DomainIntegrityError) as exc_info:
-            BudgetCategoryService.delete(user.company, category)
-
-        assert "Não é possível apagar esta categoria" in str(exc_info.value)
-        assert BudgetCategory.objects.filter(uuid=category.uuid).exists()

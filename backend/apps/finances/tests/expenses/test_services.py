@@ -141,6 +141,31 @@ class TestExpenseServiceCreate:
         assert expense.installments.count() == 1
         assert expense.installments.first().due_date == date.today()
 
+    def test_create_expense_amount_differs_from_contract_raises_error(self, user):
+        """BR-F02: despesa vinculada a contrato deve ter mesmo valor do contrato."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        category = _setup_category(user)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=category.wedding,
+            supplier=supplier,
+            total_amount=Decimal("5000.00"),
+        )
+
+        data = {
+            "category": category.uuid,
+            "contract": contract.uuid,
+            "name": "Despesa com contrato",
+            "estimated_amount": Decimal("5000.00"),
+            "actual_amount": Decimal("3000.00"),
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ExpenseService.create(user.company, data)
+
+        assert exc_info.value.code == "br_f02_violation"
+
 
 @pytest.mark.django_db
 class TestExpenseServiceUpdate:
@@ -338,6 +363,71 @@ class TestExpenseServiceListAndGet:
 
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.get(user_a.company, expense_b.uuid)
+
+
+@pytest.mark.django_db
+class TestExpenseServiceDelete:
+    """Testes de deleção de despesas via ExpenseService."""
+
+    def test_delete_expense_success(self, user, make_expense):
+        """Deleção de despesa existente é permitida."""
+        expense = make_expense()
+
+        ExpenseService.delete(user.company, expense)
+
+        with pytest.raises(ObjectNotFoundError):
+            ExpenseService.get(user.company, expense.uuid)
+
+
+@pytest.mark.django_db
+class TestExpenseServiceFromDocument:
+    """Testes de criação de despesa a partir de contrato
+    via ExpenseService.from_document()."""
+
+    def test_from_document_success(self, user):
+        """from_document() retorna dict com dados do contrato."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            total_amount=Decimal("5000.00"),
+            name="Buffet Premium",
+        )
+
+        result = ExpenseService.from_document(user.company, contract.uuid)
+
+        assert result["name"] == "Buffet Premium"
+        assert result["actual_amount"] == Decimal("5000.00")
+        assert result["contract"] == str(contract.uuid)
+        assert result["category_uuid"] is None
+        assert result["num_installments"] is None
+        assert result["first_due_date"] is None
+
+    def test_from_document_contract_not_found(self, user):
+        """UUID de contrato inexistente levanta ObjectNotFoundError."""
+        with pytest.raises(ObjectNotFoundError):
+            ExpenseService.from_document(user.company, uuid4())
+
+    def test_from_document_multitenancy(self, user):
+        """Usuário A não pode acessar contrato do Usuário B."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        user_b = UserFactory()
+        wedding_b = WeddingFactory(company=user_b.company)
+        supplier_b = SupplierFactory(company=user_b.company)
+        contract_b = ContractFactory(
+            wedding=wedding_b,
+            supplier=supplier_b,
+            total_amount=Decimal("5000.00"),
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ExpenseService.from_document(user.company, contract_b.uuid)
+
+        assert exc_info.value.code == "contract_not_found_or_denied"
 
 
 @pytest.mark.django_db

@@ -1,15 +1,18 @@
 """
 Configuração Local de Testes: App Finances.
 
-Este ficheiro regista as factories financeiras. Como as finanças são o coração
-do sistema, estas fixtures permitem validar cálculos de impostos, parcelamento
-e fluxos de caixa.
+Fornece fixtures fábrica que eliminam o boilerplate de criação
+da cadeia wedding → budget → category → expense → installment.
 """
 
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
 from pytest_factoryboy import register
+
+from apps.finances.models import Installment
+from apps.weddings.tests.factories import WeddingFactory
 
 from .factories import (
     BudgetCategoryFactory,
@@ -19,7 +22,6 @@ from .factories import (
 )
 
 
-# Registo das factories financeiras
 register(BudgetFactory)
 register(BudgetCategoryFactory)
 register(ExpenseFactory)
@@ -27,19 +29,44 @@ register(InstallmentFactory)
 
 
 @pytest.fixture
-def budget_setup(db, budget_factory, budget_category_factory):
-    """
-    Fixture que prepara um cenário financeiro básico:
-    Um orçamento com uma categoria já alocada.
-    """
-    budget = budget_factory.create(total_estimated=Decimal("30000.00"))
-    category = budget_category_factory.create(
-        wedding=budget.wedding, name="Decoração", allocated_budget=Decimal("5000.00")
-    )
-    return budget, category
+def make_expense(user):
+    """Factory fixture: cria wedding + budget + category + expense."""
+
+    def _make(actual_amount=Decimal("5000.00"), **kwargs):
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(budget=budget, wedding=wedding)
+        return ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            actual_amount=actual_amount,
+            **kwargs,
+        )
+
+    return _make
 
 
 @pytest.fixture
-def simple_expense(db, expense_factory):
-    """Fixture que devolve uma despesa de R$ 1000,00 pronta para ser parcelada."""
-    return expense_factory.create(actual_amount=Decimal("1000.00"))
+def make_installment(user):
+    """Factory fixture: cria toda a cadeia até uma parcela."""
+
+    def _make(
+        amount=Decimal("500.00"), status=Installment.StatusChoices.PENDING, **kwargs
+    ):
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(budget=budget, wedding=wedding)
+        expense = ExpenseFactory(
+            wedding=wedding, category=category, actual_amount=amount
+        )
+        return InstallmentFactory(
+            expense=expense,
+            wedding=wedding,
+            company=user.company,
+            amount=amount,
+            status=status,
+            due_date=kwargs.pop("due_date", date.today() + timedelta(days=30)),
+            **kwargs,
+        )
+
+    return _make

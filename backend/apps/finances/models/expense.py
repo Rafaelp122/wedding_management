@@ -48,6 +48,9 @@ class Expense(TenantModel, WeddingOwnedMixin):
             models.Index(fields=["category"]),
         ]
 
+    def __str__(self) -> str:
+        return self.name or f"Despesa #{self.pk}"
+
     def clean(self) -> None:
         super().clean()
 
