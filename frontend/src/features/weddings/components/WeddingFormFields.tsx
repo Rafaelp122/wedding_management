@@ -14,6 +14,7 @@ type WeddingFormShape = {
   date?: string | null;
   location?: string | null;
   expected_guests?: number | null;
+  status?: string | null;
 };
 
 interface WeddingFormFieldsProps<

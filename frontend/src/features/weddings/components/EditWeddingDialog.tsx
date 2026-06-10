@@ -8,7 +8,27 @@ import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 import { FormDialog } from "@/components/form-dialog";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { WeddingFormFields } from "./WeddingFormFields";
+
+const WEDDING_STATUS_OPTIONS = [
+  { value: "IN_PROGRESS", label: "Em Andamento" },
+  { value: "COMPLETED", label: "Concluído" },
+  { value: "CANCELED", label: "Cancelado" },
+] as const;
 
 type UpdateWeddingFormData = z.infer<typeof WeddingsUpdateBody>;
 
@@ -35,6 +55,7 @@ export function EditWeddingDialog({
       date: wedding.date || "",
       location: wedding.location || "",
       expected_guests: wedding.expected_guests ?? undefined,
+      status: wedding.status || "IN_PROGRESS",
     },
   });
 
@@ -62,6 +83,34 @@ export function EditWeddingDialog({
       maxWidth="600px"
     >
       <WeddingFormFields form={form} />
+
+      <FormField
+        control={form.control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              value={field.value ?? "IN_PROGRESS"}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {WEDDING_STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </FormDialog>
   );
 }

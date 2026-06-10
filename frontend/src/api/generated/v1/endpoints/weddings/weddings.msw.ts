@@ -27,6 +27,15 @@ export const getWeddingsListResponseMock = (
     status: faker.string.alpha({ length: { min: 10, max: 20 } }),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+    total_budget: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([
+        faker.number.float({ min: 0, fractionDigits: 2 }),
+        null,
+      ]),
+      undefined,
+    ]),
+    overdue_installments: faker.number.int({ min: 0 }),
+    incomplete_tasks: faker.number.int({ min: 0 }),
   })),
   count: faker.number.int(),
   ...overrideResponse,
@@ -44,6 +53,15 @@ export const getWeddingsCreateResponseMock = (
   status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  total_budget: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.number.float({ min: 0, fractionDigits: 2 }),
+      null,
+    ]),
+    undefined,
+  ]),
+  overdue_installments: faker.number.int({ min: 0 }),
+  incomplete_tasks: faker.number.int({ min: 0 }),
   ...overrideResponse,
 });
 
@@ -59,6 +77,15 @@ export const getWeddingsReadResponseMock = (
   status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  total_budget: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.number.float({ min: 0, fractionDigits: 2 }),
+      null,
+    ]),
+    undefined,
+  ]),
+  overdue_installments: faker.number.int({ min: 0 }),
+  incomplete_tasks: faker.number.int({ min: 0 }),
   ...overrideResponse,
 });
 
@@ -74,6 +101,15 @@ export const getWeddingsUpdateResponseMock = (
   status: faker.string.alpha({ length: { min: 10, max: 20 } }),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  total_budget: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.number.float({ min: 0, fractionDigits: 2 }),
+      null,
+    ]),
+    undefined,
+  ]),
+  overdue_installments: faker.number.int({ min: 0 }),
+  incomplete_tasks: faker.number.int({ min: 0 }),
   ...overrideResponse,
 });
 

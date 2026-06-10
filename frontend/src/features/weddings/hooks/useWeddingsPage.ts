@@ -8,12 +8,14 @@ import {
 
 import type { WeddingStatusFilter } from "@/features/weddings/utils/wedding-status";
 
+export const WEDDINGS_PAGE_SIZE = 5;
+
 export function useWeddingsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<WeddingStatusFilter>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const pagination = usePagination();
+  const pagination = usePagination(WEDDINGS_PAGE_SIZE);
 
   const {
     data: weddingsResponse,
@@ -68,6 +70,7 @@ export function useWeddingsPage() {
     pagination: {
       ...pagination,
       info: paginationInfo,
+      pageSize: WEDDINGS_PAGE_SIZE,
     },
   };
 }
