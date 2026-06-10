@@ -3,6 +3,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+from django.db import models as db_models
 
 from .factories import AdminFactory, UserFactory
 
@@ -98,10 +99,8 @@ class TestUserCompanyProtect:
 
     def test_delete_company_with_users_raises_protected_error(self):
         """Não é possível deletar Company que possui Users vinculados."""
-        from django.db.models import ProtectedError
-
         user = UserFactory()
         company = user.company
 
-        with pytest.raises(ProtectedError):
+        with pytest.raises(db_models.ProtectedError):
             company.delete()
