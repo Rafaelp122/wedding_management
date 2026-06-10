@@ -15,11 +15,51 @@ from ninja.errors import HttpError
 from ninja_jwt.schema import TokenRefreshOutputSchema
 from ninja_jwt.tokens import RefreshToken
 
-from apps.users.schemas import VerifyTokenOut
+from apps.users.schemas import TokenOut, UserDataOut, VerifyTokenOut
 from apps.users.services.token_service import TokenService
 
 
 pytestmark = pytest.mark.django_db
+
+
+class TestTokenServiceObtain:
+    """Testes para TokenService.obtain()."""
+
+    def test_obtain_success(self, user_factory):
+        """Credenciais válidas retornam TokenOut com access + refresh."""
+        user_factory.create(
+            email="auth@example.com", password="secure123", is_active=True
+        )
+
+        result = TokenService.obtain("auth@example.com", "secure123")
+
+        assert isinstance(result, TokenOut)
+        assert isinstance(result.user, UserDataOut)
+        assert result.access
+        assert result.refresh
+        assert result.user.email == "auth@example.com"
+
+    def test_obtain_wrong_password_raises_401(self, user_factory):
+        """Senha incorreta levanta HttpError 401."""
+        user_factory.create(
+            email="auth@example.com", password="secure123", is_active=True
+        )
+
+        with pytest.raises(HttpError) as exc_info:
+            TokenService.obtain("auth@example.com", "wrong")
+
+        assert exc_info.value.status_code == 401
+
+    def test_obtain_inactive_user_raises_401(self, user_factory):
+        """Usuário inativo levanta HttpError 401."""
+        user_factory.create(
+            email="inactive@example.com", password="secure123", is_active=False
+        )
+
+        with pytest.raises(HttpError) as exc_info:
+            TokenService.obtain("inactive@example.com", "secure123")
+
+        assert exc_info.value.status_code == 401
 
 
 class TestTokenServiceRefresh:

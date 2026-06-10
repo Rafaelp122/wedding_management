@@ -26,6 +26,10 @@ class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
 
+    # Vincula explicitamente a uma Company para evitar dependência oculta
+    # do CustomUserManager em TenantService.create_company().
+    company = factory.SubFactory("apps.tenants.tests.factories.CompanyFactory")
+
     # Gera emails únicos: planner0@example.com, planner1@example.com...
     # Essencial para evitar erros de integridade no seu modelo
     email = factory.Sequence(lambda n: f"planner{n}@example.com")
