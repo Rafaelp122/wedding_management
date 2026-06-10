@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from django.utils import timezone
@@ -27,6 +28,37 @@ from apps.weddings.tests.factories import WeddingFactory
 
 @pytest.mark.django_db
 class TestWeddingService:
+    def test_get_wedding_success(self, user):
+        """get() com uuid existente deve retornar o Wedding correto."""
+        wedding = WeddingFactory(company=user.company, bride_name="Noiva Get")
+
+        result = WeddingService.get(company=user.company, uuid=wedding.uuid)
+
+        assert result.uuid == wedding.uuid
+        assert result.bride_name == "Noiva Get"
+        assert result.company == user.company
+
+    def test_get_wedding_not_found_raises_object_not_found(self, user):
+        """get() com uuid inexistente deve levantar ObjectNotFoundError."""
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            WeddingService.get(company=user.company, uuid=uuid4())
+
+        assert "Casamento não encontrado ou acesso negado" in str(exc_info.value)
+        assert exc_info.value.code == "wedding_not_found_or_denied"
+
+    def test_update_wedding_with_empty_bride_name_raises_business_rule_violation(
+        self, user
+    ):
+        """update() com dado inválido deve levantar BusinessRuleViolation."""
+        wedding = WeddingFactory(company=user.company, bride_name="Antiga")
+
+        with pytest.raises(BusinessRuleViolation, match="não pode estar vazio"):
+            WeddingService.update(
+                instance=wedding,
+                company=user.company,
+                data={"bride_name": ""},
+            )
+
     def test_create_wedding_does_not_create_financial_data_eagerly(
         self, user, wedding_payload
     ):
@@ -57,7 +89,8 @@ class TestWeddingService:
         # Setup: Casamento já existente
 
         wedding = WeddingFactory(company=user.company, bride_name="Antiga")
-        BudgetFactory(wedding=wedding)
+        initial_value = Decimal("50000.00")
+        BudgetFactory(wedding=wedding, total_estimated=initial_value)
 
         update_data = {
             "bride_name": "Nova Maria",
@@ -73,7 +106,7 @@ class TestWeddingService:
         assert updated_wedding.bride_name == "Nova Maria"
         # O valor do orçamento NÃO deve ter mudado se buscarmos no banco
         budget = Budget.objects.get(wedding=updated_wedding)
-        assert budget.total_estimated != Decimal("999999.99")
+        assert budget.total_estimated == initial_value
 
     def test_create_wedding_fail_fast_validation_error(self, user, wedding_payload):
         """
@@ -163,35 +196,6 @@ class TestWeddingService:
             .exists()
             is False
         )
-
-    def test_update_wedding_protects_budget_field(self, user):
-        """
-        Cenário 5: Garante que o campo total_estimated é ignorado no update.
-        """
-        # 1. Setup: Criar casamento e orçamento separadamente
-        initial_value = Decimal("50000.00")
-
-        # O casamento nasce limpo, sem efeitos colaterais
-        wedding = WeddingFactory(company=user.company)
-
-        # O orçamento é criado explicitamente para este teste
-        BudgetFactory(wedding=wedding, total_estimated=initial_value)
-
-        # 2. Payload de atualização com uma tentativa de mudar o orçamento
-        update_data = {
-            "bride_name": "Bruna Atualizada",
-            "total_estimated": Decimal("100000.00"),
-        }
-
-        # 3. Execução
-        updated_wedding = WeddingService.update(
-            instance=wedding, company=user.company, data=update_data
-        )
-
-        # 4. Asserções
-        assert updated_wedding.bride_name == "Bruna Atualizada"
-        budget = Budget.objects.get(wedding=updated_wedding)
-        assert budget.total_estimated == initial_value
 
     def test_delete_wedding_protected_by_contracts(self, user):
         """
