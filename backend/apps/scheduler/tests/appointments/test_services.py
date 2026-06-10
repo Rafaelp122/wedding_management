@@ -309,3 +309,8 @@ class TestEventServiceListAndGet:
 
         with pytest.raises(ObjectNotFoundError):
             EventService.get(user_a.company, event_b.uuid)
+
+    def test_list_events_empty_company(self, user):
+        """list() sem eventos retorna QuerySet vazio."""
+        qs = EventService.list(user.company)
+        assert qs.count() == 0

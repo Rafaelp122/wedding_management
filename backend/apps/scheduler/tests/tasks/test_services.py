@@ -192,3 +192,8 @@ class TestTaskServiceListAndGet:
 
         with pytest.raises(ObjectNotFoundError):
             TaskService.get(user_a.company, task_b.uuid)
+
+    def test_list_tasks_empty_company(self, user):
+        """list() sem tarefas retorna QuerySet vazio."""
+        qs = TaskService.list(user.company)
+        assert qs.count() == 0
