@@ -111,3 +111,8 @@ class TestEventReminder:
             start_time=timezone.now(),
         )
         assert event.reminder_minutes_before == 60
+
+    def test_event_recurrence_rule_choices(self, user):
+        """RecurrenceChoices contém os valores em português."""
+        expected = {"none", "semanal", "quinzenal", "mensal"}
+        assert set(Event.RecurrenceChoices.values) == expected

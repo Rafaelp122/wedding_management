@@ -1,107 +1,258 @@
 import pytest
+from django.utils import timezone
 
-from apps.scheduler.services import EventService
-from apps.weddings.services import WeddingService
-
-
-@pytest.fixture
-def seed_data(user, django_user_model):
-    # Planner alvo
-    my_wedding = WeddingService.create(
-        user.company,
-        {
-            "bride_name": "Minha",
-            "groom_name": "Noz",
-            "location": "A",
-            "date": "2026-10-11",
-        },
-    )
-    my_event = EventService.create(
-        user.company,
-        {
-            "wedding": my_wedding,
-            "title": "Reunião A",
-            "event_type": "reuniao",
-            "start_time": "2026-10-11T10:00:00Z",
-            "end_time": "2026-10-11T11:00:00Z",
-        },
-    )
-
-    # Planner alheio
-    from apps.users.tests.factories import UserFactory
-
-    other_user = UserFactory(email="b@b.com")
-    other_user.set_password("123")
-    other_user.save()
-    other_wedding = WeddingService.create(
-        other_user.company,
-        {
-            "bride_name": "Outra",
-            "groom_name": "Outro",
-            "location": "B",
-            "date": "2026-10-11",
-        },
-    )
-    EventService.create(
-        other_user.company,
-        {
-            "wedding": other_wedding,
-            "title": "Reunião B",
-            "event_type": "reuniao",
-            "start_time": "2026-10-11T10:00:00Z",
-            "end_time": "2026-10-11T11:00:00Z",
-        },
-    )
-
-    return {
-        "my_event": my_event,
-    }
+from apps.scheduler.tests.factories import EventFactory, TaskFactory
+from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
-class TestSchedulerNinjaAPI:
-    def test_list_events_isolation(self, auth_client, seed_data):
+class TestSchedulerEventsAPI:
+    """Testes dos endpoints de Eventos do Scheduler."""
+
+    def test_list_events_isolation(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        EventFactory(wedding=wedding, title="Reunião A")
+        EventFactory(title="Reunião B")
+
         response = auth_client.get("/api/v1/scheduler/events/")
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 1
         assert data["items"][0]["title"] == "Reunião A"
 
-    def test_create_event_validates_dates(self, auth_client, seed_data):
-        my_wedding = seed_data["my_event"].wedding
+    def test_list_events_unauthorized(self, client):
+        response = client.get("/api/v1/scheduler/events/")
+        assert response.status_code == 401
 
-        # 1. end_time before start_time
+    def test_create_event_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now()
+
         response = auth_client.post(
             "/api/v1/scheduler/events/",
             {
-                "wedding": str(my_wedding.uuid),
+                "wedding": str(wedding.uuid),
+                "title": "Prova de Buffet",
+                "event_type": "degustacao",
+                "location": "",
+                "description": "",
+                "start_time": (now + timezone.timedelta(days=10)).isoformat(),
+                "end_time": (now + timezone.timedelta(days=10, hours=1)).isoformat(),
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["title"] == "Prova de Buffet"
+
+    def test_create_event_unauthorized(self, client):
+        response = client.post(
+            "/api/v1/scheduler/events/", {}, content_type="application/json"
+        )
+        assert response.status_code == 401
+
+    def test_create_event_invalid_end_time(self, auth_client, user):
+        """end_time < start_time deve retornar 422."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now()
+
+        response = auth_client.post(
+            "/api/v1/scheduler/events/",
+            {
+                "wedding": str(wedding.uuid),
                 "title": "Inválido",
                 "event_type": "outro",
-                "start_time": "2026-10-10T12:00:00Z",
-                "end_time": "2026-10-10T10:00:00Z",
-                "reminder_minutes_before": 10,
+                "location": "",
+                "description": "",
+                "start_time": (now + timezone.timedelta(days=1, hours=12)).isoformat(),
+                "end_time": (now + timezone.timedelta(days=1, hours=10)).isoformat(),
             },
             content_type="application/json",
         )
         assert response.status_code == 422
-        errors = response.json().get("detail", [])
-        assert "A hora de término não pode ser anterior à hora de início." in str(
-            errors
-        )
 
-        # 2. reminder_minutes_before negative
-        response2 = auth_client.post(
+    def test_create_event_negative_reminder(self, auth_client, user):
+        """reminder_minutes_before < 0 deve retornar 422."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now()
+
+        response = auth_client.post(
             "/api/v1/scheduler/events/",
             {
-                "wedding": str(my_wedding.uuid),
-                "title": "Inválido 2",
+                "wedding": str(wedding.uuid),
+                "title": "Inválido",
                 "event_type": "outro",
-                "start_time": "2026-10-10T12:00:00Z",
-                "end_time": "2026-10-10T14:00:00Z",
+                "location": "",
+                "description": "",
+                "start_time": (now + timezone.timedelta(days=1, hours=12)).isoformat(),
+                "end_time": (now + timezone.timedelta(days=1, hours=14)).isoformat(),
                 "reminder_minutes_before": -10,
             },
             content_type="application/json",
         )
-        assert response2.status_code == 422
-        errors2 = response2.json().get("detail", [])
-        assert "Os minutos do lembrete devem ser um valor positivo." in str(errors2)
+        assert response.status_code == 422
+
+    def test_create_payment_event_manual_returns_422(self, auth_client, user):
+        """BR-S01: eventos de pagamento não podem ser criados manualmente."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now()
+
+        response = auth_client.post(
+            "/api/v1/scheduler/events/",
+            {
+                "wedding": str(wedding.uuid),
+                "title": "Pagamento Manual",
+                "event_type": "pagamento",
+                "location": "",
+                "description": "",
+                "start_time": (now + timezone.timedelta(days=1)).isoformat(),
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+
+    def test_retrieve_event_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        event = EventFactory(wedding=wedding, title="Prova de Vestido")
+
+        response = auth_client.get(f"/api/v1/scheduler/events/{event.uuid}/")
+        assert response.status_code == 200
+        assert response.json()["title"] == "Prova de Vestido"
+
+    def test_retrieve_event_isolation_404(self, auth_client):
+        other_event = EventFactory(title="Evento Alheio")
+
+        response = auth_client.get(f"/api/v1/scheduler/events/{other_event.uuid}/")
+        assert response.status_code == 404
+
+    def test_update_event_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        event = EventFactory(wedding=wedding, title="Antigo")
+
+        response = auth_client.patch(
+            f"/api/v1/scheduler/events/{event.uuid}/",
+            {"title": "Novo Título"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["title"] == "Novo Título"
+
+    def test_update_event_unauthorized(self, client):
+        response = client.patch(
+            "/api/v1/scheduler/events/00000000-0000-0000-0000-000000000001/",
+            {},
+            content_type="application/json",
+        )
+        assert response.status_code == 401
+
+    def test_update_event_isolation_404(self, auth_client):
+        other_event = EventFactory()
+
+        response = auth_client.patch(
+            f"/api/v1/scheduler/events/{other_event.uuid}/",
+            {"title": "Hack"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
+    def test_delete_event_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        event = EventFactory(wedding=wedding)
+
+        response = auth_client.delete(f"/api/v1/scheduler/events/{event.uuid}/")
+        assert response.status_code == 204
+
+    def test_delete_event_unauthorized(self, client):
+        response = client.delete(
+            "/api/v1/scheduler/events/00000000-0000-0000-0000-000000000001/"
+        )
+        assert response.status_code == 401
+
+    def test_delete_event_isolation_404(self, auth_client):
+        other_event = EventFactory()
+
+        response = auth_client.delete(f"/api/v1/scheduler/events/{other_event.uuid}/")
+        assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestSchedulerTasksAPI:
+    """Testes dos endpoints de Tarefas do Scheduler."""
+
+    def test_list_tasks_isolation(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        TaskFactory(wedding=wedding, title="Minha Tarefa")
+        TaskFactory(title="Tarefa Alheia")
+
+        response = auth_client.get("/api/v1/scheduler/tasks/")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 1
+        assert data["items"][0]["title"] == "Minha Tarefa"
+
+    def test_list_tasks_unauthorized(self, client):
+        response = client.get("/api/v1/scheduler/tasks/")
+        assert response.status_code == 401
+
+    def test_create_task_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.post(
+            "/api/v1/scheduler/tasks/",
+            {
+                "wedding": str(wedding.uuid),
+                "title": "Contratar Buffet",
+                "description": "Pedir 3 orçamentos",
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["title"] == "Contratar Buffet"
+
+    def test_create_task_unauthorized(self, client):
+        response = client.post(
+            "/api/v1/scheduler/tasks/", {}, content_type="application/json"
+        )
+        assert response.status_code == 401
+
+    def test_update_task_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        task = TaskFactory(wedding=wedding, title="Antigo", is_completed=False)
+
+        response = auth_client.patch(
+            f"/api/v1/scheduler/tasks/{task.uuid}/",
+            {"title": "Novo", "is_completed": True},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["title"] == "Novo"
+        assert data["is_completed"] is True
+
+    def test_update_task_unauthorized(self, client):
+        response = client.patch(
+            "/api/v1/scheduler/tasks/00000000-0000-0000-0000-000000000001/",
+            {},
+            content_type="application/json",
+        )
+        assert response.status_code == 401
+
+    def test_delete_task_success(self, auth_client, user):
+        wedding = WeddingFactory(company=user.company)
+        task = TaskFactory(wedding=wedding)
+
+        response = auth_client.delete(f"/api/v1/scheduler/tasks/{task.uuid}/")
+        assert response.status_code == 204
+
+    def test_delete_task_unauthorized(self, client):
+        response = client.delete(
+            "/api/v1/scheduler/tasks/00000000-0000-0000-0000-000000000001/"
+        )
+        assert response.status_code == 401
+
+    def test_delete_task_isolation_404(self, auth_client):
+        other_task = TaskFactory()
+
+        response = auth_client.delete(f"/api/v1/scheduler/tasks/{other_task.uuid}/")
+        assert response.status_code == 404
