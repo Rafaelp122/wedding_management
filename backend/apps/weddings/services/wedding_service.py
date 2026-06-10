@@ -39,13 +39,18 @@ class WeddingService:
                 | Q(location__icontains=search)
             )
         if status:
+            if status not in Wedding.StatusChoices.values:
+                raise BusinessRuleViolation(
+                    detail=f"Status inválido: '{status}'.",
+                    code="wedding_invalid_status_filter",
+                )
             qs = qs.filter(status=status)
 
         qs = qs.annotate(
             total_budget=Subquery(
-                Budget.objects.filter(wedding=OuterRef("pk")).values("total_estimated")[
-                    :1
-                ]
+                Budget.objects.filter(
+                    wedding=OuterRef("pk"), company=OuterRef("company")
+                ).values("total_estimated")[:1]
             ),
             overdue_installments=Count(
                 "installment_records",

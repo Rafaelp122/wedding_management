@@ -242,6 +242,7 @@ export const WeddingsTable = memo(function WeddingsTable({
 
       {editingWedding && (
         <EditWeddingDialog
+          key={editingWedding.uuid}
           wedding={editingWedding}
           open={!!editingWedding}
           onOpenChange={(open) => !open && setEditingWedding(null)}
@@ -253,6 +254,7 @@ export const WeddingsTable = memo(function WeddingsTable({
       )}
       {deletingWedding && (
         <DeleteWeddingDialog
+          key={deletingWedding.uuid}
           wedding={deletingWedding}
           open={!!deletingWedding}
           onOpenChange={(open) => !open && setDeletingWedding(null)}

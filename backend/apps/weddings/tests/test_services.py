@@ -311,6 +311,54 @@ class TestWeddingServiceListAnnotations:
 
         assert qs.count() == 1
 
+    def test_list_filters_by_search(self, user):
+        """list() filtra por groom_name, bride_name e location."""
+        WeddingFactory(
+            company=user.company,
+            groom_name="Xablau",
+            bride_name="Xablau",
+            location="Xablau",
+        )
+        WeddingFactory(
+            company=user.company,
+            groom_name="Ciclano",
+            bride_name="Fulana",
+            location="Belo Horizonte",
+        )
+
+        by_groom = WeddingService.list(company=user.company, search="Ciclano")
+        by_bride = WeddingService.list(company=user.company, search="Fulana")
+        by_location = WeddingService.list(company=user.company, search="Belo")
+        by_none = WeddingService.list(company=user.company, search="Inexistente")
+
+        assert by_groom.count() == 1
+        assert by_bride.count() == 1
+        assert by_location.count() == 1
+        assert by_none.count() == 0
+
+    def test_list_filters_by_status(self, user):
+        """list() filtra corretamente por status."""
+        from datetime import date, timedelta
+
+        WeddingFactory(company=user.company, status="IN_PROGRESS")
+        completed = WeddingFactory(company=user.company, status="IN_PROGRESS")
+        Wedding.objects.filter(pk=completed.pk).update(
+            status="COMPLETED", date=date.today() - timedelta(days=30)
+        )
+
+        in_progress = WeddingService.list(company=user.company, status="IN_PROGRESS")
+        completed_qs = WeddingService.list(company=user.company, status="COMPLETED")
+
+        assert in_progress.count() == 1
+        assert completed_qs.count() == 1
+
+    def test_list_raises_on_invalid_status(self, user):
+        """list() rejeita status inválido com BusinessRuleViolation."""
+        WeddingFactory(company=user.company)
+
+        with pytest.raises(BusinessRuleViolation, match="Status inválido"):
+            WeddingService.list(company=user.company, status="INVALIDO")
+
 
 @pytest.mark.django_db
 class TestWeddingTemplateApplication:
