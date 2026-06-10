@@ -1,12 +1,10 @@
 import { memo, useCallback, useMemo, useState } from "react";
-import { Calendar, dayjsLocalizer, type SlotInfo, type View, Views } from "react-big-calendar";
+import { Calendar, dateFnsLocalizer, type SlotInfo, type View, Views } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./SchedulerCalendar.css";
-import dayjs from "dayjs";
-import "dayjs/locale/pt-br";
+import { format, getDay, startOfWeek } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Info } from "lucide-react";
-
-dayjs.locale("pt-br");
 
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
 
@@ -20,7 +18,14 @@ import { Badge } from "@/components/ui/badge";
 
 import { EVENT_LABELS, EVENT_COLORS } from "../constants";
 
-const localizer = dayjsLocalizer(dayjs);
+const locales = { "pt-BR": ptBR };
+
+const localizer = dateFnsLocalizer({
+  format,
+  startOfWeek: (date: Date) => startOfWeek(date, { locale: ptBR }),
+  getDay,
+  locales,
+});
 
 interface CalendarEvent {
   title: string;
@@ -53,12 +58,12 @@ const EventRenderer = memo(function EventRenderer({
               event.resource.event_type}
           </p>
           <p>
-            Início: {dayjs(event.start).format("DD/MM/YYYY HH:mm")}
+            Início: {format(event.start, "dd/MM/yyyy HH:mm")}
           </p>
           {event.resource.end_time ? (
             <p>
               Fim:{" "}
-              {dayjs(event.end).format("DD/MM/YYYY HH:mm")}
+              {format(event.end, "dd/MM/yyyy HH:mm")}
             </p>
           ) : null}
           {event.resource.location ? (
