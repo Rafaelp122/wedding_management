@@ -5,6 +5,7 @@ Main Django Ninja API configuration.
 import logging
 
 import sentry_sdk
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpRequest
 from ninja.errors import HttpError
 from ninja_extra import NinjaExtraAPI
@@ -49,7 +50,25 @@ def application_error_handler(request: HttpRequest, exc: ApplicationError):
     )
 
 
-# --- Handler 2: O "Segurança" ---
+# --- Handler 2: Validação de modelo/serviço ---
+# Django ValidationError vindo do model clean() ou service layer → HTTP 400.
+@api.exception_handler(DjangoValidationError)
+def django_validation_error_handler(request: HttpRequest, exc: DjangoValidationError):
+    detail = (
+        exc.message_dict
+        if hasattr(exc, "message_dict") and exc.message_dict
+        else exc.messages
+        if hasattr(exc, "messages") and exc.messages
+        else str(exc)
+    )
+    return api.create_response(
+        request,
+        {"detail": detail, "code": "validation_error"},
+        status=400,
+    )
+
+
+# --- Handler 3: O "Segurança" ---
 # Trata o que NÃO foi previsto (bugs reais).
 # Re-raise Pydantic validation errors para não mascarar erros 422 do Ninja.
 @api.exception_handler(Exception)

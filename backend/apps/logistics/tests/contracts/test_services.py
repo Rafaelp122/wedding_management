@@ -2,6 +2,8 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.finances.tests.factories import (
@@ -256,3 +258,53 @@ class TestContractServiceListAndGet:
 
         with pytest.raises(ObjectNotFoundError):
             ContractService.get(user_a.company, contract_b.uuid)
+
+
+@pytest.mark.django_db
+class TestContractServiceUploadFile:
+    """Testes de upload de arquivo para contrato via ContractService."""
+
+    def test_upload_file_invalid_content_type_fails(self, user):
+        """upload_file com content_type inválido deve falhar (fast-fail)."""
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+        invalid_file = SimpleUploadedFile(
+            name="malicious.exe",
+            content=b"malicious content",
+            content_type="application/octet-stream",
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            ContractService.upload_file(user.company, contract.uuid, invalid_file)
+
+        assert "não suportado" in str(exc_info.value).lower()
+
+    def test_upload_file_exceeds_size_fails(self, user):
+        """upload_file com arquivo > 10MB deve falhar (fast-fail)."""
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+        oversized_file = SimpleUploadedFile(
+            name="big_contract.pdf",
+            content=b"0" * (10 * 1024 * 1024 + 1),
+            content_type="application/pdf",
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            ContractService.upload_file(user.company, contract.uuid, oversized_file)
+
+        assert "10mb" in str(exc_info.value).lower()
+
+    def test_upload_file_valid_pdf_succeeds(self, user):
+        """upload_file com pdf válido deve salvar com sucesso."""
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+        valid_file = SimpleUploadedFile(
+            name="valid_contract.pdf",
+            content=b"valid pdf content",
+            content_type="application/pdf",
+        )
+
+        result = ContractService.upload_file(user.company, contract.uuid, valid_file)
+
+        assert result.pdf_file.name.endswith(".pdf")
+        assert result.uuid == contract.uuid

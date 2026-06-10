@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -298,10 +299,43 @@ class ContractService:
     @staticmethod
     def upload_file(company: Company, uuid: UUID | str, uploaded_file: Any) -> Contract:
         """
-        Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+        Faz upload de um arquivo (PDF, PNG, JPEG) para o contrato.
         Salva no storage configurado e persiste a referência no modelo.
         """
         logger.info(f"Upload de arquivo para contrato uuid={uuid}")
+
+        # Defesa em camadas: o service valida MIME (content_type do UploadedFile)
+        # como fast-fail antes de I/O; o modelo valida extensão via
+        # FileExtensionValidator no clean(). MIME não é acessível no modelo,
+        # extensão não é confiável isoladamente — os critérios são complementares.
+        allowed_content_types = [
+            "application/pdf",
+            "image/png",
+            "image/jpeg",
+        ]
+        file_content_type = getattr(uploaded_file, "content_type", None)
+        if file_content_type is None:
+            logger.warning(
+                "Upload sem Content-Type header para contrato uuid=%s — "
+                "validação de MIME bypassada, extensão será verificada no modelo.",
+                uuid,
+            )
+        elif file_content_type not in allowed_content_types:
+            raise ValidationError(
+                {"pdf_file": "Tipo de arquivo não suportado. Use PDF, PNG ou JPEG."}
+            )
+
+        # Fast-fail: validação de tamanho
+        max_size = 10 * 1024 * 1024  # 10MB
+        if uploaded_file.size is None:
+            logger.warning(
+                "Upload sem size reportado para contrato uuid=%s — "
+                "validação de tamanho bypassada, será verificada no modelo.",
+                uuid,
+            )
+        elif uploaded_file.size > max_size:
+            raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
+
         contract = ContractService.get(company, uuid)
         contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
         contract.save(update_fields=["pdf_file"])
