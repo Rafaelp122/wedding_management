@@ -1,3 +1,4 @@
+import hashlib
 import logging
 
 from django.contrib.auth import authenticate
@@ -66,10 +67,11 @@ class TokenService:
             HttpError (401): Se o refresh token for inválido ou estiver
                 na blacklist.
         """
-        logger.info(f"Tentativa de refresh de token (id={refresh_token[-12:]})")
+        token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
+        logger.info(f"Tentativa de refresh de token (fp={token_fp})")
         schema = TokenRefreshInputSchema(refresh=refresh_token)
         result = schema.to_response_schema()
-        logger.info(f"Token refresh bem-sucedido (id={refresh_token[-12:]})")
+        logger.info(f"Token refresh bem-sucedido (fp={token_fp})")
         return result
 
     @staticmethod
@@ -80,8 +82,9 @@ class TokenService:
         Raises:
             HttpError (401): Se o token for inválido ou expirado.
         """
-        logger.info(f"Tentativa de verificação de token (id={token[-12:]})")
+        token_fp = hashlib.sha256(token.encode()).hexdigest()[:12]
+        logger.info(f"Tentativa de verificação de token (fp={token_fp})")
         schema = TokenVerifyInputSchema(token=token)
         schema.to_response_schema()  # levanta HttpError(401) se inválido
-        logger.info(f"Token verificado com sucesso (id={token[-12:]})")
+        logger.info(f"Token verificado com sucesso (fp={token_fp})")
         return VerifyTokenOut()

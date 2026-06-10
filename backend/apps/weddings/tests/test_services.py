@@ -611,3 +611,33 @@ class TestDashboardService:
             DashboardService.get_wedding_overview(
                 company=user.company, wedding_uuid=other_wedding.uuid
             )
+
+    def test_get_summary_logs_entry_and_exit(self, user):
+        """Logs de entrada e saída devem ser emitidos em get_summary."""
+        with patch("apps.weddings.services.dashboard_service.logger") as mock_logger:
+            DashboardService.get_summary(company=user.company)
+
+        mock_logger.info.assert_any_call(
+            f"Computando resumo do dashboard para company_id={user.company.id}"
+        )
+        assert any(
+            "Dashboard resumo computado" in call[0][0]
+            for call in mock_logger.info.call_args_list
+        )
+
+    def test_get_wedding_overview_logs_entry_and_exit(self, user):
+        """Logs de entrada e saída devem ser emitidos em get_wedding_overview."""
+        wedding = WeddingFactory(company=user.company)
+        with patch("apps.weddings.services.dashboard_service.logger") as mock_logger:
+            DashboardService.get_wedding_overview(
+                company=user.company, wedding_uuid=wedding.uuid
+            )
+
+        assert any(
+            f"uuid={wedding.uuid}" in call[0][0]
+            for call in mock_logger.info.call_args_list
+        )
+        assert any(
+            "Visão geral do casamento" in call[0][0]
+            for call in mock_logger.info.call_args_list
+        )

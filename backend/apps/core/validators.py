@@ -16,7 +16,7 @@ class MaxFileSizeValidator:
     def __call__(self, value) -> None:
         try:
             size = value.size
-        except (OSError, FileNotFoundError):
+        except OSError:
             return
 
         if size is not None and size > self.max_size:
@@ -25,3 +25,14 @@ class MaxFileSizeValidator:
                 f"Arquivo excede o limite de {mb}MB.",
                 code="max_file_size",
             )
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, MaxFileSizeValidator):
+            return self.max_size == other.max_size
+        return False
+
+    def deconstruct(self) -> tuple:
+        path = "apps.core.validators.MaxFileSizeValidator"
+        args = (self.max_size,)
+        kwargs: dict = {}
+        return path, args, kwargs
