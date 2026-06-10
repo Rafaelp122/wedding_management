@@ -56,6 +56,11 @@ class Installment(TenantModel, WeddingOwnedMixin):
         super().clean()
         from django.core.exceptions import ValidationError
 
+        if self.amount is not None and self.amount < 0:
+            raise ValidationError(
+                {"amount": "O valor da parcela não pode ser negativo."}
+            )
+
         if self.paid_date and self.status != self.StatusChoices.PAID:
             raise ValidationError("Parcela com data de pagamento deve ter status PAGO")
 

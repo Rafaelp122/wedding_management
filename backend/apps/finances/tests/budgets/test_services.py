@@ -147,6 +147,16 @@ class TestBudgetServiceCritical:
         # Pelo menos uma das categorias esperadas deve estar presente
         assert any(expected in category_names for expected in expected_categories)
 
+    def test_get_budget_success(self, user):
+        """get() retorna budget por UUID com select_related."""
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetFactory(wedding=wedding)
+
+        result = BudgetService.get(user.company, budget.uuid)
+
+        assert result.uuid == budget.uuid
+        assert result.wedding == wedding
+
     def test_get_budget_multi_tenancy(self):
         """
         Teste CRÍTICO: get() respeita multi-tenancy.

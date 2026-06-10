@@ -164,3 +164,23 @@ class TestInstallmentStatusConsistency:
             due_date=date.today() - timedelta(days=5),
         )
         installment.full_clean()
+
+
+@pytest.mark.django_db
+class TestInstallmentAmountValidator:
+    """Testes de validação do valor da parcela."""
+
+    def test_installment_amount_negative_fails(self, user):
+        """Valor negativo deve levantar ValidationError."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("-100.00"),
+            due_date=date.today(),
+        )
+
+        with pytest.raises(ValidationError):
+            installment.full_clean()
