@@ -281,3 +281,14 @@ class TestItemServiceTransitionStatus:
         )
         with pytest.raises(BusinessRuleViolation):
             ItemService.transition_status(user.company, item, "PENDING")
+
+    def test_transition_status_multitenancy(self, user):
+        """Transição com company diferente deve falhar."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="PENDING"
+        )
+        other_user = UserFactory()
+
+        with pytest.raises(ObjectNotFoundError):
+            ItemService.transition_status(other_user.company, item, "IN_PROGRESS")

@@ -359,7 +359,7 @@ class TestContractServiceTransitionStatus:
             wedding=wedding,
             supplier=supplier,
             status="SIGNED",
-            total_amount=5000,
+            total_amount=Decimal("5000.00"),
             signed_date=date.today(),
             pdf_file="contracts/dummy.pdf",
         )
@@ -386,7 +386,7 @@ class TestContractServiceTransitionStatus:
             wedding=wedding,
             supplier=supplier,
             status="SIGNED",
-            total_amount=5000,
+            total_amount=Decimal("5000.00"),
             signed_date=date.today(),
             pdf_file="contracts/dummy.pdf",
         )
@@ -397,6 +397,15 @@ class TestContractServiceTransitionStatus:
         contract = make_contract("CANCELED")
         with pytest.raises(BusinessRuleViolation):
             ContractService.transition_status(contract.company, contract, "SIGNED")
+
+    def test_transition_status_multitenancy(self, make_contract):
+        """Transição com company diferente deve falhar — ou o service
+        deve validar que instance pertence à company passada."""
+        contract = make_contract("DRAFT")
+        other_user = UserFactory()
+
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.transition_status(other_user.company, contract, "PENDING")
 
 
 @pytest.mark.django_db
@@ -423,9 +432,9 @@ class TestContractServiceDeleteFile:
 
 @pytest.mark.django_db
 class TestContractServiceResolveParent:
-    """Testes da lógica de vinculação de contrato pai."""
+    """Testes de vinculação de contrato pai via update()."""
 
-    def test_resolve_parent_success(self, user):
+    def test_update_parent_success(self, user):
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         parent = ContractFactory(
@@ -437,19 +446,20 @@ class TestContractServiceResolveParent:
             pdf_file="contracts/dummy.pdf",
         )
         child = ContractFactory(wedding=wedding, supplier=supplier, status="DRAFT")
-        ContractService._resolve_parent(child.company, child, parent.uuid)
-        child.save()
+        ContractService.update(child.company, child, {"parent": str(parent.uuid)})
 
         child.refresh_from_db()
         assert child.parent == parent
 
-    def test_resolve_parent_self_raises_error(self, make_contract):
+    def test_update_parent_self_raises_error(self, make_contract):
         contract = make_contract("DRAFT")
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ContractService._resolve_parent(contract.company, contract, contract.uuid)
+            ContractService.update(
+                contract.company, contract, {"parent": str(contract.uuid)}
+            )
         assert "não pode ser pai de si mesmo" in str(exc_info.value)
 
-    def test_resolve_parent_cross_wedding_raises_error(self, user):
+    def test_update_parent_cross_wedding_raises_error(self, user):
         parent = ContractFactory(
             wedding__company=user.company,
             status="SIGNED",
@@ -462,13 +472,12 @@ class TestContractServiceResolveParent:
         child = ContractFactory(
             wedding=child_wedding, supplier=child_supplier, status="DRAFT"
         )
-        assert parent.wedding.uuid != child.wedding.uuid
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ContractService._resolve_parent(child.company, child, parent.uuid)
+            ContractService.update(child.company, child, {"parent": str(parent.uuid)})
         assert "deve pertencer ao mesmo casamento" in str(exc_info.value)
 
-    def test_resolve_parent_circular_raises_error(self, user):
+    def test_update_parent_circular_raises_error(self, user):
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         ancestor = ContractFactory(
@@ -479,7 +488,7 @@ class TestContractServiceResolveParent:
             signed_date=date.today(),
             pdf_file="contracts/dummy.pdf",
         )
-        parent = ContractFactory(
+        intermediate = ContractFactory(
             wedding=ancestor.wedding,
             supplier=ancestor.supplier,
             parent=ancestor,
@@ -488,14 +497,16 @@ class TestContractServiceResolveParent:
         child = ContractFactory(
             wedding=ancestor.wedding,
             supplier=ancestor.supplier,
-            parent=parent,
+            parent=intermediate,
             status="DRAFT",
         )
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ContractService._resolve_parent(ancestor.company, ancestor, child.uuid)
+            ContractService.update(
+                ancestor.company, ancestor, {"parent": str(child.uuid)}
+            )
         assert "descendente" in str(exc_info.value)
 
-    def test_resolve_parent_not_found_raises_error(self, make_contract):
+    def test_update_parent_not_found_raises_error(self, make_contract):
         contract = make_contract("DRAFT")
         with pytest.raises(ObjectNotFoundError):
-            ContractService._resolve_parent(contract.company, contract, uuid4())
+            ContractService.update(contract.company, contract, {"parent": str(uuid4())})
