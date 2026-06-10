@@ -7,8 +7,9 @@ import {
 import { Outlet, useLocation } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
-import { Search, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { AppSidebar } from "../app-sidebar";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard Geral",
@@ -24,7 +25,9 @@ export const AppLayout = () => {
     ? "Detalhes do Casamento"
     : pathname.startsWith("/suppliers/")
       ? "Detalhes do Fornecedor"
-      : PAGE_TITLES[pathname] ?? "Painel de Controle";
+      : (PAGE_TITLES[pathname] ?? "Painel de Controle");
+
+  useDocumentTitle(pageTitle);
 
   return (
     <SidebarProvider>
@@ -39,24 +42,6 @@ export const AppLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Search */}
-            <div className="relative hidden md:block">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="w-4 h-4 text-zinc-400" />
-              </div>
-              <input
-                type="text"
-                aria-label="Buscar fornecedor, evento"
-                className="block w-64 pl-10 pr-12 py-2 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-zinc-900 dark:text-zinc-100"
-                placeholder="Buscar fornecedor, evento..."
-              />
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-                <span className="text-xs text-zinc-400 font-mono bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
-                  ⌘&nbsp;K
-                </span>
-              </div>
-            </div>
-
             {/* Notifications */}
             <Button
               variant="ghost"

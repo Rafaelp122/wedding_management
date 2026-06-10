@@ -1,7 +1,10 @@
 import { AuthLayout } from "../components/AuthLayout";
 import { LoginForm } from "../components/LoginForm";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export default function LoginPage() {
+  useDocumentTitle("Entrar");
+
   return (
     <AuthLayout
       heroQuote="O verdadeiro luxo reside na ausência absoluta de falhas logísticas e orçamentais nos bastidores."

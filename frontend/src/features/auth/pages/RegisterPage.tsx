@@ -1,7 +1,10 @@
 import { AuthLayout } from "../components/AuthLayout";
 import { RegisterForm } from "../components/RegisterForm";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export default function RegisterPage() {
+  useDocumentTitle("Criar Conta");
+
   return (
     <AuthLayout
       heroQuote="Sua arte é criar memórias inesquecíveis. Nossa ciência é garantir que os bastidores sejam impecáveis."

@@ -1,5 +1,14 @@
 ---
 import "../styles/global.css";
+
+interface Props {
+	title?: string;
+}
+
+const { title } = Astro.props;
+const pageTitle = title
+	? `${title} | Sim, Aceito!`
+	: "Sim, Aceito! | Gestão e Faturamento para Assessoras de Casamento";
 ---
 <!doctype html>
 <html lang="pt" class="antialiased">
@@ -9,7 +18,7 @@ import "../styles/global.css";
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Sim, Aceito! - Gestão e Faturamento para Assessoras de Casamento</title>
+		<title>{pageTitle}</title>
 		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
