@@ -157,7 +157,9 @@ class ItemService:
             )
 
         except ProtectedError as e:
-            logger.error(f"Falha de integridade ao deletar Item uuid={instance.uuid}")
+            logger.exception(
+                f"Falha de integridade ao deletar Item uuid={instance.uuid}"
+            )
             raise DomainIntegrityError(
                 detail="Não é possível apagar este item pois existem registros "
                 "dependentes vinculados a ele.",

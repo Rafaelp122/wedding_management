@@ -99,7 +99,7 @@ class SupplierService:
         except ProtectedError as e:
             # Captura a trava do banco de dados (relacionamento com Contract) e formata
             # para o Frontend
-            logger.error(
+            logger.exception(
                 f"Falha de integridade ao deletar Fornecedor uuid={instance.uuid}: "
                 f"Possui contratos ativos."
             )

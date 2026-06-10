@@ -123,7 +123,7 @@ class BudgetCategoryService:
             )
 
         except ProtectedError as e:
-            logger.error(
+            logger.exception(
                 f"Falha de integridade ao deletar Categoria uuid={instance.uuid}: "
                 "Possui despesas ativas."
             )

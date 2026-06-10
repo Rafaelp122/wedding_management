@@ -31,12 +31,12 @@ class TokenService:
             HttpError (401): Se as credenciais forem inválidas ou a conta
                 estiver desativada.
         """
-        logger.info("Tentativa de obtenção de token para email=%s", email)
+        logger.info(f"Tentativa de obtenção de token para email={email}")
 
         user = authenticate(request=None, username=email, password=password)
 
         if user is None:
-            logger.warning("Falha de autenticação para email=%s", email)
+            logger.warning(f"Falha de autenticação para email={email}")
             raise HttpError(401, "Credenciais inválidas ou conta desativada.")
 
         refresh = RefreshToken.for_user(user)
@@ -51,7 +51,7 @@ class TokenService:
             ),
         )
 
-        logger.info("Token gerado com sucesso para user uuid=%s", user.uuid)
+        logger.info(f"Token gerado com sucesso para user uuid={user.uuid}")
         return token_out
 
     @staticmethod
@@ -66,10 +66,10 @@ class TokenService:
             HttpError (401): Se o refresh token for inválido ou estiver
                 na blacklist.
         """
-        logger.info("Tentativa de refresh de token")
+        logger.info(f"Tentativa de refresh de token (id={refresh_token[-12:]})")
         schema = TokenRefreshInputSchema(refresh=refresh_token)
         result = schema.to_response_schema()
-        logger.info("Token refresh bem-sucedido")
+        logger.info(f"Token refresh bem-sucedido (id={refresh_token[-12:]})")
         return result
 
     @staticmethod
@@ -80,8 +80,8 @@ class TokenService:
         Raises:
             HttpError (401): Se o token for inválido ou expirado.
         """
-        logger.info("Tentativa de verificação de token")
+        logger.info(f"Tentativa de verificação de token (id={token[-12:]})")
         schema = TokenVerifyInputSchema(token=token)
         schema.to_response_schema()  # levanta HttpError(401) se inválido
-        logger.info("Token verificado com sucesso")
+        logger.info(f"Token verificado com sucesso (id={token[-12:]})")
         return VerifyTokenOut()

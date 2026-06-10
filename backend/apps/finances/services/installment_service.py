@@ -195,7 +195,7 @@ class InstallmentService:
         try:
             expense.full_clean()
         except DjangoValidationError as e:
-            logger.error(
+            logger.exception(
                 f"Criação de parcela violou Tolerância Zero da despesa "
                 f"uuid={expense.uuid}"
             )
@@ -234,7 +234,7 @@ class InstallmentService:
         try:
             instance.expense.full_clean()
         except DjangoValidationError as e:
-            logger.error(
+            logger.exception(
                 f"Atualização de parcela quebrou Tolerância Zero na despesa "
                 f"uuid={instance.expense.uuid}"
             )
@@ -263,7 +263,7 @@ class InstallmentService:
         try:
             instance.expense.full_clean()
         except DjangoValidationError as e:
-            logger.error(
+            logger.exception(
                 f"Marcação de parcela quebrou Tolerância Zero na despesa "
                 f"uuid={instance.expense.uuid}"
             )
@@ -295,7 +295,7 @@ class InstallmentService:
         try:
             instance.expense.full_clean()
         except DjangoValidationError as e:
-            logger.error(
+            logger.exception(
                 f"Desmarcação de parcela quebrou Tolerância Zero na despesa "
                 f"uuid={instance.expense.uuid}"
             )
@@ -366,7 +366,7 @@ class InstallmentService:
         try:
             instance.expense.full_clean()
         except DjangoValidationError as e:
-            logger.error(
+            logger.exception(
                 f"Ajuste de parcela quebrou Tolerância Zero na despesa "
                 f"uuid={instance.expense.uuid}"
             )
@@ -401,7 +401,7 @@ class InstallmentService:
             )
 
         except DjangoValidationError as e:
-            logger.error(
+            logger.exception(
                 f"Deleção de parcela quebrou integridade matemática da despesa "
                 f"uuid={expense.uuid}"
             )
@@ -415,7 +415,9 @@ class InstallmentService:
             ) from e
 
         except ProtectedError as e:
-            logger.error(f"Falha estrutural ao deletar parcela uuid={instance.uuid}")
+            logger.exception(
+                f"Falha estrutural ao deletar parcela uuid={instance.uuid}"
+            )
             raise DomainIntegrityError(
                 detail="Não é possível apagar esta parcela no momento.",
                 code="installment_protected_error",

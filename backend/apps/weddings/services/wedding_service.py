@@ -91,9 +91,8 @@ class WeddingService:
             wedding.save()
         except DjangoValidationError as e:
             logger.warning(
-                "Falha de validação ao criar casamento para company_id=%s: %s",
-                company.id,
-                e,
+                f"Falha de validação ao criar casamento para company_id={company.id}: "
+                f"{e}"
             )
             detail = "; ".join(e.messages) if e.messages else str(e)
             raise BusinessRuleViolation(
@@ -105,9 +104,7 @@ class WeddingService:
         template_name = data.get("template")
         if template_name is not None:
             logger.info(
-                "Aplicando template '%s' ao casamento uuid=%s",
-                template_name,
-                wedding.uuid,
+                f"Aplicando template '{template_name}' ao casamento uuid={wedding.uuid}"
             )
             _apply_template_events(company, wedding, template_name)
 
@@ -131,11 +128,8 @@ class WeddingService:
             instance.save()
         except DjangoValidationError as e:
             logger.warning(
-                "Falha de validação ao atualizar casamento uuid=%s pela "
-                "company_id=%s: %s",
-                instance.uuid,
-                company.id,
-                e,
+                f"Falha de validação ao atualizar casamento uuid={instance.uuid} "
+                f"pela company_id={company.id}: {e}"
             )
             detail = "; ".join(e.messages) if e.messages else str(e)
             raise BusinessRuleViolation(
@@ -166,7 +160,7 @@ class WeddingService:
             )
 
         except ProtectedError as e:
-            logger.error(
+            logger.exception(
                 f"Falha de integridade: Casamento uuid={instance.uuid} protegido por "
                 f"contratos/despesas."
             )

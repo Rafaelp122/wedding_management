@@ -316,9 +316,8 @@ class ContractService:
         file_content_type = getattr(uploaded_file, "content_type", None)
         if file_content_type is None:
             logger.warning(
-                "Upload sem Content-Type header para contrato uuid=%s — "
-                "validação de MIME bypassada, extensão será verificada no modelo.",
-                uuid,
+                f"Upload sem Content-Type header para contrato uuid={uuid} — "
+                f"validação de MIME bypassada, extensão será verificada no modelo."
             )
         elif file_content_type not in allowed_content_types:
             raise ValidationError(
@@ -329,9 +328,8 @@ class ContractService:
         max_size = 10 * 1024 * 1024  # 10MB
         if uploaded_file.size is None:
             logger.warning(
-                "Upload sem size reportado para contrato uuid=%s — "
-                "validação de tamanho bypassada, será verificada no modelo.",
-                uuid,
+                f"Upload sem size reportado para contrato uuid={uuid} — "
+                f"validação de tamanho bypassada, será verificada no modelo."
             )
         elif uploaded_file.size > max_size:
             raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})

@@ -107,7 +107,9 @@ class TaskService:
                 f"Tarefa uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
             )
         except ProtectedError as e:
-            logger.error(f"Falha de integridade ao deletar tarefa uuid={instance.uuid}")
+            logger.exception(
+                f"Falha de integridade ao deletar tarefa uuid={instance.uuid}"
+            )
             raise DomainIntegrityError(
                 detail="Não é possível apagar esta tarefa pois existem registros "
                 "vinculados a ela.",

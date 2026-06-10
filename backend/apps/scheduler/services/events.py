@@ -158,7 +158,9 @@ class EventService:
             )
 
         except ProtectedError as e:
-            logger.error(f"Falha de integridade ao deletar evento uuid={instance.uuid}")
+            logger.exception(
+                f"Falha de integridade ao deletar evento uuid={instance.uuid}"
+            )
             raise DomainIntegrityError(
                 detail="Não é possível apagar este evento pois existem registros "
                 "vinculados a ele.",

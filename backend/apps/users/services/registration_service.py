@@ -55,7 +55,7 @@ class RegistrationService:
                 is_active=True,
             )
         except IntegrityError as e:
-            logger.error(f"Erro de integridade ao registrar usuário {email}: {e}")
+            logger.exception(f"Erro de integridade ao registrar usuário {email}")
             raise DomainIntegrityError(
                 detail="Este e-mail já está cadastrado em outra conta.",
                 code="email_already_exists",
