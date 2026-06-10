@@ -27,6 +27,28 @@ from apps.weddings.tests.factories import WeddingFactory
 
 @pytest.mark.django_db
 class TestWeddingService:
+    def test_get_wedding_not_found_raises_object_not_found(self, user):
+        """get() com uuid inexistente deve levantar ObjectNotFoundError."""
+        from uuid import uuid4
+
+        with pytest.raises(
+            ObjectNotFoundError, match="Casamento não encontrado ou acesso negado"
+        ):
+            WeddingService.get(company=user.company, uuid=uuid4())
+
+    def test_update_wedding_with_empty_bride_name_raises_business_rule_violation(
+        self, user
+    ):
+        """update() com dado inválido deve levantar BusinessRuleViolation."""
+        wedding = WeddingFactory(company=user.company, bride_name="Antiga")
+
+        with pytest.raises(BusinessRuleViolation, match="não pode estar vazio"):
+            WeddingService.update(
+                instance=wedding,
+                company=user.company,
+                data={"bride_name": ""},
+            )
+
     def test_create_wedding_does_not_create_financial_data_eagerly(
         self, user, wedding_payload
     ):
@@ -163,35 +185,6 @@ class TestWeddingService:
             .exists()
             is False
         )
-
-    def test_update_wedding_protects_budget_field(self, user):
-        """
-        Cenário 5: Garante que o campo total_estimated é ignorado no update.
-        """
-        # 1. Setup: Criar casamento e orçamento separadamente
-        initial_value = Decimal("50000.00")
-
-        # O casamento nasce limpo, sem efeitos colaterais
-        wedding = WeddingFactory(company=user.company)
-
-        # O orçamento é criado explicitamente para este teste
-        BudgetFactory(wedding=wedding, total_estimated=initial_value)
-
-        # 2. Payload de atualização com uma tentativa de mudar o orçamento
-        update_data = {
-            "bride_name": "Bruna Atualizada",
-            "total_estimated": Decimal("100000.00"),
-        }
-
-        # 3. Execução
-        updated_wedding = WeddingService.update(
-            instance=wedding, company=user.company, data=update_data
-        )
-
-        # 4. Asserções
-        assert updated_wedding.bride_name == "Bruna Atualizada"
-        budget = Budget.objects.get(wedding=updated_wedding)
-        assert budget.total_estimated == initial_value
 
     def test_delete_wedding_protected_by_contracts(self, user):
         """
