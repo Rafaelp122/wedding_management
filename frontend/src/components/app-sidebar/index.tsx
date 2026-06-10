@@ -68,7 +68,7 @@ export function AppSidebar() {
           </Tooltip>
         ) : (
           <div className="flex items-center justify-between w-full px-3 h-10 animate-in fade-in duration-200">
-            <Logo />
+            <Logo className="-ml-[7px]" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
