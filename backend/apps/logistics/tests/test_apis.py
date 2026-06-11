@@ -165,6 +165,24 @@ class TestLogisticsNinjaAPI:
         )
         assert response.status_code == 422
 
+    def test_create_supplier_invalid_cnpj_shows_friendly_message(self, auth_client):
+        """CNPJ inválido deve retornar 422 com mensagem amigável, não regex cru."""
+        payload = {
+            "name": "CNPJ Inválido",
+            "cnpj": "00.000.000/0000-0X",  # tamanho correto, formato inválido
+            "phone": "11999999999",
+            "email": "invalido@email.com",
+        }
+        response = auth_client.post(
+            "/api/v1/logistics/suppliers/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        body = response.json()
+        detail = str(body.get("detail", ""))
+        assert "formato" in detail.lower() or "XX.XXX" in detail
+
     def test_list_suppliers_filter_by_search(self, auth_client, user):
         SupplierService.create(
             user.company,

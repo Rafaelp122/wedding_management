@@ -1,15 +1,18 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod";
 
 import {
   useLogisticsSuppliersCreate,
   useLogisticsSuppliersUpdate,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
-import { LogisticsSuppliersCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
+
+import {
+  SupplierFormSchema,
+  type SupplierFormData,
+} from "@/features/logistics/hooks/supplierFormSchema";
 
 import { FormDialog } from "@/components/form-dialog";
 import {
@@ -27,8 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormInput } from "@/components/form-fields";
-
-type SupplierFormData = z.infer<typeof LogisticsSuppliersCreateBody>;
 
 interface SupplierFormDialogProps {
   open: boolean;
@@ -50,7 +51,7 @@ export function SupplierFormDialog({
   const isPending = mode === "create" ? createMutation.isPending : updateMutation.isPending;
 
   const form = useForm({
-    resolver: zodResolver(LogisticsSuppliersCreateBody),
+    resolver: zodResolver(SupplierFormSchema),
     defaultValues: {
       name: "",
       cnpj: "",

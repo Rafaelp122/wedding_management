@@ -4,10 +4,12 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from apps.finances.models import BudgetCategory
+from apps.finances.models.installment import Installment
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
     ExpenseFactory,
+    InstallmentFactory,
 )
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -157,22 +159,35 @@ class TestBudgetCategoryTotalSpent:
         assert category.total_spent == Decimal("0.00")
 
     def test_total_spent_sums_expenses(self, user):
-        """total_spent soma actual_amount das despesas."""
+        """total_spent soma apenas parcelas PAID das despesas."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
         category = BudgetCategoryFactory(budget=budget, wedding=wedding)
 
-        ExpenseFactory(
+        expense1 = ExpenseFactory(
             wedding=wedding,
             category=category,
             actual_amount=Decimal("1500.00"),
             contract=None,
         )
-        ExpenseFactory(
+        InstallmentFactory(
+            expense=expense1,
+            amount=Decimal("1500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-01-15",
+        )
+
+        expense2 = ExpenseFactory(
             wedding=wedding,
             category=category,
             actual_amount=Decimal("3500.00"),
             contract=None,
+        )
+        InstallmentFactory(
+            expense=expense2,
+            amount=Decimal("3500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-01-15",
         )
 
         assert category.total_spent == Decimal("5000.00")

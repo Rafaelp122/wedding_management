@@ -55,17 +55,20 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
     @property
     def total_spent(self) -> Decimal:
         """
-        Retorna o total gasto nesta categoria específica
-        (soma do ``actual_amount`` de todas as despesas vinculadas).
+        Retorna o total efetivamente pago nesta categoria, somando apenas
+        o ``amount`` das parcelas com status ``PAID``.
 
-        Computed property — não persiste no banco. O valor é sempre consistente
-        com o estado atual das despesas e parcelas.
+        O ``actual_amount`` das despesas representa o valor contratado, não o
+        gasto real (BR-F01).
         """
-        from django.db.models import Sum
+        from django.db.models import Q, Sum
 
-        return self.expenses.aggregate(total=Sum("actual_amount"))["total"] or Decimal(
-            "0.00"
-        )
+        return self.expenses.aggregate(
+            total=Sum(
+                "installments__amount",
+                filter=Q(installments__status="PAID"),
+            )
+        )["total"] or Decimal("0.00")
 
     def clean(self) -> None:
         super().clean()

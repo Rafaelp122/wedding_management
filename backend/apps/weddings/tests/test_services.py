@@ -11,7 +11,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.finances.models import Budget, BudgetCategory
+from apps.finances.models import Budget, BudgetCategory, Installment
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
@@ -570,12 +570,21 @@ class TestDashboardService:
             total_amount=3000.00,
         )
 
-        # 3. Parcela
+        # 3. Parcelas
         InstallmentFactory(
             expense=expense,
             amount=1000.00,
-            due_date=today + timedelta(days=5),
-            status="PENDING",
+            due_date=today - timedelta(days=10),
+            status=Installment.StatusChoices.PAID,
+            paid_date=today - timedelta(days=10),
+            wedding=wedding,
+            company=user.company,
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=today + timedelta(days=30),
+            status=Installment.StatusChoices.PENDING,
             wedding=wedding,
             company=user.company,
         )
@@ -585,9 +594,7 @@ class TestDashboardService:
         )
 
         assert overview["days_until_wedding"] == 60
-        assert (
-            overview["budget_percentage_used"] == 20.0
-        )  # 2000 spent / 10000 estimated
+        assert overview["budget_percentage_used"] == 10.0  # 1000 paid / 10000 estimated
         assert overview["tasks_completed"] == 1
         assert overview["tasks_total"] == 2
         assert overview["contracts_signed"] == 1
