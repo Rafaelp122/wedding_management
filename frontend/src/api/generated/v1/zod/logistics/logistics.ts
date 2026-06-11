@@ -72,9 +72,9 @@ export const LogisticsSuppliersListResponse = zod.object({
  * Cadastra um novo fornecedor no sistema.
  * @summary Create Supplier
  */
-export const logisticsSuppliersCreateBodyCnpjRegExp = new RegExp(
-  "^\\d{2}\\.\\d{3}\\.\\d{3}\/\\d{4}-\\d{2}$",
-);
+export const logisticsSuppliersCreateBodyCnpjMin = 14;
+export const logisticsSuppliersCreateBodyCnpjMax = 18;
+
 export const logisticsSuppliersCreateBodyIsActiveDefault = true;
 export const logisticsSuppliersCreateBodyAddressDefault = ``;
 export const logisticsSuppliersCreateBodyCityDefault = ``;
@@ -90,7 +90,10 @@ export const logisticsSuppliersCreateBodyNotesDefault = ``;
 
 export const LogisticsSuppliersCreateBody = zod.object({
   name: zod.string(),
-  cnpj: zod.string().regex(logisticsSuppliersCreateBodyCnpjRegExp),
+  cnpj: zod
+    .string()
+    .min(logisticsSuppliersCreateBodyCnpjMin)
+    .max(logisticsSuppliersCreateBodyCnpjMax),
   phone: zod.string(),
   email: zod.string(),
   is_active: zod.boolean().default(logisticsSuppliersCreateBodyIsActiveDefault),
@@ -151,9 +154,9 @@ export const LogisticsSuppliersUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
-export const logisticsSuppliersUpdateBodyCnpjOneRegExp = new RegExp(
-  "^(\\d{2}\\.\\d{3}\\.\\d{3}\/\\d{4}-\\d{2})?$",
-);
+export const logisticsSuppliersUpdateBodyCnpjOneMin = 14;
+export const logisticsSuppliersUpdateBodyCnpjOneMax = 18;
+
 export const logisticsSuppliersUpdateBodyStateOneRegExp = new RegExp(
   "^$|^[A-Z]{2}$",
 );
@@ -163,7 +166,10 @@ export const LogisticsSuppliersUpdateBody = zod.object({
   name: zod.union([zod.string(), zod.null()]).optional(),
   cnpj: zod
     .union([
-      zod.string().regex(logisticsSuppliersUpdateBodyCnpjOneRegExp),
+      zod
+        .string()
+        .min(logisticsSuppliersUpdateBodyCnpjOneMin)
+        .max(logisticsSuppliersUpdateBodyCnpjOneMax),
       zod.null(),
     ])
     .optional(),

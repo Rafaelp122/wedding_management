@@ -7,7 +7,10 @@
 
 export interface SupplierIn {
   name: string;
-  /** @pattern ^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$ */
+  /**
+   * @minLength 14
+   * @maxLength 18
+   */
   cnpj: string;
   phone: string;
   email: string;
