@@ -1,4 +1,5 @@
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.finances.services.budget_service import BudgetService
 from apps.logistics.services.contract_service import ContractService
@@ -252,3 +253,174 @@ class TestLogisticsNinjaAPI:
         data = response.json()
         assert data["count"] == 1
         assert data["items"][0]["name"] == "A Buffet"
+
+    def test_update_contract_success(self, auth_client, seed_data):
+        """Testa atualização de contrato com PATCH."""
+        contract = seed_data["my_contract"]
+        payload = {"name": "Contrato Atualizado"}
+        response = auth_client.patch(
+            f"/api/v1/logistics/contracts/{contract.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Contrato Atualizado"
+
+    def test_delete_contract_success(self, auth_client, seed_data):
+        """Testa exclusão de contrato com DELETE."""
+        contract = seed_data["my_contract"]
+        response = auth_client.delete(f"/api/v1/logistics/contracts/{contract.uuid}/")
+        assert response.status_code == 204
+
+    def test_update_item_success(self, auth_client, seed_data):
+        """Testa atualização de item com PATCH."""
+        item = seed_data["my_item"]
+        payload = {"name": "Item Atualizado"}
+        response = auth_client.patch(
+            f"/api/v1/logistics/items/{item.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Item Atualizado"
+
+    def test_delete_item_success(self, auth_client, seed_data):
+        """Testa exclusão de item com DELETE."""
+        item = seed_data["my_item"]
+        response = auth_client.delete(f"/api/v1/logistics/items/{item.uuid}/")
+        assert response.status_code == 204
+
+    def test_update_supplier_success(self, auth_client, seed_data):
+        """Testa atualização de fornecedor com PATCH."""
+        supplier = seed_data["my_supplier"]
+        payload = {"name": "Fornecedor Atualizado"}
+        response = auth_client.patch(
+            f"/api/v1/logistics/suppliers/{supplier.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Fornecedor Atualizado"
+
+    def test_delete_supplier_success(self, auth_client, seed_data):
+        """Testa exclusão de fornecedor com DELETE."""
+        supplier = seed_data["my_supplier"]
+        response = auth_client.delete(f"/api/v1/logistics/suppliers/{supplier.uuid}/")
+        assert response.status_code == 204
+
+    def test_retrieve_contract(self, auth_client, seed_data):
+        response = auth_client.get(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Contrato Teste"
+
+    def test_create_contract_via_api(self, auth_client, seed_data):
+        payload = {
+            "wedding": str(seed_data["my_contract"].wedding.uuid),
+            "supplier": str(seed_data["my_supplier"].uuid),
+            "name": "Contrato API",
+            "total_amount": "500.00",
+            "status": "DRAFT",
+        }
+        response = auth_client.post(
+            "/api/v1/logistics/contracts/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        assert response.json()["name"] == "Contrato API"
+
+    def test_upload_contract_file(self, auth_client, seed_data):
+        pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+            data={"pdf_file": pdf},
+        )
+        assert response.status_code == 200
+
+    def test_delete_contract_file(self, auth_client, seed_data):
+        pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
+        auth_client.post(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+            data={"pdf_file": pdf},
+        )
+        response = auth_client.delete(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+        )
+        assert response.status_code == 204
+
+    def test_transition_contract_status(self, auth_client, seed_data):
+        """DRAFT → PENDING (transição válida)."""
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}"
+            f"/transition-status/",
+            data={"status": "PENDING"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "PENDING"
+
+    def test_retrieve_item(self, auth_client, seed_data):
+        response = auth_client.get(
+            f"/api/v1/logistics/items/{seed_data['my_item'].uuid}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Item Meu"
+
+    def test_create_item_via_api(self, auth_client, seed_data):
+        payload = {
+            "wedding": str(seed_data["my_contract"].wedding.uuid),
+            "contract": str(seed_data["my_contract"].uuid),
+            "name": "Item API",
+            "quantity": 3,
+        }
+        response = auth_client.post(
+            "/api/v1/logistics/items/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        assert response.json()["name"] == "Item API"
+
+    def test_transition_item_status(self, auth_client, seed_data):
+        """PENDING → IN_PROGRESS → DONE."""
+        # Primeiro PENDING → IN_PROGRESS
+        auth_client.post(
+            f"/api/v1/logistics/items/{seed_data['my_item'].uuid}/transition-status/",
+            data={"acquisition_status": "IN_PROGRESS"},
+            content_type="application/json",
+        )
+        # Depois IN_PROGRESS → DONE
+        response = auth_client.post(
+            f"/api/v1/logistics/items/{seed_data['my_item'].uuid}/transition-status/",
+            data={"acquisition_status": "DONE"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "DONE"
+
+    def test_retrieve_supplier(self, auth_client, seed_data):
+        response = auth_client.get(
+            f"/api/v1/logistics/suppliers/{seed_data['my_supplier'].uuid}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Fornecedor Meu"
+
+
+@pytest.mark.django_db
+class TestLogisticsAPIAuth:
+    def test_contracts_requires_auth(self, client):
+        """Verifica que listar contratos sem autenticação retorna 401."""
+        response = client.get("/api/v1/logistics/contracts/")
+        assert response.status_code == 401
+
+    def test_items_requires_auth(self, client):
+        """Verifica que listar itens sem autenticação retorna 401."""
+        response = client.get("/api/v1/logistics/items/")
+        assert response.status_code == 401
+
+    def test_suppliers_requires_auth(self, client):
+        """Verifica que listar fornecedores sem autenticação retorna 401."""
+        response = client.get("/api/v1/logistics/suppliers/")
+        assert response.status_code == 401

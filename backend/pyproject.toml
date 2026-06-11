@@ -209,6 +209,8 @@ omit = [
     "manage.py",
     "*/config/*",
     "*/__init__.py",
+    "**/admin.py",
+    "**/schemas.py",
 ]
 
 [tool.coverage.report]
