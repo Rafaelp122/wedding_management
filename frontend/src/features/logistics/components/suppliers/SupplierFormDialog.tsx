@@ -77,7 +77,7 @@ export function SupplierFormDialog({
   const updateMutation = useLogisticsSuppliersUpdate();
   const isPending = mode === "create" ? createMutation.isPending : updateMutation.isPending;
 
-  const form = useForm<SupplierFormData>({
+  const form = useForm({
     resolver: zodResolver(SupplierFormSchema),
     defaultValues: EMPTY_VALUES,
   });
