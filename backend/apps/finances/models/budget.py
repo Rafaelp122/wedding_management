@@ -64,15 +64,19 @@ class Budget(TenantModel, WeddingOwnedMixin):
         Retorna o total efetivamente pago em todas as categorias deste orçamento,
         somando apenas o ``amount`` das parcelas com status ``PAID``.
 
-        A soma do ``actual_amount`` das despesas não reflete o gasto real, pois
-        representa apenas o valor contratado. O gasto efetivo é determinado pelas
-        parcelas já pagas (BR-F01).
+        .. warning::
+           Esta property dispara uma query ``aggregate`` a cada acesso.
+           Para múltiplas categorias, prefira
+           ``BudgetCategory.objects.with_total_spent()`` que faz uma única
+           query com ``annotate``.
         """
         from django.db.models import Q, Sum
+
+        from apps.finances.models.installment import Installment
 
         return self.categories.aggregate(
             total=Sum(
                 "expenses__installments__amount",
-                filter=Q(expenses__installments__status="PAID"),
+                filter=Q(expenses__installments__status=Installment.StatusChoices.PAID),
             )
         )["total"] or Decimal("0.00")
