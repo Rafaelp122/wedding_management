@@ -10,14 +10,17 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.tenants.models import TenantModel
+from apps.core.models import BaseModel
+from apps.core.tests.factories import WeddingFactory
 from apps.tenants.tests.factories import CompanyFactory
-from apps.weddings.tests.factories import WeddingFactory
 
 
-class WeddingOwnedStub(TenantModel, WeddingOwnedMixin):
-    """Stub para testar WeddingOwnedMixin — multitenant + cross-wedding."""
+class WeddingOwnedStub(BaseModel, WeddingOwnedMixin):
+    """Stub auto-contido: não depende de TenantModel de outro app."""
 
+    company = models.ForeignKey(
+        "tenants.Company", on_delete=models.CASCADE, related_name="+"
+    )
     name = models.CharField(max_length=100)
     related_item = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.SET_NULL
@@ -99,13 +102,25 @@ class TestWeddingOwnedMixinCrossWedding:
 
 @pytest.mark.django_db
 class TestWeddingOwnedMixinEdgeCases:
-    def test_both_validations_in_same_instance(self):
+    def test_related_obj_none_skips_cross_wedding_check(self):
+        """FK nula (related_item=None) não dispara validação horizontal."""
+        company = CompanyFactory()
+        wedding = WeddingFactory(company=company)
+
+        stub = WeddingOwnedStub(
+            name="sem related", company=company, wedding=wedding, related_item=None
+        )
+
+        stub.full_clean()
+
+    def test_vertical_guard_fires_before_horizontal(self):
+        """Erro cross-tenant é detectado antes da validação cross-wedding."""
         company = CompanyFactory()
         company_b = CompanyFactory()
         wedding_b = WeddingFactory(company=company_b)
 
         stub = WeddingOwnedStub(
-            name="dupla violação", company=company, wedding=wedding_b
+            name="violação vertical", company=company, wedding=wedding_b
         )
 
         with pytest.raises(ValidationError) as exc_info:

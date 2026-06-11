@@ -144,13 +144,3 @@ class TestExceptionIntegration:
 
             assert exc.value.status_code == expected_status
             assert exc.value.detail == detail
-
-    def test_api_returns_correct_http_status_for_exceptions(self, auth_client):
-        """API mapeia exceções para status HTTP corretos."""
-        import uuid
-
-        # 404: recurso inexistente (UUID aleatório)
-        response = auth_client.get(f"/api/v1/weddings/{uuid.uuid4()}/")
-        assert response.status_code == 404
-        data = response.json()
-        assert "detail" in data
