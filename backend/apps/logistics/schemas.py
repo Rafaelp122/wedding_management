@@ -47,7 +47,7 @@ class SupplierPatchIn(Schema):
     address: str | None = None
     city: str | None = None
     state: str | None = Field(None, pattern="^$|^[A-Z]{2}$")
-    website: str = ""
+    website: str | None = None
     notes: str | None = None
 
     @field_validator("cnpj")
@@ -71,7 +71,7 @@ class SupplierOut(Schema):
     is_active: bool
     address: str = ""
     city: str = ""
-    state: str = Field("", pattern="^$|^[A-Z]{2}$")
+    state: str = Field("", min_length=2, max_length=2)
     website: str = ""
     notes: str = ""
     created_at: datetime.datetime

@@ -45,6 +45,19 @@ function applyCnpjMask(value: string): string {
   return masked;
 }
 
+const EMPTY_VALUES: SupplierFormData = {
+  name: "",
+  cnpj: "",
+  phone: "",
+  email: "",
+  is_active: true,
+  address: "",
+  city: "",
+  state: "",
+  website: "",
+  notes: "",
+};
+
 interface SupplierFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -64,22 +77,9 @@ export function SupplierFormDialog({
   const updateMutation = useLogisticsSuppliersUpdate();
   const isPending = mode === "create" ? createMutation.isPending : updateMutation.isPending;
 
-  const emptyValues: SupplierFormData = {
-    name: "",
-    cnpj: "",
-    phone: "",
-    email: "",
-    is_active: true,
-    address: "",
-    city: "",
-    state: "",
-    website: "",
-    notes: "",
-  };
-
-  const form = useForm({
+  const form = useForm<SupplierFormData>({
     resolver: zodResolver(SupplierFormSchema),
-    defaultValues: emptyValues,
+    defaultValues: EMPTY_VALUES,
   });
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export function SupplierFormDialog({
           notes: supplier.notes ?? "",
         });
       } else {
-        form.reset(emptyValues);
+        form.reset(EMPTY_VALUES);
       }
     }
   }, [open, mode, supplier, form]);
