@@ -79,8 +79,33 @@ class TestTenantManager:
         assert result.count() == 1
 
     def test_all_models_with_tenant_manager_return_same_type(self):
-        """Garante consistência: todo TenantModel expõe TenantManager."""
-        models_with_tenant = [Wedding]
+        """Garante consistência: todo TenantModel expõe TenantManager.
+
+        NOTA: Ao adicionar novos modelos TenantModel, inclua-os nesta lista
+        para manter o guard de regressão ativo.
+        """
+        from apps.finances.models import (
+            Budget,
+            BudgetCategory,
+            Expense,
+            Installment,
+        )
+        from apps.logistics.models import Contract, Item, Supplier
+        from apps.scheduler.models import Event, Task
+        from apps.weddings.models import Wedding
+
+        models_with_tenant = [
+            Wedding,
+            Budget,
+            BudgetCategory,
+            Expense,
+            Installment,
+            Contract,
+            Item,
+            Supplier,
+            Event,
+            Task,
+        ]
 
         for model_class in models_with_tenant:
             assert isinstance(model_class.objects, TenantManager), (

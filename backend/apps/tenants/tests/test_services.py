@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.tenants.models import Company
 from apps.tenants.services.tenant_service import TenantService
@@ -55,3 +56,17 @@ class TestTenantService:
         company = TenantService.create_company(display_name="   ")
         assert company.name == "Workspace de    "
         assert company.slug  # slug não-vazio (contém UUID)
+
+    def test_create_company_display_name_too_long_raises(self):
+        """Display name >255 chars faz name exceder max_length → ValidationError."""
+        long_name = "A" * 300
+
+        with pytest.raises(ValidationError):
+            TenantService.create_company(display_name=long_name)
+
+    def test_create_company_custom_name_too_long_raises(self):
+        """company_name >255 chars excede max_length → ValidationError."""
+        long_name = "B" * 300
+
+        with pytest.raises(ValidationError):
+            TenantService.create_company(display_name="Rafael", company_name=long_name)
