@@ -605,8 +605,8 @@ class TestDashboardService:
         assert len(overview["categories_summary"]) == 1
         assert overview["categories_summary"][0]["name"] == category.name
         assert (
-            overview["categories_summary"][0]["percentage"] == 40
-        )  # 2000 spent / 5000 allocated
+            overview["categories_summary"][0]["percentage"] == 20
+        )  # 1000 paid / 5000 allocated
 
     def test_get_wedding_overview_not_found(self, user):
         """

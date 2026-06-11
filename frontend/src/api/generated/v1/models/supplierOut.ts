@@ -14,7 +14,10 @@ export interface SupplierOut {
   is_active: boolean;
   address?: string;
   city?: string;
-  /** @pattern ^$|^[A-Z]{2}$ */
+  /**
+   * @minLength 2
+   * @maxLength 2
+   */
   state?: string;
   website?: string;
   notes?: string;

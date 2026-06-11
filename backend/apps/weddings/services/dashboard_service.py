@@ -231,7 +231,15 @@ class DashboardService:
             .filter(wedding=wedding)
             .select_related("budget")
             .annotate(
-                _total_spent=Coalesce(Sum("expenses__actual_amount"), Decimal("0.00"))
+                _total_spent=Coalesce(
+                    Sum(
+                        "expenses__installments__amount",
+                        filter=Q(
+                            expenses__installments__status=Installment.StatusChoices.PAID
+                        ),
+                    ),
+                    Decimal("0.00"),
+                )
             )
         )
 

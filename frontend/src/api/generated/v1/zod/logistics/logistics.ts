@@ -30,9 +30,9 @@ export const LogisticsSuppliersListQueryParams = zod.object({
 export const logisticsSuppliersListResponseItemsItemAddressDefault = ``;
 export const logisticsSuppliersListResponseItemsItemCityDefault = ``;
 export const logisticsSuppliersListResponseItemsItemStateDefault = ``;
-export const logisticsSuppliersListResponseItemsItemStateRegExp = new RegExp(
-  "^$|^[A-Z]{2}$",
-);
+export const logisticsSuppliersListResponseItemsItemStateMin = 2;
+export const logisticsSuppliersListResponseItemsItemStateMax = 2;
+
 export const logisticsSuppliersListResponseItemsItemWebsiteDefault = ``;
 export const logisticsSuppliersListResponseItemsItemNotesDefault = ``;
 
@@ -53,7 +53,8 @@ export const LogisticsSuppliersListResponse = zod.object({
         .default(logisticsSuppliersListResponseItemsItemCityDefault),
       state: zod
         .string()
-        .regex(logisticsSuppliersListResponseItemsItemStateRegExp)
+        .min(logisticsSuppliersListResponseItemsItemStateMin)
+        .max(logisticsSuppliersListResponseItemsItemStateMax)
         .default(logisticsSuppliersListResponseItemsItemStateDefault),
       website: zod
         .string()
@@ -121,9 +122,9 @@ export const LogisticsSuppliersReadParams = zod.object({
 export const logisticsSuppliersReadResponseAddressDefault = ``;
 export const logisticsSuppliersReadResponseCityDefault = ``;
 export const logisticsSuppliersReadResponseStateDefault = ``;
-export const logisticsSuppliersReadResponseStateRegExp = new RegExp(
-  "^$|^[A-Z]{2}$",
-);
+export const logisticsSuppliersReadResponseStateMin = 2;
+export const logisticsSuppliersReadResponseStateMax = 2;
+
 export const logisticsSuppliersReadResponseWebsiteDefault = ``;
 export const logisticsSuppliersReadResponseNotesDefault = ``;
 
@@ -138,7 +139,8 @@ export const LogisticsSuppliersReadResponse = zod.object({
   city: zod.string().default(logisticsSuppliersReadResponseCityDefault),
   state: zod
     .string()
-    .regex(logisticsSuppliersReadResponseStateRegExp)
+    .min(logisticsSuppliersReadResponseStateMin)
+    .max(logisticsSuppliersReadResponseStateMax)
     .default(logisticsSuppliersReadResponseStateDefault),
   website: zod.string().default(logisticsSuppliersReadResponseWebsiteDefault),
   notes: zod.string().default(logisticsSuppliersReadResponseNotesDefault),
@@ -160,7 +162,6 @@ export const logisticsSuppliersUpdateBodyCnpjOneMax = 18;
 export const logisticsSuppliersUpdateBodyStateOneRegExp = new RegExp(
   "^$|^[A-Z]{2}$",
 );
-export const logisticsSuppliersUpdateBodyWebsiteDefault = ``;
 
 export const LogisticsSuppliersUpdateBody = zod.object({
   name: zod.union([zod.string(), zod.null()]).optional(),
@@ -184,16 +185,16 @@ export const LogisticsSuppliersUpdateBody = zod.object({
       zod.null(),
     ])
     .optional(),
-  website: zod.string().default(logisticsSuppliersUpdateBodyWebsiteDefault),
+  website: zod.union([zod.string(), zod.null()]).optional(),
   notes: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 export const logisticsSuppliersUpdateResponseAddressDefault = ``;
 export const logisticsSuppliersUpdateResponseCityDefault = ``;
 export const logisticsSuppliersUpdateResponseStateDefault = ``;
-export const logisticsSuppliersUpdateResponseStateRegExp = new RegExp(
-  "^$|^[A-Z]{2}$",
-);
+export const logisticsSuppliersUpdateResponseStateMin = 2;
+export const logisticsSuppliersUpdateResponseStateMax = 2;
+
 export const logisticsSuppliersUpdateResponseWebsiteDefault = ``;
 export const logisticsSuppliersUpdateResponseNotesDefault = ``;
 
@@ -208,7 +209,8 @@ export const LogisticsSuppliersUpdateResponse = zod.object({
   city: zod.string().default(logisticsSuppliersUpdateResponseCityDefault),
   state: zod
     .string()
-    .regex(logisticsSuppliersUpdateResponseStateRegExp)
+    .min(logisticsSuppliersUpdateResponseStateMin)
+    .max(logisticsSuppliersUpdateResponseStateMax)
     .default(logisticsSuppliersUpdateResponseStateDefault),
   website: zod.string().default(logisticsSuppliersUpdateResponseWebsiteDefault),
   notes: zod.string().default(logisticsSuppliersUpdateResponseNotesDefault),
