@@ -85,6 +85,60 @@ describe("SupplierFormDialog", () => {
     expect(cnpjInput).toHaveValue("12.345.678/0001-90");
   });
 
+  it("applies partial CNPJ mask at 2 digits", async () => {
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="create"
+        supplier={null}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const cnpjInput = screen.getByLabelText("CNPJ");
+
+    await user.type(cnpjInput, "12");
+    expect(cnpjInput).toHaveValue("12");
+  });
+
+  it("applies CNPJ mask dot after 3 digits", async () => {
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="create"
+        supplier={null}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const cnpjInput = screen.getByLabelText("CNPJ");
+
+    await user.type(cnpjInput, "123456");
+    expect(cnpjInput).toHaveValue("12.345.6");
+  });
+
+  it("applies CNPJ mask slash after 9 digits", async () => {
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="create"
+        supplier={null}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const cnpjInput = screen.getByLabelText("CNPJ");
+
+    await user.type(cnpjInput, "123456789");
+    expect(cnpjInput).toHaveValue("12.345.678/9");
+  });
+
   it("limits CNPJ to 14 digits", async () => {
     render(
       <SupplierFormDialog
@@ -117,6 +171,20 @@ describe("SupplierFormDialog", () => {
     expect(screen.getByText("Editar fornecedor")).toBeInTheDocument();
     expect(screen.getByLabelText("Nome")).toHaveValue("Fornecedor Teste");
     expect(screen.getByLabelText("CNPJ")).toHaveValue("12.345.678/0001-90");
+  });
+
+  it("shows status label in create mode", () => {
+    render(
+      <SupplierFormDialog
+        open={false}
+        onOpenChange={vi.fn()}
+        mode="create"
+        supplier={null}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Novo fornecedor")).not.toBeInTheDocument();
   });
 
   it("renders edit dialog with pre-filled optional fields", () => {
@@ -166,14 +234,13 @@ describe("SupplierFormDialog", () => {
   });
 
   it("submits update and shows success toast on edit", async () => {
-    const onSuccess = vi.fn();
     render(
       <SupplierFormDialog
         open={true}
         onOpenChange={vi.fn()}
         mode="edit"
         supplier={mockSupplier}
-        onSuccess={onSuccess}
+        onSuccess={vi.fn()}
       />,
     );
 

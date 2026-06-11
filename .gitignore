@@ -115,3 +115,4 @@ logs
 !.gemini/
 gha-creds-*.json
 .vercel
+coverage.json
