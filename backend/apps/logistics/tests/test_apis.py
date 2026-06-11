@@ -1,4 +1,5 @@
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.finances.services.budget_service import BudgetService
 from apps.logistics.services.contract_service import ContractService
@@ -163,6 +164,24 @@ class TestLogisticsNinjaAPI:
             content_type="application/json",
         )
         assert response.status_code == 422
+
+    def test_create_supplier_invalid_cnpj_shows_friendly_message(self, auth_client):
+        """CNPJ inválido deve retornar 422 com mensagem amigável, não regex cru."""
+        payload = {
+            "name": "CNPJ Inválido",
+            "cnpj": "00.000.000/0000-0X",  # tamanho correto, formato inválido
+            "phone": "11999999999",
+            "email": "invalido@email.com",
+        }
+        response = auth_client.post(
+            "/api/v1/logistics/suppliers/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        body = response.json()
+        detail = str(body.get("detail", ""))
+        assert "formato" in detail.lower() or "XX.XXX" in detail
 
     def test_list_suppliers_filter_by_search(self, auth_client, user):
         SupplierService.create(
@@ -331,8 +350,6 @@ class TestLogisticsNinjaAPI:
         assert response.json()["name"] == "Contrato API"
 
     def test_upload_contract_file(self, auth_client, seed_data):
-        from django.core.files.uploadedfile import SimpleUploadedFile
-
         pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
         response = auth_client.post(
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
@@ -341,8 +358,6 @@ class TestLogisticsNinjaAPI:
         assert response.status_code == 200
 
     def test_delete_contract_file(self, auth_client, seed_data):
-        from django.core.files.uploadedfile import SimpleUploadedFile
-
         pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
         auth_client.post(
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",

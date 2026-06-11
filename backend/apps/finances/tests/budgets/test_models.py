@@ -4,10 +4,12 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from apps.finances.models import Budget
+from apps.finances.models.installment import Installment
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
     ExpenseFactory,
+    InstallmentFactory,
 )
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -68,25 +70,82 @@ class TestBudgetTotalOverallSpent:
         budget = BudgetFactory(wedding=wedding)
         assert budget.total_overall_spent == Decimal("0.00")
 
-    def test_total_overall_spent_sums_all_categories(self, user):
-        """total_overall_spent soma actual_amount de despesas em todas as categorias."""
+    def test_total_overall_spent_only_paid_installments(self, user):
+        """total_overall_spent soma apenas parcelas PAID, ignorando PENDING."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
+        cat = BudgetCategoryFactory(budget=budget, wedding=wedding)
 
+        expense = ExpenseFactory(
+            wedding=wedding,
+            category=cat,
+            actual_amount=Decimal("6000.00"),
+            contract=None,
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=Decimal("3000.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-01-15",
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=Decimal("3000.00"),
+            status=Installment.StatusChoices.PENDING,
+        )
+
+        assert budget.total_overall_spent == Decimal("3000.00")
+
+    def test_total_overall_spent_all_pending_returns_zero(self, user):
+        """Todas as parcelas PENDING: total_overall_spent = 0."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        cat = BudgetCategoryFactory(budget=budget, wedding=wedding)
+
+        expense = ExpenseFactory(
+            wedding=wedding,
+            category=cat,
+            actual_amount=Decimal("4000.00"),
+            contract=None,
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=Decimal("4000.00"),
+            status=Installment.StatusChoices.PENDING,
+        )
+
+        assert budget.total_overall_spent == Decimal("0.00")
+
+    def test_total_overall_spent_multiple_categories_mixed_status(self, user):
+        """Soma PAID de múltiplas categorias, ignorando PENDING de todas."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
         cat1 = BudgetCategoryFactory(budget=budget, wedding=wedding)
         cat2 = BudgetCategoryFactory(budget=budget, wedding=wedding)
 
-        ExpenseFactory(
+        exp1 = ExpenseFactory(
             wedding=wedding,
             category=cat1,
             actual_amount=Decimal("3000.00"),
             contract=None,
         )
-        ExpenseFactory(
+        InstallmentFactory(
+            expense=exp1,
+            amount=Decimal("3000.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-01-15",
+        )
+
+        exp2 = ExpenseFactory(
             wedding=wedding,
             category=cat2,
             actual_amount=Decimal("2000.00"),
             contract=None,
         )
+        InstallmentFactory(
+            expense=exp2,
+            amount=Decimal("2000.00"),
+            status=Installment.StatusChoices.PENDING,
+        )
 
-        assert budget.total_overall_spent == Decimal("5000.00")
+        assert budget.total_overall_spent == Decimal("3000.00")

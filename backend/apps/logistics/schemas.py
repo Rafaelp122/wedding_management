@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from ninja import Field, Schema
-from pydantic import UUID4
+from pydantic import UUID4, field_validator
 
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 # ==============================================================================
 class SupplierIn(Schema):
     name: str
-    cnpj: str = Field(pattern=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$")
+    cnpj: str = Field(min_length=14, max_length=18)
     phone: str
     email: str
     is_active: bool = True
@@ -26,10 +26,21 @@ class SupplierIn(Schema):
     website: str = Field("", pattern=r"^(?:https?://\S+)?$")
     notes: str = ""
 
+    @field_validator("cnpj")
+    @classmethod
+    def validate_cnpj_format(cls, v: str) -> str:
+        import re
+
+        if not re.match(r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$", v):
+            raise ValueError(
+                "CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.",
+            )
+        return v
+
 
 class SupplierPatchIn(Schema):
     name: str | None = None
-    cnpj: str | None = Field(None, pattern=r"^(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})?$")
+    cnpj: str | None = Field(None, min_length=14, max_length=18)
     phone: str | None = None
     email: str | None = None
     is_active: bool | None = None
@@ -38,6 +49,17 @@ class SupplierPatchIn(Schema):
     state: str | None = Field(None, pattern="^$|^[A-Z]{2}$")
     website: str = ""
     notes: str | None = None
+
+    @field_validator("cnpj")
+    @classmethod
+    def validate_cnpj_format(cls, v: str | None) -> str | None:
+        import re
+
+        if v is not None and not re.match(r"^(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})?$", v):
+            raise ValueError(
+                "CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.",
+            )
+        return v
 
 
 class SupplierOut(Schema):
