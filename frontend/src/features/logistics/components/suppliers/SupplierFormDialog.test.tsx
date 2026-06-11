@@ -21,7 +21,14 @@ vi.mock("sonner", async (importOriginal) => {
   };
 });
 
-const mockSupplier = createMockSupplier({ uuid: "s-edit" });
+const mockSupplier = createMockSupplier({
+  uuid: "s-edit",
+  address: "Rua das Rosas, 123",
+  city: "São Paulo",
+  state: "SP",
+  website: "https://buffet.com.br",
+  notes: "Fornecedor premium",
+});
 
 describe("SupplierFormDialog", () => {
   it("renders create dialog with empty fields", () => {
@@ -42,6 +49,60 @@ describe("SupplierFormDialog", () => {
     expect(screen.getByLabelText("CNPJ")).toBeInTheDocument();
   });
 
+  it("renders all optional fields in create mode", () => {
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="create"
+        supplier={null}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Endereço")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cidade")).toBeInTheDocument();
+    expect(screen.getByLabelText("Estado (UF)")).toBeInTheDocument();
+    expect(screen.getByLabelText("Website")).toBeInTheDocument();
+    expect(screen.getByLabelText("Observações")).toBeInTheDocument();
+  });
+
+  it("applies CNPJ mask as user types digits", async () => {
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="create"
+        supplier={null}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const cnpjInput = screen.getByLabelText("CNPJ");
+
+    await user.type(cnpjInput, "12345678000190");
+    expect(cnpjInput).toHaveValue("12.345.678/0001-90");
+  });
+
+  it("limits CNPJ to 14 digits", async () => {
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="create"
+        supplier={null}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const cnpjInput = screen.getByLabelText("CNPJ");
+
+    await user.type(cnpjInput, "1234567800019012345");
+    expect((cnpjInput as HTMLInputElement).value).toHaveLength(18);
+  });
+
   it("renders edit dialog with pre-filled data", () => {
     render(
       <SupplierFormDialog
@@ -56,6 +117,24 @@ describe("SupplierFormDialog", () => {
     expect(screen.getByText("Editar fornecedor")).toBeInTheDocument();
     expect(screen.getByLabelText("Nome")).toHaveValue("Fornecedor Teste");
     expect(screen.getByLabelText("CNPJ")).toHaveValue("12.345.678/0001-90");
+  });
+
+  it("renders edit dialog with pre-filled optional fields", () => {
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="edit"
+        supplier={mockSupplier}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Endereço")).toHaveValue("Rua das Rosas, 123");
+    expect(screen.getByLabelText("Cidade")).toHaveValue("São Paulo");
+    expect(screen.getByLabelText("Estado (UF)")).toHaveValue("SP");
+    expect(screen.getByLabelText("Website")).toHaveValue("https://buffet.com.br");
+    expect(screen.getByLabelText("Observações")).toHaveValue("Fornecedor premium");
   });
 
   it("submits form and shows success toast on create", async () => {
