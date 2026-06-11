@@ -86,12 +86,16 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         # categorias não pode ultrapassar o teto do orçamento mestre.
         if self.pk or self.budget_id:
             budget_total = self.budget.total_estimated
-            siblings = (
-                self.budget.categories.exclude(pk=self.pk)
+            siblings_agg = (
+                self.budget.categories.exclude(pk=self.pk).aggregate(
+                    total=models.Sum("allocated_budget")
+                )
                 if self.pk is not None
-                else self.budget.categories.all()
+                else self.budget.categories.aggregate(
+                    total=models.Sum("allocated_budget")
+                )
             )
-            allocated_siblings = sum(cat.allocated_budget for cat in siblings)
+            allocated_siblings = siblings_agg["total"] or Decimal("0.00")
             if allocated_siblings + self.allocated_budget > budget_total:
                 raise ValidationError(
                     f"A soma das categorias alocadas ({allocated_siblings + self.allocated_budget}) "  # noqa

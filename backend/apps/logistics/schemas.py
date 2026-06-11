@@ -61,6 +61,15 @@ class SupplierPatchIn(Schema):
             )
         return v
 
+    @field_validator("website")
+    @classmethod
+    def validate_website_format(cls, v: str | None) -> str | None:
+        import re
+
+        if v is not None and not re.match(r"^(?:https?://\S+)?$", v):
+            raise ValueError("Website deve ser uma URL válida (http:// ou https://).")
+        return v
+
 
 class SupplierOut(Schema):
     uuid: UUID4
