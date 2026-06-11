@@ -29,7 +29,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { FormInput } from "@/components/form-fields";
+
+function applyCnpjMask(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 14);
+
+  let masked = digits;
+  if (digits.length > 2) masked = `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  if (digits.length > 5) masked = `${masked.slice(0, 6)}.${masked.slice(6)}`;
+  if (digits.length > 8) masked = `${masked.slice(0, 10)}/${masked.slice(10)}`;
+  if (digits.length > 12) masked = `${masked.slice(0, 15)}-${masked.slice(15)}`;
+
+  return masked;
+}
 
 interface SupplierFormDialogProps {
   open: boolean;
@@ -50,15 +64,22 @@ export function SupplierFormDialog({
   const updateMutation = useLogisticsSuppliersUpdate();
   const isPending = mode === "create" ? createMutation.isPending : updateMutation.isPending;
 
+  const emptyValues: SupplierFormData = {
+    name: "",
+    cnpj: "",
+    phone: "",
+    email: "",
+    is_active: true,
+    address: "",
+    city: "",
+    state: "",
+    website: "",
+    notes: "",
+  };
+
   const form = useForm({
     resolver: zodResolver(SupplierFormSchema),
-    defaultValues: {
-      name: "",
-      cnpj: "",
-      phone: "",
-      email: "",
-      is_active: true,
-    } as SupplierFormData,
+    defaultValues: emptyValues,
   });
 
   useEffect(() => {
@@ -66,19 +87,18 @@ export function SupplierFormDialog({
       if (mode === "edit" && supplier) {
         form.reset({
           name: supplier.name,
-          cnpj: supplier.cnpj,
+          cnpj: supplier.cnpj ?? "",
           phone: supplier.phone,
           email: supplier.email,
           is_active: supplier.is_active,
+          address: supplier.address ?? "",
+          city: supplier.city ?? "",
+          state: supplier.state ?? "",
+          website: supplier.website ?? "",
+          notes: supplier.notes ?? "",
         });
       } else {
-        form.reset({
-          name: "",
-          cnpj: "",
-          phone: "",
-          email: "",
-          is_active: true,
-        });
+        form.reset(emptyValues);
       }
     }
   }, [open, mode, supplier, form]);
@@ -145,11 +165,25 @@ export function SupplierFormDialog({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormInput
+        <FormField
           control={form.control}
           name="cnpj"
-          label="CNPJ"
-          placeholder="00.000.000/0000-00"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>CNPJ</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="00.000.000/0000-00"
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(applyCnpjMask(e.target.value))}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         <FormField
@@ -177,6 +211,74 @@ export function SupplierFormDialog({
           )}
         />
       </div>
+
+      <FormField
+        control={form.control}
+        name="address"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Endereço</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Rua, número, bairro"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormInput
+          control={form.control}
+          name="city"
+          label="Cidade"
+          placeholder="São Paulo"
+        />
+
+        <FormInput
+          control={form.control}
+          name="state"
+          label="Estado (UF)"
+          placeholder="SP"
+        />
+      </div>
+
+      <FormInput
+        control={form.control}
+        name="website"
+        label="Website"
+        type="url"
+        placeholder="https://www.fornecedor.com.br"
+      />
+
+      <FormField
+        control={form.control}
+        name="notes"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Observações</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Anotações internas sobre o fornecedor"
+                className="resize-none"
+                rows={3}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </FormDialog>
   );
 }
