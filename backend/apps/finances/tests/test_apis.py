@@ -4,6 +4,7 @@ import pytest
 
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.services.expense_service import ExpenseService
+from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.weddings.services import WeddingService
 
 
@@ -260,12 +261,7 @@ class TestFinancesNinjaAPI:
 
     def test_from_document(self, auth_client, seed_data):
         """POST from-document — sugere payload de despesa a partir de contrato."""
-        # Cria um contrato via API (precisa ter supplier + wedding)
-        from apps.logistics.tests.factories import ContractFactory
-
         wedding = seed_data["my_budget"].wedding
-        from apps.logistics.tests.factories import SupplierFactory
-
         supplier = SupplierFactory(company=wedding.company)
         contract = ContractFactory(wedding=wedding, supplier=supplier)
 
@@ -275,6 +271,45 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         data = response.json()
         assert "description" in data
+
+    def test_mark_as_paid_already_paid_returns_422(self, auth_client, seed_data):
+        """Marcar parcela já paga deve retornar 422."""
+        installment = seed_data["my_expense"].installments.first()
+        auth_client.post(
+            f"/api/v1/finances/installments/{installment.uuid}/mark-as-paid/",
+        )
+        response = auth_client.post(
+            f"/api/v1/finances/installments/{installment.uuid}/mark-as-paid/",
+        )
+        assert response.status_code == 422
+
+    def test_unmark_as_paid_not_paid_returns_422(self, auth_client, seed_data):
+        """Desmarcar parcela não paga deve retornar 422."""
+        installment = seed_data["my_expense"].installments.first()
+        response = auth_client.post(
+            f"/api/v1/finances/installments/{installment.uuid}/unmark-as-paid/",
+        )
+        assert response.status_code == 422
+
+    def test_adjust_paid_installment_returns_422(self, auth_client, seed_data):
+        """Ajustar parcela já paga deve retornar 422 (BR-F06)."""
+        installment = seed_data["my_expense"].installments.first()
+        auth_client.post(
+            f"/api/v1/finances/installments/{installment.uuid}/mark-as-paid/",
+        )
+        response = auth_client.patch(
+            f"/api/v1/finances/installments/{installment.uuid}/adjust/",
+            data={"amount": "100.00"},
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+
+    def test_delete_category_with_expenses_returns_409(self, auth_client, seed_data):
+        """Deletar categoria com despesas ativas deve retornar 409."""
+        response = auth_client.delete(
+            f"/api/v1/finances/categories/{seed_data['my_category'].uuid}/",
+        )
+        assert response.status_code == 409
 
 
 @pytest.mark.django_db

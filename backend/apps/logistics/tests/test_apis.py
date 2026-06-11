@@ -1,4 +1,5 @@
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.finances.services.budget_service import BudgetService
 from apps.logistics.services.contract_service import ContractService
@@ -331,8 +332,6 @@ class TestLogisticsNinjaAPI:
         assert response.json()["name"] == "Contrato API"
 
     def test_upload_contract_file(self, auth_client, seed_data):
-        from django.core.files.uploadedfile import SimpleUploadedFile
-
         pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
         response = auth_client.post(
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
@@ -341,8 +340,6 @@ class TestLogisticsNinjaAPI:
         assert response.status_code == 200
 
     def test_delete_contract_file(self, auth_client, seed_data):
-        from django.core.files.uploadedfile import SimpleUploadedFile
-
         pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
         auth_client.post(
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
