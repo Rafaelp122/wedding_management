@@ -4,7 +4,6 @@ from decimal import Decimal
 from uuid import UUID
 
 from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import Coalesce
 
 from apps.finances.models import Budget, BudgetCategory, Installment
 from apps.logistics.models import Contract
@@ -230,17 +229,7 @@ class DashboardService:
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)
             .select_related("budget")
-            .annotate(
-                _total_spent=Coalesce(
-                    Sum(
-                        "expenses__installments__amount",
-                        filter=Q(
-                            expenses__installments__status=Installment.StatusChoices.PAID
-                        ),
-                    ),
-                    Decimal("0.00"),
-                )
-            )
+            .with_total_spent()  # type: ignore[attr-defined]
         )
 
         categories_summary = []

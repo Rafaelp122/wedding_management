@@ -14,6 +14,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
+from apps.finances.managers import BudgetCategoryManager
 from apps.tenants.models import TenantModel
 
 
@@ -22,6 +23,8 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
     Categorias de gastos (RF03).
     Permite o agrupamento logístico e financeiro vinculando despesas a um orçamento.
     """
+
+    objects = BudgetCategoryManager()  # type: ignore[misc]
 
     budget = models.ForeignKey(
         "finances.Budget",
