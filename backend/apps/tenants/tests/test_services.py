@@ -35,3 +35,23 @@ class TestTenantService:
         assert admin_company1.slug == "admin-workspace"
         assert admin_company1.id == admin_company2.id
         assert Company.objects.filter(slug="admin-workspace").count() == 1
+
+    def test_create_company_with_custom_name(self):
+        """company_name explícito substitui o nome padrão 'Workspace de ...'."""
+        company = TenantService.create_company(
+            display_name="Rafael", company_name="Cerimonial XPTO"
+        )
+        assert company.name == "Cerimonial XPTO"
+        assert "Workspace de" not in company.name
+
+    def test_create_company_special_chars_in_display_name(self):
+        """Caracteres especiais e acentos são normalizados no slug."""
+        company = TenantService.create_company(display_name="João & Maria")
+        assert "joao" in company.slug
+        assert "&" not in company.slug
+
+    def test_create_company_whitespace_only_display_name(self):
+        """Display name apenas com espaços gera slug mínimo com UUID."""
+        company = TenantService.create_company(display_name="   ")
+        assert company.name == "Workspace de    "
+        assert company.slug  # slug não-vazio (contém UUID)
