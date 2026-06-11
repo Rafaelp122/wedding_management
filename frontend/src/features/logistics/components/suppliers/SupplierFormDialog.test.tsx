@@ -165,6 +165,33 @@ describe("SupplierFormDialog", () => {
     );
   });
 
+  it("submits update and shows success toast on edit", async () => {
+    const onSuccess = vi.fn();
+    render(
+      <SupplierFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        mode="edit"
+        supplier={mockSupplier}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("Nome"));
+    await user.type(screen.getByLabelText("Nome"), "Fornecedor Editado");
+    await user.click(screen.getByRole("button", { name: /salvar/i }));
+
+    await waitFor(
+      () => {
+        expect(toastSuccess).toHaveBeenCalledWith(
+          "Fornecedor atualizado com sucesso!",
+        );
+      },
+      { timeout: 5000 },
+    );
+  });
+
   it("calls onOpenChange when cancel is clicked", async () => {
     const onOpenChange = vi.fn();
     render(
