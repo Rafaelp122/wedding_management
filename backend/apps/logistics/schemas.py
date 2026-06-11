@@ -71,7 +71,7 @@ class SupplierOut(Schema):
     is_active: bool
     address: str = ""
     city: str = ""
-    state: str = Field("", min_length=2, max_length=2)
+    state: str = Field("", max_length=2)
     website: str = ""
     notes: str = ""
     created_at: datetime.datetime
