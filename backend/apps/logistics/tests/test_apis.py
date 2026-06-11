@@ -252,3 +252,75 @@ class TestLogisticsNinjaAPI:
         data = response.json()
         assert data["count"] == 1
         assert data["items"][0]["name"] == "A Buffet"
+
+    def test_update_contract_success(self, auth_client, seed_data):
+        """Testa atualização de contrato com PATCH."""
+        contract = seed_data["my_contract"]
+        payload = {"name": "Contrato Atualizado"}
+        response = auth_client.patch(
+            f"/api/v1/logistics/contracts/{contract.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Contrato Atualizado"
+
+    def test_delete_contract_success(self, auth_client, seed_data):
+        """Testa exclusão de contrato com DELETE."""
+        contract = seed_data["my_contract"]
+        response = auth_client.delete(f"/api/v1/logistics/contracts/{contract.uuid}/")
+        assert response.status_code == 204
+
+    def test_update_item_success(self, auth_client, seed_data):
+        """Testa atualização de item com PATCH."""
+        item = seed_data["my_item"]
+        payload = {"name": "Item Atualizado"}
+        response = auth_client.patch(
+            f"/api/v1/logistics/items/{item.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Item Atualizado"
+
+    def test_delete_item_success(self, auth_client, seed_data):
+        """Testa exclusão de item com DELETE."""
+        item = seed_data["my_item"]
+        response = auth_client.delete(f"/api/v1/logistics/items/{item.uuid}/")
+        assert response.status_code == 204
+
+    def test_update_supplier_success(self, auth_client, seed_data):
+        """Testa atualização de fornecedor com PATCH."""
+        supplier = seed_data["my_supplier"]
+        payload = {"name": "Fornecedor Atualizado"}
+        response = auth_client.patch(
+            f"/api/v1/logistics/suppliers/{supplier.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Fornecedor Atualizado"
+
+    def test_delete_supplier_success(self, auth_client, seed_data):
+        """Testa exclusão de fornecedor com DELETE."""
+        supplier = seed_data["my_supplier"]
+        response = auth_client.delete(f"/api/v1/logistics/suppliers/{supplier.uuid}/")
+        assert response.status_code == 204
+
+
+@pytest.mark.django_db
+class TestLogisticsAPIAuth:
+    def test_contracts_requires_auth(self, client):
+        """Verifica que listar contratos sem autenticação retorna 401."""
+        response = client.get("/api/v1/logistics/contracts/")
+        assert response.status_code == 401
+
+    def test_items_requires_auth(self, client):
+        """Verifica que listar itens sem autenticação retorna 401."""
+        response = client.get("/api/v1/logistics/items/")
+        assert response.status_code == 401
+
+    def test_suppliers_requires_auth(self, client):
+        """Verifica que listar fornecedores sem autenticação retorna 401."""
+        response = client.get("/api/v1/logistics/suppliers/")
+        assert response.status_code == 401

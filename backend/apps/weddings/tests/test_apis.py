@@ -149,6 +149,28 @@ class TestWeddingNinjaAPI:
         assert "days_until_wedding" in data
         assert "budget_percentage_used" in data
 
+    def test_update_wedding_success(self, auth_client, user):
+        """PATCH deve atualizar parcialmente um casamento."""
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.patch(
+            f"/api/v1/weddings/{wedding.uuid}/",
+            data={"location": "Praia do Forte"},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["location"] == "Praia do Forte"
+
+    def test_delete_wedding_success(self, auth_client, user):
+        """DELETE deve remover um casamento."""
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.delete(f"/api/v1/weddings/{wedding.uuid}/")
+
+        assert response.status_code == 204
+
     def test_dashboard_wedding_api_unauthorized(self, auth_client):
         from apps.tenants.tests.factories import CompanyFactory
 

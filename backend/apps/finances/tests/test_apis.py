@@ -110,6 +110,130 @@ class TestFinancesNinjaAPI:
 
         assert response.status_code == 422
 
+    def test_update_budget_success(self, auth_client, seed_data):
+        """PATCH orçamento — altera total_estimated com sucesso."""
+        response = auth_client.patch(
+            f"/api/v1/finances/budgets/{seed_data['my_budget'].uuid}/",
+            data={"total_estimated": "50000.00"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["total_estimated"] == "50000.00"
+
+    def test_create_category_success(self, auth_client, seed_data):
+        """POST categoria — cria nova categoria no orçamento."""
+        # Aumenta teto do orçamento primeiro (está em 0.00)
+        auth_client.patch(
+            f"/api/v1/finances/budgets/{seed_data['my_budget'].uuid}/",
+            data={"total_estimated": "10000.00"},
+            content_type="application/json",
+        )
+        payload = {
+            "name": "Buffet Extra",
+            "description": "",
+            "budget": str(seed_data["my_budget"].uuid),
+            "allocated_budget": "5000.00",
+        }
+        response = auth_client.post(
+            "/api/v1/finances/categories/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 201, response.json()
+        assert response.json()["name"] == "Buffet Extra"
+
+    def test_update_category_success(self, auth_client, seed_data):
+        """PATCH categoria — altera nome com sucesso."""
+        response = auth_client.patch(
+            f"/api/v1/finances/categories/{seed_data['my_category'].uuid}/",
+            data={"name": "Buffet Premium"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Buffet Premium"
+
+    def test_delete_category_success(self, auth_client, seed_data):
+        """DELETE categoria — remove categoria recém-criada (sem despesas)."""
+        # Aumenta teto do orçamento primeiro
+        auth_client.patch(
+            f"/api/v1/finances/budgets/{seed_data['my_budget'].uuid}/",
+            data={"total_estimated": "10000.00"},
+            content_type="application/json",
+        )
+        payload = {
+            "name": "Para Deletar",
+            "description": "",
+            "budget": str(seed_data["my_budget"].uuid),
+            "allocated_budget": "1000.00",
+        }
+        create_resp = auth_client.post(
+            "/api/v1/finances/categories/",
+            data=payload,
+            content_type="application/json",
+        )
+        new_uuid = create_resp.json()["uuid"]
+
+        response = auth_client.delete(f"/api/v1/finances/categories/{new_uuid}/")
+        assert response.status_code == 204
+
+    def test_update_expense_success(self, auth_client, seed_data):
+        """PATCH despesa — altera nome com sucesso."""
+        response = auth_client.patch(
+            f"/api/v1/finances/expenses/{seed_data['my_expense'].uuid}/",
+            data={"name": "Despesa Atualizada"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Despesa Atualizada"
+
+    def test_delete_expense_success(self, auth_client, seed_data):
+        """DELETE despesa — remove com sucesso."""
+        response = auth_client.delete(
+            f"/api/v1/finances/expenses/{seed_data['my_expense'].uuid}/",
+        )
+        assert response.status_code == 204
+
+    def test_mark_installment_as_paid_success(self, auth_client, seed_data):
+        """POST marcar parcela como paga — status PAID."""
+        installment = seed_data["my_expense"].installments.first()
+        response = auth_client.post(
+            f"/api/v1/finances/installments/{installment.uuid}/mark-as-paid/",
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "PAID"
+
+    def test_unmark_installment_as_paid_success(self, auth_client, seed_data):
+        """POST desmarcar parcela como paga — status PENDING."""
+        installment = seed_data["my_expense"].installments.first()
+
+        # Marca como paga primeiro
+        auth_client.post(
+            f"/api/v1/finances/installments/{installment.uuid}/mark-as-paid/",
+        )
+
+        # Desmarca
+        response = auth_client.post(
+            f"/api/v1/finances/installments/{installment.uuid}/unmark-as-paid/",
+        )
+        assert response.status_code == 200
+
+    def test_adjust_installment_success(self, auth_client, seed_data):
+        """PATCH ajustar parcela — altera valor com sucesso."""
+        # Atualiza expense para 200 primeiro (Tolerância Zero exige soma = valor)
+        auth_client.patch(
+            f"/api/v1/finances/expenses/{seed_data['my_expense'].uuid}/",
+            data={"actual_amount": "200.00"},
+            content_type="application/json",
+        )
+        installment = seed_data["my_expense"].installments.first()
+        response = auth_client.patch(
+            f"/api/v1/finances/installments/{installment.uuid}/adjust/",
+            data={"amount": "200.00"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["amount"] == "200.00"
+
 
 @pytest.mark.django_db
 class TestFinancesAPIErrorHandling:
