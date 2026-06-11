@@ -130,16 +130,27 @@ class TestExceptionIntegration:
     """Testes de integração para verificar exceções em contexto real."""
 
     def test_service_raises_correct_exception_types(self):
-        """Teste CRÍTICO: Serviços lançam tipos corretos de exceção."""
-        # Este teste precisaria de um serviço real para testar
-        # Por enquanto é um placeholder para testes de integração futuros
-        pass
+        """Serviços lançam tipos corretos de exceção com atributos esperados."""
+        errors = [
+            (ObjectNotFoundError, "Recurso não encontrado", 404),
+            (BusinessRuleViolation, "Regra de negócio violada", 422),
+            (DomainIntegrityError, "Conflito de integridade", 409),
+            (ApplicationError, "Erro genérico", 400),
+        ]
 
-    def test_api_returns_correct_http_status_for_exceptions(self):
-        """Teste CRÍTICO: API mapeia exceções para status HTTP corretos."""
-        # Placeholder para testes de API que verificam:
-        # - ObjectNotFoundError → 404
-        # - BusinessRuleViolation → 422
-        # - DomainIntegrityError → 409
-        # - ApplicationError → 400
-        pass
+        for exc_class, detail, expected_status in errors:
+            with pytest.raises(exc_class) as exc:
+                raise exc_class(detail=detail)
+
+            assert exc.value.status_code == expected_status
+            assert exc.value.detail == detail
+
+    def test_api_returns_correct_http_status_for_exceptions(self, auth_client):
+        """API mapeia exceções para status HTTP corretos."""
+        import uuid
+
+        # 404: recurso inexistente (UUID aleatório)
+        response = auth_client.get(f"/api/v1/weddings/{uuid.uuid4()}/")
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data

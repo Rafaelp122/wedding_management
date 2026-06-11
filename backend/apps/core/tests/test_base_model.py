@@ -93,6 +93,11 @@ class TestBaseModelValidation:
         assert found is not None
         assert found.id == instance.id
 
+    def test_base_model_get_by_uuid_with_invalid_uuid_string(self):
+        """get_by_uuid com string inválida propaga ValidationError do Django."""
+        with pytest.raises(ValidationError):
+            BaseModelStub.get_by_uuid("abc")
+
     def test_base_model_abstract_meta(self):
         """Teste CRÍTICO: BaseModel é abstrato."""
         assert BaseModel._meta.abstract is True
