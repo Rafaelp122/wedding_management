@@ -307,6 +307,109 @@ class TestLogisticsNinjaAPI:
         response = auth_client.delete(f"/api/v1/logistics/suppliers/{supplier.uuid}/")
         assert response.status_code == 204
 
+    def test_retrieve_contract(self, auth_client, seed_data):
+        response = auth_client.get(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Contrato Teste"
+
+    def test_create_contract_via_api(self, auth_client, seed_data):
+        payload = {
+            "wedding": str(seed_data["my_contract"].wedding.uuid),
+            "supplier": str(seed_data["my_supplier"].uuid),
+            "name": "Contrato API",
+            "total_amount": "500.00",
+            "status": "DRAFT",
+        }
+        response = auth_client.post(
+            "/api/v1/logistics/contracts/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        assert response.json()["name"] == "Contrato API"
+
+    def test_upload_contract_file(self, auth_client, seed_data):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+            data={"pdf_file": pdf},
+        )
+        assert response.status_code == 200
+
+    def test_delete_contract_file(self, auth_client, seed_data):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
+        auth_client.post(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+            data={"pdf_file": pdf},
+        )
+        response = auth_client.delete(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+        )
+        assert response.status_code == 204
+
+    def test_transition_contract_status(self, auth_client, seed_data):
+        """DRAFT → PENDING (transição válida)."""
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}"
+            f"/transition-status/",
+            data={"status": "PENDING"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "PENDING"
+
+    def test_retrieve_item(self, auth_client, seed_data):
+        response = auth_client.get(
+            f"/api/v1/logistics/items/{seed_data['my_item'].uuid}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Item Meu"
+
+    def test_create_item_via_api(self, auth_client, seed_data):
+        payload = {
+            "wedding": str(seed_data["my_contract"].wedding.uuid),
+            "contract": str(seed_data["my_contract"].uuid),
+            "name": "Item API",
+            "quantity": 3,
+        }
+        response = auth_client.post(
+            "/api/v1/logistics/items/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        assert response.json()["name"] == "Item API"
+
+    def test_transition_item_status(self, auth_client, seed_data):
+        """PENDING → IN_PROGRESS → DONE."""
+        # Primeiro PENDING → IN_PROGRESS
+        auth_client.post(
+            f"/api/v1/logistics/items/{seed_data['my_item'].uuid}/transition-status/",
+            data={"acquisition_status": "IN_PROGRESS"},
+            content_type="application/json",
+        )
+        # Depois IN_PROGRESS → DONE
+        response = auth_client.post(
+            f"/api/v1/logistics/items/{seed_data['my_item'].uuid}/transition-status/",
+            data={"acquisition_status": "DONE"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "DONE"
+
+    def test_retrieve_supplier(self, auth_client, seed_data):
+        response = auth_client.get(
+            f"/api/v1/logistics/suppliers/{seed_data['my_supplier'].uuid}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Fornecedor Meu"
+
 
 @pytest.mark.django_db
 class TestLogisticsAPIAuth:

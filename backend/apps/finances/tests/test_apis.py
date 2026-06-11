@@ -234,6 +234,48 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["amount"] == "200.00"
 
+    def test_get_budget_for_wedding(self, auth_client, seed_data):
+        """GET orçamento por wedding_uuid — lazy-create."""
+        wedding_uuid = seed_data["my_budget"].wedding.uuid
+        response = auth_client.get(
+            f"/api/v1/finances/budgets/for-wedding/{wedding_uuid}/"
+        )
+        assert response.status_code == 200
+        assert "total_estimated" in response.json()
+
+    def test_get_expense(self, auth_client, seed_data):
+        """GET despesa por UUID."""
+        response = auth_client.get(
+            f"/api/v1/finances/expenses/{seed_data['my_expense'].uuid}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Despesa A"
+
+    def test_get_installment(self, auth_client, seed_data):
+        """GET parcela por UUID."""
+        installment = seed_data["my_expense"].installments.first()
+        response = auth_client.get(f"/api/v1/finances/installments/{installment.uuid}/")
+        assert response.status_code == 200
+        assert "amount" in response.json()
+
+    def test_from_document(self, auth_client, seed_data):
+        """POST from-document — sugere payload de despesa a partir de contrato."""
+        # Cria um contrato via API (precisa ter supplier + wedding)
+        from apps.logistics.tests.factories import ContractFactory
+
+        wedding = seed_data["my_budget"].wedding
+        from apps.logistics.tests.factories import SupplierFactory
+
+        supplier = SupplierFactory(company=wedding.company)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+
+        response = auth_client.post(
+            f"/api/v1/finances/expenses/from-document/{contract.uuid}/"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "description" in data
+
 
 @pytest.mark.django_db
 class TestFinancesAPIErrorHandling:
