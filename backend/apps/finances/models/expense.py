@@ -52,15 +52,25 @@ class Expense(TenantModel, WeddingOwnedMixin):
         return self.name or f"Despesa #{self.pk}"
 
     def clean(self) -> None:
+        """
+        Valida a regra de Tolerância Zero (BR-F01 / ADR-010).
+
+        A verificação só roda para instâncias já persistidas (self.pk existe)
+        porque durante a criação as parcelas ainda não existem — elas são
+        geradas posteriormente por InstallmentService.auto_generate_installments()
+        no service layer (ExpenseService.create).
+
+        O guard self.pk previne um falso positivo no primeiro save, onde
+        a soma das parcelas seria 0 e actual_amount > 0.
+        """
         super().clean()
 
-        # TOLERÂNCIA ZERO: A soma das parcelas deve ser EXATA
         if self.pk and self.actual_amount:
             total_installments = self.installments.aggregate(models.Sum("amount"))[
                 "amount__sum"
             ] or Decimal("0.00")
             if total_installments != self.actual_amount:
                 raise ValidationError(
-                    f"ERRO DE INTEGRIDADE: A soma das parcelas (R${total_installments}) "  # noqa
-                    f"não bate com o valor total (R${self.actual_amount})."
+                    f"ERRO DE INTEGRIDADE: A soma das parcelas (R${total_installments})"
+                    f" não bate com o valor total (R${self.actual_amount})."
                 )
