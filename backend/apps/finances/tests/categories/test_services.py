@@ -3,8 +3,12 @@ from uuid import uuid4
 
 import pytest
 
-from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
-from apps.finances.models import BudgetCategory
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
+from apps.finances.models import Budget, BudgetCategory
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
@@ -86,6 +90,50 @@ class TestBudgetCategoryServiceCreate:
 
         assert "budget_not_found_or_denied" in str(exc_info.value.code)
 
+    def test_create_category_exceeds_budget_cap_raises_error(self, user):
+        """
+        TOCTOU: criar categoria que ultrapassa o teto do orçamento
+        levanta BusinessRuleViolation.
+        """
+        wedding, budget = _setup_budget(user, total_estimated=Decimal("10000.00"))
+        BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("9000.00"),
+        )
+
+        data = {
+            "budget": budget.uuid,
+            "name": "Excedente",
+            "allocated_budget": Decimal("2000.00"),
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            BudgetCategoryService.create(user.company, data)
+
+        assert "budget_cap_exceeded" in str(exc_info.value.code)
+
+    def test_create_category_uses_select_for_update(self, user, mocker):
+        """
+        TOCTOU: create() deve usar select_for_update() no budget
+        para evitar race condition na leitura da soma das categorias.
+        """
+        _, budget = _setup_budget(user)
+        data = {
+            "budget": budget.uuid,
+            "name": "Teste Lock",
+            "allocated_budget": Decimal("1000.00"),
+        }
+
+        mock_qs = mocker.MagicMock()
+        mock_qs.select_for_update.return_value = mock_qs
+        mock_qs.get.return_value = budget
+        mocker.patch.object(Budget.objects, "for_tenant", return_value=mock_qs)
+
+        BudgetCategoryService.create(user.company, data)
+
+        mock_qs.select_for_update.assert_called_once()
+
 
 @pytest.mark.django_db
 class TestBudgetCategoryServiceUpdate:
@@ -135,6 +183,50 @@ class TestBudgetCategoryServiceUpdate:
         )
 
         assert updated.company == user.company
+
+    def test_update_category_allocated_budget_exceeds_cap_raises_error(self, user):
+        """
+        TOCTOU: atualizar allocated_budget ultrapassando o teto
+        levanta BusinessRuleViolation.
+        """
+        wedding, budget = _setup_budget(user, total_estimated=Decimal("10000.00"))
+        _ = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("9000.00"),
+        )
+        category2 = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("500.00"),
+            name="Outra",
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            BudgetCategoryService.update(
+                user.company, category2, {"allocated_budget": Decimal("2000.00")}
+            )
+
+        assert "budget_cap_exceeded" in str(exc_info.value.code)
+
+    def test_update_category_uses_select_for_update(self, user, mocker):
+        """
+        TOCTOU: update() deve usar select_for_update() no budget
+        para evitar race condition na leitura da soma das categorias.
+        """
+        wedding, budget = _setup_budget(user)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+        )
+
+        mock_qs = mocker.MagicMock()
+        mock_qs.select_for_update.return_value = mock_qs
+        mock_qs.get.return_value = budget
+        mocker.patch.object(Budget.objects, "for_tenant", return_value=mock_qs)
+
+        BudgetCategoryService.update(user.company, category, {"name": "Renomeada"})
+        mock_qs.select_for_update.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -280,3 +372,16 @@ class TestBudgetCategoryServiceSetupDefaults:
         categories = BudgetCategory.objects.filter(budget=budget)
         for cat in categories:
             assert cat.allocated_budget == Decimal("0.00")
+
+    def test_setup_defaults_is_idempotent(self, user):
+        """
+        TOCTOU: setup_defaults() não duplica categorias quando chamado
+        múltiplas vezes.
+        """
+        wedding, budget = _setup_budget(user)
+
+        BudgetCategoryService.setup_defaults(user.company, wedding, budget)
+        assert BudgetCategory.objects.filter(budget=budget).count() == 6
+
+        BudgetCategoryService.setup_defaults(user.company, wedding, budget)
+        assert BudgetCategory.objects.filter(budget=budget).count() == 6

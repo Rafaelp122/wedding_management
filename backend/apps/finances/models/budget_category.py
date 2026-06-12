@@ -86,23 +86,3 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 "O orçamento pai deve pertencer ao mesmo casamento desta categoria."
             )
-
-        # TRAVA DE SEGURANÇA: A soma do que foi alocado nesta e nas demais
-        # categorias não pode ultrapassar o teto do orçamento mestre.
-        if self.pk or self.budget_id:
-            budget_total = self.budget.total_estimated
-            siblings_agg = (
-                self.budget.categories.exclude(pk=self.pk).aggregate(
-                    total=models.Sum("allocated_budget")
-                )
-                if self.pk is not None
-                else self.budget.categories.aggregate(
-                    total=models.Sum("allocated_budget")
-                )
-            )
-            allocated_siblings = siblings_agg["total"] or Decimal("0.00")
-            if allocated_siblings + self.allocated_budget > budget_total:
-                raise ValidationError(
-                    f"A soma das categorias alocadas ({allocated_siblings + self.allocated_budget}) "  # noqa
-                    f"excede o teto do orçamento ({budget_total})."
-                )

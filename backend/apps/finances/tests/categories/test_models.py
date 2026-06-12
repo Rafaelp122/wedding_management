@@ -101,51 +101,6 @@ class TestBudgetCategoryClean:
 
         assert "outro casamento" in str(exc_info.value).lower()
 
-    def test_clean_fails_when_siblings_exceed_budget_total(self, user):
-        """TRAVA: soma de allocated_budget excede total_estimated do budget."""
-        wedding = WeddingFactory(user_context=user)
-        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("10000.00"))
-
-        BudgetCategoryFactory(
-            budget=budget,
-            wedding=wedding,
-            allocated_budget=Decimal("9000.00"),
-        )
-
-        cat2 = BudgetCategory(
-            company=user.company,
-            budget=budget,
-            wedding=wedding,
-            name="Excedente",
-            allocated_budget=Decimal("2000.00"),
-        )
-
-        with pytest.raises(ValidationError) as exc_info:
-            cat2.full_clean()
-
-        assert "excede" in str(exc_info.value).lower()
-
-    def test_clean_passes_when_siblings_within_budget(self, user):
-        """Categorias dentro do teto do orçamento passam na validação."""
-        wedding = WeddingFactory(user_context=user)
-        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("10000.00"))
-
-        BudgetCategoryFactory(
-            budget=budget,
-            wedding=wedding,
-            allocated_budget=Decimal("6000.00"),
-        )
-
-        cat2 = BudgetCategory(
-            company=user.company,
-            budget=budget,
-            wedding=wedding,
-            name="Dentro do Teto",
-            allocated_budget=Decimal("4000.00"),
-        )
-
-        cat2.full_clean()
-
 
 @pytest.mark.django_db
 class TestBudgetCategoryTotalSpent:
