@@ -35,34 +35,24 @@ const {
   mockSuppliersList,
   mockContractsList,
   mockCategoriesList,
-  mockCreateContract,
-  mockCreateItem,
-  mockCreateExpense,
-  createContractAsync,
+  mockCreateFull,
+  createFullAsync,
 } = vi.hoisted(() => ({
   mockSuppliersList: vi.fn(),
   mockContractsList: vi.fn(),
   mockCategoriesList: vi.fn(),
-  mockCreateContract: vi.fn(),
-  mockCreateItem: vi.fn(),
-  mockCreateExpense: vi.fn(),
-  createContractAsync: vi.fn(),
+  mockCreateFull: vi.fn(),
+  createFullAsync: vi.fn(),
 }));
 
 vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
   useLogisticsSuppliersList: () => mockSuppliersList(),
   useLogisticsContractsList: () => mockContractsList(),
-  useLogisticsContractsCreate: () => mockCreateContract(),
-  useLogisticsItemsCreate: () => mockCreateItem(),
+  useLogisticsContractsCreateFull: () => mockCreateFull(),
 }));
 
 vi.mock("@/api/generated/v1/endpoints/finances/finances", () => ({
   useFinancesCategoriesList: () => mockCategoriesList(),
-  useFinancesExpensesCreate: () => mockCreateExpense(),
-}));
-
-vi.mock("@/api/axios-instance", () => ({
-  AXIOS_INSTANCE: { post: vi.fn() },
 }));
 
 // ===== TEST SUITE =====
@@ -112,15 +102,13 @@ describe("ContractUploadDialog", () => {
       mockQueryResponse({ data: { items: [], count: 0 } }),
     );
 
-    createContractAsync.mockReset();
-    createContractAsync.mockResolvedValue({ data: { uuid: "contract-1" } });
+    createFullAsync.mockReset();
+    createFullAsync.mockResolvedValue({ data: { uuid: "contract-1" } });
 
-    mockCreateContract.mockReturnValue({
-      mutateAsync: createContractAsync,
+    mockCreateFull.mockReturnValue({
+      mutateAsync: createFullAsync,
       isPending: false,
     });
-    mockCreateItem.mockReturnValue({ mutateAsync: vi.fn() });
-    mockCreateExpense.mockReturnValue({ mutateAsync: vi.fn() });
   });
 
   // ------------------------------------------------------------------
@@ -257,10 +245,10 @@ describe("ContractUploadDialog", () => {
     );
 
     await waitFor(() => {
-      expect(createContractAsync).toHaveBeenCalled();
+      expect(createFullAsync).toHaveBeenCalled();
     });
 
-    expect(createContractAsync).toHaveBeenCalledWith({
+    expect(createFullAsync).toHaveBeenCalledWith({
       data: {
         wedding: weddingUuid,
         supplier: "supplier-1",
@@ -269,6 +257,12 @@ describe("ContractUploadDialog", () => {
         status: "DRAFT",
         description: "Descrição do contrato de teste",
         parent: null,
+        items_data: "[]",
+        create_expense: false,
+        expense_category: null,
+        expense_num_installments: null,
+        expense_first_due_date: null,
+        pdf_file: null,
       },
     });
   });
@@ -330,7 +324,7 @@ describe("ContractUploadDialog", () => {
     );
 
     // Make the mutation reject
-    createContractAsync.mockRejectedValue(new Error("API Error"));
+    createFullAsync.mockRejectedValue(new Error("API Error"));
 
     render(<ContractUploadDialog {...defaultProps} />);
 
