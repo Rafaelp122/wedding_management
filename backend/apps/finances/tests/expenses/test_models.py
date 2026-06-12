@@ -103,3 +103,35 @@ class TestExpenseToleranceZero:
             expense.full_clean()
 
         assert "não bate" in str(exc_info.value).lower()
+
+    def test_expense_creation_skips_tolerance_validation(self, user):
+        """Criação (primeiro save) não valida Tolerância Zero — gap intencional.
+
+        O guard self.pk em Expense.clean() impede a validação durante o
+        primeiro save porque as parcelas ainda não existem. O service layer
+        (ExpenseService.create) é responsável por gerar as parcelas via
+        InstallmentService.auto_generate_installments() após o save.
+
+        Este teste documenta o comportamento esperado: criação via modelo
+        direto (sem service layer) com actual_amount > 0 e sem parcelas
+        passa no primeiro save mas falha em full_clean() posterior.
+        """
+        _, category = _setup_expense(user)
+        expense = Expense(
+            company=category.wedding.company,
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            name="Teste gap criação",
+            estimated_amount=Decimal("500.00"),
+            actual_amount=Decimal("500.00"),
+        )
+
+        assert expense.pk is None
+        expense.save()
+        assert expense.pk is not None
+
+        with pytest.raises(ValidationError) as exc_info:
+            expense.full_clean()
+
+        assert "não bate" in str(exc_info.value).lower()
