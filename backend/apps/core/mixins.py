@@ -30,11 +30,22 @@ class WeddingOwnedMixin(models.Model):
 
         # 2. Lógica genérica de validação de consistência horizontal (entre casamentos)
         for field in self._meta.concrete_fields:
-            if isinstance(field, models.ForeignKey):
-                related_obj = getattr(self, field.name)
-                # Se o objeto relacionado também for 'WeddingOwned', os IDs devem bater
-                if related_obj and hasattr(related_obj, "wedding_id"):
-                    if related_obj.wedding_id != self.wedding_id:
-                        raise ValidationError(
-                            {field.name: "Este recurso pertence a outro casamento."}
-                        )
+            if not isinstance(field, models.ForeignKey):
+                continue
+            if field.name == "wedding":
+                continue
+
+            fk_id = getattr(self, field.attname, None)
+            if fk_id is None:
+                continue
+
+            if field.related_model is None or not hasattr(
+                field.related_model, "wedding_id"
+            ):
+                continue
+
+            related_obj = getattr(self, field.name)
+            if related_obj and related_obj.wedding_id != self.wedding_id:
+                raise ValidationError(
+                    {field.name: "Este recurso pertence a outro casamento."}
+                )

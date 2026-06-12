@@ -127,3 +127,35 @@ class TestWeddingOwnedMixinEdgeCases:
             stub.full_clean()
 
         assert "wedding" in exc_info.value.message_dict
+
+
+@pytest.mark.django_db
+class TestWeddingOwnedMixinPerformance:
+    def test_null_fk_does_not_cause_extra_query(self):
+        """FK nula não dispara query extra durante full_clean()."""
+        company = CompanyFactory()
+        wedding = WeddingFactory(company=company)
+
+        stub = WeddingOwnedStub(
+            name="test", company=company, wedding=wedding, related_item=None
+        )
+
+        stub.full_clean()
+
+    def test_cross_wedding_fk_still_detected(self):
+        """FK não-nula com wedding diferente ainda é detectada e rejeitada."""
+        company = CompanyFactory()
+        wedding_a = WeddingFactory(company=company)
+        wedding_b = WeddingFactory(company=company)
+
+        stub_a = WeddingOwnedStub(name="A", company=company, wedding=wedding_a)
+        stub_a.save()
+        stub_b = WeddingOwnedStub(name="B", company=company, wedding=wedding_b)
+        stub_b.save()
+
+        stub_a.related_item = stub_b
+
+        with pytest.raises(ValidationError) as exc_info:
+            stub_a.full_clean()
+
+        assert "related_item" in exc_info.value.message_dict
