@@ -2,10 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AxiosError, AxiosHeaders } from "axios";
 import { addConnectionErrorInterceptor } from "@/api/interceptors/connection-error";
 
-vi.mock("@sentry/react", () => ({
-  setContext: vi.fn(),
-  captureException: vi.fn(),
-}));
 
 import * as Sentry from "@sentry/react";
 
@@ -78,11 +74,11 @@ describe("addConnectionErrorInterceptor", () => {
       const error = new AxiosError("Network Error", "ERR_NETWORK");
 
       const result = handlers.error?.(error);
+      await expect(result).rejects.toBe(error);
 
       expect(Sentry.captureException).toHaveBeenCalledWith(error, {
         tags: { source: "connection-error-interceptor" },
       });
-      await expect(result).rejects.toBe(error);
     });
 
     it("captures 502 error to Sentry", async () => {
@@ -102,11 +98,11 @@ describe("addConnectionErrorInterceptor", () => {
       );
 
       const result = handlers.error?.(error);
+      await expect(result).rejects.toBe(error);
 
       expect(Sentry.captureException).toHaveBeenCalledWith(error, {
         tags: { source: "connection-error-interceptor" },
       });
-      await expect(result).rejects.toBe(error);
     });
 
     it("captures 503 error to Sentry", async () => {
@@ -126,11 +122,11 @@ describe("addConnectionErrorInterceptor", () => {
       );
 
       const result = handlers.error?.(error);
+      await expect(result).rejects.toBe(error);
 
       expect(Sentry.captureException).toHaveBeenCalledWith(error, {
         tags: { source: "connection-error-interceptor" },
       });
-      await expect(result).rejects.toBe(error);
     });
 
     it("captures 504 error to Sentry", async () => {
@@ -150,11 +146,11 @@ describe("addConnectionErrorInterceptor", () => {
       );
 
       const result = handlers.error?.(error);
+      await expect(result).rejects.toBe(error);
 
       expect(Sentry.captureException).toHaveBeenCalledWith(error, {
         tags: { source: "connection-error-interceptor" },
       });
-      await expect(result).rejects.toBe(error);
     });
 
     it("does not capture 400 error to Sentry", async () => {
@@ -174,9 +170,9 @@ describe("addConnectionErrorInterceptor", () => {
       );
 
       const result = handlers.error?.(error);
+      await expect(result).rejects.toBe(error);
 
       expect(Sentry.captureException).not.toHaveBeenCalled();
-      await expect(result).rejects.toBe(error);
     });
 
     it("does not capture 500 error to Sentry", async () => {
@@ -196,9 +192,9 @@ describe("addConnectionErrorInterceptor", () => {
       );
 
       const result = handlers.error?.(error);
+      await expect(result).rejects.toBe(error);
 
       expect(Sentry.captureException).not.toHaveBeenCalled();
-      await expect(result).rejects.toBe(error);
     });
 
     it("sets Sentry context with X-Request-ID from error response headers", async () => {

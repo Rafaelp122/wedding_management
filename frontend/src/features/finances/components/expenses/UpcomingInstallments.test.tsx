@@ -7,18 +7,7 @@ import { WeddingUpcomingInstallments } from "./UpcomingInstallments";
 // ---------------------------------------------------------------------------
 // Toast mocking – same pattern as EditExpenseDialog.test.tsx
 // ---------------------------------------------------------------------------
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: { ...actual.toast, success: toastSuccess, error: toastError },
-  };
-});
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -238,7 +227,7 @@ describe("WeddingUpcomingInstallments", () => {
     await user.setup().click(screen.getByRole("button", { name: /pagar/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         "Parcela marcada como paga!",
       );
     });
@@ -285,7 +274,7 @@ describe("WeddingUpcomingInstallments", () => {
     await user.setup().click(screen.getByRole("button", { name: /pagar/i }));
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith(
+      expect(toast.error).toHaveBeenCalledWith(
         "Erro ao processar pagamento.",
       );
     });

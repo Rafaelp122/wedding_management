@@ -8,22 +8,7 @@ const EXPENSE_UUID = "test-expense-uuid";
 // ---------------------------------------------------------------------------
 // Toast mocking – same pattern as DeleteExpenseDialog.test.tsx
 // ---------------------------------------------------------------------------
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Mutation hook mocking – we control isPending via a mutable object so that
@@ -147,7 +132,7 @@ describe("ExpenseRedistributeForm", () => {
         uuid: EXPENSE_UUID,
         data: { num_installments: 3, first_due_date: "2025-07-15" },
       });
-      expect(toastSuccess).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         "Parcelas remanejadas com sucesso!",
       );
     });
@@ -169,7 +154,7 @@ describe("ExpenseRedistributeForm", () => {
     await user.click(screen.getByRole("button", { name: /aplicar/i }));
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith(
+      expect(toast.error).toHaveBeenCalledWith(
         "Erro ao remanejar parcelas.",
       );
     });

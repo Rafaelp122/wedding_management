@@ -68,6 +68,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "happy-dom": "^20.10.2",
     "jsdom": "^29.1.1",
     "msw": "^2.12.10",
     "orval": "^8.4.2",

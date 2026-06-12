@@ -4,23 +4,7 @@ import { server } from "@/mocks/server";
 import { EditEventDialog } from "./EditEventDialog";
 import { createMockEvent } from "@/test-data";
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 describe("EditEventDialog", () => {
   const onOpenChange = vi.fn();
@@ -163,7 +147,7 @@ describe("EditEventDialog", () => {
       await userEvent.click(screen.getByRole("button", { name: /salvar/i }));
 
       await waitFor(() => {
-        expect(toastSuccess).toHaveBeenCalled();
+        expect(toast.success).toHaveBeenCalled();
       });
       expect(onSuccess).toHaveBeenCalled();
     });

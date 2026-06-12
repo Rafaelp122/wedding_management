@@ -4,23 +4,7 @@ import { RegisterForm } from "@/features/auth/components/RegisterForm";
 import { server } from "@/mocks/server";
 import { getAuthRegisterUserMockHandler } from "@/api/generated/v1/endpoints/auth/auth.msw";
 import type { UserOut } from "@/api/generated/v1/models/userOut";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async (importOriginal) => {
@@ -145,7 +129,7 @@ describe("RegisterForm", () => {
     );
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         "Conta criada com sucesso! Faça login para continuar.",
       );
     });
@@ -179,7 +163,7 @@ describe("RegisterForm", () => {
     );
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
   });
 

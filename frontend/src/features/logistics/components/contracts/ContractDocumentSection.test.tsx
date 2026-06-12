@@ -1,25 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
-import { fireEvent } from "@testing-library/react";
 import { server } from "@/mocks/server";
 import { ContractDocumentSection } from "./ContractDocumentSection";
 
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const CONTRACT_UUID = "c-1";
 const FILE_NAME = "Contrato_Assinado.pdf";
@@ -103,25 +87,22 @@ describe("ContractDocumentSection", () => {
         />,
       );
 
+      const user = userEvent.setup();
       const fileInput = container.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
-      fireEvent.change(fileInput, {
-        target: {
-          files: [
-            new File(["dummy content"], FILE_NAME, {
-              type: "application/pdf",
-            }),
-          ],
-        },
-      });
+      await user.upload(
+        fileInput,
+        new File(["dummy content"], FILE_NAME, {
+          type: "application/pdf",
+        }),
+      );
 
-      const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /enviar/i }));
 
       await waitFor(
         () => {
-          expect(toastSuccess).toHaveBeenCalledWith(
+          expect(toast.success).toHaveBeenCalledWith(
             "Documento enviado com sucesso!",
           );
         },
@@ -145,25 +126,22 @@ describe("ContractDocumentSection", () => {
         />,
       );
 
+      const user = userEvent.setup();
       const fileInput = container.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
-      fireEvent.change(fileInput, {
-        target: {
-          files: [
-            new File(["dummy content"], FILE_NAME, {
-              type: "application/pdf",
-            }),
-          ],
-        },
-      });
+      await user.upload(
+        fileInput,
+        new File(["dummy content"], FILE_NAME, {
+          type: "application/pdf",
+        }),
+      );
 
-      const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /enviar/i }));
 
       await waitFor(
         () => {
-          expect(toastError).toHaveBeenCalledWith(
+          expect(toast.error).toHaveBeenCalledWith(
             "Erro ao enviar documento.",
           );
         },
@@ -187,7 +165,7 @@ describe("ContractDocumentSection", () => {
 
       await waitFor(
         () => {
-          expect(toastSuccess).toHaveBeenCalledWith("Documento removido.");
+          expect(toast.success).toHaveBeenCalledWith("Documento removido.");
         },
         { timeout: 5000 },
       );
@@ -214,7 +192,7 @@ describe("ContractDocumentSection", () => {
 
       await waitFor(
         () => {
-          expect(toastError).toHaveBeenCalledWith(
+          expect(toast.error).toHaveBeenCalledWith(
             "Erro ao remover documento.",
           );
         },

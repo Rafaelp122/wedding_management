@@ -8,6 +8,7 @@ import { formatDateBR } from "@/lib/formatters";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -39,30 +40,51 @@ export const SupplierDetailDialog = memo(function SupplierDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         {isLoading ? (
-          <div className="space-y-3 py-4">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-4 w-32" />
-          </div>
+          <>
+            <DialogTitle className="sr-only">Carregando fornecedor...</DialogTitle>
+            <DialogDescription className="sr-only">
+              Carregando fornecedor...
+            </DialogDescription>
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </>
         ) : error ? (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Não foi possível carregar os dados do fornecedor.
-            </AlertDescription>
-          </Alert>
+          <>
+            <DialogTitle className="sr-only">Erro ao carregar fornecedor</DialogTitle>
+            <DialogDescription className="sr-only">
+              Erro ao carregar fornecedor
+            </DialogDescription>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Não foi possível carregar os dados do fornecedor.
+              </AlertDescription>
+            </Alert>
+          </>
         ) : !supplier ? (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Fornecedor não encontrado.
-            </AlertDescription>
-          </Alert>
+          <>
+            <DialogTitle className="sr-only">Fornecedor não encontrado</DialogTitle>
+            <DialogDescription className="sr-only">
+              Fornecedor não encontrado
+            </DialogDescription>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Fornecedor não encontrado.
+              </AlertDescription>
+            </Alert>
+          </>
         ) : (
           <>
             <DialogHeader>
               <DialogTitle>{supplier.name}</DialogTitle>
+              <DialogDescription className="sr-only">
+                Detalhes do fornecedor
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-3 text-sm">

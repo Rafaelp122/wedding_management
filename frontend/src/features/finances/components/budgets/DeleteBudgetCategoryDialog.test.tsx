@@ -4,18 +4,7 @@ import { DeleteBudgetCategoryDialog } from "@/features/finances/components/budge
 import { createMockBudgetCategory } from "@/test-data";
 import { server } from "@/mocks/server";
 
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: { ...actual.toast, success: toastSuccess, error: toastError },
-  };
-});
+import { toast } from "sonner";
 
 describe("DeleteBudgetCategoryDialog", () => {
   it("renders nothing when closed", () => {
@@ -76,7 +65,7 @@ describe("DeleteBudgetCategoryDialog", () => {
     await user.click(screen.getByRole("button", { name: /remover/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith("Categoria removida com sucesso!");
+      expect(toast.success).toHaveBeenCalledWith("Categoria removida com sucesso!");
       expect(onSuccess).toHaveBeenCalled();
     });
   });
@@ -102,7 +91,7 @@ describe("DeleteBudgetCategoryDialog", () => {
     await user.click(screen.getByRole("button", { name: /remover/i }));
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
   });
 });

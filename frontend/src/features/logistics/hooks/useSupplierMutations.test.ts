@@ -4,23 +4,7 @@ import { useSupplierMutations } from "@/features/logistics/hooks/useSupplierMuta
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { createMockSupplier } from "@/test-data";
 import { server } from "@/mocks/server";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const mockSupplier = createMockSupplier();
 
@@ -45,7 +29,7 @@ describe("useSupplierMutations", () => {
       await result.current.handleDeleteSupplier();
     });
 
-    expect(toastSuccess).toHaveBeenCalledWith(
+    expect(toast.success).toHaveBeenCalledWith(
       "Fornecedor removido com sucesso!",
     );
   });
@@ -57,8 +41,8 @@ describe("useSupplierMutations", () => {
       await result.current.handleDeleteSupplier();
     });
 
-    expect(toastSuccess).not.toHaveBeenCalled();
-    expect(toastError).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("shows error toast on API failure when deleting", async () => {
@@ -75,7 +59,7 @@ describe("useSupplierMutations", () => {
       await result.current.handleDeleteSupplier();
     });
 
-    expect(toastError).toHaveBeenCalledWith(
+    expect(toast.error).toHaveBeenCalledWith(
       "Fornecedor não encontrado",
     );
   });

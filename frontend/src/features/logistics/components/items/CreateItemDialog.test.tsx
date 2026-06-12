@@ -3,23 +3,7 @@ import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 import { CreateItemDialog } from "./CreateItemDialog";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const weddingUuid = "test-wedding-uuid";
 const onOpenChange = vi.fn();
@@ -133,7 +117,7 @@ describe("CreateItemDialog", () => {
     await user.click(screen.getByRole("button", { name: /criar item/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith("Item criado com sucesso!");
+      expect(toast.success).toHaveBeenCalledWith("Item criado com sucesso!");
     });
   });
 
@@ -180,7 +164,7 @@ describe("CreateItemDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastError).toHaveBeenCalled();
+        expect(toast.error).toHaveBeenCalled();
       },
       { timeout: 5000 },
     );

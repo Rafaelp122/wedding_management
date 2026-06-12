@@ -5,16 +5,40 @@ export default mergeConfig(
   viteConfig,
   defineConfig({
     test: {
-      environment: "jsdom",
+      environment: "happy-dom",
       environmentOptions: {
-        jsdom: {
+        happyDom: {
           url: "http://localhost:5173",
         },
       },
       setupFiles: ["./src/test-setup.ts"],
+      isolate: false,
       include: ["src/**/*.{test,spec}.{ts,tsx}"],
       exclude: ["node_modules", "dist"],
-      css: true,
+      css: false,
+      deps: {
+        optimizer: {
+          web: {
+            enabled: true,
+            include: [
+              "react",
+              "react-dom",
+              "react-router-dom",
+              "lucide-react",
+              "recharts",
+              "date-fns",
+              "@tanstack/react-query",
+              "zustand",
+              "axios",
+              "class-variance-authority",
+              "clsx",
+              "tailwind-merge",
+              "zod",
+              "sonner"
+            ],
+          },
+        },
+      },
       clearMocks: true,
       restoreMocks: true,
       coverage: {
@@ -28,6 +52,7 @@ export default mergeConfig(
           "**/*.test.*",
           "**/*.spec.*",
           "src/test-data.ts",
+          "src/test-utils/**",
           "src/main.tsx",
           "src/router/**",
           "src/components/layouts/**",

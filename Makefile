@@ -17,7 +17,7 @@ else
 endif
 
 .PHONY: help setup up dev logs down build rebuild clean db-reset back-logs front-logs \
-        frontend-dev landing-dev sync-api openapi orval \
+        frontend-dev landing-dev sync-api openapi orval frontend-test frontend-test-changed \
         migrate makemigrations superuser shell reqs back-install \
         test test-cov lint mypy format check-backend check-frontend check-landing check-ci check \
         prod-build prod-up prod-migrate prod-shell \
@@ -167,6 +167,14 @@ orval:
 sync-api: openapi orval
 	@echo "🔄 API e Frontend sincronizados!"
 
+frontend-test:
+	@echo "🧪 Executando todos os testes do frontend..."
+	cd frontend && npm test
+
+frontend-test-changed:
+	@echo "🧪 Executando testes do frontend modificados no Git..."
+	cd frontend && npx vitest run --changed
+
 # ==============================================================================
 # 🐍 COMANDOS REPASSADOS PARA O CONTAINER
 # ==============================================================================
@@ -236,10 +244,10 @@ check-backend:
 	$(RUN_BACK) make check-backend
 
 check-frontend:
-	cd frontend && npm ci && npm run lint && npm run type-check && npm test && npm run build
+	cd frontend && npm install && npm run lint && npm run type-check && npm test && npm run build
 
 check-landing:
-	cd landing && npm ci && npx astro check && npm run build
+	cd landing && npm install && npx astro check && npm run build
 
 check-ci: check-backend check-frontend check-landing
 	@echo "✅ Todos os gates locais passaram com sucesso!"

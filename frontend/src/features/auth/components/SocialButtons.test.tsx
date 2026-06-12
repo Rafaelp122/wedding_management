@@ -1,21 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { SocialButtons } from "@/features/auth/components/SocialButtons";
 
-const { toastInfo } = vi.hoisted(() => ({
-  toastInfo: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      info: toastInfo,
-    },
-  };
-});
+import { toast } from "sonner";
 
 describe("SocialButtons", () => {
   it("renders Google button", () => {
@@ -31,7 +18,7 @@ describe("SocialButtons", () => {
 
     await user.click(screen.getByRole("button"));
 
-    expect(toastInfo).toHaveBeenCalledWith(
+    expect(toast.info).toHaveBeenCalledWith(
       "Integração Google SSO em desenvolvimento.",
     );
   });

@@ -2,23 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { CreateWeddingDialog } from "@/features/weddings/components/CreateWeddingDialog";
 import { server } from "@/mocks/server";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 describe("CreateWeddingDialog", () => {
   it("renders nothing when closed", () => {
@@ -96,7 +80,7 @@ describe("CreateWeddingDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastSuccess).toHaveBeenCalledWith(
+        expect(toast.success).toHaveBeenCalledWith(
           "Casamento criado com sucesso!",
         );
         expect(onSuccess).toHaveBeenCalled();
@@ -145,7 +129,7 @@ describe("CreateWeddingDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastError).toHaveBeenCalledWith("Erro interno");
+        expect(toast.error).toHaveBeenCalledWith("Erro interno");
       },
       { timeout: 5000 },
     );

@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { EditContractDialog } from "./EditContractDialog";
 import { createMockContract, createMockSupplier } from "@/test-data";
+import { toast } from "sonner";
 
 // Polyfills for Radix UI Select in jsdom (missing browser APIs)
 beforeAll(() => {
@@ -9,27 +10,6 @@ beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => {};
   Element.prototype.releasePointerCapture ??= () => {};
   Element.prototype.scrollIntoView ??= () => {};
-});
-
-// ============================================================================
-// Hoisted mocks – available at module scope before vi.mock factories run
-// ============================================================================
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
 });
 
 const mockMutate = vi.hoisted(
@@ -234,7 +214,7 @@ describe("EditContractDialog", () => {
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         "Contrato atualizado com sucesso!",
       );
     });

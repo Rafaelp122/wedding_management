@@ -4,23 +4,7 @@ import { LoginForm } from "@/features/auth/components/LoginForm";
 import { server } from "@/mocks/server";
 import { getAuthObtainTokenMockHandler } from "@/api/generated/v1/endpoints/auth/auth.msw";
 import type { TokenOut } from "@/api/generated/v1/models/tokenOut";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async (importOriginal) => {
@@ -91,7 +75,7 @@ describe("LoginForm", () => {
     await user.click(screen.getByRole("button", { name: /acessar painel/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith("Bem-vindo, Admin!");
+      expect(toast.success).toHaveBeenCalledWith("Bem-vindo, Admin!");
     });
     expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
@@ -115,7 +99,7 @@ describe("LoginForm", () => {
     await user.click(screen.getByRole("button", { name: /acessar painel/i }));
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
   });
 

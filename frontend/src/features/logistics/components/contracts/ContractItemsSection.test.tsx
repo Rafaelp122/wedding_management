@@ -1,25 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { server } from "@/mocks/server";
 import { ContractItemsSection } from "@/features/logistics/components/contracts/ContractItemsSection";
 import { createMockItem } from "@/test-data";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const weddingUuid = "w-1";
 const contractUuid = "c-1";
@@ -173,7 +157,7 @@ describe("ContractItemsSection", () => {
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith("Item adicionado!");
+      expect(toast.success).toHaveBeenCalledWith("Item adicionado!");
     });
 
     expect(
@@ -206,7 +190,7 @@ describe("ContractItemsSection", () => {
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     }, { timeout: 5000 });
   });
 });

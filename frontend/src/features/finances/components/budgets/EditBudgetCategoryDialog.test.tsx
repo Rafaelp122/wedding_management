@@ -3,18 +3,7 @@ import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { EditBudgetCategoryDialog } from "@/features/finances/components/budgets/EditBudgetCategoryDialog";
 import { createMockBudgetCategory } from "@/test-data";
 
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: { ...actual.toast, success: toastSuccess, error: toastError },
-  };
-});
+import { toast } from "sonner";
 
 const mockCategory = createMockBudgetCategory({
   uuid: "cat-1",
@@ -88,7 +77,7 @@ describe("EditBudgetCategoryDialog", () => {
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith("Categoria atualizada com sucesso!");
+      expect(toast.success).toHaveBeenCalledWith("Categoria atualizada com sucesso!");
       expect(onSuccess).toHaveBeenCalled();
     });
   });
