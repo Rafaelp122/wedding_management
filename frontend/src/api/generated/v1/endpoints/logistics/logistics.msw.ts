@@ -334,6 +334,63 @@ export const getLogisticsContractsUpdateResponseMock = (
   ...overrideResponse,
 });
 
+export const getLogisticsContractsCreateFullResponseMock = (
+  overrideResponse: Partial<Extract<ContractOut, object>> = {},
+): ContractOut => ({
+  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  wedding: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  supplier: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  total_amount: faker.helpers.fromRegExp("^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$"),
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  description: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  expiration_date: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 10),
+      null,
+    ]),
+    undefined,
+  ]),
+  signed_date: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 10),
+      null,
+    ]),
+    undefined,
+  ]),
+  created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
+  supplier_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  supplier_phone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  has_linked_expense: faker.datatype.boolean(),
+  progress_percent: faker.number.int(),
+  expense_uuid: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  parent: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  addendums_count: faker.number.int(),
+  has_file: faker.datatype.boolean(),
+  file_name: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
+
 export const getLogisticsContractsUploadResponseMock = (
   overrideResponse: Partial<Extract<ContractOut, object>> = {},
 ): ContractOut => ({
@@ -793,6 +850,30 @@ export const getLogisticsContractsDeleteMockHandler = (
   );
 };
 
+export const getLogisticsContractsCreateFullMockHandler = (
+  overrideResponse?:
+    | ContractOut
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<ContractOut> | ContractOut),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/api/v1/logistics/contracts/full/",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getLogisticsContractsCreateFullResponseMock(),
+        { status: 201 },
+      );
+    },
+    options,
+  );
+};
+
 export const getLogisticsContractsUploadMockHandler = (
   overrideResponse?:
     | ContractOut
@@ -1013,6 +1094,7 @@ export const getLogisticsMock = () => [
   getLogisticsContractsReadMockHandler(),
   getLogisticsContractsUpdateMockHandler(),
   getLogisticsContractsDeleteMockHandler(),
+  getLogisticsContractsCreateFullMockHandler(),
   getLogisticsContractsUploadMockHandler(),
   getLogisticsContractsDeleteUploadMockHandler(),
   getLogisticsContractsTransitionStatusMockHandler(),

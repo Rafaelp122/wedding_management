@@ -30,6 +30,7 @@ import type {
   ItemOut,
   ItemPatchIn,
   ItemStatusTransitionIn,
+  LogisticsContractsCreateFullBody,
   LogisticsContractsListParams,
   LogisticsContractsUploadBody,
   LogisticsItemsListParams,
@@ -1256,6 +1257,166 @@ export const useLogisticsContractsDelete = <
 > => {
   return useMutation(
     getLogisticsContractsDeleteMutationOptions(options),
+    queryClient,
+  );
+};
+/**
+ * Cria contrato com arquivo, itens e despesa em uma única transação atômica.
+ * @summary Create Contract Full
+ */
+export const logisticsContractsCreateFull = (
+  logisticsContractsCreateFullBody: LogisticsContractsCreateFullBody,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  const formData = new FormData();
+  formData.append(`wedding`, logisticsContractsCreateFullBody.wedding);
+  formData.append(`supplier`, logisticsContractsCreateFullBody.supplier);
+  formData.append(`name`, logisticsContractsCreateFullBody.name);
+  formData.append(
+    `total_amount`,
+    logisticsContractsCreateFullBody.total_amount.toString(),
+  );
+  if (logisticsContractsCreateFullBody.status !== undefined) {
+    formData.append(`status`, logisticsContractsCreateFullBody.status);
+  }
+  if (logisticsContractsCreateFullBody.description !== undefined) {
+    formData.append(
+      `description`,
+      logisticsContractsCreateFullBody.description,
+    );
+  }
+  if (
+    logisticsContractsCreateFullBody.parent !== undefined &&
+    logisticsContractsCreateFullBody.parent !== null
+  ) {
+    formData.append(`parent`, logisticsContractsCreateFullBody.parent);
+  }
+  if (logisticsContractsCreateFullBody.items_data !== undefined) {
+    formData.append(`items_data`, logisticsContractsCreateFullBody.items_data);
+  }
+  if (logisticsContractsCreateFullBody.create_expense !== undefined) {
+    formData.append(
+      `create_expense`,
+      logisticsContractsCreateFullBody.create_expense.toString(),
+    );
+  }
+  if (
+    logisticsContractsCreateFullBody.expense_category !== undefined &&
+    logisticsContractsCreateFullBody.expense_category !== null
+  ) {
+    formData.append(
+      `expense_category`,
+      logisticsContractsCreateFullBody.expense_category,
+    );
+  }
+  if (
+    logisticsContractsCreateFullBody.expense_num_installments !== undefined &&
+    logisticsContractsCreateFullBody.expense_num_installments !== null
+  ) {
+    formData.append(
+      `expense_num_installments`,
+      logisticsContractsCreateFullBody.expense_num_installments.toString(),
+    );
+  }
+  if (
+    logisticsContractsCreateFullBody.expense_first_due_date !== undefined &&
+    logisticsContractsCreateFullBody.expense_first_due_date !== null
+  ) {
+    formData.append(
+      `expense_first_due_date`,
+      logisticsContractsCreateFullBody.expense_first_due_date,
+    );
+  }
+  if (
+    logisticsContractsCreateFullBody.pdf_file !== undefined &&
+    logisticsContractsCreateFullBody.pdf_file !== null
+  ) {
+    formData.append(`pdf_file`, logisticsContractsCreateFullBody.pdf_file);
+  }
+
+  return customInstance<ContractOut>(
+    {
+      url: `/api/v1/logistics/contracts/full/`,
+      method: "POST",
+      data: formData,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getLogisticsContractsCreateFullMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
+    TError,
+    { data: LogisticsContractsCreateFullBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
+  TError,
+  { data: LogisticsContractsCreateFullBody },
+  TContext
+> => {
+  const mutationKey = ["logisticsContractsCreateFull"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
+    { data: LogisticsContractsCreateFullBody }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return logisticsContractsCreateFull(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogisticsContractsCreateFullMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsContractsCreateFull>>
+>;
+export type LogisticsContractsCreateFullMutationBody =
+  LogisticsContractsCreateFullBody;
+export type LogisticsContractsCreateFullMutationError =
+  ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create Contract Full
+ */
+export const useLogisticsContractsCreateFull = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
+      TError,
+      { data: LogisticsContractsCreateFullBody },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
+  TError,
+  { data: LogisticsContractsCreateFullBody },
+  TContext
+> => {
+  return useMutation(
+    getLogisticsContractsCreateFullMutationOptions(options),
     queryClient,
   );
 };

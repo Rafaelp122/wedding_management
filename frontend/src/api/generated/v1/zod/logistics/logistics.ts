@@ -488,6 +488,43 @@ export const LogisticsContractsDeleteParams = zod.object({
 });
 
 /**
+ * Cria contrato com arquivo, itens e despesa em uma única transação atômica.
+ * @summary Create Contract Full
+ */
+export const logisticsContractsCreateFullBodyTotalAmountTwoRegExp = new RegExp(
+  "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
+);
+export const logisticsContractsCreateFullBodyStatusDefault = `DRAFT`;
+export const logisticsContractsCreateFullBodyDescriptionDefault = ``;
+export const logisticsContractsCreateFullBodyItemsDataDefault = `[]`;
+export const logisticsContractsCreateFullBodyCreateExpenseDefault = false;
+
+export const LogisticsContractsCreateFullBody = zod.object({
+  wedding: zod.string(),
+  supplier: zod.string(),
+  name: zod.string(),
+  total_amount: zod.union([
+    zod.number(),
+    zod.string().regex(logisticsContractsCreateFullBodyTotalAmountTwoRegExp),
+  ]),
+  status: zod.string().default(logisticsContractsCreateFullBodyStatusDefault),
+  description: zod
+    .string()
+    .default(logisticsContractsCreateFullBodyDescriptionDefault),
+  parent: zod.union([zod.string(), zod.null()]).optional(),
+  items_data: zod
+    .string()
+    .default(logisticsContractsCreateFullBodyItemsDataDefault),
+  create_expense: zod
+    .boolean()
+    .default(logisticsContractsCreateFullBodyCreateExpenseDefault),
+  expense_category: zod.union([zod.string(), zod.null()]).optional(),
+  expense_num_installments: zod.union([zod.number(), zod.null()]).optional(),
+  expense_first_due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  pdf_file: zod.union([zod.instanceof(File), zod.null()]).optional(),
+});
+
+/**
  * Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
  * @summary Upload Contract File
  */
