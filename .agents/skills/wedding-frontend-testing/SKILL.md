@@ -15,11 +15,141 @@ Testing standards for the Wedding Management System frontend — Vitest + React 
 
 ---
 
-## 2. API Mocking — Two Layers
+## 2. Vitest Configuration
+
+The project uses `isolate: false` for speed — all test files share a single Vite module graph. This means `vi.mock` calls are cached globally and module state persists across files. Two consequences:
+
+1. **Mocks MUST be centralized** in `test-setup.ts` (see Section 3). Never mock shared dependencies per-file — use the global mock.
+2. **State MUST be cleaned** in `afterEach`: `vi.clearAllMocks()`, `cleanup()`, `server.resetHandlers()`, and `useAuthStore.getState().logout()`.
+
+```ts
+// vitest.config.ts (key settings)
+{
+  isolate: false,          // shared module graph for speed
+  clearMocks: true,        // reset vi.fn() call history before each test
+  restoreMocks: true,      // restore original implementations
+  environment: "happy-dom",
+  css: false,
+  deps: { optimizer: { web: { enabled: true, include: [...] } } },
+}
+```
+
+---
+
+## 3. Global Test Setup (`test-setup.ts`)
+
+The setup file at `frontend/src/test-setup.ts` runs once before all tests. It provides:
+
+### 3.1 Centralized Sonner Mock
+
+`sonner` is mocked globally — **no per-file mocking needed**. Tests import `toast` directly and assert on it:
+
+```ts
+// test-setup.ts (global, already in place)
+const globalAny = globalThis as any;
+if (!globalAny.__SONNER_MOCK__) {
+  globalAny.__SONNER_MOCK__ = {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn(),
+    custom: vi.fn(),
+  };
+}
+vi.mock("sonner", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("sonner")>();
+  return { ...actual, toast: globalAny.__SONNER_MOCK__ };
+});
+```
+
+```tsx
+// ✅ In tests — import toast directly, no per-file mock
+import { toast } from "sonner";
+
+expect(toast.success).toHaveBeenCalledWith("Conta criada com sucesso!");
+expect(toast.error).toHaveBeenCalled();
+```
+
+### 3.2 Centralized Sentry Mock
+
+```ts
+vi.mock("@sentry/react", () => ({
+  setContext: vi.fn(),
+  captureException: vi.fn(),
+}));
+```
+
+### 3.3 MSW Server
+
+```ts
+import { server } from "@/mocks/server";
+beforeAll(() => server.listen({ onUnhandledRequest: "warn" }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+```
+
+### 3.4 DOM Patches
+
+- **Happy-dom submit workaround**: Patches `HTMLElement.prototype.dispatchEvent` so `userEvent.click()` on submit buttons triggers `form.dispatchEvent(new Event("submit"))`.
+- **matchMedia**: Stubbed with `vi.fn()` returning `{ matches: false, media, ... }`.
+- **ResizeObserver**: Stubbed with no-op `{ observe, unobserve, disconnect }`.
+
+### 3.5 Cleanup (`afterEach`)
+
+```ts
+afterEach(() => {
+  cleanup();                              // unmount React trees
+  server.resetHandlers();                 // reset MSW overrides
+  vi.clearAllMocks();                     // reset all vi.fn() history
+  document.body.removeAttribute("data-scroll-locked");
+  document.body.style.pointerEvents = "";
+  document.documentElement.style.pointerEvents = "";
+  useAuthStore.getState().logout();       // reset auth state
+});
+```
+
+---
+
+## 4. Custom Render Wrapper (`test-utils.tsx`)
+
+The project provides its own `render` and `renderHook` that wrap components with required providers:
+
+```tsx
+// test-utils.tsx — wraps every render with:
+<QueryClientProvider client={queryClient}>
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <RouterProvider router={router} />
+    <Toaster />   {/* enables sonner toast rendering */}
+  </ThemeProvider>
+</QueryClientProvider>
+```
+
+**Always import from `@/test-utils`**, never from `@testing-library/react` directly:
+
+```tsx
+// ✅ CORRECT
+import { render, screen, userEvent, waitFor } from "@/test-utils";
+
+// ❌ WRONG — misses providers (Toaster, QueryClient, Router, Theme)
+import { render, screen } from "@testing-library/react";
+```
+
+The custom `userEvent` export has `pointerEventsCheck: 0` by default — no need to configure it per test.
+
+```tsx
+import { userEvent } from "@/test-utils";
+const user = userEvent.setup();
+```
+
+---
+
+## 5. API Mocking — Two Layers
 
 The project uses two complementary strategies:
 
-### 2.1 MSW (Mock Service Worker) — Integration Tests
+### 5.1 MSW (Mock Service Worker) — Integration Tests
 
 Orval auto-generates MSW handlers in `src/api/generated/v1/endpoints/*/*.msw.ts`. Global setup:
 
@@ -40,12 +170,6 @@ export const handlers = [
   ...getSchedulerMock(),
   ...getDashboardMock(),
 ];
-
-// frontend/src/setupTests.ts
-import { server } from "./mocks/server";
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
 ```
 
 **When to use MSW**: Integration tests where the component makes real requests (via Orval hooks) and you want to test the full request → response → render flow.
@@ -65,7 +189,7 @@ test("shows error on API failure", async () => {
 });
 ```
 
-### 2.2 `vi.mock` — Component Unit Tests
+### 5.2 `vi.mock` — Component Unit Tests
 
 For component unit tests, mock Orval hooks directly:
 
@@ -92,7 +216,7 @@ vi.mocked(useWeddingsList).mockReturnValue({
 
 ---
 
-## 3. React Testing Library — Patterns
+## 6. React Testing Library — Patterns
 
 ### Queries (accessibility priority)
 
@@ -110,7 +234,7 @@ await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
 ### User Event (always use `userEvent`, never `fireEvent`)
 
 ```tsx
-import userEvent from "@testing-library/user-event";
+import { userEvent } from "@/test-utils";
 
 const user = userEvent.setup();
 await user.click(button);
@@ -121,7 +245,7 @@ await user.selectOptions(select, "option");
 
 ---
 
-## 4. Testing Forms (react-hook-form + zod)
+## 7. Testing Forms (react-hook-form + zod)
 
 ```tsx
 test("submits form with valid data", async () => {
@@ -149,7 +273,9 @@ test("shows validation errors", async () => {
 
 ---
 
-## 5. Testing shadcn/ui Components
+## 8. Testing shadcn/ui Components
+
+### Portal queries
 
 Components like `Dialog`, `Sheet`, `DropdownMenu` render in Radix portals — outside the default RTL container.
 
@@ -160,13 +286,101 @@ expect(dialogContent.getByText(/confirm/i)).toBeInTheDocument();
 
 // Or use baseElement to search outside the container:
 const { baseElement } = render(<MyPage />);
-// query inside the portal
 expect(within(baseElement).getByRole("dialog")).toBeInTheDocument();
 ```
 
+### Radix Dialog — Accessibility Requirement
+
+`DialogContent` **requires** both `<DialogTitle>` and `<DialogDescription>` for screen reader accessibility. This applies to **every state** rendered inside a `DialogContent`, including loading, error, and empty states.
+
+Use `className="sr-only"` to hide them visually while satisfying the requirement:
+
+```tsx
+{isLoading ? (
+  <>
+    <DialogTitle className="sr-only">Carregando fornecedor...</DialogTitle>
+    <DialogDescription className="sr-only">Carregando fornecedor...</DialogDescription>
+    <div className="space-y-3 py-4">
+      <Skeleton className="h-6 w-48" />
+      <Skeleton className="h-4 w-32" />
+    </div>
+  </>
+) : error ? (
+  <>
+    <DialogTitle className="sr-only">Erro ao carregar</DialogTitle>
+    <DialogDescription className="sr-only">Erro ao carregar</DialogDescription>
+    <Alert variant="destructive">...</Alert>
+  </>
+) : !data ? (
+  <>
+    <DialogTitle className="sr-only">Não encontrado</DialogTitle>
+    <DialogDescription className="sr-only">Não encontrado</DialogDescription>
+    <Alert>...</Alert>
+  </>
+) : (
+  <DialogHeader>
+    <DialogTitle>{data.name}</DialogTitle>
+    <DialogDescription>Detalhes do item</DialogDescription>
+  </DialogHeader>
+)}
+```
+
+**Rule**: Every branch inside `DialogContent` must render a `DialogTitle` + `DialogDescription` pair. The project uses Tailwind's `sr-only` (not `@radix-ui/react-visually-hidden`).
+
 ---
 
-## 6. Testing Zustand Stores
+## 9. Testing Charts / Recharts
+
+jsdom has no CSS layout engine — `getBoundingClientRect()` returns `{ width: 0, height: 0 }`. Recharts' `ResponsiveContainer` reads these dimensions and emits `"width(0) and height(0)"` warnings.
+
+**Solution**: Mock `recharts` entirely with simple `<div>` elements. This eliminates the warning and makes tests faster.
+
+```tsx
+vi.mock("recharts", () => ({
+  ResponsiveContainer: ({
+    children,
+    width,
+    height,
+  }: {
+    children: React.ReactNode;
+    width?: string | number;
+    height?: string | number;
+  }) => <div data-testid="recharts-container" style={{ width, height }}>{children}</div>,
+  BarChart: ({
+    children,
+    data,
+  }: {
+    children: React.ReactNode;
+    data: unknown[];
+  }) => <div data-testid="bar-chart" data-items={data.length}>{children}</div>,
+  Bar: ({ dataKey, name }: { dataKey: string; name?: string }) => (
+    <div data-testid={`bar-${dataKey}`}>{name}</div>
+  ),
+  CartesianGrid: () => <div data-testid="cartesian-grid" />,
+  XAxis: ({ dataKey }: { dataKey: string }) => (
+    <div data-testid="x-axis" data-datakey={dataKey} />
+  ),
+  YAxis: () => <div data-testid="y-axis" />,
+  Tooltip: () => <div data-testid="tooltip" />,
+  Legend: () => <div data-testid="legend" />,
+  Cell: () => <></>,
+  ReferenceLine: () => <div data-testid="reference-line" />,
+}));
+```
+
+**Use `data-testid` and `data-*` attributes** on mocked elements to assert chart content:
+
+```ts
+expect(screen.getByTestId("bar-chart").dataset.items).toBe("5");
+expect(screen.getByTestId("bar-amount")).toBeInTheDocument();
+expect(screen.queryByTestId("cartesian-grid")).toBeInTheDocument();
+```
+
+**When to mock Recharts**: Any test file that renders a component containing `ResponsiveContainer`, `BarChart`, `LineChart`, `PieChart`, etc. The canonical example is `FinancesDistributionChart.test.tsx`.
+
+---
+
+## 10. Testing Zustand Stores
 
 ```tsx
 import { useAuthStore } from "@/stores/auth-store";
@@ -191,7 +405,7 @@ test("auth store login/logout", () => {
 
 ---
 
-## 7. Playwright — E2E Testing
+## 11. Playwright — E2E Testing
 
 ### Structure
 
@@ -262,7 +476,7 @@ export const test = base.extend({
 
 ---
 
-## 8. References
+## 12. References
 
 For complete tooling APIs, load these skills:
 
