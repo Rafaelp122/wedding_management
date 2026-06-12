@@ -98,6 +98,21 @@ class TestItemServiceCreate:
 
         assert "contract_not_found_or_denied" in str(exc_info.value.code)
 
+    def test_create_item_without_contract_and_wedding_raises_error(self, user):
+        """
+        Sem contrato E sem wedding, create() levanta BusinessRuleViolation
+        em vez de IntegrityError obscuro do banco.
+        """
+        data = {
+            "name": "Item solto no vácuo",
+            "quantity": 1,
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ItemService.create(user.company, data)
+
+        assert "item_missing_wedding" in str(exc_info.value.code)
+
 
 @pytest.mark.django_db
 class TestItemServiceUpdate:
