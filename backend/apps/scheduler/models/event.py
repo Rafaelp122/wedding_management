@@ -56,6 +56,15 @@ class Event(TenantModel, WeddingOwnedMixin):
         help_text="Quantos minutos antes do evento enviar lembrete",
     )
 
+    source_installment = models.ForeignKey(
+        "finances.Installment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Parcela de origem",
+        help_text="Parcela financeira que gerou este evento (apenas PAYMENT)",
+    )
+
     class Meta:
         verbose_name = "Evento"
         verbose_name_plural = "Eventos"
