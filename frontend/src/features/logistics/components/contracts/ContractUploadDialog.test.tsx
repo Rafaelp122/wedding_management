@@ -323,12 +323,12 @@ describe("ContractUploadDialog", () => {
       mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
     );
 
-    // Make the mutation reject
+
     createFullAsync.mockRejectedValue(new Error("API Error"));
 
     render(<ContractUploadDialog {...defaultProps} />);
 
-    // Select supplier
+
     await user.click(
       screen.getByRole("combobox", { name: /fornecedor/i }),
     );
@@ -337,7 +337,7 @@ describe("ContractUploadDialog", () => {
     });
     await user.click(supplierOption);
 
-    // Fill required fields
+
     await user.type(
       screen.getByRole("textbox", { name: /nome do contrato/i }),
       "Falha",
@@ -347,7 +347,7 @@ describe("ContractUploadDialog", () => {
       { target: { value: "500" } },
     );
 
-    // Submit
+
     await user.click(
       screen.getByRole("button", { name: /criar contrato/i }),
     );
@@ -355,5 +355,71 @@ describe("ContractUploadDialog", () => {
     await waitFor(() => {
       expect(toastError).toHaveBeenCalled();
     });
+  });
+
+  it("submits with parent contract", async () => {
+    const user = userEvent.setup();
+
+    mockSuppliersList.mockReturnValue(
+      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
+    );
+    mockContractsList.mockReturnValue(
+      mockQueryResponse({
+        data: {
+          items: [{ uuid: "parent-1", name: "Contrato Original" }],
+          count: 1,
+        },
+      }),
+    );
+
+    render(
+      <ContractUploadDialog
+        {...defaultProps}
+        prefilledParentUuid="parent-1"
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("combobox", { name: /fornecedor/i }),
+    );
+    const supplierOption = await screen.findByRole("option", {
+      name: /fornecedor teste/i,
+    });
+    await user.click(supplierOption);
+
+    await user.type(
+      screen.getByRole("textbox", { name: /nome do contrato/i }),
+      "Aditivo",
+    );
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: /valor total/i }),
+      { target: { value: "1000" } },
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /criar contrato/i }),
+    );
+
+    await waitFor(() => {
+      expect(createFullAsync).toHaveBeenCalled();
+    });
+
+    expect(createFullAsync).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        parent: "parent-1",
+      }),
+    });
+  });
+
+  it("shows loading state while creating", () => {
+    mockCreateFull.mockReturnValue({
+      mutateAsync: createFullAsync,
+      isPending: true,
+    });
+
+    render(<ContractUploadDialog {...defaultProps} />);
+
+    expect(screen.getByRole("button", { name: /criar contrato/i })).toBeDisabled();
+    expect(screen.getByText(/cancelar/i).closest("button")).toBeDisabled();
   });
 });
