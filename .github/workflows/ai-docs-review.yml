@@ -2,7 +2,7 @@ name: AI Docs Review
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, ready_for_review]
     paths:
       - "**.py"
       - "**.ts"
@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: anomalyco/opencode/github@latest
+      - uses: anomalyco/opencode/github@v1
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

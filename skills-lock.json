@@ -1,88 +1,16 @@
 {
   "version": 1,
   "skills": {
-    "astro": {
-      "source": "astrolicious/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/astro/SKILL.md",
-      "computedHash": "ebefe26b231d32379c14e41a46c2de7b4b0184543bedab7febdabe4fb21fba4e"
-    },
-    "build-dashboard": {
-      "source": "anthropics/knowledge-work-plugins",
-      "sourceType": "github",
-      "skillPath": "data/skills/build-dashboard/SKILL.md",
-      "computedHash": "978eb2a7d02cfb91967e94f78567464a68aa222c4e95583d1c7a970d89028c00"
-    },
-    "cloud-run-basics": {
-      "source": "google/skills",
-      "sourceType": "github",
-      "skillPath": "skills/cloud/cloud-run-basics/SKILL.md",
-      "computedHash": "d04d21b683f404fcd6c3b798095c0399d61e5e9d84cb913da46a09e0aa90c708"
-    },
-    "deploy-to-vercel": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/deploy-to-vercel/SKILL.md",
-      "computedHash": "03e0eaaa9bf13ba1e7ffa387f5893de6f324c0868c627001f179395a8feaa7c9"
-    },
-    "docker-expert": {
-      "source": "sickn33/antigravity-awesome-skills",
-      "sourceType": "github",
-      "skillPath": "skills/docker-expert/SKILL.md",
-      "computedHash": "0974b5f64fcd284c1bd662810e2388f7beb9be6784c597de4d0ad4213ccbd6af"
-    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
-    },
-    "github-actions-docs": {
-      "source": "xixu-me/skills",
-      "sourceType": "github",
-      "skillPath": "skills/github-actions-docs/SKILL.md",
-      "computedHash": "e9ac24e79715ef3060bd4ae376052f8d863b830604e69cb513b39764bf47ee53"
-    },
-    "playwright-best-practices": {
-      "source": "currents-dev/playwright-best-practices-skill",
-      "sourceType": "github",
-      "skillPath": "SKILL.md",
-      "computedHash": "320eaf861e3a0a923bfaad0726cb311a3fe30093378f8d26c89b9c5ae5c42b35"
     },
     "react-hook-form": {
       "source": "pproenca/dot-skills",
       "sourceType": "github",
       "skillPath": "skills/react-hook-form/SKILL.md",
       "computedHash": "auto"
-    },
-    "sentry-feature-setup": {
-      "source": "getsentry/sentry-for-ai",
-      "sourceType": "github",
-      "skillPath": "skills/sentry-feature-setup/SKILL.md",
-      "computedHash": "3c97d88fd29c67cc6cc1e4d19ae39a91a475749fa3f71714d7ed9cdba307f3a9"
-    },
-    "sentry-python-sdk": {
-      "source": "getsentry/sentry-for-ai",
-      "sourceType": "github",
-      "skillPath": "skills/sentry-python-sdk/SKILL.md",
-      "computedHash": "aa14751471a8bc62d3a248f4f6826f257a8d39be75e7147757e84975b5d3e776"
-    },
-    "sentry-react-sdk": {
-      "source": "getsentry/sentry-for-ai",
-      "sourceType": "github",
-      "skillPath": "skills/sentry-react-sdk/SKILL.md",
-      "computedHash": "f97fb5d2ce1543f1c7c31a04023175ecf1bd950a193792c3b999428af9ce7ca0"
-    },
-    "sentry-sdk-setup": {
-      "source": "getsentry/sentry-for-ai",
-      "sourceType": "github",
-      "skillPath": "skills/sentry-sdk-setup/SKILL.md",
-      "computedHash": "a471d03591daf5371c3dacc00532d957c14f7ae7f4120b7305ad3b148ccefbb2"
-    },
-    "sentry-workflow": {
-      "source": "getsentry/sentry-for-ai",
-      "sourceType": "github",
-      "skillPath": "skills/sentry-workflow/SKILL.md",
-      "computedHash": "00a62d74aa26a9007d74532ab405b16684386e59c4121a5496f0059206683c6e"
     },
     "shadcn": {
       "source": "shadcn/ui",
@@ -95,27 +23,41 @@
       "skillPath": "skills/tailwind-v4-shadcn/SKILL.md",
       "computedHash": "auto"
     },
-    "vercel-composition-patterns": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/composition-patterns/SKILL.md",
-      "computedHash": "575757e3e25761c8c562d6e395d29f0b76c98b1273c0bd72d88e6ab1bc9c7d42"
-    },
-    "vercel-react-best-practices": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
-    },
     "vitest": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/vitest/SKILL.md",
       "computedHash": "669c7275f7e1379b06b2bcfa593603aead4c983b951c7e8edbc09640aa38d0a1"
     },
-    "web-design-guidelines": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    "wedding-backend": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/wedding-backend/SKILL.md",
+      "computedHash": "auto"
+    },
+    "wedding-backend-testing": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/wedding-backend-testing/SKILL.md",
+      "computedHash": "auto"
+    },
+    "wedding-business-rules": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/wedding-business-rules/SKILL.md",
+      "computedHash": "auto"
+    },
+    "wedding-frontend": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/wedding-frontend/SKILL.md",
+      "computedHash": "auto"
+    },
+    "wedding-frontend-testing": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/wedding-frontend-testing/SKILL.md",
+      "computedHash": "auto"
     }
   }
 }
