@@ -389,12 +389,11 @@ class InstallmentService:
         expense = instance.expense
 
         try:
+            _delete_payment_event_for_single(company, instance)
+
             instance.delete()
 
-            # Checagem de Ricochete após deleção
             expense.full_clean()
-
-            _delete_payment_event_for_single(company, instance)
 
             logger.warning(
                 f"Parcela uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
