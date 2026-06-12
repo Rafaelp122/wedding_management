@@ -110,7 +110,7 @@ jobs:
   # ----------------------------------------------------------------------------
   backend-tests:
     name: Backend Tests & Migrations
-    needs: [detect-changes, lint]
+    needs: detect-changes
     if: success() && needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -147,7 +147,7 @@ jobs:
   # ----------------------------------------------------------------------------
   frontend-tests:
     name: Frontend Unit Tests
-    needs: [detect-changes, lint]
+    needs: detect-changes
     if: success() && needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -273,7 +273,7 @@ jobs:
   # ----------------------------------------------------------------------------
   deploy:
     name: Deploy to Cloud Run / Test Build
-    needs: [detect-changes, contract-sync]
+    needs: [detect-changes, backend-tests, contract-sync]
     if: |
       success() &&
       needs.detect-changes.outputs.backend == 'true'
@@ -323,7 +323,7 @@ jobs:
   # ----------------------------------------------------------------------------
   deploy-frontend:
     name: Deploy Frontend to Vercel
-    needs: [detect-changes, contract-sync]
+    needs: [detect-changes, frontend-tests, contract-sync]
     if: |
       success() &&
       needs.detect-changes.outputs.frontend == 'true'
