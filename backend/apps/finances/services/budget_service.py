@@ -142,7 +142,6 @@ class BudgetService:
         """
         from apps.weddings.models import Wedding
 
-        # 1. Validação de Acesso: Garante que o Wedding pertence à empresa
         try:
             wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_uuid)
         except Wedding.DoesNotExist as e:
@@ -155,15 +154,16 @@ class BudgetService:
                 code="wedding_not_found_or_denied",
             ) from e
 
-        # 2. Get or Create
         budget, created = Budget.objects.get_or_create(
             company=company,
             wedding=wedding,
             defaults={"total_estimated": 0},
         )
 
-        # 3. Setup Inicial
         if created:
+            # TRAVA DE SEGURANÇA (TOCTOU): serializa criação de categorias padrão
+            budget = Budget.objects.for_tenant(company).select_for_update().get(pk=budget.pk)
+
             from apps.finances.services.budget_category_service import (
                 BudgetCategoryService,
             )
