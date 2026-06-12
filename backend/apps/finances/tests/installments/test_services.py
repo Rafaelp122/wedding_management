@@ -528,6 +528,14 @@ class TestInstallmentServiceRedistribute:
 
         InstallmentService.redistribute(user.company, expense, 2, date_type.today())
 
+        # Verify no orphaned events (with NULL source_installment) remain
+        orphaned = SchedulerEvent.objects.filter(
+            wedding=expense.wedding,
+            event_type="pagamento",
+            source_installment__isnull=True,
+        )
+        assert orphaned.count() == 0, f"Found {orphaned.count()} orphaned events"
+
         old_events = SchedulerEvent.objects.filter(
             wedding=expense.wedding,
             event_type="pagamento",
@@ -549,10 +557,11 @@ class TestInstallmentServiceRedistribute:
         )
 
         # Verify FK is set
-        event = SchedulerEvent.objects.filter(
+        deleted_event = SchedulerEvent.objects.filter(
             source_installment=installments[0]
         ).first()
-        assert event is not None
+        assert deleted_event is not None
+        deleted_event_uuid = deleted_event.uuid
 
         events_before = SchedulerEvent.objects.filter(
             wedding=expense.wedding, event_type="pagamento"
@@ -571,10 +580,7 @@ class TestInstallmentServiceRedistribute:
         ).count()
         assert events_after == 1
 
-        # Verify the specific event was deleted via FK
-        assert not SchedulerEvent.objects.filter(
-            source_installment=installments[0]
-        ).exists()
+        assert not SchedulerEvent.objects.filter(uuid=deleted_event_uuid).exists()
 
 
 @pytest.mark.django_db

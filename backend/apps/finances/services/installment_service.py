@@ -153,8 +153,8 @@ class InstallmentService:
                 code="redistribute_blocked_by_paid",
             )
 
-        expense.installments.all().delete()
         _delete_payment_events_for_expense(company, expense)
+        expense.installments.all().delete()
         return InstallmentService.auto_generate_installments(
             company=company,
             expense=expense,
