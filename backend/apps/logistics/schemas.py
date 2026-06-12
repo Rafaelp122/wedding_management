@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from ninja import Field, Schema
-from pydantic import UUID4, field_validator
+from pydantic import UUID4, field_validator, model_validator
 
 
 if TYPE_CHECKING:
@@ -234,3 +234,26 @@ class ItemOut(Schema):
     acquisition_status: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
+
+
+class ContractFullCreateIn(Schema):
+    wedding: UUID4
+    supplier: UUID4
+    name: str
+    total_amount: Decimal
+    status: str = "DRAFT"
+    description: str = ""
+    parent: UUID4 | None = None
+
+    items_data: str = "[]"
+
+    create_expense: bool = False
+    expense_category: UUID4 | None = None
+    expense_num_installments: int | None = None
+    expense_first_due_date: date | None = None
+
+    @model_validator(mode="after")
+    def validate_expense(self) -> "ContractFullCreateIn":
+        if self.create_expense and self.expense_category is None:
+            raise ValueError("Categoria é obrigatória quando create_expense é True.")
+        return self
