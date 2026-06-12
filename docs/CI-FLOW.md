@@ -15,21 +15,22 @@ O pipeline de CI (`integrity-ci.yml`) é acionado em `push` e `pull_request` na 
               ▼              ▼              ▼
           backend?       frontend?       landing?
               │              │              │
-              ▼              ▼              ▼
-            lint           lint        landing-check
-              │              │              │
-    ┌─────────┼─────────┐    │              │
-    ▼                   ▼    ▼              │
-backend-tests    frontend-tests             │
-    │                   │                   │
-    └───────┬───────────┘                   │
-            ▼                               │
-      contract-sync                         │
-            │                               │
-    ┌───────┴───────┐                       │
-    ▼               ▼                       ▼
-deploy          deploy-frontend        deploy-landing
-(Cloud Run)     (Vercel)              (Vercel)
+        ┌─────┴─────┐  ┌────┴─────┐        │
+        ▼           ▼  ▼          ▼        ▼
+      lint      backend-  lint  frontend-  landing-
+                 tests          tests      check
+        │           │    │         │        │
+        └──────┬────┘    └────┬────┘        │
+               ▼              ▼              │
+         contract-sync        │              │
+           │    │             │              │
+           │    └──────┐      │              │
+           ▼           ▼      ▼              ▼
+      deploy         deploy-frontend    deploy-landing
+   (Cloud Run)        (Vercel)          (Vercel)
+   (needs backend-   (needs frontend-
+    tests +           tests +
+    contract-sync)    contract-sync)
 ```
 
 ---
@@ -75,7 +76,7 @@ uv run pytest --cov=apps --cov-report=term --cov-report=xml -v
 
 **Ambiente:** `DJANGO_SETTINGS_MODULE=config.settings.test`, `SECRET_KEY=django-ci-secret-key-not-for-production`.
 
-**Condição:** Roda se `backend == true` e `lint` passou.
+**Condição:** Roda se `backend == true`.
 
 ### 2.4 `frontend-tests`
 **Propósito:** Testes unitários com Vitest + React Testing Library + upload de coverage.
@@ -85,7 +86,7 @@ cd frontend && npm ci && npm run test:ci
 # Upload para Codecov (codecov/codecov-action@v5)
 ```
 
-**Condição:** Roda se `frontend == true` e `lint` passou.
+**Condição:** Roda se `frontend == true`.
 
 ### 2.5 `landing-check`
 **Propósito:** Verifica build da landing page Astro.
@@ -114,10 +115,11 @@ git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
 
 **Dependências:** `detect-changes`, `lint`.
 
-> **Decisão de design (ADR implícito):** `contract-sync` depende apenas de `lint`, não de `backend-tests` ou `frontend-tests`. Motivos:
+> **Decisão de design (ADR implícito):** `contract-sync` depende de `lint` (análise estática rápida), não de `backend-tests` ou `frontend-tests`. Motivos:
 > - O job é um **validador de contrato**, não um gate de qualidade de código — precisa só do código presente e sintaticamente válido.
 > - Quando um dos testes é skipped (ex: PR só de backend → `frontend-tests` skipped), o GitHub Actions força o skip de qualquer job que tenha ele em `needs`, bloqueando deploys.
-> - Os testes como gate de deploy são aplicados nos jobs de deploy (`deploy` depende de `backend-tests`, `deploy-frontend` depende de `frontend-tests`), não no `contract-sync`.
+> - Os testes são gate de deploy diretamente nos jobs de deploy (`deploy` depende de `backend-tests` + `contract-sync`, `deploy-frontend` depende de `frontend-tests` + `contract-sync`).
+> - `lint` retém dependência porque é rápido (segundos) e evita que `contract-sync` desperdice minutos buildando/puxando dependências se o código tem erros óbvios.
 
 **Condição:** Roda se `backend == true` ou `frontend == true`, e `lint` passou.
 
@@ -129,7 +131,7 @@ git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
 | `pull_request` | Apenas build do Docker (`docker build`) — valida que a imagem compila |
 | `push` na `main` | Deploy real via `gcloud run deploy` |
 
-**Dependências:** `detect-changes`, `contract-sync`.
+**Dependências:** `detect-changes`, `backend-tests`, `contract-sync`.
 
 **Condição:** Roda se `backend == true` e jobs anteriores passaram.
 
@@ -141,7 +143,7 @@ git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
 | `pull_request` | Preview deploy |
 | `push` na `main` | Deploy de produção (`--prod`) |
 
-**Dependências:** `detect-changes`, `contract-sync`.
+**Dependências:** `detect-changes`, `frontend-tests`, `contract-sync`.
 
 **Condição:** Roda se `frontend == true` e jobs anteriores passaram.
 
@@ -167,7 +169,7 @@ contract-sync:
 
 Se `frontend-tests` é skipped (sem mudanças no frontend), `contract-sync` é forçado a skip também, mesmo com `backend == true` e `backend-tests` tendo passado. Isso quebrava deploys em PRs só de backend.
 
-**Solução aplicada:** `contract-sync` agora depende de `lint` (que sempre roda quando backend ou frontend mudam) em vez de `backend-tests` e `frontend-tests`. Os testes seguem como gate nos jobs de deploy individuais.
+**Solução aplicada:** `contract-sync` depende de `lint` (rápido, segundos) em vez de `backend-tests` e `frontend-tests`. Os testes rodam em paralelo com `lint` (mesmo nível, sem dependência) e servem como gate nos jobs de deploy individuais.
 
 ---
 
@@ -192,7 +194,7 @@ git commit -m "chore(api): sync OpenAPI schema and Orval hooks"
 
 ### Deploy pulado em PR só de backend
 
-**Causa corrigida** (ver seção 3). Se ocorrer novamente, verifique se `lint` ou `detect-changes` falhou.
+**Causa corrigida** (ver seção 3). Se ocorrer novamente, verifique se `lint`, `backend-tests` ou `detect-changes` falhou.
 
 ### `makemigrations --check` falhou
 
@@ -223,5 +225,5 @@ git commit -m "feat(scope): descrição"
 git push
 
 # 4. Monitore o CI no GitHub
-# Verifique: lint → tests → contract-sync → deploy preview
+# Verifique: lint + tests (paralelo) → contract-sync → deploy preview
 ```
