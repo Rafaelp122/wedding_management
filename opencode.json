@@ -15,6 +15,9 @@
         "bash": {
           "*": "allow",
           "git push*": "ask"
+        },
+        "task": {
+          "*": "allow"
         }
       }
     },
