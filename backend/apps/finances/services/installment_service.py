@@ -421,7 +421,7 @@ def _delete_payment_events_for_expense(company: Company, expense: Expense) -> No
     SchedulerEvent.objects.for_tenant(company).filter(
         wedding=expense.wedding,
         event_type="pagamento",
-        title__startswith=f"Pagamento: {expense.name} -",
+        source_installment__expense=expense,
     ).delete()
 
 
@@ -432,8 +432,7 @@ def _delete_payment_event_for_single(company: Company, instance: Installment) ->
     SchedulerEvent.objects.for_tenant(company).filter(
         wedding=instance.expense.wedding,
         event_type="pagamento",
-        title__startswith=f"Pagamento: {instance.expense.name}",
-        title__icontains=f"Parcela {instance.installment_number}/",
+        source_installment=instance,
     ).delete()
 
 
@@ -468,6 +467,7 @@ def _create_payment_events(
                 "event_type": "pagamento",
                 "start_time": event_start,
                 "description": (f"Valor: R$ {inst.amount:.2f} — {expense.name}"),
+                "source_installment": inst,
             },
             _caller_internal=True,
         )
