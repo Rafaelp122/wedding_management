@@ -19,14 +19,17 @@ from apps.weddings.models import Wedding
 logger = logging.getLogger(__name__)
 
 
-def _validate_budget_cap(category: BudgetCategory, budget: Budget) -> None:
+def _validate_budget_cap(
+    company: Company, category: BudgetCategory, budget: Budget
+) -> None:
     """
     Valida que a soma do allocated_budget de todas as categorias não excede
     o teto do orçamento mestre.
     Executada DENTRO de um ``select_for_update()`` para evitar TOCTOU.
     """
     siblings_agg = (
-        BudgetCategory.objects.filter(budget=budget)
+        BudgetCategory.objects.for_tenant(company)
+        .filter(budget=budget)
         .exclude(pk=category.pk)
         .aggregate(total=Sum("allocated_budget"))
     )
@@ -45,7 +48,8 @@ def _validate_budget_cap(category: BudgetCategory, budget: Budget) -> None:
 class BudgetCategoryService:
     """
     Camada de serviço para gestão de categorias de orçamento.
-    Delega a validação matemática rigorosa de teto financeiro para o Model.
+    Validação de teto financeiro (_validate_budget_cap) executada com
+    select_for_update() para evitar TOCTOU.
     """
 
     @staticmethod
@@ -107,9 +111,10 @@ class BudgetCategoryService:
             company=company, wedding=budget.wedding, budget=budget, **data
         )
 
-        _validate_budget_cap(category, budget)
+        category.full_clean()
+        _validate_budget_cap(company, category, budget)
 
-        category.save()
+        category.save(skip_clean=True)
 
         logger.info(f"Categoria de Orçamento criada com sucesso: uuid={category.uuid}")
         return category
@@ -136,9 +141,11 @@ class BudgetCategoryService:
             .select_for_update()
             .get(pk=instance.budget.pk)
         )
-        _validate_budget_cap(instance, budget)
 
-        instance.save()
+        instance.full_clean()
+        _validate_budget_cap(company, instance, budget)
+
+        instance.save(skip_clean=True)
 
         logger.info(f"Categoria uuid={instance.uuid} atualizada com sucesso.")
         return instance
@@ -171,10 +178,16 @@ class BudgetCategoryService:
             ) from e
 
     @staticmethod
+    @transaction.atomic
     def setup_defaults(company: Company, wedding: Wedding, budget: Budget) -> None:
         """
         Cria as categorias iniciais obrigatórias para um novo casamento.
         É idempotente: se as categorias já existirem, não duplica.
+
+        Nota de segurança (TOCTOU): espera-se que o budget esteja protegido
+        por ``select_for_update()`` no chamador (ex: get_or_create_for_wedding).
+        O ``ignore_conflicts=True`` no bulk_create protege contra o cenário
+        residual de chamada direta sem lock.
         """
         DEFAULT_CATEGORIES = [
             "Espaço e Buffet",
@@ -212,4 +225,4 @@ class BudgetCategoryService:
         for cat in categories:
             cat.full_clean()
 
-        BudgetCategory.objects.bulk_create(categories)
+        BudgetCategory.objects.bulk_create(categories, ignore_conflicts=True)
