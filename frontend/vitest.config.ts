@@ -52,6 +52,7 @@ export default mergeConfig(
           "**/*.test.*",
           "**/*.spec.*",
           "src/test-data.ts",
+          "src/test-utils/**",
           "src/main.tsx",
           "src/router/**",
           "src/components/layouts/**",
