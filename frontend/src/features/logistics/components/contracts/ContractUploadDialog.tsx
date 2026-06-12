@@ -6,18 +6,12 @@ import type { z } from "zod";
 import { AlertTriangle } from "lucide-react";
 
 import {
-  useLogisticsContractsCreate,
+  useLogisticsContractsCreateFull,
   useLogisticsContractsList,
   useLogisticsSuppliersList,
-  useLogisticsItemsCreate,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
-import {
-  useFinancesExpensesCreate,
-  useFinancesCategoriesList,
-} from "@/api/generated/v1/endpoints/finances/finances";
-import { AXIOS_INSTANCE } from "@/api/axios-instance";
+import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
 import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
-import { getApiErrorInfo } from "@/api/error-utils";
 import { SELECT_NONE_VALUE } from "@/lib/constants";
 import { CONTRACT_STATUS_OPTIONS } from "@/features/logistics/constants";
 
@@ -72,10 +66,8 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
   prefilledParentUuid,
 }: ContractUploadDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { mutateAsync: createContract, isPending: isCreating } =
-    useLogisticsContractsCreate();
-  const { mutateAsync: createItem } = useLogisticsItemsCreate();
-  const { mutateAsync: createExpense } = useFinancesExpensesCreate();
+  const { mutateAsync: createFull, isPending: isCreating } =
+    useLogisticsContractsCreateFull();
 
   const [itemDrafts, setItemDrafts] = useState<ItemDraft[]>([]);
   const [expenseChecked, setExpenseChecked] = useState(false);
@@ -113,65 +105,40 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
 
   const onSubmit = async (data: CreateContractFormData) => {
     try {
-      const result = await createContract({ data });
-      const contractUuid = (result as { data: { uuid: string } }).data.uuid;
+      const itemsData = JSON.stringify(
+        itemDrafts.map((d) => ({
+          name: d.name,
+          quantity: d.quantity,
+          acquisition_status: d.acquisition_status,
+        })),
+      );
 
-      const file = selectedFile;
-      if (file) {
-        const formData = new FormData();
-        formData.append("pdf_file", file);
-        try {
-          await AXIOS_INSTANCE.post(
-            `/api/v1/logistics/contracts/${contractUuid}/upload/`,
-            formData,
-          );
-        } catch {
-          toast.warning("Contrato criado, mas o upload do documento falhou.");
-        }
-      }
-
-      for (const draft of itemDrafts) {
-        try {
-          await createItem({
-            data: {
-              wedding: weddingUuid,
-              contract: contractUuid,
-              name: draft.name,
-              quantity: draft.quantity,
-              acquisition_status: draft.acquisition_status,
-            },
-          });
-        } catch {
-          // item creation failed — non-blocking
-        }
-      }
-
-      if (expenseChecked && data.total_amount) {
-        try {
-          await createExpense({
-            data: {
-              category: expenseCategory,
-              contract: contractUuid,
-              name: data.name || data.description || "Despesa",
-              description: data.description || null,
-              estimated_amount: Number(data.total_amount),
-              actual_amount: Number(data.total_amount),
-              num_installments: expenseNumInstallments,
-              first_due_date: expenseFirstDueDate || null,
-            },
-          });
-        } catch {
-          toast.warning("Contrato criado, mas a criação da despesa falhou.");
-        }
-      }
+      await createFull({
+        data: {
+          wedding: data.wedding,
+          supplier: data.supplier,
+          name: data.name,
+          total_amount: data.total_amount,
+          status: data.status,
+          description: data.description,
+          parent: data.parent ?? null,
+          items_data: itemsData,
+          create_expense: expenseChecked,
+          expense_category: expenseChecked ? expenseCategory : null,
+          expense_num_installments: expenseChecked
+            ? expenseNumInstallments
+            : null,
+          expense_first_due_date: expenseChecked ? expenseFirstDueDate : null,
+          pdf_file: selectedFile ?? null,
+        },
+      });
 
       toast.success("Contrato criado com sucesso!");
       form.reset();
       setItemDrafts([]);
       onSuccess();
-    } catch (error) {
-      const { message } = getApiErrorInfo(error, "Erro ao criar contrato.");
-      toast.error(message);
+    } catch {
+      toast.error("Erro ao criar contrato. Nenhum dado foi salvo.");
     }
   };
 

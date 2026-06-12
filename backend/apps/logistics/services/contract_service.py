@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from decimal import Decimal
 from typing import Any
@@ -23,7 +25,9 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.finances.models import Expense, Installment
+from apps.finances.services.expense_service import ExpenseService
 from apps.logistics.models import Contract, Supplier
+from apps.logistics.services.item_service import ItemService
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -153,6 +157,58 @@ class ContractService:
         contract.save()
 
         logger.info(f"Contrato criado com sucesso: uuid={contract.uuid}")
+        return contract
+
+    @staticmethod
+    @transaction.atomic
+    def create_full(
+        company: Company,
+        *,
+        contract_data: dict[str, Any],
+        items_data: list[dict[str, Any]] | None = None,  # type: ignore[valid-type]
+        expense_data: dict[str, Any] | None = None,
+        pdf_file: Any | None = None,
+    ) -> Contract:
+        logger.info(
+            f"Iniciando criação completa de Contrato para company_id={company.id}"
+        )
+
+        contract = ContractService.create(company=company, data=contract_data)
+
+        if pdf_file:
+            allowed_content_types = [
+                "application/pdf",
+                "image/png",
+                "image/jpeg",
+            ]
+            file_content_type = getattr(pdf_file, "content_type", None)
+            if file_content_type and file_content_type not in allowed_content_types:
+                raise ValidationError(
+                    {
+                        "pdf_file": (
+                            "Tipo de arquivo não suportado. Use PDF, PNG ou JPEG."
+                        ),
+                    }
+                )
+
+            max_size = 10 * 1024 * 1024
+            if pdf_file.size and pdf_file.size > max_size:
+                raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
+
+            contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
+            contract.save(update_fields=["pdf_file"])
+
+        if items_data:
+            for item_dict in items_data:  # type: ignore[attr-defined]
+                item_dict["wedding"] = contract.wedding
+                item_dict["contract"] = contract
+                ItemService.create(company=company, data=item_dict)
+
+        if expense_data:
+            expense_data["contract"] = contract
+            ExpenseService.create(company=company, data=expense_data)
+
+        logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
 
     @staticmethod

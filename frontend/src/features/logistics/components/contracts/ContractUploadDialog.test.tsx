@@ -35,34 +35,24 @@ const {
   mockSuppliersList,
   mockContractsList,
   mockCategoriesList,
-  mockCreateContract,
-  mockCreateItem,
-  mockCreateExpense,
-  createContractAsync,
+  mockCreateFull,
+  createFullAsync,
 } = vi.hoisted(() => ({
   mockSuppliersList: vi.fn(),
   mockContractsList: vi.fn(),
   mockCategoriesList: vi.fn(),
-  mockCreateContract: vi.fn(),
-  mockCreateItem: vi.fn(),
-  mockCreateExpense: vi.fn(),
-  createContractAsync: vi.fn(),
+  mockCreateFull: vi.fn(),
+  createFullAsync: vi.fn(),
 }));
 
 vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
   useLogisticsSuppliersList: () => mockSuppliersList(),
   useLogisticsContractsList: () => mockContractsList(),
-  useLogisticsContractsCreate: () => mockCreateContract(),
-  useLogisticsItemsCreate: () => mockCreateItem(),
+  useLogisticsContractsCreateFull: () => mockCreateFull(),
 }));
 
 vi.mock("@/api/generated/v1/endpoints/finances/finances", () => ({
   useFinancesCategoriesList: () => mockCategoriesList(),
-  useFinancesExpensesCreate: () => mockCreateExpense(),
-}));
-
-vi.mock("@/api/axios-instance", () => ({
-  AXIOS_INSTANCE: { post: vi.fn() },
 }));
 
 // ===== TEST SUITE =====
@@ -112,15 +102,13 @@ describe("ContractUploadDialog", () => {
       mockQueryResponse({ data: { items: [], count: 0 } }),
     );
 
-    createContractAsync.mockReset();
-    createContractAsync.mockResolvedValue({ data: { uuid: "contract-1" } });
+    createFullAsync.mockReset();
+    createFullAsync.mockResolvedValue({ data: { uuid: "contract-1" } });
 
-    mockCreateContract.mockReturnValue({
-      mutateAsync: createContractAsync,
+    mockCreateFull.mockReturnValue({
+      mutateAsync: createFullAsync,
       isPending: false,
     });
-    mockCreateItem.mockReturnValue({ mutateAsync: vi.fn() });
-    mockCreateExpense.mockReturnValue({ mutateAsync: vi.fn() });
   });
 
   // ------------------------------------------------------------------
@@ -257,10 +245,10 @@ describe("ContractUploadDialog", () => {
     );
 
     await waitFor(() => {
-      expect(createContractAsync).toHaveBeenCalled();
+      expect(createFullAsync).toHaveBeenCalled();
     });
 
-    expect(createContractAsync).toHaveBeenCalledWith({
+    expect(createFullAsync).toHaveBeenCalledWith({
       data: {
         wedding: weddingUuid,
         supplier: "supplier-1",
@@ -269,6 +257,12 @@ describe("ContractUploadDialog", () => {
         status: "DRAFT",
         description: "Descrição do contrato de teste",
         parent: null,
+        items_data: "[]",
+        create_expense: false,
+        expense_category: null,
+        expense_num_installments: null,
+        expense_first_due_date: null,
+        pdf_file: null,
       },
     });
   });
@@ -329,12 +323,12 @@ describe("ContractUploadDialog", () => {
       mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
     );
 
-    // Make the mutation reject
-    createContractAsync.mockRejectedValue(new Error("API Error"));
+
+    createFullAsync.mockRejectedValue(new Error("API Error"));
 
     render(<ContractUploadDialog {...defaultProps} />);
 
-    // Select supplier
+
     await user.click(
       screen.getByRole("combobox", { name: /fornecedor/i }),
     );
@@ -343,7 +337,7 @@ describe("ContractUploadDialog", () => {
     });
     await user.click(supplierOption);
 
-    // Fill required fields
+
     await user.type(
       screen.getByRole("textbox", { name: /nome do contrato/i }),
       "Falha",
@@ -353,7 +347,7 @@ describe("ContractUploadDialog", () => {
       { target: { value: "500" } },
     );
 
-    // Submit
+
     await user.click(
       screen.getByRole("button", { name: /criar contrato/i }),
     );
@@ -361,5 +355,71 @@ describe("ContractUploadDialog", () => {
     await waitFor(() => {
       expect(toastError).toHaveBeenCalled();
     });
+  });
+
+  it("submits with parent contract", async () => {
+    const user = userEvent.setup();
+
+    mockSuppliersList.mockReturnValue(
+      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
+    );
+    mockContractsList.mockReturnValue(
+      mockQueryResponse({
+        data: {
+          items: [{ uuid: "parent-1", name: "Contrato Original" }],
+          count: 1,
+        },
+      }),
+    );
+
+    render(
+      <ContractUploadDialog
+        {...defaultProps}
+        prefilledParentUuid="parent-1"
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("combobox", { name: /fornecedor/i }),
+    );
+    const supplierOption = await screen.findByRole("option", {
+      name: /fornecedor teste/i,
+    });
+    await user.click(supplierOption);
+
+    await user.type(
+      screen.getByRole("textbox", { name: /nome do contrato/i }),
+      "Aditivo",
+    );
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: /valor total/i }),
+      { target: { value: "1000" } },
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /criar contrato/i }),
+    );
+
+    await waitFor(() => {
+      expect(createFullAsync).toHaveBeenCalled();
+    });
+
+    expect(createFullAsync).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        parent: "parent-1",
+      }),
+    });
+  });
+
+  it("shows loading state while creating", () => {
+    mockCreateFull.mockReturnValue({
+      mutateAsync: createFullAsync,
+      isPending: true,
+    });
+
+    render(<ContractUploadDialog {...defaultProps} />);
+
+    expect(screen.getByRole("button", { name: /criar contrato/i })).toBeDisabled();
+    expect(screen.getByText(/cancelar/i).closest("button")).toBeDisabled();
   });
 });

@@ -44,6 +44,16 @@
 
 ## AI Rules
 
-- **Default to subagents**: 2+ file changes, multi-step logic, or complex searches → dispatch subagent. Main conversation = only direct questions, single edits, coordination.
 - **Read `docs/DESIGN.md`** before UI work.
 - **Load skills on demand** (not proactively).
+
+## Subagents
+
+Dispatch subagents for 2+ file changes, multi-step logic, or complex searches.
+Main conversation = only direct questions, single edits, coordination.
+
+| Name | When to dispatch |
+|---|---|
+| **backend** | Django models, services, endpoints, migrations, tests, business logic |
+| **frontend** | React components, pages, hooks, forms, Orval, API integration, tests |
+| **design** | UI/UX design, layout, styling, theme, Tailwind, accessibility |
