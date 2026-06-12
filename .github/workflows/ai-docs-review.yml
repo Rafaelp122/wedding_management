@@ -2,7 +2,7 @@ name: AI Docs Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, ready_for_review]
     paths:
       - "**.py"
       - "**.ts"
@@ -29,12 +29,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: anomalyco/opencode/github@v1.16.2
+      - uses: anomalyco/opencode/github@v1
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          model: opencode-go/deepseek-v4-flash
+          model: deepseek/deepseek-v4-flash
           prompt: |
             Sua única tarefa: revisar a DOCUMENTAÇÃO deste Pull Request. NÃO revise lógica de código.
 

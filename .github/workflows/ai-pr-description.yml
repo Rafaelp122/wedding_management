@@ -2,7 +2,7 @@ name: AI PR Description
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,12 +62,12 @@ jobs:
 
       - name: Generate PR Description
         if: steps.check.outputs.empty == 'true'
-        uses: anomalyco/opencode/github@v1.16.2
+        uses: anomalyco/opencode/github@v1
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          model: opencode-go/deepseek-v4-flash
+          model: deepseek/deepseek-v4-flash
           prompt: |
             Sua única tarefa: preencher as seções de descrição do Pull Request e atualizar o corpo do PR.
 
