@@ -68,5 +68,17 @@ function customRenderHook<Result, Props>(
 
 export { customRender as render, customRenderHook as renderHook };
 export { screen, within, waitFor, act, fireEvent } from "@testing-library/react";
-export { userEvent } from "@testing-library/user-event";
+import { userEvent as originalUserEvent } from "@testing-library/user-event";
+
+const customUserEvent = {
+  ...originalUserEvent,
+  setup(options?: Parameters<typeof originalUserEvent.setup>[0]) {
+    return originalUserEvent.setup({
+      pointerEventsCheck: 0, // Disable pointer-events checks for Dialogs in Happy DOM
+      ...options,
+    });
+  },
+};
+
+export { customUserEvent as userEvent };
 export { server } from "@/mocks/server";
