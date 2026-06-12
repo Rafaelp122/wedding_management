@@ -86,7 +86,7 @@ class ItemService:
                         detail="Contrato não encontrado ou acesso negado.",
                         code="contract_not_found_or_denied",
                     ) from e
-        elif isinstance(wedding_input, UUID | str) or isinstance(wedding_input, str):
+        elif isinstance(wedding_input, UUID | str):
             from apps.weddings.models import Wedding
 
             try:
@@ -98,6 +98,12 @@ class ItemService:
                 ) from e
 
         # 3. Instanciação
+        if wedding is None:
+            raise BusinessRuleViolation(
+                detail="É necessário informar um casamento ou um contrato vinculado.",
+                code="item_missing_wedding",
+            )
+
         item = Item(company=company, wedding=wedding, contract=contract, **data)
 
         item.save()
