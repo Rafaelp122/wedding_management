@@ -741,3 +741,49 @@ class TestContractServiceCreateFull:
                 company=user_b.company,
                 contract_data=contract_data,
             )
+
+    def test_create_full_expense_category_not_found(self, user):
+        """Expense com categoria inexistente deve falhar."""
+        wedding, supplier, _ = self._setup(user)
+        contract_data = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Contrato",
+            "total_amount": Decimal("5000.00"),
+        }
+        expense_data = {
+            "category": uuid4(),
+            "name": "Despesa Inválida",
+            "estimated_amount": Decimal("5000.00"),
+            "actual_amount": Decimal("5000.00"),
+        }
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ContractService.create_full(
+                company=user.company,
+                contract_data=contract_data,
+                expense_data=expense_data,
+            )
+        assert "categoria não encontrada" in str(exc_info.value).lower()
+
+    def test_create_full_expense_amount_mismatch_contract(self, user):
+        """Expense com valor divergente do contrato deve falhar (BR-F02)."""
+        wedding, supplier, category = self._setup(user)
+        contract_data = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Contrato",
+            "total_amount": Decimal("5000.00"),
+        }
+        expense_data = {
+            "category": category.uuid,
+            "name": "Despesa Divergente",
+            "estimated_amount": Decimal("3000.00"),
+            "actual_amount": Decimal("3000.00"),
+        }
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.create_full(
+                company=user.company,
+                contract_data=contract_data,
+                expense_data=expense_data,
+            )
+        assert "br_f02_violation" in str(exc_info.value.code)
