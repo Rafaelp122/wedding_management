@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
+import { render, screen, userEvent } from "@/test-utils";
 import { DataPagination } from "@/components/data-pagination";
 
 const defaultProps = {
@@ -182,7 +181,7 @@ describe("DataPagination", () => {
   });
 
   it("returns null for empty collection", () => {
-    const { container } = render(
+    render(
       <DataPagination
         from={0}
         to={0}
@@ -197,7 +196,7 @@ describe("DataPagination", () => {
       />,
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 
   it("renders page number buttons", () => {

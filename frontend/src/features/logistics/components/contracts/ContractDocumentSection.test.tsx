@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
-import { fireEvent } from "@testing-library/react";
 import { server } from "@/mocks/server";
 import { ContractDocumentSection } from "./ContractDocumentSection";
 
@@ -88,20 +87,17 @@ describe("ContractDocumentSection", () => {
         />,
       );
 
+      const user = userEvent.setup();
       const fileInput = container.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
-      fireEvent.change(fileInput, {
-        target: {
-          files: [
-            new File(["dummy content"], FILE_NAME, {
-              type: "application/pdf",
-            }),
-          ],
-        },
-      });
+      await user.upload(
+        fileInput,
+        new File(["dummy content"], FILE_NAME, {
+          type: "application/pdf",
+        }),
+      );
 
-      const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /enviar/i }));
 
       await waitFor(
@@ -130,20 +126,17 @@ describe("ContractDocumentSection", () => {
         />,
       );
 
+      const user = userEvent.setup();
       const fileInput = container.querySelector(
         'input[type="file"]',
       ) as HTMLInputElement;
-      fireEvent.change(fileInput, {
-        target: {
-          files: [
-            new File(["dummy content"], FILE_NAME, {
-              type: "application/pdf",
-            }),
-          ],
-        },
-      });
+      await user.upload(
+        fileInput,
+        new File(["dummy content"], FILE_NAME, {
+          type: "application/pdf",
+        }),
+      );
 
-      const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /enviar/i }));
 
       await waitFor(

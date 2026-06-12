@@ -1,6 +1,34 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import React from "react";
+
+vi.mock("recharts", () => ({
+  ResponsiveContainer: ({
+    children,
+    width,
+    height,
+  }: {
+    children: React.ReactNode;
+    width?: string | number;
+    height?: string | number;
+  }) => React.createElement("div", { "data-testid": "recharts-container", style: { width, height } }, children),
+  BarChart: ({
+    children,
+    data,
+  }: {
+    children: React.ReactNode;
+    data: unknown[];
+  }) => React.createElement("div", { "data-testid": "bar-chart", "data-items": data.length }, children),
+  Bar: ({ dataKey, name }: { dataKey: string; name?: string }) =>
+    React.createElement("div", { "data-testid": `bar-${dataKey}` }, name),
+  CartesianGrid: () => React.createElement("div", { "data-testid": "cartesian-grid" }),
+  XAxis: ({ dataKey }: { dataKey: string }) =>
+    React.createElement("div", { "data-testid": "x-axis", "data-datakey": dataKey }),
+  YAxis: () => React.createElement("div", { "data-testid": "y-axis" }),
+  Tooltip: () => React.createElement("div", { "data-testid": "tooltip" }),
+  Legend: () => React.createElement("div", { "data-testid": "legend" }),
+}));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalAny = globalThis as any;
@@ -43,8 +71,6 @@ beforeAll(() => {
   if (!globalAny.__HAPPY_DOM_SUBMIT_BUG_FIXED__) {
     globalAny.__HAPPY_DOM_SUBMIT_BUG_FIXED__ = true;
 
-    // Workaround for Happy DOM bug where clicking a submit button with children inside a form
-    // fails to submit the form due to event propagation issues.
     window.addEventListener(
       "submit",
       (e) => {
@@ -56,7 +82,7 @@ beforeAll(() => {
           }, 0);
         }
       },
-      { capture: true }
+      { capture: true },
     );
 
     const originalDispatchEvent = HTMLElement.prototype.dispatchEvent;
@@ -79,7 +105,7 @@ beforeAll(() => {
               new window.Event("submit", {
                 bubbles: true,
                 cancelable: true,
-              })
+              }),
             );
           }
         }
