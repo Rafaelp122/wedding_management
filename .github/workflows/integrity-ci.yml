@@ -84,11 +84,24 @@ jobs:
           SECRET_KEY: dummy-ci-key-for-static-analysis-only # pragma: allowlist secret
         run: cd backend && uv run mypy . --show-error-codes --no-color-output
 
+      - name: Cache Node Modules (Frontend)
+        if: needs.detect-changes.outputs.frontend == 'true'
+        id: cache-node-modules-frontend
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Frontend Dependencies
+        if: needs.detect-changes.outputs.frontend == 'true' && steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
+        run: |
+          cd frontend
+          npm ci
+
       - name: Frontend Lint & TypeCheck
         if: needs.detect-changes.outputs.frontend == 'true'
         run: |
           cd frontend
-          npm ci
           npm run lint
           npm run type-check
 
@@ -146,10 +159,22 @@ jobs:
           node-version-file: "frontend/.nvmrc"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
-      - name: Install & Test (build + unit)
+      - name: Cache Node Modules
+        id: cache-node-modules-frontend
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Dependencies
+        if: steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
         run: |
           cd frontend
           npm ci
+
+      - name: Test (build + unit)
+        run: |
+          cd frontend
           npm run test:ci
 
       - name: Upload Coverage to Codecov
@@ -177,10 +202,22 @@ jobs:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: landing/package-lock.json
-      - name: Install & Check (build + lint)
+      - name: Cache Node Modules
+        id: cache-node-modules-landing
+        uses: actions/cache@v4
+        with:
+          path: landing/node_modules
+          key: node-modules-landing-${{ hashFiles('landing/package-lock.json') }}
+
+      - name: Install Dependencies
+        if: steps.cache-node-modules-landing.outputs.cache-hit != 'true'
         run: |
           cd landing
           npm ci
+
+      - name: Check (build + lint)
+        run: |
+          cd landing
           npx astro check
           npm run build
 
@@ -212,10 +249,23 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Cache Node Modules (Frontend)
+        id: cache-node-modules-frontend
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Frontend Dependencies
+        if: steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
+        run: |
+          cd frontend
+          npm ci
+
       - name: Validate OpenAPI & Orval Sync
         run: |
           cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2
-          cd ../frontend && npm ci && npm run generate:api
+          cd ../frontend && npm run generate:api
           git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
 
   # ----------------------------------------------------------------------------
