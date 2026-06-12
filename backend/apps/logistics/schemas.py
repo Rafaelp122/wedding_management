@@ -1,4 +1,5 @@
 import datetime
+import json
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -251,6 +252,14 @@ class ContractFullCreateIn(Schema):
     expense_category: UUID4 | None = None
     expense_num_installments: int | None = None
     expense_first_due_date: date | None = None
+
+    @field_validator("items_data")
+    def validate_items_json(cls, v: str) -> str:
+        try:
+            json.loads(v or "[]")
+        except json.JSONDecodeError as e:
+            raise ValueError("items_data deve ser um JSON válido.") from e
+        return v
 
     @model_validator(mode="after")
     def validate_expense(self) -> "ContractFullCreateIn":

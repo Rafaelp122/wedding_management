@@ -165,7 +165,7 @@ class ContractService:
         company: Company,
         *,
         contract_data: dict[str, Any],
-        items_data: list[dict[str, Any]] | None = None,
+        items_data: list[dict[str, Any]] | None = None,  # type: ignore[valid-type]
         expense_data: dict[str, Any] | None = None,
         pdf_file: Any | None = None,
     ) -> Contract:
@@ -199,12 +199,13 @@ class ContractService:
             contract.save(update_fields=["pdf_file"])
 
         if items_data:
-            for item_dict in items_data:
+            for item_dict in items_data:  # type: ignore[attr-defined]
                 item_dict["wedding"] = contract.wedding
                 item_dict["contract"] = contract
                 ItemService.create(company=company, data=item_dict)
 
         if expense_data:
+            expense_data["contract"] = contract
             ExpenseService.create(company=company, data=expense_data)
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
