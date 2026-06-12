@@ -3,23 +3,7 @@ import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { DeleteWeddingDialog } from "@/features/weddings/components/DeleteWeddingDialog";
 import { server } from "@/mocks/server";
 import { createMockWedding } from "@/test-data";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const mockWedding = createMockWedding();
 
@@ -96,7 +80,7 @@ describe("DeleteWeddingDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastSuccess).toHaveBeenCalledWith(
+        expect(toast.success).toHaveBeenCalledWith(
           "Casamento deletado com sucesso!",
         );
         expect(onSuccess).toHaveBeenCalled();
@@ -133,7 +117,7 @@ describe("DeleteWeddingDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastError).toHaveBeenCalled();
+        expect(toast.error).toHaveBeenCalled();
       },
       { timeout: 5000 },
     );

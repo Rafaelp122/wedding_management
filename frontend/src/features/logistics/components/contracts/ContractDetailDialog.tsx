@@ -74,11 +74,17 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
         {isContractLoading ? (
-          <div className="space-y-3 py-4">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-40" />
-          </div>
+          <>
+            <DialogTitle className="sr-only">Carregando contrato...</DialogTitle>
+            <DialogDescription className="sr-only">
+              Carregando contrato...
+            </DialogDescription>
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          </>
         ) : !contract ? (
           <DialogHeader>
             <DialogTitle>Contrato não encontrado</DialogTitle>

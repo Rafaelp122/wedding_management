@@ -4,22 +4,7 @@ import { DeleteExpenseDialog } from "@/features/finances/components/expenses/Del
 import { server } from "@/mocks/server";
 import { createMockExpense } from "@/test-data";
 
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const mockExpense = createMockExpense();
 
@@ -73,7 +58,7 @@ describe("DeleteExpenseDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastSuccess).toHaveBeenCalledWith(
+        expect(toast.success).toHaveBeenCalledWith(
           "Despesa deletada com sucesso!",
         );
         expect(onSuccess).toHaveBeenCalled();
@@ -110,7 +95,7 @@ describe("DeleteExpenseDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastError).toHaveBeenCalled();
+        expect(toast.error).toHaveBeenCalled();
       },
       { timeout: 5000 },
     );

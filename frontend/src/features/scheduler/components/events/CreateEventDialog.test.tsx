@@ -2,23 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, userEvent, waitFor, fireEvent } from "@/test-utils";
 import { server } from "@/mocks/server";
 import { CreateEventDialog } from "./CreateEventDialog";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 describe("CreateEventDialog", () => {
   const onOpenChange = vi.fn();
@@ -126,7 +110,7 @@ describe("CreateEventDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalled();
     });
     expect(onSuccess).toHaveBeenCalled();
   });

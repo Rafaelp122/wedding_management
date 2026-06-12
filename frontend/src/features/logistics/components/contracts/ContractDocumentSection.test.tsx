@@ -1,25 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { fireEvent } from "@testing-library/react";
 import { server } from "@/mocks/server";
 import { ContractDocumentSection } from "./ContractDocumentSection";
 
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const CONTRACT_UUID = "c-1";
 const FILE_NAME = "Contrato_Assinado.pdf";
@@ -121,7 +106,7 @@ describe("ContractDocumentSection", () => {
 
       await waitFor(
         () => {
-          expect(toastSuccess).toHaveBeenCalledWith(
+          expect(toast.success).toHaveBeenCalledWith(
             "Documento enviado com sucesso!",
           );
         },
@@ -163,7 +148,7 @@ describe("ContractDocumentSection", () => {
 
       await waitFor(
         () => {
-          expect(toastError).toHaveBeenCalledWith(
+          expect(toast.error).toHaveBeenCalledWith(
             "Erro ao enviar documento.",
           );
         },
@@ -187,7 +172,7 @@ describe("ContractDocumentSection", () => {
 
       await waitFor(
         () => {
-          expect(toastSuccess).toHaveBeenCalledWith("Documento removido.");
+          expect(toast.success).toHaveBeenCalledWith("Documento removido.");
         },
         { timeout: 5000 },
       );
@@ -214,7 +199,7 @@ describe("ContractDocumentSection", () => {
 
       await waitFor(
         () => {
-          expect(toastError).toHaveBeenCalledWith(
+          expect(toast.error).toHaveBeenCalledWith(
             "Erro ao remover documento.",
           );
         },

@@ -4,18 +4,7 @@ import { EditExpenseDialog } from "@/features/finances/components/expenses/EditE
 import { createMockExpense } from "@/test-data";
 import { server } from "@/mocks/server";
 
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: { ...actual.toast, success: toastSuccess, error: toastError },
-  };
-});
+import { toast } from "sonner";
 
 const mockExpense = createMockExpense({ paid_installments_count: 0 });
 
@@ -65,7 +54,7 @@ describe("EditExpenseDialog", () => {
     await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith("Despesa atualizada com sucesso!");
+      expect(toast.success).toHaveBeenCalledWith("Despesa atualizada com sucesso!");
       expect(onSuccess).toHaveBeenCalled();
     });
   });
@@ -110,7 +99,7 @@ describe("EditExpenseDialog", () => {
     await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
   });
 });

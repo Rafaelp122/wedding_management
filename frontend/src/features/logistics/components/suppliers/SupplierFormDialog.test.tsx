@@ -3,23 +3,7 @@ import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { SupplierFormDialog } from "@/features/logistics/components/suppliers/SupplierFormDialog";
 import { createMockSupplier } from "@/test-data";
 import { server } from "@/mocks/server";
-
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
-});
+import { toast } from "sonner";
 
 const mockSupplier = createMockSupplier({
   uuid: "s-edit",
@@ -225,7 +209,7 @@ describe("SupplierFormDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastSuccess).toHaveBeenCalledWith(
+        expect(toast.success).toHaveBeenCalledWith(
           "Fornecedor criado com sucesso!",
         );
       },
@@ -251,7 +235,7 @@ describe("SupplierFormDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastSuccess).toHaveBeenCalledWith(
+        expect(toast.success).toHaveBeenCalledWith(
           "Fornecedor atualizado com sucesso!",
         );
       },
@@ -303,7 +287,7 @@ describe("SupplierFormDialog", () => {
 
     await waitFor(
       () => {
-        expect(toastError).toHaveBeenCalledWith("CNPJ duplicado");
+        expect(toast.error).toHaveBeenCalledWith("CNPJ duplicado");
       },
       { timeout: 5000 },
     );

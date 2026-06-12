@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi, beforeAll } from "vitest";
 import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
 import { ContractUploadDialog } from "./ContractUploadDialog";
+import { toast } from "sonner";
 
 // Polyfills for Radix UI Select in jsdom (missing browser APIs)
 beforeAll(() => {
@@ -8,26 +9,6 @@ beforeAll(() => {
   Element.prototype.setPointerCapture ??= () => {};
   Element.prototype.releasePointerCapture ??= () => {};
   Element.prototype.scrollIntoView ??= () => {};
-});
-
-// ===== HOISTED MOCKS =====
-
-// Toast mock
-const { toastSuccess, toastError } = vi.hoisted(() => ({
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-}));
-
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: toastSuccess,
-      error: toastError,
-    },
-  };
 });
 
 // Hook mocks
@@ -304,7 +285,7 @@ describe("ContractUploadDialog", () => {
     );
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         "Contrato criado com sucesso!",
       );
     });
@@ -353,7 +334,7 @@ describe("ContractUploadDialog", () => {
     );
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
     });
   });
 
