@@ -214,7 +214,7 @@ jobs:
 
       - name: Validate OpenAPI & Orval Sync
         run: |
-          cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json
+          cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2
           cd ../frontend && npm ci && npm run generate:api
           git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
 
