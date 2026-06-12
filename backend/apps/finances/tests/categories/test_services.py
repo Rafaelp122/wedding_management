@@ -118,7 +118,7 @@ class TestBudgetCategoryServiceCreate:
         TOCTOU: create() deve usar select_for_update() no budget
         para evitar race condition na leitura da soma das categorias.
         """
-        wedding, budget = _setup_budget(user)
+        _, budget = _setup_budget(user)
         data = {
             "budget": budget.uuid,
             "name": "Teste Lock",
@@ -185,7 +185,7 @@ class TestBudgetCategoryServiceUpdate:
         levanta BusinessRuleViolation.
         """
         wedding, budget = _setup_budget(user, total_estimated=Decimal("10000.00"))
-        category1 = BudgetCategoryFactory(
+        _ = BudgetCategoryFactory(
             budget=budget,
             wedding=wedding,
             allocated_budget=Decimal("9000.00"),

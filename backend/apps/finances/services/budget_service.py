@@ -162,7 +162,9 @@ class BudgetService:
 
         if created:
             # TRAVA DE SEGURANÇA (TOCTOU): serializa criação de categorias padrão
-            budget = Budget.objects.for_tenant(company).select_for_update().get(pk=budget.pk)
+            budget = (
+                Budget.objects.for_tenant(company).select_for_update().get(pk=budget.pk)
+            )
 
             from apps.finances.services.budget_category_service import (
                 BudgetCategoryService,
