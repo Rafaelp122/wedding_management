@@ -6,25 +6,6 @@
   ],
   "model": "deepseek/deepseek-v4-flash",
   "small_model": "deepseek/deepseek-v4-flash",
-  "provider": {
-    "deepseek": {
-      "name": "DeepSeek",
-      "options": {
-        "baseURL": "https://api.deepseek.com",
-        "apiKey": "{env:DEEPSEEK_API_KEY}"
-      },
-      "models": {
-        "deepseek-v4-flash": {
-          "name": "DeepSeek-V4-Flash",
-          "limit": { "context": 1048576, "output": 262144 }
-        },
-        "deepseek-v4-pro": {
-          "name": "DeepSeek-V4-Pro",
-          "limit": { "context": 1048576, "output": 262144 }
-        }
-      }
-    }
-  },
   "agent": {
     "build": {
       "mode": "primary",
