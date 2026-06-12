@@ -27,12 +27,12 @@ jobs:
           fetch-depth: 0 # Required to evaluate full history in the git diff
 
       - name: Run OpenCode Reviewer
-        uses: anomalyco/opencode/github@v1.16.2
+        uses: anomalyco/opencode/github@latest
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          model: opencode-go/deepseek-v4-pro
+          model: deepseek/deepseek-v4-pro
           prompt: |
             Revise este pull request seguindo estritamente as regras de arquitetura, qualidade e testes do projeto:
             1. Diretrizes gerais: `AGENTS.md`
