@@ -125,9 +125,14 @@ class TestBudgetCategoryServiceCreate:
             "allocated_budget": Decimal("1000.00"),
         }
 
-        spy = mocker.spy(Budget.objects, "select_for_update")
+        mock_qs = mocker.MagicMock()
+        mock_qs.select_for_update.return_value = mock_qs
+        mock_qs.get.return_value = budget
+        mocker.patch.object(Budget.objects, "for_tenant", return_value=mock_qs)
+
         BudgetCategoryService.create(user.company, data)
-        spy.assert_called_once()
+
+        mock_qs.select_for_update.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -215,9 +220,13 @@ class TestBudgetCategoryServiceUpdate:
             wedding=wedding,
         )
 
-        spy = mocker.spy(Budget.objects, "select_for_update")
+        mock_qs = mocker.MagicMock()
+        mock_qs.select_for_update.return_value = mock_qs
+        mock_qs.get.return_value = budget
+        mocker.patch.object(Budget.objects, "for_tenant", return_value=mock_qs)
+
         BudgetCategoryService.update(user.company, category, {"name": "Renomeada"})
-        spy.assert_called_once()
+        mock_qs.select_for_update.assert_called_once()
 
 
 @pytest.mark.django_db
