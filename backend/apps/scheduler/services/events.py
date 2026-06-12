@@ -57,6 +57,9 @@ class EventService:
 
         wedding_input = data.pop("wedding", None)
 
+        if not _caller_internal:
+            data.pop("source_installment", None)
+
         # BR-S01: Eventos de pagamento são gerados automaticamente
         if not _caller_internal and data.get("event_type") == Event.TypeChoices.PAYMENT:
             raise BusinessRuleViolation(
