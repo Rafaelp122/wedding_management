@@ -508,26 +508,39 @@ class TestInstallmentServiceRedistribute:
         expense = _setup_expense(
             user, actual_amount=Decimal("1000.00"), name="Buffet Teste"
         )
-        InstallmentService.auto_generate_installments(
+        installments = InstallmentService.auto_generate_installments(
             user.company, expense, 3, date_type.today()
         )
 
-        # Deveria ter criado 3 eventos PAYMENT
+        # Verify FK is set on created events
+        for inst in installments:
+            event = SchedulerEvent.objects.filter(source_installment=inst).first()
+            assert event is not None, (
+                f"Event not found for installment {inst.installment_number}"
+            )
+            assert event.title.startswith(f"Pagamento: {expense.name}")
+
         old_events_count = SchedulerEvent.objects.filter(
             wedding=expense.wedding,
             event_type="pagamento",
         ).count()
         assert old_events_count == 3
 
-        # Redistribuir para 2 parcelas
         InstallmentService.redistribute(user.company, expense, 2, date_type.today())
 
-        # Eventos antigos removidos
+        # Verify no orphaned events (with NULL source_installment) remain
+        orphaned = SchedulerEvent.objects.filter(
+            wedding=expense.wedding,
+            event_type="pagamento",
+            source_installment__isnull=True,
+        )
+        assert orphaned.count() == 0, f"Found {orphaned.count()} orphaned events"
+
         old_events = SchedulerEvent.objects.filter(
             wedding=expense.wedding,
             event_type="pagamento",
         )
-        assert old_events.count() == 2  # apenas os novos
+        assert old_events.count() == 2
         assert all("Parcela" in e.title for e in old_events)
 
     def test_delete_installment_cleans_up_payment_event(self, user):
@@ -543,13 +556,18 @@ class TestInstallmentServiceRedistribute:
             user.company, expense, 2, date_type.today()
         )
 
+        # Verify FK is set
+        deleted_event = SchedulerEvent.objects.filter(
+            source_installment=installments[0]
+        ).first()
+        assert deleted_event is not None
+        deleted_event_uuid = deleted_event.uuid
+
         events_before = SchedulerEvent.objects.filter(
             wedding=expense.wedding, event_type="pagamento"
         ).count()
         assert events_before == 2
 
-        # Forçar soma ajustada para permitir deleção (se a soma fechar)
-        # Deleção individual de 1 parcela quebra tolerância zero — ajustar antes
         remaining = expense.installments.exclude(uuid=installments[0].uuid).first()
         if remaining:
             remaining.amount = expense.actual_amount
@@ -561,6 +579,8 @@ class TestInstallmentServiceRedistribute:
             wedding=expense.wedding, event_type="pagamento"
         ).count()
         assert events_after == 1
+
+        assert not SchedulerEvent.objects.filter(uuid=deleted_event_uuid).exists()
 
 
 @pytest.mark.django_db
