@@ -27,12 +27,13 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVENT_TYPE_OPTIONS, RECURRENCE_OPTIONS } from "../../constants";
 import { toDateTimeLocalValue, toISODateTime } from "../../utils";
+import { parseISO } from "date-fns";
 
 const formSchema = SchedulerEventsCreateBody.superRefine((data, ctx) => {
   if (
     data.end_time &&
     data.start_time &&
-    new Date(data.end_time) <= new Date(data.start_time)
+    parseISO(data.end_time) <= parseISO(data.start_time)
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

@@ -114,4 +114,94 @@ describe("CreateEventDialog", () => {
     });
     expect(onSuccess).toHaveBeenCalled();
   });
+
+  it("shows validation error when end_time is before start_time", async () => {
+    render(
+      <CreateEventDialog
+        weddingUuid="wedding-1"
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    await userEvent.type(screen.getByLabelText("Título"), "Test");
+
+    const startInput = screen.getByLabelText("Data/Hora Início *");
+    fireEvent.change(startInput, { target: { value: "2026-08-15T10:00" } });
+
+    const endInput = screen.getByLabelText("Data/Hora Fim (opcional)");
+    fireEvent.change(endInput, { target: { value: "2026-08-15T09:00" } });
+
+    await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
+
+    expect(
+      await screen.findByText(
+        "Data/hora de término deve ser posterior ao início.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("allows submission when end_time is after start_time", async () => {
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.post("*/api/v1/events/", () =>
+        HttpResponse.json({ uuid: "new-ev", title: "Test" }, { status: 201 }),
+      ),
+    );
+
+    render(
+      <CreateEventDialog
+        weddingUuid="wedding-1"
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    await userEvent.type(screen.getByLabelText("Título"), "Test");
+
+    const startInput = screen.getByLabelText("Data/Hora Início *");
+    fireEvent.change(startInput, { target: { value: "2026-08-15T09:00" } });
+
+    const endInput = screen.getByLabelText("Data/Hora Fim (opcional)");
+    fireEvent.change(endInput, { target: { value: "2026-08-15T10:00" } });
+
+    await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalled();
+    });
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it("allows submission when end_time is null (no validation needed)", async () => {
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.post("*/api/v1/events/", () =>
+        HttpResponse.json({ uuid: "new-ev", title: "Test" }, { status: 201 }),
+      ),
+    );
+
+    render(
+      <CreateEventDialog
+        weddingUuid="wedding-1"
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    await userEvent.type(screen.getByLabelText("Título"), "Test");
+
+    const startInput = screen.getByLabelText("Data/Hora Início *");
+    fireEvent.change(startInput, { target: { value: "2026-08-15T09:00" } });
+
+    await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalled();
+    });
+    expect(onSuccess).toHaveBeenCalled();
+  });
 });

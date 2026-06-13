@@ -334,7 +334,9 @@ describe("ContractUploadDialog", () => {
     );
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith(
+        "Erro ao criar contrato: API Error",
+      );
     });
   });
 

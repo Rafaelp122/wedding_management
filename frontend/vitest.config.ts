@@ -6,6 +6,9 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: "happy-dom",
+      env: {
+        TZ: "UTC",
+      },
       environmentOptions: {
         happyDom: {
           url: "http://localhost:5173",

@@ -72,6 +72,8 @@ export function EditExpenseDialog({
       estimated_amount: Number(expense.estimated_amount) || 0,
       actual_amount: Number(expense.actual_amount) || 0,
       contract: expense.contract || null,
+      num_installments: null,
+      first_due_date: null,
     };
     const modified: Record<string, unknown> = {
       name: data.name,
@@ -79,6 +81,8 @@ export function EditExpenseDialog({
       estimated_amount: Number(data.estimated_amount) || 0,
       actual_amount: Number(data.actual_amount) || 0,
       contract: data.contract,
+      num_installments: data.num_installments ?? null,
+      first_due_date: data.first_due_date ?? null,
     };
     const payload = buildPatchPayload(original, modified, [
       "name",
@@ -86,6 +90,8 @@ export function EditExpenseDialog({
       "estimated_amount",
       "actual_amount",
       "contract",
+      "num_installments",
+      "first_due_date",
     ]);
 
     mutate(
