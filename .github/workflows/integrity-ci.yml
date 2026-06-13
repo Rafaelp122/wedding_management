@@ -511,6 +511,7 @@ jobs:
         if: success()
         run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
+          gh label create "ai-reviewed" --color "0e8a16" --force 2>/dev/null || true
           gh pr edit "$PR_NUMBER" --add-label "ai-reviewed"
           echo "✓ Added 'ai-reviewed' label to PR #$PR_NUMBER"
         env:

@@ -20,20 +20,21 @@ O pipeline de CI (`integrity-ci.yml`) é acionado em `push` e `pull_request` na 
        lint      backend-  lint  frontend-  landing-
                   tests          tests      check
          │           │    │         │        │
-         └──────┬────┘    └────┬────┘        │
-                ▼              ▼              │
-          contract-sync        │              │
-            │    │             │              │
-            │    └──────┐      │              │
-            ▼           ▼      ▼              ▼
-       deploy         deploy-frontend    deploy-landing
-    (Cloud Run)        (Vercel)          (Vercel)
-    (needs backend-   (needs frontend-
-     tests +           tests +
-      contract-sync)    contract-sync)
+         └───────────┴────┼─────────┘        │
+                      │   │                  │
+                      ▼   ▼                  ▼
+                 contract-sync                │
+                      │   │                  │
+                      │   └──────────┐       │
+                      ▼               ▼       ▼
+                 deploy         deploy-frontend   deploy-landing
+              (Cloud Run)        (Vercel)          (Vercel)
+              (needs:            (needs:
+               backend-tests,     frontend-tests,
+               contract-sync)     contract-sync)
 
    review ── needs: backend-tests, frontend-tests, landing-check
-   (AI Code Review, gate: bloqueia se testes falharem, roda se skipped)
+   (AI Code Review, gate: !failure() && !cancelled(), roda se skipped)
 ```
 
 ---
@@ -116,15 +117,14 @@ cd ../frontend && npm ci && npm run generate:api
 git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
 ```
 
-**Dependências:** `detect-changes`, `lint`.
+**Dependências:** `detect-changes`.
 
-> **Decisão de design (ADR implícito):** `contract-sync` depende de `lint` (análise estática rápida), não de `backend-tests` ou `frontend-tests`. Motivos:
-> - O job é um **validador de contrato**, não um gate de qualidade de código — precisa só do código presente e sintaticamente válido.
-> - Quando um dos testes é skipped (ex: PR só de backend → `frontend-tests` skipped), o GitHub Actions força o skip de qualquer job que tenha ele em `needs`, bloqueando deploys.
-> - Os testes são gate de deploy diretamente nos jobs de deploy (`deploy` depende de `backend-tests` + `contract-sync`, `deploy-frontend` depende de `frontend-tests` + `contract-sync`).
-> - `lint` retém dependência porque é rápido (segundos) e evita que `contract-sync` desperdice minutos buildando/puxando dependências se o código tem erros óbvios.
+> **Decisão de design (ADR implícito):** `contract-sync` depende apenas de `detect-changes`, rodando em paralelo com `lint`. Motivos:
+> - O job é um **validador de contrato**, não um gate de qualidade de código — precisa só do código presente.
+> - `lint` não é dependência porque o `contract-sync` valida a sincronia do schema, não a qualidade do código. Se o lint falhar, os jobs de deploy subsequentes (que dependem de testes + `contract-sync`) já não irão rodar.
+> - Executar em paralelo reduz o tempo total do pipeline.
 
-**Condição:** Roda se `backend == true` ou `frontend == true`, e `lint` passou.
+**Condição:** Roda se `backend == true` ou `frontend == true`.
 
 ### 2.7 `deploy` (Cloud Run)
 **Propósito:** Deploy do backend no Google Cloud Run.
@@ -172,7 +172,7 @@ git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
 
 **Re-review:** Use `opencode-assistant.yml` — comente `/opencode` na PR para disparar uma nova revisão a qualquer momento.
 
-> **Decisão de design:** Integrado ao integrity-ci para simplificar o pipeline. Usa `needs.<job>.result == 'failure'` em vez de `always() && !failure()` para evitar o edge case onde jobs skipped forçam o skip do review. O label `ai-reviewed` é o guard que impede revisões repetidas em pushes subsequentes.
+> **Decisão de design:** Integrado ao integrity-ci para simplificar o pipeline. Usa `!failure() && !cancelled()` em vez de verificar `needs.<job>.result == 'failure'` individualmente — mais conciso e com o mesmo efeito: bloqueia se algum teste falhar, mas permite que o review rode quando jobs são skipped. O label `ai-reviewed` é o guard que impede revisões repetidas em pushes subsequentes.
 >
 > **Cancelamento em progresso:** Como o integrity-ci tem `concurrency: cancel-in-progress: true`, um novo push cancela o review em andamento. Como o label ainda não foi adicionado (job cancelado antes de completar), o próximo push bem-sucedido rodará o review novamente — garantindo que a versão mais recente seja sempre revisada.
 
@@ -182,16 +182,9 @@ git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
 
 Um comportamento importante do GitHub Actions: **se um job em `needs` é skipped, o job dependente é automaticamente skipped**, independente da condição `if`.
 
-Exemplo:
-```yaml
-contract-sync:
-    needs: [detect-changes, backend-tests, frontend-tests]
-    if: success() && needs.detect-changes.outputs.backend == 'true'
-```
+**Design atual:** `contract-sync` depende apenas de `detect-changes` (que nunca é skipped), portanto nunca é forçado a skip por propagação. Os testes rodam em paralelo com `contract-sync` e servem como gate nos jobs de deploy individuais: `deploy` depende de `backend-tests + contract-sync`, `deploy-frontend` depende de `frontend-tests + contract-sync`. Se os testes de uma stack são skipped (sem mudanças), o deploy correspondente também é — comportamento correto.
 
-Se `frontend-tests` é skipped (sem mudanças no frontend), `contract-sync` é forçado a skip também, mesmo com `backend == true` e `backend-tests` tendo passado. Isso quebrava deploys em PRs só de backend.
-
-**Solução aplicada:** `contract-sync` depende de `lint` (rápido, segundos) em vez de `backend-tests` e `frontend-tests`. Os testes rodam em paralelo com `lint` (mesmo nível, sem dependência) e servem como gate nos jobs de deploy individuais.
+O job `review` usa `!failure()` na condição `if`, o que bloqueia a revisão se algum teste falhar, mas permite que rode quando testes são skipped (ex: PR só de backend, `frontend-tests` skipped).
 
 ---
 
