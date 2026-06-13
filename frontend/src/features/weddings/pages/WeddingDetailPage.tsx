@@ -9,8 +9,31 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 
 export default function WeddingDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
+  const { data: response, isLoading, error } = useWeddingsRead(uuid!, {
+    query: { enabled: !!uuid },
+  });
 
-  const { data: response, isLoading, error } = useWeddingsRead(uuid!);
+  if (!uuid) {
+    return (
+      <div className="container mx-auto py-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>URL inválida</AlertTitle>
+          <AlertDescription>
+            O ID do casamento não foi encontrado na URL.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4">
+          <Button asChild variant="outline">
+            <Link to="/weddings">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar para lista
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const wedding = response?.data;
 

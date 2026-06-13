@@ -1,9 +1,12 @@
+import { formatISO, parseISO } from "date-fns";
+
 /**
  * Converte string datetime-local (YYYY-MM-DDTHH:MM) para ISO 8601 com timezone.
  */
 export function toISODateTime(localValue: string): string {
   if (!localValue) return "";
-  return new Date(localValue).toISOString();
+  // Adiciona timezone local ao valor antes de converter
+  return formatISO(parseISO(localValue));
 }
 
 /**
