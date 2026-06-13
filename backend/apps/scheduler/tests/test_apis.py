@@ -175,6 +175,43 @@ class TestSchedulerEventsAPI:
         event.refresh_from_db()
         assert event.recurrence_rule == Event.RecurrenceChoices.WEEKLY
 
+    def test_update_event_clear_recurrence_rule_explicitly_success(
+        self, auth_client, user
+    ):
+        """PATCH de evento enviando "none" limpa a recorrência."""
+        wedding = WeddingFactory(company=user.company)
+        event = EventFactory(
+            wedding=wedding,
+            title="Antigo",
+            recurrence_rule=Event.RecurrenceChoices.WEEKLY,
+        )
+
+        response = auth_client.patch(
+            f"/api/v1/scheduler/events/{event.uuid}/",
+            {"recurrence_rule": "none"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+        event.refresh_from_db()
+        assert event.recurrence_rule == Event.RecurrenceChoices.NONE
+
+    def test_update_event_recurrence_rule_null_returns_400(self, auth_client, user):
+        """PATCH de evento enviando null retorna 400."""
+        wedding = WeddingFactory(company=user.company)
+        event = EventFactory(
+            wedding=wedding,
+            title="Antigo",
+            recurrence_rule=Event.RecurrenceChoices.WEEKLY,
+        )
+
+        response = auth_client.patch(
+            f"/api/v1/scheduler/events/{event.uuid}/",
+            {"recurrence_rule": None},
+            content_type="application/json",
+        )
+        assert response.status_code == 400
+
     def test_delete_event_success(self, auth_client, user):
         wedding = WeddingFactory(company=user.company)
         event = EventFactory(wedding=wedding)
