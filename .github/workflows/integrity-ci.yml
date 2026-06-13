@@ -488,12 +488,14 @@ jobs:
             5. Padrões de Testes:
                - Backend (Pytest, factories, mocks): `.agents/skills/wedding-backend-testing/SKILL.md`
                - Frontend (Vitest, RTL, MSW): `.agents/skills/wedding-frontend-testing/SKILL.md`
-            6. Padrões de Documentação:
-               - Backend (apps/): endpoints em api.py precisam de operation_id. Funções em services.py
-                 e modelos precisam de docstring. Campos de modelo precisam de help_text.
-                 Mudanças estruturais (nova app, refactor grande) precisam de ADR em docs/ADR/.
-               - Frontend (src/): hooks, tipos e utils exportados em features/ precisam de JSDoc.
-                 Stores Zustand precisam de comentário descrevendo o estado gerenciado.
+             6. Padrões de Documentação:
+                - Backend (apps/): endpoints em api.py precisam de operation_id. Funções em services.py
+                  e modelos precisam de docstring. Campos de modelo precisam de help_text.
+                  Mudanças que envolvem trade-offs arquiteturais (nova app, mudança de framework,
+                  refactor grande com impacto em múltiplos apps) precisam de ADR em docs/ADR/.
+                  Limpeza de código, otimização de CI e refactors pontuais NÃO precisam de ADR.
+                - Frontend (src/): hooks, tipos e utils exportados em features/ precisam de JSDoc.
+                  Stores Zustand precisam de comentário descrevendo o estado gerenciado.
 
             IMPORTANTE — O pipeline de CI já executou lint, type-check e todos os testes
             (backend + frontend) com sucesso antes desta revisão. NÃO execute comandos
