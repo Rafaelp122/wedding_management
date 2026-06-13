@@ -195,18 +195,26 @@ class ContractService:
             if pdf_file.size and pdf_file.size > max_size:
                 raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
 
-            contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
-            contract.save(update_fields=["pdf_file"])
+        file_saved = False
+        try:
+            if pdf_file:
+                contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
+                contract.save(update_fields=["pdf_file"])
+                file_saved = True
 
-        if items_data:
-            for item_dict in items_data:  # type: ignore[attr-defined]
-                item_dict["wedding"] = contract.wedding
-                item_dict["contract"] = contract
-                ItemService.create(company=company, data=item_dict)
+            if items_data:
+                for item_dict in items_data:  # type: ignore[attr-defined]
+                    item_dict["wedding"] = contract.wedding
+                    item_dict["contract"] = contract
+                    ItemService.create(company=company, data=item_dict)
 
-        if expense_data:
-            expense_data["contract"] = contract
-            ExpenseService.create(company=company, data=expense_data)
+            if expense_data:
+                expense_data["contract"] = contract
+                ExpenseService.create(company=company, data=expense_data)
+        except Exception:
+            if file_saved and contract.pdf_file:
+                contract.pdf_file.delete(save=False)
+            raise
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
@@ -356,6 +364,7 @@ class ContractService:
         return instance
 
     @staticmethod
+    @transaction.atomic
     def upload_file(company: Company, uuid: UUID | str, uploaded_file: Any) -> Contract:
         """
         Faz upload de um arquivo (PDF, PNG, JPEG) para o contrato.
@@ -394,8 +403,15 @@ class ContractService:
             raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
 
         contract = ContractService.get(company, uuid)
-        contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
-        contract.save(update_fields=["pdf_file"])
+
+        try:
+            contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
+            contract.save(update_fields=["pdf_file"])
+        except Exception:
+            if contract.pdf_file:
+                contract.pdf_file.delete(save=False)
+            raise
+
         logger.info(f"Arquivo salvo no contrato uuid={uuid}")
         return contract
 

@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -328,6 +329,24 @@ class TestContractServiceUploadFile:
 
         assert result.pdf_file.name.endswith(".pdf")
         assert result.uuid == contract.uuid
+
+    def test_upload_file_db_error_cleans_up_storage(self, user):
+        """Se ocorrer um erro no DB, o arquivo deve ser removido do storage."""
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+        valid_file = SimpleUploadedFile(
+            name="valid_contract.pdf",
+            content=b"valid pdf content",
+            content_type="application/pdf",
+        )
+
+        with patch("apps.logistics.models.Contract.save") as mock_save:
+            mock_save.side_effect = Exception("DB Error")
+            with patch("django.db.models.fields.files.FieldFile.delete") as mock_delete:
+                with pytest.raises(Exception, match="DB Error"):
+                    ContractService.upload_file(user.company, contract.uuid, valid_file)
+
+                mock_delete.assert_called_once_with(save=False)
 
 
 @pytest.mark.django_db
@@ -787,3 +806,33 @@ class TestContractServiceCreateFull:
                 expense_data=expense_data,
             )
         assert "br_f02_violation" in str(exc_info.value.code)
+
+    @patch("apps.logistics.services.item_service.ItemService.create")
+    def test_create_full_db_error_cleans_up_storage(self, mock_item_create, user):
+        """Se ocorrer um erro subsequente (ex: no ItemService),
+        o arquivo no storage deve ser deletado."""
+        wedding, supplier, _ = self._setup(user)
+        contract_data = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Contrato",
+            "total_amount": Decimal("5000.00"),
+        }
+        pdf_file = SimpleUploadedFile(
+            "contrato.pdf", b"pdf content", content_type="application/pdf"
+        )
+        items_data = [
+            {"name": "Item 1", "quantity": 10, "acquisition_status": "PENDING"},
+        ]
+
+        mock_item_create.side_effect = Exception("Item Creation Error")
+
+        with patch("django.db.models.fields.files.FieldFile.delete") as mock_delete:
+            with pytest.raises(Exception, match="Item Creation Error"):
+                ContractService.create_full(
+                    company=user.company,
+                    contract_data=contract_data,
+                    pdf_file=pdf_file,
+                    items_data=items_data,
+                )
+            mock_delete.assert_called_once_with(save=False)
