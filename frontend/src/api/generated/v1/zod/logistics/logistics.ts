@@ -409,7 +409,6 @@ export const logisticsContractsUpdateBodyTotalAmountTwoRegExp = new RegExp(
 );
 
 export const LogisticsContractsUpdateBody = zod.object({
-  wedding: zod.union([zod.string(), zod.null()]).optional(),
   supplier: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.union([zod.string(), zod.null()]).optional(),
   total_amount: zod
