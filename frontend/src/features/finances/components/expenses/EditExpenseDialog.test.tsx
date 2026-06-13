@@ -98,6 +98,8 @@ describe("EditExpenseDialog", () => {
     );
 
     const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("Nome da Despesa"));
+    await user.type(screen.getByLabelText("Nome da Despesa"), "Buffet Alterado");
     await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
 
     await waitFor(() => {
