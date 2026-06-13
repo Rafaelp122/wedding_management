@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod";
+import { z } from "zod";
 
 import { useSchedulerEventsCreate } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { SchedulerEventsCreateBody } from "@/api/generated/v1/zod/scheduler/scheduler";
@@ -28,7 +28,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EVENT_TYPE_OPTIONS, RECURRENCE_OPTIONS } from "../../constants";
 import { toDateTimeLocalValue, toISODateTime } from "../../utils";
 
-type CreateEventFormData = z.infer<typeof SchedulerEventsCreateBody>;
+const formSchema = SchedulerEventsCreateBody.superRefine((data, ctx) => {
+  if (
+    data.end_time &&
+    data.start_time &&
+    new Date(data.end_time) <= new Date(data.start_time)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Data/hora de término deve ser posterior ao início.",
+      path: ["end_time"],
+    });
+  }
+});
+
+type CreateEventFormData = z.infer<typeof formSchema>;
 
 interface CreateEventDialogProps {
   weddingUuid: string;
@@ -54,7 +68,7 @@ export function CreateEventDialog({
   const defaultStartTimeIso = defaultStartTime?.toISOString() ?? "";
 
   const form = useForm({
-    resolver: zodResolver(SchedulerEventsCreateBody),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       wedding: weddingUuid,
       title: "",

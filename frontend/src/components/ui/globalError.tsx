@@ -21,8 +21,8 @@ export const GlobalError = () => {
         Erro Inesperado
       </h2>
       <p className="text-muted-foreground max-w-md">
-        Algo correu mal ao tentar carregar esta secção. Verifica a tua ligação
-        ou tenta novamente.
+        Algo deu errado ao carregar esta seção. Verifique sua conexão ou tente
+        novamente.
       </p>
 
       {isDev && error instanceof Error && (

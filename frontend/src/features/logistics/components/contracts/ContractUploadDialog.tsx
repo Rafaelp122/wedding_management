@@ -137,8 +137,10 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
       form.reset();
       setItemDrafts([]);
       onSuccess();
-    } catch {
-      toast.error("Erro ao criar contrato. Nenhum dado foi salvo.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erro desconhecido";
+      toast.error(`Erro ao criar contrato: ${message}`);
     }
   };
 

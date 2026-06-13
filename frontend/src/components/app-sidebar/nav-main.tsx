@@ -19,7 +19,10 @@ export function NavMain({ items }: { items: NavItem[] }) {
   return (
     <SidebarMenu className="p-2 gap-1">
       {items.map((item) => {
-        const isActive = location.pathname.startsWith(item.path);
+        const isActive =
+          location.pathname === item.path ||
+          (item.path !== "/" &&
+            location.pathname.startsWith(item.path + "/"));
         return (
           <SidebarMenuItem key={item.path}>
             <SidebarMenuButton
