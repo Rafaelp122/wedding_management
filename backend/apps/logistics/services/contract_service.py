@@ -160,6 +160,38 @@ class ContractService:
         return contract
 
     @staticmethod
+    def _validate_uploaded_file(uploaded_file: Any, context_label: str) -> None:
+        """
+        Valida o tipo MIME (content_type) e o tamanho máximo de um arquivo de upload.
+        Emite avisos se os metadados forem omitidos, delegando à validação
+        de extensão do modelo.
+        """
+        allowed_content_types = [
+            "application/pdf",
+            "image/png",
+            "image/jpeg",
+        ]
+        file_content_type = getattr(uploaded_file, "content_type", None)
+        if file_content_type is None:
+            logger.warning(
+                f"Upload sem Content-Type header para {context_label} — "
+                "validação de MIME bypassada, extensão será verificada no modelo."
+            )
+        elif file_content_type not in allowed_content_types:
+            raise ValidationError(
+                {"pdf_file": "Tipo de arquivo não suportado. Use PDF, PNG ou JPEG."}
+            )
+
+        max_size = 10 * 1024 * 1024  # 10MB
+        if uploaded_file.size is None:
+            logger.warning(
+                f"Upload sem size reportado para {context_label} — "
+                "validação de tamanho bypassada, será verificada no modelo."
+            )
+        elif uploaded_file.size > max_size:
+            raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
+
+    @staticmethod
     @transaction.atomic
     def create_full(
         company: Company,
@@ -169,6 +201,14 @@ class ContractService:
         expense_data: dict[str, Any] | None = None,
         pdf_file: Any | None = None,
     ) -> Contract:
+        """
+        Orquestra a criação completa de um contrato.
+        Cria o contrato base, valida e associa opcionalmente um arquivo PDF/imagem,
+        cria os itens logísticos associados e inicializa o fluxo de despesa
+        financeira correspondente.
+        Em caso de falha em qualquer etapa, garante o rollback no banco e a
+        deleção de arquivos órfãos no storage.
+        """
         logger.info(
             f"Iniciando criação completa de Contrato para company_id={company.id}"
         )
@@ -176,37 +216,30 @@ class ContractService:
         contract = ContractService.create(company=company, data=contract_data)
 
         if pdf_file:
-            allowed_content_types = [
-                "application/pdf",
-                "image/png",
-                "image/jpeg",
-            ]
-            file_content_type = getattr(pdf_file, "content_type", None)
-            if file_content_type and file_content_type not in allowed_content_types:
-                raise ValidationError(
-                    {
-                        "pdf_file": (
-                            "Tipo de arquivo não suportado. Use PDF, PNG ou JPEG."
-                        ),
-                    }
-                )
+            ContractService._validate_uploaded_file(
+                pdf_file, "criação completa de contrato"
+            )
 
-            max_size = 10 * 1024 * 1024
-            if pdf_file.size and pdf_file.size > max_size:
-                raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
+        file_saved = False
+        try:
+            if pdf_file:
+                contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
+                contract.save(update_fields=["pdf_file"])
+                file_saved = True
 
-            contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
-            contract.save(update_fields=["pdf_file"])
+            if items_data:
+                for item_dict in items_data:  # type: ignore[attr-defined]
+                    item_dict["wedding"] = contract.wedding
+                    item_dict["contract"] = contract
+                    ItemService.create(company=company, data=item_dict)
 
-        if items_data:
-            for item_dict in items_data:  # type: ignore[attr-defined]
-                item_dict["wedding"] = contract.wedding
-                item_dict["contract"] = contract
-                ItemService.create(company=company, data=item_dict)
-
-        if expense_data:
-            expense_data["contract"] = contract
-            ExpenseService.create(company=company, data=expense_data)
+            if expense_data:
+                expense_data["contract"] = contract
+                ExpenseService.create(company=company, data=expense_data)
+        except Exception:
+            if file_saved and contract.pdf_file:
+                contract.pdf_file.delete(save=False)
+            raise
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
@@ -356,6 +389,7 @@ class ContractService:
         return instance
 
     @staticmethod
+    @transaction.atomic
     def upload_file(company: Company, uuid: UUID | str, uploaded_file: Any) -> Contract:
         """
         Faz upload de um arquivo (PDF, PNG, JPEG) para o contrato.
@@ -363,39 +397,18 @@ class ContractService:
         """
         logger.info(f"Upload de arquivo para contrato uuid={uuid}")
 
-        # Defesa em camadas: o service valida MIME (content_type do UploadedFile)
-        # como fast-fail antes de I/O; o modelo valida extensão via
-        # FileExtensionValidator no clean(). MIME não é acessível no modelo,
-        # extensão não é confiável isoladamente — os critérios são complementares.
-        allowed_content_types = [
-            "application/pdf",
-            "image/png",
-            "image/jpeg",
-        ]
-        file_content_type = getattr(uploaded_file, "content_type", None)
-        if file_content_type is None:
-            logger.warning(
-                f"Upload sem Content-Type header para contrato uuid={uuid} — "
-                f"validação de MIME bypassada, extensão será verificada no modelo."
-            )
-        elif file_content_type not in allowed_content_types:
-            raise ValidationError(
-                {"pdf_file": "Tipo de arquivo não suportado. Use PDF, PNG ou JPEG."}
-            )
-
-        # Fast-fail: validação de tamanho
-        max_size = 10 * 1024 * 1024  # 10MB
-        if uploaded_file.size is None:
-            logger.warning(
-                f"Upload sem size reportado para contrato uuid={uuid} — "
-                f"validação de tamanho bypassada, será verificada no modelo."
-            )
-        elif uploaded_file.size > max_size:
-            raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
+        ContractService._validate_uploaded_file(uploaded_file, f"contrato uuid={uuid}")
 
         contract = ContractService.get(company, uuid)
-        contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
-        contract.save(update_fields=["pdf_file"])
+
+        try:
+            contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
+            contract.save(update_fields=["pdf_file"])
+        except Exception:
+            if contract.pdf_file:
+                contract.pdf_file.delete(save=False)
+            raise
+
         logger.info(f"Arquivo salvo no contrato uuid={uuid}")
         return contract
 
