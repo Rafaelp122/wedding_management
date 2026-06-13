@@ -1,6 +1,6 @@
 # 🔁 Fluxo de CI — Wedding Management System
 
-> **Última atualização:** 9 de junho de 2026
+> **Última atualização:** 13 de junho de 2026
 
 ---
 
@@ -9,28 +9,31 @@
 O pipeline de CI (`integrity-ci.yml`) é acionado em `push` e `pull_request` na branch `main`. Ele detecta quais partes do monorepo mudaram e executa apenas os jobs relevantes, otimizando tempo de CI.
 
 ```
-                        detect-changes
-                             │
-              ┌──────────────┼──────────────┐
-              ▼              ▼              ▼
-          backend?       frontend?       landing?
-              │              │              │
-        ┌─────┴─────┐  ┌────┴─────┐        │
-        ▼           ▼  ▼          ▼        ▼
-      lint      backend-  lint  frontend-  landing-
-                 tests          tests      check
-        │           │    │         │        │
-        └──────┬────┘    └────┬────┘        │
-               ▼              ▼              │
-         contract-sync        │              │
-           │    │             │              │
-           │    └──────┐      │              │
-           ▼           ▼      ▼              ▼
-      deploy         deploy-frontend    deploy-landing
-   (Cloud Run)        (Vercel)          (Vercel)
-   (needs backend-   (needs frontend-
-    tests +           tests +
-    contract-sync)    contract-sync)
+                         detect-changes
+                              │
+               ┌──────────────┼──────────────┐
+               ▼              ▼              ▼
+           backend?       frontend?       landing?
+               │              │              │
+         ┌─────┴─────┐  ┌────┴─────┐        │
+         ▼           ▼  ▼          ▼        ▼
+       lint      backend-  lint  frontend-  landing-
+                  tests          tests      check
+         │           │    │         │        │
+         └──────┬────┘    └────┬────┘        │
+                ▼              ▼              │
+          contract-sync        │              │
+            │    │             │              │
+            │    └──────┐      │              │
+            ▼           ▼      ▼              ▼
+       deploy         deploy-frontend    deploy-landing
+    (Cloud Run)        (Vercel)          (Vercel)
+    (needs backend-   (needs frontend-
+     tests +           tests +
+      contract-sync)    contract-sync)
+
+   review ── needs: backend-tests, frontend-tests, landing-check
+   (AI Code Review, gate: bloqueia se testes falharem, roda se skipped)
 ```
 
 ---
@@ -153,6 +156,25 @@ git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO" && exit 1)
 **Dependências:** `detect-changes`, `landing-check`.
 
 **Condição:** Roda se `landing == true` e `landing-check` passou.
+
+### 2.10 `review` — AI Code Review (dentro do integrity-ci)
+**Propósito:** Revisão automatizada de PR via OpenCode + DeepSeek. Verifica desvios arquiteturais, segurança, e qualidade seguindo os skills do projeto.
+
+**Dependências:** `detect-changes`, `backend-tests`, `frontend-tests`, `landing-check`.
+
+**Condição:** Apenas em `pull_request` (não em push na main), quando backend ou frontend mudaram. Bloqueia se algum teste falhar, mas roda normalmente se forem skipped (ex: PR só de backend).
+
+**Fluxo:**
+1. Roda automaticamente dentro do pipeline de CI, após testes passarem
+2. Verifica se o label `ai-reviewed` já existe na PR — se sim, **skipa**
+3. Executa o reviewer via `anomalyco/opencode/github` com `deepseek-v4-pro`
+4. Após review bem-sucedido, adiciona o label `ai-reviewed` na PR
+
+**Re-review:** Use `opencode-assistant.yml` — comente `/opencode` na PR para disparar uma nova revisão a qualquer momento.
+
+> **Decisão de design:** Integrado ao integrity-ci para simplificar o pipeline. Usa `needs.<job>.result == 'failure'` em vez de `always() && !failure()` para evitar o edge case onde jobs skipped forçam o skip do review. O label `ai-reviewed` é o guard que impede revisões repetidas em pushes subsequentes.
+>
+> **Cancelamento em progresso:** Como o integrity-ci tem `concurrency: cancel-in-progress: true`, um novo push cancela o review em andamento. Como o label ainda não foi adicionado (job cancelado antes de completar), o próximo push bem-sucedido rodará o review novamente — garantindo que a versão mais recente seja sempre revisada.
 
 ---
 
