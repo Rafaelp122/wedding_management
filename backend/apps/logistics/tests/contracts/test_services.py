@@ -836,3 +836,29 @@ class TestContractServiceCreateFull:
                     items_data=items_data,
                 )
             mock_delete.assert_called_once_with(save=False)
+
+    def test_create_full_file_save_db_error_no_cleanup(self, user):
+        """Se o erro ocorrer antes de salvar o arquivo no storage (ex: erro ao
+        chamar save do FieldFile), o cleanup (FieldFile.delete) não deve ser
+        acionado porque o arquivo nunca foi salvo com sucesso."""
+        wedding, supplier, _ = self._setup(user)
+        contract_data = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Contrato",
+            "total_amount": Decimal("5000.00"),
+        }
+        pdf_file = SimpleUploadedFile(
+            "contrato.pdf", b"pdf content", content_type="application/pdf"
+        )
+
+        with patch("django.db.models.fields.files.FieldFile.save") as mock_save:
+            mock_save.side_effect = Exception("Storage Save Error")
+            with patch("django.db.models.fields.files.FieldFile.delete") as mock_delete:
+                with pytest.raises(Exception, match="Storage Save Error"):
+                    ContractService.create_full(
+                        company=user.company,
+                        contract_data=contract_data,
+                        pdf_file=pdf_file,
+                    )
+                mock_delete.assert_not_called()
