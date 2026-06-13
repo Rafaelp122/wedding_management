@@ -288,6 +288,26 @@ class TestLogisticsNinjaAPI:
         assert response.status_code == 200
         assert response.json()["name"] == "Contrato Atualizado"
 
+    def test_update_contract_wedding_field_is_ignored(
+        self, auth_client, seed_data, user
+    ):
+        """
+        Testa que enviar o campo wedding no PATCH do contrato é ignorado (200)
+        e não altera o casamento.
+        """
+        contract = seed_data["my_contract"]
+        other_wedding = WeddingFactory(company=user.company)
+        payload = {"name": "Novo Nome", "wedding": str(other_wedding.uuid)}
+        response = auth_client.patch(
+            f"/api/v1/logistics/contracts/{contract.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        contract.refresh_from_db()
+        assert contract.name == "Novo Nome"
+        assert contract.wedding.uuid == seed_data["my_contract"].wedding.uuid
+
     def test_delete_contract_success(self, auth_client, seed_data):
         """Testa exclusão de contrato com DELETE."""
         contract = seed_data["my_contract"]
@@ -305,6 +325,24 @@ class TestLogisticsNinjaAPI:
         )
         assert response.status_code == 200
         assert response.json()["name"] == "Item Atualizado"
+
+    def test_update_item_wedding_field_is_ignored(self, auth_client, seed_data, user):
+        """
+        Testa que enviar o campo wedding no PATCH do item é ignorado (200)
+        e não altera o casamento.
+        """
+        item = seed_data["my_item"]
+        other_wedding = WeddingFactory(company=user.company)
+        payload = {"name": "Novo Nome", "wedding": str(other_wedding.uuid)}
+        response = auth_client.patch(
+            f"/api/v1/logistics/items/{item.uuid}/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        item.refresh_from_db()
+        assert item.name == "Novo Nome"
+        assert item.wedding.uuid == seed_data["my_item"].wedding.uuid
 
     def test_delete_item_success(self, auth_client, seed_data):
         """Testa exclusão de item com DELETE."""

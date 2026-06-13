@@ -6,7 +6,6 @@
  */
 
 export interface ContractPatchIn {
-  wedding?: string | null;
   supplier?: string | null;
   name?: string | null;
   total_amount?: number | string | null;

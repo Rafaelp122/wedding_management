@@ -6,7 +6,6 @@
  */
 
 export interface ItemPatchIn {
-  wedding?: string | null;
   contract?: string | null;
   name?: string | null;
   description?: string | null;

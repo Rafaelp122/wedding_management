@@ -5722,18 +5722,6 @@
       },
       "ContractPatchIn": {
         "properties": {
-          "wedding": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Wedding"
-          },
           "supplier": {
             "anyOf": [
               {
@@ -6061,18 +6049,6 @@
       },
       "ItemPatchIn": {
         "properties": {
-          "wedding": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Wedding"
-          },
           "contract": {
             "anyOf": [
               {
