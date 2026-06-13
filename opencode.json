@@ -18,7 +18,8 @@
         },
         "task": {
           "*": "allow"
-        }
+        },
+        "external_directory": "allow"
       }
     },
     "plan": {
