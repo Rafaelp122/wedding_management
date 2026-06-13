@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { AppSidebar } from "../app-sidebar";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard Geral",
@@ -43,15 +50,25 @@ export const AppLayout = () => {
 
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 focus-visible:ring-primary/50"
-              aria-label="Notificações"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-destructive rounded-full ring-2 ring-white dark:ring-[#18181B]" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 focus-visible:ring-primary/50 cursor-pointer"
+                  aria-label="Notificações"
+                >
+                  <Bell className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="p-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Você não tem novas notificações no momento.
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
