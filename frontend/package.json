@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "generate:api": "orval",
     "test": "vitest run",
-    "test:ci": "npm run build && vitest run --coverage",
+    "test:ci": "vitest run --coverage",
     "type-check": "tsc -p tsconfig.app.json --noEmit"
   },
   "dependencies": {
