@@ -33,7 +33,11 @@
       <h5 class="text-zinc-400 uppercase tracking-widest text-[10px] font-bold">Contato</h5>
       <p>📧 suporte@simaceito.site</p>
       <p>📍 São Paulo • Rio de Janeiro • Lisboa</p>
-      <p class="mt-4 text-[10px] font-mono">© {new Date().getFullYear()} Sim, Aceito!. Todos os direitos reservados.</p>
+      <p class="mt-4 text-[10px] font-mono">© <span id="copyright-year"></span> Sim, Aceito!. Todos os direitos reservados.</p>
+      <script>
+        const yearEl = document.getElementById('copyright-year');
+        if (yearEl) yearEl.textContent = new Date().getFullYear().toString();
+      </script>
     </div>
   </div>
 </footer>
