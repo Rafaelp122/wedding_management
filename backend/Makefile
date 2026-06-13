@@ -45,7 +45,7 @@ format:
 	uv run ruff check . --fix
 
 openapi:
-	$(PYTHON) export_openapi_schema --api config.api.api --output openapi.json --settings=config.settings.development
+	$(PYTHON) export_openapi_schema --api config.api.api --output openapi.json --settings=config.settings.development --indent 2
 	@echo "✅ Schema OpenAPI exportado para openapi.json dentro do container."
 
 check-backend: lint mypy test openapi

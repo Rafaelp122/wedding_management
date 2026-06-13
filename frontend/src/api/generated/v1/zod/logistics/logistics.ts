@@ -754,7 +754,6 @@ export const LogisticsItemsUpdateParams = zod.object({
 });
 
 export const LogisticsItemsUpdateBody = zod.object({
-  wedding: zod.union([zod.string(), zod.null()]).optional(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.union([zod.string(), zod.null()]).optional(),
   description: zod.union([zod.string(), zod.null()]).optional(),

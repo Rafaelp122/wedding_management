@@ -216,7 +216,6 @@ class ItemStatusTransitionIn(Schema):
 
 
 class ItemPatchIn(Schema):
-    wedding: UUID4 | None = None
     contract: UUID4 | None = None
     name: str | None = None
     description: str | None = None
