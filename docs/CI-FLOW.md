@@ -20,22 +20,23 @@ O pipeline de CI (`integrity-ci.yml`) é acionado em `push` e `pull_request` na 
        lint      backend-  lint  frontend-  landing-
                   tests          tests      check
          │           │    │         │        │
-         └───────────┴────┼─────────┘        │
-                      │   │                  │
-                      ▼   ▼                  ▼
-                 contract-sync                │
-                      │   │                  │
-                      │   └──────────┐       │
-                      ▼               ▼       ▼
-                 deploy         deploy-frontend   deploy-landing
-              (Cloud Run)        (Vercel)          (Vercel)
-              (needs:            (needs:
-               backend-tests,     frontend-tests,
-               contract-sync)     contract-sync)
+         │           │    │         │        │
+         │           └────┼─────────┘        │
+         │                │                  │
+         ▼                ▼                  │
+   contract-sync    contract-sync            │
+         │                │                  │
+         └────┬───────────┘                  │
+              │        │                     │
+              ▼        ▼                     ▼
+           deploy  deploy-frontend     deploy-landing
+        (Cloud Run)  (Vercel)            (Vercel)
 
    review ── needs: backend-tests, frontend-tests, landing-check
    (AI Code Review, gate: !failure() && !cancelled(), roda se skipped)
 ```
+
+`contract-sync` depende apenas de `detect-changes` — roda em paralelo com `lint` e testes.
 
 ---
 
@@ -240,5 +241,5 @@ git commit -m "feat(scope): descrição"
 git push
 
 # 4. Monitore o CI no GitHub
-# Verifique: lint + tests (paralelo) → contract-sync → deploy preview
+# Verifique: lint + tests + contract-sync (paralelo) → deploy preview
 ```
