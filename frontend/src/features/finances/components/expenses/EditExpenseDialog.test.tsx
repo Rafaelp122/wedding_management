@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
 import { EditExpenseDialog } from "@/features/finances/components/expenses/EditExpenseDialog";
 import { createMockExpense } from "@/test-data";
 import { server } from "@/mocks/server";
@@ -100,6 +100,75 @@ describe("EditExpenseDialog", () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();
+    });
+  });
+
+  it("submits only changed fields", async () => {
+    let requestBody: Record<string, unknown>;
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.patch(
+        "*/api/v1/finances/expenses/:uuid/",
+        async ({ request }) => {
+          requestBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({ ...mockExpense, name: "Novo Nome" });
+        },
+      ),
+    );
+
+    render(
+      <EditExpenseDialog
+        expense={mockExpense}
+        weddingUuid="w-1"
+        open={true}
+        onOpenChange={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const nameInput = screen.getByLabelText("Nome da Despesa");
+    await user.clear(nameInput);
+    await user.type(nameInput, "Novo Nome");
+
+    await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
+
+    await waitFor(() => {
+      expect(requestBody).toEqual({ name: "Novo Nome" });
+    });
+  });
+
+  it("sends num_installments when changed", async () => {
+    let requestBody: Record<string, unknown>;
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.patch(
+        "*/api/v1/finances/expenses/:uuid/",
+        async ({ request }) => {
+          requestBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({ ...mockExpense });
+        },
+      ),
+    );
+
+    render(
+      <EditExpenseDialog
+        expense={mockExpense}
+        weddingUuid="w-1"
+        open={true}
+        onOpenChange={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const installmentsInput = screen.getByLabelText("Nº de Parcelas");
+    fireEvent.change(installmentsInput, { target: { value: "5" } });
+
+    await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
+
+    await waitFor(() => {
+      expect(requestBody).toHaveProperty("num_installments", 5);
     });
   });
 });

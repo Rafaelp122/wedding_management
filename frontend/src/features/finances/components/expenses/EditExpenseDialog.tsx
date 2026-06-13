@@ -7,6 +7,7 @@ import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistic
 import { FinancesExpensesUpdateBody } from "@/api/generated/v1/zod/finances/finances";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import { selectOnFocus } from "@/lib/select-on-focus";
+import { buildPatchPayload } from "@/lib/patch-payload";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
 import { FormDialog } from "@/components/form-dialog";
@@ -65,8 +66,36 @@ export function EditExpenseDialog({
   });
 
   const onSubmit = (data: EditExpenseFormData) => {
+    const original: Record<string, unknown> = {
+      name: expense.name || "",
+      description: expense.description || null,
+      estimated_amount: Number(expense.estimated_amount) || 0,
+      actual_amount: Number(expense.actual_amount) || 0,
+      contract: expense.contract || null,
+      num_installments: null,
+      first_due_date: null,
+    };
+    const modified: Record<string, unknown> = {
+      name: data.name,
+      description: data.description,
+      estimated_amount: Number(data.estimated_amount) || 0,
+      actual_amount: Number(data.actual_amount) || 0,
+      contract: data.contract,
+      num_installments: data.num_installments ?? null,
+      first_due_date: data.first_due_date ?? null,
+    };
+    const payload = buildPatchPayload(original, modified, [
+      "name",
+      "description",
+      "estimated_amount",
+      "actual_amount",
+      "contract",
+      "num_installments",
+      "first_due_date",
+    ]);
+
     mutate(
-      { uuid: expense.uuid, data },
+      { uuid: expense.uuid, data: payload },
       createMutationCallbacks({
         successMsg: "Despesa atualizada com sucesso!",
         fallbackErrorMsg: "Erro ao atualizar despesa.",
