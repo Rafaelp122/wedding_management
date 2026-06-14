@@ -2,7 +2,11 @@ from uuid import uuid4
 
 import pytest
 
-from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.logistics.models import Item
 from apps.logistics.services.item_service import ItemService
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
@@ -113,6 +117,89 @@ class TestItemServiceCreate:
 
         assert "item_missing_wedding" in str(exc_info.value.code)
 
+    def test_create_item_mismatched_wedding_and_contract(self, user):
+        """
+        Se contract e wedding são fornecidos e divergem,
+        levanta DomainIntegrityError.
+        """
+        _, contract_a = _setup_item_context(user)
+        wedding_b = WeddingFactory(user_context=user)
+
+        data = {
+            "contract": contract_a.uuid,
+            "wedding": wedding_b.uuid,
+            "name": "Item conflitante",
+            "quantity": 1,
+        }
+
+        with pytest.raises(DomainIntegrityError) as exc_info:
+            ItemService.create(user.company, data)
+
+        assert "item_contract_wedding_mismatch" in str(exc_info.value.code)
+
+    def test_create_item_matching_wedding_and_contract(self, user):
+        """
+        Se contract e wedding são fornecidos e coincidem,
+        cria o item com sucesso.
+        """
+        wedding, contract = _setup_item_context(user)
+
+        data = {
+            "contract": contract.uuid,
+            "wedding": wedding.uuid,
+            "name": "Item consistente",
+            "quantity": 1,
+        }
+
+        item = ItemService.create(user.company, data)
+        assert item.contract == contract
+        assert item.wedding == wedding
+
+    def test_create_item_with_wedding_instance(self, user):
+        """Criação de item passando uma instância de Wedding diretamente."""
+        wedding, _ = _setup_item_context(user)
+
+        data = {
+            "wedding": wedding,
+            "name": "Item com instância",
+            "quantity": 2,
+        }
+
+        item = ItemService.create(user.company, data)
+
+        assert item.wedding == wedding
+        assert item.contract is None
+        assert item.name == "Item com instância"
+
+    def test_create_item_with_invalid_wedding_type_raises_error(self, user):
+        """Criação de item com tipo inválido de casamento levanta erro."""
+        data = {
+            "wedding": 12345,  # Tipo inválido (int)
+            "name": "Item inválido",
+            "quantity": 1,
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ItemService.create(user.company, data)
+
+        assert "item_missing_wedding" in str(exc_info.value.code)
+
+    def test_create_item_with_nonexistent_wedding_uuid_raises_error(self, user):
+        """
+        Criação de item com UUID de casamento inexistente
+        levanta ObjectNotFoundError.
+        """
+        data = {
+            "wedding": uuid4(),
+            "name": "Item fantasma",
+            "quantity": 1,
+        }
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ItemService.create(user.company, data)
+
+        assert "wedding_not_found_or_denied" in str(exc_info.value.code)
+
 
 @pytest.mark.django_db
 class TestItemServiceUpdate:
@@ -170,6 +257,30 @@ class TestItemServiceUpdate:
         updated = ItemService.update(user.company, item, {"contract": None})
 
         assert updated.contract is None
+
+    def test_update_item_contract_matching_wedding(self, user):
+        """Atualização do contrato para um contrato com casamento correspondente."""
+        wedding, contract1 = _setup_item_context(user)
+        supplier = SupplierFactory(company=user.company)
+        contract2 = ContractFactory(wedding=wedding, supplier=supplier)
+        item = ItemFactory(contract=contract1, wedding=wedding)
+
+        updated = ItemService.update(user.company, item, {"contract": contract2})
+
+        assert updated.contract == contract2
+
+    def test_update_item_contract_mismatched_wedding_raises_error(self, user):
+        """Atualização do contrato para um com casamento diferente levanta erro."""
+        wedding1, contract1 = _setup_item_context(user)
+        wedding2 = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        contract2 = ContractFactory(wedding=wedding2, supplier=supplier)
+        item = ItemFactory(contract=contract1, wedding=wedding1)
+
+        with pytest.raises(DomainIntegrityError) as exc_info:
+            ItemService.update(user.company, item, {"contract": contract2})
+
+        assert "item_contract_wedding_mismatch" in str(exc_info.value.code)
 
 
 @pytest.mark.django_db
