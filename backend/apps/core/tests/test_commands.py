@@ -27,7 +27,7 @@ class TestSeedDbCommand:
         call_command("seed_db", planners=3, weddings=0)
 
         planners = User.objects.filter(is_superuser=False, is_staff=False)
-        assert planners.count() >= 3
+        assert planners.count() == 4  # 3 batch + 1 E2E
 
     def test_seed_db_creates_weddings_with_mixed_statuses(self):
         call_command("seed_db", planners=1, weddings=3)
@@ -46,7 +46,7 @@ class TestSeedDbCommand:
         assert wedding is not None
 
         suppliers = Supplier.objects.filter(company=wedding.company)
-        assert suppliers.count() >= 5
+        assert suppliers.count() == 5
 
     def test_seed_db_creates_contracts_with_mixed_statuses(self):
         call_command("seed_db", planners=1, weddings=1)
@@ -124,3 +124,22 @@ class TestSeedDbCommand:
 
         assert Wedding.objects.count() > 0
         assert User.objects.filter(is_superuser=True).exists()
+
+    def test_seed_db_creates_e2e_planner(self):
+        call_command("seed_db", planners=0, weddings=0)
+
+        e2e = User.objects.filter(email="planner@example.com").first()
+        assert e2e is not None
+        assert e2e.is_active is True
+        assert e2e.is_staff is False
+        assert e2e.is_superuser is False
+
+    def test_seed_db_is_idempotent(self):
+        call_command("seed_db", planners=1, weddings=1)
+        call_command("seed_db", planners=1, weddings=1)
+
+        e2e_planners = User.objects.filter(email="planner@example.com")
+        assert e2e_planners.count() == 1
+
+        superusers = User.objects.filter(is_superuser=True)
+        assert superusers.count() == 1

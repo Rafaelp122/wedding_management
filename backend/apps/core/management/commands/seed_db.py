@@ -11,7 +11,7 @@ Uso:
 
 import secrets
 from datetime import date, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_DOWN, Decimal
 
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
@@ -33,7 +33,7 @@ from apps.logistics.tests.factories import (
 )
 from apps.scheduler.tests.factories import EventFactory, TaskFactory
 from apps.users.tests.factories import AdminFactory, UserFactory
-from apps.weddings.models import Wedding as WeddingModel
+from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -111,7 +111,7 @@ class Command(BaseCommand):
             for i in range(num_weddings):
                 if i == 0 and num_weddings > 1:
                     wedding = WeddingFactory.create(user_context=planner)
-                    wedding.status = WeddingModel.StatusChoices.COMPLETED
+                    wedding.status = Wedding.StatusChoices.COMPLETED
                     wedding.date = timezone.now().date() - timedelta(days=30)
                     wedding.save(skip_clean=True)
                 else:
@@ -165,7 +165,10 @@ class Command(BaseCommand):
 
                     installment_amount = (
                         contract.total_amount / Decimal("3")
-                    ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                    ).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+                    remainder_amount = contract.total_amount - (
+                        installment_amount * Decimal("2")
+                    )
 
                     InstallmentFactory.create(
                         expense=expense,
@@ -206,7 +209,7 @@ class Command(BaseCommand):
                         company=planner.company,
                         wedding=wedding,
                         installment_number=3,
-                        amount=installment_amount,
+                        amount=remainder_amount,
                         due_date=date.today() + timedelta(days=45),
                         paid_date=None,
                         status=Installment.StatusChoices.PENDING,
