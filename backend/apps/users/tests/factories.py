@@ -33,7 +33,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     # Gera emails únicos: planner0@example.com, planner1@example.com...
     # Essencial para evitar erros de integridade no seu modelo
-    email = factory.Sequence(lambda n: f"planner{n}@example.com")
+    email = factory.Faker("email")
 
     # Usa o Faker configurado como pt_BR (no conftest global) para nomes reais
     first_name = factory.Faker("first_name")
