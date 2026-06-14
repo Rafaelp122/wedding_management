@@ -52,12 +52,13 @@ describe("WeddingFinancesSummaryCards", () => {
     expect(usage.className).toContain("text-red-500");
   });
 
-  it("caps usage at 100%", () => {
+  it("shows percentage above 100% in label while Progress is clamped at 100", () => {
     render(
       <WeddingFinancesSummaryCards totalEstimated={1000} totalSpent={2000} />,
     );
 
     expect(screen.getByText("200%")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
   });
 
   it("does not render average comparison when there is only one wedding budget", () => {
@@ -140,6 +141,35 @@ describe("WeddingFinancesSummaryCards", () => {
     );
 
     expect(screen.getByText("Na média dos casamentos")).toBeInTheDocument();
+  });
+
+  it("shows loading skeleton when budgets are loading", () => {
+    vi.mocked(useFinancesBudgetsList).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as any);
+
+    render(
+      <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,
+    );
+
+    const skeletons = document.querySelectorAll(".animate-pulse");
+    expect(skeletons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not render average comparison when budgets fetch fails", () => {
+    vi.mocked(useFinancesBudgetsList).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error("API Error"),
+    } as any);
+
+    render(
+      <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,
+    );
+
+    expect(screen.queryByText(/que a média/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/média dos casamentos/)).not.toBeInTheDocument();
   });
 
   it("shows 'Dentro do planejado' when budget usage is under 90%", () => {

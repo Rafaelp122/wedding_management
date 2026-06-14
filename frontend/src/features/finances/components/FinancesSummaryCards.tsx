@@ -23,7 +23,7 @@ export function WeddingFinancesSummaryCards({
     totalEstimated > 0 ? Math.round((totalSpent / totalEstimated) * 100) : 0;
   const clampedBudgetUsage = Math.min(100, Math.max(0, budgetUsage));
 
-  const { data: budgetsListResponse } = useFinancesBudgetsList();
+  const { data: budgetsListResponse, isLoading: budgetsLoading } = useFinancesBudgetsList();
   const budgets = budgetsListResponse?.data?.items || [];
   const validBudgets = budgets.filter((b) => Number(b.total_estimated) > 0);
   const hasEnoughData = validBudgets.length >= 2;
@@ -89,7 +89,12 @@ export function WeddingFinancesSummaryCards({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {hasEnoughData && (
+          {budgetsLoading ? (
+            <div className="flex items-center gap-1 text-xs">
+              <div className="w-3 h-3 rounded-full bg-muted animate-pulse" />
+              <div className="h-3 w-36 bg-muted rounded animate-pulse" />
+            </div>
+          ) : hasEnoughData ? (
             <div
               className={`flex items-center gap-1 text-xs font-medium ${
                 isBudgetEqual
@@ -112,7 +117,7 @@ export function WeddingFinancesSummaryCards({
                   : `${diffPercentage}% ${isBudgetGreater ? "maior" : "menor"} que a média`}
               </span>
             </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
