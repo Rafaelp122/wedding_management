@@ -58,7 +58,7 @@ describe("WeddingFinancesSummaryCards", () => {
     );
 
     expect(screen.getByText("200%")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+    expect(screen.getByRole("progressbar")).toHaveAttribute("data-value", "100");
   });
 
   it("does not render average comparison when there is only one wedding budget", () => {
