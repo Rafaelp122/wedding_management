@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 from django.db.models import QuerySet
-from ninja import File, Form, Router, UploadedFile
+from ninja import Router
 from ninja.pagination import paginate
 from pydantic import UUID4
 
@@ -14,14 +14,12 @@ from apps.logistics.schemas import (
     ContractOut,
     ContractPatchIn,
     ContractStatusTransitionIn,
+    ContractUploadIn,
+    ContractUploadUrlIn,
+    ContractUploadUrlOut,
 )
 from apps.logistics.services.contract_service import ContractService
 from apps.users.types import AuthRequest
-
-
-PDF_FILE_REQUIRED = File(...)
-CONTRACT_FULL_FORM = Form(...)
-CONTRACT_FULL_FILE = File(None)
 
 
 contracts_router = Router(tags=["Logistics"])
@@ -62,6 +60,24 @@ def retrieve_contract(request: AuthRequest, uuid: UUID4) -> Contract:
 
 
 @contracts_router.post(
+    "/upload-url/",
+    response={200: ContractUploadUrlOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_upload_url",
+)
+def generate_upload_url(
+    request: AuthRequest, payload: ContractUploadUrlIn
+) -> dict[str, Any]:
+    """
+    Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.
+    """
+    return ContractService.generate_upload_url(
+        company=request.user.company,
+        filename=payload.filename,
+        wedding_id=payload.wedding_id,
+    )
+
+
+@contracts_router.post(
     "/",
     response={201: ContractOut, **MUTATION_ERROR_RESPONSES},
     operation_id="logistics_contracts_create",
@@ -83,14 +99,14 @@ def create_contract(request: AuthRequest, payload: ContractIn) -> tuple[int, Con
 )
 def create_contract_full(
     request: AuthRequest,
-    payload: ContractFullCreateIn = CONTRACT_FULL_FORM,
-    pdf_file: UploadedFile | None = CONTRACT_FULL_FILE,
+    payload: ContractFullCreateIn,
 ) -> tuple[int, Contract]:
     """
     Cria contrato com arquivo, itens e despesa em uma única transação atômica.
     """
     contract_data = payload.model_dump(
         exclude={
+            "pdf_file_key",
             "items_data",
             "create_expense",
             "expense_category",
@@ -119,7 +135,7 @@ def create_contract_full(
         contract_data=contract_data,
         items_data=items_list,
         expense_data=expense_data,
-        pdf_file=pdf_file,
+        pdf_file_key=payload.pdf_file_key,
     )
     return 201, contract
 
@@ -162,13 +178,13 @@ def delete_contract(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     operation_id="logistics_contracts_upload",
 )
 def upload_contract_file(
-    request: AuthRequest, uuid: UUID4, pdf_file: UploadedFile = PDF_FILE_REQUIRED
+    request: AuthRequest, uuid: UUID4, payload: ContractUploadIn
 ) -> Contract:
     """
-    Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+    Associa um arquivo já carregado no R2/S3 (chave) ao contrato.
     """
     contract = ContractService.upload_file(
-        company=request.user.company, uuid=uuid, uploaded_file=pdf_file
+        company=request.user.company, uuid=uuid, pdf_file_key=payload.pdf_file_key
     )
     return contract
 

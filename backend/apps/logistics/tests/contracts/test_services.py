@@ -5,7 +5,6 @@ from uuid import uuid4
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.finances.tests.factories import (
@@ -285,68 +284,29 @@ class TestContractServiceListAndGet:
 class TestContractServiceUploadFile:
     """Testes de upload de arquivo para contrato via ContractService."""
 
-    def test_upload_file_invalid_content_type_fails(self, user):
-        """upload_file com content_type inválido deve falhar (fast-fail)."""
+    def test_upload_file_invalid_extension_fails(self, user):
+        """upload_file com extensão inválida deve falhar na validação do model."""
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(wedding=wedding, supplier=supplier)
-        invalid_file = SimpleUploadedFile(
-            name="malicious.exe",
-            content=b"malicious content",
-            content_type="application/octet-stream",
-        )
 
         with pytest.raises(ValidationError) as exc_info:
-            ContractService.upload_file(user.company, contract.uuid, invalid_file)
+            ContractService.upload_file(
+                user.company, contract.uuid, "contracts/malicious.exe"
+            )
 
         assert "não suportado" in str(exc_info.value).lower()
 
-    def test_upload_file_exceeds_size_fails(self, user):
-        """upload_file com arquivo > 10MB deve falhar (fast-fail)."""
+    def test_upload_file_valid_key_succeeds(self, user):
+        """upload_file com key válida deve salvar com sucesso."""
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(wedding=wedding, supplier=supplier)
-        oversized_file = SimpleUploadedFile(
-            name="big_contract.pdf",
-            content=b"0" * (10 * 1024 * 1024 + 1),
-            content_type="application/pdf",
+
+        result = ContractService.upload_file(
+            user.company, contract.uuid, "contracts/valid_contract.pdf"
         )
 
-        with pytest.raises(ValidationError) as exc_info:
-            ContractService.upload_file(user.company, contract.uuid, oversized_file)
-
-        assert "10mb" in str(exc_info.value).lower()
-
-    def test_upload_file_valid_pdf_succeeds(self, user):
-        """upload_file com pdf válido deve salvar com sucesso."""
-        wedding, supplier = _setup_contract_context(user)
-        contract = ContractFactory(wedding=wedding, supplier=supplier)
-        valid_file = SimpleUploadedFile(
-            name="valid_contract.pdf",
-            content=b"valid pdf content",
-            content_type="application/pdf",
-        )
-
-        result = ContractService.upload_file(user.company, contract.uuid, valid_file)
-
-        assert result.pdf_file.name.endswith(".pdf")
+        assert result.pdf_file.name == "contracts/valid_contract.pdf"
         assert result.uuid == contract.uuid
-
-    def test_upload_file_db_error_cleans_up_storage(self, user):
-        """Se ocorrer um erro no DB, o arquivo deve ser removido do storage."""
-        wedding, supplier = _setup_contract_context(user)
-        contract = ContractFactory(wedding=wedding, supplier=supplier)
-        valid_file = SimpleUploadedFile(
-            name="valid_contract.pdf",
-            content=b"valid pdf content",
-            content_type="application/pdf",
-        )
-
-        with patch("apps.logistics.models.Contract.save") as mock_save:
-            mock_save.side_effect = Exception("DB Error")
-            with patch("django.db.models.fields.files.FieldFile.delete") as mock_delete:
-                with pytest.raises(Exception, match="DB Error"):
-                    ContractService.upload_file(user.company, contract.uuid, valid_file)
-
-                mock_delete.assert_called_once_with(save=False)
 
 
 @pytest.mark.django_db
@@ -369,9 +329,7 @@ class TestContractServiceTransitionStatus:
 
     def test_pending_to_signed(self, make_contract):
         contract = make_contract("PENDING")
-        contract.pdf_file = SimpleUploadedFile(
-            "test.pdf", b"pdf content", content_type="application/pdf"
-        )
+        contract.pdf_file = "contracts/test.pdf"
         contract.signed_date = date.today()
         contract.total_amount = Decimal("5000.00")
         contract.save()
@@ -587,15 +545,12 @@ class TestContractServiceCreateFull:
             "name": "Contrato com Arquivo",
             "total_amount": Decimal("5000.00"),
         }
-        pdf_file = SimpleUploadedFile(
-            "contrato.pdf", b"pdf content", content_type="application/pdf"
-        )
         contract = ContractService.create_full(
             company=user.company,
             contract_data=contract_data,
-            pdf_file=pdf_file,
+            pdf_file_key="contracts/contrato.pdf",
         )
-        assert contract.pdf_file.name
+        assert contract.pdf_file.name == "contracts/contrato.pdf"
 
     def test_create_full_with_items(self, user):
         """Cria contrato com itens via items_data."""
@@ -651,9 +606,6 @@ class TestContractServiceCreateFull:
             "name": "Contrato Completo",
             "total_amount": Decimal("10000.00"),
         }
-        pdf_file = SimpleUploadedFile(
-            "contrato.pdf", b"pdf content", content_type="application/pdf"
-        )
         items_data = [
             {"name": "Item 1", "quantity": 10, "acquisition_status": "PENDING"},
         ]
@@ -670,9 +622,9 @@ class TestContractServiceCreateFull:
             contract_data=contract_data,
             items_data=items_data,
             expense_data=expense_data,
-            pdf_file=pdf_file,
+            pdf_file_key="contracts/contrato.pdf",
         )
-        assert contract.pdf_file.name
+        assert contract.pdf_file.name == "contracts/contrato.pdf"
         assert contract.items.count() == 1
         assert contract.expense is not None
         assert contract.expense.installments.count() == 3
@@ -686,38 +638,13 @@ class TestContractServiceCreateFull:
             "name": "Contrato",
             "total_amount": Decimal("5000.00"),
         }
-        exe_file = SimpleUploadedFile(
-            "virus.exe", b"exe content", content_type="application/x-msdownload"
-        )
         with pytest.raises(ValidationError) as exc_info:
             ContractService.create_full(
                 company=user.company,
                 contract_data=contract_data,
-                pdf_file=exe_file,
+                pdf_file_key="contracts/virus.exe",
             )
         assert "não suportado" in str(exc_info.value)
-
-    def test_create_full_file_exceeds_max_size(self, user):
-        """Arquivo maior que 10MB deve falhar."""
-        wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato",
-            "total_amount": Decimal("5000.00"),
-        }
-        large_file = SimpleUploadedFile(
-            "large.pdf",
-            b"x" * (11 * 1024 * 1024),
-            content_type="application/pdf",
-        )
-        with pytest.raises(ValidationError) as exc_info:
-            ContractService.create_full(
-                company=user.company,
-                contract_data=contract_data,
-                pdf_file=large_file,
-            )
-        assert "10MB" in str(exc_info.value)
 
     def test_create_full_with_parent(self, user):
         """Cria contrato como aditivo de outro contrato."""
@@ -807,58 +734,37 @@ class TestContractServiceCreateFull:
             )
         assert "br_f02_violation" in str(exc_info.value.code)
 
-    @patch("apps.logistics.services.item_service.ItemService.create")
-    def test_create_full_db_error_cleans_up_storage(self, mock_item_create, user):
-        """Se ocorrer um erro subsequente (ex: no ItemService),
-        o arquivo no storage deve ser deletado."""
-        wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato",
-            "total_amount": Decimal("5000.00"),
-        }
-        pdf_file = SimpleUploadedFile(
-            "contrato.pdf", b"pdf content", content_type="application/pdf"
-        )
-        items_data = [
-            {"name": "Item 1", "quantity": 10, "acquisition_status": "PENDING"},
-        ]
 
-        mock_item_create.side_effect = Exception("Item Creation Error")
+@pytest.mark.django_db
+class TestContractServiceGenerateUploadUrl:
+    """Testes de geração de upload URL pré-assinada."""
 
-        with patch("django.db.models.fields.files.FieldFile.delete") as mock_delete:
-            with pytest.raises(Exception, match="Item Creation Error"):
-                ContractService.create_full(
-                    company=user.company,
-                    contract_data=contract_data,
-                    pdf_file=pdf_file,
-                    items_data=items_data,
-                )
-            mock_delete.assert_called_once_with(save=False)
+    @patch("boto3.client")
+    def test_generate_upload_url_success(self, mock_boto3_client, user):
+        wedding, _ = _setup_contract_context(user)
+        mock_s3 = mock_boto3_client.return_value
+        mock_s3.generate_presigned_url.return_value = "https://r2.com/presigned-url"
 
-    def test_create_full_file_save_db_error_no_cleanup(self, user):
-        """Se o erro ocorrer antes de salvar o arquivo no storage (ex: erro ao
-        chamar save do FieldFile), o cleanup (FieldFile.delete) não deve ser
-        acionado porque o arquivo nunca foi salvo com sucesso."""
-        wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato",
-            "total_amount": Decimal("5000.00"),
-        }
-        pdf_file = SimpleUploadedFile(
-            "contrato.pdf", b"pdf content", content_type="application/pdf"
+        result = ContractService.generate_upload_url(
+            company=user.company,
+            filename="contrato.pdf",
+            wedding_id=wedding.uuid,
         )
 
-        with patch("django.db.models.fields.files.FieldFile.save") as mock_save:
-            mock_save.side_effect = Exception("Storage Save Error")
-            with patch("django.db.models.fields.files.FieldFile.delete") as mock_delete:
-                with pytest.raises(Exception, match="Storage Save Error"):
-                    ContractService.create_full(
-                        company=user.company,
-                        contract_data=contract_data,
-                        pdf_file=pdf_file,
-                    )
-                mock_delete.assert_not_called()
+        assert "upload_url" in result
+        assert "object_key" in result
+        assert result["upload_url"] == "https://r2.com/presigned-url"
+        assert result["object_key"].startswith(f"contracts/{wedding.uuid}/")
+        assert result["object_key"].endswith("/contrato.pdf")
+
+        mock_s3.generate_presigned_url.assert_called_once()
+        _, kwargs = mock_s3.generate_presigned_url.call_args
+        assert kwargs["Params"]["ContentType"] == "application/pdf"
+
+    def test_generate_upload_url_wedding_not_found(self, user):
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.generate_upload_url(
+                company=user.company,
+                filename="contrato.pdf",
+                wedding_id=uuid4(),
+            )

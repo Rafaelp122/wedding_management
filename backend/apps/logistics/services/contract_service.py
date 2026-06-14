@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
@@ -101,6 +102,7 @@ class ContractService:
         # 1. Resolução Segura de Dependências (Suporta Instância ou UUID)
         wedding_input = data.pop("wedding", None)
         supplier_input = data.pop("supplier", None)
+        pdf_file_key = data.pop("pdf_file_key", None)
 
         # Resolução do Casamento
         if isinstance(wedding_input, Wedding):
@@ -149,6 +151,7 @@ class ContractService:
             wedding=wedding,
             supplier=supplier,
             parent=parent,
+            pdf_file=pdf_file_key,
             **data,
         )
 
@@ -197,17 +200,17 @@ class ContractService:
         company: Company,
         *,
         contract_data: dict[str, Any],
-        items_data: list[dict[str, Any]] | None = None,  # type: ignore[valid-type]
+        items_data: list[dict[str, Any]] | None = None,
         expense_data: dict[str, Any] | None = None,
-        pdf_file: Any | None = None,
+        pdf_file_key: str | None = None,
     ) -> Contract:
         """
         Orquestra a criação completa de um contrato.
-        Cria o contrato base, valida e associa opcionalmente um arquivo PDF/imagem,
+        Cria o contrato base, associa opcionalmente a chave do arquivo PDF/imagem
+        do R2/S3,
         cria os itens logísticos associados e inicializa o fluxo de despesa
         financeira correspondente.
-        Em caso de falha em qualquer etapa, garante o rollback no banco e a
-        deleção de arquivos órfãos no storage.
+        Em caso de falha em qualquer etapa, garante o rollback no banco.
         """
         logger.info(
             f"Iniciando criação completa de Contrato para company_id={company.id}"
@@ -215,31 +218,19 @@ class ContractService:
 
         contract = ContractService.create(company=company, data=contract_data)
 
-        if pdf_file:
-            ContractService._validate_uploaded_file(
-                pdf_file, "criação completa de contrato"
-            )
+        if pdf_file_key:
+            contract.pdf_file = pdf_file_key
+            contract.save(update_fields=["pdf_file"])
 
-        file_saved = False
-        try:
-            if pdf_file:
-                contract.pdf_file.save(pdf_file.name, pdf_file, save=False)
-                contract.save(update_fields=["pdf_file"])
-                file_saved = True
+        if items_data:
+            for item_dict in items_data:
+                item_dict["wedding"] = contract.wedding
+                item_dict["contract"] = contract
+                ItemService.create(company=company, data=item_dict)
 
-            if items_data:
-                for item_dict in items_data:  # type: ignore[attr-defined]
-                    item_dict["wedding"] = contract.wedding
-                    item_dict["contract"] = contract
-                    ItemService.create(company=company, data=item_dict)
-
-            if expense_data:
-                expense_data["contract"] = contract
-                ExpenseService.create(company=company, data=expense_data)
-        except Exception:
-            if file_saved and contract.pdf_file:
-                contract.pdf_file.delete(save=False)
-            raise
+        if expense_data:
+            expense_data["contract"] = contract
+            ExpenseService.create(company=company, data=expense_data)
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
@@ -295,6 +286,9 @@ class ContractService:
 
         data.pop("wedding", None)
         data.pop("company", None)
+        pdf_file_key = data.pop("pdf_file_key", None)
+        if pdf_file_key is not None:
+            instance.pdf_file = pdf_file_key
 
         supplier_input = data.pop("supplier", None)
         if supplier_input:
@@ -390,26 +384,17 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def upload_file(company: Company, uuid: UUID | str, uploaded_file: Any) -> Contract:
+    def upload_file(company: Company, uuid: UUID | str, pdf_file_key: str) -> Contract:
         """
-        Faz upload de um arquivo (PDF, PNG, JPEG) para o contrato.
-        Salva no storage configurado e persiste a referência no modelo.
+        Associa a chave do arquivo (pdf_file_key) carregado no R2/S3 ao contrato.
         """
-        logger.info(f"Upload de arquivo para contrato uuid={uuid}")
-
-        ContractService._validate_uploaded_file(uploaded_file, f"contrato uuid={uuid}")
-
+        logger.info(
+            f"Associando chave de arquivo {pdf_file_key} ao contrato uuid={uuid}"
+        )
         contract = ContractService.get(company, uuid)
-
-        try:
-            contract.pdf_file.save(uploaded_file.name, uploaded_file, save=False)
-            contract.save(update_fields=["pdf_file"])
-        except Exception:
-            if contract.pdf_file:
-                contract.pdf_file.delete(save=False)
-            raise
-
-        logger.info(f"Arquivo salvo no contrato uuid={uuid}")
+        contract.pdf_file = pdf_file_key
+        contract.save(update_fields=["pdf_file"])
+        logger.info(f"Chave de arquivo associada ao contrato uuid={uuid}")
         return contract
 
     @staticmethod
@@ -422,3 +407,75 @@ class ContractService:
         contract.pdf_file = None
         contract.save(update_fields=["pdf_file"])
         logger.info(f"Arquivo removido do contrato uuid={uuid}")
+
+    @staticmethod
+    def generate_upload_url(
+        company: Company, filename: str, wedding_id: UUID | str
+    ) -> dict[str, Any]:
+        """
+        Gera presigned URL para upload de contrato no R2/S3.
+        """
+        import uuid
+
+        import boto3
+
+        # Validar casamento
+        try:
+            wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_id)
+        except Wedding.DoesNotExist as e:
+            logger.warning(
+                f"Tentativa de gerar upload URL para casamento inválido: {wedding_id}"
+            )
+            raise ObjectNotFoundError(
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            ) from e
+
+        # Determinar Content-Type com base no filename
+        content_type = "application/pdf"
+        ext = filename.split(".")[-1].lower()
+        if ext in ["png", "jpg", "jpeg"]:
+            content_type = f"image/{ext if ext != 'jpg' else 'jpeg'}"
+
+        # Gerar chave única
+        unique_id = uuid.uuid4()
+        object_key = f"contracts/{wedding.uuid}/{unique_id}/{filename}"
+
+        # Configurar boto3 client
+        r2_endpoint = getattr(settings, "AWS_S3_ENDPOINT_URL", None) or getattr(
+            settings, "R2_ENDPOINT_URL", None
+        )
+        r2_access_key = getattr(settings, "AWS_ACCESS_KEY_ID", None) or getattr(
+            settings, "R2_ACCESS_KEY_ID", None
+        )
+        r2_secret_key = getattr(settings, "AWS_SECRET_ACCESS_KEY", None) or getattr(
+            settings, "R2_SECRET_ACCESS_KEY", None
+        )
+        r2_bucket = (
+            getattr(settings, "AWS_STORAGE_BUCKET_NAME", None)
+            or getattr(settings, "R2_BUCKET", None)
+            or "wedding-contracts"
+        )
+
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=r2_endpoint,
+            aws_access_key_id=r2_access_key,
+            aws_secret_access_key=r2_secret_key,
+            region_name=getattr(settings, "AWS_S3_REGION_NAME", "us-east-1"),
+        )
+
+        presigned_url = s3_client.generate_presigned_url(
+            "put_object",
+            Params={
+                "Bucket": r2_bucket,
+                "Key": object_key,
+                "ContentType": content_type,
+            },
+            ExpiresIn=900,
+        )
+
+        return {
+            "upload_url": presigned_url,
+            "object_key": object_key,
+        }

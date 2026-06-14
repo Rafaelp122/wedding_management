@@ -99,6 +99,7 @@ class ContractIn(Schema):
     status: str = "DRAFT"
     description: str = ""
     parent: UUID4 | None = None
+    pdf_file_key: str | None = None
 
 
 class ContractPatchIn(Schema):
@@ -108,6 +109,7 @@ class ContractPatchIn(Schema):
     status: str | None = None
     description: str | None = None
     parent: UUID4 | None = None
+    pdf_file_key: str | None = None
 
 
 class ContractStatusTransitionIn(Schema):
@@ -243,6 +245,7 @@ class ContractFullCreateIn(Schema):
     status: str = "DRAFT"
     description: str = ""
     parent: UUID4 | None = None
+    pdf_file_key: str | None = None
 
     items_data: str = "[]"
 
@@ -264,3 +267,20 @@ class ContractFullCreateIn(Schema):
         if self.create_expense and self.expense_category is None:
             raise ValueError("Categoria é obrigatória quando create_expense é True.")
         return self
+
+
+# ==============================================================================
+# UPLOAD SCHEMAS
+# ==============================================================================
+class ContractUploadUrlIn(Schema):
+    filename: str
+    wedding_id: UUID4
+
+
+class ContractUploadUrlOut(Schema):
+    upload_url: str
+    object_key: str
+
+
+class ContractUploadIn(Schema):
+    pdf_file_key: str

@@ -1,5 +1,7 @@
+import json
+from unittest.mock import patch
+
 import pytest
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.tests.factories import BudgetCategoryFactory, BudgetFactory
@@ -392,18 +394,18 @@ class TestLogisticsNinjaAPI:
         assert response.json()["name"] == "Contrato API"
 
     def test_upload_contract_file(self, auth_client, seed_data):
-        pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
         response = auth_client.post(
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
-            data={"pdf_file": pdf},
+            data=json.dumps({"pdf_file_key": "contracts/test.pdf"}),
+            content_type="application/json",
         )
         assert response.status_code == 200
 
     def test_delete_contract_file(self, auth_client, seed_data):
-        pdf = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
         auth_client.post(
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
-            data={"pdf_file": pdf},
+            data=json.dumps({"pdf_file_key": "contracts/test.pdf"}),
+            content_type="application/json",
         )
         response = auth_client.delete(
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
@@ -488,12 +490,15 @@ class TestContractCreateFullAPI:
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Contrato Full",
-                "total_amount": "5000.00",
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato Full",
+                    "total_amount": "5000.00",
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 201
         data = response.json()
@@ -505,38 +510,43 @@ class TestContractCreateFullAPI:
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Contrato com Itens",
-                "total_amount": "3000.00",
-                "items_data": '[{"name":"Item A","quantity":2,'
-                '"acquisition_status":"PENDING"}]',
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato com Itens",
+                    "total_amount": "3000.00",
+                    "items_data": (
+                        '[{"name":"Item A","quantity":2,'
+                        '"acquisition_status":"PENDING"}]'
+                    ),
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 201
         assert response.json()["name"] == "Contrato com Itens"
 
     def test_create_full_with_file(self, auth_client, user):
-        """POST /full/ com pdf_file retorna 201 e salva o arquivo."""
+        """POST /full/ com pdf_file_key retorna 201."""
         wedding, supplier = self._wedding_supplier(user)
-        pdf = SimpleUploadedFile(
-            "contrato.pdf", b"pdf content", content_type="application/pdf"
-        )
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Contrato com PDF",
-                "total_amount": "7000.00",
-                "pdf_file": pdf,
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato com PDF",
+                    "total_amount": "7000.00",
+                    "pdf_file_key": "contracts/contrato.pdf",
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 201
         data = response.json()
         assert data["has_file"] is True
-        assert ".pdf" in data["file_name"]
+        assert data["file_name"] == "contrato.pdf"
 
     def test_create_full_with_expense(self, auth_client, user):
         """POST /full/ com create_expense=True cria despesa vinculada."""
@@ -544,16 +554,19 @@ class TestContractCreateFullAPI:
         supplier = SupplierFactory(company=user.company)
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Contrato com Despesa",
-                "total_amount": "5000.00",
-                "create_expense": "true",
-                "expense_category": str(category.uuid),
-                "expense_num_installments": "2",
-                "expense_first_due_date": "2026-12-25",
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato com Despesa",
+                    "total_amount": "5000.00",
+                    "create_expense": True,
+                    "expense_category": str(category.uuid),
+                    "expense_num_installments": 2,
+                    "expense_first_due_date": "2026-12-25",
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 201
         data = response.json()
@@ -563,26 +576,28 @@ class TestContractCreateFullAPI:
         """POST /full/ com file + items + expense — cenário completo."""
         wedding, category = self._category(user)
         supplier = SupplierFactory(company=user.company)
-        pdf = SimpleUploadedFile(
-            "contrato.pdf", b"pdf content", content_type="application/pdf"
-        )
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Contrato Completo",
-                "total_amount": "10000.00",
-                "description": "Teste full",
-                "status": "DRAFT",
-                "items_data": '[{"name":"Item 1","quantity":10,'
-                '"acquisition_status":"PENDING"}]',
-                "create_expense": "true",
-                "expense_category": str(category.uuid),
-                "expense_num_installments": "3",
-                "expense_first_due_date": "2026-12-25",
-                "pdf_file": pdf,
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato Completo",
+                    "total_amount": "10000.00",
+                    "description": "Teste full",
+                    "status": "DRAFT",
+                    "items_data": (
+                        '[{"name":"Item 1","quantity":10,'
+                        '"acquisition_status":"PENDING"}]'
+                    ),
+                    "create_expense": True,
+                    "expense_category": str(category.uuid),
+                    "expense_num_installments": 3,
+                    "expense_first_due_date": "2026-12-25",
+                    "pdf_file_key": "contracts/contrato.pdf",
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 201
         data = response.json()
@@ -593,13 +608,16 @@ class TestContractCreateFullAPI:
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Contrato",
-                "total_amount": "5000.00",
-                "items_data": "{invalid json",
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato",
+                    "total_amount": "5000.00",
+                    "items_data": "{invalid json",
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 422
         body = response.json()
@@ -612,13 +630,16 @@ class TestContractCreateFullAPI:
         supplier = SupplierFactory(company=user.company)
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Contrato",
-                "total_amount": "5000.00",
-                "create_expense": "true",
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato",
+                    "total_amount": "5000.00",
+                    "create_expense": True,
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 422
 
@@ -629,14 +650,41 @@ class TestContractCreateFullAPI:
         supplier = SupplierFactory(company=user.company)
         response = auth_client.post(
             "/api/v1/logistics/contracts/full/",
-            data={
-                "wedding": str(other_wedding.uuid),
-                "supplier": str(supplier.uuid),
-                "name": "Cross Tenant",
-                "total_amount": "1000.00",
-            },
+            data=json.dumps(
+                {
+                    "wedding": str(other_wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Cross Tenant",
+                    "total_amount": "1000.00",
+                }
+            ),
+            content_type="application/json",
         )
         assert response.status_code == 404
+
+    @patch("boto3.client")
+    def test_generate_upload_url_api_success(
+        self, mock_boto3_client, auth_client, user
+    ):
+        wedding = WeddingFactory(company=user.company)
+        mock_s3 = mock_boto3_client.return_value
+        mock_s3.generate_presigned_url.return_value = "https://r2.com/presigned-url"
+
+        response = auth_client.post(
+            "/api/v1/logistics/contracts/upload-url/",
+            data=json.dumps(
+                {
+                    "filename": "contrato.pdf",
+                    "wedding_id": str(wedding.uuid),
+                }
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "upload_url" in data
+        assert "object_key" in data
+        assert data["upload_url"] == "https://r2.com/presigned-url"
 
 
 @pytest.mark.django_db

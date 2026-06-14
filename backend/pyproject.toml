@@ -22,6 +22,9 @@ dependencies = [
     "email-validator>=2.3.0",
     "whitenoise>=6.12.0",
     "sentry-sdk[django]>=2.62.0",
+    # Cloud Storage (R2/S3)
+    "django-storages[s3]>=1.14.4",
+    "boto3>=1.34.0",
 ]
 
 # ==============================================================================
