@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload, Loader2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Sentry from "@sentry/react";
 
 import {
   useLogisticsContractsUpload,
@@ -75,7 +76,7 @@ export function ContractDocumentSection({
       setSelectedFile(null);
     } catch (error) {
       toast.error("Erro ao enviar documento.");
-      console.error(error);
+      Sentry.captureException(error);
     } finally {
       setIsUploading(false);
     }

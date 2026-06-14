@@ -66,15 +66,16 @@ def retrieve_contract(request: AuthRequest, uuid: UUID4) -> Contract:
 )
 def generate_upload_url(
     request: AuthRequest, payload: ContractUploadUrlIn
-) -> dict[str, Any]:
+) -> ContractUploadUrlOut:
     """
     Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.
     """
-    return ContractService.generate_upload_url(
+    res = ContractService.generate_upload_url(
         company=request.user.company,
         filename=payload.filename,
         wedding_id=payload.wedding_id,
     )
+    return ContractUploadUrlOut(**res)
 
 
 @contracts_router.post(

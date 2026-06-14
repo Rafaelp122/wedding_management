@@ -6,7 +6,6 @@ from typing import Any
 from uuid import UUID
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -34,6 +33,11 @@ from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
+
+# Aliases para evitar colisão do método 'list'
+# com o built-in 'list' no escopo da classe
+_ListDict = list[dict[str, Any]]
+_ListStr = list[str]
 
 
 class ContractService:
@@ -87,8 +91,15 @@ class ContractService:
         try:
             return (
                 Contract.objects.for_tenant(company)
-                .select_related("supplier", "wedding", "parent", "expense")
-                .annotate(addendums_count=Count("addendums"))
+                .select_related("supplier", "wedding", "parent")
+                .annotate(
+                    addendums_count=Count("addendums"),
+                    expense_id=Subquery(
+                        Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[
+                            :1
+                        ]
+                    ),
+                )
                 .get(uuid=uuid)
             )
         except Contract.DoesNotExist as e:
@@ -163,44 +174,12 @@ class ContractService:
         return contract
 
     @staticmethod
-    def _validate_uploaded_file(uploaded_file: Any, context_label: str) -> None:
-        """
-        Valida o tipo MIME (content_type) e o tamanho máximo de um arquivo de upload.
-        Emite avisos se os metadados forem omitidos, delegando à validação
-        de extensão do modelo.
-        """
-        allowed_content_types = [
-            "application/pdf",
-            "image/png",
-            "image/jpeg",
-        ]
-        file_content_type = getattr(uploaded_file, "content_type", None)
-        if file_content_type is None:
-            logger.warning(
-                f"Upload sem Content-Type header para {context_label} — "
-                "validação de MIME bypassada, extensão será verificada no modelo."
-            )
-        elif file_content_type not in allowed_content_types:
-            raise ValidationError(
-                {"pdf_file": "Tipo de arquivo não suportado. Use PDF, PNG ou JPEG."}
-            )
-
-        max_size = 10 * 1024 * 1024  # 10MB
-        if uploaded_file.size is None:
-            logger.warning(
-                f"Upload sem size reportado para {context_label} — "
-                "validação de tamanho bypassada, será verificada no modelo."
-            )
-        elif uploaded_file.size > max_size:
-            raise ValidationError({"pdf_file": "Arquivo excede o limite de 10MB."})
-
-    @staticmethod
     @transaction.atomic
     def create_full(
         company: Company,
         *,
         contract_data: dict[str, Any],
-        items_data: list[dict[str, Any]] | None = None,
+        items_data: _ListDict | None = None,
         expense_data: dict[str, Any] | None = None,
         pdf_file_key: str | None = None,
     ) -> Contract:
@@ -334,6 +313,10 @@ class ContractService:
         # Desvinculação de itens logísticos órfãos
         instance.items.update(contract=None)
 
+        # Remover arquivo físico se houver
+        if instance.pdf_file:
+            instance.pdf_file.delete(save=False)
+
         try:
             instance.delete()
             logger.warning(
@@ -360,7 +343,7 @@ class ContractService:
             raise ObjectNotFoundError(detail="Contrato não encontrado.")
 
         # TODO(sprint/018): mover máquina de estados para Contract.clean()
-        allowed_transitions: dict[str, list[str]] = {
+        allowed_transitions: dict[str, _ListStr] = {
             "DRAFT": ["PENDING", "CANCELED"],
             "PENDING": ["SIGNED", "DRAFT", "CANCELED"],
             "SIGNED": ["CANCELED"],
@@ -404,6 +387,8 @@ class ContractService:
         """
         logger.info(f"Removendo arquivo do contrato uuid={uuid}")
         contract = ContractService.get(company, uuid)
+        if contract.pdf_file:
+            contract.pdf_file.delete(save=False)
         contract.pdf_file = None
         contract.save(update_fields=["pdf_file"])
         logger.info(f"Arquivo removido do contrato uuid={uuid}")
@@ -417,7 +402,7 @@ class ContractService:
         """
         import uuid
 
-        import boto3
+        import boto3  # type: ignore[import-untyped]
 
         # Validar casamento
         try:
@@ -451,11 +436,16 @@ class ContractService:
         r2_secret_key = getattr(settings, "AWS_SECRET_ACCESS_KEY", None) or getattr(
             settings, "R2_SECRET_ACCESS_KEY", None
         )
-        r2_bucket = (
-            getattr(settings, "AWS_STORAGE_BUCKET_NAME", None)
-            or getattr(settings, "R2_BUCKET", None)
-            or "wedding-contracts"
+        r2_bucket = getattr(settings, "AWS_STORAGE_BUCKET_NAME", None) or getattr(
+            settings, "R2_BUCKET", None
         )
+
+        if not all([r2_endpoint, r2_access_key, r2_secret_key, r2_bucket]):
+            logger.error("Configuração de storage R2/S3 incompleta no servidor.")
+            raise BusinessRuleViolation(
+                detail="Configuração de storage R2/S3 incompleta no servidor.",
+                code="storage_configuration_incomplete",
+            )
 
         s3_client = boto3.client(
             "s3",

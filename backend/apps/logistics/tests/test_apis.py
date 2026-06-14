@@ -664,8 +664,16 @@ class TestContractCreateFullAPI:
 
     @patch("boto3.client")
     def test_generate_upload_url_api_success(
-        self, mock_boto3_client, auth_client, user
+        self, mock_boto3_client, auth_client, user, settings
     ):
+        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.R2_ACCESS_KEY_ID = "test-key-id"
+        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.R2_BUCKET = "test-bucket"
+        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.AWS_ACCESS_KEY_ID = "test-key-id"
+        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
         wedding = WeddingFactory(company=user.company)
         mock_s3 = mock_boto3_client.return_value
         mock_s3.generate_presigned_url.return_value = "https://r2.com/presigned-url"

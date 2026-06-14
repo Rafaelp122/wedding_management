@@ -5774,6 +5774,7 @@
         "type": "object"
       },
       "ContractUploadUrlOut": {
+        "description": "Schema de saída com URL pré-assinada e chave do objeto no R2/S3.",
         "properties": {
           "upload_url": {
             "title": "Upload Url",
@@ -5792,6 +5793,7 @@
         "type": "object"
       },
       "ContractUploadUrlIn": {
+        "description": "Schema de entrada para requisição de URL de upload pré-assinada.",
         "properties": {
           "filename": {
             "title": "Filename",
@@ -5927,6 +5929,7 @@
         "type": "object"
       },
       "ContractUploadIn": {
+        "description": "Schema de entrada para associar a chave do arquivo enviado.",
         "properties": {
           "pdf_file_key": {
             "title": "Pdf File Key",

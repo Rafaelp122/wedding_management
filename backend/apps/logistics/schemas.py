@@ -273,14 +273,20 @@ class ContractFullCreateIn(Schema):
 # UPLOAD SCHEMAS
 # ==============================================================================
 class ContractUploadUrlIn(Schema):
+    """Schema de entrada para requisição de URL de upload pré-assinada."""
+
     filename: str
     wedding_id: UUID4
 
 
 class ContractUploadUrlOut(Schema):
+    """Schema de saída com URL pré-assinada e chave do objeto no R2/S3."""
+
     upload_url: str
     object_key: str
 
 
 class ContractUploadIn(Schema):
+    """Schema de entrada para associar a chave do arquivo enviado."""
+
     pdf_file_key: str

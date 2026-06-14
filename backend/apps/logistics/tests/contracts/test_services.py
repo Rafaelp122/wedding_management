@@ -740,7 +740,16 @@ class TestContractServiceGenerateUploadUrl:
     """Testes de geração de upload URL pré-assinada."""
 
     @patch("boto3.client")
-    def test_generate_upload_url_success(self, mock_boto3_client, user):
+    def test_generate_upload_url_success(self, mock_boto3_client, user, settings):
+        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.R2_ACCESS_KEY_ID = "test-key-id"
+        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.R2_BUCKET = "test-bucket"
+        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.AWS_ACCESS_KEY_ID = "test-key-id"
+        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
+
         wedding, _ = _setup_contract_context(user)
         mock_s3 = mock_boto3_client.return_value
         mock_s3.generate_presigned_url.return_value = "https://r2.com/presigned-url"
@@ -761,10 +770,38 @@ class TestContractServiceGenerateUploadUrl:
         _, kwargs = mock_s3.generate_presigned_url.call_args
         assert kwargs["Params"]["ContentType"] == "application/pdf"
 
-    def test_generate_upload_url_wedding_not_found(self, user):
+    def test_generate_upload_url_wedding_not_found(self, user, settings):
+        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.R2_ACCESS_KEY_ID = "test-key-id"
+        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.R2_BUCKET = "test-bucket"
+        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.AWS_ACCESS_KEY_ID = "test-key-id"
+        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
+
         with pytest.raises(ObjectNotFoundError):
             ContractService.generate_upload_url(
                 company=user.company,
                 filename="contrato.pdf",
                 wedding_id=uuid4(),
+            )
+
+    def test_generate_upload_url_multitenancy(self, user, settings):
+        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.R2_ACCESS_KEY_ID = "test-key-id"
+        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.R2_BUCKET = "test-bucket"
+        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.AWS_ACCESS_KEY_ID = "test-key-id"
+        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
+
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.generate_upload_url(
+                company=user.company,
+                filename="contrato.pdf",
+                wedding_id=other_wedding.uuid,
             )
