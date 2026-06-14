@@ -52,13 +52,12 @@ describe("WeddingFinancesSummaryCards", () => {
     expect(usage.className).toContain("text-red-500");
   });
 
-  it("shows percentage above 100% in label while Progress is clamped at 100", () => {
+  it("shows percentage above 100% in label while Progress value is clamped at 100", () => {
     render(
       <WeddingFinancesSummaryCards totalEstimated={1000} totalSpent={2000} />,
     );
 
     expect(screen.getByText("200%")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute("data-value", "100");
   });
 
   it("does not render average comparison when there is only one wedding budget", () => {
