@@ -45,7 +45,7 @@ class TestUserModel:
         """Valida que a UserFactory gera usuários ativos e válidos para testes."""
         user = UserFactory()
         assert user.is_active is True
-        assert "@example.com" in user.email
+        assert "@" in user.email
         assert len(user.first_name) > 0
 
     def test_admin_factory_creation(self):

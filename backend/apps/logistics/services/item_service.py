@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from django.db import transaction
@@ -7,11 +9,15 @@ from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
+    DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.logistics.models import Contract, Item
 from apps.tenants.models import Company
 
+
+if TYPE_CHECKING:
+    from apps.weddings.models import Wedding
 
 logger = logging.getLogger(__name__)
 
@@ -55,47 +61,82 @@ class ItemService:
             raise ObjectNotFoundError(detail="Item de logística não encontrado.") from e
 
     @staticmethod
+    def _resolve_wedding(
+        company: Company, wedding_input: UUID | str | Wedding | None
+    ) -> Wedding | None:
+        """
+        Resolve um casamento (instância, UUID ou string) garantindo multi-tenancy.
+        """
+        if not wedding_input:
+            return None
+
+        from django.apps import apps
+
+        Wedding = apps.get_model("weddings", "Wedding")
+
+        if isinstance(wedding_input, Wedding):
+            return wedding_input
+        if isinstance(wedding_input, UUID | str):
+            try:
+                return Wedding.objects.for_tenant(company).get(uuid=wedding_input)
+            except Wedding.DoesNotExist as e:
+                raise ObjectNotFoundError(
+                    detail="Casamento não encontrado ou acesso negado.",
+                    code="wedding_not_found_or_denied",
+                ) from e
+        return None
+
+    @staticmethod
+    def _resolve_contract(
+        company: Company, contract_input: UUID | str | Contract | None
+    ) -> Contract | None:
+        """
+        Resolve um contrato (instância, UUID ou string) garantindo multi-tenancy.
+        """
+        if not contract_input:
+            return None
+
+        if isinstance(contract_input, Contract):
+            return contract_input
+
+        try:
+            return Contract.objects.for_tenant(company).get(uuid=contract_input)
+        except Contract.DoesNotExist as e:
+            logger.warning(
+                f"Tentativa de uso de contrato inválido/negado: {contract_input}"
+            )
+            raise ObjectNotFoundError(
+                detail="Contrato não encontrado ou acesso negado.",
+                code="contract_not_found_or_denied",
+            ) from e
+
+    @staticmethod
     @transaction.atomic
     def create(company: Company, data: dict[str, Any]) -> Item:
         logger.info(f"Iniciando criação de Item logístico para company_id={company.id}")
 
         # 1. Resolução do Casamento (Item é WeddingOwnedMixin)
         wedding_input = data.pop("wedding", None)
-        wedding = None
 
         # 2. Tratamento de contrato
-        contract = None
         contract_input = data.pop("contract", None)
+        contract = ItemService._resolve_contract(company, contract_input)
 
-        if contract_input:
-            if isinstance(contract_input, Contract):
-                contract = contract_input
-                wedding = contract.wedding
-            else:
-                try:
-                    contract = Contract.objects.for_tenant(company).get(
-                        uuid=contract_input
+        wedding: Wedding | None = None
+        if contract:
+            wedding = contract.wedding
+            if wedding_input:
+                resolved_wedding = ItemService._resolve_wedding(company, wedding_input)
+                if resolved_wedding and wedding != resolved_wedding:
+                    raise DomainIntegrityError(
+                        detail=(
+                            "O wedding informado não corresponde ao wedding "
+                            "do contrato."
+                        ),
+                        code="item_contract_wedding_mismatch",
                     )
-                    wedding = contract.wedding
-                except Contract.DoesNotExist as e:
-                    logger.warning(
-                        f"Tentativa de uso de contrato inválido/negado: "
-                        f"{contract_input}"
-                    )
-                    raise ObjectNotFoundError(
-                        detail="Contrato não encontrado ou acesso negado.",
-                        code="contract_not_found_or_denied",
-                    ) from e
-        elif isinstance(wedding_input, UUID | str):
-            from apps.weddings.models import Wedding
-
-            try:
-                wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_input)
-            except Wedding.DoesNotExist as e:
-                raise ObjectNotFoundError(
-                    detail="Casamento não encontrado ou acesso negado.",
-                    code="wedding_not_found_or_denied",
-                ) from e
+        else:
+            wedding = ItemService._resolve_wedding(company, wedding_input)
 
         # 3. Instanciação
         if wedding is None:
@@ -105,7 +146,6 @@ class ItemService:
             )
 
         item = Item(company=company, wedding=wedding, contract=contract, **data)
-
         item.save()
 
         logger.info(f"Item criado com sucesso: uuid={item.uuid}")
@@ -123,21 +163,13 @@ class ItemService:
 
         if "contract" in data:
             contract_input = data.pop("contract")
-            if contract_input:
-                if isinstance(contract_input, Contract):
-                    instance.contract = contract_input
-                else:
-                    try:
-                        instance.contract = Contract.objects.for_tenant(company).get(
-                            uuid=contract_input
-                        )
-                    except Contract.DoesNotExist as e:
-                        raise ObjectNotFoundError(
-                            detail="Contrato inválido ou acesso negado.",
-                            code="contract_not_found_or_denied",
-                        ) from e
-            else:
-                instance.contract = None
+            contract = ItemService._resolve_contract(company, contract_input)
+            if contract and contract.wedding != instance.wedding:
+                raise DomainIntegrityError(
+                    detail="O contrato informado não pertence ao casamento deste item.",
+                    code="item_contract_wedding_mismatch",
+                )
+            instance.contract = contract
 
         for field, value in data.items():
             setattr(instance, field, value)
