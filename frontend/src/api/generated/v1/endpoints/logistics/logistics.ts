@@ -21,18 +21,20 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ContractFullCreateIn,
   ContractIn,
   ContractOut,
   ContractPatchIn,
   ContractStatusTransitionIn,
+  ContractUploadIn,
+  ContractUploadUrlIn,
+  ContractUploadUrlOut,
   ErrorResponse,
   ItemIn,
   ItemOut,
   ItemPatchIn,
   ItemStatusTransitionIn,
-  LogisticsContractsCreateFullBody,
   LogisticsContractsListParams,
-  LogisticsContractsUploadBody,
   LogisticsItemsListParams,
   LogisticsSuppliersListParams,
   PagedContractOut,
@@ -1261,85 +1263,113 @@ export const useLogisticsContractsDelete = <
   );
 };
 /**
+ * Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.
+ * @summary Generate Upload Url
+ */
+export const logisticsContractsUploadUrl = (
+  contractUploadUrlIn: ContractUploadUrlIn,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<ContractUploadUrlOut>(
+    {
+      url: `/api/v1/logistics/contracts/upload-url/`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: contractUploadUrlIn,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getLogisticsContractsUploadUrlMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logisticsContractsUploadUrl>>,
+    TError,
+    { data: ContractUploadUrlIn },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logisticsContractsUploadUrl>>,
+  TError,
+  { data: ContractUploadUrlIn },
+  TContext
+> => {
+  const mutationKey = ["logisticsContractsUploadUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logisticsContractsUploadUrl>>,
+    { data: ContractUploadUrlIn }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return logisticsContractsUploadUrl(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogisticsContractsUploadUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logisticsContractsUploadUrl>>
+>;
+export type LogisticsContractsUploadUrlMutationBody = ContractUploadUrlIn;
+export type LogisticsContractsUploadUrlMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Generate Upload Url
+ */
+export const useLogisticsContractsUploadUrl = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof logisticsContractsUploadUrl>>,
+      TError,
+      { data: ContractUploadUrlIn },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof logisticsContractsUploadUrl>>,
+  TError,
+  { data: ContractUploadUrlIn },
+  TContext
+> => {
+  return useMutation(
+    getLogisticsContractsUploadUrlMutationOptions(options),
+    queryClient,
+  );
+};
+/**
  * Cria contrato com arquivo, itens e despesa em uma única transação atômica.
  * @summary Create Contract Full
  */
 export const logisticsContractsCreateFull = (
-  logisticsContractsCreateFullBody: LogisticsContractsCreateFullBody,
+  contractFullCreateIn: ContractFullCreateIn,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  const formData = new FormData();
-  formData.append(`wedding`, logisticsContractsCreateFullBody.wedding);
-  formData.append(`supplier`, logisticsContractsCreateFullBody.supplier);
-  formData.append(`name`, logisticsContractsCreateFullBody.name);
-  formData.append(
-    `total_amount`,
-    logisticsContractsCreateFullBody.total_amount.toString(),
-  );
-  if (logisticsContractsCreateFullBody.status !== undefined) {
-    formData.append(`status`, logisticsContractsCreateFullBody.status);
-  }
-  if (logisticsContractsCreateFullBody.description !== undefined) {
-    formData.append(
-      `description`,
-      logisticsContractsCreateFullBody.description,
-    );
-  }
-  if (
-    logisticsContractsCreateFullBody.parent !== undefined &&
-    logisticsContractsCreateFullBody.parent !== null
-  ) {
-    formData.append(`parent`, logisticsContractsCreateFullBody.parent);
-  }
-  if (logisticsContractsCreateFullBody.items_data !== undefined) {
-    formData.append(`items_data`, logisticsContractsCreateFullBody.items_data);
-  }
-  if (logisticsContractsCreateFullBody.create_expense !== undefined) {
-    formData.append(
-      `create_expense`,
-      logisticsContractsCreateFullBody.create_expense.toString(),
-    );
-  }
-  if (
-    logisticsContractsCreateFullBody.expense_category !== undefined &&
-    logisticsContractsCreateFullBody.expense_category !== null
-  ) {
-    formData.append(
-      `expense_category`,
-      logisticsContractsCreateFullBody.expense_category,
-    );
-  }
-  if (
-    logisticsContractsCreateFullBody.expense_num_installments !== undefined &&
-    logisticsContractsCreateFullBody.expense_num_installments !== null
-  ) {
-    formData.append(
-      `expense_num_installments`,
-      logisticsContractsCreateFullBody.expense_num_installments.toString(),
-    );
-  }
-  if (
-    logisticsContractsCreateFullBody.expense_first_due_date !== undefined &&
-    logisticsContractsCreateFullBody.expense_first_due_date !== null
-  ) {
-    formData.append(
-      `expense_first_due_date`,
-      logisticsContractsCreateFullBody.expense_first_due_date,
-    );
-  }
-  if (
-    logisticsContractsCreateFullBody.pdf_file !== undefined &&
-    logisticsContractsCreateFullBody.pdf_file !== null
-  ) {
-    formData.append(`pdf_file`, logisticsContractsCreateFullBody.pdf_file);
-  }
-
   return customInstance<ContractOut>(
     {
       url: `/api/v1/logistics/contracts/full/`,
       method: "POST",
-      data: formData,
+      headers: { "Content-Type": "application/json" },
+      data: contractFullCreateIn,
       signal,
     },
     options,
@@ -1353,14 +1383,14 @@ export const getLogisticsContractsCreateFullMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
     TError,
-    { data: LogisticsContractsCreateFullBody },
+    { data: ContractFullCreateIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
   TError,
-  { data: LogisticsContractsCreateFullBody },
+  { data: ContractFullCreateIn },
   TContext
 > => {
   const mutationKey = ["logisticsContractsCreateFull"];
@@ -1374,7 +1404,7 @@ export const getLogisticsContractsCreateFullMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
-    { data: LogisticsContractsCreateFullBody }
+    { data: ContractFullCreateIn }
   > = (props) => {
     const { data } = props ?? {};
 
@@ -1387,8 +1417,7 @@ export const getLogisticsContractsCreateFullMutationOptions = <
 export type LogisticsContractsCreateFullMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsContractsCreateFull>>
 >;
-export type LogisticsContractsCreateFullMutationBody =
-  LogisticsContractsCreateFullBody;
+export type LogisticsContractsCreateFullMutationBody = ContractFullCreateIn;
 export type LogisticsContractsCreateFullMutationError =
   ErrorType<ErrorResponse>;
 
@@ -1403,7 +1432,7 @@ export const useLogisticsContractsCreateFull = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
       TError,
-      { data: LogisticsContractsCreateFullBody },
+      { data: ContractFullCreateIn },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -1412,7 +1441,7 @@ export const useLogisticsContractsCreateFull = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof logisticsContractsCreateFull>>,
   TError,
-  { data: LogisticsContractsCreateFullBody },
+  { data: ContractFullCreateIn },
   TContext
 > => {
   return useMutation(
@@ -1421,23 +1450,21 @@ export const useLogisticsContractsCreateFull = <
   );
 };
 /**
- * Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+ * Associa um arquivo já carregado no R2/S3 (chave) ao contrato.
  * @summary Upload Contract File
  */
 export const logisticsContractsUpload = (
   uuid: string,
-  logisticsContractsUploadBody: LogisticsContractsUploadBody,
+  contractUploadIn: ContractUploadIn,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  const formData = new FormData();
-  formData.append(`pdf_file`, logisticsContractsUploadBody.pdf_file);
-
   return customInstance<ContractOut>(
     {
       url: `/api/v1/logistics/contracts/${uuid}/upload/`,
       method: "POST",
-      data: formData,
+      headers: { "Content-Type": "application/json" },
+      data: contractUploadIn,
       signal,
     },
     options,
@@ -1451,14 +1478,14 @@ export const getLogisticsContractsUploadMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof logisticsContractsUpload>>,
     TError,
-    { uuid: string; data: LogisticsContractsUploadBody },
+    { uuid: string; data: ContractUploadIn },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof logisticsContractsUpload>>,
   TError,
-  { uuid: string; data: LogisticsContractsUploadBody },
+  { uuid: string; data: ContractUploadIn },
   TContext
 > => {
   const mutationKey = ["logisticsContractsUpload"];
@@ -1472,7 +1499,7 @@ export const getLogisticsContractsUploadMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof logisticsContractsUpload>>,
-    { uuid: string; data: LogisticsContractsUploadBody }
+    { uuid: string; data: ContractUploadIn }
   > = (props) => {
     const { uuid, data } = props ?? {};
 
@@ -1485,7 +1512,7 @@ export const getLogisticsContractsUploadMutationOptions = <
 export type LogisticsContractsUploadMutationResult = NonNullable<
   Awaited<ReturnType<typeof logisticsContractsUpload>>
 >;
-export type LogisticsContractsUploadMutationBody = LogisticsContractsUploadBody;
+export type LogisticsContractsUploadMutationBody = ContractUploadIn;
 export type LogisticsContractsUploadMutationError = ErrorType<ErrorResponse>;
 
 /**
@@ -1499,7 +1526,7 @@ export const useLogisticsContractsUpload = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof logisticsContractsUpload>>,
       TError,
-      { uuid: string; data: LogisticsContractsUploadBody },
+      { uuid: string; data: ContractUploadIn },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -1508,7 +1535,7 @@ export const useLogisticsContractsUpload = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof logisticsContractsUpload>>,
   TError,
-  { uuid: string; data: LogisticsContractsUploadBody },
+  { uuid: string; data: ContractUploadIn },
   TContext
 > => {
   return useMutation(

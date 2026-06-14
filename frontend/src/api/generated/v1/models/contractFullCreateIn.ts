@@ -13,6 +13,7 @@ export interface ContractFullCreateIn {
   status?: string;
   description?: string;
   parent?: string | null;
+  pdf_file_key?: string | null;
   items_data?: string;
   create_expense?: boolean;
   expense_category?: string | null;

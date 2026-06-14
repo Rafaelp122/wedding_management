@@ -333,6 +333,7 @@ export const LogisticsContractsCreateBody = zod.object({
     .string()
     .default(logisticsContractsCreateBodyDescriptionDefault),
   parent: zod.union([zod.string(), zod.null()]).optional(),
+  pdf_file_key: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 /**
@@ -421,6 +422,7 @@ export const LogisticsContractsUpdateBody = zod.object({
   status: zod.union([zod.string(), zod.null()]).optional(),
   description: zod.union([zod.string(), zod.null()]).optional(),
   parent: zod.union([zod.string(), zod.null()]).optional(),
+  pdf_file_key: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 export const logisticsContractsUpdateResponseNameDefault = ``;
@@ -487,6 +489,20 @@ export const LogisticsContractsDeleteParams = zod.object({
 });
 
 /**
+ * Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.
+ * @summary Generate Upload Url
+ */
+export const LogisticsContractsUploadUrlBody = zod.object({
+  filename: zod.string(),
+  wedding_id: zod.string(),
+});
+
+export const LogisticsContractsUploadUrlResponse = zod.object({
+  upload_url: zod.string(),
+  object_key: zod.string(),
+});
+
+/**
  * Cria contrato com arquivo, itens e despesa em uma única transação atômica.
  * @summary Create Contract Full
  */
@@ -511,6 +527,7 @@ export const LogisticsContractsCreateFullBody = zod.object({
     .string()
     .default(logisticsContractsCreateFullBodyDescriptionDefault),
   parent: zod.union([zod.string(), zod.null()]).optional(),
+  pdf_file_key: zod.union([zod.string(), zod.null()]).optional(),
   items_data: zod
     .string()
     .default(logisticsContractsCreateFullBodyItemsDataDefault),
@@ -520,11 +537,10 @@ export const LogisticsContractsCreateFullBody = zod.object({
   expense_category: zod.union([zod.string(), zod.null()]).optional(),
   expense_num_installments: zod.union([zod.number(), zod.null()]).optional(),
   expense_first_due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
-  pdf_file: zod.union([zod.instanceof(File), zod.null()]).optional(),
 });
 
 /**
- * Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.
+ * Associa um arquivo já carregado no R2/S3 (chave) ao contrato.
  * @summary Upload Contract File
  */
 export const LogisticsContractsUploadParams = zod.object({
@@ -532,7 +548,7 @@ export const LogisticsContractsUploadParams = zod.object({
 });
 
 export const LogisticsContractsUploadBody = zod.object({
-  pdf_file: zod.instanceof(File),
+  pdf_file_key: zod.string(),
 });
 
 export const logisticsContractsUploadResponseNameDefault = ``;

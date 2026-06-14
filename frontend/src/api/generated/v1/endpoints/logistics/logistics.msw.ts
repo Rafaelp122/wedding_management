@@ -11,6 +11,7 @@ import type { RequestHandlerOptions } from "msw";
 
 import type {
   ContractOut,
+  ContractUploadUrlOut,
   ItemOut,
   PagedContractOut,
   PagedItemOut,
@@ -331,6 +332,14 @@ export const getLogisticsContractsUpdateResponseMock = (
     ]),
     undefined,
   ]),
+  ...overrideResponse,
+});
+
+export const getLogisticsContractsUploadUrlResponseMock = (
+  overrideResponse: Partial<Extract<ContractUploadUrlOut, object>> = {},
+): ContractUploadUrlOut => ({
+  upload_url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  object_key: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 });
 
@@ -850,6 +859,30 @@ export const getLogisticsContractsDeleteMockHandler = (
   );
 };
 
+export const getLogisticsContractsUploadUrlMockHandler = (
+  overrideResponse?:
+    | ContractUploadUrlOut
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<ContractUploadUrlOut> | ContractUploadUrlOut),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/api/v1/logistics/contracts/upload-url/",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getLogisticsContractsUploadUrlResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getLogisticsContractsCreateFullMockHandler = (
   overrideResponse?:
     | ContractOut
@@ -1094,6 +1127,7 @@ export const getLogisticsMock = () => [
   getLogisticsContractsReadMockHandler(),
   getLogisticsContractsUpdateMockHandler(),
   getLogisticsContractsDeleteMockHandler(),
+  getLogisticsContractsUploadUrlMockHandler(),
   getLogisticsContractsCreateFullMockHandler(),
   getLogisticsContractsUploadMockHandler(),
   getLogisticsContractsDeleteUploadMockHandler(),

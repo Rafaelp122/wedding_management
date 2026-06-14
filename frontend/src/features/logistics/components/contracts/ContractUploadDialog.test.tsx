@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi, beforeAll } from "vitest";
 import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
 import { ContractUploadDialog } from "./ContractUploadDialog";
 import { toast } from "sonner";
+import { server } from "@/mocks/server";
 
 // Polyfills for Radix UI Select in jsdom (missing browser APIs)
 beforeAll(() => {
@@ -18,18 +19,23 @@ const {
   mockCategoriesList,
   mockCreateFull,
   createFullAsync,
+  mockUploadUrl,
+  uploadUrlAsync,
 } = vi.hoisted(() => ({
   mockSuppliersList: vi.fn(),
   mockContractsList: vi.fn(),
   mockCategoriesList: vi.fn(),
   mockCreateFull: vi.fn(),
   createFullAsync: vi.fn(),
+  mockUploadUrl: vi.fn(),
+  uploadUrlAsync: vi.fn(),
 }));
 
 vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
   useLogisticsSuppliersList: () => mockSuppliersList(),
   useLogisticsContractsList: () => mockContractsList(),
   useLogisticsContractsCreateFull: () => mockCreateFull(),
+  useLogisticsContractsUploadUrl: () => mockUploadUrl(),
 }));
 
 vi.mock("@/api/generated/v1/endpoints/finances/finances", () => ({
@@ -88,6 +94,19 @@ describe("ContractUploadDialog", () => {
 
     mockCreateFull.mockReturnValue({
       mutateAsync: createFullAsync,
+      isPending: false,
+    });
+
+    uploadUrlAsync.mockReset();
+    uploadUrlAsync.mockResolvedValue({
+      data: {
+        upload_url: "https://r2.com/presigned-url",
+        object_key: "r2-file-key",
+      },
+    } as unknown as Record<string, unknown>);
+
+    mockUploadUrl.mockReturnValue({
+      mutateAsync: uploadUrlAsync,
       isPending: false,
     });
   });
@@ -243,7 +262,7 @@ describe("ContractUploadDialog", () => {
         expense_category: null,
         expense_num_installments: null,
         expense_first_due_date: null,
-        pdf_file: null,
+        pdf_file_key: null,
       },
     });
   });
@@ -304,11 +323,9 @@ describe("ContractUploadDialog", () => {
       mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
     );
 
-
     createFullAsync.mockRejectedValue(new Error("API Error"));
 
     render(<ContractUploadDialog {...defaultProps} />);
-
 
     await user.click(
       screen.getByRole("combobox", { name: /fornecedor/i }),
@@ -318,7 +335,6 @@ describe("ContractUploadDialog", () => {
     });
     await user.click(supplierOption);
 
-
     await user.type(
       screen.getByRole("textbox", { name: /nome do contrato/i }),
       "Falha",
@@ -327,7 +343,6 @@ describe("ContractUploadDialog", () => {
       screen.getByRole("spinbutton", { name: /valor total/i }),
       { target: { value: "500" } },
     );
-
 
     await user.click(
       screen.getByRole("button", { name: /criar contrato/i }),
@@ -404,5 +419,67 @@ describe("ContractUploadDialog", () => {
 
     expect(screen.getByRole("button", { name: /criar contrato/i })).toBeDisabled();
     expect(screen.getByText(/cancelar/i).closest("button")).toBeDisabled();
+  });
+
+  it("uploads file to R2 and submits pdf_file_key", async () => {
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.put("https://r2.com/presigned-url", () =>
+        new HttpResponse(null, { status: 200 }),
+      ),
+    );
+
+    const user = userEvent.setup();
+    mockSuppliersList.mockReturnValue(
+      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
+    );
+
+    render(<ContractUploadDialog {...defaultProps} />);
+
+    // Select supplier
+    await user.click(screen.getByRole("combobox", { name: /fornecedor/i }));
+    const supplierOption = await screen.findByRole("option", {
+      name: /fornecedor teste/i,
+    });
+    await user.click(supplierOption);
+
+    // Fill name
+    await user.type(
+      screen.getByRole("textbox", { name: /nome do contrato/i }),
+      "Contrato com PDF",
+    );
+
+    // Fill total amount
+    const amountInput = screen.getByRole("spinbutton", {
+      name: /valor total/i,
+    });
+    fireEvent.change(amountInput, { target: { value: "2500" } });
+
+    // Select file
+    const file = new File(["dummy content"], "contract.pdf", {
+      type: "application/pdf",
+    });
+    const fileInput = document.body.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await user.upload(fileInput, file);
+
+    // Submit
+    await user.click(screen.getByRole("button", { name: /criar contrato/i }));
+
+    await waitFor(() => {
+      expect(uploadUrlAsync).toHaveBeenCalledWith({
+        data: {
+          filename: "contract.pdf",
+          wedding_id: weddingUuid,
+        },
+      });
+      expect(createFullAsync).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: "Contrato com PDF",
+          pdf_file_key: "r2-file-key",
+        }),
+      });
+    });
   });
 });
