@@ -124,7 +124,7 @@ export function AuthLayout({
           </div>
 
           <div className="w-full flex items-center justify-between text-[10px] text-zinc-450 dark:text-zinc-500 relative z-10">
-            <span>© 2026 Sim, Aceito! Todos os direitos reservados.</span>
+            <span>© {new Date().getFullYear()} Sim, Aceito! Todos os direitos reservados.</span>
           </div>
         </div>
       </div>
