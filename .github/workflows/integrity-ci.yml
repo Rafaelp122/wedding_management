@@ -186,6 +186,104 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   # ----------------------------------------------------------------------------
+  # JOB 3.4: PLAYWRIGHT E2E INTEGRITY
+  # ----------------------------------------------------------------------------
+  e2e-tests:
+    name: Playwright E2E Tests - Shard ${{ matrix.shard }}/2
+    needs: detect-changes
+    if: success() && needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Python & UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "frontend/.nvmrc"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache Node Modules
+        id: cache-node-modules-frontend
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Frontend Dependencies
+        if: steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Start Django Backend
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.development
+          DB_ENGINE: django.db.backends.sqlite3
+          DB_NAME: db.sqlite3
+          SECRET_KEY: e2e-ci-key # pragma: allowlist secret
+        run: |
+          cd backend
+          uv run python manage.py migrate --noinput
+          uv run python manage.py seed_db
+          uv run python manage.py runserver 8000 &
+
+      - name: Wait for Backend
+        run: |
+          until curl -s http://localhost:8000/api/v1/docs > /dev/null; do
+            echo "Waiting for Django backend to be ready..."
+            sleep 1
+          done
+          echo "Django backend is ready!"
+
+      - name: Cache Playwright Browsers
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright Browsers and Deps
+        run: |
+          cd frontend
+          if [ "${{ steps.cache-playwright.outputs.cache-hit }}" = "true" ]; then
+            npx playwright install-deps
+          else
+            npx playwright install --with-deps
+          fi
+
+      - name: Run Playwright tests
+        env:
+          VITE_API_URL: http://localhost:8000
+        run: |
+          cd frontend
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npx playwright test --grep "@smoke" --shard=${{ matrix.shard }}/2
+          else
+            npx playwright test --grep "@smoke|@critical" --shard=${{ matrix.shard }}/2
+          fi
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-shard-${{ matrix.shard }}
+          path: frontend/playwright-report/
+          if-no-files-found: ignore
+
+  # ----------------------------------------------------------------------------
   # JOB 3.5: LANDING INTEGRITY
   # ----------------------------------------------------------------------------
   landing-check:

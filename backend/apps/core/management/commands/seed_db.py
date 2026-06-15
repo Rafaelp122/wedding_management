@@ -96,6 +96,19 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS("  ✓ Planner E2E: planner@example.com / password123")
             )
+
+        e2e_staff = User.objects.filter(email="staff@example.com").first()
+        if not e2e_staff:
+            e2e_staff = UserFactory.create(
+                email="staff@example.com",
+                first_name="Staff",
+                last_name="E2E",
+                is_staff=True,
+                is_superuser=False,
+            )
+            self.stdout.write(
+                self.style.SUCCESS("  ✓ Staff E2E: staff@example.com / password123")
+            )
         planners = [e2e_planner, *UserFactory.create_batch(num_planners)]
         self.stdout.write(
             self.style.SUCCESS(f"  ✓ {num_planners + 1} planners criados")
