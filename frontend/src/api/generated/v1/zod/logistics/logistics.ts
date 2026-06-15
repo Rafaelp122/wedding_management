@@ -492,15 +492,21 @@ export const LogisticsContractsDeleteParams = zod.object({
  * Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.
  * @summary Generate Upload Url
  */
-export const LogisticsContractsUploadUrlBody = zod.object({
-  filename: zod.string(),
-  wedding_id: zod.string(),
-});
+export const LogisticsContractsUploadUrlBody = zod
+  .object({
+    filename: zod.string(),
+    wedding_id: zod.string(),
+  })
+  .describe("Schema de entrada para requisição de URL de upload pré-assinada.");
 
-export const LogisticsContractsUploadUrlResponse = zod.object({
-  upload_url: zod.string(),
-  object_key: zod.string(),
-});
+export const LogisticsContractsUploadUrlResponse = zod
+  .object({
+    upload_url: zod.string(),
+    object_key: zod.string(),
+  })
+  .describe(
+    "Schema de saída com URL pré-assinada e chave do objeto no R2\/S3.",
+  );
 
 /**
  * Cria contrato com arquivo, itens e despesa em uma única transação atômica.
@@ -547,9 +553,11 @@ export const LogisticsContractsUploadParams = zod.object({
   uuid: zod.string(),
 });
 
-export const LogisticsContractsUploadBody = zod.object({
-  pdf_file_key: zod.string(),
-});
+export const LogisticsContractsUploadBody = zod
+  .object({
+    pdf_file_key: zod.string(),
+  })
+  .describe("Schema de entrada para associar a chave do arquivo enviado.");
 
 export const logisticsContractsUploadResponseNameDefault = ``;
 export const logisticsContractsUploadResponseTotalAmountRegExp = new RegExp(

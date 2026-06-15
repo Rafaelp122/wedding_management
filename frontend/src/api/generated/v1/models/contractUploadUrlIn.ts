@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para requisição de URL de upload pré-assinada.
+ */
 export interface ContractUploadUrlIn {
   filename: string;
   wedding_id: string;

@@ -212,6 +212,15 @@ class TestContractServiceDelete:
 
         assert Contract.objects.filter(uuid=contract.uuid).count() == 0
 
+    def test_delete_contract_with_file_removes_physical_file(self, user):
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(
+            wedding=wedding, supplier=supplier, pdf_file="contracts/dummy.pdf"
+        )
+        assert contract.pdf_file.name
+        ContractService.delete(user.company, contract)
+        assert Contract.objects.filter(uuid=contract.uuid).count() == 0
+
 
 @pytest.mark.django_db
 class TestContractServiceListAndGet:
@@ -262,6 +271,22 @@ class TestContractServiceListAndGet:
         assert result.uuid == contract.uuid
         assert result.supplier == supplier
         assert result.wedding == wedding
+
+    def test_get_contract_with_expense(self, user):
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(budget=budget, wedding=wedding)
+        expense = ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            contract=contract,
+            actual_amount=contract.total_amount,
+        )
+
+        result = ContractService.get(user.company, contract.uuid)
+        assert result.uuid == contract.uuid
+        assert result.expense_id == expense.uuid
 
     def test_get_contract_not_found(self, user):
         """UUID inexistente levanta ObjectNotFoundError."""
@@ -805,3 +830,22 @@ class TestContractServiceGenerateUploadUrl:
                 filename="contrato.pdf",
                 wedding_id=other_wedding.uuid,
             )
+
+    def test_generate_upload_url_configuration_incomplete(self, user, settings):
+        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.R2_ACCESS_KEY_ID = "test-key-id"
+        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.R2_BUCKET = ""
+        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
+        settings.AWS_ACCESS_KEY_ID = "test-key-id"
+        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
+        settings.AWS_STORAGE_BUCKET_NAME = ""
+
+        wedding, _ = _setup_contract_context(user)
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.generate_upload_url(
+                company=user.company,
+                filename="contrato.pdf",
+                wedding_id=wedding.uuid,
+            )
+        assert exc_info.value.code == "storage_configuration_incomplete"

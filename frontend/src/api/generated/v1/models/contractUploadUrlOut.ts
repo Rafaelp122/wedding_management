@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída com URL pré-assinada e chave do objeto no R2/S3.
+ */
 export interface ContractUploadUrlOut {
   upload_url: string;
   object_key: string;

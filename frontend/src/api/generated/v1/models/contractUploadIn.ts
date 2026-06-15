@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para associar a chave do arquivo enviado.
+ */
 export interface ContractUploadIn {
   pdf_file_key: string;
 }
