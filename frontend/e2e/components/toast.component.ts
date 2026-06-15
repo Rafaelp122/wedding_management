@@ -4,7 +4,7 @@ export class ToastComponent {
   readonly toastContainer: Locator;
 
   constructor(private readonly page: Page) {
-    this.toastContainer = this.page.locator("[data-sonner-toast]");
+    this.toastContainer = this.page.locator("[data-sonner-toast], [role='status'], [role='alert']");
   }
 
   async expectSuccess(message: string | RegExp) {

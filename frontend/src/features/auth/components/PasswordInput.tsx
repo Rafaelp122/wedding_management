@@ -3,7 +3,7 @@ import { forwardRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 interface PasswordInputProps {
-  id: string;
+  id?: string;
   placeholder: string;
   className?: string;
   value?: string;

@@ -7,7 +7,7 @@ export class LoginPage {
 
   constructor(private readonly page: Page) {
     this.emailInput = this.page.locator('input[type="email"]');
-    this.passwordInput = this.page.locator('#loginPassword');
+    this.passwordInput = this.page.getByLabel("Senha de Acesso");
     this.submitButton = this.page.getByRole("button", { name: "Acessar painel" });
   }
 

@@ -79,9 +79,11 @@ test.describe("Authentication Flow", () => {
 
   test("@regression Admin page can bypass login and access dashboard", async ({ adminPage }) => {
     await expect(adminPage).toHaveURL(/\/dashboard/);
+    await expect(adminPage.getByText("admin@admin.com")).toBeVisible();
   });
 
   test("@regression Staff page can bypass login and access dashboard", async ({ staffPage }) => {
     await expect(staffPage).toHaveURL(/\/dashboard/);
+    await expect(staffPage.getByText("staff@example.com")).toBeVisible();
   });
 });

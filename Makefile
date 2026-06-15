@@ -177,11 +177,11 @@ frontend-test-changed:
 
 frontend-e2e:
 	@echo "🧪 Executando testes E2E com Playwright..."
-	npx --prefix frontend playwright test -c frontend/playwright.config.ts
+	cd frontend && npx playwright test
 
 frontend-e2e-report:
 	@echo "📊 Abrindo o relatório de testes E2E do Playwright..."
-	npx --prefix frontend playwright show-report
+	cd frontend && npx playwright show-report
 
 # ==============================================================================
 # 🐍 COMANDOS REPASSADOS PARA O CONTAINER

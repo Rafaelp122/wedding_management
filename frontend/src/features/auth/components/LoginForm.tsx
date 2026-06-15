@@ -113,7 +113,6 @@ export function LoginForm() {
                 </div>
                 <FormControl>
                   <PasswordInput
-                    id="loginPassword"
                     placeholder="••••••••"
                     {...field}
                   />
