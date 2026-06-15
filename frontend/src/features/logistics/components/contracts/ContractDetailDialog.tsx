@@ -173,6 +173,7 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
                 contractUuid={contractUuid!}
                 hasFile={contract.has_file ?? false}
                 fileName={contract.file_name}
+                weddingUuid={weddingUuid}
               />
 
               <Separator />

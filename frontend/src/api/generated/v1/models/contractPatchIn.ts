@@ -12,4 +12,5 @@ export interface ContractPatchIn {
   status?: string | null;
   description?: string | null;
   parent?: string | null;
+  pdf_file_key?: string | null;
 }

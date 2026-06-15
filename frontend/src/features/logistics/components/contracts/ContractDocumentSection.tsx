@@ -2,11 +2,13 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload, Loader2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Sentry from "@sentry/react";
 
 import {
   useLogisticsContractsUpload,
   useLogisticsContractsDeleteUpload,
   getLogisticsContractsListQueryKey,
+  useLogisticsContractsUploadUrl,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 
 import { Button } from "@/components/ui/button";
@@ -16,37 +18,68 @@ interface ContractDocumentSectionProps {
   contractUuid: string;
   hasFile: boolean;
   fileName: string | null | undefined;
+  weddingUuid: string;
 }
 
 export function ContractDocumentSection({
   contractUuid,
   hasFile,
   fileName,
+  weddingUuid,
 }: ContractDocumentSectionProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const uploadMutation = useLogisticsContractsUpload();
   const deleteUploadMutation = useLogisticsContractsDeleteUpload();
+  const { mutateAsync: getUploadUrl } = useLogisticsContractsUploadUrl();
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!selectedFile) return;
-    uploadMutation.mutate(
-      { uuid: contractUuid, data: { pdf_file: selectedFile } },
-      {
-        onSuccess: () => {
-          toast.success("Documento enviado com sucesso!");
-          queryClient.invalidateQueries({
-            queryKey: getLogisticsContractsListQueryKey(),
-          });
-          setSelectedFile(null);
+    setIsUploading(true);
+    try {
+      const uploadUrlRes = await getUploadUrl({
+        data: {
+          filename: selectedFile.name,
+          wedding_id: weddingUuid,
         },
-        onError: () => {
-          toast.error("Erro ao enviar documento.");
+      });
+
+      const uploadResponse = await fetch(uploadUrlRes.data.upload_url, {
+        method: "PUT",
+        body: selectedFile,
+        headers: {
+          "Content-Type": selectedFile.type || "application/octet-stream",
         },
-      },
-    );
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Erro no envio do arquivo: ${uploadResponse.statusText}`);
+      }
+
+      await uploadMutation.mutateAsync({
+        uuid: contractUuid,
+        data: {
+          pdf_file_key: uploadUrlRes.data.object_key,
+        },
+      });
+
+      toast.success("Documento enviado com sucesso!");
+      queryClient.invalidateQueries({
+        queryKey: getLogisticsContractsListQueryKey(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/v1/logistics/contracts/${contractUuid}/`],
+      });
+      setSelectedFile(null);
+    } catch (error) {
+      toast.error("Erro ao enviar documento.");
+      Sentry.captureException(error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleRemoveFile = () => {
@@ -57,6 +90,9 @@ export function ContractDocumentSection({
           toast.success("Documento removido.");
           queryClient.invalidateQueries({
             queryKey: getLogisticsContractsListQueryKey(),
+          });
+          queryClient.invalidateQueries({
+            queryKey: [`/api/v1/logistics/contracts/${contractUuid}/`],
           });
         },
         onError: () => {
@@ -83,7 +119,7 @@ export function ContractDocumentSection({
               size="sm"
               className="h-7 text-xs"
               onClick={handleRemoveFile}
-              disabled={deleteUploadMutation.isPending}
+              disabled={deleteUploadMutation.isPending || isUploading}
             >
               {deleteUploadMutation.isPending ? (
                 <Loader2 className="size-3 mr-1 animate-spin" />
@@ -103,15 +139,16 @@ export function ContractDocumentSection({
               accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg,.txt"
               className="flex-1 text-sm"
               onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+              disabled={uploadMutation.isPending || isUploading}
             />
             <Button
               variant="outline"
               size="sm"
               className="h-8 text-xs shrink-0"
               onClick={handleUpload}
-              disabled={uploadMutation.isPending || !selectedFile}
+              disabled={uploadMutation.isPending || isUploading || !selectedFile}
             >
-              {uploadMutation.isPending ? (
+              {uploadMutation.isPending || isUploading ? (
                 <Loader2 className="size-3 mr-1 animate-spin" />
               ) : (
                 <Upload className="size-3 mr-1" />

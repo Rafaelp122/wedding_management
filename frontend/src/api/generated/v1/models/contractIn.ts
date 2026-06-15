@@ -13,4 +13,5 @@ export interface ContractIn {
   status?: string;
   description?: string;
   parent?: string | null;
+  pdf_file_key?: string | null;
 }

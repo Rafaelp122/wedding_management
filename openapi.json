@@ -1518,6 +1518,84 @@
         ]
       }
     },
+    "/api/v1/logistics/contracts/upload-url/": {
+      "post": {
+        "operationId": "logistics_contracts_upload_url",
+        "summary": "Generate Upload Url",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractUploadUrlOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.",
+        "tags": [
+          "Logistics"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractUploadUrlIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/logistics/contracts/full/": {
       "post": {
         "operationId": "logistics_contracts_create_full",
@@ -1581,123 +1659,9 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "title": "MultiPartBodyParams",
-                "type": "object",
-                "properties": {
-                  "wedding": {
-                    "format": "uuid4",
-                    "title": "Wedding",
-                    "type": "string"
-                  },
-                  "supplier": {
-                    "format": "uuid4",
-                    "title": "Supplier",
-                    "type": "string"
-                  },
-                  "name": {
-                    "title": "Name",
-                    "type": "string"
-                  },
-                  "total_amount": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                        "type": "string"
-                      }
-                    ],
-                    "title": "Total Amount"
-                  },
-                  "status": {
-                    "default": "DRAFT",
-                    "title": "Status",
-                    "type": "string"
-                  },
-                  "description": {
-                    "default": "",
-                    "title": "Description",
-                    "type": "string"
-                  },
-                  "parent": {
-                    "anyOf": [
-                      {
-                        "format": "uuid4",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "title": "Parent"
-                  },
-                  "items_data": {
-                    "default": "[]",
-                    "title": "Items Data",
-                    "type": "string"
-                  },
-                  "create_expense": {
-                    "default": false,
-                    "title": "Create Expense",
-                    "type": "boolean"
-                  },
-                  "expense_category": {
-                    "anyOf": [
-                      {
-                        "format": "uuid4",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "title": "Expense Category"
-                  },
-                  "expense_num_installments": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "title": "Expense Num Installments"
-                  },
-                  "expense_first_due_date": {
-                    "anyOf": [
-                      {
-                        "format": "date",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "title": "Expense First Due Date"
-                  },
-                  "pdf_file": {
-                    "anyOf": [
-                      {
-                        "format": "binary",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "title": "Pdf File"
-                  }
-                },
-                "required": [
-                  "wedding",
-                  "supplier",
-                  "name",
-                  "total_amount"
-                ]
+                "$ref": "#/components/schemas/ContractFullCreateIn"
               }
             }
           },
@@ -1778,26 +1742,15 @@
             }
           }
         },
-        "description": "Faz upload de um arquivo (PDF, DOCX, etc.) para o contrato.",
+        "description": "Associa um arquivo já carregado no R2/S3 (chave) ao contrato.",
         "tags": [
           "Logistics"
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "properties": {
-                  "pdf_file": {
-                    "format": "binary",
-                    "title": "Pdf File",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "pdf_file"
-                ],
-                "title": "FileParams",
-                "type": "object"
+                "$ref": "#/components/schemas/ContractUploadIn"
               }
             }
           },
@@ -5709,6 +5662,17 @@
               }
             ],
             "title": "Parent"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
           }
         },
         "required": [
@@ -5793,9 +5757,59 @@
               }
             ],
             "title": "Parent"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
           }
         },
         "title": "ContractPatchIn",
+        "type": "object"
+      },
+      "ContractUploadUrlOut": {
+        "description": "Schema de saída com URL pré-assinada e chave do objeto no R2/S3.",
+        "properties": {
+          "upload_url": {
+            "title": "Upload Url",
+            "type": "string"
+          },
+          "object_key": {
+            "title": "Object Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_url",
+          "object_key"
+        ],
+        "title": "ContractUploadUrlOut",
+        "type": "object"
+      },
+      "ContractUploadUrlIn": {
+        "description": "Schema de entrada para requisição de URL de upload pré-assinada.",
+        "properties": {
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "wedding_id": {
+            "format": "uuid4",
+            "title": "Wedding Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "wedding_id"
+        ],
+        "title": "ContractUploadUrlIn",
         "type": "object"
       },
       "ContractFullCreateIn": {
@@ -5847,6 +5861,17 @@
               }
             ],
             "title": "Parent"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
           },
           "items_data": {
             "default": "[]",
@@ -5901,6 +5926,20 @@
           "total_amount"
         ],
         "title": "ContractFullCreateIn",
+        "type": "object"
+      },
+      "ContractUploadIn": {
+        "description": "Schema de entrada para associar a chave do arquivo enviado.",
+        "properties": {
+          "pdf_file_key": {
+            "title": "Pdf File Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pdf_file_key"
+        ],
+        "title": "ContractUploadIn",
         "type": "object"
       },
       "ContractStatusTransitionIn": {

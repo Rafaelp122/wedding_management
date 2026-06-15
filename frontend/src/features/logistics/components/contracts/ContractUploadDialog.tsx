@@ -3,12 +3,13 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 import {
   useLogisticsContractsCreateFull,
   useLogisticsContractsList,
   useLogisticsSuppliersList,
+  useLogisticsContractsUploadUrl,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
 import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
@@ -42,7 +43,6 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
 
 import { FormInput, FormSelect, FormNumber, FormTextarea } from "@/components/form-fields";
 import { ContractItemDrafts, type ItemDraft } from "./ContractItemDrafts";
@@ -68,6 +68,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { mutateAsync: createFull, isPending: isCreating } =
     useLogisticsContractsCreateFull();
+  const { mutateAsync: getUploadUrl } = useLogisticsContractsUploadUrl();
 
   const [itemDrafts, setItemDrafts] = useState<ItemDraft[]>([]);
   const [expenseChecked, setExpenseChecked] = useState(false);
@@ -105,6 +106,30 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
 
   const onSubmit = async (data: CreateContractFormData) => {
     try {
+      let pdfFileKey: string | null = null;
+      if (selectedFile) {
+        const uploadUrlRes = await getUploadUrl({
+          data: {
+            filename: selectedFile.name,
+            wedding_id: weddingUuid,
+          },
+        });
+
+        const uploadResponse = await fetch(uploadUrlRes.data.upload_url, {
+          method: "PUT",
+          body: selectedFile,
+          headers: {
+            "Content-Type": selectedFile.type || "application/octet-stream",
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Erro no envio do arquivo: ${uploadResponse.statusText}`);
+        }
+
+        pdfFileKey = uploadUrlRes.data.object_key;
+      }
+
       const itemsData = JSON.stringify(
         itemDrafts.map((d) => ({
           name: d.name,
@@ -129,13 +154,14 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
             ? expenseNumInstallments
             : null,
           expense_first_due_date: expenseChecked ? expenseFirstDueDate : null,
-          pdf_file: selectedFile ?? null,
+          pdf_file_key: pdfFileKey,
         },
       });
 
       toast.success("Contrato criado com sucesso!");
       form.reset();
       setItemDrafts([]);
+      setSelectedFile(null);
       onSuccess();
     } catch (error) {
       const message =
@@ -143,6 +169,8 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
       toast.error(`Erro ao criar contrato: ${message}`);
     }
   };
+
+  const isSubmitting = form.formState.isSubmitting;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -291,12 +319,12 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={isCreating}
+                disabled={isCreating || isSubmitting}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreating}>
-                {isCreating && <Loader2 className="mr-2 size-4 animate-spin" />}
+              <Button type="submit" disabled={isCreating || isSubmitting}>
+                {(isCreating || isSubmitting) && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Criar Contrato
               </Button>
             </DialogFooter>

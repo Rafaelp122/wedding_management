@@ -16,6 +16,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={true}
           fileName={FILE_NAME}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -28,6 +29,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={true}
           fileName={FILE_NAME}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -44,6 +46,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={false}
           fileName={null}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -56,6 +59,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={false}
           fileName={null}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -70,6 +74,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={false}
           fileName={null}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -79,11 +84,30 @@ describe("ContractDocumentSection", () => {
 
   describe("upload flow", () => {
     it("shows success toast when upload succeeds", async () => {
+      const { http, HttpResponse } = await import("msw");
+      server.use(
+        http.post("*/api/v1/logistics/contracts/upload-url/", () =>
+          HttpResponse.json({
+            upload_url: "https://r2.com/presigned-url",
+            object_key: "r2-file-key",
+          }),
+        ),
+        http.put("https://r2.com/presigned-url", () =>
+          new HttpResponse(null, { status: 200 }),
+        ),
+        http.post("*/api/v1/logistics/contracts/:uuid/upload/", async ({ request }) => {
+          const body = (await request.json()) as { pdf_file_key: string };
+          expect(body.pdf_file_key).toBe("r2-file-key");
+          return HttpResponse.json({ uuid: CONTRACT_UUID }, { status: 200 });
+        }),
+      );
+
       const { container } = render(
         <ContractDocumentSection
           contractUuid={CONTRACT_UUID}
           hasFile={false}
           fileName={null}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -113,6 +137,15 @@ describe("ContractDocumentSection", () => {
     it("shows error toast when upload fails", async () => {
       const { http, HttpResponse } = await import("msw");
       server.use(
+        http.post("*/api/v1/logistics/contracts/upload-url/", () =>
+          HttpResponse.json({
+            upload_url: "https://r2.com/presigned-url",
+            object_key: "r2-file-key",
+          }),
+        ),
+        http.put("https://r2.com/presigned-url", () =>
+          new HttpResponse(null, { status: 200 }),
+        ),
         http.post("*/api/v1/logistics/contracts/:uuid/upload/", () =>
           HttpResponse.json({ detail: "Erro no upload" }, { status: 500 }),
         ),
@@ -123,6 +156,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={false}
           fileName={null}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -157,6 +191,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={true}
           fileName={FILE_NAME}
+          weddingUuid="wedding-1"
         />,
       );
 
@@ -184,6 +219,7 @@ describe("ContractDocumentSection", () => {
           contractUuid={CONTRACT_UUID}
           hasFile={true}
           fileName={FILE_NAME}
+          weddingUuid="wedding-1"
         />,
       );
 
