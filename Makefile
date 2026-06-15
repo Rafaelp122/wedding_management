@@ -175,6 +175,14 @@ frontend-test-changed:
 	@echo "🧪 Executando testes do frontend modificados no Git..."
 	cd frontend && npx vitest run --changed
 
+frontend-e2e:
+	@echo "🧪 Executando testes E2E com Playwright..."
+	cd frontend && npx playwright test
+
+frontend-e2e-report:
+	@echo "📊 Abrindo o relatório de testes E2E do Playwright..."
+	cd frontend && npx playwright show-report
+
 # ==============================================================================
 # 🐍 COMANDOS REPASSADOS PARA O CONTAINER
 # ==============================================================================

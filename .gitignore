@@ -96,6 +96,8 @@ pnpm-debug.log*
 frontend/dist/
 frontend/dist-ssr/
 frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
 .DS_Store
 Thumbs.db
 logs
