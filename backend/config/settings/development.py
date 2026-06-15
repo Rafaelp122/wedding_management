@@ -12,7 +12,7 @@ ENABLE_ZEAL = env.bool("ENABLE_ZEAL", default=True)
 
 if ENABLE_ZEAL:
     INSTALLED_APPS += ["zeal"]
-    MIDDLEWARE = ["zeal.middleware.ZealotMiddleware", *MIDDLEWARE]
+    MIDDLEWARE = ["zeal.middleware.zeal_middleware", *MIDDLEWARE]
     ZEAL_FAIL = env.bool("ZEAL_FAIL", default=False)
     ZEAL_LOG = True
 
