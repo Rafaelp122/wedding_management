@@ -24,6 +24,17 @@ class ObjectNotFoundError(ApplicationError):
     default_code = "not_found"
 
 
+class AuthenticationRequiredError(ApplicationError):
+    """
+    Status 401: Autenticação necessária.
+    Usada quando um recurso exige autenticação e o usuário não está autenticado.
+    """
+
+    status_code = 401
+    default_detail = "Autenticação obrigatória para acessar este recurso."
+    default_code = "authentication_required"
+
+
 class BusinessRuleViolation(ApplicationError):
     """
     Para falhas de lógica (ex: ADR-010 Tolerância Zero).
