@@ -7,6 +7,7 @@ from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.budget import Budget
 from apps.finances.schemas import BudgetOut, BudgetPatchIn
 from apps.finances.services.budget_service import BudgetService
+from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -19,7 +20,8 @@ def list_budgets(request: AuthRequest) -> QuerySet[Budget]:
     """
     Lista as estatísticas de orçamento geral de todos os casamentos.
     """
-    return BudgetService.list(request.user.company)
+    user = require_user(request.user)
+    return BudgetService.list(user.company)
 
 
 @budgets_router.get(
@@ -31,7 +33,8 @@ def get_budget(request: AuthRequest, uuid: UUID4) -> Budget:
     """
     Retorna os totais e os saldos remanescentes autorizados de um projeto macro.
     """
-    return BudgetService.get(request.user.company, uuid)
+    user = require_user(request.user)
+    return BudgetService.get(user.company, uuid)
 
 
 @budgets_router.get(
@@ -43,7 +46,8 @@ def get_budget_for_wedding(request: AuthRequest, wedding_uuid: UUID4) -> Budget:
     """
     Retorna o orçamento de um casamento específico (lazy-create).
     """
-    return BudgetService.get_or_create_for_wedding(request.user.company, wedding_uuid)
+    user = require_user(request.user)
+    return BudgetService.get_or_create_for_wedding(user.company, wedding_uuid)
 
 
 @budgets_router.patch(
@@ -56,7 +60,8 @@ def update_budget(request: AuthRequest, uuid: UUID4, payload: BudgetPatchIn) -> 
     Atualiza métricas mestres de gasto e painéis globais.
     Contorna referências numéricas totais.
     """
-    instance = BudgetService.get(request.user.company, uuid)
+    user = require_user(request.user)
+    instance = BudgetService.get(user.company, uuid)
     return BudgetService.update(
-        request.user.company, instance, payload.model_dump(exclude_unset=True)
+        user.company, instance, payload.model_dump(exclude_unset=True)
     )
