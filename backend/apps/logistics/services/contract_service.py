@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -37,7 +38,6 @@ logger = logging.getLogger(__name__)
 # Aliases para evitar colisão do método 'list'
 # com o built-in 'list' no escopo da classe
 _ListDict = list[dict[str, Any]]
-_ListStr = list[str]
 
 
 class ContractService:
@@ -342,25 +342,14 @@ class ContractService:
         if instance.company_id != company.id:
             raise ObjectNotFoundError(detail="Contrato não encontrado.")
 
-        # TODO(sprint/018): mover máquina de estados para Contract.clean()
-        allowed_transitions: dict[str, _ListStr] = {
-            "DRAFT": ["PENDING", "CANCELED"],
-            "PENDING": ["SIGNED", "DRAFT", "CANCELED"],
-            "SIGNED": ["CANCELED"],
-            "CANCELED": ["DRAFT"],
-        }
-
-        current = instance.status
-        allowed = allowed_transitions.get(current, [])
-
-        if new_status not in allowed:
-            raise BusinessRuleViolation(
-                detail=f"Não é permitido transitar de '{current}' para '{new_status}'.",
-                code="contract_invalid_status_transition",
-            )
-
         instance.status = new_status
-        instance.save()
+        try:
+            instance.save()
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages),
+                code="contract_invalid_status_transition",
+            ) from e
 
         logger.info(f"Contrato uuid={instance.uuid} transitado para '{new_status}'.")
         return instance
