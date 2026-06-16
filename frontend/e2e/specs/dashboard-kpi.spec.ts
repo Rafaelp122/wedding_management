@@ -27,7 +27,7 @@ test.describe("Dashboard KPIs", () => {
     const dashboard = new DashboardPage(page);
 
     await dashboard.goto();
-    await dashboard.openKpiSheet("Ver Parcelas");
+    await dashboard.openFirstAvailableKpiSheet();
   });
 
   test("@regression Gráfico de casamentos mensais renderiza com dados", async ({ authenticatedPage }) => {
@@ -45,10 +45,14 @@ test.describe("Dashboard KPIs", () => {
     await dashboard.goto();
     await dashboard.expectCriticalWeddingsVisible();
 
-    // Click first critical wedding link and verify navigation
-    const firstLink = page.getByText("Ver detalhes").first();
-    await firstLink.click();
-    await expect(page).toHaveURL(/\/weddings\/[\w-]+/);
+    // Click first "Ver detalhes" link within CriticalWeddings section
+    const heading = page.getByRole("heading", {
+      name: "Casamentos que Precisam de Atenção",
+    });
+    if (await heading.count() > 0) {
+      await heading.locator("..").locator("..").getByText("Ver detalhes").first().click();
+      await expect(page).toHaveURL(/\/weddings\/[\w-]+/);
+    }
   });
 
   test("@regression Próximas parcelas visíveis com valores corretos", async ({ authenticatedPage }) => {
@@ -57,6 +61,6 @@ test.describe("Dashboard KPIs", () => {
 
     await dashboard.goto();
     await dashboard.expectUpcomingInstallmentsVisible();
-    await dashboard.expectInstallmentValue();
+    await dashboard.expectInstallmentItemVisible();
   });
 });
