@@ -8,12 +8,16 @@ export class FormDialogComponent {
   }
 
   async fillField(label: string, value: string) {
-    await this.page.getByLabel(label).fill(value);
+    await this.dialog.getByLabel(label).fill(value);
   }
 
   async fillSelectField(label: string, optionLabel: string) {
-    await this.page.getByLabel(label).click();
+    await this.dialog.getByLabel(label).click();
     await this.page.getByRole("option", { name: optionLabel }).click();
+  }
+
+  async expectValidationError() {
+    await expect(this.dialog.getByRole("alert")).toBeVisible();
   }
 
   async submit() {

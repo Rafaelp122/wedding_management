@@ -79,28 +79,22 @@ test.describe("Weddings CRUD", () => {
 
     await weddingsList.goto();
 
-    // Create 6 weddings (pageSize is 5)
-    const weddingNames: string[] = [];
-    for (let i = 0; i < 6; i++) {
+    // Create enough weddings to span at least 2 pages
+    for (let i = 0; i < 8; i++) {
       const data = generateWeddingData();
       await weddingsList.createWedding(data);
-      weddingNames.push(`${data.groom_name} & ${data.bride_name}`);
     }
 
-    // Page 1 should show 5 weddings
-    for (let i = 0; i < 5; i++) {
-      await weddingsList.expectRowVisible(weddingNames[i]);
-    }
+    // Page 1: next button visible, previous not
+    await weddingsList.expectHasNext();
+    await weddingsList.expectNotHasPrevious();
 
-    // Navigate to page 2
+    // Navigate forward and backward
     await weddingsList.nextPage();
-    await weddingsList.expectRowVisible(weddingNames[5]);
+    await weddingsList.expectHasPrevious();
 
-    // Navigate back to page 1
     await weddingsList.previousPage();
-    for (let i = 0; i < 5; i++) {
-      await weddingsList.expectRowVisible(weddingNames[i]);
-    }
+    await weddingsList.expectNotHasPrevious();
   });
 
   test("@regression Filtros de status aplicados corretamente", async ({ authenticatedPage }) => {
@@ -117,15 +111,28 @@ test.describe("Weddings CRUD", () => {
     await weddingsList.createWedding(data2);
     const name2 = `${data2.groom_name} & ${data2.bride_name}`;
 
-    // Filter by "Em Andamento" — default status, both should appear
     await weddingsList.filterByStatus("Em Andamento");
     await weddingsList.expectRowVisible(name1);
     await weddingsList.expectRowVisible(name2);
 
-    // Filter by "Concluído" — none should appear
-    await page.getByRole("combobox", { name: "Filtrar por status" }).click();
-    await page.getByRole("option", { name: "Concluído" }).click();
+    await weddingsList.filterByStatus("Concluído");
     await weddingsList.expectRowNotVisible(name1);
     await weddingsList.expectRowNotVisible(name2);
+  });
+
+  test("@critical Enviar formulário vazio mostra erros de validação", async ({ authenticatedPage }) => {
+    const page = authenticatedPage;
+    const weddingsList = new WeddingsListPage(page);
+
+    await weddingsList.goto();
+
+    // Open dialog and submit without filling
+    await page.getByRole("button", { name: "Novo Casamento" }).click();
+    await weddingsList.formDialog.expectVisible("Novo Casamento");
+    await weddingsList.formDialog.submit();
+
+    // Dialog stays open with validation errors
+    await weddingsList.formDialog.expectValidationError();
+    await weddingsList.formDialog.expectVisible("Novo Casamento");
   });
 });

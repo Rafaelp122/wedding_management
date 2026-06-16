@@ -105,4 +105,20 @@ export class WeddingsListPage {
   async expectToastSuccess(message: string | RegExp) {
     await this.toast.expectSuccess(message);
   }
+
+  async expectHasNext() {
+    await expect(this.page.getByRole("button", { name: "Próximo" })).toBeVisible();
+  }
+
+  async expectHasPrevious() {
+    await expect(this.page.getByRole("button", { name: "Anterior" })).toBeVisible();
+  }
+
+  async expectNotHasPrevious() {
+    await expect(this.page.getByRole("button", { name: "Anterior" })).not.toBeVisible();
+  }
+
+  async expectNotHasNext() {
+    await expect(this.page.getByRole("button", { name: "Próximo" })).not.toBeVisible();
+  }
 }
