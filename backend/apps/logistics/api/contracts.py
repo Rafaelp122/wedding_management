@@ -19,6 +19,7 @@ from apps.logistics.schemas import (
     ContractUploadUrlOut,
 )
 from apps.logistics.services.contract_service import ContractService
+from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -39,8 +40,9 @@ def list_contracts(
     Lista os contratos de fornecedores associados aos casamentos do Planner.
     Permite filtrar por casamento, status e fornecedor.
     """
+    user = require_user(request.user)
     return ContractService.list(
-        company=request.user.company,
+        company=user.company,
         wedding_id=wedding_id,
         status=status,
         supplier_id=supplier_id,
@@ -56,7 +58,8 @@ def retrieve_contract(request: AuthRequest, uuid: UUID4) -> Contract:
     """
     Exibe as cláusulas e informações completas de um contrato.
     """
-    return ContractService.get(company=request.user.company, uuid=uuid)
+    user = require_user(request.user)
+    return ContractService.get(company=user.company, uuid=uuid)
 
 
 @contracts_router.post(
@@ -70,8 +73,9 @@ def generate_upload_url(
     """
     Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.
     """
+    user = require_user(request.user)
     res = ContractService.generate_upload_url(
-        company=request.user.company,
+        company=user.company,
         filename=payload.filename,
         wedding_id=payload.wedding_id,
     )
@@ -87,9 +91,8 @@ def create_contract(request: AuthRequest, payload: ContractIn) -> tuple[int, Con
     """
     Associa um fornecedor a um casamento através de um novo contrato logístico.
     """
-    contract = ContractService.create(
-        company=request.user.company, data=payload.model_dump()
-    )
+    user = require_user(request.user)
+    contract = ContractService.create(company=user.company, data=payload.model_dump())
     return 201, contract
 
 
@@ -105,6 +108,7 @@ def create_contract_full(
     """
     Cria contrato com arquivo, itens e despesa em uma única transação atômica.
     """
+    user = require_user(request.user)
     contract_data = payload.model_dump(
         exclude={
             "pdf_file_key",
@@ -132,7 +136,7 @@ def create_contract_full(
         }
 
     contract = ContractService.create_full(
-        company=request.user.company,
+        company=user.company,
         contract_data=contract_data,
         items_data=items_list,
         expense_data=expense_data,
@@ -152,11 +156,10 @@ def update_contract(
     """
     Altera o status, valores agregados ou observações de um contrato existente na base.
     """
-    contract = ContractService.get(company=request.user.company, uuid=uuid)
+    user = require_user(request.user)
+    contract = ContractService.get(company=user.company, uuid=uuid)
     data = payload.model_dump(exclude_unset=True)
-    return ContractService.update(
-        company=request.user.company, instance=contract, data=data
-    )
+    return ContractService.update(company=user.company, instance=contract, data=data)
 
 
 @contracts_router.delete(
@@ -168,8 +171,9 @@ def delete_contract(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.
     """
-    contract = ContractService.get(company=request.user.company, uuid=uuid)
-    ContractService.delete(company=request.user.company, instance=contract)
+    user = require_user(request.user)
+    contract = ContractService.get(company=user.company, uuid=uuid)
+    ContractService.delete(company=user.company, instance=contract)
     return 204, None
 
 
@@ -184,8 +188,9 @@ def upload_contract_file(
     """
     Associa um arquivo já carregado no R2/S3 (chave) ao contrato.
     """
+    user = require_user(request.user)
     contract = ContractService.upload_file(
-        company=request.user.company, uuid=uuid, pdf_file_key=payload.pdf_file_key
+        company=user.company, uuid=uuid, pdf_file_key=payload.pdf_file_key
     )
     return contract
 
@@ -199,7 +204,8 @@ def delete_contract_file(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove o arquivo vinculado ao contrato.
     """
-    ContractService.delete_file(company=request.user.company, uuid=uuid)
+    user = require_user(request.user)
+    ContractService.delete_file(company=user.company, uuid=uuid)
     return 204, None
 
 
@@ -214,9 +220,10 @@ def transition_contract_status(
     """
     Transita o status do contrato (DRAFT → PENDING → SIGNED → CANCELED).
     """
-    contract = ContractService.get(company=request.user.company, uuid=uuid)
+    user = require_user(request.user)
+    contract = ContractService.get(company=user.company, uuid=uuid)
     return ContractService.transition_status(
-        company=request.user.company,
+        company=user.company,
         instance=contract,
         new_status=payload.status,
     )

@@ -4,6 +4,7 @@ from ninja.pagination import paginate
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
@@ -20,9 +21,8 @@ def list_weddings(
     search: str = "",
     status: str = "",
 ) -> QuerySet[Wedding]:
-    return WeddingService.list(
-        company=request.user.company, search=search, status=status
-    )
+    user = require_user(request.user)
+    return WeddingService.list(company=user.company, search=search, status=status)
 
 
 @router.get(
@@ -31,7 +31,8 @@ def list_weddings(
     operation_id="weddings_read",
 )
 def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
-    return WeddingService.get(company=request.user.company, uuid=uuid)
+    user = require_user(request.user)
+    return WeddingService.get(company=user.company, uuid=uuid)
 
 
 @router.post(
@@ -40,9 +41,8 @@ def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     operation_id="weddings_create",
 )
 def create_wedding(request: AuthRequest, payload: WeddingIn) -> tuple[int, Wedding]:
-    wedding = WeddingService.create(
-        company=request.user.company, data=payload.model_dump()
-    )
+    user = require_user(request.user)
+    wedding = WeddingService.create(company=user.company, data=payload.model_dump())
     return 201, wedding
 
 
@@ -56,10 +56,11 @@ def update_wedding(
     uuid: UUID4,
     payload: WeddingPatchIn,
 ) -> Wedding:
+    user = require_user(request.user)
     data = payload.model_dump(exclude_unset=True)
-    instance = WeddingService.get(company=request.user.company, uuid=uuid)
+    instance = WeddingService.get(company=user.company, uuid=uuid)
     updated_wedding = WeddingService.update(
-        company=request.user.company, instance=instance, data=data
+        company=user.company, instance=instance, data=data
     )
     return updated_wedding
 
@@ -70,5 +71,6 @@ def update_wedding(
     operation_id="weddings_delete",
 )
 def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    WeddingService.delete(company=request.user.company, uuid=uuid)
+    user = require_user(request.user)
+    WeddingService.delete(company=user.company, uuid=uuid)
     return 204, None

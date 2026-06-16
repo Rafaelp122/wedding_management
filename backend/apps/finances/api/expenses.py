@@ -12,6 +12,7 @@ from apps.finances.schemas import (
     ExpensePatchIn,
 )
 from apps.finances.services.expense_service import ExpenseService
+from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -28,7 +29,8 @@ def list_expenses(
     """
     Lista todas as compras e despachos que saíram dos painéis orçamentários.
     """
-    return ExpenseService.list(request.user.company, wedding_id=wedding_id)
+    user = require_user(request.user)
+    return ExpenseService.list(user.company, wedding_id=wedding_id)
 
 
 @expenses_router.get(
@@ -40,7 +42,8 @@ def get_expense(request: AuthRequest, uuid: UUID4) -> Expense:
     """
     Retorna recibo unitário simplificado nominal registrado no controle base.
     """
-    return ExpenseService.get(request.user.company, uuid)
+    user = require_user(request.user)
+    return ExpenseService.get(user.company, uuid)
 
 
 @expenses_router.post(
@@ -53,7 +56,8 @@ def create_expense(request: AuthRequest, payload: ExpenseIn) -> tuple[int, Expen
     Aprova lançamento final nos tetos das divisões e categorias.
     Consome o limite orçamentário previsto inicial geral da categoria.
     """
-    return 201, ExpenseService.create(request.user.company, payload.model_dump())
+    user = require_user(request.user)
+    return 201, ExpenseService.create(user.company, payload.model_dump())
 
 
 @expenses_router.patch(
@@ -67,9 +71,10 @@ def update_expense(
     """
     Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
     """
-    instance = ExpenseService.get(request.user.company, uuid)
+    user = require_user(request.user)
+    instance = ExpenseService.get(user.company, uuid)
     return ExpenseService.update(
-        request.user.company, instance, payload.model_dump(exclude_unset=True)
+        user.company, instance, payload.model_dump(exclude_unset=True)
     )
 
 
@@ -82,8 +87,9 @@ def delete_expense(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Deleta uma compra revertendo seu efeito, estornando em painel os gastos.
     """
-    instance = ExpenseService.get(request.user.company, uuid)
-    ExpenseService.delete(request.user.company, instance)
+    user = require_user(request.user)
+    instance = ExpenseService.get(user.company, uuid)
+    ExpenseService.delete(user.company, instance)
     return 204, None
 
 
@@ -97,7 +103,6 @@ def from_document(request: AuthRequest, uuid: UUID4) -> ExpenseFromDocumentOut:
     Retorna sugestão de payload para criar despesa a partir de um contrato.
     Pré-preenche valores, descrição e fornecedor do documento de referência.
     """
-    data = ExpenseService.from_document(
-        company=request.user.company, contract_uuid=uuid
-    )
+    user = require_user(request.user)
+    data = ExpenseService.from_document(company=user.company, contract_uuid=uuid)
     return ExpenseFromDocumentOut(**data)

@@ -187,6 +187,29 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["name"] == "Despesa Atualizada"
 
+    def test_create_expense_success(self, auth_client, seed_data):
+        """POST despesa — cria com sucesso."""
+        response = auth_client.patch(
+            f"/api/v1/finances/budgets/{seed_data['my_budget'].uuid}/",
+            data={"total_estimated": "10000.00"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        payload = {
+            "category": str(seed_data["my_category"].uuid),
+            "name": "Nova Despesa",
+            "description": "Descricao da despesa",
+            "estimated_amount": "500.00",
+            "actual_amount": "500.00",
+        }
+        response = auth_client.post(
+            "/api/v1/finances/expenses/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        assert response.json()["name"] == "Nova Despesa"
+
     def test_delete_expense_success(self, auth_client, seed_data):
         """DELETE despesa — remove com sucesso."""
         response = auth_client.delete(

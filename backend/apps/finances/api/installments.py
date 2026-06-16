@@ -10,6 +10,7 @@ from apps.finances.schemas import (
     InstallmentOut,
 )
 from apps.finances.services.installment_service import InstallmentService
+from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -28,8 +29,9 @@ def list_installments(
     """
     Lista parcelas com filtro opcional por casamento e despesa.
     """
+    user = require_user(request.user)
     return InstallmentService.list(
-        request.user.company, wedding_id=wedding_id, expense_id=expense_id
+        user.company, wedding_id=wedding_id, expense_id=expense_id
     )
 
 
@@ -42,7 +44,8 @@ def get_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     """
     Retorna os detalhes de uma parcela específica.
     """
-    return InstallmentService.get(request.user.company, uuid)
+    user = require_user(request.user)
+    return InstallmentService.get(user.company, uuid)
 
 
 @installments_router.post(
@@ -55,8 +58,9 @@ def mark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     Marca uma parcela como paga (data de hoje).
     Bloqueia se já estiver paga (BR-F06).
     """
-    instance = InstallmentService.get(request.user.company, uuid)
-    return InstallmentService.mark_as_paid(request.user.company, instance)
+    user = require_user(request.user)
+    instance = InstallmentService.get(user.company, uuid)
+    return InstallmentService.mark_as_paid(user.company, instance)
 
 
 @installments_router.post(
@@ -68,8 +72,9 @@ def unmark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment
     """
     Desmarca uma parcela paga, revertendo para PENDING ou OVERDUE.
     """
-    instance = InstallmentService.get(request.user.company, uuid)
-    return InstallmentService.unmark_as_paid(request.user.company, instance)
+    user = require_user(request.user)
+    instance = InstallmentService.get(user.company, uuid)
+    return InstallmentService.unmark_as_paid(user.company, instance)
 
 
 @installments_router.patch(
@@ -84,9 +89,10 @@ def adjust_installment(
     Ajusta data/valor de uma parcela futura não paga.
     Valida que due_date não pode ser anterior à parcela anterior.
     """
-    instance = InstallmentService.get(request.user.company, uuid)
+    user = require_user(request.user)
+    instance = InstallmentService.get(user.company, uuid)
     return InstallmentService.adjust(
-        request.user.company,
+        user.company,
         instance,
         payload.model_dump(exclude_unset=True, exclude_none=True),
     )
