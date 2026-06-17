@@ -205,6 +205,17 @@ class TestEventServiceUpdate:
 
         assert updated.title == "Reunião com Buffet Atualizada"
 
+    def test_update_event_cross_tenant(self, user):
+        """Evento de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_event = EventFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            EventService.update(
+                user.company, other_event, {"title": "Hack"}
+            )
+
 
 @pytest.mark.django_db
 class TestEventServiceDelete:
@@ -215,14 +226,9 @@ class TestEventServiceDelete:
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding)
 
-        EventService.delete(user.company, event.uuid)
+        EventService.delete(user.company, instance=event)
 
         assert Event.objects.filter(uuid=event.uuid).count() == 0
-
-    def test_delete_event_not_found(self, user):
-        """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError):
-            EventService.delete(user.company, uuid4())
 
     def test_delete_payment_event_blocked(self, user):
         """BR-S01: Eventos PAYMENT não podem ser deletados manualmente."""
@@ -234,7 +240,7 @@ class TestEventServiceDelete:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            EventService.delete(user.company, event.uuid)
+            EventService.delete(user.company, instance=event)
 
         assert exc_info.value.code == "payment_event_readonly"
         assert Event.objects.filter(uuid=event.uuid).exists()
@@ -247,9 +253,18 @@ class TestEventServiceDelete:
             event_type=Event.TypeChoices.MEETING,
         )
 
-        EventService.delete(user.company, event.uuid)
+        EventService.delete(user.company, instance=event)
 
         assert Event.objects.filter(uuid=event.uuid).count() == 0
+
+    def test_delete_event_cross_tenant(self, user):
+        """Evento de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_event = EventFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            EventService.delete(user.company, instance=other_event)
 
 
 @pytest.mark.django_db

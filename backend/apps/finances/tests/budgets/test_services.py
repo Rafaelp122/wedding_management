@@ -319,10 +319,11 @@ class TestBudgetServiceIntegration:
         assert Budget.objects.filter(wedding=wedding).count() == 1
 
         # Deletar wedding (deve cascadear para budget)
-        WeddingService.delete(user.company, wedding.uuid)
+        WeddingService.delete(user.company, instance=wedding)
 
         # Verificar que ambos foram deletados
-        assert Budget.objects.filter(wedding=wedding).count() == 0
+        # Usamos uuid pois em Django 5.2 instance.delete() limpa o estado da pk
+        assert Budget.objects.filter(wedding__uuid=wedding.uuid).count() == 0
 
     def test_budget_create_with_wedding_instance(self, user):
         """
@@ -366,6 +367,17 @@ class TestBudgetServiceIntegration:
 
         assert updated.wedding == wedding1
 
+    def test_update_budget_cross_tenant(self, user):
+        """Orçamento de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            BudgetService.update(
+                user.company, other_budget, {"notes": "Hack"}
+            )
+
     def test_budget_delete_success(self, user):
         """
         BudgetService.delete() remove o orçamento se não houver categorias.
@@ -408,3 +420,12 @@ class TestBudgetServiceIntegration:
 
         assert "Não é possível apagar este orçamento" in str(exc_info.value)
         assert Budget.objects.filter(uuid=budget.uuid).exists()
+
+    def test_delete_budget_cross_tenant(self, user):
+        """Orçamento de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            BudgetService.delete(user.company, instance=other_budget)

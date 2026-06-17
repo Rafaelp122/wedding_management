@@ -306,6 +306,30 @@ class TestInstallmentServiceUpdate:
         )
         assert updated.due_date == new_due_date
 
+    def test_update_installment_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser atualizada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense, amount=Decimal("500.00")
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.update(
+                user.company, other_installment, {"amount": Decimal("300.00")}
+            )
+
 
 @pytest.mark.django_db
 class TestInstallmentServiceDelete:
@@ -427,6 +451,53 @@ class TestInstallmentServiceMarkAsPaid:
         with pytest.raises(BusinessRuleViolation) as exc:
             InstallmentService.unmark_as_paid(user.company, installment)
         assert exc.value.code == "installment_not_paid"
+
+    def test_mark_as_paid_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser marcada como paga."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense, amount=Decimal("500.00")
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.mark_as_paid(user.company, other_installment)
+
+    def test_unmark_as_paid_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser desmarcada como paga."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.unmark_as_paid(user.company, other_installment)
 
 
 @pytest.mark.django_db
@@ -582,6 +653,28 @@ class TestInstallmentServiceRedistribute:
 
         assert not SchedulerEvent.objects.filter(uuid=deleted_event_uuid).exists()
 
+    def test_delete_installment_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser deletada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("1000.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense, installment_number=1, amount=Decimal("1000.00")
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.delete(user.company, instance=other_installment)
+
 
 @pytest.mark.django_db
 class TestInstallmentServiceAdjust:
@@ -707,6 +800,30 @@ class TestInstallmentServiceAdjust:
         with pytest.raises(BusinessRuleViolation) as exc:
             InstallmentService.adjust(user.company, inst, {"amount": Decimal("300.00")})
         assert exc.value.code == "expense_math_violation"
+
+    def test_adjust_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser ajustada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense, amount=Decimal("500.00")
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.adjust(
+                user.company, other_installment, {"amount": Decimal("300.00")}
+            )
 
 
 @pytest.mark.django_db

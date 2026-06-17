@@ -104,9 +104,22 @@ class TestWeddingService:
 
         # Asserção
         assert updated_wedding.bride_name == "Nova Maria"
-        # O valor do orçamento NÃO deve ter mudado se buscarmos no banco
+
         budget = Budget.objects.get(wedding=updated_wedding)
         assert budget.total_estimated == initial_value
+
+    def test_update_wedding_cross_tenant(self, user):
+        """Casamento de outro tenant não pode ser atualizado."""
+        from apps.users.tests.factories import UserFactory
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+
+        with pytest.raises(ObjectNotFoundError):
+            WeddingService.update(
+                company=user.company,
+                instance=other_wedding,
+                data={"bride_name": "Hack"},
+            )
 
     def test_create_wedding_fail_fast_validation_error(self, user, wedding_payload):
         """
@@ -214,7 +227,7 @@ class TestWeddingService:
         with pytest.raises(
             DomainIntegrityError, match="Não é possível apagar este casamento"
         ):
-            WeddingService.delete(company=user.company, uuid=wedding.uuid)
+            WeddingService.delete(company=user.company, instance=wedding)
 
         assert Wedding.objects.filter(uuid=wedding.uuid).exists()
 
@@ -230,12 +243,21 @@ class TestWeddingService:
         wedding = WeddingService.create(company=user.company, data=payload)
 
         # 2. Execução: Deletar o casamento
-        WeddingService.delete(company=user.company, uuid=wedding.uuid)
+        WeddingService.delete(company=user.company, instance=wedding)
 
         # 3. Asserções: O banco de dados deve estar limpo
         assert Wedding.objects.count() == 0
         assert Budget.objects.count() == 0
         assert BudgetCategory.objects.count() == 0
+
+    def test_delete_wedding_cross_tenant(self, user):
+        """Casamento de outro tenant não pode ser deletado."""
+        from apps.users.tests.factories import UserFactory
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+
+        with pytest.raises(ObjectNotFoundError):
+            WeddingService.delete(company=user.company, instance=other_wedding)
 
 
 @pytest.mark.django_db

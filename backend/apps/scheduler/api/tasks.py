@@ -63,5 +63,6 @@ def delete_task(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Remove uma tarefa permanentemente.
     """
     user = require_user(request.user)
-    TaskService.delete(user.company, uuid)
+    instance = TaskService.get(user.company, uuid)
+    TaskService.delete(user.company, instance)
     return 204, None

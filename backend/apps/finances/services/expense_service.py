@@ -21,6 +21,7 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import BudgetCategory, Expense
 from apps.finances.services.installment_service import InstallmentService
 from apps.logistics.models import Contract
@@ -271,12 +272,18 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Expense, data: dict[str, Any]) -> Expense:
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Despesa não encontrada ou acesso negado.",
+            code="expense_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Despesa uuid={instance.uuid} por company_id={company.id}"
         )
 
-        data.pop("company", None)
         data.pop("wedding", None)
+        data.pop("company", None)
         data.pop("category", None)
 
         contract_changed = "contract" in data
@@ -345,6 +352,12 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Expense) -> None:
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Despesa não encontrada ou acesso negado.",
+            code="expense_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção da Despesa uuid={instance.uuid} "
             f"por company_id={company.id}"

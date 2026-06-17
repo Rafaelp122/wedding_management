@@ -115,6 +115,17 @@ class TestTaskServiceUpdate:
 
         assert updated.company == user.company
 
+    def test_update_task_cross_tenant(self, user):
+        """Tarefa de outro tenant não pode ser atualizada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_task = TaskFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            TaskService.update(
+                user.company, other_task, {"title": "Hack"}
+            )
+
 
 @pytest.mark.django_db
 class TestTaskServiceDelete:
@@ -125,14 +136,18 @@ class TestTaskServiceDelete:
         wedding = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding)
 
-        TaskService.delete(user.company, task.uuid)
+        TaskService.delete(user.company, instance=task)
 
         assert Task.objects.filter(uuid=task.uuid).count() == 0
 
-    def test_delete_task_not_found(self, user):
-        """UUID inexistente levanta ObjectNotFoundError."""
+    def test_delete_task_cross_tenant(self, user):
+        """Tarefa de outro tenant não pode ser deletada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_task = TaskFactory(wedding=other_wedding)
+
         with pytest.raises(ObjectNotFoundError):
-            TaskService.delete(user.company, uuid4())
+            TaskService.delete(user.company, instance=other_task)
 
 
 @pytest.mark.django_db

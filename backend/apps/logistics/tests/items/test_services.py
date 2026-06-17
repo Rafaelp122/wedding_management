@@ -249,6 +249,21 @@ class TestItemServiceUpdate:
 
         assert updated.company == user.company
 
+    def test_update_item_cross_tenant(self, user):
+        """Item de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding, supplier=other_supplier
+        )
+        other_item = ItemFactory(contract=other_contract, wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            ItemService.update(
+                user.company, other_item, {"name": "Hack"}
+            )
+
     def test_update_item_clear_contract(self, user):
         """Item pode ser desvinculado do contrato (contract=None)."""
         wedding, contract = _setup_item_context(user)
@@ -295,6 +310,17 @@ class TestItemServiceDelete:
         ItemService.delete(user.company, item)
 
         assert Item.objects.filter(uuid=item.uuid).count() == 0
+
+    def test_delete_item_cross_tenant(self, user):
+        """Item de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(wedding=other_wedding, supplier=other_supplier)
+        other_item = ItemFactory(contract=other_contract, wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            ItemService.delete(user.company, instance=other_item)
 
 
 @pytest.mark.django_db

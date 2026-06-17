@@ -210,6 +210,20 @@ class TestContractServiceUpdate:
 
         assert "Não é permitido transitar" in str(exc_info.value)
 
+    def test_update_contract_cross_tenant(self, user):
+        """Contrato de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding, supplier=other_supplier
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.update(
+                user.company, other_contract, {"notes": "Hack"}
+            )
+
 
 @pytest.mark.django_db
 class TestContractServiceDelete:
@@ -257,6 +271,16 @@ class TestContractServiceDelete:
         assert contract.pdf_file.name
         ContractService.delete(user.company, contract)
         assert Contract.objects.filter(uuid=contract.uuid).count() == 0
+
+    def test_delete_contract_cross_tenant(self, user):
+        """Contrato de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(wedding=other_wedding, supplier=other_supplier)
+
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.delete(user.company, instance=other_contract)
 
 
 @pytest.mark.django_db

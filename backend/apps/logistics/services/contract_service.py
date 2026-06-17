@@ -25,6 +25,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.finances.services.expense_service import ExpenseService
 from apps.logistics.models import Contract, Supplier
@@ -259,6 +260,12 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Contract, data: dict[str, Any]) -> Contract:
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Contrato uuid={instance.uuid} por company_id={company.id}"
         )
@@ -290,8 +297,6 @@ class ContractService:
 
         status_input = data.pop("status", None)
         if status_input is not None and status_input != instance.status:
-            if instance.company_id != company.id:
-                raise ObjectNotFoundError(detail="Contrato não encontrado.")
             instance.status = status_input
 
         ContractService._apply_fields(instance, data)
@@ -317,6 +322,12 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Contract) -> None:
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção do Contrato uuid={instance.uuid} por "
             f"company_id={company.id}"
@@ -351,8 +362,11 @@ class ContractService:
             f"{instance.status} -> {new_status}"
         )
 
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(detail="Contrato não encontrado.")
+        validate_tenant_ownership(
+            company, instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
 
         instance.status = new_status
         try:
