@@ -112,6 +112,23 @@ class TestContractServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
+    def test_create_contract_with_inactive_supplier(self, user):
+        """Criação de contrato com fornecedor inativo deve funcionar."""
+        wedding, supplier = _setup_contract_context(user)
+        supplier.is_active = False
+        supplier.save()
+
+        data = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Contrato Fornecedor Inativo",
+            "total_amount": Decimal("5000.00"),
+        }
+
+        contract = ContractService.create(user.company, data)
+        assert contract.supplier == supplier
+        assert contract.status == Contract.StatusChoices.DRAFT
+
 
 @pytest.mark.django_db
 class TestContractServiceUpdate:
@@ -153,6 +170,22 @@ class TestContractServiceUpdate:
         )
 
         assert updated.supplier == supplier2
+
+    def test_update_expiration_date_with_alert_days_before(self, make_contract):
+        """Atualizar expiration_date e alert_days_before juntos."""
+        contract = make_contract("DRAFT")
+        future_date = date(2027, 12, 31)
+
+        updated = ContractService.update(
+            contract.company,
+            contract,
+            {
+                "expiration_date": future_date,
+                "alert_days_before": 30,
+            },
+        )
+        assert updated.expiration_date == future_date
+        assert updated.alert_days_before == 30
 
     def test_update_with_valid_status_transition(self, make_contract):
         """update() com status válido chama transition_status internamente."""
@@ -428,6 +461,62 @@ class TestContractServiceTransitionStatus:
         with pytest.raises(ObjectNotFoundError):
             ContractService.transition_status(other_user.company, contract, "PENDING")
 
+    def test_transition_to_signed_without_pdf_raises_error(self, make_contract):
+        """Transição para SIGNED sem PDF vinculado deve falhar."""
+        contract = make_contract("PENDING", pdf_file=None)
+
+        with pytest.raises(ValidationError) as exc_info:
+            ContractService.transition_status(
+                contract.company, contract, "SIGNED"
+            )
+        assert "PDF" in str(exc_info.value)
+
+    def test_transition_to_signed_without_signed_date_raises_error(self, make_contract):
+        """Transição para SIGNED sem signed_date deve falhar."""
+        contract = make_contract(
+            "PENDING",
+            pdf_file="contracts/dummy.pdf",
+            signed_date=None,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            ContractService.transition_status(
+                contract.company, contract, "SIGNED"
+            )
+        assert "data" in str(exc_info.value).lower()
+
+    def test_cancel_contract_with_pending_installments(self, make_contract, user):
+        """Cancelar contrato com parcelas pendentes deve ser permitido."""
+        from apps.finances.tests.factories import (
+            BudgetCategoryFactory,
+            BudgetFactory,
+            ExpenseFactory,
+            InstallmentFactory,
+        )
+
+        contract = make_contract("SIGNED", signed_date=date.today())
+        category = BudgetCategoryFactory(
+            budget=BudgetFactory(wedding=contract.wedding),
+            wedding=contract.wedding,
+        )
+        expense = ExpenseFactory(
+            wedding=contract.wedding,
+            category=category,
+            contract=contract,
+            actual_amount=Decimal("3000.00"),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("3000.00"),
+            status="PENDING",
+        )
+
+        updated = ContractService.transition_status(
+            contract.company, contract, "CANCELED"
+        )
+        assert updated.status == "CANCELED"
+
 
 @pytest.mark.django_db
 class TestContractServiceDeleteFile:
@@ -671,6 +760,30 @@ class TestContractServiceCreateFull:
             )
         assert "não suportado" in str(exc_info.value)
 
+    def test_create_full_invalid_file_size(self, user):
+        """Arquivo com tamanho acima de 10MB deve falhar."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        wedding, supplier, _ = self._setup(user)
+        contract_data = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Contrato",
+            "total_amount": Decimal("5000.00"),
+        }
+        oversized = SimpleUploadedFile(
+            "contrato.pdf",
+            b"x" * (11 * 1024 * 1024),  # 11MB
+            content_type="application/pdf",
+        )
+        with pytest.raises(ValidationError) as exc_info:
+            ContractService.create_full(
+                company=user.company,
+                contract_data=contract_data,
+                pdf_file=oversized,
+            )
+        assert "tamanho" in str(exc_info.value).lower()
+
     def test_create_full_with_parent(self, user):
         """Cria contrato como aditivo de outro contrato."""
         wedding, supplier, _ = self._setup(user)
@@ -686,6 +799,28 @@ class TestContractServiceCreateFull:
             "wedding": wedding.uuid,
             "supplier": supplier.uuid,
             "name": "Aditivo",
+            "total_amount": Decimal("2000.00"),
+            "parent": str(parent.uuid),
+        }
+        contract = ContractService.create_full(
+            company=user.company,
+            contract_data=contract_data,
+        )
+        assert contract.parent == parent
+
+    def test_create_full_addendum_with_canceled_parent(self, user):
+        """Criar aditivo de contrato cancelado — documenta comportamento."""
+        wedding, supplier, _ = self._setup(user)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            status="CANCELED",
+            total_amount=Decimal("10000.00"),
+        )
+        contract_data = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Aditivo Cancelado",
             "total_amount": Decimal("2000.00"),
             "parent": str(parent.uuid),
         }
