@@ -228,6 +228,22 @@ class TestBudgetCategoryServiceUpdate:
         BudgetCategoryService.update(user.company, category, {"name": "Renomeada"})
         mock_qs.select_for_update.assert_called_once()
 
+    def test_update_category_cross_tenant(self, user):
+        """Categoria de outro tenant não pode ser atualizada."""
+        from apps.users.tests.factories import UserFactory
+
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            BudgetCategoryService.update(
+                user.company, other_category, {"name": "Hack"}
+            )
+
 
 @pytest.mark.django_db
 class TestBudgetCategoryServiceDelete:

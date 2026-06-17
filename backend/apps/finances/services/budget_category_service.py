@@ -125,6 +125,11 @@ class BudgetCategoryService:
     def update(
         company: Company, instance: BudgetCategory, data: dict[str, Any]
     ) -> BudgetCategory:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Categoria de orçamento não encontrada ou acesso negado.",
+            code="budget_category_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Categoria uuid={instance.uuid} por company_id={company.id}"
         )

@@ -217,6 +217,11 @@ class InstallmentService:
     def update(
         company: Company, instance: Installment, data: dict[str, Any]
     ) -> Installment:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Parcela não encontrada ou acesso negado.",
+            code="installment_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Parcela uuid={instance.uuid} por company_id={company.id}"
         )

@@ -297,8 +297,6 @@ class ContractService:
 
         status_input = data.pop("status", None)
         if status_input is not None and status_input != instance.status:
-            if instance.company_id != company.id:
-                raise ObjectNotFoundError(detail="Contrato não encontrado.")
             instance.status = status_input
 
         ContractService._apply_fields(instance, data)
