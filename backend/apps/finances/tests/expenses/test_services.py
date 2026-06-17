@@ -455,7 +455,7 @@ class TestExpenseServiceDelete:
             ExpenseService.get(user.company, expense.uuid)
 
     def test_delete_expense_with_contract_is_allowed(self, user):
-        """Excluir despesa vinculada a contrato é permitido (contract FK é SET_NULL no Expense)."""
+        """Excluir despesa vinculada a contrato é permitido."""
         from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 
         category = _setup_category(user)
