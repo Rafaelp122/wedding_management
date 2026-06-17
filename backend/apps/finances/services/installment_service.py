@@ -414,6 +414,7 @@ class InstallmentService:
             ) from e
 
 
+@transaction.atomic
 def _delete_payment_events_for_expense(company: Company, expense: Expense) -> None:
     """Remove todos os eventos PAYMENT do scheduler vinculados a esta despesa."""
     from apps.scheduler.models import Event as SchedulerEvent
@@ -425,6 +426,7 @@ def _delete_payment_events_for_expense(company: Company, expense: Expense) -> No
     ).delete()
 
 
+@transaction.atomic
 def _delete_payment_event_for_single(company: Company, instance: Installment) -> None:
     """Remove o evento PAYMENT vinculado a uma parcela específica."""
     from apps.scheduler.models import Event as SchedulerEvent
@@ -436,6 +438,7 @@ def _delete_payment_event_for_single(company: Company, instance: Installment) ->
     ).delete()
 
 
+@transaction.atomic
 def _create_payment_events(
     company: Company,
     expense: Expense,
