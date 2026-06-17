@@ -466,9 +466,7 @@ class TestContractServiceTransitionStatus:
         contract = make_contract("PENDING", pdf_file=None)
 
         with pytest.raises(ValidationError) as exc_info:
-            ContractService.transition_status(
-                contract.company, contract, "SIGNED"
-            )
+            ContractService.transition_status(contract.company, contract, "SIGNED")
         assert "PDF" in str(exc_info.value)
 
     def test_transition_to_signed_without_signed_date_raises_error(self, make_contract):
@@ -480,9 +478,7 @@ class TestContractServiceTransitionStatus:
         )
 
         with pytest.raises(ValidationError) as exc_info:
-            ContractService.transition_status(
-                contract.company, contract, "SIGNED"
-            )
+            ContractService.transition_status(contract.company, contract, "SIGNED")
         assert "data" in str(exc_info.value).lower()
 
     def test_cancel_contract_with_pending_installments(self, make_contract, user):

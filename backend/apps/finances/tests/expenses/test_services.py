@@ -272,9 +272,7 @@ class TestExpenseServiceUpdate:
             amount=Decimal("500.00"),
         )
 
-        updated = ExpenseService.update(
-            user.company, expense, {"name": "Nome Novo"}
-        )
+        updated = ExpenseService.update(user.company, expense, {"name": "Nome Novo"})
 
         assert updated.name == "Nome Novo"
         assert updated.actual_amount == Decimal("500.00")
