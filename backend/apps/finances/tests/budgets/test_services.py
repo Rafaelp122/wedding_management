@@ -319,10 +319,11 @@ class TestBudgetServiceIntegration:
         assert Budget.objects.filter(wedding=wedding).count() == 1
 
         # Deletar wedding (deve cascadear para budget)
-        WeddingService.delete(user.company, wedding.uuid)
+        WeddingService.delete(user.company, instance=wedding)
 
         # Verificar que ambos foram deletados
-        assert Budget.objects.filter(wedding=wedding).count() == 0
+        # Usamos uuid pois em Django 5.2 instance.delete() limpa o estado da pk
+        assert Budget.objects.filter(wedding__uuid=wedding.uuid).count() == 0
 
     def test_budget_create_with_wedding_instance(self, user):
         """

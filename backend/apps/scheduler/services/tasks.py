@@ -94,8 +94,7 @@ class TaskService:
 
     @staticmethod
     @transaction.atomic
-    def delete(company: Company, uuid: UUID | str) -> None:
-        instance = TaskService.get(company, uuid)
+    def delete(company: Company, instance: Task) -> None:
         logger.info(
             f"Tentativa de deleção da Tarefa uuid={instance.uuid} por "
             f"company_id={company.id}"

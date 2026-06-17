@@ -142,11 +142,10 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def delete(company: Company, uuid: UUID | str) -> None:
+    def delete(company: Company, instance: Wedding) -> None:
         """
         Deleta um casamento.
         """
-        instance = WeddingService.get(company, uuid)
         logger.info(
             f"Tentativa de deleção do casamento uuid={instance.uuid} pela "
             f"company_id={company.id}"

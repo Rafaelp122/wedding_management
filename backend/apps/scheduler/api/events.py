@@ -92,5 +92,6 @@ def delete_event(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Desativa também os alertas e lembretes associados a ela.
     """
     user = require_user(request.user)
-    EventService.delete(user.company, uuid)
+    instance = EventService.get(user.company, uuid)
+    EventService.delete(user.company, instance)
     return 204, None

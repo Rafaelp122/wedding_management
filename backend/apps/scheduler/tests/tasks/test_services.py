@@ -125,14 +125,9 @@ class TestTaskServiceDelete:
         wedding = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding)
 
-        TaskService.delete(user.company, task.uuid)
+        TaskService.delete(user.company, instance=task)
 
         assert Task.objects.filter(uuid=task.uuid).count() == 0
-
-    def test_delete_task_not_found(self, user):
-        """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError):
-            TaskService.delete(user.company, uuid4())
 
 
 @pytest.mark.django_db

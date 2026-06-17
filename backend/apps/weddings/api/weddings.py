@@ -72,5 +72,6 @@ def update_wedding(
 )
 def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     user = require_user(request.user)
-    WeddingService.delete(company=user.company, uuid=uuid)
+    instance = WeddingService.get(company=user.company, uuid=uuid)
+    WeddingService.delete(company=user.company, instance=instance)
     return 204, None

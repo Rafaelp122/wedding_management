@@ -136,8 +136,7 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def delete(company: Company, uuid: UUID | str) -> None:
-        instance = EventService.get(company, uuid)
+    def delete(company: Company, instance: Event) -> None:
         logger.info(
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
             f"company_id={company.id}"
