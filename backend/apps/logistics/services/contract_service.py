@@ -290,17 +290,29 @@ class ContractService:
 
         status_input = data.pop("status", None)
         if status_input is not None and status_input != instance.status:
-            ContractService.transition_status(company, instance, status_input)
+            if instance.company_id != company.id:
+                raise ObjectNotFoundError(detail="Contrato não encontrado.")
+            instance.status = status_input
 
+        ContractService._apply_fields(instance, data)
+
+        try:
+            instance.save()
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages),
+                code="contract_update_validation_error",
+            ) from e
+
+        logger.info(f"Contrato uuid={instance.uuid} atualizado com sucesso.")
+        return instance
+
+    @staticmethod
+    def _apply_fields(instance: Contract, data: dict[str, Any]) -> None:
         for field, value in data.items():
             if field == "pdf_file" and value is None:
                 continue
             setattr(instance, field, value)
-
-        instance.save()
-
-        logger.info(f"Contrato uuid={instance.uuid} atualizado com sucesso.")
-        return instance
 
     @staticmethod
     @transaction.atomic
