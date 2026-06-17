@@ -382,6 +382,11 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Installment) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Parcela não encontrada ou acesso negado.",
+                code="installment_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção da Parcela uuid={instance.uuid} "
             f"por company_id={company.id}"

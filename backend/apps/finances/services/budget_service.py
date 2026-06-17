@@ -112,6 +112,11 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Budget) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Orçamento não encontrado ou acesso negado.",
+                code="budget_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção do Orçamento uuid={instance.uuid} por "
             f"company_id={company.id}"

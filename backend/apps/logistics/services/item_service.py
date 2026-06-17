@@ -183,6 +183,11 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Item) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Item de logística não encontrado ou acesso negado.",
+                code="item_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção do Item uuid={instance.uuid} por "
             f"company_id={company.id}"

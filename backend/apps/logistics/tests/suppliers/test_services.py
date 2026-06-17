@@ -132,6 +132,14 @@ class TestSupplierServiceDelete:
         assert Supplier.objects.filter(uuid=supplier.uuid).count() == 0
         assert Contract.objects.filter(uuid=contract.uuid).count() == 0
 
+    def test_delete_supplier_cross_tenant(self, user):
+        """Fornecedor de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_supplier = SupplierFactory(company=other_user.company)
+
+        with pytest.raises(ObjectNotFoundError):
+            SupplierService.delete(user.company, instance=other_supplier)
+
 
 @pytest.mark.django_db
 class TestSupplierServiceListAndGet:

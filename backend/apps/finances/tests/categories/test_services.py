@@ -264,6 +264,18 @@ class TestBudgetCategoryServiceDelete:
         assert "category_protected_error" in str(exc_info.value.code)
         assert BudgetCategory.objects.filter(uuid=category.uuid).count() == 1
 
+    def test_delete_category_cross_tenant(self, user):
+        """Categoria de outro tenant não pode ser deletada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            BudgetCategoryService.delete(user.company, instance=other_category)
+
 
 @pytest.mark.django_db
 class TestBudgetCategoryServiceListAndGet:

@@ -345,6 +345,11 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Expense) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Despesa não encontrada ou acesso negado.",
+                code="expense_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção da Despesa uuid={instance.uuid} "
             f"por company_id={company.id}"

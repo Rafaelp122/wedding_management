@@ -582,6 +582,28 @@ class TestInstallmentServiceRedistribute:
 
         assert not SchedulerEvent.objects.filter(uuid=deleted_event_uuid).exists()
 
+    def test_delete_installment_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser deletada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("1000.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense, installment_number=1, amount=Decimal("1000.00")
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.delete(user.company, instance=other_installment)
+
 
 @pytest.mark.django_db
 class TestInstallmentServiceAdjust:

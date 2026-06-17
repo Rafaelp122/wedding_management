@@ -83,6 +83,11 @@ class SupplierService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Supplier) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Fornecedor não encontrado ou acesso negado.",
+                code="supplier_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção do Fornecedor uuid={instance.uuid} pela "
             f"company_id={company.id}"

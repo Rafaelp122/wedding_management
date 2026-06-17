@@ -409,3 +409,12 @@ class TestBudgetServiceIntegration:
 
         assert "Não é possível apagar este orçamento" in str(exc_info.value)
         assert Budget.objects.filter(uuid=budget.uuid).exists()
+
+    def test_delete_budget_cross_tenant(self, user):
+        """Orçamento de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            BudgetService.delete(user.company, instance=other_budget)

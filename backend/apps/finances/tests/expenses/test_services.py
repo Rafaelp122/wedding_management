@@ -473,6 +473,25 @@ class TestExpenseServiceDelete:
         with pytest.raises(Expense.DoesNotExist):
             Expense.objects.get(uuid=expense.uuid)
 
+    def test_delete_expense_cross_tenant(self, user):
+        """Despesa de outro tenant não pode ser deletada."""
+
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            ExpenseService.delete(user.company, instance=other_expense)
+
 
 @pytest.mark.django_db
 class TestExpenseServiceFromDocument:

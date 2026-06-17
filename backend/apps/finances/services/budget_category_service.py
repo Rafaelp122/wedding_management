@@ -153,6 +153,11 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: BudgetCategory) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Categoria de orçamento não encontrada ou acesso negado.",
+                code="budget_category_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção da Categoria uuid={instance.uuid} "
             f"por company_id={company.id}"

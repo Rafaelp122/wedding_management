@@ -317,6 +317,11 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Contract) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Contrato não encontrado ou acesso negado.",
+                code="contract_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção do Contrato uuid={instance.uuid} por "
             f"company_id={company.id}"
