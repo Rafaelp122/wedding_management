@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
-from apps.finances.models import Installment
+from apps.finances.models import Expense, Installment
 from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
@@ -166,6 +166,25 @@ class TestExpenseServiceCreate:
 
         assert exc_info.value.code == "br_f02_violation"
 
+    def test_create_expense_triggers_tolerance_zero(self, user):
+        """BR-F01: expense com actual_amount > 0 deve gerar parcelas que somam
+        exatamente o valor total."""
+        category = _setup_category(user)
+        data = {
+            "category": category.uuid,
+            "name": "Tolerância Zero",
+            "estimated_amount": Decimal("1000.00"),
+            "actual_amount": Decimal("1000.00"),
+            "num_installments": 3,
+            "first_due_date": date.today(),
+        }
+        expense = ExpenseService.create(user.company, data)
+        expense.refresh_from_db()
+        total = sum(i.amount for i in expense.installments.all())
+        assert total == Decimal("1000.00"), (
+            f"Soma das parcelas ({total}) deve ser igual a actual_amount (1000.00)"
+        )
+
 
 @pytest.mark.django_db
 class TestExpenseServiceUpdate:
@@ -236,6 +255,63 @@ class TestExpenseServiceUpdate:
         )
 
         assert updated.company == user.company
+
+    def test_update_expense_partial_fields_only_name(self, user):
+        """Atualização apenas do nome não redistribui parcelas nem falha."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+            name="Nome Antigo",
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+        )
+
+        updated = ExpenseService.update(user.company, expense, {"name": "Nome Novo"})
+
+        assert updated.name == "Nome Novo"
+        assert updated.actual_amount == Decimal("500.00")
+        assert updated.installments.count() == 1
+
+    def test_update_expense_amount_with_installment_count(self, user):
+        """Alterar actual_amount + especificar num_installments redistribui
+        com o número informado."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("600.00"),
+        )
+        InstallmentFactory(
+            expense=expense, installment_number=1, amount=Decimal("200.00")
+        )
+        InstallmentFactory(
+            expense=expense, installment_number=2, amount=Decimal("200.00")
+        )
+        InstallmentFactory(
+            expense=expense, installment_number=3, amount=Decimal("200.00")
+        )
+
+        updated = ExpenseService.update(
+            user.company,
+            expense,
+            {
+                "actual_amount": Decimal("900.00"),
+                "num_installments": 3,
+                "first_due_date": date.today(),
+            },
+        )
+
+        assert updated.actual_amount == Decimal("900.00")
+        assert updated.installments.count() == 3
+        total = sum(i.amount for i in updated.installments.all())
+        assert total == Decimal("900.00")
 
     def test_update_amount_auto_redistribute(self, user):
         """Alterar actual_amount sem num_installments redistribui parcelas."""
@@ -377,6 +453,25 @@ class TestExpenseServiceDelete:
 
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.get(user.company, expense.uuid)
+
+    def test_delete_expense_with_contract_is_allowed(self, user):
+        """Excluir despesa vinculada a contrato é permitido."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        category = _setup_category(user)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(wedding=category.wedding, supplier=supplier)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=contract,
+            actual_amount=Decimal("5000.00"),
+        )
+
+        ExpenseService.delete(user.company, expense)
+
+        with pytest.raises(Expense.DoesNotExist):
+            Expense.objects.get(uuid=expense.uuid)
 
 
 @pytest.mark.django_db
@@ -531,3 +626,48 @@ class TestExpenseServiceContractIntegration:
         updated = ExpenseService.update(user.company, expense, {"contract": None})
 
         assert updated.contract is None
+
+
+@pytest.mark.django_db
+class TestExpenseServiceInstallmentDistribution:
+    """Testes de rateio de parcelas com valores quebrados."""
+
+    def test_create_expense_uneven_installments(self, user):
+        """R$ 100 / 3 deve criar parcelas que somam exatamente R$ 100."""
+        category = _setup_category(user)
+        data = {
+            "category": category.uuid,
+            "name": "Rateio Quebrado",
+            "estimated_amount": Decimal("100.00"),
+            "actual_amount": Decimal("100.00"),
+            "num_installments": 3,
+            "first_due_date": date.today(),
+        }
+        expense = ExpenseService.create(user.company, data)
+        total = sum(i.amount for i in expense.installments.all())
+        assert total == Decimal("100.00")
+        assert expense.installments.count() == 3
+
+    def test_update_redistribute_invalid_number(self, user):
+        """Redistribuir com num_installments < 1 levanta BusinessRuleViolation."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        InstallmentFactory(
+            expense=expense, installment_number=1, amount=Decimal("500.00")
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            ExpenseService.update(
+                user.company,
+                expense,
+                {
+                    "actual_amount": Decimal("500.00"),
+                    "num_installments": 0,
+                },
+            )
+        assert exc.value.code == "invalid_installment_number"
