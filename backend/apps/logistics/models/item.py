@@ -7,6 +7,10 @@ serviços contratados.
 Referências: RF07-RF08
 """
 
+from collections.abc import Collection
+from typing import Any, ClassVar, Self
+
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
@@ -21,6 +25,14 @@ class Item(TenantModel, WeddingOwnedMixin):
     Item de logística (RF07-RF08).
     Representa a necessidade física ou o serviço contratado.
     """
+
+    _original_acquisition_status: str | None = None
+
+    ALLOWED_TRANSITIONS: ClassVar[dict[str, list[str]]] = {
+        "PENDING": ["IN_PROGRESS"],
+        "IN_PROGRESS": ["DONE", "PENDING"],
+        "DONE": ["IN_PROGRESS"],
+    }
 
     class AcquisitionStatus(models.TextChoices):
         PENDING = "PENDING", "Pendente"
@@ -59,8 +71,39 @@ class Item(TenantModel, WeddingOwnedMixin):
             models.Index(fields=["acquisition_status"]),
         ]
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._original_acquisition_status = self.acquisition_status
+
     def __str__(self) -> str:
         return f"{self.name} ({self.quantity}x)"
+
+    @classmethod
+    def from_db(
+        cls, db: str | None, field_names: Collection[str], values: Collection[Any]
+    ) -> Self:
+        instance = super().from_db(db, field_names, values)
+        instance._original_acquisition_status = instance.acquisition_status
+        return instance
+
+    def clean(self) -> None:
+        super().clean()
+
+        if not self._state.adding:
+            original = self._original_acquisition_status
+            if original is None:
+                msg = (
+                    "Não foi possível determinar o status original do item. "
+                    "Recarregue a instância do banco e tente novamente."
+                )
+                raise ValidationError(msg)
+            if self.acquisition_status != original:
+                allowed = self.ALLOWED_TRANSITIONS.get(original, [])
+                if self.acquisition_status not in allowed:
+                    raise ValidationError(
+                        f"Não é permitido transitar de '{original}' para "
+                        f"'{self.acquisition_status}'."
+                    )
 
     @property
     def supplier(self) -> Supplier | None:

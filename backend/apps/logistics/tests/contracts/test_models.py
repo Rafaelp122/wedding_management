@@ -255,3 +255,63 @@ class TestContractFileValidation:
         ]
         assert len(validators) == 1
         assert validators[0].max_size == 10 * 1024 * 1024
+
+
+@pytest.mark.django_db
+class TestContractStatusTransitionValidation:
+    """Testes da máquina de estados de contrato em Contract.clean()."""
+
+    _SIGNED_KWARGS = {
+        "pdf_file": "contracts/dummy.pdf",
+        "signed_date": date.today(),
+        "total_amount": Decimal("5000.00"),
+    }
+
+    _VALID: list[tuple[str, str, dict]] = [
+        ("DRAFT", "PENDING", {}),
+        ("DRAFT", "CANCELED", {}),
+        ("PENDING", "SIGNED", {}),
+        ("PENDING", "DRAFT", {}),
+        ("PENDING", "CANCELED", {}),
+        ("SIGNED", "CANCELED", _SIGNED_KWARGS),
+        ("CANCELED", "DRAFT", {}),
+    ]
+
+    _INVALID: list[tuple[str, str, dict]] = [
+        ("DRAFT", "SIGNED", {}),
+        ("SIGNED", "DRAFT", _SIGNED_KWARGS),
+        ("CANCELED", "SIGNED", {}),
+        ("CANCELED", "PENDING", {}),
+    ]
+
+    @pytest.mark.parametrize("from_status, to_status, kwargs", _VALID)
+    def test_valid_transitions(self, make_contract, from_status, to_status, kwargs):
+        contract = make_contract(from_status, **kwargs)
+        if to_status == "SIGNED":
+            contract.pdf_file = "contracts/test.pdf"
+            contract.signed_date = date.today()
+            contract.total_amount = Decimal("5000.00")
+        contract.status = to_status
+        contract.full_clean()
+
+    @pytest.mark.parametrize("from_status, to_status, kwargs", _INVALID)
+    def test_invalid_transitions(self, make_contract, from_status, to_status, kwargs):
+        contract = make_contract(from_status, **kwargs)
+        contract.status = to_status
+        with pytest.raises(ValidationError):
+            contract.full_clean()
+
+    def test_new_instance_not_validated_as_transition(self):
+        """Criação direta de contrato ASSINADO não deve falhar por transição,
+        apenas pelas regras de SIGNED (PDF, valor, data)."""
+        with pytest.raises(ValidationError) as exc_info:
+            Contract(
+                company=None,
+                wedding=None,
+                supplier=None,
+                status="SIGNED",
+                total_amount=Decimal("5000.00"),
+            ).full_clean()
+        errors = str(exc_info.value)
+        assert "PDF" in errors.upper() or "data" in errors.lower()
+        assert "transitar" not in errors

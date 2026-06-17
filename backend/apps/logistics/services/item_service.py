@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import QuerySet
 
@@ -203,24 +204,14 @@ class ItemService:
         if instance.company_id != company.id:
             raise ObjectNotFoundError(detail="Item não encontrado.")
 
-        # TODO(sprint/018): mover máquina de estados para Item.clean()
-        allowed_transitions: dict[str, list[str]] = {
-            "PENDING": ["IN_PROGRESS"],
-            "IN_PROGRESS": ["DONE", "PENDING"],
-            "DONE": ["IN_PROGRESS"],
-        }
-
-        current = instance.acquisition_status
-        allowed = allowed_transitions.get(current, [])
-
-        if new_status not in allowed:
-            raise BusinessRuleViolation(
-                detail=f"Não é permitido transitar de '{current}' para '{new_status}'.",
-                code="item_invalid_status_transition",
-            )
-
         instance.acquisition_status = new_status
-        instance.save()
+        try:
+            instance.save()
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages),
+                code="item_invalid_status_transition",
+            ) from e
 
         logger.info(f"Item uuid={instance.uuid} transitado para '{new_status}'.")
         return instance

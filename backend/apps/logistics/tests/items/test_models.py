@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.logistics.models import Item
 from apps.logistics.tests.factories import ContractFactory, ItemFactory
@@ -94,4 +95,44 @@ class TestItemAcquisitionStatus:
         item = ItemFactory(
             wedding=wedding, acquisition_status=Item.AcquisitionStatus.DONE
         )
+        item.full_clean()
+
+
+@pytest.mark.django_db
+class TestItemStatusTransitionValidation:
+    """Testes da máquina de estados de item em Item.clean()."""
+
+    _VALID: list[tuple[str, str]] = [
+        ("PENDING", "IN_PROGRESS"),
+        ("IN_PROGRESS", "DONE"),
+        ("IN_PROGRESS", "PENDING"),
+        ("DONE", "IN_PROGRESS"),
+    ]
+
+    _INVALID: list[tuple[str, str]] = [
+        ("PENDING", "DONE"),
+        ("DONE", "PENDING"),
+    ]
+
+    @pytest.fixture
+    def item_for_transition(self, user):
+        wedding = WeddingFactory(user_context=user)
+        return lambda status: ItemFactory(wedding=wedding, acquisition_status=status)
+
+    @pytest.mark.parametrize("from_status, to_status", _VALID)
+    def test_valid_transitions(self, item_for_transition, from_status, to_status):
+        item = item_for_transition(from_status)
+        item.acquisition_status = to_status
+        item.full_clean()
+
+    @pytest.mark.parametrize("from_status, to_status", _INVALID)
+    def test_invalid_transitions(self, item_for_transition, from_status, to_status):
+        item = item_for_transition(from_status)
+        item.acquisition_status = to_status
+        with pytest.raises(ValidationError):
+            item.full_clean()
+
+    def test_no_change_does_not_validate(self, item_for_transition):
+        item = item_for_transition("PENDING")
+        item.acquisition_status = "PENDING"
         item.full_clean()
