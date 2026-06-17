@@ -382,6 +382,7 @@ class ContractService:
         return contract
 
     @staticmethod
+    @transaction.atomic
     def delete_file(company: Company, uuid: UUID | str) -> None:
         """
         Remove o arquivo vinculado ao contrato.

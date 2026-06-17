@@ -171,6 +171,7 @@ class WeddingService:
             ) from e
 
 
+@transaction.atomic
 def _apply_template_events(
     company: Company, wedding: Wedding, template_name: str
 ) -> None:
