@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.finances.models import Budget, BudgetCategory
@@ -472,6 +473,27 @@ class TestBudgetServiceIntegration:
                     "wedding": ["Budget with this Wedding already exists."],
                 }
             )
+
+        budget_data = {
+            "wedding": wedding.uuid,
+            "total_estimated": Decimal("50000.00"),
+        }
+
+        with patch.object(Budget, "save", mock_save):
+            with pytest.raises(DomainIntegrityError) as exc_info:
+                BudgetService.create(user.company, budget_data)
+
+        assert "já possui um orçamento definido" in str(exc_info.value.detail)
+
+    def test_create_budget_integrity_error_path(self, user):
+        """
+        IntegrityError puro (sem ValidationError) deve ser convertido
+        para DomainIntegrityError.
+        """
+        wedding = WeddingFactory(company=user.company)
+
+        def mock_save(*args, **kwargs):
+            raise IntegrityError("UNIQUE constraint failed: wedding_id")
 
         budget_data = {
             "wedding": wedding.uuid,
