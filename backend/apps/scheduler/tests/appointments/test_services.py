@@ -257,6 +257,15 @@ class TestEventServiceDelete:
 
         assert Event.objects.filter(uuid=event.uuid).count() == 0
 
+    def test_delete_event_cross_tenant(self, user):
+        """Evento de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_event = EventFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            EventService.delete(user.company, instance=other_event)
+
 
 @pytest.mark.django_db
 class TestEventServiceListAndGet:

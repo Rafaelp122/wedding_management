@@ -326,6 +326,11 @@ class InstallmentService:
     def adjust(
         company: Company, instance: Installment, data: dict[str, Any]
     ) -> Installment:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Parcela não encontrada ou acesso negado.",
+            code="installment_not_found_or_denied",
+        )
         if instance.status == Installment.StatusChoices.PAID:
             raise BusinessRuleViolation(
                 detail="Não é possível ajustar uma parcela já marcada como paga. "

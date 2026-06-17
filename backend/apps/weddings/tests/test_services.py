@@ -247,6 +247,14 @@ class TestWeddingService:
         assert Budget.objects.count() == 0
         assert BudgetCategory.objects.count() == 0
 
+    def test_delete_wedding_cross_tenant(self, user):
+        """Casamento de outro tenant não pode ser deletado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+
+        with pytest.raises(ObjectNotFoundError):
+            WeddingService.delete(company=user.company, instance=other_wedding)
+
 
 @pytest.mark.django_db
 class TestWeddingServiceListAnnotations:

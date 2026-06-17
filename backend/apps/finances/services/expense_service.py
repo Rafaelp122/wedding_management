@@ -283,6 +283,7 @@ class ExpenseService:
         )
 
         data.pop("wedding", None)
+        data.pop("company", None)
         data.pop("category", None)
 
         contract_changed = "contract" in data

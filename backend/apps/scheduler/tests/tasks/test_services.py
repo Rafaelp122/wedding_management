@@ -140,6 +140,15 @@ class TestTaskServiceDelete:
 
         assert Task.objects.filter(uuid=task.uuid).count() == 0
 
+    def test_delete_task_cross_tenant(self, user):
+        """Tarefa de outro tenant não pode ser deletada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_task = TaskFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            TaskService.delete(user.company, instance=other_task)
+
 
 @pytest.mark.django_db
 class TestTaskServiceListAndGet:

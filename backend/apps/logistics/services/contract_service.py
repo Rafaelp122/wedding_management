@@ -364,8 +364,11 @@ class ContractService:
             f"{instance.status} -> {new_status}"
         )
 
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(detail="Contrato não encontrado.")
+        validate_tenant_ownership(
+            company, instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
 
         instance.status = new_status
         try:

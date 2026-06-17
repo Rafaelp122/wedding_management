@@ -777,6 +777,30 @@ class TestInstallmentServiceAdjust:
             InstallmentService.adjust(user.company, inst, {"amount": Decimal("300.00")})
         assert exc.value.code == "expense_math_violation"
 
+    def test_adjust_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser ajustada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense, amount=Decimal("500.00")
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.adjust(
+                user.company, other_installment, {"amount": Decimal("300.00")}
+            )
+
 
 @pytest.mark.django_db
 class TestInstallmentServiceListAndGet:
