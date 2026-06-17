@@ -137,6 +137,11 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Event) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Evento não encontrado ou acesso negado.",
+                code="event_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
             f"company_id={company.id}"

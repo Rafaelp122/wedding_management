@@ -95,6 +95,11 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Task) -> None:
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Tarefa não encontrada ou acesso negado.",
+                code="task_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção da Tarefa uuid={instance.uuid} por "
             f"company_id={company.id}"

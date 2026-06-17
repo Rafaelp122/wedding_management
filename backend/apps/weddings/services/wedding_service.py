@@ -146,6 +146,11 @@ class WeddingService:
         """
         Deleta um casamento.
         """
+        if instance.company_id != company.id:
+            raise ObjectNotFoundError(
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            )
         logger.info(
             f"Tentativa de deleção do casamento uuid={instance.uuid} pela "
             f"company_id={company.id}"
