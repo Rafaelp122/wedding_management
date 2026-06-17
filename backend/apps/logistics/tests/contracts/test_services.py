@@ -112,6 +112,10 @@ class TestContractServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
+    # Regra intencional: supplier inativo não bloqueia criação de contrato.
+    # O status is_active do supplier é um controle interno, não uma validação
+    # de integridade referencial. O contrato pode referenciar um supplier que
+    # foi desativado após a criação.
     def test_create_contract_with_inactive_supplier(self, user):
         """Criação de contrato com fornecedor inativo deve funcionar."""
         wedding, supplier = _setup_contract_context(user)
@@ -807,6 +811,9 @@ class TestContractServiceCreateFull:
         )
         assert contract.parent == parent
 
+    # Regra intencional: contratos cancelados podem receber aditivos.
+    # O cancelamento não é um estado terminal absoluto — um contrato
+    # cancelado pode ser regularizado via aditivo.
     def test_create_full_addendum_with_canceled_parent(self, user):
         """Criar aditivo de contrato cancelado — documenta comportamento."""
         wedding, supplier, _ = self._setup(user)

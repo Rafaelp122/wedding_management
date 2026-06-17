@@ -454,8 +454,8 @@ class TestExpenseServiceDelete:
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.get(user.company, expense.uuid)
 
-    def test_delete_expense_with_contract_nullifies_reference(self, user):
-        """Excluir despesa vinculada a contrato deve setar expense.contract = None."""
+    def test_delete_expense_with_contract_is_allowed(self, user):
+        """Excluir despesa vinculada a contrato é permitido (contract FK é SET_NULL no Expense)."""
         from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 
         category = _setup_category(user)
