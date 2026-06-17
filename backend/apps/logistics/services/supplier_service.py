@@ -8,6 +8,7 @@ from django.db.models import Q, QuerySet
 from apps.core.exceptions import (
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Supplier
 from apps.tenants.models import Company
 
@@ -65,12 +66,15 @@ class SupplierService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Supplier, data: dict[str, Any]) -> Supplier:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Fornecedor não encontrado ou acesso negado.",
+            code="supplier_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Fornecedor uuid={instance.uuid} por company_id={company.id}"
         )
 
-        # Proteção: Impedimos o sequestro/mudança de dono via API
-        data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
@@ -83,11 +87,11 @@ class SupplierService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Supplier) -> None:
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Fornecedor não encontrado ou acesso negado.",
-                code="supplier_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Fornecedor não encontrado ou acesso negado.",
+            code="supplier_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção do Fornecedor uuid={instance.uuid} pela "
             f"company_id={company.id}"

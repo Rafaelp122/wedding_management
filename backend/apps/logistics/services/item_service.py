@@ -13,6 +13,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Contract, Item
 from apps.tenants.models import Company
 
@@ -155,11 +156,15 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Item, data: dict[str, Any]) -> Item:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Item uuid={instance.uuid} por company_id={company.id}"
         )
 
-        data.pop("company", None)
         data.pop("wedding", None)
 
         if "contract" in data:
@@ -183,11 +188,11 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Item) -> None:
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Item de logística não encontrado ou acesso negado.",
-                code="item_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção do Item uuid={instance.uuid} por "
             f"company_id={company.id}"
@@ -201,13 +206,15 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def transition_status(company: Company, instance: Item, new_status: str) -> Item:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
         logger.info(
             f"Transição de status do Item uuid={instance.uuid}: "
             f"{instance.acquisition_status} -> {new_status}"
         )
-
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(detail="Item não encontrado.")
 
         instance.acquisition_status = new_status
         try:

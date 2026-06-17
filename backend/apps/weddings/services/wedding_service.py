@@ -12,6 +12,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget
 from apps.tenants.models import Company
 
@@ -114,6 +115,11 @@ class WeddingService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Wedding, data: dict[str, Any]) -> Wedding:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Casamento não encontrado ou acesso negado.",
+            code="wedding_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando casamento uuid={instance.uuid} pela company_id={company.id}"
         )
@@ -146,11 +152,11 @@ class WeddingService:
         """
         Deleta um casamento.
         """
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Casamento não encontrado ou acesso negado.",
-                code="wedding_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Casamento não encontrado ou acesso negado.",
+            code="wedding_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção do casamento uuid={instance.uuid} pela "
             f"company_id={company.id}"

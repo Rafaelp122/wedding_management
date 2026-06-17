@@ -9,6 +9,7 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Event
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -99,11 +100,16 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Event, data: dict[str, Any]) -> Event:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Evento não encontrado ou acesso negado.",
+            code="event_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Evento uuid={instance.uuid} por company_id={company.id}"
         )
 
-        # BR-S01: Eventos PAYMENT são read-only
+
         if instance.event_type == Event.TypeChoices.PAYMENT:
             raise BusinessRuleViolation(
                 detail=(
@@ -137,11 +143,11 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Event) -> None:
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Evento não encontrado ou acesso negado.",
-                code="event_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Evento não encontrado ou acesso negado.",
+            code="event_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção do Evento uuid={instance.uuid} por "
             f"company_id={company.id}"

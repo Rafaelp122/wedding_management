@@ -6,6 +6,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from apps.core.exceptions import ObjectNotFoundError
+from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Task
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -77,6 +78,11 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Task, data: dict[str, Any]) -> Task:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Tarefa não encontrada ou acesso negado.",
+            code="task_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Tarefa uuid={instance.uuid} por company_id={company.id}"
         )
@@ -95,11 +101,11 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Task) -> None:
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Tarefa não encontrada ou acesso negado.",
-                code="task_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Tarefa não encontrada ou acesso negado.",
+            code="task_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção da Tarefa uuid={instance.uuid} por "
             f"company_id={company.id}"

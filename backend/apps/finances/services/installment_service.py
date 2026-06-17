@@ -13,6 +13,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.tenants.models import Company
 
@@ -250,6 +251,11 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def mark_as_paid(company: Company, instance: Installment) -> Installment:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Parcela não encontrada ou acesso negado.",
+            code="installment_not_found_or_denied",
+        )
         if instance.status == Installment.StatusChoices.PAID:
             raise BusinessRuleViolation(
                 detail="Esta parcela já foi marcada como paga.",
@@ -279,6 +285,11 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def unmark_as_paid(company: Company, instance: Installment) -> Installment:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Parcela não encontrada ou acesso negado.",
+            code="installment_not_found_or_denied",
+        )
         if instance.status != Installment.StatusChoices.PAID:
             raise BusinessRuleViolation(
                 detail="Apenas parcelas marcadas como pagas podem ser desmarcadas.",
@@ -382,11 +393,11 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Installment) -> None:
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Parcela não encontrada ou acesso negado.",
-                code="installment_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Parcela não encontrada ou acesso negado.",
+            code="installment_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção da Parcela uuid={instance.uuid} "
             f"por company_id={company.id}"

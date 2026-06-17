@@ -11,6 +11,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget, BudgetCategory
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -153,11 +154,11 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: BudgetCategory) -> None:
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Categoria de orçamento não encontrada ou acesso negado.",
-                code="budget_category_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Categoria de orçamento não encontrada ou acesso negado.",
+            code="budget_category_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção da Categoria uuid={instance.uuid} "
             f"por company_id={company.id}"

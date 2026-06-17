@@ -7,6 +7,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
+from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -92,11 +93,16 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Budget, data: dict[str, Any]) -> Budget:
+        validate_tenant_ownership(
+            company, instance,
+            detail="Orçamento não encontrado ou acesso negado.",
+            code="budget_not_found_or_denied",
+        )
         logger.info(
             f"Atualizando Orçamento uuid={instance.uuid} por company_id={company.id}"
         )
 
-        # Proteção contra sequestro de propriedade e realocação
+
         data.pop("wedding", None)
         data.pop("company", None)
 
@@ -112,11 +118,11 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Budget) -> None:
-        if instance.company_id != company.id:
-            raise ObjectNotFoundError(
-                detail="Orçamento não encontrado ou acesso negado.",
-                code="budget_not_found_or_denied",
-            )
+        validate_tenant_ownership(
+            company, instance,
+            detail="Orçamento não encontrado ou acesso negado.",
+            code="budget_not_found_or_denied",
+        )
         logger.info(
             f"Tentativa de deleção do Orçamento uuid={instance.uuid} por "
             f"company_id={company.id}"
