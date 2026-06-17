@@ -69,13 +69,11 @@ class BudgetService:
         try:
             budget.save()
         except (IntegrityError, ValidationError) as e:
-            # full_clean() ou o banco apitam se já existir um Budget (OneToOne)
-
-            # Se for ValidationError, verificamos se é o erro de unicidade
-            if isinstance(e, ValidationError) and "wedding" not in getattr(
-                e, "message_dict", {}
-            ):
-                raise e
+            if isinstance(e, ValidationError):
+                message_dict = getattr(e, "message_dict", {})
+                other_fields = [k for k in message_dict if k != "wedding"]
+                if other_fields:
+                    raise e
 
             logger.exception(
                 f"Conflito de integridade: Casamento uuid={wedding.uuid} já possui "
