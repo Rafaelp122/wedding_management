@@ -465,9 +465,9 @@ class TestContractServiceTransitionStatus:
         """Transição para SIGNED sem PDF vinculado deve falhar."""
         contract = make_contract("PENDING", pdf_file=None)
 
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.transition_status(contract.company, contract, "SIGNED")
-        assert "PDF" in str(exc_info.value)
+        assert "PDF" in str(exc_info.value.detail)
 
     def test_transition_to_signed_without_signed_date_raises_error(self, make_contract):
         """Transição para SIGNED sem signed_date deve falhar."""
@@ -477,9 +477,9 @@ class TestContractServiceTransitionStatus:
             signed_date=None,
         )
 
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.transition_status(contract.company, contract, "SIGNED")
-        assert "data" in str(exc_info.value).lower()
+        assert "data" in str(exc_info.value.detail).lower()
 
     def test_cancel_contract_with_pending_installments(self, make_contract, user):
         """Cancelar contrato com parcelas pendentes deve ser permitido."""
@@ -490,7 +490,9 @@ class TestContractServiceTransitionStatus:
             InstallmentFactory,
         )
 
-        contract = make_contract("SIGNED", signed_date=date.today())
+        contract = make_contract(
+            "SIGNED", signed_date=date.today(), pdf_file="contracts/dummy.pdf"
+        )
         category = BudgetCategoryFactory(
             budget=BudgetFactory(wedding=contract.wedding),
             wedding=contract.wedding,
@@ -757,7 +759,7 @@ class TestContractServiceCreateFull:
         assert "não suportado" in str(exc_info.value)
 
     def test_create_full_invalid_file_size(self, user):
-        """Arquivo com tamanho acima de 10MB deve falhar."""
+        """Arquivo com tamanho acima de 10MB deve falhar via model."""
         from django.core.files.uploadedfile import SimpleUploadedFile
 
         wedding, supplier, _ = self._setup(user)
@@ -772,13 +774,14 @@ class TestContractServiceCreateFull:
             b"x" * (11 * 1024 * 1024),  # 11MB
             content_type="application/pdf",
         )
+        contract = ContractService.create_full(
+            company=user.company,
+            contract_data=contract_data,
+        )
+        contract.pdf_file = oversized
         with pytest.raises(ValidationError) as exc_info:
-            ContractService.create_full(
-                company=user.company,
-                contract_data=contract_data,
-                pdf_file=oversized,
-            )
-        assert "tamanho" in str(exc_info.value).lower()
+            contract.full_clean()
+        assert "excede o limite" in str(exc_info.value).lower()
 
     def test_create_full_with_parent(self, user):
         """Cria contrato como aditivo de outro contrato."""
