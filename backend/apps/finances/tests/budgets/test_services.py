@@ -12,6 +12,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.finances.models import Budget, BudgetCategory
@@ -374,9 +375,7 @@ class TestBudgetServiceIntegration:
         other_budget = BudgetFactory(wedding=other_wedding)
 
         with pytest.raises(ObjectNotFoundError):
-            BudgetService.update(
-                user.company, other_budget, {"notes": "Hack"}
-            )
+            BudgetService.update(user.company, other_budget, {"notes": "Hack"})
 
     def test_budget_delete_success(self, user):
         """
@@ -429,3 +428,58 @@ class TestBudgetServiceIntegration:
 
         with pytest.raises(ObjectNotFoundError):
             BudgetService.delete(user.company, instance=other_budget)
+
+    def test_create_budget_validation_error_with_other_fields(self, user):
+        """
+        ValidationError com campos além de 'wedding' NÃO deve ser engolido
+        pelo DomainIntegrityError.
+        """
+        wedding = WeddingFactory(company=user.company)
+
+        def mock_save(*args, **kwargs):
+            raise ValidationError(
+                {
+                    "wedding": ["Budget with this Wedding already exists."],
+                    "total_estimated": [
+                        "Ensure this value is greater than or equal to 0."
+                    ],
+                }
+            )
+
+        budget_data = {
+            "wedding": wedding.uuid,
+            "total_estimated": Decimal("50000.00"),
+        }
+
+        with patch.object(Budget, "save", mock_save):
+            with pytest.raises(ValidationError) as exc_info:
+                BudgetService.create(user.company, budget_data)
+
+        message_dict = exc_info.value.message_dict
+        assert "total_estimated" in message_dict
+        assert "wedding" in message_dict
+
+    def test_create_budget_validation_error_wedding_only(self, user):
+        """
+        ValidationError APENAS com 'wedding' no message_dict deve ser
+        convertido para DomainIntegrityError.
+        """
+        wedding = WeddingFactory(company=user.company)
+
+        def mock_save(*args, **kwargs):
+            raise ValidationError(
+                {
+                    "wedding": ["Budget with this Wedding already exists."],
+                }
+            )
+
+        budget_data = {
+            "wedding": wedding.uuid,
+            "total_estimated": Decimal("50000.00"),
+        }
+
+        with patch.object(Budget, "save", mock_save):
+            with pytest.raises(DomainIntegrityError) as exc_info:
+                BudgetService.create(user.company, budget_data)
+
+        assert "já possui um orçamento definido" in str(exc_info.value.detail)
