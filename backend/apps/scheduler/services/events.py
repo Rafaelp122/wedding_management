@@ -101,14 +101,14 @@ class EventService:
     @transaction.atomic
     def update(company: Company, instance: Event, data: dict[str, Any]) -> Event:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Evento não encontrado ou acesso negado.",
             code="event_not_found_or_denied",
         )
         logger.info(
             f"Atualizando Evento uuid={instance.uuid} por company_id={company.id}"
         )
-
 
         if instance.event_type == Event.TypeChoices.PAYMENT:
             raise BusinessRuleViolation(
@@ -144,7 +144,8 @@ class EventService:
     @transaction.atomic
     def delete(company: Company, instance: Event) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Evento não encontrado ou acesso negado.",
             code="event_not_found_or_denied",
         )

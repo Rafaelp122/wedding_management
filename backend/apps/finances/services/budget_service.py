@@ -94,14 +94,14 @@ class BudgetService:
     @transaction.atomic
     def update(company: Company, instance: Budget, data: dict[str, Any]) -> Budget:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Orçamento não encontrado ou acesso negado.",
             code="budget_not_found_or_denied",
         )
         logger.info(
             f"Atualizando Orçamento uuid={instance.uuid} por company_id={company.id}"
         )
-
 
         data.pop("wedding", None)
         data.pop("company", None)
@@ -119,7 +119,8 @@ class BudgetService:
     @transaction.atomic
     def delete(company: Company, instance: Budget) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Orçamento não encontrado ou acesso negado.",
             code="budget_not_found_or_denied",
         )

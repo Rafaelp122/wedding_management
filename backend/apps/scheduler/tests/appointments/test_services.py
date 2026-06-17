@@ -205,6 +205,17 @@ class TestEventServiceUpdate:
 
         assert updated.title == "Reunião com Buffet Atualizada"
 
+    def test_update_event_cross_tenant(self, user):
+        """Evento de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_event = EventFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            EventService.update(
+                user.company, other_event, {"title": "Hack"}
+            )
+
 
 @pytest.mark.django_db
 class TestEventServiceDelete:

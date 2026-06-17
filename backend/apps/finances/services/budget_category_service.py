@@ -155,7 +155,8 @@ class BudgetCategoryService:
     @transaction.atomic
     def delete(company: Company, instance: BudgetCategory) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Categoria de orçamento não encontrada ou acesso negado.",
             code="budget_category_not_found_or_denied",
         )

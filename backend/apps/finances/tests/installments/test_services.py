@@ -428,6 +428,53 @@ class TestInstallmentServiceMarkAsPaid:
             InstallmentService.unmark_as_paid(user.company, installment)
         assert exc.value.code == "installment_not_paid"
 
+    def test_mark_as_paid_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser marcada como paga."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense, amount=Decimal("500.00")
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.mark_as_paid(user.company, other_installment)
+
+    def test_unmark_as_paid_cross_tenant(self, user):
+        """Parcela de outro tenant não pode ser desmarcada como paga."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        other_installment = InstallmentFactory(
+            expense=other_expense,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            InstallmentService.unmark_as_paid(user.company, other_installment)
+
 
 @pytest.mark.django_db
 class TestInstallmentServiceRedistribute:

@@ -104,9 +104,19 @@ class TestWeddingService:
 
         # Asserção
         assert updated_wedding.bride_name == "Nova Maria"
-        # O valor do orçamento NÃO deve ter mudado se buscarmos no banco
+
         budget = Budget.objects.get(wedding=updated_wedding)
         assert budget.total_estimated == initial_value
+
+    def test_update_wedding_cross_tenant(self, user):
+        """Casamento de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+
+        with pytest.raises(ObjectNotFoundError):
+            WeddingService.update(
+                company=user.company, instance=other_wedding, data={"bride_name": "Hack"}
+            )
 
     def test_create_wedding_fail_fast_validation_error(self, user, wedding_payload):
         """

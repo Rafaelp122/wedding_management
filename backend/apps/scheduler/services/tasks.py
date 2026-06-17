@@ -79,7 +79,8 @@ class TaskService:
     @transaction.atomic
     def update(company: Company, instance: Task, data: dict[str, Any]) -> Task:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Tarefa não encontrada ou acesso negado.",
             code="task_not_found_or_denied",
         )
@@ -102,7 +103,8 @@ class TaskService:
     @transaction.atomic
     def delete(company: Company, instance: Task) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Tarefa não encontrada ou acesso negado.",
             code="task_not_found_or_denied",
         )

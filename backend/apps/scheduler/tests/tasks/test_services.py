@@ -115,6 +115,17 @@ class TestTaskServiceUpdate:
 
         assert updated.company == user.company
 
+    def test_update_task_cross_tenant(self, user):
+        """Tarefa de outro tenant não pode ser atualizada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_task = TaskFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            TaskService.update(
+                user.company, other_task, {"title": "Hack"}
+            )
+
 
 @pytest.mark.django_db
 class TestTaskServiceDelete:

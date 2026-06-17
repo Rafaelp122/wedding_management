@@ -261,7 +261,8 @@ class ContractService:
     @transaction.atomic
     def update(company: Company, instance: Contract, data: dict[str, Any]) -> Contract:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Contrato não encontrado ou acesso negado.",
             code="contract_not_found_or_denied",
         )
@@ -324,7 +325,8 @@ class ContractService:
     @transaction.atomic
     def delete(company: Company, instance: Contract) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Contrato não encontrado ou acesso negado.",
             code="contract_not_found_or_denied",
         )

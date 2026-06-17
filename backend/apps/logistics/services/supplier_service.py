@@ -67,7 +67,8 @@ class SupplierService:
     @transaction.atomic
     def update(company: Company, instance: Supplier, data: dict[str, Any]) -> Supplier:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Fornecedor não encontrado ou acesso negado.",
             code="supplier_not_found_or_denied",
         )
@@ -75,6 +76,7 @@ class SupplierService:
             f"Atualizando Fornecedor uuid={instance.uuid} por company_id={company.id}"
         )
 
+        data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
@@ -88,7 +90,8 @@ class SupplierService:
     @transaction.atomic
     def delete(company: Company, instance: Supplier) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Fornecedor não encontrado ou acesso negado.",
             code="supplier_not_found_or_denied",
         )

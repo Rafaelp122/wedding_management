@@ -18,6 +18,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 
 from apps.core.exceptions import (
+    BusinessRuleViolation,
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
@@ -272,7 +273,8 @@ class ExpenseService:
     @transaction.atomic
     def update(company: Company, instance: Expense, data: dict[str, Any]) -> Expense:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Despesa não encontrada ou acesso negado.",
             code="expense_not_found_or_denied",
         )
@@ -350,7 +352,8 @@ class ExpenseService:
     @transaction.atomic
     def delete(company: Company, instance: Expense) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Despesa não encontrada ou acesso negado.",
             code="expense_not_found_or_denied",
         )

@@ -116,7 +116,8 @@ class WeddingService:
     @transaction.atomic
     def update(company: Company, instance: Wedding, data: dict[str, Any]) -> Wedding:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Casamento não encontrado ou acesso negado.",
             code="wedding_not_found_or_denied",
         )
@@ -153,7 +154,8 @@ class WeddingService:
         Deleta um casamento.
         """
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Casamento não encontrado ou acesso negado.",
             code="wedding_not_found_or_denied",
         )

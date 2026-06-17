@@ -2,9 +2,11 @@ from typing import TYPE_CHECKING
 
 from apps.core.exceptions import ObjectNotFoundError
 
+
 if TYPE_CHECKING:
-    from apps.tenants.models import Company
     from django.db.models import Model
+
+    from apps.tenants.models import Company
 
 
 def validate_tenant_ownership(

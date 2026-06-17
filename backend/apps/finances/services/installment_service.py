@@ -252,7 +252,8 @@ class InstallmentService:
     @transaction.atomic
     def mark_as_paid(company: Company, instance: Installment) -> Installment:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Parcela não encontrada ou acesso negado.",
             code="installment_not_found_or_denied",
         )
@@ -286,7 +287,8 @@ class InstallmentService:
     @transaction.atomic
     def unmark_as_paid(company: Company, instance: Installment) -> Installment:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Parcela não encontrada ou acesso negado.",
             code="installment_not_found_or_denied",
         )
@@ -394,7 +396,8 @@ class InstallmentService:
     @transaction.atomic
     def delete(company: Company, instance: Installment) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Parcela não encontrada ou acesso negado.",
             code="installment_not_found_or_denied",
         )

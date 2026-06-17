@@ -157,7 +157,8 @@ class ItemService:
     @transaction.atomic
     def update(company: Company, instance: Item, data: dict[str, Any]) -> Item:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Item de logística não encontrado ou acesso negado.",
             code="item_not_found_or_denied",
         )
@@ -166,6 +167,7 @@ class ItemService:
         )
 
         data.pop("wedding", None)
+        data.pop("company", None)
 
         if "contract" in data:
             contract_input = data.pop("contract")
@@ -189,7 +191,8 @@ class ItemService:
     @transaction.atomic
     def delete(company: Company, instance: Item) -> None:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Item de logística não encontrado ou acesso negado.",
             code="item_not_found_or_denied",
         )
@@ -207,7 +210,8 @@ class ItemService:
     @transaction.atomic
     def transition_status(company: Company, instance: Item, new_status: str) -> Item:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Item de logística não encontrado ou acesso negado.",
             code="item_not_found_or_denied",
         )

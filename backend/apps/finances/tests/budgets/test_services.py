@@ -367,6 +367,17 @@ class TestBudgetServiceIntegration:
 
         assert updated.wedding == wedding1
 
+    def test_update_budget_cross_tenant(self, user):
+        """Orçamento de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            BudgetService.update(
+                user.company, other_budget, {"notes": "Hack"}
+            )
+
     def test_budget_delete_success(self, user):
         """
         BudgetService.delete() remove o orçamento se não houver categorias.

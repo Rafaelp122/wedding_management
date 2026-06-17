@@ -210,6 +210,20 @@ class TestContractServiceUpdate:
 
         assert "Não é permitido transitar" in str(exc_info.value)
 
+    def test_update_contract_cross_tenant(self, user):
+        """Contrato de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding, supplier=other_supplier
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.update(
+                user.company, other_contract, {"notes": "Hack"}
+            )
+
 
 @pytest.mark.django_db
 class TestContractServiceDelete:

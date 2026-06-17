@@ -278,6 +278,26 @@ class TestExpenseServiceUpdate:
         assert updated.actual_amount == Decimal("500.00")
         assert updated.installments.count() == 1
 
+    def test_update_expense_cross_tenant(self, user):
+        """Despesa de outro tenant não pode ser atualizada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            ExpenseService.update(
+                user.company, other_expense, {"name": "Hack"}
+            )
+
     def test_update_expense_amount_with_installment_count(self, user):
         """Alterar actual_amount + especificar num_installments redistribui
         com o número informado."""
