@@ -57,7 +57,7 @@ def create_expense(request: AuthRequest, payload: ExpenseIn) -> tuple[int, Expen
     Consome o limite orçamentário previsto inicial geral da categoria.
     """
     user = require_user(request.user)
-    return 201, ExpenseService.create(user.company, payload.model_dump())
+    return 201, ExpenseService.create(user.company, payload)
 
 
 @expenses_router.patch(
@@ -73,9 +73,7 @@ def update_expense(
     """
     user = require_user(request.user)
     instance = ExpenseService.get(user.company, uuid)
-    return ExpenseService.update(
-        user.company, instance, payload.model_dump(exclude_unset=True)
-    )
+    return ExpenseService.update(user.company, instance, payload)
 
 
 @expenses_router.delete(

@@ -12,6 +12,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
+from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
 from apps.finances.models import Budget, BudgetCategory
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -82,10 +83,12 @@ class BudgetCategoryService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> BudgetCategory:
+    def create(company: Company, payload: BudgetCategoryIn) -> BudgetCategory:
         logger.info(
             f"Iniciando criação de Categoria de Orçamento para company_id={company.id}"
         )
+
+        data = payload.model_dump()
 
         budget_input = data.pop("budget", None)
 
@@ -123,7 +126,7 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def update(
-        company: Company, instance: BudgetCategory, data: dict[str, Any]
+        company: Company, instance: BudgetCategory, payload: BudgetCategoryPatchIn | dict[str, Any]
     ) -> BudgetCategory:
         validate_tenant_ownership(
             company, instance,
@@ -134,6 +137,10 @@ class BudgetCategoryService:
             f"Atualizando Categoria uuid={instance.uuid} por company_id={company.id}"
         )
 
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
         data.pop("budget", None)
         data.pop("wedding", None)
         data.pop("company", None)

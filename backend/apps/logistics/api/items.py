@@ -66,7 +66,7 @@ def create_item(request: AuthRequest, payload: ItemIn) -> tuple[int, Item]:
     Parte do planejamento logístico de um evento.
     """
     user = require_user(request.user)
-    item = ItemService.create(company=user.company, data=payload.model_dump())
+    item = ItemService.create(company=user.company, payload=payload)
     return 201, item
 
 
@@ -81,8 +81,7 @@ def update_item(request: AuthRequest, uuid: UUID4, payload: ItemPatchIn) -> Item
     """
     user = require_user(request.user)
     item = ItemService.get(company=user.company, uuid=uuid)
-    data = payload.model_dump(exclude_unset=True)
-    return ItemService.update(company=user.company, instance=item, data=data)
+    return ItemService.update(company=user.company, instance=item, payload=payload)
 
 
 @items_router.delete(

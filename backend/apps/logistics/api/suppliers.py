@@ -56,7 +56,7 @@ def create_supplier(request: AuthRequest, payload: SupplierIn) -> tuple[int, Sup
     Cadastra um novo fornecedor no sistema.
     """
     user = require_user(request.user)
-    supplier = SupplierService.create(company=user.company, data=payload.model_dump())
+    supplier = SupplierService.create(company=user.company, payload=payload)
     return 201, supplier
 
 
@@ -73,8 +73,7 @@ def update_supplier(
     """
     user = require_user(request.user)
     supplier = SupplierService.get(company=user.company, uuid=uuid)
-    data = payload.model_dump(exclude_unset=True)
-    return SupplierService.update(company=user.company, instance=supplier, data=data)
+    return SupplierService.update(company=user.company, instance=supplier, payload=payload)
 
 
 @suppliers_router.delete(

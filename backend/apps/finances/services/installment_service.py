@@ -1,4 +1,5 @@
-import builtins
+from __future__ import annotations
+
 import logging
 from datetime import date
 from typing import Any
@@ -14,6 +15,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
+from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn
 from apps.finances.models import Expense, Installment
 from apps.tenants.models import Company
 
@@ -61,7 +63,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> builtins.list[Installment]:
+    ) -> list[Installment]:
         """
         Gera automaticamente as parcelas de uma despesa com ajuste na última
         parcela (Tolerância Zero).
@@ -144,7 +146,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> builtins.list[Installment]:
+    ) -> list[Installment]:
         if expense.installments.filter(status="PAID").exists():
             raise BusinessRuleViolation(
                 detail=(
@@ -165,10 +167,11 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Installment:
+    def create(company: Company, payload: InstallmentIn) -> Installment:
         logger.info(f"Iniciando criação de Parcela para company_id={company.id}")
 
-        # 1. Resolução Segura de Dependências
+        data = payload.model_dump()
+
         expense_input = data.pop("expense", None)
         if isinstance(expense_input, Expense):
             expense = expense_input
@@ -329,8 +332,7 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def adjust(
-        company: Company, instance: Installment, data: dict[str, Any]
-    ) -> Installment:
+        company: Company, instance: Installment, payload: InstallmentAdjustIn) -> Installment:
         validate_tenant_ownership(
             company, instance,
             detail="Parcela não encontrada ou acesso negado.",
@@ -342,6 +344,8 @@ class InstallmentService:
                 "Reversão não suportada.",
                 code="adjustment_on_paid_installment",
             )
+
+        data = payload.model_dump(exclude_unset=True, exclude_none=True)
 
         new_due_date = data.get("due_date")
         if new_due_date:
@@ -471,7 +475,7 @@ def _delete_payment_event_for_single(company: Company, instance: Installment) ->
 def _create_payment_events(
     company: Company,
     expense: Expense,
-    installments: builtins.list[Installment],
+    installments: list[Installment],
 ) -> None:
     """
     Cria eventos PAYMENT no scheduler para cada parcela gerada.

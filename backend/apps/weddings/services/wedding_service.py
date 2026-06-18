@@ -14,9 +14,11 @@ from apps.core.exceptions import (
 )
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget
+from apps.scheduler.schemas import EventIn
 from apps.tenants.models import Company
 
 from ..models import Wedding
+from ..schemas import WeddingIn, WeddingPatchIn
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +71,7 @@ class WeddingService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Wedding:
-        wedding = Wedding.objects.for_tenant(company).filter(uuid=uuid).first()
+        wedding = Wedding.objects.for_tenant(company).select_related("company").filter(uuid=uuid).first()
         if wedding is None:
             raise ObjectNotFoundError(
                 detail="Casamento não encontrado ou acesso negado.",
@@ -79,10 +81,11 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Wedding:
+    def create(company: Company, payload: WeddingIn) -> Wedding:
         logger.info(f"Criando casamento para company_id={company.id}")
 
-        # Filtra apenas os campos que pertencem ao modelo Wedding
+        data = payload.model_dump()
+
         valid_fields = {f.name for f in Wedding._meta.concrete_fields}
         model_data = {k: v for k, v in data.items() if k in valid_fields}
 
@@ -114,7 +117,7 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Wedding, data: dict[str, Any]) -> Wedding:
+    def update(company: Company, instance: Wedding, payload: WeddingPatchIn) -> Wedding:
         validate_tenant_ownership(
             company,
             instance,
@@ -124,6 +127,8 @@ class WeddingService:
         logger.info(
             f"Atualizando casamento uuid={instance.uuid} pela company_id={company.id}"
         )
+
+        data = payload.model_dump(exclude_unset=True)
 
         valid_fields = {f.name for f in Wedding._meta.concrete_fields}
         for field, value in data.items():
@@ -210,10 +215,10 @@ def _apply_template_events(
 
         EventService.create(
             company,
-            {
-                "wedding": wedding,
-                "title": event_data["title"],
-                "event_type": event_data["event_type"],
-                "start_time": event_start,
-            },
+            EventIn(
+                wedding=wedding.uuid,
+                title=event_data["title"],
+                event_type=event_data["event_type"],
+                start_time=event_start,
+            ),
         )

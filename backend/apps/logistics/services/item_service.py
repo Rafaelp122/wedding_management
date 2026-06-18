@@ -14,6 +14,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
+from apps.logistics.schemas import ItemIn, ItemPatchIn
 from apps.logistics.models import Contract, Item
 from apps.tenants.models import Company
 
@@ -114,10 +115,11 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Item:
-        logger.info(f"Iniciando criação de Item logístico para company_id={company.id}")
+    def create(company: Company, payload: ItemIn) -> Item:
+        logger.info(f"Iniciando criação de Item para company_id={company.id}")
 
-        # 1. Resolução do Casamento (Item é WeddingOwnedMixin)
+        data = payload.model_dump()
+
         wedding_input = data.pop("wedding", None)
 
         # 2. Tratamento de contrato
@@ -155,7 +157,7 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Item, data: dict[str, Any]) -> Item:
+    def update(company: Company, instance: Item, payload: ItemPatchIn | dict[str, Any]) -> Item:
         validate_tenant_ownership(
             company,
             instance,
@@ -166,6 +168,10 @@ class ItemService:
             f"Atualizando Item uuid={instance.uuid} por company_id={company.id}"
         )
 
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
 
