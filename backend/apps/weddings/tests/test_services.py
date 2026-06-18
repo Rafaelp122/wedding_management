@@ -479,8 +479,12 @@ class TestWeddingTemplateApplication:
         """Aplicar o mesmo template duas vezes não corrompe os dados."""
         wedding_payload["template"] = "beach_6m"
 
-        wedding1 = WeddingService.create(company=user.company, payload=WeddingIn(**wedding_payload))
-        wedding2 = WeddingService.create(company=user.company, payload=WeddingIn(**wedding_payload))
+        wedding1 = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
+        wedding2 = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events1 = Event.objects.filter(wedding=wedding1).count()
         events2 = Event.objects.filter(wedding=wedding2).count()
