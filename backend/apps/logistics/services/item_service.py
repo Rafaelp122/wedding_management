@@ -14,8 +14,8 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
-from apps.logistics.schemas import ItemIn, ItemPatchIn
 from apps.logistics.models import Contract, Item
+from apps.logistics.schemas import ItemIn, ItemPatchIn
 from apps.tenants.models import Company
 
 
@@ -157,7 +157,9 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Item, payload: ItemPatchIn | dict[str, Any]) -> Item:
+    def update(
+        company: Company, instance: Item, payload: ItemPatchIn | dict[str, Any]
+    ) -> Item:
         validate_tenant_ownership(
             company,
             instance,

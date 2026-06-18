@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -8,8 +7,8 @@ from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.finances.models import Budget
+from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -36,7 +35,9 @@ class BudgetService:
                 .get(uuid=uuid)
             )
         except Budget.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Orçamento não encontrado ou acesso negado.") from e
+            raise ObjectNotFoundError(
+                detail="Orçamento não encontrado ou acesso negado."
+            ) from e
 
     @staticmethod
     @transaction.atomic

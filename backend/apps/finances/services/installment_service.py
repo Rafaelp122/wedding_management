@@ -15,8 +15,8 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn
 from apps.finances.models import Expense, Installment
+from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn
 from apps.tenants.models import Company
 
 
@@ -221,7 +221,8 @@ class InstallmentService:
         company: Company, instance: Installment, data: dict[str, Any]
     ) -> Installment:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Parcela não encontrada ou acesso negado.",
             code="installment_not_found_or_denied",
         )
@@ -332,9 +333,11 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def adjust(
-        company: Company, instance: Installment, payload: InstallmentAdjustIn) -> Installment:
+        company: Company, instance: Installment, payload: InstallmentAdjustIn
+    ) -> Installment:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Parcela não encontrada ou acesso negado.",
             code="installment_not_found_or_denied",
         )

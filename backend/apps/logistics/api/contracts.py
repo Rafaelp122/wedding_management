@@ -158,7 +158,9 @@ def update_contract(
     """
     user = require_user(request.user)
     contract = ContractService.get(company=user.company, uuid=uuid)
-    return ContractService.update(company=user.company, instance=contract, payload=payload)
+    return ContractService.update(
+        company=user.company, instance=contract, payload=payload
+    )
 
 
 @contracts_router.delete(

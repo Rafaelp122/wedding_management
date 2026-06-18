@@ -199,7 +199,9 @@ class ContractService:
             f"Iniciando criação completa de Contrato para company_id={company.id}"
         )
 
-        contract = ContractService.create(company=company, payload=ContractIn(**contract_data))
+        contract = ContractService.create(
+            company=company, payload=ContractIn(**contract_data)
+        )
 
         if pdf_file_key:
             contract.pdf_file = pdf_file_key
@@ -262,7 +264,9 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Contract, payload: ContractPatchIn | dict[str, Any]) -> Contract:
+    def update(
+        company: Company, instance: Contract, payload: ContractPatchIn | dict[str, Any]
+    ) -> Contract:
         validate_tenant_ownership(
             company,
             instance,
@@ -370,7 +374,8 @@ class ContractService:
         )
 
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Contrato não encontrado ou acesso negado.",
             code="contract_not_found_or_denied",
         )

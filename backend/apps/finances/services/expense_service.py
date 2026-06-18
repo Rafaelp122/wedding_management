@@ -22,8 +22,8 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.models import BudgetCategory, Expense
+from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
 from apps.logistics.models import Contract
 from apps.tenants.models import Company
@@ -102,7 +102,9 @@ class ExpenseService:
                 .get(uuid=uuid)
             )
         except Expense.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Despesa não encontrada ou acesso negado.") from e
+            raise ObjectNotFoundError(
+                detail="Despesa não encontrada ou acesso negado."
+            ) from e
 
     @staticmethod
     def from_document(company: Company, contract_uuid: UUID | str) -> dict[str, Any]:
@@ -273,7 +275,9 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Expense, payload: ExpensePatchIn | dict[str, Any]) -> Expense:
+    def update(
+        company: Company, instance: Expense, payload: ExpensePatchIn | dict[str, Any]
+    ) -> Expense:
         validate_tenant_ownership(
             company,
             instance,

@@ -79,7 +79,9 @@ class TaskService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Task, payload: TaskPatchIn | dict[str, Any]) -> Task:
+    def update(
+        company: Company, instance: Task, payload: TaskPatchIn | dict[str, Any]
+    ) -> Task:
         validate_tenant_ownership(
             company,
             instance,

@@ -12,8 +12,8 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
 from apps.finances.models import Budget, BudgetCategory
+from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -126,10 +126,13 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def update(
-        company: Company, instance: BudgetCategory, payload: BudgetCategoryPatchIn | dict[str, Any]
+        company: Company,
+        instance: BudgetCategory,
+        payload: BudgetCategoryPatchIn | dict[str, Any],
     ) -> BudgetCategory:
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Categoria de orçamento não encontrada ou acesso negado.",
             code="budget_category_not_found_or_denied",
         )

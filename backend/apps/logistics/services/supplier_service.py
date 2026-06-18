@@ -67,7 +67,9 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Supplier, payload: SupplierPatchIn | dict[str, Any]) -> Supplier:
+    def update(
+        company: Company, instance: Supplier, payload: SupplierPatchIn | dict[str, Any]
+    ) -> Supplier:
         validate_tenant_ownership(
             company,
             instance,

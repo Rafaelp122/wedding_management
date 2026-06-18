@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, time, timedelta
-from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -71,7 +70,12 @@ class WeddingService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Wedding:
-        wedding = Wedding.objects.for_tenant(company).select_related("company").filter(uuid=uuid).first()
+        wedding = (
+            Wedding.objects.for_tenant(company)
+            .select_related("company")
+            .filter(uuid=uuid)
+            .first()
+        )
         if wedding is None:
             raise ObjectNotFoundError(
                 detail="Casamento não encontrado ou acesso negado.",

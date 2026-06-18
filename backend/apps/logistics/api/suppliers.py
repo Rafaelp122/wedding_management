@@ -73,7 +73,9 @@ def update_supplier(
     """
     user = require_user(request.user)
     supplier = SupplierService.get(company=user.company, uuid=uuid)
-    return SupplierService.update(company=user.company, instance=supplier, payload=payload)
+    return SupplierService.update(
+        company=user.company, instance=supplier, payload=payload
+    )
 
 
 @suppliers_router.delete(
