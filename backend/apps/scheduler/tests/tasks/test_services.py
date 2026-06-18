@@ -5,6 +5,7 @@ import pytest
 from apps.core.exceptions import ObjectNotFoundError
 from apps.scheduler.models import Task
 from apps.scheduler.services.tasks import TaskService
+from apps.scheduler.schemas import TaskIn, TaskPatchIn
 from apps.scheduler.tests.factories import TaskFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
@@ -24,22 +25,22 @@ class TestTaskServiceCreate:
             "description": "Fazer orçamento com 3 fornecedores",
         }
 
-        task = TaskService.create(user.company, data)
+        task = TaskService.create(user.company, TaskIn(**data))
 
         assert task.wedding == wedding
         assert task.title == "Contratar Buffet"
         assert task.is_completed is False
 
     def test_create_task_with_wedding_instance(self, user):
-        """create() aceita instância de Wedding."""
+        """create() aceita UUID do Wedding."""
         wedding = WeddingFactory(user_context=user)
 
         data = {
-            "wedding": wedding,
+            "wedding": wedding.uuid,
             "title": "Enviar Convites",
         }
 
-        task = TaskService.create(user.company, data)
+        task = TaskService.create(user.company, TaskIn(**data))
         assert task.wedding == wedding
 
     def test_create_task_wedding_not_found(self, user):
@@ -50,7 +51,7 @@ class TestTaskServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            TaskService.create(user.company, data)
+            TaskService.create(user.company, TaskIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
@@ -66,7 +67,7 @@ class TestTaskServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            TaskService.create(user_a.company, data)
+            TaskService.create(user_a.company, TaskIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
@@ -80,7 +81,7 @@ class TestTaskServiceUpdate:
         wedding = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding, title="Título Antigo")
 
-        updated = TaskService.update(user.company, task, {"title": "Título Novo"})
+        updated = TaskService.update(user.company, task, TaskPatchIn(title="Título Novo"))
 
         assert updated.title == "Título Novo"
 
@@ -89,7 +90,7 @@ class TestTaskServiceUpdate:
         wedding = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding, is_completed=False)
 
-        updated = TaskService.update(user.company, task, {"is_completed": True})
+        updated = TaskService.update(user.company, task, TaskPatchIn(is_completed=True))
 
         assert updated.is_completed is True
 
@@ -99,7 +100,7 @@ class TestTaskServiceUpdate:
         wedding2 = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding1)
 
-        updated = TaskService.update(user.company, task, {"wedding": wedding2.uuid})
+        updated = TaskService.update(user.company, task, TaskPatchIn(wedding=wedding2.uuid))
 
         assert updated.wedding == wedding1
 
@@ -123,7 +124,7 @@ class TestTaskServiceUpdate:
 
         with pytest.raises(ObjectNotFoundError):
             TaskService.update(
-                user.company, other_task, {"title": "Hack"}
+                user.company, other_task, TaskPatchIn(title="Hack")
             )
 
 

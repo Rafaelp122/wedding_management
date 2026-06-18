@@ -14,6 +14,7 @@ from apps.finances.tests.factories import (
 )
 from apps.logistics.models import Contract
 from apps.logistics.services.contract_service import ContractService
+from apps.logistics.schemas import ContractIn, ContractPatchIn
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
@@ -42,7 +43,7 @@ class TestContractServiceCreate:
             "description": "Buffet completo",
         }
 
-        contract = ContractService.create(user.company, data)
+        contract = ContractService.create(user.company, ContractIn(**data))
 
         assert contract.wedding == wedding
         assert contract.supplier == supplier
@@ -60,7 +61,7 @@ class TestContractServiceCreate:
             "total_amount": Decimal("5000.00"),
         }
 
-        contract = ContractService.create(user.company, data)
+        contract = ContractService.create(user.company, ContractIn(**data))
         assert contract.wedding == wedding
         assert contract.supplier == supplier
 
@@ -75,7 +76,7 @@ class TestContractServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ContractService.create(user.company, data)
+            ContractService.create(user.company, ContractIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
@@ -90,7 +91,7 @@ class TestContractServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ContractService.create(user.company, data)
+            ContractService.create(user.company, ContractIn(**data))
 
         assert "supplier_not_found_or_denied" in str(exc_info.value.code)
 
@@ -108,7 +109,7 @@ class TestContractServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ContractService.create(user_a.company, data)
+            ContractService.create(user_a.company, ContractIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
@@ -129,7 +130,7 @@ class TestContractServiceCreate:
             "total_amount": Decimal("5000.00"),
         }
 
-        contract = ContractService.create(user.company, data)
+        contract = ContractService.create(user.company, ContractIn(**data))
         assert contract.supplier == supplier
         assert contract.status == Contract.StatusChoices.DRAFT
 
@@ -196,7 +197,7 @@ class TestContractServiceUpdate:
         contract = make_contract("DRAFT")
 
         updated = ContractService.update(
-            contract.company, contract, {"status": "PENDING"}
+            contract.company, contract, ContractPatchIn(status="PENDING")
         )
 
         assert updated.status == "PENDING"
@@ -206,7 +207,7 @@ class TestContractServiceUpdate:
         contract = make_contract("DRAFT")
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ContractService.update(contract.company, contract, {"status": "SIGNED"})
+            ContractService.update(contract.company, contract, ContractPatchIn(status="SIGNED"))
 
         assert "Não é permitido transitar" in str(exc_info.value)
 
@@ -582,7 +583,7 @@ class TestContractServiceResolveParent:
             pdf_file="contracts/dummy.pdf",
         )
         child = ContractFactory(wedding=wedding, supplier=supplier, status="DRAFT")
-        ContractService.update(child.company, child, {"parent": str(parent.uuid)})
+        ContractService.update(child.company, child, ContractPatchIn(parent=str(parent.uuid)))
 
         child.refresh_from_db()
         assert child.parent == parent
@@ -610,7 +611,7 @@ class TestContractServiceResolveParent:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ContractService.update(child.company, child, {"parent": str(parent.uuid)})
+            ContractService.update(child.company, child, ContractPatchIn(parent=str(parent.uuid)))
         assert "deve pertencer ao mesmo casamento" in str(exc_info.value)
 
     def test_update_parent_circular_raises_error(self, user):
@@ -645,7 +646,7 @@ class TestContractServiceResolveParent:
     def test_update_parent_not_found_raises_error(self, make_contract):
         contract = make_contract("DRAFT")
         with pytest.raises(ObjectNotFoundError):
-            ContractService.update(contract.company, contract, {"parent": str(uuid4())})
+            ContractService.update(contract.company, contract, ContractPatchIn(parent=str(uuid4())))
 
 
 @pytest.mark.django_db

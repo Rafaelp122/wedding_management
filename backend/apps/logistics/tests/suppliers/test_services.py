@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from apps.core.exceptions import ObjectNotFoundError
 from apps.logistics.models import Contract, Supplier
 from apps.logistics.services.supplier_service import SupplierService
+from apps.logistics.schemas import SupplierIn, SupplierPatchIn
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
@@ -29,7 +30,7 @@ class TestSupplierServiceCreate:
             "notes": "Fornecedor premium",
         }
 
-        supplier = SupplierService.create(user.company, data)
+        supplier = SupplierService.create(user.company, SupplierIn(**data))
 
         assert supplier.company == user.company
         assert supplier.name == "Buffet Master"
@@ -50,7 +51,7 @@ class TestSupplierServiceCreate:
         }
 
         with pytest.raises(ValidationError):
-            SupplierService.create(user.company, data)
+            SupplierService.create(user.company, SupplierIn(**data))
 
 
 @pytest.mark.django_db
@@ -61,7 +62,7 @@ class TestSupplierServiceUpdate:
         """Atualização de nome é permitida."""
         supplier = SupplierFactory(company=user.company, name="Nome Antigo")
 
-        updated = SupplierService.update(user.company, supplier, {"name": "Nome Novo"})
+        updated = SupplierService.update(user.company, supplier, SupplierPatchIn(name="Nome Novo"))
 
         assert updated.name == "Nome Novo"
 
@@ -83,14 +84,14 @@ class TestSupplierServiceUpdate:
 
         with pytest.raises(ObjectNotFoundError):
             SupplierService.update(
-                user.company, other_supplier, {"name": "Hack"}
+                user.company, other_supplier, SupplierPatchIn(name="Hack")
             )
 
     def test_update_supplier_toggle_active(self, user):
         """Desativar/ativar fornecedor via is_active."""
         supplier = SupplierFactory(company=user.company, is_active=True)
 
-        updated = SupplierService.update(user.company, supplier, {"is_active": False})
+        updated = SupplierService.update(user.company, supplier, SupplierPatchIn(is_active=False))
 
         assert updated.is_active is False
 
@@ -101,13 +102,13 @@ class TestSupplierServiceUpdate:
         updated = SupplierService.update(
             user.company,
             supplier,
-            {
-                "address": "Av. Paulista, 1000",
-                "city": "São Paulo",
-                "state": "SP",
-                "website": "https://example.com",
-                "notes": "Observação atualizada",
-            },
+            SupplierPatchIn(
+                address="Av. Paulista, 1000",
+                city="São Paulo",
+                state="SP",
+                website="https://example.com",
+                notes="Observação atualizada",
+            ),
         )
 
         assert updated.address == "Av. Paulista, 1000"

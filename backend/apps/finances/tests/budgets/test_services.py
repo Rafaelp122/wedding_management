@@ -17,6 +17,7 @@ from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.services.budget_service import BudgetService
+from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
@@ -363,7 +364,7 @@ class TestBudgetServiceIntegration:
         wedding2 = WeddingFactory(company=user.company)
         budget = BudgetService.get_or_create_for_wedding(user.company, wedding1.uuid)
 
-        updated = BudgetService.update(user.company, budget, {"wedding": wedding2.uuid})
+        updated = BudgetService.update(user.company, budget, BudgetPatchIn(wedding=wedding2.uuid))
 
         assert updated.wedding == wedding1
 
@@ -375,7 +376,7 @@ class TestBudgetServiceIntegration:
 
         with pytest.raises(ObjectNotFoundError):
             BudgetService.update(
-                user.company, other_budget, {"notes": "Hack"}
+                user.company, other_budget, BudgetPatchIn(notes="Hack")
             )
 
     def test_budget_delete_success(self, user):
