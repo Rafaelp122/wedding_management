@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-type EditExpenseFormData = z.infer<typeof FinancesExpensesUpdateBody>;
+type EditExpenseFormData = z.input<typeof FinancesExpensesUpdateBody>;
 
 interface EditExpenseDialogProps {
   expense: ExpenseOut;

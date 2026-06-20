@@ -30,7 +30,7 @@ const WEDDING_STATUS_OPTIONS = [
   { value: "CANCELED", label: "Cancelado" },
 ] as const;
 
-type UpdateWeddingFormData = z.infer<typeof WeddingsUpdateBody>;
+type UpdateWeddingFormData = z.input<typeof WeddingsUpdateBody>;
 
 interface EditWeddingDialogProps {
   wedding: WeddingOut;

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-type CreateExpenseFormData = z.infer<typeof FinancesExpensesCreateBody>;
+type CreateExpenseFormData = z.input<typeof FinancesExpensesCreateBody>;
 
 interface CreateExpenseDialogProps {
   weddingUuid: string;
