@@ -7,13 +7,14 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
+from apps.finances.schemas import ExpenseIn
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
     ExpenseFactory,
 )
 from apps.logistics.models import Contract
-from apps.logistics.schemas import ContractIn, ContractPatchIn
+from apps.logistics.schemas import ContractIn, ContractPatchIn, ItemIn
 from apps.logistics.services.contract_service import ContractService
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
@@ -150,22 +151,10 @@ class TestContractServiceUpdate:
         )
 
         updated = ContractService.update(
-            user.company, contract, {"description": "Nova descrição"}
+            user.company, contract, ContractPatchIn(description="Nova descrição")
         )
 
         assert updated.description == "Nova descrição"
-
-    def test_update_contract_cannot_change_wedding(self, user):
-        """Wedding é bloqueado no update (campo estrutural)."""
-        wedding1, supplier = _setup_contract_context(user)
-        wedding2 = WeddingFactory(user_context=user)
-        contract = ContractFactory(wedding=wedding1, supplier=supplier)
-
-        updated = ContractService.update(
-            user.company, contract, {"wedding": wedding2.uuid}
-        )
-
-        assert updated.wedding == wedding1
 
     def test_update_contract_change_supplier(self, user):
         """Troca de supplier é permitida com validação multitenant."""
@@ -174,7 +163,7 @@ class TestContractServiceUpdate:
         contract = ContractFactory(wedding=wedding, supplier=supplier1)
 
         updated = ContractService.update(
-            user.company, contract, {"supplier": supplier2.uuid}
+            user.company, contract, ContractPatchIn(supplier=supplier2.uuid)
         )
 
         assert updated.supplier == supplier2
@@ -187,10 +176,7 @@ class TestContractServiceUpdate:
         updated = ContractService.update(
             contract.company,
             contract,
-            {
-                "expiration_date": future_date,
-                "alert_days_before": 30,
-            },
+            ContractPatchIn(expiration_date=future_date, alert_days_before=30),
         )
         assert updated.expiration_date == future_date
         assert updated.alert_days_before == 30
@@ -224,7 +210,9 @@ class TestContractServiceUpdate:
         other_contract = ContractFactory(wedding=other_wedding, supplier=other_supplier)
 
         with pytest.raises(ObjectNotFoundError):
-            ContractService.update(user.company, other_contract, {"notes": "Hack"})
+            ContractService.update(
+                user.company, other_contract, ContractPatchIn(description="Hack")
+            )
 
 
 @pytest.mark.django_db
@@ -595,7 +583,7 @@ class TestContractServiceResolveParent:
         contract = make_contract("DRAFT")
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.update(
-                contract.company, contract, {"parent": str(contract.uuid)}
+                contract.company, contract, ContractPatchIn(parent=contract.uuid)
             )
         assert "não pode ser pai de si mesmo" in str(exc_info.value)
 
@@ -644,7 +632,7 @@ class TestContractServiceResolveParent:
         )
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.update(
-                ancestor.company, ancestor, {"parent": str(child.uuid)}
+                ancestor.company, ancestor, ContractPatchIn(parent=child.uuid)
             )
         assert "descendente" in str(exc_info.value)
 
@@ -670,12 +658,12 @@ class TestContractServiceCreateFull:
     def test_create_full_contract_only(self, user):
         """Cria contrato sem file, items ou expense."""
         wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato Teste",
-            "total_amount": Decimal("10000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato Teste",
+            total_amount=Decimal("10000.00"),
+        )
         contract = ContractService.create_full(
             company=user.company,
             contract_data=contract_data,
@@ -687,12 +675,12 @@ class TestContractServiceCreateFull:
     def test_create_full_with_file(self, user):
         """Cria contrato com upload de arquivo."""
         wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato com Arquivo",
-            "total_amount": Decimal("5000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato com Arquivo",
+            total_amount=Decimal("5000.00"),
+        )
         contract = ContractService.create_full(
             company=user.company,
             contract_data=contract_data,
@@ -703,15 +691,15 @@ class TestContractServiceCreateFull:
     def test_create_full_with_items(self, user):
         """Cria contrato com itens via items_data."""
         wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato com Itens",
-            "total_amount": Decimal("5000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato com Itens",
+            total_amount=Decimal("5000.00"),
+        )
         items_data = [
-            {"name": "Item 1", "quantity": 10, "acquisition_status": "PENDING"},
-            {"name": "Item 2", "quantity": 5, "acquisition_status": "PENDING"},
+            ItemIn(name="Item 1", quantity=10, acquisition_status="PENDING"),
+            ItemIn(name="Item 2", quantity=5, acquisition_status="PENDING"),
         ]
         contract = ContractService.create_full(
             company=user.company,
@@ -723,20 +711,20 @@ class TestContractServiceCreateFull:
     def test_create_full_with_expense(self, user):
         """Cria contrato com despesa vinculada."""
         wedding, supplier, category = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato com Despesa",
-            "total_amount": Decimal("5000.00"),
-        }
-        expense_data = {
-            "category": category.uuid,
-            "name": "Despesa do Contrato",
-            "estimated_amount": Decimal("5000.00"),
-            "actual_amount": Decimal("5000.00"),
-            "num_installments": 1,
-            "first_due_date": date.today(),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato com Despesa",
+            total_amount=Decimal("5000.00"),
+        )
+        expense_data = ExpenseIn(
+            category=category.uuid,
+            name="Despesa do Contrato",
+            estimated_amount=Decimal("5000.00"),
+            actual_amount=Decimal("5000.00"),
+            num_installments=1,
+            first_due_date=date.today(),
+        )
         contract = ContractService.create_full(
             company=user.company,
             contract_data=contract_data,
@@ -748,23 +736,23 @@ class TestContractServiceCreateFull:
     def test_create_full_with_all(self, user):
         """Cria contrato completo: file + items + expense."""
         wedding, supplier, category = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato Completo",
-            "total_amount": Decimal("10000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato Completo",
+            total_amount=Decimal("10000.00"),
+        )
         items_data = [
-            {"name": "Item 1", "quantity": 10, "acquisition_status": "PENDING"},
+            ItemIn(name="Item 1", quantity=10, acquisition_status="PENDING"),
         ]
-        expense_data = {
-            "category": category.uuid,
-            "name": "Despesa do Contrato",
-            "estimated_amount": Decimal("10000.00"),
-            "actual_amount": Decimal("10000.00"),
-            "num_installments": 3,
-            "first_due_date": date.today(),
-        }
+        expense_data = ExpenseIn(
+            category=category.uuid,
+            name="Despesa do Contrato",
+            estimated_amount=Decimal("10000.00"),
+            actual_amount=Decimal("10000.00"),
+            num_installments=3,
+            first_due_date=date.today(),
+        )
         contract = ContractService.create_full(
             company=user.company,
             contract_data=contract_data,
@@ -780,12 +768,12 @@ class TestContractServiceCreateFull:
     def test_create_full_invalid_file_type(self, user):
         """Arquivo com tipo inválido deve falhar."""
         wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato",
-            "total_amount": Decimal("5000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato",
+            total_amount=Decimal("5000.00"),
+        )
         with pytest.raises(ValidationError) as exc_info:
             ContractService.create_full(
                 company=user.company,
@@ -799,12 +787,12 @@ class TestContractServiceCreateFull:
         from django.core.files.uploadedfile import SimpleUploadedFile
 
         wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato",
-            "total_amount": Decimal("5000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato",
+            total_amount=Decimal("5000.00"),
+        )
         oversized = SimpleUploadedFile(
             "contrato.pdf",
             b"x" * (11 * 1024 * 1024),  # 11MB
@@ -830,13 +818,13 @@ class TestContractServiceCreateFull:
             signed_date=date.today(),
             pdf_file="contracts/dummy.pdf",
         )
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Aditivo",
-            "total_amount": Decimal("2000.00"),
-            "parent": str(parent.uuid),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Aditivo",
+            total_amount=Decimal("2000.00"),
+            parent=parent.uuid,
+        )
         contract = ContractService.create_full(
             company=user.company,
             contract_data=contract_data,
@@ -855,13 +843,13 @@ class TestContractServiceCreateFull:
             status="CANCELED",
             total_amount=Decimal("10000.00"),
         )
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Aditivo Cancelado",
-            "total_amount": Decimal("2000.00"),
-            "parent": str(parent.uuid),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Aditivo Cancelado",
+            total_amount=Decimal("2000.00"),
+            parent=parent.uuid,
+        )
         contract = ContractService.create_full(
             company=user.company,
             contract_data=contract_data,
@@ -874,12 +862,12 @@ class TestContractServiceCreateFull:
         user_b = UserFactory()
         wedding_a = WeddingFactory(company=user_a.company)
         supplier_b = SupplierFactory(company=user_b.company)
-        contract_data = {
-            "wedding": wedding_a.uuid,
-            "supplier": supplier_b.uuid,
-            "name": "Cross-tenant",
-            "total_amount": Decimal("5000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding_a.uuid,
+            supplier=supplier_b.uuid,
+            name="Cross-tenant",
+            total_amount=Decimal("5000.00"),
+        )
         with pytest.raises(ObjectNotFoundError):
             ContractService.create_full(
                 company=user_b.company,
@@ -889,18 +877,18 @@ class TestContractServiceCreateFull:
     def test_create_full_expense_category_not_found(self, user):
         """Expense com categoria inexistente deve falhar."""
         wedding, supplier, _ = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato",
-            "total_amount": Decimal("5000.00"),
-        }
-        expense_data = {
-            "category": uuid4(),
-            "name": "Despesa Inválida",
-            "estimated_amount": Decimal("5000.00"),
-            "actual_amount": Decimal("5000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato",
+            total_amount=Decimal("5000.00"),
+        )
+        expense_data = ExpenseIn(
+            category=uuid4(),
+            name="Despesa Inválida",
+            estimated_amount=Decimal("5000.00"),
+            actual_amount=Decimal("5000.00"),
+        )
         with pytest.raises(ObjectNotFoundError) as exc_info:
             ContractService.create_full(
                 company=user.company,
@@ -912,18 +900,18 @@ class TestContractServiceCreateFull:
     def test_create_full_expense_amount_mismatch_contract(self, user):
         """Expense com valor divergente do contrato deve falhar (BR-F02)."""
         wedding, supplier, category = self._setup(user)
-        contract_data = {
-            "wedding": wedding.uuid,
-            "supplier": supplier.uuid,
-            "name": "Contrato",
-            "total_amount": Decimal("5000.00"),
-        }
-        expense_data = {
-            "category": category.uuid,
-            "name": "Despesa Divergente",
-            "estimated_amount": Decimal("3000.00"),
-            "actual_amount": Decimal("3000.00"),
-        }
+        contract_data = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato",
+            total_amount=Decimal("5000.00"),
+        )
+        expense_data = ExpenseIn(
+            category=category.uuid,
+            name="Despesa Divergente",
+            estimated_amount=Decimal("3000.00"),
+            actual_amount=Decimal("3000.00"),
+        )
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.create_full(
                 company=user.company,

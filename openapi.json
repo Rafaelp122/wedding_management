@@ -5534,6 +5534,17 @@
             "title": "Progress Percent",
             "type": "integer"
           },
+          "alert_days_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Days Before"
+          },
           "expense_uuid": {
             "anyOf": [
               {
@@ -5762,6 +5773,29 @@
               }
             ],
             "title": "Pdf File Key"
+          },
+          "expiration_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiration Date"
+          },
+          "alert_days_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Days Before"
           }
         },
         "title": "ContractPatchIn",

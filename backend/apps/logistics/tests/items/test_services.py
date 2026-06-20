@@ -224,18 +224,6 @@ class TestItemServiceUpdate:
 
         assert updated.wedding == wedding1
 
-    def test_update_item_cannot_change_company(self, user):
-        """Company é bloqueada no update."""
-        wedding, contract = _setup_item_context(user)
-        item = ItemFactory(contract=contract, wedding=wedding)
-        other_user = UserFactory()
-
-        updated = ItemService.update(
-            user.company, item, {"company": other_user.company}
-        )
-
-        assert updated.company == user.company
-
     def test_update_item_cross_tenant(self, user):
         """Item de outro tenant não pode ser atualizado."""
         other_user = UserFactory()

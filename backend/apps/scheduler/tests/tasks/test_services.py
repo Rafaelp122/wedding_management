@@ -108,18 +108,6 @@ class TestTaskServiceUpdate:
 
         assert updated.wedding == wedding1
 
-    def test_update_task_cannot_change_company(self, user):
-        """Company é bloqueada no update."""
-        wedding = WeddingFactory(user_context=user)
-        task = TaskFactory(wedding=wedding)
-        other_user = UserFactory()
-
-        updated = TaskService.update(
-            user.company, task, {"company": other_user.company}
-        )
-
-        assert updated.company == user.company
-
     def test_update_task_cross_tenant(self, user):
         """Tarefa de outro tenant não pode ser atualizada."""
         other_user = UserFactory()

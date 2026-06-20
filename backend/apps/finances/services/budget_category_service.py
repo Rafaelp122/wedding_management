@@ -1,6 +1,5 @@
 import logging
 from decimal import Decimal
-from typing import Any
 from uuid import UUID
 
 from django.db import transaction
@@ -128,7 +127,7 @@ class BudgetCategoryService:
     def update(
         company: Company,
         instance: BudgetCategory,
-        payload: BudgetCategoryPatchIn | dict[str, Any],
+        payload: BudgetCategoryPatchIn,
     ) -> BudgetCategory:
         validate_tenant_ownership(
             company,
@@ -140,13 +139,7 @@ class BudgetCategoryService:
             f"Atualizando Categoria uuid={instance.uuid} por company_id={company.id}"
         )
 
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            data = payload.model_dump(exclude_unset=True)
-        data.pop("budget", None)
-        data.pop("wedding", None)
-        data.pop("company", None)
+        data = payload.model_dump(exclude_unset=True)
 
         for field, value in data.items():
             setattr(instance, field, value)

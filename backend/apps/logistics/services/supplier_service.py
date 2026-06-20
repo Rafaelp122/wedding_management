@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 from uuid import UUID
 
 from django.db import transaction
@@ -68,7 +67,7 @@ class SupplierService:
     @staticmethod
     @transaction.atomic
     def update(
-        company: Company, instance: Supplier, payload: SupplierPatchIn | dict[str, Any]
+        company: Company, instance: Supplier, payload: SupplierPatchIn
     ) -> Supplier:
         validate_tenant_ownership(
             company,
@@ -80,11 +79,7 @@ class SupplierService:
             f"Atualizando Fornecedor uuid={instance.uuid} por company_id={company.id}"
         )
 
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            data = payload.model_dump(exclude_unset=True)
-        data.pop("company", None)
+        data = payload.model_dump(exclude_unset=True)
 
         for field, value in data.items():
             setattr(instance, field, value)

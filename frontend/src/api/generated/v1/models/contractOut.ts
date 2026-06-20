@@ -23,6 +23,7 @@ export interface ContractOut {
   supplier_email?: string;
   has_linked_expense?: boolean;
   progress_percent?: number;
+  alert_days_before?: number | null;
   expense_uuid?: string | null;
   parent?: string | null;
   addendums_count?: number;

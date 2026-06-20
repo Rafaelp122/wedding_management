@@ -110,6 +110,8 @@ class ContractPatchIn(Schema):
     description: str = ""
     parent: UUID4 | None = None
     pdf_file_key: str | None = None
+    expiration_date: date | None = None
+    alert_days_before: int | None = None
 
 
 class ContractStatusTransitionIn(Schema):
@@ -133,6 +135,7 @@ class ContractOut(Schema):
     supplier_email: str = ""
     has_linked_expense: bool = False
     progress_percent: int = 0
+    alert_days_before: int | None = None
     expense_uuid: UUID4 | None = None
     parent: UUID4 | None = None
     addendums_count: int = 0

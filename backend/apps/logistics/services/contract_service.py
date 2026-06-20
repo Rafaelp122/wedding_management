@@ -36,13 +36,14 @@ from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
 
+_ItemInList = list[ItemIn]
+
+
 logger = logging.getLogger(__name__)
+
 
 # Aliases para evitar colisão do método 'list'
 # com o built-in 'list' no escopo da classe
-_ListDict = list[dict[str, Any]]
-
-
 class ContractService:
     """
     Camada de serviço para gestão de contratos.
@@ -182,9 +183,9 @@ class ContractService:
     def create_full(
         company: Company,
         *,
-        contract_data: dict[str, Any],
-        items_data: _ListDict | None = None,
-        expense_data: dict[str, Any] | None = None,
+        contract_data: ContractIn,
+        items_data: _ItemInList | None = None,
+        expense_data: ExpenseIn | None = None,
         pdf_file_key: str | None = None,
     ) -> Contract:
         """
@@ -199,23 +200,29 @@ class ContractService:
             f"Iniciando criação completa de Contrato para company_id={company.id}"
         )
 
-        contract = ContractService.create(
-            company=company, payload=ContractIn(**contract_data)
-        )
+        contract = ContractService.create(company=company, payload=contract_data)
 
         if pdf_file_key:
             contract.pdf_file = pdf_file_key
             contract.save(update_fields=["pdf_file"])
 
         if items_data:
-            for item_dict in items_data:
-                item_dict["wedding"] = contract.wedding.uuid
-                item_dict["contract"] = contract.uuid
-                ItemService.create(company=company, payload=ItemIn(**item_dict))
+            for item in items_data:
+                ItemService.create(
+                    company=company,
+                    payload=item.model_copy(
+                        update={
+                            "wedding": contract.wedding.uuid,
+                            "contract": contract.uuid,
+                        }
+                    ),
+                )
 
         if expense_data:
-            expense_data["contract"] = contract.uuid
-            ExpenseService.create(company=company, payload=ExpenseIn(**expense_data))
+            ExpenseService.create(
+                company=company,
+                payload=expense_data.model_copy(update={"contract": contract.uuid}),
+            )
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
@@ -265,7 +272,7 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def update(
-        company: Company, instance: Contract, payload: ContractPatchIn | dict[str, Any]
+        company: Company, instance: Contract, payload: ContractPatchIn
     ) -> Contract:
         validate_tenant_ownership(
             company,
@@ -277,12 +284,7 @@ class ContractService:
             f"Atualizando Contrato uuid={instance.uuid} por company_id={company.id}"
         )
 
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            data = payload.model_dump(exclude_unset=True)
-        data.pop("wedding", None)
-        data.pop("company", None)
+        data = payload.model_dump(exclude_unset=True)
         pdf_file_key = data.pop("pdf_file_key", None)
         if pdf_file_key is not None:
             instance.pdf_file = pdf_file_key

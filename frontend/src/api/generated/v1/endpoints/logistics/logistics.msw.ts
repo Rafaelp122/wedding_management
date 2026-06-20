@@ -136,6 +136,10 @@ export const getLogisticsContractsListResponseMock = (
     supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
     has_linked_expense: faker.datatype.boolean(),
     progress_percent: faker.number.int(),
+    alert_days_before: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
     expense_uuid: faker.helpers.arrayElement([
       faker.helpers.arrayElement([
         faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -195,6 +199,10 @@ export const getLogisticsContractsCreateResponseMock = (
   supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
   has_linked_expense: faker.datatype.boolean(),
   progress_percent: faker.number.int(),
+  alert_days_before: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   expense_uuid: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -252,6 +260,10 @@ export const getLogisticsContractsReadResponseMock = (
   supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
   has_linked_expense: faker.datatype.boolean(),
   progress_percent: faker.number.int(),
+  alert_days_before: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   expense_uuid: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -309,6 +321,10 @@ export const getLogisticsContractsUpdateResponseMock = (
   supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
   has_linked_expense: faker.datatype.boolean(),
   progress_percent: faker.number.int(),
+  alert_days_before: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   expense_uuid: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -374,6 +390,10 @@ export const getLogisticsContractsCreateFullResponseMock = (
   supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
   has_linked_expense: faker.datatype.boolean(),
   progress_percent: faker.number.int(),
+  alert_days_before: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   expense_uuid: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -431,6 +451,10 @@ export const getLogisticsContractsUploadResponseMock = (
   supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
   has_linked_expense: faker.datatype.boolean(),
   progress_percent: faker.number.int(),
+  alert_days_before: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   expense_uuid: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),
@@ -488,6 +512,10 @@ export const getLogisticsContractsTransitionStatusResponseMock = (
   supplier_email: faker.string.alpha({ length: { min: 10, max: 20 } }),
   has_linked_expense: faker.datatype.boolean(),
   progress_percent: faker.number.int(),
+  alert_days_before: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([faker.number.int(), null]),
+    undefined,
+  ]),
   expense_uuid: faker.helpers.arrayElement([
     faker.helpers.arrayElement([
       faker.string.alpha({ length: { min: 10, max: 20 } }),

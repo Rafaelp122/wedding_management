@@ -13,4 +13,6 @@ export interface ContractPatchIn {
   description?: string;
   parent?: string | null;
   pdf_file_key?: string | null;
+  expiration_date?: string | null;
+  alert_days_before?: number | null;
 }

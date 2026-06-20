@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 from uuid import UUID
 
 from django.db import transaction
@@ -79,9 +78,7 @@ class TaskService:
 
     @staticmethod
     @transaction.atomic
-    def update(
-        company: Company, instance: Task, payload: TaskPatchIn | dict[str, Any]
-    ) -> Task:
+    def update(company: Company, instance: Task, payload: TaskPatchIn) -> Task:
         validate_tenant_ownership(
             company,
             instance,
@@ -92,12 +89,7 @@ class TaskService:
             f"Atualizando Tarefa uuid={instance.uuid} por company_id={company.id}"
         )
 
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            data = payload.model_dump(exclude_unset=True)
-        data.pop("wedding", None)
-        data.pop("company", None)
+        data = payload.model_dump(exclude_unset=True)
 
         for field, value in data.items():
             setattr(instance, field, value)
