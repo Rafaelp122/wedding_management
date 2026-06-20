@@ -169,8 +169,6 @@ class ItemService:
         )
 
         data = payload.model_dump(exclude_unset=True)
-        data.pop("wedding", None)
-        data.pop("company", None)
 
         if "contract" in data:
             contract_input = data.pop("contract")

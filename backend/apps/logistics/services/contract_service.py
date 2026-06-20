@@ -285,8 +285,6 @@ class ContractService:
         )
 
         data = payload.model_dump(exclude_unset=True)
-        data.pop("wedding", None)
-        data.pop("company", None)
         pdf_file_key = data.pop("pdf_file_key", None)
         if pdf_file_key is not None:
             instance.pdf_file = pdf_file_key

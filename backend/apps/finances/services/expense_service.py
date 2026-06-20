@@ -287,9 +287,6 @@ class ExpenseService:
         )
 
         data = payload.model_dump(exclude_unset=True)
-        data.pop("wedding", None)
-        data.pop("company", None)
-        data.pop("category", None)
 
         contract_changed = "contract" in data
         if contract_changed:

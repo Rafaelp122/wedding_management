@@ -80,7 +80,6 @@ class SupplierService:
         )
 
         data = payload.model_dump(exclude_unset=True)
-        data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)

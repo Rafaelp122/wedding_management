@@ -233,10 +233,6 @@ class InstallmentService:
 
         data = payload.model_dump(exclude_unset=True)
 
-        data.pop("expense", None)
-        data.pop("wedding", None)
-        data.pop("company", None)
-
         for field, value in data.items():
             setattr(instance, field, value)
 
