@@ -118,3 +118,4 @@ logs
 gha-creds-*.json
 .vercel
 coverage.json
+*.tsbuildinfo

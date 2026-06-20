@@ -296,6 +296,7 @@ export const LogisticsContractsListResponse = zod.object({
       progress_percent: zod
         .number()
         .default(logisticsContractsListResponseItemsItemProgressPercentDefault),
+      alert_days_before: zod.union([zod.number(), zod.null()]).optional(),
       expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
       parent: zod.union([zod.string(), zod.null()]).optional(),
       addendums_count: zod
@@ -388,6 +389,7 @@ export const LogisticsContractsReadResponse = zod.object({
   progress_percent: zod
     .number()
     .default(logisticsContractsReadResponseProgressPercentDefault),
+  alert_days_before: zod.union([zod.number(), zod.null()]).optional(),
   expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
   parent: zod.union([zod.string(), zod.null()]).optional(),
   addendums_count: zod
@@ -474,6 +476,7 @@ export const LogisticsContractsUpdateResponse = zod.object({
   progress_percent: zod
     .number()
     .default(logisticsContractsUpdateResponseProgressPercentDefault),
+  alert_days_before: zod.union([zod.number(), zod.null()]).optional(),
   expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
   parent: zod.union([zod.string(), zod.null()]).optional(),
   addendums_count: zod
@@ -608,6 +611,7 @@ export const LogisticsContractsUploadResponse = zod.object({
   progress_percent: zod
     .number()
     .default(logisticsContractsUploadResponseProgressPercentDefault),
+  alert_days_before: zod.union([zod.number(), zod.null()]).optional(),
   expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
   parent: zod.union([zod.string(), zod.null()]).optional(),
   addendums_count: zod
@@ -684,6 +688,7 @@ export const LogisticsContractsTransitionStatusResponse = zod.object({
   progress_percent: zod
     .number()
     .default(logisticsContractsTransitionStatusResponseProgressPercentDefault),
+  alert_days_before: zod.union([zod.number(), zod.null()]).optional(),
   expense_uuid: zod.union([zod.string(), zod.null()]).optional(),
   parent: zod.union([zod.string(), zod.null()]).optional(),
   addendums_count: zod

@@ -5534,6 +5534,17 @@
             "title": "Progress Percent",
             "type": "integer"
           },
+          "alert_days_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Days Before"
+          },
           "expense_uuid": {
             "anyOf": [
               {

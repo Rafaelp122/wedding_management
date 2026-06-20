@@ -208,13 +208,21 @@ class ContractService:
 
         if items_data:
             for item in items_data:
-                item.wedding = contract.wedding.uuid
-                item.contract = contract.uuid
-                ItemService.create(company=company, payload=item)
+                ItemService.create(
+                    company=company,
+                    payload=item.model_copy(
+                        update={
+                            "wedding": contract.wedding.uuid,
+                            "contract": contract.uuid,
+                        }
+                    ),
+                )
 
         if expense_data:
-            expense_data.contract = contract.uuid
-            ExpenseService.create(company=company, payload=expense_data)
+            ExpenseService.create(
+                company=company,
+                payload=expense_data.model_copy(update={"contract": contract.uuid}),
+            )
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
