@@ -8,8 +8,8 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.logistics.models import Item
-from apps.logistics.services.item_service import ItemService
 from apps.logistics.schemas import ItemIn, ItemPatchIn
+from apps.logistics.services.item_service import ItemService
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory

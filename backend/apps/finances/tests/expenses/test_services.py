@@ -6,8 +6,8 @@ import pytest
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.finances.models import Expense, Installment
-from apps.finances.services.expense_service import ExpenseService
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
+from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,

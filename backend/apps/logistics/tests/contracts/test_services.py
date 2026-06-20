@@ -13,8 +13,8 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
 )
 from apps.logistics.models import Contract
-from apps.logistics.services.contract_service import ContractService
 from apps.logistics.schemas import ContractIn, ContractPatchIn
+from apps.logistics.services.contract_service import ContractService
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory

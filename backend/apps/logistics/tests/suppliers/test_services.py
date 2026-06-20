@@ -5,8 +5,8 @@ from pydantic import ValidationError
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.logistics.models import Contract, Supplier
-from apps.logistics.services.supplier_service import SupplierService
 from apps.logistics.schemas import SupplierIn, SupplierPatchIn
+from apps.logistics.services.supplier_service import SupplierService
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory

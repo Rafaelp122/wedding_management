@@ -4,8 +4,8 @@ import pytest
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.scheduler.models import Task
-from apps.scheduler.services.tasks import TaskService
 from apps.scheduler.schemas import TaskIn, TaskPatchIn
+from apps.scheduler.services.tasks import TaskService
 from apps.scheduler.tests.factories import TaskFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory

@@ -15,9 +15,9 @@ import pytest
 
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.finances.models import Budget, BudgetCategory
+from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.services.budget_service import BudgetService
-from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,

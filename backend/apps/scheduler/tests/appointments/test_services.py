@@ -6,8 +6,8 @@ from django.utils import timezone
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.scheduler.models import Event
-from apps.scheduler.services.events import EventService
 from apps.scheduler.schemas import EventIn, EventPatchIn
+from apps.scheduler.services.events import EventService
 from apps.scheduler.tests.factories import EventFactory
 from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory

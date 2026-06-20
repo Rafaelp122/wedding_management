@@ -10,8 +10,8 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.finances.models import Installment
-from apps.finances.services.installment_service import InstallmentService
 from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn, InstallmentPatchIn
+from apps.finances.services.installment_service import InstallmentService
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,

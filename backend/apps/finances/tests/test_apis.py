@@ -1,9 +1,8 @@
+from datetime import date
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
-
-from datetime import date
-from decimal import Decimal
 
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.budget_service import BudgetService

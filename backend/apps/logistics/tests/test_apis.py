@@ -1,16 +1,15 @@
 import json
+from datetime import date
+from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
 
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.tests.factories import BudgetCategoryFactory, BudgetFactory
+from apps.logistics.schemas import ContractIn, ItemIn, SupplierIn
 from apps.logistics.services.contract_service import ContractService
 from apps.logistics.services.item_service import ItemService
-from datetime import date
-from decimal import Decimal
-
-from apps.logistics.schemas import SupplierIn, ContractIn, ItemIn
 from apps.logistics.services.supplier_service import SupplierService
 from apps.logistics.tests.factories import SupplierFactory
 from apps.users.tests.factories import UserFactory

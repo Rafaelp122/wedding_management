@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError

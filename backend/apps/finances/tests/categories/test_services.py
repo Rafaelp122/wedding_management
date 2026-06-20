@@ -9,8 +9,8 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.finances.models import Budget, BudgetCategory
-from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
+from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
