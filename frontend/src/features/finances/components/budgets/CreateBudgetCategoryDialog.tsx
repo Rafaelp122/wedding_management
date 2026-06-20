@@ -39,7 +39,7 @@ export function CreateBudgetCategoryDialog({
     defaultValues: {
       budget: "",
       name: "",
-      description: null,
+      description: "",
       allocated_budget: undefined,
     },
   });

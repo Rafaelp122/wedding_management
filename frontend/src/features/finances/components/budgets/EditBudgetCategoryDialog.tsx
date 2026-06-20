@@ -32,7 +32,7 @@ export function EditBudgetCategoryDialog({
     resolver: zodResolver(FinancesCategoriesUpdateBody),
     defaultValues: {
       name: category.name,
-      description: category.description ?? null,
+      description: category.description ?? "",
       allocated_budget: parseFloat(category.allocated_budget),
     },
   });
@@ -83,7 +83,7 @@ export function EditBudgetCategoryDialog({
         name="allocated_budget"
         label="Valor Orçado (R$)"
         placeholder="0,00"
-        transformEmptyTo={null}
+        transformEmptyTo={""}
       />
 
       <FormTextarea
