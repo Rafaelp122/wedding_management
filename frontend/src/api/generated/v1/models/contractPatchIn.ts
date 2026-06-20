@@ -10,7 +10,7 @@ export interface ContractPatchIn {
   name?: string | null;
   total_amount?: number | string | null;
   status?: string | null;
-  description?: string | null;
+  description?: string;
   parent?: string | null;
   pdf_file_key?: string | null;
 }

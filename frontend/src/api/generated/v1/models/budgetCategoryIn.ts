@@ -9,6 +9,6 @@ export interface BudgetCategoryIn {
   budget: string;
   /** @maxLength 255 */
   name: string;
-  description?: string | null;
+  description?: string;
   allocated_budget: number | string;
 }

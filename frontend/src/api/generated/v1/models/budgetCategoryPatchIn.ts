@@ -7,6 +7,6 @@
 
 export interface BudgetCategoryPatchIn {
   name?: string | null;
-  description?: string | null;
+  description?: string;
   allocated_budget?: number | string | null;
 }

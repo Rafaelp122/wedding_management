@@ -7,5 +7,5 @@
 
 export interface BudgetPatchIn {
   total_estimated?: number | string | null;
-  notes?: string | null;
+  notes?: string;
 }

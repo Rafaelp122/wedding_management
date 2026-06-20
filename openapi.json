@@ -5736,15 +5736,9 @@
             "title": "Status"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "parent": {
             "anyOf": [
@@ -6043,9 +6037,16 @@
       "ItemIn": {
         "properties": {
           "wedding": {
-            "format": "uuid4",
-            "title": "Wedding",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wedding"
           },
           "contract": {
             "anyOf": [
@@ -6080,7 +6081,6 @@
           }
         },
         "required": [
-          "wedding",
           "name"
         ],
         "title": "ItemIn",
@@ -6112,15 +6112,9 @@
             "title": "Name"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "quantity": {
             "anyOf": [
@@ -6243,15 +6237,9 @@
             "title": "Total Estimated"
           },
           "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
+            "default": "",
+            "title": "Notes",
+            "type": "string"
           }
         },
         "title": "BudgetPatchIn",
@@ -6345,15 +6333,9 @@
             "type": "string"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "allocated_budget": {
             "anyOf": [
@@ -6391,15 +6373,9 @@
             "title": "Name"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "allocated_budget": {
             "anyOf": [
@@ -6569,15 +6545,9 @@
             "type": "string"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "estimated_amount": {
             "anyOf": [
@@ -6606,7 +6576,7 @@
           "num_installments": {
             "anyOf": [
               {
-                "exclusiveMinimum": 0,
+                "minimum": 0,
                 "type": "integer"
               },
               {
@@ -6664,15 +6634,9 @@
             "title": "Name"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "estimated_amount": {
             "anyOf": [
@@ -6707,7 +6671,7 @@
           "num_installments": {
             "anyOf": [
               {
-                "exclusiveMinimum": 0,
+                "minimum": 0,
                 "type": "integer"
               },
               {
@@ -7047,27 +7011,15 @@
             "type": "string"
           },
           "location": {
-            "anyOf": [
-              {
-                "maxLength": 255,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Location"
+            "default": "",
+            "maxLength": 255,
+            "title": "Location",
+            "type": "string"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "event_type": {
             "maxLength": 50,
@@ -7150,27 +7102,15 @@
             "title": "Title"
           },
           "location": {
-            "anyOf": [
-              {
-                "maxLength": 255,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Location"
+            "default": "",
+            "maxLength": 255,
+            "title": "Location",
+            "type": "string"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "event_type": {
             "anyOf": [
@@ -7338,15 +7278,9 @@
             "type": "string"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "due_date": {
             "anyOf": [
@@ -7388,15 +7322,9 @@
             "title": "Title"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "default": "",
+            "title": "Description",
+            "type": "string"
           },
           "due_date": {
             "anyOf": [

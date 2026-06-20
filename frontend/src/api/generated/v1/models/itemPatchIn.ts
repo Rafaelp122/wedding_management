@@ -8,7 +8,7 @@
 export interface ItemPatchIn {
   contract?: string | null;
   name?: string | null;
-  description?: string | null;
+  description?: string;
   quantity?: number | null;
   acquisition_status?: string | null;
 }
