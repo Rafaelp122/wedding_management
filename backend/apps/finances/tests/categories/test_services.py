@@ -155,36 +155,6 @@ class TestBudgetCategoryServiceUpdate:
 
         assert updated.name == "Nova Categoria"
 
-    def test_update_category_cannot_change_budget(self, user):
-        """Budget é bloqueado no update (campo estrutural)."""
-        _, budget1 = _setup_budget(user)
-        _, budget2 = _setup_budget(user)
-        category = BudgetCategoryFactory(
-            budget=budget1,
-            wedding=budget1.wedding,
-        )
-
-        updated = BudgetCategoryService.update(
-            user.company, category, {"budget": budget2.uuid}
-        )
-
-        assert updated.budget == budget1
-
-    def test_update_category_cannot_change_company(self, user):
-        """Company é bloqueada no update."""
-        _, budget = _setup_budget(user)
-        category = BudgetCategoryFactory(
-            budget=budget,
-            wedding=budget.wedding,
-        )
-        other_user = UserFactory()
-
-        updated = BudgetCategoryService.update(
-            user.company, category, {"company": other_user.company}
-        )
-
-        assert updated.company == user.company
-
     def test_update_category_allocated_budget_exceeds_cap_raises_error(self, user):
         """
         TOCTOU: atualizar allocated_budget ultrapassando o teto

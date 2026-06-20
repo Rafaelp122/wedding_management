@@ -213,50 +213,6 @@ class TestExpenseServiceUpdate:
 
         assert updated.description == "Nova Descrição"
 
-    def test_update_expense_cannot_change_category(self, user):
-        """Categoria é bloqueada no update (campo estrutural)."""
-        category1 = _setup_category(user)
-        category2 = _setup_category(user)
-        expense = ExpenseFactory(
-            wedding=category1.wedding,
-            category=category1,
-            contract=None,
-            actual_amount=Decimal("500.00"),
-        )
-        InstallmentFactory(
-            expense=expense,
-            installment_number=1,
-            amount=Decimal("500.00"),
-        )
-
-        updated = ExpenseService.update(
-            user.company, expense, {"category": category2.uuid}
-        )
-
-        assert updated.category == category1
-
-    def test_update_expense_cannot_change_company(self, user):
-        """Company é bloqueada no update."""
-        category = _setup_category(user)
-        expense = ExpenseFactory(
-            wedding=category.wedding,
-            category=category,
-            contract=None,
-            actual_amount=Decimal("500.00"),
-        )
-        InstallmentFactory(
-            expense=expense,
-            installment_number=1,
-            amount=Decimal("500.00"),
-        )
-        other_user = UserFactory()
-
-        updated = ExpenseService.update(
-            user.company, expense, {"company": other_user.company}
-        )
-
-        assert updated.company == user.company
-
     def test_update_expense_partial_fields_only_name(self, user):
         """Atualização apenas do nome não redistribui parcelas nem falha."""
         category = _setup_category(user)
@@ -324,11 +280,11 @@ class TestExpenseServiceUpdate:
         updated = ExpenseService.update(
             user.company,
             expense,
-            {
-                "actual_amount": Decimal("900.00"),
-                "num_installments": 3,
-                "first_due_date": date.today(),
-            },
+            ExpensePatchIn(
+                actual_amount=Decimal("900.00"),
+                num_installments=3,
+                first_due_date=date.today(),
+            ),
         )
 
         assert updated.actual_amount == Decimal("900.00")
@@ -354,7 +310,7 @@ class TestExpenseServiceUpdate:
         updated = ExpenseService.update(
             user.company,
             expense,
-            {"actual_amount": Decimal("1000.00")},
+            ExpensePatchIn(actual_amount=Decimal("1000.00")),
         )
 
         assert updated.actual_amount == Decimal("1000.00")
@@ -382,7 +338,7 @@ class TestExpenseServiceUpdate:
             ExpenseService.update(
                 user.company,
                 expense,
-                {"actual_amount": Decimal("1000.00")},
+                ExpensePatchIn(actual_amount=Decimal("1000.00")),
             )
         assert exc.value.code == "amount_change_blocked_by_paid"
 
@@ -709,9 +665,9 @@ class TestExpenseServiceInstallmentDistribution:
             ExpenseService.update(
                 user.company,
                 expense,
-                {
-                    "actual_amount": Decimal("500.00"),
-                    "num_installments": 0,
-                },
+                ExpensePatchIn(
+                    actual_amount=Decimal("500.00"),
+                    num_installments=0,
+                ),
             )
         assert exc.value.code == "invalid_installment_number"

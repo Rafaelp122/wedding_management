@@ -110,6 +110,8 @@ class ContractPatchIn(Schema):
     description: str = ""
     parent: UUID4 | None = None
     pdf_file_key: str | None = None
+    expiration_date: date | None = None
+    alert_days_before: int | None = None
 
 
 class ContractStatusTransitionIn(Schema):

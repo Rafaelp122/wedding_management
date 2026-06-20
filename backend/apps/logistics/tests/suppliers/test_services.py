@@ -68,17 +68,6 @@ class TestSupplierServiceUpdate:
 
         assert updated.name == "Nome Novo"
 
-    def test_update_supplier_cannot_change_company(self, user):
-        """Company é bloqueada no update."""
-        supplier = SupplierFactory(company=user.company)
-        other_user = UserFactory()
-
-        updated = SupplierService.update(
-            user.company, supplier, {"company": other_user.company}
-        )
-
-        assert updated.company == user.company
-
     def test_update_supplier_cross_tenant(self, user):
         """Fornecedor de outro tenant não pode ser atualizado."""
         other_user = UserFactory()

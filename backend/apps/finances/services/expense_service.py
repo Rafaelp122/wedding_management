@@ -275,9 +275,7 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def update(
-        company: Company, instance: Expense, payload: ExpensePatchIn | dict[str, Any]
-    ) -> Expense:
+    def update(company: Company, instance: Expense, payload: ExpensePatchIn) -> Expense:
         validate_tenant_ownership(
             company,
             instance,
@@ -288,10 +286,7 @@ class ExpenseService:
             f"Atualizando Despesa uuid={instance.uuid} por company_id={company.id}"
         )
 
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            data = payload.model_dump(exclude_unset=True)
+        data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
         data.pop("category", None)

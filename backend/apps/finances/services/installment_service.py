@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -220,7 +219,7 @@ class InstallmentService:
     def update(
         company: Company,
         instance: Installment,
-        payload: InstallmentPatchIn | dict[str, Any],
+        payload: InstallmentPatchIn,
     ) -> Installment:
         validate_tenant_ownership(
             company,
@@ -232,10 +231,7 @@ class InstallmentService:
             f"Atualizando Parcela uuid={instance.uuid} por company_id={company.id}"
         )
 
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            data = payload.model_dump(exclude_unset=True)
+        data = payload.model_dump(exclude_unset=True)
 
         data.pop("expense", None)
         data.pop("wedding", None)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -157,9 +157,7 @@ class ItemService:
 
     @staticmethod
     @transaction.atomic
-    def update(
-        company: Company, instance: Item, payload: ItemPatchIn | dict[str, Any]
-    ) -> Item:
+    def update(company: Company, instance: Item, payload: ItemPatchIn) -> Item:
         validate_tenant_ownership(
             company,
             instance,
@@ -170,10 +168,7 @@ class ItemService:
             f"Atualizando Item uuid={instance.uuid} por company_id={company.id}"
         )
 
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            data = payload.model_dump(exclude_unset=True)
+        data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
 

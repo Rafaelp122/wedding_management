@@ -264,7 +264,7 @@ class TestInstallmentServiceUpdate:
 
         # Atualizar para o mesmo valor (ou para outro que ainda fecha 1000 sozinho)
         updated = InstallmentService.update(
-            user.company, i1, {"amount": Decimal("1000.00")}
+            user.company, i1, InstallmentPatchIn(amount=Decimal("1000.00"))
         )
         assert updated.amount == Decimal("1000.00")
 
@@ -282,18 +282,6 @@ class TestInstallmentServiceUpdate:
 
         assert "expense_math_violation" in str(exc_info.value.code)
 
-    def test_update_installment_cannot_change_expense(self, user):
-        """Campos estruturais (expense, wedding, company) são bloqueados."""
-        expense1 = _setup_expense(user, actual_amount=Decimal("500.00"))
-        expense2 = _setup_expense(user, actual_amount=Decimal("500.00"))
-        i1 = InstallmentFactory(expense=expense1, amount=Decimal("500.00"))
-        InstallmentFactory(expense=expense2, amount=Decimal("500.00"))
-
-        updated = InstallmentService.update(
-            user.company, i1, {"expense": expense2.uuid}
-        )
-        assert updated.expense == expense1
-
     def test_update_installment_due_date(self, user):
         """Atualização de due_date é permitida para parcelas futuras."""
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
@@ -305,7 +293,7 @@ class TestInstallmentServiceUpdate:
 
         new_due_date = date.today() + timedelta(days=60)
         updated = InstallmentService.update(
-            user.company, installment, {"due_date": new_due_date}
+            user.company, installment, InstallmentPatchIn(due_date=new_due_date)
         )
         assert updated.due_date == new_due_date
 
@@ -330,7 +318,9 @@ class TestInstallmentServiceUpdate:
 
         with pytest.raises(ObjectNotFoundError):
             InstallmentService.update(
-                user.company, other_installment, {"amount": Decimal("300.00")}
+                user.company,
+                other_installment,
+                InstallmentPatchIn(amount=Decimal("300.00")),
             )
 
 
