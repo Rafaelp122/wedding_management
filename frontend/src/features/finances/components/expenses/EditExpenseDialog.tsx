@@ -166,7 +166,7 @@ export function EditExpenseDialog({
           min={1}
           placeholder="Manter atual"
           disabled={hasPaid}
-          transformEmptyTo={""}
+          transformEmptyTo={null}
         />
 
         <FormField

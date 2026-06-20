@@ -83,7 +83,7 @@ export function EditBudgetCategoryDialog({
         name="allocated_budget"
         label="Valor Orçado (R$)"
         placeholder="0,00"
-        transformEmptyTo={""}
+        transformEmptyTo={null}
       />
 
       <FormTextarea
