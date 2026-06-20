@@ -13,7 +13,7 @@ import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import { FormDialog } from "@/components/form-dialog";
 import { FormInput, FormNumber, FormTextarea } from "@/components/form-fields";
 
-type CreateCategoryFormData = z.infer<typeof FinancesCategoriesCreateBody>;
+type CreateCategoryFormData = z.input<typeof FinancesCategoriesCreateBody>;
 
 interface CreateBudgetCategoryDialogProps {
   weddingUuid: string;
