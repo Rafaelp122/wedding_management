@@ -26,5 +26,5 @@ def validate_tenant_ownership(
     Levanta ObjectNotFoundError (404) em vez de PermissionError (403) para não
     revelar a existência de recursos de outros tenants (segurança multi-tenant).
     """
-    if instance.company_id != company.id:
+    if instance.company_id != company.id:  # type: ignore[attr-defined]
         raise ObjectNotFoundError(detail=detail, code=code)

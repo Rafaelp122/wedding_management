@@ -55,8 +55,8 @@ class TestContractServiceCreate:
         wedding, supplier = _setup_contract_context(user)
 
         data = {
-            "wedding": wedding,
-            "supplier": supplier,
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
             "name": "Buffet Teste",
             "total_amount": Decimal("5000.00"),
         }
@@ -73,6 +73,7 @@ class TestContractServiceCreate:
             "wedding": uuid4(),
             "supplier": supplier.uuid,
             "total_amount": Decimal("1000.00"),
+            "name": "Contrato Teste",
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
@@ -88,6 +89,7 @@ class TestContractServiceCreate:
             "wedding": wedding.uuid,
             "supplier": uuid4(),
             "total_amount": Decimal("1000.00"),
+            "name": "Contrato Teste",
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
@@ -106,6 +108,7 @@ class TestContractServiceCreate:
             "wedding": wedding_b.uuid,
             "supplier": supplier_a.uuid,
             "total_amount": Decimal("1000.00"),
+            "name": "Contrato Teste",
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
@@ -207,7 +210,9 @@ class TestContractServiceUpdate:
         contract = make_contract("DRAFT")
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ContractService.update(contract.company, contract, ContractPatchIn(status="SIGNED"))
+            ContractService.update(
+                contract.company, contract, ContractPatchIn(status="SIGNED")
+            )
 
         assert "Não é permitido transitar" in str(exc_info.value)
 
@@ -216,14 +221,10 @@ class TestContractServiceUpdate:
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
         other_supplier = SupplierFactory(company=other_user.company)
-        other_contract = ContractFactory(
-            wedding=other_wedding, supplier=other_supplier
-        )
+        other_contract = ContractFactory(wedding=other_wedding, supplier=other_supplier)
 
         with pytest.raises(ObjectNotFoundError):
-            ContractService.update(
-                user.company, other_contract, {"notes": "Hack"}
-            )
+            ContractService.update(user.company, other_contract, {"notes": "Hack"})
 
 
 @pytest.mark.django_db
@@ -583,7 +584,9 @@ class TestContractServiceResolveParent:
             pdf_file="contracts/dummy.pdf",
         )
         child = ContractFactory(wedding=wedding, supplier=supplier, status="DRAFT")
-        ContractService.update(child.company, child, ContractPatchIn(parent=str(parent.uuid)))
+        ContractService.update(
+            child.company, child, ContractPatchIn(parent=str(parent.uuid))
+        )
 
         child.refresh_from_db()
         assert child.parent == parent
@@ -611,7 +614,9 @@ class TestContractServiceResolveParent:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ContractService.update(child.company, child, ContractPatchIn(parent=str(parent.uuid)))
+            ContractService.update(
+                child.company, child, ContractPatchIn(parent=str(parent.uuid))
+            )
         assert "deve pertencer ao mesmo casamento" in str(exc_info.value)
 
     def test_update_parent_circular_raises_error(self, user):
@@ -646,7 +651,9 @@ class TestContractServiceResolveParent:
     def test_update_parent_not_found_raises_error(self, make_contract):
         contract = make_contract("DRAFT")
         with pytest.raises(ObjectNotFoundError):
-            ContractService.update(contract.company, contract, ContractPatchIn(parent=str(uuid4())))
+            ContractService.update(
+                contract.company, contract, ContractPatchIn(parent=str(uuid4()))
+            )
 
 
 @pytest.mark.django_db

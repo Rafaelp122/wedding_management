@@ -81,7 +81,9 @@ class TestTaskServiceUpdate:
         wedding = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding, title="Título Antigo")
 
-        updated = TaskService.update(user.company, task, TaskPatchIn(title="Título Novo"))
+        updated = TaskService.update(
+            user.company, task, TaskPatchIn(title="Título Novo")
+        )
 
         assert updated.title == "Título Novo"
 
@@ -100,7 +102,9 @@ class TestTaskServiceUpdate:
         wedding2 = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding1)
 
-        updated = TaskService.update(user.company, task, TaskPatchIn(wedding=wedding2.uuid))
+        updated = TaskService.update(
+            user.company, task, TaskPatchIn(wedding=wedding2.uuid)
+        )
 
         assert updated.wedding == wedding1
 
@@ -123,9 +127,7 @@ class TestTaskServiceUpdate:
         other_task = TaskFactory(wedding=other_wedding)
 
         with pytest.raises(ObjectNotFoundError):
-            TaskService.update(
-                user.company, other_task, TaskPatchIn(title="Hack")
-            )
+            TaskService.update(user.company, other_task, TaskPatchIn(title="Hack"))
 
 
 @pytest.mark.django_db

@@ -7,9 +7,14 @@ from apps.finances.services.budget_service import BudgetService
 from apps.finances.tests.factories import BudgetCategoryFactory, BudgetFactory
 from apps.logistics.services.contract_service import ContractService
 from apps.logistics.services.item_service import ItemService
+from datetime import date
+from decimal import Decimal
+
+from apps.logistics.schemas import SupplierIn, ContractIn, ItemIn
 from apps.logistics.services.supplier_service import SupplierService
 from apps.logistics.tests.factories import SupplierFactory
 from apps.users.tests.factories import UserFactory
+from apps.weddings.schemas import WeddingIn
 from apps.weddings.services import WeddingService
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -19,36 +24,41 @@ def seed_data(user, django_user_model):
     # Planner alvo
     my_wedding = WeddingService.create(
         user.company,
-        {
-            "bride_name": "Minha",
-            "groom_name": "Noz",
-            "location": "Local",
-            "date": "2026-10-10",
-        },
+        WeddingIn(
+            bride_name="Minha",
+            groom_name="Noz",
+            location="Local",
+            date=date(2026, 10, 10),
+        ),
     )
     my_supplier = SupplierService.create(
         user.company,
-        {"name": "Fornecedor Meu", "cnpj": "", "phone": "0", "email": "a@email.com"},
+        SupplierIn(
+            name="Fornecedor Meu",
+            cnpj="00.000.000/0001-00",
+            phone="0",
+            email="a@email.com",
+        ),
     )
     my_contract = ContractService.create(
         user.company,
-        {
-            "wedding": my_wedding,
-            "supplier": my_supplier,
-            "name": "Contrato Teste",
-            "total_amount": "100.00",
-            "status": "DRAFT",
-        },
+        ContractIn(
+            wedding=my_wedding.uuid,
+            supplier=my_supplier.uuid,
+            name="Contrato Teste",
+            total_amount=Decimal("100.00"),
+            status="DRAFT",
+        ),
     )
     BudgetService.get_or_create_for_wedding(user.company, my_wedding.uuid)
     my_item = ItemService.create(
         user.company,
-        {
-            "wedding": my_wedding.uuid,
-            "contract": my_contract.uuid,
-            "name": "Item Meu",
-            "quantity": 1,
-        },
+        ItemIn(
+            wedding=my_wedding.uuid,
+            contract=my_contract.uuid,
+            name="Item Meu",
+            quantity=1,
+        ),
     )
 
     # Planner alheio
@@ -59,44 +69,46 @@ def seed_data(user, django_user_model):
     other_user.save()
     other_wedding = WeddingService.create(
         other_user.company,
-        {
-            "bride_name": "Outra",
-            "groom_name": "Noz",
-            "location": "Local",
-            "date": "2026-10-10",
-        },
+        WeddingIn(
+            bride_name="Outra",
+            groom_name="Noz",
+            location="Local",
+            date=date(2026, 10, 10),
+        ),
     )
     other_supplier = SupplierService.create(
         other_user.company,
-        {"name": "Outro", "cnpj": "", "phone": "1", "email": "b@email.com"},
+        SupplierIn(
+            name="Outro", cnpj="00.000.000/0001-01", phone="1", email="b@email.com"
+        ),
     )
     other_contract = ContractService.create(
         other_user.company,
-        {
-            "wedding": other_wedding,
-            "supplier": other_supplier,
-            "name": "Contrato Teste 2",
-            "total_amount": "100.00",
-            "status": "DRAFT",
-        },
+        ContractIn(
+            wedding=other_wedding.uuid,
+            supplier=other_supplier.uuid,
+            name="Contrato Teste 2",
+            total_amount=Decimal("100.00"),
+            status="DRAFT",
+        ),
     )
     ItemService.create(
         other_user.company,
-        {
-            "wedding": other_wedding.uuid,
-            "contract": other_contract.uuid,
-            "name": "Item Outro",
-            "quantity": 1,
-        },
+        ItemIn(
+            wedding=other_wedding.uuid,
+            contract=other_contract.uuid,
+            name="Item Outro",
+            quantity=1,
+        ),
     )
     ItemService.create(
         other_user.company,
-        {
-            "wedding": other_wedding.uuid,
-            "contract": other_contract.uuid,
-            "name": "Item Alheio",
-            "quantity": 1,
-        },
+        ItemIn(
+            wedding=other_wedding.uuid,
+            contract=other_contract.uuid,
+            name="Item Alheio",
+            quantity=1,
+        ),
     )
 
     return {
@@ -192,25 +204,30 @@ class TestLogisticsNinjaAPI:
     def test_list_suppliers_filter_by_search(self, auth_client, user):
         SupplierService.create(
             user.company,
-            {
-                "name": "Buffet Estrela",
-                "cnpj": "",
-                "phone": "1",
-                "email": "buffet@email.com",
-            },
+            SupplierIn(
+                name="Buffet Estrela",
+                cnpj="00.000.000/0001-00",
+                phone="1",
+                email="buffet@email.com",
+            ),
         )
         SupplierService.create(
             user.company,
-            {
-                "name": "Fotógrafo Sol",
-                "cnpj": "",
-                "phone": "2",
-                "email": "foto@email.com",
-            },
+            SupplierIn(
+                name="Fotógrafo Sol",
+                cnpj="00.000.000/0001-00",
+                phone="2",
+                email="foto@email.com",
+            ),
         )
         SupplierService.create(
             user.company,
-            {"name": "Outro", "cnpj": "", "phone": "3", "email": "outro@email.com"},
+            SupplierIn(
+                name="Outro",
+                cnpj="00.000.000/0001-00",
+                phone="3",
+                email="outro@email.com",
+            ),
         )
 
         response = auth_client.get("/api/v1/logistics/suppliers/?search=estrela")
@@ -223,23 +240,23 @@ class TestLogisticsNinjaAPI:
     def test_list_suppliers_filter_by_is_active(self, auth_client, user):
         SupplierService.create(
             user.company,
-            {
-                "name": "Ativo",
-                "cnpj": "",
-                "phone": "1",
-                "email": "a@email.com",
-                "is_active": True,
-            },
+            SupplierIn(
+                name="Ativo",
+                cnpj="00.000.000/0001-00",
+                phone="1",
+                email="a@email.com",
+                is_active=True,
+            ),
         )
         SupplierService.create(
             user.company,
-            {
-                "name": "Inativo",
-                "cnpj": "",
-                "phone": "2",
-                "email": "b@email.com",
-                "is_active": False,
-            },
+            SupplierIn(
+                name="Inativo",
+                cnpj="00.000.000/0001-00",
+                phone="2",
+                email="b@email.com",
+                is_active=False,
+            ),
         )
 
         response = auth_client.get("/api/v1/logistics/suppliers/?is_active=false")
@@ -251,23 +268,23 @@ class TestLogisticsNinjaAPI:
     def test_list_suppliers_filter_by_search_and_status(self, auth_client, user):
         SupplierService.create(
             user.company,
-            {
-                "name": "A Buffet",
-                "cnpj": "",
-                "phone": "1",
-                "email": "a@email.com",
-                "is_active": True,
-            },
+            SupplierIn(
+                name="A Buffet",
+                cnpj="00.000.000/0001-00",
+                phone="1",
+                email="a@email.com",
+                is_active=True,
+            ),
         )
         SupplierService.create(
             user.company,
-            {
-                "name": "B Buffet",
-                "cnpj": "",
-                "phone": "2",
-                "email": "b@email.com",
-                "is_active": False,
-            },
+            SupplierIn(
+                name="B Buffet",
+                cnpj="00.000.000/0001-00",
+                phone="2",
+                email="b@email.com",
+                is_active=False,
+            ),
         )
 
         response = auth_client.get(

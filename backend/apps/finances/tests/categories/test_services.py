@@ -53,7 +53,7 @@ class TestBudgetCategoryServiceCreate:
         _, budget = _setup_budget(user)
 
         data = {
-            "budget": budget,
+            "budget": budget.uuid,
             "name": "Fotografia",
             "allocated_budget": Decimal("3000.00"),
         }
@@ -205,7 +205,9 @@ class TestBudgetCategoryServiceUpdate:
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
             BudgetCategoryService.update(
-                user.company, category2, BudgetCategoryPatchIn(allocated_budget=Decimal("2000.00"))
+                user.company,
+                category2,
+                BudgetCategoryPatchIn(allocated_budget=Decimal("2000.00")),
             )
 
         assert "budget_cap_exceeded" in str(exc_info.value.code)
@@ -226,7 +228,9 @@ class TestBudgetCategoryServiceUpdate:
         mock_qs.get.return_value = budget
         mocker.patch.object(Budget.objects, "for_tenant", return_value=mock_qs)
 
-        BudgetCategoryService.update(user.company, category, BudgetCategoryPatchIn(name="Renomeada"))
+        BudgetCategoryService.update(
+            user.company, category, BudgetCategoryPatchIn(name="Renomeada")
+        )
         mock_qs.select_for_update.assert_called_once()
 
     def test_update_category_cross_tenant(self, user):

@@ -2,9 +2,14 @@ from uuid import uuid4
 
 import pytest
 
+from datetime import date
+from decimal import Decimal
+
+from apps.finances.schemas import ExpenseIn
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.services.expense_service import ExpenseService
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+from apps.weddings.schemas import WeddingIn
 from apps.weddings.services import WeddingService
 
 
@@ -13,23 +18,20 @@ def seed_data(user, django_user_model):
     # Planner alvo
     my_wedding = WeddingService.create(
         user.company,
-        {
-            "bride_name": "Minha",
-            "groom_name": "Noz",
-            "location": "A",
-            "date": "2026-10-11",
-        },
+        WeddingIn(
+            bride_name="Minha", groom_name="Noz", location="A", date=date(2026, 10, 11)
+        ),
     )
     my_budget = BudgetService.get_or_create_for_wedding(user.company, my_wedding.uuid)
     my_category = my_budget.categories.first()
     my_expense = ExpenseService.create(
         user.company,
-        {
-            "category": my_category,
-            "name": "Despesa A",
-            "estimated_amount": "100.00",
-            "actual_amount": "100.00",
-        },
+        ExpenseIn(
+            category=my_category.uuid,
+            name="Despesa A",
+            estimated_amount=Decimal("100.00"),
+            actual_amount=Decimal("100.00"),
+        ),
     )
 
     # Planner alheio
@@ -41,12 +43,12 @@ def seed_data(user, django_user_model):
 
     other_wedding = WeddingService.create(
         other_user.company,
-        {
-            "bride_name": "Alheia",
-            "groom_name": "Alheio",
-            "location": "B",
-            "date": "2026-10-11",
-        },
+        WeddingIn(
+            bride_name="Alheia",
+            groom_name="Alheio",
+            location="B",
+            date=date(2026, 10, 11),
+        ),
     )
     other_budget = BudgetService.get_or_create_for_wedding(
         other_user.company, other_wedding.uuid
@@ -54,12 +56,12 @@ def seed_data(user, django_user_model):
     other_category = other_budget.categories.first()
     ExpenseService.create(
         other_user.company,
-        {
-            "category": other_category,
-            "name": "Despesa B",
-            "estimated_amount": "200.00",
-            "actual_amount": "200.00",
-        },
+        ExpenseIn(
+            category=other_category.uuid,
+            name="Despesa B",
+            estimated_amount=Decimal("200.00"),
+            actual_amount=Decimal("200.00"),
+        ),
     )
 
     return {

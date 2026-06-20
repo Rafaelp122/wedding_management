@@ -46,7 +46,7 @@ class BudgetService:
             f"Iniciando criação de Orçamento Mestre para company_id={company.id}"
         )
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         wedding_input = data.pop("wedding", None)
 

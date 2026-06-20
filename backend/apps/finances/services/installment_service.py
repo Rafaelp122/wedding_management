@@ -16,7 +16,7 @@ from apps.core.exceptions import (
 )
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
-from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn
+from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn, InstallmentPatchIn
 from apps.tenants.models import Company
 
 
@@ -63,7 +63,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> list[Installment]:
+    ) -> list[Installment]:  # type: ignore[valid-type]
         """
         Gera automaticamente as parcelas de uma despesa com ajuste na última
         parcela (Tolerância Zero).
@@ -98,7 +98,7 @@ class InstallmentService:
             )
 
         base_amount = round(expense.actual_amount / num_installments, 2)
-        installments = []
+        installments: list[Installment] = []
 
         current_due_date = first_due_date
 
@@ -146,7 +146,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> list[Installment]:
+    ) -> list[Installment]:  # type: ignore[valid-type]
         if expense.installments.filter(status="PAID").exists():
             raise BusinessRuleViolation(
                 detail=(
@@ -170,7 +170,7 @@ class InstallmentService:
     def create(company: Company, payload: InstallmentIn) -> Installment:
         logger.info(f"Iniciando criação de Parcela para company_id={company.id}")
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         expense_input = data.pop("expense", None)
         if isinstance(expense_input, Expense):
@@ -218,7 +218,9 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def update(
-        company: Company, instance: Installment, data: dict[str, Any]
+        company: Company,
+        instance: Installment,
+        payload: InstallmentPatchIn | dict[str, Any],
     ) -> Installment:
         validate_tenant_ownership(
             company,
@@ -230,7 +232,11 @@ class InstallmentService:
             f"Atualizando Parcela uuid={instance.uuid} por company_id={company.id}"
         )
 
-        # Proteção de campos estruturais
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
+
         data.pop("expense", None)
         data.pop("wedding", None)
         data.pop("company", None)

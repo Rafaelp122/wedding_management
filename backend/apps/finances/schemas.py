@@ -16,12 +16,12 @@ if TYPE_CHECKING:
 class BudgetIn(Schema):
     wedding: UUID4
     total_estimated: Decimal
-    notes: str | None = None
+    notes: str = ""
 
 
 class BudgetPatchIn(Schema):
     total_estimated: Decimal | None = None
-    notes: str | None = None
+    notes: str = ""
 
 
 class BudgetOut(Schema):
@@ -41,13 +41,13 @@ class BudgetOut(Schema):
 class BudgetCategoryIn(Schema):
     budget: UUID4
     name: str = Field(..., max_length=255)
-    description: str | None = None
+    description: str = ""
     allocated_budget: Decimal
 
 
 class BudgetCategoryPatchIn(Schema):
     name: str | None = Field(None, max_length=255)
-    description: str | None = None
+    description: str = ""
     allocated_budget: Decimal | None = None
 
 
@@ -73,20 +73,20 @@ class ExpenseIn(Schema):
     category: UUID4 = Field(...)
     contract: UUID4 | None = None
     name: str = Field(..., max_length=255)
-    description: str | None = None
+    description: str = ""
     estimated_amount: Decimal
     actual_amount: Decimal
-    num_installments: int | None = Field(None, gt=0)
+    num_installments: int | None = Field(None, ge=0)
     first_due_date: date | None = None
 
 
 class ExpensePatchIn(Schema):
     contract: UUID4 | None = None
     name: str | None = Field(None, max_length=255)
-    description: str | None = None
+    description: str = ""
     estimated_amount: Decimal | None = None
     actual_amount: Decimal | None = None
-    num_installments: int | None = Field(None, gt=0)
+    num_installments: int | None = Field(None, ge=0)
     first_due_date: date | None = None
 
 
@@ -180,7 +180,7 @@ class InstallmentIn(Schema):
     amount: Decimal
     due_date: date
     paid_date: date | None = None
-    notes: str | None = None
+    notes: str = ""
 
 
 class InstallmentPatchIn(Schema):
@@ -188,7 +188,7 @@ class InstallmentPatchIn(Schema):
     amount: Decimal | None = None
     due_date: date | None = None
     paid_date: date | None = None
-    notes: str | None = None
+    notes: str = ""
 
 
 class InstallmentAdjustIn(Schema):

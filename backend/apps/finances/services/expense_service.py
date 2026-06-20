@@ -139,7 +139,7 @@ class ExpenseService:
     def create(company: Company, payload: ExpenseIn) -> Expense:
         logger.info(f"Iniciando criação de Despesa para company_id={company.id}")
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         category_input = data.pop("category", None)
 

@@ -113,7 +113,7 @@ class ContractService:
     def create(company: Company, payload: ContractIn) -> Contract:
         logger.info(f"Iniciando criação de Contrato para company_id={company.id}")
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         wedding_input = data.pop("wedding", None)
         supplier_input = data.pop("supplier", None)
@@ -209,12 +209,12 @@ class ContractService:
 
         if items_data:
             for item_dict in items_data:
-                item_dict["wedding"] = contract.wedding
-                item_dict["contract"] = contract
+                item_dict["wedding"] = contract.wedding.uuid
+                item_dict["contract"] = contract.uuid
                 ItemService.create(company=company, payload=ItemIn(**item_dict))
 
         if expense_data:
-            expense_data["contract"] = contract
+            expense_data["contract"] = contract.uuid
             ExpenseService.create(company=company, payload=ExpenseIn(**expense_data))
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")

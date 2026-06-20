@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 import pytest
-from django.core.exceptions import ValidationError
+from pydantic import ValidationError
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.logistics.models import Contract, Supplier
@@ -62,7 +62,9 @@ class TestSupplierServiceUpdate:
         """Atualização de nome é permitida."""
         supplier = SupplierFactory(company=user.company, name="Nome Antigo")
 
-        updated = SupplierService.update(user.company, supplier, SupplierPatchIn(name="Nome Novo"))
+        updated = SupplierService.update(
+            user.company, supplier, SupplierPatchIn(name="Nome Novo")
+        )
 
         assert updated.name == "Nome Novo"
 
@@ -91,7 +93,9 @@ class TestSupplierServiceUpdate:
         """Desativar/ativar fornecedor via is_active."""
         supplier = SupplierFactory(company=user.company, is_active=True)
 
-        updated = SupplierService.update(user.company, supplier, SupplierPatchIn(is_active=False))
+        updated = SupplierService.update(
+            user.company, supplier, SupplierPatchIn(is_active=False)
+        )
 
         assert updated.is_active is False
 

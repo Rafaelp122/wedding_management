@@ -60,7 +60,7 @@ class EventService:
         if isinstance(payload, dict):
             data = payload
         else:
-            data = payload.model_dump()
+            data = payload.model_dump(exclude_unset=True)
 
         wedding_input = data.pop("wedding", None)
 

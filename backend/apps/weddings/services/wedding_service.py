@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from datetime import datetime, time, timedelta
 from uuid import UUID
 
@@ -88,7 +89,7 @@ class WeddingService:
     def create(company: Company, payload: WeddingIn) -> Wedding:
         logger.info(f"Criando casamento para company_id={company.id}")
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         valid_fields = {f.name for f in Wedding._meta.concrete_fields}
         model_data = {k: v for k, v in data.items() if k in valid_fields}
@@ -224,5 +225,7 @@ def _apply_template_events(
                 title=event_data["title"],
                 event_type=event_data["event_type"],
                 start_time=event_start,
+                location="",
+                description="",
             ),
         )

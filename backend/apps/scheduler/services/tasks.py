@@ -49,7 +49,7 @@ class TaskService:
     def create(company: Company, payload: TaskIn) -> Task:
         logger.info(f"Iniciando criação de Tarefa para company_id={company.id}")
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
         wedding_input = data.pop("wedding", None)
 
         if isinstance(wedding_input, Wedding):

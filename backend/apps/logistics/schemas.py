@@ -107,7 +107,7 @@ class ContractPatchIn(Schema):
     name: str | None = None
     total_amount: Decimal | None = None
     status: str | None = None
-    description: str | None = None
+    description: str = ""
     parent: UUID4 | None = None
     pdf_file_key: str | None = None
 
@@ -205,7 +205,7 @@ class ContractOut(Schema):
 # ITEM SCHEMAS
 # ==============================================================================
 class ItemIn(Schema):
-    wedding: UUID4
+    wedding: UUID4 | None = None
     contract: UUID4 | None = None
     name: str
     description: str = ""
@@ -220,7 +220,7 @@ class ItemStatusTransitionIn(Schema):
 class ItemPatchIn(Schema):
     contract: UUID4 | None = None
     name: str | None = None
-    description: str | None = None
+    description: str = ""
     quantity: int | None = None
     acquisition_status: str | None = None
 

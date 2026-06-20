@@ -7,8 +7,8 @@ from pydantic import UUID4, Field, model_validator
 class EventIn(Schema):
     wedding: UUID4
     title: str = Field(..., max_length=255)
-    location: str | None = Field(None, max_length=255)
-    description: str | None = None
+    location: str = Field("", max_length=255)
+    description: str = ""
     event_type: str = Field(..., max_length=50)
     start_time: datetime
     end_time: datetime | None = None
@@ -35,8 +35,8 @@ class EventIn(Schema):
 class EventPatchIn(Schema):
     wedding: UUID4 | None = None
     title: str | None = Field(None, max_length=255)
-    location: str | None = Field(None, max_length=255)
-    description: str | None = None
+    location: str = Field("", max_length=255)
+    description: str = ""
     event_type: str | None = Field(None, max_length=50)
     start_time: datetime | None = None
     end_time: datetime | None = None
@@ -77,14 +77,14 @@ class EventOut(Schema):
 class TaskIn(Schema):
     wedding: UUID4
     title: str = Field(..., max_length=255)
-    description: str | None = None
+    description: str = ""
     due_date: date | None = None
     is_completed: bool = False
 
 
 class TaskPatchIn(Schema):
     title: str | None = Field(None, max_length=255)
-    description: str | None = None
+    description: str = ""
     due_date: date | None = None
     is_completed: bool | None = None
 

@@ -219,7 +219,7 @@ class TestBudgetServiceCritical:
 
         # Criar primeiro budget
         budget1_data = {"wedding": wedding.uuid, "total_estimated": Decimal("50000.00")}
-        BudgetService.create(user.company, budget1_data)
+        BudgetService.create(user.company, BudgetIn(**budget1_data))
 
         # Tentar criar segundo budget para mesmo wedding
         budget2_data = {"wedding": wedding.uuid, "total_estimated": Decimal("75000.00")}
@@ -227,7 +227,7 @@ class TestBudgetServiceCritical:
         from apps.core.exceptions import DomainIntegrityError
 
         with pytest.raises(DomainIntegrityError) as exc_info:
-            BudgetService.create(user.company, budget2_data)
+            BudgetService.create(user.company, BudgetIn(**budget2_data))
 
         assert "já possui um orçamento definido" in str(exc_info.value.detail)
 
@@ -250,7 +250,7 @@ class TestBudgetServiceCritical:
         budget_data = {"wedding": invalid_uuid, "total_estimated": Decimal("50000.00")}
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.create(user.company, budget_data)
+            BudgetService.create(user.company, BudgetIn(**budget_data))
 
         assert "não encontrado ou acesso negado" in str(exc_info.value.detail).lower()
 
@@ -282,6 +282,7 @@ class TestBudgetServiceIntegration:
 
         Lazy loading: budget só é criado na primeira requisição.
         """
+        from apps.weddings.schemas import WeddingIn
         from apps.weddings.services import WeddingService
 
         wedding_payload = {
@@ -292,8 +293,7 @@ class TestBudgetServiceIntegration:
             "expected_guests": 150,
         }
 
-        # Criar wedding
-        wedding = WeddingService.create(user.company, wedding_payload)
+        wedding = WeddingService.create(user.company, WeddingIn(**wedding_payload))
 
         # Verificar que wedding foi criado mas budget NÃO
         assert wedding is not None
@@ -334,7 +334,7 @@ class TestBudgetServiceIntegration:
 
         budget = BudgetService.create(
             user.company,
-            {"wedding": wedding, "total_estimated": Decimal("30000.00")},
+            BudgetIn(wedding=wedding.uuid, total_estimated=Decimal("30000.00")),
         )
 
         assert budget.wedding == wedding
@@ -350,7 +350,7 @@ class TestBudgetServiceIntegration:
         updated = BudgetService.update(
             user.company,
             budget,
-            {"total_estimated": Decimal("80000.00"), "notes": "Nova observação"},
+            BudgetPatchIn(total_estimated=Decimal("80000.00"), notes="Nova observação"),
         )
 
         assert updated.total_estimated == Decimal("80000.00")
@@ -364,7 +364,9 @@ class TestBudgetServiceIntegration:
         wedding2 = WeddingFactory(company=user.company)
         budget = BudgetService.get_or_create_for_wedding(user.company, wedding1.uuid)
 
-        updated = BudgetService.update(user.company, budget, BudgetPatchIn(wedding=wedding2.uuid))
+        updated = BudgetService.update(
+            user.company, budget, BudgetPatchIn(wedding=wedding2.uuid)
+        )
 
         assert updated.wedding == wedding1
 

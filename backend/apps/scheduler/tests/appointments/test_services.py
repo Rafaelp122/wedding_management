@@ -124,7 +124,9 @@ class TestEventServiceUpdate:
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding, title="Título Antigo")
 
-        updated = EventService.update(user.company, event, EventPatchIn(title="Título Novo"))
+        updated = EventService.update(
+            user.company, event, EventPatchIn(title="Título Novo")
+        )
 
         assert updated.title == "Título Novo"
 
@@ -134,7 +136,9 @@ class TestEventServiceUpdate:
         wedding2 = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding1)
 
-        updated = EventService.update(user.company, event, EventPatchIn(wedding=wedding2.uuid))
+        updated = EventService.update(
+            user.company, event, EventPatchIn(wedding=wedding2.uuid)
+        )
 
         assert updated.wedding == wedding1
 
@@ -143,7 +147,9 @@ class TestEventServiceUpdate:
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding, reminder_enabled=False)
 
-        updated = EventService.update(user.company, event, EventPatchIn(reminder_enabled=True))
+        updated = EventService.update(
+            user.company, event, EventPatchIn(reminder_enabled=True)
+        )
 
         assert updated.reminder_enabled is True
 
@@ -188,7 +194,9 @@ class TestEventServiceUpdate:
 
         with pytest.raises(BusinessRuleViolation):
             EventService.update(
-                user.company, event, EventPatchIn(start_time=timezone.now() + timedelta(days=10))
+                user.company,
+                event,
+                EventPatchIn(start_time=timezone.now() + timedelta(days=10)),
             )
 
     def test_update_non_payment_event_allowed(self, user):
@@ -213,9 +221,7 @@ class TestEventServiceUpdate:
         other_event = EventFactory(wedding=other_wedding)
 
         with pytest.raises(ObjectNotFoundError):
-            EventService.update(
-                user.company, other_event, EventPatchIn(title="Hack")
-            )
+            EventService.update(user.company, other_event, EventPatchIn(title="Hack"))
 
 
 @pytest.mark.django_db

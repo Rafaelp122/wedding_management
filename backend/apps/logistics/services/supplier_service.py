@@ -55,7 +55,7 @@ class SupplierService:
     def create(company: Company, payload: SupplierIn) -> Supplier:
         logger.info(f"Iniciando criação de Fornecedor para company_id={company.id}")
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         supplier = Supplier(company=company, **data)
 

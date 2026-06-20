@@ -54,7 +54,7 @@ class TestExpenseServiceCreate:
         category = _setup_category(user)
 
         data = {
-            "category": category,
+            "category": category.uuid,
             "name": "Fotografia",
             "estimated_amount": Decimal("5000.00"),
             "actual_amount": Decimal("5000.00"),
@@ -112,7 +112,7 @@ class TestExpenseServiceCreate:
         assert "budget_category_not_found_or_denied" in str(exc_info.value.code)
 
     def test_create_expense_validation_error(self, user):
-        """num_installments < 1 levanta BusinessRuleViolation."""
+        """Erro de negócio: num_installments < 1."""
         category = _setup_category(user)
 
         data = {
@@ -273,7 +273,9 @@ class TestExpenseServiceUpdate:
             amount=Decimal("500.00"),
         )
 
-        updated = ExpenseService.update(user.company, expense, ExpensePatchIn(name="Nome Novo"))
+        updated = ExpenseService.update(
+            user.company, expense, ExpensePatchIn(name="Nome Novo")
+        )
 
         assert updated.name == "Nome Novo"
         assert updated.actual_amount == Decimal("500.00")
@@ -607,7 +609,7 @@ class TestExpenseServiceContractIntegration:
 
         data = {
             "category": category.uuid,
-            "contract": contract,
+            "contract": contract.uuid,
             "name": "Despesa com contrato",
             "estimated_amount": Decimal("5000.00"),
             "actual_amount": Decimal("5000.00"),
@@ -663,7 +665,9 @@ class TestExpenseServiceContractIntegration:
             amount=contract.total_amount,
         )
 
-        updated = ExpenseService.update(user.company, expense, ExpensePatchIn(contract=None))
+        updated = ExpenseService.update(
+            user.company, expense, ExpensePatchIn(contract=None)
+        )
 
         assert updated.contract is None
 

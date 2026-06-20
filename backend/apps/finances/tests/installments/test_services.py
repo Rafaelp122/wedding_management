@@ -11,7 +11,7 @@ from apps.core.exceptions import (
 )
 from apps.finances.models import Installment
 from apps.finances.services.installment_service import InstallmentService
-from apps.finances.schemas import InstallmentIn, InstallmentAdjustIn
+from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn, InstallmentPatchIn
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
@@ -61,7 +61,7 @@ class TestInstallmentServiceCreate:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
 
         data = {
-            "expense": expense,
+            "expense": expense.uuid,
             "installment_number": 1,
             "amount": Decimal("500.00"),
             "due_date": date.today() + timedelta(days=15),
@@ -276,7 +276,9 @@ class TestInstallmentServiceUpdate:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            InstallmentService.update(user.company, i1, InstallmentAdjustIn(amount=Decimal("300.00")))
+            InstallmentService.update(
+                user.company, i1, InstallmentPatchIn(amount=Decimal("300.00"))
+            )
 
         assert "expense_math_violation" in str(exc_info.value.code)
 
@@ -714,7 +716,9 @@ class TestInstallmentServiceAdjust:
         )
 
         new_date = date.today() + timedelta(days=45)
-        result = InstallmentService.adjust(user.company, inst, InstallmentAdjustIn(due_date=new_date))
+        result = InstallmentService.adjust(
+            user.company, inst, InstallmentAdjustIn(due_date=new_date)
+        )
 
         assert result.due_date == new_date
 
@@ -730,7 +734,9 @@ class TestInstallmentServiceAdjust:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc:
-            InstallmentService.adjust(user.company, inst, InstallmentAdjustIn(amount=Decimal("300.00")))
+            InstallmentService.adjust(
+                user.company, inst, InstallmentAdjustIn(amount=Decimal("300.00"))
+            )
         assert exc.value.code == "adjustment_on_paid_installment"
 
     def test_adjust_due_date_before_previous(self, user):
@@ -799,7 +805,9 @@ class TestInstallmentServiceAdjust:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc:
-            InstallmentService.adjust(user.company, inst, InstallmentAdjustIn(amount=Decimal("300.00")))
+            InstallmentService.adjust(
+                user.company, inst, InstallmentAdjustIn(amount=Decimal("300.00"))
+            )
         assert exc.value.code == "expense_math_violation"
 
     def test_adjust_cross_tenant(self, user):
@@ -823,7 +831,9 @@ class TestInstallmentServiceAdjust:
 
         with pytest.raises(ObjectNotFoundError):
             InstallmentService.adjust(
-                user.company, other_installment, InstallmentAdjustIn(amount=Decimal("300.00"))
+                user.company,
+                other_installment,
+                InstallmentAdjustIn(amount=Decimal("300.00")),
             )
 
 

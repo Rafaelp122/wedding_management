@@ -88,7 +88,7 @@ class BudgetCategoryService:
             f"Iniciando criação de Categoria de Orçamento para company_id={company.id}"
         )
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         budget_input = data.pop("budget", None)
 

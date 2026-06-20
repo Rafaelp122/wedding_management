@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any, TYPE_CHECKING, Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -118,7 +118,7 @@ class ItemService:
     def create(company: Company, payload: ItemIn) -> Item:
         logger.info(f"Iniciando criação de Item para company_id={company.id}")
 
-        data = payload.model_dump()
+        data = payload.model_dump(exclude_unset=True)
 
         wedding_input = data.pop("wedding", None)
 
