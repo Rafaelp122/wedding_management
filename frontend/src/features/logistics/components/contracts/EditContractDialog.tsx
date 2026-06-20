@@ -18,7 +18,7 @@ import { FormInput, FormSelect, FormSelectNullable, FormNumber, FormTextarea } f
 import { CONTRACT_STATUS_OPTIONS } from "@/features/logistics/constants";
 import { buildPatchPayload } from "@/lib/patch-payload";
 
-type EditContractFormData = z.infer<typeof LogisticsContractsUpdateBody>;
+type EditContractFormData = z.input<typeof LogisticsContractsUpdateBody>;
 
 interface EditContractDialogProps {
   contract: ContractOut;

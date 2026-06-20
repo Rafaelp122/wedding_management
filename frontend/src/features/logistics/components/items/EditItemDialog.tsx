@@ -17,7 +17,7 @@ import { FormInput, FormSelect, FormSelectNullable, FormNumber, FormTextarea } f
 import { ACQUISITION_STATUS_OPTIONS } from "@/features/logistics/constants";
 import { buildPatchPayload } from "@/lib/patch-payload";
 
-type EditItemFormData = z.infer<typeof LogisticsItemsUpdateBody>;
+type EditItemFormData = z.input<typeof LogisticsItemsUpdateBody>;
 
 interface EditItemDialogProps {
   item: ItemOut;
