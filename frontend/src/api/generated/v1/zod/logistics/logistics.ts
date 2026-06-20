@@ -426,6 +426,8 @@ export const LogisticsContractsUpdateBody = zod.object({
     .default(logisticsContractsUpdateBodyDescriptionDefault),
   parent: zod.union([zod.string(), zod.null()]).optional(),
   pdf_file_key: zod.union([zod.string(), zod.null()]).optional(),
+  expiration_date: zod.union([zod.iso.date(), zod.null()]).optional(),
+  alert_days_before: zod.union([zod.number(), zod.null()]).optional(),
 });
 
 export const logisticsContractsUpdateResponseNameDefault = ``;
