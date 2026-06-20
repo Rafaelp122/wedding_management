@@ -62,6 +62,4 @@ def update_budget(request: AuthRequest, uuid: UUID4, payload: BudgetPatchIn) -> 
     """
     user = require_user(request.user)
     instance = BudgetService.get(user.company, uuid)
-    return BudgetService.update(
-        user.company, instance, payload.model_dump(exclude_unset=True)
-    )
+    return BudgetService.update(user.company, instance, payload)

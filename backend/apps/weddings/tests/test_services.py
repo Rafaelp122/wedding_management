@@ -22,6 +22,7 @@ from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.scheduler.models import Event
 from apps.scheduler.tests.factories import TaskFactory
 from apps.weddings.models import Wedding
+from apps.weddings.schemas import WeddingIn, WeddingPatchIn
 from apps.weddings.services import DashboardService, WeddingService
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -56,7 +57,7 @@ class TestWeddingService:
             WeddingService.update(
                 instance=wedding,
                 company=user.company,
-                data={"bride_name": ""},
+                payload=WeddingPatchIn(**{"bride_name": ""}),
             )
 
     def test_create_wedding_does_not_create_financial_data_eagerly(
@@ -69,7 +70,9 @@ class TestWeddingService:
         wedding_payload["total_estimated"] = Decimal("75000.50")
 
         # Execução
-        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         # Asserções: Wedding criado
         assert Wedding.objects.count() == 1
@@ -99,7 +102,9 @@ class TestWeddingService:
 
         # Execução
         updated_wedding = WeddingService.update(
-            instance=wedding, company=user.company, data=update_data
+            company=user.company,
+            instance=wedding,
+            payload=WeddingPatchIn(**update_data),
         )
 
         # Asserção
@@ -111,6 +116,7 @@ class TestWeddingService:
     def test_update_wedding_cross_tenant(self, user):
         """Casamento de outro tenant não pode ser atualizado."""
         from apps.users.tests.factories import UserFactory
+
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
 
@@ -118,7 +124,7 @@ class TestWeddingService:
             WeddingService.update(
                 company=user.company,
                 instance=other_wedding,
-                data={"bride_name": "Hack"},
+                payload=WeddingPatchIn(**{"bride_name": "Hack"}),
             )
 
     def test_create_wedding_fail_fast_validation_error(self, user, wedding_payload):
@@ -132,7 +138,9 @@ class TestWeddingService:
 
         # 2. Execução e Asserção de Erro
         with pytest.raises(BusinessRuleViolation, match="não pode estar vazio"):
-            WeddingService.create(company=user.company, data=wedding_payload)
+            WeddingService.create(
+                company=user.company, payload=WeddingIn(**wedding_payload)
+            )
 
         # 3. Validação de Banco de Dados Limpo
         # Nada deve ter sido criado devido à falha precoce
@@ -152,7 +160,9 @@ class TestWeddingService:
         wedding_payload["date"] = timezone.now().date() - timedelta(days=1)
 
         with pytest.raises(BusinessRuleViolation, match="não pode ser no passado"):
-            WeddingService.create(company=user.company, data=wedding_payload)
+            WeddingService.create(
+                company=user.company, payload=WeddingIn(**wedding_payload)
+            )
 
         assert Wedding.objects.count() == 0
 
@@ -161,7 +171,9 @@ class TestWeddingService:
         with patch(
             "apps.finances.services.budget_service.BudgetService.create"
         ) as mock_budget:
-            wedding = WeddingService.create(company=user.company, data=wedding_payload)
+            wedding = WeddingService.create(
+                company=user.company, payload=WeddingIn(**wedding_payload)
+            )
 
         assert wedding.uuid is not None
         assert Wedding.objects.count() == 1
@@ -192,8 +204,12 @@ class TestWeddingService:
         }
 
         # 2. Execução
-        wedding_a = WeddingService.create(company=planner_a.company, data=payload_a)
-        wedding_b = WeddingService.create(company=planner_b.company, data=payload_b)
+        wedding_a = WeddingService.create(
+            company=planner_a.company, payload=WeddingIn(**payload_a)
+        )
+        wedding_b = WeddingService.create(
+            company=planner_b.company, payload=WeddingIn(**payload_b)
+        )
 
         # 3. Asserções (O coração do teste)
         assert wedding_a.company == planner_a.company
@@ -240,7 +256,9 @@ class TestWeddingService:
         payload = {**wedding_payload, "total_estimated": Decimal("50000.00")}
 
         # O serviço cria apenas o Wedding; a camada financeira é lazy.
-        wedding = WeddingService.create(company=user.company, data=payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**payload)
+        )
 
         # 2. Execução: Deletar o casamento
         WeddingService.delete(company=user.company, instance=wedding)
@@ -253,6 +271,7 @@ class TestWeddingService:
     def test_delete_wedding_cross_tenant(self, user):
         """Casamento de outro tenant não pode ser deletado."""
         from apps.users.tests.factories import UserFactory
+
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
 
@@ -394,7 +413,9 @@ class TestWeddingTemplateApplication:
         """Template 'religious_12m' gera eventos com offset antes da data."""
         wedding_payload["template"] = "religious_12m"
 
-        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events = Event.objects.filter(wedding=wedding).order_by("start_time")
         assert len(events) == 10  # religious_12m tem 10 eventos
@@ -412,7 +433,9 @@ class TestWeddingTemplateApplication:
         """Template 'beach_6m' gera eventos corretamente."""
         wedding_payload["template"] = "beach_6m"
 
-        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events = Event.objects.filter(wedding=wedding)
         assert len(events) == 8
@@ -423,7 +446,9 @@ class TestWeddingTemplateApplication:
         """Template 'civil_buffet_3m' gera eventos corretamente."""
         wedding_payload["template"] = "civil_buffet_3m"
 
-        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events = Event.objects.filter(wedding=wedding)
         assert len(events) == 7
@@ -432,7 +457,9 @@ class TestWeddingTemplateApplication:
         """Sem template, nenhum evento é criado."""
         wedding_payload.pop("template", None)
 
-        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events = Event.objects.filter(wedding=wedding)
         assert events.count() == 0
@@ -441,7 +468,9 @@ class TestWeddingTemplateApplication:
         """Template=None não gera eventos."""
         wedding_payload["template"] = None
 
-        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events = Event.objects.filter(wedding=wedding)
         assert events.count() == 0
@@ -451,7 +480,9 @@ class TestWeddingTemplateApplication:
         wedding_payload["template"] = "nonexistent_template"
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            WeddingService.create(company=user.company, data=wedding_payload)
+            WeddingService.create(
+                company=user.company, payload=WeddingIn(**wedding_payload)
+            )
 
         assert "nonexistent_template" in str(exc_info.value.detail)
         assert exc_info.value.code == "template_not_found"
@@ -462,7 +493,9 @@ class TestWeddingTemplateApplication:
         wedding_payload["date"] = timezone.now().date() + timedelta(days=200)
         wedding_payload["template"] = "religious_12m"
 
-        wedding = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events = Event.objects.filter(wedding=wedding).order_by("start_time")
         offsets = [365, 330, 300, 270, 240, 180, 150, 90, 30, 7]
@@ -478,8 +511,12 @@ class TestWeddingTemplateApplication:
         """Aplicar o mesmo template duas vezes não corrompe os dados."""
         wedding_payload["template"] = "beach_6m"
 
-        wedding1 = WeddingService.create(company=user.company, data=wedding_payload)
-        wedding2 = WeddingService.create(company=user.company, data=wedding_payload)
+        wedding1 = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
+        wedding2 = WeddingService.create(
+            company=user.company, payload=WeddingIn(**wedding_payload)
+        )
 
         events1 = Event.objects.filter(wedding=wedding1).count()
         events2 = Event.objects.filter(wedding=wedding2).count()

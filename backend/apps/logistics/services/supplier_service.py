@@ -10,6 +10,7 @@ from apps.core.exceptions import (
 )
 from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Supplier
+from apps.logistics.schemas import SupplierIn, SupplierPatchIn
 from apps.tenants.models import Company
 
 
@@ -51,10 +52,11 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Supplier:
+    def create(company: Company, payload: SupplierIn) -> Supplier:
         logger.info(f"Iniciando criação de Fornecedor para company_id={company.id}")
 
-        # 1. Instanciação em Memória
+        data = payload.model_dump(exclude_unset=True)
+
         supplier = Supplier(company=company, **data)
 
         # 2. Validação Estrita no Model
@@ -65,7 +67,9 @@ class SupplierService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Supplier, data: dict[str, Any]) -> Supplier:
+    def update(
+        company: Company, instance: Supplier, payload: SupplierPatchIn | dict[str, Any]
+    ) -> Supplier:
         validate_tenant_ownership(
             company,
             instance,
@@ -76,6 +80,10 @@ class SupplierService:
             f"Atualizando Fornecedor uuid={instance.uuid} por company_id={company.id}"
         )
 
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
         data.pop("company", None)
 
         for field, value in data.items():

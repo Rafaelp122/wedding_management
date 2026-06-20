@@ -14,7 +14,7 @@ import { FormDialog } from "@/components/form-dialog";
 import { FormInput, FormSelect, FormSelectNullable, FormNumber, FormTextarea } from "@/components/form-fields";
 import { ACQUISITION_STATUS_OPTIONS } from "@/features/logistics/constants";
 
-type CreateItemFormData = z.infer<typeof LogisticsItemsCreateBody>;
+type CreateItemFormData = z.input<typeof LogisticsItemsCreateBody>;
 
 interface CreateItemDialogProps {
   weddingUuid: string;

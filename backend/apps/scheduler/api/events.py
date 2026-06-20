@@ -58,7 +58,7 @@ def create_event(request: AuthRequest, payload: EventIn) -> tuple[int, Event]:
     - Validar os minutos para o disparo de lembretes (reminder).
     """
     user = require_user(request.user)
-    return 201, EventService.create(user.company, payload.model_dump())
+    return 201, EventService.create(user.company, payload)
 
 
 @events_router.patch(
@@ -74,9 +74,7 @@ def update_event(request: AuthRequest, uuid: UUID4, payload: EventPatchIn) -> Ev
     """
     user = require_user(request.user)
     instance = EventService.get(user.company, uuid)
-    return EventService.update(
-        user.company, instance, payload.model_dump(exclude_unset=True)
-    )
+    return EventService.update(user.company, instance, payload)
 
 
 @events_router.delete(

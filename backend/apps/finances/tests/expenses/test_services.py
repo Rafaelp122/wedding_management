@@ -6,6 +6,7 @@ import pytest
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.finances.models import Expense, Installment
+from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
@@ -41,7 +42,7 @@ class TestExpenseServiceCreate:
             "actual_amount": Decimal("10000.00"),
         }
 
-        expense = ExpenseService.create(user.company, data)
+        expense = ExpenseService.create(user.company, ExpenseIn(**data))
 
         assert expense.category == category
         assert expense.wedding == category.wedding
@@ -53,13 +54,13 @@ class TestExpenseServiceCreate:
         category = _setup_category(user)
 
         data = {
-            "category": category,
+            "category": category.uuid,
             "name": "Fotografia",
             "estimated_amount": Decimal("5000.00"),
             "actual_amount": Decimal("5000.00"),
         }
 
-        expense = ExpenseService.create(user.company, data)
+        expense = ExpenseService.create(user.company, ExpenseIn(**data))
         assert expense.category == category
 
     def test_create_expense_inherits_wedding_from_category(self, user):
@@ -68,12 +69,12 @@ class TestExpenseServiceCreate:
 
         expense = ExpenseService.create(
             user.company,
-            {
-                "category": category.uuid,
-                "name": "Decoração",
-                "estimated_amount": Decimal("3000.00"),
-                "actual_amount": Decimal("3000.00"),
-            },
+            ExpenseIn(
+                category=category.uuid,
+                name="Decoração",
+                estimated_amount=Decimal("3000.00"),
+                actual_amount=Decimal("3000.00"),
+            ),
         )
 
         assert expense.wedding == category.wedding
@@ -88,7 +89,7 @@ class TestExpenseServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ExpenseService.create(user.company, data)
+            ExpenseService.create(user.company, ExpenseIn(**data))
 
         assert "budget_category_not_found_or_denied" in str(exc_info.value.code)
 
@@ -106,12 +107,12 @@ class TestExpenseServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ExpenseService.create(user_a.company, data)
+            ExpenseService.create(user_a.company, ExpenseIn(**data))
 
         assert "budget_category_not_found_or_denied" in str(exc_info.value.code)
 
     def test_create_expense_validation_error(self, user):
-        """num_installments < 1 levanta BusinessRuleViolation."""
+        """Erro de negócio: num_installments < 1."""
         category = _setup_category(user)
 
         data = {
@@ -123,7 +124,7 @@ class TestExpenseServiceCreate:
         }
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ExpenseService.create(user.company, data)
+            ExpenseService.create(user.company, ExpenseIn(**data))
 
         assert "invalid_installment_number" in str(exc_info.value.code)
 
@@ -137,7 +138,7 @@ class TestExpenseServiceCreate:
             "actual_amount": Decimal("1000.00"),
         }
 
-        expense = ExpenseService.create(user.company, data)
+        expense = ExpenseService.create(user.company, ExpenseIn(**data))
         assert expense.installments.count() == 1
         assert expense.installments.first().due_date == date.today()
 
@@ -162,7 +163,7 @@ class TestExpenseServiceCreate:
         }
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ExpenseService.create(user.company, data)
+            ExpenseService.create(user.company, ExpenseIn(**data))
 
         assert exc_info.value.code == "br_f02_violation"
 
@@ -178,7 +179,7 @@ class TestExpenseServiceCreate:
             "num_installments": 3,
             "first_due_date": date.today(),
         }
-        expense = ExpenseService.create(user.company, data)
+        expense = ExpenseService.create(user.company, ExpenseIn(**data))
         expense.refresh_from_db()
         total = sum(i.amount for i in expense.installments.all())
         assert total == Decimal("1000.00"), (
@@ -207,7 +208,7 @@ class TestExpenseServiceUpdate:
         )
 
         updated = ExpenseService.update(
-            user.company, expense, {"description": "Nova Descrição"}
+            user.company, expense, ExpensePatchIn(description="Nova Descrição")
         )
 
         assert updated.description == "Nova Descrição"
@@ -272,7 +273,9 @@ class TestExpenseServiceUpdate:
             amount=Decimal("500.00"),
         )
 
-        updated = ExpenseService.update(user.company, expense, {"name": "Nome Novo"})
+        updated = ExpenseService.update(
+            user.company, expense, ExpensePatchIn(name="Nome Novo")
+        )
 
         assert updated.name == "Nome Novo"
         assert updated.actual_amount == Decimal("500.00")
@@ -295,7 +298,7 @@ class TestExpenseServiceUpdate:
 
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.update(
-                user.company, other_expense, {"name": "Hack"}
+                user.company, other_expense, ExpensePatchIn(name="Hack")
             )
 
     def test_update_expense_amount_with_installment_count(self, user):
@@ -588,7 +591,7 @@ class TestExpenseServiceContractIntegration:
             "actual_amount": Decimal("5000.00"),
         }
 
-        expense = ExpenseService.create(user.company, data)
+        expense = ExpenseService.create(user.company, ExpenseIn(**data))
 
         assert expense.contract == contract
         assert expense.wedding == category.wedding
@@ -606,13 +609,13 @@ class TestExpenseServiceContractIntegration:
 
         data = {
             "category": category.uuid,
-            "contract": contract,
+            "contract": contract.uuid,
             "name": "Despesa com contrato",
             "estimated_amount": Decimal("5000.00"),
             "actual_amount": Decimal("5000.00"),
         }
 
-        expense = ExpenseService.create(user.company, data)
+        expense = ExpenseService.create(user.company, ExpenseIn(**data))
         assert expense.contract == contract
 
     def test_update_expense_swap_contract(self, user):
@@ -637,7 +640,7 @@ class TestExpenseServiceContractIntegration:
         )
 
         updated = ExpenseService.update(
-            user.company, expense, {"contract": contract2.uuid}
+            user.company, expense, ExpensePatchIn(contract=contract2.uuid)
         )
 
         assert updated.contract == contract2
@@ -662,7 +665,9 @@ class TestExpenseServiceContractIntegration:
             amount=contract.total_amount,
         )
 
-        updated = ExpenseService.update(user.company, expense, {"contract": None})
+        updated = ExpenseService.update(
+            user.company, expense, ExpensePatchIn(contract=None)
+        )
 
         assert updated.contract is None
 
@@ -682,7 +687,7 @@ class TestExpenseServiceInstallmentDistribution:
             "num_installments": 3,
             "first_due_date": date.today(),
         }
-        expense = ExpenseService.create(user.company, data)
+        expense = ExpenseService.create(user.company, ExpenseIn(**data))
         total = sum(i.amount for i in expense.installments.all())
         assert total == Decimal("100.00")
         assert expense.installments.count() == 3

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-type CreateExpenseFormData = z.infer<typeof FinancesExpensesCreateBody>;
+type CreateExpenseFormData = z.input<typeof FinancesExpensesCreateBody>;
 
 interface CreateExpenseDialogProps {
   weddingUuid: string;
@@ -60,7 +60,7 @@ export function CreateExpenseDialog({
       category: "",
       contract: null,
       name: "",
-      description: null,
+      description: "",
       estimated_amount: undefined,
       actual_amount: undefined,
       num_installments: 1,
@@ -164,7 +164,7 @@ export function CreateExpenseDialog({
                   value={field.value ?? ""}
                   onChange={(e) =>
                     field.onChange(
-                      e.target.value === "" ? null : e.target.value,
+                      e.target.value,
                     )
                   }
                 />

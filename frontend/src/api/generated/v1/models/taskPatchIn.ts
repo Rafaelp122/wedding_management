@@ -7,7 +7,7 @@
 
 export interface TaskPatchIn {
   title?: string | null;
-  description?: string | null;
+  description?: string;
   due_date?: string | null;
   is_completed?: boolean | null;
 }

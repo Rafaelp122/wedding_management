@@ -8,8 +8,9 @@
 export interface EventPatchIn {
   wedding?: string | null;
   title?: string | null;
-  location?: string | null;
-  description?: string | null;
+  /** @maxLength 255 */
+  location?: string;
+  description?: string;
   event_type?: string | null;
   start_time?: string | null;
   end_time?: string | null;

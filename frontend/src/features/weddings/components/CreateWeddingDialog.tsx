@@ -33,7 +33,7 @@ const TEMPLATE_OPTIONS = [
   { value: "civil_buffet_3m", label: "Mini Wedding Intimista" },
 ] as const;
 
-type CreateWeddingFormData = z.infer<typeof WeddingsCreateBody>;
+type CreateWeddingFormData = z.input<typeof WeddingsCreateBody>;
 
 interface CreateWeddingDialogProps {
   open: boolean;

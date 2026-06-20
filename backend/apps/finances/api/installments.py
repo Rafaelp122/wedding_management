@@ -91,8 +91,4 @@ def adjust_installment(
     """
     user = require_user(request.user)
     instance = InstallmentService.get(user.company, uuid)
-    return InstallmentService.adjust(
-        user.company,
-        instance,
-        payload.model_dump(exclude_unset=True, exclude_none=True),
-    )
+    return InstallmentService.adjust(user.company, instance, payload)

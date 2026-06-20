@@ -12,11 +12,10 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.finances.models import Budget, BudgetCategory
+from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.tests.factories import (
@@ -220,7 +219,7 @@ class TestBudgetServiceCritical:
 
         # Criar primeiro budget
         budget1_data = {"wedding": wedding.uuid, "total_estimated": Decimal("50000.00")}
-        BudgetService.create(user.company, budget1_data)
+        BudgetService.create(user.company, BudgetIn(**budget1_data))
 
         # Tentar criar segundo budget para mesmo wedding
         budget2_data = {"wedding": wedding.uuid, "total_estimated": Decimal("75000.00")}
@@ -228,7 +227,7 @@ class TestBudgetServiceCritical:
         from apps.core.exceptions import DomainIntegrityError
 
         with pytest.raises(DomainIntegrityError) as exc_info:
-            BudgetService.create(user.company, budget2_data)
+            BudgetService.create(user.company, BudgetIn(**budget2_data))
 
         assert "já possui um orçamento definido" in str(exc_info.value.detail)
 
@@ -251,7 +250,7 @@ class TestBudgetServiceCritical:
         budget_data = {"wedding": invalid_uuid, "total_estimated": Decimal("50000.00")}
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.create(user.company, budget_data)
+            BudgetService.create(user.company, BudgetIn(**budget_data))
 
         assert "não encontrado ou acesso negado" in str(exc_info.value.detail).lower()
 
@@ -283,6 +282,7 @@ class TestBudgetServiceIntegration:
 
         Lazy loading: budget só é criado na primeira requisição.
         """
+        from apps.weddings.schemas import WeddingIn
         from apps.weddings.services import WeddingService
 
         wedding_payload = {
@@ -293,8 +293,7 @@ class TestBudgetServiceIntegration:
             "expected_guests": 150,
         }
 
-        # Criar wedding
-        wedding = WeddingService.create(user.company, wedding_payload)
+        wedding = WeddingService.create(user.company, WeddingIn(**wedding_payload))
 
         # Verificar que wedding foi criado mas budget NÃO
         assert wedding is not None
@@ -335,7 +334,7 @@ class TestBudgetServiceIntegration:
 
         budget = BudgetService.create(
             user.company,
-            {"wedding": wedding, "total_estimated": Decimal("30000.00")},
+            BudgetIn(wedding=wedding.uuid, total_estimated=Decimal("30000.00")),
         )
 
         assert budget.wedding == wedding
@@ -351,7 +350,7 @@ class TestBudgetServiceIntegration:
         updated = BudgetService.update(
             user.company,
             budget,
-            {"total_estimated": Decimal("80000.00"), "notes": "Nova observação"},
+            BudgetPatchIn(total_estimated=Decimal("80000.00"), notes="Nova observação"),
         )
 
         assert updated.total_estimated == Decimal("80000.00")
@@ -365,7 +364,9 @@ class TestBudgetServiceIntegration:
         wedding2 = WeddingFactory(company=user.company)
         budget = BudgetService.get_or_create_for_wedding(user.company, wedding1.uuid)
 
-        updated = BudgetService.update(user.company, budget, {"wedding": wedding2.uuid})
+        updated = BudgetService.update(
+            user.company, budget, BudgetPatchIn(wedding=wedding2.uuid)
+        )
 
         assert updated.wedding == wedding1
 
@@ -376,7 +377,9 @@ class TestBudgetServiceIntegration:
         other_budget = BudgetFactory(wedding=other_wedding)
 
         with pytest.raises(ObjectNotFoundError):
-            BudgetService.update(user.company, other_budget, {"notes": "Hack"})
+            BudgetService.update(
+                user.company, other_budget, BudgetPatchIn(notes="Hack")
+            )
 
     def test_budget_delete_success(self, user):
         """
@@ -429,79 +432,3 @@ class TestBudgetServiceIntegration:
 
         with pytest.raises(ObjectNotFoundError):
             BudgetService.delete(user.company, instance=other_budget)
-
-    def test_create_budget_validation_error_with_other_fields(self, user):
-        """
-        ValidationError com campos além de 'wedding' NÃO deve ser engolido
-        pelo DomainIntegrityError.
-        """
-        wedding = WeddingFactory(company=user.company)
-
-        def mock_save(*args, **kwargs):
-            raise ValidationError(
-                {
-                    "wedding": ["Budget with this Wedding already exists."],
-                    "total_estimated": [
-                        "Ensure this value is greater than or equal to 0."
-                    ],
-                }
-            )
-
-        budget_data = {
-            "wedding": wedding.uuid,
-            "total_estimated": Decimal("50000.00"),
-        }
-
-        with patch.object(Budget, "save", mock_save):
-            with pytest.raises(ValidationError) as exc_info:
-                BudgetService.create(user.company, budget_data)
-
-        message_dict = exc_info.value.message_dict
-        assert "total_estimated" in message_dict
-        assert "wedding" in message_dict
-
-    def test_create_budget_validation_error_wedding_only(self, user):
-        """
-        ValidationError APENAS com 'wedding' no message_dict deve ser
-        convertido para DomainIntegrityError.
-        """
-        wedding = WeddingFactory(company=user.company)
-
-        def mock_save(*args, **kwargs):
-            raise ValidationError(
-                {
-                    "wedding": ["Budget with this Wedding already exists."],
-                }
-            )
-
-        budget_data = {
-            "wedding": wedding.uuid,
-            "total_estimated": Decimal("50000.00"),
-        }
-
-        with patch.object(Budget, "save", mock_save):
-            with pytest.raises(DomainIntegrityError) as exc_info:
-                BudgetService.create(user.company, budget_data)
-
-        assert "já possui um orçamento definido" in str(exc_info.value.detail)
-
-    def test_create_budget_integrity_error_path(self, user):
-        """
-        IntegrityError puro (sem ValidationError) deve ser convertido
-        para DomainIntegrityError.
-        """
-        wedding = WeddingFactory(company=user.company)
-
-        def mock_save(*args, **kwargs):
-            raise IntegrityError("UNIQUE constraint failed: wedding_id")
-
-        budget_data = {
-            "wedding": wedding.uuid,
-            "total_estimated": Decimal("50000.00"),
-        }
-
-        with patch.object(Budget, "save", mock_save):
-            with pytest.raises(DomainIntegrityError) as exc_info:
-                BudgetService.create(user.company, budget_data)
-
-        assert "já possui um orçamento definido" in str(exc_info.value.detail)

@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.scheduler.models import Event
+from apps.scheduler.schemas import EventIn, EventPatchIn
 from apps.scheduler.services.events import EventService
 from apps.scheduler.tests.factories import EventFactory
 from apps.users.tests.factories import UserFactory
@@ -28,7 +29,7 @@ class TestEventServiceCreate:
             "start_time": now + timedelta(days=30),
         }
 
-        event = EventService.create(user.company, data)
+        event = EventService.create(user.company, EventIn(**data))
 
         assert event.wedding == wedding
         assert event.title == "Prova de Vestido"
@@ -58,7 +59,7 @@ class TestEventServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            EventService.create(user.company, data)
+            EventService.create(user.company, EventIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
@@ -76,7 +77,7 @@ class TestEventServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            EventService.create(user_a.company, data)
+            EventService.create(user_a.company, EventIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
@@ -92,7 +93,7 @@ class TestEventServiceCreate:
         }
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            EventService.create(user.company, data)
+            EventService.create(user.company, EventIn(**data))
 
         assert exc_info.value.code == "payment_event_readonly"
         assert Event.objects.count() == 0
@@ -123,7 +124,9 @@ class TestEventServiceUpdate:
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding, title="Título Antigo")
 
-        updated = EventService.update(user.company, event, {"title": "Título Novo"})
+        updated = EventService.update(
+            user.company, event, EventPatchIn(title="Título Novo")
+        )
 
         assert updated.title == "Título Novo"
 
@@ -133,7 +136,9 @@ class TestEventServiceUpdate:
         wedding2 = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding1)
 
-        updated = EventService.update(user.company, event, {"wedding": wedding2.uuid})
+        updated = EventService.update(
+            user.company, event, EventPatchIn(wedding=wedding2.uuid)
+        )
 
         assert updated.wedding == wedding1
 
@@ -142,7 +147,9 @@ class TestEventServiceUpdate:
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding, reminder_enabled=False)
 
-        updated = EventService.update(user.company, event, {"reminder_enabled": True})
+        updated = EventService.update(
+            user.company, event, EventPatchIn(reminder_enabled=True)
+        )
 
         assert updated.reminder_enabled is True
 
@@ -157,7 +164,7 @@ class TestEventServiceUpdate:
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
             EventService.update(
-                user.company, event, {"event_type": Event.TypeChoices.PAYMENT}
+                user.company, event, EventPatchIn(event_type=Event.TypeChoices.PAYMENT)
             )
 
         assert exc_info.value.code == "payment_event_readonly"
@@ -172,7 +179,7 @@ class TestEventServiceUpdate:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            EventService.update(user.company, event, {"title": "Novo título"})
+            EventService.update(user.company, event, EventPatchIn(title="Novo título"))
 
         assert exc_info.value.code == "payment_event_readonly"
 
@@ -187,7 +194,9 @@ class TestEventServiceUpdate:
 
         with pytest.raises(BusinessRuleViolation):
             EventService.update(
-                user.company, event, {"start_time": timezone.now() + timedelta(days=10)}
+                user.company,
+                event,
+                EventPatchIn(start_time=timezone.now() + timedelta(days=10)),
             )
 
     def test_update_non_payment_event_allowed(self, user):
@@ -200,7 +209,7 @@ class TestEventServiceUpdate:
         )
 
         updated = EventService.update(
-            user.company, event, {"title": "Reunião com Buffet Atualizada"}
+            user.company, event, EventPatchIn(title="Reunião com Buffet Atualizada")
         )
 
         assert updated.title == "Reunião com Buffet Atualizada"
@@ -212,9 +221,7 @@ class TestEventServiceUpdate:
         other_event = EventFactory(wedding=other_wedding)
 
         with pytest.raises(ObjectNotFoundError):
-            EventService.update(
-                user.company, other_event, {"title": "Hack"}
-            )
+            EventService.update(user.company, other_event, EventPatchIn(title="Hack"))
 
 
 @pytest.mark.django_db

@@ -8,6 +8,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.logistics.models import Item
+from apps.logistics.schemas import ItemIn, ItemPatchIn
 from apps.logistics.services.item_service import ItemService
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
@@ -36,7 +37,7 @@ class TestItemServiceCreate:
             "quantity": 5,
         }
 
-        item = ItemService.create(user.company, data)
+        item = ItemService.create(user.company, ItemIn(**data))
 
         assert item.contract == contract
         assert item.wedding == wedding
@@ -54,7 +55,7 @@ class TestItemServiceCreate:
             "quantity": 1,
         }
 
-        item = ItemService.create(user.company, data)
+        item = ItemService.create(user.company, ItemIn(**data))
 
         assert item.wedding == wedding
         assert item.contract is None
@@ -64,12 +65,12 @@ class TestItemServiceCreate:
         _, contract = _setup_item_context(user)
 
         data = {
-            "contract": contract,
+            "contract": contract.uuid,
             "name": "Cadeiras",
             "quantity": 100,
         }
 
-        item = ItemService.create(user.company, data)
+        item = ItemService.create(user.company, ItemIn(**data))
         assert item.contract == contract
 
     def test_create_item_contract_not_found(self, user):
@@ -81,7 +82,7 @@ class TestItemServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ItemService.create(user.company, data)
+            ItemService.create(user.company, ItemIn(**data))
 
         assert "contract_not_found_or_denied" in str(exc_info.value.code)
 
@@ -98,7 +99,7 @@ class TestItemServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ItemService.create(user_a.company, data)
+            ItemService.create(user_a.company, ItemIn(**data))
 
         assert "contract_not_found_or_denied" in str(exc_info.value.code)
 
@@ -113,7 +114,7 @@ class TestItemServiceCreate:
         }
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ItemService.create(user.company, data)
+            ItemService.create(user.company, ItemIn(**data))
 
         assert "item_missing_wedding" in str(exc_info.value.code)
 
@@ -133,7 +134,7 @@ class TestItemServiceCreate:
         }
 
         with pytest.raises(DomainIntegrityError) as exc_info:
-            ItemService.create(user.company, data)
+            ItemService.create(user.company, ItemIn(**data))
 
         assert "item_contract_wedding_mismatch" in str(exc_info.value.code)
 
@@ -151,7 +152,7 @@ class TestItemServiceCreate:
             "quantity": 1,
         }
 
-        item = ItemService.create(user.company, data)
+        item = ItemService.create(user.company, ItemIn(**data))
         assert item.contract == contract
         assert item.wedding == wedding
 
@@ -160,29 +161,13 @@ class TestItemServiceCreate:
         wedding, _ = _setup_item_context(user)
 
         data = {
-            "wedding": wedding,
+            "wedding": wedding.uuid,
             "name": "Item com instância",
-            "quantity": 2,
-        }
-
-        item = ItemService.create(user.company, data)
-
-        assert item.wedding == wedding
-        assert item.contract is None
-        assert item.name == "Item com instância"
-
-    def test_create_item_with_invalid_wedding_type_raises_error(self, user):
-        """Criação de item com tipo inválido de casamento levanta erro."""
-        data = {
-            "wedding": 12345,  # Tipo inválido (int)
-            "name": "Item inválido",
             "quantity": 1,
         }
 
-        with pytest.raises(BusinessRuleViolation) as exc_info:
-            ItemService.create(user.company, data)
-
-        assert "item_missing_wedding" in str(exc_info.value.code)
+        item = ItemService.create(user.company, ItemIn(**data))
+        assert item.wedding == wedding
 
     def test_create_item_with_nonexistent_wedding_uuid_raises_error(self, user):
         """
@@ -196,7 +181,7 @@ class TestItemServiceCreate:
         }
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            ItemService.create(user.company, data)
+            ItemService.create(user.company, ItemIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
@@ -210,7 +195,7 @@ class TestItemServiceUpdate:
         wedding, contract = _setup_item_context(user)
         item = ItemFactory(contract=contract, wedding=wedding, name="Velho")
 
-        updated = ItemService.update(user.company, item, {"name": "Novo Nome"})
+        updated = ItemService.update(user.company, item, ItemPatchIn(name="Novo Nome"))
 
         assert updated.name == "Novo Nome"
 
@@ -222,7 +207,7 @@ class TestItemServiceUpdate:
         updated = ItemService.update(
             user.company,
             item,
-            {"acquisition_status": Item.AcquisitionStatus.IN_PROGRESS},
+            ItemPatchIn(acquisition_status=Item.AcquisitionStatus.IN_PROGRESS),
         )
 
         assert updated.acquisition_status == Item.AcquisitionStatus.IN_PROGRESS
@@ -233,7 +218,9 @@ class TestItemServiceUpdate:
         wedding2 = WeddingFactory(user_context=user)
         item = ItemFactory(contract=contract, wedding=wedding1)
 
-        updated = ItemService.update(user.company, item, {"wedding": wedding2.uuid})
+        updated = ItemService.update(
+            user.company, item, ItemPatchIn(wedding=wedding2.uuid)
+        )
 
         assert updated.wedding == wedding1
 
@@ -254,22 +241,18 @@ class TestItemServiceUpdate:
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
         other_supplier = SupplierFactory(company=other_user.company)
-        other_contract = ContractFactory(
-            wedding=other_wedding, supplier=other_supplier
-        )
+        other_contract = ContractFactory(wedding=other_wedding, supplier=other_supplier)
         other_item = ItemFactory(contract=other_contract, wedding=other_wedding)
 
         with pytest.raises(ObjectNotFoundError):
-            ItemService.update(
-                user.company, other_item, {"name": "Hack"}
-            )
+            ItemService.update(user.company, other_item, ItemPatchIn(name="Hack"))
 
     def test_update_item_clear_contract(self, user):
         """Item pode ser desvinculado do contrato (contract=None)."""
         wedding, contract = _setup_item_context(user)
         item = ItemFactory(contract=contract, wedding=wedding)
 
-        updated = ItemService.update(user.company, item, {"contract": None})
+        updated = ItemService.update(user.company, item, ItemPatchIn(contract=None))
 
         assert updated.contract is None
 
@@ -280,7 +263,9 @@ class TestItemServiceUpdate:
         contract2 = ContractFactory(wedding=wedding, supplier=supplier)
         item = ItemFactory(contract=contract1, wedding=wedding)
 
-        updated = ItemService.update(user.company, item, {"contract": contract2})
+        updated = ItemService.update(
+            user.company, item, ItemPatchIn(contract=contract2.uuid)
+        )
 
         assert updated.contract == contract2
 
@@ -293,7 +278,7 @@ class TestItemServiceUpdate:
         item = ItemFactory(contract=contract1, wedding=wedding1)
 
         with pytest.raises(DomainIntegrityError) as exc_info:
-            ItemService.update(user.company, item, {"contract": contract2})
+            ItemService.update(user.company, item, ItemPatchIn(contract=contract2.uuid))
 
         assert "item_contract_wedding_mismatch" in str(exc_info.value.code)
 

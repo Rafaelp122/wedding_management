@@ -11,6 +11,7 @@ from apps.core.exceptions import (
 )
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Event
+from apps.scheduler.schemas import EventIn, EventPatchIn
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -50,11 +51,16 @@ class EventService:
     @transaction.atomic
     def create(
         company: Company,
-        data: dict[str, Any],
+        payload: EventIn | dict[str, Any],
         *,
         _caller_internal: bool = False,
     ) -> Event:
         logger.info(f"Iniciando criação de Evento para company_id={company.id}")
+
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
 
         wedding_input = data.pop("wedding", None)
 
@@ -99,7 +105,7 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Event, data: dict[str, Any]) -> Event:
+    def update(company: Company, instance: Event, payload: EventPatchIn) -> Event:
         validate_tenant_ownership(
             company,
             instance,
@@ -109,6 +115,8 @@ class EventService:
         logger.info(
             f"Atualizando Evento uuid={instance.uuid} por company_id={company.id}"
         )
+
+        data = payload.model_dump(exclude_unset=True)
 
         if instance.event_type == Event.TypeChoices.PAYMENT:
             raise BusinessRuleViolation(

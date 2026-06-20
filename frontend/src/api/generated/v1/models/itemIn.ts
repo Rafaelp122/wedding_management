@@ -6,7 +6,7 @@
  */
 
 export interface ItemIn {
-  wedding: string;
+  wedding?: string | null;
   contract?: string | null;
   name: string;
   description?: string;

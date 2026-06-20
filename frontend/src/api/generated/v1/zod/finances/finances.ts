@@ -88,6 +88,7 @@ export const FinancesBudgetsUpdateParams = zod.object({
 export const financesBudgetsUpdateBodyTotalEstimatedTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const financesBudgetsUpdateBodyNotesDefault = ``;
 
 export const FinancesBudgetsUpdateBody = zod.object({
   total_estimated: zod
@@ -97,7 +98,7 @@ export const FinancesBudgetsUpdateBody = zod.object({
       zod.null(),
     ])
     .optional(),
-  notes: zod.union([zod.string(), zod.null()]).optional(),
+  notes: zod.string().default(financesBudgetsUpdateBodyNotesDefault),
 });
 
 export const financesBudgetsUpdateResponseTotalEstimatedRegExp = new RegExp(
@@ -203,6 +204,7 @@ Associa devidamente ao orçamento atrelado em tela.
  */
 export const financesCategoriesCreateBodyNameMax = 255;
 
+export const financesCategoriesCreateBodyDescriptionDefault = ``;
 export const financesCategoriesCreateBodyAllocatedBudgetTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
@@ -210,7 +212,9 @@ export const financesCategoriesCreateBodyAllocatedBudgetTwoRegExp = new RegExp(
 export const FinancesCategoriesCreateBody = zod.object({
   budget: zod.string(),
   name: zod.string().max(financesCategoriesCreateBodyNameMax),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod
+    .string()
+    .default(financesCategoriesCreateBodyDescriptionDefault),
   allocated_budget: zod.union([
     zod.number(),
     zod.string().regex(financesCategoriesCreateBodyAllocatedBudgetTwoRegExp),
@@ -260,6 +264,7 @@ export const FinancesCategoriesUpdateParams = zod.object({
 
 export const financesCategoriesUpdateBodyNameOneMax = 255;
 
+export const financesCategoriesUpdateBodyDescriptionDefault = ``;
 export const financesCategoriesUpdateBodyAllocatedBudgetTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
@@ -271,7 +276,9 @@ export const FinancesCategoriesUpdateBody = zod.object({
       zod.null(),
     ])
     .optional(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod
+    .string()
+    .default(financesCategoriesUpdateBodyDescriptionDefault),
   allocated_budget: zod
     .union([
       zod.number(),
@@ -400,19 +407,22 @@ Consome o limite orçamentário previsto inicial geral da categoria.
  */
 export const financesExpensesCreateBodyNameMax = 255;
 
+export const financesExpensesCreateBodyDescriptionDefault = ``;
 export const financesExpensesCreateBodyEstimatedAmountTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
 export const financesExpensesCreateBodyActualAmountTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
-export const financesExpensesCreateBodyNumInstallmentsOneExclusiveMin = 0;
+export const financesExpensesCreateBodyNumInstallmentsOneMin = 0;
 
 export const FinancesExpensesCreateBody = zod.object({
   category: zod.string(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.string().max(financesExpensesCreateBodyNameMax),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod
+    .string()
+    .default(financesExpensesCreateBodyDescriptionDefault),
   estimated_amount: zod.union([
     zod.number(),
     zod.string().regex(financesExpensesCreateBodyEstimatedAmountTwoRegExp),
@@ -423,7 +433,7 @@ export const FinancesExpensesCreateBody = zod.object({
   ]),
   num_installments: zod
     .union([
-      zod.number().gt(financesExpensesCreateBodyNumInstallmentsOneExclusiveMin),
+      zod.number().min(financesExpensesCreateBodyNumInstallmentsOneMin),
       zod.null(),
     ])
     .optional(),
@@ -504,20 +514,23 @@ export const FinancesExpensesUpdateParams = zod.object({
 
 export const financesExpensesUpdateBodyNameOneMax = 255;
 
+export const financesExpensesUpdateBodyDescriptionDefault = ``;
 export const financesExpensesUpdateBodyEstimatedAmountTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
 export const financesExpensesUpdateBodyActualAmountTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
-export const financesExpensesUpdateBodyNumInstallmentsOneExclusiveMin = 0;
+export const financesExpensesUpdateBodyNumInstallmentsOneMin = 0;
 
 export const FinancesExpensesUpdateBody = zod.object({
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod
     .union([zod.string().max(financesExpensesUpdateBodyNameOneMax), zod.null()])
     .optional(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod
+    .string()
+    .default(financesExpensesUpdateBodyDescriptionDefault),
   estimated_amount: zod
     .union([
       zod.number(),
@@ -534,7 +547,7 @@ export const FinancesExpensesUpdateBody = zod.object({
     .optional(),
   num_installments: zod
     .union([
-      zod.number().gt(financesExpensesUpdateBodyNumInstallmentsOneExclusiveMin),
+      zod.number().min(financesExpensesUpdateBodyNumInstallmentsOneMin),
       zod.null(),
     ])
     .optional(),

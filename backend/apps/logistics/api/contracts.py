@@ -92,7 +92,7 @@ def create_contract(request: AuthRequest, payload: ContractIn) -> tuple[int, Con
     Associa um fornecedor a um casamento através de um novo contrato logístico.
     """
     user = require_user(request.user)
-    contract = ContractService.create(company=user.company, data=payload.model_dump())
+    contract = ContractService.create(company=user.company, payload=payload)
     return 201, contract
 
 
@@ -158,8 +158,9 @@ def update_contract(
     """
     user = require_user(request.user)
     contract = ContractService.get(company=user.company, uuid=uuid)
-    data = payload.model_dump(exclude_unset=True)
-    return ContractService.update(company=user.company, instance=contract, data=data)
+    return ContractService.update(
+        company=user.company, instance=contract, payload=payload
+    )
 
 
 @contracts_router.delete(

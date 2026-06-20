@@ -9,7 +9,7 @@ export interface TaskIn {
   wedding: string;
   /** @maxLength 255 */
   title: string;
-  description?: string | null;
+  description?: string;
   due_date?: string | null;
   is_completed?: boolean;
 }

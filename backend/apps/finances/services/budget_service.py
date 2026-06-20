@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -9,6 +8,7 @@ from django.db.models import ProtectedError, QuerySet
 from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget
+from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -35,16 +35,19 @@ class BudgetService:
                 .get(uuid=uuid)
             )
         except Budget.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Orçamento não encontrado.") from e
+            raise ObjectNotFoundError(
+                detail="Orçamento não encontrado ou acesso negado."
+            ) from e
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Budget:
+    def create(company: Company, payload: BudgetIn) -> Budget:
         logger.info(
             f"Iniciando criação de Orçamento Mestre para company_id={company.id}"
         )
 
-        # 1. Resolução Segura do Casamento (Suporta Instância ou UUID)
+        data = payload.model_dump(exclude_unset=True)
+
         wedding_input = data.pop("wedding", None)
 
         if isinstance(wedding_input, Wedding):
@@ -90,7 +93,7 @@ class BudgetService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Budget, data: dict[str, Any]) -> Budget:
+    def update(company: Company, instance: Budget, payload: BudgetPatchIn) -> Budget:
         validate_tenant_ownership(
             company,
             instance,
@@ -101,6 +104,7 @@ class BudgetService:
             f"Atualizando Orçamento uuid={instance.uuid} por company_id={company.id}"
         )
 
+        data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
 

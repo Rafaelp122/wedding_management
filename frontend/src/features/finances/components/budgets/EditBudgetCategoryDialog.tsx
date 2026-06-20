@@ -11,7 +11,7 @@ import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategory
 import { FormDialog } from "@/components/form-dialog";
 import { FormInput, FormNumber, FormTextarea } from "@/components/form-fields";
 
-type EditCategoryFormData = z.infer<typeof FinancesCategoriesUpdateBody>;
+type EditCategoryFormData = z.input<typeof FinancesCategoriesUpdateBody>;
 
 interface EditBudgetCategoryDialogProps {
   category: BudgetCategoryOut;
@@ -32,7 +32,7 @@ export function EditBudgetCategoryDialog({
     resolver: zodResolver(FinancesCategoriesUpdateBody),
     defaultValues: {
       name: category.name,
-      description: category.description ?? null,
+      description: category.description ?? "",
       allocated_budget: parseFloat(category.allocated_budget),
     },
   });

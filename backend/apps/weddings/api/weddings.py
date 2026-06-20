@@ -42,7 +42,7 @@ def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
 )
 def create_wedding(request: AuthRequest, payload: WeddingIn) -> tuple[int, Wedding]:
     user = require_user(request.user)
-    wedding = WeddingService.create(company=user.company, data=payload.model_dump())
+    wedding = WeddingService.create(company=user.company, payload=payload)
     return 201, wedding
 
 
@@ -57,10 +57,9 @@ def update_wedding(
     payload: WeddingPatchIn,
 ) -> Wedding:
     user = require_user(request.user)
-    data = payload.model_dump(exclude_unset=True)
     instance = WeddingService.get(company=user.company, uuid=uuid)
     updated_wedding = WeddingService.update(
-        company=user.company, instance=instance, data=data
+        company=user.company, instance=instance, payload=payload
     )
     return updated_wedding
 

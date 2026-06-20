@@ -23,6 +23,7 @@ from apps.core.exceptions import (
 )
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import BudgetCategory, Expense
+from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
 from apps.logistics.models import Contract
 from apps.tenants.models import Company
@@ -101,7 +102,9 @@ class ExpenseService:
                 .get(uuid=uuid)
             )
         except Expense.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Despesa não encontrada.") from e
+            raise ObjectNotFoundError(
+                detail="Despesa não encontrada ou acesso negado."
+            ) from e
 
     @staticmethod
     def from_document(company: Company, contract_uuid: UUID | str) -> dict[str, Any]:
@@ -133,10 +136,11 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Expense:
+    def create(company: Company, payload: ExpenseIn) -> Expense:
         logger.info(f"Iniciando criação de Despesa para company_id={company.id}")
 
-        # 1. Resolução Segura de Categoria (Suporta Instância ou UUID)
+        data = payload.model_dump(exclude_unset=True)
+
         category_input = data.pop("category", None)
 
         if isinstance(category_input, BudgetCategory):
@@ -271,7 +275,9 @@ class ExpenseService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Expense, data: dict[str, Any]) -> Expense:
+    def update(
+        company: Company, instance: Expense, payload: ExpensePatchIn | dict[str, Any]
+    ) -> Expense:
         validate_tenant_ownership(
             company,
             instance,
@@ -282,6 +288,10 @@ class ExpenseService:
             f"Atualizando Despesa uuid={instance.uuid} por company_id={company.id}"
         )
 
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
         data.pop("category", None)

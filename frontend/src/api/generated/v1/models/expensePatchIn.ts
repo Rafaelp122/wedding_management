@@ -8,7 +8,7 @@
 export interface ExpensePatchIn {
   contract?: string | null;
   name?: string | null;
-  description?: string | null;
+  description?: string;
   estimated_amount?: number | string | null;
   actual_amount?: number | string | null;
   num_installments?: number | null;

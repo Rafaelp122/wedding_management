@@ -57,8 +57,10 @@ O Service realiza validações como:
  */
 export const schedulerEventsCreateBodyTitleMax = 255;
 
-export const schedulerEventsCreateBodyLocationOneMax = 255;
+export const schedulerEventsCreateBodyLocationDefault = ``;
+export const schedulerEventsCreateBodyLocationMax = 255;
 
+export const schedulerEventsCreateBodyDescriptionDefault = ``;
 export const schedulerEventsCreateBodyEventTypeMax = 50;
 
 export const schedulerEventsCreateBodyRecurrenceRuleDefault = `none`;
@@ -69,12 +71,12 @@ export const SchedulerEventsCreateBody = zod.object({
   wedding: zod.string(),
   title: zod.string().max(schedulerEventsCreateBodyTitleMax),
   location: zod
-    .union([
-      zod.string().max(schedulerEventsCreateBodyLocationOneMax),
-      zod.null(),
-    ])
-    .optional(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+    .string()
+    .max(schedulerEventsCreateBodyLocationMax)
+    .default(schedulerEventsCreateBodyLocationDefault),
+  description: zod
+    .string()
+    .default(schedulerEventsCreateBodyDescriptionDefault),
   event_type: zod.string().max(schedulerEventsCreateBodyEventTypeMax),
   start_time: zod.iso.datetime({}),
   end_time: zod.union([zod.iso.datetime({}), zod.null()]).optional(),
@@ -126,8 +128,10 @@ export const SchedulerEventsUpdateParams = zod.object({
 
 export const schedulerEventsUpdateBodyTitleOneMax = 255;
 
-export const schedulerEventsUpdateBodyLocationOneMax = 255;
+export const schedulerEventsUpdateBodyLocationDefault = ``;
+export const schedulerEventsUpdateBodyLocationMax = 255;
 
+export const schedulerEventsUpdateBodyDescriptionDefault = ``;
 export const schedulerEventsUpdateBodyEventTypeOneMax = 50;
 
 export const SchedulerEventsUpdateBody = zod.object({
@@ -136,12 +140,12 @@ export const SchedulerEventsUpdateBody = zod.object({
     .union([zod.string().max(schedulerEventsUpdateBodyTitleOneMax), zod.null()])
     .optional(),
   location: zod
-    .union([
-      zod.string().max(schedulerEventsUpdateBodyLocationOneMax),
-      zod.null(),
-    ])
-    .optional(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+    .string()
+    .max(schedulerEventsUpdateBodyLocationMax)
+    .default(schedulerEventsUpdateBodyLocationDefault),
+  description: zod
+    .string()
+    .default(schedulerEventsUpdateBodyDescriptionDefault),
   event_type: zod
     .union([
       zod.string().max(schedulerEventsUpdateBodyEventTypeOneMax),
@@ -220,12 +224,13 @@ export const SchedulerTasksListResponse = zod.object({
  */
 export const schedulerTasksCreateBodyTitleMax = 255;
 
+export const schedulerTasksCreateBodyDescriptionDefault = ``;
 export const schedulerTasksCreateBodyIsCompletedDefault = false;
 
 export const SchedulerTasksCreateBody = zod.object({
   wedding: zod.string(),
   title: zod.string().max(schedulerTasksCreateBodyTitleMax),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod.string().default(schedulerTasksCreateBodyDescriptionDefault),
   due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   is_completed: zod
     .boolean()
@@ -242,11 +247,13 @@ export const SchedulerTasksUpdateParams = zod.object({
 
 export const schedulerTasksUpdateBodyTitleOneMax = 255;
 
+export const schedulerTasksUpdateBodyDescriptionDefault = ``;
+
 export const SchedulerTasksUpdateBody = zod.object({
   title: zod
     .union([zod.string().max(schedulerTasksUpdateBodyTitleOneMax), zod.null()])
     .optional(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod.string().default(schedulerTasksUpdateBodyDescriptionDefault),
   due_date: zod.union([zod.iso.date(), zod.null()]).optional(),
   is_completed: zod.union([zod.boolean(), zod.null()]).optional(),
 });

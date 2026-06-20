@@ -408,6 +408,7 @@ export const LogisticsContractsUpdateParams = zod.object({
 export const logisticsContractsUpdateBodyTotalAmountTwoRegExp = new RegExp(
   "^(?!^[-+.]\*$)[+-]?0\*\\d\*\\.?\\d\*$",
 );
+export const logisticsContractsUpdateBodyDescriptionDefault = ``;
 
 export const LogisticsContractsUpdateBody = zod.object({
   supplier: zod.union([zod.string(), zod.null()]).optional(),
@@ -420,7 +421,9 @@ export const LogisticsContractsUpdateBody = zod.object({
     ])
     .optional(),
   status: zod.union([zod.string(), zod.null()]).optional(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod
+    .string()
+    .default(logisticsContractsUpdateBodyDescriptionDefault),
   parent: zod.union([zod.string(), zod.null()]).optional(),
   pdf_file_key: zod.union([zod.string(), zod.null()]).optional(),
 });
@@ -739,7 +742,7 @@ export const logisticsItemsCreateBodyQuantityDefault = 1;
 export const logisticsItemsCreateBodyAcquisitionStatusDefault = `PENDING`;
 
 export const LogisticsItemsCreateBody = zod.object({
-  wedding: zod.string(),
+  wedding: zod.union([zod.string(), zod.null()]).optional(),
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.string(),
   description: zod.string().default(logisticsItemsCreateBodyDescriptionDefault),
@@ -777,10 +780,12 @@ export const LogisticsItemsUpdateParams = zod.object({
   uuid: zod.string(),
 });
 
+export const logisticsItemsUpdateBodyDescriptionDefault = ``;
+
 export const LogisticsItemsUpdateBody = zod.object({
   contract: zod.union([zod.string(), zod.null()]).optional(),
   name: zod.union([zod.string(), zod.null()]).optional(),
-  description: zod.union([zod.string(), zod.null()]).optional(),
+  description: zod.string().default(logisticsItemsUpdateBodyDescriptionDefault),
   quantity: zod.union([zod.number(), zod.null()]).optional(),
   acquisition_status: zod.union([zod.string(), zod.null()]).optional(),
 });

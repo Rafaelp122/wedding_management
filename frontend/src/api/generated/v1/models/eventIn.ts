@@ -9,8 +9,9 @@ export interface EventIn {
   wedding: string;
   /** @maxLength 255 */
   title: string;
-  location?: string | null;
-  description?: string | null;
+  /** @maxLength 255 */
+  location?: string;
+  description?: string;
   /** @maxLength 50 */
   event_type: string;
   start_time: string;

@@ -8,6 +8,7 @@ from django.db.models import QuerySet
 from apps.core.exceptions import ObjectNotFoundError
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Task
+from apps.scheduler.schemas import TaskIn, TaskPatchIn
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -45,9 +46,10 @@ class TaskService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Task:
+    def create(company: Company, payload: TaskIn) -> Task:
         logger.info(f"Iniciando criação de Tarefa para company_id={company.id}")
 
+        data = payload.model_dump(exclude_unset=True)
         wedding_input = data.pop("wedding", None)
 
         if isinstance(wedding_input, Wedding):
@@ -77,7 +79,9 @@ class TaskService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Task, data: dict[str, Any]) -> Task:
+    def update(
+        company: Company, instance: Task, payload: TaskPatchIn | dict[str, Any]
+    ) -> Task:
         validate_tenant_ownership(
             company,
             instance,
@@ -88,6 +92,10 @@ class TaskService:
             f"Atualizando Tarefa uuid={instance.uuid} por company_id={company.id}"
         )
 
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
 

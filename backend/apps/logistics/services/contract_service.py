@@ -27,8 +27,10 @@ from apps.core.exceptions import (
 )
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
+from apps.finances.schemas import ExpenseIn
 from apps.finances.services.expense_service import ExpenseService
 from apps.logistics.models import Contract, Supplier
+from apps.logistics.schemas import ContractIn, ContractPatchIn, ItemIn
 from apps.logistics.services.item_service import ItemService
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -108,10 +110,11 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, data: dict[str, Any]) -> Contract:
+    def create(company: Company, payload: ContractIn) -> Contract:
         logger.info(f"Iniciando criação de Contrato para company_id={company.id}")
 
-        # 1. Resolução Segura de Dependências (Suporta Instância ou UUID)
+        data = payload.model_dump(exclude_unset=True)
+
         wedding_input = data.pop("wedding", None)
         supplier_input = data.pop("supplier", None)
         pdf_file_key = data.pop("pdf_file_key", None)
@@ -196,7 +199,9 @@ class ContractService:
             f"Iniciando criação completa de Contrato para company_id={company.id}"
         )
 
-        contract = ContractService.create(company=company, data=contract_data)
+        contract = ContractService.create(
+            company=company, payload=ContractIn(**contract_data)
+        )
 
         if pdf_file_key:
             contract.pdf_file = pdf_file_key
@@ -204,13 +209,13 @@ class ContractService:
 
         if items_data:
             for item_dict in items_data:
-                item_dict["wedding"] = contract.wedding
-                item_dict["contract"] = contract
-                ItemService.create(company=company, data=item_dict)
+                item_dict["wedding"] = contract.wedding.uuid
+                item_dict["contract"] = contract.uuid
+                ItemService.create(company=company, payload=ItemIn(**item_dict))
 
         if expense_data:
-            expense_data["contract"] = contract
-            ExpenseService.create(company=company, data=expense_data)
+            expense_data["contract"] = contract.uuid
+            ExpenseService.create(company=company, payload=ExpenseIn(**expense_data))
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
@@ -259,7 +264,9 @@ class ContractService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Contract, data: dict[str, Any]) -> Contract:
+    def update(
+        company: Company, instance: Contract, payload: ContractPatchIn | dict[str, Any]
+    ) -> Contract:
         validate_tenant_ownership(
             company,
             instance,
@@ -270,6 +277,10 @@ class ContractService:
             f"Atualizando Contrato uuid={instance.uuid} por company_id={company.id}"
         )
 
+        if isinstance(payload, dict):
+            data = payload
+        else:
+            data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
         pdf_file_key = data.pop("pdf_file_key", None)
@@ -363,7 +374,8 @@ class ContractService:
         )
 
         validate_tenant_ownership(
-            company, instance,
+            company,
+            instance,
             detail="Contrato não encontrado ou acesso negado.",
             code="contract_not_found_or_denied",
         )

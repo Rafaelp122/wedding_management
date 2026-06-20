@@ -48,7 +48,7 @@ import { FormInput, FormSelect, FormNumber, FormTextarea } from "@/components/fo
 import { ContractItemDrafts, type ItemDraft } from "./ContractItemDrafts";
 import { ContractCreateExpenseFields } from "./ContractCreateExpenseFields";
 
-type CreateContractFormData = z.infer<typeof LogisticsContractsCreateBody>;
+type CreateContractFormData = z.input<typeof LogisticsContractsCreateBody>;
 
 interface ContractUploadDialogProps {
   weddingUuid: string;

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-type EditExpenseFormData = z.infer<typeof FinancesExpensesUpdateBody>;
+type EditExpenseFormData = z.input<typeof FinancesExpensesUpdateBody>;
 
 interface EditExpenseDialogProps {
   expense: ExpenseOut;
@@ -56,7 +56,7 @@ export function EditExpenseDialog({
     resolver: zodResolver(FinancesExpensesUpdateBody),
     defaultValues: {
       name: expense.name || "",
-      description: expense.description || null,
+      description: expense.description || "",
       estimated_amount: Number(expense.estimated_amount) || 0,
       actual_amount: Number(expense.actual_amount) || 0,
       contract: expense.contract || null,
@@ -68,7 +68,7 @@ export function EditExpenseDialog({
   const onSubmit = (data: EditExpenseFormData) => {
     const original: Record<string, unknown> = {
       name: expense.name || "",
-      description: expense.description || null,
+      description: expense.description || "",
       estimated_amount: Number(expense.estimated_amount) || 0,
       actual_amount: Number(expense.actual_amount) || 0,
       contract: expense.contract || null,
@@ -182,7 +182,7 @@ export function EditExpenseDialog({
                   value={field.value ?? ""}
                   onChange={(e) =>
                     field.onChange(
-                      e.target.value === "" ? null : e.target.value,
+                      e.target.value,
                     )
                   }
                 />
