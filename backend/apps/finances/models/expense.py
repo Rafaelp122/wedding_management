@@ -21,7 +21,8 @@ class Expense(TenantModel, WeddingOwnedMixin):
     Compromisso financeiro real (RF03/RF04).
     Liga o financeiro à logística (Contract).
     """
-    objects = ExpenseManager()
+
+    objects = ExpenseManager()  # type: ignore[misc]
 
     category = models.ForeignKey(
         "finances.BudgetCategory", on_delete=models.PROTECT, related_name="expenses"

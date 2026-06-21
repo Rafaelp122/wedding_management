@@ -33,7 +33,7 @@ class ExpenseService:
     def list(
         company: Company, wedding_id: UUID | str | None = None
     ) -> QuerySet[Expense]:
-        qs = Expense.objects.for_tenant(company).with_details()
+        qs = Expense.objects.for_tenant(company).with_details()  # type: ignore[attr-defined]
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
         return qs
@@ -41,7 +41,7 @@ class ExpenseService:
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Expense:
         try:
-            return Expense.objects.for_tenant(company).with_details().get(uuid=uuid)
+            return Expense.objects.for_tenant(company).with_details().get(uuid=uuid)  # type: ignore[attr-defined]
         except Expense.DoesNotExist as e:
             raise ObjectNotFoundError(
                 detail="Despesa não encontrada ou acesso negado."
