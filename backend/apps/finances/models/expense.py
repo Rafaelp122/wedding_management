@@ -17,11 +17,11 @@ from apps.tenants.models import TenantModel
 
 
 class Expense(TenantModel, WeddingOwnedMixin):
-    objects = ExpenseManager()
     """
     Compromisso financeiro real (RF03/RF04).
     Liga o financeiro à logística (Contract).
     """
+    objects = ExpenseManager()
 
     category = models.ForeignKey(
         "finances.BudgetCategory", on_delete=models.PROTECT, related_name="expenses"
