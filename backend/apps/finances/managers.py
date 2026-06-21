@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from django.db.models import Q, Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 
 from apps.finances.models.installment import Installment
@@ -36,3 +36,43 @@ class BudgetCategoryManager(TenantManager):
 
     def get_queryset(self) -> BudgetCategoryQuerySet:
         return BudgetCategoryQuerySet(self.model, using=self._db)
+
+
+class ExpenseQuerySet(TenantQuerySet):
+    """QuerySet customizado para Expense."""
+
+    def with_details(self) -> ExpenseQuerySet:
+        """Anota cada despesa com contagem de parcelas e valores totais."""
+        return self.select_related("category", "contract", "wedding").annotate(
+            installments_count=Count("installments"),
+            paid_installments_count=Count(
+                "installments",
+                filter=Q(installments__status=Installment.StatusChoices.PAID),
+            ),
+            total_paid=Coalesce(
+                Sum(
+                    "installments__amount",
+                    filter=Q(installments__status=Installment.StatusChoices.PAID),
+                ),
+                Decimal("0.00"),
+            ),
+            total_pending=Coalesce(
+                Sum(
+                    "installments__amount",
+                    filter=Q(
+                        installments__status__in=[
+                            Installment.StatusChoices.PENDING,
+                            Installment.StatusChoices.OVERDUE,
+                        ]
+                    ),
+                ),
+                Decimal("0.00"),
+            ),
+        )
+
+
+class ExpenseManager(TenantManager):
+    """Manager customizado para Expense."""
+
+    def get_queryset(self) -> ExpenseQuerySet:
+        return ExpenseQuerySet(self.model, using=self._db)

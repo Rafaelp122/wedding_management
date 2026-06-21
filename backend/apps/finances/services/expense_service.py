@@ -1,21 +1,11 @@
 import logging
 from datetime import date
-from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import (
-    Count,
-    Q,
-    QuerySet,
-    Sum,
-)
-from django.db.models import (
-    Value as V,
-)
-from django.db.models.functions import Coalesce
+from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -43,31 +33,7 @@ class ExpenseService:
     def list(
         company: Company, wedding_id: UUID | str | None = None
     ) -> QuerySet[Expense]:
-        qs = (
-            Expense.objects.for_tenant(company)
-            .select_related("category", "contract", "wedding")
-            .annotate(
-                installments_count=Count("installments"),
-                paid_installments_count=Count(
-                    "installments",
-                    filter=Q(installments__status="PAID"),
-                ),
-                total_paid=Coalesce(
-                    Sum(
-                        "installments__amount",
-                        filter=Q(installments__status="PAID"),
-                    ),
-                    V(Decimal("0.00")),
-                ),
-                total_pending=Coalesce(
-                    Sum(
-                        "installments__amount",
-                        filter=Q(installments__status__in=["PENDING", "OVERDUE"]),
-                    ),
-                    V(Decimal("0.00")),
-                ),
-            )
-        )
+        qs = Expense.objects.for_tenant(company).with_details()
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
         return qs
@@ -75,32 +41,7 @@ class ExpenseService:
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Expense:
         try:
-            return (
-                Expense.objects.for_tenant(company)
-                .select_related("category", "contract", "wedding")
-                .annotate(
-                    installments_count=Count("installments"),
-                    paid_installments_count=Count(
-                        "installments",
-                        filter=Q(installments__status="PAID"),
-                    ),
-                    total_paid=Coalesce(
-                        Sum(
-                            "installments__amount",
-                            filter=Q(installments__status="PAID"),
-                        ),
-                        V(Decimal("0.00")),
-                    ),
-                    total_pending=Coalesce(
-                        Sum(
-                            "installments__amount",
-                            filter=Q(installments__status__in=["PENDING", "OVERDUE"]),
-                        ),
-                        V(Decimal("0.00")),
-                    ),
-                )
-                .get(uuid=uuid)
-            )
+            return Expense.objects.for_tenant(company).with_details().get(uuid=uuid)
         except Expense.DoesNotExist as e:
             raise ObjectNotFoundError(
                 detail="Despesa não encontrada ou acesso negado."

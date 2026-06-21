@@ -12,10 +12,12 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
+from apps.finances.managers import ExpenseManager
 from apps.tenants.models import TenantModel
 
 
 class Expense(TenantModel, WeddingOwnedMixin):
+    objects = ExpenseManager()
     """
     Compromisso financeiro real (RF03/RF04).
     Liga o financeiro à logística (Contract).
