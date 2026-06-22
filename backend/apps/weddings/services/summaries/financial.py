@@ -47,7 +47,7 @@ class FinancialSummaryService:
 
     @staticmethod
     def budget_percentage_used(*, company: Company, wedding: Wedding) -> float:
-        """Return the percentage of the total estimated budget that has been spent, capped at 100%."""
+        """Return the percentage of total estimated budget spent, capped at 100%."""
         try:
             budget = Budget.objects.for_tenant(company).get(wedding=wedding)
             total_spent = budget.total_overall_spent
@@ -63,7 +63,7 @@ class FinancialSummaryService:
     def upcoming_installments(
         *, company: Company, wedding: Wedding, today: date | None = None
     ) -> list[dict[str, Any]]:
-        """Return up to 5 upcoming unpaid installments due within 30 days for a wedding."""
+        """Return up to 5 upcoming unpaid installments within 30 days for a wedding."""
         today = today or date.today()
         thirty_days = today + timedelta(days=30)
         installments = (
@@ -91,7 +91,7 @@ class FinancialSummaryService:
     def categories_summary(
         *, company: Company, wedding: Wedding
     ) -> list[dict[str, Any]]:
-        """Return a summary of each budget category with allocated, spent, and percentage used."""
+        """Return a summary of budget categories with allocated and spent."""
         categories = (
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)

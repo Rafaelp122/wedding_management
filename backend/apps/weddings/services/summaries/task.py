@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class TaskSummaryService:
     @staticmethod
     def urgent_tasks_count(*, company: Company, today: date | None = None) -> int:
-        """Return the number of uncompleted tasks past their due date for the company."""
+        """Return the number of uncompleted tasks past due for the company."""
         today = today or date.today()
         return (
             Task.objects.for_tenant(company)
@@ -35,7 +35,7 @@ class TaskSummaryService:
     def urgent_tasks(
         *, company: Company, wedding: Wedding, today: date | None = None, limit: int = 3
     ) -> list[dict[str, Any]]:
-        """Return up to `limit` urgent tasks (overdue or no due date) for a wedding, ordered by due date."""
+        """Return up to `limit` urgent tasks for a wedding, ordered by due date."""
         today = today or date.today()
         urgent = (
             Task.objects.for_tenant(company)
