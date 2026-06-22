@@ -4,14 +4,9 @@ import { Wallet, ArrowRight, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useFinancesInstallmentsList } from "@/api/generated/v1/endpoints/finances/finances";
+import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 
 const PERIOD_OPTIONS = [7, 14, 30] as const;
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
 
 export function UpcomingInstallments() {
   const [days, setDays] = useState<number>(7);
@@ -86,17 +81,13 @@ export function UpcomingInstallments() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Vencimento:{" "}
-                    {new Intl.DateTimeFormat("pt-BR", {
-                      day: "2-digit",
-                      month: "short",
-                      timeZone: "UTC",
-                    }).format(new Date(inst.due_date))}
+                    {formatDateBR(inst.due_date, { day: "2-digit", month: "short" })}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold tabular-nums">
-                  {formatCurrency(Number(inst.amount))}
+                  {formatCurrencyBR(Number(inst.amount))}
                 </p>
                 {inst.wedding ? (
                   <Link

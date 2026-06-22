@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import { formatDateBR } from "@/lib/formatters";
+import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 import { getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,12 +29,6 @@ import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistic
 interface DashboardOperationsProps {
   weddings: WeddingOut[];
 }
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
 
 export function DashboardOperations({ weddings }: DashboardOperationsProps) {
   const [activeTab, setActiveTab] = useState<string>("tarefas");
@@ -323,7 +317,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
                         </td>
                         <td className="py-4 px-6">
                           <span className="text-sm font-mono font-medium text-zinc-900 dark:text-zinc-100">
-                            {formatCurrency(Number(contract.total_amount))}
+                            {formatCurrencyBR(Number(contract.total_amount))}
                           </span>
                         </td>
                         <td className="py-4 px-6 text-center">
