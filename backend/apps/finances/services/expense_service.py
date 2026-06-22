@@ -1,6 +1,6 @@
 import logging
 from datetime import date
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -12,6 +12,7 @@ from apps.core.exceptions import (
     ObjectNotFoundError,
 )
 from apps.core.tenant import validate_tenant_ownership
+from apps.finances.managers import ExpenseQuerySet
 from apps.finances.models import BudgetCategory, Expense
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
@@ -33,7 +34,7 @@ class ExpenseService:
     def list(
         company: Company, wedding_id: UUID | str | None = None
     ) -> QuerySet[Expense]:
-        qs = Expense.objects.for_tenant(company).with_details()  # type: ignore[attr-defined]
+        qs = cast(ExpenseQuerySet, Expense.objects.for_tenant(company)).with_details()
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
         return qs
@@ -41,7 +42,11 @@ class ExpenseService:
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Expense:
         try:
-            return Expense.objects.for_tenant(company).with_details().get(uuid=uuid)  # type: ignore[attr-defined]
+            return (
+                cast(ExpenseQuerySet, Expense.objects.for_tenant(company))
+                .with_details()
+                .get(uuid=uuid)
+            )
         except Expense.DoesNotExist as e:
             raise ObjectNotFoundError(
                 detail="Despesa não encontrada ou acesso negado."
