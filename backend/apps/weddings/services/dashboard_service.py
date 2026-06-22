@@ -7,9 +7,11 @@ from django.db.models import Count, Q
 from apps.finances.models import Installment
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
-from apps.weddings.services.contract_summary_service import ContractSummaryService
-from apps.weddings.services.financial_summary_service import FinancialSummaryService
-from apps.weddings.services.task_summary_service import TaskSummaryService
+from apps.weddings.services.summaries import (
+    ContractSummaryService,
+    FinancialSummaryService,
+    TaskSummaryService,
+)
 from apps.weddings.services.wedding_service import WeddingService
 
 

@@ -1,7 +1,9 @@
-from .contract_summary_service import ContractSummaryService
 from .dashboard_service import DashboardService
-from .financial_summary_service import FinancialSummaryService
-from .task_summary_service import TaskSummaryService
+from .summaries import (
+    ContractSummaryService,
+    FinancialSummaryService,
+    TaskSummaryService,
+)
 from .wedding_service import WeddingService
 
 
