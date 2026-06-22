@@ -718,6 +718,17 @@ class TestDashboardService:
             for call in mock_logger.info.call_args_list
         )
 
+    def test_get_summary_empty_company(self, user):
+        """Dashboard sem casamentos deve retornar zeros."""
+        summary = DashboardService.get_summary(company=user.company)
+
+        assert summary["pending_installments_7d"] == "0.00"
+        assert summary["urgent_tasks_count"] == 0
+        assert summary["overdue_installments_amount"] == "0.00"
+        assert summary["overdue_installments_count"] == 0
+        assert summary["pending_contracts_count"] == 0
+        assert summary["critical_weddings"] == []
+
 
 @pytest.mark.django_db
 class TestFinancialSummaryService:
