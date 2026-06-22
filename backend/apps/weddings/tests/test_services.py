@@ -24,6 +24,7 @@ from apps.scheduler.tests.factories import TaskFactory
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingPatchIn
 from apps.weddings.services import (
+    ContractSummaryService,
     DashboardService,
     FinancialSummaryService,
     TaskSummaryService,
@@ -972,3 +973,63 @@ class TestTaskSummaryService:
             company=user.company, wedding=wedding, today=date.today()
         )
         assert result == []
+
+
+@pytest.mark.django_db
+class TestContractSummaryService:
+    def test_pending_contracts_count(self, user):
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        ContractFactory(
+            wedding=wedding, company=user.company, supplier=supplier, status="PENDING"
+        )
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="SIGNED",
+            pdf_file="contracts/x.pdf",
+            signed_date=date.today(),
+        )
+
+        count = ContractSummaryService.pending_contracts_count(company=user.company)
+        assert count == 1
+
+    def test_pending_contracts_count_zero(self, user):
+        count = ContractSummaryService.pending_contracts_count(company=user.company)
+        assert count == 0
+
+    def test_wedding_contract_stats(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="SIGNED",
+            total_amount=5000.00,
+            pdf_file="contracts/x.pdf",
+            signed_date=today,
+        )
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="PENDING",
+            total_amount=3000.00,
+        )
+
+        signed, total = ContractSummaryService.wedding_contract_stats(
+            company=user.company, wedding=wedding
+        )
+        assert signed == 1
+        assert total == 2
+
+    def test_wedding_contract_stats_no_contracts(self, user):
+        wedding = WeddingFactory(company=user.company)
+        signed, total = ContractSummaryService.wedding_contract_stats(
+            company=user.company, wedding=wedding
+        )
+        assert signed == 0
+        assert total == 0
