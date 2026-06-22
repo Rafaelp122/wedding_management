@@ -1,6 +1,7 @@
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any
 
 from django.db.models import Q, Sum
 
@@ -17,6 +18,7 @@ class FinancialSummaryService:
     def pending_installments_7d(
         *, company: Company, today: date | None = None
     ) -> Decimal:
+        """Return total amount of pending installments due within the next 7 days."""
         today = today or date.today()
         seven_days = today + timedelta(days=7)
         total = (
@@ -34,6 +36,7 @@ class FinancialSummaryService:
     def overdue_installments(
         *, company: Company, today: date | None = None
     ) -> tuple[Decimal, int]:
+        """Return total amount and count of overdue installments."""
         today = today or date.today()
         qs = Installment.objects.for_tenant(company).filter(
             Q(status=Installment.StatusChoices.OVERDUE)
@@ -44,6 +47,7 @@ class FinancialSummaryService:
 
     @staticmethod
     def budget_percentage_used(*, company: Company, wedding: Wedding) -> float:
+        """Return the percentage of the total estimated budget that has been spent, capped at 100%."""
         try:
             budget = Budget.objects.for_tenant(company).get(wedding=wedding)
             total_spent = budget.total_overall_spent
@@ -58,7 +62,8 @@ class FinancialSummaryService:
     @staticmethod
     def upcoming_installments(
         *, company: Company, wedding: Wedding, today: date | None = None
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
+        """Return up to 5 upcoming unpaid installments due within 30 days for a wedding."""
         today = today or date.today()
         thirty_days = today + timedelta(days=30)
         installments = (
@@ -83,7 +88,10 @@ class FinancialSummaryService:
         ]
 
     @staticmethod
-    def categories_summary(*, company: Company, wedding: Wedding) -> list[dict]:
+    def categories_summary(
+        *, company: Company, wedding: Wedding
+    ) -> list[dict[str, Any]]:
+        """Return a summary of each budget category with allocated, spent, and percentage used."""
         categories = (
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)
@@ -103,4 +111,7 @@ class FinancialSummaryService:
                     "percentage": min(pct, 100),
                 }
             )
+        logger.info(
+            f"Categorias computadas: wedding={wedding.uuid}, total={len(result)}"
+        )
         return result

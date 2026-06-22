@@ -745,6 +745,40 @@ class TestFinancialSummaryService:
         )
         assert result == Decimal("2500.00")
 
+    def test_pending_installments_7d_includes_today(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+        InstallmentFactory(
+            expense=expense,
+            amount=500.00,
+            due_date=today,
+            status="PENDING",
+        )
+
+        result = FinancialSummaryService.pending_installments_7d(
+            company=user.company, today=today
+        )
+        assert result == Decimal("500.00")
+
+    def test_pending_installments_7d_includes_last_day(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+        InstallmentFactory(
+            expense=expense,
+            amount=500.00,
+            due_date=today + timedelta(days=7),
+            status="PENDING",
+        )
+
+        result = FinancialSummaryService.pending_installments_7d(
+            company=user.company, today=today
+        )
+        assert result == Decimal("500.00")
+
     def test_pending_installments_7d_empty(self, user):
         result = FinancialSummaryService.pending_installments_7d(
             company=user.company, today=date.today()
@@ -809,6 +843,32 @@ class TestFinancialSummaryService:
         )
         assert pct == 10.0
 
+    def test_budget_percentage_used_capped(self, user):
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetFactory(
+            wedding=wedding, company=user.company, total_estimated=1000.00
+        )
+        category = BudgetCategoryFactory(
+            wedding=wedding, budget=budget, allocated_budget=5000.00
+        )
+        expense = ExpenseFactory(
+            wedding=wedding, category=category, actual_amount=5000.00, contract=None
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=5000.00,
+            due_date=date.today() - timedelta(days=5),
+            status="PAID",
+            paid_date=date.today() - timedelta(days=5),
+            wedding=wedding,
+            company=user.company,
+        )
+
+        pct = FinancialSummaryService.budget_percentage_used(
+            company=user.company, wedding=wedding
+        )
+        assert pct == 100.0
+
     def test_budget_percentage_used_no_budget(self, user):
         wedding = WeddingFactory(company=user.company)
         pct = FinancialSummaryService.budget_percentage_used(
@@ -856,6 +916,13 @@ class TestFinancialSummaryService:
             company=user.company, wedding=wedding, today=today
         )
         assert len(result) == 0
+
+    def test_categories_summary_empty(self, user):
+        wedding = WeddingFactory(company=user.company)
+        result = FinancialSummaryService.categories_summary(
+            company=user.company, wedding=wedding
+        )
+        assert result == []
 
     def test_categories_summary(self, user):
         wedding = WeddingFactory(company=user.company)
@@ -982,6 +1049,24 @@ class TestContractSummaryService:
         supplier = SupplierFactory(company=user.company)
         ContractFactory(
             wedding=wedding, company=user.company, supplier=supplier, status="PENDING"
+        )
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="SIGNED",
+            pdf_file="contracts/x.pdf",
+            signed_date=date.today(),
+        )
+
+        count = ContractSummaryService.pending_contracts_count(company=user.company)
+        assert count == 1
+
+    def test_pending_contracts_count_includes_draft(self, user):
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        ContractFactory(
+            wedding=wedding, company=user.company, supplier=supplier, status="DRAFT"
         )
         ContractFactory(
             wedding=wedding,

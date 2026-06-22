@@ -1,5 +1,6 @@
 import logging
 from datetime import date, timedelta
+from typing import Any
 from uuid import UUID
 
 from django.db.models import Count, Q
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class DashboardService:
     @staticmethod
-    def get_summary(company: Company) -> dict:
+    def get_summary(company: Company) -> dict[str, Any]:
         logger.info(f"Computando resumo do dashboard para company_id={company.id}")
         today = date.today()
 
@@ -106,7 +107,7 @@ class DashboardService:
         }
 
     @staticmethod
-    def get_wedding_overview(company: Company, wedding_uuid: UUID) -> dict:
+    def get_wedding_overview(company: Company, wedding_uuid: UUID) -> dict[str, Any]:
         wedding = WeddingService.get(company, wedding_uuid)
         logger.info(
             f"Computando visão geral do casamento uuid={wedding_uuid} "

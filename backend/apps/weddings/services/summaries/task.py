@@ -1,5 +1,6 @@
 import logging
 from datetime import date
+from typing import Any
 
 from django.db.models import F, Q
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 class TaskSummaryService:
     @staticmethod
     def urgent_tasks_count(*, company: Company, today: date | None = None) -> int:
+        """Return the number of uncompleted tasks past their due date for the company."""
         today = today or date.today()
         return (
             Task.objects.for_tenant(company)
@@ -23,6 +25,7 @@ class TaskSummaryService:
 
     @staticmethod
     def wedding_task_stats(*, company: Company, wedding: Wedding) -> tuple[int, int]:
+        """Return (completed, total) task counts for a wedding."""
         tasks = Task.objects.for_tenant(company).filter(wedding=wedding)
         total = tasks.count()
         completed = tasks.filter(is_completed=True).count()
@@ -31,7 +34,8 @@ class TaskSummaryService:
     @staticmethod
     def urgent_tasks(
         *, company: Company, wedding: Wedding, today: date | None = None, limit: int = 3
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
+        """Return up to `limit` urgent tasks (overdue or no due date) for a wedding, ordered by due date."""
         today = today or date.today()
         urgent = (
             Task.objects.for_tenant(company)
