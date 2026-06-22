@@ -26,6 +26,7 @@ from apps.weddings.schemas import WeddingIn, WeddingPatchIn
 from apps.weddings.services import (
     DashboardService,
     FinancialSummaryService,
+    TaskSummaryService,
     WeddingService,
 )
 from apps.weddings.tests.factories import WeddingFactory
@@ -882,3 +883,92 @@ class TestFinancialSummaryService:
         assert len(result) == 1
         assert result[0]["name"] == category.name
         assert result[0]["percentage"] == 20
+
+
+@pytest.mark.django_db
+class TestTaskSummaryService:
+    def test_urgent_tasks_count(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+            due_date=today - timedelta(days=1),
+        )
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=True,
+            due_date=today - timedelta(days=1),
+        )
+
+        count = TaskSummaryService.urgent_tasks_count(company=user.company, today=today)
+        assert count == 1
+
+    def test_urgent_tasks_count_zero(self, user):
+        count = TaskSummaryService.urgent_tasks_count(
+            company=user.company, today=date.today()
+        )
+        assert count == 0
+
+    def test_wedding_task_stats(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=True,
+            due_date=today - timedelta(days=1),
+        )
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+            due_date=today + timedelta(days=1),
+        )
+
+        completed, total = TaskSummaryService.wedding_task_stats(
+            company=user.company, wedding=wedding
+        )
+        assert completed == 1
+        assert total == 2
+
+    def test_wedding_task_stats_no_tasks(self, user):
+        wedding = WeddingFactory(company=user.company)
+        completed, total = TaskSummaryService.wedding_task_stats(
+            company=user.company, wedding=wedding
+        )
+        assert completed == 0
+        assert total == 0
+
+    def test_urgent_tasks_returns_overdue_first(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+            due_date=today - timedelta(days=2),
+            title="Urgent",
+        )
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            is_completed=False,
+            due_date=today + timedelta(days=5),
+            title="Future",
+        )
+
+        result = TaskSummaryService.urgent_tasks(
+            company=user.company, wedding=wedding, today=today
+        )
+        assert len(result) == 1
+        assert result[0]["title"] == "Urgent"
+
+    def test_urgent_tasks_empty(self, user):
+        wedding = WeddingFactory(company=user.company)
+        result = TaskSummaryService.urgent_tasks(
+            company=user.company, wedding=wedding, today=date.today()
+        )
+        assert result == []
