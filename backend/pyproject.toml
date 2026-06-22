@@ -8,7 +8,7 @@ description = "Sistema de gestão de casamentos - Backend Django REST API"
 requires-python = ">=3.12"
 dependencies = [
     # Core Django
-    "django>=5.2.9,<6.0",
+    "django>=5.2.9,<7.0",
     "django-cors-headers>=4.6.0,<4.10",
     # Database
     "psycopg[binary]>=3.2.0,<4.0",
