@@ -96,7 +96,7 @@ class FinancialSummaryService:
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)
             .select_related("budget")
-            .with_total_spent()
+            .with_total_spent()  # type: ignore[attr-defined]
         )
         result = []
         for cat in categories:
