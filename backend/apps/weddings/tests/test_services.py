@@ -23,7 +23,11 @@ from apps.scheduler.models import Event
 from apps.scheduler.tests.factories import TaskFactory
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingPatchIn
-from apps.weddings.services import DashboardService, WeddingService
+from apps.weddings.services import (
+    DashboardService,
+    FinancialSummaryService,
+    WeddingService,
+)
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -711,3 +715,170 @@ class TestDashboardService:
             "Visão geral do casamento" in call[0][0]
             for call in mock_logger.info.call_args_list
         )
+
+
+@pytest.mark.django_db
+class TestFinancialSummaryService:
+    def test_pending_installments_7d_returns_total(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+
+        InstallmentFactory(
+            expense=expense,
+            amount=2500.00,
+            due_date=today + timedelta(days=3),
+            status="PENDING",
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=today + timedelta(days=10),
+            status="PENDING",
+        )
+
+        result = FinancialSummaryService.pending_installments_7d(
+            company=user.company, today=today
+        )
+        assert result == Decimal("2500.00")
+
+    def test_pending_installments_7d_empty(self, user):
+        result = FinancialSummaryService.pending_installments_7d(
+            company=user.company, today=date.today()
+        )
+        assert result == Decimal("0.00")
+
+    def test_overdue_installments_returns_amount_and_count(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+
+        InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=today - timedelta(days=5),
+            status="PENDING",
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=500.00,
+            due_date=today - timedelta(days=10),
+            status="OVERDUE",
+        )
+
+        amount, count = FinancialSummaryService.overdue_installments(
+            company=user.company, today=today
+        )
+        assert amount == Decimal("1500.00")
+        assert count == 2
+
+    def test_overdue_installments_empty(self, user):
+        amount, count = FinancialSummaryService.overdue_installments(
+            company=user.company, today=date.today()
+        )
+        assert amount == Decimal("0.00")
+        assert count == 0
+
+    def test_budget_percentage_used(self, user):
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetFactory(
+            wedding=wedding, company=user.company, total_estimated=10000.00
+        )
+        category = BudgetCategoryFactory(
+            wedding=wedding, budget=budget, allocated_budget=5000.00
+        )
+        expense = ExpenseFactory(
+            wedding=wedding, category=category, actual_amount=2000.00, contract=None
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=date.today() - timedelta(days=5),
+            status="PAID",
+            paid_date=date.today() - timedelta(days=5),
+            wedding=wedding,
+            company=user.company,
+        )
+
+        pct = FinancialSummaryService.budget_percentage_used(
+            company=user.company, wedding=wedding
+        )
+        assert pct == 10.0
+
+    def test_budget_percentage_used_no_budget(self, user):
+        wedding = WeddingFactory(company=user.company)
+        pct = FinancialSummaryService.budget_percentage_used(
+            company=user.company, wedding=wedding
+        )
+        assert pct == 0.0
+
+    def test_upcoming_installments_returns_list(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+        inst = InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=today + timedelta(days=15),
+            status="PENDING",
+            wedding=wedding,
+            company=user.company,
+        )
+
+        result = FinancialSummaryService.upcoming_installments(
+            company=user.company, wedding=wedding, today=today
+        )
+        assert len(result) == 1
+        assert result[0]["uuid"] == inst.uuid
+        assert result[0]["amount"] == "1000.00"
+
+    def test_upcoming_installments_excludes_paid(self, user):
+        today = date.today()
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+        InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=today + timedelta(days=5),
+            status="PAID",
+            paid_date=today,
+            wedding=wedding,
+            company=user.company,
+        )
+
+        result = FinancialSummaryService.upcoming_installments(
+            company=user.company, wedding=wedding, today=today
+        )
+        assert len(result) == 0
+
+    def test_categories_summary(self, user):
+        wedding = WeddingFactory(company=user.company)
+        budget = BudgetFactory(
+            wedding=wedding, company=user.company, total_estimated=10000.00
+        )
+        category = BudgetCategoryFactory(
+            wedding=wedding, budget=budget, allocated_budget=5000.00
+        )
+        expense = ExpenseFactory(
+            wedding=wedding, category=category, actual_amount=1000.00, contract=None
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=1000.00,
+            due_date=date.today() - timedelta(days=5),
+            status="PAID",
+            paid_date=date.today() - timedelta(days=5),
+            wedding=wedding,
+            company=user.company,
+        )
+
+        result = FinancialSummaryService.categories_summary(
+            company=user.company, wedding=wedding
+        )
+        assert len(result) == 1
+        assert result[0]["name"] == category.name
+        assert result[0]["percentage"] == 20
