@@ -238,9 +238,24 @@ class TestInstallmentServiceAutoGeneration:
         events = Event.objects.filter(wedding=expense.wedding).order_by("start_time")
         assert len(events) == 2
 
-        # Verificar que o valor R$ aparece na descrição
+
         assert "125.00" in events[0].description
         assert "Flores" in events[0].description
+
+    def test_auto_generate_single_installment(self, user):
+        """num_installments=1 cria uma unica parcela com o valor total."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        first_date = date.today() + timedelta(days=30)
+
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 1, first_date
+        )
+
+        assert len(installments) == 1
+        assert installments[0].amount == Decimal("500.00")
+        assert installments[0].installment_number == 1
+        assert installments[0].due_date == first_date
+        assert installments[0].status == Installment.StatusChoices.PENDING
 
 
 @pytest.mark.django_db
