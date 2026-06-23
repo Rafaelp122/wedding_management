@@ -339,6 +339,26 @@ class TestContractServiceListAndGet:
         assert result.uuid == contract.uuid
         assert result.expense_id == expense.uuid
 
+    def test_list_contracts_filter_by_parent(self, user):
+        """list() com parent_id filtra apenas aditivos do contrato pai."""
+        wedding, supplier = _setup_contract_context(user)
+        parent = ContractFactory(
+            wedding=wedding, supplier=supplier, description="Contrato Pai"
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            description="Aditivo 1",
+            parent=parent,
+        )
+        ContractFactory(
+            wedding=wedding, supplier=supplier, description="Outro Contrato"
+        )
+
+        qs = ContractService.list(user.company, parent_id=parent.uuid)
+        assert qs.count() == 1
+        assert qs.first().description == "Aditivo 1"
+
     def test_get_contract_not_found(self, user):
         """UUID inexistente levanta ObjectNotFoundError."""
         with pytest.raises(ObjectNotFoundError):

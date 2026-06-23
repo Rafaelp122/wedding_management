@@ -133,6 +133,15 @@ class TestLogisticsNinjaAPI:
         assert len(data["items"]) == 1
         assert data["items"][0]["status"] == "DRAFT"
 
+    def test_list_contracts_filter_by_parent(self, auth_client, seed_data):
+        """GET /api/v1/logistics/contracts/?parent_id=X retorna só aditivos."""
+        response = auth_client.get(
+            f"/api/v1/logistics/contracts/?parent_id={seed_data['my_contract'].uuid}"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 0  # seed_data não cria aditivos
+
     def test_list_items_isolation(self, auth_client, seed_data):
         response = auth_client.get("/api/v1/logistics/items/")
         assert response.status_code == 200
