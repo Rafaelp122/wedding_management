@@ -5,26 +5,7 @@ import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
 describe("WeddingMonthlyChart", () => {
-  it("shows empty state when no weddings in selected year", () => {
-    server.use(
-      http.get("*/api/v1/weddings/by-month/", () =>
-        HttpResponse.json([]),
-      ),
-    );
-
-    render(
-      <WeddingMonthlyChart
-        selectedYear={2025}
-        onYearChange={vi.fn()}
-      />,
-    );
-
-    expect(
-      screen.getByText(/nenhum casamento agendado para 2025/i),
-    ).toBeInTheDocument();
-  });
-
-  it("shows empty state for year with no matches", () => {
+  it("shows empty state for year with no weddings", () => {
     server.use(
       http.get("*/api/v1/weddings/by-month/", () =>
         HttpResponse.json([]),

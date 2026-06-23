@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
 from datetime import datetime, time, timedelta
 from uuid import UUID
 
@@ -72,7 +71,16 @@ class WeddingService:
         return qs
 
     @staticmethod
-    def count_by_month(company: Company, year: int) -> Sequence[dict]:
+    def count_by_month(company: Company, year: int) -> list[dict]:
+        """Agrupa casamentos por mês no ano informado, retornando contagens.
+
+        Args:
+            company: Tenant para isolamento multitenancy.
+            year: Ano para filtrar os casamentos.
+
+        Returns:
+            Lista de dicts com {"month": int, "count": int} ordenada por mês.
+        """
         qs = (
             Wedding.objects.for_tenant(company)
             .filter(date__year=year)

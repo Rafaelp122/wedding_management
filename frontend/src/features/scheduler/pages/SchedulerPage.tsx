@@ -32,10 +32,9 @@ export default function SchedulerPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventOut | null>(null);
 
-  const EVENTS_PAGE_SIZE = 10;
   const WEDDINGS_PAGE_SIZE = 100;
 
-  const pagination = usePagination(EVENTS_PAGE_SIZE);
+  const pagination = usePagination(10);
 
   const {
     data: eventsResponse,

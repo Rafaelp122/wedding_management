@@ -38,6 +38,16 @@ class InstallmentService:
         due_date_gte: date | None = None,
         due_date_lte: date | None = None,
     ) -> QuerySet[Installment]:
+        """Lista parcelas com filtros opcionais.
+
+        Args:
+            company: Tenant para isolamento multitenancy.
+            wedding_id: Filtra por casamento.
+            expense_id: Filtra por despesa.
+            status: Filtra por status (PENDING, PAID, OVERDUE).
+            due_date_gte: Filtra por data de vencimento >= este valor.
+            due_date_lte: Filtra por data de vencimento <= este valor.
+        """
         qs = Installment.objects.for_tenant(company).select_related(
             "expense", "wedding"
         )
