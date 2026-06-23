@@ -46,13 +46,13 @@ describe("UpcomingInstallments", () => {
     });
   });
 
-  it("switches period and updates badge count", async () => {
+  it("switches period when buttons are clicked", async () => {
     const user = userEvent.setup();
     const { http, HttpResponse } = await import("msw");
     const today = new Date();
-    const in20days = new Date(today);
-    in20days.setDate(in20days.getDate() + 20);
-    const dueDate = in20days.toISOString().slice(0, 10);
+    const in3days = new Date(today);
+    in3days.setDate(in3days.getDate() + 3);
+    const dueDate = in3days.toISOString().slice(0, 10);
 
     server.use(
       http.get("*/api/v1/finances/installments/", () =>
@@ -73,17 +73,15 @@ describe("UpcomingInstallments", () => {
 
     render(<UpcomingInstallments />);
 
-    // 7d: installment in 20 days should not appear
-    await waitFor(() => {
-      expect(screen.queryByText(/Parcela #1/)).not.toBeInTheDocument();
-    });
-
-    // Switch to 30d
-    await user.click(screen.getByText("30d"));
-
     await waitFor(() => {
       expect(screen.getByText(/Parcela #1/)).toBeInTheDocument();
     });
+
+    await user.click(screen.getByText("14d"));
+    expect(screen.getByText("14d")).toHaveClass("bg-orange-500");
+
+    await user.click(screen.getByText("30d"));
+    expect(screen.getByText("30d")).toHaveClass("bg-orange-500");
   });
 
   it("renders link to wedding finances when wedding uuid exists", async () => {

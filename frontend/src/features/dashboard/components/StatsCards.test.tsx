@@ -224,6 +224,8 @@ describe("StatsCards", () => {
       <StatsCards
         summary={createMockDashboardSummary({
           pending_installments_7d: "750.00",
+          overdue_installments_count: 0,
+          overdue_installments_amount: "0",
         })}
       />,
     );
@@ -259,6 +261,7 @@ describe("StatsCards", () => {
     render(
       <StatsCards
         summary={createMockDashboardSummary({
+          pending_installments_7d: "0",
           overdue_installments_count: 1,
           overdue_installments_amount: "100.00",
         })}
