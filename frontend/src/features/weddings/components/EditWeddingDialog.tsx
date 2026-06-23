@@ -6,6 +6,7 @@ import { useWeddingsUpdate } from "@/api/generated/v1/endpoints/weddings/wedding
 import { WeddingsUpdateBody } from "@/api/generated/v1/zod/weddings/weddings";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 
 import { FormDialog } from "@/components/form-dialog";
 import {
@@ -25,9 +26,9 @@ import {
 import { WeddingFormFields } from "./WeddingFormFields";
 
 const WEDDING_STATUS_OPTIONS = [
-  { value: "IN_PROGRESS", label: "Em Andamento" },
-  { value: "COMPLETED", label: "Concluído" },
-  { value: "CANCELED", label: "Cancelado" },
+  { value: WeddingStatusEnum.IN_PROGRESS, label: "Em Andamento" },
+  { value: WeddingStatusEnum.COMPLETED, label: "Concluído" },
+  { value: WeddingStatusEnum.CANCELED, label: "Cancelado" },
 ] as const;
 
 type UpdateWeddingFormData = z.input<typeof WeddingsUpdateBody>;

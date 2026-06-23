@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 import { formatWeddingName } from "../utils";
 import { getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
@@ -168,10 +169,10 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
                         <td className="py-4 px-6 text-center">
                           <Badge
                             variant={
-                              wedding.status === "COMPLETED" ? "default" : "secondary"
+                              wedding.status === WeddingStatusEnum.COMPLETED ? "default" : "secondary"
                             }
                             className={`text-[10px] font-bold uppercase tracking-wider h-5 px-2.5 rounded-md ${
-                              wedding.status === "COMPLETED"
+                              wedding.status === WeddingStatusEnum.COMPLETED
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
                                 : "bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20"
                             }`}

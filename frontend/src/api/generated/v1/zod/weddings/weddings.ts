@@ -43,7 +43,7 @@ export const WeddingsListResponse = zod.object({
       date: zod.iso.date(),
       location: zod.string(),
       expected_guests: zod.union([zod.number(), zod.null()]),
-      status: zod.string(),
+      status: zod.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
       created_at: zod.iso.datetime({}),
       updated_at: zod.iso.datetime({}),
       total_budget: zod
@@ -117,7 +117,7 @@ export const WeddingsReadResponse = zod.object({
   date: zod.iso.date(),
   location: zod.string(),
   expected_guests: zod.union([zod.number(), zod.null()]),
-  status: zod.string(),
+  status: zod.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
   total_budget: zod
@@ -149,7 +149,9 @@ export const WeddingsUpdateBody = zod.object({
   date: zod.union([zod.iso.date(), zod.null()]).optional(),
   location: zod.union([zod.string(), zod.null()]).optional(),
   expected_guests: zod.union([zod.number(), zod.null()]).optional(),
-  status: zod.union([zod.string(), zod.null()]).optional(),
+  status: zod
+    .union([zod.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]), zod.null()])
+    .optional(),
 });
 
 export const weddingsUpdateResponseTotalBudgetOneMin = 0;
@@ -167,7 +169,7 @@ export const WeddingsUpdateResponse = zod.object({
   date: zod.iso.date(),
   location: zod.string(),
   expected_guests: zod.union([zod.number(), zod.null()]),
-  status: zod.string(),
+  status: zod.enum(["IN_PROGRESS", "COMPLETED", "CANCELED"]),
   created_at: zod.iso.datetime({}),
   updated_at: zod.iso.datetime({}),
   total_budget: zod

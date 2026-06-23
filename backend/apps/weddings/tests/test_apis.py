@@ -163,6 +163,32 @@ class TestWeddingNinjaAPI:
         data = response.json()
         assert data["location"] == "Praia do Forte"
 
+    def test_update_wedding_valid_status_success(self, auth_client, user):
+        """PATCH com status válido deve ter sucesso."""
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.patch(
+            f"/api/v1/weddings/{wedding.uuid}/",
+            data={"status": "CANCELED"},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "CANCELED"
+
+    def test_update_wedding_invalid_status_returns_422(self, auth_client, user):
+        """PATCH com status inválido deve retornar 422 (Schema validation error)."""
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.patch(
+            f"/api/v1/weddings/{wedding.uuid}/",
+            data={"status": "INVALID_STATUS"},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 422
+
     def test_delete_wedding_success(self, auth_client, user):
         """DELETE deve remover um casamento."""
         wedding = WeddingFactory(company=user.company)

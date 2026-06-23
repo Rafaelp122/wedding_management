@@ -81,3 +81,4 @@ export * from "./weddingOut";
 export * from "./weddingPatchIn";
 export * from "./weddingsByMonthParams";
 export * from "./weddingsListParams";
+export * from "./weddingStatusEnum";
