@@ -233,7 +233,8 @@ describe("StatsCards", () => {
     await user.click(screen.getByRole("button", { name: "Ver Parcelas" }));
 
     await waitFor(() => {
-      expect(screen.getByText("750,00")).toBeInTheDocument();
+      const matches = screen.getAllByText("750,00");
+      expect(matches.length).toBeGreaterThanOrEqual(2);
     });
   });
 
