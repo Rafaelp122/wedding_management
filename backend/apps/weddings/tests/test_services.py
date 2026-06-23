@@ -21,6 +21,7 @@ from apps.finances.tests.factories import (
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.scheduler.models import Event
 from apps.scheduler.tests.factories import TaskFactory
+from apps.users.tests.factories import UserFactory
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingPatchIn
 from apps.weddings.services import (
@@ -1129,3 +1130,44 @@ class TestContractSummaryService:
         )
         assert signed == 0
         assert total == 0
+
+
+@pytest.mark.django_db
+class TestWeddingServiceCountByMonth:
+    def test_count_by_month_returns_counts_grouped_by_month(self, user):
+        """count_by_month() agrupa casamentos por mês no ano dado."""
+        FUTURE_YEAR = date.today().year + 1
+        for month in [1, 1, 3, 6]:
+            WeddingFactory(
+                company=user.company,
+                date=date(FUTURE_YEAR, month, 15),
+            )
+        result = WeddingService.count_by_month(company=user.company, year=FUTURE_YEAR)
+        assert len(result) == 3
+        assert {"month": 1, "count": 2} in result
+        assert {"month": 3, "count": 1} in result
+        assert {"month": 6, "count": 1} in result
+
+    def test_count_by_month_returns_empty_list_for_year_without_weddings(self, user):
+        """count_by_month() retorna lista vazia quando não há casamentos no ano."""
+        result = WeddingService.count_by_month(company=user.company, year=2000)
+        assert result == []
+
+    def test_count_by_month_multitenancy(self):
+        """count_by_month() só conta casamentos do tenant."""
+        FUTURE_YEAR = date.today().year + 1
+        user_a = UserFactory()
+        user_b = UserFactory()
+        WeddingFactory(company=user_a.company, date=date(FUTURE_YEAR, 1, 15))
+        WeddingFactory(company=user_b.company, date=date(FUTURE_YEAR, 1, 20))
+        WeddingFactory(company=user_b.company, date=date(FUTURE_YEAR, 3, 10))
+
+        result_a = WeddingService.count_by_month(
+            company=user_a.company, year=FUTURE_YEAR
+        )
+        result_b = WeddingService.count_by_month(
+            company=user_b.company, year=FUTURE_YEAR
+        )
+
+        assert result_a == [{"month": 1, "count": 1}]
+        assert len(result_b) == 2

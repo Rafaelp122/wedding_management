@@ -98,3 +98,8 @@ class WeddingDashboardOut(Schema):
     upcoming_installments: list[WeddingDashboardInstallmentOut]
     urgent_tasks: list[WeddingDashboardTaskOut]
     categories_summary: list[WeddingDashboardCategoryOut]
+
+
+class WeddingByMonthOut(Schema):
+    month: int = Field(..., ge=1, le=12)
+    count: int = Field(..., ge=0)

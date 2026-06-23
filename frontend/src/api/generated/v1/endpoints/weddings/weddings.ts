@@ -23,9 +23,11 @@ import type {
 import type {
   ErrorResponse,
   PagedWeddingOut,
+  WeddingByMonthOut,
   WeddingIn,
   WeddingOut,
   WeddingPatchIn,
+  WeddingsByMonthParams,
   WeddingsListParams,
 } from "../../models";
 
@@ -263,6 +265,167 @@ export const useWeddingsCreate = <
 > => {
   return useMutation(getWeddingsCreateMutationOptions(options), queryClient);
 };
+/**
+ * Retorna a quantidade de casamentos por mês no ano informado.
+ * @summary List Weddings By Month
+ */
+export const weddingsByMonth = (
+  params: WeddingsByMonthParams,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<WeddingByMonthOut[]>(
+    { url: `/api/v1/weddings/by-month/`, method: "GET", params, signal },
+    options,
+  );
+};
+
+export const getWeddingsByMonthQueryKey = (params?: WeddingsByMonthParams) => {
+  return [`/api/v1/weddings/by-month/`, ...(params ? [params] : [])] as const;
+};
+
+export const getWeddingsByMonthQueryOptions = <
+  TData = Awaited<ReturnType<typeof weddingsByMonth>>,
+  TError = ErrorType<unknown>,
+>(
+  params: WeddingsByMonthParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof weddingsByMonth>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getWeddingsByMonthQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof weddingsByMonth>>> = ({
+    signal,
+  }) => weddingsByMonth(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof weddingsByMonth>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type WeddingsByMonthQueryResult = NonNullable<
+  Awaited<ReturnType<typeof weddingsByMonth>>
+>;
+export type WeddingsByMonthQueryError = ErrorType<unknown>;
+
+export function useWeddingsByMonth<
+  TData = Awaited<ReturnType<typeof weddingsByMonth>>,
+  TError = ErrorType<unknown>,
+>(
+  params: WeddingsByMonthParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof weddingsByMonth>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weddingsByMonth>>,
+          TError,
+          Awaited<ReturnType<typeof weddingsByMonth>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useWeddingsByMonth<
+  TData = Awaited<ReturnType<typeof weddingsByMonth>>,
+  TError = ErrorType<unknown>,
+>(
+  params: WeddingsByMonthParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof weddingsByMonth>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weddingsByMonth>>,
+          TError,
+          Awaited<ReturnType<typeof weddingsByMonth>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useWeddingsByMonth<
+  TData = Awaited<ReturnType<typeof weddingsByMonth>>,
+  TError = ErrorType<unknown>,
+>(
+  params: WeddingsByMonthParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof weddingsByMonth>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Weddings By Month
+ */
+
+export function useWeddingsByMonth<
+  TData = Awaited<ReturnType<typeof weddingsByMonth>>,
+  TError = ErrorType<unknown>,
+>(
+  params: WeddingsByMonthParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof weddingsByMonth>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getWeddingsByMonthQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 /**
  * @summary Retrieve Wedding
  */

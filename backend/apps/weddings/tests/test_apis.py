@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 from django.utils import timezone
@@ -179,3 +179,24 @@ class TestWeddingNinjaAPI:
 
         response = auth_client.get(f"/api/v1/dashboard/wedding/{other_wedding.uuid}/")
         assert response.status_code == 404
+
+    def test_list_weddings_by_month_success(self, auth_client, user):
+        """GET /api/v1/weddings/by-month/?year=<future> retorna contagens."""
+        FUTURE_YEAR = date.today().year + 1
+        WeddingFactory(company=user.company, date=date(FUTURE_YEAR, 1, 15))
+        WeddingFactory(company=user.company, date=date(FUTURE_YEAR, 1, 20))
+        response = auth_client.get("/api/v1/weddings/by-month/", {"year": FUTURE_YEAR})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["month"] == 1
+        assert data[0]["count"] == 2
+
+    def test_list_weddings_by_month_multitenancy(self, auth_client, user):
+        """Usuário só vê seus próprios casamentos."""
+        FUTURE_YEAR = date.today().year + 1
+        WeddingFactory(company=user.company, date=date(FUTURE_YEAR, 1, 15))
+        response = auth_client.get("/api/v1/weddings/by-month/", {"year": FUTURE_YEAR})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
