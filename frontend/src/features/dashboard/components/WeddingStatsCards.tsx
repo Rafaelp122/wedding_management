@@ -151,7 +151,7 @@ export function WeddingStatsCards({ data, isLoading }: WeddingStatsCardsProps) {
                     <span
                       className={`font-mono font-bold ${isOverdue ? "text-destructive" : "text-zinc-900 dark:text-white"}`}
                     >
-                      R$ {formatCurrencyBR(Number(inst.amount))}
+                      {formatCurrencyBR(Number(inst.amount))}
                     </span>
                   </div>
                 );
