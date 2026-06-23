@@ -8,6 +8,7 @@ import {
   getPaginationInfo,
   usePagination,
 } from "@/hooks/use-pagination";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import { useSupplierFormDialogState } from "./useSupplierFormDialogState";
 import { useSupplierMutations } from "./useSupplierMutations";
@@ -15,6 +16,7 @@ import type { SupplierStatusFilter } from "../types";
 
 export function useSuppliersPage() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<SupplierStatusFilter>("all");
   const [supplierToDelete, setSupplierToDelete] = useState<SupplierOut | null>(null);
 
@@ -33,7 +35,7 @@ export function useSuppliersPage() {
     {
       limit: pagination.limit,
       offset: pagination.offset,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       is_active: isActiveParam,
     },
     {
@@ -58,7 +60,7 @@ export function useSuppliersPage() {
   useEffect(() => {
     pagination.resetPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
   const {
     formOpen,
