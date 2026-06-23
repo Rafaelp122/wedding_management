@@ -9,13 +9,11 @@ interface ProgressBarProps {
 export function ProgressBar({ percentage, className, barClassName }: ProgressBarProps) {
   const pct = Math.min(percentage, 100);
   const color =
-    pct >= 100
+    pct >= 90
       ? "bg-destructive"
-      : pct >= 90
-        ? "bg-destructive"
-        : pct >= 70
-          ? "bg-amber-500"
-          : "bg-aura-500";
+      : pct >= 70
+        ? "bg-amber-500"
+        : "bg-aura-500";
 
   return (
     <div

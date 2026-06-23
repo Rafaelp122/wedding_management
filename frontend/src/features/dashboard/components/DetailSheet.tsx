@@ -39,7 +39,7 @@ export function DetailSheet({
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="right"
-        className="sm:max-w-md bg-white dark:bg-zinc-900"
+        className="sm:max-w-md bg-background"
       >
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">

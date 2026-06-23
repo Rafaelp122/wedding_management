@@ -13,6 +13,7 @@ import {
 
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
+import { formatWeddingName } from "../utils";
 import { getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +63,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
 
   // 1. Process Grooms & Brides map for name resolution
   const weddingMap = weddings.reduce((acc, w) => {
-    acc[w.uuid] = `${w.bride_name} & ${w.groom_name}`;
+    acc[w.uuid] = formatWeddingName(w.bride_name, w.groom_name);
     return acc;
   }, {} as Record<string, string>);
 
@@ -151,7 +152,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
                       <tr key={wedding.uuid} className="table-row-hover">
                         <td className="py-4 px-6">
                           <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                            {wedding.groom_name} & {wedding.bride_name}
+                            {formatWeddingName(wedding.bride_name, wedding.groom_name)}
                           </p>
                         </td>
                         <td className="py-4 px-6">

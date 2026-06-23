@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 import { MetricCard } from "./MetricCard";
 import { DetailSheet } from "./DetailSheet";
-import { type Severity } from "../utils";
+import { ProgressBar } from "./ProgressBar";
+import { type Severity, pluralize } from "../utils";
 
 interface WeddingStatsCardsProps {
   data?: WeddingDashboardOut;
@@ -76,11 +77,11 @@ export function WeddingStatsCards({ data, isLoading }: WeddingStatsCardsProps) {
   const tasksStatusLabel =
     tasksTotal > 0 && tasksCompleted === tasksTotal
       ? "✓ Todas concluídas"
-      : `${tasksPending} pendente${tasksPending !== 1 ? "s" : ""}`;
+      : `${tasksPending} ${pluralize(tasksPending, "pendente")}`;
 
   const contractsStatusLabel =
     contractsPending > 0
-      ? `${contractsPending} pendente${contractsPending !== 1 ? "s" : ""} de assinatura`
+      ? `${contractsPending} ${pluralize(contractsPending, "pendente")} de assinatura`
       : contractsTotal === 0
         ? "Nenhum contrato"
         : "✓ Todos assinados";
@@ -161,18 +162,7 @@ export function WeddingStatsCards({ data, isLoading }: WeddingStatsCardsProps) {
         }
       >
         {/* Progress bar */}
-        <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5">
-          <div
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              budgetSeverity === "danger"
-                ? "bg-destructive"
-                : budgetSeverity === "warning"
-                  ? "bg-amber-500"
-                  : "bg-aura-500"
-            }`}
-            style={{ width: `${Math.min(budgetPct, 100)}%` }}
-          />
-        </div>
+        <ProgressBar percentage={budgetPct} barClassName="h-1.5" />
       </MetricCard>
 
       {/* Card 3: Tarefas Concluídas */}
@@ -222,21 +212,10 @@ export function WeddingStatsCards({ data, isLoading }: WeddingStatsCardsProps) {
           <span className="text-base text-muted-foreground">/ {tasksTotal}</span>
         </div>
         {/* Progress bar */}
-        <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5">
-          <div
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              tasksTotal > 0 && tasksCompleted === tasksTotal
-                ? "bg-success"
-                : "bg-amber-500"
-            }`}
-            style={{
-              width:
-                tasksTotal > 0
-                  ? `${(tasksCompleted / tasksTotal) * 100}%`
-                  : "0%",
-            }}
-          />
-        </div>
+        <ProgressBar
+          percentage={tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0}
+          barClassName="h-1.5"
+        />
       </MetricCard>
 
       {/* Card 4: Contratos Assinados */}
@@ -251,21 +230,10 @@ export function WeddingStatsCards({ data, isLoading }: WeddingStatsCardsProps) {
           <span className="text-base text-muted-foreground">/ {contractsTotal}</span>
         </div>
         {/* Progress bar */}
-        <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5">
-          <div
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              contractsTotal > 0 && contractsSigned === contractsTotal
-                ? "bg-success"
-                : "bg-amber-500"
-            }`}
-            style={{
-              width:
-                contractsTotal > 0
-                  ? `${(contractsSigned / contractsTotal) * 100}%`
-                  : "0%",
-            }}
-          />
-        </div>
+        <ProgressBar
+          percentage={contractsTotal > 0 ? (contractsSigned / contractsTotal) * 100 : 0}
+          barClassName="h-1.5"
+        />
       </MetricCard>
     </div>
   );

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useFinancesInstallmentsList } from "@/api/generated/v1/endpoints/finances/finances";
 import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
+import { pluralize } from "../utils";
 
 const PERIOD_OPTIONS = [7, 14, 30] as const;
 
@@ -59,7 +60,7 @@ export function UpcomingInstallments() {
               variant="outline"
               className="text-xs border-orange-200 text-orange-700 dark:border-orange-800 dark:text-orange-300"
             >
-              {installments.length} pendente{installments.length > 1 ? "s" : ""}
+              {installments.length} {pluralize(installments.length, "pendente")}
             </Badge>
           </div>
         </div>
