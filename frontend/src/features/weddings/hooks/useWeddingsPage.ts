@@ -5,23 +5,25 @@ import {
   getPaginationInfo,
   usePagination,
 } from "@/hooks/use-pagination";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import type { WeddingStatusFilter } from "@/features/weddings/utils/wedding-status";
 
 export const WEDDINGS_PAGE_SIZE = 5;
 
+/**
+ * Hook to manage the state and data fetching for the Weddings page.
+ * Handles search query (with debouncing), pagination, and status filters.
+ *
+ * @returns State and functions to manage the weddings list and filters.
+ */
 export function useWeddingsPage() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<WeddingStatusFilter>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const pagination = usePagination(WEDDINGS_PAGE_SIZE);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   const {
     data: weddingsResponse,

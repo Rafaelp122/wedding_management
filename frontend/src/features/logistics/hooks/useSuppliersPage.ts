@@ -8,13 +8,22 @@ import {
   getPaginationInfo,
   usePagination,
 } from "@/hooks/use-pagination";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import { useSupplierFormDialogState } from "./useSupplierFormDialogState";
 import { useSupplierMutations } from "./useSupplierMutations";
 import type { SupplierStatusFilter } from "../types";
 
+/**
+ * Hook to manage the state and data fetching for the Suppliers page.
+ * Handles search query (with debouncing), pagination, and status filters,
+ * as well as actions for creating, editing, and deleting suppliers.
+ *
+ * @returns State, pagination details, and mutations for suppliers management.
+ */
 export function useSuppliersPage() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<SupplierStatusFilter>("all");
   const [supplierToDelete, setSupplierToDelete] = useState<SupplierOut | null>(null);
 
@@ -33,7 +42,7 @@ export function useSuppliersPage() {
     {
       limit: pagination.limit,
       offset: pagination.offset,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       is_active: isActiveParam,
     },
     {
@@ -58,7 +67,7 @@ export function useSuppliersPage() {
   useEffect(() => {
     pagination.resetPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
   const {
     formOpen,
