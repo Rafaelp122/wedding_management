@@ -1,15 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import { WeddingMonthlyChart } from "@/features/dashboard/components/WeddingMonthlyChart";
-import { createMockWedding } from "@/test-data";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
 describe("WeddingMonthlyChart", () => {
   it("shows empty state when no weddings in selected year", () => {
+    server.use(
+      http.get("*/api/v1/weddings/by-month/", () =>
+        HttpResponse.json([]),
+      ),
+    );
+
     render(
       <WeddingMonthlyChart
-        weddings={[]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -21,9 +25,14 @@ describe("WeddingMonthlyChart", () => {
   });
 
   it("shows empty state for year with no matches", () => {
+    server.use(
+      http.get("*/api/v1/weddings/by-month/", () =>
+        HttpResponse.json([]),
+      ),
+    );
+
     render(
       <WeddingMonthlyChart
-        weddings={[createMockWedding({ date: "2024-06-15" })]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -35,9 +44,14 @@ describe("WeddingMonthlyChart", () => {
   });
 
   it("renders chart container when data exists", () => {
+    server.use(
+      http.get("*/api/v1/weddings/by-month/", () =>
+        HttpResponse.json([{ month: 6, count: 1 }]),
+      ),
+    );
+
     render(
       <WeddingMonthlyChart
-        weddings={[createMockWedding({ date: "2025-06-15" })]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -50,13 +64,17 @@ describe("WeddingMonthlyChart", () => {
   });
 
   it("renders wedding bars for populated data", () => {
+    server.use(
+      http.get("*/api/v1/weddings/by-month/", () =>
+        HttpResponse.json([
+          { month: 1, count: 2 },
+          { month: 6, count: 1 },
+        ]),
+      ),
+    );
+
     render(
       <WeddingMonthlyChart
-        weddings={[
-          createMockWedding({ date: "2025-01-10", bride_name: "Alice", groom_name: "Bob" }),
-          createMockWedding({ date: "2025-01-20", bride_name: "Carol", groom_name: "Dan" }),
-          createMockWedding({ date: "2025-06-15", bride_name: "Eve", groom_name: "Frank" }),
-        ]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -78,7 +96,6 @@ describe("WeddingMonthlyChart", () => {
 
     render(
       <WeddingMonthlyChart
-        weddings={[]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -136,10 +153,6 @@ describe("WeddingMonthlyChart", () => {
 
     render(
       <WeddingMonthlyChart
-        weddings={[
-          createMockWedding({ date: "2025-01-10", uuid: "w1" }),
-          createMockWedding({ date: "2025-06-15", uuid: "w2" }),
-        ]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -163,7 +176,6 @@ describe("WeddingMonthlyChart", () => {
 
     render(
       <WeddingMonthlyChart
-        weddings={[]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -199,10 +211,6 @@ describe("WeddingMonthlyChart", () => {
 
     render(
       <WeddingMonthlyChart
-        weddings={[
-          createMockWedding({ date: "2025-03-10", uuid: "w1", bride_name: "Alice", groom_name: "Bob" }),
-          createMockWedding({ date: "2025-07-20", uuid: "w2", bride_name: "Carol", groom_name: "Dan" }),
-        ]}
         selectedYear={2025}
         onYearChange={vi.fn()}
       />,
@@ -221,7 +229,6 @@ describe("WeddingMonthlyChart", () => {
     const onYearChange = vi.fn();
     render(
       <WeddingMonthlyChart
-        weddings={[]}
         selectedYear={2025}
         onYearChange={onYearChange}
       />,

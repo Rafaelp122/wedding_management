@@ -1961,7 +1961,8 @@ export const useFinancesExpensesFromDocument = <
   );
 };
 /**
- * Lista parcelas com filtro opcional por casamento e despesa.
+ * Lista parcelas com filtros opcionais por casamento, despesa,
+status e período de vencimento.
  * @summary List Installments
  */
 export const financesInstallmentsList = (
