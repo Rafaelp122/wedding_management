@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from django.db.models import QuerySet
 from ninja import Router
 from ninja.pagination import paginate
@@ -7,7 +9,12 @@ from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 from apps.weddings.models import Wedding
-from apps.weddings.schemas import WeddingIn, WeddingOut, WeddingPatchIn
+from apps.weddings.schemas import (
+    WeddingByMonthOut,
+    WeddingIn,
+    WeddingOut,
+    WeddingPatchIn,
+)
 from apps.weddings.services import WeddingService
 
 
@@ -23,6 +30,20 @@ def list_weddings(
 ) -> QuerySet[Wedding]:
     user = require_user(request.user)
     return WeddingService.list(company=user.company, search=search, status=status)
+
+
+@router.get(
+    "/by-month/",
+    response=list[WeddingByMonthOut],
+    operation_id="weddings_by_month",
+)
+def list_weddings_by_month(
+    request: AuthRequest,
+    year: int,
+) -> Sequence[dict]:
+    """Retorna a quantidade de casamentos por mês no ano informado."""
+    user = require_user(request.user)
+    return WeddingService.count_by_month(company=user.company, year=year)
 
 
 @router.get(

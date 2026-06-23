@@ -32,25 +32,15 @@ export default function SchedulerPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventOut | null>(null);
 
-  const EVENTS_PAGE_SIZE = 10;
-  const CALENDAR_EVENTS_LIMIT = 500;
   const WEDDINGS_PAGE_SIZE = 100;
 
-  const pagination = usePagination(EVENTS_PAGE_SIZE);
+  const pagination = usePagination(10);
 
   const {
     data: eventsResponse,
     isLoading: isLoadingEvents,
     error: eventsError,
-  } = useSchedulerEventsList({
-    limit: pagination.limit,
-    offset: pagination.offset,
-  });
-  const {
-    data: allEventsResponse,
-    isLoading: isLoadingAllEvents,
-    error: allEventsError,
-  } = useSchedulerEventsList({ limit: CALENDAR_EVENTS_LIMIT, offset: 0 });
+  } = useSchedulerEventsList({ limit: 500, offset: 0 });
   const {
     data: weddingsResponse,
     isLoading: isLoadingWeddings,
@@ -59,10 +49,6 @@ export default function SchedulerPage() {
 
   const events = useMemo(() => eventsResponse?.data.items ?? [], [eventsResponse]);
   const eventsCount = eventsResponse?.data.count ?? 0;
-  const allEvents = useMemo(
-    () => allEventsResponse?.data.items ?? [],
-    [allEventsResponse],
-  );
   const weddings = useMemo(
     () => weddingsResponse?.data.items ?? [],
     [weddingsResponse],
@@ -74,8 +60,8 @@ export default function SchedulerPage() {
     eventsCount,
   );
 
-  const isLoading = isLoadingEvents || isLoadingAllEvents || isLoadingWeddings;
-  const firstError = eventsError ?? allEventsError ?? weddingsError;
+  const isLoading = isLoadingEvents || isLoadingWeddings;
+  const firstError = eventsError ?? weddingsError;
 
   const weddingsByUuid = useMemo(
     () =>
@@ -88,7 +74,6 @@ export default function SchedulerPage() {
     [weddings],
   );
 
-  // For the table: sorted events
   const sortedEvents = useMemo(
     () =>
       [...events].sort(
@@ -98,28 +83,33 @@ export default function SchedulerPage() {
     [events],
   );
 
+  const paginatedEvents = useMemo(
+    () =>
+      sortedEvents.slice(pagination.offset, pagination.offset + pagination.limit),
+    [sortedEvents, pagination.offset, pagination.limit],
+  );
+
   const summary = useMemo(() => {
     const now = new Date();
     const next7Days = new Date();
     next7Days.setDate(now.getDate() + 7);
 
-    const upcoming = allEvents.filter((event) => {
+    const upcoming = events.filter((event) => {
       const startsAt = new Date(event.start_time);
       return startsAt >= now && startsAt <= next7Days;
     }).length;
 
-    const withReminder = allEvents.filter(
+    const withReminder = events.filter(
       (event) => event.reminder_enabled,
     ).length;
 
     return {
-      total: allEvents.length,
+      total: events.length,
       upcoming,
       withReminder,
     };
-  }, [allEvents]);
+  }, [events]);
 
-  // Handlers
   const handleSelectEvent = useCallback((event: EventOut) => {
     setSelectedEvent(event);
     setEditDialogOpen(true);
@@ -131,7 +121,6 @@ export default function SchedulerPage() {
     queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
   }, [queryClient]);
 
-  // Wedding options for the create event dialog (must be before handlers that use them)
   const weddingOptions = useMemo(
     () =>
       weddings.map((w) => ({
@@ -247,12 +236,12 @@ export default function SchedulerPage() {
 
       {viewMode === "table" ? (
         <SchedulerEventsTable
-          events={sortedEvents}
+          events={paginatedEvents}
           weddingsByUuid={weddingsByUuid}
         />
       ) : (
         <SchedulerCalendar
-          events={allEvents}
+          events={events}
           weddingsByUuid={weddingsByUuid}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}

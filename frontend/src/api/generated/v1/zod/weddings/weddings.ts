@@ -78,6 +78,24 @@ export const WeddingsCreateBody = zod.object({
 });
 
 /**
+ * Retorna a quantidade de casamentos por mês no ano informado.
+ * @summary List Weddings By Month
+ */
+export const WeddingsByMonthQueryParams = zod.object({
+  year: zod.number(),
+});
+
+export const weddingsByMonthResponseMonthMax = 12;
+
+export const weddingsByMonthResponseCountMin = 0;
+
+export const WeddingsByMonthResponseItem = zod.object({
+  month: zod.number().min(1).max(weddingsByMonthResponseMonthMax),
+  count: zod.number().min(weddingsByMonthResponseCountMin),
+});
+export const WeddingsByMonthResponse = zod.array(WeddingsByMonthResponseItem);
+
+/**
  * @summary Retrieve Wedding
  */
 export const WeddingsReadParams = zod.object({

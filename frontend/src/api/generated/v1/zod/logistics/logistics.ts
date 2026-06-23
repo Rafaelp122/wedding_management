@@ -228,7 +228,7 @@ export const LogisticsSuppliersDeleteParams = zod.object({
 
 /**
  * Lista os contratos de fornecedores associados aos casamentos do Planner.
-Permite filtrar por casamento, status e fornecedor.
+Permite filtrar por casamento, status, fornecedor e contrato pai (aditivos).
  * @summary List Contracts
  */
 export const logisticsContractsListQueryLimitDefault = 100;
@@ -240,6 +240,7 @@ export const LogisticsContractsListQueryParams = zod.object({
   wedding_id: zod.union([zod.string(), zod.null()]).optional(),
   status: zod.union([zod.string(), zod.null()]).optional(),
   supplier_id: zod.union([zod.string(), zod.null()]).optional(),
+  parent_id: zod.union([zod.string(), zod.null()]).optional(),
   limit: zod.number().min(1).default(logisticsContractsListQueryLimitDefault),
   offset: zod
     .number()

@@ -37,10 +37,11 @@ def list_contracts(
     wedding_id: UUID4 | None = None,
     status: str | None = None,
     supplier_id: UUID4 | None = None,
+    parent_id: UUID4 | None = None,
 ) -> QuerySet[Contract]:
     """
     Lista os contratos de fornecedores associados aos casamentos do Planner.
-    Permite filtrar por casamento, status e fornecedor.
+    Permite filtrar por casamento, status, fornecedor e contrato pai (aditivos).
     """
     user = require_user(request.user)
     return ContractService.list(
@@ -48,6 +49,7 @@ def list_contracts(
         wedding_id=wedding_id,
         status=status,
         supplier_id=supplier_id,
+        parent_id=parent_id,
     )
 
 

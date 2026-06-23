@@ -62,13 +62,11 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
       { query: { enabled: !!contractUuid } },
     );
 
-  const { data: allContractsResponse } = useLogisticsContractsList({
+  const { data: addendumsResponse } = useLogisticsContractsList({
     wedding_id: weddingUuid,
+    parent_id: contractUuid ?? "",
   });
-  const addendums =
-    allContractsResponse?.data?.items?.filter(
-      (c) => c.parent === contractUuid,
-    ) ?? [];
+  const addendums = addendumsResponse?.data?.items ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

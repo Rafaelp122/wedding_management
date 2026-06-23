@@ -9,7 +9,11 @@ import { faker } from "@faker-js/faker";
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type { PagedWeddingOut, WeddingOut } from "../../models";
+import type {
+  PagedWeddingOut,
+  WeddingByMonthOut,
+  WeddingOut,
+} from "../../models";
 
 export const getWeddingsListResponseMock = (
   overrideResponse: Partial<Extract<PagedWeddingOut, object>> = {},
@@ -64,6 +68,15 @@ export const getWeddingsCreateResponseMock = (
   incomplete_tasks: faker.number.int({ min: 0 }),
   ...overrideResponse,
 });
+
+export const getWeddingsByMonthResponseMock = (): WeddingByMonthOut[] =>
+  Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    month: faker.number.int({ min: 1, max: 12 }),
+    count: faker.number.int({ min: 0 }),
+  }));
 
 export const getWeddingsReadResponseMock = (
   overrideResponse: Partial<Extract<WeddingOut, object>> = {},
@@ -161,6 +174,30 @@ export const getWeddingsCreateMockHandler = (
   );
 };
 
+export const getWeddingsByMonthMockHandler = (
+  overrideResponse?:
+    | WeddingByMonthOut[]
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<WeddingByMonthOut[]> | WeddingByMonthOut[]),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    "*/api/v1/weddings/by-month/",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getWeddingsByMonthResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getWeddingsReadMockHandler = (
   overrideResponse?:
     | WeddingOut
@@ -232,6 +269,7 @@ export const getWeddingsDeleteMockHandler = (
 export const getWeddingsMock = () => [
   getWeddingsListMockHandler(),
   getWeddingsCreateMockHandler(),
+  getWeddingsByMonthMockHandler(),
   getWeddingsReadMockHandler(),
   getWeddingsUpdateMockHandler(),
   getWeddingsDeleteMockHandler(),

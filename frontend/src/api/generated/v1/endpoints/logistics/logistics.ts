@@ -658,7 +658,7 @@ export const useLogisticsSuppliersDelete = <
 };
 /**
  * Lista os contratos de fornecedores associados aos casamentos do Planner.
-Permite filtrar por casamento, status e fornecedor.
+Permite filtrar por casamento, status, fornecedor e contrato pai (aditivos).
  * @summary List Contracts
  */
 export const logisticsContractsList = (

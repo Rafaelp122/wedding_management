@@ -646,7 +646,8 @@ export const FinancesExpensesFromDocumentResponse = zod.object({
 });
 
 /**
- * Lista parcelas com filtro opcional por casamento e despesa.
+ * Lista parcelas com filtros opcionais por casamento, despesa,
+status e período de vencimento.
  * @summary List Installments
  */
 export const financesInstallmentsListQueryLimitDefault = 100;
@@ -657,6 +658,9 @@ export const financesInstallmentsListQueryOffsetMin = 0;
 export const FinancesInstallmentsListQueryParams = zod.object({
   wedding_id: zod.union([zod.string(), zod.null()]).optional(),
   expense_id: zod.union([zod.string(), zod.null()]).optional(),
+  status: zod.union([zod.string(), zod.null()]).optional(),
+  due_date_gte: zod.union([zod.iso.date(), zod.null()]).optional(),
+  due_date_lte: zod.union([zod.iso.date(), zod.null()]).optional(),
   limit: zod.number().min(1).default(financesInstallmentsListQueryLimitDefault),
   offset: zod
     .number()

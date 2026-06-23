@@ -486,6 +486,48 @@
         ]
       }
     },
+    "/api/v1/weddings/by-month/": {
+      "get": {
+        "operationId": "weddings_by_month",
+        "summary": "List Weddings By Month",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "schema": {
+              "title": "Year",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WeddingByMonthOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna a quantidade de casamentos por mês no ano informado.",
+        "tags": [
+          "Weddings"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/weddings/{uuid}/": {
       "get": {
         "operationId": "weddings_read",
@@ -1192,6 +1234,23 @@
           },
           {
             "in": "query",
+            "name": "parent_id",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid4",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parent Id"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
             "name": "limit",
             "schema": {
               "default": 100,
@@ -1225,7 +1284,7 @@
             }
           }
         },
-        "description": "Lista os contratos de fornecedores associados aos casamentos do Planner.\nPermite filtrar por casamento, status e fornecedor.",
+        "description": "Lista os contratos de fornecedores associados aos casamentos do Planner.\nPermite filtrar por casamento, status, fornecedor e contrato pai (aditivos).",
         "tags": [
           "Logistics"
         ],
@@ -3436,6 +3495,56 @@
           },
           {
             "in": "query",
+            "name": "status",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "due_date_gte",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Due Date Gte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "due_date_lte",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Due Date Lte"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
             "name": "limit",
             "schema": {
               "default": 100,
@@ -3469,7 +3578,7 @@
             }
           }
         },
-        "description": "Lista parcelas com filtro opcional por casamento e despesa.",
+        "description": "Lista parcelas com filtros opcionais por casamento, despesa,\nstatus e período de vencimento.",
         "tags": [
           "Finances"
         ],
@@ -4838,6 +4947,27 @@
           "location"
         ],
         "title": "WeddingIn",
+        "type": "object"
+      },
+      "WeddingByMonthOut": {
+        "properties": {
+          "month": {
+            "maximum": 12,
+            "minimum": 1,
+            "title": "Month",
+            "type": "integer"
+          },
+          "count": {
+            "minimum": 0,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "count"
+        ],
+        "title": "WeddingByMonthOut",
         "type": "object"
       },
       "WeddingPatchIn": {

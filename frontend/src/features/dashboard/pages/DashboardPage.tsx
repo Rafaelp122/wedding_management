@@ -45,7 +45,7 @@ export default function DashboardPage() {
   const [selectedWeddingUuid, setSelectedWeddingUuid] = useState<string>("all");
   const firstName = useAuthStore((state) => state.user?.first_name);
 
-  const { data, isLoading, error } = useWeddingsList();
+  const { data, isLoading, error } = useWeddingsList({ limit: 200 });
   const { data: summaryData } = useDashboardSummary({
     query: { enabled: selectedWeddingUuid === "all" },
   });
@@ -279,7 +279,6 @@ export default function DashboardPage() {
                 }
               >
                 <WeddingMonthlyChart
-                  weddings={weddingsArray}
                   selectedYear={selectedYear}
                   onYearChange={setSelectedYear}
                 />

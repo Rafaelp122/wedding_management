@@ -8,6 +8,9 @@
 export type FinancesInstallmentsListParams = {
   wedding_id?: string | null;
   expense_id?: string | null;
+  status?: string | null;
+  due_date_gte?: string | null;
+  due_date_lte?: string | null;
   /**
    * @minimum 1
    */

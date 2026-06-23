@@ -57,6 +57,7 @@ class ContractService:
         wedding_id: UUID | str | None = None,
         status: str | None = None,
         supplier_id: UUID | str | None = None,
+        parent_id: UUID | str | None = None,
     ) -> QuerySet[Contract]:
         qs = (
             Contract.objects.for_tenant(company)
@@ -88,6 +89,8 @@ class ContractService:
             qs = qs.filter(status=status)
         if supplier_id:
             qs = qs.filter(supplier__uuid=supplier_id)
+        if parent_id:
+            qs = qs.filter(parent__uuid=parent_id)
         return qs
 
     @staticmethod
