@@ -238,7 +238,6 @@ class TestInstallmentServiceAutoGeneration:
         events = Event.objects.filter(wedding=expense.wedding).order_by("start_time")
         assert len(events) == 2
 
-
         assert "125.00" in events[0].description
         assert "Flores" in events[0].description
 
@@ -863,6 +862,62 @@ class TestInstallmentServiceListAndGet:
         qs_b = InstallmentService.list(user_b.company)
         assert qs_b.count() == 1
         assert qs_b.first().expense.company == user_b.company
+
+    def test_list_installments_filter_by_status(self, user):
+        """list() com status filtra corretamente."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        InstallmentFactory(expense=expense, amount=Decimal("500.00"), status="PENDING")
+        InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+            status="PAID",
+            paid_date=date.today(),
+        )
+
+        qs = InstallmentService.list(user.company, status="PAID")
+        assert qs.count() == 1
+        assert qs.first().status == "PAID"
+
+    def test_list_installments_filter_by_due_date_gte(self, user):
+        """list() com due_date_gte filtra corretamente."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        InstallmentFactory(expense=expense, due_date=date(2026, 1, 1))
+        InstallmentFactory(expense=expense, due_date=date(2026, 6, 1))
+
+        qs = InstallmentService.list(user.company, due_date_gte=date(2026, 3, 1))
+        assert qs.count() == 1
+        assert qs.first().due_date == date(2026, 6, 1)
+
+    def test_list_installments_filter_by_due_date_lte(self, user):
+        """list() com due_date_lte filtra corretamente."""
+        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
+        InstallmentFactory(expense=expense, due_date=date(2026, 1, 1))
+        InstallmentFactory(expense=expense, due_date=date(2026, 6, 1))
+
+        qs = InstallmentService.list(user.company, due_date_lte=date(2026, 3, 1))
+        assert qs.count() == 1
+        assert qs.first().due_date == date(2026, 1, 1)
+
+    def test_list_installments_filter_by_status_and_date_range(self, user):
+        """list() combina status + date range."""
+        expense = _setup_expense(user, actual_amount=Decimal("2000.00"))
+        InstallmentFactory(expense=expense, due_date=date(2026, 1, 1), status="PENDING")
+        InstallmentFactory(expense=expense, due_date=date(2026, 6, 1), status="PENDING")
+        InstallmentFactory(
+            expense=expense,
+            due_date=date(2026, 6, 15),
+            status="PAID",
+            paid_date=date(2026, 6, 15),
+        )
+
+        qs = InstallmentService.list(
+            user.company,
+            status="PENDING",
+            due_date_gte=date(2026, 5, 1),
+            due_date_lte=date(2026, 7, 1),
+        )
+        assert qs.count() == 1
+        assert qs.first().due_date == date(2026, 6, 1)
 
     def test_get_installment_success(self, user):
         """get() retorna parcela por UUID com select_related."""

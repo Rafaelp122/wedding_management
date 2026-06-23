@@ -34,6 +34,9 @@ class InstallmentService:
         company: Company,
         wedding_id: UUID | str | None = None,
         expense_id: UUID | str | None = None,
+        status: str | None = None,
+        due_date_gte: date | None = None,
+        due_date_lte: date | None = None,
     ) -> QuerySet[Installment]:
         qs = Installment.objects.for_tenant(company).select_related(
             "expense", "wedding"
@@ -42,6 +45,12 @@ class InstallmentService:
             qs = qs.filter(wedding__uuid=wedding_id)
         if expense_id:
             qs = qs.filter(expense__uuid=expense_id)
+        if status:
+            qs = qs.filter(status=status)
+        if due_date_gte:
+            qs = qs.filter(due_date__gte=due_date_gte)
+        if due_date_lte:
+            qs = qs.filter(due_date__lte=due_date_lte)
         return qs
 
     @staticmethod

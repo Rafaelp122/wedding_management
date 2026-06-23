@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db.models import QuerySet
 from ninja import Router
 from ninja.pagination import paginate
@@ -25,13 +27,22 @@ def list_installments(
     request: AuthRequest,
     wedding_id: UUID4 | None = None,
     expense_id: UUID4 | None = None,
+    status: str | None = None,
+    due_date_gte: date | None = None,
+    due_date_lte: date | None = None,
 ) -> QuerySet[Installment]:
     """
-    Lista parcelas com filtro opcional por casamento e despesa.
+    Lista parcelas com filtros opcionais por casamento, despesa,
+    status e período de vencimento.
     """
     user = require_user(request.user)
     return InstallmentService.list(
-        user.company, wedding_id=wedding_id, expense_id=expense_id
+        user.company,
+        wedding_id=wedding_id,
+        expense_id=expense_id,
+        status=status,
+        due_date_gte=due_date_gte,
+        due_date_lte=due_date_lte,
     )
 
 
