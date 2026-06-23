@@ -58,7 +58,7 @@ export const AppLayout = () => {
                   className="relative text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 focus-visible:ring-primary/50 cursor-pointer"
                   aria-label="Notificações"
                 >
-                  <Bell className="w-5 h-5" />
+                  <Bell aria-hidden="true" className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">

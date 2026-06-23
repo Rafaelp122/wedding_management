@@ -45,8 +45,8 @@ export function NavUser() {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               aria-label="Alternar tema"
             >
-              <Sun className="h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun aria-hidden="true" className="h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon aria-hidden="true" className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
           </div>
 
@@ -54,7 +54,7 @@ export function NavUser() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0 border-2 border-white dark:border-zinc-800 shadow-sm">
-                {userInitials || <UserIcon className="h-4.5 w-4.5" />}
+                {userInitials || <UserIcon aria-hidden="true" className="h-4.5 w-4.5" />}
               </div>
               <div className="flex flex-col overflow-hidden text-left">
                 <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate leading-none font-display">
@@ -74,16 +74,16 @@ export function NavUser() {
                   className="h-8 w-8 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 rounded-lg cursor-pointer ml-auto focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Menu do usuário"
                 >
-                  <MoreVertical className="h-[18px] w-[18px]" />
+                  <MoreVertical aria-hidden="true" className="h-[18px] w-[18px]" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="top" className="w-48">
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/settings")}>
-                  <UserIcon className="h-4 w-4" />
+                  <UserIcon aria-hidden="true" className="h-4 w-4" />
                   Minha Conta
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/settings")}>
-                  <Settings className="h-4 w-4" />
+                  <Settings aria-hidden="true" className="h-4 w-4" />
                   Configurações
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -91,7 +91,7 @@ export function NavUser() {
                   className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer gap-2"
                   onClick={handleLogout}
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut aria-hidden="true" className="h-4 w-4" />
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -107,7 +107,7 @@ export function NavUser() {
                 className="h-10 w-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0 border-2 border-white dark:border-zinc-800 shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Menu do usuário"
               >
-                {userInitials || <UserIcon className="h-4.5 w-4.5" />}
+                {userInitials || <UserIcon aria-hidden="true" className="h-4.5 w-4.5" />}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="right" className="w-56">
@@ -119,11 +119,11 @@ export function NavUser() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/settings")}>
-                <UserIcon className="h-4 w-4" />
+                <UserIcon aria-hidden="true" className="h-4 w-4" />
                 Minha Conta
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/settings")}>
-                <Settings className="h-4 w-4" />
+                <Settings aria-hidden="true" className="h-4 w-4" />
                 Configurações
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -133,12 +133,12 @@ export function NavUser() {
               >
                 {theme === "dark" ? (
                   <>
-                    <Sun className="h-4 w-4" />
+                    <Sun aria-hidden="true" className="h-4 w-4" />
                     Modo Claro
                   </>
                 ) : (
                   <>
-                    <Moon className="h-4 w-4" />
+                    <Moon aria-hidden="true" className="h-4 w-4" />
                     Modo Escuro
                   </>
                 )}
@@ -148,7 +148,7 @@ export function NavUser() {
                 className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer gap-2"
                 onClick={handleLogout}
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut aria-hidden="true" className="h-4 w-4" />
                 Sair
               </DropdownMenuItem>
             </DropdownMenuContent>

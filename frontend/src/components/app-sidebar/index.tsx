@@ -56,9 +56,9 @@ export function AppSidebar() {
                 aria-label="Abrir barra lateral"
               >
                 {isLogoHovered ? (
-                  <PanelLeft className="size-[18px] text-primary-foreground" />
+                  <PanelLeft aria-hidden="true" className="size-[18px] text-primary-foreground" />
                 ) : (
-                  <RingsIcon className="size-[18px] text-primary-foreground" />
+                  <RingsIcon aria-hidden="true" className="size-[18px] text-primary-foreground" />
                 )}
               </button>
             </TooltipTrigger>
@@ -78,7 +78,7 @@ export function AppSidebar() {
                   onClick={toggleSidebar}
                   aria-label="Fechar barra lateral"
                 >
-                  <PanelLeft className="size-[18px]" />
+                  <PanelLeft aria-hidden="true" className="size-[18px]" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" align="center">

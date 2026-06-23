@@ -189,7 +189,7 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
                 onClick={() => onYearChange(selectedYear - 1)}
                 aria-label="Ano anterior"
               >
-                <ChevronLeft className="size-4" />
+                <ChevronLeft aria-hidden="true" className="size-4" />
               </Button>
               <span className="text-sm font-semibold min-w-[50px] text-center font-mono">
                 {selectedYear}
@@ -201,7 +201,7 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
                 onClick={() => onYearChange(selectedYear + 1)}
                 aria-label="Próximo ano"
               >
-                <ChevronRight className="size-4" />
+                <ChevronRight aria-hidden="true" className="size-4" />
               </Button>
             </div>
           </div>
