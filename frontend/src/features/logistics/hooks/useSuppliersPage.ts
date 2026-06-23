@@ -14,6 +14,13 @@ import { useSupplierFormDialogState } from "./useSupplierFormDialogState";
 import { useSupplierMutations } from "./useSupplierMutations";
 import type { SupplierStatusFilter } from "../types";
 
+/**
+ * Hook to manage the state and data fetching for the Suppliers page.
+ * Handles search query (with debouncing), pagination, and status filters,
+ * as well as actions for creating, editing, and deleting suppliers.
+ *
+ * @returns State, pagination details, and mutations for suppliers management.
+ */
 export function useSuppliersPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);

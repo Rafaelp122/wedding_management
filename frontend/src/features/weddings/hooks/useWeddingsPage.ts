@@ -11,6 +11,12 @@ import type { WeddingStatusFilter } from "@/features/weddings/utils/wedding-stat
 
 export const WEDDINGS_PAGE_SIZE = 5;
 
+/**
+ * Hook to manage the state and data fetching for the Weddings page.
+ * Handles search query (with debouncing), pagination, and status filters.
+ *
+ * @returns State and functions to manage the weddings list and filters.
+ */
 export function useWeddingsPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
