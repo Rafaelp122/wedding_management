@@ -3,16 +3,15 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
-import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { ChevronLeft, ChevronRight, BarChart2, DollarSign, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFinancesInstallmentsList } from "@/api/generated/v1/endpoints/finances/finances";
 import { useSchedulerTasksList } from "@/api/generated/v1/endpoints/scheduler/scheduler";
+import { useWeddingsByMonth, useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface WeddingMonthlyChartProps {
-  weddings: WeddingOut[];
   selectedYear: number;
   onYearChange: (year: number) => void;
 }
@@ -45,7 +44,6 @@ const tasksConfig = {
 } satisfies ChartConfig;
 
 export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
-  weddings,
   selectedYear,
   onYearChange,
 }: WeddingMonthlyChartProps) {
@@ -63,14 +61,17 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
   );
 
   // Chart 1: Weddings per Month
+  const { data: byMonthData } = useWeddingsByMonth(
+    { year: selectedYear },
+  );
+
+  const { data: weddingsData } = useWeddingsList({ limit: 200 });
+
   const { monthlyData, hasData } = useMemo(() => {
     const counts = new Array(12).fill(0);
-    for (const w of weddings) {
-      if (!w.date) continue;
-      const [year, month] = w.date.split("-").map(Number);
-      if (year === selectedYear) {
-        counts[month - 1]++;
-      }
+    const items = byMonthData?.data ?? [];
+    for (const item of items) {
+      counts[item.month - 1] = item.count;
     }
     const data = MONTHS.map((name, index) => ({
       name,
@@ -78,9 +79,9 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
     }));
     return {
       monthlyData: data,
-      hasData: counts.some((c) => c > 0),
+      hasData: data.some((d) => d.casamentos > 0),
     };
-  }, [weddings, selectedYear]);
+  }, [byMonthData, selectedYear]);
 
   // Chart 2: Cash Flow (previsto vs pago)
   const { cashFlowData, hasCashFlowData } = useMemo(() => {
@@ -115,8 +116,10 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
   }, [installmentsRes, selectedYear]);
 
   // Chart 3: Tasks Progress per Wedding in selectedYear
+  const weddingsForTasks = weddingsData?.data?.items ?? [];
+
   const { tasksData, hasTasksData } = useMemo(() => {
-    const yearWeddings = weddings.filter((w) => {
+    const yearWeddings = weddingsForTasks.filter((w) => {
       if (!w.date) return false;
       const [year] = w.date.split("-").map(Number);
       return year === selectedYear;
@@ -136,14 +139,14 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
       };
     });
 
-    // Sort by completion percentage descending and display up to 10
+
     const sortedData = data.sort((a, b) => b.concluido - a.concluido).slice(0, 10);
 
     return {
       tasksData: sortedData,
       hasTasksData: data.length > 0,
     };
-  }, [weddings, tasksRes, selectedYear]);
+  }, [weddingsForTasks, tasksRes, selectedYear]);
 
   return (
     <Card className="lg:col-span-2 shadow-soft border-zinc-200 dark:border-zinc-800 flex flex-col h-full">
