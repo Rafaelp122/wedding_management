@@ -25,7 +25,7 @@ describe("DetailSheet", () => {
 
     expect(screen.getByText("Detalhes")).toBeInTheDocument();
     expect(screen.getByText("Descrição detalhada")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByTestId("loading-skeleton")).toBeInTheDocument();
   });
 
   it("opens and shows empty state", async () => {

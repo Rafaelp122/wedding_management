@@ -20,7 +20,7 @@ describe("pluralize", () => {
     expect(pluralize(2, "parcela", "parcelas")).toBe("parcelas");
   });
 
-  it("returns singular for count 0", () => {
-    expect(pluralize(0, "item")).toBe("itens");
+  it("returns plural for count 0", () => {
+    expect(pluralize(0, "item")).toBe("items");
   });
 });

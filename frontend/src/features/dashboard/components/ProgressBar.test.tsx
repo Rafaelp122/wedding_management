@@ -37,7 +37,7 @@ describe("ProgressBar", () => {
     const { container } = render(
       <ProgressBar percentage={50} className="custom-track" />,
     );
-    const track = container.firstElementChild;
+    const track = container.querySelector('[class*="rounded-full"]');
     expect(track?.className).toContain("custom-track");
   });
 });

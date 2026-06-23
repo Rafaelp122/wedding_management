@@ -50,7 +50,7 @@ export function DetailSheet({
         </SheetHeader>
         <div className="mt-6 space-y-3">
           {isLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-4" data-testid="loading-skeleton">
               {[...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-16 w-full rounded-lg" />
               ))}

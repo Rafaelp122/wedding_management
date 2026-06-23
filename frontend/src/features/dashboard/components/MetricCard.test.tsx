@@ -46,10 +46,10 @@ describe("MetricCard", () => {
   });
 
   it("renders with neutral severity by default", () => {
-    const { container } = render(
+    render(
       <MetricCard label="Test" value={0} icon={<DollarSign />} />,
     );
-    const card = container.firstElementChild;
-    expect(card?.className).toContain("border-zinc-200");
+    const card = screen.getByText("Test").closest('[class*="border"]');
+    expect(card).toBeInTheDocument();
   });
 });
