@@ -16,19 +16,19 @@ export function UpcomingInstallments() {
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() + days);
 
-  const { data } = useFinancesInstallmentsList({ limit: 100 });
+  const dueDateGte = today.toISOString().split("T")[0];
+  const dueDateLte = cutoff.toISOString().split("T")[0];
 
-  const installments = (data?.data?.items ?? [])
-    .filter((inst) => {
-      if (inst.status !== "PENDING") return false;
-      const dueDate = new Date(inst.due_date);
-      dueDate.setHours(0, 0, 0, 0);
-      return dueDate >= today && dueDate <= cutoff;
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
-    );
+  const { data } = useFinancesInstallmentsList({
+    status: "PENDING",
+    due_date_gte: dueDateGte,
+    due_date_lte: dueDateLte,
+  });
+
+  const installments = (data?.data?.items ?? []).sort(
+    (a, b) =>
+      new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+  );
 
   if (installments.length === 0) return null;
 
