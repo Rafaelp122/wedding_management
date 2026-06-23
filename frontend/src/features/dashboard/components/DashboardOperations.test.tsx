@@ -135,7 +135,7 @@ describe("DashboardOperations", () => {
     await waitFor(() => {
       expect(screen.getByText("Contratos Pendentes com Fornecedores")).toBeInTheDocument();
       expect(screen.getByText("Dj Alok")).toBeInTheDocument();
-      expect(screen.getByText("R$ 5.000,00")).toBeInTheDocument();
+      expect(screen.getByText("5.000,00")).toBeInTheDocument();
     });
   });
 });

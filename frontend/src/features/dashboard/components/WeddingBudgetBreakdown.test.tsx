@@ -44,8 +44,8 @@ describe("WeddingBudgetBreakdown", () => {
     );
     expect(screen.getByText("Buffet")).toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
-    expect(screen.getByText("R$ 5.000")).toBeInTheDocument();
-    expect(screen.getByText("R$ 10.000")).toBeInTheDocument();
+    expect(screen.getByText("5.000,00")).toBeInTheDocument();
+    expect(screen.getByText("10.000,00")).toBeInTheDocument();
   });
 
   it("renders multiple categories sorted by percentage descending", () => {
@@ -150,8 +150,8 @@ describe("WeddingBudgetBreakdown", () => {
       />,
     );
 
-    expect(screen.getByText("R$ 9.000")).toBeInTheDocument();
-    expect(screen.getByText("R$ 15.000")).toBeInTheDocument();
+    expect(screen.getByText("9.000,00")).toBeInTheDocument();
+    expect(screen.getByText("15.000,00")).toBeInTheDocument();
     expect(screen.getByText("(60%)")).toBeInTheDocument();
   });
 
