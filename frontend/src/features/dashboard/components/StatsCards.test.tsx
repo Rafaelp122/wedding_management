@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import { StatsCards } from "@/features/dashboard/components/StatsCards";
 import { createMockDashboardSummary } from "@/test-data";
@@ -6,6 +6,26 @@ import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
 describe("StatsCards", () => {
+  beforeEach(() => {
+    server.use(
+      http.get("*/api/v1/weddings/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/scheduler/tasks/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/logistics/contracts/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+    );
+  });
+
   it("renders all 4 stat cards", () => {
     render(
       <StatsCards summary={createMockDashboardSummary()} />,
@@ -38,7 +58,7 @@ describe("StatsCards", () => {
 
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("Ação Necessária: 3 pendências")).toBeInTheDocument();
-    expect(screen.getByText("R$ 12.350,00")).toBeInTheDocument();
+    expect(screen.getByText("12.350,00")).toBeInTheDocument();
     expect(screen.getByText("Ação Necessária: 2 pendências")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("Aguardando assinatura/sinal")).toBeInTheDocument();
@@ -103,7 +123,7 @@ describe("StatsCards", () => {
     await waitFor(() => {
       const headers = screen.getAllByText("Parcelas Vencidas");
       expect(headers.length).toBeGreaterThanOrEqual(2);
-      const amounts = screen.getAllByText("R$ 5.000,00");
+      const amounts = screen.getAllByText("5.000,00");
       expect(amounts.length).toBeGreaterThanOrEqual(1);
     });
   });
@@ -164,6 +184,98 @@ describe("StatsCards", () => {
     });
   });
 
+  it("opens pending installments Sheet and renders content", async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("*/api/v1/weddings/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({
+          items: [
+            {
+              uuid: "inst-p1",
+              installment_number: 1,
+              amount: "750.00",
+              due_date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+              status: "PENDING",
+              expense: "exp-1",
+              wedding: "w1",
+            },
+          ],
+          count: 1,
+          limit: 100,
+          offset: 0,
+        }),
+      ),
+      http.get("*/api/v1/scheduler/tasks/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/logistics/contracts/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+    );
+
+    render(
+      <StatsCards
+        summary={createMockDashboardSummary({
+          pending_installments_7d: "750.00",
+          overdue_installments_count: 0,
+          overdue_installments_amount: "0",
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Ver Parcelas" }));
+
+    await waitFor(() => {
+      const matches = screen.getAllByText("750,00");
+      expect(matches.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it("shows empty message in overdue Sheet when no data", async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("*/api/v1/weddings/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/scheduler/tasks/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/logistics/contracts/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+    );
+
+    render(
+      <StatsCards
+        summary={createMockDashboardSummary({
+          pending_installments_7d: "0",
+          overdue_installments_count: 1,
+          overdue_installments_amount: "100.00",
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Ver Parcelas" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Nenhuma parcela vencida.")).toBeInTheDocument();
+    });
+  });
+
   it("opens pending contracts Sheet and renders content", async () => {
     const user = userEvent.setup();
 
@@ -217,7 +329,7 @@ describe("StatsCards", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Buffet Sabor")).toBeInTheDocument();
-      expect(screen.getByText("R$ 15.000,00")).toBeInTheDocument();
+      expect(screen.getByText("15.000,00")).toBeInTheDocument();
     });
   });
 });

@@ -1,5 +1,7 @@
 import { PiggyBank, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProgressBar } from "@/features/dashboard/components/ProgressBar";
+import { formatCurrencyBR } from "@/lib/formatters";
 import type { WeddingDashboardCategoryOut } from "@/api/generated/v1/models/weddingDashboardCategoryOut";
 
 interface WeddingBudgetBreakdownProps {
@@ -7,24 +9,10 @@ interface WeddingBudgetBreakdownProps {
   isLoading?: boolean;
 }
 
-const formatCurrency = (value: number | string) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(Number(value));
-
 function CategoryBar({ category }: { category: WeddingDashboardCategoryOut }) {
-  const pct = Math.min(category.percentage, 100);
   const isOver = category.percentage > 100;
   const isDanger = category.percentage >= 90;
   const isWarning = category.percentage >= 70 && category.percentage < 90;
-
-  const barColor = isOver || isDanger
-    ? "bg-destructive"
-    : isWarning
-      ? "bg-amber-500"
-      : "bg-aura-500";
 
   const textColor = isOver || isDanger
     ? "text-destructive"
@@ -57,19 +45,14 @@ function CategoryBar({ category }: { category: WeddingDashboardCategoryOut }) {
         </div>
         <div className="flex items-center gap-3 shrink-0 ml-2 text-xs">
           <span className="text-zinc-500 dark:text-zinc-400">
-            {formatCurrency(category.spent)} / {formatCurrency(category.allocated)}
+            {formatCurrencyBR(Number(category.spent))} / {formatCurrencyBR(Number(category.allocated))}
           </span>
           <span className={`font-bold tabular-nums w-10 text-right ${textColor}`}>
             {isOver ? `+${(category.percentage - 100).toFixed(0)}%` : `${category.percentage.toFixed(0)}%`}
           </span>
         </div>
       </div>
-      <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-        <div
-          className={`h-1.5 rounded-full transition-all duration-700 ${barColor}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <ProgressBar percentage={category.percentage} barClassName="h-1.5" />
     </div>
   );
 }
@@ -145,9 +128,9 @@ export function WeddingBudgetBreakdown({
             Orçamento por Categoria
           </CardTitle>
           <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            <span>{formatCurrency(totalSpent)}</span>
+            <span>{formatCurrencyBR(totalSpent)}</span>
             <span>/</span>
-            <span className="text-zinc-700 dark:text-zinc-300">{formatCurrency(totalAllocated)}</span>
+            <span className="text-zinc-700 dark:text-zinc-300">{formatCurrencyBR(totalAllocated)}</span>
             <span
               className={`ml-1 font-bold ${
                 totalPct >= 90

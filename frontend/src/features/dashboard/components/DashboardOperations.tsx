@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import { formatDateBR } from "@/lib/formatters";
+import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
+import { formatWeddingName } from "../utils";
 import { getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,12 +30,6 @@ import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistic
 interface DashboardOperationsProps {
   weddings: WeddingOut[];
 }
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
 
 export function DashboardOperations({ weddings }: DashboardOperationsProps) {
   const [activeTab, setActiveTab] = useState<string>("tarefas");
@@ -68,7 +63,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
 
   // 1. Process Grooms & Brides map for name resolution
   const weddingMap = weddings.reduce((acc, w) => {
-    acc[w.uuid] = `${w.bride_name} & ${w.groom_name}`;
+    acc[w.uuid] = formatWeddingName(w.bride_name, w.groom_name);
     return acc;
   }, {} as Record<string, string>);
 
@@ -157,7 +152,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
                       <tr key={wedding.uuid} className="table-row-hover">
                         <td className="py-4 px-6">
                           <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                            {wedding.groom_name} & {wedding.bride_name}
+                            {formatWeddingName(wedding.bride_name, wedding.groom_name)}
                           </p>
                         </td>
                         <td className="py-4 px-6">
@@ -323,7 +318,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
                         </td>
                         <td className="py-4 px-6">
                           <span className="text-sm font-mono font-medium text-zinc-900 dark:text-zinc-100">
-                            {formatCurrency(Number(contract.total_amount))}
+                            {formatCurrencyBR(Number(contract.total_amount))}
                           </span>
                         </td>
                         <td className="py-4 px-6 text-center">

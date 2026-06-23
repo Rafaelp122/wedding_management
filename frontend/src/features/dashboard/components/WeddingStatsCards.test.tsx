@@ -212,7 +212,7 @@ describe("WeddingStatsCards", () => {
 
     expect(screen.getByText("Próximas Parcelas")).toBeInTheDocument();
     expect(screen.getByText("Parcela #2")).toBeInTheDocument();
-    expect(screen.getByText("R$ 750,00")).toBeInTheDocument();
+    expect(screen.getByText(/750,00/)).toBeInTheDocument();
   });
 
   it("opens urgent tasks sheet and renders task details", async () => {
@@ -260,7 +260,8 @@ describe("WeddingStatsCards", () => {
     await user.click(screen.getByText("Ver Parcelas"));
 
     expect(screen.getByText("Em atraso")).toBeInTheDocument();
-    expect(screen.getByText("R$ 1.200,00")).toBeInTheDocument();
+    expect(screen.getByText(/1\.200,00/)).toBeInTheDocument();
+
   });
 
   it("shows default zero values when data is undefined", () => {

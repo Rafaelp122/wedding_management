@@ -23,8 +23,8 @@ describe("DashboardOperations", () => {
     render(<DashboardOperations weddings={weddings} />);
     const casamentosTab = screen.getByRole("tab", { name: /casamentos/i });
     await user.click(casamentosTab);
-    expect(screen.getByText(/João & Maria/)).toBeInTheDocument();
-    expect(screen.getByText(/Pedro & Ana/)).toBeInTheDocument();
+    expect(screen.getByText(/Maria & João/)).toBeInTheDocument();
+    expect(screen.getByText(/Ana & Pedro/)).toBeInTheDocument();
   });
 
   it("renders empty state in weddings tab when none provided", async () => {
@@ -135,7 +135,7 @@ describe("DashboardOperations", () => {
     await waitFor(() => {
       expect(screen.getByText("Contratos Pendentes com Fornecedores")).toBeInTheDocument();
       expect(screen.getByText("Dj Alok")).toBeInTheDocument();
-      expect(screen.getByText("R$ 5.000,00")).toBeInTheDocument();
+      expect(screen.getByText("5.000,00")).toBeInTheDocument();
     });
   });
 });
