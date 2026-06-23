@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from django.db.models import QuerySet
 from ninja import Router
 from ninja.pagination import paginate
@@ -38,7 +40,7 @@ def list_weddings(
 def list_weddings_by_month(
     request: AuthRequest,
     year: int,
-) -> list[WeddingByMonthOut]:
+) -> Sequence[dict]:
     """Retorna a quantidade de casamentos por mês no ano informado."""
     user = require_user(request.user)
     return WeddingService.count_by_month(company=user.company, year=year)
