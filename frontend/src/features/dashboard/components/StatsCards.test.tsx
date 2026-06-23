@@ -184,6 +184,94 @@ describe("StatsCards", () => {
     });
   });
 
+  it("opens pending installments Sheet and renders content", async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("*/api/v1/weddings/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({
+          items: [
+            {
+              uuid: "inst-p1",
+              installment_number: 1,
+              amount: "750.00",
+              due_date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+              status: "PENDING",
+              expense: "exp-1",
+              wedding: "w1",
+            },
+          ],
+          count: 1,
+          limit: 100,
+          offset: 0,
+        }),
+      ),
+      http.get("*/api/v1/scheduler/tasks/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/logistics/contracts/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+    );
+
+    render(
+      <StatsCards
+        summary={createMockDashboardSummary({
+          pending_installments_7d: "750.00",
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Ver Parcelas" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("750,00")).toBeInTheDocument();
+    });
+  });
+
+  it("shows empty message in overdue Sheet when no data", async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("*/api/v1/weddings/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/scheduler/tasks/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+      http.get("*/api/v1/logistics/contracts/", () =>
+        HttpResponse.json({ items: [], count: 0, limit: 100, offset: 0 }),
+      ),
+    );
+
+    render(
+      <StatsCards
+        summary={createMockDashboardSummary({
+          overdue_installments_count: 1,
+          overdue_installments_amount: "100.00",
+        })}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Ver Parcelas" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Nenhuma parcela vencida.")).toBeInTheDocument();
+    });
+  });
+
   it("opens pending contracts Sheet and renders content", async () => {
     const user = userEvent.setup();
 
