@@ -9,6 +9,7 @@ import { faker } from "@faker-js/faker";
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
+import { WeddingStatusEnum } from "../../models";
 import type {
   PagedWeddingOut,
   WeddingByMonthOut,
@@ -28,7 +29,7 @@ export const getWeddingsListResponseMock = (
     date: faker.date.past().toISOString().slice(0, 10),
     location: faker.string.alpha({ length: { min: 10, max: 20 } }),
     expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
-    status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)),
     created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
     total_budget: faker.helpers.arrayElement([
@@ -54,7 +55,7 @@ export const getWeddingsCreateResponseMock = (
   date: faker.date.past().toISOString().slice(0, 10),
   location: faker.string.alpha({ length: { min: 10, max: 20 } }),
   expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
-  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   total_budget: faker.helpers.arrayElement([
@@ -87,7 +88,7 @@ export const getWeddingsReadResponseMock = (
   date: faker.date.past().toISOString().slice(0, 10),
   location: faker.string.alpha({ length: { min: 10, max: 20 } }),
   expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
-  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   total_budget: faker.helpers.arrayElement([
@@ -111,7 +112,7 @@ export const getWeddingsUpdateResponseMock = (
   date: faker.date.past().toISOString().slice(0, 10),
   location: faker.string.alpha({ length: { min: 10, max: 20 } }),
   expected_guests: faker.helpers.arrayElement([faker.number.int(), null]),
-  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)),
   created_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   updated_at: faker.date.past().toISOString().slice(0, 19) + "Z",
   total_budget: faker.helpers.arrayElement([

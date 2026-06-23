@@ -4,6 +4,7 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
+import type { WeddingStatusEnum } from "./weddingStatusEnum";
 
 export interface WeddingOut {
   uuid: string;
@@ -12,7 +13,7 @@ export interface WeddingOut {
   date: string;
   location: string;
   expected_guests: number | null;
-  status: string;
+  status: WeddingStatusEnum;
   created_at: string;
   updated_at: string;
   total_budget?: number | null;

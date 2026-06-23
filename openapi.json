@@ -4846,8 +4846,7 @@
             "title": "Expected Guests"
           },
           "status": {
-            "title": "Status",
-            "type": "string"
+            "$ref": "#/components/schemas/WeddingStatusEnum"
           },
           "created_at": {
             "format": "date-time",
@@ -4897,6 +4896,15 @@
         ],
         "title": "WeddingOut",
         "type": "object"
+      },
+      "WeddingStatusEnum": {
+        "enum": [
+          "IN_PROGRESS",
+          "COMPLETED",
+          "CANCELED"
+        ],
+        "title": "WeddingStatusEnum",
+        "type": "string"
       },
       "WeddingIn": {
         "properties": {
@@ -5031,13 +5039,12 @@
           "status": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/WeddingStatusEnum"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Status"
+            ]
           }
         },
         "title": "WeddingPatchIn",

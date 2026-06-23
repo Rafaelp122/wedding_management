@@ -11,6 +11,7 @@ import {
   getWeddingAvatarStyle,
 } from "@/features/weddings/utils/wedding-status";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 import { EditWeddingDialog } from "./EditWeddingDialog";
 import { DeleteWeddingDialog } from "./DeleteWeddingDialog";
 
@@ -81,7 +82,7 @@ export const WeddingsTable = memo(function WeddingsTable({
               );
               const badgeStyle = getWeddingStatusBadgeStyle(wedding.status);
               const avatarStyle = getWeddingAvatarStyle(wedding.status);
-              const isCompleted = wedding.status === "COMPLETED";
+              const isCompleted = wedding.status === WeddingStatusEnum.COMPLETED;
 
               return (
                 <TableRow

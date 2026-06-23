@@ -4,6 +4,7 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
+import type { WeddingStatusEnum } from "./weddingStatusEnum";
 
 export interface WeddingPatchIn {
   groom_name?: string | null;
@@ -11,5 +12,5 @@ export interface WeddingPatchIn {
   date?: string | null;
   location?: string | null;
   expected_guests?: number | null;
-  status?: string | null;
+  status?: WeddingStatusEnum | null;
 }

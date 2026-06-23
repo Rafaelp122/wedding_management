@@ -1,7 +1,14 @@
 import datetime
+from enum import StrEnum
 
 from ninja import Field, Schema
 from pydantic import UUID4
+
+
+class WeddingStatusEnum(StrEnum):
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    CANCELED = "CANCELED"
 
 
 class WeddingIn(Schema):
@@ -23,7 +30,7 @@ class WeddingPatchIn(Schema):
     date: datetime.date | None = None
     location: str | None = None
     expected_guests: int | None = None
-    status: str | None = None
+    status: WeddingStatusEnum | None = None
 
 
 class WeddingOut(Schema):
@@ -33,7 +40,7 @@ class WeddingOut(Schema):
     date: datetime.date
     location: str
     expected_guests: int | None
-    status: str
+    status: WeddingStatusEnum
     created_at: datetime.datetime
     updated_at: datetime.datetime
     total_budget: float | None = Field(None, ge=0)

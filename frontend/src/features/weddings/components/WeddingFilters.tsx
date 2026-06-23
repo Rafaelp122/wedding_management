@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import type { WeddingStatusFilter } from "@/features/weddings/utils/wedding-status";
+import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 
 interface WeddingFiltersProps {
   search: string;
@@ -46,9 +47,9 @@ export function WeddingFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="IN_PROGRESS">Em Andamento</SelectItem>
-            <SelectItem value="COMPLETED">Concluído</SelectItem>
-            <SelectItem value="CANCELED">Cancelado</SelectItem>
+            <SelectItem value={WeddingStatusEnum.IN_PROGRESS}>Em Andamento</SelectItem>
+            <SelectItem value={WeddingStatusEnum.COMPLETED}>Concluído</SelectItem>
+            <SelectItem value={WeddingStatusEnum.CANCELED}>Cancelado</SelectItem>
           </SelectContent>
         </Select>
       </div>
