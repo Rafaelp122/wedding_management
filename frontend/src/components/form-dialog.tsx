@@ -56,8 +56,12 @@ export function FormDialog({
       <DialogContent className={contentClass}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && (
+          {description ? (
             <DialogDescription>{description}</DialogDescription>
+          ) : (
+            <DialogDescription className="sr-only">
+              Formulário para {title.toLowerCase()}
+            </DialogDescription>
           )}
         </DialogHeader>
 

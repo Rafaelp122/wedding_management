@@ -40,6 +40,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
             >
               <Link to={item.path} className="flex items-center w-full">
                 <item.icon
+                  aria-hidden="true"
                   className={cn(
                     "size-5 shrink-0",
                     isActive
