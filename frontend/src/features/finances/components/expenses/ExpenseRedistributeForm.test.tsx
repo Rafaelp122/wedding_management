@@ -154,9 +154,7 @@ describe("ExpenseRedistributeForm", () => {
     await user.click(screen.getByRole("button", { name: /aplicar/i }));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        "Erro ao remanejar parcelas.",
-      );
+      expect(toast.error).toHaveBeenCalledWith("API Error");
     });
   });
 
