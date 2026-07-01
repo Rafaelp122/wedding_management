@@ -54,6 +54,12 @@ export function getApiErrorInfo(
   fallback = "Não foi possível concluir a operação.",
 ): ApiErrorInfo {
   if (!(error instanceof AxiosError)) {
+    if (error instanceof Error && error.message) {
+      return { message: error.message };
+    }
+    if (typeof error === "string" && error.trim()) {
+      return { message: error };
+    }
     return { message: fallback };
   }
 
