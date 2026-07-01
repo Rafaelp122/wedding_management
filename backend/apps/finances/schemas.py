@@ -38,8 +38,9 @@ class BudgetOut(Schema):
     @staticmethod
     def resolve_total_overall_spent(obj: "Budget") -> Decimal:
         """Expõe o computed property ``Budget.total_overall_spent`` no payload JSON."""
-        if hasattr(obj, "_total_overall_spent"):
-            return obj._total_overall_spent
+        val = getattr(obj, "_total_overall_spent", None)
+        if val is not None:
+            return val
         return obj.total_overall_spent
 
 
@@ -77,8 +78,9 @@ class BudgetCategoryOut(Schema):
     @staticmethod
     def resolve_total_spent(obj: "BudgetCategory") -> Decimal:
         """Expõe o computed property ``BudgetCategory.total_spent`` no payload JSON."""
-        if hasattr(obj, "_total_spent"):
-            return obj._total_spent
+        val = getattr(obj, "_total_spent", None)
+        if val is not None:
+            return val
         return obj.total_spent
 
 
@@ -142,36 +144,36 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_contract(obj: "Expense") -> UUID4 | None:
-        if obj.contract_id:
+        if obj.contract_id and obj.contract:
             return obj.contract.uuid
         return None
 
     @staticmethod
     def resolve_category_name(obj: "Expense") -> str:
-        if hasattr(obj, "category_name"):
-            return obj.category_name
-        return obj.category.name if hasattr(obj, "category") else ""
+        val = getattr(obj, "category_name", None)
+        if val is not None:
+            return str(val)
+        return obj.category.name
 
     @staticmethod
     def resolve_contract_description(obj: "Expense") -> str | None:
-        if hasattr(obj, "contract_description"):
-            return obj.contract_description
-        if obj.contract_id:
+        val = getattr(obj, "contract_description", None)
+        if val is not None:
+            return str(val)
+        if obj.contract_id and obj.contract:
             return obj.contract.description
         return None
 
     @staticmethod
     def resolve_status(obj: "Expense") -> str:
-        total = (
-            obj.installments_count
-            if hasattr(obj, "installments_count")
-            else obj.installments.count()
-        )
-        paid = (
-            obj.paid_installments_count
-            if hasattr(obj, "paid_installments_count")
-            else obj.installments.filter(status="PAID").count()
-        )
+        total = getattr(obj, "installments_count", None)
+        if total is None:
+            total = obj.installments.count()
+
+        paid = getattr(obj, "paid_installments_count", None)
+        if paid is None:
+            paid = obj.installments.filter(status="PAID").count()
+
         if total == 0:
             return "PENDING"
         if paid >= total:
@@ -182,14 +184,16 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_installments_count(obj: "Expense") -> int:
-        if hasattr(obj, "installments_count"):
-            return obj.installments_count
+        val = getattr(obj, "installments_count", None)
+        if val is not None:
+            return int(val)
         return obj.installments.count()
 
     @staticmethod
     def resolve_paid_installments_count(obj: "Expense") -> int:
-        if hasattr(obj, "paid_installments_count"):
-            return obj.paid_installments_count
+        val = getattr(obj, "paid_installments_count", None)
+        if val is not None:
+            return int(val)
         return obj.installments.filter(status="PAID").count()
 
     @staticmethod
