@@ -10,6 +10,10 @@ updates:
     labels:
       - "dependencies"
       - "backend"
+    groups:
+      backend-dependencies:
+        patterns:
+          - "*"
 
   # 2. Monitorar o Frontend (React / Vite)
   - package-ecosystem: "npm"
@@ -21,6 +25,10 @@ updates:
     labels:
       - "dependencies"
       - "frontend"
+    groups:
+      frontend-dependencies:
+        patterns:
+          - "*"
 
   # 3. Monitorar a Landing Page (Astro)
   - package-ecosystem: "npm"
@@ -32,6 +40,10 @@ updates:
     labels:
       - "dependencies"
       - "landing-page"
+    groups:
+      landing-dependencies:
+        patterns:
+          - "*"
 
   # 4. Manter as próprias GitHub Actions seguras e atualizadas
   - package-ecosystem: "github-actions"
@@ -42,6 +54,10 @@ updates:
     labels:
       - "dependencies"
       - "ci-cd"
+    groups:
+      actions-dependencies:
+        patterns:
+          - "*"
 
   # 5. Monitorar Imagens Docker (Dockerfile e docker-compose.yml)
   - package-ecosystem: "docker"
@@ -52,3 +68,7 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    groups:
+      docker-dependencies:
+        patterns:
+          - "*"

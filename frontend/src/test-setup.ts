@@ -85,32 +85,41 @@ beforeAll(() => {
       { capture: true },
     );
 
+    let isInterceptorsRunning = false;
     const originalDispatchEvent = HTMLElement.prototype.dispatchEvent;
     HTMLElement.prototype.dispatchEvent = function (event) {
-      const result = originalDispatchEvent.call(this, event);
-      if (event.type === "click") {
-        const button = this.closest("button");
-        if (
-          button &&
-          button.type === "submit" &&
-          !button.disabled
-        ) {
-          const form = button.closest("form") as HTMLFormElement & { _hasSubmittedInTick?: boolean };
-          if (form && !form._hasSubmittedInTick) {
-            form._hasSubmittedInTick = true;
-            setTimeout(() => {
-              form._hasSubmittedInTick = false;
-            }, 0);
-            form.dispatchEvent(
-              new window.Event("submit", {
-                bubbles: true,
-                cancelable: true,
-              }),
-            );
+      if (isInterceptorsRunning) {
+        return originalDispatchEvent.call(this, event);
+      }
+      try {
+        isInterceptorsRunning = true;
+        const result = originalDispatchEvent.call(this, event);
+        if (event.type === "click") {
+          const button = this.closest("button");
+          if (
+            button &&
+            button.type === "submit" &&
+            !button.disabled
+          ) {
+            const form = button.closest("form") as HTMLFormElement & { _hasSubmittedInTick?: boolean };
+            if (form && !form._hasSubmittedInTick) {
+              form._hasSubmittedInTick = true;
+              setTimeout(() => {
+                form._hasSubmittedInTick = false;
+              }, 0);
+              form.dispatchEvent(
+                new window.Event("submit", {
+                  bubbles: true,
+                  cancelable: true,
+                }),
+              );
+            }
           }
         }
+        return result;
+      } finally {
+        isInterceptorsRunning = false;
       }
-      return result;
     };
   }
 
