@@ -24,15 +24,28 @@ function createAxiosError(
 }
 
 describe("getApiErrorInfo", () => {
-  it("returns fallback for non-Axios errors", () => {
-    const result = getApiErrorInfo(new Error("boom"));
+  it("returns original message for standard Error instances", () => {
+    const result = getApiErrorInfo(new Error("Erro inesperado no cliente"));
     expect(result).toEqual<ApiErrorInfo>({
-      message: "Não foi possível concluir a operação.",
+      message: "Erro inesperado no cliente",
     });
   });
 
-  it("returns custom fallback for non-Axios errors", () => {
-    const result = getApiErrorInfo(new Error("boom"), "deu ruim");
+  it("returns string as message when error is a string", () => {
+    const result = getApiErrorInfo("String de erro direta");
+    expect(result).toEqual<ApiErrorInfo>({
+      message: "String de erro direta",
+    });
+  });
+
+  it("returns fallback for non-Axios and non-Error types (like null or undefined)", () => {
+    expect(getApiErrorInfo(null).message).toBe("Não foi possível concluir a operação.");
+    expect(getApiErrorInfo(undefined).message).toBe("Não foi possível concluir a operação.");
+    expect(getApiErrorInfo({}).message).toBe("Não foi possível concluir a operação.");
+  });
+
+  it("returns custom fallback for empty Error objects or generic objects", () => {
+    const result = getApiErrorInfo({}, "deu ruim");
     expect(result.message).toBe("deu ruim");
   });
 
