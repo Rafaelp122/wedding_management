@@ -13,6 +13,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn, InstallmentPatchIn
@@ -65,14 +66,13 @@ class InstallmentService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Installment:
-        try:
-            return (
-                Installment.objects.for_tenant(company)
-                .select_related("expense", "wedding")
-                .get(uuid=uuid)
-            )
-        except Installment.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Parcela não encontrada.") from e
+        return get_object_or_404_for_tenant(
+            Installment,
+            company,
+            uuid,
+            select_related=["expense", "wedding"],
+            detail="Parcela não encontrada.",
+        )
 
     @staticmethod
     @transaction.atomic

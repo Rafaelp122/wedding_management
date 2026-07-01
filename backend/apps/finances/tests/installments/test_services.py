@@ -930,8 +930,10 @@ class TestInstallmentServiceListAndGet:
 
     def test_get_installment_not_found(self, user):
         """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
             InstallmentService.get(user.company, uuid4())
+
+        assert str(exc_info.value.detail) == "Parcela não encontrada."
 
     def test_get_installment_multitenancy(self):
         """Usuário A não pode acessar parcela do Usuário B."""
@@ -940,5 +942,7 @@ class TestInstallmentServiceListAndGet:
         expense_b = _setup_expense(user_b)
         installment_b = InstallmentFactory(expense=expense_b)
 
-        with pytest.raises(ObjectNotFoundError):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
             InstallmentService.get(user_a.company, installment_b.uuid)
+
+        assert str(exc_info.value.detail) == "Parcela não encontrada."
