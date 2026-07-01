@@ -5,7 +5,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, QuerySet
 
-from apps.core.exceptions import DomainIntegrityError, ObjectNotFoundError
+from apps.core.exceptions import DomainIntegrityError
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget
 from apps.finances.schemas import BudgetIn, BudgetPatchIn
@@ -28,16 +29,13 @@ class BudgetService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Budget:
-        try:
-            return (
-                Budget.objects.for_tenant(company)
-                .select_related("wedding")
-                .get(uuid=uuid)
-            )
-        except Budget.DoesNotExist as e:
-            raise ObjectNotFoundError(
-                detail="Orçamento não encontrado ou acesso negado."
-            ) from e
+        return get_object_or_404_for_tenant(
+            Budget,
+            company,
+            uuid,
+            select_related=["wedding"],
+            detail="Orçamento não encontrado ou acesso negado.",
+        )
 
     @staticmethod
     @transaction.atomic
@@ -53,17 +51,12 @@ class BudgetService:
         if isinstance(wedding_input, Wedding):
             wedding = wedding_input
         else:
-            try:
-                wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_input)
-            except Wedding.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de criar orçamento para casamento "
-                    f"inválido/negado: {wedding_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Casamento não encontrado ou acesso negado.",
-                    code="wedding_not_found_or_denied",
-                ) from e
+            wedding = get_object_or_404_for_tenant(
+                Wedding,
+                company,
+                wedding_input,
+                code="wedding_not_found_or_denied",
+            )
 
         # 2. Instanciação em Memória
         budget = Budget(company=company, wedding=wedding, **data)
@@ -156,17 +149,12 @@ class BudgetService:
         """
         from apps.weddings.models import Wedding
 
-        try:
-            wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_uuid)
-        except Wedding.DoesNotExist as e:
-            logger.warning(
-                f"Tentativa de criar orçamento para casamento inválido/negado: "
-                f"{wedding_uuid} por company_id={company.id}"
-            )
-            raise ObjectNotFoundError(
-                detail="Casamento não encontrado ou acesso negado.",
-                code="wedding_not_found_or_denied",
-            ) from e
+        wedding = get_object_or_404_for_tenant(
+            Wedding,
+            company,
+            wedding_uuid,
+            code="wedding_not_found_or_denied",
+        )
 
         budget, created = Budget.objects.get_or_create(
             company=company,
