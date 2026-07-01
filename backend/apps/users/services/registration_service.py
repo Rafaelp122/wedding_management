@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError, transaction
 
 from apps.core.exceptions import DomainIntegrityError
@@ -33,7 +34,12 @@ class RegistrationService:
         """
         logger.info(f"Iniciando registro de novo proprietário: {email}")
 
-        # 1. Validação Preventiva
+        # 1. Validação de Senha (Segurança)
+        # O User.objects.create_user já chama validate_password?
+        # Não por padrão no Django, e queremos falhar cedo.
+        validate_password(password)
+
+        # 2. Validação Preventiva de E-mail
         if User.objects.filter(email=email).exists():
             raise DomainIntegrityError(
                 detail="Este e-mail já está cadastrado em outra conta.",

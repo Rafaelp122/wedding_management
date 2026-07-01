@@ -15,7 +15,7 @@ class TestRegistrationService:
     def test_register_new_owner_success(self):
         """Garante que um novo usuário e empresa são criados corretamente."""
         email = "novo@exemplo.com"
-        password = "password123"
+        password = "SecurePassword123!"
         first_name = "Novo"
         last_name = "Usuário"
 
@@ -63,7 +63,7 @@ class TestRegistrationService:
     def test_register_new_owner_with_company_name(self):
         """Garante que o nome da empresa é usado quando fornecido."""
         email = "agencia@exemplo.com"
-        password = "password123"
+        password = "SecurePassword123!"
         first_name = "Helena"
         last_name = "Costa"
         company_name = "Aura Eventos"
