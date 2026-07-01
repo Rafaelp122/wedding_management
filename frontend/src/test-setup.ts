@@ -143,6 +143,21 @@ beforeAll(() => {
       disconnect: vi.fn(),
     };
   });
+
+  const originalFocus = HTMLElement.prototype.focus;
+  let isFocusing = false;
+  Object.defineProperty(HTMLElement.prototype, "focus", {
+    configurable: true,
+    value: function (...args: unknown[]) {
+      if (isFocusing) return;
+      try {
+        isFocusing = true;
+        originalFocus.apply(this, args);
+      } finally {
+        isFocusing = false;
+      }
+    },
+  });
 });
 
 afterEach(() => {

@@ -38,9 +38,13 @@ vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
   useLogisticsContractsUploadUrl: () => mockUploadUrl(),
 }));
 
-vi.mock("@/api/generated/v1/endpoints/finances/finances", () => ({
-  useFinancesCategoriesList: () => mockCategoriesList(),
-}));
+vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
+  return {
+    ...mod,
+    useFinancesCategoriesList: () => mockCategoriesList(),
+  };
+});
 
 // ===== TEST SUITE =====
 
