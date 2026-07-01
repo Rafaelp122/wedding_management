@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -105,10 +104,14 @@ const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     active?: boolean
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload?: any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     label?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     labelFormatter?: (value: any, payload: any[]) => React.ReactNode
     labelClassName?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formatter?: any
     color?: string
     hideLabel?: boolean
@@ -191,7 +194,9 @@ const ChartTooltipContent = React.forwardRef<
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
           {payload
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .filter((item: any) => item.type !== "none")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .map((item: any, index: number) => {
               const key = `${nameKey || item.name || item.dataKey || "value"}`
               const itemConfig = getPayloadConfigFromPayload(config, item, key)
@@ -268,6 +273,7 @@ const ChartLegend = RechartsPrimitive.Legend
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload?: any[]
     verticalAlign?: "top" | "bottom" | "middle"
     hideIcon?: boolean
@@ -294,7 +300,9 @@ const ChartLegendContent = React.forwardRef<
         )}
       >
         {payload
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .filter((item: any) => item.type !== "none")
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((item: any) => {
             const key = `${nameKey || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)

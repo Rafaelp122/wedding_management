@@ -148,11 +148,11 @@ beforeAll(() => {
   let isFocusing = false;
   Object.defineProperty(HTMLElement.prototype, "focus", {
     configurable: true,
-    value: function (...args: unknown[]) {
+    value: function (options?: FocusOptions) {
       if (isFocusing) return;
       try {
         isFocusing = true;
-        originalFocus.apply(this, args);
+        originalFocus.call(this, options);
       } finally {
         isFocusing = false;
       }
