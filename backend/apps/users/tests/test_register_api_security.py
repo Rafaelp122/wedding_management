@@ -14,9 +14,9 @@ def test_register_user_weak_password_api_response(auth_client):
             "password": "password",
             "first_name": "Weak",
             "last_name": "API",
-            "company_name": "Test Co"
+            "company_name": "Test Co",
         },
-        content_type="application/json"
+        content_type="application/json",
     )
 
     assert response.status_code == 400

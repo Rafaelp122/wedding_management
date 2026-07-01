@@ -22,5 +22,5 @@ class TestRegistrationPasswordSecurity:
                 email=email,
                 password=weak_password,
                 first_name="Weak",
-                last_name="Password"
+                last_name="Password",
             )
