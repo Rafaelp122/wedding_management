@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from typing import cast
 from uuid import UUID
 
 from django.db import transaction
@@ -11,6 +12,7 @@ from apps.core.exceptions import (
 )
 from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
+from apps.finances.managers import BudgetCategoryQuerySet
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
 from apps.tenants.models import Company
@@ -60,8 +62,10 @@ class BudgetCategoryService:
         """
         Lista categorias de orçamento de uma empresa.
         """
-        qs = BudgetCategory.objects.for_tenant(company).select_related(
-            "budget", "wedding"
+        qs = (
+            cast(BudgetCategoryQuerySet, BudgetCategory.objects.for_tenant(company))
+            .with_total_spent()
+            .select_related("budget", "wedding")
         )
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
@@ -69,13 +73,21 @@ class BudgetCategoryService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> BudgetCategory:
-        return get_object_or_404_for_tenant(
-            BudgetCategory,
-            company,
-            uuid,
-            select_related=["budget", "wedding"],
-            detail="Categoria de orçamento não encontrada.",
-        )
+        from django.core.exceptions import ValidationError
+
+        from apps.core.exceptions import ObjectNotFoundError
+
+        try:
+            return (
+                cast(BudgetCategoryQuerySet, BudgetCategory.objects.for_tenant(company))
+                .with_total_spent()
+                .select_related("budget", "wedding")
+                .get(uuid=uuid)
+            )
+        except (BudgetCategory.DoesNotExist, ValueError, ValidationError) as e:
+            raise ObjectNotFoundError(
+                detail="Categoria de orçamento não encontrada."
+            ) from e
 
     @staticmethod
     @transaction.atomic

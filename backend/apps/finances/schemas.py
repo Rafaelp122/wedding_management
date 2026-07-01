@@ -32,8 +32,15 @@ class BudgetOut(Schema):
     notes: str | None = None
 
     @staticmethod
+    def resolve_wedding(obj: "Budget") -> UUID4:
+        return obj.wedding.uuid
+
+    @staticmethod
     def resolve_total_overall_spent(obj: "Budget") -> Decimal:
         """Expõe o computed property ``Budget.total_overall_spent`` no payload JSON."""
+        val = getattr(obj, "_total_overall_spent", None)
+        if val is not None:
+            return val
         return obj.total_overall_spent
 
 
@@ -53,9 +60,7 @@ class BudgetCategoryPatchIn(Schema):
 
 class BudgetCategoryOut(Schema):
     uuid: UUID4
-    wedding: UUID4 = Field(
-        alias="wedding.uuid"
-    )  # Read-Only logic keeps it in the output
+    wedding: UUID4 = Field(alias="wedding.uuid")
     budget: UUID4 = Field(alias="budget.uuid")
     name: str
     description: str | None = None
@@ -63,8 +68,19 @@ class BudgetCategoryOut(Schema):
     total_spent: Decimal = Field(default=Decimal("0.00"))
 
     @staticmethod
+    def resolve_wedding(obj: "BudgetCategory") -> UUID4:
+        return obj.wedding.uuid
+
+    @staticmethod
+    def resolve_budget(obj: "BudgetCategory") -> UUID4:
+        return obj.budget.uuid
+
+    @staticmethod
     def resolve_total_spent(obj: "BudgetCategory") -> Decimal:
         """Expõe o computed property ``BudgetCategory.total_spent`` no payload JSON."""
+        val = getattr(obj, "_total_spent", None)
+        if val is not None:
+            return val
         return obj.total_spent
 
 
@@ -105,6 +121,15 @@ class ExpenseOut(Schema):
     wedding: UUID4 = Field(alias="wedding.uuid")
     category: UUID4 = Field(alias="category.uuid")
     contract: UUID4 | None = None
+
+    @staticmethod
+    def resolve_wedding(obj: "Expense") -> UUID4:
+        return obj.wedding.uuid
+
+    @staticmethod
+    def resolve_category(obj: "Expense") -> UUID4:
+        return obj.category.uuid
+
     name: str
     description: str = ""
     estimated_amount: Decimal
@@ -119,27 +144,36 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_contract(obj: "Expense") -> UUID4 | None:
-        c = obj.contract
-        return c.uuid if c else None
+        if obj.contract_id and obj.contract:
+            return obj.contract.uuid
+        return None
 
     @staticmethod
     def resolve_category_name(obj: "Expense") -> str:
-        return getattr(obj, "category_name", obj.category.name)
+        val = getattr(obj, "category_name", None)
+        if val is not None:
+            return str(val)
+        return obj.category.name
 
     @staticmethod
     def resolve_contract_description(obj: "Expense") -> str | None:
-        if obj.contract:
-            return getattr(obj, "contract_description", obj.contract.description)
+        val = getattr(obj, "contract_description", None)
+        if val is not None:
+            return str(val)
+        if obj.contract_id and obj.contract:
+            return obj.contract.description
         return None
 
     @staticmethod
     def resolve_status(obj: "Expense") -> str:
-        total = getattr(obj, "installments_count", obj.installments.count())
-        paid = getattr(
-            obj,
-            "paid_installments_count",
-            obj.installments.filter(status="PAID").count(),
-        )
+        total = getattr(obj, "installments_count", None)
+        if total is None:
+            total = obj.installments.count()
+
+        paid = getattr(obj, "paid_installments_count", None)
+        if paid is None:
+            paid = obj.installments.filter(status="PAID").count()
+
         if total == 0:
             return "PENDING"
         if paid >= total:
@@ -150,15 +184,17 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_installments_count(obj: "Expense") -> int:
-        return getattr(obj, "installments_count", obj.installments.count())
+        val = getattr(obj, "installments_count", None)
+        if val is not None:
+            return int(val)
+        return obj.installments.count()
 
     @staticmethod
     def resolve_paid_installments_count(obj: "Expense") -> int:
-        return getattr(
-            obj,
-            "paid_installments_count",
-            obj.installments.filter(status="PAID").count(),
-        )
+        val = getattr(obj, "paid_installments_count", None)
+        if val is not None:
+            return int(val)
+        return obj.installments.filter(status="PAID").count()
 
     @staticmethod
     def resolve_total_paid(obj: "Expense") -> Decimal:

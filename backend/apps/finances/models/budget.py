@@ -13,6 +13,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
+from apps.finances.managers import BudgetManager
 from apps.tenants.models import TenantModel
 
 
@@ -31,6 +32,8 @@ class Budget(TenantModel, WeddingOwnedMixin):
        continua identificando o modelo como "pertencente a um casamento" e aplica
        automaticamente os filtros de Multitenancy (Segurança por Design).
     """
+
+    objects = BudgetManager()  # type: ignore[misc]
 
     wedding = models.OneToOneField(
         "weddings.Wedding",

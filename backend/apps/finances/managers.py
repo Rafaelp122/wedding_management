@@ -13,6 +13,31 @@ from apps.finances.models.installment import Installment
 from apps.tenants.managers import TenantManager, TenantQuerySet
 
 
+class BudgetQuerySet(TenantQuerySet):
+    """QuerySet customizado para Budget."""
+
+    def with_total_spent(self) -> BudgetQuerySet:
+        """Anota cada orçamento com o total geral pago."""
+        return self.annotate(
+            _total_overall_spent=Coalesce(
+                Sum(
+                    "categories__expenses__installments__amount",
+                    filter=Q(
+                        categories__expenses__installments__status=Installment.StatusChoices.PAID
+                    ),
+                ),
+                Decimal("0.00"),
+            )
+        )
+
+
+class BudgetManager(TenantManager):
+    """Manager customizado para Budget."""
+
+    def get_queryset(self) -> BudgetQuerySet:
+        return BudgetQuerySet(self.model, using=self._db)
+
+
 class BudgetCategoryQuerySet(TenantQuerySet):
     """QuerySet customizado para BudgetCategory."""
 
