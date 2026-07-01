@@ -25,17 +25,27 @@ class BudgetService:
 
     @staticmethod
     def list(company: Company) -> QuerySet[Budget]:
-        return Budget.objects.for_tenant(company).select_related("wedding")
+        return (
+            Budget.objects.for_tenant(company)
+            .with_total_spent()
+            .select_related("wedding")
+        )
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Budget:
-        return get_object_or_404_for_tenant(
-            Budget,
-            company,
-            uuid,
-            select_related=["wedding"],
-            detail="Orçamento não encontrado ou acesso negado.",
-        )
+        try:
+            return (
+                Budget.objects.for_tenant(company)
+                .with_total_spent()
+                .select_related("wedding")
+                .get(uuid=uuid)
+            )
+        except (Budget.DoesNotExist, ValueError, ValidationError) as e:
+            from apps.core.exceptions import ObjectNotFoundError
+
+            raise ObjectNotFoundError(
+                detail="Orçamento não encontrado ou acesso negado."
+            ) from e
 
     @staticmethod
     @transaction.atomic
