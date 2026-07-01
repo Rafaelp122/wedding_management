@@ -317,8 +317,10 @@ class TestBudgetCategoryServiceListAndGet:
 
     def test_get_category_not_found(self, user):
         """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
             BudgetCategoryService.get(user.company, uuid4())
+
+        assert str(exc_info.value.detail) == "Categoria de orçamento não encontrada."
 
     def test_get_category_multitenancy(self):
         """Usuário A não pode acessar categoria do Usuário B."""
@@ -330,8 +332,10 @@ class TestBudgetCategoryServiceListAndGet:
             wedding=budget_b.wedding,
         )
 
-        with pytest.raises(ObjectNotFoundError):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
             BudgetCategoryService.get(user_a.company, category_b.uuid)
+
+        assert str(exc_info.value.detail) == "Categoria de orçamento não encontrada."
 
 
 @pytest.mark.django_db
