@@ -111,7 +111,7 @@ class ContractService:
                 )
                 .get(uuid=uuid)
             )
-        except (Contract.DoesNotExist, ValueError) as e:
+        except (Contract.DoesNotExist, ValueError, ValidationError) as e:
             raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
 
     @staticmethod

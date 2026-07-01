@@ -42,7 +42,13 @@ class SupplierService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Supplier:
-        return get_object_or_404_for_tenant(Supplier, company, uuid)
+        return get_object_or_404_for_tenant(
+            Supplier,
+            company,
+            uuid,
+            detail="Fornecedor não encontrado ou acesso negado.",
+            code="supplier_not_found_or_denied",
+        )
 
     @staticmethod
     @transaction.atomic

@@ -3,6 +3,7 @@ from datetime import date
 from typing import Any, cast
 from uuid import UUID
 
+from django.core.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import QuerySet
@@ -52,7 +53,7 @@ class ExpenseService:
                 .with_details()
                 .get(uuid=uuid)
             )
-        except (Expense.DoesNotExist, ValueError) as e:
+        except (Expense.DoesNotExist, ValueError, ValidationError) as e:
             raise ObjectNotFoundError(
                 detail="Despesa não encontrada ou acesso negado."
             ) from e
@@ -97,6 +98,7 @@ class ExpenseService:
                 BudgetCategory,
                 company,
                 category_input,
+                detail="Categoria de orçamento não encontrada ou acesso negado.",
                 code="budget_category_not_found_or_denied",
             )
 

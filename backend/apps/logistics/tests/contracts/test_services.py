@@ -915,7 +915,7 @@ class TestContractServiceCreateFull:
                 contract_data=contract_data,
                 expense_data=expense_data,
             )
-        assert "categoria de orçamento não encontrado" in str(exc_info.value).lower()
+        assert exc_info.value.code == "budget_category_not_found_or_denied"
 
     def test_create_full_expense_amount_mismatch_contract(self, user):
         """Expense com valor divergente do contrato deve falhar (BR-F02)."""

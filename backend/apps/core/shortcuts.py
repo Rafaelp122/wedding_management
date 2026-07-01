@@ -47,5 +47,16 @@ def get_object_or_404_for_tenant[ModelT: models.Model](
         return cast(ModelT, queryset.get(uuid=uuid))
     except (ObjectDoesNotExist, ValueError, ValidationError) as e:
         model_name = getattr(model_cls._meta, "verbose_name", "Recurso")
-        error_detail = detail or f"{model_name} não encontrado ou acesso negado."
+
+        # Ajuste de concordância gramatical básica
+        # Se termina em 'a' ou 'ão' (como em Categoria ou Organização),
+        # usamos 'encontrada'. É uma heurística simples.
+        name_str = str(model_name).lower()
+        suffix = (
+            "encontrada"
+            if name_str.endswith("a") or name_str.endswith("ão")
+            else "encontrado"
+        )
+
+        error_detail = detail or f"{model_name} não {suffix} ou acesso negado."
         raise ObjectNotFoundError(detail=error_detail, code=code) from e
