@@ -238,7 +238,7 @@ jobs:
           cd backend
           uv run python manage.py migrate --noinput
           uv run python manage.py seed_db
-          uv run python manage.py runserver 8000 &
+          .venv/bin/python manage.py runserver 8000 &
 
       - name: Wait for Backend
         run: |

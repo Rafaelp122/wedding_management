@@ -266,7 +266,8 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
-                        formatter={(value, name) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        formatter={(value: any, name: any) => {
                           const config = cashFlowConfig[name as keyof typeof cashFlowConfig];
                           const label = config ? config.label : name;
                           const formattedValue = new Intl.NumberFormat("pt-BR", {
@@ -324,7 +325,8 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
-                        formatter={(value) => `${value}% concluído`}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        formatter={(value: any) => `${value}% concluído`}
                         hideLabel
                       />
                     }
