@@ -19,7 +19,7 @@ class BudgetQuerySet(TenantQuerySet):
     def with_total_spent(self) -> BudgetQuerySet:
         """Anota cada orçamento com o total geral pago."""
         return self.annotate(
-            annotated_total_overall_spent=Coalesce(
+            _total_overall_spent=Coalesce(
                 Sum(
                     "categories__expenses__installments__amount",
                     filter=Q(
@@ -44,7 +44,7 @@ class BudgetCategoryQuerySet(TenantQuerySet):
     def with_total_spent(self) -> BudgetCategoryQuerySet:
         """Anota cada categoria com o total pago (soma de parcelas PAID)."""
         return self.annotate(
-            annotated_total_spent=Coalesce(
+            _total_spent=Coalesce(
                 Sum(
                     "expenses__installments__amount",
                     filter=Q(

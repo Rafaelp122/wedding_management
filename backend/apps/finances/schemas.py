@@ -27,20 +27,20 @@ class BudgetPatchIn(Schema):
 
 class BudgetOut(Schema):
     uuid: UUID4
-    wedding: UUID = Field(alias="wedding.uuid")
+    wedding: UUID4 = Field(alias="wedding.uuid")
     total_estimated: Decimal
     total_overall_spent: Decimal = Field(default=Decimal("0.00"))
     notes: str | None = None
 
     @staticmethod
-    def resolve_wedding(obj: "Budget") -> UUID:
+    def resolve_wedding(obj: "Budget") -> UUID4:
         return obj.wedding.uuid
 
     @staticmethod
     def resolve_total_overall_spent(obj: "Budget") -> Decimal:
         """Expõe o computed property ``Budget.total_overall_spent`` no payload JSON."""
-        if hasattr(obj, "annotated_total_overall_spent"):
-            return obj.annotated_total_overall_spent
+        if hasattr(obj, "_total_overall_spent"):
+            return obj._total_overall_spent
         return obj.total_overall_spent
 
 
@@ -60,26 +60,26 @@ class BudgetCategoryPatchIn(Schema):
 
 class BudgetCategoryOut(Schema):
     uuid: UUID4
-    wedding: UUID = Field(alias="wedding.uuid")
-    budget: UUID = Field(alias="budget.uuid")
+    wedding: UUID4 = Field(alias="wedding.uuid")
+    budget: UUID4 = Field(alias="budget.uuid")
     name: str
     description: str | None = None
     allocated_budget: Decimal
     total_spent: Decimal = Field(default=Decimal("0.00"))
 
     @staticmethod
-    def resolve_wedding(obj: "BudgetCategory") -> UUID:
+    def resolve_wedding(obj: "BudgetCategory") -> UUID4:
         return obj.wedding.uuid
 
     @staticmethod
-    def resolve_budget(obj: "BudgetCategory") -> UUID:
+    def resolve_budget(obj: "BudgetCategory") -> UUID4:
         return obj.budget.uuid
 
     @staticmethod
     def resolve_total_spent(obj: "BudgetCategory") -> Decimal:
         """Expõe o computed property ``BudgetCategory.total_spent`` no payload JSON."""
-        if hasattr(obj, "annotated_total_spent"):
-            return obj.annotated_total_spent
+        if hasattr(obj, "_total_spent"):
+            return obj._total_spent
         return obj.total_spent
 
 
@@ -117,16 +117,16 @@ class ExpenseFromDocumentOut(Schema):
 
 class ExpenseOut(Schema):
     uuid: UUID4
-    wedding: UUID = Field(alias="wedding.uuid")
-    category: UUID = Field(alias="category.uuid")
-    contract: UUID | None = None
+    wedding: UUID4 = Field(alias="wedding.uuid")
+    category: UUID4 = Field(alias="category.uuid")
+    contract: UUID4 | None = None
 
     @staticmethod
-    def resolve_wedding(obj: "Expense") -> UUID:
+    def resolve_wedding(obj: "Expense") -> UUID4:
         return obj.wedding.uuid
 
     @staticmethod
-    def resolve_category(obj: "Expense") -> UUID:
+    def resolve_category(obj: "Expense") -> UUID4:
         return obj.category.uuid
     name: str
     description: str = ""
@@ -141,7 +141,7 @@ class ExpenseOut(Schema):
     total_pending: Decimal = Decimal("0.00")
 
     @staticmethod
-    def resolve_contract(obj: "Expense") -> UUID | None:
+    def resolve_contract(obj: "Expense") -> UUID4 | None:
         if obj.contract_id:
             return obj.contract.uuid
         return None
