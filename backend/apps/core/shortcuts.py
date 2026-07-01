@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 
 from apps.core.exceptions import ObjectNotFoundError
@@ -45,7 +45,7 @@ def get_object_or_404_for_tenant[ModelT: models.Model](
             queryset = queryset.prefetch_related(*prefetch_related)
 
         return cast(ModelT, queryset.get(uuid=uuid))
-    except (model_cls.DoesNotExist, ValueError, ValidationError) as e:
+    except (ObjectDoesNotExist, ValueError, ValidationError) as e:
         model_name = getattr(model_cls._meta, "verbose_name", "Recurso")
         error_detail = detail or f"{model_name} não encontrado ou acesso negado."
         raise ObjectNotFoundError(detail=error_detail, code=code) from e
