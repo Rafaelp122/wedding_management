@@ -187,7 +187,9 @@ class TestBudgetServiceCritical:
         with pytest.raises(ObjectNotFoundError) as exc_info:
             BudgetService.get(user.company, invalid_uuid)
 
-        assert "Orçamento não encontrado ou acesso negado." in str(exc_info.value.detail)
+        assert "Orçamento não encontrado ou acesso negado." in str(
+            exc_info.value.detail
+        )
 
     def test_get_budget_invalid_uuid_format(self, user):
         """get() lança ObjectNotFoundError para formato de UUID inválido."""
@@ -196,7 +198,9 @@ class TestBudgetServiceCritical:
         with pytest.raises(ObjectNotFoundError) as exc_info:
             BudgetService.get(user.company, invalid_format)
 
-        assert "Orçamento não encontrado ou acesso negado." in str(exc_info.value.detail)
+        assert "Orçamento não encontrado ou acesso negado." in str(
+            exc_info.value.detail
+        )
 
     def test_list_budgets_multi_tenancy(self):
         """
