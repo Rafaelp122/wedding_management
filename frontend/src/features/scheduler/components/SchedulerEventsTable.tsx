@@ -20,13 +20,7 @@ import {
 } from "@/components/ui/table";
 import { formatDateTimeBR } from "@/lib/formatters";
 
-const EVENT_LABELS: Record<string, string> = {
-  reuniao: "Reunião",
-  pagamento: "Pagamento",
-  visita: "Visita Técnica",
-  degustacao: "Degustação",
-  outro: "Outro",
-};
+import { EVENT_LABELS } from "../constants";
 
 interface SchedulerEventsTableProps {
   events: EventOut[];
