@@ -1,7 +1,6 @@
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 from ninja import Schema
 from pydantic import UUID4, Field
@@ -128,6 +127,7 @@ class ExpenseOut(Schema):
     @staticmethod
     def resolve_category(obj: "Expense") -> UUID4:
         return obj.category.uuid
+
     name: str
     description: str = ""
     estimated_amount: Decimal
