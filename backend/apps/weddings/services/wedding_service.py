@@ -12,8 +12,8 @@ from django.db.models import Count, OuterRef, ProtectedError, Q, QuerySet, Subqu
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
-    ObjectNotFoundError,
 )
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget
 from apps.scheduler.schemas import EventIn
@@ -93,18 +93,13 @@ class WeddingService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Wedding:
-        wedding = (
-            Wedding.objects.for_tenant(company)
-            .select_related("company")
-            .filter(uuid=uuid)
-            .first()
+        return get_object_or_404_for_tenant(
+            Wedding,
+            company,
+            uuid,
+            select_related=["company"],
+            code="wedding_not_found_or_denied",
         )
-        if wedding is None:
-            raise ObjectNotFoundError(
-                detail="Casamento não encontrado ou acesso negado.",
-                code="wedding_not_found_or_denied",
-            )
-        return wedding
 
     @staticmethod
     @transaction.atomic

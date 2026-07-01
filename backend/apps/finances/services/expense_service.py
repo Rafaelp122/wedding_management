@@ -3,6 +3,7 @@ from datetime import date
 from typing import Any, cast
 from uuid import UUID
 
+from django.core.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import QuerySet
@@ -11,6 +12,7 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     ObjectNotFoundError,
 )
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.managers import ExpenseQuerySet
 from apps.finances.models import BudgetCategory, Expense
@@ -41,30 +43,30 @@ class ExpenseService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Expense:
+        # Nota: with_details() é um método do manager customizado.
+        # get_object_or_404_for_tenant usa objects.for_tenant(company).
+        # Para manter with_details(), vamos fazer manualmente ou garantir que
+        # with_details() seja chamado no queryset.
         try:
             return (
                 cast(ExpenseQuerySet, Expense.objects.for_tenant(company))
                 .with_details()
                 .get(uuid=uuid)
             )
-        except Expense.DoesNotExist as e:
+        except (Expense.DoesNotExist, ValueError, ValidationError) as e:
             raise ObjectNotFoundError(
                 detail="Despesa não encontrada ou acesso negado."
             ) from e
 
     @staticmethod
     def from_document(company: Company, contract_uuid: UUID | str) -> dict[str, Any]:
-        try:
-            contract = (
-                Contract.objects.for_tenant(company)
-                .select_related("supplier")
-                .get(uuid=contract_uuid)
-            )
-        except Contract.DoesNotExist as e:
-            raise ObjectNotFoundError(
-                detail="Contrato não encontrado ou acesso negado.",
-                code="contract_not_found_or_denied",
-            ) from e
+        contract = get_object_or_404_for_tenant(
+            Contract,
+            company,
+            contract_uuid,
+            select_related=["supplier"],
+            code="contract_not_found_or_denied",
+        )
 
         return {
             "name": (
@@ -92,18 +94,13 @@ class ExpenseService:
         if isinstance(category_input, BudgetCategory):
             category = category_input
         else:
-            try:
-                category = BudgetCategory.objects.for_tenant(company).get(
-                    uuid=category_input
-                )
-            except BudgetCategory.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de uso de categoria inválida/negada: {category_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Categoria não encontrada ou acesso negado.",
-                    code="budget_category_not_found_or_denied",
-                ) from e
+            category = get_object_or_404_for_tenant(
+                BudgetCategory,
+                company,
+                category_input,
+                detail="Categoria de orçamento não encontrada ou acesso negado.",
+                code="budget_category_not_found_or_denied",
+            )
 
         # 2. Resolução de Contrato (Opcional)
         contract = None
@@ -113,19 +110,12 @@ class ExpenseService:
             if isinstance(contract_input, Contract):
                 contract = contract_input
             else:
-                try:
-                    contract = Contract.objects.for_tenant(company).get(
-                        uuid=contract_input
-                    )
-                except Contract.DoesNotExist as e:
-                    logger.warning(
-                        f"Tentativa de uso de contrato inválido/negado: "
-                        f"{contract_input}"
-                    )
-                    raise ObjectNotFoundError(
-                        detail="Contrato não encontrado ou acesso negado.",
-                        code="contract_not_found_or_denied",
-                    ) from e
+                contract = get_object_or_404_for_tenant(
+                    Contract,
+                    company,
+                    contract_input,
+                    code="contract_not_found_or_denied",
+                )
 
         num_installments = data.pop("num_installments", None)
         if num_installments is None:
@@ -207,15 +197,13 @@ class ExpenseService:
             if isinstance(contract_input, Contract):
                 instance.contract = contract_input
             else:
-                try:
-                    instance.contract = Contract.objects.for_tenant(company).get(
-                        uuid=contract_input
-                    )
-                except Contract.DoesNotExist as e:
-                    raise ObjectNotFoundError(
-                        detail="Contrato inválido ou acesso negado.",
-                        code="contract_not_found_or_denied",
-                    ) from e
+                instance.contract = get_object_or_404_for_tenant(
+                    Contract,
+                    company,
+                    contract_input,
+                    code="contract_not_found_or_denied",
+                    detail="Contrato inválido ou acesso negado.",
+                )
         else:
             instance.contract = None
 

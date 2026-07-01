@@ -4,9 +4,7 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import Q, QuerySet
 
-from apps.core.exceptions import (
-    ObjectNotFoundError,
-)
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Supplier
 from apps.logistics.schemas import SupplierIn, SupplierPatchIn
@@ -44,10 +42,13 @@ class SupplierService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Supplier:
-        try:
-            return Supplier.objects.for_tenant(company).get(uuid=uuid)
-        except Supplier.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Fornecedor não encontrado.") from e
+        return get_object_or_404_for_tenant(
+            Supplier,
+            company,
+            uuid,
+            detail="Fornecedor não encontrado ou acesso negado.",
+            code="supplier_not_found_or_denied",
+        )
 
     @staticmethod
     @transaction.atomic

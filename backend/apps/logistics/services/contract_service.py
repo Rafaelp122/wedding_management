@@ -25,6 +25,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.finances.schemas import ExpenseIn
@@ -95,6 +96,7 @@ class ContractService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Contract:
+        """Busca um contrato com annotations detalhadas."""
         try:
             return (
                 Contract.objects.for_tenant(company)
@@ -109,7 +111,7 @@ class ContractService:
                 )
                 .get(uuid=uuid)
             )
-        except Contract.DoesNotExist as e:
+        except (Contract.DoesNotExist, ValueError, ValidationError) as e:
             raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
 
     @staticmethod
@@ -127,42 +129,34 @@ class ContractService:
         if isinstance(wedding_input, Wedding):
             wedding = wedding_input
         else:
-            try:
-                wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_input)
-            except Wedding.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de uso de casamento inválido/negado: {wedding_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Casamento não encontrado ou acesso negado.",
-                    code="wedding_not_found_or_denied",
-                ) from e
+            wedding = get_object_or_404_for_tenant(
+                Wedding,
+                company,
+                wedding_input,
+                code="wedding_not_found_or_denied",
+            )
 
         # Resolução do Fornecedor
         if isinstance(supplier_input, Supplier):
             supplier = supplier_input
         else:
-            try:
-                supplier = Supplier.objects.for_tenant(company).get(uuid=supplier_input)
-            except Supplier.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de uso de fornecedor inválido/negado: {supplier_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Fornecedor não encontrado ou acesso negado.",
-                    code="supplier_not_found_or_denied",
-                ) from e
+            supplier = get_object_or_404_for_tenant(
+                Supplier,
+                company,
+                supplier_input,
+                code="supplier_not_found_or_denied",
+            )
 
         parent_input = data.pop("parent", None)
         parent = None
         if parent_input:
-            try:
-                parent = Contract.objects.for_tenant(company).get(uuid=parent_input)
-            except Contract.DoesNotExist as e:
-                raise ObjectNotFoundError(
-                    detail="Contrato pai não encontrado.",
-                    code="parent_contract_not_found",
-                ) from e
+            parent = get_object_or_404_for_tenant(
+                Contract,
+                company,
+                parent_input,
+                detail="Contrato pai não encontrado.",
+                code="parent_contract_not_found",
+            )
 
         # 2. Instanciação em Memória
         contract = Contract(
@@ -241,13 +235,13 @@ class ContractService:
             instance.parent = None
             return
         else:
-            try:
-                parent = Contract.objects.for_tenant(company).get(uuid=parent_input)
-            except Contract.DoesNotExist as e:
-                raise ObjectNotFoundError(
-                    detail="Contrato pai inválido ou acesso negado.",
-                    code="parent_contract_not_found_or_denied",
-                ) from e
+            parent = get_object_or_404_for_tenant(
+                Contract,
+                company,
+                parent_input,
+                detail="Contrato pai inválido ou acesso negado.",
+                code="parent_contract_not_found_or_denied",
+            )
 
         if parent is not None:
             if parent.pk == instance.pk:
@@ -297,15 +291,13 @@ class ContractService:
             if isinstance(supplier_input, Supplier):
                 instance.supplier = supplier_input
             else:
-                try:
-                    instance.supplier = Supplier.objects.for_tenant(company).get(
-                        uuid=supplier_input
-                    )
-                except Supplier.DoesNotExist as e:
-                    raise ObjectNotFoundError(
-                        detail="Fornecedor inválido ou acesso negado.",
-                        code="supplier_not_found_or_denied",
-                    ) from e
+                instance.supplier = get_object_or_404_for_tenant(
+                    Supplier,
+                    company,
+                    supplier_input,
+                    detail="Fornecedor inválido ou acesso negado.",
+                    code="supplier_not_found_or_denied",
+                )
 
         parent_input = data.pop("parent", None)
         if parent_input is not None:
@@ -438,16 +430,12 @@ class ContractService:
         import boto3  # type: ignore[import-untyped]
 
         # Validar casamento
-        try:
-            wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_id)
-        except Wedding.DoesNotExist as e:
-            logger.warning(
-                f"Tentativa de gerar upload URL para casamento inválido: {wedding_id}"
-            )
-            raise ObjectNotFoundError(
-                detail="Casamento não encontrado ou acesso negado.",
-                code="wedding_not_found_or_denied",
-            ) from e
+        wedding = get_object_or_404_for_tenant(
+            Wedding,
+            company,
+            wedding_id,
+            code="wedding_not_found_or_denied",
+        )
 
         # Determinar Content-Type com base no filename
         content_type = "application/pdf"

@@ -11,8 +11,8 @@ from django.db.models import QuerySet
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
-    ObjectNotFoundError,
 )
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Contract, Item
 from apps.logistics.schemas import ItemIn, ItemPatchIn
@@ -54,14 +54,13 @@ class ItemService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Item:
-        try:
-            return (
-                Item.objects.for_tenant(company)
-                .select_related("wedding", "contract", "contract__supplier")
-                .get(uuid=uuid)
-            )
-        except Item.DoesNotExist as e:
-            raise ObjectNotFoundError(detail="Item de logística não encontrado.") from e
+        return get_object_or_404_for_tenant(
+            Item,
+            company,
+            uuid,
+            select_related=["wedding", "contract", "contract__supplier"],
+            detail="Item de logística não encontrado.",
+        )
 
     @staticmethod
     def _resolve_wedding(
@@ -80,13 +79,12 @@ class ItemService:
         if isinstance(wedding_input, Wedding):
             return wedding_input
         if isinstance(wedding_input, UUID | str):
-            try:
-                return Wedding.objects.for_tenant(company).get(uuid=wedding_input)
-            except Wedding.DoesNotExist as e:
-                raise ObjectNotFoundError(
-                    detail="Casamento não encontrado ou acesso negado.",
-                    code="wedding_not_found_or_denied",
-                ) from e
+            return get_object_or_404_for_tenant(
+                Wedding,
+                company,
+                wedding_input,
+                code="wedding_not_found_or_denied",
+            )
         return None
 
     @staticmethod
@@ -102,16 +100,12 @@ class ItemService:
         if isinstance(contract_input, Contract):
             return contract_input
 
-        try:
-            return Contract.objects.for_tenant(company).get(uuid=contract_input)
-        except Contract.DoesNotExist as e:
-            logger.warning(
-                f"Tentativa de uso de contrato inválido/negado: {contract_input}"
-            )
-            raise ObjectNotFoundError(
-                detail="Contrato não encontrado ou acesso negado.",
-                code="contract_not_found_or_denied",
-            ) from e
+        return get_object_or_404_for_tenant(
+            Contract,
+            company,
+            contract_input,
+            code="contract_not_found_or_denied",
+        )
 
     @staticmethod
     @transaction.atomic

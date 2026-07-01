@@ -4,7 +4,7 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import QuerySet
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Task
 from apps.scheduler.schemas import TaskIn, TaskPatchIn
@@ -30,18 +30,13 @@ class TaskService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Task:
-        task = (
-            Task.objects.for_tenant(company)
-            .select_related("wedding")
-            .filter(uuid=uuid)
-            .first()
+        return get_object_or_404_for_tenant(
+            Task,
+            company,
+            uuid,
+            select_related=["wedding"],
+            code="task_not_found_or_denied",
         )
-        if task is None:
-            raise ObjectNotFoundError(
-                detail="Tarefa não encontrada ou acesso negado.",
-                code="task_not_found_or_denied",
-            )
-        return task
 
     @staticmethod
     @transaction.atomic
@@ -54,18 +49,13 @@ class TaskService:
         if isinstance(wedding_input, Wedding):
             wedding = wedding_input
         else:
-            try:
-                wedding = Wedding.objects.for_tenant(company).get(uuid=wedding_input)
-            except Wedding.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de criar tarefa em casamento inválido ou "
-                    f"negado: {wedding_input} por company_id={company.id}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Casamento não encontrado ou você não tem permissão para "
-                    "acessá-lo.",
-                    code="wedding_not_found_or_denied",
-                ) from e
+            wedding = get_object_or_404_for_tenant(
+                Wedding,
+                company,
+                wedding_input,
+                code="wedding_not_found_or_denied",
+                detail="Acesso negado ao casamento.",
+            )
 
         task = Task(company=company, wedding=wedding, **data)
         task.save()

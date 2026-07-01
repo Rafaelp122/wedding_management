@@ -8,8 +8,8 @@ from django.db.models import ProtectedError, QuerySet, Sum
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
-    ObjectNotFoundError,
 )
+from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
@@ -69,16 +69,13 @@ class BudgetCategoryService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> BudgetCategory:
-        try:
-            return (
-                BudgetCategory.objects.for_tenant(company)
-                .select_related("budget", "wedding")
-                .get(uuid=uuid)
-            )
-        except BudgetCategory.DoesNotExist as e:
-            raise ObjectNotFoundError(
-                detail="Categoria de orçamento não encontrada."
-            ) from e
+        return get_object_or_404_for_tenant(
+            BudgetCategory,
+            company,
+            uuid,
+            select_related=["budget", "wedding"],
+            detail="Categoria de orçamento não encontrada.",
+        )
 
     @staticmethod
     @transaction.atomic
@@ -94,16 +91,13 @@ class BudgetCategoryService:
         if isinstance(budget_input, Budget):
             budget = budget_input
         else:
-            try:
-                budget = Budget.objects.for_tenant(company).get(uuid=budget_input)
-            except Budget.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de uso de orçamento inválido/negado: {budget_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Orçamento mestre não encontrado ou acesso negado.",
-                    code="budget_not_found_or_denied",
-                ) from e
+            budget = get_object_or_404_for_tenant(
+                Budget,
+                company,
+                budget_input,
+                detail="Orçamento mestre não encontrado ou acesso negado.",
+                code="budget_not_found_or_denied",
+            )
 
         # TRAVA DE SEGURANÇA (TOCTOU): lock no budget antes de ler soma das categorias
         budget = (
