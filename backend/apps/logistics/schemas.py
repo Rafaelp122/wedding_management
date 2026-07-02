@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 # ==============================================================================
 # SUPPLIER SCHEMAS
 # ==============================================================================
+
+
 class SupplierIn(Schema):
     name: str
     cnpj: str = Field(min_length=14, max_length=18)
@@ -70,7 +72,6 @@ class SupplierPatchIn(Schema):
         if v is not None and not re.match(r"^(?:https?://\S+)?$", v):
             raise ValueError("Website deve ser uma URL válida (http:// ou https://).")
         return v
-
 
 class SupplierOut(Schema):
     uuid: UUID4
@@ -173,32 +174,19 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
-        val = getattr(obj, "supplier_name", None)
-        if val is not None:
-            return str(val)
-        return obj.supplier.name
+        return str(getattr(obj, "supplier_name", ""))
 
     @staticmethod
     def resolve_supplier_phone(obj: "Contract") -> str:
-        val = getattr(obj, "supplier_phone", None)
-        if val is not None:
-            return str(val)
-        return obj.supplier.phone
+        return str(getattr(obj, "supplier_phone", ""))
 
     @staticmethod
     def resolve_supplier_email(obj: "Contract") -> str:
-        val = getattr(obj, "supplier_email", None)
-        if val is not None:
-            return str(val)
-        return obj.supplier.email
+        return str(getattr(obj, "supplier_email", ""))
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Usa a annotated expense_id (disponível em list()) para evitar N+1
-        if hasattr(obj, "expense_id"):
-            return bool(obj.expense_id)
-        # Fallback para get() que carrega expense via select_related
-        return hasattr(obj, "expense") and obj.expense is not None
+        return bool(getattr(obj, "expense_id", False))
 
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:
@@ -209,16 +197,11 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_parent(obj: "Contract") -> UUID4 | None:
-        if obj.parent_id and obj.parent:
-            return obj.parent.uuid
-        return None
+        return obj.parent_id
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
-        val = getattr(obj, "addendums_count", None)
-        if val is not None:
-            return int(val)
-        return obj.addendums.count()
+        return int(getattr(obj, "addendums_count", 0))
 
     @staticmethod
     def resolve_supplier(obj: "Contract") -> UUID4:
