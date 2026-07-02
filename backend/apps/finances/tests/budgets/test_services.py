@@ -10,6 +10,7 @@ Estes testes cobrem as áreas de maior risco identificadas na análise:
 
 from decimal import Decimal
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 
@@ -178,6 +179,28 @@ class TestBudgetServiceCritical:
             BudgetService.get(user_b.company, budget_a.uuid)
 
         assert "Orçamento não encontrado" in str(exc_info.value.detail)
+
+    def test_get_budget_not_found(self, user):
+        """get() lança ObjectNotFoundError para UUID inexistente."""
+        invalid_uuid = uuid4()
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            BudgetService.get(user.company, invalid_uuid)
+
+        assert "Orçamento não encontrado ou acesso negado." in str(
+            exc_info.value.detail
+        )
+
+    def test_get_budget_invalid_uuid_format(self, user):
+        """get() lança ObjectNotFoundError para formato de UUID inválido."""
+        invalid_format = "not-a-uuid"
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            BudgetService.get(user.company, invalid_format)
+
+        assert "Orçamento não encontrado ou acesso negado." in str(
+            exc_info.value.detail
+        )
 
     def test_list_budgets_multi_tenancy(self):
         """
