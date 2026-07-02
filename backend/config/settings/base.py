@@ -111,6 +111,14 @@ CORS_ALLOW_HEADERS = [
     "baggage",
 ]
 
+NINJA_EXTRA = {
+    "THROTTLE_RATES": {
+        "user": "1000/day",
+        "anon": "100/day",
+        "auth": "5/min",
+    }
+}
+
 NINJA_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default=15)

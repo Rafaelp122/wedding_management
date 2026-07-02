@@ -1,7 +1,8 @@
 from typing import Any
 
 from django.http import HttpRequest
-from ninja import Router
+from ninja_extra import Router
+from ninja_extra.throttling import AnonRateThrottle
 from ninja_jwt.schema import (
     TokenRefreshInputSchema,
     TokenRefreshOutputSchema,
@@ -19,11 +20,16 @@ from .services.token_service import TokenService
 router = Router(tags=["auth"])
 
 
+class AuthAnonRateThrottle(AnonRateThrottle):
+    scope = "auth"
+
+
 @router.post(
     "/register/",
     response={201: UserOut, **MUTATION_ERROR_RESPONSES},
     auth=None,
     operation_id="auth_register_user",
+    throttle=[AuthAnonRateThrottle()],
 )
 def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
     """
@@ -44,6 +50,7 @@ def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
     response={200: TokenOut, 401: ErrorResponse, **MUTATION_ERROR_RESPONSES},
     auth=None,
     operation_id="auth_obtain_token",
+    throttle=[AuthAnonRateThrottle()],
 )
 def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
     """
