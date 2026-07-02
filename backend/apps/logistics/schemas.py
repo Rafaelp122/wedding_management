@@ -144,61 +144,23 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
-        # Tenta pegar do annotation (Subquery)
-        val = getattr(obj, "expense_id", None)
-        if val is not None:
-            return val
-
-        # Fallback seguro para evitar N+1 em listas.
-        # Se for uma instância isolada (ex: GET detalhe), e 'expense' estiver carregado,
-        # retornamos. Se for uma lista, 'expense_id' deve ter sido anotado.
-
-        # Em Django, para OneToOne reverso, se não for carregado via select_related,
-        # acessar 'obj.expense' SEMPRE dispara uma query.
-
-        # Para suportar o 'create_full', verificamos se 'expense' foi manualmente
-        # atribuído.
-        if "expense" in obj.__dict__:
-            expense = obj.__dict__["expense"]
-            if expense:
-                return expense.uuid
-
-        # Se estivermos em um GET detalhado (único objeto), podemos permitir a query
-        # se necessário? A convenção do BOLT é NÃO fazer N+1.
-        # Mas para um único objeto não é N+1.
-        # No entanto, como diferenciar lista de detalhe aqui?
-        # Geralmente não diferenciamos no schema.
-
-        return None
+        return getattr(obj, "expense_id", None)
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
-        val = getattr(obj, "supplier_name", None)
-        if val is not None:
-            return str(val)
-        return obj.supplier.name
+        return getattr(obj, "supplier_name", "")
 
     @staticmethod
     def resolve_supplier_phone(obj: "Contract") -> str:
-        val = getattr(obj, "supplier_phone", None)
-        if val is not None:
-            return str(val)
-        return obj.supplier.phone
+        return getattr(obj, "supplier_phone", "")
 
     @staticmethod
     def resolve_supplier_email(obj: "Contract") -> str:
-        val = getattr(obj, "supplier_email", None)
-        if val is not None:
-            return str(val)
-        return obj.supplier.email
+        return getattr(obj, "supplier_email", "")
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Usa a annotated expense_id (disponível em list()) para evitar N+1
-        if hasattr(obj, "expense_id"):
-            return bool(obj.expense_id)
-        # Fallback para get() que carrega expense via select_related
-        return hasattr(obj, "expense") and obj.expense is not None
+        return bool(getattr(obj, "expense_id", False))
 
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:
@@ -209,16 +171,11 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_parent(obj: "Contract") -> UUID4 | None:
-        if obj.parent_id and obj.parent:
-            return obj.parent.uuid
-        return None
+        return obj.parent_id
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
-        val = getattr(obj, "addendums_count", None)
-        if val is not None:
-            return int(val)
-        return obj.addendums.count()
+        return getattr(obj, "addendums_count", 0)
 
     @staticmethod
     def resolve_supplier(obj: "Contract") -> UUID4:

@@ -108,6 +108,17 @@ class ContractService:
                             :1
                         ]
                     ),
+                    total_paid=Coalesce(
+                        Subquery(
+                            Installment.objects.filter(
+                                expense__contract=OuterRef("pk"), status="PAID"
+                            )
+                            .values("expense__contract")
+                            .annotate(s=Sum("amount"))
+                            .values("s")[:1]
+                        ),
+                        Value(Decimal("0.00")),
+                    ),
                 )
                 .get(uuid=uuid)
             )
@@ -220,10 +231,7 @@ class ContractService:
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
-            # Vincula explicitamente no __dict__ para o schema ver sem query
-            # e garante que o campo 'expense_id' também esteja disponível
-            contract.__dict__["expense"] = expense
-            contract.expense_id = expense.uuid  # type: ignore[attr-defined]
+            contract.expense_id = expense.uuid
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
