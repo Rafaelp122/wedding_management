@@ -150,20 +150,21 @@ class ContractOut(Schema):
             return val
 
         # Fallback seguro para evitar N+1 em listas.
-        # Se for uma instância isolada (ex: GET detalhe), e 'expense' estiver carregado, retornamos.
-        # Se for uma lista, 'expense_id' deve ter sido anotado.
+        # Se for uma instância isolada (ex: GET detalhe), e 'expense' estiver carregado,
+        # retornamos. Se for uma lista, 'expense_id' deve ter sido anotado.
 
         # Em Django, para OneToOne reverso, se não for carregado via select_related,
         # acessar 'obj.expense' SEMPRE dispara uma query.
 
-        # Para suportar o 'create_full', verificamos se 'expense' foi manualmente atribuído.
+        # Para suportar o 'create_full', verificamos se 'expense' foi manualmente
+        # atribuído.
         if "expense" in obj.__dict__:
             expense = obj.__dict__["expense"]
             if expense:
                 return expense.uuid
 
-        # Se estivermos em um GET detalhado (único objeto), podemos permitir a query se necessário?
-        # A convenção do BOLT é NÃO fazer N+1.
+        # Se estivermos em um GET detalhado (único objeto), podemos permitir a query
+        # se necessário? A convenção do BOLT é NÃO fazer N+1.
         # Mas para um único objeto não é N+1.
         # No entanto, como diferenciar lista de detalhe aqui?
         # Geralmente não diferenciamos no schema.
@@ -195,7 +196,7 @@ class ContractOut(Schema):
     def resolve_has_linked_expense(obj: "Contract") -> bool:
         # Usa a annotated expense_id (disponível em list()) para evitar N+1
         if hasattr(obj, "expense_id"):
-            return bool(getattr(obj, "expense_id"))
+            return bool(obj.expense_id)
         # Fallback para get() que carrega expense via select_related
         return hasattr(obj, "expense") and obj.expense is not None
 

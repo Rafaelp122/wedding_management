@@ -1,11 +1,12 @@
 import pytest
-from django.test.utils import CaptureQueriesContext
 from django.db import connection
-from apps.logistics.services.contract_service import ContractService
+from django.test.utils import CaptureQueriesContext
+
 from apps.logistics.schemas import ContractOut
+from apps.logistics.services.contract_service import ContractService
 from apps.logistics.tests.factories import ContractFactory
-from apps.users.tests.factories import UserFactory
 from apps.weddings.tests.factories import WeddingFactory
+
 
 @pytest.mark.django_db
 class TestContractPerformance:
@@ -32,14 +33,17 @@ class TestContractPerformance:
                 _ = data["addendums_count"]
 
         # Atualmente, deve haver queries extras por causa do N+1 nos resolvers
-        # Se houver 5 contratos, e 4 resolvers problemáticos (supplier_name, phone, email, addendums_count)
+        # Se houver 5 contratos, e 4 resolvers problemáticos
+        # (supplier_name, phone, email, addendums_count)
         # Poderíamos esperar pelo menos 5 * X queries extras.
         # Na verdade, supplier_name/phone/email acessam obj.supplier.name, etc.
-        # Se supplier já foi carregado via select_related, talvez não gere queries extras para eles,
-        # MAS obj.addendums.count() certamente gerará uma query por contrato.
+        # Se supplier já foi carregado via select_related, talvez não gere
+        # queries extras para eles, MAS obj.addendums.count() certamente
+        # gerará uma query por contrato.
 
         # O ideal seria 0 queries aqui, pois tudo deveria estar no objeto.
-        assert len(queries) == 0, f"Deveria ter 0 queries durante a serialização, mas obteve {len(queries)}"
+        msg = f"Deveria ter 0 queries na serialização, mas obteve {len(queries)}"
+        assert len(queries) == 0, msg
 
     def test_single_contract_serialization_efficiency(self, user):
         """
