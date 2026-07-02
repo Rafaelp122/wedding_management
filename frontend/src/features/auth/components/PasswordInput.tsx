@@ -7,15 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface PasswordInputProps {
-  id?: string;
-  placeholder: string;
-  className?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
-  name?: string;
-}
+interface PasswordInputProps extends React.ComponentPropsWithoutRef<"input"> {}
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   function PasswordInput({ id, placeholder, className = "", ...props }, ref) {
