@@ -67,6 +67,7 @@ class ContractService:
                 supplier_name=F("supplier__name"),
                 supplier_phone=F("supplier__phone"),
                 supplier_email=F("supplier__email"),
+                parent_uuid=F("parent__uuid"),
                 expense_id=Subquery(
                     Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[:1]
                 ),
@@ -105,6 +106,7 @@ class ContractService:
                     supplier_name=F("supplier__name"),
                     supplier_phone=F("supplier__phone"),
                     supplier_email=F("supplier__email"),
+                    parent_uuid=F("parent__uuid"),
                     addendums_count=Count("addendums"),
                     expense_id=Subquery(
                         Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[
@@ -224,7 +226,7 @@ class ContractService:
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
             # Popula cache de ID para evitar query no resolver do Schema (N+1)
-            contract.expense_id = expense.uuid
+            setattr(contract, "expense_id", expense.uuid)
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract

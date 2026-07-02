@@ -171,7 +171,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_parent(obj: "Contract") -> UUID4 | None:
-        return obj.parent_id
+        return getattr(obj, "parent_uuid", None)
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
