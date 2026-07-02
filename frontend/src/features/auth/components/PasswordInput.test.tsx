@@ -18,10 +18,13 @@ describe("PasswordInput", () => {
     const input = screen.getByPlaceholderText("Digite a senha");
     expect(input).toHaveAttribute("type", "password");
 
-    const toggleBtn = screen.getByRole("button");
+    const toggleBtn = screen.getByRole("button", { name: /mostrar senha/i });
+    expect(toggleBtn).toBeInTheDocument();
+
     await user.click(toggleBtn);
 
     expect(input).toHaveAttribute("type", "text");
+    expect(toggleBtn).toHaveAttribute("aria-label", "Ocultar senha");
   });
 
   it("toggles back to password on second click", async () => {
@@ -29,13 +32,15 @@ describe("PasswordInput", () => {
     render(<PasswordInput id="test-pw" placeholder="Digite a senha" />);
 
     const input = screen.getByPlaceholderText("Digite a senha");
-    const toggleBtn = screen.getByRole("button");
+    const toggleBtn = screen.getByRole("button", { name: /mostrar senha/i });
 
     await user.click(toggleBtn);
     expect(input).toHaveAttribute("type", "text");
+    expect(toggleBtn).toHaveAttribute("aria-label", "Ocultar senha");
 
     await user.click(toggleBtn);
     expect(input).toHaveAttribute("type", "password");
+    expect(toggleBtn).toHaveAttribute("aria-label", "Mostrar senha");
   });
 
   it("accepts value and onChange props", async () => {
@@ -46,5 +51,19 @@ describe("PasswordInput", () => {
     await user.type(input, "mypassword");
 
     expect(input).toHaveValue("mypassword");
+  });
+
+  it("is keyboard accessible", async () => {
+    const user = userEvent.setup();
+    render(<PasswordInput id="test-pw" placeholder="Digite a senha" />);
+
+    const input = screen.getByPlaceholderText("Digite a senha");
+    const toggleBtn = screen.getByRole("button", { name: /mostrar senha/i });
+
+    await user.tab();
+    expect(input).toHaveFocus();
+
+    await user.tab();
+    expect(toggleBtn).toHaveFocus();
   });
 });

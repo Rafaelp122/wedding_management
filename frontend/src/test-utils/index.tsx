@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import type { ReactElement, ReactNode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -36,8 +37,10 @@ function createWrapper(options: WrapperOptions = {}) {
     return (
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <RouterProvider router={router} />
-          <Toaster />
+          <TooltipProvider>
+            <RouterProvider router={router} />
+            <Toaster />
+          </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>
     );
