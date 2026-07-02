@@ -102,6 +102,9 @@ class ContractService:
                 Contract.objects.for_tenant(company)
                 .select_related("supplier", "wedding", "parent")
                 .annotate(
+                    supplier_name=F("supplier__name"),
+                    supplier_phone=F("supplier__phone"),
+                    supplier_email=F("supplier__email"),
                     addendums_count=Count("addendums"),
                     expense_id=Subquery(
                         Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[
@@ -216,10 +219,12 @@ class ContractService:
                 )
 
         if expense_data:
-            ExpenseService.create(
+            expense = ExpenseService.create(
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
+            # Popula cache de ID para evitar query no resolver do Schema (N+1)
+            contract.expense_id = expense.uuid
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract

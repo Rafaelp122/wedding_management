@@ -144,33 +144,23 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
-        annotated = getattr(obj, "expense_id", None)
-        if annotated:
-            return annotated
-        if hasattr(obj, "expense") and obj.expense:
-            return obj.expense.uuid
-        return None
+        return getattr(obj, "expense_id", None)
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
-        return getattr(obj, "supplier_name", obj.supplier.name)
+        return getattr(obj, "supplier_name", "")
 
     @staticmethod
     def resolve_supplier_phone(obj: "Contract") -> str:
-        return getattr(obj, "supplier_phone", obj.supplier.phone)
+        return getattr(obj, "supplier_phone", "")
 
     @staticmethod
     def resolve_supplier_email(obj: "Contract") -> str:
-        return getattr(obj, "supplier_email", obj.supplier.email)
+        return getattr(obj, "supplier_email", "")
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Usa a annotated expense_id (disponível em list()) para evitar N+1
-        expense_id = getattr(obj, "expense_id", None)
-        if expense_id:
-            return True
-        # Fallback para get() que carrega expense via select_related
-        return hasattr(obj, "expense") and obj.expense is not None
+        return bool(getattr(obj, "expense_id", None))
 
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:
@@ -181,13 +171,11 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_parent(obj: "Contract") -> UUID4 | None:
-        if obj.parent:
-            return obj.parent.uuid
-        return None
+        return obj.parent_id
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
-        return getattr(obj, "addendums_count", obj.addendums.count())
+        return getattr(obj, "addendums_count", 0)
 
     @staticmethod
     def resolve_supplier(obj: "Contract") -> UUID4:
