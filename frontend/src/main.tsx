@@ -16,6 +16,7 @@ import { ThemeProvider } from "next-themes";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { router } from "./router"; // Importando sua nova configuração
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -58,9 +59,11 @@ ReactDOM.createRoot(document.getElementById("root")!, {
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <RouterProvider router={router} />
-        <Toaster />
-        <ReactQueryDevtools initialIsOpen={false} />
+        <TooltipProvider>
+          <RouterProvider router={router} />
+          <Toaster />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>,

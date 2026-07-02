@@ -1,6 +1,11 @@
 import { Eye, EyeOff } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface PasswordInputProps {
   id?: string;
@@ -26,18 +31,25 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           placeholder={placeholder}
           {...props}
         />
-        <button
-          type="button"
-          onClick={() => setVisible(!visible)}
-          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
-          tabIndex={-1}
-        >
-          {visible ? (
-            <EyeOff className="w-4 h-4" />
-          ) : (
-            <Eye className="w-4 h-4" />
-          )}
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => setVisible(!visible)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors focus-visible:ring-2 focus-visible:ring-aura-500 outline-none rounded-sm"
+              aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+            >
+              {visible ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" align="center">
+            {visible ? "Ocultar senha" : "Mostrar senha"}
+          </TooltipContent>
+        </Tooltip>
       </div>
     );
   },

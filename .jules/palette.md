@@ -1,0 +1,3 @@
+## 2025-05-15 - [Acessibilidade em Inputs de Senha]
+**Learning:** Elementos interativos apenas com ícones (como o alternador de visibilidade de senha) frequentemente são ignorados na acessibilidade. A remoção de `tabIndex={-1}` aliada a `aria-label` dinâmicos e Tooltips é essencial para garantir que usuários de teclado e leitores de tela tenham a mesma experiência. Além disso, o `TooltipProvider` deve estar no nível global (App e TestUtils) para evitar erros de contexto do Radix UI.
+**Action:** Sempre que adicionar um botão de ícone, verificar se ele possui `aria-label`, se é focável via teclado e se possui uma dica visual (Tooltip).
