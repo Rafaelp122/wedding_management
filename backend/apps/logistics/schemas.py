@@ -209,7 +209,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_parent(obj: "Contract") -> UUID4 | None:
-        if obj.parent_id:
+        if obj.parent_id and obj.parent:
             return obj.parent.uuid
         return None
 

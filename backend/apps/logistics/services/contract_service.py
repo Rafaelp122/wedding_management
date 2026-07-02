@@ -223,7 +223,7 @@ class ContractService:
             # Vincula explicitamente no __dict__ para o schema ver sem query
             # e garante que o campo 'expense_id' também esteja disponível
             contract.__dict__["expense"] = expense
-            contract.expense_id = expense.uuid
+            contract.expense_id = expense.uuid  # type: ignore[attr-defined]
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
