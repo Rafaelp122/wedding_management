@@ -69,7 +69,7 @@ class WeddingService:
                     Installment.objects.filter(
                         wedding=OuterRef("pk"),
                         company=OuterRef("company"),
-                        status="OVERDUE"
+                        status="OVERDUE",
                     )
                     .values("wedding")
                     .annotate(cnt=Count("id"))
@@ -82,7 +82,7 @@ class WeddingService:
                     Task.objects.filter(
                         wedding=OuterRef("pk"),
                         company=OuterRef("company"),
-                        is_completed=False
+                        is_completed=False,
                     )
                     .values("wedding")
                     .annotate(cnt=Count("id"))
