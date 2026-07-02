@@ -226,7 +226,7 @@ class ContractService:
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
             # Popula cache de ID para evitar query no resolver do Schema (N+1)
-            setattr(contract, "expense_id", expense.uuid)
+            contract.expense_id = expense.uuid  # type: ignore[attr-defined]
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
