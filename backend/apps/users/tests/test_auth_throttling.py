@@ -1,10 +1,12 @@
 import pytest
 from django.core.cache import cache
 
+
 @pytest.mark.django_db
 def test_obtain_token_rate_limiting(client, user):
     """
-    Testa se o endpoint de obtenção de token respeita o limite de 5 requisições por minuto.
+    Testa se o endpoint de obtenção de token respeita o limite de 5 requisições
+    por minuto.
     """
     cache.clear()
     url = "/api/v1/auth/token/"
@@ -24,6 +26,7 @@ def test_obtain_token_rate_limiting(client, user):
     data = response.json()
     assert "detail" in data
     assert "throttled" in str(data["detail"]).lower()
+
 
 @pytest.mark.django_db
 def test_register_user_rate_limiting(client):

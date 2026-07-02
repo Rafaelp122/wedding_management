@@ -58,3 +58,14 @@ def auth_client(user):
     c = JWTClient(user=user)
     c.user = user
     return c
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """
+    Limpa o cache do Django antes de cada teste para evitar que o Rate Limiting
+    afete a execução de múltiplos testes sequencialmente.
+    """
+    from django.core.cache import cache
+
+    cache.clear()
