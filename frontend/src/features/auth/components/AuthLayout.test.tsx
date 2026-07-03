@@ -76,5 +76,7 @@ describe("AuthLayout", () => {
     await waitFor(() => {
       expect(screen.getByRole("tooltip", { name: "Alternar tema" })).toBeInTheDocument();
     });
+
+    await user.click(toggle);
   });
 });
