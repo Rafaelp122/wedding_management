@@ -2,6 +2,11 @@ import type { ReactNode } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { Logo } from "@/components/logo";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const LANDING_URL = "https://simaceito.site/";
 
@@ -46,23 +51,29 @@ export function AuthLayout({
           <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 hidden sm:block">
             Foco Visual
           </span>
-          <button
-            type="button"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="group relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full bg-zinc-200 dark:bg-zinc-800 transition-colors duration-300 focus:outline-none"
-            role="switch"
-            aria-checked={theme === "dark"}
-          >
-            <span
-              className={`pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-zinc-950 shadow-md transition-transform duration-300 text-[10px] ${theme === "dark" ? "translate-x-5" : "translate-x-1"}`}
-            >
-              {theme === "dark" ? (
-                <Moon className="w-3 h-3" />
-              ) : (
-                <Sun className="w-3 h-3" />
-              )}
-            </span>
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="group relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full bg-zinc-200 dark:bg-zinc-800 transition-colors duration-300 focus:outline-none"
+                role="switch"
+                aria-checked={theme === "dark"}
+                aria-label="Alternar tema"
+              >
+                <span
+                  className={`pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-zinc-950 shadow-md transition-transform duration-300 text-[10px] ${theme === "dark" ? "translate-x-5" : "translate-x-1"}`}
+                >
+                  {theme === "dark" ? (
+                    <Moon className="w-3 h-3" />
+                  ) : (
+                    <Sun className="w-3 h-3" />
+                  )}
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Alternar tema</TooltipContent>
+          </Tooltip>
         </div>
       </header>
 

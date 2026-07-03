@@ -6,6 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -38,16 +43,27 @@ export function NavUser() {
           {/* Row 1: Tema */}
           <div className="flex items-center justify-between mb-4 px-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
             <span>Tema</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 rounded-lg cursor-pointer transition-colors"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label="Alternar tema"
-            >
-              <Sun aria-hidden="true" className="h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon aria-hidden="true" className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 rounded-lg cursor-pointer transition-colors"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  aria-label="Alternar tema"
+                >
+                  <Sun
+                    aria-hidden="true"
+                    className="h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+                  />
+                  <Moon
+                    aria-hidden="true"
+                    className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Alternar tema</TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Row 2: User profile info */}
