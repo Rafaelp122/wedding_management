@@ -4,6 +4,7 @@ Configuração Global de Testes (Pytest).
 
 import factory
 import pytest
+from django.core.cache import cache
 from django.test import Client
 from ninja_jwt.tokens import RefreshToken
 from pytest_factoryboy import register
@@ -58,3 +59,12 @@ def auth_client(user):
     c = JWTClient(user=user)
     c.user = user
     return c
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """
+    Limpa o cache do Django antes de cada teste.
+    Necessário para evitar que o throttling persista entre os testes.
+    """
+    cache.clear()
