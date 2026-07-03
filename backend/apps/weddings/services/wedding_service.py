@@ -37,6 +37,8 @@ class WeddingService:
 
     @staticmethod
     def list(company: Company, search: str = "", status: str = "") -> QuerySet[Wedding]:
+        """Lista casamentos com suporte a filtro por texto e status, incluindo anotações
+        de orçamento total, parcelas atrasadas e tarefas incompletas via Subquery."""
         qs = Wedding.objects.for_tenant(company).select_related("company")
         if search:
             qs = qs.filter(
