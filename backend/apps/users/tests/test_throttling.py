@@ -24,7 +24,7 @@ class TestThrottling:
             response = client.post(
                 "/api/v1/auth/register/",
                 data={**payload, "email": f"user{i}@example.com"},
-                content_type="application/json"
+                content_type="application/json",
             )
             assert response.status_code == 201
 
@@ -32,7 +32,7 @@ class TestThrottling:
         response = client.post(
             "/api/v1/auth/register/",
             data={**payload, "email": "user6@example.com"},
-            content_type="application/json"
+            content_type="application/json",
         )
         assert response.status_code == 429
         data = response.json()
@@ -52,17 +52,13 @@ class TestThrottling:
         # Realiza 5 requisições
         for _ in range(5):
             response = client.post(
-                "/api/v1/auth/token/",
-                data=payload,
-                content_type="application/json"
+                "/api/v1/auth/token/", data=payload, content_type="application/json"
             )
             assert response.status_code == 200
 
         # A 6ª requisição deve falhar com 429
         response = client.post(
-            "/api/v1/auth/token/",
-            data=payload,
-            content_type="application/json"
+            "/api/v1/auth/token/", data=payload, content_type="application/json"
         )
         assert response.status_code == 429
         data = response.json()
