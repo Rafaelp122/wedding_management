@@ -1,4 +1,4 @@
-## 2025-05-15 - Validação de Complexidade de Senha no Registro
-**Vulnerability:** Usuários podiam registrar contas com senhas extremamente fracas (ex: "12345678", "password"), apesar de o Django possuir validadores configurados em `AUTH_PASSWORD_VALIDATORS`.
-**Learning:** No Django Ninja (ou qualquer fluxo customizado), o método `create_user` ou `set_password` do `UserManager` padrão NÃO invoca automaticamente os validadores de complexidade do Django. A validação do Pydantic no Schema apenas checava o tamanho mínimo (`min_length=8`).
-**Prevention:** Sempre chamar explicitamente `django.contrib.auth.password_validation.validate_password(password)` na Service Layer antes de criar o usuário.
+## 2026-04-04 - Ninja Extra Throttling Rate Format
+**Vulnerability:** N/A (Security Enhancement)
+**Learning:** Ao implementar throttling com `django-ninja-extra`, descobri que o parser de `RateThrottle` espera abreviações de uma única letra para unidades de tempo ('s', 'm', 'h', 'd'). O uso de palavras completas como 'minute' ou 'day' resulta em um `ValueError` durante a inicialização da API, impedindo que o servidor suba.
+**Prevention:** Sempre utilizar o formato abreviado nas configurações de `THROTTLE_RATES` (ex: '10/m' em vez de '10/minute').

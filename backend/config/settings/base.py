@@ -143,3 +143,13 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Ninja Extra Throttling
+NINJA_EXTRA = {
+    "THROTTLE_RATES": {
+        "anon": "100/day",
+        "user": "1000/day",
+        "auth_anon": "10/m",
+        "auth_user": "20/m",
+    }
+}
