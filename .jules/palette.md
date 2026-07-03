@@ -5,3 +5,7 @@
 ## 2025-05-15 - [Padronização de Props em Componentes de UI]
 **Learning:** Ao criar componentes que envolvem elementos nativos do HTML (como inputs), deve-se sempre estender `React.ComponentPropsWithoutRef<"elemento">` em vez de criar uma interface manual limitada. Isso garante que o componente suporte todas as props padrão (id, name, value, handlers, etc.) e siga as convenções do ecossistema React.
 **Action:** Usar `extends React.ComponentPropsWithoutRef<...>` em componentes base de UI.
+
+## 2025-05-15 - [Testando Tooltips do Radix UI em Vitest]
+**Learning:** Testar tooltips do Radix UI requer atenção à natureza assíncrona do componente e ao atraso (delay) padrão. Configurar o `TooltipProvider` com `delayDuration={0}` no wrapper de testes e utilizar `waitFor` junto com queries semânticas (`screen.getByRole('tooltip', { name: '...' })`) garante testes robustos e confiáveis, evitando falsos negativos e garantindo que o conteúdo esteja de fato acessível ao usuário.
+**Action:** Configurar `delayDuration={0}` no `TooltipProvider` de teste e usar `waitFor` com `getByRole('tooltip', ...)` para verificar tooltips.

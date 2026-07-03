@@ -37,7 +37,7 @@ function createWrapper(options: WrapperOptions = {}) {
     return (
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <TooltipProvider>
+          <TooltipProvider delayDuration={0}>
             <RouterProvider router={router} />
             <Toaster />
           </TooltipProvider>
