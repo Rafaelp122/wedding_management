@@ -128,6 +128,13 @@ NINJA_JWT = {
     "USER_ID_CLAIM": "user_id",
 }
 
+NINJA_EXTRA = {
+    "THROTTLE_RATES": {
+        "user": "1000/d",
+        "anon": "5/m",
+    }
+}
+
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
