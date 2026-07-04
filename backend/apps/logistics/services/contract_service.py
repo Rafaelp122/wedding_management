@@ -220,9 +220,9 @@ class ContractService:
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
-            # Performance Bolt ⚡: Cache reference to avoid N+1 in immediate serialization
+            # Performance Bolt ⚡: Cache reference to avoid N+1 in serialization
             contract.expense = expense
-            setattr(contract, "expense_id", expense.uuid)
+            contract.expense_id = expense.uuid  # type: ignore[attr-defined]
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract

@@ -148,7 +148,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
-        # Performance Bolt ⚡: Avoid N+1 by checking annotated field or cached relationship
+        # Performance Bolt ⚡: Use annotated field or cached relation to avoid N+1
         # Using getattr(obj, "expense_id", None) is safe as long as we don't trigger
         # the reverse OneToOne descriptor logic blindly.
         annotated = getattr(obj, "expense_id", None)
@@ -189,7 +189,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Performance Bolt ⚡: Avoid N+1 by checking annotated field or cached relationship
+        # Performance Bolt ⚡: Use annotated field or cached relation to avoid N+1
         expense_id = getattr(obj, "expense_id", None)
         if expense_id:
             return True
