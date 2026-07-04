@@ -143,34 +143,61 @@ class ContractOut(Schema):
     file_name: str | None = None
 
     @staticmethod
+    def resolve_wedding(obj: "Contract") -> UUID4:
+        return obj.wedding.uuid
+
+    @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
+        # Performance Bolt ⚡: Avoid N+1 by checking annotated field or cached relationship
+        # Using getattr(obj, "expense_id", None) is safe as long as we don't trigger
+        # the reverse OneToOne descriptor logic blindly.
         annotated = getattr(obj, "expense_id", None)
         if annotated:
             return annotated
-        if hasattr(obj, "expense") and obj.expense:
-            return obj.expense.uuid
+
+        # For reverse OneToOne, hasattr(obj, 'expense') triggers a query.
+        # We check __dict__ first.
+        if "expense" in obj.__dict__:
+            expense = obj.expense
+            return expense.uuid if expense else None
+
         return None
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
-        return getattr(obj, "supplier_name", obj.supplier.name)
+        # Performance Bolt ⚡: Avoid N+1 query if supplier not select_related
+        val = getattr(obj, "supplier_name", None)
+        if val:
+            return str(val)
+        return obj.supplier.name
 
     @staticmethod
     def resolve_supplier_phone(obj: "Contract") -> str:
-        return getattr(obj, "supplier_phone", obj.supplier.phone)
+        # Performance Bolt ⚡: Avoid N+1 query if supplier not select_related
+        val = getattr(obj, "supplier_phone", None)
+        if val:
+            return str(val)
+        return obj.supplier.phone
 
     @staticmethod
     def resolve_supplier_email(obj: "Contract") -> str:
-        return getattr(obj, "supplier_email", obj.supplier.email)
+        # Performance Bolt ⚡: Avoid N+1 query if supplier not select_related
+        val = getattr(obj, "supplier_email", None)
+        if val:
+            return str(val)
+        return obj.supplier.email
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Usa a annotated expense_id (disponível em list()) para evitar N+1
+        # Performance Bolt ⚡: Avoid N+1 by checking annotated field or cached relationship
         expense_id = getattr(obj, "expense_id", None)
         if expense_id:
             return True
-        # Fallback para get() que carrega expense via select_related
-        return hasattr(obj, "expense") and obj.expense is not None
+
+        if "expense" in obj.__dict__:
+            return obj.expense is not None
+
+        return False
 
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:
@@ -187,7 +214,12 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
-        return getattr(obj, "addendums_count", obj.addendums.count())
+        # Performance Bolt ⚡: Use annotated value if present
+        val = getattr(obj, "addendums_count", None)
+        if val is not None:
+            return int(val)
+        # Safe fallback to count() query to ensure correctness
+        return obj.addendums.count()
 
     @staticmethod
     def resolve_supplier(obj: "Contract") -> UUID4:

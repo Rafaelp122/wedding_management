@@ -216,10 +216,13 @@ class ContractService:
                 )
 
         if expense_data:
-            ExpenseService.create(
+            expense = ExpenseService.create(
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
+            # Performance Bolt ⚡: Cache reference to avoid N+1 in immediate serialization
+            contract.expense = expense
+            setattr(contract, "expense_id", expense.uuid)
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract

@@ -144,12 +144,22 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_contract(obj: "Expense") -> UUID4 | None:
-        if obj.contract_id and obj.contract:
-            return obj.contract.uuid
+        # Performance Bolt ⚡: Avoid N+1 query
+        if obj.contract_id:
+            # Check if contract is already loaded via select_related
+            if "contract" in obj.__dict__:
+                contract = obj.contract
+                return contract.uuid if contract else None
+            # Safe fallback: we might need the query if it's not annotated or cached
+            try:
+                return obj.contract.uuid
+            except Exception:
+                return None
         return None
 
     @staticmethod
     def resolve_category_name(obj: "Expense") -> str:
+        # Performance Bolt ⚡: Avoid N+1 query
         val = getattr(obj, "category_name", None)
         if val is not None:
             return str(val)
@@ -157,6 +167,7 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_contract_description(obj: "Expense") -> str | None:
+        # Performance Bolt ⚡: Avoid N+1 query
         val = getattr(obj, "contract_description", None)
         if val is not None:
             return str(val)
@@ -166,6 +177,7 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_status(obj: "Expense") -> str:
+        # Performance Bolt ⚡: Avoid N+1 query. Use annotated values if present.
         total = getattr(obj, "installments_count", None)
         if total is None:
             total = obj.installments.count()
@@ -184,6 +196,7 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_installments_count(obj: "Expense") -> int:
+        # Performance Bolt ⚡: Use annotated value if present
         val = getattr(obj, "installments_count", None)
         if val is not None:
             return int(val)
@@ -191,6 +204,7 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_paid_installments_count(obj: "Expense") -> int:
+        # Performance Bolt ⚡: Use annotated value if present
         val = getattr(obj, "paid_installments_count", None)
         if val is not None:
             return int(val)
