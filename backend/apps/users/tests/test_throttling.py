@@ -36,4 +36,9 @@ def test_token_endpoint_throttling(client):
     assert response.status_code == 429
     data = response.json()
     assert "detail" in data
-    assert "Request was throttled" in data["detail"] or "Limite de requisições" in data["detail"] or "throttled" in data["detail"].lower()
+    detail = data["detail"].lower()
+    assert (
+        "request was throttled" in detail
+        or "limite de requisições" in detail
+        or "throttled" in detail
+    )
