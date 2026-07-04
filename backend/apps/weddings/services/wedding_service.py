@@ -8,6 +8,7 @@ from uuid import UUID
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Count, OuterRef, ProtectedError, Q, QuerySet, Subquery
+from django.db.models.functions import Coalesce
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -36,6 +37,8 @@ class WeddingService:
 
     @staticmethod
     def list(company: Company, search: str = "", status: str = "") -> QuerySet[Wedding]:
+        """Lista casamentos com suporte a filtro por texto e status, incluindo anotações
+        de orçamento total, parcelas atrasadas e tarefas incompletas via Subquery."""
         qs = Wedding.objects.for_tenant(company).select_related("company")
         if search:
             qs = qs.filter(
@@ -51,21 +54,43 @@ class WeddingService:
                 )
             qs = qs.filter(status=status)
 
+        from apps.finances.models import Installment
+        from apps.scheduler.models import Task
+
+        # Bolt Optimization: Use Subqueries for counts instead of Count(distinct=True)
+        # to avoid the "Cartesian Product" join explosion when multiple related sets
+        # are counted on the same query.
         qs = qs.annotate(
             total_budget=Subquery(
                 Budget.objects.filter(
                     wedding=OuterRef("pk"), company=OuterRef("company")
                 ).values("total_estimated")[:1]
             ),
-            overdue_installments=Count(
-                "installment_records",
-                filter=Q(installment_records__status="OVERDUE"),
-                distinct=True,
+            overdue_installments=Coalesce(
+                Subquery(
+                    Installment.objects.filter(
+                        wedding=OuterRef("pk"),
+                        company=OuterRef("company"),
+                        status="OVERDUE",
+                    )
+                    .values("wedding")
+                    .annotate(cnt=Count("id"))
+                    .values("cnt")[:1]
+                ),
+                0,
             ),
-            incomplete_tasks=Count(
-                "task_records",
-                filter=Q(task_records__is_completed=False),
-                distinct=True,
+            incomplete_tasks=Coalesce(
+                Subquery(
+                    Task.objects.filter(
+                        wedding=OuterRef("pk"),
+                        company=OuterRef("company"),
+                        is_completed=False,
+                    )
+                    .values("wedding")
+                    .annotate(cnt=Count("id"))
+                    .values("cnt")[:1]
+                ),
+                0,
             ),
         )  # type: ignore[assignment]
 

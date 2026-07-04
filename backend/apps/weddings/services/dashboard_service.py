@@ -3,9 +3,11 @@ from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
 
-from django.db.models import Count, Q
+from django.db.models import Count, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 
 from apps.finances.models import Installment
+from apps.scheduler.models import Task
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 from apps.weddings.services.summaries import (
@@ -46,32 +48,58 @@ class DashboardService:
                 date__lte=ninety_days,
             )
             .annotate(
-                incomplete_tasks=Count(
-                    "task_records",
-                    filter=Q(task_records__is_completed=False),
-                    distinct=True,
-                ),
-                pending_installments=Count(
-                    "installment_records",
-                    filter=Q(
-                        installment_records__status=Installment.StatusChoices.PENDING,
+                incomplete_tasks=Coalesce(
+                    Subquery(
+                        Task.objects.filter(
+                            wedding=OuterRef("pk"),
+                            company=OuterRef("company"),
+                            is_completed=False,
+                        )
+                        .values("wedding")
+                        .annotate(cnt=Count("id"))
+                        .values("cnt")[:1]
                     ),
-                    distinct=True,
+                    0,
                 ),
-                overdue_tasks=Count(
-                    "task_records",
-                    filter=Q(
-                        task_records__is_completed=False,
-                        task_records__due_date__lt=today,
+                pending_installments=Coalesce(
+                    Subquery(
+                        Installment.objects.filter(
+                            wedding=OuterRef("pk"),
+                            company=OuterRef("company"),
+                            status=Installment.StatusChoices.PENDING,
+                        )
+                        .values("wedding")
+                        .annotate(cnt=Count("id"))
+                        .values("cnt")[:1]
                     ),
-                    distinct=True,
+                    0,
                 ),
-                overdue_installments=Count(
-                    "installment_records",
-                    filter=Q(
-                        installment_records__status=Installment.StatusChoices.OVERDUE,
+                overdue_tasks=Coalesce(
+                    Subquery(
+                        Task.objects.filter(
+                            wedding=OuterRef("pk"),
+                            company=OuterRef("company"),
+                            is_completed=False,
+                            due_date__lt=today,
+                        )
+                        .values("wedding")
+                        .annotate(cnt=Count("id"))
+                        .values("cnt")[:1]
                     ),
-                    distinct=True,
+                    0,
+                ),
+                overdue_installments=Coalesce(
+                    Subquery(
+                        Installment.objects.filter(
+                            wedding=OuterRef("pk"),
+                            company=OuterRef("company"),
+                            status=Installment.StatusChoices.OVERDUE,
+                        )
+                        .values("wedding")
+                        .annotate(cnt=Count("id"))
+                        .values("cnt")[:1]
+                    ),
+                    0,
                 ),
             )
             .order_by("date")
