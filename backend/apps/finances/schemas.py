@@ -152,7 +152,9 @@ class ExpenseOut(Schema):
                 return contract.uuid if contract else None
             # Safe fallback: we might need the query if it's not annotated or cached
             try:
-                return obj.contract.uuid
+                # Ensure contract exists and has uuid to satisfy mypy
+                contract = obj.contract
+                return contract.uuid if contract else None
             except Exception:
                 return None
         return None
