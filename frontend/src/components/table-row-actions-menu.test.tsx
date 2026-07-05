@@ -44,4 +44,13 @@ describe("TableRowActionsMenu", () => {
 
     expect(onClick).toHaveBeenCalled();
   });
+
+  it("uses default label when none provided", () => {
+    render(
+      <TableRowActionsMenu>
+        <DropdownMenuItem>Item 1</DropdownMenuItem>
+      </TableRowActionsMenu>
+    );
+    expect(screen.getByRole("button", { name: "Ações" })).toBeInTheDocument();
+  });
 });

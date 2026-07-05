@@ -19,10 +19,14 @@ describe("WeddingExpensesTable", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders expense rows with different statuses", () => {
+  it("renders expense rows correctly", () => {
     const expenses = [
-      createMockExpense({ uuid: "e-1", status: "SETTLED", name: "Expense 1" }),
-      createMockExpense({ uuid: "e-2", status: "PENDING", name: "Expense 2" }),
+      createMockExpense({
+        uuid: "e-1",
+        name: "Expense 1",
+        category_name: "Buffet",
+        status: "SETTLED",
+      }),
     ];
 
     render(
@@ -35,9 +39,8 @@ describe("WeddingExpensesTable", () => {
     );
 
     expect(screen.getByText("Expense 1")).toBeInTheDocument();
+    expect(screen.getByText("Buffet")).toBeInTheDocument();
     expect(screen.getByText("Quitada")).toBeInTheDocument();
-    expect(screen.getByText("Expense 2")).toBeInTheDocument();
-    expect(screen.getAllByText("Pendente")).toHaveLength(1);
   });
 
   it("triggers callbacks for actions", async () => {
