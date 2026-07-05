@@ -111,6 +111,20 @@ CORS_ALLOW_HEADERS = [
     "baggage",
 ]
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
+
+NINJA_EXTRA = {
+    "THROTTLE_RATES": {
+        "user": "1000/d",
+        "anon": "5/m",
+    }
+}
+
 NINJA_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default=15)
