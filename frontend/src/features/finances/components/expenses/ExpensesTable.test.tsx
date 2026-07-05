@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { WeddingExpensesTable } from "@/features/finances/components/expenses/ExpensesTable";
 import { createMockExpense } from "@/test-data";
 
@@ -58,7 +58,7 @@ describe("WeddingExpensesTable", () => {
     expect(onDetailExpense).toHaveBeenCalledWith(expenses[0]);
 
     // Open dropdown menu
-    const menuBtn = screen.getByRole("button", { name: /ações/i });
+    const menuBtn = screen.getByRole("button", { name: /ações da despesa/i });
     await user.click(menuBtn);
 
     // Click edit
@@ -71,5 +71,33 @@ describe("WeddingExpensesTable", () => {
     const deleteBtn = screen.getByText("Excluir");
     await user.click(deleteBtn);
     expect(onDeleteExpense).toHaveBeenCalledWith(expenses[0]);
+  });
+
+  it("renders tooltips for expense name and actions", async () => {
+    const expenses = [createMockExpense({ name: "Despesa Longa " + "A".repeat(50) })];
+    const user = userEvent.setup();
+
+    render(
+      <WeddingExpensesTable
+        expenses={expenses}
+        onEditExpense={vi.fn()}
+        onDeleteExpense={vi.fn()}
+        onDetailExpense={vi.fn()}
+      />,
+    );
+
+    const nameLink = screen.getByRole("button", { name: /despesa longa/i });
+    const actionsBtn = screen.getByRole("button", { name: /ações da despesa/i });
+
+    // Hover to trigger tooltips
+    await user.hover(nameLink);
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip", { name: expenses[0].name })).toBeInTheDocument();
+    });
+
+    await user.hover(actionsBtn);
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip", { name: "Ações da despesa" })).toBeInTheDocument();
+    });
   });
 });

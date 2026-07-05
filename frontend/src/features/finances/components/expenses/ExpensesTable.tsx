@@ -1,5 +1,4 @@
 import { memo } from "react";
-import { MoreHorizontal } from "lucide-react";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import {
   Table,
@@ -11,12 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { TableRowActionsMenu } from "@/components/table-row-actions-menu";
 import { formatCurrencyBR } from "@/lib/formatters";
 import { statusLabel, statusVariant } from "./constants";
 
@@ -26,8 +26,6 @@ interface WeddingExpensesTableProps {
   onDeleteExpense: (expense: ExpenseOut) => void;
   onDetailExpense: (expense: ExpenseOut) => void;
 }
-
-
 
 export const WeddingExpensesTable = memo(function WeddingExpensesTable({
   expenses,
@@ -62,6 +60,7 @@ export const WeddingExpensesTable = memo(function WeddingExpensesTable({
             const status = expense.status ?? "PENDING";
             const paidCount = expense.paid_installments_count ?? 0;
             const totalCount = expense.installments_count ?? 0;
+            const expenseName = expense.name || expense.description || "N/A";
 
             return (
               <TableRow
@@ -69,13 +68,18 @@ export const WeddingExpensesTable = memo(function WeddingExpensesTable({
                 className="hover:bg-muted/50"
               >
                 <TableCell className="font-medium text-sm max-w-40 truncate p-0">
-                  <Button
-                    variant="link"
-                    className="h-auto w-full justify-start px-4 py-3 text-sm font-medium text-foreground hover:no-underline"
-                    onClick={() => onDetailExpense(expense)}
-                  >
-                    {expense.name || expense.description || "N/A"}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="link"
+                        className="h-auto w-full justify-start px-4 py-3 text-sm font-medium text-foreground hover:no-underline"
+                        onClick={() => onDetailExpense(expense)}
+                      >
+                        <span className="truncate">{expenseName}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{expenseName}</TooltipContent>
+                  </Tooltip>
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {expense.category_name || expense.category.substring(0, 8)}
@@ -99,30 +103,26 @@ export const WeddingExpensesTable = memo(function WeddingExpensesTable({
                     {statusLabel[status] ?? status}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        aria-label="Ações da despesa"
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEditExpense(expense)}>
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => onDeleteExpense(expense)}
-                      >
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TableRowActionsMenu label="Ações da despesa">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditExpense(expense);
+                      }}
+                    >
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteExpense(expense);
+                      }}
+                    >
+                      Excluir
+                    </DropdownMenuItem>
+                  </TableRowActionsMenu>
                 </TableCell>
               </TableRow>
             );
