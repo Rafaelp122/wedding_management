@@ -49,7 +49,8 @@ class FinancialSummaryService:
     def budget_percentage_used(*, company: Company, wedding: Wedding) -> float:
         """Return the percentage of total estimated budget spent, capped at 100%."""
         try:
-            # Bolt Optimization: Use with_total_spent() to fetch budget and total spent in one query
+            # Bolt Optimization: Use with_total_spent() to fetch budget and total
+            # spent in one query
             budget = (
                 Budget.objects.for_tenant(company)
                 .with_total_spent()

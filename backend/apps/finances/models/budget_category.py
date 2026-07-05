@@ -10,7 +10,6 @@ Referência: RF03
 from decimal import Decimal
 from typing import cast
 
-from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -86,10 +85,9 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         )["total"] or Decimal("0.00")
 
     def clean(self) -> None:
+        """
+        Validações de integridade.
+        Nota: A consistência entre o orçamento (budget) e o casamento (wedding)
+        já é validada pelo WeddingOwnedMixin.clean().
+        """
         super().clean()
-
-        # TRAVA DE SEGURANÇA: Garante que o orçamento e a categoria são do mesmo casamento # noqa
-        if self.budget.wedding != self.wedding:
-            raise ValidationError(
-                "O orçamento pai deve pertencer ao mesmo casamento desta categoria."
-            )
