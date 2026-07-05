@@ -143,3 +143,20 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- SECURITY: Throttling (Rate Limiting) ---
+# Necessário para prevenir ataques de força bruta e DoS em endpoints sensíveis.
+# O Ninja Extra utiliza o Cache do Django para rastrear as requisições.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
+
+NINJA_EXTRA = {
+    "THROTTLE_RATES": {
+        "user": "1000/d",
+        "anon": "5/m",
+    }
+}

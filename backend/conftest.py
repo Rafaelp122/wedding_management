@@ -4,6 +4,7 @@ Configuração Global de Testes (Pytest).
 
 import factory
 import pytest
+from django.core.cache import cache
 from django.test import Client
 from ninja_jwt.tokens import RefreshToken
 from pytest_factoryboy import register
@@ -58,3 +59,13 @@ def auth_client(user):
     c = JWTClient(user=user)
     c.user = user
     return c
+
+
+@pytest.fixture(autouse=True)
+def clear_cache_between_tests():
+    """
+    Limpa o cache do Django antes de cada teste.
+    Essencial para garantir isolamento em testes que usam Throttling (Rate Limiting),
+    pois o Ninja Extra armazena as contagens de requisição no Cache padrão.
+    """
+    cache.clear()
