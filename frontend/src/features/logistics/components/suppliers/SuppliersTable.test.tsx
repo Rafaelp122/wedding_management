@@ -61,7 +61,7 @@ describe("SuppliersTable", () => {
       />,
     );
 
-    const actionButtons = screen.getAllByRole("button", { name: /abrir menu/i });
+    const actionButtons = screen.getAllByRole("button", { name: /ações/i });
     const user = userEvent.setup();
     await user.click(actionButtons[0]);
 
