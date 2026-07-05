@@ -4,13 +4,11 @@ import pytest
 @pytest.mark.django_db
 def test_obtain_token_throttling(client):
     """
-    Verifica se o endpoint /token/ aplica rate limiting (5 requisições por minuto para anônimos).
+    Verifica se o endpoint /token/ aplica rate limiting.
+    (5 requisições por minuto para anônimos).
     """
     url = "/api/v1/auth/token/"
-    payload = {
-        "email": "throttled@example.com",
-        "password": "somepassword123"
-    }
+    payload = {"email": "throttled@example.com", "password": "somepassword123"}
 
     # Faz 5 requisições (limite configurado: 5/m)
     for _ in range(5):
@@ -27,6 +25,7 @@ def test_obtain_token_throttling(client):
     # Ninja Extra padrão retorna "Request was throttled."
     assert "throttled" in data["detail"].lower()
 
+
 @pytest.mark.django_db
 def test_register_throttling(client):
     """
@@ -38,7 +37,7 @@ def test_register_throttling(client):
         "password": "password123",
         "first_name": "John",
         "last_name": "Doe",
-        "company_name": "Doe Corp"
+        "company_name": "Doe Corp",
     }
 
     # Faz 5 requisições
