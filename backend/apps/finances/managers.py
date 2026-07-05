@@ -37,6 +37,9 @@ class BudgetManager(TenantManager):
     def get_queryset(self) -> BudgetQuerySet:
         return BudgetQuerySet(self.model, using=self._db)
 
+    def with_total_spent(self) -> BudgetQuerySet:
+        return self.get_queryset().with_total_spent()
+
 
 class BudgetCategoryQuerySet(TenantQuerySet):
     """QuerySet customizado para BudgetCategory."""
@@ -61,6 +64,9 @@ class BudgetCategoryManager(TenantManager):
 
     def get_queryset(self) -> BudgetCategoryQuerySet:
         return BudgetCategoryQuerySet(self.model, using=self._db)
+
+    def with_total_spent(self) -> BudgetCategoryQuerySet:
+        return self.get_queryset().with_total_spent()
 
 
 class ExpenseQuerySet(TenantQuerySet):
@@ -101,3 +107,6 @@ class ExpenseManager(TenantManager):
 
     def get_queryset(self) -> ExpenseQuerySet:
         return ExpenseQuerySet(self.model, using=self._db)
+
+    def with_details(self) -> ExpenseQuerySet:
+        return self.get_queryset().with_details()

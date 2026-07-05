@@ -8,6 +8,7 @@ Referência: RF03
 """
 
 from decimal import Decimal
+from typing import cast
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -62,11 +63,17 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         o ``amount`` das parcelas com status ``PAID``.
 
         .. warning::
-           Esta property dispara uma query ``aggregate`` a cada acesso.
+           Esta property dispara uma query ``aggregate`` a cada acesso se não houver
+           o atributo anotado ``_total_spent``.
            Para múltiplas categorias, prefira
            ``BudgetCategory.objects.with_total_spent()`` que faz uma única
            query com ``annotate``.
         """
+        # Bolt Optimization: Check for annotated attribute to avoid extra query
+        val = getattr(self, "_total_spent", None)
+        if val is not None:
+            return cast(Decimal, val)
+
         from django.db.models import Q, Sum
 
         from apps.finances.models.installment import Installment
