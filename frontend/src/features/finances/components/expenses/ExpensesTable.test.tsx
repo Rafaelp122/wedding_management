@@ -19,8 +19,11 @@ describe("WeddingExpensesTable", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders expense rows", () => {
-    const expenses = [createMockExpense()];
+  it("renders expense rows with different statuses", () => {
+    const expenses = [
+      createMockExpense({ uuid: "e-1", status: "SETTLED", name: "Expense 1" }),
+      createMockExpense({ uuid: "e-2", status: "PENDING", name: "Expense 2" }),
+    ];
 
     render(
       <WeddingExpensesTable
@@ -31,13 +34,14 @@ describe("WeddingExpensesTable", () => {
       />,
     );
 
-    expect(screen.getByText("Buffet Principal")).toBeInTheDocument();
-    expect(screen.getByText("Buffet")).toBeInTheDocument();
-    expect(screen.getByText("Parcial")).toBeInTheDocument();
+    expect(screen.getByText("Expense 1")).toBeInTheDocument();
+    expect(screen.getByText("Quitada")).toBeInTheDocument();
+    expect(screen.getByText("Expense 2")).toBeInTheDocument();
+    expect(screen.getAllByText("Pendente")).toHaveLength(1);
   });
 
   it("triggers callbacks for actions", async () => {
-    const expenses = [createMockExpense()];
+    const expenses = [createMockExpense({ name: "Buffet Principal" })];
     const onEditExpense = vi.fn();
     const onDeleteExpense = vi.fn();
     const onDetailExpense = vi.fn();
@@ -86,11 +90,10 @@ describe("WeddingExpensesTable", () => {
       />,
     );
 
-    const nameLink = screen.getByRole("button", { name: /despesa longa/i });
+    const nameBtn = screen.getByRole("button", { name: /despesa longa/i });
     const actionsBtn = screen.getByRole("button", { name: /ações da despesa/i });
 
-    // Hover to trigger tooltips
-    await user.hover(nameLink);
+    await user.hover(nameBtn);
     await waitFor(() => {
       expect(screen.getByRole("tooltip", { name: expenses[0].name })).toBeInTheDocument();
     });

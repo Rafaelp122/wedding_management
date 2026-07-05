@@ -3,10 +3,16 @@ import { Edit, Trash2 } from "lucide-react";
 
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -50,10 +56,22 @@ export const SuppliersTable = memo(function SuppliersTable({
           {suppliers.map((supplier) => (
             <TableRow
               key={supplier.uuid}
-              className={onDetail ? "cursor-pointer" : ""}
-              onClick={() => onDetail?.(supplier.uuid)}
+              className={onDetail ? "hover:bg-muted/50" : ""}
             >
-              <TableCell className="font-medium">{supplier.name}</TableCell>
+              <TableCell className="font-medium truncate max-w-40 p-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="link"
+                      className="h-auto w-full justify-start px-4 py-3 text-sm font-medium text-foreground hover:no-underline"
+                      onClick={() => onDetail?.(supplier.uuid)}
+                    >
+                      <span className="truncate">{supplier.name}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{supplier.name}</TooltipContent>
+                </Tooltip>
+              </TableCell>
               <TableCell>{supplier.email || "—"}</TableCell>
               <TableCell>{supplier.phone || "—"}</TableCell>
               <TableCell>{supplier.cnpj || "—"}</TableCell>
