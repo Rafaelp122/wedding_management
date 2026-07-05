@@ -1,11 +1,15 @@
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from django.db.models import Q, Sum
 
 from apps.finances.models import Budget, BudgetCategory, Installment
+
+
+if TYPE_CHECKING:
+    pass
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -51,8 +55,10 @@ class FinancialSummaryService:
         try:
             # Bolt Optimization: Use with_total_spent() to fetch budget and total
             # spent in one query
+            from apps.finances.managers import BudgetQuerySet
+
             budget = (
-                Budget.objects.for_tenant(company)
+                cast(BudgetQuerySet, Budget.objects.for_tenant(company))
                 .with_total_spent()
                 .get(wedding=wedding)
             )
