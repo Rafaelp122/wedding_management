@@ -147,7 +147,7 @@ class ContractOut(Schema):
         # Bolt Optimization: Avoid eager getattr default evaluation and reverse O2O
         # queries
         if hasattr(obj, "expense_id"):
-            return getattr(obj, "expense_id")
+            return obj.expense_id
 
         # Check __dict__ to avoid query if not loaded
         if "expense" in obj.__dict__:
@@ -184,7 +184,7 @@ class ContractOut(Schema):
     def resolve_has_linked_expense(obj: "Contract") -> bool:
         # Bolt Optimization: Avoid reverse O2O query
         if hasattr(obj, "expense_id"):
-            return bool(getattr(obj, "expense_id"))
+            return bool(obj.expense_id)
 
         # Fallback using __dict__ cache
         if "expense" in obj.__dict__:
