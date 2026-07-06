@@ -8,7 +8,14 @@ from django.test import Client
 from ninja_jwt.tokens import RefreshToken
 from pytest_factoryboy import register
 
+from django.core.cache import cache
 from apps.users.tests.factories import AdminFactory, UserFactory
+
+
+@pytest.fixture(autouse=True)
+def clear_cache_between_tests():
+    """Ensures that the cache (used for throttling) is cleared before each test."""
+    cache.clear()
 
 
 # 1. Registo Global de Factories
