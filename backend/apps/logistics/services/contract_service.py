@@ -241,7 +241,7 @@ class ContractService:
             # Bolt Optimization: Manually populate the reverse O2O cache and expense_id
             # to ensure immediate serialization in resolvers remains query-free.
             contract.expense = expense
-            contract.expense_id = expense.uuid
+            contract.expense_id = expense.uuid  # type: ignore[attr-defined]
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract
