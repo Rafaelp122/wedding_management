@@ -4,11 +4,11 @@ Configuração Global de Testes (Pytest).
 
 import factory
 import pytest
+from django.core.cache import cache
 from django.test import Client
 from ninja_jwt.tokens import RefreshToken
 from pytest_factoryboy import register
 
-from django.core.cache import cache
 from apps.users.tests.factories import AdminFactory, UserFactory
 
 
