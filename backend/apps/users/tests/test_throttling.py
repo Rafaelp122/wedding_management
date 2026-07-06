@@ -8,10 +8,7 @@ def test_obtain_token_throttling(client):
     A taxa configurada para 'anon' é 5/m.
     """
     url = "/api/v1/auth/token/"
-    payload = {
-        "email": "throttled@example.com",
-        "password": "wrong-password"
-    }
+    payload = {"email": "throttled@example.com", "password": "wrong-password"}
 
     # Executa 5 requisições (dentro do limite)
     for _ in range(5):
@@ -26,6 +23,7 @@ def test_obtain_token_throttling(client):
     assert "detail" in data
     assert "Request was throttled" in data["detail"]
 
+
 @pytest.mark.django_db
 def test_register_throttling(client):
     """
@@ -37,7 +35,7 @@ def test_register_throttling(client):
         "password": "password123",
         "first_name": "Throttled",
         "last_name": "User",
-        "company_name": "Spam Inc"
+        "company_name": "Spam Inc",
     }
 
     # Executa 5 requisições
