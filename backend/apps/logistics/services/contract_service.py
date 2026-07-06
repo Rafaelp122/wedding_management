@@ -234,10 +234,14 @@ class ContractService:
                 )
 
         if expense_data:
-            ExpenseService.create(
+            expense = ExpenseService.create(
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
+            # Bolt Optimization: Manually populate the reverse O2O cache and expense_id
+            # to ensure immediate serialization in resolvers remains query-free.
+            contract.expense = expense
+            contract.expense_id = expense.uuid
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract

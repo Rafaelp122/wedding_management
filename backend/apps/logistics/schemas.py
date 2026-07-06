@@ -146,13 +146,17 @@ class ContractOut(Schema):
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
         # Bolt Optimization: Avoid eager getattr default evaluation and reverse O2O
         # queries
-        annotated = getattr(obj, "expense_id", None)
-        if annotated:
-            return annotated
+        if hasattr(obj, "expense_id"):
+            return getattr(obj, "expense_id")
+
         # Check __dict__ to avoid query if not loaded
         if "expense" in obj.__dict__:
             return obj.expense.uuid if obj.expense else None
-        return None
+
+        # Fallback to real query if data is missing (ensures correctness)
+        # Note: getattr(obj, 'expense', None) is safe as long as it's not a default arg
+        expense = getattr(obj, "expense", None)
+        return expense.uuid if expense else None
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
@@ -179,13 +183,15 @@ class ContractOut(Schema):
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
         # Bolt Optimization: Avoid reverse O2O query
-        expense_id = getattr(obj, "expense_id", None)
-        if expense_id:
-            return True
+        if hasattr(obj, "expense_id"):
+            return bool(getattr(obj, "expense_id"))
+
         # Fallback using __dict__ cache
         if "expense" in obj.__dict__:
             return obj.expense is not None
-        return False
+
+        # Fallback to real query if data is missing (ensures correctness)
+        return hasattr(obj, "expense") and obj.expense is not None
 
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:

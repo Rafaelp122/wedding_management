@@ -20,9 +20,7 @@ def test_contract_out_resolvers_no_extra_queries():
     supplier = SupplierFactory(company=company)
 
     # Create 5 contracts
-    ContractFactory.create_batch(
-        5, wedding=wedding, company=company, supplier=supplier
-    )
+    ContractFactory.create_batch(5, wedding=wedding, company=company, supplier=supplier)
 
     # Get contracts via service which annotates fields
     qs = ContractService.list(company, wedding_id=wedding.uuid)
@@ -37,9 +35,7 @@ def test_contract_out_resolvers_no_extra_queries():
             assert data.addendums_count == 0
 
     print(f"\nQueries captured during serialization: {len(ctx)}")
-    assert (
-        len(ctx) == 0
-    ), f"Expected 0 queries during serialization, but got {len(ctx)}"
+    assert len(ctx) == 0, f"Expected 0 queries during serialization, but got {len(ctx)}"
 
 
 @pytest.mark.django_db
