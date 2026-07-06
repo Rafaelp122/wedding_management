@@ -143,3 +143,19 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Cache Configuration (Required for Throttling) ---
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
+
+# --- Ninja Extra Configuration (Throttling) ---
+NINJA_EXTRA = {
+    "THROTTLE_RATES": {
+        "user": "1000/d",
+        "anon": "5/m",
+    }
+}

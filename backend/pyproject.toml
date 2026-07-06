@@ -18,6 +18,7 @@ dependencies = [
     "gunicorn>=23.0.0,<27.0",
     "python-json-logger>=4.0.0",
     "django-ninja>=1.6.2",
+    "django-ninja-extra>=0.31.4",
     "django-ninja-jwt>=5.4.4",
     "email-validator>=2.3.0",
     "whitenoise>=6.12.0",
