@@ -144,33 +144,48 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
+        # Bolt Optimization: Avoid eager getattr default evaluation and reverse O2O
+        # queries
         annotated = getattr(obj, "expense_id", None)
         if annotated:
             return annotated
-        if hasattr(obj, "expense") and obj.expense:
-            return obj.expense.uuid
+        # Check __dict__ to avoid query if not loaded
+        if "expense" in obj.__dict__:
+            return obj.expense.uuid if obj.expense else None
         return None
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
-        return getattr(obj, "supplier_name", obj.supplier.name)
+        # Bolt Optimization: Use conditional to avoid eager default evaluation
+        val = getattr(obj, "supplier_name", None)
+        if val is not None:
+            return str(val)
+        return obj.supplier.name
 
     @staticmethod
     def resolve_supplier_phone(obj: "Contract") -> str:
-        return getattr(obj, "supplier_phone", obj.supplier.phone)
+        val = getattr(obj, "supplier_phone", None)
+        if val is not None:
+            return str(val)
+        return obj.supplier.phone
 
     @staticmethod
     def resolve_supplier_email(obj: "Contract") -> str:
-        return getattr(obj, "supplier_email", obj.supplier.email)
+        val = getattr(obj, "supplier_email", None)
+        if val is not None:
+            return str(val)
+        return obj.supplier.email
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Usa a annotated expense_id (disponível em list()) para evitar N+1
+        # Bolt Optimization: Avoid reverse O2O query
         expense_id = getattr(obj, "expense_id", None)
         if expense_id:
             return True
-        # Fallback para get() que carrega expense via select_related
-        return hasattr(obj, "expense") and obj.expense is not None
+        # Fallback using __dict__ cache
+        if "expense" in obj.__dict__:
+            return obj.expense is not None
+        return False
 
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:
@@ -187,7 +202,11 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
-        return getattr(obj, "addendums_count", obj.addendums.count())
+        # Bolt Optimization: Avoid eager count query if annotated
+        val = getattr(obj, "addendums_count", None)
+        if val is not None:
+            return int(val)
+        return obj.addendums.count()
 
     @staticmethod
     def resolve_supplier(obj: "Contract") -> UUID4:

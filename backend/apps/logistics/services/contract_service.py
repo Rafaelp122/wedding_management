@@ -81,7 +81,16 @@ class ContractService:
                     ),
                     Value(Decimal("0.00")),
                 ),
-                addendums_count=Count("addendums"),
+                # Bolt Optimization: Use Subquery for count to avoid join explosion
+                addendums_count=Coalesce(
+                    Subquery(
+                        Contract.objects.filter(parent=OuterRef("pk"))
+                        .values("parent")
+                        .annotate(cnt=Count("id"))
+                        .values("cnt")[:1]
+                    ),
+                    0,
+                ),
             )
         )
         if wedding_id:
@@ -102,7 +111,16 @@ class ContractService:
                 Contract.objects.for_tenant(company)
                 .select_related("supplier", "wedding", "parent")
                 .annotate(
-                    addendums_count=Count("addendums"),
+                    # Bolt Optimization: Use Subquery for count to avoid join explosion
+                    addendums_count=Coalesce(
+                        Subquery(
+                            Contract.objects.filter(parent=OuterRef("pk"))
+                            .values("parent")
+                            .annotate(cnt=Count("id"))
+                            .values("cnt")[:1]
+                        ),
+                        0,
+                    ),
                     expense_id=Subquery(
                         Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[
                             :1
