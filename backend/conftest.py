@@ -53,7 +53,7 @@ def user(user_factory):
 
 @pytest.fixture(autouse=True)
 def clear_cache_between_tests():
-    """Limpa o cache antes de cada teste para evitar efeitos colaterais de throttling."""
+    """Limpa o cache antes de cada teste para evitar efeitos de throttling."""
     cache.clear()
 
 
