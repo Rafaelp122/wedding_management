@@ -1,4 +1,4 @@
-from ninja import Router
+from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import READ_ERROR_RESPONSES

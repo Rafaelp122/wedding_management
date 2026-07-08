@@ -74,3 +74,11 @@ LOGGING = {
         "urllib3": {"level": "WARNING"},
     },
 }
+
+# --- Cache Configuration ---
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "development-cache",
+    }
+}

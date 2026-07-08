@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 
 from django.db.models import QuerySet
-from ninja import Router
 from ninja.pagination import paginate
+from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES

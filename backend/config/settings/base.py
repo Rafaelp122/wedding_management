@@ -143,3 +143,12 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+NINJA_EXTRA = {
+    "THROTTLE_RATES": {
+        "auth_register": "5/m",
+        "auth_login": "5/m",
+        "auth_refresh": "5/m",
+        "auth_verify": "5/m",
+    }
+}
