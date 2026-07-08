@@ -205,8 +205,20 @@ vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal)
   return {
     ...mod,
     useFinancesBudgetsList: vi.fn(mod.useFinancesBudgetsList),
-    useFinancesExpensesList: vi.fn(mod.useFinancesExpensesList),
+    useFinancesBudgetsUpdate: vi.fn(mod.useFinancesBudgetsUpdate),
     useFinancesCategoriesList: vi.fn(mod.useFinancesCategoriesList),
+    useFinancesCategoriesCreate: vi.fn(mod.useFinancesCategoriesCreate),
+    useFinancesCategoriesUpdate: vi.fn(mod.useFinancesCategoriesUpdate),
+    useFinancesCategoriesDelete: vi.fn(mod.useFinancesCategoriesDelete),
+    useFinancesExpensesList: vi.fn(mod.useFinancesExpensesList),
+    useFinancesExpensesCreate: vi.fn(mod.useFinancesExpensesCreate),
+    useFinancesExpensesUpdate: vi.fn(mod.useFinancesExpensesUpdate),
+    useFinancesExpensesDelete: vi.fn(mod.useFinancesExpensesDelete),
+    useFinancesExpensesFromDocument: vi.fn(mod.useFinancesExpensesFromDocument),
+    useFinancesInstallmentsList: vi.fn(mod.useFinancesInstallmentsList),
+    useFinancesInstallmentsMarkAsPaid: vi.fn(mod.useFinancesInstallmentsMarkAsPaid),
+    useFinancesInstallmentsUnmarkAsPaid: vi.fn(mod.useFinancesInstallmentsUnmarkAsPaid),
+    useFinancesInstallmentsAdjust: vi.fn(mod.useFinancesInstallmentsAdjust),
   };
 });
 
