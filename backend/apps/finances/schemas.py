@@ -144,8 +144,18 @@ class ExpenseOut(Schema):
 
     @staticmethod
     def resolve_contract(obj: "Expense") -> UUID4 | None:
-        if obj.contract_id and obj.contract:
-            return obj.contract.uuid
+        if obj.contract_id:
+            # Verifica se o contrato já está carregado em memória (select_related)
+            if hasattr(obj, "_state") and "contract" in obj._state.fields_cache:
+                contract = obj.contract
+                return contract.uuid if contract else None
+            # Fallback seguro para instâncias isoladas
+            try:
+                from apps.logistics.models import Contract
+
+                return obj.contract.uuid
+            except (Contract.DoesNotExist, AttributeError):
+                return None
         return None
 
     @staticmethod
