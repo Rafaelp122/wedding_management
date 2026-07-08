@@ -140,3 +140,21 @@ STORAGES = {
         ),
     },
 }
+
+# --- Cache Configuration (Redis for production) ---
+if env("REDIS_HOST", default=""):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": (
+                f"redis://{env('REDIS_HOST')}:{env.int('REDIS_PORT', default=6379)}/1"
+            ),
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "wedding-prod-cache",
+        }
+    }

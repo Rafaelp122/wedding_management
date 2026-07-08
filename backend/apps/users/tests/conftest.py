@@ -8,6 +8,13 @@ todos os módulos do sistema.
 """
 
 import pytest
+from django.core.cache import cache
+
+
+@pytest.fixture(autouse=True)
+def clear_cache_between_tests():
+    """Garante que o cache de rate limiting é limpo antes de cada teste."""
+    cache.clear()
 
 
 @pytest.fixture

@@ -146,14 +146,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 NINJA_EXTRA = {
     "THROTTLE_RATES": {
-        "anon": "5/m",
-        "user": "1000/d",
-    }
-}
-
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",
+        "auth_register": "5/m",
+        "auth_login": "5/m",
+        "auth_refresh": "5/m",
+        "auth_verify": "5/m",
     }
 }

@@ -17,6 +17,22 @@ from .services.registration_service import RegistrationService
 from .services.token_service import TokenService
 
 
+class RegisterAnonThrottle(AnonRateThrottle):
+    scope = "auth_register"
+
+
+class LoginAnonThrottle(AnonRateThrottle):
+    scope = "auth_login"
+
+
+class RefreshAnonThrottle(AnonRateThrottle):
+    scope = "auth_refresh"
+
+
+class VerifyAnonThrottle(AnonRateThrottle):
+    scope = "auth_verify"
+
+
 router = Router(tags=["auth"])
 
 
@@ -24,7 +40,7 @@ router = Router(tags=["auth"])
     "/register/",
     response={201: UserOut, **MUTATION_ERROR_RESPONSES},
     auth=None,
-    throttle=[AnonRateThrottle()],
+    throttle=[RegisterAnonThrottle()],
     operation_id="auth_register_user",
 )
 def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
@@ -45,7 +61,7 @@ def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
     "/token/",
     response={200: TokenOut, 401: ErrorResponse, **MUTATION_ERROR_RESPONSES},
     auth=None,
-    throttle=[AnonRateThrottle()],
+    throttle=[LoginAnonThrottle()],
     operation_id="auth_obtain_token",
 )
 def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
@@ -65,7 +81,7 @@ def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
 @router.post(
     "/refresh/",
     auth=None,
-    throttle=[AnonRateThrottle()],
+    throttle=[RefreshAnonThrottle()],
     response={
         200: TokenRefreshOutputSchema,
         401: ErrorResponse,
@@ -93,7 +109,7 @@ def refresh_token(
         **MUTATION_ERROR_RESPONSES,
     },
     auth=None,
-    throttle=[AnonRateThrottle()],
+    throttle=[VerifyAnonThrottle()],
     operation_id="auth_verify_token",
 )
 def verify_token(
