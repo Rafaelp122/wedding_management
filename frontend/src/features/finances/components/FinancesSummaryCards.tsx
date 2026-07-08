@@ -28,7 +28,6 @@ export function WeddingFinancesSummaryCards({
   const validBudgets = budgets.filter((b) => Number(b.total_estimated) > 0);
   const hasEnoughData = validBudgets.length >= 2;
 
-  let averageBudget = 0;
   let diffPercentage = 0;
   let isBudgetGreater = false;
   let isBudgetEqual = false;
@@ -38,7 +37,7 @@ export function WeddingFinancesSummaryCards({
       (sum, b) => sum + Number(b.total_estimated),
       0
     );
-    averageBudget = totalOfBudgets / validBudgets.length;
+    const averageBudget = totalOfBudgets / validBudgets.length;
     if (averageBudget > 0) {
       if (totalEstimated > averageBudget) {
         diffPercentage = Math.round(((totalEstimated - averageBudget) / averageBudget) * 100);

@@ -4,14 +4,6 @@ import { render, screen } from "@/test-utils";
 import { WeddingFinancesSummaryCards } from "@/features/finances/components/FinancesSummaryCards";
 import { useFinancesBudgetsList } from "@/api/generated/v1/endpoints/finances/finances";
 
-vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
-  return {
-    ...mod,
-    useFinancesBudgetsList: vi.fn(),
-  };
-});
-
 describe("WeddingFinancesSummaryCards", () => {
   beforeEach(() => {
     vi.mocked(useFinancesBudgetsList).mockReturnValue({

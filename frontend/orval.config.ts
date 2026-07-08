@@ -17,9 +17,7 @@ export default defineConfig({
           name: "customInstance",
         },
         query: {
-          useQuery: true,
           useInfinite: false,
-          useMutation: true,
         },
       },
     },
