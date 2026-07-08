@@ -103,9 +103,10 @@ vi.mock("@/components/ui/dropdown-menu", () => {
       );
 
       if (asChild && React.isValidElement(children)) {
-        return React.cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, {
+        const childElement = children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>;
+        return React.cloneElement(childElement, {
           onClick: (e: React.MouseEvent) => {
-            if (children.props.onClick) children.props.onClick(e);
+            if (childElement.props.onClick) childElement.props.onClick(e);
             handleClick(e);
           },
           ...props,
