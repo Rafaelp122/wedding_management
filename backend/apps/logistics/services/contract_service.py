@@ -81,7 +81,16 @@ class ContractService:
                     ),
                     Value(Decimal("0.00")),
                 ),
-                addendums_count=Count("addendums"),
+                # Bolt Optimization: Use Subquery for count to avoid join explosion
+                addendums_count=Coalesce(
+                    Subquery(
+                        Contract.objects.filter(parent=OuterRef("pk"))
+                        .values("parent")
+                        .annotate(cnt=Count("id"))
+                        .values("cnt")[:1]
+                    ),
+                    0,
+                ),
             )
         )
         if wedding_id:
@@ -102,7 +111,16 @@ class ContractService:
                 Contract.objects.for_tenant(company)
                 .select_related("supplier", "wedding", "parent")
                 .annotate(
-                    addendums_count=Count("addendums"),
+                    # Bolt Optimization: Use Subquery for count to avoid join explosion
+                    addendums_count=Coalesce(
+                        Subquery(
+                            Contract.objects.filter(parent=OuterRef("pk"))
+                            .values("parent")
+                            .annotate(cnt=Count("id"))
+                            .values("cnt")[:1]
+                        ),
+                        0,
+                    ),
                     expense_id=Subquery(
                         Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[
                             :1
@@ -216,10 +234,14 @@ class ContractService:
                 )
 
         if expense_data:
-            ExpenseService.create(
+            expense = ExpenseService.create(
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
+            # Bolt Optimization: Manually populate the reverse O2O cache and expense_id
+            # to ensure immediate serialization in resolvers remains query-free.
+            contract.expense = expense
+            contract.expense_id = expense.uuid  # type: ignore[attr-defined]
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract

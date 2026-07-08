@@ -144,32 +144,53 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
-        annotated = getattr(obj, "expense_id", None)
-        if annotated:
-            return annotated
-        if hasattr(obj, "expense") and obj.expense:
-            return obj.expense.uuid
-        return None
+        # Bolt Optimization: Avoid eager getattr default evaluation and reverse O2O
+        # queries
+        if hasattr(obj, "expense_id"):
+            return obj.expense_id
+
+        # Check __dict__ to avoid query if not loaded
+        if "expense" in obj.__dict__:
+            return obj.expense.uuid if obj.expense else None
+
+        # Fallback to real query if data is missing (ensures correctness)
+        # Note: getattr(obj, 'expense', None) is safe as long as it's not a default arg
+        expense = getattr(obj, "expense", None)
+        return expense.uuid if expense else None
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
-        return getattr(obj, "supplier_name", obj.supplier.name)
+        # Bolt Optimization: Use conditional to avoid eager default evaluation
+        val = getattr(obj, "supplier_name", None)
+        if val is not None:
+            return str(val)
+        return obj.supplier.name
 
     @staticmethod
     def resolve_supplier_phone(obj: "Contract") -> str:
-        return getattr(obj, "supplier_phone", obj.supplier.phone)
+        val = getattr(obj, "supplier_phone", None)
+        if val is not None:
+            return str(val)
+        return obj.supplier.phone
 
     @staticmethod
     def resolve_supplier_email(obj: "Contract") -> str:
-        return getattr(obj, "supplier_email", obj.supplier.email)
+        val = getattr(obj, "supplier_email", None)
+        if val is not None:
+            return str(val)
+        return obj.supplier.email
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Usa a annotated expense_id (disponível em list()) para evitar N+1
-        expense_id = getattr(obj, "expense_id", None)
-        if expense_id:
-            return True
-        # Fallback para get() que carrega expense via select_related
+        # Bolt Optimization: Avoid reverse O2O query
+        if hasattr(obj, "expense_id"):
+            return bool(obj.expense_id)
+
+        # Fallback using __dict__ cache
+        if "expense" in obj.__dict__:
+            return obj.expense is not None
+
+        # Fallback to real query if data is missing (ensures correctness)
         return hasattr(obj, "expense") and obj.expense is not None
 
     @staticmethod
@@ -187,7 +208,11 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
-        return getattr(obj, "addendums_count", obj.addendums.count())
+        # Bolt Optimization: Avoid eager count query if annotated
+        val = getattr(obj, "addendums_count", None)
+        if val is not None:
+            return int(val)
+        return obj.addendums.count()
 
     @staticmethod
     def resolve_supplier(obj: "Contract") -> UUID4:
