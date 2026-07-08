@@ -199,6 +199,16 @@ vi.mock("sonner", async (importOriginal) => {
 
 vi.mock("@sentry/react", () => globalAny.__SENTRY_MOCK__);
 
+vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
+  return {
+    ...mod,
+    useFinancesBudgetsList: vi.fn(mod.useFinancesBudgetsList),
+    useFinancesExpensesList: vi.fn(mod.useFinancesExpensesList),
+    useFinancesCategoriesList: vi.fn(mod.useFinancesCategoriesList),
+  };
+});
+
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
 

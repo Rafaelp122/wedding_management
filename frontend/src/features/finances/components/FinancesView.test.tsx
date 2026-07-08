@@ -18,15 +18,6 @@ vi.mock("@/features/finances/hooks/useBudget", () => ({
   useWeddingBudget: vi.fn(),
 }));
 
-// Mock useFinancesExpensesList only, keep all other exports original
-vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
-  return {
-    ...mod,
-    useFinancesExpensesList: vi.fn(),
-  };
-});
-
 import { useWeddingBudget } from "@/features/finances/hooks/useBudget";
 import { useFinancesExpensesList } from "@/api/generated/v1/endpoints/finances/finances";
 
