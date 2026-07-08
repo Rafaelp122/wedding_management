@@ -9,14 +9,6 @@ import {
 } from '@faker-js/faker';
 
 import {
-  HttpResponse,
-  http
-} from 'msw';
-import type {
-  RequestHandlerOptions
-} from 'msw';
-
-import {
   WeddingStatusEnum
 } from '../../models';
 import type {
@@ -36,81 +28,3 @@ export const getWeddingsReadResponseMock = (overrideResponse: Partial<Extract<We
 
 export const getWeddingsUpdateResponseMock = (overrideResponse: Partial<Extract<WeddingOut, object>> = {}): WeddingOut => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), groom_name: faker.string.alpha({length: {min: 10, max: 20}}), bride_name: faker.string.alpha({length: {min: 10, max: 20}}), date: faker.date.past().toISOString().slice(0, 10), location: faker.string.alpha({length: {min: 10, max: 20}}), expected_guests: faker.helpers.arrayElement([faker.number.int(),null,]), status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)), created_at: faker.date.past().toISOString().slice(0, 19) + 'Z', updated_at: faker.date.past().toISOString().slice(0, 19) + 'Z', total_budget: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({min: 0, fractionDigits: 2}),null,]), undefined]), overdue_installments: faker.number.int({min: 0}), incomplete_tasks: faker.number.int({min: 0}), ...overrideResponse})
 
-
-export const getWeddingsListMockHandler = (overrideResponse?: PagedWeddingOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedWeddingOut> | PagedWeddingOut), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/weddings/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getWeddingsListResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
-
-export const getWeddingsCreateMockHandler = (overrideResponse?: WeddingOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<WeddingOut> | WeddingOut), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/weddings/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getWeddingsCreateResponseMock(),
-      { status: 201
-      })
-  }, options)
-}
-
-export const getWeddingsByMonthMockHandler = (overrideResponse?: WeddingByMonthOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingByMonthOut[]> | WeddingByMonthOut[]), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/weddings/by-month/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getWeddingsByMonthResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
-
-export const getWeddingsReadMockHandler = (overrideResponse?: WeddingOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingOut> | WeddingOut), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/weddings/:uuid/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getWeddingsReadResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
-
-export const getWeddingsUpdateMockHandler = (overrideResponse?: WeddingOut | ((info: Parameters<Parameters<typeof http.patch>[1]>[0]) => Promise<WeddingOut> | WeddingOut), options?: RequestHandlerOptions) => {
-  return http.patch('*/api/v1/weddings/:uuid/', async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getWeddingsUpdateResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
-
-export const getWeddingsDeleteMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
-  return http.delete('*/api/v1/weddings/:uuid/', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
-
-    return new HttpResponse(null,
-      { status: 204
-      })
-  }, options)
-}
-export const getWeddingsMock = () => [
-  getWeddingsListMockHandler(),
-  getWeddingsCreateMockHandler(),
-  getWeddingsByMonthMockHandler(),
-  getWeddingsReadMockHandler(),
-  getWeddingsUpdateMockHandler(),
-  getWeddingsDeleteMockHandler()
-]
