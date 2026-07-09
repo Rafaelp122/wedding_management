@@ -5,15 +5,15 @@
 # Definição de versão para evitar repetição e erro de tag flutuante
 ARG NODE_VERSION=22.14.0
 FROM node:${NODE_VERSION}-slim AS base
+RUN npm install -g pnpm@9.15.0
 
 # ------------------------------------------------------------------------------
 # Stage 1: Dependencies
 # ------------------------------------------------------------------------------
 FROM base AS dependencies
 WORKDIR /app
-COPY package.json package-lock.json ./
-# npm ci é obrigatório em CI/Docker
-RUN npm ci --quiet
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # ------------------------------------------------------------------------------
 # Stage 2: Development (Para uso com Docker Compose + Volumes)
@@ -26,7 +26,7 @@ COPY . .
 
 EXPOSE 5173
 # Vite precisa do --host para aceitar conexões de fora do container
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["pnpm", "run", "dev", "--host", "0.0.0.0"]
 
 # ------------------------------------------------------------------------------
 # Stage 3: Builder (Onde a mágica da produção acontece)
@@ -36,7 +36,7 @@ WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 # Build otimizado
-RUN npm run build
+RUN pnpm run build
 
 # ------------------------------------------------------------------------------
 # Stage 4: Production (Nginx servindo estáticos)

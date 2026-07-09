@@ -17,7 +17,7 @@ export class FormDialogComponent {
   }
 
   async expectValidationError() {
-    await expect(this.dialog.getByRole("alert")).toBeVisible();
+    await expect(this.dialog.locator(".text-destructive").first()).toBeVisible();
   }
 
   async submit() {

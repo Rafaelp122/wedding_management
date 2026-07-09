@@ -23,7 +23,7 @@ export class DashboardPage {
   }
 
   async expectGreeting(name: string) {
-    await expect(this.page.getByText(new RegExp(name, "i"))).toBeVisible();
+    await expect(this.page.getByText(new RegExp(name, "i")).first()).toBeVisible();
   }
 
   async expectKpiCardsVisible() {
@@ -34,12 +34,11 @@ export class DashboardPage {
   }
 
   async expectKpiValueNonZero(cardLabel: string) {
-    // Find the <h3> value sibling of the <p> label within the card
+    // Find the value sibling of the <p> label within the card (both are <p> elements)
     const label = this.page.getByText(cardLabel, { exact: false }).first();
-    const h3 = label.locator("..").locator("h3");
-    const text = await h3.innerText();
-    // Check it contains at least one non-zero digit (catches both R$ values and plain numbers)
-    expect(text).toMatch(/[1-9]/);
+    const valueElement = label.locator("..").locator("p").nth(1);
+    // Use polling assertion to wait for the API to load and update the value
+    await expect(valueElement).toHaveText(/[1-9]/);
   }
 
   async expectChartVisible() {
@@ -84,6 +83,8 @@ export class DashboardPage {
   }
 
   async openFirstAvailableKpiSheet() {
+    // Wait for the data to load first
+    await this.expectKpiValueNonZero("Parcelas a Vencer");
     for (const label of KPI_VER_BUTTONS) {
       const btn = this.page.getByRole("button", { name: label });
       if (await btn.count() > 0) {

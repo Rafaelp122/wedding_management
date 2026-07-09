@@ -82,3 +82,12 @@ CACHES = {
         "LOCATION": "development-cache",
     }
 }
+
+# Afrouxa limites de throttling em desenvolvimento para viabilizar
+# testes E2E concorrentes
+NINJA_EXTRA["THROTTLE_RATES"] = {
+    "auth_register": "1000/m",
+    "auth_login": "1000/m",
+    "auth_refresh": "1000/m",
+    "auth_verify": "1000/m",
+}

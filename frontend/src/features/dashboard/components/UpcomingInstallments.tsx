@@ -88,7 +88,7 @@ export function UpcomingInstallments() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold tabular-nums">
-                  {formatCurrencyBR(Number(inst.amount))}
+                  R$ {formatCurrencyBR(Number(inst.amount))}
                 </p>
                 {inst.wedding ? (
                   <Link

@@ -49,7 +49,7 @@ repos:
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
-        exclude: .*/tests/.*|backend/uv.lock|^\.agents/|^\.claude/|^\.antigravity/|^skills/|skills-lock\.json
+        exclude: .*/tests/.*|backend/uv.lock|.*pnpm-lock\.yaml|^\.agents/|^\.claude/|^\.antigravity/|^skills/|skills-lock\.json
 
   # ----------------------------------------------------------------------------
   # 4. INTEGRIDADE LOCAL E LINTING O(1)
@@ -59,7 +59,7 @@ repos:
       # --- FRONTEND ---
       - id: frontend-lint
         name: ⚛️ React Lint (Fast)
-        entry: bash -c "cd frontend && npx eslint --fix"
+        entry: bash -c "cd frontend && pnpm exec eslint --fix"
         language: system
         types_or: [javascript, jsx, ts, tsx]
         files: ^frontend/src/

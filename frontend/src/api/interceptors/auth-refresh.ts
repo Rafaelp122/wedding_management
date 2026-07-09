@@ -93,7 +93,12 @@ export function addAuthRefreshInterceptor(instance: AxiosInstance) {
     async (error) => {
       const originalRequest = error.config as InternalAxiosRequestConfig;
 
-      if (error.response?.status !== 401 || originalRequest._retry) {
+      const isLoginRequest = originalRequest.url?.includes("/auth/token/");
+      if (
+        error.response?.status !== 401 ||
+        originalRequest._retry ||
+        isLoginRequest
+      ) {
         return Promise.reject(error);
       }
 

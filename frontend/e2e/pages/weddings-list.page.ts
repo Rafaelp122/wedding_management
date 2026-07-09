@@ -12,11 +12,13 @@ export interface CreateWeddingData {
   expected_guests?: number;
 }
 
+let yearCounter = 2050;
 export function generateWeddingData(): CreateWeddingData {
+  const currentYear = yearCounter++;
   return {
     groom_name: faker.person.fullName(),
     bride_name: faker.person.fullName(),
-    date: faker.date.future({ years: 1 }).toISOString().split("T")[0],
+    date: `${currentYear}-12-31`,
     location: faker.location.streetAddress(),
     expected_guests: faker.number.int({ min: 20, max: 500 }),
   };
@@ -53,7 +55,7 @@ export class WeddingsListPage {
 
   async editWedding(name: string, data: Partial<CreateWeddingData>) {
     const row = this.page.getByRole("row").filter({ hasText: name });
-    await row.getByRole("button", { name: "Editar casamento" }).click();
+    await row.getByRole("button", { name: "Editar" }).click();
     await this.formDialog.expectVisible("Editar Casamento");
 
     if (data.groom_name) await this.formDialog.fillField("Nome do Noivo", data.groom_name);
@@ -70,7 +72,7 @@ export class WeddingsListPage {
 
   async deleteWedding(name: string) {
     const row = this.page.getByRole("row").filter({ hasText: name });
-    await row.getByRole("button", { name: "Deletar casamento" }).click();
+    await row.getByRole("button", { name: "Excluir" }).click();
     await this.confirmDelete.expectVisible();
     await this.confirmDelete.confirm(name);
   }
@@ -107,18 +109,18 @@ export class WeddingsListPage {
   }
 
   async expectHasNext() {
-    await expect(this.page.getByRole("button", { name: "Próximo" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Próximo" })).toBeEnabled();
   }
 
   async expectHasPrevious() {
-    await expect(this.page.getByRole("button", { name: "Anterior" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Anterior" })).toBeEnabled();
   }
 
   async expectNotHasPrevious() {
-    await expect(this.page.getByRole("button", { name: "Anterior" })).not.toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Anterior" })).toBeDisabled();
   }
 
   async expectNotHasNext() {
-    await expect(this.page.getByRole("button", { name: "Próximo" })).not.toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Próximo" })).toBeDisabled();
   }
 }
