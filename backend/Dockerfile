@@ -66,7 +66,8 @@ COPY --chown=appuser:appuser . .
 
 RUN DJANGO_SETTINGS_MODULE=config.settings.production \
     SECRET_KEY=${BUILD_SECRET_KEY} \
-    python manage.py collectstatic --noinput
+    python manage.py collectstatic --noinput && \
+    python -m compileall -q .
 
 USER appuser
 
@@ -74,4 +75,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')" || exit 1
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8080} --worker-class gthread --workers ${GUNICORN_WORKERS:-2} --threads 4 --timeout 60"]
+CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8080} --worker-class gthread --workers ${GUNICORN_WORKERS:-1} --threads 4 --timeout 60 --preload"]

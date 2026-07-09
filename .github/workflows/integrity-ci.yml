@@ -424,6 +424,24 @@ jobs:
         with:
           project_id: gen-lang-client-0194045282
 
+      - name: Install UV
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Run Database Migrations
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DJANGO_SETTINGS_MODULE: config.settings.production
+        run: |
+          cd backend
+          uv run python manage.py migrate --noinput
+
       - name: Deploy to Cloud Run
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -440,6 +458,7 @@ jobs:
             --region us-central1 \
             --allow-unauthenticated \
             --concurrency 15 \
+            --cpu-boost \
             --set-env-vars='^|^DATABASE_URL='"${DATABASE_URL}"'|SECRET_KEY='"${SECRET_KEY}"'|R2_ACCESS_KEY_ID='"${R2_ACCESS_KEY_ID}"'|R2_SECRET_ACCESS_KEY='"${R2_SECRET_ACCESS_KEY}"'|R2_BUCKET='"${R2_BUCKET}"'|R2_ENDPOINT_URL='"${R2_ENDPOINT_URL}"'|ALLOWED_HOSTS=api.simaceito.site,simaceito.site,www.simaceito.site,app.simaceito.site,.run.app,localhost|DJANGO_SETTINGS_MODULE=config.settings.production|CORS_ALLOWED_ORIGINS=https://simaceito.site,https://www.simaceito.site,https://app.simaceito.site' \
             --quiet
 
