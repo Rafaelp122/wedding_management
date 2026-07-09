@@ -176,8 +176,11 @@ frontend-test-changed:
 	cd frontend && pnpm exec vitest run --changed
 
 frontend-e2e:
+	@echo "🔄 Preparando banco de dados para testes E2E..."
+	$(RUN_BACK) python manage.py flush --noinput
+	$(RUN_BACK) python manage.py seed_db
 	@echo "🧪 Executando testes E2E com Playwright..."
-	cd frontend && pnpm exec playwright test
+	cd frontend && pnpm exec playwright test --workers=1
 
 frontend-e2e-report:
 	@echo "📊 Abrindo o relatório de testes E2E do Playwright..."
