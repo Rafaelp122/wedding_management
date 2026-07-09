@@ -414,6 +414,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DJANGO_SETTINGS_MODULE: config.settings.production
         run: |
           cd backend
           uv run python manage.py migrate --noinput
