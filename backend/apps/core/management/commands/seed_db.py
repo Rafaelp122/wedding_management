@@ -231,7 +231,7 @@ class Command(BaseCommand):
                     )
 
                 TaskFactory.create_batch(3, wedding=wedding, is_completed=True)
-                TaskFactory.create_batch(2, wedding=wedding, is_completed=False)
+                TaskFactory.create(wedding=wedding, is_completed=False)
                 TaskFactory.create(
                     wedding=wedding,
                     is_completed=False,

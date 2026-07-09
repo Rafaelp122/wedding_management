@@ -153,7 +153,7 @@ class ExpenseOut(Schema):
             try:
                 from apps.logistics.models import Contract
 
-                return obj.contract.uuid
+                return obj.contract.uuid if obj.contract else None
             except (Contract.DoesNotExist, AttributeError):
                 return None
         return None
