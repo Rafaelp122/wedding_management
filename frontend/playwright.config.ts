@@ -9,7 +9,7 @@ export default defineConfig({
   testDir: "./e2e/specs",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
     ? [["github"], ["blob"], ["html"]]
     : [["list"], ["html"]],

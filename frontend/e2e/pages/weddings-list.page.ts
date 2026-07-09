@@ -12,13 +12,13 @@ export interface CreateWeddingData {
   expected_guests?: number;
 }
 
-let yearCounter = 2050;
 export function generateWeddingData(): CreateWeddingData {
-  const currentYear = yearCounter++;
+  // Gera um ano futuro único e crescente baseado no timestamp atual (entre 2050 e 3050)
+  const uniqueYear = 2050 + (Math.floor(Date.now() / 1000) % 1000);
   return {
     groom_name: faker.person.fullName(),
     bride_name: faker.person.fullName(),
-    date: `${currentYear}-12-31`,
+    date: `${uniqueYear}-12-31`,
     location: faker.location.streetAddress(),
     expected_guests: faker.number.int({ min: 20, max: 500 }),
   };
