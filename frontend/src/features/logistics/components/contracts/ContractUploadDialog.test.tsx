@@ -38,13 +38,7 @@ vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
   useLogisticsContractsUploadUrl: () => mockUploadUrl(),
 }));
 
-vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
-  return {
-    ...mod,
-    useFinancesCategoriesList: () => mockCategoriesList(),
-  };
-});
+import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
 
 // ===== TEST SUITE =====
 
@@ -82,6 +76,7 @@ describe("ContractUploadDialog", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useFinancesCategoriesList).mockImplementation(mockCategoriesList);
 
     mockSuppliersList.mockReturnValue(
       mockQueryResponse({ data: { items: [], count: 0 } }),

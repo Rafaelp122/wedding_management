@@ -30,6 +30,144 @@ vi.mock("recharts", () => ({
   Legend: () => React.createElement("div", { "data-testid": "legend" }),
 }));
 
+const dropdownListeners = new Set<() => void>();
+let hasAnyTriggerBeenClicked = false;
+
+const setHasAnyTriggerBeenClicked = (val: boolean) => {
+  hasAnyTriggerBeenClicked = val;
+  dropdownListeners.forEach((listener) => listener());
+};
+
+const useHasAnyTriggerBeenClicked = () => {
+  const [state, setState] = React.useState(hasAnyTriggerBeenClicked);
+  React.useEffect(() => {
+    const handler = () => setState(hasAnyTriggerBeenClicked);
+    dropdownListeners.add(handler);
+    return () => {
+      dropdownListeners.delete(handler);
+    };
+  }, []);
+  return state;
+};
+
+const DropdownMenuContext = React.createContext<{
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}>({
+  open: false,
+  setOpen: () => {},
+});
+
+vi.mock("@/components/ui/dropdown-menu", () => {
+  return {
+    DropdownMenu: ({
+      children,
+      open,
+      onOpenChange,
+    }: {
+      children: React.ReactNode;
+      open?: boolean;
+      onOpenChange?: (open: boolean) => void;
+    }) => {
+      const [localOpen, setLocalOpen] = React.useState(false);
+      const isOpen = open !== undefined ? open : localOpen;
+      const setOpen = React.useCallback(
+        (val: boolean) => {
+          setLocalOpen(val);
+          if (onOpenChange) onOpenChange(val);
+        },
+        [onOpenChange]
+      );
+      return React.createElement(
+        DropdownMenuContext.Provider,
+        { value: { open: isOpen, setOpen } },
+        children
+      );
+    },
+    DropdownMenuTrigger: ({
+      children,
+      asChild,
+      ...props
+    }: {
+      children: React.ReactNode;
+      asChild?: boolean;
+    }) => {
+      const { setOpen } = React.useContext(DropdownMenuContext);
+      const handleClick = React.useCallback(
+        (e: React.MouseEvent) => {
+          setHasAnyTriggerBeenClicked(true);
+          e.stopPropagation();
+          setOpen(true);
+        },
+        [setOpen]
+      );
+
+      if (asChild && React.isValidElement(children)) {
+        const childElement = children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>;
+        return React.cloneElement(childElement, {
+          onClick: (e: React.MouseEvent) => {
+            if (childElement.props.onClick) childElement.props.onClick(e);
+            handleClick(e);
+          },
+          ...props,
+        });
+      }
+
+      return React.createElement(
+        "button",
+        { onClick: handleClick, ...props },
+        children
+      );
+    },
+    DropdownMenuContent: ({
+      children,
+      ...props
+    }: {
+      children: React.ReactNode;
+    }) => {
+      const { open } = React.useContext(DropdownMenuContext);
+      const clicked = useHasAnyTriggerBeenClicked();
+      if (clicked && !open) return null;
+      return React.createElement("div", props, children);
+    },
+    DropdownMenuItem: ({
+      children,
+      onClick,
+      className,
+      ...props
+    }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      className?: string;
+    }) => {
+      const { setOpen } = React.useContext(DropdownMenuContext);
+      const handleClick = React.useCallback(
+        () => {
+          if (onClick) onClick();
+          setOpen(false);
+        },
+        [onClick, setOpen]
+      );
+      return React.createElement(
+        "div",
+        { className, onClick: handleClick, ...props },
+        children
+      );
+    },
+    DropdownMenuLabel: ({ children }: { children: React.ReactNode }) =>
+      React.createElement("div", null, children),
+    DropdownMenuSeparator: () => React.createElement("hr"),
+    DropdownMenuGroup: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    DropdownMenuSub: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) =>
+      React.createElement("button", null, children),
+    DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) =>
+      React.createElement("div", null, children),
+  };
+});
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalAny = globalThis as any;
 
@@ -61,6 +199,28 @@ vi.mock("sonner", async (importOriginal) => {
 });
 
 vi.mock("@sentry/react", () => globalAny.__SENTRY_MOCK__);
+
+vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
+  return {
+    ...mod,
+    useFinancesBudgetsList: vi.fn(mod.useFinancesBudgetsList),
+    useFinancesBudgetsUpdate: vi.fn(mod.useFinancesBudgetsUpdate),
+    useFinancesCategoriesList: vi.fn(mod.useFinancesCategoriesList),
+    useFinancesCategoriesCreate: vi.fn(mod.useFinancesCategoriesCreate),
+    useFinancesCategoriesUpdate: vi.fn(mod.useFinancesCategoriesUpdate),
+    useFinancesCategoriesDelete: vi.fn(mod.useFinancesCategoriesDelete),
+    useFinancesExpensesList: vi.fn(mod.useFinancesExpensesList),
+    useFinancesExpensesCreate: vi.fn(mod.useFinancesExpensesCreate),
+    useFinancesExpensesUpdate: vi.fn(mod.useFinancesExpensesUpdate),
+    useFinancesExpensesDelete: vi.fn(mod.useFinancesExpensesDelete),
+    useFinancesExpensesFromDocument: vi.fn(mod.useFinancesExpensesFromDocument),
+    useFinancesInstallmentsList: vi.fn(mod.useFinancesInstallmentsList),
+    useFinancesInstallmentsMarkAsPaid: vi.fn(mod.useFinancesInstallmentsMarkAsPaid),
+    useFinancesInstallmentsUnmarkAsPaid: vi.fn(mod.useFinancesInstallmentsUnmarkAsPaid),
+    useFinancesInstallmentsAdjust: vi.fn(mod.useFinancesInstallmentsAdjust),
+  };
+});
 
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
@@ -164,6 +324,7 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   vi.clearAllMocks();
+  setHasAnyTriggerBeenClicked(false);
   document.body.removeAttribute("data-scroll-locked");
   document.body.style.pointerEvents = "";
   document.documentElement.style.pointerEvents = "";

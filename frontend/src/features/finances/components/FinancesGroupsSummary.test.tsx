@@ -3,48 +3,6 @@ import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { WeddingFinancesGroupsSummary } from "./FinancesGroupsSummary";
 import { createMockBudgetCategory } from "@/test-data";
 
-// Mock Radix DropdownMenu so the menu renders inline (jsdom doesn't support pointer events)
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  DropdownMenuTrigger: ({
-    children,
-    asChild,
-    ...props
-  }: {
-    children: React.ReactNode;
-    asChild?: boolean;
-  }) =>
-    asChild ? (
-      <>{children}</>
-    ) : (
-      <button {...props}>{children}</button>
-    ),
-  DropdownMenuContent: ({
-    children,
-    ...props
-  }: {
-    children: React.ReactNode;
-    align?: string;
-  }) => <div {...props}>{children}</div>,
-  DropdownMenuItem: ({
-    children,
-    onClick,
-    className,
-    ...props
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <div className={className} onClick={onClick} {...props}>
-      {children}
-    </div>
-  ),
-  DropdownMenuSeparator: () => <hr />,
-}));
-
 // Mock lazy-loaded dialog modules so they render synchronously in tests
 vi.mock(
   "@/features/finances/components/budgets/CreateBudgetCategoryDialog",

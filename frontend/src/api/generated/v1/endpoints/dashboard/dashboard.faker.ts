@@ -8,14 +8,6 @@ import {
   faker
 } from '@faker-js/faker';
 
-import {
-  HttpResponse,
-  http
-} from 'msw';
-import type {
-  RequestHandlerOptions
-} from 'msw';
-
 import type {
   DashboardSummaryOut,
   WeddingDashboardOut
@@ -26,31 +18,3 @@ export const getDashboardSummaryResponseMock = (overrideResponse: Partial<Extrac
 
 export const getDashboardWeddingResponseMock = (overrideResponse: Partial<Extract<WeddingDashboardOut, object>> = {}): WeddingDashboardOut => ({days_until_wedding: faker.number.int(), budget_percentage_used: faker.number.float({fractionDigits: 2}), tasks_completed: faker.number.int(), tasks_total: faker.number.int(), contracts_signed: faker.number.int(), contracts_total: faker.number.int(), upcoming_installments: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), installment_number: faker.number.int(), amount: faker.string.alpha({length: {min: 10, max: 20}}), due_date: faker.date.past().toISOString().slice(0, 10), status: faker.string.alpha({length: {min: 10, max: 20}})})), urgent_tasks: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), title: faker.string.alpha({length: {min: 10, max: 20}}), due_date: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 10),null,]), undefined])})), categories_summary: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({name: faker.string.alpha({length: {min: 10, max: 20}}), allocated: faker.string.alpha({length: {min: 10, max: 20}}), spent: faker.string.alpha({length: {min: 10, max: 20}}), percentage: faker.number.float({fractionDigits: 2})})), ...overrideResponse})
 
-
-export const getDashboardSummaryMockHandler = (overrideResponse?: DashboardSummaryOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DashboardSummaryOut> | DashboardSummaryOut), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/dashboard/summary/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getDashboardSummaryResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
-
-export const getDashboardWeddingMockHandler = (overrideResponse?: WeddingDashboardOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingDashboardOut> | WeddingDashboardOut), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/dashboard/wedding/:uuid/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getDashboardWeddingResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
-export const getDashboardMock = () => [
-  getDashboardSummaryMockHandler(),
-  getDashboardWeddingMockHandler()
-]
