@@ -25,6 +25,10 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
+from apps.core.services.storage_service import (
+    StorageService,
+    get_storage_service,
+)
 from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
@@ -51,6 +55,12 @@ class ContractService:
     Foco: Orquestração, Multitenancy Segura e Auditoria.
     Validações de integridade do dado (ex: datas inválidas) ficam delegadas ao Model.
     """
+
+    _storage_service: StorageService = get_storage_service()
+
+    @classmethod
+    def set_storage_service(cls, storage_service: StorageService) -> None:
+        cls._storage_service = storage_service
 
     @staticmethod
     def list(
@@ -442,14 +452,15 @@ class ContractService:
 
     @staticmethod
     def generate_upload_url(
-        company: Company, filename: str, wedding_id: UUID | str
+        company: Company,
+        filename: str,
+        wedding_id: UUID | str,
+        storage_service: StorageService | None = None,
     ) -> dict[str, Any]:
         """
         Gera presigned URL para upload de contrato no R2/S3.
         """
         import uuid
-
-        import boto3  # type: ignore[import-untyped]
 
         # Validar casamento
         wedding = get_object_or_404_for_tenant(
@@ -469,43 +480,24 @@ class ContractService:
         unique_id = uuid.uuid4()
         object_key = f"contracts/{wedding.uuid}/{unique_id}/{filename}"
 
-        # Configurar boto3 client
-        r2_endpoint = getattr(settings, "AWS_S3_ENDPOINT_URL", None) or getattr(
-            settings, "R2_ENDPOINT_URL", None
-        )
-        r2_access_key = getattr(settings, "AWS_ACCESS_KEY_ID", None) or getattr(
-            settings, "R2_ACCESS_KEY_ID", None
-        )
-        r2_secret_key = getattr(settings, "AWS_SECRET_ACCESS_KEY", None) or getattr(
-            settings, "R2_SECRET_ACCESS_KEY", None
-        )
+        # Obter bucket das configurações
         r2_bucket = getattr(settings, "AWS_STORAGE_BUCKET_NAME", None) or getattr(
             settings, "R2_BUCKET", None
         )
 
-        if not all([r2_endpoint, r2_access_key, r2_secret_key, r2_bucket]):
+        if not r2_bucket:
             logger.error("Configuração de storage R2/S3 incompleta no servidor.")
             raise BusinessRuleViolation(
                 detail="Configuração de storage R2/S3 incompleta no servidor.",
                 code="storage_configuration_incomplete",
             )
 
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=r2_endpoint,
-            aws_access_key_id=r2_access_key,
-            aws_secret_access_key=r2_secret_key,
-            region_name=getattr(settings, "AWS_S3_REGION_NAME", "us-east-1"),
-        )
-
-        presigned_url = s3_client.generate_presigned_url(
-            "put_object",
-            Params={
-                "Bucket": r2_bucket,
-                "Key": object_key,
-                "ContentType": content_type,
-            },
-            ExpiresIn=900,
+        storage = storage_service or ContractService._storage_service
+        presigned_url = storage.generate_presigned_put_url(
+            bucket=r2_bucket,
+            object_key=object_key,
+            content_type=content_type,
+            expires_in=900,
         )
 
         return {
