@@ -101,4 +101,7 @@ def get_storage_service() -> StorageService:
 
     # Outros provedores (como GCS, S3 padrão) podem ser
     # facilmente adicionados aqui no futuro.
-    raise ValueError(f"Provedor de storage '{provider}' não suportado.")
+    raise BusinessRuleViolation(
+        detail=f"Provedor de storage '{provider}' não suportado.",
+        code="unsupported_storage_provider",
+    )

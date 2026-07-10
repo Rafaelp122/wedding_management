@@ -21,6 +21,8 @@ environ.Env.read_env(BASE_DIR.parent / ".env")
 
 SECRET_KEY = env("SECRET_KEY")
 
+STORAGE_PROVIDER = env("STORAGE_PROVIDER", default="R2")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

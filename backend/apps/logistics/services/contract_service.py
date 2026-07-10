@@ -56,7 +56,13 @@ class ContractService:
     Validações de integridade do dado (ex: datas inválidas) ficam delegadas ao Model.
     """
 
-    _storage_service: StorageService = get_storage_service()
+    _storage_service: StorageService | None = None
+
+    @classmethod
+    def get_storage_client(cls) -> StorageService:
+        if cls._storage_service is None:
+            cls._storage_service = get_storage_service()
+        return cls._storage_service
 
     @classmethod
     def set_storage_service(cls, storage_service: StorageService) -> None:
@@ -492,7 +498,7 @@ class ContractService:
                 code="storage_configuration_incomplete",
             )
 
-        storage = storage_service or ContractService._storage_service
+        storage = storage_service or ContractService.get_storage_client()
         presigned_url = storage.generate_presigned_put_url(
             bucket=r2_bucket,
             object_key=object_key,
