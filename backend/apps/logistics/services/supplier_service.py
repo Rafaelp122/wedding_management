@@ -28,7 +28,7 @@ class SupplierService:
         search: str = "",
         is_active: bool | None = None,
     ) -> QuerySet[Supplier]:
-        qs = Supplier.objects.for_tenant(company).select_related("company")
+        qs = Supplier.objects.for_tenant(company)
         if search:
             qs = qs.filter(
                 Q(name__icontains=search)
