@@ -51,7 +51,7 @@
 
 - **Read `docs/DESIGN.md`** before UI work.
 - **Load skills on demand** (not proactively).
-- **Docstrings and Comments**: Must follow the standard defined in [COMMENTING_STANDARDS.md](file:///home/rafael/.gemini/antigravity/worktrees/wedding_management/review-service-documentation-comments/docs/COMMENTING_STANDARDS.md). Write in Portuguese (PT-BR) for business explanations, use Google Style for docstrings, and never include references to AI/generation tools (like "Bolt", "Jules", "Copilot").
+- **Docstrings and Comments**: Must follow the standard defined in [COMMENTING_STANDARDS.md](docs/COMMENTING_STANDARDS.md). Write in Portuguese (PT-BR) for business explanations, use Google Style for docstrings, and never include references to AI/generation tools (like "Bolt", "Jules", "Copilot").
 
 ## Subagents
 

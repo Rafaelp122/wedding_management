@@ -83,7 +83,7 @@ class ItemService:
             O objeto Item correspondente.
 
         Raises:
-            Http404: Se o item não for encontrado ou não pertencer
+            ObjectNotFoundError: Se o item não for encontrado ou não pertencer
                 ao tenant.
         """
         return get_object_or_404_for_tenant(
@@ -111,7 +111,7 @@ class ItemService:
             A instância resolvida do casamento, ou None se não fornecido.
 
         Raises:
-            Http404: Se o casamento não for encontrado para o tenant.
+            ObjectNotFoundError: Se o casamento não for encontrado para o tenant.
         """
         if not wedding_input:
             return None
@@ -148,7 +148,7 @@ class ItemService:
             A instância resolvida do contrato, ou None se não fornecido.
 
         Raises:
-            Http404: Se o contrato não for encontrado para o tenant.
+            ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
         """
         if not contract_input:
             return None
@@ -245,7 +245,7 @@ class ItemService:
         Raises:
             DomainIntegrityError: Se o novo contrato informado não pertencer
                 ao casamento do item.
-            Http404: Se o item não pertencer ao tenant.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
@@ -290,7 +290,7 @@ class ItemService:
             instance: A instância do Item a ser removida.
 
         Raises:
-            Http404: Se o item não pertencer ao tenant.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
@@ -327,7 +327,7 @@ class ItemService:
         Raises:
             BusinessRuleViolation: Se a transição de status for inválida
                 segundo as regras de validação do modelo.
-            Http404: Se o item não pertencer ao tenant.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,

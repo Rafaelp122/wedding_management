@@ -43,7 +43,6 @@ from apps.weddings.models import Wedding
 
 _ItemInList = list[ItemIn]
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -220,7 +219,7 @@ class ContractService:
             A instância criada do Contract.
 
         Raises:
-            Http404: Se algum objeto relacionado (casamento, fornecedor
+            ObjectNotFoundError: Se algum objeto relacionado (casamento, fornecedor
                 ou contrato pai) não for encontrado para o tenant.
         """
         logger.info(f"Iniciando criação de Contrato para company_id={company.id}")
@@ -359,7 +358,7 @@ class ContractService:
         Raises:
             BusinessRuleViolation: Se houver tentativa de auto-vínculo,
                 casamentos divergentes ou vinculação cíclica.
-            Http404: Se o contrato pai não for encontrado para o tenant.
+            ObjectNotFoundError: Se o contrato pai não for encontrado para o tenant.
         """
         parent: Contract | None = None
         if isinstance(parent_input, Contract):
@@ -420,7 +419,7 @@ class ContractService:
 
         Raises:
             BusinessRuleViolation: Se a validação dos dados falhar.
-            Http404: Se o contrato ou relacionados não forem encontrados
+            ObjectNotFoundError: Se o contrato ou relacionados não forem encontrados
                 para o tenant.
         """
         validate_tenant_ownership(
@@ -503,7 +502,7 @@ class ContractService:
 
         Raises:
             DomainIntegrityError: Se houverem aditivos vinculados.
-            Http404: Se o contrato não pertencer ao tenant.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
@@ -553,7 +552,7 @@ class ContractService:
 
         Raises:
             BusinessRuleViolation: Se a transição for inválida.
-            Http404: Se o contrato não pertencer ao tenant.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
         """
         logger.info(
             f"Transição de status do Contrato uuid={instance.uuid}: "
@@ -594,7 +593,7 @@ class ContractService:
             A instância atualizada de Contract.
 
         Raises:
-            Http404: Se o contrato não for encontrado para o tenant.
+            ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
         """
         logger.info(
             f"Associando chave de arquivo {pdf_file_key} ao contrato uuid={uuid}"
@@ -618,7 +617,7 @@ class ContractService:
             uuid: Identificador único (UUID ou string) do contrato.
 
         Raises:
-            Http404: Se o contrato não for encontrado para o tenant.
+            ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
         """
         logger.info(f"Removendo arquivo do contrato uuid={uuid}")
         contract = ContractService.get(company, uuid)
@@ -650,7 +649,7 @@ class ContractService:
         Raises:
             BusinessRuleViolation: Se a configuração do storage
                 estiver incompleta no servidor.
-            Http404: Se o casamento não for encontrado para o tenant.
+            ObjectNotFoundError: Se o casamento não for encontrado para o tenant.
         """
         import uuid
 

@@ -19,7 +19,7 @@ Isso trazia dois problemas:
 
 ## Decisão
 
-1. Adotar formalmente o guia [COMMENTING_STANDARDS.md](file:///home/rafael/.gemini/antigravity/worktrees/wedding_management/review-service-documentation-comments/docs/COMMENTING_STANDARDS.md) como a especificação única de escrita de documentação do Wedding Management System.
+1. Adotar formalmente o guia [COMMENTING_STANDARDS.md](../COMMENTING_STANDARDS.md) como a especificação única de escrita de documentação do Wedding Management System.
 2. Adotar **Google Style** (em PT-BR) para docstrings de métodos de negócio (Services) e descrição curta para endpoints (API/Django Ninja).
 3. Banir do código de produção qualquer menção a nomes de ferramentas de geração de código.
 

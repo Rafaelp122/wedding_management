@@ -69,7 +69,8 @@ class SupplierService:
             A instância do Supplier correspondente.
 
         Raises:
-            Http404: Se o fornecedor não for encontrado ou acesso for negado.
+            ObjectNotFoundError: Se o fornecedor não for encontrado ou acesso
+                for negado.
         """
         return get_object_or_404_for_tenant(
             Supplier,
@@ -125,7 +126,7 @@ class SupplierService:
             A instância atualizada do Supplier.
 
         Raises:
-            Http404: Se o fornecedor não pertencer ao tenant.
+            ObjectNotFoundError: Se o fornecedor não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
@@ -160,7 +161,7 @@ class SupplierService:
             instance: A instância do Supplier a ser removida.
 
         Raises:
-            Http404: Se o fornecedor não pertencer ao tenant.
+            ObjectNotFoundError: Se o fornecedor não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
