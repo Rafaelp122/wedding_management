@@ -693,9 +693,7 @@ class TestContractCreateFullAPI:
         )
         assert response.status_code == 404
 
-    def test_generate_upload_url_api_success(
-        self, auth_client, user, settings
-    ):
+    def test_generate_upload_url_api_success(self, auth_client, user, settings):
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
         wedding = WeddingFactory(company=user.company)
 
@@ -720,7 +718,9 @@ class TestContractCreateFullAPI:
             data = response.json()
             assert "upload_url" in data
             assert "object_key" in data
-            assert data["upload_url"] == f"https://r2.com/test-bucket/{data['object_key']}"
+            assert (
+                data["upload_url"] == f"https://r2.com/test-bucket/{data['object_key']}"
+            )
         finally:
             ContractService.set_storage_service(original_storage)
 
