@@ -14,7 +14,7 @@ export class WeddingDetailPage {
   }
 
   async goBack() {
-    await this.page.getByRole("button", { name: "Voltar para lista" }).click();
+    await this.page.getByRole("link", { name: "Voltar para lista" }).click();
   }
 
   async expectUrlMatch() {

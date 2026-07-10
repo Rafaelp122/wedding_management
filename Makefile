@@ -147,11 +147,11 @@ front-logs:
 # ==============================================================================
 frontend-dev:
 	@echo "🔥 Iniciando Vite dev server local..."
-	cd frontend && npm run dev
+	cd frontend && pnpm run dev
 
 landing-dev:
 	@echo "🔥 Astro dev server local..."
-	cd landing && npm run dev
+	cd landing && pnpm run dev
 
 openapi:
 	@echo "📝 Gerando schema OpenAPI a partir do Django Ninja..."
@@ -162,26 +162,29 @@ openapi:
 
 orval:
 	@echo "📦 Gerando hooks do Orval..."
-	cd frontend && npm run generate:api
+	cd frontend && pnpm run generate:api
 
 sync-api: openapi orval
 	@echo "🔄 API e Frontend sincronizados!"
 
 frontend-test:
 	@echo "🧪 Executando todos os testes do frontend..."
-	cd frontend && npm test
+	cd frontend && pnpm test
 
 frontend-test-changed:
 	@echo "🧪 Executando testes do frontend modificados no Git..."
-	cd frontend && npx vitest run --changed
+	cd frontend && pnpm exec vitest run --changed
 
 frontend-e2e:
+	@echo "🔄 Preparando banco de dados para testes E2E..."
+	$(RUN_BACK) python manage.py flush --noinput
+	$(RUN_BACK) python manage.py seed_db
 	@echo "🧪 Executando testes E2E com Playwright..."
-	cd frontend && npx playwright test
+	cd frontend && pnpm exec playwright test --workers=1
 
 frontend-e2e-report:
 	@echo "📊 Abrindo o relatório de testes E2E do Playwright..."
-	cd frontend && npx playwright show-report
+	cd frontend && pnpm exec playwright show-report
 
 # ==============================================================================
 # 🐍 COMANDOS REPASSADOS PARA O CONTAINER
@@ -252,10 +255,10 @@ check-backend:
 	$(RUN_BACK) make check-backend
 
 check-frontend:
-	cd frontend && npm install && npm run lint && npm run type-check && npm test && npm run build
+	cd frontend && pnpm install --frozen-lockfile && pnpm run lint && pnpm run type-check && pnpm test && pnpm run build
 
 check-landing:
-	cd landing && npm install && npx astro check && npm run build
+	cd landing && pnpm install --frozen-lockfile && pnpm exec astro check && pnpm run build
 
 check-ci: check-backend check-frontend check-landing
 	@echo "✅ Todos os gates locais passaram com sucesso!"

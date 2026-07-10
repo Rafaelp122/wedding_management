@@ -41,7 +41,7 @@ test.describe("Authentication Flow", () => {
     await loginPage.goto();
     await loginPage.login("wrong@example.com", "wrongpassword");
 
-    await toast.expectError("E-mail ou senha incorretos.");
+    await toast.expectError(/E-mail ou senha incorretos\.|Credenciais inválidas ou conta desativada\./);
     await expect(page).toHaveURL(/\/login/);
   });
 

@@ -98,6 +98,7 @@ frontend/dist-ssr/
 frontend/coverage/
 frontend/playwright-report/
 frontend/test-results/
+frontend/blob-report/
 .DS_Store
 Thumbs.db
 logs

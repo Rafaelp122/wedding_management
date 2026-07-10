@@ -214,7 +214,7 @@ class Command(BaseCommand):
                             wedding=wedding,
                             installment_number=2,
                             amount=installment_amount,
-                            due_date=date.today() + timedelta(days=15),
+                            due_date=date.today() + timedelta(days=5),
                             paid_date=None,
                             status=Installment.StatusChoices.PENDING,
                         )
@@ -231,7 +231,12 @@ class Command(BaseCommand):
                     )
 
                 TaskFactory.create_batch(3, wedding=wedding, is_completed=True)
-                TaskFactory.create_batch(2, wedding=wedding, is_completed=False)
+                TaskFactory.create(wedding=wedding, is_completed=False)
+                TaskFactory.create(
+                    wedding=wedding,
+                    is_completed=False,
+                    due_date=date.today() - timedelta(days=2),
+                )
 
                 EventFactory.create_batch(4, wedding=wedding)
 

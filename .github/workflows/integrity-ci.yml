@@ -58,13 +58,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup PNPM
+        if: needs.detect-changes.outputs.frontend == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
       - name: Setup Node
         if: needs.detect-changes.outputs.frontend == 'true'
         uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install UV
         if: needs.detect-changes.outputs.backend == 'true'
@@ -90,20 +96,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: frontend/node_modules
-          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
 
       - name: Install Frontend Dependencies
         if: needs.detect-changes.outputs.frontend == 'true' && steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
         run: |
           cd frontend
-          npm ci
+          pnpm install --frozen-lockfile
 
       - name: Frontend Lint & TypeCheck
         if: needs.detect-changes.outputs.frontend == 'true'
         run: |
           cd frontend
-          npm run lint
-          npm run type-check
+          pnpm run lint
+          pnpm run type-check
 
   # ----------------------------------------------------------------------------
   # JOB 2: BACKEND INTEGRITY
@@ -153,29 +159,33 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Cache Node Modules
         id: cache-node-modules-frontend
         uses: actions/cache@v4
         with:
           path: frontend/node_modules
-          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
 
       - name: Install Dependencies
         if: steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
         run: |
           cd frontend
-          npm ci
+          pnpm install --frozen-lockfile
 
       - name: Test
         run: |
           cd frontend
-          npm run test:ci
+          pnpm run test:ci
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -208,25 +218,30 @@ jobs:
           python-version: "3.12"
           cache-dependency-glob: "backend/uv.lock"
 
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Cache Node Modules
         id: cache-node-modules-frontend
         uses: actions/cache@v4
         with:
           path: frontend/node_modules
-          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
 
       - name: Install Frontend Dependencies
         if: steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
         run: |
           cd frontend
-          npm ci
+          pnpm install --frozen-lockfile
 
       - name: Start Django Backend
         env:
@@ -253,15 +268,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-browsers-${{ hashFiles('frontend/package-lock.json') }}
+          key: playwright-browsers-${{ hashFiles('frontend/pnpm-lock.yaml') }}
 
       - name: Install Playwright Browsers and Deps
         run: |
           cd frontend
           if [ "${{ steps.cache-playwright.outputs.cache-hit }}" = "true" ]; then
-            npx playwright install-deps
+            pnpm exec playwright install-deps
           else
-            npx playwright install --with-deps
+            pnpm exec playwright install --with-deps
           fi
 
       - name: Run Playwright tests
@@ -270,9 +285,9 @@ jobs:
         run: |
           cd frontend
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            npx playwright test --grep "@smoke" --shard=${{ matrix.shard }}/2
+            pnpm exec playwright test --grep "@smoke" --shard=${{ matrix.shard }}/2
           else
-            npx playwright test --grep "@smoke|@critical" --shard=${{ matrix.shard }}/2
+            pnpm exec playwright test --grep "@smoke|@critical" --shard=${{ matrix.shard }}/2
           fi
 
       - name: Upload Playwright Report
@@ -294,30 +309,34 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
-          cache-dependency-path: landing/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: landing/pnpm-lock.yaml
       - name: Cache Node Modules
         id: cache-node-modules-landing
         uses: actions/cache@v4
         with:
           path: landing/node_modules
-          key: node-modules-landing-${{ hashFiles('landing/package-lock.json') }}
+          key: node-modules-landing-${{ hashFiles('landing/pnpm-lock.yaml') }}
 
       - name: Install Dependencies
         if: steps.cache-node-modules-landing.outputs.cache-hit != 'true'
         run: |
           cd landing
-          npm ci
+          pnpm install --frozen-lockfile
 
       - name: Check (build + lint)
         run: |
           cd landing
-          npx astro check
-          npm run build
+          pnpm exec astro check
+          pnpm run build
 
   # ----------------------------------------------------------------------------
   # JOB 4: CONTRACT VALIDATION (Runs if either backend or frontend changed)
@@ -341,29 +360,33 @@ jobs:
           python-version: "3.12"
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
       - uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Cache Node Modules (Frontend)
         id: cache-node-modules-frontend
         uses: actions/cache@v4
         with:
           path: frontend/node_modules
-          key: node-modules-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
 
       - name: Install Frontend Dependencies
         if: steps.cache-node-modules-frontend.outputs.cache-hit != 'true'
         run: |
           cd frontend
-          npm ci
+          pnpm install --frozen-lockfile
 
       - name: Validate OpenAPI & Orval Sync
         run: |
           cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2
-          cd ../frontend && npm run generate:api
+          cd ../frontend && pnpm run generate:api
           git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
 
   # ----------------------------------------------------------------------------
@@ -454,15 +477,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: "frontend/.nvmrc"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: pnpm install --global vercel@latest
 
       - name: Set Vercel Env
         id: env
@@ -510,15 +538,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
-          cache-dependency-path: landing/package-lock.json
+          cache: "pnpm"
+          cache-dependency-path: landing/pnpm-lock.yaml
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: pnpm install --global vercel@latest
 
       - name: Set Vercel Env
         id: env

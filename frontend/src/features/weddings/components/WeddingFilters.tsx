@@ -42,7 +42,7 @@ export function WeddingFilters({
             onStatusFilterChange(value as WeddingStatusFilter)
           }
         >
-          <SelectTrigger className="w-full sm:w-48 border-0 bg-muted/50 focus:ring-2 focus:ring-ring/50">
+          <SelectTrigger aria-label="Filtrar por status" className="w-full sm:w-48 border-0 bg-muted/50 focus:ring-2 focus:ring-ring/50">
             <SelectValue placeholder="Todos os Status" />
           </SelectTrigger>
           <SelectContent>

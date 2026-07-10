@@ -9,7 +9,7 @@ export default defineConfig({
   testDir: "./e2e/specs",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
     ? [["github"], ["blob"], ["html"]]
     : [["list"], ["html"]],
@@ -19,9 +19,9 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: "npm run dev",
+    command: "pnpm run dev",
     url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     cwd: __dirname,
   },
   projects: [
