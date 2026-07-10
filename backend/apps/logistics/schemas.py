@@ -144,8 +144,8 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
-        # Bolt Optimization: Avoid eager getattr default evaluation and reverse O2O
-        # queries
+        # Otimização de performance: Evita a avaliação eager de getattr e queries
+        # reversas OneToOne.
         if hasattr(obj, "expense_id"):
             return obj.expense_id
 
@@ -160,7 +160,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_supplier_name(obj: "Contract") -> str:
-        # Bolt Optimization: Use conditional to avoid eager default evaluation
+        # Otimização: Evita a avaliação eager do valor padrão usando getattr.
         val = getattr(obj, "supplier_name", None)
         if val is not None:
             return str(val)
@@ -182,7 +182,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Bolt Optimization: Avoid reverse O2O query
+        # Otimização de performance: Evita a query reversa OneToOne.
         if hasattr(obj, "expense_id"):
             return bool(obj.expense_id)
 
@@ -208,7 +208,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_addendums_count(obj: "Contract") -> int:
-        # Bolt Optimization: Avoid eager count query if annotated
+        # Otimização de performance: Evita a query de contagem se já estiver anotada.
         val = getattr(obj, "addendums_count", None)
         if val is not None:
             return int(val)

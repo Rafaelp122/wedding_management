@@ -176,10 +176,13 @@ def handle_validation_error(request, exc):
 - Raise domain exceptions (`ApplicationError` subclasses) — never return error codes/dicts. See [Exception Handling](#8-exception-handling).
 - Returning `None` is acceptable — always type it explicitly (`User | None`). Let `mypy` enforce null-checks.
 
-### Comments
-- Prefer self-explanatory code over comments.
-- Keep comments for: complex business rules (formulas), regex/DB workarounds, `TODO` notes.
-- Never: `# save the user` followed by `user.save()`.
+### Comments & Docstrings
+- Prefer self-explanatory code over redundant comments (e.g. never write `# save the user` followed by `user.save()`).
+- Comments and docstrings must follow the guidelines in [COMMENTING_STANDARDS.md](file:///home/rafael/.gemini/antigravity/worktrees/wedding_management/review-service-documentation-comments/docs/COMMENTING_STANDARDS.md).
+- Use **Português (PT-BR)** for business rules, model validations, and logic explanations. Keep technical terms in English.
+- Code comments must focus on the "why" (business rules, workarounds, performance optimizations), never on the "what".
+- Enforce **Google Style** docstrings for complex or public methods, detailing `Args`, `Returns`, and `Raises`.
+- **CRITICAL**: Never reference AI coding assistants, code generation tools, or development environments in code comments (such as "Bolt", "Jules", "Copilot"). Focus comments strictly on technical explanation.
 
 ---
 

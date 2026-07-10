@@ -14,11 +14,26 @@ logger = logging.getLogger(__name__)
 
 
 class FinancialSummaryService:
+    """
+    Camada de serviço para consolidação de resumos e relatórios financeiros.
+    Agrega informações sobre parcelas pendentes, vencidas, uso de orçamento
+    e distribuição de gastos por categorias de orçamento do tenant.
+    """
+
     @staticmethod
     def pending_installments_7d(
         *, company: Company, today: date | None = None
     ) -> Decimal:
-        """Return total amount of pending installments due within the next 7 days."""
+        """
+        Retorna o valor total de parcelas pendentes que vencem nos próximos 7 dias.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            today: Data de referência (caso não informada, usa a data atual).
+
+        Returns:
+            Valor decimal total acumulado das parcelas que vencem em 7 dias.
+        """
         today = today or date.today()
         seven_days = today + timedelta(days=7)
         total = (
@@ -36,7 +51,19 @@ class FinancialSummaryService:
     def overdue_installments(
         *, company: Company, today: date | None = None
     ) -> tuple[Decimal, int]:
-        """Return total amount and count of overdue installments."""
+        """
+        Retorna o valor total acumulado e a quantidade de parcelas atrasadas.
+
+        Considera parcelas com status explícito de atraso (OVERDUE) ou
+        pendentes com vencimento anterior à data de referência.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            today: Data de referência (caso não informada, usa a data atual).
+
+        Returns:
+            Uma tupla contendo (valor_total_atrasado, quantidade_de_parcelas).
+        """
         today = today or date.today()
         qs = Installment.objects.for_tenant(company).filter(
             Q(status=Installment.StatusChoices.OVERDUE)
@@ -47,7 +74,18 @@ class FinancialSummaryService:
 
     @staticmethod
     def budget_percentage_used(*, company: Company, wedding: Wedding) -> float:
-        """Return the percentage of total estimated budget spent, capped at 100%."""
+        """
+        Calcula o percentual do orçamento estimado consumido até o momento.
+
+        O percentual retornado é limitado ao teto máximo de 100%.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding: Instância do casamento associado.
+
+        Returns:
+            Percentual utilizado (float) arredondado para uma casa decimal.
+        """
         try:
             budget = Budget.objects.for_tenant(company).get(wedding=wedding)
             total_spent = budget.total_overall_spent
@@ -63,7 +101,21 @@ class FinancialSummaryService:
     def upcoming_installments(
         *, company: Company, wedding: Wedding, today: date | None = None
     ) -> list[dict[str, Any]]:
-        """Return up to 5 upcoming unpaid installments within 30 days for a wedding."""
+        """
+        Retorna até 5 parcelas a vencer nos próximos 30 dias de um casamento.
+
+        Também inclui parcelas que já estejam vencidas (status OVERDUE).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding: Instância do casamento associado.
+            today: Data de referência (caso não informada, usa a data atual).
+
+        Returns:
+            Lista de dicionários contendo os dados das parcelas ordenadas por
+            data de vencimento. Cada dicionário possui chaves: `uuid`,
+            `installment_number`, `amount`, `due_date` e `status`.
+        """
         today = today or date.today()
         thirty_days = today + timedelta(days=30)
         installments = (
@@ -91,7 +143,17 @@ class FinancialSummaryService:
     def categories_summary(
         *, company: Company, wedding: Wedding
     ) -> list[dict[str, Any]]:
-        """Return a summary of budget categories with allocated and spent."""
+        """
+        Gera um resumo de categorias de orçamento com alocação e gastos.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding: Instância do casamento associado.
+
+        Returns:
+            Lista de dicionários contendo o nome da categoria, valor alocado,
+            valor gasto e a respectiva porcentagem consumida.
+        """
         categories = (
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)

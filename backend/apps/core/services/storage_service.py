@@ -7,17 +7,32 @@ from apps.core.exceptions import BusinessRuleViolation
 
 
 class StorageService(Protocol):
-    """Protocolo definindo a interface para serviços de armazenamento de arquivos."""
+    """
+    Protocolo definindo a interface para serviços de armazenamento de arquivos.
+    """
 
     def generate_presigned_put_url(
         self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
     ) -> str:
-        """Gera uma URL pré-assinada para upload direto via PUT."""
+        """
+        Gera uma URL pré-assinada para upload direto via PUT.
+
+        Args:
+            bucket: O nome do bucket de destino no storage.
+            object_key: O caminho/nome único do objeto no bucket.
+            content_type: O tipo MIME do arquivo (ex: application/pdf).
+            expires_in: O tempo de expiração da URL em segundos.
+
+        Returns:
+            A URL pré-assinada em formato de string.
+        """
         ...
 
 
 class CloudflareR2StorageService:
-    """Implementação concreta de StorageService usando Cloudflare R2/S3 via boto3."""
+    """
+    Implementação concreta de StorageService usando Cloudflare R2/S3 via boto3.
+    """
 
     def __init__(
         self,
@@ -26,6 +41,15 @@ class CloudflareR2StorageService:
         secret_access_key: str | None = None,
         region_name: str = "us-east-1",
     ):
+        """
+        Inicializa o serviço com credenciais explícitas ou defaults.
+
+        Args:
+            endpoint_url: URL de endpoint do R2 ou S3 compatível.
+            access_key_id: ID da chave de acesso do serviço de nuvem.
+            secret_access_key: Chave secreta de acesso do serviço.
+            region_name: O nome da região (default: us-east-1).
+        """
         self._endpoint_url = endpoint_url
         self._access_key_id = access_key_id
         self._secret_access_key = secret_access_key
@@ -33,6 +57,12 @@ class CloudflareR2StorageService:
 
     @property
     def endpoint_url(self) -> str | None:
+        """
+        Obtém a URL do endpoint a partir do settings do Django ou inicialização.
+
+        Returns:
+            A URL do endpoint ou None.
+        """
         return (
             self._endpoint_url
             or getattr(settings, "AWS_S3_ENDPOINT_URL", None)
@@ -41,6 +71,12 @@ class CloudflareR2StorageService:
 
     @property
     def access_key_id(self) -> str | None:
+        """
+        Obtém o ID da chave de acesso configurada.
+
+        Returns:
+            O ID da chave de acesso ou None.
+        """
         return (
             self._access_key_id
             or getattr(settings, "AWS_ACCESS_KEY_ID", None)
@@ -49,6 +85,12 @@ class CloudflareR2StorageService:
 
     @property
     def secret_access_key(self) -> str | None:
+        """
+        Obtém a chave de acesso secreta configurada.
+
+        Returns:
+            A chave de acesso secreta ou None.
+        """
         return (
             self._secret_access_key
             or getattr(settings, "AWS_SECRET_ACCESS_KEY", None)
@@ -59,7 +101,20 @@ class CloudflareR2StorageService:
         self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
     ) -> str:
         """
-        Gera uma URL pré-assinada para upload de um objeto.
+        Gera uma URL pré-assinada para upload de um objeto no Cloudflare R2.
+
+        Args:
+            bucket: O nome do bucket de destino no storage.
+            object_key: O caminho/nome único do objeto no bucket.
+            content_type: O tipo MIME do arquivo (ex: image/png).
+            expires_in: Tempo em segundos para a URL expirar.
+
+        Returns:
+            A URL gerada para upload direto de arquivos via PUT.
+
+        Raises:
+            BusinessRuleViolation: Se as credenciais ou o bucket não
+                estiverem devidamente configurados no servidor.
         """
         if not all(
             [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
@@ -91,8 +146,16 @@ class CloudflareR2StorageService:
 
 def get_storage_service() -> StorageService:
     """
-    Factory function para retornar a implementação ativa do StorageService
-    com base no provedor configurado no Django settings.
+    Retorna a implementação ativa do StorageService.
+
+    A escolha do provedor é feita com base no settings do Django.
+
+    Returns:
+        Uma instância concreta de StorageService correspondente.
+
+    Raises:
+        BusinessRuleViolation: Se o provedor configurado no settings
+            não for suportado.
     """
     provider = getattr(settings, "STORAGE_PROVIDER", "R2").upper()
 

@@ -20,13 +20,22 @@ logger = logging.getLogger(__name__)
 
 
 class BudgetService:
-    """
-    Camada de serviço para gestão do orçamento mestre.
-    Garante que cada casamento tenha exatamente UM teto financeiro (OneToOne).
+    """Camada de serviço para gestão do orçamento mestre.
+
+    Garante que cada casamento tenha exatamente um teto financeiro (OneToOne)
+    e isola a lógica de negócio por tenant.
     """
 
     @staticmethod
     def list(company: Company) -> QuerySet[Budget]:
+        """Lista os orçamentos de uma empresa.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+
+        Returns:
+            QuerySet[Budget]: QuerySet com os orçamentos contendo o gasto total.
+        """
         return (
             cast(BudgetQuerySet, Budget.objects.for_tenant(company))
             .with_total_spent()
@@ -35,6 +44,18 @@ class BudgetService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Budget:
+        """Obtém um orçamento específico pelo seu UUID.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: O UUID do orçamento desejado.
+
+        Returns:
+            Budget: A instância do orçamento encontrada.
+
+        Raises:
+            ObjectNotFoundError: Se o orçamento não for encontrado.
+        """
         try:
             return (
                 cast(BudgetQuerySet, Budget.objects.for_tenant(company))
@@ -52,6 +73,21 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: BudgetIn) -> Budget:
+        """Cria um novo orçamento mestre para um casamento.
+
+        Garante que casamentos não tenham orçamentos duplicados (restrição
+        OneToOne).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados de entrada para criação do orçamento.
+
+        Returns:
+            Budget: A instância do orçamento criada.
+
+        Raises:
+            DomainIntegrityError: Se o casamento já possuir um orçamento.
+        """
         logger.info(
             f"Iniciando criação de Orçamento Mestre para company_id={company.id}"
         )
@@ -99,6 +135,19 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Budget, payload: BudgetPatchIn) -> Budget:
+        """Atualiza um orçamento existente.
+
+        Garante o isolamento do tenant e valida as regras de negócios como
+        o validador de valor mínimo.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do orçamento a ser atualizada.
+            payload: Dados parciais para atualização do orçamento.
+
+        Returns:
+            Budget: A instância do orçamento atualizada.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -125,6 +174,18 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Budget) -> None:
+        """Exclui um orçamento existente.
+
+        Verifica a propriedade do tenant e se o orçamento está protegido por
+        categorias ou despesas filhas antes de prosseguir com a exclusão.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do orçamento a ser excluída.
+
+        Raises:
+            DomainIntegrityError: Se o orçamento possuir categorias ou despesas.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -156,8 +217,17 @@ class BudgetService:
     @staticmethod
     @transaction.atomic
     def get_or_create_for_wedding(company: Company, wedding_uuid: UUID | str) -> Budget:
-        """
-        Retorna o Budget existente ou cria um novo para o Wedding especificado.
+        """Retorna o orçamento existente ou cria um novo para o casamento.
+
+        Se for criado, também gera automaticamente as categorias padrão
+        do orçamento sob lock (select_for_update) para evitar condições de corrida.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_uuid: O UUID do casamento associado.
+
+        Returns:
+            Budget: A instância do orçamento (existente ou recém-criado).
         """
         from apps.weddings.models import Wedding
 

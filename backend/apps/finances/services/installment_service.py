@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 class InstallmentService:
-    """
-    Camada de serviço para orquestração de Parcelas.
+    """Camada de serviço para orquestração de Parcelas.
+
     Garante o isolamento multitenant e a integridade da Tolerância Zero (ADR-010)
     nas despesas pai.
     """
@@ -42,12 +42,15 @@ class InstallmentService:
         """Lista parcelas com filtros opcionais.
 
         Args:
-            company: Tenant para isolamento multitenancy.
-            wedding_id: Filtra por casamento.
-            expense_id: Filtra por despesa.
-            status: Filtra por status (PENDING, PAID, OVERDUE).
-            due_date_gte: Filtra por data de vencimento >= este valor.
-            due_date_lte: Filtra por data de vencimento <= este valor.
+            company: O tenant atual para isolamento multitenancy.
+            wedding_id: UUID ou string do casamento para filtragem opcional.
+            expense_id: UUID ou string da despesa para filtragem opcional.
+            status: Status das parcelas (PENDING, PAID, OVERDUE).
+            due_date_gte: Data de vencimento inicial para intervalo de busca.
+            due_date_lte: Data de vencimento final para intervalo de busca.
+
+        Returns:
+            QuerySet[Installment]: QuerySet com as parcelas encontradas.
         """
         qs = Installment.objects.for_tenant(company).select_related(
             "expense", "wedding"
@@ -66,6 +69,18 @@ class InstallmentService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Installment:
+        """Obtém uma parcela específica pelo seu UUID.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: O UUID da parcela desejada.
+
+        Returns:
+            Installment: A instância da parcela encontrada.
+
+        Raises:
+            ObjectNotFoundError: Se a parcela não for encontrada.
+        """
         return get_object_or_404_for_tenant(
             Installment,
             company,
@@ -82,17 +97,29 @@ class InstallmentService:
         num_installments: int,
         first_due_date: date,
     ) -> list[Installment]:  # type: ignore[valid-type]
-        """
-        Gera automaticamente as parcelas de uma despesa com ajuste na última
-        parcela (Tolerância Zero).
+        """Gera parcelas de despesa com ajuste na última (Tolerância Zero).
 
-        Para cada parcela gerada, também cria um evento PAYMENT no scheduler
-        (BR-S01) para que o casal visualize os compromissos de pagamento no
-        calendário.
+        Para cada parcela gerada, cria um evento PAYMENT no scheduler (BR-S01)
+        para visualização dos compromissos de pagamento no calendário.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            expense: A despesa pai que receberá o parcelamento.
+            num_installments: Número total de parcelas (> 0).
+            first_due_date: Data de vencimento da primeira parcela.
+
+        Returns:
+            list[Installment]: Lista com as instâncias de parcelas salvas no
+                banco.
+
+        Raises:
+            BusinessRuleViolation: Se a despesa já possuir parcelas, se o
+                número de parcelas for <= 0, ou se o valor total da despesa for
+                inválido.
         """
         from datetime import timedelta
 
-        # Bloqueio de reentrada/duplicação (Copilot Review Fix)
+        # Bloqueio preventivo contra reentrada e duplicação de parcelas na despesa.
         if expense.installments.exists():
             raise BusinessRuleViolation(
                 detail=(
@@ -165,6 +192,24 @@ class InstallmentService:
         num_installments: int,
         first_due_date: date,
     ) -> list[Installment]:  # type: ignore[valid-type]
+        """Redistribui as parcelas de uma despesa.
+
+        Remove as parcelas anteriores (e seus respectivos eventos de pagamento)
+        e gera novas parcelas com novos valores e datas.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            expense: A despesa associada que terá as parcelas redistribuídas.
+            num_installments: Novo número total de parcelas.
+            first_due_date: Data de vencimento da primeira parcela.
+
+        Returns:
+            list[Installment]: Lista com as novas parcelas geradas.
+
+        Raises:
+            BusinessRuleViolation: Se existirem parcelas já pagas (status PAID)
+                na despesa.
+        """
         if expense.installments.filter(status="PAID").exists():
             raise BusinessRuleViolation(
                 detail=(
@@ -186,6 +231,22 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: InstallmentIn) -> Installment:
+        """Cria uma parcela individual avulsa.
+
+        Valida se a adição da nova parcela respeita a integridade matemática
+        da despesa (Tolerância Zero / ADR-010).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados de entrada para a criação da parcela.
+
+        Returns:
+            Installment: A parcela criada.
+
+        Raises:
+            ObjectNotFoundError: Se a despesa correspondente não for encontrada.
+            BusinessRuleViolation: Se a criação violar o total da despesa pai.
+        """
         logger.info(f"Iniciando criação de Parcela para company_id={company.id}")
 
         data = payload.model_dump(exclude_unset=True)
@@ -240,6 +301,23 @@ class InstallmentService:
         instance: Installment,
         payload: InstallmentPatchIn,
     ) -> Installment:
+        """Atualiza os dados de uma parcela.
+
+        Revalida se as alterações mantêm a consistência matemática da despesa
+        pai.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da parcela a ser atualizada.
+            payload: Dados parciais de atualização da parcela.
+
+        Returns:
+            Installment: A instância da parcela atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a alteração violar a regra Tolerância
+                Zero.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -277,6 +355,22 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def mark_as_paid(company: Company, instance: Installment) -> Installment:
+        """Marca uma parcela como paga.
+
+        Garante a atualização de status para PAID e define a data de pagamento
+        como o dia corrente, revalidando a despesa pai.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da parcela a ser paga.
+
+        Returns:
+            Installment: A parcela atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a parcela já estiver paga ou se a
+                transação violar a consistência matemática da despesa.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -312,6 +406,22 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def unmark_as_paid(company: Company, instance: Installment) -> Installment:
+        """Desmarca uma parcela que foi definida como paga.
+
+        Remove a data de pagamento e redefine o status apropriado dependendo
+        da data de vencimento (PENDING ou OVERDUE).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da parcela a ser revertida.
+
+        Returns:
+            Installment: A parcela com status atualizado.
+
+        Raises:
+            BusinessRuleViolation: Se a parcela não estiver paga ou violar as
+                regras matemáticas da despesa pai.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -352,6 +462,23 @@ class InstallmentService:
     def adjust(
         company: Company, instance: Installment, payload: InstallmentAdjustIn
     ) -> Installment:
+        """Ajusta o valor ou data de vencimento de uma parcela.
+
+        Garante que a nova data de vencimento respeite a sequência cronológica
+        das parcelas anterior e posterior, além de revalidar a despesa pai.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da parcela a ser ajustada.
+            payload: Dados de ajuste da parcela.
+
+        Returns:
+            Installment: A instância da parcela ajustada.
+
+        Raises:
+            BusinessRuleViolation: Se a parcela estiver paga, se a data estiver
+                fora da cronologia sequencial ou se violar a soma da despesa pai.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -429,6 +556,19 @@ class InstallmentService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Installment) -> None:
+        """Exclui uma parcela individual.
+
+        Remove o evento de pagamento associado no scheduler e revalida a
+        despesa pai.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da parcela a ser excluída.
+
+        Raises:
+            DomainIntegrityError: Se a exclusão violar a integridade
+                matemática da despesa pai.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -469,7 +609,12 @@ class InstallmentService:
 
 @transaction.atomic
 def _delete_payment_events_for_expense(company: Company, expense: Expense) -> None:
-    """Remove todos os eventos PAYMENT do scheduler vinculados a esta despesa."""
+    """Remove todos os eventos PAYMENT do scheduler vinculados a esta despesa.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+        expense: A despesa cujos eventos de pagamento serão removidos.
+    """
     from apps.scheduler.models import Event as SchedulerEvent
 
     SchedulerEvent.objects.for_tenant(company).filter(
@@ -481,7 +626,13 @@ def _delete_payment_events_for_expense(company: Company, expense: Expense) -> No
 
 @transaction.atomic
 def _delete_payment_event_for_single(company: Company, instance: Installment) -> None:
-    """Remove o evento PAYMENT vinculado a uma parcela específica."""
+    """Remove o evento PAYMENT vinculado a uma parcela específica.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+        instance: A parcela cujo evento de pagamento correspondente será
+            removido.
+    """
     from apps.scheduler.models import Event as SchedulerEvent
 
     SchedulerEvent.objects.for_tenant(company).filter(
@@ -497,11 +648,15 @@ def _create_payment_events(
     expense: Expense,
     installments: list[Installment],
 ) -> None:
-    """
-    Cria eventos PAYMENT no scheduler para cada parcela gerada.
+    """Cria eventos PAYMENT no scheduler para cada parcela gerada.
 
     Importação lazy do EventService para evitar circular imports.
     Ref: BR-S01 — Eventos PAYMENT são read-only no calendário.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+        expense: A despesa pai associada.
+        installments: Lista de parcelas que receberão eventos de pagamento.
     """
     from datetime import datetime, time
 
