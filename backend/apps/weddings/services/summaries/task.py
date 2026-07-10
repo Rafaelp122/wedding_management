@@ -13,9 +13,24 @@ logger = logging.getLogger(__name__)
 
 
 class TaskSummaryService:
+    """
+    Camada de serviço para consolidação de resumos e estatísticas de tarefas.
+    Agrega informações sobre tarefas atrasadas, totais por casamento
+    e listagens de pendências urgentes do tenant.
+    """
+
     @staticmethod
     def urgent_tasks_count(*, company: Company, today: date | None = None) -> int:
-        """Return the number of uncompleted tasks past due for the company."""
+        """
+        Retorna a quantidade de tarefas não concluídas e atrasadas do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            today: Data de referência (caso não informada, usa a data atual).
+
+        Returns:
+            Quantidade total de tarefas atrasadas.
+        """
         today = today or date.today()
         return (
             Task.objects.for_tenant(company)
@@ -25,7 +40,16 @@ class TaskSummaryService:
 
     @staticmethod
     def wedding_task_stats(*, company: Company, wedding: Wedding) -> tuple[int, int]:
-        """Return (completed, total) task counts for a wedding."""
+        """
+        Retorna as estatísticas de tarefas concluídas e totais de um casamento.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding: Instância do casamento a ser consultado.
+
+        Returns:
+            Uma tupla contendo (tarefas_concluidas, total_tarefas).
+        """
         tasks = Task.objects.for_tenant(company).filter(wedding=wedding)
         total = tasks.count()
         completed = tasks.filter(is_completed=True).count()
@@ -35,7 +59,22 @@ class TaskSummaryService:
     def urgent_tasks(
         *, company: Company, wedding: Wedding, today: date | None = None, limit: int = 3
     ) -> list[dict[str, Any]]:
-        """Return up to `limit` urgent tasks for a wedding, ordered by due date."""
+        """
+        Retorna as tarefas urgentes (atrasadas ou sem prazo) de um casamento.
+
+        Ordena as tarefas de forma ascendente pela data de vencimento, com
+        valores nulos ao final.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding: Instância do casamento a ser consultado.
+            today: Data de referência (caso não informada, usa a data atual).
+            limit: Limite máximo de tarefas a serem retornadas (padrão: 3).
+
+        Returns:
+            Lista contendo até `limit` dicionários com as chaves `uuid`, `title`
+            e `due_date`.
+        """
         today = today or date.today()
         urgent = (
             Task.objects.for_tenant(company)

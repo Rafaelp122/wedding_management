@@ -23,6 +23,17 @@ class TaskService:
 
     @staticmethod
     def list(company: Company, wedding_id: UUID | str | None = None) -> QuerySet[Task]:
+        """
+        Lista todas as tarefas vinculadas ao tenant (Company).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_id: UUID ou string identificadora do casamento
+                (opcional, para filtragem).
+
+        Returns:
+            QuerySet contendo as tarefas filtradas da empresa.
+        """
         qs = Task.objects.for_tenant(company).select_related("wedding")
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
@@ -30,6 +41,20 @@ class TaskService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Task:
+        """
+        Recupera uma tarefa específica pelo seu UUID, garantindo o tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: O identificador único da tarefa.
+
+        Returns:
+            A instância da Task localizada.
+
+        Raises:
+            ObjectNotFoundError: Se a tarefa não for encontrada ou pertencer
+                a outro tenant.
+        """
         return get_object_or_404_for_tenant(
             Task,
             company,
@@ -41,6 +66,20 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: TaskIn) -> Task:
+        """
+        Cria uma nova tarefa para o tenant especificado.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados de entrada para criação da tarefa.
+
+        Returns:
+            A tarefa criada e salva no banco de dados.
+
+        Raises:
+            ObjectNotFoundError: Se o casamento associado não for encontrado ou
+                pertencer a outro tenant.
+        """
         logger.info(f"Iniciando criação de Tarefa para company_id={company.id}")
 
         data = payload.model_dump(exclude_unset=True)
@@ -69,6 +108,20 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Task, payload: TaskPatchIn) -> Task:
+        """
+        Atualiza as informações de uma tarefa existente.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da tarefa a ser atualizada.
+            payload: Dados com as alterações a serem aplicadas.
+
+        Returns:
+            A instância da tarefa atualizada.
+
+        Raises:
+            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -92,6 +145,16 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Task) -> None:
+        """
+        Exclui uma tarefa existente.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da tarefa a ser excluída.
+
+        Raises:
+            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -105,5 +168,5 @@ class TaskService:
 
         instance.delete()
         logger.warning(
-            f"Tarefa uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
+            f"Tarefa uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
         )

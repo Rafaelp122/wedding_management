@@ -39,6 +39,22 @@ class ItemService:
         search: str | None = None,
         contract_id: UUID | str | None = None,
     ) -> QuerySet[Item]:
+        """
+        Lista os itens de logística pertencentes ao tenant.
+
+        Permite filtrar os itens por casamento, status de aquisição, termo
+        de busca no nome do item ou contrato associado.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_id: Identificador único (UUID ou string) do casamento.
+            status: Status de aquisição do item para filtragem.
+            search: Termo de busca para busca parcial no nome do item.
+            contract_id: Identificador único (UUID ou string) do contrato.
+
+        Returns:
+            QuerySet contendo os itens que atendem aos filtros aplicados.
+        """
         qs = Item.objects.for_tenant(company).select_related(
             "wedding", "contract", "contract__supplier"
         )
@@ -54,6 +70,22 @@ class ItemService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Item:
+        """
+        Recupera um item de logística específico pelo UUID.
+
+        Realiza a busca garantindo o isolamento multitenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: Identificador único (UUID ou string) do item.
+
+        Returns:
+            O objeto Item correspondente.
+
+        Raises:
+            ObjectNotFoundError: Se o item não for encontrado ou não pertencer
+                ao tenant.
+        """
         return get_object_or_404_for_tenant(
             Item,
             company,
@@ -67,7 +99,19 @@ class ItemService:
         company: Company, wedding_input: UUID | str | Wedding | None
     ) -> Wedding | None:
         """
-        Resolve um casamento (instância, UUID ou string) garantindo multi-tenancy.
+        Resolve um casamento garantindo o isolamento multitenant.
+
+        Aceita uma instância de Wedding, UUID ou string identificadora.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_input: Instância, UUID ou string do casamento.
+
+        Returns:
+            A instância resolvida do casamento, ou None se não fornecido.
+
+        Raises:
+            ObjectNotFoundError: Se o casamento não for encontrado para o tenant.
         """
         if not wedding_input:
             return None
@@ -92,7 +136,19 @@ class ItemService:
         company: Company, contract_input: UUID | str | Contract | None
     ) -> Contract | None:
         """
-        Resolve um contrato (instância, UUID ou string) garantindo multi-tenancy.
+        Resolve um contrato garantindo o isolamento multitenant.
+
+        Aceita uma instância de Contract, UUID ou string identificadora.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            contract_input: Instância, UUID ou string do contrato.
+
+        Returns:
+            A instância resolvida do contrato, ou None se não fornecido.
+
+        Raises:
+            ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
         """
         if not contract_input:
             return None
@@ -110,6 +166,26 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: ItemIn) -> Item:
+        """
+        Cria um novo item de logística associado ao tenant.
+
+        Garante que o item esteja vinculado a um casamento válido e,
+        se houver contrato associado, valida a correspondência do
+        casamento com o do contrato.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados de entrada para criação do item.
+
+        Returns:
+            A instância do Item criada e salva no banco.
+
+        Raises:
+            DomainIntegrityError: Se o casamento do item não coincidir
+                com o casamento do contrato informado.
+            BusinessRuleViolation: Se nem o casamento nem o contrato
+                forem informados.
+        """
         logger.info(f"Iniciando criação de Item para company_id={company.id}")
 
         data = payload.model_dump(exclude_unset=True)
@@ -152,6 +228,25 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Item, payload: ItemPatchIn) -> Item:
+        """
+        Atualiza os dados de um item de logística existente.
+
+        Valida a propriedade do tenant antes da alteração e garante
+        que o contrato informado pertença ao mesmo casamento do item.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância atual do Item a ser atualizada.
+            payload: Dados parciais para atualização do item.
+
+        Returns:
+            A instância atualizada do Item.
+
+        Raises:
+            DomainIntegrityError: Se o novo contrato informado não pertencer
+                ao casamento do item.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -185,6 +280,18 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Item) -> None:
+        """
+        Remove um item de logística do banco de dados.
+
+        Verifica a propriedade do tenant antes de efetuar a exclusão.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser removida.
+
+        Raises:
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -204,6 +311,24 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def transition_status(company: Company, instance: Item, new_status: str) -> Item:
+        """
+        Realiza a transição do status de aquisição de um item.
+
+        Valida as regras de transição e a propriedade do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ter o status alterado.
+            new_status: O novo status desejado para o item.
+
+        Returns:
+            A instância do Item com o status atualizado.
+
+        Raises:
+            BusinessRuleViolation: Se a transição de status for inválida
+                segundo as regras de validação do modelo.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
+        """
         validate_tenant_ownership(
             company,
             instance,

@@ -19,18 +19,26 @@ logger = logging.getLogger(__name__)
 class TokenService:
     """
     Serviço de orquestração para autenticação e geração de tokens JWT.
+
     Centraliza a lógica de validação de credenciais, criação de tokens
-    e montagem da resposta.
+    e montagem da resposta com dados do usuário autenticado.
     """
 
     @staticmethod
     def obtain(email: str, password: str) -> TokenOut:
         """
-        Autentica o usuário por email/senha e retorna tokens JWT.
+        Autentica o usuário por e-mail e senha, gerando os tokens JWT correspondentes.
+
+        Args:
+            email: O endereço de e-mail do usuário para autenticação.
+            password: A senha em texto puro fornecida pelo usuário.
+
+        Returns:
+            TokenOut contendo o token de acesso (access), o token de atualização
+            (refresh) e os dados básicos do usuário autenticado.
 
         Raises:
-            HttpError (401): Se as credenciais forem inválidas ou a conta
-                estiver desativada.
+            HttpError: Caso as credenciais sejam inválidas ou a conta esteja inativa.
         """
         logger.info(f"Tentativa de obtenção de token para email={email}")
 
@@ -58,14 +66,21 @@ class TokenService:
     @staticmethod
     def refresh(refresh_token: str) -> TokenRefreshOutputSchema:
         """
-        Gera um novo par de tokens a partir de um refresh token válido.
+        Gera um novo par de tokens a partir de um token de atualização (refresh token).
 
-        Se ROTATE_REFRESH_TOKENS estiver ativo (padrão), o refresh token
-        anterior é invalidado (blacklist) e um novo refresh é emitido.
+        Se a rotação de tokens estiver ativa (padrão do ninja_jwt), o token antigo
+        será invalidado e adicionado à blacklist, emitindo-se um novo refresh.
+
+        Args:
+            refresh_token: O refresh token atual recebido na requisição.
+
+        Returns:
+            TokenRefreshOutputSchema contendo o novo token de acesso e,
+            opcionalmente, o novo refresh token.
 
         Raises:
-            HttpError (401): Se o refresh token for inválido ou estiver
-                na blacklist.
+            HttpError: Se o refresh token for inválido, estiver expirado ou
+                constar na blacklist.
         """
         token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de refresh de token (fp={token_fp})")
@@ -77,14 +92,21 @@ class TokenService:
     @staticmethod
     def verify(token: str) -> VerifyTokenOut:
         """
-        Verifica se um token JWT é válido e não expirou.
+        Verifica a integridade e a validade temporal de um token JWT.
+
+        Args:
+            token: O token JWT (geralmente o access token) a ser validado.
+
+        Returns:
+            VerifyTokenOut indicando sucesso caso o token seja válido.
 
         Raises:
-            HttpError (401): Se o token for inválido ou expirado.
+            HttpError: Se o token for inválido, estiver corrompido ou expirado.
         """
         token_fp = hashlib.sha256(token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de verificação de token (fp={token_fp})")
         schema = TokenVerifyInputSchema(token=token)
-        schema.to_response_schema()  # levanta HttpError(401) se inválido
+        # O método levanta HttpError(401) caso o token seja inválido.
+        schema.to_response_schema()
         logger.info(f"Token verificado com sucesso (fp={token_fp})")
         return VerifyTokenOut()

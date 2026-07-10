@@ -166,12 +166,17 @@ TEMPLATE_CHOICES: list[str] = list(TEMPLATES.keys())
 
 def get_template_events(template_name: str) -> list[dict[str, Any]]:
     """
-    Retorna a lista de eventos do template solicitado.
+    Retorna a lista de eventos pré-definidos do template solicitado.
 
-    Cada evento contém: title, event_type, offset_days.
+    Args:
+        template_name: O nome identificador do template de cronograma.
+
+    Returns:
+        Lista contendo dicionários representativos dos eventos do template,
+        com as chaves `title`, `event_type` e `offset_days`.
 
     Raises:
-        BusinessRuleViolation: Se o template não existir.
+        BusinessRuleViolation: Se o template solicitado não for encontrado.
     """
     template = TEMPLATES.get(template_name)
     if template is None:

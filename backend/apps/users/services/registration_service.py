@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 class RegistrationService:
     """
     Serviço de orquestração para registro de novos usuários e empresas.
-    Assegura que a criação do par Usuário-Empresa seja atômica.
+
+    Assegura que o fluxo de cadastro e a criação do par Usuário-Empresa
+    sejam executados de forma atômica no banco de dados.
     """
 
     @staticmethod
@@ -27,30 +29,43 @@ class RegistrationService:
         company_name: str = "",
     ) -> User:
         """
-        Realiza o onboarding completo de um novo profissional (Owner).
-        1. Valida se o e-mail já existe.
-        2. Cria a Empresa (Workspace) pragmático.
-        3. Cria o Usuário vinculado a essa empresa.
+        Realiza o onboarding completo de um novo proprietário (Owner).
+
+        Cria a conta do usuário e a empresa correspondente em uma transação
+        atômica, realizando validações de senha e de unicidade do e-mail.
+
+        Args:
+            email: E-mail do novo usuário. Deve ser único.
+            password: Senha em formato texto puro a ser validada e criptografada.
+            first_name: Primeiro nome do usuário.
+            last_name: Sobrenome do usuário.
+            company_name: Nome opcional da empresa a ser criada.
+
+        Returns:
+            Instância do usuário (User) recém-criado e associado à empresa.
+
+        Raises:
+            ValidationError: Se a senha não atender aos requisitos de segurança.
+            DomainIntegrityError: Se o e-mail já estiver cadastrado no sistema.
         """
         logger.info(f"Iniciando registro de novo proprietário: {email}")
 
-        # 1. Validação de Senha (Segurança)
-        # O User.objects.create_user já chama validate_password?
-        # Não por padrão no Django, e queremos falhar cedo.
+        # Validação de senha preventiva antes de persistir dados no banco.
         validate_password(password)
 
-        # 2. Validação Preventiva de E-mail
+        # Evita prosseguir com a criação da empresa se o e-mail já existir.
         if User.objects.filter(email=email).exists():
             raise DomainIntegrityError(
                 detail="Este e-mail já está cadastrado em outra conta.",
                 code="email_already_exists",
             )
 
-        # 2. Criação da Empresa
+        # Cria a empresa associada ao novo usuário.
         display_name = f"{first_name} {last_name}".strip() or email
         company = TenantService.create_company(display_name, company_name=company_name)
 
-        # 3. Criação do Usuário com captura de erro de integridade (Race conditions)
+        # Cria o usuário. Captura erro de concorrência se o e-mail for registrado
+        # concorrentemente.
         try:
             user = User.objects.create_user(
                 email=email,

@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 class ExpenseService:
-    """
-    Camada de serviço para orquestração de Despesas.
+    """Camada de serviço para orquestração de Despesas.
+
     Garante que gastos reais respeitem o contexto do casamento, os contratos
     e assegura a rastreabilidade estrita da operação.
     """
@@ -36,6 +36,15 @@ class ExpenseService:
     def list(
         company: Company, wedding_id: UUID | str | None = None
     ) -> QuerySet[Expense]:
+        """Lista despesas de uma empresa.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_id: UUID ou string do casamento para filtragem opcional.
+
+        Returns:
+            QuerySet[Expense]: QuerySet com as despesas filtradas e detalhadas.
+        """
         qs = cast(ExpenseQuerySet, Expense.objects.for_tenant(company)).with_details()
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
@@ -43,6 +52,18 @@ class ExpenseService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Expense:
+        """Obtém uma despesa específica pelo seu UUID.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: O UUID da despesa desejada.
+
+        Returns:
+            Expense: A instância da despesa encontrada com detalhes.
+
+        Raises:
+            ObjectNotFoundError: Se a despesa não for encontrada.
+        """
         # Nota: with_details() é um método do manager customizado.
         # get_object_or_404_for_tenant usa objects.for_tenant(company).
         # Para manter with_details(), vamos fazer manualmente ou garantir que
@@ -60,6 +81,21 @@ class ExpenseService:
 
     @staticmethod
     def from_document(company: Company, contract_uuid: UUID | str) -> dict[str, Any]:
+        """Prepara dados para criar despesa a partir de um contrato.
+
+        Garante o preenchimento de campos obrigatórios com base nos valores
+        do contrato.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            contract_uuid: O UUID do contrato de origem.
+
+        Returns:
+            dict[str, Any]: Dicionário formatado contendo os dados sugeridos.
+
+        Raises:
+            ObjectNotFoundError: Se o contrato não for encontrado.
+        """
         contract = get_object_or_404_for_tenant(
             Contract,
             company,
@@ -85,6 +121,22 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: ExpenseIn) -> Expense:
+        """Cria uma nova despesa e gera suas parcelas correspondentes.
+
+        Valida se o valor total da despesa é idêntico ao total do contrato
+        associado (Regra BR-F02) e auto-gera pelo menos 1 parcela de pagamento.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados de entrada para criação da despesa.
+
+        Returns:
+            Expense: A instância da despesa criada.
+
+        Raises:
+            BusinessRuleViolation: Se infringir a regra BR-F02 ou as parcelas
+                forem inválidas.
+        """
         logger.info(f"Iniciando criação de Despesa para company_id={company.id}")
 
         data = payload.model_dump(exclude_unset=True)
@@ -175,7 +227,18 @@ class ExpenseService:
 
     @staticmethod
     def _validate_br_f02(instance: Expense, data: dict[str, Any]) -> None:
-        """BR-F02: despesa vinculada a contrato deve ter mesmo valor."""
+        """Valida a conformidade com a regra de negócio BR-F02.
+
+        Garante que o valor da despesa vinculada a um contrato seja exatamente
+        igual ao total do contrato.
+
+        Args:
+            instance: A instância da despesa sendo validada.
+            data: Dicionário contendo os dados atualizados para validação.
+
+        Raises:
+            BusinessRuleViolation: Se o valor da despesa diferir do valor do contrato.
+        """
         effective_contract = instance.contract
         effective_amount = data.get("actual_amount", instance.actual_amount)
         if effective_contract and effective_amount != effective_contract.total_amount:
@@ -192,7 +255,16 @@ class ExpenseService:
     def _resolve_contract(
         company: Company, instance: Expense, contract_input: Any
     ) -> None:
-        """Resolve contrato no update e atribui à instância."""
+        """Resolve e vincula um contrato a uma despesa no update.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A despesa que receberá a vinculação do contrato.
+            contract_input: Instância, UUID ou ID do contrato a ser resolvido.
+
+        Raises:
+            ObjectNotFoundError: Se o contrato especificado não for encontrado.
+        """
         if contract_input:
             if isinstance(contract_input, Contract):
                 instance.contract = contract_input
@@ -210,6 +282,23 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Expense, payload: ExpensePatchIn) -> Expense:
+        """Atualiza os dados de uma despesa existente.
+
+        Trata a re-distribuição de parcelas caso o valor total ou a quantidade de
+        parcelas sejam alterados, validando a regra BR-F02 quando aplicável.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da despesa a ser atualizada.
+            payload: Dados parciais de atualização da despesa.
+
+        Returns:
+            Expense: A instância da despesa atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a alteração de valor for bloqueada por parcelas
+                já pagas ou se violar a consistência do model.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -288,6 +377,15 @@ class ExpenseService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Expense) -> None:
+        """Exclui uma despesa existente.
+
+        Previamente valida a propriedade pelo tenant. Exclui a despesa e remove
+        todas as parcelas vinculadas em cascata.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância da despesa a ser excluída.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -311,6 +409,17 @@ class ExpenseService:
         num_installments: int,
         first_due_date: date | None,
     ) -> None:
+        """Gerencia o processo de redistribuição de parcelas de uma despesa.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            expense: A despesa associada que terá as parcelas redistribuídas.
+            num_installments: Novo número total de parcelas.
+            first_due_date: Data de vencimento da primeira parcela.
+
+        Raises:
+            BusinessRuleViolation: Se o número de parcelas for menor que 1.
+        """
         if num_installments < 1:
             raise BusinessRuleViolation(
                 detail="O número de parcelas deve ser pelo menos 1.",

@@ -22,8 +22,34 @@ logger = logging.getLogger(__name__)
 
 
 class DashboardService:
+    """
+    Serviço para consolidação de dados e métricas do painel do usuário (Dashboard).
+
+    Agrupa dados financeiros, tarefas pendentes, contratos e casamentos
+    críticos em um único ponto de consulta para exibição no frontend.
+    """
+
     @staticmethod
     def get_summary(company: Company) -> dict[str, Any]:
+        """
+        Gera um resumo consolidado de indicadores importantes para a empresa.
+
+        Busca estatísticas financeiras gerais (parcelas a vencer e atrasadas),
+        quantidade de tarefas urgentes, contratos pendentes e uma listagem
+        de casamentos críticos ocorrendo nos próximos 90 dias com pendências.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+
+        Returns:
+            Dicionário contendo as chaves:
+                - pending_installments_7d (str): Valor pendente em 7 dias.
+                - urgent_tasks_count (int): Tarefas urgentes acumuladas.
+                - overdue_installments_amount (str): Valor total em atraso.
+                - overdue_installments_count (int): Quantidade de parcelas em atraso.
+                - pending_contracts_count (int): Quantidade de contratos pendentes.
+                - critical_weddings (list[dict]): Lista dos top 5 casamentos críticos.
+        """
         logger.info(f"Computando resumo do dashboard para company_id={company.id}")
         today = date.today()
 
@@ -136,6 +162,23 @@ class DashboardService:
 
     @staticmethod
     def get_wedding_overview(company: Company, wedding_uuid: UUID) -> dict[str, Any]:
+        """
+        Computa uma visão geral detalhada de um casamento específico.
+
+        Reúne métricas de cronômetro, uso do orçamento, progresso de tarefas,
+        assinatura de contratos, parcelas financeiras a vencer, tarefas
+        urgentes e resumo por categorias de despesa.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_uuid: O identificador único (UUID) do casamento.
+
+        Returns:
+            Dicionário com os indicadores detalhados do casamento solicitado.
+
+        Raises:
+            HttpError: Se o casamento correspondente ao UUID não for encontrado.
+        """
         wedding = WeddingService.get(company, wedding_uuid)
         logger.info(
             f"Computando visão geral do casamento uuid={wedding_uuid} "

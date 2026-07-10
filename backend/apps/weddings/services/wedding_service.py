@@ -37,8 +37,24 @@ class WeddingService:
 
     @staticmethod
     def list(company: Company, search: str = "", status: str = "") -> QuerySet[Wedding]:
-        """Lista casamentos com suporte a filtro por texto e status, incluindo anotações
-        de orçamento total, parcelas atrasadas e tarefas incompletas via Subquery."""
+        """
+        Lista os casamentos associados à empresa com filtros e anotações.
+
+        Permite busca textual por nomes dos noivos/local e filtragem por status.
+        Anota de forma otimizada o orçamento estimado total, contagem de parcelas
+        em atraso e de tarefas incompletas usando Subqueries.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            search: Termo de busca para filtrar por noivos ou local.
+            status: Filtro por status do casamento (ex: IN_PROGRESS).
+
+        Returns:
+            QuerySet contendo os casamentos correspondentes e anotados.
+
+        Raises:
+            BusinessRuleViolation: Se o status de filtro fornecido for inválido.
+        """
         qs = Wedding.objects.for_tenant(company).select_related("company")
         if search:
             qs = qs.filter(
@@ -57,9 +73,9 @@ class WeddingService:
         from apps.finances.models import Installment
         from apps.scheduler.models import Task
 
-        # Bolt Optimization: Use Subqueries for counts instead of Count(distinct=True)
-        # to avoid the "Cartesian Product" join explosion when multiple related sets
-        # are counted on the same query.
+        # Otimização: Uso de Subqueries para contagem ao invés de Count(distinct=True)
+        # para evitar a explosão do produto cartesiano (JOIN explosion) quando
+        # múltiplos conjuntos relacionados são contados na mesma query.
         qs = qs.annotate(
             total_budget=Subquery(
                 Budget.objects.filter(
@@ -98,14 +114,16 @@ class WeddingService:
 
     @staticmethod
     def count_by_month(company: Company, year: int) -> Sequence[dict]:
-        """Agrupa casamentos por mês no ano informado, retornando contagens.
+        """
+        Agrupa e conta os casamentos por mês para um determinado ano.
 
         Args:
-            company: Tenant para isolamento multitenancy.
-            year: Ano para filtrar os casamentos.
+            company: O tenant atual para isolamento de dados.
+            year: O ano correspondente para filtragem dos casamentos.
 
         Returns:
-            Lista de dicts com {"month": int, "count": int} ordenada por mês.
+            Sequência de dicionários com chaves 'month' e 'count',
+            ordenada cronologicamente pelo mês.
         """
         qs = (
             Wedding.objects.for_tenant(company)
@@ -118,6 +136,19 @@ class WeddingService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Wedding:
+        """
+        Recupera um casamento pelo UUID validando o tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: O UUID ou representação em string do casamento.
+
+        Returns:
+            A instância do casamento solicitada.
+
+        Raises:
+            HttpError: Se o casamento não pertencer à empresa ou não existir.
+        """
         return get_object_or_404_for_tenant(
             Wedding,
             company,
@@ -129,6 +160,23 @@ class WeddingService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: WeddingIn) -> Wedding:
+        """
+        Cria um novo casamento e opcionalmente aplica um template de cronograma.
+
+        Realiza a persistência do casamento após validar os dados de entrada
+        com o método full_clean(). Se especificado no payload, agenda
+        automaticamente os eventos de template configurados.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados de entrada para criação do casamento.
+
+        Returns:
+            A instância de Wedding criada e salva no banco de dados.
+
+        Raises:
+            BusinessRuleViolation: Se houver erro de validação nos dados fornecidos.
+        """
         logger.info(f"Criando casamento para company_id={company.id}")
 
         data = payload.model_dump(exclude_unset=True)
@@ -165,6 +213,24 @@ class WeddingService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Wedding, payload: WeddingPatchIn) -> Wedding:
+        """
+        Atualiza dados de um casamento existente com base no payload fornecido.
+
+        Garante isolamento de tenant antes de atualizar e executa validações
+        com full_clean() antes de persistir as modificações.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: Instância atual de Wedding a ser atualizada.
+            payload: Campos modificados a serem aplicados no casamento.
+
+        Returns:
+            A instância do casamento atualizada e salva.
+
+        Raises:
+            BusinessRuleViolation: Se a atualização violar regras de negócio ou de
+                validação do modelo.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -203,7 +269,18 @@ class WeddingService:
     @transaction.atomic
     def delete(company: Company, instance: Wedding) -> None:
         """
-        Deleta um casamento.
+        Deleta um casamento existente validando a propriedade de tenant.
+
+        Previne a deleção caso existam contratos ou despesas protegidos
+        por chaves estrangeiras vinculadas.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: Instância de Wedding a ser deletada.
+
+        Raises:
+            DomainIntegrityError: Se houver violação de integridade ou se
+                o casamento possuir relacionamentos protegidos.
         """
         validate_tenant_ownership(
             company,
@@ -240,10 +317,15 @@ def _apply_template_events(
     company: Company, wedding: Wedding, template_name: str
 ) -> None:
     """
-    Aplica um template de cronograma ao casamento, criando eventos
-    com base no offset em dias antes da data do casamento.
+    Aplica um template de cronograma criando eventos para o casamento.
 
-    Importação lazy do EventService para evitar circular imports.
+    Calcula a data de início de cada evento usando a quantidade de dias
+    especificada como offset relativo à data do casamento.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+        wedding: O casamento a receber os eventos do template.
+        template_name: O identificador/nome do template a ser aplicado.
     """
     from django.utils import timezone
 

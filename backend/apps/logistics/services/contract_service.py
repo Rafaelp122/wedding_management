@@ -43,7 +43,6 @@ from apps.weddings.models import Wedding
 
 _ItemInList = list[ItemIn]
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -53,19 +52,40 @@ class ContractService:
     """
     Camada de serviço para gestão de contratos.
     Foco: Orquestração, Multitenancy Segura e Auditoria.
-    Validações de integridade do dado (ex: datas inválidas) ficam delegadas ao Model.
+    Validações de integridade do dado ficam delegadas ao Model.
     """
 
+    # Injeção de dependência para desacoplar a infraestrutura de Storage (R2/S3).
+    # Permite que testes unitários injetem mocks para evitar chamadas de rede e
+    # dependências de configurações reais de ambiente.
     _storage_service: StorageService | None = None
 
     @classmethod
     def get_storage_client(cls) -> StorageService:
+        """
+        Retorna o cliente de storage ativo.
+
+        Se nenhuma dependência foi injetada anteriormente, inicializa a
+        implementação padrão obtida a partir do app core.
+
+        Returns:
+            A instância ativa de StorageService.
+        """
         if cls._storage_service is None:
             cls._storage_service = get_storage_service()
         return cls._storage_service
 
     @classmethod
     def set_storage_service(cls, storage_service: StorageService) -> None:
+        """
+        Injeta uma instância de StorageService.
+
+        Utilizado para fins de testes ou substituição de infraestrutura
+        em runtime.
+
+        Args:
+            storage_service: Instância customizada ou mock de StorageService.
+        """
         cls._storage_service = storage_service
 
     @staticmethod
@@ -76,6 +96,23 @@ class ContractService:
         supplier_id: UUID | str | None = None,
         parent_id: UUID | str | None = None,
     ) -> QuerySet[Contract]:
+        """
+        Lista os contratos pertencentes ao tenant com filtros aplicados.
+
+        Aplica otimizações de banco de dados (select_related e subqueries)
+        para evitar queries redundantes ao carregar dados do fornecedor,
+        despesas e contagem de aditivos.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_id: Identificador do casamento para filtragem.
+            status: Status do contrato (ex: DRAFT, SIGNED).
+            supplier_id: Identificador do fornecedor associado.
+            parent_id: Identificador do contrato pai (aditivo).
+
+        Returns:
+            QuerySet contendo os contratos filtrados e anotados.
+        """
         qs = (
             Contract.objects.for_tenant(company)
             .select_related("supplier", "wedding", "parent")
@@ -97,7 +134,8 @@ class ContractService:
                     ),
                     Value(Decimal("0.00")),
                 ),
-                # Bolt Optimization: Use Subquery for count to avoid join explosion
+                # Otimização: Uso de Subquery para contagem para evitar a
+                # explosão de JOINs.
                 addendums_count=Coalesce(
                     Subquery(
                         Contract.objects.filter(parent=OuterRef("pk"))
@@ -121,13 +159,29 @@ class ContractService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Contract:
-        """Busca um contrato com annotations detalhadas."""
+        """
+        Busca um contrato específico pertencente ao tenant.
+
+        Garante a separação multitenant e anota contagem de aditivos
+        e despesa vinculada para evitar queries N+1.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: Identificador único (UUID ou string) do contrato.
+
+        Returns:
+            A instância do Contract correspondente.
+
+        Raises:
+            ObjectNotFoundError: Se o contrato não for encontrado.
+        """
         try:
             return (
                 Contract.objects.for_tenant(company)
                 .select_related("supplier", "wedding", "parent")
                 .annotate(
-                    # Bolt Optimization: Use Subquery for count to avoid join explosion
+                    # Otimização: Uso de Subquery para contagem para evitar a
+                    # explosão de JOINs.
                     addendums_count=Coalesce(
                         Subquery(
                             Contract.objects.filter(parent=OuterRef("pk"))
@@ -151,6 +205,23 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: ContractIn) -> Contract:
+        """
+        Cria um contrato básico no banco de dados.
+
+        Resolve as chaves estrangeiras de casamento, fornecedor e
+        contrato pai correspondentes ao tenant informado.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Objeto de entrada contendo os dados do contrato.
+
+        Returns:
+            A instância criada do Contract.
+
+        Raises:
+            ObjectNotFoundError: Se algum objeto relacionado (casamento, fornecedor
+                ou contrato pai) não for encontrado para o tenant.
+        """
         logger.info(f"Iniciando criação de Contrato para company_id={company.id}")
 
         data = payload.model_dump(exclude_unset=True)
@@ -221,11 +292,20 @@ class ContractService:
     ) -> Contract:
         """
         Orquestra a criação completa de um contrato.
-        Cria o contrato base, associa opcionalmente a chave do arquivo PDF/imagem
-        do R2/S3,
-        cria os itens logísticos associados e inicializa o fluxo de despesa
-        financeira correspondente.
-        Em caso de falha em qualquer etapa, garante o rollback no banco.
+
+        Cria o contrato básico, anexa o PDF/imagem e, opcionalmente,
+        cria itens logísticos e a despesa correspondente. Se qualquer
+        etapa falhar, o rollback é efetuado.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            contract_data: Dados básicos do contrato.
+            items_data: Lista opcional de itens a serem criados.
+            expense_data: Dados opcionais da despesa para parcelamento.
+            pdf_file_key: Chave do arquivo PDF/imagem salvo no storage.
+
+        Returns:
+            A instância do Contract criada e totalmente populada.
         """
         logger.info(
             f"Iniciando criação completa de Contrato para company_id={company.id}"
@@ -254,8 +334,8 @@ class ContractService:
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
-            # Bolt Optimization: Manually populate the reverse O2O cache and expense_id
-            # to ensure immediate serialization in resolvers remains query-free.
+            # Otimização: Popula manualmente o cache reverso OneToOne e o expense_id
+            # para garantir que a serialização nos resolvers seja livre de queries.
             contract.expense = expense
             contract.expense_id = expense.uuid  # type: ignore[attr-defined]
 
@@ -266,6 +346,20 @@ class ContractService:
     def _resolve_parent(
         company: Company, instance: Contract, parent_input: Any
     ) -> None:
+        """
+        Resolve o contrato pai e valida regras de hierarquia de contratos.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: O contrato em edição que receberá o pai.
+            parent_input: Instância, UUID, string do contrato pai,
+                ou string vazia para remover vínculo.
+
+        Raises:
+            BusinessRuleViolation: Se houver tentativa de auto-vínculo,
+                casamentos divergentes ou vinculação cíclica.
+            ObjectNotFoundError: Se o contrato pai não for encontrado para o tenant.
+        """
         parent: Contract | None = None
         if isinstance(parent_input, Contract):
             parent = parent_input
@@ -309,6 +403,25 @@ class ContractService:
     def update(
         company: Company, instance: Contract, payload: ContractPatchIn
     ) -> Contract:
+        """
+        Atualiza dados de um contrato do tenant.
+
+        Garante a validação de acesso ao tenant, além de resolver as
+        referências de fornecedor, contrato pai e status.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Contract a ser atualizada.
+            payload: Dados de alteração parcial para atualização.
+
+        Returns:
+            A instância de Contract atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a validação dos dados falhar.
+            ObjectNotFoundError: Se o contrato ou relacionados não forem encontrados
+                para o tenant.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -360,6 +473,15 @@ class ContractService:
 
     @staticmethod
     def _apply_fields(instance: Contract, data: dict[str, Any]) -> None:
+        """
+        Aplica campos simples de dicionário na instância do contrato.
+
+        Ignora o campo de arquivo caso seja explicitamente None.
+
+        Args:
+            instance: A instância de Contract que receberá as alterações.
+            data: Dicionário mapeando os campos do model a valores.
+        """
         for field, value in data.items():
             if field == "pdf_file" and value is None:
                 continue
@@ -368,6 +490,20 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Contract) -> None:
+        """
+        Remove um contrato e suas dependências físicas.
+
+        Desvincula os itens logísticos órfãos e remove o arquivo físico.
+        Valida a propriedade do tenant antes de excluir.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Contract a ser removida.
+
+        Raises:
+            DomainIntegrityError: Se houverem aditivos vinculados.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -403,6 +539,21 @@ class ContractService:
     def transition_status(
         company: Company, instance: Contract, new_status: str
     ) -> Contract:
+        """
+        Executa a transição de status do contrato.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Contract a ter o status alterado.
+            new_status: O novo status desejado para o contrato.
+
+        Returns:
+            A instância atualizada de Contract.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
+        """
         logger.info(
             f"Transição de status do Contrato uuid={instance.uuid}: "
             f"{instance.status} -> {new_status}"
@@ -431,7 +582,18 @@ class ContractService:
     @transaction.atomic
     def upload_file(company: Company, uuid: UUID | str, pdf_file_key: str) -> Contract:
         """
-        Associa a chave do arquivo (pdf_file_key) carregado no R2/S3 ao contrato.
+        Associa uma chave de arquivo já carregada no storage ao contrato.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: Identificador único (UUID ou string) do contrato.
+            pdf_file_key: A chave do objeto de arquivo salva no storage.
+
+        Returns:
+            A instância atualizada de Contract.
+
+        Raises:
+            ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
         """
         logger.info(
             f"Associando chave de arquivo {pdf_file_key} ao contrato uuid={uuid}"
@@ -446,7 +608,16 @@ class ContractService:
     @transaction.atomic
     def delete_file(company: Company, uuid: UUID | str) -> None:
         """
-        Remove o arquivo vinculado ao contrato.
+        Remove a associação de arquivo físico do contrato.
+
+        Deleta o arquivo físico do storage caso exista.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: Identificador único (UUID ou string) do contrato.
+
+        Raises:
+            ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
         """
         logger.info(f"Removendo arquivo do contrato uuid={uuid}")
         contract = ContractService.get(company, uuid)
@@ -464,7 +635,21 @@ class ContractService:
         storage_service: StorageService | None = None,
     ) -> dict[str, Any]:
         """
-        Gera presigned URL para upload de contrato no R2/S3.
+        Gera presigned URL para upload direto de contrato no R2/S3.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            filename: Nome do arquivo original a ser carregado.
+            wedding_id: Identificador único do casamento associado.
+            storage_service: Serviço de storage opcional para injeção.
+
+        Returns:
+            Dicionário contendo a 'upload_url' e a 'object_key'.
+
+        Raises:
+            BusinessRuleViolation: Se a configuração do storage
+                estiver incompleta no servidor.
+            ObjectNotFoundError: Se o casamento não for encontrado para o tenant.
         """
         import uuid
 

@@ -27,6 +27,17 @@ class EventService:
 
     @staticmethod
     def list(company: Company, wedding_id: UUID | str | None = None) -> QuerySet[Event]:
+        """
+        Lista todos os eventos vinculados ao tenant (Company).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            wedding_id: UUID ou string identificadora do casamento
+                (opcional, para filtragem).
+
+        Returns:
+            QuerySet contendo os eventos filtrados da empresa.
+        """
         qs = Event.objects.for_tenant(company).select_related("wedding")
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
@@ -34,6 +45,20 @@ class EventService:
 
     @staticmethod
     def get(company: Company, uuid: UUID | str) -> Event:
+        """
+        Recupera um evento específico pelo seu UUID, garantindo o tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: O identificador único do evento.
+
+        Returns:
+            A instância do Event localizado.
+
+        Raises:
+            ObjectNotFoundError: Se o evento não for encontrado ou pertencer
+                a outro tenant.
+        """
         return get_object_or_404_for_tenant(
             Event,
             company,
@@ -50,6 +75,24 @@ class EventService:
         *,
         _caller_internal: bool = False,
     ) -> Event:
+        """
+        Cria um novo evento para o tenant especificado.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados de entrada para criação do evento (EventIn ou dict).
+            _caller_internal: Flag interna indicando se a chamada foi originada
+                por outro serviço do sistema (permite bypass de regras de negócio).
+
+        Returns:
+            O evento criado e salvo no banco de dados.
+
+        Raises:
+            BusinessRuleViolation: Se for tentada a criação manual de um evento
+                de pagamento (_caller_internal=False).
+            ObjectNotFoundError: Se o casamento associado não for encontrado ou
+                pertencer a outro tenant.
+        """
         logger.info(f"Iniciando criação de Evento para company_id={company.id}")
 
         if isinstance(payload, dict):
@@ -96,6 +139,22 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Event, payload: EventPatchIn) -> Event:
+        """
+        Atualiza as informações de um evento existente.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do evento a ser atualizada.
+            payload: Dados com as alterações a serem aplicadas.
+
+        Returns:
+            A instância do evento atualizada.
+
+        Raises:
+            ObjectNotFoundError: Se o evento pertencer a outro tenant.
+            BusinessRuleViolation: Se o evento for de pagamento ou se for
+                tentada a alteração do tipo para pagamento.
+        """
         validate_tenant_ownership(
             company,
             instance,
@@ -141,6 +200,17 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Event) -> None:
+        """
+        Exclui um evento existente.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do evento a ser excluída.
+
+        Raises:
+            ObjectNotFoundError: Se o evento pertencer a outro tenant.
+            BusinessRuleViolation: Se o evento for do tipo pagamento.
+        """
         validate_tenant_ownership(
             company,
             instance,
