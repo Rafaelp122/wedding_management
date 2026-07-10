@@ -1029,3 +1029,16 @@ class TestContractServiceGenerateUploadUrl:
                 storage_service=DummyStorageService(),
             )
         assert exc_info.value.code == "storage_configuration_incomplete"
+
+    def test_contract_service_get_storage_client_lazy_load(self):
+        # Salva o estado original
+        original_storage = ContractService._storage_service
+
+        # Força o estado a ser None para testar a inicialização lazy
+        ContractService._storage_service = None
+        try:
+            client = ContractService.get_storage_client()
+            assert client is not None
+        finally:
+            # Restaura o estado original
+            ContractService._storage_service = original_storage

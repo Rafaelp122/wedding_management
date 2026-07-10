@@ -3,7 +3,10 @@ from unittest.mock import patch
 import pytest
 
 from apps.core.exceptions import BusinessRuleViolation
-from apps.core.services.storage_service import CloudflareR2StorageService
+from apps.core.services.storage_service import (
+    CloudflareR2StorageService,
+    get_storage_service,
+)
 
 
 class TestCloudflareR2StorageService:
@@ -58,3 +61,18 @@ class TestCloudflareR2StorageService:
                 content_type="application/pdf",
             )
         assert exc_info.value.code == "storage_configuration_incomplete"
+
+
+class TestGetStorageService:
+    """Testes da factory function get_storage_service."""
+
+    def test_get_storage_service_r2_success(self, settings):
+        settings.STORAGE_PROVIDER = "R2"
+        service = get_storage_service()
+        assert isinstance(service, CloudflareR2StorageService)
+
+    def test_get_storage_service_unsupported_raises_error(self, settings):
+        settings.STORAGE_PROVIDER = "GCS"
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            get_storage_service()
+        assert exc_info.value.code == "unsupported_storage_provider"
