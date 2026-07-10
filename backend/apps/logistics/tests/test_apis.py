@@ -1,7 +1,6 @@
 import json
 from datetime import date
 from decimal import Decimal
-from unittest.mock import patch
 
 import pytest
 
@@ -495,6 +494,13 @@ class TestLogisticsNinjaAPI:
         assert response.json()["name"] == "Fornecedor Meu"
 
 
+class DummyStorageService:
+    def generate_presigned_put_url(
+        self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
+    ) -> str:
+        return f"https://r2.com/{bucket}/{object_key}"
+
+
 @pytest.mark.django_db
 class TestContractCreateFullAPI:
     """Testes HTTP do endpoint contracts/full/ (criação atômica)."""
@@ -687,37 +693,36 @@ class TestContractCreateFullAPI:
         )
         assert response.status_code == 404
 
-    @patch("boto3.client")
-    def test_generate_upload_url_api_success(
-        self, mock_boto3_client, auth_client, user, settings
-    ):
-        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.R2_ACCESS_KEY_ID = "test-key-id"
-        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
-        settings.R2_BUCKET = "test-bucket"
-        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.AWS_ACCESS_KEY_ID = "test-key-id"
-        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
+    def test_generate_upload_url_api_success(self, auth_client, user, settings):
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
         wedding = WeddingFactory(company=user.company)
-        mock_s3 = mock_boto3_client.return_value
-        mock_s3.generate_presigned_url.return_value = "https://r2.com/presigned-url"
 
-        response = auth_client.post(
-            "/api/v1/logistics/contracts/upload-url/",
-            data=json.dumps(
-                {
-                    "filename": "contrato.pdf",
-                    "wedding_id": str(wedding.uuid),
-                }
-            ),
-            content_type="application/json",
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert "upload_url" in data
-        assert "object_key" in data
-        assert data["upload_url"] == "https://r2.com/presigned-url"
+        from apps.logistics.services.contract_service import ContractService
+
+        original_storage = ContractService._storage_service
+        dummy_storage = DummyStorageService()
+        ContractService.set_storage_service(dummy_storage)
+
+        try:
+            response = auth_client.post(
+                "/api/v1/logistics/contracts/upload-url/",
+                data=json.dumps(
+                    {
+                        "filename": "contrato.pdf",
+                        "wedding_id": str(wedding.uuid),
+                    }
+                ),
+                content_type="application/json",
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert "upload_url" in data
+            assert "object_key" in data
+            assert (
+                data["upload_url"] == f"https://r2.com/test-bucket/{data['object_key']}"
+            )
+        finally:
+            ContractService.set_storage_service(original_storage)
 
 
 @pytest.mark.django_db

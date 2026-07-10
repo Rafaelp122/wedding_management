@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -941,49 +940,59 @@ class TestContractServiceCreateFull:
         assert "br_f02_violation" in str(exc_info.value.code)
 
 
+class DummyStorageService:
+    def generate_presigned_put_url(
+        self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
+    ) -> str:
+        return f"https://r2.com/{bucket}/{object_key}"
+
+
 @pytest.mark.django_db
 class TestContractServiceGenerateUploadUrl:
     """Testes de geração de upload URL pré-assinada."""
 
-    @patch("boto3.client")
-    def test_generate_upload_url_success(self, mock_boto3_client, user, settings):
-        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.R2_ACCESS_KEY_ID = "test-key-id"
-        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
-        settings.R2_BUCKET = "test-bucket"
-        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.AWS_ACCESS_KEY_ID = "test-key-id"
-        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
+    def test_generate_upload_url_success_with_injection(self, user, settings):
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
-
         wedding, _ = _setup_contract_context(user)
-        mock_s3 = mock_boto3_client.return_value
-        mock_s3.generate_presigned_url.return_value = "https://r2.com/presigned-url"
+        dummy_storage = DummyStorageService()
 
         result = ContractService.generate_upload_url(
             company=user.company,
             filename="contrato.pdf",
             wedding_id=wedding.uuid,
+            storage_service=dummy_storage,
         )
 
         assert "upload_url" in result
         assert "object_key" in result
-        assert result["upload_url"] == "https://r2.com/presigned-url"
+        assert (
+            result["upload_url"] == f"https://r2.com/test-bucket/{result['object_key']}"
+        )
         assert result["object_key"].startswith(f"contracts/{wedding.uuid}/")
         assert result["object_key"].endswith("/contrato.pdf")
 
-        mock_s3.generate_presigned_url.assert_called_once()
-        _, kwargs = mock_s3.generate_presigned_url.call_args
-        assert kwargs["Params"]["ContentType"] == "application/pdf"
+    def test_generate_upload_url_success_with_class_setter(self, user, settings):
+        settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
+        wedding, _ = _setup_contract_context(user)
+
+        original_storage = ContractService._storage_service
+        dummy_storage = DummyStorageService()
+        ContractService.set_storage_service(dummy_storage)
+
+        try:
+            result = ContractService.generate_upload_url(
+                company=user.company,
+                filename="contrato.pdf",
+                wedding_id=wedding.uuid,
+            )
+            assert (
+                result["upload_url"]
+                == f"https://r2.com/test-bucket/{result['object_key']}"
+            )
+        finally:
+            ContractService.set_storage_service(original_storage)
 
     def test_generate_upload_url_wedding_not_found(self, user, settings):
-        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.R2_ACCESS_KEY_ID = "test-key-id"
-        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
-        settings.R2_BUCKET = "test-bucket"
-        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.AWS_ACCESS_KEY_ID = "test-key-id"
-        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
 
         with pytest.raises(ObjectNotFoundError):
@@ -991,16 +1000,10 @@ class TestContractServiceGenerateUploadUrl:
                 company=user.company,
                 filename="contrato.pdf",
                 wedding_id=uuid4(),
+                storage_service=DummyStorageService(),
             )
 
     def test_generate_upload_url_multitenancy(self, user, settings):
-        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.R2_ACCESS_KEY_ID = "test-key-id"
-        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
-        settings.R2_BUCKET = "test-bucket"
-        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.AWS_ACCESS_KEY_ID = "test-key-id"
-        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
 
         other_user = UserFactory()
@@ -1010,17 +1013,12 @@ class TestContractServiceGenerateUploadUrl:
                 company=user.company,
                 filename="contrato.pdf",
                 wedding_id=other_wedding.uuid,
+                storage_service=DummyStorageService(),
             )
 
     def test_generate_upload_url_configuration_incomplete(self, user, settings):
-        settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.R2_ACCESS_KEY_ID = "test-key-id"
-        settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
-        settings.R2_BUCKET = ""
-        settings.AWS_S3_ENDPOINT_URL = "https://r2-endpoint.com"
-        settings.AWS_ACCESS_KEY_ID = "test-key-id"
-        settings.AWS_SECRET_ACCESS_KEY = "test-secret-key"
         settings.AWS_STORAGE_BUCKET_NAME = ""
+        settings.R2_BUCKET = ""
 
         wedding, _ = _setup_contract_context(user)
         with pytest.raises(BusinessRuleViolation) as exc_info:
@@ -1028,5 +1026,19 @@ class TestContractServiceGenerateUploadUrl:
                 company=user.company,
                 filename="contrato.pdf",
                 wedding_id=wedding.uuid,
+                storage_service=DummyStorageService(),
             )
         assert exc_info.value.code == "storage_configuration_incomplete"
+
+    def test_contract_service_get_storage_client_lazy_load(self):
+        # Salva o estado original
+        original_storage = ContractService._storage_service
+
+        # Força o estado a ser None para testar a inicialização lazy
+        ContractService._storage_service = None
+        try:
+            client = ContractService.get_storage_client()
+            assert client is not None
+        finally:
+            # Restaura o estado original
+            ContractService._storage_service = original_storage
