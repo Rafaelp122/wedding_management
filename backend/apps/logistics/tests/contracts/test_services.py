@@ -965,7 +965,9 @@ class TestContractServiceGenerateUploadUrl:
 
         assert "upload_url" in result
         assert "object_key" in result
-        assert result["upload_url"] == f"https://r2.com/test-bucket/{result['object_key']}"
+        assert (
+            result["upload_url"] == f"https://r2.com/test-bucket/{result['object_key']}"
+        )
         assert result["object_key"].startswith(f"contracts/{wedding.uuid}/")
         assert result["object_key"].endswith("/contrato.pdf")
 
@@ -983,7 +985,10 @@ class TestContractServiceGenerateUploadUrl:
                 filename="contrato.pdf",
                 wedding_id=wedding.uuid,
             )
-            assert result["upload_url"] == f"https://r2.com/test-bucket/{result['object_key']}"
+            assert (
+                result["upload_url"]
+                == f"https://r2.com/test-bucket/{result['object_key']}"
+            )
         finally:
             ContractService.set_storage_service(original_storage)
 

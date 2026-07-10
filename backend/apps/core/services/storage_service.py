@@ -26,22 +26,34 @@ class CloudflareR2StorageService:
         secret_access_key: str | None = None,
         region_name: str = "us-east-1",
     ):
-        self.endpoint_url = (
-            endpoint_url
+        self._endpoint_url = endpoint_url
+        self._access_key_id = access_key_id
+        self._secret_access_key = secret_access_key
+        self.region_name = region_name
+
+    @property
+    def endpoint_url(self) -> str | None:
+        return (
+            self._endpoint_url
             or getattr(settings, "AWS_S3_ENDPOINT_URL", None)
             or getattr(settings, "R2_ENDPOINT_URL", None)
         )
-        self.access_key_id = (
-            access_key_id
+
+    @property
+    def access_key_id(self) -> str | None:
+        return (
+            self._access_key_id
             or getattr(settings, "AWS_ACCESS_KEY_ID", None)
             or getattr(settings, "R2_ACCESS_KEY_ID", None)
         )
-        self.secret_access_key = (
-            secret_access_key
+
+    @property
+    def secret_access_key(self) -> str | None:
+        return (
+            self._secret_access_key
             or getattr(settings, "AWS_SECRET_ACCESS_KEY", None)
             or getattr(settings, "R2_SECRET_ACCESS_KEY", None)
         )
-        self.region_name = region_name
 
     def generate_presigned_put_url(
         self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
@@ -90,4 +102,3 @@ def get_storage_service() -> StorageService:
     # Outros provedores (como GCS, S3 padrão) podem ser
     # facilmente adicionados aqui no futuro.
     raise ValueError(f"Provedor de storage '{provider}' não suportado.")
-
