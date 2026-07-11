@@ -14,20 +14,6 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// Mock the Orval hooks
-vi.mock(
-  "@/api/generated/v1/endpoints/weddings/weddings",
-  async () => {
-    const actual = await vi.importActual<
-      typeof import("@/api/generated/v1/endpoints/weddings/weddings")
-    >("@/api/generated/v1/endpoints/weddings/weddings");
-    return {
-      ...actual,
-      useWeddingsRead: vi.fn(),
-    };
-  },
-);
-
 vi.mock(
   "@/api/generated/v1/endpoints/dashboard/dashboard",
   async () => {

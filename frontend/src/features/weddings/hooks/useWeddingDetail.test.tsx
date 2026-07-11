@@ -9,16 +9,6 @@ import type { AxiosResponse } from "axios";
 import type { PagedWeddingOut } from "@/api/generated/v1/models/pagedWeddingOut";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
-// Garante o mock do hook useWeddingsRead para evitar quebras por isolate: false
-vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/api/generated/v1/endpoints/weddings/weddings")>();
-  return {
-    ...actual,
-    useWeddingsRead: vi.fn(),
-    useWeddingsLookup: vi.fn().mockReturnValue({ data: undefined, isLoading: false, error: null }),
-  };
-});
-
 describe("useWeddingDetail", () => {
   it("uses cached weddings list data as placeholderData", async () => {
     const uuid = "test-wedding-uuid-123";

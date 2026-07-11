@@ -222,6 +222,18 @@ vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal)
   };
 });
 
+vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/weddings/weddings")>();
+  return {
+    ...mod,
+    useWeddingsRead: vi.fn(mod.useWeddingsRead),
+    useWeddingsLookup: vi.fn(mod.useWeddingsLookup),
+    useWeddingsList: vi.fn(mod.useWeddingsList),
+    useWeddingsCreate: vi.fn(mod.useWeddingsCreate),
+    useWeddingsUpdate: vi.fn(mod.useWeddingsUpdate),
+  };
+});
+
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
 

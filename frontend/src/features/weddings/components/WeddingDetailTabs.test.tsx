@@ -9,7 +9,7 @@ describe("WeddingDetailTabs", () => {
   it("renders tab triggers", () => {
     render(<WeddingDetailTabs wedding={mockWedding} />);
 
-    expect(screen.getByRole("tab", { name: /geral/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /visão geral/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /finanças/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /logística/i })).toBeInTheDocument();
     expect(
@@ -20,6 +20,6 @@ describe("WeddingDetailTabs", () => {
   it("shows general tab content area", () => {
     render(<WeddingDetailTabs wedding={mockWedding} />);
 
-    expect(screen.getByText("Geral")).toBeInTheDocument();
+    expect(screen.getByText("Visão Geral")).toBeInTheDocument();
   });
 });

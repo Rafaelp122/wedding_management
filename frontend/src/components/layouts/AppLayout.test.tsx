@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@/test-utils";
 import { AppLayout } from "@/components/layouts/AppLayout";
 
@@ -35,21 +36,21 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 vi.mock("@/hooks/useDocumentTitle", () => ({
   useDocumentTitle: vi.fn(),
 }));
-
-vi.mock("@/api/generated/v1/endpoints/weddings/weddings", () => ({
-  useWeddingsRead: vi.fn(() => ({
-    data: undefined,
-    isLoading: false,
-  })),
-  useWeddingsList: vi.fn(() => ({
-    data: { data: { items: [], count: 0 } },
-    isLoading: false,
-  })),
-}));
-
 import { useWeddingsRead, useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 
 describe("AppLayout", () => {
+  beforeEach(() => {
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWeddingsList).mockReturnValue({
+      data: { data: { items: [], count: 0 } } as any,
+      isLoading: false,
+      error: null,
+    } as any);
+  });
   it("renders the page title for dashboard path", () => {
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
     expect(screen.getByText("Dashboard Geral")).toBeInTheDocument();
