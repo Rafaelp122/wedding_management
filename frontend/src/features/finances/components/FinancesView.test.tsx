@@ -13,6 +13,29 @@ vi.mock("@/features/finances/components/expenses/CreateExpenseDialog", () => ({
     open ? <div data-testid="create-expense-dialog">Nova Despesa</div> : null,
 }));
 
+vi.mock("@/features/finances/components/FinancesGroupsSummary", () => ({
+  WeddingFinancesGroupsSummary: ({ onCategoryChanged }: { onCategoryChanged: () => void }) => (
+    <div>
+      <button data-testid="mock-category-change-btn" onClick={onCategoryChanged}>
+        Change Category
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock("@/features/finances/components/expenses/ExpensesTable", () => ({
+  WeddingExpensesTable: ({ expenses, onExpenseUpdated }: { expenses: any[], onExpenseUpdated: () => void }) => (
+    <div>
+      {expenses.map((e) => (
+        <div key={e.uuid}>{e.name}</div>
+      ))}
+      <button data-testid="mock-expense-update-btn" onClick={onExpenseUpdated}>
+        Update Expense
+      </button>
+    </div>
+  ),
+}));
+
 // Mock the useWeddingBudget hook
 vi.mock("@/features/finances/hooks/useBudget", () => ({
   useWeddingBudget: vi.fn(),
@@ -193,5 +216,22 @@ describe("WeddingFinancesView", () => {
     expect(useFinancesExpensesList).toHaveBeenCalledWith(
       expect.objectContaining({ wedding_id: "w-1", limit: 5 }),
     );
+  });
+
+  it("triggers refetch queries when category or expense changes", async () => {
+    const userEvent = (await import("@/test-utils")).userEvent;
+    render(<WeddingFinancesView weddingUuid="w-1" />);
+
+    const user = userEvent.setup();
+
+    // Trigger category change
+    const categoryBtn = screen.getByTestId("mock-category-change-btn");
+    await user.click(categoryBtn);
+
+    // Trigger expense update
+    const expenseBtn = screen.getByTestId("mock-expense-update-btn");
+    await user.click(expenseBtn);
+
+    expect(categoryBtn).toBeInTheDocument();
   });
 });

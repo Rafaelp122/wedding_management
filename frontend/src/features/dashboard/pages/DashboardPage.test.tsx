@@ -87,4 +87,46 @@ describe("DashboardPage", () => {
     const lastYear = new Date().getFullYear() - 1;
     expect(screen.getByText(lastYear.toString())).toBeInTheDocument();
   });
+
+  it("allows filtering by a specific wedding", async () => {
+    const { http, HttpResponse } = await import("msw");
+    const mockWedding = {
+      uuid: "w-123",
+      bride_name: "Noiva",
+      groom_name: "Noivo",
+      date: "2026-12-25",
+      status: "PLANNING",
+    };
+
+    server.use(
+      http.get("*/api/v1/weddings/", () =>
+        HttpResponse.json(
+          {
+            items: [mockWedding],
+            count: 1,
+          },
+          { status: 200 },
+        ),
+      ),
+    );
+
+    render(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: /Todos os Casamentos/i })).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup();
+    const combobox = screen.getByRole("combobox", { name: /Todos os Casamentos/i });
+    await user.click(combobox);
+
+    // MSW mocks weddings. Let's find and select a wedding option
+    const option = await screen.findByRole("option", { name: /Noiva & Noivo/ });
+    await user.click(option);
+
+    // It should render the wedding-specific breakdown
+    await waitFor(() => {
+      expect(screen.getByText("Orçamento por Categoria")).toBeInTheDocument();
+    });
+  });
 });
