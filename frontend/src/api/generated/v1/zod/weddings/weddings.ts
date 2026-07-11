@@ -170,7 +170,8 @@ export const WeddingsUpdateBody = zod.object({
   "date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "expected_guests": zod.union([zod.number(),zod.null()]).optional(),
-  "status": zod.union([zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),zod.null()]).optional()
+  "status": zod.union([zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),zod.null()]).optional(),
+  "template": zod.union([zod.string(),zod.null()]).optional()
 })
 
 export const weddingsUpdateResponseTotalBudgetOneMin = 0;

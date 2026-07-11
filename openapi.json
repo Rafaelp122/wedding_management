@@ -5112,6 +5112,17 @@
                 "type": "null"
               }
             ]
+          },
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template"
           }
         },
         "title": "WeddingPatchIn",
