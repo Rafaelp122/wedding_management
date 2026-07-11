@@ -9,6 +9,14 @@ import type { AxiosResponse } from "axios";
 import type { PagedWeddingOut } from "@/api/generated/v1/models/pagedWeddingOut";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
+vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/weddings/weddings")>();
+  return {
+    ...mod,
+    useWeddingsRead: vi.fn(mod.useWeddingsRead),
+  };
+});
+
 describe("useWeddingDetail", () => {
   beforeEach(() => {
     vi.mocked(useWeddingsRead).mockReset();

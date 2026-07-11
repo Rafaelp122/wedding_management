@@ -3,47 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@/test-utils";
 import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
 import { createMockWedding } from "@/test-data";
-
-// Mock useParams to control the uuid param independently of MemoryRouter
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<
-    typeof import("react-router-dom")
-  >("react-router-dom");
-  return {
-    ...actual,
-    useParams: vi.fn(),
-  };
-});
-
-vi.mock(
-  "@/api/generated/v1/endpoints/dashboard/dashboard",
-  async () => {
-    const actual = await vi.importActual<
-      typeof import("@/api/generated/v1/endpoints/dashboard/dashboard")
-    >("@/api/generated/v1/endpoints/dashboard/dashboard");
-    return {
-      ...actual,
-      useDashboardWedding: vi.fn(() => ({
-        data: {
-          data: {
-            tasks_completed: 68,
-            tasks_total: 100,
-            days_until_wedding: 30,
-            budget_percentage_used: 10,
-            contracts_signed: 1,
-            contracts_total: 2,
-            upcoming_installments: [],
-            urgent_tasks: [],
-            categories_summary: [],
-          },
-        },
-        isLoading: false,
-        error: null,
-      })),
-    };
-  },
-);
-
 import { useParams } from "react-router-dom";
 import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
@@ -58,9 +17,36 @@ const mockWedding = createMockWedding({
   template: "beach_6m",
 });
 
+// Mock useParams to control the uuid param independently of MemoryRouter
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<
+    typeof import("react-router-dom")
+  >("react-router-dom");
+  return {
+    ...actual,
+    useParams: vi.fn(),
+  };
+});
 describe("WeddingDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useDashboardWedding).mockReturnValue({
+      data: {
+        data: {
+          tasks_completed: 68,
+          tasks_total: 100,
+          days_until_wedding: 30,
+          budget_percentage_used: 10,
+          contracts_signed: 1,
+          contracts_total: 2,
+          upcoming_installments: [],
+          urgent_tasks: [],
+          categories_summary: [],
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
   });
 
   it("shows 'URL inválida' when uuid is undefined", () => {

@@ -231,7 +231,15 @@ vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal)
     useWeddingsLookup: vi.fn(mod.useWeddingsLookup),
     useWeddingsList: vi.fn(mod.useWeddingsList),
     useWeddingsCreate: vi.fn(mod.useWeddingsCreate),
-    useWeddingsUpdate: vi.fn(mod.useWeddingsUpdate),
+  };
+});
+
+vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/dashboard/dashboard")>();
+  return {
+    ...mod,
+    useDashboardSummary: vi.fn(mod.useDashboardSummary),
+    useDashboardWedding: vi.fn(mod.useDashboardWedding),
   };
 });
 
