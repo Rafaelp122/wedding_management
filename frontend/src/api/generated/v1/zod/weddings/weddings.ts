@@ -8,6 +8,17 @@ import * as zod from 'zod';
 
 
 /**
+ * Retorna lista simplificada de casamentos para comboboxes.
+ * @summary List Weddings Lookup
+ */
+export const WeddingsLookupResponseItem = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string()
+})
+export const WeddingsLookupResponse = zod.array(WeddingsLookupResponseItem)
+
+/**
  * @summary List Weddings
  */
 export const weddingsListQuerySearchDefault = ``;

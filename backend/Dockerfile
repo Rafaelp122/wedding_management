@@ -18,12 +18,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
 # ==============================================================================
-# STAGE 2: Builder - Apenas para compilar o venv
+# STAGE 2: Builder - Onde o uv é necessário para gerar o venv
 # ==============================================================================
 FROM base AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -72,7 +72,5 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.production \
 USER appuser
 
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')" || exit 1
 
 CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8080} --worker-class gthread --workers ${GUNICORN_WORKERS:-1} --threads 4 --timeout 60 --preload"]

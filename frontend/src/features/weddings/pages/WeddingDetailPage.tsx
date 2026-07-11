@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingDetail } from "../hooks/useWeddingDetail";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,7 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 export default function WeddingDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
 
-  const { data: response, isLoading, error } = useWeddingsRead(uuid!, {
-    query: { enabled: !!uuid },
-  });
+  const { data: response, isLoading, error } = useWeddingDetail(uuid!);
 
   const wedding = response?.data;
 
@@ -34,16 +32,6 @@ export default function WeddingDetailPage() {
             </Link>
           </Button>
         </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-6 space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-100 w-full" />
       </div>
     );
   }
@@ -71,29 +59,6 @@ export default function WeddingDetailPage() {
     );
   }
 
-  if (!wedding) {
-    return (
-      <div className="container mx-auto py-6">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Casamento não encontrado</AlertTitle>
-          <AlertDescription>
-            O casamento solicitado não foi encontrado ou você não tem permissão
-            para acessá-lo.
-          </AlertDescription>
-        </Alert>
-        <div className="mt-4">
-          <Button asChild variant="outline">
-            <Link to="/weddings">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar para lista
-            </Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto py-6 flex flex-col gap-6">
       {/* Botão voltar */}
@@ -106,8 +71,24 @@ export default function WeddingDetailPage() {
         </Button>
       </div>
 
-      {/* Tabs de conteúdo */}
-      <WeddingDetailTabs wedding={wedding} />
+      {/* Nome do casal — skeleton enquanto carrega */}
+      {isLoading && <Skeleton className="h-8 w-64" />}
+
+      {/* Tabs de conteúdo — skeleton enquanto carrega, tabs reais após */}
+      {isLoading ? (
+        <Skeleton className="h-12 w-full" />
+      ) : wedding ? (
+        <WeddingDetailTabs wedding={wedding} />
+      ) : (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Casamento não encontrado</AlertTitle>
+          <AlertDescription>
+            O casamento solicitado não foi encontrado ou você não tem permissão
+            para acessá-lo.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }

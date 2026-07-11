@@ -58,7 +58,7 @@ describe("DashboardPage", () => {
   it("shows error state when API fails", async () => {
     const { http, HttpResponse } = await import("msw");
     server.use(
-      http.get("*/api/v1/weddings/", () =>
+      http.get("*/api/v1/weddings/lookup/", () =>
         HttpResponse.json({ detail: "Erro ao carregar painel" }, { status: 500 }),
       ),
     );
@@ -86,5 +86,24 @@ describe("DashboardPage", () => {
 
     const lastYear = new Date().getFullYear() - 1;
     expect(screen.getByText(lastYear.toString())).toBeInTheDocument();
+  });
+
+  it("allows filtering by a specific wedding", async () => {
+    render(<DashboardPage />);
+
+    // Aguarda o select de filtro aparecer (lookup carregado, isLoading = false)
+    // Usa o id do SelectTrigger pois accessible name do Radix pode não resolver no JSDOM
+    await waitFor(() => {
+      expect(document.getElementById("wedding-filter")).toBeInTheDocument();
+    }, { timeout: 5000 });
+
+    const trigger = document.getElementById("wedding-filter")!;
+    const user = userEvent.setup();
+    await user.click(trigger);
+
+    // O mock padrão do Orval gera ao menos 1 casamento no lookup
+    const options = await screen.findAllByRole("option");
+    // Deve haver ao menos a opção "Todos os Casamentos" + 1 casamento
+    expect(options.length).toBeGreaterThan(1);
   });
 });

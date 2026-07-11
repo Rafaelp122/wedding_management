@@ -58,10 +58,6 @@ export default function SuppliersPage() {
     pagination,
   } = useSuppliersPage();
 
-  if (isLoading) {
-    return <ListPageLoadingState />;
-  }
-
   if (error) {
     const { message } = getApiErrorInfo(
       error,
@@ -115,11 +111,13 @@ export default function SuppliersPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {filteredSuppliers.length} de {totalCount} fornecedores
+            {isLoading ? "Carregando..." : `${filteredSuppliers.length} de ${totalCount} fornecedores`}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredSuppliers.length === 0 ? (
+          {isLoading ? (
+            <ListPageLoadingState />
+          ) : filteredSuppliers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertCircle className="mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="text-lg font-semibold">Nenhum fornecedor encontrado</h3>

@@ -7,25 +7,18 @@ import { AppLayout } from "@/components/layouts/AppLayout";
 import { GlobalError } from "@/components/ui/globalError";
 import { LoadingScreen } from "@/components/ui/loadingScreen";
 
-const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
-const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
-const DashboardPage = lazy(
-  () => import("@/features/dashboard/pages/DashboardPage"),
-);
+// Static imports for main pages — loaded eagerly for instant navigation
+import LoginPage from "@/features/auth/pages/LoginPage";
+import RegisterPage from "@/features/auth/pages/RegisterPage";
+import DashboardPage from "@/features/dashboard/pages/DashboardPage";
+import SchedulerPage from "@/features/scheduler/pages/SchedulerPage";
+import SuppliersPage from "@/features/logistics/pages/SuppliersPage";
+import WeddingsListPage from "@/features/weddings/pages/WeddingsListPage";
+import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
+
+// Lazy imports for rarely accessed pages
 const ComingSoonPage = lazy(() => import("@/components/coming-soon"));
 const NotFoundPage = lazy(() => import("@/components/not-found"));
-const SchedulerPage = lazy(
-  () => import("@/features/scheduler/pages/SchedulerPage"),
-);
-const SuppliersPage = lazy(() => import("@/features/logistics/pages/SuppliersPage"));
-
-// Feature: Weddings
-const WeddingsListPage = lazy(
-  () => import("@/features/weddings/pages/WeddingsListPage"),
-);
-const WeddingDetailPage = lazy(
-  () => import("@/features/weddings/pages/WeddingDetailPage"),
-);
 
 const withLoading = (element: ReactNode) => (
   <Suspense fallback={<LoadingScreen />}>{element}</Suspense>
@@ -39,7 +32,7 @@ export const router = sentryCreateBrowserRouter([
     path: "/login",
     element: (
       <PublicRoute>
-        {withLoading(<LoginPage />)}
+        <LoginPage />
       </PublicRoute>
     ),
   },
@@ -47,7 +40,7 @@ export const router = sentryCreateBrowserRouter([
     path: "/register",
     element: (
       <PublicRoute>
-        {withLoading(<RegisterPage />)}
+        <RegisterPage />
       </PublicRoute>
     ),
   },
@@ -69,23 +62,23 @@ export const router = sentryCreateBrowserRouter([
       },
       {
         path: "/dashboard",
-        element: withLoading(<DashboardPage />),
+        element: <DashboardPage />,
       },
       {
         path: "/weddings",
-        element: withLoading(<WeddingsListPage />),
+        element: <WeddingsListPage />,
       },
       {
         path: "/weddings/:uuid",
-        element: withLoading(<WeddingDetailPage />),
+        element: <WeddingDetailPage />,
       },
       {
         path: "/scheduler",
-        element: withLoading(<SchedulerPage />),
+        element: <SchedulerPage />,
       },
       {
         path: "/suppliers",
-        element: withLoading(<SuppliersPage />),
+        element: <SuppliersPage />,
       },
       {
         path: "/settings",

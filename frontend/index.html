@@ -1,10 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sim, Aceito!</title>
+    <!-- Warmup de conexão com o backend (Origin da API) -->
+    <script>
+      (function() {
+        const apiUrl = "%VITE_API_URL%";
+        if (apiUrl && apiUrl.startsWith("http")) {
+          try {
+            const url = new URL(apiUrl);
+            const link = document.createElement("link");
+            link.rel = "preconnect";
+            link.href = url.origin;
+            link.crossOrigin = "anonymous";
+            document.head.appendChild(link);
+          } catch (e) {
+            console.error("Erro ao configurar preconnect para a API:", e);
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

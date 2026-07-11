@@ -6,40 +6,16 @@ import {
   Package,
   Wallet,
 } from "lucide-react";
-import { lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 
-const WeddingOverview = lazy(
-  () => import("./WeddingOverview").then((m) => ({ default: m.WeddingOverview })),
-);
-const WeddingFinancesView = lazy(
-  () =>
-    import("@/features/finances/components/FinancesView").then((m) => ({
-      default: m.WeddingFinancesView,
-    })),
-);
-const WeddingVendorsItemsTab = lazy(
-  () =>
-    import("@/features/logistics/components/VendorsItemsView").then((m) => ({
-      default: m.WeddingVendorsItemsTab,
-    })),
-);
-const WeddingTimelineTab = lazy(
-  () =>
-    import("@/features/scheduler/components/events/TimelineView").then((m) => ({
-      default: m.WeddingTimelineTab,
-    })),
-);
-const WeddingChecklistTab = lazy(
-  () =>
-    import("@/features/scheduler/components/tasks/ChecklistView").then((m) => ({
-      default: m.WeddingChecklistTab,
-    })),
-);
+import { WeddingOverview } from "./WeddingOverview";
+import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
+import { WeddingVendorsItemsTab } from "@/features/logistics/components/VendorsItemsView";
+import { WeddingTimelineTab } from "@/features/scheduler/components/events/TimelineView";
+import { WeddingChecklistTab } from "@/features/scheduler/components/tasks/ChecklistView";
 
 interface WeddingDetailTabsProps {
   wedding: WeddingOut;
@@ -98,21 +74,15 @@ export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
       </TabsList>
 
       <TabsContent value="general" className="space-y-4 pt-4">
-        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-          <WeddingOverview wedding={wedding} />
-        </Suspense>
+        <WeddingOverview wedding={wedding} />
       </TabsContent>
 
       <TabsContent value="finances" className="space-y-4 pt-4">
-        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-          <WeddingFinancesView weddingUuid={wedding.uuid} />
-        </Suspense>
+        <WeddingFinancesView weddingUuid={wedding.uuid} />
       </TabsContent>
 
       <TabsContent value="logistics" className="space-y-4 pt-4">
-        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-          <WeddingVendorsItemsTab weddingUuid={wedding.uuid} />
-        </Suspense>
+        <WeddingVendorsItemsTab weddingUuid={wedding.uuid} />
       </TabsContent>
 
       <TabsContent value="planning" className="space-y-4 pt-4">
@@ -128,14 +98,10 @@ export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="timeline">
-            <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-              <WeddingTimelineTab weddingUuid={wedding.uuid} />
-            </Suspense>
+            <WeddingTimelineTab weddingUuid={wedding.uuid} />
           </TabsContent>
           <TabsContent value="checklist">
-            <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-              <WeddingChecklistTab weddingUuid={wedding.uuid} />
-            </Suspense>
+            <WeddingChecklistTab weddingUuid={wedding.uuid} />
           </TabsContent>
         </Tabs>
       </TabsContent>

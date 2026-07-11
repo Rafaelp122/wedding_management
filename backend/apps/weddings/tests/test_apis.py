@@ -226,3 +226,37 @@ class TestWeddingNinjaAPI:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
+
+    def test_list_weddings_lookup_success(self, auth_client, user):
+        """GET /api/v1/weddings/lookup/ retorna lista simplificada
+        ordenada por bride_name.
+        """
+        WeddingFactory(company=user.company, bride_name="Zélia", groom_name="Beto")
+        WeddingFactory(company=user.company, bride_name="Beatriz", groom_name="Carlos")
+
+        response = auth_client.get("/api/v1/weddings/lookup/")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["bride_name"] == "Beatriz"
+        assert data[0]["groom_name"] == "Carlos"
+        assert "uuid" in data[0]
+        assert "location" not in data[0]
+        assert "date" not in data[0]
+        assert data[1]["bride_name"] == "Zélia"
+
+    def test_list_weddings_lookup_multitenancy(self, auth_client, user):
+        """GET /api/v1/weddings/lookup/ respeita o isolamento multi-tenant."""
+        from apps.users.tests.factories import UserFactory
+
+        other_user = UserFactory()
+        WeddingFactory(company=user.company, bride_name="Minha Noiva")
+        WeddingFactory(company=other_user.company, bride_name="Noiva Alheia")
+
+        response = auth_client.get("/api/v1/weddings/lookup/")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["bride_name"] == "Minha Noiva"
