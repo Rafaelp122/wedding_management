@@ -33,6 +33,13 @@ class Wedding(TenantModel):
         choices=StatusChoices.choices,
         default=StatusChoices.IN_PROGRESS,
     )
+    template = models.CharField(  # noqa: DJ001
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Modelo de Cronograma",
+        help_text="Template aplicado na criação do casamento",
+    )
 
     class Meta:
         verbose_name = "Casamento"

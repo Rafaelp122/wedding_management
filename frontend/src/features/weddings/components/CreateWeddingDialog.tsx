@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useWeddingsCreate } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingsCreate, getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { WeddingsCreateBody } from "@/api/generated/v1/zod/weddings/weddings";
@@ -77,6 +77,7 @@ export function CreateWeddingDialog({
           form.reset();
           queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
           queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
           onSuccess();
         },
       }),

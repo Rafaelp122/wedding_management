@@ -1,10 +1,10 @@
 import {
   Calendar,
-  ClipboardList,
-  LayoutDashboard,
   ListChecks,
-  Package,
+  LayoutDashboard,
+  ClipboardList,
   Wallet,
+  Package,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
@@ -42,34 +42,34 @@ export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-      <TabsList className="w-full justify-start overflow-x-auto border-b bg-transparent p-0">
+      <TabsList className="w-full justify-start overflow-x-auto border-b bg-transparent p-0 h-auto gap-8 rounded-none">
         <TabsTrigger
           value="general"
-          className="relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          className="relative rounded-none border-b-2 border-transparent bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground shadow-none transition-all data-[state=active]:border-b-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-none cursor-pointer flex items-center"
         >
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          Geral
+          <LayoutDashboard className="mr-2 h-4 w-4 shrink-0" />
+          Visão Geral
+        </TabsTrigger>
+        <TabsTrigger
+          value="planning"
+          className="relative rounded-none border-b-2 border-transparent bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground shadow-none transition-all data-[state=active]:border-b-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-none cursor-pointer flex items-center"
+        >
+          <ClipboardList className="mr-2 h-4 w-4 shrink-0" />
+          Planejamento
         </TabsTrigger>
         <TabsTrigger
           value="finances"
-          className="relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          className="relative rounded-none border-b-2 border-transparent bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground shadow-none transition-all data-[state=active]:border-b-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-none cursor-pointer flex items-center"
         >
-          <Wallet className="mr-2 h-4 w-4" />
+          <Wallet className="mr-2 h-4 w-4 shrink-0" />
           Finanças
         </TabsTrigger>
         <TabsTrigger
           value="logistics"
-          className="relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+          className="relative rounded-none border-b-2 border-transparent bg-transparent px-0 py-3 text-sm font-medium text-muted-foreground shadow-none transition-all data-[state=active]:border-b-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:shadow-none cursor-pointer flex items-center"
         >
-          <Package className="mr-2 h-4 w-4" />
+          <Package className="mr-2 h-4 w-4 shrink-0" />
           Logística
-        </TabsTrigger>
-        <TabsTrigger
-          value="planning"
-          className="relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-        >
-          <ClipboardList className="mr-2 h-4 w-4" />
-          Planejamento
         </TabsTrigger>
       </TabsList>
 

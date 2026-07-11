@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "ninja_jwt.token_blacklist",
     "ninja_extra",
     "corsheaders",
+    "django_extensions",
     "apps.core",
     "apps.tenants",
     "apps.users",

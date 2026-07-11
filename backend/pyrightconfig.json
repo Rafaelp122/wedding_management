@@ -1,4 +1,19 @@
 {
   "venvPath": ".",
-  "venv": ".venv"
+  "venv": ".venv",
+  "typeCheckingMode": "basic",
+  "exclude": [
+    "**/migrations/**",
+    "**/tests/**",
+    "**/.venv/**",
+    "**/__pycache__/**",
+    "**/node_modules/**"
+  ],
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownParameterType": "none",
+  "reportMissingTypeArgument": "information",
+  "reportGeneralTypeIssues": "information",
+  "reportPrivateUsage": "information"
 }

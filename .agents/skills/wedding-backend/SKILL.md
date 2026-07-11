@@ -173,7 +173,7 @@ def handle_validation_error(request, exc):
 - API schemas auto-generate OpenAPI docs and Orval hooks.
 
 ### Error Handling & Null Safety
-- Raise domain exceptions (`ApplicationError` subclasses) — never return error codes/dicts. See [Exception Handling](#8-exception-handling).
+- Raise domain exceptions (`ApplicationError` subclasses) — never return error codes/dicts.
 - Returning `None` is acceptable — always type it explicitly (`User | None`). Let `mypy` enforce null-checks.
 
 ### Comments & Docstrings
@@ -198,19 +198,29 @@ def handle_validation_error(request, exc):
 
 ### Standard "Get by UUID" Pattern
 
-Every service fetching a resource by UUID must filter by tenant and return a user-safe 404:
+Use the project's helper `get_object_or_404_for_tenant` from `apps.core.shortcuts`:
 
 ```python
-wedding = Wedding.objects.for_tenant(company).filter(uuid=uuid).first()
-if wedding is None:
-    raise ObjectNotFoundError(
-        detail="Wedding not found or access denied.",
-        code="wedding_not_found_or_denied",
-    )
-return wedding
+from apps.core.shortcuts import get_object_or_404_for_tenant
+
+wedding = get_object_or_404_for_tenant(
+    Wedding,
+    company=company,
+    uuid=uuid,
+    select_related=["venue"],      # optional FK optimization
+    prefetch_related=["guests"],   # optional M2M optimization
+)
 ```
 
-NEVER use `get_object_or_404` — it leaks existence and doesn't filter by tenant.
+This function:
+- Filters by tenant via `Model.objects.for_tenant(company)` ✅
+- Returns a user-safe 404 (`ObjectNotFoundError`) if not found ✅
+- Accepts `select_related` / `prefetch_related` for N+1 prevention ✅
+- Supports custom `detail` and `code` for error messages ✅
+- Handles malformed UUIDs gracefully (ValueError → 404) ✅
+
+> **Do NOT use Django's `get_object_or_404`** — it doesn't filter by tenant and leaks existence info.
+> **Do NOT use `.filter(uuid=uuid).first()` + manual raise** — the helper already does this and is the project convention (used 40+ times across services).
 
 ### Fail-Fast in Services
 
@@ -266,8 +276,6 @@ class EventIn(Schema):
         return self
 ```
 
-**Currently underutilized** — most schemas lack explicit validators. Expanding schema-level validation is a future improvement.
-
 ### 2. Model (Django) — Automatic via `BaseModel.full_clean()`
 
 Field-level constraints enforced on `save()`:
@@ -282,3 +290,37 @@ Complex rules that span multiple models or require database lookups:
 - Multi-tenancy isolation
 - Use `raise BusinessRuleViolation` for business rule failures
 - Use `raise DomainIntegrityError` for cross-entity conflicts
+
+---
+
+## 10. Common Pitfalls (Avoid These!)
+
+### ❌ Forgetting `operation_id` on Router Endpoints
+Orval hooks won't be generated. Every `@router.get/post/...` must have `operation_id`.
+
+### ❌ Using Django's `get_object_or_404` in Services
+Leaks existence information to unauthorized tenants and doesn't filter by company. Use `get_object_or_404_for_tenant` from `apps.core.shortcuts` instead — it's type-safe, tenant-aware, and already used 40+ times across the project.
+
+### ❌ Accessing `request.user.company` Directly
+Can fail if user is `AuthContextUser` instead of `User`. Always use `user = require_user(request.user)` first.
+
+### ❌ Not Using `transaction.atomic` for Multi-Write Services
+If a service creates + updates multiple models, wrap in `with transaction.atomic():`. Otherwise a partial failure leaves inconsistent data.
+
+### ❌ Forgetting `.select_related()` / `.prefetch_related()`
+Results in N+1 queries. Always prefetch FK/M2M relations in list/detail endpoints.
+
+### ❌ Returning Python `float` for Monetary Values
+Causes floating-point rounding errors. Always use `Decimal` for monetary amounts in schemas and models.
+
+### ❌ Using `.objects.create()` or `.objects.bulk_create()` Without `for_tenant`
+Bypasses tenant isolation. Always go through `Model.objects.for_tenant(company)` first.
+
+### ❌ Hardcoding File Paths or URLs
+Breaks in Docker/Cloud Run. Use Django settings or environment variables.
+
+### ❌ Raising Generic `Exception` or `RuntimeError`
+Consumers can't distinguish error types. Always raise a domain exception from `apps/core/exceptions.py`.
+
+### ❌ Passing `skip_clean=True` Without Good Reason
+Bypasses model validation. Only use for bulk operations, migrations, or fixtures. Document why in a comment.

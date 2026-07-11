@@ -4904,6 +4904,17 @@
           "status": {
             "$ref": "#/components/schemas/WeddingStatusEnum"
           },
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",

@@ -121,3 +121,6 @@ gha-creds-*.json
 .vercel
 coverage.json
 *.tsbuildinfo
+
+# Hermes Agent — session plans (scratch notes)
+.hermes/plans/
