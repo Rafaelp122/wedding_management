@@ -31,12 +31,18 @@ const {
   uploadUrlAsync: vi.fn(),
 }));
 
-vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
-  useLogisticsSuppliersList: () => mockSuppliersList(),
-  useLogisticsContractsList: () => mockContractsList(),
-  useLogisticsContractsCreateFull: () => mockCreateFull(),
-  useLogisticsContractsUploadUrl: () => mockUploadUrl(),
-}));
+vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOriginal) => {
+  const original = await importOriginal<
+    typeof import("@/api/generated/v1/endpoints/logistics/logistics")
+  >();
+  return {
+    ...original,
+    useLogisticsSuppliersList: () => mockSuppliersList(),
+    useLogisticsContractsList: () => mockContractsList(),
+    useLogisticsContractsCreateFull: () => mockCreateFull(),
+    useLogisticsContractsUploadUrl: () => mockUploadUrl(),
+  };
+});
 
 import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
 
