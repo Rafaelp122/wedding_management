@@ -48,7 +48,7 @@ describe("WeddingFinancesView", () => {
     );
   });
 
-  it("shows loading state when budget is loading", () => {
+  it("shows skeleton placeholders when budget is loading", () => {
     vi.mocked(useWeddingBudget).mockReturnValue({
       ...defaultBudgetData,
       isLoading: true,
@@ -56,15 +56,13 @@ describe("WeddingFinancesView", () => {
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    expect(
-      screen.getByText("Carregando dados financeiros..."),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/carregando dados financeiros/i)).toHaveClass(
-      "animate-pulse",
-    );
+    // Os cards de resumo não devem aparecer — skeletons os substituem
+    expect(screen.queryByText("Orçamento Total")).not.toBeInTheDocument();
+    // O gráfico e as categorias também são substituídos por skeletons
+    expect(screen.queryByTestId("distribution-chart")).not.toBeInTheDocument();
   });
 
-  it("shows loading state when expenses are loading", () => {
+  it("shows skeleton placeholders when expenses are loading", () => {
     vi.mocked(useFinancesExpensesList).mockReturnValue({
       ...defaultExpensesData,
       isLoading: true,
@@ -72,9 +70,10 @@ describe("WeddingFinancesView", () => {
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    expect(
-      screen.getByText("Carregando dados financeiros..."),
-    ).toBeInTheDocument();
+    // As seções de orçamento (não loading) devem aparecer normalmente
+    expect(screen.getByText("Orçamento Total")).toBeInTheDocument();
+    // Despesas recentes e tabela não devem aparecer — skeletons os substituem
+    expect(screen.queryByText("Despesas Recentes")).not.toBeInTheDocument();
   });
 
   it("renders summary cards after loading", async () => {

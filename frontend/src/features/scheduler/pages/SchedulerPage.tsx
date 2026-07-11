@@ -158,20 +158,6 @@ export default function SchedulerPage() {
     queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
   }, [queryClient]);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-72" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
-
   if (firstError) {
     const { message } = getApiErrorInfo(
       firstError,
@@ -232,20 +218,33 @@ export default function SchedulerPage() {
         </div>
       </div>
 
-      <SchedulerSummaryCards summary={summary} />
-
-      {viewMode === "table" ? (
-        <SchedulerEventsTable
-          events={paginatedEvents}
-          weddingsByUuid={weddingsByUuid}
-        />
+      {isLoading ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+          <Skeleton className="h-96 w-full" />
+        </>
       ) : (
-        <SchedulerCalendar
-          events={events}
-          weddingsByUuid={weddingsByUuid}
-          onSelectEvent={handleSelectEvent}
-          onSelectSlot={handleSelectSlot}
-        />
+        <>
+          <SchedulerSummaryCards summary={summary} />
+
+          {viewMode === "table" ? (
+            <SchedulerEventsTable
+              events={paginatedEvents}
+              weddingsByUuid={weddingsByUuid}
+            />
+          ) : (
+            <SchedulerCalendar
+              events={events}
+              weddingsByUuid={weddingsByUuid}
+              onSelectEvent={handleSelectEvent}
+              onSelectSlot={handleSelectSlot}
+            />
+          )}
+        </>
       )}
 
       {/* Create Event Dialog */}

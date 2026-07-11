@@ -57,32 +57,6 @@ export default function DashboardPage() {
       query: { enabled: isWeddingSelected },
     });
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 overflow-auto min-h-screen">
-        <div className="max-w-7xl mx-auto space-y-8 py-6 px-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-            <Skeleton className="h-10 w-32 rounded-lg" />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full rounded-xl shadow-sm" />
-            ))}
-          </div>
-          <div className="grid gap-6 lg:grid-cols-3">
-            <Skeleton className="h-100 lg:col-span-2 rounded-xl shadow-sm" />
-            <Skeleton className="h-100 rounded-xl shadow-sm" />
-          </div>
-          <Skeleton className="h-87.5 w-full rounded-xl shadow-sm" />
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     const { message } = getApiErrorInfo(
       error,
@@ -137,6 +111,7 @@ export default function DashboardPage() {
   return (
     <div className="flex-1 overflow-auto min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        {/* Loading overlay for header selectors while data loads */}
         {/* Welcome + Filters */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -151,29 +126,33 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Wedding filter */}
-            <Select
-              value={selectedWeddingUuid}
-              onValueChange={setSelectedWeddingUuid}
-            >
-              <SelectTrigger
-                id="wedding-filter"
-                className="w-52 bg-white dark:bg-[#18181B] border-zinc-200 dark:border-zinc-800 shadow-sm text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            {/* Wedding filter — disabled while data loads */}
+            {isLoading ? (
+              <Skeleton className="h-10 w-52 rounded-lg" />
+            ) : (
+              <Select
+                value={selectedWeddingUuid}
+                onValueChange={setSelectedWeddingUuid}
               >
-                <div className="flex items-center gap-2 truncate">
-                  <Heart className="w-3.5 h-3.5 text-aura-500 shrink-0" />
-                  <SelectValue placeholder="Todos os Casamentos" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Casamentos</SelectItem>
-                {weddingsArray.map((wedding) => (
-                  <SelectItem key={wedding.uuid} value={wedding.uuid}>
-                    {wedding.bride_name} &amp; {wedding.groom_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  id="wedding-filter"
+                  className="w-52 bg-white dark:bg-[#18181B] border-zinc-200 dark:border-zinc-800 shadow-sm text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Heart className="w-3.5 h-3.5 text-aura-500 shrink-0" />
+                    <SelectValue placeholder="Todos os Casamentos" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Casamentos</SelectItem>
+                  {weddingsArray.map((wedding) => (
+                    <SelectItem key={wedding.uuid} value={wedding.uuid}>
+                      {wedding.bride_name} &amp; {wedding.groom_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {/* Date badge */}
             <div className="hidden sm:flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 bg-white dark:bg-[#18181B] px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm font-medium shrink-0">
@@ -243,7 +222,13 @@ export default function DashboardPage() {
         )}
 
         {/* KPI Grid — Global or Individual */}
-        {isWeddingSelected ? (
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-32 w-full rounded-xl shadow-sm" />
+            ))}
+          </div>
+        ) : isWeddingSelected ? (
           <WeddingStatsCards
             data={weddingDashboard}
             isLoading={isLoadingWeddingDashboard}
@@ -258,35 +243,42 @@ export default function DashboardPage() {
         )}
 
         {/* Main Content Grid */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {isWeddingSelected ? (
-            /* Individual view: Budget Breakdown (2/3) + Agenda (1/3) */
-            <>
-              <div className="lg:col-span-2">
-                <WeddingBudgetBreakdown
-                  categories={weddingDashboard?.categories_summary ?? []}
-                  isLoading={isLoadingWeddingDashboard}
-                />
-              </div>
-              <UpcomingAppointments weddingUuid={selectedWeddingUuid} />
-            </>
-          ) : (
-            /* Global view: Chart (2/3) + Agenda (1/3) */
-            <>
-              <Suspense
-                fallback={
-                  <Skeleton className="h-80 lg:col-span-2 rounded-xl shadow-sm" />
-                }
-              >
-                <WeddingMonthlyChart
-                  selectedYear={selectedYear}
-                  onYearChange={setSelectedYear}
-                />
-              </Suspense>
-              <UpcomingAppointments />
-            </>
-          )}
-        </div>
+        {isLoading ? (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Skeleton className="h-80 lg:col-span-2 rounded-xl shadow-sm" />
+            <Skeleton className="h-80 rounded-xl shadow-sm" />
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-3">
+            {isWeddingSelected ? (
+              /* Individual view: Budget Breakdown (2/3) + Agenda (1/3) */
+              <>
+                <div className="lg:col-span-2">
+                  <WeddingBudgetBreakdown
+                    categories={weddingDashboard?.categories_summary ?? []}
+                    isLoading={isLoadingWeddingDashboard}
+                  />
+                </div>
+                <UpcomingAppointments weddingUuid={selectedWeddingUuid} />
+              </>
+            ) : (
+              /* Global view: Chart (2/3) + Agenda (1/3) */
+              <>
+                <Suspense
+                  fallback={
+                    <Skeleton className="h-80 lg:col-span-2 rounded-xl shadow-sm" />
+                  }
+                >
+                  <WeddingMonthlyChart
+                    selectedYear={selectedYear}
+                    onYearChange={setSelectedYear}
+                  />
+                </Suspense>
+                <UpcomingAppointments />
+              </>
+            )}
+          </div>
+        )}
 
         <UpcomingInstallments />
 

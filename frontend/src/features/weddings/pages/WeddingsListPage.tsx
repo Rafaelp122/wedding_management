@@ -34,10 +34,6 @@ export default function WeddingsListPage() {
 
   const queryClient = useQueryClient();
 
-  if (isLoading) {
-    return <ListPageLoadingState />;
-  }
-
   if (error) {
     const { message } = getApiErrorInfo(
       error,
@@ -72,7 +68,9 @@ export default function WeddingsListPage() {
       />
 
       <div className="bg-card rounded-xl border shadow-soft overflow-hidden">
-        {filteredWeddings.length === 0 && totalCount === 0 ? (
+        {isLoading ? (
+          <ListPageLoadingState />
+        ) : filteredWeddings.length === 0 && totalCount === 0 ? (
           <EmptyWeddingsState
             onCreateClick={() => setCreateDialogOpen(true)}
           />
