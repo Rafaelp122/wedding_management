@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@/test-utils";
 import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
@@ -195,5 +196,119 @@ describe("WeddingDetailPage", () => {
     expect(
       screen.getByRole("tab", { name: /planejamento/i }),
     ).toBeInTheDocument();
+  });
+
+  it("does not render the template badge when template is null", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: {
+        data: {
+          ...mockWedding,
+          template: null,
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useWeddingsRead>);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.queryByText("Campestre")).not.toBeInTheDocument();
+    expect(screen.queryByText("Clássico")).not.toBeInTheDocument();
+    expect(screen.queryByText("Intimista")).not.toBeInTheDocument();
+  });
+
+  it("renders budget and checklist skeletons when dashboard is loading", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: { data: mockWedding },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useWeddingsRead>);
+
+    vi.mocked(useDashboardWedding).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+    } as unknown as ReturnType<typeof useDashboardWedding>);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.queryByText("R$ 145k")).not.toBeInTheDocument();
+    expect(screen.queryByText("68%")).not.toBeInTheDocument();
+  });
+
+  it("shows fallback error message on API error with no message", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: {} as any,
+    } as unknown as ReturnType<typeof useWeddingsRead>);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(
+      screen.getByText("Não foi possível carregar os dados do casamento."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows zero-state for expected guests when expected_guests is null/0", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: {
+        data: {
+          ...mockWedding,
+          expected_guests: null,
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useWeddingsRead>);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.getByText("— Convidados")).toBeInTheDocument();
+  });
+
+  it("calculates 0% checklist percentage when tasks_total is 0", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: { data: mockWedding },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useWeddingsRead>);
+
+    vi.mocked(useDashboardWedding).mockReturnValue({
+      data: {
+        data: {
+          tasks_completed: 0,
+          tasks_total: 0,
+          days_until_wedding: 30,
+          budget_percentage_used: 10,
+          contracts_signed: 1,
+          contracts_total: 2,
+          upcoming_installments: [],
+          urgent_tasks: [],
+          categories_summary: [],
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as unknown as ReturnType<typeof useDashboardWedding>);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.getByText("0%")).toBeInTheDocument();
   });
 });
