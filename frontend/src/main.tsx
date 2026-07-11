@@ -13,6 +13,7 @@ import { RouterProvider } from "react-router-dom"; // O substituto do BrowserRou
 import { toast } from "sonner";
 import { ThemeProvider } from "next-themes";
 
+import { useCoreHealthCheck } from "@/api/generated/v1/endpoints/default/default";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { router } from "./router"; // Importando sua nova configuração
 import { Toaster } from "@/components/ui/sonner";
@@ -52,12 +53,18 @@ const queryClient = new QueryClient({
   },
 });
 
+function WarmupTrigger() {
+  useCoreHealthCheck();
+  return null;
+}
+
 ReactDOM.createRoot(document.getElementById("root")!, {
   onUncaughtError: Sentry.reactErrorHandler(),
   onRecoverableError: Sentry.reactErrorHandler(),
 }).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
+      <WarmupTrigger />
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
           <RouterProvider router={router} />

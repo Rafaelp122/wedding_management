@@ -1,13 +1,9 @@
-import { useCoreHealthCheck } from "@/api/generated/v1/endpoints/default/default";
 import { AuthLayout } from "../components/AuthLayout";
 import { RegisterForm } from "../components/RegisterForm";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export default function RegisterPage() {
   useDocumentTitle("Criar Conta");
-
-  // Inicia o warmup em background para mitigar cold starts
-  useCoreHealthCheck();
 
   return (
     <AuthLayout
