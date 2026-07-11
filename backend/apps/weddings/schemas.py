@@ -48,6 +48,12 @@ class WeddingOut(Schema):
     incomplete_tasks: int = Field(0, ge=0)
 
 
+class WeddingLookupOut(Schema):
+    uuid: UUID4
+    groom_name: str
+    bride_name: str
+
+
 # ── Global Dashboard ──
 
 

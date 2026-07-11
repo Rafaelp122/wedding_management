@@ -75,6 +75,7 @@ export * from './weddingDashboardInstallmentOut';
 export * from './weddingDashboardOut';
 export * from './weddingDashboardTaskOut';
 export * from './weddingIn';
+export * from './weddingLookupOut';
 export * from './weddingOut';
 export * from './weddingPatchIn';
 export * from './weddingsByMonthParams';

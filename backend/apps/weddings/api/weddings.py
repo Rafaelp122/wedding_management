@@ -12,6 +12,7 @@ from apps.weddings.models import Wedding
 from apps.weddings.schemas import (
     WeddingByMonthOut,
     WeddingIn,
+    WeddingLookupOut,
     WeddingOut,
     WeddingPatchIn,
 )
@@ -19,6 +20,13 @@ from apps.weddings.services import WeddingService
 
 
 router = Router(tags=["Weddings"])
+
+
+@router.get("/lookup/", response=list[WeddingLookupOut], operation_id="weddings_lookup")
+def list_weddings_lookup(request: AuthRequest) -> QuerySet[Wedding]:
+    """Retorna lista simplificada de casamentos para comboboxes."""
+    user = require_user(request.user)
+    return WeddingService.list_lookup(company=user.company)
 
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")

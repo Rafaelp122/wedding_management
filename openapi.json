@@ -341,6 +341,38 @@
         }
       }
     },
+    "/api/v1/weddings/lookup/": {
+      "get": {
+        "operationId": "weddings_lookup",
+        "summary": "List Weddings Lookup",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WeddingLookupOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna lista simplificada de casamentos para comboboxes.",
+        "tags": [
+          "Weddings"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/weddings/": {
       "get": {
         "operationId": "weddings_list",
@@ -4769,6 +4801,30 @@
           "token"
         ],
         "title": "TokenVerifyInputSchema",
+        "type": "object"
+      },
+      "WeddingLookupOut": {
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "groom_name": {
+            "title": "Groom Name",
+            "type": "string"
+          },
+          "bride_name": {
+            "title": "Bride Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "groom_name",
+          "bride_name"
+        ],
+        "title": "WeddingLookupOut",
         "type": "object"
       },
       "Input": {

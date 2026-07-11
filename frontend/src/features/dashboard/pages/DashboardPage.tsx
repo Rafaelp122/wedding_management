@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
-import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingsList, useWeddingsLookup, useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { useDashboardSummary, useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { StatsCards } from "@/features/dashboard/components/StatsCards";
 import { WeddingStatsCards } from "@/features/dashboard/components/WeddingStatsCards";
@@ -45,17 +45,30 @@ export default function DashboardPage() {
   const [selectedWeddingUuid, setSelectedWeddingUuid] = useState<string>("all");
   const firstName = useAuthStore((state) => state.user?.first_name);
 
-  const { data, isLoading, error } = useWeddingsList({ limit: 200 });
+  // Hook enxuto para popular o combobox — apenas uuid, bride_name e groom_name
+  const { data: lookupData, isLoading, error } = useWeddingsLookup();
+
+  const isWeddingSelected = selectedWeddingUuid !== "all";
+
+  // Lista completa apenas para o componente de operações (aba de casamentos)
+  const { data: weddingsListData } = useWeddingsList(
+    { limit: 200 },
+    { query: { enabled: !isWeddingSelected } },
+  );
   const { data: summaryData } = useDashboardSummary({
     query: { enabled: selectedWeddingUuid === "all" },
   });
-
-  const isWeddingSelected = selectedWeddingUuid !== "all";
 
   const { data: weddingDashboardData, isLoading: isLoadingWeddingDashboard } =
     useDashboardWedding(selectedWeddingUuid, {
       query: { enabled: isWeddingSelected },
     });
+
+  // Dados completos do casamento selecionado (status, data, local) para o cabeçalho
+  const { data: selectedWeddingData } = useWeddingsRead(selectedWeddingUuid, {
+    query: { enabled: isWeddingSelected },
+  });
+
 
   if (error) {
     const { message } = getApiErrorInfo(
@@ -73,13 +86,15 @@ export default function DashboardPage() {
     );
   }
 
-  const weddingsArray = data?.data.items ?? [];
+  const weddingsArray = lookupData?.data ?? [];
+  const fullWeddingsArray = weddingsListData?.data?.items ?? [];
   const summary = summaryData?.data;
   const weddingDashboard = weddingDashboardData?.data;
 
-  const selectedWedding = weddingsArray.find(
-    (w) => w.uuid === selectedWeddingUuid,
-  );
+  const selectedWedding = isWeddingSelected
+    ? (weddingsArray.find((w) => w.uuid === selectedWeddingUuid) ?? null)
+    : null;
+  const selectedWeddingFull = selectedWeddingData?.data ?? null;
 
   const greetingHour = now.getHours();
   const greeting =
@@ -95,12 +110,12 @@ export default function DashboardPage() {
     year: "numeric",
   });
 
-  const weddingStatusInfo = selectedWedding
-    ? getWeddingStatusInfo(selectedWedding.status)
+  const weddingStatusInfo = selectedWeddingFull
+    ? getWeddingStatusInfo(selectedWeddingFull.status)
     : null;
 
-  const weddingDate = selectedWedding
-    ? new Date(selectedWedding.date).toLocaleDateString("pt-BR", {
+  const weddingDate = selectedWeddingFull
+    ? new Date(selectedWeddingFull.date).toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "long",
         year: "numeric",
@@ -163,7 +178,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Wedding Header — only in individual view */}
-        {isWeddingSelected && selectedWedding && (
+        {isWeddingSelected && selectedWeddingFull && (
           <div className="bg-gradient-to-r from-aura-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-aura-100 dark:border-zinc-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-soft animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-aura-100 dark:bg-aura-900/40 flex items-center justify-center text-aura-600 dark:text-aura-400 border border-aura-200 dark:border-aura-800/50 shrink-0">
@@ -172,7 +187,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
-                    {selectedWedding.bride_name} & {selectedWedding.groom_name}
+                    {selectedWeddingFull.bride_name} & {selectedWeddingFull.groom_name}
                   </h2>
                   {weddingStatusInfo && (
                     <Badge
@@ -190,7 +205,7 @@ export default function DashboardPage() {
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" />
-                    {selectedWedding.location}
+                    {selectedWeddingFull.location}
                   </span>
                 </div>
               </div>
@@ -202,7 +217,7 @@ export default function DashboardPage() {
                 size="sm"
                 className="border-aura-200 dark:border-aura-800/50 text-aura-700 dark:text-aura-400 hover:bg-aura-50 dark:hover:bg-aura-900/30 gap-1.5"
               >
-                <Link to={`/weddings/${selectedWedding.uuid}`}>
+                <Link to={`/weddings/${selectedWeddingFull.uuid}`}>
                   <ExternalLink className="w-3.5 h-3.5" />
                   Abrir casamento
                 </Link>
@@ -213,7 +228,7 @@ export default function DashboardPage() {
                 size="sm"
                 className="text-zinc-500 gap-1"
               >
-                <Link to={`/weddings/${selectedWedding.uuid}?tab=finances`}>
+                <Link to={`/weddings/${selectedWeddingFull.uuid}?tab=finances`}>
                   Finanças <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </Button>
@@ -285,7 +300,7 @@ export default function DashboardPage() {
         {/* Recent Weddings — only in global view */}
         {!isWeddingSelected && (
           <div className="grid gap-6">
-            <DashboardOperations weddings={weddingsArray} />
+            <DashboardOperations weddings={fullWeddingsArray} />
           </div>
         )}
       </div>

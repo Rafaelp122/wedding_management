@@ -28,6 +28,7 @@ import type {
   PagedWeddingOut,
   WeddingByMonthOut,
   WeddingIn,
+  WeddingLookupOut,
   WeddingOut,
   WeddingPatchIn,
   WeddingsByMonthParams,
@@ -56,6 +57,99 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+/**
+ * Retorna lista simplificada de casamentos para comboboxes.
+ * @summary List Weddings Lookup
+ */
+export const weddingsLookup = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingLookupOut[]>(
+      {url: `/api/v1/weddings/lookup/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsLookupQueryKey = () => {
+    return [
+    `/api/v1/weddings/lookup/`
+    ] as const;
+    }
+
+
+export const getWeddingsLookupQueryOptions = <TData = Awaited<ReturnType<typeof weddingsLookup>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsLookup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getWeddingsLookupQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof weddingsLookup>>> = ({ signal }) => weddingsLookup(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof weddingsLookup>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type WeddingsLookupQueryResult = NonNullable<Awaited<ReturnType<typeof weddingsLookup>>>
+export type WeddingsLookupQueryError = ErrorType<unknown>
+
+
+export function useWeddingsLookup<TData = Awaited<ReturnType<typeof weddingsLookup>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsLookup>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weddingsLookup>>,
+          TError,
+          Awaited<ReturnType<typeof weddingsLookup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWeddingsLookup<TData = Awaited<ReturnType<typeof weddingsLookup>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsLookup>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weddingsLookup>>,
+          TError,
+          Awaited<ReturnType<typeof weddingsLookup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWeddingsLookup<TData = Awaited<ReturnType<typeof weddingsLookup>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsLookup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Weddings Lookup
+ */
+
+export function useWeddingsLookup<TData = Awaited<ReturnType<typeof weddingsLookup>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsLookup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getWeddingsLookupQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
 
 /**
  * @summary List Weddings

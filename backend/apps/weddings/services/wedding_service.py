@@ -113,6 +113,27 @@ class WeddingService:
         return qs
 
     @staticmethod
+    def list_lookup(company: Company) -> QuerySet[Wedding]:
+        """
+        Retorna uma lista simplificada de casamentos associados à empresa.
+
+        Esta lista é otimizada para ser utilizada em componentes de busca rápida
+        ou caixas de seleção (comboboxes), selecionando apenas os campos necessários.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+
+        Returns:
+            QuerySet contendo os casamentos com campos restritos a uuid,
+            bride_name e groom_name, ordenados pelo nome da noiva.
+        """
+        return (
+            Wedding.objects.for_tenant(company)
+            .only("uuid", "bride_name", "groom_name")
+            .order_by("bride_name")
+        )
+
+    @staticmethod
     def count_by_month(company: Company, year: int) -> Sequence[dict]:
         """
         Agrupa e conta os casamentos por mês para um determinado ano.

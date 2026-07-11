@@ -15,6 +15,7 @@ vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal)
   return {
     ...actual,
     useWeddingsRead: vi.fn(),
+    useWeddingsLookup: vi.fn().mockReturnValue({ data: undefined, isLoading: false, error: null }),
   };
 });
 

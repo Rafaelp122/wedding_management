@@ -285,6 +285,32 @@ class TestWeddingService:
         with pytest.raises(ObjectNotFoundError):
             WeddingService.delete(company=user.company, instance=other_wedding)
 
+    def test_list_lookup_success(self, user):
+        """list_lookup() deve retornar apenas os casamentos da empresa
+        do usuário, ordenados pelo nome da noiva.
+        """
+        WeddingFactory(company=user.company, bride_name="Zulmira", groom_name="Beto")
+        WeddingFactory(company=user.company, bride_name="Ana", groom_name="Carlos")
+
+        result = WeddingService.list_lookup(company=user.company)
+
+        assert result.count() == 2
+        assert result[0].bride_name == "Ana"
+        assert result[1].bride_name == "Zulmira"
+
+    def test_list_lookup_multitenancy_isolation(self, user):
+        """list_lookup() deve isolar os casamentos por tenant."""
+        from apps.users.tests.factories import UserFactory
+
+        other_user = UserFactory()
+        WeddingFactory(company=user.company, bride_name="Noiva A")
+        WeddingFactory(company=other_user.company, bride_name="Noiva B")
+
+        result = WeddingService.list_lookup(company=user.company)
+
+        assert result.count() == 1
+        assert result[0].bride_name == "Noiva A"
+
 
 @pytest.mark.django_db
 class TestWeddingServiceListAnnotations:
