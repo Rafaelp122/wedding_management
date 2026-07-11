@@ -22,7 +22,12 @@ import "./index.css";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: (error) => {
+    onError: (error, query) => {
+      // Ignora silenciosamente erros causados pelo warmup do healthcheck
+      if (query.queryKey[0] === "/api/v1/health") {
+        return;
+      }
+
       const { status, message } = getApiErrorInfo(
         error,
         "Não foi possível carregar os dados solicitados.",

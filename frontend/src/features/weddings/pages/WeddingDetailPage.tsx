@@ -1,10 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
-import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingDetail } from "../hooks/useWeddingDetail";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
-import type { PagedWeddingOut } from "@/api/generated/v1/models/pagedWeddingOut";
-import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,34 +9,8 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 
 export default function WeddingDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
-  const queryClient = useQueryClient();
 
-  const { data: response, isLoading, error } = useWeddingsRead(uuid!, {
-    query: {
-      enabled: !!uuid,
-      placeholderData: () => {
-        const cachedQueries = queryClient.getQueriesData<AxiosResponse<PagedWeddingOut>>({
-          queryKey: ["/api/v1/weddings/"],
-        });
-
-        for (const [, queryData] of cachedQueries) {
-          const weddingItem = queryData?.data?.items?.find(
-            (item: WeddingOut) => item.uuid === uuid
-          );
-          if (weddingItem) {
-            return {
-              data: weddingItem,
-              status: 200,
-              statusText: "OK",
-              headers: {},
-              config: {} as InternalAxiosRequestConfig,
-            };
-          }
-        }
-        return undefined;
-      },
-    },
-  });
+  const { data: response, isLoading, error } = useWeddingDetail(uuid!);
 
   const wedding = response?.data;
 
