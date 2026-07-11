@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { ExpenseDetailSheet } from "./ExpenseDetailSheet";
@@ -20,6 +21,13 @@ vi.mock("./ExpenseRedistributeForm", () => ({
   ),
 }));
 
+import {
+  useFinancesExpensesRead,
+  useFinancesInstallmentsList,
+  useFinancesInstallmentsMarkAsPaid,
+  useFinancesInstallmentsUnmarkAsPaid,
+} from "@/api/generated/v1/endpoints/finances/finances";
+
 // ---------------------------------------------------------------------------
 // Hoisted mocks for the Orval-generated hooks – we make them functions so
 // each test can control exactly what each hook returns.
@@ -27,27 +35,14 @@ vi.mock("./ExpenseRedistributeForm", () => ({
 const mockExpensesRead = vi.hoisted(() => vi.fn());
 const mockInstallmentsList = vi.hoisted(() => vi.fn());
 
-vi.mock(
-  "@/api/generated/v1/endpoints/finances/finances",
-  async (importOriginal) => {
-    const actual =
-      await importOriginal<
-        typeof import("@/api/generated/v1/endpoints/finances/finances")
-      >();
-    return {
-      ...actual,
-      useFinancesExpensesRead: (uuid: string) => mockExpensesRead(uuid),
-      useFinancesInstallmentsList: (params: unknown) =>
-        mockInstallmentsList(params),
-      useFinancesInstallmentsMarkAsPaid: () => ({ mutateAsync: vi.fn() }),
-      useFinancesInstallmentsUnmarkAsPaid: () => ({ mutateAsync: vi.fn() }),
-    };
-  },
-);
-
 describe("ExpenseDetailSheet", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    vi.mocked(useFinancesExpensesRead).mockImplementation((uuid) => mockExpensesRead(uuid));
+    vi.mocked(useFinancesInstallmentsList).mockImplementation((params) => mockInstallmentsList(params));
+    vi.mocked(useFinancesInstallmentsMarkAsPaid).mockReturnValue({ mutateAsync: vi.fn() } as any);
+    vi.mocked(useFinancesInstallmentsUnmarkAsPaid).mockReturnValue({ mutateAsync: vi.fn() } as any);
 
     // Default mocks: expense with all standard fields, empty installments
     mockExpensesRead.mockReturnValue({

@@ -215,6 +215,7 @@ vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal)
     useFinancesExpensesUpdate: vi.fn(mod.useFinancesExpensesUpdate),
     useFinancesExpensesDelete: vi.fn(mod.useFinancesExpensesDelete),
     useFinancesExpensesFromDocument: vi.fn(mod.useFinancesExpensesFromDocument),
+    useFinancesExpensesRead: vi.fn(mod.useFinancesExpensesRead),
     useFinancesInstallmentsList: vi.fn(mod.useFinancesInstallmentsList),
     useFinancesInstallmentsMarkAsPaid: vi.fn(mod.useFinancesInstallmentsMarkAsPaid),
     useFinancesInstallmentsUnmarkAsPaid: vi.fn(mod.useFinancesInstallmentsUnmarkAsPaid),

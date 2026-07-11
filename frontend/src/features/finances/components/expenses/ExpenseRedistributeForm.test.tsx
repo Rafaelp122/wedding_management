@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 
@@ -18,23 +19,7 @@ const mockMutationState = vi.hoisted(() => ({
   isPending: false,
   mutateAsync: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
 }));
-
-vi.mock(
-  "@/api/generated/v1/endpoints/finances/finances",
-  async (importOriginal) => {
-    const actual =
-      await importOriginal<
-        typeof import("@/api/generated/v1/endpoints/finances/finances")
-      >();
-    return {
-      ...actual,
-      useFinancesExpensesUpdate: () => ({
-        mutateAsync: mockMutationState.mutateAsync,
-        isPending: mockMutationState.isPending,
-      }),
-    };
-  },
-);
+import { useFinancesExpensesUpdate } from "@/api/generated/v1/endpoints/finances/finances";
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -43,6 +28,10 @@ describe("ExpenseRedistributeForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockMutationState.isPending = false;
+    vi.mocked(useFinancesExpensesUpdate).mockImplementation(() => ({
+      mutateAsync: mockMutationState.mutateAsync,
+      isPending: mockMutationState.isPending,
+    } as any));
   });
 
   it("renders with initial values from props", () => {
