@@ -31,6 +31,7 @@ class WeddingPatchIn(Schema):
     location: str | None = None
     expected_guests: int | None = None
     status: WeddingStatusEnum | None = None
+    template: str | None = None
 
 
 class WeddingOut(Schema):

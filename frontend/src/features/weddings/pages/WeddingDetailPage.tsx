@@ -9,6 +9,7 @@ import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDia
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Pencil } from "lucide-react";
@@ -227,12 +228,7 @@ export default function WeddingDetailPage() {
               {isLoadingDashboard ? (
                 <Skeleton className="h-1.5 w-24 rounded-full" />
               ) : (
-                <div className="w-24 bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-primary h-1.5 rounded-full"
-                    style={{ width: `${checklistPercentage}%` }}
-                  />
-                </div>
+                <Progress value={checklistPercentage} className="h-1.5 w-24" />
               )}
             </div>
           </div>
