@@ -25,13 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WeddingFormFields } from "./WeddingFormFields";
-
-const TEMPLATE_OPTIONS = [
-  { value: "none", label: "Nenhum (Começar do zero)" },
-  { value: "religious_12m", label: "Casamento Clássico em Salão" },
-  { value: "beach_6m", label: "Casamento Campestre Premium" },
-  { value: "civil_buffet_3m", label: "Mini Wedding Intimista" },
-] as const;
+import { TEMPLATE_OPTIONS } from "../constants";
 
 type CreateWeddingFormData = z.input<typeof WeddingsCreateBody>;
 
@@ -62,14 +56,8 @@ export function CreateWeddingDialog({
   });
 
   const onSubmit = (data: CreateWeddingFormData) => {
-    const payload = {
-      ...data,
-      // Se o template for "none", não enviar (null)
-      template: data.template === "none" ? null : data.template,
-    };
-
     mutate(
-      { data: payload },
+      { data },
       createMutationCallbacks({
         successMsg: "Casamento criado com sucesso!",
         fallbackErrorMsg: "Erro ao criar casamento.",

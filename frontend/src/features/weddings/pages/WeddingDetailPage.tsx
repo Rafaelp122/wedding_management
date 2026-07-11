@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useWeddingDetail } from "../hooks/useWeddingDetail";
+import { TEMPLATE_MAP } from "../constants";
 import { getWeddingsReadQueryKey, getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { useDashboardWedding, getDashboardWeddingQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
@@ -54,13 +55,7 @@ export default function WeddingDetailPage() {
     return Math.round((overview.tasks_completed / overview.tasks_total) * 100);
   }, [overview]);
 
-  const templateMap: Record<string, string> = {
-    religious_12m: "Clássico",
-    beach_6m: "Campestre",
-    civil_buffet_3m: "Intimista",
-  };
-
-  const templateLabel = wedding?.template ? (templateMap[wedding.template] ?? wedding.template) : null;
+  const templateLabel = wedding?.template ? (TEMPLATE_MAP[wedding.template] ?? wedding.template) : null;
   const statusStyle = wedding ? getWeddingStatusBadgeStyle(wedding.status) : null;
   const statusLabel = wedding ? getWeddingStatusLabel(wedding.status) : "";
 

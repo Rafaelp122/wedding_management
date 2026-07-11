@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@/test-utils";
+import { render, screen, userEvent } from "@/test-utils";
 import { AppLayout } from "@/components/layouts/AppLayout";
 
 vi.mock("@/components/ui/sidebar", () => ({
@@ -23,16 +23,7 @@ vi.mock("../app-sidebar", () => ({
   AppSidebar: () => null,
 }));
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DropdownMenuTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
-    asChild ? <>{children}</> : <button>{children}</button>,
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuSeparator: () => <hr />,
-  DropdownMenuItem: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
-    asChild ? <>{children}</> : <div>{children}</div>,
-}));
+
 vi.mock("@/hooks/useDocumentTitle", () => ({
   useDocumentTitle: vi.fn(),
 }));
@@ -61,8 +52,11 @@ describe("AppLayout", () => {
     expect(screen.getByRole("button", { name: /notificações/i })).toBeInTheDocument();
   });
 
-  it("renders notification dropdown with empty state message", () => {
+  it("renders notification dropdown with empty state message", async () => {
+    const user = userEvent.setup();
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
+    const bellButton = screen.getByRole("button", { name: /notificações/i });
+    await user.click(bellButton);
     expect(screen.getByText("Notificações")).toBeInTheDocument();
     expect(
       screen.getByText("Você não tem novas notificações no momento."),
