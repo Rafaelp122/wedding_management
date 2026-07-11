@@ -46,6 +46,7 @@ class WeddingFactory(factory.django.DjangoModelFactory):
 
     # Status inicial padrão conforme o modelo
     status = Wedding.StatusChoices.IN_PROGRESS
+    template = None
 
 
 class CompletedWeddingFactory(WeddingFactory):
