@@ -15,7 +15,7 @@ React 19 + TypeScript + Vite 7 + Tailwind CSS 4 + shadcn/ui.
 src/features/<feature_name>/
 ├── components/     # Feature-specific components
 ├── hooks/          # Feature-specific hooks
-├── pages/          # Pages (lazy-loaded)
+├── pages/          # Pages (main pages static, secondary lazy)
 ├── types.ts        # Feature types
 └── utils.ts        # Utilities
 ```
@@ -26,7 +26,7 @@ src/features/<feature_name>/
 
 - Public routes (landing, login): `PublicLayout` + `PublicRoute` guard
 - Protected routes (dashboard, weddings, etc.): `/app` prefix, `AppLayout` inside `ProtectedRoute`
-- ALL routes are lazy-loaded with `React.lazy` + `Suspense`
+- Core workflow routes/tabs are statically imported. Only secondary/admin routes use `React.lazy` + `Suspense` (see ADR-022)
 
 ---
 
@@ -171,7 +171,8 @@ queryClient.invalidateQueries({ queryKey: ["weddings"] });
 | Editing `src/components/ui/button.tsx` | Compose with Tailwind in the parent component |
 | Form with `useState` per field | `react-hook-form` + `zod` |
 | Inline CSS (`style={{}}`) | Tailwind utility classes |
-| Component without lazy load in route | `React.lazy(() => import(...))` |
+| Component without static import in core route | Use standard sessional static `import` |
+| Component without lazy load in secondary route | `React.lazy(() => import(...))` |
 
 ---
 
