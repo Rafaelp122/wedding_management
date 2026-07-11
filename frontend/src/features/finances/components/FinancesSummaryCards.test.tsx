@@ -4,7 +4,7 @@ import { render, screen } from "@/test-utils";
 import { WeddingFinancesSummaryCards } from "@/features/finances/components/FinancesSummaryCards";
 import { useFinancesBudgetsList } from "@/api/generated/v1/endpoints/finances/finances";
 
-vi.mock("@/api/generated/v1/endpoints/finances/finances");
+
 
 describe("WeddingFinancesSummaryCards", () => {
   beforeEach(() => {
