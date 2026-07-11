@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useWeddingDetail } from "@/features/weddings/hooks/useWeddingDetail";
@@ -10,6 +10,10 @@ import type { PagedWeddingOut } from "@/api/generated/v1/models/pagedWeddingOut"
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 describe("useWeddingDetail", () => {
+  beforeEach(() => {
+    vi.mocked(useWeddingsRead).mockReset();
+  });
+
   it("uses cached weddings list data as placeholderData", async () => {
     const uuid = "test-wedding-uuid-123";
     const mockWedding = {
