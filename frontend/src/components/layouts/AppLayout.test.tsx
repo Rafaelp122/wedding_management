@@ -27,6 +27,7 @@ vi.mock("../app-sidebar", () => ({
 vi.mock("@/hooks/useDocumentTitle", () => ({
   useDocumentTitle: vi.fn(),
 }));
+
 import { useWeddingsRead, useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 
 describe("AppLayout", () => {

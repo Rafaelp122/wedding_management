@@ -8,6 +8,7 @@ import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings"
 import type { AxiosResponse } from "axios";
 import type { PagedWeddingOut } from "@/api/generated/v1/models/pagedWeddingOut";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+
 describe("useWeddingDetail", () => {
   beforeEach(() => {
     vi.mocked(useWeddingsRead).mockReset();
@@ -33,7 +34,7 @@ describe("useWeddingDetail", () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    // Mock do hook useWeddingsRead para simular o comportamento de placeholderData
+
     vi.mocked(useWeddingsRead).mockImplementation((_uuid, options) => {
       const placeholder = options?.query?.placeholderData;
       const data = typeof placeholder === "function" ? (placeholder as any)() : undefined;
@@ -44,7 +45,7 @@ describe("useWeddingDetail", () => {
       } as any;
     });
 
-    // Popula o cache da listagem de casamentos
+
     queryClient.setQueryData<AxiosResponse<PagedWeddingOut>>(
       ["/api/v1/weddings/"],
       {
@@ -59,10 +60,10 @@ describe("useWeddingDetail", () => {
       }
     );
 
-    // Executa o hook useWeddingDetail
+
     const { result } = renderHook(() => useWeddingDetail(uuid), { wrapper });
 
-    // O status do data deve ser imediatamente populado pelo cache
+
     expect(result.current.data?.data).toBeDefined();
     expect(result.current.data?.data.groom_name).toBe("Noivo Teste");
     expect(result.current.data?.data.bride_name).toBe("Noiva Teste");
@@ -90,10 +91,10 @@ describe("useWeddingDetail", () => {
       } as any;
     });
 
-    // Executa o hook sem nada no cache
+
     const { result } = renderHook(() => useWeddingDetail(uuid), { wrapper });
 
-    // O status do data deve ser undefined no placeholderData
+
     expect(result.current.data).toBeUndefined();
   });
 });

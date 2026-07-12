@@ -6,18 +6,9 @@ import { createMockWedding } from "@/test-data";
 import { useParams } from "react-router-dom";
 import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
 
-const mockWedding = createMockWedding({
-  bride_name: "Maria",
-  groom_name: "João",
-  date: "2026-09-20",
-  location: "Fazenda Vila Rica, SP",
-  expected_guests: 250,
-  total_budget: 145000,
-  template: "beach_6m",
-});
-
-// Mock useParams to control the uuid param independently of MemoryRouter
+// Mantido: mock de módulo NÃO-Orval (react-router-dom)
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<
     typeof import("react-router-dom")
@@ -28,6 +19,7 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
+// Mantido: mock de componente local NÃO-Orval
 vi.mock("@/features/weddings/components/EditWeddingDialog", () => ({
   EditWeddingDialog: ({ open, onSuccess, onOpenChange }: any) => {
     if (!open) return null;
@@ -40,23 +32,33 @@ vi.mock("@/features/weddings/components/EditWeddingDialog", () => ({
   }
 }));
 
+const mockWedding = createMockWedding({
+  bride_name: "Maria",
+  groom_name: "João",
+  date: "2026-09-20",
+  location: "Fazenda Vila Rica, SP",
+  expected_guests: 250,
+  total_budget: 145000,
+  template: "beach_6m",
+});
+
+const defaultDashboard: WeddingDashboardOut = {
+  tasks_completed: 68,
+  tasks_total: 100,
+  days_until_wedding: 30,
+  budget_percentage_used: 10,
+  contracts_signed: 1,
+  contracts_total: 2,
+  upcoming_installments: [],
+  urgent_tasks: [],
+  categories_summary: [],
+};
+
 describe("WeddingDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useDashboardWedding).mockReturnValue({
-      data: {
-        data: {
-          tasks_completed: 68,
-          tasks_total: 100,
-          days_until_wedding: 30,
-          budget_percentage_used: 10,
-          contracts_signed: 1,
-          contracts_total: 2,
-          upcoming_installments: [],
-          urgent_tasks: [],
-          categories_summary: [],
-        },
-      },
+      data: { data: defaultDashboard },
       isLoading: false,
       error: null,
     } as any);
@@ -68,7 +70,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, { initialEntries: ["/weddings"] });
 
@@ -84,7 +86,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, { initialEntries: ["/weddings"] });
 
@@ -99,7 +101,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: true,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -115,7 +117,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: false,
       error: new Error("Erro de rede"),
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -133,7 +135,7 @@ describe("WeddingDetailPage", () => {
       data: { data: undefined },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -155,25 +157,7 @@ describe("WeddingDetailPage", () => {
       data: { data: mockWedding },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
-
-    vi.mocked(useDashboardWedding).mockReturnValue({
-      data: {
-        data: {
-          tasks_completed: 68,
-          tasks_total: 100,
-          days_until_wedding: 30,
-          budget_percentage_used: 10,
-          contracts_signed: 1,
-          contracts_total: 2,
-          upcoming_installments: [],
-          urgent_tasks: [],
-          categories_summary: [],
-        },
-      },
-      isLoading: false,
-      error: null,
-    } as unknown as ReturnType<typeof useDashboardWedding>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -208,7 +192,7 @@ describe("WeddingDetailPage", () => {
       },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -225,13 +209,13 @@ describe("WeddingDetailPage", () => {
       data: { data: mockWedding },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     vi.mocked(useDashboardWedding).mockReturnValue({
       data: undefined,
       isLoading: true,
       error: null,
-    } as unknown as ReturnType<typeof useDashboardWedding>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -247,7 +231,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: false,
       error: {} as any,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -269,7 +253,7 @@ describe("WeddingDetailPage", () => {
       },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -284,7 +268,7 @@ describe("WeddingDetailPage", () => {
       data: { data: mockWedding },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     vi.mocked(useDashboardWedding).mockReturnValue({
       data: {
@@ -302,7 +286,7 @@ describe("WeddingDetailPage", () => {
       },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useDashboardWedding>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -322,7 +306,7 @@ describe("WeddingDetailPage", () => {
       },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -337,7 +321,7 @@ describe("WeddingDetailPage", () => {
       data: { data: mockWedding },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -367,7 +351,7 @@ describe("WeddingDetailPage", () => {
       },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     const { rerender } = render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -377,7 +361,7 @@ describe("WeddingDetailPage", () => {
     expect(screen.getByText("unknown_template")).toBeInTheDocument();
     expect(screen.getByText("✓")).toBeInTheDocument();
 
-    // Rerender with decimal budget
+
     vi.mocked(useWeddingsRead).mockReturnValue({
       data: {
         data: {
@@ -387,7 +371,7 @@ describe("WeddingDetailPage", () => {
       },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     rerender(<WeddingDetailPage />);
     expect(screen.getByText("R$ 145.5k")).toBeInTheDocument();

@@ -189,21 +189,45 @@ test("shows error on API failure", async () => {
 });
 ```
 
-### 5.2 `vi.mock` — Component Unit Tests
+### 5.2 MSW (Mock Service Worker) — Padrão Preferido
 
-For component unit tests, mock Orval hooks directly:
+O projeto usa MSW como padrão para mockar APIs em testes de unidade.  
+NUNCA use `vi.mock` com factory síncrona `() => ({})` em módulos Orval gerados — isso apaga o módulo inteiro e causa colisões com `isolate: false`.
 
-```tsx
-// ✅ CORRECT — mock Orval hooks, NEVER make real API calls
-vi.mock("@/api/generated/v1/endpoints/weddings");
-import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings";
-vi.mocked(useWeddingsList).mockReturnValue({
-  data: mockWeddings,
-  isLoading: false,
+```ts
+// ❌ PROIBIDO — factory síncrona apaga o módulo inteiro com isolate:false
+vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
+  useLogisticsItemsUpdate: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+// ✅ PREFERIDO — MSW, sem risco de colisão
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
+
+server.use(
+  http.patch("/api/v1/logistics/items/:uuid", async ({ request, params }) => {
+    const body = await request.json();
+    return HttpResponse.json(createMockItem({ uuid: params.uuid as string, ...body }));
+  })
+);
+```
+
+**Quando usar `vi.mock`** (única exceção): para simular `isLoading: true` em testes de loading state.  
+Nesse caso, SEMPRE use `importOriginal` para preservar as outras exports:
+
+```ts
+vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal) => {
+  const original = await importOriginal<typeof import("...")>();
+  return { ...original, useWeddingsRetrieve: () => ({ data: undefined, isLoading: true, isError: false }) };
 });
 ```
 
-**When to use `vi.mock`**: Component unit tests where you want precise control over hook return values without going through MSW.
+### 5.3 Regra de Ouro — vi.mock em Módulos Orval
+
+1. NUNCA use `vi.mock("@/api/generated/...", () => ({...}))` — factory síncrona.
+2. SEMPRE prefira MSW (`server.use(http.METHOD(url, handler))`).
+3. Se `vi.mock` for inevitável (ex: loading state), use `async (importOriginal) => ({ ...original, hookOverride: ... })`.
+4. Mocks globais ficam em `test-setup.ts`. Nunca per-file para deps compartilhadas.
 
 ### Summary: which to use?
 

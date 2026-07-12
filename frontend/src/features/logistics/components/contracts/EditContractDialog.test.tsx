@@ -1,43 +1,16 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { render, screen, userEvent, waitFor, server } from "@/test-utils";
+import { http, HttpResponse } from "msw";
 import { EditContractDialog } from "./EditContractDialog";
 import { createMockContract, createMockSupplier } from "@/test-data";
 import { toast } from "sonner";
 
-// Polyfills for Radix UI Select in jsdom (missing browser APIs)
 beforeAll(() => {
   Element.prototype.hasPointerCapture ??= () => false;
   Element.prototype.setPointerCapture ??= () => {};
   Element.prototype.releasePointerCapture ??= () => {};
   Element.prototype.scrollIntoView ??= () => {};
 });
-
-const mockMutate = vi.hoisted(
-  () => vi.fn((_variables, options) => options?.onSuccess?.(null)),
-);
-
-const mockSuppliersList = vi.hoisted(() => vi.fn());
-const mockContractsList = vi.hoisted(() => vi.fn());
-
-vi.mock(
-  "@/api/generated/v1/endpoints/logistics/logistics",
-  async () => ({
-    useLogisticsContractsUpdate: () => ({
-      mutate: mockMutate,
-      isPending: false,
-    }),
-    useLogisticsSuppliersList: () => mockSuppliersList(),
-    useLogisticsContractsList: () => mockContractsList(),
-  }),
-);
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-function mockQueryResponse(data: unknown) {
-  return { data, isLoading: false, isError: false, error: null };
-}
 
 const mockSupplier = createMockSupplier({
   uuid: "supplier-uuid-123",
@@ -58,27 +31,22 @@ function createMockContractWithName(overrides: Partial<Record<string, unknown>> 
   });
 }
 
-// ============================================================================
-// Tests
-// ============================================================================
-
 describe("EditContractDialog", () => {
   const onOpenChange = vi.fn();
   const onSuccess = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSuppliersList.mockReturnValue(
-      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
-    );
-    mockContractsList.mockReturnValue(
-      mockQueryResponse({ data: { items: [], count: 0 } }),
+    server.use(
+      http.get("*/api/v1/logistics/suppliers/", () =>
+        HttpResponse.json({ items: [mockSupplier], count: 1 }),
+      ),
+      http.get("*/api/v1/logistics/contracts/", () =>
+        HttpResponse.json({ items: [], count: 0 }),
+      ),
     );
   });
 
-  // -----------------------------------------------------------------------
-  // 1. Renders form with pre-filled data
-  // -----------------------------------------------------------------------
   it("renders form with pre-filled data", () => {
     const contract = createMockContractWithName();
 
@@ -92,29 +60,24 @@ describe("EditContractDialog", () => {
       />,
     );
 
-    // Dialog title and description
     expect(screen.getByText("Editar Contrato")).toBeInTheDocument();
     expect(
       screen.getByText("Altere os metadados do contrato de fornecedor."),
     ).toBeInTheDocument();
 
-    // Pre-filled name input
     expect(screen.getByLabelText("Nome do Contrato")).toHaveValue(
       "Buffet Casamento",
     );
 
-    // Pre-filled description
     expect(screen.getByLabelText("Descrição")).toHaveValue(
       "Buffet para 150 convidados",
     );
 
-    // Pre-filled total_amount (number input)
     const amountInput = screen.getByRole("spinbutton", {
       name: /valor total/i,
     });
     expect(amountInput).toHaveValue(5000);
 
-    // Selects rendered
     expect(
       screen.getByRole("combobox", { name: /fornecedor/i }),
     ).toBeInTheDocument();
@@ -122,19 +85,23 @@ describe("EditContractDialog", () => {
       screen.getByRole("combobox", { name: /status/i }),
     ).toBeInTheDocument();
 
-    // Submit button
     expect(
       screen.getByRole("button", { name: /salvar/i }),
     ).toBeInTheDocument();
   });
 
-  // -----------------------------------------------------------------------
-  // 2. Submits only changed fields
-  // -----------------------------------------------------------------------
   it("submits only changed fields", async () => {
     const user = userEvent.setup();
     const contract = createMockContractWithName();
 
+    let capturedBody: unknown;
+    server.use(
+      http.patch("*/api/v1/logistics/contracts/:uuid/", async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json(createMockContract({ uuid: "contract-1" }));
+      }),
+    );
+
     render(
       <EditContractDialog
         contract={contract}
@@ -145,29 +112,29 @@ describe("EditContractDialog", () => {
       />,
     );
 
-    // Change the name field
     const nameInput = screen.getByLabelText("Nome do Contrato");
     await user.clear(nameInput);
     await user.type(nameInput, "Buffet VIP Atualizado");
 
-    // Submit
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith(
-        { uuid: "contract-1", data: { name: "Buffet VIP Atualizado" } },
-        expect.any(Object),
-      );
+      expect(capturedBody).toMatchObject({ name: "Buffet VIP Atualizado" });
     });
   });
 
-  // -----------------------------------------------------------------------
-  // 3. Ignores submit when nothing changed
-  // -----------------------------------------------------------------------
   it("ignores submit when nothing changed", async () => {
     const user = userEvent.setup();
     const contract = createMockContractWithName();
 
+    const patchSpy = vi.fn();
+    server.use(
+      http.patch("*/api/v1/logistics/contracts/:uuid/", (info) => {
+        patchSpy(info);
+        return HttpResponse.json(createMockContract());
+      }),
+    );
+
     render(
       <EditContractDialog
         contract={contract}
@@ -178,23 +145,23 @@ describe("EditContractDialog", () => {
       />,
     );
 
-    // Click submit without making any changes
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
-    // mutate should NOT have been called
-    expect(mockMutate).not.toHaveBeenCalled();
-
-    // Dialog should have been closed via the empty-payload guard
+    expect(patchSpy).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  // -----------------------------------------------------------------------
-  // 4. Shows success toast on successful submit
-  // -----------------------------------------------------------------------
   it("shows success toast on successful submit", async () => {
     const user = userEvent.setup();
     const contract = createMockContractWithName();
 
+    server.use(
+      http.patch("*/api/v1/logistics/contracts/:uuid/", async ({ request }) => {
+        await request.json();
+        return HttpResponse.json(createMockContract({ uuid: "contract-1" }));
+      }),
+    );
+
     render(
       <EditContractDialog
         contract={contract}
@@ -205,12 +172,10 @@ describe("EditContractDialog", () => {
       />,
     );
 
-    // Change the name
     const nameInput = screen.getByLabelText("Nome do Contrato");
     await user.clear(nameInput);
     await user.type(nameInput, "Nome Alterado");
 
-    // Submit
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
@@ -219,7 +184,6 @@ describe("EditContractDialog", () => {
       );
     });
 
-    // onSuccess callback from props should have been called
     expect(onSuccess).toHaveBeenCalled();
   });
 });
