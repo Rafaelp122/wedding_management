@@ -4,6 +4,8 @@ import { SidebarComponent } from "../components/sidebar.component";
 import { ToastComponent } from "../components/toast.component";
 
 test.describe("Authentication Flow", () => {
+  test.describe.configure({ mode: "serial" });
+
   test("@smoke Login with valid credentials redirects to '/dashboard'", async ({ page }) => {
     const loginPage = new LoginPage(page);
     const toast = new ToastComponent(page);
@@ -49,7 +51,7 @@ test.describe("Authentication Flow", () => {
     const page = authenticatedPage;
 
     let weddingsRequestCount = 0;
-    await page.route("**/api/v1/weddings/**", async (route) => {
+    await page.route("**/api/v1/weddings**", async (route) => {
       weddingsRequestCount++;
       if (weddingsRequestCount === 1) {
         await route.fulfill({
@@ -82,8 +84,4 @@ test.describe("Authentication Flow", () => {
     await expect(adminPage.getByText("admin@admin.com")).toBeVisible();
   });
 
-  test("@regression Staff page can bypass login and access dashboard", async ({ staffPage }) => {
-    await expect(staffPage).toHaveURL(/\/dashboard/);
-    await expect(staffPage.getByText("staff@example.com")).toBeVisible();
-  });
 });

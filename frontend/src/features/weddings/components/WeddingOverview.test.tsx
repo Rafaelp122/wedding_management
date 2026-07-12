@@ -4,17 +4,6 @@ import { render, screen } from "@/test-utils";
 import { WeddingOverview } from "@/features/weddings/components/WeddingOverview";
 import { createMockWedding } from "@/test-data";
 import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
-
-// Mock global do dashboard usando importOriginal para evitar vazamento de
-// estado entre arquivos com isolate: false
-vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/dashboard/dashboard")>();
-  return {
-    ...mod,
-    useDashboardWedding: vi.fn(mod.useDashboardWedding),
-  };
-});
-
 import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 
 const emptyDashboard: WeddingDashboardOut = {

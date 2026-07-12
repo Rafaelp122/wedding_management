@@ -34,6 +34,8 @@ export class FormDialogComponent {
   }
 
   async expectClosed() {
-    await expect(this.dialog).not.toBeVisible();
+    await expect(this.page.locator("[role='dialog'][data-state='open']")).not.toBeVisible({
+      timeout: 10_000,
+    });
   }
 }

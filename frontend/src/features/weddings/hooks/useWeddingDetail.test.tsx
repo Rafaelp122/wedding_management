@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { renderHook } from "@/test-utils";
 import { useWeddingDetail } from "@/features/weddings/hooks/useWeddingDetail";
 import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
 import type { AxiosResponse } from "axios";
@@ -30,11 +29,6 @@ describe("useWeddingDetail", () => {
       },
     });
 
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-
-
     vi.mocked(useWeddingsRead).mockImplementation((_uuid, options) => {
       const placeholder = options?.query?.placeholderData;
       const data = typeof placeholder === "function" ? (placeholder as any)() : undefined;
@@ -61,7 +55,7 @@ describe("useWeddingDetail", () => {
     );
 
 
-    const { result } = renderHook(() => useWeddingDetail(uuid), { wrapper });
+    const { result } = renderHook(() => useWeddingDetail(uuid), { queryClient });
 
 
     expect(result.current.data?.data).toBeDefined();
@@ -77,10 +71,6 @@ describe("useWeddingDetail", () => {
       },
     });
 
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-
     vi.mocked(useWeddingsRead).mockImplementation((_uuid, options) => {
       const placeholder = options?.query?.placeholderData;
       const data = typeof placeholder === "function" ? (placeholder as any)() : undefined;
@@ -92,7 +82,7 @@ describe("useWeddingDetail", () => {
     });
 
 
-    const { result } = renderHook(() => useWeddingDetail(uuid), { wrapper });
+    const { result } = renderHook(() => useWeddingDetail(uuid), { queryClient });
 
 
     expect(result.current.data).toBeUndefined();
