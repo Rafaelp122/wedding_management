@@ -200,26 +200,35 @@ vi.mock("sonner", async (importOriginal) => {
 
 vi.mock("@sentry/react", () => globalAny.__SENTRY_MOCK__);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const registeredMockHooks: Array<{ mockFn: any; originalFn: any }> = [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function registerMockHook(originalFn: any) {
+  const mockFn = vi.fn(originalFn);
+  registeredMockHooks.push({ mockFn, originalFn });
+  return mockFn;
+}
+
 vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
   return {
     ...mod,
-    useFinancesBudgetsList: vi.fn(mod.useFinancesBudgetsList),
-    useFinancesBudgetsUpdate: vi.fn(mod.useFinancesBudgetsUpdate),
-    useFinancesCategoriesList: vi.fn(mod.useFinancesCategoriesList),
-    useFinancesCategoriesCreate: vi.fn(mod.useFinancesCategoriesCreate),
-    useFinancesCategoriesUpdate: vi.fn(mod.useFinancesCategoriesUpdate),
-    useFinancesCategoriesDelete: vi.fn(mod.useFinancesCategoriesDelete),
-    useFinancesExpensesList: vi.fn(mod.useFinancesExpensesList),
-    useFinancesExpensesCreate: vi.fn(mod.useFinancesExpensesCreate),
-    useFinancesExpensesUpdate: vi.fn(mod.useFinancesExpensesUpdate),
-    useFinancesExpensesDelete: vi.fn(mod.useFinancesExpensesDelete),
-    useFinancesExpensesFromDocument: vi.fn(mod.useFinancesExpensesFromDocument),
-    useFinancesExpensesRead: vi.fn(mod.useFinancesExpensesRead),
-    useFinancesInstallmentsList: vi.fn(mod.useFinancesInstallmentsList),
-    useFinancesInstallmentsMarkAsPaid: vi.fn(mod.useFinancesInstallmentsMarkAsPaid),
-    useFinancesInstallmentsUnmarkAsPaid: vi.fn(mod.useFinancesInstallmentsUnmarkAsPaid),
-    useFinancesInstallmentsAdjust: vi.fn(mod.useFinancesInstallmentsAdjust),
+    useFinancesBudgetsList: registerMockHook(mod.useFinancesBudgetsList),
+    useFinancesBudgetsUpdate: registerMockHook(mod.useFinancesBudgetsUpdate),
+    useFinancesCategoriesList: registerMockHook(mod.useFinancesCategoriesList),
+    useFinancesCategoriesCreate: registerMockHook(mod.useFinancesCategoriesCreate),
+    useFinancesCategoriesUpdate: registerMockHook(mod.useFinancesCategoriesUpdate),
+    useFinancesCategoriesDelete: registerMockHook(mod.useFinancesCategoriesDelete),
+    useFinancesExpensesList: registerMockHook(mod.useFinancesExpensesList),
+    useFinancesExpensesCreate: registerMockHook(mod.useFinancesExpensesCreate),
+    useFinancesExpensesUpdate: registerMockHook(mod.useFinancesExpensesUpdate),
+    useFinancesExpensesDelete: registerMockHook(mod.useFinancesExpensesDelete),
+    useFinancesExpensesFromDocument: registerMockHook(mod.useFinancesExpensesFromDocument),
+    useFinancesExpensesRead: registerMockHook(mod.useFinancesExpensesRead),
+    useFinancesInstallmentsList: registerMockHook(mod.useFinancesInstallmentsList),
+    useFinancesInstallmentsMarkAsPaid: registerMockHook(mod.useFinancesInstallmentsMarkAsPaid),
+    useFinancesInstallmentsUnmarkAsPaid: registerMockHook(mod.useFinancesInstallmentsUnmarkAsPaid),
+    useFinancesInstallmentsAdjust: registerMockHook(mod.useFinancesInstallmentsAdjust),
   };
 });
 
@@ -227,10 +236,10 @@ vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal)
   const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/weddings/weddings")>();
   return {
     ...mod,
-    useWeddingsRead: vi.fn(mod.useWeddingsRead),
-    useWeddingsLookup: vi.fn(mod.useWeddingsLookup),
-    useWeddingsList: vi.fn(mod.useWeddingsList),
-    useWeddingsCreate: vi.fn(mod.useWeddingsCreate),
+    useWeddingsRead: registerMockHook(mod.useWeddingsRead),
+    useWeddingsLookup: registerMockHook(mod.useWeddingsLookup),
+    useWeddingsList: registerMockHook(mod.useWeddingsList),
+    useWeddingsCreate: registerMockHook(mod.useWeddingsCreate),
   };
 });
 
@@ -238,8 +247,8 @@ vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", async (importOrigina
   const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/dashboard/dashboard")>();
   return {
     ...mod,
-    useDashboardSummary: vi.fn(mod.useDashboardSummary),
-    useDashboardWedding: vi.fn(mod.useDashboardWedding),
+    useDashboardSummary: registerMockHook(mod.useDashboardSummary),
+    useDashboardWedding: registerMockHook(mod.useDashboardWedding),
   };
 });
 
@@ -345,6 +354,9 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   vi.clearAllMocks();
+  registeredMockHooks.forEach(({ mockFn, originalFn }) => {
+    mockFn.mockImplementation(originalFn);
+  });
   setHasAnyTriggerBeenClicked(false);
   document.body.removeAttribute("data-scroll-locked");
   document.body.style.pointerEvents = "";
