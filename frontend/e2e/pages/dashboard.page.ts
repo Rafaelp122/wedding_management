@@ -51,23 +51,20 @@ export class DashboardPage {
   }
 
   async expectUpcomingInstallmentsVisible() {
-    const heading = this.page.getByRole("heading", { name: "Parcelas a Vencer" });
-    if ((await heading.count()) === 0) {
-      await expect(this.page.getByText("Parcelas a Vencer", { exact: false }).first()).toBeVisible();
-      return;
-    }
+    const card = this.page.locator(".border-orange-200").first();
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    const heading = card.getByRole("heading", { name: "Parcelas a Vencer" });
     await expect(heading).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "7d" })).toBeVisible();
+    await expect(card.getByRole("button", { name: "7d" })).toBeVisible();
   }
 
   async expectInstallmentItemVisible() {
-    if ((await this.page.getByRole("heading", { name: "Parcelas a Vencer" }).count()) === 0) {
-      return;
-    }
-    const badge = this.page.getByText(/pendente[s]?$/).first();
+    const card = this.page.locator(".border-orange-200").first();
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    const badge = card.getByText(/pendente[s]?$/).first();
     await expect(badge).toBeVisible();
-    if (await this.page.getByText(/Parcela #\d+/).count() > 0) {
-      await expect(this.page.getByText(/R\$/).first()).toBeVisible();
+    if (await card.getByText(/Parcela #\d+/).count() > 0) {
+      await expect(card.getByText(/R\$/).first()).toBeVisible();
     }
   }
 

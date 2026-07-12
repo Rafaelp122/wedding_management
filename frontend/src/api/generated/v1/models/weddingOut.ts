@@ -14,7 +14,7 @@ export interface WeddingOut {
   location: string;
   expected_guests: number | null;
   status: WeddingStatusEnum;
-  template?: string | null;
+  template: string | null;
   created_at: string;
   updated_at: string;
   total_budget?: number | null;

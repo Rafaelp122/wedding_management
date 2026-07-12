@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Pencil } from "lucide-react";
+import { AlertCircle, Calendar, MapPin, Pencil, Users } from "lucide-react";
 import { getWeddingStatusBadgeStyle, getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { cn } from "@/lib/utils";
 
@@ -189,15 +189,15 @@ export default function WeddingDetailPage() {
             {/* Row 2: Date, Address, and Guests consolidated */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
               <span className="flex items-center gap-1.5">
-                <span className="opacity-80">🗓️</span> {displayDate}
+                <Calendar className="h-3.5 w-3.5 opacity-80" /> {displayDate}
               </span>
               <span className="text-zinc-300 dark:text-zinc-800/40 hidden sm:inline">•</span>
               <span className="flex items-center gap-1.5">
-                <span className="opacity-80">📍</span> {wedding.location}
+                <MapPin className="h-3.5 w-3.5 opacity-80" /> {wedding.location}
               </span>
               <span className="text-zinc-300 dark:text-zinc-800/40 hidden sm:inline">•</span>
               <span className="flex items-center gap-1.5">
-                <span className="opacity-80">👥</span> {wedding.expected_guests ? `${wedding.expected_guests} Convidados` : "— Convidados"}
+                <Users className="h-3.5 w-3.5 opacity-80" /> {wedding.expected_guests ? `${wedding.expected_guests} Convidados` : "— Convidados"}
               </span>
             </div>
           </div>

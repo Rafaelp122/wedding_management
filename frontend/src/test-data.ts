@@ -23,6 +23,7 @@ export function createMockWedding(overrides?: Partial<WeddingOut>): WeddingOut {
     location: "São Paulo",
     expected_guests: 150,
     status: "IN_PROGRESS",
+    template: null,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
     ...overrides,

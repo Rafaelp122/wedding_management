@@ -31,7 +31,6 @@ class WeddingPatchIn(Schema):
     location: str | None = None
     expected_guests: int | None = None
     status: WeddingStatusEnum | None = None
-    template: str | None = None
 
 
 class WeddingOut(Schema):
@@ -42,7 +41,7 @@ class WeddingOut(Schema):
     location: str
     expected_guests: int | None
     status: WeddingStatusEnum
-    template: str | None = None
+    template: str | None
     created_at: datetime.datetime
     updated_at: datetime.datetime
     total_budget: float | None = Field(None, ge=0)

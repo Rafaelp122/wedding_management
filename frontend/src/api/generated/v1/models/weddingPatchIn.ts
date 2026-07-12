@@ -13,5 +13,4 @@ export interface WeddingPatchIn {
   location?: string | null;
   expected_guests?: number | null;
   status?: WeddingStatusEnum | null;
-  template?: string | null;
 }

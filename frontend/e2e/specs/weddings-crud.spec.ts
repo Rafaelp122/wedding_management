@@ -75,7 +75,7 @@ test.describe("Weddings CRUD", () => {
     await weddingsList.goto();
 
     // Create enough weddings to span at least 2 pages
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       const data = generateWeddingData();
       await weddingsList.createWedding(data, { focusRow: false });
     }
