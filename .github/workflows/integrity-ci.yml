@@ -27,12 +27,12 @@ jobs:
       landing: ${{ steps.filter.outputs.landing }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Path Filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -56,11 +56,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup PNPM
         if: needs.detect-changes.outputs.frontend == 'true'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
 
@@ -74,7 +74,7 @@ jobs:
 
       - name: Install UV
         if: needs.detect-changes.outputs.backend == 'true'
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
           enable-cache: true
@@ -93,7 +93,7 @@ jobs:
       - name: Cache Node Modules (Frontend)
         if: needs.detect-changes.outputs.frontend == 'true'
         id: cache-node-modules-frontend
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: frontend/node_modules
           key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -124,9 +124,9 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup Python & UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           python-version: "3.12"
@@ -141,7 +141,7 @@ jobs:
         run: cd backend && uv run pytest --cov=apps --cov-report=term --cov-report=xml -v
 
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: backend/coverage.xml
           flags: backend
@@ -158,9 +158,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
       - name: Setup Node
@@ -172,7 +172,7 @@ jobs:
 
       - name: Cache Node Modules
         id: cache-node-modules-frontend
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: frontend/node_modules
           key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -198,7 +198,7 @@ jobs:
           echo "All API mocks are properly centralized."
 
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: frontend/coverage/lcov.info
           flags: frontend
@@ -218,17 +218,17 @@ jobs:
       matrix:
         shard: [1, 2]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Python & UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           python-version: "3.12"
           cache-dependency-glob: "backend/uv.lock"
 
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
 
@@ -241,7 +241,7 @@ jobs:
 
       - name: Cache Node Modules
         id: cache-node-modules-frontend
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: frontend/node_modules
           key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -274,7 +274,7 @@ jobs:
 
       - name: Cache Playwright Browsers
         id: cache-playwright
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -301,7 +301,7 @@ jobs:
 
       - name: Upload Playwright Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-shard-${{ matrix.shard }}
           path: frontend/playwright-report/
@@ -317,9 +317,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
       - name: Setup Node
@@ -330,7 +330,7 @@ jobs:
           cache-dependency-path: landing/pnpm-lock.yaml
       - name: Cache Node Modules
         id: cache-node-modules-landing
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: landing/node_modules
           key: node-modules-landing-${{ hashFiles('landing/pnpm-lock.yaml') }}
@@ -362,15 +362,15 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings.test
       SECRET_KEY: django-ci-secret-key-not-for-production # pragma: allowlist secret
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup Tools (UV & Node)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
       - uses: actions/setup-node@v6
@@ -381,7 +381,7 @@ jobs:
 
       - name: Cache Node Modules (Frontend)
         id: cache-node-modules-frontend
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: frontend/node_modules
           key: node-modules-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -414,7 +414,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Test Docker Build (PR)
         if: github.event_name == 'pull_request'
@@ -422,20 +422,20 @@ jobs:
 
       - name: Google Auth
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: gen-lang-client-0194045282
 
       - name: Install UV
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
           enable-cache: true
@@ -484,10 +484,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
 
@@ -545,10 +545,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup PNPM
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9.15.0
 
@@ -611,7 +611,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 2
@@ -632,7 +632,7 @@ jobs:
 
       - name: Run OpenCode Reviewer
         if: steps.label-check.outputs.skip != 'true'
-        uses: anomalyco/opencode/github@v1.16.2
+        uses: anomalyco/opencode/github@v1.17.18
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
