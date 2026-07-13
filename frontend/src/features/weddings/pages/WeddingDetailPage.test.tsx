@@ -203,7 +203,7 @@ describe("WeddingDetailPage", () => {
     expect(screen.queryByText("Intimista")).not.toBeInTheDocument();
   });
 
-  it("renders budget and checklist skeletons when dashboard is loading", () => {
+  it("renders budget immediately and checklist skeleton when dashboard is loading", () => {
     vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
     vi.mocked(useWeddingsRead).mockReturnValue({
       data: { data: mockWedding },
@@ -221,7 +221,9 @@ describe("WeddingDetailPage", () => {
       initialEntries: ["/weddings/some-uuid"],
     });
 
-    expect(screen.queryByText("R$ 145k")).not.toBeInTheDocument();
+    // Budget is now shown immediately, not behind dashboard loading
+    expect(screen.getByText("R$ 145k")).toBeInTheDocument();
+    // Checklist still depends on dashboard
     expect(screen.queryByText("68%")).not.toBeInTheDocument();
   });
 

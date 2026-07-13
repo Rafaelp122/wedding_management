@@ -206,13 +206,9 @@ export default function WeddingDetailPage() {
           <div className="flex items-center gap-4 divide-x divide-zinc-200 dark:divide-zinc-800 shrink-0">
             <div className="text-left pl-0">
               <span className="block text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Orçado</span>
-              {isLoadingDashboard ? (
-                <Skeleton className="h-5 w-16 mt-0.5" />
-              ) : (
-                <span className="block font-mono text-base font-bold text-zinc-950 dark:text-white">
-                  {formatBudget(wedding.total_budget)}
-                </span>
-              )}
+              <span className="block font-mono text-base font-bold text-zinc-950 dark:text-white">
+                {formatBudget(wedding.total_budget)}
+              </span>
             </div>
             <div className="text-left pl-4 space-y-1">
               <div className="flex items-center justify-between gap-3">
