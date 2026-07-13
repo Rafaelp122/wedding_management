@@ -9,6 +9,8 @@ from apps.core.tenant import validate_tenant_ownership
 
 
 if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
     from apps.tenants.models import Company
 
 
@@ -26,6 +28,23 @@ def _get_not_found_detail(model_cls: type[models.Model], detail: str | None) -> 
     )
 
     return f"{model_name} não {suffix} ou acesso negado."
+
+
+def _build_tenant_queryset[ModelT: models.Model](
+    model_cls: type[ModelT],
+    company: "Company",
+    *,
+    select_related: list[str] | None = None,
+    prefetch_related: list[str] | None = None,
+) -> "QuerySet[ModelT]":
+    queryset = model_cls.objects.for_tenant(company)  # type: ignore[attr-defined]
+
+    if select_related:
+        queryset = queryset.select_related(*select_related)
+    if prefetch_related:
+        queryset = queryset.prefetch_related(*prefetch_related)
+
+    return cast("QuerySet[ModelT]", queryset)
 
 
 def get_object_or_404_for_tenant[ModelT: models.Model](
@@ -52,16 +71,14 @@ def get_object_or_404_for_tenant[ModelT: models.Model](
         code: Código de erro customizado.
     """
     try:
-        # Assumimos que o model_cls tem o TenantManager (objects)
-        # que implementa o método for_tenant.
-        queryset = model_cls.objects.for_tenant(company)  # type: ignore[attr-defined]
+        queryset = _build_tenant_queryset(
+            model_cls,
+            company,
+            select_related=select_related,
+            prefetch_related=prefetch_related,
+        )
 
-        if select_related:
-            queryset = queryset.select_related(*select_related)
-        if prefetch_related:
-            queryset = queryset.prefetch_related(*prefetch_related)
-
-        return cast(ModelT, queryset.get(uuid=uuid))
+        return queryset.get(uuid=uuid)
     except (ObjectDoesNotExist, ValueError, ValidationError) as e:
         raise ObjectNotFoundError(
             detail=_get_not_found_detail(model_cls, detail),
@@ -127,15 +144,15 @@ def resolve_tenant_resource[ModelT: models.Model](
         )
 
     try:
-        queryset = model_cls.objects.for_tenant(company)  # type: ignore[attr-defined]
+        queryset = _build_tenant_queryset(
+            model_cls,
+            company,
+            select_related=select_related,
+            prefetch_related=prefetch_related,
+        )
 
-        if select_related:
-            queryset = queryset.select_related(*select_related)
-        if prefetch_related:
-            queryset = queryset.prefetch_related(*prefetch_related)
-
-        return cast(ModelT, queryset.get(**{lookup_field: resource_input}))
-    except (ObjectDoesNotExist, ValueError, ValidationError, TypeError) as e:
+        return queryset.get(**{lookup_field: resource_input})
+    except (ObjectDoesNotExist, ValueError, ValidationError) as e:
         raise ObjectNotFoundError(
             detail=_get_not_found_detail(model_cls, detail),
             code=code,
