@@ -1,41 +1,16 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { render, screen, userEvent, waitFor, server } from "@/test-utils";
+import { http, HttpResponse } from "msw";
 import { EditItemDialog } from "./EditItemDialog";
 import { createMockItem } from "@/test-data";
 import { toast } from "sonner";
 
-// Polyfills for Radix UI Select in jsdom (missing browser APIs)
 beforeAll(() => {
   Element.prototype.hasPointerCapture ??= () => false;
   Element.prototype.setPointerCapture ??= () => {};
   Element.prototype.releasePointerCapture ??= () => {};
   Element.prototype.scrollIntoView ??= () => {};
 });
-
-const mockMutate = vi.hoisted(
-  () => vi.fn((_variables, options) => options?.onSuccess?.(null)),
-);
-
-const mockContractsList = vi.hoisted(() => vi.fn());
-
-vi.mock(
-  "@/api/generated/v1/endpoints/logistics/logistics",
-  async () => ({
-    useLogisticsItemsUpdate: () => ({
-      mutate: mockMutate,
-      isPending: false,
-    }),
-    useLogisticsContractsList: () => mockContractsList(),
-  }),
-);
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-function mockQueryResponse(data: unknown) {
-  return { data, isLoading: false, isError: false, error: null };
-}
 
 const weddingUuid = "test-wedding-uuid";
 
@@ -52,24 +27,19 @@ function createMockItemWithDefaults(
   });
 }
 
-// ============================================================================
-// Tests
-// ============================================================================
-
 describe("EditItemDialog", () => {
   const onOpenChange = vi.fn();
   const onSuccess = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockContractsList.mockReturnValue(
-      mockQueryResponse({ data: { items: [], count: 0 } }),
+    server.use(
+      http.get("*/api/v1/logistics/contracts/", () =>
+        HttpResponse.json({ items: [], count: 0 }),
+      ),
     );
   });
 
-  // -----------------------------------------------------------------------
-  // 1. Renders form with pre-filled data
-  // -----------------------------------------------------------------------
   it("renders form with pre-filled data", () => {
     const item = createMockItemWithDefaults();
 
@@ -83,27 +53,22 @@ describe("EditItemDialog", () => {
       />,
     );
 
-    // Dialog title and description
     expect(screen.getByText("Editar Item")).toBeInTheDocument();
     expect(
       screen.getByText("Altere as informações do item logístico."),
     ).toBeInTheDocument();
 
-    // Pre-filled name input
     expect(screen.getByLabelText("Nome")).toHaveValue("Cadeiras Tiffany");
 
-    // Pre-filled description
     expect(screen.getByLabelText("Descrição")).toHaveValue(
       "Cadeiras decorativas para cerimônia",
     );
 
-    // Pre-filled quantity (number input)
     const quantityInput = screen.getByRole("spinbutton", {
       name: /quantidade/i,
     });
     expect(quantityInput).toHaveValue(150);
 
-    // Selects rendered
     expect(
       screen.getByRole("combobox", { name: /status/i }),
     ).toBeInTheDocument();
@@ -111,19 +76,23 @@ describe("EditItemDialog", () => {
       screen.getByRole("combobox", { name: /contrato/i }),
     ).toBeInTheDocument();
 
-    // Submit button
     expect(
       screen.getByRole("button", { name: /salvar/i }),
     ).toBeInTheDocument();
   });
 
-  // -----------------------------------------------------------------------
-  // 2. Submits only changed fields
-  // -----------------------------------------------------------------------
   it("submits only changed fields", async () => {
     const user = userEvent.setup();
     const item = createMockItemWithDefaults();
 
+    let capturedBody: unknown;
+    server.use(
+      http.patch("*/api/v1/logistics/items/:uuid/", async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json(createMockItem({ uuid: "item-1" }));
+      }),
+    );
+
     render(
       <EditItemDialog
         item={item}
@@ -134,29 +103,29 @@ describe("EditItemDialog", () => {
       />,
     );
 
-    // Change the name field
     const nameInput = screen.getByLabelText("Nome");
     await user.clear(nameInput);
     await user.type(nameInput, "Cadeiras Tiffany Plus");
 
-    // Submit
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith(
-        { uuid: "item-1", data: { name: "Cadeiras Tiffany Plus" } },
-        expect.any(Object),
-      );
+      expect(capturedBody).toMatchObject({ name: "Cadeiras Tiffany Plus" });
     });
   });
 
-  // -----------------------------------------------------------------------
-  // 3. Ignores submit when nothing changed
-  // -----------------------------------------------------------------------
   it("ignores submit when nothing changed", async () => {
     const user = userEvent.setup();
     const item = createMockItemWithDefaults();
 
+    const patchSpy = vi.fn();
+    server.use(
+      http.patch("*/api/v1/logistics/items/:uuid/", (info) => {
+        patchSpy(info);
+        return HttpResponse.json(createMockItem());
+      }),
+    );
+
     render(
       <EditItemDialog
         item={item}
@@ -167,23 +136,23 @@ describe("EditItemDialog", () => {
       />,
     );
 
-    // Click submit without making any changes
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
-    // mutate should NOT have been called
-    expect(mockMutate).not.toHaveBeenCalled();
-
-    // Dialog should have been closed via the empty-payload guard
+    expect(patchSpy).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  // -----------------------------------------------------------------------
-  // 4. Shows success toast on successful submit
-  // -----------------------------------------------------------------------
   it("shows success toast on successful submit", async () => {
     const user = userEvent.setup();
     const item = createMockItemWithDefaults();
 
+    server.use(
+      http.patch("*/api/v1/logistics/items/:uuid/", async ({ request }) => {
+        await request.json();
+        return HttpResponse.json(createMockItem({ uuid: "item-1" }));
+      }),
+    );
+
     render(
       <EditItemDialog
         item={item}
@@ -194,12 +163,10 @@ describe("EditItemDialog", () => {
       />,
     );
 
-    // Change the name
     const nameInput = screen.getByLabelText("Nome");
     await user.clear(nameInput);
     await user.type(nameInput, "Cadeiras Reformuladas");
 
-    // Submit
     await user.click(screen.getByRole("button", { name: /salvar/i }));
 
     await waitFor(() => {
@@ -208,7 +175,6 @@ describe("EditItemDialog", () => {
       );
     });
 
-    // onSuccess callback from props should have been called
     expect(onSuccess).toHaveBeenCalled();
   });
 });

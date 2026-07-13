@@ -4,11 +4,6 @@ import { render, screen } from "@/test-utils";
 import { WeddingOverview } from "@/features/weddings/components/WeddingOverview";
 import { createMockWedding } from "@/test-data";
 import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
-
-vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", () => ({
-  useDashboardWedding: vi.fn(),
-}));
-
 import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 
 const emptyDashboard: WeddingDashboardOut = {
@@ -47,10 +42,10 @@ describe("WeddingOverview", () => {
   it("renders formatted date and location", () => {
     render(<WeddingOverview wedding={mockWedding} />);
 
-    // The date is formatted with Intl.DateTimeFormat("pt-BR")
-    // "2025-06-15" with month:"long" should produce "15 de junho de 2025"
+
+
     expect(screen.getByText(/15\s+de\s+junho/i)).toBeInTheDocument();
-    // Location should appear in the same paragraph
+
     expect(screen.getByText(/São Paulo/)).toBeInTheDocument();
   });
 
@@ -90,19 +85,19 @@ describe("WeddingOverview", () => {
 
     render(<WeddingOverview wedding={mockWedding} />);
 
-    // Countdown card
+
     expect(screen.getByText("Contagem Regressiva")).toBeInTheDocument();
     expect(screen.getByText("45")).toBeInTheDocument();
 
-    // Financial health card
+
     expect(screen.getByText("Saúde Financeira")).toBeInTheDocument();
     expect(screen.getByText("62%")).toBeInTheDocument();
 
-    // Tasks card
+
     expect(screen.getByText("Tarefas Concluídas")).toBeInTheDocument();
     expect(screen.getByText("7/20")).toBeInTheDocument();
 
-    // Contracts card
+
     expect(screen.getByText("Contratos")).toBeInTheDocument();
     expect(screen.getByText("3/8")).toBeInTheDocument();
   });
@@ -115,10 +110,10 @@ describe("WeddingOverview", () => {
 
     render(<WeddingOverview wedding={mockWedding} />);
 
-    // Should show dash/zero fallbacks
+
     expect(screen.getByText("—")).toBeInTheDocument();
     expect(screen.getByText("0%")).toBeInTheDocument();
-    // Both tasks and contracts show "0/0" when no data
+
     const zeroOverZero = screen.getAllByText("0/0");
     expect(zeroOverZero).toHaveLength(2);
   });
@@ -150,7 +145,7 @@ describe("WeddingOverview", () => {
 
     expect(screen.getByText("Fechar buffet")).toBeInTheDocument();
     expect(screen.getByText("Confirmar igreja")).toBeInTheDocument();
-    // Empty state text should NOT be present
+
     expect(
       screen.queryByText("Tudo em dia por aqui!"),
     ).not.toBeInTheDocument();
@@ -188,12 +183,12 @@ describe("WeddingOverview", () => {
 
     expect(screen.getByText("Parcela #3")).toBeInTheDocument();
     expect(screen.getByText("Parcela #1")).toBeInTheDocument();
-    // Empty state text should NOT be present
+
     expect(
       screen.queryByText("Nenhum pagamento próximo."),
     ).not.toBeInTheDocument();
 
-    // Should show overdue status
+
     expect(screen.getByText("Atrasado")).toBeInTheDocument();
     expect(screen.getByText("Pendente")).toBeInTheDocument();
   });

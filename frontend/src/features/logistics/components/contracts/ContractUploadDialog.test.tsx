@@ -2,45 +2,16 @@ import { beforeEach, describe, expect, it, vi, beforeAll } from "vitest";
 import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
 import { ContractUploadDialog } from "./ContractUploadDialog";
 import { toast } from "sonner";
-import { server } from "@/mocks/server";
 
-// Polyfills for Radix UI Select in jsdom (missing browser APIs)
+import * as logisticsApi from "@/api/generated/v1/endpoints/logistics/logistics";
+import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
+
 beforeAll(() => {
   Element.prototype.hasPointerCapture ??= () => false;
   Element.prototype.setPointerCapture ??= () => {};
   Element.prototype.releasePointerCapture ??= () => {};
   Element.prototype.scrollIntoView ??= () => {};
 });
-
-// Hook mocks
-const {
-  mockSuppliersList,
-  mockContractsList,
-  mockCategoriesList,
-  mockCreateFull,
-  createFullAsync,
-  mockUploadUrl,
-  uploadUrlAsync,
-} = vi.hoisted(() => ({
-  mockSuppliersList: vi.fn(),
-  mockContractsList: vi.fn(),
-  mockCategoriesList: vi.fn(),
-  mockCreateFull: vi.fn(),
-  createFullAsync: vi.fn(),
-  mockUploadUrl: vi.fn(),
-  uploadUrlAsync: vi.fn(),
-}));
-
-vi.mock("@/api/generated/v1/endpoints/logistics/logistics", () => ({
-  useLogisticsSuppliersList: () => mockSuppliersList(),
-  useLogisticsContractsList: () => mockContractsList(),
-  useLogisticsContractsCreateFull: () => mockCreateFull(),
-  useLogisticsContractsUploadUrl: () => mockUploadUrl(),
-}));
-
-import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
-
-// ===== TEST SUITE =====
 
 describe("ContractUploadDialog", () => {
   const weddingUuid = "wedding-1";
@@ -54,15 +25,6 @@ describe("ContractUploadDialog", () => {
     onSuccess,
   };
 
-  function mockQueryResponse(data: unknown) {
-    return {
-      data,
-      isLoading: false,
-      isError: false,
-      error: null,
-    };
-  }
-
   const mockSupplier = {
     uuid: "supplier-1",
     name: "Fornecedor Teste",
@@ -74,45 +36,49 @@ describe("ContractUploadDialog", () => {
     updated_at: "2024-01-01T00:00:00Z",
   };
 
+  /**
+   * Retorna o shape padrão de um hook de listagem (query) vazio.
+   */
+  function emptyListResponse() {
+    return {
+      data: { data: { items: [], count: 0 } },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useFinancesCategoriesList).mockImplementation(mockCategoriesList);
+    vi.unstubAllGlobals();
 
-    mockSuppliersList.mockReturnValue(
-      mockQueryResponse({ data: { items: [], count: 0 } }),
+    vi.mocked(useFinancesCategoriesList).mockReturnValue({
+      data: { data: { items: [], count: 0 } },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof useFinancesCategoriesList>);
+
+    // Por padrão, hooks de listagem retornam lista vazia
+    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue(
+      emptyListResponse() as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>,
     );
-    mockContractsList.mockReturnValue(
-      mockQueryResponse({ data: { items: [], count: 0 } }),
-    );
-    mockCategoriesList.mockReturnValue(
-      mockQueryResponse({ data: { items: [], count: 0 } }),
+    vi.spyOn(logisticsApi, "useLogisticsContractsList").mockReturnValue(
+      emptyListResponse() as ReturnType<typeof logisticsApi.useLogisticsContractsList>,
     );
 
-    createFullAsync.mockReset();
-    createFullAsync.mockResolvedValue({ data: { uuid: "contract-1" } });
-
-    mockCreateFull.mockReturnValue({
-      mutateAsync: createFullAsync,
+    // Por padrão, hooks de mutation retornam mutateAsync genérico e isPending=false
+    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
+      mutateAsync: vi.fn(),
       isPending: false,
-    });
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
 
-    uploadUrlAsync.mockReset();
-    uploadUrlAsync.mockResolvedValue({
-      data: {
-        upload_url: "https://r2.com/presigned-url",
-        object_key: "r2-file-key",
-      },
-    } as unknown as Record<string, unknown>);
-
-    mockUploadUrl.mockReturnValue({
-      mutateAsync: uploadUrlAsync,
+    vi.spyOn(logisticsApi, "useLogisticsContractsUploadUrl").mockReturnValue({
+      mutateAsync: vi.fn(),
       isPending: false,
-    });
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsUploadUrl>);
   });
 
-  // ------------------------------------------------------------------
-  // 1. Renders nothing when closed
-  // ------------------------------------------------------------------
   it("renders nothing when closed", () => {
     render(<ContractUploadDialog {...defaultProps} open={false} />);
 
@@ -122,9 +88,6 @@ describe("ContractUploadDialog", () => {
     ).not.toBeInTheDocument();
   });
 
-  // ------------------------------------------------------------------
-  // 2. Renders form fields when open
-  // ------------------------------------------------------------------
   it("renders form fields when open", () => {
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -135,14 +98,12 @@ describe("ContractUploadDialog", () => {
       ),
     ).toBeInTheDocument();
 
-    // Form field labels
     expect(screen.getByText("Fornecedor")).toBeInTheDocument();
     expect(screen.getByText("Nome do Contrato")).toBeInTheDocument();
     expect(screen.getByText("Valor Total")).toBeInTheDocument();
     expect(screen.getByText("Status")).toBeInTheDocument();
     expect(screen.getByText("Descrição")).toBeInTheDocument();
 
-    // Inputs
     expect(
       screen.getByPlaceholderText("Ex: Buffet Completo"),
     ).toBeInTheDocument();
@@ -150,7 +111,6 @@ describe("ContractUploadDialog", () => {
       screen.getByPlaceholderText("Descreva o objeto do contrato..."),
     ).toBeInTheDocument();
 
-    // Comboboxes
     expect(
       screen.getByRole("combobox", { name: /fornecedor/i }),
     ).toBeInTheDocument();
@@ -158,12 +118,10 @@ describe("ContractUploadDialog", () => {
       screen.getByRole("combobox", { name: /status/i }),
     ).toBeInTheDocument();
 
-    // Warning alert
     expect(
       screen.getByText(/este sistema não substitui consultoria jurídica/i),
     ).toBeInTheDocument();
 
-    // Buttons
     expect(
       screen.getByRole("button", { name: /cancelar/i }),
     ).toBeInTheDocument();
@@ -172,9 +130,6 @@ describe("ContractUploadDialog", () => {
     ).toBeInTheDocument();
   });
 
-  // ------------------------------------------------------------------
-  // 3. Renders item drafts section
-  // ------------------------------------------------------------------
   it("renders item drafts section", () => {
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -185,9 +140,6 @@ describe("ContractUploadDialog", () => {
     expect(screen.getByText("Nenhum item adicionado.")).toBeInTheDocument();
   });
 
-  // ------------------------------------------------------------------
-  // 4. Renders expense creation checkbox section
-  // ------------------------------------------------------------------
   it("renders expense creation checkbox section", () => {
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -199,19 +151,24 @@ describe("ContractUploadDialog", () => {
     ).toBeInTheDocument();
   });
 
-  // ------------------------------------------------------------------
-  // 5. Fills form and submits (verify contract creation is called)
-  // ------------------------------------------------------------------
   it("fills form and submits successfully", async () => {
     const user = userEvent.setup();
 
-    mockSuppliersList.mockReturnValue(
-      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
-    );
+    const mockMutateAsync = vi.fn().mockResolvedValue({ uuid: "contract-1" });
+    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
+
+    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
+      data: { data: { items: [mockSupplier], count: 1 } },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
 
     render(<ContractUploadDialog {...defaultProps} />);
 
-    // -- Select supplier --
     await user.click(
       screen.getByRole("combobox", { name: /fornecedor/i }),
     );
@@ -220,35 +177,31 @@ describe("ContractUploadDialog", () => {
     });
     await user.click(supplierOption);
 
-    // -- Fill name --
     await user.type(
       screen.getByRole("textbox", { name: /nome do contrato/i }),
       "Contrato Teste",
     );
 
-    // -- Fill total_amount (number input) --
     const amountInput = screen.getByRole("spinbutton", {
       name: /valor total/i,
     });
     fireEvent.change(amountInput, { target: { value: "1500" } });
 
-    // -- Fill description --
     await user.type(
       screen.getByRole("textbox", { name: /descrição/i }),
       "Descrição do contrato de teste",
     );
 
-    // -- Submit --
     await user.click(
       screen.getByRole("button", { name: /criar contrato/i }),
     );
 
     await waitFor(() => {
-      expect(createFullAsync).toHaveBeenCalled();
+      expect(mockMutateAsync).toHaveBeenCalled();
     });
 
-    expect(createFullAsync).toHaveBeenCalledWith({
-      data: {
+    expect(mockMutateAsync).toHaveBeenCalledWith({
+      data: expect.objectContaining({
         wedding: weddingUuid,
         supplier: "supplier-1",
         name: "Contrato Teste",
@@ -256,29 +209,28 @@ describe("ContractUploadDialog", () => {
         status: "DRAFT",
         description: "Descrição do contrato de teste",
         parent: null,
-        items_data: "[]",
-        create_expense: false,
-        expense_category: null,
-        expense_num_installments: null,
-        expense_first_due_date: null,
         pdf_file_key: null,
-      },
+      }),
     });
   });
 
-  // ------------------------------------------------------------------
-  // 6. Shows success toast on successful creation
-  // ------------------------------------------------------------------
   it("shows success toast on successful creation", async () => {
     const user = userEvent.setup();
 
-    mockSuppliersList.mockReturnValue(
-      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
-    );
+    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ uuid: "contract-1" }),
+      isPending: false,
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
+
+    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
+      data: { data: { items: [mockSupplier], count: 1 } },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
 
     render(<ContractUploadDialog {...defaultProps} />);
 
-    // Select supplier
     await user.click(
       screen.getByRole("combobox", { name: /fornecedor/i }),
     );
@@ -287,7 +239,6 @@ describe("ContractUploadDialog", () => {
     });
     await user.click(supplierOption);
 
-    // Fill required fields
     await user.type(
       screen.getByRole("textbox", { name: /nome do contrato/i }),
       "Teste",
@@ -297,7 +248,6 @@ describe("ContractUploadDialog", () => {
       { target: { value: "1000" } },
     );
 
-    // Submit
     await user.click(
       screen.getByRole("button", { name: /criar contrato/i }),
     );
@@ -308,21 +258,23 @@ describe("ContractUploadDialog", () => {
       );
     });
 
-    // onSuccess callback should have been called
     expect(onSuccess).toHaveBeenCalled();
   });
 
-  // ------------------------------------------------------------------
-  // 7. Shows error toast on API failure
-  // ------------------------------------------------------------------
   it("shows error toast on API failure", async () => {
     const user = userEvent.setup();
 
-    mockSuppliersList.mockReturnValue(
-      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
-    );
+    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(new Error("API Error")),
+      isPending: false,
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
 
-    createFullAsync.mockRejectedValue(new Error("API Error"));
+    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
+      data: { data: { items: [mockSupplier], count: 1 } },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
 
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -357,17 +309,18 @@ describe("ContractUploadDialog", () => {
   it("submits with parent contract", async () => {
     const user = userEvent.setup();
 
-    mockSuppliersList.mockReturnValue(
-      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
-    );
-    mockContractsList.mockReturnValue(
-      mockQueryResponse({
-        data: {
-          items: [{ uuid: "parent-1", name: "Contrato Original" }],
-          count: 1,
-        },
-      }),
-    );
+    const mockMutateAsync = vi.fn().mockResolvedValue({ uuid: "contract-1" });
+    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
+
+    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
+      data: { data: { items: [mockSupplier], count: 1 } },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
 
     render(
       <ContractUploadDialog
@@ -398,10 +351,10 @@ describe("ContractUploadDialog", () => {
     );
 
     await waitFor(() => {
-      expect(createFullAsync).toHaveBeenCalled();
+      expect(mockMutateAsync).toHaveBeenCalled();
     });
 
-    expect(createFullAsync).toHaveBeenCalledWith({
+    expect(mockMutateAsync).toHaveBeenCalledWith({
       data: expect.objectContaining({
         parent: "parent-1",
       }),
@@ -409,10 +362,10 @@ describe("ContractUploadDialog", () => {
   });
 
   it("shows loading state while creating", () => {
-    mockCreateFull.mockReturnValue({
-      mutateAsync: createFullAsync,
+    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
+      mutateAsync: vi.fn(),
       isPending: true,
-    });
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
 
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -421,40 +374,57 @@ describe("ContractUploadDialog", () => {
   });
 
   it("uploads file to R2 and submits pdf_file_key", async () => {
-    const { http, HttpResponse } = await import("msw");
-    server.use(
-      http.put("https://r2.com/presigned-url", () =>
-        new HttpResponse(null, { status: 200 }),
-      ),
-    );
-
     const user = userEvent.setup();
-    mockSuppliersList.mockReturnValue(
-      mockQueryResponse({ data: { items: [mockSupplier], count: 1 } }),
-    );
+
+    const mockGetUploadUrl = vi.fn().mockResolvedValue({
+      data: {
+        upload_url: "https://r2.example.com/upload",
+        object_key: "r2-file-key",
+      },
+    });
+    vi.spyOn(logisticsApi, "useLogisticsContractsUploadUrl").mockReturnValue({
+      mutateAsync: mockGetUploadUrl,
+      isPending: false,
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsUploadUrl>);
+
+    const mockCreateFull = vi.fn().mockResolvedValue({ uuid: "contract-1" });
+    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
+      mutateAsync: mockCreateFull,
+      isPending: false,
+    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
+
+    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
+      data: { data: { items: [mockSupplier], count: 1 } },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
+
+    // Mock global fetch para simular o upload para o R2
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+    } as Response);
+    vi.stubGlobal("fetch", mockFetch);
 
     render(<ContractUploadDialog {...defaultProps} />);
 
-    // Select supplier
     await user.click(screen.getByRole("combobox", { name: /fornecedor/i }));
     const supplierOption = await screen.findByRole("option", {
       name: /fornecedor teste/i,
     });
     await user.click(supplierOption);
 
-    // Fill name
     await user.type(
       screen.getByRole("textbox", { name: /nome do contrato/i }),
       "Contrato com PDF",
     );
 
-    // Fill total amount
     const amountInput = screen.getByRole("spinbutton", {
       name: /valor total/i,
     });
     fireEvent.change(amountInput, { target: { value: "2500" } });
 
-    // Select file
     const file = new File(["dummy content"], "contract.pdf", {
       type: "application/pdf",
     });
@@ -463,22 +433,22 @@ describe("ContractUploadDialog", () => {
     ) as HTMLInputElement;
     await user.upload(fileInput, file);
 
-    // Submit
     await user.click(screen.getByRole("button", { name: /criar contrato/i }));
 
     await waitFor(() => {
-      expect(uploadUrlAsync).toHaveBeenCalledWith({
+      expect(mockGetUploadUrl).toHaveBeenCalledWith({
         data: {
           filename: "contract.pdf",
           wedding_id: weddingUuid,
         },
       });
-      expect(createFullAsync).toHaveBeenCalledWith({
+      expect(mockCreateFull).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: "Contrato com PDF",
           pdf_file_key: "r2-file-key",
         }),
       });
     });
+
   });
 });

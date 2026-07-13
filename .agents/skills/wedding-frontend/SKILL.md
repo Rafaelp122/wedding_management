@@ -211,3 +211,64 @@ docker compose exec frontend npm test     # Via Docker
 - Prefer self-explanatory code over comments.
 - Keep comments only for: complex business rules, browser/DB workarounds, `TODO` notes.
 - Never: comments that repeat what the code obviously does.
+
+---
+
+## 12. Workflow: Adding a New Feature
+
+Use this step-by-step when creating a new feature (e.g. "guests list", "supplier form").
+
+### Step 1: Feature Scaffold
+```bash
+mkdir -p src/features/<name>/components
+mkdir -p src/features/<name>/hooks
+mkdir -p src/features/<name>/pages
+```
+
+### Step 2: Types
+Create `src/features/<name>/types.ts`:
+- Define domain types (infer from Orval Zod schemas where possible)
+- Import from `@/api/generated/v1/zod/` when available
+
+### Step 3: Orval Hooks (if new API endpoints exist)
+```bash
+make orval    # Regenerates hooks + Zod schemas + MSW mocks
+```
+
+### Step 4: Page Component
+Create `src/features/<name>/pages/<Name>Page.tsx`:
+- Lazy-loaded route component
+- Uses Orval hooks for data fetching
+- Handles loading, empty, error, and success states
+
+### Step 5: Route Registration
+Edit `src/router.tsx`:
+- Add `React.lazy(() => import('@/features/<name>/pages/<Name>Page'))`
+- Place inside correct layout (`PublicLayout` or `AppLayout`)
+
+### Step 6: Feature Components
+Create UI in `src/features/<name>/components/`:
+- Compose shadcn/ui primitives with Tailwind
+- Use `react-hook-form` + `zod` for forms
+- Use `lucide-react` for icons
+- Use `sonner` for toast notifications
+
+### Step 7: Custom Hooks (if needed)
+Create `src/features/<name>/hooks/use<Name>.ts`:
+- Extract complex state or data fetching logic
+- One hook = one concern
+
+### Step 8: Tests
+- **Unit**: `vi.mock` Orval hooks for component tests
+- **CRITICAL**: `vi.mock("@/api/generated/...")` is **FORBIDDEN** in test files.
+  All API mocks are centralized in `test-setup.ts` via `registerMockHook`.
+  Per-file `vi.mock` of Orval modules causes cross-test state corruption with `isolate: false`.
+- **Integration**: MSW for page/flow tests
+- **E2E**: Playwright for critical user journeys
+
+### Step 9: Verify
+```bash
+npm run lint       # TypeScript + lint
+npm test           # Unit + integration tests
+# If API changed: make orval
+```

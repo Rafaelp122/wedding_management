@@ -160,3 +160,36 @@ class TestWeddingBusinessRules:
             status=Wedding.StatusChoices.CANCELED,
         )
         wedding_canceled.clean()  # Deve passar
+
+
+@pytest.mark.django_db
+class TestWeddingTemplateField:
+    """
+    Testes de validação para o campo 'template' do modelo Wedding.
+    """
+
+    def test_template_null_passes(self, user):
+        """
+        Garante que o campo template pode ser nulo.
+        """
+        wedding = WeddingFactory.build(company=user.company, template=None)
+        wedding.full_clean()
+
+    def test_template_blank_passes(self, user):
+        """
+        Garante que o campo template pode ser em branco (vazio).
+        """
+        wedding = WeddingFactory.build(company=user.company, template="")
+        wedding.full_clean()
+
+    def test_template_max_length_exceeded_fails(self, user):
+        """
+        Garante que o campo template falha na validação se exceder 50 caracteres.
+        """
+        invalid_template = "x" * 51
+        wedding = WeddingFactory.build(company=user.company, template=invalid_template)
+
+        with pytest.raises(ValidationError) as excinfo:
+            wedding.full_clean()
+
+        assert "template" in excinfo.value.message_dict

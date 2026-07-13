@@ -12,6 +12,10 @@ export interface CreateWeddingData {
   expected_guests?: number;
 }
 
+interface CreateWeddingOptions {
+  focusRow?: boolean;
+}
+
 export function generateWeddingData(): CreateWeddingData {
   // Gera um ano futuro único e crescente baseado no timestamp atual (entre 2050 e 3050)
   const uniqueYear = 2050 + (Math.floor(Date.now() / 1000) % 1000);
@@ -40,7 +44,8 @@ export class WeddingsListPage {
     await this.page.waitForURL("**/weddings");
   }
 
-  async createWedding(data: CreateWeddingData) {
+  async createWedding(data: CreateWeddingData, options: CreateWeddingOptions = {}) {
+    const { focusRow = true } = options;
     await this.page.getByRole("button", { name: "Novo Casamento" }).click();
     await this.formDialog.expectVisible("Novo Casamento");
     await this.formDialog.fillField("Nome do Noivo", data.groom_name);
@@ -50,10 +55,20 @@ export class WeddingsListPage {
     await this.formDialog.fillField("Local", data.location);
     await this.formDialog.fillSelectField("Modelo de Cronograma", "Nenhum (Começar do zero)");
     await this.formDialog.submit();
+    await expect(this.page.getByText("Casamento criado com sucesso!").first()).toBeVisible();
     await this.formDialog.expectClosed();
+    if (focusRow) {
+      await this.searchWedding(`${data.groom_name} & ${data.bride_name}`);
+    }
+  }
+
+  async searchWedding(name: string) {
+    const searchTerm = name.split(" & ")[0];
+    await this.page.getByRole("textbox", { name: "Buscar por noivos ou local..." }).fill(searchTerm);
   }
 
   async editWedding(name: string, data: Partial<CreateWeddingData>) {
+    await this.searchWedding(name);
     const row = this.page.getByRole("row").filter({ hasText: name });
     await row.getByRole("button", { name: "Editar" }).click();
     await this.formDialog.expectVisible("Editar Casamento");
@@ -67,10 +82,12 @@ export class WeddingsListPage {
     }
 
     await this.formDialog.submit();
+    await expect(this.page.getByText("Casamento atualizado com sucesso!").first()).toBeVisible();
     await this.formDialog.expectClosed();
   }
 
   async deleteWedding(name: string) {
+    await this.searchWedding(name);
     const row = this.page.getByRole("row").filter({ hasText: name });
     await row.getByRole("button", { name: "Excluir" }).click();
     await this.confirmDelete.expectVisible();
@@ -78,6 +95,7 @@ export class WeddingsListPage {
   }
 
   async viewWedding(name: string) {
+    await this.searchWedding(name);
     await this.page.getByRole("row").filter({ hasText: name }).click();
   }
 
@@ -95,11 +113,13 @@ export class WeddingsListPage {
   }
 
   async expectRowVisible(name: string) {
+    await this.searchWedding(name);
     const row = this.page.getByRole("row").filter({ hasText: name });
     await expect(row).toBeVisible();
   }
 
   async expectRowNotVisible(name: string) {
+    await this.searchWedding(name);
     const row = this.page.getByRole("row").filter({ hasText: name });
     await expect(row).not.toBeVisible();
   }

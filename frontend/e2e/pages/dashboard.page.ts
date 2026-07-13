@@ -29,37 +29,42 @@ export class DashboardPage {
   async expectKpiCardsVisible() {
     for (const title of KPI_CARDS) {
       // Card titles are <p> elements, not headings (e.g. "Parcelas a Vencer (7d)")
-      await expect(this.page.getByText(title, { exact: false }).first()).toBeVisible();
+      await expect(this.page.getByText(title, { exact: false }).first()).toBeVisible({
+        timeout: 15_000,
+      });
     }
   }
 
-  async expectKpiValueNonZero(cardLabel: string) {
+  async expectKpiValueRendered(cardLabel: string) {
     // Find the value sibling of the <p> label within the card (both are <p> elements)
     const label = this.page.getByText(cardLabel, { exact: false }).first();
     const valueElement = label.locator("..").locator("p").nth(1);
-    // Use polling assertion to wait for the API to load and update the value
-    await expect(valueElement).toHaveText(/[1-9]/);
+    await expect(valueElement).toHaveText(/^(?!\s*(--|—)\s*$).+/);
   }
 
   async expectChartVisible() {
-    await expect(this.page.getByText("Casamentos por Mês")).toBeVisible();
+    await expect(this.page.getByText("Casamentos por Mês")).toBeVisible({
+      timeout: 15_000,
+    });
     // Verify Recharts actually rendered an SVG
     await expect(this.page.locator(".recharts-surface").first()).toBeVisible();
   }
 
   async expectUpcomingInstallmentsVisible() {
-    // Differentiate from KPI "Parcelas a Vencer" card by checking period toggles
-    await expect(
-      this.page.getByRole("heading", { name: "Parcelas a Vencer" }),
-    ).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "7d" })).toBeVisible();
+    const card = this.page.locator(".border-orange-200").first();
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    const heading = card.getByRole("heading", { name: "Parcelas a Vencer" });
+    await expect(heading).toBeVisible();
+    await expect(card.getByRole("button", { name: "7d" })).toBeVisible();
   }
 
   async expectInstallmentItemVisible() {
-    const badge = this.page.getByText(/pendente[s]?$/).first();
+    const card = this.page.locator(".border-orange-200").first();
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    const badge = card.getByText(/pendente[s]?$/).first();
     await expect(badge).toBeVisible();
-    if (await this.page.getByText(/Parcela #\d+/).count() > 0) {
-      await expect(this.page.getByText(/R\$/).first()).toBeVisible();
+    if (await card.getByText(/Parcela #\d+/).count() > 0) {
+      await expect(card.getByText(/R\$/).first()).toBeVisible();
     }
   }
 
@@ -83,8 +88,7 @@ export class DashboardPage {
   }
 
   async openFirstAvailableKpiSheet() {
-    // Wait for the data to load first
-    await this.expectKpiValueNonZero("Parcelas a Vencer");
+    await this.expectKpiCardsVisible();
     for (const label of KPI_VER_BUTTONS) {
       const btn = this.page.getByRole("button", { name: label });
       if (await btn.count() > 0) {

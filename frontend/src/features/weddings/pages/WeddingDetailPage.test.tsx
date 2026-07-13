@@ -1,9 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@/test-utils";
+import { render, screen, userEvent } from "@/test-utils";
 import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
 import { createMockWedding } from "@/test-data";
+import { useParams } from "react-router-dom";
+import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
 
-// Mock useParams to control the uuid param independently of MemoryRouter
+// Mantido: mock de módulo NÃO-Orval (react-router-dom)
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<
     typeof import("react-router-dom")
@@ -14,31 +19,49 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// Mock the Orval hook
-vi.mock(
-  "@/api/generated/v1/endpoints/weddings/weddings",
-  async () => {
-    const actual = await vi.importActual<
-      typeof import("@/api/generated/v1/endpoints/weddings/weddings")
-    >("@/api/generated/v1/endpoints/weddings/weddings");
-    return {
-      ...actual,
-      useWeddingsRead: vi.fn(),
-    };
-  },
-);
-
-import { useParams } from "react-router-dom";
-import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
+// Mantido: mock de componente local NÃO-Orval
+vi.mock("@/features/weddings/components/EditWeddingDialog", () => ({
+  EditWeddingDialog: ({ open, onSuccess, onOpenChange }: any) => {
+    if (!open) return null;
+    return (
+      <div data-testid="edit-dialog">
+        <button onClick={() => onSuccess()} data-testid="submit-success">Success</button>
+        <button onClick={() => onOpenChange(false)} data-testid="close-dialog">Close</button>
+      </div>
+    );
+  }
+}));
 
 const mockWedding = createMockWedding({
   bride_name: "Maria",
   groom_name: "João",
+  date: "2026-09-20",
+  location: "Fazenda Vila Rica, SP",
+  expected_guests: 250,
+  total_budget: 145000,
+  template: "beach_6m",
 });
+
+const defaultDashboard: WeddingDashboardOut = {
+  tasks_completed: 68,
+  tasks_total: 100,
+  days_until_wedding: 30,
+  budget_percentage_used: 10,
+  contracts_signed: 1,
+  contracts_total: 2,
+  upcoming_installments: [],
+  urgent_tasks: [],
+  categories_summary: [],
+};
 
 describe("WeddingDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useDashboardWedding).mockReturnValue({
+      data: { data: defaultDashboard },
+      isLoading: false,
+      error: null,
+    } as any);
   });
 
   it("shows 'URL inválida' when uuid is undefined", () => {
@@ -47,7 +70,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, { initialEntries: ["/weddings"] });
 
@@ -63,7 +86,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, { initialEntries: ["/weddings"] });
 
@@ -78,7 +101,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: true,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -94,7 +117,7 @@ describe("WeddingDetailPage", () => {
       data: undefined,
       isLoading: false,
       error: new Error("Erro de rede"),
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -112,7 +135,7 @@ describe("WeddingDetailPage", () => {
       data: { data: undefined },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
@@ -128,22 +151,25 @@ describe("WeddingDetailPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows wedding detail tabs when data loads", () => {
+  it("shows wedding detail tabs and compact card when data loads", () => {
     vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
     vi.mocked(useWeddingsRead).mockReturnValue({
       data: { data: mockWedding },
       isLoading: false,
       error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
+    } as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
     });
 
-    expect(
-      screen.getByRole("link", { name: /voltar para lista/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /geral/i })).toBeInTheDocument();
+    expect(screen.getAllByText("João & Maria").length).toBeGreaterThan(0);
+    expect(screen.getByText("Campestre")).toBeInTheDocument();
+    expect(screen.getByText(/250 Convidados/i)).toBeInTheDocument();
+    expect(screen.getByText("R$ 145k")).toBeInTheDocument();
+    expect(screen.getByText("68%")).toBeInTheDocument();
+
+    expect(screen.getByRole("tab", { name: /visão geral/i })).toBeInTheDocument();
     expect(
       screen.getByRole("tab", { name: /finanças/i }),
     ).toBeInTheDocument();
@@ -153,5 +179,203 @@ describe("WeddingDetailPage", () => {
     expect(
       screen.getByRole("tab", { name: /planejamento/i }),
     ).toBeInTheDocument();
+  });
+
+  it("does not render the template badge when template is null", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: {
+        data: {
+          ...mockWedding,
+          template: null,
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.queryByText("Campestre")).not.toBeInTheDocument();
+    expect(screen.queryByText("Clássico")).not.toBeInTheDocument();
+    expect(screen.queryByText("Intimista")).not.toBeInTheDocument();
+  });
+
+  it("renders budget immediately and checklist skeleton when dashboard is loading", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: { data: mockWedding },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    vi.mocked(useDashboardWedding).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+    } as any);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    // Budget is now shown immediately, not behind dashboard loading
+    expect(screen.getByText("R$ 145k")).toBeInTheDocument();
+    // Checklist still depends on dashboard
+    expect(screen.queryByText("68%")).not.toBeInTheDocument();
+  });
+
+  it("shows fallback error message on API error with no message", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: {} as any,
+    } as any);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(
+      screen.getByText("Não foi possível carregar os dados do casamento."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows zero-state for expected guests when expected_guests is null/0", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: {
+        data: {
+          ...mockWedding,
+          expected_guests: null,
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.getByText("— Convidados")).toBeInTheDocument();
+  });
+
+  it("calculates 0% checklist percentage when tasks_total is 0", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: { data: mockWedding },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    vi.mocked(useDashboardWedding).mockReturnValue({
+      data: {
+        data: {
+          tasks_completed: 0,
+          tasks_total: 0,
+          days_until_wedding: 30,
+          budget_percentage_used: 10,
+          contracts_signed: 1,
+          contracts_total: 2,
+          upcoming_installments: [],
+          urgent_tasks: [],
+          categories_summary: [],
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.getByText("0%")).toBeInTheDocument();
+  });
+
+  it("renders budget formatted when total_budget is under 1000", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: {
+        data: {
+          ...mockWedding,
+          total_budget: 500,
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.getByText("R$ 500")).toBeInTheDocument();
+  });
+
+  it("opens edit dialog on pencil click and triggers query invalidation on success", async () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: { data: mockWedding },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    const editBtn = screen.getByTitle("Editar dados do casamento");
+    await userEvent.click(editBtn);
+
+    expect(screen.getByTestId("edit-dialog")).toBeInTheDocument();
+
+    const successBtn = screen.getByTestId("submit-success");
+    await userEvent.click(successBtn);
+
+    expect(screen.queryByTestId("edit-dialog")).not.toBeInTheDocument();
+  });
+
+  it("renders with fallback budget, decimal budget, unknown template, and completed status style", () => {
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: {
+        data: {
+          ...mockWedding,
+          total_budget: null,
+          template: "unknown_template",
+          status: "COMPLETED",
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    const { rerender } = render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    expect(screen.getByText("R$ —")).toBeInTheDocument();
+    expect(screen.getByText("unknown_template")).toBeInTheDocument();
+    expect(screen.getByText("✓")).toBeInTheDocument();
+
+
+    vi.mocked(useWeddingsRead).mockReturnValue({
+      data: {
+        data: {
+          ...mockWedding,
+          total_budget: 145500,
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    rerender(<WeddingDetailPage />);
+    expect(screen.getByText("R$ 145.5k")).toBeInTheDocument();
   });
 });

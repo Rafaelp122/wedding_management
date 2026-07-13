@@ -22,13 +22,13 @@ function createTestQueryClient() {
 
 interface WrapperOptions {
   initialEntries?: string[];
+  queryClient?: QueryClient;
 }
 
 function createWrapper(options: WrapperOptions = {}) {
-  const { initialEntries = ["/"] } = options;
+  const { initialEntries = ["/"], queryClient = createTestQueryClient() } = options;
 
   return function Wrapper({ children }: { children: ReactNode }) {
-    const queryClient = createTestQueryClient();
     const router = createMemoryRouter(
       [{ path: "*", element: <>{children}</> }],
       { initialEntries },
@@ -51,9 +51,9 @@ function customRender(
   ui: ReactElement,
   options?: Omit<RenderOptions, "wrapper"> & WrapperOptions,
 ): RenderResult {
-  const { initialEntries, ...renderOptions } = options ?? {};
+  const { initialEntries, queryClient, ...renderOptions } = options ?? {};
   return render(ui, {
-    wrapper: createWrapper({ initialEntries }),
+    wrapper: createWrapper({ initialEntries, queryClient }),
     ...renderOptions,
   });
 }
@@ -62,9 +62,9 @@ function customRenderHook<Result, Props>(
   hook: (props: Props) => Result,
   options?: Omit<Parameters<typeof renderHook>[1], "wrapper"> & WrapperOptions,
 ) {
-  const { initialEntries, ...hookOptions } = options ?? {};
+  const { initialEntries, queryClient, ...hookOptions } = options ?? {};
   return renderHook(hook, {
-    wrapper: createWrapper({ initialEntries }),
+    wrapper: createWrapper({ initialEntries, queryClient }),
     ...hookOptions,
   });
 }

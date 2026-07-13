@@ -18,8 +18,6 @@ export interface AuthFixtures {
   authenticatedPage: Page;
   /** Page fixture for an authenticated Admin user. */
   adminPage: Page;
-  /** Page fixture for an authenticated Staff user. */
-  staffPage: Page;
 }
 
 /**
@@ -73,11 +71,6 @@ export const test = base.extend<AuthFixtures>({
 
   adminPage: async ({ page, request }, run) => {
     const authPage = await loginAndSetupPage(page, request, "admin@admin.com");
-    await run(authPage);
-  },
-
-  staffPage: async ({ page, request }, run) => {
-    const authPage = await loginAndSetupPage(page, request, "staff@example.com");
     await run(authPage);
   },
 });

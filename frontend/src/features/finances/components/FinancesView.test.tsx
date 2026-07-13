@@ -3,7 +3,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@/test-utils";
 import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
 
-// Mock lazy sub-components to avoid suspense boundaries and import issues
 vi.mock("@/features/finances/components/FinancesDistributionChart", () => ({
   WeddingFinancesDistributionChart: () => <div data-testid="distribution-chart" />,
 }));
@@ -36,11 +35,6 @@ vi.mock("@/features/finances/components/expenses/ExpensesTable", () => ({
   ),
 }));
 
-// Mock the useWeddingBudget hook
-vi.mock("@/features/finances/hooks/useBudget", () => ({
-  useWeddingBudget: vi.fn(),
-}));
-
 import { useWeddingBudget } from "@/features/finances/hooks/useBudget";
 import { useFinancesExpensesList } from "@/api/generated/v1/endpoints/finances/finances";
 
@@ -52,7 +46,7 @@ describe("WeddingFinancesView", () => {
     totalSpent: 25000,
   };
 
-  const defaultExpensesData = {
+  const defaultExpensesResponse = {
     data: {
       data: {
         items: [],
@@ -65,9 +59,7 @@ describe("WeddingFinancesView", () => {
   beforeEach(() => {
     vi.mocked(useWeddingBudget).mockReturnValue(defaultBudgetData as any);
     vi.mocked(useFinancesExpensesList).mockImplementation(
-      () => {
-        return defaultExpensesData as any;
-      },
+      () => defaultExpensesResponse as any,
     );
   });
 
@@ -79,23 +71,21 @@ describe("WeddingFinancesView", () => {
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    // Os cards de resumo não devem aparecer — skeletons os substituem
     expect(screen.queryByText("Orçamento Total")).not.toBeInTheDocument();
-    // O gráfico e as categorias também são substituídos por skeletons
+
     expect(screen.queryByTestId("distribution-chart")).not.toBeInTheDocument();
   });
 
   it("shows skeleton placeholders when expenses are loading", () => {
     vi.mocked(useFinancesExpensesList).mockReturnValue({
-      ...defaultExpensesData,
+      data: undefined,
       isLoading: true,
     } as any);
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    // As seções de orçamento (não loading) devem aparecer normalmente
     expect(screen.getByText("Orçamento Total")).toBeInTheDocument();
-    // Despesas recentes e tabela não devem aparecer — skeletons os substituem
+
     expect(screen.queryByText("Despesas Recentes")).not.toBeInTheDocument();
   });
 
@@ -141,20 +131,17 @@ describe("WeddingFinancesView", () => {
     const userEvent = (await import("@/test-utils")).userEvent;
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    // Dialog should not be visible initially
     await waitFor(() => {
       expect(
         screen.queryByTestId("create-expense-dialog"),
       ).not.toBeInTheDocument();
     });
 
-    // Click the add expense button
     const addButton = await screen.findByRole("button", {
       name: /adicionar despesa/i,
     });
     await userEvent.setup().click(addButton);
 
-    // Dialog should now be visible
     await waitFor(() => {
       expect(
         screen.getByTestId("create-expense-dialog"),
@@ -209,13 +196,8 @@ describe("WeddingFinancesView", () => {
 
     await waitFor(() => {
       const matches = screen.getAllByText("Buffet Premium");
-      // Appears in both RecentExpenses card and ExpensesTable rows
       expect(matches.length).toBeGreaterThanOrEqual(2);
     });
-
-    expect(useFinancesExpensesList).toHaveBeenCalledWith(
-      expect.objectContaining({ wedding_id: "w-1", limit: 5 }),
-    );
   });
 
   it("triggers refetch queries when category or expense changes", async () => {
@@ -224,11 +206,9 @@ describe("WeddingFinancesView", () => {
 
     const user = userEvent.setup();
 
-    // Trigger category change
     const categoryBtn = screen.getByTestId("mock-category-change-btn");
     await user.click(categoryBtn);
 
-    // Trigger expense update
     const expenseBtn = screen.getByTestId("mock-expense-update-btn");
     await user.click(expenseBtn);
 

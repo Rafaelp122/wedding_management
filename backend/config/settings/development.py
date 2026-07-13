@@ -5,6 +5,9 @@ Development settings: DEBUG=True, django-zeal, console email, colored logging.
 from .base import *
 
 
+INSTALLED_APPS += ["django_extensions"]
+
+
 DEBUG = env.bool("DEBUG", default=True)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "0.0.0.0"])
 

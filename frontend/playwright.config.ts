@@ -7,7 +7,9 @@ const __dirname = dirname(__filename);
 
 export default defineConfig({
   testDir: "./e2e/specs",
-  fullyParallel: true,
+  timeout: 60000,
+  workers: 1,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI

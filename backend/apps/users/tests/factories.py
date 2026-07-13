@@ -10,6 +10,8 @@ Destaques Técnicos:
 - Unicidade: Garante emails únicos para evitar conflitos de integridade no PostgreSQL.
 """
 
+import uuid
+
 import factory
 from django.contrib.auth import get_user_model
 
@@ -31,9 +33,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     # chamar TenantService.create_company() implicitamente) era pior.
     company = factory.SubFactory("apps.tenants.tests.factories.CompanyFactory")
 
-    # Gera emails únicos: planner0@example.com, planner1@example.com...
-    # Essencial para evitar erros de integridade no seu modelo
-    email = factory.Faker("email")
+    # Gera emails únicos e garantidos contra colisões em execuções paralelas
+    email = factory.Sequence(lambda n: f"planner_{n}_{uuid.uuid4().hex}@example.com")
 
     # Usa o Faker configurado como pt_BR (no conftest global) para nomes reais
     first_name = factory.Faker("first_name")

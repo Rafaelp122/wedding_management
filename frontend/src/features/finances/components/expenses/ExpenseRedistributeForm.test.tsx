@@ -1,48 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { render, screen, userEvent, waitFor, server } from "@/test-utils";
+import { http, HttpResponse } from "msw";
 
 import { ExpenseRedistributeForm } from "./ExpenseRedistributeForm";
 
 const EXPENSE_UUID = "test-expense-uuid";
 
-// ---------------------------------------------------------------------------
-// Toast mocking – same pattern as DeleteExpenseDialog.test.tsx
-// ---------------------------------------------------------------------------
 import { toast } from "sonner";
 
-// ---------------------------------------------------------------------------
-// Mutation hook mocking – we control isPending via a mutable object so that
-// one test can render with isPending=true without affecting others.
-// ---------------------------------------------------------------------------
-const mockMutationState = vi.hoisted(() => ({
-  isPending: false,
-  mutateAsync: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
-}));
+let capturedBody: unknown;
 
-vi.mock(
-  "@/api/generated/v1/endpoints/finances/finances",
-  async (importOriginal) => {
-    const actual =
-      await importOriginal<
-        typeof import("@/api/generated/v1/endpoints/finances/finances")
-      >();
-    return {
-      ...actual,
-      useFinancesExpensesUpdate: () => ({
-        mutateAsync: mockMutationState.mutateAsync,
-        isPending: mockMutationState.isPending,
-      }),
-    };
-  },
-);
+import { useFinancesExpensesUpdate } from "@/api/generated/v1/endpoints/finances/finances";
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 describe("ExpenseRedistributeForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockMutationState.isPending = false;
+    capturedBody = undefined;
+
+    // Default: successful mutation via MSW
+    server.use(
+      http.patch(`*/api/v1/finances/expenses/${EXPENSE_UUID}/`, async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json({ uuid: EXPENSE_UUID, num_installments: 3 });
+      }),
+    );
   });
 
   it("renders with initial values from props", () => {
@@ -113,8 +95,6 @@ describe("ExpenseRedistributeForm", () => {
   });
 
   it("shows success toast on successful mutation", async () => {
-    mockMutationState.mutateAsync.mockResolvedValue({});
-
     const user = userEvent.setup();
 
     render(
@@ -128,9 +108,9 @@ describe("ExpenseRedistributeForm", () => {
     await user.click(screen.getByRole("button", { name: /aplicar/i }));
 
     await waitFor(() => {
-      expect(mockMutationState.mutateAsync).toHaveBeenCalledWith({
-        uuid: EXPENSE_UUID,
-        data: { num_installments: 3, first_due_date: "2025-07-15" },
+      expect(capturedBody).toMatchObject({
+        num_installments: 3,
+        first_due_date: "2025-07-15",
       });
       expect(toast.success).toHaveBeenCalledWith(
         "Parcelas remanejadas com sucesso!",
@@ -139,7 +119,11 @@ describe("ExpenseRedistributeForm", () => {
   });
 
   it("shows error toast on failed mutation", async () => {
-    mockMutationState.mutateAsync.mockRejectedValue(new Error("API Error"));
+    server.use(
+      http.patch(`*/api/v1/finances/expenses/${EXPENSE_UUID}/`, async () => {
+        return HttpResponse.json({ detail: "API Error" }, { status: 400 });
+      }),
+    );
 
     const user = userEvent.setup();
 
@@ -159,7 +143,10 @@ describe("ExpenseRedistributeForm", () => {
   });
 
   it("button is disabled while mutation is pending", () => {
-    mockMutationState.isPending = true;
+    vi.mocked(useFinancesExpensesUpdate).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: true,
+    } as any);
 
     render(
       <ExpenseRedistributeForm

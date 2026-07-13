@@ -5,7 +5,7 @@ export class WeddingDetailPage {
 
   async expectHeading(groom: string, bride: string) {
     await expect(
-      this.page.getByRole("heading", { level: 2, name: `${groom} & ${bride}` }),
+      this.page.getByRole("heading", { level: 2, name: `${groom} & ${bride}` }).first(),
     ).toBeVisible();
   }
 
@@ -14,7 +14,8 @@ export class WeddingDetailPage {
   }
 
   async goBack() {
-    await this.page.getByRole("link", { name: "Voltar para lista" }).click();
+    await this.page.getByRole("link", { name: "Casamentos" }).first().click();
+    await expect(this.page).toHaveURL(/\/weddings$/);
   }
 
   async expectUrlMatch() {

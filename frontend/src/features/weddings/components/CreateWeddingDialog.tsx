@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useWeddingsCreate } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingsCreate, getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { WeddingsCreateBody } from "@/api/generated/v1/zod/weddings/weddings";
@@ -25,13 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WeddingFormFields } from "./WeddingFormFields";
-
-const TEMPLATE_OPTIONS = [
-  { value: "none", label: "Nenhum (Começar do zero)" },
-  { value: "religious_12m", label: "Casamento Clássico em Salão" },
-  { value: "beach_6m", label: "Casamento Campestre Premium" },
-  { value: "civil_buffet_3m", label: "Mini Wedding Intimista" },
-] as const;
+import { TEMPLATE_OPTIONS } from "../constants";
 
 type CreateWeddingFormData = z.input<typeof WeddingsCreateBody>;
 
@@ -62,14 +56,8 @@ export function CreateWeddingDialog({
   });
 
   const onSubmit = (data: CreateWeddingFormData) => {
-    const payload = {
-      ...data,
-      // Se o template for "none", não enviar (null)
-      template: data.template === "none" ? null : data.template,
-    };
-
     mutate(
-      { data: payload },
+      { data },
       createMutationCallbacks({
         successMsg: "Casamento criado com sucesso!",
         fallbackErrorMsg: "Erro ao criar casamento.",
@@ -77,6 +65,7 @@ export function CreateWeddingDialog({
           form.reset();
           queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
           queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
           onSuccess();
         },
       }),
