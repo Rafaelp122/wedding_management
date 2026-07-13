@@ -34,9 +34,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     company = factory.SubFactory("apps.tenants.tests.factories.CompanyFactory")
 
     # Gera emails únicos e garantidos contra colisões em execuções paralelas
-    email = factory.Sequence(
-        lambda n: f"planner_{n}_{uuid.uuid4().hex}@example.com"
-    )
+    email = factory.Sequence(lambda n: f"planner_{n}_{uuid.uuid4().hex}@example.com")
 
     # Usa o Faker configurado como pt_BR (no conftest global) para nomes reais
     first_name = factory.Faker("first_name")
