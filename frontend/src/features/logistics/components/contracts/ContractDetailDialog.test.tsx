@@ -9,27 +9,7 @@ import {
   useLogisticsContractsList,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 
-/**
- * Mock do módulo Orval logistics para controlar os hooks de contrato.
- * Usamos importOriginal para preservar as demais exports (mutações, etc.)
- * e substituímos apenas os hooks de leitura por vi.fn().
- *
- * Cada teste (ou beforeEach) define o retorno via mockReturnValue.
- */
-vi.mock(
-  "@/api/generated/v1/endpoints/logistics/logistics",
-  async (importOriginal) => {
-    const original = await importOriginal<
-      typeof import("@/api/generated/v1/endpoints/logistics/logistics")
-    >();
-    return {
-      ...original,
-      useLogisticsContractsRead: vi.fn(),
-      useLogisticsItemsList: vi.fn(),
-      useLogisticsContractsList: vi.fn(),
-    };
-  },
-);
+
 
 /* Seções filhas são stub — não precisam ser testadas aqui */
 vi.mock("./ContractDocumentSection", () => ({

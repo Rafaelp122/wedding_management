@@ -38,7 +38,8 @@
 - Recharts: mock with `vi.mock("recharts", ...)` returning simple `<div>` elements with `data-testid`. See `FinancesDistributionChart.test.tsx` for the canonical pattern.
 - Dialogs: every `DialogContent` **must** render `DialogTitle` + `DialogDescription`. Use `className="sr-only"` for loading/error/empty states.
 - `isolate: false` — all `vi.mock` calls are shared. Centralize mocks in `test-setup.ts`, never per-file for shared deps.
-- Prioritize `getByRole`/`getByLabelText`. Mock Orval hooks with `vi.mock`. Use `faker` for test data.
+- FORBIDDEN `vi.mock("@/api/generated/...")` in test files — all API mocks go in `test-setup.ts` via `registerMockHook`.
+- Prioritize `getByRole`/`getByLabelText`. Mock Orval hooks with `vi.mock` (only in test-setup). Use `faker` for test data.
 
 ## Workflow
 

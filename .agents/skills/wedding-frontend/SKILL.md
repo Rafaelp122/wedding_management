@@ -260,6 +260,9 @@ Create `src/features/<name>/hooks/use<Name>.ts`:
 
 ### Step 8: Tests
 - **Unit**: `vi.mock` Orval hooks for component tests
+- **CRITICAL**: `vi.mock("@/api/generated/...")` is **FORBIDDEN** in test files.
+  All API mocks are centralized in `test-setup.ts` via `registerMockHook`.
+  Per-file `vi.mock` of Orval modules causes cross-test state corruption with `isolate: false`.
 - **Integration**: MSW for page/flow tests
 - **E2E**: Playwright for critical user journeys
 

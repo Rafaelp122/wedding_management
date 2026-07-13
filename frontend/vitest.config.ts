@@ -42,8 +42,7 @@ export default mergeConfig(
           },
         },
       },
-      clearMocks: true,
-      restoreMocks: true,
+
       coverage: {
         provider: "v8",
         enabled: false,

@@ -252,6 +252,16 @@ vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", async (importOrigina
   };
 });
 
+vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/logistics/logistics")>();
+  return {
+    ...mod,
+    useLogisticsContractsRead: registerMockHook(mod.useLogisticsContractsRead),
+    useLogisticsItemsList: registerMockHook(mod.useLogisticsItemsList),
+    useLogisticsContractsList: registerMockHook(mod.useLogisticsContractsList),
+  };
+});
+
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
 
