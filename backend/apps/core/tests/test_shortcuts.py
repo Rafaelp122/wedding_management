@@ -1,4 +1,4 @@
-from typing import Any, cast, no_type_check
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
@@ -169,20 +169,18 @@ class TestShortcuts:
 
 @pytest.mark.django_db
 class TestValidateTenantOwnership:
-    @no_type_check
     def test_validate_tenant_ownership_returns_instance_for_same_tenant(self) -> None:
-        company = CompanyFactory()
-        wedding = WeddingFactory(company=company)
+        company = _company()
+        wedding = _wedding(company=company)
 
         result = validate_tenant_ownership(company, wedding)
 
         assert result is wedding
 
-    @no_type_check
     def test_validate_tenant_ownership_raises_not_found_for_other_tenant(self) -> None:
-        company = CompanyFactory()
-        other_company = CompanyFactory()
-        wedding = WeddingFactory(company=other_company)
+        company = _company()
+        other_company = _company()
+        wedding = _wedding(company=other_company)
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
             validate_tenant_ownership(
