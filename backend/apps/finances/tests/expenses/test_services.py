@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
@@ -171,7 +172,10 @@ class TestExpenseServiceCreate:
 
         assert exc_info.value.code == "br_f02_violation"
 
-    def test_create_expense_contract_from_other_wedding_raises_error(self, user):
+    @no_type_check
+    def test_create_expense_contract_from_other_wedding_raises_error(
+        self, user
+    ) -> None:
         """BR-L02: contrato e categoria devem pertencer ao mesmo casamento."""
         from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 
@@ -196,6 +200,35 @@ class TestExpenseServiceCreate:
             ExpenseService.create(user.company, ExpenseIn(**data))
 
         assert exc_info.value.code == "expense_contract_wedding_mismatch"
+
+    @no_type_check
+    def test_create_expense_rejects_contract_instance_from_other_tenant(
+        self,
+    ) -> None:
+        """Contrato pré-carregado de outro tenant deve ser rejeitado."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        user_a = UserFactory()
+        user_b = UserFactory()
+        category_a = _setup_category(user_a)
+        wedding_b = WeddingFactory(user_context=user_b)
+        supplier_b = SupplierFactory(company=user_b.company)
+        contract_b = ContractFactory(wedding=wedding_b, supplier=supplier_b)
+        payload = ExpenseIn.model_construct(
+            category=category_a,
+            contract=contract_b,
+            name="Despesa cross-tenant",
+            description="",
+            estimated_amount=contract_b.total_amount,
+            actual_amount=contract_b.total_amount,
+            num_installments=1,
+            first_due_date=date.today(),
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ExpenseService.create(user_a.company, payload)
+
+        assert exc_info.value.code == "contract_not_found_or_denied"
 
     def test_create_expense_triggers_tolerance_zero(self, user):
         """BR-F01: expense com actual_amount > 0 deve gerar parcelas que somam
@@ -372,7 +405,10 @@ class TestExpenseServiceUpdate:
             )
         assert exc.value.code == "amount_change_blocked_by_paid"
 
-    def test_update_expense_contract_from_other_wedding_raises_error(self, user):
+    @no_type_check
+    def test_update_expense_contract_from_other_wedding_raises_error(
+        self, user
+    ) -> None:
         """BR-L02: despesa não pode ser religada a contrato de outro casamento."""
         from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 
@@ -404,6 +440,37 @@ class TestExpenseServiceUpdate:
             )
 
         assert exc_info.value.code == "expense_contract_wedding_mismatch"
+
+    @no_type_check
+    def test_update_expense_rejects_contract_instance_without_mutating(
+        self, user
+    ) -> None:
+        """Falha de tenant não deve trocar o contrato em memória."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        category = _setup_category(user)
+        supplier = SupplierFactory(company=user.company)
+        current_contract = ContractFactory(wedding=category.wedding, supplier=supplier)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=current_contract,
+            actual_amount=current_contract.total_amount,
+        )
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+        )
+        payload = ExpensePatchIn.model_construct(contract=other_contract)
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ExpenseService.update(user.company, expense, payload)
+
+        assert exc_info.value.code == "contract_not_found_or_denied"
+        assert expense.contract is current_contract
 
 
 @pytest.mark.django_db

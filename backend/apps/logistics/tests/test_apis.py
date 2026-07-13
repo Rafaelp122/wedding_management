@@ -655,6 +655,26 @@ class TestContractCreateFullAPI:
         detail = str(body.get("detail", ""))
         assert "json" in detail.lower()
 
+    def test_create_full_non_list_items_json(self, auth_client, user) -> None:
+        """POST /full/ com items_data não-lista retorna 422."""
+        wedding, supplier = self._wedding_supplier(user)
+        response = auth_client.post(
+            "/api/v1/logistics/contracts/full/",
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato",
+                    "total_amount": "5000.00",
+                    "items_data": '{"name":"Item solto"}',
+                }
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        body = response.json()
+        assert "items_data" in str(body).lower()
+
     def test_create_full_expense_without_category(self, auth_client, user):
         """POST /full/ com create_expense=True sem categoria retorna 422."""
         wedding = WeddingFactory(company=user.company)

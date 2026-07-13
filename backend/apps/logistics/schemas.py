@@ -152,8 +152,10 @@ class ContractOut(Schema):
         if expense_id is not _MISSING:
             return cast("UUID4 | None", expense_id)
 
-        expense = obj._state.fields_cache.get("expense")
-        if expense is None:
+        cached_expense = obj._state.fields_cache.get("expense", _MISSING)
+        if cached_expense is not _MISSING:
+            expense = cached_expense
+        else:
             try:
                 expense = obj.expense
             except ObjectDoesNotExist:
@@ -188,8 +190,9 @@ class ContractOut(Schema):
         if expense_id is not _MISSING:
             return bool(expense_id)
 
-        if obj._state.fields_cache.get("expense") is not None:
-            return True
+        cached_expense = obj._state.fields_cache.get("expense", _MISSING)
+        if cached_expense is not _MISSING:
+            return cached_expense is not None
 
         try:
             return obj.expense is not None

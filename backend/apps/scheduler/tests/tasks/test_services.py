@@ -1,3 +1,4 @@
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
@@ -71,7 +72,8 @@ class TestTaskServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_task_rejects_wedding_instance_from_other_tenant(self):
+    @no_type_check
+    def test_create_task_rejects_wedding_instance_from_other_tenant(self) -> None:
         """Instância de Wedding pré-carregada também passa por validação tenant."""
         user_a = UserFactory()
         user_b = UserFactory()

@@ -20,6 +20,7 @@ from django.db.models import (
     Value,
 )
 from django.db.models.functions import Coalesce
+from pydantic import ValidationError as PydanticValidationError
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -265,17 +266,60 @@ class ContractService:
     def _build_full_items_payload(
         payload: ContractFullCreateIn,
     ) -> _ItemInList | None:
-        raw_items: list[dict[str, Any]] = json.loads(payload.items_data or "[]")
-        items_data = [
-            ItemIn(**{**item_data, "wedding": payload.wedding})
-            for item_data in raw_items
-        ]
+        """
+        Converte o JSON de itens do payload completo em schemas de criação.
+
+        Args:
+            payload: Dados recebidos pelo endpoint de criação completa.
+
+        Returns:
+            Lista de itens normalizada com o casamento do contrato ou None.
+
+        Raises:
+            BusinessRuleViolation: Se `items_data` não for uma lista de objetos
+                JSON compatíveis com ItemIn.
+        """
+        try:
+            raw_items = json.loads(payload.items_data or "[]")
+        except json.JSONDecodeError as e:
+            raise BusinessRuleViolation(
+                detail="items_data deve ser um JSON válido.",
+                code="invalid_items_data",
+            ) from e
+
+        if not isinstance(raw_items, list) or not all(
+            isinstance(item_data, dict) for item_data in raw_items
+        ):
+            raise BusinessRuleViolation(
+                detail="items_data deve ser uma lista de objetos JSON.",
+                code="invalid_items_data",
+            )
+
+        try:
+            items_data = [
+                ItemIn(**{**item_data, "wedding": payload.wedding})
+                for item_data in raw_items
+            ]
+        except PydanticValidationError as e:
+            raise BusinessRuleViolation(
+                detail="items_data contém item inválido.",
+                code="invalid_items_data",
+            ) from e
         return items_data or None
 
     @staticmethod
     def _build_full_expense_payload(
         payload: ContractFullCreateIn,
     ) -> ExpenseIn | None:
+        """
+        Monta o payload financeiro opcional para criação completa de contrato.
+
+        Args:
+            payload: Dados recebidos pelo endpoint de criação completa.
+
+        Returns:
+            Schema de criação de despesa quando solicitado ou None.
+        """
         if not payload.create_expense:
             return None
 

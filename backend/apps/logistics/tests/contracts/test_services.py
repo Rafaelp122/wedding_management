@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
@@ -125,7 +126,8 @@ class TestContractServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_contract_rejects_supplier_instance_from_other_tenant(self):
+    @no_type_check
+    def test_create_contract_rejects_supplier_instance_from_other_tenant(self) -> None:
         """Instâncias pré-carregadas também precisam respeitar o tenant."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -244,7 +246,10 @@ class TestContractServiceUpdate:
                 user.company, other_contract, ContractPatchIn(description="Hack")
             )
 
-    def test_update_contract_rejects_supplier_instance_from_other_tenant(self, user):
+    @no_type_check
+    def test_update_contract_rejects_supplier_instance_from_other_tenant(
+        self, user
+    ) -> None:
         """Update não pode receber Supplier pré-carregado de outro tenant."""
         wedding, supplier = _setup_contract_context(user)
         other_user = UserFactory()
@@ -418,7 +423,8 @@ class TestContractServiceListAndGet:
         with pytest.raises(ObjectNotFoundError):
             ContractService.get(user_a.company, contract_b.uuid)
 
-    def test_list_annotations_ignore_cross_tenant_related_records(self):
+    @no_type_check
+    def test_list_annotations_ignore_cross_tenant_related_records(self) -> None:
         """Subqueries de list() não consideram vínculos corrompidos de outro tenant."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -456,7 +462,8 @@ class TestContractServiceListAndGet:
         assert result.total_paid == Decimal("0.00")
         assert result.addendums_count == 0
 
-    def test_get_annotations_ignore_cross_tenant_related_records(self):
+    @no_type_check
+    def test_get_annotations_ignore_cross_tenant_related_records(self) -> None:
         """Subqueries de get() não consideram vínculos corrompidos de outro tenant."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -921,7 +928,8 @@ class TestContractServiceCreateFull:
         assert contract.expense is not None
         assert contract.expense.installments.count() == 3
 
-    def test_create_full_from_payload_with_all(self, user):
+    @no_type_check
+    def test_create_full_from_payload_with_all(self, user) -> None:
         """Cria contrato completo a partir do schema usado pela API."""
         wedding, supplier, category = self._setup(user)
         payload = ContractFullCreateIn(
@@ -951,7 +959,48 @@ class TestContractServiceCreateFull:
         assert contract.expense is not None
         assert contract.expense.installments.count() == 2
 
-    def test_create_full_from_payload_cross_tenant_wedding_raises_error(self):
+    @no_type_check
+    def test_create_full_from_payload_rejects_non_list_items_data(self, user) -> None:
+        """items_data precisa ser uma lista JSON de objetos."""
+        wedding, supplier, _ = self._setup(user)
+        payload = ContractFullCreateIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato Payload",
+            total_amount=Decimal("10000.00"),
+            items_data='{"name":"Item solto"}',
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.create_full_from_payload(
+                company=user.company,
+                payload=payload,
+            )
+
+        assert exc_info.value.code == "invalid_items_data"
+
+    @no_type_check
+    def test_create_full_from_payload_rejects_non_object_items(self, user) -> None:
+        """Cada item de items_data precisa ser um objeto JSON."""
+        wedding, supplier, _ = self._setup(user)
+        payload = ContractFullCreateIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato Payload",
+            total_amount=Decimal("10000.00"),
+            items_data='["item inválido"]',
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.create_full_from_payload(
+                company=user.company,
+                payload=payload,
+            )
+
+        assert exc_info.value.code == "invalid_items_data"
+
+    @no_type_check
+    def test_create_full_from_payload_cross_tenant_wedding_raises_error(self) -> None:
         """Payload da API preserva isolamento ao delegar a criação completa."""
         user_a = UserFactory()
         user_b = UserFactory()

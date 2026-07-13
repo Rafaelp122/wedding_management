@@ -1,3 +1,4 @@
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
@@ -55,15 +56,17 @@ class TestShortcuts:
 
 @pytest.mark.django_db
 class TestValidateTenantOwnership:
-    def test_validate_tenant_ownership_returns_instance_for_same_tenant(self):
+    @no_type_check
+    def test_validate_tenant_ownership_returns_instance_for_same_tenant(self) -> None:
         company = CompanyFactory()
         wedding = WeddingFactory(company=company)
 
         result = validate_tenant_ownership(company, wedding)
 
-        assert result == wedding
+        assert result is wedding
 
-    def test_validate_tenant_ownership_raises_not_found_for_other_tenant(self):
+    @no_type_check
+    def test_validate_tenant_ownership_raises_not_found_for_other_tenant(self) -> None:
         company = CompanyFactory()
         other_company = CompanyFactory()
         wedding = WeddingFactory(company=other_company)

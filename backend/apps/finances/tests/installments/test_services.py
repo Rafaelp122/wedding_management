@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
@@ -319,7 +320,10 @@ class TestInstallmentServiceUpdate:
             ("installment_number", 2),
         ],
     )
-    def test_update_paid_installment_protected_fields_blocked(self, user, field, value):
+    @no_type_check
+    def test_update_paid_installment_protected_fields_blocked(
+        self, user, field, value
+    ) -> None:
         """BR-F06: parcela paga não permite alterar valor, vencimento ou número."""
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
         installment = InstallmentFactory(
@@ -339,7 +343,8 @@ class TestInstallmentServiceUpdate:
 
         assert exc_info.value.code == "paid_installment_immutable"
 
-    def test_update_paid_installment_notes_allowed(self, user):
+    @no_type_check
+    def test_update_paid_installment_notes_allowed(self, user) -> None:
         """BR-F06 protege campos contábeis, mas permite anotação operacional."""
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
         installment = InstallmentFactory(
