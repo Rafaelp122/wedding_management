@@ -142,7 +142,12 @@ class BudgetCategoryService:
         budget_input = data.pop("budget", None)
 
         if isinstance(budget_input, Budget):
-            budget = budget_input
+            budget = validate_tenant_ownership(
+                company,
+                budget_input,
+                detail="Orçamento mestre não encontrado ou acesso negado.",
+                code="budget_not_found_or_denied",
+            )
         else:
             budget = get_object_or_404_for_tenant(
                 Budget,

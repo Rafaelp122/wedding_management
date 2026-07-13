@@ -10,6 +10,7 @@ from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
+    DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.core.shortcuts import get_object_or_404_for_tenant
@@ -31,6 +32,28 @@ class ExpenseService:
     Garante que gastos reais respeitem o contexto do casamento, os contratos
     e assegura a rastreabilidade estrita da operação.
     """
+
+    @staticmethod
+    def _validate_contract_wedding(
+        category: BudgetCategory, contract: Contract | None
+    ) -> None:
+        """Valida a fronteira cross-wedding entre categoria e contrato.
+
+        Args:
+            category: Categoria financeira que define o casamento da despesa.
+            contract: Contrato logístico opcional vinculado à despesa.
+
+        Raises:
+            DomainIntegrityError: Se o contrato pertencer a outro casamento.
+        """
+        if contract and contract.wedding_id != category.wedding_id:
+            raise DomainIntegrityError(
+                detail=(
+                    "O contrato vinculado deve pertencer ao mesmo casamento da "
+                    "categoria de orçamento."
+                ),
+                code="expense_contract_wedding_mismatch",
+            )
 
     @staticmethod
     def list(
@@ -145,6 +168,12 @@ class ExpenseService:
 
         if isinstance(category_input, BudgetCategory):
             category = category_input
+            validate_tenant_ownership(
+                company,
+                category,
+                detail="Categoria de orçamento não encontrada ou acesso negado.",
+                code="budget_category_not_found_or_denied",
+            )
         else:
             category = get_object_or_404_for_tenant(
                 BudgetCategory,
@@ -161,6 +190,12 @@ class ExpenseService:
         if contract_input:
             if isinstance(contract_input, Contract):
                 contract = contract_input
+                validate_tenant_ownership(
+                    company,
+                    contract,
+                    detail="Contrato inválido ou acesso negado.",
+                    code="contract_not_found_or_denied",
+                )
             else:
                 contract = get_object_or_404_for_tenant(
                     Contract,
@@ -168,6 +203,8 @@ class ExpenseService:
                     contract_input,
                     code="contract_not_found_or_denied",
                 )
+
+        ExpenseService._validate_contract_wedding(category, contract)
 
         num_installments = data.pop("num_installments", None)
         if num_installments is None:
@@ -265,19 +302,36 @@ class ExpenseService:
         Raises:
             ObjectNotFoundError: Se o contrato especificado não for encontrado.
         """
+        resolved_contract = None
         if contract_input:
             if isinstance(contract_input, Contract):
-                instance.contract = contract_input
+                resolved_contract = validate_tenant_ownership(
+                    company,
+                    contract_input,
+                    detail="Contrato inválido ou acesso negado.",
+                    code="contract_not_found_or_denied",
+                )
             else:
-                instance.contract = get_object_or_404_for_tenant(
+                resolved_contract = get_object_or_404_for_tenant(
                     Contract,
                     company,
                     contract_input,
                     code="contract_not_found_or_denied",
                     detail="Contrato inválido ou acesso negado.",
                 )
-        else:
-            instance.contract = None
+
+        if (
+            resolved_contract is not None
+            and resolved_contract.wedding_id != instance.wedding_id
+        ):
+            raise DomainIntegrityError(
+                detail=(
+                    "O contrato vinculado deve pertencer ao mesmo casamento da despesa."
+                ),
+                code="expense_contract_wedding_mismatch",
+            )
+
+        instance.contract = resolved_contract
 
     @staticmethod
     @transaction.atomic
