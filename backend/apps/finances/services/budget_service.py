@@ -100,6 +100,7 @@ class BudgetService:
             Wedding,
             company,
             wedding_input,
+            detail="Casamento não encontrado ou acesso negado.",
             code="wedding_not_found_or_denied",
         )
 

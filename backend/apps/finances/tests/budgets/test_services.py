@@ -9,6 +9,7 @@ Estes testes cobrem as áreas de maior risco identificadas na análise:
 """
 
 from decimal import Decimal
+from typing import no_type_check
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -83,6 +84,23 @@ class TestBudgetServiceCritical:
 
         # Verificar que NÃO foi criado budget para wedding_a (user_b não tem acesso)
         assert Budget.objects.filter(wedding=wedding_a).count() == 0
+
+    @no_type_check
+    def test_create_budget_rejects_wedding_instance_from_other_tenant(self) -> None:
+        """Instância de Wedding pré-carregada também passa por validação tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        wedding_b = WeddingFactory(user_context=user_b)
+        payload = BudgetIn.model_construct(
+            wedding=wedding_b,
+            total_estimated=Decimal("1000.00"),
+            notes="",
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            BudgetService.create(user_a.company, payload)
+
+        assert exc_info.value.code == "wedding_not_found_or_denied"
 
     def test_get_or_create_for_wedding_with_nonexistent_wedding(self, user):
         """

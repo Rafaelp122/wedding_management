@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
@@ -90,6 +91,24 @@ class TestBudgetCategoryServiceCreate:
             BudgetCategoryService.create(user_a.company, BudgetCategoryIn(**data))
 
         assert "budget_not_found_or_denied" in str(exc_info.value.code)
+
+    @no_type_check
+    def test_create_category_rejects_budget_instance_from_other_tenant(self) -> None:
+        """Instância de Budget pré-carregada também passa por validação tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        _, budget_b = _setup_budget(user_b)
+        payload = BudgetCategoryIn.model_construct(
+            budget=budget_b,
+            name="Invasão por instância",
+            description="",
+            allocated_budget=Decimal("1000.00"),
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            BudgetCategoryService.create(user_a.company, payload)
+
+        assert exc_info.value.code == "budget_not_found_or_denied"
 
     def test_create_category_exceeds_budget_cap_raises_error(self, user):
         """

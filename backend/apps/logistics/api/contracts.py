@@ -1,13 +1,9 @@
-import json
-from typing import Any
-
 from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
-from apps.finances.schemas import ExpenseIn
 from apps.logistics.models.contract import Contract
 from apps.logistics.schemas import (
     ContractFullCreateIn,
@@ -18,7 +14,6 @@ from apps.logistics.schemas import (
     ContractUploadIn,
     ContractUploadUrlIn,
     ContractUploadUrlOut,
-    ItemIn,
 )
 from apps.logistics.services.contract_service import ContractService
 from apps.users.auth import require_user
@@ -113,41 +108,9 @@ def create_contract_full(
     Cria contrato com arquivo, itens e despesa em uma única transação atômica.
     """
     user = require_user(request.user)
-
-    contract_in = ContractIn(
-        wedding=payload.wedding,
-        supplier=payload.supplier,
-        name=payload.name,
-        total_amount=payload.total_amount,
-        status=payload.status,
-        description=payload.description,
-        parent=payload.parent,
-    )
-
-    items_list: list[ItemIn] = []
-    raw_items: list[dict[str, Any]] = json.loads(payload.items_data or "[]")
-    for item_dict in raw_items:
-        item_dict["wedding"] = payload.wedding
-        items_list.append(ItemIn(**item_dict))
-
-    expense_in: ExpenseIn | None = None
-    if payload.create_expense:
-        expense_in = ExpenseIn(
-            category=payload.expense_category,  # type: ignore[arg-type]
-            name=payload.name,
-            description=payload.description,
-            estimated_amount=payload.total_amount,
-            actual_amount=payload.total_amount,
-            num_installments=payload.expense_num_installments,
-            first_due_date=payload.expense_first_due_date,
-        )
-
-    contract = ContractService.create_full(
+    contract = ContractService.create_full_from_payload(
         company=user.company,
-        contract_data=contract_in,
-        items_data=items_list or None,
-        expense_data=expense_in,
-        pdf_file_key=payload.pdf_file_key,
+        payload=payload,
     )
     return 201, contract
 

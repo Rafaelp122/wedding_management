@@ -322,6 +322,23 @@ class InstallmentService:
         )
 
         data = payload.model_dump(exclude_unset=True)
+        protected_fields = {"amount", "due_date", "installment_number"}
+        changed_protected_fields = {
+            field
+            for field in protected_fields & data.keys()
+            if data[field] != getattr(instance, field)
+        }
+        if (
+            instance.status == Installment.StatusChoices.PAID
+            and changed_protected_fields
+        ):
+            raise BusinessRuleViolation(
+                detail=(
+                    "Parcelas pagas não podem ter valor, vencimento ou número "
+                    "alterados. Faça a reversão antes de ajustar."
+                ),
+                code="paid_installment_immutable",
+            )
 
         for field, value in data.items():
             setattr(instance, field, value)

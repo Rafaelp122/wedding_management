@@ -14,7 +14,7 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.tenants.models import Company
+from apps.tenants.tests.factories import CompanyFactory
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -23,7 +23,7 @@ def test_benchmark_n_plus_one_resolved():
     print("\n--- ⚡ Iniciando Benchmark de Performance (Verificação de Correção) ---")
 
     # 1. Setup Data
-    company = Company.objects.create(name="Benchmarking Co", slug="benchmarking-co")
+    company = CompanyFactory(name="Benchmarking Co")
     wedding = WeddingFactory(company=company)
     budget = BudgetFactory(wedding=wedding, company=company)
 

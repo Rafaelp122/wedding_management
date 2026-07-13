@@ -1,9 +1,11 @@
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
+from apps.core.tenant import validate_tenant_ownership
 from apps.tenants.tests.factories import CompanyFactory
 from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory
@@ -45,7 +47,6 @@ class TestShortcuts:
         company = CompanyFactory()
         wedding = WeddingFactory(company=company)
 
-        # Apenas para verificar se não explode e chama o método
         result = get_object_or_404_for_tenant(
             Wedding, company, wedding.uuid, select_related=["company"]
         )
@@ -119,3 +120,32 @@ class TestShortcuts:
         )
 
         assert result == wedding
+
+
+@pytest.mark.django_db
+class TestValidateTenantOwnership:
+    @no_type_check
+    def test_validate_tenant_ownership_returns_instance_for_same_tenant(self) -> None:
+        company = CompanyFactory()
+        wedding = WeddingFactory(company=company)
+
+        result = validate_tenant_ownership(company, wedding)
+
+        assert result is wedding
+
+    @no_type_check
+    def test_validate_tenant_ownership_raises_not_found_for_other_tenant(self) -> None:
+        company = CompanyFactory()
+        other_company = CompanyFactory()
+        wedding = WeddingFactory(company=other_company)
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            validate_tenant_ownership(
+                company,
+                wedding,
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            )
+
+        assert exc_info.value.detail == "Casamento não encontrado ou acesso negado."
+        assert exc_info.value.code == "wedding_not_found_or_denied"

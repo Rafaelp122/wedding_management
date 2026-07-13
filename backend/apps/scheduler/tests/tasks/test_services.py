@@ -1,3 +1,4 @@
+from typing import no_type_check
 from uuid import uuid4
 
 import pytest
@@ -70,6 +71,25 @@ class TestTaskServiceCreate:
             TaskService.create(user_a.company, TaskIn(**data))
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
+
+    @no_type_check
+    def test_create_task_rejects_wedding_instance_from_other_tenant(self) -> None:
+        """Instância de Wedding pré-carregada também passa por validação tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        wedding_b = WeddingFactory(user_context=user_b)
+        payload = TaskIn.model_construct(
+            wedding=wedding_b,
+            title="Invasão por instância",
+            description="",
+            due_date=None,
+            is_completed=False,
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            TaskService.create(user_a.company, payload)
+
+        assert exc_info.value.code == "wedding_not_found_or_denied"
 
 
 @pytest.mark.django_db
