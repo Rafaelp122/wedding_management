@@ -431,10 +431,8 @@ class ContractService:
                 company=company,
                 payload=expense_data.model_copy(update={"contract": contract.uuid}),
             )
-            # Otimização: Popula manualmente o cache reverso OneToOne e o expense_id
-            # para garantir que a serialização nos resolvers seja livre de queries.
+            # Otimização: Popula o cache reverso OneToOne para serialização imediata.
             contract.expense = expense
-            contract.expense_id = expense.uuid  # type: ignore[attr-defined]
 
         logger.info(f"Criação completa de Contrato finalizada: uuid={contract.uuid}")
         return contract

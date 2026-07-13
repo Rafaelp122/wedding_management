@@ -4,6 +4,8 @@ from uuid import uuid4
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.finances.schemas import ExpenseIn
@@ -17,6 +19,7 @@ from apps.logistics.models import Contract
 from apps.logistics.schemas import (
     ContractFullCreateIn,
     ContractIn,
+    ContractOut,
     ContractPatchIn,
     ItemIn,
 )
@@ -785,6 +788,13 @@ class TestContractServiceCreateFull:
     """Testes de criação completa de contrato via ContractService.create_full()."""
 
     def _setup(self, user):
+        """
+        Cria o contexto mínimo para criação completa de contratos.
+
+        Returns:
+            tuple[Wedding, Supplier, BudgetCategory]: Casamento, fornecedor e
+            categoria de orçamento do tenant informado.
+        """
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         budget = BudgetFactory(wedding=wedding)
@@ -868,6 +878,16 @@ class TestContractServiceCreateFull:
         )
         assert contract.expense is not None
         assert contract.expense.actual_amount == Decimal("5000.00")
+        assert not hasattr(contract, "expense_id")
+
+        with CaptureQueriesContext(connection) as ctx:
+            data = ContractOut.from_orm(contract)
+
+        assert data.expense_uuid == contract.expense.uuid
+        assert data.has_linked_expense is True
+        assert not any(
+            "finances_expense" in query["sql"] for query in ctx.captured_queries
+        )
 
     def test_create_full_with_all(self, user):
         """Cria contrato completo: file + items + expense."""

@@ -2,14 +2,18 @@ import datetime
 import json
 from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from django.core.exceptions import ObjectDoesNotExist
 from ninja import Field, Schema
 from pydantic import UUID4, field_validator, model_validator
 
 
 if TYPE_CHECKING:
     from apps.logistics.models.contract import Contract
+
+
+_MISSING = object()
 
 
 # ==============================================================================
@@ -144,18 +148,16 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
-        # Otimização de performance: Evita a avaliação eager de getattr e queries
-        # reversas OneToOne.
-        if hasattr(obj, "expense_id"):
-            return obj.expense_id
+        expense_id = getattr(obj, "expense_id", _MISSING)
+        if expense_id is not _MISSING:
+            return cast("UUID4 | None", expense_id)
 
-        # Check __dict__ to avoid query if not loaded
-        if "expense" in obj.__dict__:
-            return obj.expense.uuid if obj.expense else None
-
-        # Fallback to real query if data is missing (ensures correctness)
-        # Note: getattr(obj, 'expense', None) is safe as long as it's not a default arg
-        expense = getattr(obj, "expense", None)
+        expense = obj._state.fields_cache.get("expense")
+        if expense is None:
+            try:
+                expense = obj.expense
+            except ObjectDoesNotExist:
+                return None
         return expense.uuid if expense else None
 
     @staticmethod
@@ -182,16 +184,17 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_has_linked_expense(obj: "Contract") -> bool:
-        # Otimização de performance: Evita a query reversa OneToOne.
-        if hasattr(obj, "expense_id"):
-            return bool(obj.expense_id)
+        expense_id = getattr(obj, "expense_id", _MISSING)
+        if expense_id is not _MISSING:
+            return bool(expense_id)
 
-        # Fallback using __dict__ cache
-        if "expense" in obj.__dict__:
+        if obj._state.fields_cache.get("expense") is not None:
+            return True
+
+        try:
             return obj.expense is not None
-
-        # Fallback to real query if data is missing (ensures correctness)
-        return hasattr(obj, "expense") and obj.expense is not None
+        except ObjectDoesNotExist:
+            return False
 
     @staticmethod
     def resolve_progress_percent(obj: "Contract") -> int:
