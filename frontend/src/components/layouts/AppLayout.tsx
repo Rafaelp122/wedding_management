@@ -89,7 +89,7 @@ export const AppLayout = () => {
                     <ChevronRight className="w-4 h-4 mx-2 text-zinc-300 dark:text-zinc-600" />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-1 hover:text-zinc-900 dark:hover:text-zinc-100 font-semibold text-primary cursor-pointer select-none transition-colors focus:outline-none">
+                        <button className="flex items-center gap-1 hover:text-zinc-900 dark:hover:text-zinc-100 font-semibold text-primary cursor-pointer select-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">
                           {wedding.groom_name} & {wedding.bride_name}
                           <ChevronDown className="w-4 h-4 opacity-75" />
                         </button>
@@ -124,7 +124,7 @@ export const AppLayout = () => {
                   <div className="sm:hidden">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-1 font-semibold text-primary text-base cursor-pointer select-none transition-colors focus:outline-none">
+                        <button className="flex items-center gap-1 font-semibold text-primary text-base cursor-pointer select-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">
                           {wedding.groom_name} & {wedding.bride_name}
                           <ChevronDown className="w-4 h-4 opacity-75" />
                         </button>
