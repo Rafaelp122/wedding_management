@@ -239,10 +239,19 @@ if contract.actual_amount != expense.actual_amount:
 Use `raise ... from e` to preserve the full error trail:
 
 ```python
+from django.db import IntegrityError
+from apps.core.exceptions import DomainIntegrityError
+
 try:
-    contract = Contract.objects.for_tenant(company).get(uuid=uuid)
-except Contract.DoesNotExist as e:
-    raise ObjectNotFoundError(detail="Contract not found.") from e
+    with transaction.atomic():
+        wedding = get_object_or_404_for_tenant(Wedding, company=company, uuid=uuid)
+        wedding.status = "CANCELED"
+        wedding.save()
+except IntegrityError as e:
+    raise DomainIntegrityError(
+        detail="Cannot cancel wedding due to existing contracts.",
+        code="wedding_cancel_conflict",
+    ) from e
 ```
 
 ### Security
