@@ -4,7 +4,7 @@ from uuid import UUID
 from django.db import transaction
 from django.db.models import QuerySet
 
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Task
 from apps.scheduler.schemas import TaskIn, TaskPatchIn
@@ -85,21 +85,13 @@ class TaskService:
         data = payload.model_dump(exclude_unset=True)
         wedding_input = data.pop("wedding", None)
 
-        if isinstance(wedding_input, Wedding):
-            wedding = validate_tenant_ownership(
-                company,
-                wedding_input,
-                detail="Acesso negado ao casamento.",
-                code="wedding_not_found_or_denied",
-            )
-        else:
-            wedding = get_object_or_404_for_tenant(
-                Wedding,
-                company,
-                wedding_input,
-                code="wedding_not_found_or_denied",
-                detail="Acesso negado ao casamento.",
-            )
+        wedding = resolve_tenant_resource(
+            Wedding,
+            company,
+            wedding_input,
+            code="wedding_not_found_or_denied",
+            detail="Acesso negado ao casamento.",
+        )
 
         task = Task(company=company, wedding=wedding, **data)
         task.save()

@@ -31,7 +31,7 @@ from apps.core.services.storage_service import (
     StorageService,
     get_storage_service,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.finances.schemas import ExpenseIn
@@ -361,42 +361,26 @@ class ContractService:
         supplier_input = data.pop("supplier", None)
         pdf_file_key = data.pop("pdf_file_key", None)
 
-        # Resolução do Casamento
-        if isinstance(wedding_input, Wedding):
-            wedding = validate_tenant_ownership(
-                company,
-                wedding_input,
-                detail="Casamento não encontrado ou acesso negado.",
-                code="wedding_not_found_or_denied",
-            )
-        else:
-            wedding = get_object_or_404_for_tenant(
-                Wedding,
-                company,
-                wedding_input,
-                code="wedding_not_found_or_denied",
-            )
+        wedding = resolve_tenant_resource(
+            Wedding,
+            company,
+            wedding_input,
+            detail="Casamento não encontrado ou acesso negado.",
+            code="wedding_not_found_or_denied",
+        )
 
-        # Resolução do Fornecedor
-        if isinstance(supplier_input, Supplier):
-            supplier = validate_tenant_ownership(
-                company,
-                supplier_input,
-                detail="Fornecedor inválido ou acesso negado.",
-                code="supplier_not_found_or_denied",
-            )
-        else:
-            supplier = get_object_or_404_for_tenant(
-                Supplier,
-                company,
-                supplier_input,
-                code="supplier_not_found_or_denied",
-            )
+        supplier = resolve_tenant_resource(
+            Supplier,
+            company,
+            supplier_input,
+            detail="Fornecedor inválido ou acesso negado.",
+            code="supplier_not_found_or_denied",
+        )
 
         parent_input = data.pop("parent", None)
         parent = None
         if parent_input:
-            parent = get_object_or_404_for_tenant(
+            parent = resolve_tenant_resource(
                 Contract,
                 company,
                 parent_input,
@@ -500,24 +484,17 @@ class ContractService:
             ObjectNotFoundError: Se o contrato pai não for encontrado para o tenant.
         """
         parent: Contract | None = None
-        if isinstance(parent_input, Contract):
-            parent = validate_tenant_ownership(
-                company,
-                parent_input,
-                detail="Contrato pai inválido ou acesso negado.",
-                code="parent_contract_not_found_or_denied",
-            )
-        elif parent_input == "":
+        if parent_input == "":
             instance.parent = None
             return
-        else:
-            parent = get_object_or_404_for_tenant(
-                Contract,
-                company,
-                parent_input,
-                detail="Contrato pai inválido ou acesso negado.",
-                code="parent_contract_not_found_or_denied",
-            )
+
+        parent = resolve_tenant_resource(
+            Contract,
+            company,
+            parent_input,
+            detail="Contrato pai inválido ou acesso negado.",
+            code="parent_contract_not_found_or_denied",
+        )
 
         if parent is not None:
             if parent.pk == instance.pk:
@@ -583,21 +560,13 @@ class ContractService:
 
         supplier_input = data.pop("supplier", None)
         if supplier_input:
-            if isinstance(supplier_input, Supplier):
-                instance.supplier = validate_tenant_ownership(
-                    company,
-                    supplier_input,
-                    detail="Fornecedor inválido ou acesso negado.",
-                    code="supplier_not_found_or_denied",
-                )
-            else:
-                instance.supplier = get_object_or_404_for_tenant(
-                    Supplier,
-                    company,
-                    supplier_input,
-                    detail="Fornecedor inválido ou acesso negado.",
-                    code="supplier_not_found_or_denied",
-                )
+            instance.supplier = resolve_tenant_resource(
+                Supplier,
+                company,
+                supplier_input,
+                detail="Fornecedor inválido ou acesso negado.",
+                code="supplier_not_found_or_denied",
+            )
 
         parent_input = data.pop("parent", None)
         if parent_input is not None:

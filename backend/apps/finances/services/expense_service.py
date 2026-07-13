@@ -13,7 +13,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.managers import ExpenseQuerySet
 from apps.finances.models import BudgetCategory, Expense
@@ -166,43 +166,26 @@ class ExpenseService:
 
         category_input = data.pop("category", None)
 
-        if isinstance(category_input, BudgetCategory):
-            category = category_input
-            validate_tenant_ownership(
-                company,
-                category,
-                detail="Categoria de orçamento não encontrada ou acesso negado.",
-                code="budget_category_not_found_or_denied",
-            )
-        else:
-            category = get_object_or_404_for_tenant(
-                BudgetCategory,
-                company,
-                category_input,
-                detail="Categoria de orçamento não encontrada ou acesso negado.",
-                code="budget_category_not_found_or_denied",
-            )
+        category = resolve_tenant_resource(
+            BudgetCategory,
+            company,
+            category_input,
+            detail="Categoria de orçamento não encontrada ou acesso negado.",
+            code="budget_category_not_found_or_denied",
+        )
 
         # 2. Resolução de Contrato (Opcional)
         contract = None
         contract_input = data.pop("contract", None)
 
         if contract_input:
-            if isinstance(contract_input, Contract):
-                contract = contract_input
-                validate_tenant_ownership(
-                    company,
-                    contract,
-                    detail="Contrato inválido ou acesso negado.",
-                    code="contract_not_found_or_denied",
-                )
-            else:
-                contract = get_object_or_404_for_tenant(
-                    Contract,
-                    company,
-                    contract_input,
-                    code="contract_not_found_or_denied",
-                )
+            contract = resolve_tenant_resource(
+                Contract,
+                company,
+                contract_input,
+                detail="Contrato inválido ou acesso negado.",
+                code="contract_not_found_or_denied",
+            )
 
         ExpenseService._validate_contract_wedding(category, contract)
 
@@ -304,21 +287,13 @@ class ExpenseService:
         """
         resolved_contract = None
         if contract_input:
-            if isinstance(contract_input, Contract):
-                resolved_contract = validate_tenant_ownership(
-                    company,
-                    contract_input,
-                    detail="Contrato inválido ou acesso negado.",
-                    code="contract_not_found_or_denied",
-                )
-            else:
-                resolved_contract = get_object_or_404_for_tenant(
-                    Contract,
-                    company,
-                    contract_input,
-                    code="contract_not_found_or_denied",
-                    detail="Contrato inválido ou acesso negado.",
-                )
+            resolved_contract = resolve_tenant_resource(
+                Contract,
+                company,
+                contract_input,
+                code="contract_not_found_or_denied",
+                detail="Contrato inválido ou acesso negado.",
+            )
 
         if (
             resolved_contract is not None
