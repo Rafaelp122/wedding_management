@@ -191,7 +191,7 @@ jobs:
 
       - name: Check API Mock Isolation
         run: |
-          if grep -rn 'vi\.mock.*@/api/generated' frontend/src/ --include='*.test.*' | grep -v '/test-setup.ts'; then
+          if grep -rn -A2 'vi\.mock(' frontend/src/ --include='*.test.*' --include='*.spec.*' | grep '@/api/generated' | grep -v '/test-setup.ts'; then
             echo "ERROR: vi.mock of @/api/generated found in test file. All API mocks must be in test-setup.ts."
             exit 1
           fi

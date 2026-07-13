@@ -69,13 +69,17 @@ export const WeddingsListResponse = zod.object({
 /**
  * @summary Create Wedding
  */
+export const weddingsCreateBodyTemplateOneMax = 50;
+
+
+
 export const WeddingsCreateBody = zod.object({
   "groom_name": zod.string(),
   "bride_name": zod.string(),
   "date": zod.iso.date(),
   "location": zod.string(),
   "expected_guests": zod.union([zod.number(),zod.null()]).optional(),
-  "template": zod.union([zod.string(),zod.null()]).optional()
+  "template": zod.union([zod.string().max(weddingsCreateBodyTemplateOneMax),zod.null()]).optional()
 })
 
 export const weddingsCreateResponseTotalBudgetOneMin = 0;

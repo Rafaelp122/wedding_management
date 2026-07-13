@@ -19,7 +19,7 @@ class WeddingIn(Schema):
     date: datetime.date
     location: str
     expected_guests: int | None = None
-    template: str | None = None
+    template: str | None = Field(None, max_length=50)
 
 
 class WeddingPatchIn(Schema):
