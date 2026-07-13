@@ -39,6 +39,7 @@
 - Dialogs: every `DialogContent` **must** render `DialogTitle` + `DialogDescription`. Use `className="sr-only"` for loading/error/empty states.
 - `isolate: false` — all `vi.mock` calls are shared. Centralize mocks in `test-setup.ts`, never per-file for shared deps.
 - FORBIDDEN `vi.mock("@/api/generated/...")` in test files — all API mocks go in `test-setup.ts` via `registerMockHook`.
+- FORBIDDEN `vi.mock` para hooks customizados de dados (`useBudget`, `useWedding`, `useContract` etc.) em arquivos de teste — centralizar no `test-setup.ts` e registrar com `registerMockHook`. Módulos carregados antes do `vi.mock` não são substituídos com `isolate: false`.
 - Prioritize `getByRole`/`getByLabelText`. Mock Orval hooks with `vi.mock` (only in test-setup). Use `faker` for test data.
 
 ## Workflow
