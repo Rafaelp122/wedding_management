@@ -8,7 +8,7 @@ from django.db.models import QuerySet
 from apps.core.exceptions import (
     BusinessRuleViolation,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Event
 from apps.scheduler.schemas import EventIn, EventPatchIn
@@ -116,16 +116,13 @@ class EventService:
                 code="payment_event_readonly",
             )
 
-        if isinstance(wedding_input, Wedding):
-            wedding = wedding_input
-        else:
-            wedding = get_object_or_404_for_tenant(
-                Wedding,
-                company,
-                wedding_input,
-                code="wedding_not_found_or_denied",
-                detail="Acesso negado ao casamento.",
-            )
+        wedding = resolve_tenant_resource(
+            Wedding,
+            company,
+            wedding_input,
+            code="wedding_not_found_or_denied",
+            detail="Acesso negado ao casamento.",
+        )
 
         event = Event(company=company, wedding=wedding, **data)
         event.save()

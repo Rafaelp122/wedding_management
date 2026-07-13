@@ -11,9 +11,8 @@ from django.db.models import QuerySet
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
-    ObjectNotFoundError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn, InstallmentPatchIn
@@ -252,19 +251,13 @@ class InstallmentService:
         data = payload.model_dump(exclude_unset=True)
 
         expense_input = data.pop("expense", None)
-        if isinstance(expense_input, Expense):
-            expense = expense_input
-        else:
-            try:
-                expense = Expense.objects.for_tenant(company).get(uuid=expense_input)
-            except Expense.DoesNotExist as e:
-                logger.warning(
-                    f"Tentativa de uso de despesa inválida/negada: {expense_input}"
-                )
-                raise ObjectNotFoundError(
-                    detail="Despesa não encontrada ou acesso negado.",
-                    code="expense_not_found_or_denied",
-                ) from e
+        expense = resolve_tenant_resource(
+            Expense,
+            company,
+            expense_input,
+            detail="Despesa não encontrada ou acesso negado.",
+            code="expense_not_found_or_denied",
+        )
 
         # 2. Injeção de Contexto e Instanciação
         installment = Installment(

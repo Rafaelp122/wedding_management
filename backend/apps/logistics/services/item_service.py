@@ -12,7 +12,7 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Contract, Item
 from apps.logistics.schemas import ItemIn, ItemPatchIn
@@ -120,16 +120,12 @@ class ItemService:
 
         Wedding = apps.get_model("weddings", "Wedding")
 
-        if isinstance(wedding_input, Wedding):
-            return wedding_input
-        if isinstance(wedding_input, UUID | str):
-            return get_object_or_404_for_tenant(
-                Wedding,
-                company,
-                wedding_input,
-                code="wedding_not_found_or_denied",
-            )
-        return None
+        return resolve_tenant_resource(
+            Wedding,
+            company,
+            wedding_input,
+            code="wedding_not_found_or_denied",
+        )
 
     @staticmethod
     def _resolve_contract(
@@ -153,10 +149,7 @@ class ItemService:
         if not contract_input:
             return None
 
-        if isinstance(contract_input, Contract):
-            return contract_input
-
-        return get_object_or_404_for_tenant(
+        return resolve_tenant_resource(
             Contract,
             company,
             contract_input,

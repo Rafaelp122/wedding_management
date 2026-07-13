@@ -12,7 +12,7 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     ObjectNotFoundError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.managers import ExpenseQuerySet
 from apps.finances.models import BudgetCategory, Expense
@@ -143,31 +143,25 @@ class ExpenseService:
 
         category_input = data.pop("category", None)
 
-        if isinstance(category_input, BudgetCategory):
-            category = category_input
-        else:
-            category = get_object_or_404_for_tenant(
-                BudgetCategory,
-                company,
-                category_input,
-                detail="Categoria de orçamento não encontrada ou acesso negado.",
-                code="budget_category_not_found_or_denied",
-            )
+        category = resolve_tenant_resource(
+            BudgetCategory,
+            company,
+            category_input,
+            detail="Categoria de orçamento não encontrada ou acesso negado.",
+            code="budget_category_not_found_or_denied",
+        )
 
         # 2. Resolução de Contrato (Opcional)
         contract = None
         contract_input = data.pop("contract", None)
 
         if contract_input:
-            if isinstance(contract_input, Contract):
-                contract = contract_input
-            else:
-                contract = get_object_or_404_for_tenant(
-                    Contract,
-                    company,
-                    contract_input,
-                    code="contract_not_found_or_denied",
-                )
+            contract = resolve_tenant_resource(
+                Contract,
+                company,
+                contract_input,
+                code="contract_not_found_or_denied",
+            )
 
         num_installments = data.pop("num_installments", None)
         if num_installments is None:
@@ -266,16 +260,13 @@ class ExpenseService:
             ObjectNotFoundError: Se o contrato especificado não for encontrado.
         """
         if contract_input:
-            if isinstance(contract_input, Contract):
-                instance.contract = contract_input
-            else:
-                instance.contract = get_object_or_404_for_tenant(
-                    Contract,
-                    company,
-                    contract_input,
-                    code="contract_not_found_or_denied",
-                    detail="Contrato inválido ou acesso negado.",
-                )
+            instance.contract = resolve_tenant_resource(
+                Contract,
+                company,
+                contract_input,
+                code="contract_not_found_or_denied",
+                detail="Contrato inválido ou acesso negado.",
+            )
         else:
             instance.contract = None
 

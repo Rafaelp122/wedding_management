@@ -7,7 +7,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, QuerySet
 
 from apps.core.exceptions import DomainIntegrityError
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.managers import BudgetQuerySet
 from apps.finances.models import Budget
@@ -96,15 +96,12 @@ class BudgetService:
 
         wedding_input = data.pop("wedding", None)
 
-        if isinstance(wedding_input, Wedding):
-            wedding = wedding_input
-        else:
-            wedding = get_object_or_404_for_tenant(
-                Wedding,
-                company,
-                wedding_input,
-                code="wedding_not_found_or_denied",
-            )
+        wedding = resolve_tenant_resource(
+            Wedding,
+            company,
+            wedding_input,
+            code="wedding_not_found_or_denied",
+        )
 
         # 2. Instanciação em Memória
         budget = Budget(company=company, wedding=wedding, **data)

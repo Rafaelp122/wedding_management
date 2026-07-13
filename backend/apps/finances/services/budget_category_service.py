@@ -10,7 +10,7 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.managers import BudgetCategoryQuerySet
 from apps.finances.models import Budget, BudgetCategory
@@ -141,16 +141,13 @@ class BudgetCategoryService:
 
         budget_input = data.pop("budget", None)
 
-        if isinstance(budget_input, Budget):
-            budget = budget_input
-        else:
-            budget = get_object_or_404_for_tenant(
-                Budget,
-                company,
-                budget_input,
-                detail="Orçamento mestre não encontrado ou acesso negado.",
-                code="budget_not_found_or_denied",
-            )
+        budget = resolve_tenant_resource(
+            Budget,
+            company,
+            budget_input,
+            detail="Orçamento mestre não encontrado ou acesso negado.",
+            code="budget_not_found_or_denied",
+        )
 
         # TRAVA DE SEGURANÇA (TOCTOU): lock no budget antes de ler soma das categorias
         budget = (
