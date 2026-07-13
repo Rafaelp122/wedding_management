@@ -121,7 +121,12 @@ class ItemService:
         Wedding = apps.get_model("weddings", "Wedding")
 
         if isinstance(wedding_input, Wedding):
-            return wedding_input
+            return validate_tenant_ownership(
+                company,
+                wedding_input,
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            )
         if isinstance(wedding_input, UUID | str):
             return get_object_or_404_for_tenant(
                 Wedding,
@@ -154,7 +159,12 @@ class ItemService:
             return None
 
         if isinstance(contract_input, Contract):
-            return contract_input
+            return validate_tenant_ownership(
+                company,
+                contract_input,
+                detail="Contrato inválido ou acesso negado.",
+                code="contract_not_found_or_denied",
+            )
 
         return get_object_or_404_for_tenant(
             Contract,

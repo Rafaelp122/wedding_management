@@ -10,6 +10,7 @@ from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
+    DomainIntegrityError,
     ObjectNotFoundError,
 )
 from apps.core.shortcuts import get_object_or_404_for_tenant
@@ -23,6 +24,28 @@ from apps.tenants.models import Company
 
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_contract_wedding(
+    category: BudgetCategory, contract: Contract | None
+) -> None:
+    """Valida a fronteira cross-wedding entre categoria e contrato.
+
+    Args:
+        category: Categoria financeira que define o casamento da despesa.
+        contract: Contrato logístico opcional vinculado à despesa.
+
+    Raises:
+        DomainIntegrityError: Se o contrato pertencer a outro casamento.
+    """
+    if contract and contract.wedding_id != category.wedding_id:
+        raise DomainIntegrityError(
+            detail=(
+                "O contrato vinculado deve pertencer ao mesmo casamento da "
+                "categoria de orçamento."
+            ),
+            code="expense_contract_wedding_mismatch",
+        )
 
 
 class ExpenseService:
@@ -145,6 +168,12 @@ class ExpenseService:
 
         if isinstance(category_input, BudgetCategory):
             category = category_input
+            validate_tenant_ownership(
+                company,
+                category,
+                detail="Categoria de orçamento não encontrada ou acesso negado.",
+                code="budget_category_not_found_or_denied",
+            )
         else:
             category = get_object_or_404_for_tenant(
                 BudgetCategory,
@@ -161,6 +190,12 @@ class ExpenseService:
         if contract_input:
             if isinstance(contract_input, Contract):
                 contract = contract_input
+                validate_tenant_ownership(
+                    company,
+                    contract,
+                    detail="Contrato inválido ou acesso negado.",
+                    code="contract_not_found_or_denied",
+                )
             else:
                 contract = get_object_or_404_for_tenant(
                     Contract,
@@ -168,6 +203,8 @@ class ExpenseService:
                     contract_input,
                     code="contract_not_found_or_denied",
                 )
+
+        _validate_contract_wedding(category, contract)
 
         num_installments = data.pop("num_installments", None)
         if num_installments is None:
@@ -268,6 +305,12 @@ class ExpenseService:
         if contract_input:
             if isinstance(contract_input, Contract):
                 instance.contract = contract_input
+                validate_tenant_ownership(
+                    company,
+                    instance.contract,
+                    detail="Contrato inválido ou acesso negado.",
+                    code="contract_not_found_or_denied",
+                )
             else:
                 instance.contract = get_object_or_404_for_tenant(
                     Contract,
@@ -278,6 +321,17 @@ class ExpenseService:
                 )
         else:
             instance.contract = None
+
+        if (
+            instance.contract is not None
+            and instance.contract.wedding_id != instance.wedding_id
+        ):
+            raise DomainIntegrityError(
+                detail=(
+                    "O contrato vinculado deve pertencer ao mesmo casamento da despesa."
+                ),
+                code="expense_contract_wedding_mismatch",
+            )
 
     @staticmethod
     @transaction.atomic

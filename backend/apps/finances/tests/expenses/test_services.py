@@ -4,7 +4,11 @@ from uuid import uuid4
 
 import pytest
 
-from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
+from apps.core.exceptions import (
+    BusinessRuleViolation,
+    DomainIntegrityError,
+    ObjectNotFoundError,
+)
 from apps.finances.models import Expense, Installment
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.expense_service import ExpenseService
@@ -166,6 +170,32 @@ class TestExpenseServiceCreate:
             ExpenseService.create(user.company, ExpenseIn(**data))
 
         assert exc_info.value.code == "br_f02_violation"
+
+    def test_create_expense_contract_from_other_wedding_raises_error(self, user):
+        """BR-L02: contrato e categoria devem pertencer ao mesmo casamento."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        category = _setup_category(user)
+        other_category = _setup_category(user)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=other_category.wedding,
+            supplier=supplier,
+            total_amount=Decimal("5000.00"),
+        )
+
+        data = {
+            "category": category.uuid,
+            "contract": contract.uuid,
+            "name": "Despesa cross-wedding",
+            "estimated_amount": Decimal("5000.00"),
+            "actual_amount": Decimal("5000.00"),
+        }
+
+        with pytest.raises(DomainIntegrityError) as exc_info:
+            ExpenseService.create(user.company, ExpenseIn(**data))
+
+        assert exc_info.value.code == "expense_contract_wedding_mismatch"
 
     def test_create_expense_triggers_tolerance_zero(self, user):
         """BR-F01: expense com actual_amount > 0 deve gerar parcelas que somam
@@ -341,6 +371,39 @@ class TestExpenseServiceUpdate:
                 ExpensePatchIn(actual_amount=Decimal("1000.00")),
             )
         assert exc.value.code == "amount_change_blocked_by_paid"
+
+    def test_update_expense_contract_from_other_wedding_raises_error(self, user):
+        """BR-L02: despesa não pode ser religada a contrato de outro casamento."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        category = _setup_category(user)
+        other_category = _setup_category(user)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=other_category.wedding,
+            supplier=supplier,
+            total_amount=Decimal("500.00"),
+        )
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+        )
+
+        with pytest.raises(DomainIntegrityError) as exc_info:
+            ExpenseService.update(
+                user.company,
+                expense,
+                ExpensePatchIn(contract=contract.uuid),
+            )
+
+        assert exc_info.value.code == "expense_contract_wedding_mismatch"
 
 
 @pytest.mark.django_db

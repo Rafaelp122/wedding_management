@@ -311,6 +311,53 @@ class TestInstallmentServiceUpdate:
         )
         assert updated.due_date == new_due_date
 
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("amount", Decimal("400.00")),
+            ("due_date", date.today() + timedelta(days=90)),
+            ("installment_number", 2),
+        ],
+    )
+    def test_update_paid_installment_protected_fields_blocked(self, user, field, value):
+        """BR-F06: parcela paga não permite alterar valor, vencimento ou número."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            InstallmentService.update(
+                user.company,
+                installment,
+                InstallmentPatchIn(**{field: value}),
+            )
+
+        assert exc_info.value.code == "paid_installment_immutable"
+
+    def test_update_paid_installment_notes_allowed(self, user):
+        """BR-F06 protege campos contábeis, mas permite anotação operacional."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        updated = InstallmentService.update(
+            user.company,
+            installment,
+            InstallmentPatchIn(notes="Comprovante conferido."),
+        )
+
+        assert updated.notes == "Comprovante conferido."
+
     def test_update_installment_cross_tenant(self, user):
         """Parcela de outro tenant não pode ser atualizada."""
         other_user = UserFactory()

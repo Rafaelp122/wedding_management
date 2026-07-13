@@ -81,6 +81,23 @@ class TestEventServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
+    def test_create_event_rejects_wedding_instance_from_other_tenant(self):
+        """Instância de Wedding pré-carregada também passa por validação tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        wedding_b = WeddingFactory(user_context=user_b)
+        data = {
+            "wedding": wedding_b,
+            "title": "Invasão por instância",
+            "event_type": Event.TypeChoices.OTHER,
+            "start_time": timezone.now() + timedelta(days=1),
+        }
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            EventService.create(user_a.company, data)
+
+        assert exc_info.value.code == "wedding_not_found_or_denied"
+
     def test_create_payment_event_blocked(self, user):
         """BR-S01: Eventos PAYMENT não podem ser criados manualmente."""
         wedding = WeddingFactory(user_context=user)

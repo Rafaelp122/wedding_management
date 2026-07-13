@@ -117,7 +117,12 @@ class EventService:
             )
 
         if isinstance(wedding_input, Wedding):
-            wedding = wedding_input
+            wedding = validate_tenant_ownership(
+                company,
+                wedding_input,
+                detail="Acesso negado ao casamento.",
+                code="wedding_not_found_or_denied",
+            )
         else:
             wedding = get_object_or_404_for_tenant(
                 Wedding,

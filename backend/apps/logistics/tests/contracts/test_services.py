@@ -11,9 +11,15 @@ from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
     ExpenseFactory,
+    InstallmentFactory,
 )
 from apps.logistics.models import Contract
-from apps.logistics.schemas import ContractIn, ContractPatchIn, ItemIn
+from apps.logistics.schemas import (
+    ContractFullCreateIn,
+    ContractIn,
+    ContractPatchIn,
+    ItemIn,
+)
 from apps.logistics.services.contract_service import ContractService
 from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
 from apps.users.tests.factories import UserFactory
@@ -116,6 +122,28 @@ class TestContractServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
+    def test_create_contract_rejects_supplier_instance_from_other_tenant(self):
+        """Instâncias pré-carregadas também precisam respeitar o tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        wedding_a = WeddingFactory(user_context=user_a)
+        supplier_b = SupplierFactory(company=user_b.company)
+        payload = ContractIn.model_construct(
+            wedding=wedding_a,
+            supplier=supplier_b,
+            name="Contrato Cross Tenant",
+            total_amount=Decimal("1000.00"),
+            status=Contract.StatusChoices.DRAFT,
+            description="",
+            parent=None,
+            pdf_file_key=None,
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ContractService.create(user_a.company, payload)
+
+        assert exc_info.value.code == "supplier_not_found_or_denied"
+
     # Regra intencional: supplier inativo não bloqueia criação de contrato.
     # O status is_active do supplier é um controle interno, não uma validação
     # de integridade referencial. O contrato pode referenciar um supplier que
@@ -212,6 +240,19 @@ class TestContractServiceUpdate:
             ContractService.update(
                 user.company, other_contract, ContractPatchIn(description="Hack")
             )
+
+    def test_update_contract_rejects_supplier_instance_from_other_tenant(self, user):
+        """Update não pode receber Supplier pré-carregado de outro tenant."""
+        wedding, supplier = _setup_contract_context(user)
+        other_user = UserFactory()
+        other_supplier = SupplierFactory(company=other_user.company)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+        payload = ContractPatchIn.model_construct(supplier=other_supplier)
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ContractService.update(user.company, contract, payload)
+
+        assert exc_info.value.code == "supplier_not_found_or_denied"
 
 
 @pytest.mark.django_db
@@ -373,6 +414,82 @@ class TestContractServiceListAndGet:
 
         with pytest.raises(ObjectNotFoundError):
             ContractService.get(user_a.company, contract_b.uuid)
+
+    def test_list_annotations_ignore_cross_tenant_related_records(self):
+        """Subqueries de list() não consideram vínculos corrompidos de outro tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        wedding_a = WeddingFactory(user_context=user_a)
+        wedding_b = WeddingFactory(user_context=user_b)
+        supplier_a = SupplierFactory(company=user_a.company)
+        supplier_b = SupplierFactory(company=user_b.company)
+        contract = ContractFactory(wedding=wedding_a, supplier=supplier_a)
+        other_category = BudgetCategoryFactory(
+            budget=BudgetFactory(wedding=wedding_b),
+            wedding=wedding_b,
+        )
+        other_expense = ExpenseFactory(
+            wedding=wedding_b,
+            category=other_category,
+            contract=None,
+        )
+        other_addendum = ContractFactory(wedding=wedding_b, supplier=supplier_b)
+
+        ExpenseFactory._meta.model.objects.filter(pk=other_expense.pk).update(
+            contract=contract,
+            company=user_b.company,
+        )
+        InstallmentFactory(
+            expense=other_expense,
+            amount=Decimal("123.45"),
+            status="PAID",
+            paid_date=date.today(),
+        )
+        Contract.objects.filter(pk=other_addendum.pk).update(parent=contract)
+
+        result = ContractService.list(user_a.company).get(uuid=contract.uuid)
+
+        assert result.expense_id is None
+        assert result.total_paid == Decimal("0.00")
+        assert result.addendums_count == 0
+
+    def test_get_annotations_ignore_cross_tenant_related_records(self):
+        """Subqueries de get() não consideram vínculos corrompidos de outro tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        wedding_a = WeddingFactory(user_context=user_a)
+        wedding_b = WeddingFactory(user_context=user_b)
+        supplier_a = SupplierFactory(company=user_a.company)
+        supplier_b = SupplierFactory(company=user_b.company)
+        contract = ContractFactory(wedding=wedding_a, supplier=supplier_a)
+        other_category = BudgetCategoryFactory(
+            budget=BudgetFactory(wedding=wedding_b),
+            wedding=wedding_b,
+        )
+        other_expense = ExpenseFactory(
+            wedding=wedding_b,
+            category=other_category,
+            contract=None,
+        )
+        other_addendum = ContractFactory(wedding=wedding_b, supplier=supplier_b)
+
+        ExpenseFactory._meta.model.objects.filter(pk=other_expense.pk).update(
+            contract=contract,
+            company=user_b.company,
+        )
+        InstallmentFactory(
+            expense=other_expense,
+            amount=Decimal("123.45"),
+            status="PAID",
+            paid_date=date.today(),
+        )
+        Contract.objects.filter(pk=other_addendum.pk).update(parent=contract)
+
+        result = ContractService.get(user_a.company, contract.uuid)
+
+        assert result.expense_id is None
+        assert result.total_paid == Decimal("0.00")
+        assert result.addendums_count == 0
 
 
 @pytest.mark.django_db
@@ -783,6 +900,55 @@ class TestContractServiceCreateFull:
         assert contract.items.count() == 1
         assert contract.expense is not None
         assert contract.expense.installments.count() == 3
+
+    def test_create_full_from_payload_with_all(self, user):
+        """Cria contrato completo a partir do schema usado pela API."""
+        wedding, supplier, category = self._setup(user)
+        payload = ContractFullCreateIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato Payload",
+            total_amount=Decimal("10000.00"),
+            description="Teste payload",
+            items_data=(
+                '[{"name":"Item 1","quantity":10,"acquisition_status":"PENDING"}]'
+            ),
+            create_expense=True,
+            expense_category=category.uuid,
+            expense_num_installments=2,
+            expense_first_due_date=date.today(),
+            pdf_file_key="contracts/contrato.pdf",
+        )
+
+        contract = ContractService.create_full_from_payload(
+            company=user.company,
+            payload=payload,
+        )
+
+        assert contract.name == "Contrato Payload"
+        assert contract.pdf_file.name == "contracts/contrato.pdf"
+        assert contract.items.count() == 1
+        assert contract.expense is not None
+        assert contract.expense.installments.count() == 2
+
+    def test_create_full_from_payload_cross_tenant_wedding_raises_error(self):
+        """Payload da API preserva isolamento ao delegar a criação completa."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        wedding_b = WeddingFactory(company=user_b.company)
+        supplier_a = SupplierFactory(company=user_a.company)
+        payload = ContractFullCreateIn(
+            wedding=wedding_b.uuid,
+            supplier=supplier_a.uuid,
+            name="Cross Tenant",
+            total_amount=Decimal("5000.00"),
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.create_full_from_payload(
+                company=user_a.company,
+                payload=payload,
+            )
 
     def test_create_full_invalid_file_type(self, user):
         """Arquivo com tipo inválido deve falhar."""

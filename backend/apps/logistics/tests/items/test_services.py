@@ -103,6 +103,25 @@ class TestItemServiceCreate:
 
         assert "contract_not_found_or_denied" in str(exc_info.value.code)
 
+    def test_create_item_rejects_contract_instance_from_other_tenant(self):
+        """Instância de Contract pré-carregada também passa por validação tenant."""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        _, contract_b = _setup_item_context(user_b)
+        payload = ItemIn.model_construct(
+            wedding=None,
+            contract=contract_b,
+            name="Invasão por instância",
+            description="",
+            quantity=1,
+            acquisition_status="PENDING",
+        )
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            ItemService.create(user_a.company, payload)
+
+        assert exc_info.value.code == "contract_not_found_or_denied"
+
     def test_create_item_without_contract_and_wedding_raises_error(self, user):
         """
         Sem contrato E sem wedding, create() levanta BusinessRuleViolation

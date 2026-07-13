@@ -97,7 +97,12 @@ class BudgetService:
         wedding_input = data.pop("wedding", None)
 
         if isinstance(wedding_input, Wedding):
-            wedding = wedding_input
+            wedding = validate_tenant_ownership(
+                company,
+                wedding_input,
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            )
         else:
             wedding = get_object_or_404_for_tenant(
                 Wedding,

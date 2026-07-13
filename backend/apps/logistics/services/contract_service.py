@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from decimal import Decimal
 from typing import Any
@@ -35,7 +36,12 @@ from apps.finances.models import Expense, Installment
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.expense_service import ExpenseService
 from apps.logistics.models import Contract, Supplier
-from apps.logistics.schemas import ContractIn, ContractPatchIn, ItemIn
+from apps.logistics.schemas import (
+    ContractFullCreateIn,
+    ContractIn,
+    ContractPatchIn,
+    ItemIn,
+)
 from apps.logistics.services.item_service import ItemService
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -121,13 +127,14 @@ class ContractService:
                 supplier_phone=F("supplier__phone"),
                 supplier_email=F("supplier__email"),
                 expense_id=Subquery(
-                    Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[:1]
+                    Expense.objects.for_tenant(company)
+                    .filter(contract=OuterRef("pk"))
+                    .values("uuid")[:1]
                 ),
                 total_paid=Coalesce(
                     Subquery(
-                        Installment.objects.filter(
-                            expense__contract=OuterRef("pk"), status="PAID"
-                        )
+                        Installment.objects.for_tenant(company)
+                        .filter(expense__contract=OuterRef("pk"), status="PAID")
                         .values("expense__contract")
                         .annotate(s=Sum("amount"))
                         .values("s")[:1]
@@ -138,7 +145,8 @@ class ContractService:
                 # explosão de JOINs.
                 addendums_count=Coalesce(
                     Subquery(
-                        Contract.objects.filter(parent=OuterRef("pk"))
+                        Contract.objects.for_tenant(company)
+                        .filter(parent=OuterRef("pk"))
                         .values("parent")
                         .annotate(cnt=Count("id"))
                         .values("cnt")[:1]
@@ -184,7 +192,8 @@ class ContractService:
                     # explosão de JOINs.
                     addendums_count=Coalesce(
                         Subquery(
-                            Contract.objects.filter(parent=OuterRef("pk"))
+                            Contract.objects.for_tenant(company)
+                            .filter(parent=OuterRef("pk"))
                             .values("parent")
                             .annotate(cnt=Count("id"))
                             .values("cnt")[:1]
@@ -192,15 +201,93 @@ class ContractService:
                         0,
                     ),
                     expense_id=Subquery(
-                        Expense.objects.filter(contract=OuterRef("pk")).values("uuid")[
-                            :1
-                        ]
+                        Expense.objects.for_tenant(company)
+                        .filter(contract=OuterRef("pk"))
+                        .values("uuid")[:1]
+                    ),
+                    total_paid=Coalesce(
+                        Subquery(
+                            Installment.objects.for_tenant(company)
+                            .filter(expense__contract=OuterRef("pk"), status="PAID")
+                            .values("expense__contract")
+                            .annotate(s=Sum("amount"))
+                            .values("s")[:1]
+                        ),
+                        Value(Decimal("0.00")),
                     ),
                 )
                 .get(uuid=uuid)
             )
         except (Contract.DoesNotExist, ValueError, ValidationError) as e:
             raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
+
+    @staticmethod
+    @transaction.atomic
+    def create_full_from_payload(
+        company: Company,
+        payload: ContractFullCreateIn,
+    ) -> Contract:
+        """
+        Cria um contrato completo a partir do payload HTTP.
+
+        Centraliza a montagem dos DTOs de contrato, itens e despesa para manter a
+        rota responsável apenas por autenticação e delegação.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            payload: Dados validados pelo schema da rota de criação completa.
+
+        Returns:
+            A instância do Contract criada e totalmente populada.
+        """
+        contract_data = ContractIn(
+            wedding=payload.wedding,
+            supplier=payload.supplier,
+            name=payload.name,
+            total_amount=payload.total_amount,
+            status=payload.status,
+            description=payload.description,
+            parent=payload.parent,
+        )
+
+        items_data = ContractService._build_full_items_payload(payload)
+        expense_data = ContractService._build_full_expense_payload(payload)
+
+        return ContractService.create_full(
+            company=company,
+            contract_data=contract_data,
+            items_data=items_data,
+            expense_data=expense_data,
+            pdf_file_key=payload.pdf_file_key,
+        )
+
+    @staticmethod
+    def _build_full_items_payload(
+        payload: ContractFullCreateIn,
+    ) -> _ItemInList | None:
+        raw_items: list[dict[str, Any]] = json.loads(payload.items_data or "[]")
+        items_data = [
+            ItemIn(**{**item_data, "wedding": payload.wedding})
+            for item_data in raw_items
+        ]
+        return items_data or None
+
+    @staticmethod
+    def _build_full_expense_payload(
+        payload: ContractFullCreateIn,
+    ) -> ExpenseIn | None:
+        if not payload.create_expense:
+            return None
+
+        return ExpenseIn(
+            category=payload.expense_category,  # type: ignore[arg-type]
+            name=payload.name,
+            description=payload.description,
+            estimated_amount=payload.total_amount,
+            actual_amount=payload.total_amount,
+            num_installments=payload.expense_num_installments,
+            first_due_date=payload.expense_first_due_date,
+        )
 
     @staticmethod
     @transaction.atomic
@@ -232,7 +319,12 @@ class ContractService:
 
         # Resolução do Casamento
         if isinstance(wedding_input, Wedding):
-            wedding = wedding_input
+            wedding = validate_tenant_ownership(
+                company,
+                wedding_input,
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            )
         else:
             wedding = get_object_or_404_for_tenant(
                 Wedding,
@@ -243,7 +335,12 @@ class ContractService:
 
         # Resolução do Fornecedor
         if isinstance(supplier_input, Supplier):
-            supplier = supplier_input
+            supplier = validate_tenant_ownership(
+                company,
+                supplier_input,
+                detail="Fornecedor inválido ou acesso negado.",
+                code="supplier_not_found_or_denied",
+            )
         else:
             supplier = get_object_or_404_for_tenant(
                 Supplier,
@@ -362,7 +459,12 @@ class ContractService:
         """
         parent: Contract | None = None
         if isinstance(parent_input, Contract):
-            parent = parent_input
+            parent = validate_tenant_ownership(
+                company,
+                parent_input,
+                detail="Contrato pai inválido ou acesso negado.",
+                code="parent_contract_not_found_or_denied",
+            )
         elif parent_input == "":
             instance.parent = None
             return
@@ -440,7 +542,12 @@ class ContractService:
         supplier_input = data.pop("supplier", None)
         if supplier_input:
             if isinstance(supplier_input, Supplier):
-                instance.supplier = supplier_input
+                instance.supplier = validate_tenant_ownership(
+                    company,
+                    supplier_input,
+                    detail="Fornecedor inválido ou acesso negado.",
+                    code="supplier_not_found_or_denied",
+                )
             else:
                 instance.supplier = get_object_or_404_for_tenant(
                     Supplier,
