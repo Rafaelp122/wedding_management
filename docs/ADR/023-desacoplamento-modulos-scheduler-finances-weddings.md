@@ -27,7 +27,7 @@ Além disso, o app `weddings` acumula responsabilidades de dashboard e relatóri
 
 ## Análise de Dependências
 
-Uma análise aprofundada do código revelou que **não existem dependências circulares verdadeiras** no nível de imports Python. O grafo de dependências é direcionado:
+Uma análise aprofundada do código revelou que **não há ciclo de importação em tempo de carga** entre os módulos. O grafo de dependências é direcionado:
 
 ```
 weddings ──→ scheduler (EventService, Task)
@@ -38,7 +38,7 @@ finances  ──→ weddings (Wedding model — import direto)
 finances  ──→ scheduler (EventService, Event — APENAS inline imports)
 ```
 
-As FKs entre modelos (ex: `Event.source_installment = ForeignKey("finances.Installment")`) são resolvidas pelo Django via string reference, não por imports Python. Portanto, o risco de circular import é zero para o par `scheduler` ↔ `finances`.
+As FKs entre modelos (ex: `Event.source_installment = ForeignKey("finances.Installment")`) são resolvidas pelo Django via string reference, não por imports Python. Portanto, não há ciclo de importação em tempo de carga para o par `scheduler` ↔ `finances`. O acoplamento arquitetural entre os domínios permanece, mas é gerenciado por interfaces de serviço.
 
 Os imports inline foram introduzidos por precaução desnecessária.
 
@@ -78,6 +78,8 @@ def create_wedding(*, company, payload):
         )
     return wedding
 ```
+
+> **⚠️ Warning:** `backend/apps/weddings/api/weddings.py` at line 74 calls `WeddingService.create()` directly. If `_apply_template_events` is removed from `WeddingService.create()` (as proposed in item 1), the API endpoint will create weddings without template events. Update `api.py` to call `orchestration.create_wedding()` instead.
 
 ### 4. Extrair DashboardService + summaries para app reporting
 

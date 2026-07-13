@@ -35,7 +35,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     # Gera emails únicos e garantidos contra colisões em execuções paralelas
     email = factory.Sequence(
-        lambda n: f"planner_{n}_{uuid.uuid4().hex[:8]}@example.com"
+        lambda n: f"planner_{n}_{uuid.uuid4().hex}@example.com"
     )
 
     # Usa o Faker configurado como pt_BR (no conftest global) para nomes reais
