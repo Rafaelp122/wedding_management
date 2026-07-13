@@ -262,6 +262,14 @@ vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOrigina
   };
 });
 
+vi.mock("@/features/finances/hooks/useBudget", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/features/finances/hooks/useBudget")>();
+  return {
+    ...mod,
+    useWeddingBudget: registerMockHook(mod.useWeddingBudget),
+  };
+});
+
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
 
