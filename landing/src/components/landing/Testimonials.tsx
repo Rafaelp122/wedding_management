@@ -4,6 +4,7 @@ import type { Testimonial } from "../../data/types";
 import { TESTIMONIALS } from "../../data/landing";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import { Card } from "../ui/card";
 
 export function Testimonials() {
@@ -30,7 +31,7 @@ export function Testimonials() {
     if (!name.trim() || !reviewText.trim()) return;
 
     const newReview: Testimonial = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: name.trim(),
       role: role.trim() || "Assessor(a) de Casamentos",
       text: reviewText.trim(),
@@ -52,6 +53,16 @@ export function Testimonials() {
 
   const activeReview = list[index];
 
+  if (list.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto py-6 px-4">
+        <Card className="bg-card rounded-3xl p-8 md:p-12 border border-border/30 shadow-xl text-center">
+          <p className="text-muted-foreground font-medium">Nenhum depoimento disponível.</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-6 px-4">
       <Card className="bg-card rounded-3xl p-8 md:p-12 border border-border/30 shadow-xl relative overflow-hidden group">
@@ -63,6 +74,7 @@ export function Testimonials() {
               src={activeReview.avatarUrl}
               alt={activeReview.name}
               referrerPolicy="no-referrer"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-primary/10 shadow-lg"
             />
             <div className="mt-4 flex text-amber-500 gap-0.5 justify-center">
@@ -99,7 +111,7 @@ export function Testimonials() {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          
+
           <div className="flex gap-2.5">
             {list.map((_, i) => (
               <button
@@ -130,7 +142,7 @@ export function Testimonials() {
             className="bg-card border border-border/30 rounded-3xl p-6 md:p-8 shadow-lg w-full max-w-2xl space-y-4"
           >
             <h3 className="text-lg font-extrabold text-foreground">Deixe o seu depoimento</h3>
-            
+
             {submitted ? (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
@@ -188,14 +200,14 @@ export function Testimonials() {
 
                 <div>
                   <label className="text-xs font-bold text-foreground block mb-1.5">Seu Depoimento</label>
-                  <textarea
+                  <Textarea
                     placeholder="Conte como o Sim, Aceito! facilitou a sua rotina ou ajudou sua assessoria a poupar tempo e estresse..."
                     value={reviewText}
                     required
                     rows={3}
                     onChange={(e) => setReviewText(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-border text-sm focus:ring-1 focus:ring-primary focus:outline-none bg-muted resize-none"
-                  ></textarea>
+                  />
                 </div>
 
                 <div className="flex gap-3 justify-end pt-2">

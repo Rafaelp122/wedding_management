@@ -4,6 +4,7 @@ import type { Supplier } from "../../data/types";
 import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { Slider } from "../ui/slider";
 
 interface SuppliersCardProps {
   initialItems: Supplier[];
@@ -13,7 +14,7 @@ export function SuppliersCard({ initialItems }: SuppliersCardProps) {
   const [suppliers, setSuppliers] = useState<Supplier[]>(initialItems);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
-  
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState("Fotografia");
@@ -26,7 +27,7 @@ export function SuppliersCard({ initialItems }: SuppliersCardProps) {
     if (!newName.trim()) return;
 
     const newSup: Supplier = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: newName.trim(),
       category: newCategory,
       rating: parseFloat(newRating.toFixed(1)),
@@ -40,7 +41,7 @@ export function SuppliersCard({ initialItems }: SuppliersCardProps) {
   };
 
   const filteredSuppliers = suppliers.filter((sup) => {
-    const matchesSearch = sup.name.toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch = sup.name.toLowerCase().includes(search.toLowerCase()) ||
                           sup.category.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === "Todos" || sup.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -132,8 +133,9 @@ export function SuppliersCard({ initialItems }: SuppliersCardProps) {
           <form onSubmit={handleAddSupplier} className="border-t border-border/20 pt-3.5 space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] font-bold text-muted-foreground block mb-1">Nome do Fornecedor</label>
+                <label htmlFor="supplier-name" className="text-[10px] font-bold text-muted-foreground block mb-1">Nome do Fornecedor</label>
                 <Input
+                  id="supplier-name"
                   type="text"
                   placeholder="Ex: Cerimonial Prime"
                   value={newName}
@@ -143,8 +145,9 @@ export function SuppliersCard({ initialItems }: SuppliersCardProps) {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-muted-foreground block mb-1">Categoria</label>
+                <label htmlFor="supplier-category" className="text-[10px] font-bold text-muted-foreground block mb-1">Categoria</label>
                 <select
+                  id="supplier-category"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   className="w-full px-2.5 py-1.5 border border-border/50 rounded-lg text-xs focus:ring-1 focus:ring-primary focus:outline-none bg-muted"
@@ -157,18 +160,17 @@ export function SuppliersCard({ initialItems }: SuppliersCardProps) {
                 </select>
               </div>
             </div>
-            
+
             <div className="flex gap-4 items-center justify-between">
               <div className="flex-grow">
                 <label className="text-[10px] font-bold text-muted-foreground block mb-1">Avaliação: {newRating.toFixed(1)} ★</label>
-                <input
-                  type="range"
-                  min="3.0"
-                  max="5.0"
-                  step="0.1"
-                  value={newRating}
-                  onChange={(e) => setNewRating(parseFloat(e.target.value))}
-                  className="w-full accent-primary"
+                <Slider
+                  min={3.0}
+                  max={5.0}
+                  step={0.1}
+                  value={[newRating]}
+                  onValueChange={([v]) => setNewRating(v)}
+                  className="w-full"
                 />
               </div>
               <div className="flex gap-2 shrink-0">

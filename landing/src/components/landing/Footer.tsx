@@ -6,14 +6,23 @@ import { Button } from "../ui/button";
 export function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail("");
-      setTimeout(() => setSubscribed(false), 5000);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError("Por favor, insira um e-mail.");
+      return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Por favor, insira um e-mail válido.");
+      return;
+    }
+    setError("");
+    setSubscribed(true);
+    setEmail("");
+    setTimeout(() => setSubscribed(false), 5000);
   };
 
   return (
@@ -62,7 +71,8 @@ export function Footer() {
               <span>Inscrição realizada com sucesso!</span>
             </div>
           ) : (
-            <form onSubmit={handleSubscribe} className="relative flex items-center mt-2">
+            <div>
+              <form onSubmit={handleSubscribe} className="relative flex items-center mt-2">
               <Input
                 type="email"
                 placeholder="Seu e-mail"
@@ -79,6 +89,10 @@ export function Footer() {
                 <Send className="w-4 h-4" />
               </Button>
             </form>
+              {error && (
+                <p className="text-red-500 text-xs font-medium mt-1.5">{error}</p>
+              )}
+            </div>
           )}
         </div>
       </div>

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ChevronDown, Search, HelpCircle, Send, MessageSquare } from "lucide-react";
 import type { FAQItem } from "../../data/types";
-import { FAQ_ITEMS } from "../../data/landing";
+import { FAQ_ITEMS, PLANS } from "../../data/landing";
+import { Input } from "../ui/input";
 
 export function FAQ() {
   const [faqs] = useState<FAQItem[]>(FAQ_ITEMS);
@@ -35,24 +36,25 @@ export function FAQ() {
       const q = userQuestion.toLowerCase();
       if (q.includes("whatsapp") || q.includes("contato") || q.includes("comunicação")) {
         setAiAnswer(
-          "Sim! O Sim, Aceito! possui integração nativa com o WhatsApp. Você pode enviar lembretes de checklist, confirmações de RSVP e atualizações de orçamentos diretamente para o celular dos noivos ou dos fornecedores com um clique."
+          "Sim! O Sim, Aceito! possui integração nativa com o WhatsApp. Você pode enviar lembretes de checklist, confirmações de RSVP e atualizações de orçamentos diretamente para o celular dos noivos ou dos fornecedores com um clique. (Resposta de demonstração)"
         );
       } else if (q.includes("contrato") || q.includes("assinatura") || q.includes("digital")) {
         setAiAnswer(
-          "Com certeza. A assinatura digital de contratos está inclusa a partir do plano Profissional. Você e seus fornecedores podem assinar os termos juridicamente válidos diretamente pela plataforma, economizando tempo e papel."
+          "Com certeza. A assinatura digital de contratos está inclusa a partir do plano Profissional. Você e seus fornecedores podem assinar os termos juridicamente válidos diretamente pela plataforma, economizando tempo e papel. (Resposta de demonstração)"
         );
-      } else if (q.includes("desconto") || q.includes("anual") || q.includes("pagar")) {
-        setAiAnswer(
-          "Oferecemos 20% de desconto no faturamento anual. Você pode assinar via cartão de crédito ou Pix, e cancelar a qualquer momento sem taxas ocultas."
-        );
-      } else {
-        setAiAnswer(
-          "Excelente pergunta! Nossa equipe de sucesso do cliente responderá detalhadamente sobre '" +
-            userQuestion +
-            "' em poucos minutos. Como você está em nosso ambiente de demonstração, sinta-se à vontade para testar as ferramentas de checklist e dashboard financeiro ao lado!"
-        );
-      }
-    }, 1200);
+        } else if (q.includes("desconto") || q.includes("anual") || q.includes("pagar")) {
+          const discount = Math.round((1 - PLANS[0].annualPrice / PLANS[0].monthlyPrice) * 100);
+          setAiAnswer(
+            `Oferecemos ${discount}% de desconto no faturamento anual. Você pode assinar via cartão de crédito ou Pix, e cancelar a qualquer momento sem taxas ocultas. (Resposta de demonstração)`
+          );
+        } else {
+          setAiAnswer(
+            "Excelente pergunta! Nossa equipe de sucesso do cliente responderá detalhadamente sobre '" +
+              userQuestion +
+              "' em poucos minutos. Como você está em nosso ambiente de demonstração, sinta-se à vontade para testar as ferramentas de checklist e dashboard financeiro ao lado!"
+          );
+        }
+      }, 1200);
   };
 
   return (
@@ -71,7 +73,7 @@ export function FAQ() {
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="relative">
             <Search className="absolute left-4 top-3 w-5 h-5 text-muted-foreground/40" />
-            <input
+            <Input
               type="text"
               placeholder="Busque por termos (ex: despesa, parcelamento, testar, relatórios)..."
               value={search}
@@ -104,7 +106,7 @@ export function FAQ() {
 
                   <div
                     className={`transition-all duration-300 ease-in-out px-6 ${
-                      isOpen ? "pb-6 max-h-[500px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+                      isOpen ? "pb-6 max-h-[1000px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
                     }`}
                   >
                     <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
@@ -132,7 +134,7 @@ export function FAQ() {
             </div>
 
             <form onSubmit={handleAskHelpDesk} className="relative flex items-center">
-              <input
+              <Input
                 type="text"
                 placeholder="Digite sua dúvida aqui..."
                 value={userQuestion}

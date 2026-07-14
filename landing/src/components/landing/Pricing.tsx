@@ -12,6 +12,10 @@ interface PricingProps {
 export function Pricing({ onOpenLead }: PricingProps) {
   const [annualBilling, setAnnualBilling] = useState(false);
 
+  const annualBillingDiscount = Math.round(
+    (1 - PLANS[0].annualPrice / PLANS[0].monthlyPrice) * 100
+  );
+
   return (
     <section id="pricing" className="py-20 md:py-28 relative z-10 bg-background">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
@@ -43,18 +47,22 @@ export function Pricing({ onOpenLead }: PricingProps) {
             >
               <span>Anual</span>
               <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${annualBilling ? "bg-white text-primary" : "bg-primary/10 text-primary"}`}>
-                -20%
+                -{annualBillingDiscount}%
               </span>
             </button>
           </div>
         </div>
 
-        <PlanSizer onSelectPlan={() => onOpenLead()} />
+        <PlanSizer onSelectPlan={(planId: string) => onOpenLead()} />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-8">
           {PLANS.map((plan) => {
             const price = annualBilling ? plan.annualPrice : plan.monthlyPrice;
-            return (
+  const annualBillingDiscount = Math.round(
+    (1 - PLANS[0].annualPrice / PLANS[0].monthlyPrice) * 100
+  );
+
+  return (
               <Card
                 key={plan.id}
                 className={`bg-card rounded-3xl p-8 border hover:shadow-xl transition-all duration-300 relative flex flex-col justify-between h-full overflow-visible ${

@@ -26,7 +26,7 @@ export function ChecklistCard({ initialItems }: ChecklistCardProps) {
     if (!newItemText.trim()) return;
 
     const newItem: ChecklistItem = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       text: newItemText.trim(),
       completed: false,
     };
@@ -78,9 +78,12 @@ export function ChecklistCard({ initialItems }: ChecklistCardProps) {
               key={item.id}
               className="flex items-center justify-between group py-1"
             >
-              <label
+              <button
                 onClick={() => handleToggle(item.id)}
                 className="flex items-center gap-3 cursor-pointer select-none flex-grow"
+                type="button"
+                role="checkbox"
+                aria-checked={item.completed}
               >
                 {item.completed ? (
                   <CheckSquare className="w-5 h-5 text-primary fill-primary/10 transition-transform active:scale-90" />
@@ -96,10 +99,10 @@ export function ChecklistCard({ initialItems }: ChecklistCardProps) {
                 >
                   {item.text}
                 </span>
-              </label>
+              </button>
               <button
                 onClick={() => handleDelete(item.id)}
-                className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40"
+                className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring transition-opacity p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40"
                 aria-label="Deletar tarefa"
               >
                 <Trash2 className="w-3.5 h-3.5" />

@@ -24,7 +24,7 @@ export function Header({ activeSection }: HeaderProps) {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -55,6 +55,8 @@ export function Header({ activeSection }: HeaderProps) {
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
               className="text-muted-foreground hover:text-primary transition-colors hover:bg-primary/5 px-4 py-2 rounded-full text-base font-medium flex items-center gap-1.5 cursor-pointer"
             >
               <span>Produtos</span>
@@ -80,7 +82,7 @@ export function Header({ activeSection }: HeaderProps) {
             )}
           </div>
 
-          {navItems.slice(1).map((item) => (
+          {navItems.map((item) => (
             <a
               key={item.href}
               href={item.href}
@@ -135,7 +137,9 @@ export function Header({ activeSection }: HeaderProps) {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 text-muted-foreground hover:text-primary rounded-full hover:bg-primary/5 transition-colors"
-            aria-label="Toggle mobile menu"
+            aria-label="Abrir menu"
+            aria-expanded={mobileMenuOpen}
+            aria-haspopup="true"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

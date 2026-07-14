@@ -1,17 +1,26 @@
 import { useState } from "react";
-import { DollarSign, Landmark, Plus, RefreshCw } from "lucide-react";
+import { Landmark, Plus, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardContent } from "../ui/card";
 
+const formatBRL = (val: number) => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(val);
+};
+
+const INITIAL_TRANSACTIONS = [
+  { id: "t1", desc: "Sinal Casamento Ana & Felipe", value: 3500, type: "recebido" as const },
+  { id: "t2", desc: "Parcela Buffet Bia & Leo", value: 1200, type: "recebido" as const },
+  { id: "t3", desc: "Restante Decoração Carla & Hugo", value: 1800, type: "pendente" as const },
+];
+
 export function FinancialDashboardCard() {
   const [received, setReceived] = useState(24500);
   const [pending, setPending] = useState(3200);
-  const [transactions, setTransactions] = useState([
-    { id: "t1", desc: "Sinal Casamento Ana & Felipe", value: 3500, type: "recebido" },
-    { id: "t2", desc: "Parcela Buffet Bia & Leo", value: 1200, type: "recebido" },
-    { id: "t3", desc: "Restante Decoração Carla & Hugo", value: 1800, type: "pendente" }
-  ]);
+  const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
 
   const [newDesc, setNewDesc] = useState("");
   const [newValue, setNewValue] = useState("");
@@ -29,7 +38,7 @@ export function FinancialDashboardCard() {
     }
 
     const newTx = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       desc: newDesc.trim(),
       value: valNum,
       type: newType,
@@ -43,22 +52,11 @@ export function FinancialDashboardCard() {
   const resetValues = () => {
     setReceived(24500);
     setPending(3200);
-    setTransactions([
-      { id: "t1", desc: "Sinal Casamento Ana & Felipe", value: 3500, type: "recebido" },
-      { id: "t2", desc: "Parcela Buffet Bia & Leo", value: 1200, type: "recebido" },
-      { id: "t3", desc: "Restante Decoração Carla & Hugo", value: 1800, type: "pendente" }
-    ]);
+    setTransactions(INITIAL_TRANSACTIONS);
   };
 
   const receivedRatio = Math.min(100, Math.max(20, (received / 40000) * 100));
   const pendingRatio = Math.min(100, Math.max(10, (pending / 15000) * 100));
-
-  const formatBRL = (val: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(val);
-  };
 
   return (
     <Card className="glass-panel rounded-3xl p-6 hover:-translate-y-1.5 transition-all duration-300 shadow-soft flex flex-col h-full border border-border/30">
@@ -88,8 +86,8 @@ export function FinancialDashboardCard() {
           <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 100">
             <defs>
               <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#630ED4" stopOpacity="0.15" />
-                <stop offset="100%" stopColor="#cbdbf5" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="var(--muted)" stopOpacity="0" />
               </linearGradient>
             </defs>
             <path
@@ -100,13 +98,13 @@ export function FinancialDashboardCard() {
             <path
               d={`M0,80 C50,${90 - receivedRatio / 4} 100,${50 - receivedRatio / 3} 150,${70 - receivedRatio / 2} C200,${85 - pendingRatio / 3} 250,${30 - receivedRatio / 1.5} 300,${50 - receivedRatio / 2} C350,${70 - pendingRatio / 2} 400,${10 + pendingRatio / 5}`}
               fill="none"
-              stroke="#630ED4"
+              style={{ stroke: "var(--primary)" }}
               strokeWidth="3"
               strokeLinecap="round"
               className="transition-all duration-1000"
             ></path>
-            <circle cx="150" cy={70 - receivedRatio / 2} r="5" fill="#630ED4" className="transition-all duration-1000 animate-pulse" />
-            <circle cx="300" cy={50 - receivedRatio / 2} r="5" fill="#630ED4" className="transition-all duration-1000 animate-pulse" />
+            <circle cx="150" cy={70 - receivedRatio / 2} r="5" style={{ fill: "var(--primary)" }} className="transition-all duration-1000 animate-pulse" />
+            <circle cx="300" cy={50 - receivedRatio / 2} r="5" style={{ fill: "var(--primary)" }} className="transition-all duration-1000 animate-pulse" />
           </svg>
           <div className="absolute top-2 left-3 flex gap-2">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary"></span>

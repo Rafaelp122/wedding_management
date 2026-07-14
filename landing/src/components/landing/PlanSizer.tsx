@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Sparkles, Calendar, Users, HelpCircle, ArrowRight } from "lucide-react";
 import { PLANS } from "../../data/landing";
 import { Button } from "../ui/button";
+import { Slider } from "../ui/slider";
+import { Switch } from "../ui/switch";
 
 interface PlanSizerProps {
   onSelectPlan: (planId: string) => void;
@@ -15,6 +17,10 @@ export function PlanSizer({ onSelectPlan }: PlanSizerProps) {
   let recommendedPlanId = "essential";
   let reason = "Ideal para assessores autônomos que realizam poucos casamentos simultâneos e gerenciam tudo sozinhos.";
 
+  // Thresholds de recomendação de plano:
+  // - Enterprise: mais de 15 casamentos/ano OU mais de 5 membros na equipe
+  // - Profissional: mais de 3 casamentos/ano OU mais de 1 membro OU precisa de portal de noivos
+  // - Essencial: padrão para assessores solo com baixo volume
   if (weddings > 15 || teamSize > 5) {
     recommendedPlanId = "enterprise";
     reason = "Agências de grande porte com equipes robustas e alto volume operacional necessitam do controle absoluto e multi-acesso do plano Enterprise.";
@@ -50,13 +56,13 @@ export function PlanSizer({ onSelectPlan }: PlanSizerProps) {
                 <Calendar className="w-4 h-4 text-primary" />
                 <span>Casamentos ativos por ano: <strong className="text-primary text-sm">{weddings}</strong></span>
               </label>
-              <input
-                type="range"
-                min="1"
-                max="30"
-                value={weddings}
-                onChange={(e) => setWeddings(parseInt(e.target.value))}
-                className="w-full accent-primary cursor-pointer h-2 bg-border/30 rounded-lg appearance-none"
+              <Slider
+                min={1}
+                max={30}
+                step={1}
+                value={[weddings]}
+                onValueChange={([v]) => setWeddings(v)}
+                className="w-full"
               />
               <div className="flex justify-between text-[10px] font-semibold text-muted-foreground/70">
                 <span>1 casamento</span>
@@ -70,13 +76,13 @@ export function PlanSizer({ onSelectPlan }: PlanSizerProps) {
                 <Users className="w-4 h-4 text-primary" />
                 <span>Membros na equipe: <strong className="text-primary text-sm">{teamSize}</strong></span>
               </label>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={teamSize}
-                onChange={(e) => setTeamSize(parseInt(e.target.value))}
-                className="w-full accent-primary cursor-pointer h-2 bg-border/30 rounded-lg appearance-none"
+              <Slider
+                min={1}
+                max={10}
+                step={1}
+                value={[teamSize]}
+                onValueChange={([v]) => setTeamSize(v)}
+                className="w-full"
               />
               <div className="flex justify-between text-[10px] font-semibold text-muted-foreground/70">
                 <span>Solo (Eu)</span>
@@ -95,20 +101,21 @@ export function PlanSizer({ onSelectPlan }: PlanSizerProps) {
                   </p>
                 </div>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2 shrink-0">
+                <Switch
+                  id="needs-portal"
                   checked={needsPortal}
-                  onChange={(e) => setNeedsPortal(e.target.checked)}
-                  className="sr-only peer"
+                  onCheckedChange={setNeedsPortal}
                 />
-                <div className="w-10 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-              </label>
+                <label htmlFor="needs-portal" className="sr-only cursor-pointer select-none">
+                  Portal de Noivos
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full lg:w-1/2 bg-card rounded-2xl p-6 shadow-xl border border-border/30 text-center flex flex-col items-center gap-4">
+        <div className="w-full lg:w-1/2 bg-card rounded-2xl p-6 shadow-xl border border-border/30 text-center flex flex-col items-center gap-4" aria-live="polite">
           <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80 bg-primary/5 px-3 py-1 rounded-full border border-primary/20">
             Recomendação de Especialista
           </span>

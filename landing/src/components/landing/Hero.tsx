@@ -67,6 +67,8 @@ export function Hero({ onOpenLead }: HeroProps) {
               src="https://i.pravatar.cc/150?img=47"
               alt="Noivos"
               referrerPolicy="no-referrer"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               className="w-12 h-12 rounded-full object-cover shadow-sm ring-2 ring-primary/20"
             />
             <div>
@@ -80,6 +82,8 @@ export function Hero({ onOpenLead }: HeroProps) {
               src="https://i.pravatar.cc/150?img=32"
               alt="Casal 2"
               referrerPolicy="no-referrer"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               className="w-10 h-10 rounded-full object-cover shadow-sm ring-2 ring-primary/20"
             />
             <div>
@@ -100,13 +104,13 @@ export function Hero({ onOpenLead }: HeroProps) {
               <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 100">
                 <path
                   d="M0,80 C50,80 100,40 150,60 C200,80 250,20 300,40 C350,60 400,10 400,10 L400,100 L0,100 Z"
-                  fill="#630ED4"
+                  fill="var(--primary)"
                   fillOpacity="0.08"
                 ></path>
                 <path
                   d="M0,80 C50,80 100,40 150,60 C200,80 250,20 300,40 C350,60 400,10 400,10"
                   fill="none"
-                  stroke="#630ED4"
+                  style={{ stroke: "var(--primary)" }}
                   strokeWidth="3.5"
                   strokeLinecap="round"
                 ></path>
