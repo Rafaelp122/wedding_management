@@ -21,7 +21,16 @@ from apps.scheduler.schemas import EventIn
 from apps.tenants.models import Company
 
 from ..models import Wedding
-from ..schemas import WeddingIn, WeddingPatchIn
+from ..schemas import (
+    WeddingDashboardCategoryOut,
+    WeddingDashboardInstallmentOut,
+    WeddingDashboardOut,
+    WeddingDashboardTaskOut,
+    WeddingIn,
+    WeddingOut,
+    WeddingOverviewOut,
+    WeddingPatchIn,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -331,6 +340,127 @@ class WeddingService:
                 "despesas vinculadas a ele.",
                 code="wedding_protected_error",
             ) from e
+
+    @staticmethod
+    def overview(company: Company, uuid: UUID | str) -> WeddingOverviewOut:
+        from datetime import date as date_type
+
+        wedding = get_object_or_404_for_tenant(
+            Wedding,
+            company,
+            uuid,
+            select_related=["company"],
+        )
+
+        today = date_type.today()
+        days_until = max(0, (wedding.date - today).days) if wedding.date else 0
+
+        from apps.finances.models import Budget, BudgetCategory, Installment
+        from apps.logistics.models import Contract
+        from apps.scheduler.models import Task
+
+        budget = Budget.objects.for_tenant(company).filter(wedding=wedding).first()
+        total_estimated = budget.total_estimated if budget else 0.0
+        total_spent = getattr(budget, "total_overall_spent", 0) if budget else 0.0
+        budget_pct = (
+            round((float(total_spent) / float(total_estimated)) * 100, 1)
+            if total_estimated > 0
+            else 0.0
+        )
+
+        categories_list = (
+            BudgetCategory.objects.for_tenant(company).filter(budget=budget)
+            if budget
+            else []
+        )
+        categories_summary = [
+            WeddingDashboardCategoryOut(
+                name=cat.name,
+                allocated=str(cat.allocated_budget),
+                spent=str(cat.spent_amount),
+                percentage=(
+                    round(
+                        float(cat.spent_amount) / float(cat.allocated_budget) * 100,
+                        1,
+                    )
+                    if cat.allocated_budget and float(cat.allocated_budget) > 0
+                    else 0.0
+                ),
+            )
+            for cat in categories_list
+        ]
+
+        tasks = Task.objects.for_tenant(company).filter(wedding=wedding)
+        tasks_total = tasks.count()
+        tasks_completed = tasks.filter(is_completed=True).count()
+        urgent_tasks_qs = tasks.filter(
+            is_completed=False, due_date__lte=today
+        ).order_by("due_date")[:5]
+        urgent_tasks_out = [
+            WeddingDashboardTaskOut(uuid=t.uuid, title=t.title, due_date=t.due_date)
+            for t in urgent_tasks_qs
+        ]
+        incomplete_tasks = tasks.filter(is_completed=False).count()
+
+        contracts = Contract.objects.for_tenant(company).filter(wedding=wedding)
+        contracts_total = contracts.count()
+        contracts_signed = contracts.filter(status="SIGNED").count()
+
+        installments = (
+            Installment.objects.for_tenant(company)
+            .filter(wedding=wedding, status__in=["PENDING", "OVERDUE"])
+            .order_by("due_date")[:10]
+        )
+        upcoming_out = [
+            WeddingDashboardInstallmentOut(
+                uuid=i.uuid,
+                installment_number=i.installment_number,
+                amount=str(i.amount),
+                due_date=i.due_date,
+                status=i.status,
+            )
+            for i in installments
+        ]
+        overdue_count = (
+            installments.filter(status="OVERDUE").count()
+            if hasattr(installments, "filter")
+            else sum(1 for i in installments if i.status == "OVERDUE")
+        )
+
+        wedding_out = WeddingOut(
+            uuid=wedding.uuid,
+            groom_name=wedding.groom_name,
+            bride_name=wedding.bride_name,
+            date=wedding.date,
+            location=wedding.location,
+            expected_guests=wedding.expected_guests,
+            status=(
+                wedding.status.value
+                if hasattr(wedding.status, "value")
+                else wedding.status
+            ),
+            template=wedding.template,
+            created_at=wedding.created_at,
+            updated_at=wedding.updated_at,
+            total_budget=total_estimated,
+            overdue_installments=overdue_count,
+            incomplete_tasks=incomplete_tasks,
+        )
+
+        return WeddingOverviewOut(
+            wedding=wedding_out,
+            overview=WeddingDashboardOut(
+                days_until_wedding=days_until,
+                budget_percentage_used=budget_pct,
+                tasks_completed=tasks_completed,
+                tasks_total=tasks_total,
+                contracts_signed=contracts_signed,
+                contracts_total=contracts_total,
+                upcoming_installments=upcoming_out,
+                urgent_tasks=urgent_tasks_out,
+                categories_summary=categories_summary,
+            ),
+        )
 
 
 @transaction.atomic
