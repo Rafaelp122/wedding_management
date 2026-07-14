@@ -1,10 +1,49 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
+
+import { useDashboardSummary, useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { server } from "@/mocks/server";
 
+function mockDashboardData() {
+  vi.mocked(useDashboardSummary).mockReturnValue({
+    data: {
+      pending_installments_7d: "0",
+      urgent_tasks_count: 0,
+      overdue_installments_amount: "0",
+      overdue_installments_count: 0,
+      pending_contracts_count: 0,
+      critical_weddings: [],
+    },
+    isLoading: false,
+  } as any);
+  vi.mocked(useDashboardWedding).mockReturnValue({
+    data: {
+      data: {
+        days_until_wedding: 0,
+        budget_percentage_used: 0,
+        tasks_completed: 0,
+        tasks_total: 0,
+        contracts_signed: 0,
+        contracts_total: 0,
+        upcoming_installments: [],
+        urgent_tasks: [],
+        categories_summary: [],
+      },
+    },
+    isLoading: false,
+  } as any);
+}
+
 describe("DashboardPage", () => {
+  beforeEach(() => {
+    mockDashboardData();
+  });
+
   it("shows loading skeletons initially", () => {
+    vi.mocked(useDashboardSummary).mockReturnValue({ data: undefined, isLoading: true } as any);
+    vi.mocked(useDashboardWedding).mockReturnValue({ data: undefined, isLoading: true } as any);
+
     render(<DashboardPage />);
 
     const skeletons = document.querySelectorAll("[class*='animate-pulse']");
@@ -91,8 +130,6 @@ describe("DashboardPage", () => {
   it("allows filtering by a specific wedding", async () => {
     render(<DashboardPage />);
 
-    // Aguarda o select de filtro aparecer (lookup carregado, isLoading = false)
-    // Usa o id do SelectTrigger pois accessible name do Radix pode não resolver no JSDOM
     await waitFor(() => {
       expect(document.getElementById("wedding-filter")).toBeInTheDocument();
     }, { timeout: 5000 });
@@ -101,9 +138,7 @@ describe("DashboardPage", () => {
     const user = userEvent.setup();
     await user.click(trigger);
 
-    // O mock padrão do Orval gera ao menos 1 casamento no lookup
     const options = await screen.findAllByRole("option");
-    // Deve haver ao menos a opção "Todos os Casamentos" + 1 casamento
     expect(options.length).toBeGreaterThan(1);
   });
 });

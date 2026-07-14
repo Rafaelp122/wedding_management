@@ -243,14 +243,16 @@ vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal)
   };
 });
 
-vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/dashboard/dashboard")>();
-  return {
-    ...mod,
-    useDashboardSummary: registerMockHook(mod.useDashboardSummary),
-    useDashboardWedding: registerMockHook(mod.useDashboardWedding),
-  };
-});
+vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", () => ({
+  useDashboardSummary: vi.fn().mockReturnValue({ data: undefined, isLoading: true }),
+  useDashboardWedding: vi.fn().mockReturnValue({ data: undefined, isLoading: true }),
+  getDashboardSummaryQueryKey: vi.fn(() => ["dashboard-summary"]),
+  getDashboardWeddingQueryKey: vi.fn((uuid: string) => ["dashboard-wedding", uuid]),
+  dashboardSummary: vi.fn(),
+  dashboardWedding: vi.fn(),
+  getDashboardSummaryQueryOptions: vi.fn(),
+  getDashboardWeddingQueryOptions: vi.fn(),
+}));
 
 vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/logistics/logistics")>();
