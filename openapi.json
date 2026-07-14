@@ -763,6 +763,44 @@
         ]
       }
     },
+    "/api/v1/weddings/{uuid}/overview/": {
+      "get": {
+        "operationId": "weddings_overview_read",
+        "summary": "Get Wedding Overview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeddingOverviewOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Weddings"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/dashboard/summary/": {
       "get": {
         "operationId": "dashboard_summary",
@@ -5119,96 +5157,6 @@
         "title": "WeddingPatchIn",
         "type": "object"
       },
-      "CriticalWeddingOut": {
-        "properties": {
-          "uuid": {
-            "format": "uuid4",
-            "title": "Uuid",
-            "type": "string"
-          },
-          "groom_name": {
-            "title": "Groom Name",
-            "type": "string"
-          },
-          "bride_name": {
-            "title": "Bride Name",
-            "type": "string"
-          },
-          "days_until": {
-            "title": "Days Until",
-            "type": "integer"
-          },
-          "incomplete_tasks": {
-            "title": "Incomplete Tasks",
-            "type": "integer"
-          },
-          "pending_installments": {
-            "title": "Pending Installments",
-            "type": "integer"
-          },
-          "overdue_tasks": {
-            "title": "Overdue Tasks",
-            "type": "integer"
-          },
-          "overdue_installments": {
-            "title": "Overdue Installments",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "uuid",
-          "groom_name",
-          "bride_name",
-          "days_until",
-          "incomplete_tasks",
-          "pending_installments",
-          "overdue_tasks",
-          "overdue_installments"
-        ],
-        "title": "CriticalWeddingOut",
-        "type": "object"
-      },
-      "DashboardSummaryOut": {
-        "properties": {
-          "pending_installments_7d": {
-            "title": "Pending Installments 7D",
-            "type": "string"
-          },
-          "urgent_tasks_count": {
-            "title": "Urgent Tasks Count",
-            "type": "integer"
-          },
-          "overdue_installments_amount": {
-            "title": "Overdue Installments Amount",
-            "type": "string"
-          },
-          "overdue_installments_count": {
-            "title": "Overdue Installments Count",
-            "type": "integer"
-          },
-          "pending_contracts_count": {
-            "title": "Pending Contracts Count",
-            "type": "integer"
-          },
-          "critical_weddings": {
-            "items": {
-              "$ref": "#/components/schemas/CriticalWeddingOut"
-            },
-            "title": "Critical Weddings",
-            "type": "array"
-          }
-        },
-        "required": [
-          "pending_installments_7d",
-          "urgent_tasks_count",
-          "overdue_installments_amount",
-          "overdue_installments_count",
-          "pending_contracts_count",
-          "critical_weddings"
-        ],
-        "title": "DashboardSummaryOut",
-        "type": "object"
-      },
       "WeddingDashboardCategoryOut": {
         "properties": {
           "name": {
@@ -5363,6 +5311,112 @@
           "title"
         ],
         "title": "WeddingDashboardTaskOut",
+        "type": "object"
+      },
+      "WeddingOverviewOut": {
+        "properties": {
+          "wedding": {
+            "$ref": "#/components/schemas/WeddingOut"
+          },
+          "overview": {
+            "$ref": "#/components/schemas/WeddingDashboardOut"
+          }
+        },
+        "required": [
+          "wedding",
+          "overview"
+        ],
+        "title": "WeddingOverviewOut",
+        "type": "object"
+      },
+      "CriticalWeddingOut": {
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "groom_name": {
+            "title": "Groom Name",
+            "type": "string"
+          },
+          "bride_name": {
+            "title": "Bride Name",
+            "type": "string"
+          },
+          "days_until": {
+            "title": "Days Until",
+            "type": "integer"
+          },
+          "incomplete_tasks": {
+            "title": "Incomplete Tasks",
+            "type": "integer"
+          },
+          "pending_installments": {
+            "title": "Pending Installments",
+            "type": "integer"
+          },
+          "overdue_tasks": {
+            "title": "Overdue Tasks",
+            "type": "integer"
+          },
+          "overdue_installments": {
+            "title": "Overdue Installments",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uuid",
+          "groom_name",
+          "bride_name",
+          "days_until",
+          "incomplete_tasks",
+          "pending_installments",
+          "overdue_tasks",
+          "overdue_installments"
+        ],
+        "title": "CriticalWeddingOut",
+        "type": "object"
+      },
+      "DashboardSummaryOut": {
+        "properties": {
+          "pending_installments_7d": {
+            "title": "Pending Installments 7D",
+            "type": "string"
+          },
+          "urgent_tasks_count": {
+            "title": "Urgent Tasks Count",
+            "type": "integer"
+          },
+          "overdue_installments_amount": {
+            "title": "Overdue Installments Amount",
+            "type": "string"
+          },
+          "overdue_installments_count": {
+            "title": "Overdue Installments Count",
+            "type": "integer"
+          },
+          "pending_contracts_count": {
+            "title": "Pending Contracts Count",
+            "type": "integer"
+          },
+          "critical_weddings": {
+            "items": {
+              "$ref": "#/components/schemas/CriticalWeddingOut"
+            },
+            "title": "Critical Weddings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pending_installments_7d",
+          "urgent_tasks_count",
+          "overdue_installments_amount",
+          "overdue_installments_count",
+          "pending_contracts_count",
+          "critical_weddings"
+        ],
+        "title": "DashboardSummaryOut",
         "type": "object"
       },
       "PagedSupplierOut": {
