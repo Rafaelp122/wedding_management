@@ -117,3 +117,8 @@ class WeddingDashboardOut(Schema):
 class WeddingByMonthOut(Schema):
     month: int = Field(..., ge=1, le=12)
     count: int = Field(..., ge=0)
+
+
+class WeddingOverviewOut(Schema):
+    wedding: WeddingOut
+    overview: WeddingDashboardOut
