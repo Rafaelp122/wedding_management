@@ -603,7 +603,7 @@ jobs:
       github.event_name == 'pull_request' &&
       !failure() &&
       !cancelled() &&
-      (needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true')
+      (needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.landing == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
