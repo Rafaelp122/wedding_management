@@ -60,7 +60,7 @@ export function Header({ activeSection }: HeaderProps) {
               <span>Produtos</span>
               <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
             </button>
-            
+
             {dropdownOpen && (
               <div className="absolute top-full left-0 mt-2 w-56 bg-card rounded-2xl shadow-xl border border-border/30 py-2">
                 <a href="#features" className="block px-4 py-2.5 text-sm text-muted-foreground hover:bg-primary/5 hover:text-primary transition-colors">
@@ -145,7 +145,7 @@ export function Header({ activeSection }: HeaderProps) {
       {mobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-card border-b border-border shadow-xl p-6 flex flex-col gap-4">
           <div className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider mb-1">Menu</div>
-          
+
           <a
             href="#features"
             onClick={() => setMobileMenuOpen(false)}

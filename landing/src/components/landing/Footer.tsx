@@ -55,7 +55,7 @@ export function Footer() {
           <p className="text-muted-foreground text-sm">
             Inscreva-se na nossa newsletter para receber artigos exclusivos sobre tendências do mercado de casamentos.
           </p>
-          
+
           {subscribed ? (
             <div className="bg-emerald-50 text-emerald-800 p-3.5 rounded-xl border border-emerald-200 flex items-center gap-2 text-xs font-semibold">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />

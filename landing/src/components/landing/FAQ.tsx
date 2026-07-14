@@ -101,7 +101,7 @@ export function FAQ() {
                       }`}
                     />
                   </button>
-                  
+
                   <div
                     className={`transition-all duration-300 ease-in-out px-6 ${
                       isOpen ? "pb-6 max-h-[500px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"

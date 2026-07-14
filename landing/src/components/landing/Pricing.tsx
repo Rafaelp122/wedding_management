@@ -72,7 +72,7 @@ export function Pricing({ onOpenLead }: PricingProps) {
                 <div>
                   <h3 className="text-xl font-black text-foreground mb-1.5">{plan.name}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-6 font-medium">{plan.description}</p>
-                  
+
                   <div className="flex items-baseline gap-1 mb-6">
                     <span className="text-4xl font-black text-foreground">R$ {price}</span>
                     <span className="text-xs text-muted-foreground font-medium">/mês</span>

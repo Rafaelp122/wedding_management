@@ -83,7 +83,7 @@ export function FinancialDashboardCard() {
 
       <CardContent className="bg-muted border border-border/40 rounded-2xl p-5 flex-grow flex flex-col justify-between">
         <h4 className="text-sm font-bold text-foreground mb-3">Dashboard Financeiro</h4>
-        
+
         <div className="h-32 mb-6 relative overflow-hidden rounded-xl bg-card border border-border/20 p-2 shadow-sm">
           <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 100">
             <defs>
