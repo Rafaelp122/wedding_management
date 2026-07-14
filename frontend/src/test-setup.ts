@@ -240,6 +240,8 @@ vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal)
     useWeddingsLookup: registerMockHook(mod.useWeddingsLookup),
     useWeddingsList: registerMockHook(mod.useWeddingsList),
     useWeddingsCreate: registerMockHook(mod.useWeddingsCreate),
+    useWeddingsOverviewRead: registerMockHook(mod.useWeddingsOverviewRead),
+    getWeddingsOverviewReadQueryKey: vi.fn(mod.getWeddingsOverviewReadQueryKey),
   };
 });
 

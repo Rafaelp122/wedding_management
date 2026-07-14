@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen } from "@/test-utils";
 import { WeddingOverview } from "@/features/weddings/components/WeddingOverview";
 import { createMockWedding } from "@/test-data";
 import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
-import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 
-const emptyDashboard: WeddingDashboardOut = {
+const emptyOverview: WeddingDashboardOut = {
   days_until_wedding: 120,
   budget_percentage_used: 35,
   tasks_completed: 3,
@@ -26,21 +25,14 @@ const mockWedding = createMockWedding({
 });
 
 describe("WeddingOverview", () => {
-  beforeEach(() => {
-    vi.mocked(useDashboardWedding).mockReturnValue({
-      data: { data: emptyDashboard },
-      isLoading: false,
-    } as any);
-  });
-
   it("renders couple names", () => {
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(<WeddingOverview wedding={mockWedding} overview={null} />);
 
     expect(screen.getByText("João & Maria")).toBeInTheDocument();
   });
 
   it("renders formatted date and location", () => {
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(<WeddingOverview wedding={mockWedding} overview={null} />);
 
 
 
@@ -50,7 +42,7 @@ describe("WeddingOverview", () => {
   });
 
   it("renders status badge with correct label", () => {
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(<WeddingOverview wedding={mockWedding} overview={null} />);
 
     expect(screen.getByText("Em Andamento")).toBeInTheDocument();
   });
@@ -59,6 +51,7 @@ describe("WeddingOverview", () => {
     render(
       <WeddingOverview
         wedding={createMockWedding({ status: "COMPLETED" })}
+        overview={null}
       />,
     );
 
@@ -66,24 +59,22 @@ describe("WeddingOverview", () => {
   });
 
   it("renders 4 metric cards with dashboard data", () => {
-    const dashboardData: WeddingDashboardOut = {
-      days_until_wedding: 45,
-      budget_percentage_used: 62,
-      tasks_completed: 7,
-      tasks_total: 20,
-      contracts_signed: 3,
-      contracts_total: 8,
-      upcoming_installments: [],
-      urgent_tasks: [],
-      categories_summary: [],
-    };
-
-    vi.mocked(useDashboardWedding).mockReturnValue({
-      data: { data: dashboardData },
-      isLoading: false,
-    } as any);
-
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(
+      <WeddingOverview
+        wedding={mockWedding}
+        overview={{
+          days_until_wedding: 45,
+          budget_percentage_used: 62,
+          tasks_completed: 7,
+          tasks_total: 20,
+          contracts_signed: 3,
+          contracts_total: 8,
+          upcoming_installments: [],
+          urgent_tasks: [],
+          categories_summary: [],
+        }}
+      />,
+    );
 
 
     expect(screen.getByText("Contagem Regressiva")).toBeInTheDocument();
@@ -103,12 +94,7 @@ describe("WeddingOverview", () => {
   });
 
   it("shows fallback values when dashboard data is missing", () => {
-    vi.mocked(useDashboardWedding).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-    } as any);
-
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(<WeddingOverview wedding={mockWedding} overview={null} />);
 
 
     expect(screen.getByText("—")).toBeInTheDocument();
@@ -119,7 +105,7 @@ describe("WeddingOverview", () => {
   });
 
   it("shows empty states when no urgent tasks or upcoming installments", () => {
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(<WeddingOverview wedding={mockWedding} overview={emptyOverview} />);
 
     expect(screen.getByText("Ações Necessárias")).toBeInTheDocument();
     expect(screen.getByText("Tudo em dia por aqui!")).toBeInTheDocument();
@@ -128,20 +114,18 @@ describe("WeddingOverview", () => {
   });
 
   it("shows urgent tasks when present", () => {
-    const dashboardWithTasks: WeddingDashboardOut = {
-      ...emptyDashboard,
-      urgent_tasks: [
-        { uuid: "t-1", title: "Fechar buffet", due_date: "2025-04-01" },
-        { uuid: "t-2", title: "Confirmar igreja", due_date: "2025-04-15" },
-      ],
-    };
-
-    vi.mocked(useDashboardWedding).mockReturnValue({
-      data: { data: dashboardWithTasks },
-      isLoading: false,
-    } as any);
-
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(
+      <WeddingOverview
+        wedding={mockWedding}
+        overview={{
+          ...emptyOverview,
+          urgent_tasks: [
+            { uuid: "t-1", title: "Fechar buffet", due_date: "2025-04-01" },
+            { uuid: "t-2", title: "Confirmar igreja", due_date: "2025-04-15" },
+          ],
+        }}
+      />,
+    );
 
     expect(screen.getByText("Fechar buffet")).toBeInTheDocument();
     expect(screen.getByText("Confirmar igreja")).toBeInTheDocument();
@@ -154,32 +138,30 @@ describe("WeddingOverview", () => {
   });
 
   it("shows upcoming installments when present", () => {
-    const dashboardWithInstallments: WeddingDashboardOut = {
-      ...emptyDashboard,
-      upcoming_installments: [
-        {
-          uuid: "inst-1",
-          installment_number: 3,
-          amount: "1500.00",
-          due_date: "2025-05-10",
-          status: "PENDING",
-        },
-        {
-          uuid: "inst-2",
-          installment_number: 1,
-          amount: "2000.00",
-          due_date: "2025-04-20",
-          status: "OVERDUE",
-        },
-      ],
-    };
-
-    vi.mocked(useDashboardWedding).mockReturnValue({
-      data: { data: dashboardWithInstallments },
-      isLoading: false,
-    } as any);
-
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(
+      <WeddingOverview
+        wedding={mockWedding}
+        overview={{
+          ...emptyOverview,
+          upcoming_installments: [
+            {
+              uuid: "inst-1",
+              installment_number: 3,
+              amount: "1500.00",
+              due_date: "2025-05-10",
+              status: "PENDING",
+            },
+            {
+              uuid: "inst-2",
+              installment_number: 1,
+              amount: "2000.00",
+              due_date: "2025-04-20",
+              status: "OVERDUE",
+            },
+          ],
+        }}
+      />,
+    );
 
     expect(screen.getByText("Parcela #3")).toBeInTheDocument();
     expect(screen.getByText("Parcela #1")).toBeInTheDocument();
@@ -194,7 +176,7 @@ describe("WeddingOverview", () => {
   });
 
   it("renders view planning and view finances links", () => {
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(<WeddingOverview wedding={mockWedding} overview={null} />);
 
     expect(
       screen.getByRole("link", { name: /ver planejamento/i }),
@@ -205,7 +187,7 @@ describe("WeddingOverview", () => {
   });
 
   it("has correct link URLs", () => {
-    render(<WeddingOverview wedding={mockWedding} />);
+    render(<WeddingOverview wedding={mockWedding} overview={null} />);
 
     const planningLink = screen.getByRole("link", {
       name: /ver planejamento/i,
