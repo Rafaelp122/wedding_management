@@ -23,7 +23,8 @@ import type {
   PagedWeddingOut,
   WeddingByMonthOut,
   WeddingLookupOut,
-  WeddingOut
+  WeddingOut,
+  WeddingOverviewOut
 } from '../../models';
 
 
@@ -38,6 +39,8 @@ export const getWeddingsByMonthResponseMock = (): WeddingByMonthOut[] => (Array.
 export const getWeddingsReadResponseMock = (overrideResponse: Partial<Extract<WeddingOut, object>> = {}): WeddingOut => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), groom_name: faker.string.alpha({length: {min: 10, max: 20}}), bride_name: faker.string.alpha({length: {min: 10, max: 20}}), date: faker.date.past().toISOString().slice(0, 10), location: faker.string.alpha({length: {min: 10, max: 20}}), expected_guests: faker.helpers.arrayElement([faker.number.int(),null,]), status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)), template: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), created_at: faker.date.past().toISOString().slice(0, 19) + 'Z', updated_at: faker.date.past().toISOString().slice(0, 19) + 'Z', total_budget: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({min: 0, fractionDigits: 2}),null,]), undefined]), overdue_installments: faker.number.int({min: 0}), incomplete_tasks: faker.number.int({min: 0}), ...overrideResponse})
 
 export const getWeddingsUpdateResponseMock = (overrideResponse: Partial<Extract<WeddingOut, object>> = {}): WeddingOut => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), groom_name: faker.string.alpha({length: {min: 10, max: 20}}), bride_name: faker.string.alpha({length: {min: 10, max: 20}}), date: faker.date.past().toISOString().slice(0, 10), location: faker.string.alpha({length: {min: 10, max: 20}}), expected_guests: faker.helpers.arrayElement([faker.number.int(),null,]), status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)), template: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), created_at: faker.date.past().toISOString().slice(0, 19) + 'Z', updated_at: faker.date.past().toISOString().slice(0, 19) + 'Z', total_budget: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({min: 0, fractionDigits: 2}),null,]), undefined]), overdue_installments: faker.number.int({min: 0}), incomplete_tasks: faker.number.int({min: 0}), ...overrideResponse})
+
+export const getWeddingsOverviewReadResponseMock = (overrideResponse: Partial<Extract<WeddingOverviewOut, object>> = {}): WeddingOverviewOut => ({wedding: {uuid: faker.string.alpha({length: {min: 10, max: 20}}), groom_name: faker.string.alpha({length: {min: 10, max: 20}}), bride_name: faker.string.alpha({length: {min: 10, max: 20}}), date: faker.date.past().toISOString().slice(0, 10), location: faker.string.alpha({length: {min: 10, max: 20}}), expected_guests: faker.helpers.arrayElement([faker.number.int(),null,]), status: faker.helpers.arrayElement(Object.values(WeddingStatusEnum)), template: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), created_at: faker.date.past().toISOString().slice(0, 19) + 'Z', updated_at: faker.date.past().toISOString().slice(0, 19) + 'Z', total_budget: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.number.float({min: 0, fractionDigits: 2}),null,]), undefined]), overdue_installments: faker.number.int({min: 0}), incomplete_tasks: faker.number.int({min: 0})}, overview: {days_until_wedding: faker.number.int(), budget_percentage_used: faker.number.float({fractionDigits: 2}), tasks_completed: faker.number.int(), tasks_total: faker.number.int(), contracts_signed: faker.number.int(), contracts_total: faker.number.int(), upcoming_installments: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), installment_number: faker.number.int(), amount: faker.string.alpha({length: {min: 10, max: 20}}), due_date: faker.date.past().toISOString().slice(0, 10), status: faker.string.alpha({length: {min: 10, max: 20}})})), urgent_tasks: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), title: faker.string.alpha({length: {min: 10, max: 20}}), due_date: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 10),null,]), undefined])})), categories_summary: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({name: faker.string.alpha({length: {min: 10, max: 20}}), allocated: faker.string.alpha({length: {min: 10, max: 20}}), spent: faker.string.alpha({length: {min: 10, max: 20}}), percentage: faker.number.float({fractionDigits: 2})}))}, ...overrideResponse})
 
 
 export const getWeddingsLookupMockHandler = (overrideResponse?: WeddingLookupOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingLookupOut[]> | WeddingLookupOut[]), options?: RequestHandlerOptions) => {
@@ -121,6 +124,18 @@ export const getWeddingsDeleteMockHandler = (overrideResponse?: void | ((info: P
       })
   }, options)
 }
+
+export const getWeddingsOverviewReadMockHandler = (overrideResponse?: WeddingOverviewOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingOverviewOut> | WeddingOverviewOut), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/weddings/:uuid/overview/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getWeddingsOverviewReadResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getWeddingsMock = () => [
   getWeddingsLookupMockHandler(),
   getWeddingsListMockHandler(),
@@ -128,5 +143,6 @@ export const getWeddingsMock = () => [
   getWeddingsByMonthMockHandler(),
   getWeddingsReadMockHandler(),
   getWeddingsUpdateMockHandler(),
-  getWeddingsDeleteMockHandler()
+  getWeddingsDeleteMockHandler(),
+  getWeddingsOverviewReadMockHandler()
 ]

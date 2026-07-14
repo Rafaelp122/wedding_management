@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
