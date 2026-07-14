@@ -4,8 +4,7 @@ import { render, screen, userEvent } from "@/test-utils";
 import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
 import { createMockWedding } from "@/test-data";
 import { useParams } from "react-router-dom";
-import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { useWeddingsRead, useWeddingsOverviewRead } from "@/api/generated/v1/endpoints/weddings/weddings";
 import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
 
 // Mantido: mock de módulo NÃO-Orval (react-router-dom)
@@ -57,11 +56,12 @@ const defaultDashboard: WeddingDashboardOut = {
 describe("WeddingDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useDashboardWedding).mockReturnValue({
-      data: { data: defaultDashboard },
+    vi.mocked(useWeddingsOverviewRead).mockImplementation(() => ({
+      data: { data: { wedding: mockWedding, overview: defaultDashboard } },
       isLoading: false,
       error: null,
-    } as any);
+      queryKey: ["weddings-overview", "some-uuid"],
+    }) as any);
   });
 
   it("shows 'URL inválida' when uuid is undefined", () => {
@@ -211,17 +211,17 @@ describe("WeddingDetailPage", () => {
       error: null,
     } as any);
 
-    vi.mocked(useDashboardWedding).mockReturnValue({
+    vi.mocked(useWeddingsOverviewRead).mockImplementation(() => ({
       data: undefined,
       isLoading: true,
       error: null,
-    } as any);
+    }) as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],
     });
 
-    // Budget is now shown immediately, not behind dashboard loading
+
     expect(screen.getByText("R$ 145k")).toBeInTheDocument();
     // Checklist still depends on dashboard
     expect(screen.queryByText("68%")).not.toBeInTheDocument();
@@ -272,23 +272,26 @@ describe("WeddingDetailPage", () => {
       error: null,
     } as any);
 
-    vi.mocked(useDashboardWedding).mockReturnValue({
+    vi.mocked(useWeddingsOverviewRead).mockImplementation(() => ({
       data: {
         data: {
-          tasks_completed: 0,
-          tasks_total: 0,
-          days_until_wedding: 30,
-          budget_percentage_used: 10,
-          contracts_signed: 1,
-          contracts_total: 2,
-          upcoming_installments: [],
-          urgent_tasks: [],
-          categories_summary: [],
+          wedding: mockWedding,
+          overview: {
+            tasks_completed: 0,
+            tasks_total: 0,
+            days_until_wedding: 30,
+            budget_percentage_used: 10,
+            contracts_signed: 1,
+            contracts_total: 2,
+            upcoming_installments: [],
+            urgent_tasks: [],
+            categories_summary: [],
+          },
         },
       },
       isLoading: false,
       error: null,
-    } as any);
+    }) as any);
 
     render(<WeddingDetailPage />, {
       initialEntries: ["/weddings/some-uuid"],

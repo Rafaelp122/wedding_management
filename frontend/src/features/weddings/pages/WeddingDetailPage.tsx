@@ -28,8 +28,8 @@ export default function WeddingDetailPage() {
   const { data: overviewResponse, isLoading: isLoadingOverview } = useWeddingsOverviewRead(overviewUuid, {
     query: { enabled: !!overviewUuid },
   });
-  const overview = overviewResponse?.data.overview;
-  const overviewWedding = overviewResponse?.data.wedding;
+  const overview = overviewResponse?.data?.overview;
+  const overviewWedding = overviewResponse?.data?.wedding;
   const weddingDate = overviewWedding?.date ?? wedding?.date;
 
   const displayDate = useMemo(() => {
