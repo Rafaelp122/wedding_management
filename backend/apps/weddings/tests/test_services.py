@@ -439,18 +439,54 @@ class TestWeddingServiceListAnnotations:
 
     def test_overview_success(self, user):
         """overview() com dados completos deve retornar WeddingOverviewOut com métricas."""
-        wedding = WeddingFactory(company=user.company, bride_name="Overview Bride", date=date.today() + timedelta(days=60))
+        wedding = WeddingFactory(
+            company=user.company,
+            bride_name="Overview Bride",
+            date=date.today() + timedelta(days=60),
+        )
 
-        budget = BudgetFactory(wedding=wedding, company=user.company, total_estimated=Decimal("10000.00"))
-        BudgetCategoryFactory(budget=budget, name="Buffet", allocated_budget=Decimal("5000.00"), spent_amount=Decimal("2500.00"))
-        ExpenseFactory(wedding=wedding, company=user.company, category=budget.categories.first(), actual_amount=Decimal("2500.00"))
-        InstallmentFactory(wedding=wedding, company=user.company, installment_number=1, amount=Decimal("1000.00"), status="PENDING")
-        InstallmentFactory(wedding=wedding, company=user.company, installment_number=2, amount=Decimal("1000.00"), status="OVERDUE")
-        TaskFactory(wedding=wedding, company=user.company, title="Task 1", is_completed=True)
-        TaskFactory(wedding=wedding, company=user.company, title="Task 2", is_completed=False)
+        budget = BudgetFactory(
+            wedding=wedding, company=user.company, total_estimated=Decimal("10000.00")
+        )
+        BudgetCategoryFactory(
+            budget=budget,
+            name="Buffet",
+            allocated_budget=Decimal("5000.00"),
+            spent_amount=Decimal("2500.00"),
+        )
+        ExpenseFactory(
+            wedding=wedding,
+            company=user.company,
+            category=budget.categories.first(),
+            actual_amount=Decimal("2500.00"),
+        )
+        InstallmentFactory(
+            wedding=wedding,
+            company=user.company,
+            installment_number=1,
+            amount=Decimal("1000.00"),
+            status="PENDING",
+        )
+        InstallmentFactory(
+            wedding=wedding,
+            company=user.company,
+            installment_number=2,
+            amount=Decimal("1000.00"),
+            status="OVERDUE",
+        )
+        TaskFactory(
+            wedding=wedding, company=user.company, title="Task 1", is_completed=True
+        )
+        TaskFactory(
+            wedding=wedding, company=user.company, title="Task 2", is_completed=False
+        )
         supplier = SupplierFactory(company=user.company)
-        ContractFactory(wedding=wedding, company=user.company, supplier=supplier, status="SIGNED")
-        ContractFactory(wedding=wedding, company=user.company, supplier=supplier, status="DRAFT")
+        ContractFactory(
+            wedding=wedding, company=user.company, supplier=supplier, status="SIGNED"
+        )
+        ContractFactory(
+            wedding=wedding, company=user.company, supplier=supplier, status="DRAFT"
+        )
 
         result = WeddingService.overview(company=user.company, uuid=wedding.uuid)
 
