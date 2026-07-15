@@ -366,6 +366,7 @@ class WeddingService:
             company,
             uuid,
             select_related=["company"],
+            code="wedding_not_found_or_denied",
         )
 
         today = date_type.today()
@@ -375,9 +376,14 @@ class WeddingService:
         from apps.logistics.models import Contract
         from apps.scheduler.models import Task
 
-        budget = Budget.objects.for_tenant(company).filter(wedding=wedding).first()
+        budget = (
+            Budget.objects.for_tenant(company)
+            .filter(wedding=wedding)
+            .with_total_spent()
+            .first()
+        )
         total_estimated = budget.total_estimated if budget else 0.0
-        total_spent = getattr(budget, "total_overall_spent", 0) if budget else 0.0
+        total_spent = getattr(budget, "_total_overall_spent", 0) if budget else 0.0
         budget_pct = (
             round((float(total_spent) / float(total_estimated)) * 100, 1)
             if total_estimated > 0
@@ -385,7 +391,9 @@ class WeddingService:
         )
 
         categories_list = (
-            BudgetCategory.objects.for_tenant(company).filter(budget=budget)
+            BudgetCategory.objects.for_tenant(company)
+            .filter(budget=budget)
+            .with_total_spent()
             if budget
             else []
         )
@@ -393,10 +401,10 @@ class WeddingService:
             WeddingDashboardCategoryOut(
                 name=cat.name,
                 allocated=str(cat.allocated_budget),
-                spent=str(cat.spent_amount),
+                spent=str(cat._total_spent),
                 percentage=(
                     round(
-                        float(cat.spent_amount) / float(cat.allocated_budget) * 100,
+                        float(cat._total_spent) / float(cat.allocated_budget) * 100,
                         1,
                     )
                     if cat.allocated_budget and float(cat.allocated_budget) > 0
