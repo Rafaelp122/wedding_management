@@ -266,13 +266,26 @@ vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOrigina
   };
 });
 
-vi.mock("@/features/finances/hooks/useBudget", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/features/finances/hooks/useBudget")>();
-  return {
-    ...mod,
-    useWeddingBudget: registerMockHook(mod.useWeddingBudget),
-  };
-});
+vi.mock("@/features/finances/hooks/useBudget", () => ({
+  useWeddingBudget: vi.fn().mockReturnValue({
+    budget: undefined,
+    categories: [],
+    isLoading: true,
+    budgetError: null,
+    isEditing: false,
+    editTotal: "",
+    isSaving: false,
+    totalEstimated: 0,
+    totalAllocated: 0,
+    totalSpent: 0,
+    progressPercentage: 0,
+    progressColor: "bg-green-500",
+    setEditTotal: vi.fn(),
+    handleEditInit: vi.fn(),
+    handleSave: vi.fn(),
+    handleCancelEdit: vi.fn(),
+  }),
+}));
 
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
