@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@/test-utils";
 import { WeddingBudget } from "@/features/finances/components/budgets/Budget";
