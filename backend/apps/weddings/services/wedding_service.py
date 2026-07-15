@@ -374,8 +374,8 @@ class WeddingService:
         today = date_type.today()
         days_until = max(0, (wedding.date - today).days) if wedding.date else 0
 
+        from apps.finances.managers import BudgetCategoryQuerySet, BudgetQuerySet
         from apps.finances.models import Budget, BudgetCategory, Installment
-        from apps.finances.managers import BudgetQuerySet, BudgetCategoryQuerySet
         from apps.logistics.models import Contract
         from apps.scheduler.models import Task
 
