@@ -107,10 +107,11 @@ def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
 
 
 @router.get(
-    "/{uuid}/overview/",
-    response=WeddingOverviewOut,
+    "/{uuid:uuid}/overview/",
+    response={200: WeddingOverviewOut, **READ_ERROR_RESPONSES},
     operation_id="weddings_overview_read",
 )
 def get_wedding_overview(request: AuthRequest, uuid: UUID4) -> WeddingOverviewOut:
+    """Retorna visão geral do casamento com métricas de finanças, agenda e contratos."""
     user = require_user(request.user)
     return WeddingService.overview(company=user.company, uuid=uuid)

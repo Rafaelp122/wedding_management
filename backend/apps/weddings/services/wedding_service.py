@@ -343,6 +343,22 @@ class WeddingService:
 
     @staticmethod
     def overview(company: Company, uuid: UUID | str) -> WeddingOverviewOut:
+        """
+        Retorna visão geral do casamento com métricas agregadas.
+
+        Busca dados de orçamento, tarefas, contratos e parcelas do casamento
+        para compor a visão geral usada na tela de detalhes.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            uuid: UUID do casamento a ser consultado.
+
+        Returns:
+            WeddingOverviewOut com dados do casamento e métricas.
+
+        Raises:
+            ObjectNotFoundError: Se o casamento não existir ou não pertencer ao tenant.
+        """
         from datetime import date as date_type
 
         wedding = get_object_or_404_for_tenant(
@@ -422,9 +438,9 @@ class WeddingService:
             for i in installments
         ]
         overdue_count = (
-            installments.filter(status="OVERDUE").count()
-            if hasattr(installments, "filter")
-            else sum(1 for i in installments if i.status == "OVERDUE")
+            Installment.objects.for_tenant(company)
+            .filter(wedding=wedding, status="OVERDUE")
+            .count()
         )
 
         wedding_out = WeddingOut(
