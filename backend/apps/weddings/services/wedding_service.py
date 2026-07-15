@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from datetime import datetime, time, timedelta
+from typing import cast
 from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -30,6 +31,7 @@ from ..schemas import (
     WeddingOut,
     WeddingOverviewOut,
     WeddingPatchIn,
+    WeddingStatusEnum,
 )
 
 
@@ -373,13 +375,14 @@ class WeddingService:
         days_until = max(0, (wedding.date - today).days) if wedding.date else 0
 
         from apps.finances.models import Budget, BudgetCategory, Installment
+        from apps.finances.managers import BudgetQuerySet, BudgetCategoryQuerySet
         from apps.logistics.models import Contract
         from apps.scheduler.models import Task
 
         budget = (
-            Budget.objects.for_tenant(company)
-            .filter(wedding=wedding)
+            cast(BudgetQuerySet, Budget.objects.for_tenant(company))
             .with_total_spent()
+            .filter(wedding=wedding)
             .first()
         )
         total_estimated = budget.total_estimated if budget else 0.0
@@ -391,9 +394,9 @@ class WeddingService:
         )
 
         categories_list = (
-            BudgetCategory.objects.for_tenant(company)
-            .filter(budget=budget)
+            cast(BudgetCategoryQuerySet, BudgetCategory.objects.for_tenant(company))
             .with_total_spent()
+            .filter(budget=budget)
             if budget
             else []
         )
@@ -459,9 +462,9 @@ class WeddingService:
             location=wedding.location,
             expected_guests=wedding.expected_guests,
             status=(
-                wedding.status.value
-                if hasattr(wedding.status, "value")
-                else wedding.status
+                WeddingStatusEnum(wedding.status)
+                if isinstance(wedding.status, str)
+                else WeddingStatusEnum(wedding.status.value)
             ),
             template=wedding.template,
             created_at=wedding.created_at,

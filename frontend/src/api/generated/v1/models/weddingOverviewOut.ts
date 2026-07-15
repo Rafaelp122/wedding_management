@@ -7,6 +7,9 @@
 import type { WeddingDashboardOut } from './weddingDashboardOut';
 import type { WeddingOut } from './weddingOut';
 
+/**
+ * Visão geral do casamento com métricas de finanças, agenda e contratos.
+ */
 export interface WeddingOverviewOut {
   wedding: WeddingOut;
   overview: WeddingDashboardOut;

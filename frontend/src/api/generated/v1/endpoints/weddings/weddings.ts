@@ -623,6 +623,7 @@ export const useWeddingsDelete = <TError = ErrorType<ErrorResponse>,
       return useMutation(getWeddingsDeleteMutationOptions(options), queryClient);
     }
     /**
+ * Retorna visão geral do casamento com métricas de finanças, agenda e contratos.
  * @summary Get Wedding Overview
  */
 export const weddingsOverviewRead = (
@@ -647,7 +648,7 @@ export const getWeddingsOverviewReadQueryKey = (uuid: string,) => {
     }
 
 
-export const getWeddingsOverviewReadQueryOptions = <TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<unknown>>(uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getWeddingsOverviewReadQueryOptions = <TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -666,10 +667,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type WeddingsOverviewReadQueryResult = NonNullable<Awaited<ReturnType<typeof weddingsOverviewRead>>>
-export type WeddingsOverviewReadQueryError = ErrorType<unknown>
+export type WeddingsOverviewReadQueryError = ErrorType<ErrorResponse>
 
 
-export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<unknown>>(
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
  uuid: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof weddingsOverviewRead>>,
@@ -679,7 +680,7 @@ export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddin
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<unknown>>(
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
  uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof weddingsOverviewRead>>,
@@ -689,7 +690,7 @@ export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddin
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<unknown>>(
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
  uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -697,7 +698,7 @@ export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddin
  * @summary Get Wedding Overview
  */
 
-export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<unknown>>(
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
  uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

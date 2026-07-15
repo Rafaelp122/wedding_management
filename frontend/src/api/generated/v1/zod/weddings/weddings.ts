@@ -213,6 +213,7 @@ export const WeddingsDeleteParams = zod.object({
 export const WeddingsDeleteResponse = zod.void()
 
 /**
+ * Retorna visão geral do casamento com métricas de finanças, agenda e contratos.
  * @summary Get Wedding Overview
  */
 export const WeddingsOverviewReadParams = zod.object({
@@ -271,5 +272,5 @@ export const WeddingsOverviewReadResponse = zod.object({
   "percentage": zod.number()
 }))
 })
-})
+}).describe('Visão geral do casamento com métricas de finanças, agenda e contratos.')
 

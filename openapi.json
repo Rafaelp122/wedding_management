@@ -789,8 +789,19 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
+        "description": "Retorna visão geral do casamento com métricas de finanças, agenda e contratos.",
         "tags": [
           "Weddings"
         ],
@@ -5314,6 +5325,7 @@
         "type": "object"
       },
       "WeddingOverviewOut": {
+        "description": "Visão geral do casamento com métricas de finanças, agenda e contratos.",
         "properties": {
           "wedding": {
             "$ref": "#/components/schemas/WeddingOut"
