@@ -117,3 +117,10 @@ class WeddingDashboardOut(Schema):
 class WeddingByMonthOut(Schema):
     month: int = Field(..., ge=1, le=12)
     count: int = Field(..., ge=0)
+
+
+class WeddingOverviewOut(Schema):
+    """Visão geral do casamento com métricas de finanças, agenda e contratos."""
+
+    wedding: WeddingOut
+    overview: WeddingDashboardOut

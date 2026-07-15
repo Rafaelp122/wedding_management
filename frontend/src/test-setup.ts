@@ -240,17 +240,21 @@ vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal)
     useWeddingsLookup: registerMockHook(mod.useWeddingsLookup),
     useWeddingsList: registerMockHook(mod.useWeddingsList),
     useWeddingsCreate: registerMockHook(mod.useWeddingsCreate),
+    useWeddingsOverviewRead: registerMockHook(mod.useWeddingsOverviewRead),
+    getWeddingsOverviewReadQueryKey: vi.fn(mod.getWeddingsOverviewReadQueryKey),
   };
 });
 
-vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/dashboard/dashboard")>();
-  return {
-    ...mod,
-    useDashboardSummary: registerMockHook(mod.useDashboardSummary),
-    useDashboardWedding: registerMockHook(mod.useDashboardWedding),
-  };
-});
+vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", () => ({
+  useDashboardSummary: vi.fn().mockReturnValue({ data: undefined, isLoading: true }),
+  useDashboardWedding: vi.fn().mockReturnValue({ data: undefined, isLoading: true }),
+  getDashboardSummaryQueryKey: vi.fn(() => ["dashboard-summary"]),
+  getDashboardWeddingQueryKey: vi.fn((uuid: string) => ["dashboard-wedding", uuid]),
+  dashboardSummary: vi.fn(),
+  dashboardWedding: vi.fn(),
+  getDashboardSummaryQueryOptions: vi.fn(),
+  getDashboardWeddingQueryOptions: vi.fn(),
+}));
 
 vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/logistics/logistics")>();
@@ -262,13 +266,26 @@ vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOrigina
   };
 });
 
-vi.mock("@/features/finances/hooks/useBudget", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/features/finances/hooks/useBudget")>();
-  return {
-    ...mod,
-    useWeddingBudget: registerMockHook(mod.useWeddingBudget),
-  };
-});
+vi.mock("@/features/finances/hooks/useBudget", () => ({
+  useWeddingBudget: vi.fn().mockReturnValue({
+    budget: undefined,
+    categories: [],
+    isLoading: true,
+    budgetError: null,
+    isEditing: false,
+    editTotal: "",
+    isSaving: false,
+    totalEstimated: 0,
+    totalAllocated: 0,
+    totalSpent: 0,
+    progressPercentage: 0,
+    progressColor: "bg-green-500",
+    setEditTotal: vi.fn(),
+    handleEditInit: vi.fn(),
+    handleSave: vi.fn(),
+    handleCancelEdit: vi.fn(),
+  }),
+}));
 
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";

@@ -212,3 +212,65 @@ export const WeddingsDeleteParams = zod.object({
 
 export const WeddingsDeleteResponse = zod.void()
 
+/**
+ * Retorna visão geral do casamento com métricas de finanças, agenda e contratos.
+ * @summary Get Wedding Overview
+ */
+export const WeddingsOverviewReadParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const weddingsOverviewReadResponseWeddingTotalBudgetOneMin = 0;
+
+export const weddingsOverviewReadResponseWeddingOverdueInstallmentsDefault = 0;
+export const weddingsOverviewReadResponseWeddingOverdueInstallmentsMin = 0;
+
+export const weddingsOverviewReadResponseWeddingIncompleteTasksDefault = 0;
+export const weddingsOverviewReadResponseWeddingIncompleteTasksMin = 0;
+
+
+
+export const WeddingsOverviewReadResponse = zod.object({
+  "wedding": zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.number(),zod.null()]),
+  "status": zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.number().min(weddingsOverviewReadResponseWeddingTotalBudgetOneMin),zod.null()]).optional(),
+  "overdue_installments": zod.number().min(weddingsOverviewReadResponseWeddingOverdueInstallmentsMin).default(weddingsOverviewReadResponseWeddingOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.number().min(weddingsOverviewReadResponseWeddingIncompleteTasksMin).default(weddingsOverviewReadResponseWeddingIncompleteTasksDefault)
+}),
+  "overview": zod.object({
+  "days_until_wedding": zod.number(),
+  "budget_percentage_used": zod.number(),
+  "tasks_completed": zod.number(),
+  "tasks_total": zod.number(),
+  "contracts_signed": zod.number(),
+  "contracts_total": zod.number(),
+  "upcoming_installments": zod.array(zod.object({
+  "uuid": zod.string(),
+  "installment_number": zod.number(),
+  "amount": zod.string(),
+  "due_date": zod.iso.date(),
+  "status": zod.string()
+})),
+  "urgent_tasks": zod.array(zod.object({
+  "uuid": zod.string(),
+  "title": zod.string(),
+  "due_date": zod.union([zod.iso.date(),zod.null()]).optional()
+})),
+  "categories_summary": zod.array(zod.object({
+  "name": zod.string(),
+  "allocated": zod.string(),
+  "spent": zod.string(),
+  "percentage": zod.number()
+}))
+})
+}).describe('Visão geral do casamento com métricas de finanças, agenda e contratos.')
+

@@ -11,7 +11,7 @@ import {
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -21,12 +21,11 @@ import { formatCurrencyBRCompact, formatDateBR } from "@/lib/formatters";
 
 interface WeddingOverviewProps {
   wedding: WeddingOut;
+  overview?: WeddingDashboardOut | null;
 }
 
-export function WeddingOverview({ wedding }: WeddingOverviewProps) {
+export function WeddingOverview({ wedding, overview }: WeddingOverviewProps) {
   const statusInfo = getWeddingStatusInfo(wedding.status);
-  const { data } = useDashboardWedding(wedding.uuid);
-  const overview = data?.data;
 
   const urgentTasks = overview?.urgent_tasks ?? [];
   const upcomingInstallments = overview?.upcoming_installments ?? [];

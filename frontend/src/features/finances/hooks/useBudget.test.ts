@@ -1,6 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeAll } from "vitest";
 import { renderHook, waitFor, act } from "@/test-utils";
-import { useWeddingBudget } from "@/features/finances/hooks/useBudget";
+import type { useWeddingBudget as UseWeddingBudgetType } from "@/features/finances/hooks/useBudget";
+
+let useWeddingBudget: typeof UseWeddingBudgetType;
+
+beforeAll(async () => {
+  const mod = await vi.importActual<typeof import("@/features/finances/hooks/useBudget")>(
+    "@/features/finances/hooks/useBudget",
+  );
+  useWeddingBudget = mod.useWeddingBudget;
+});
 
 describe("useWeddingBudget", () => {
   const weddingUuid = "test-wedding-uuid";

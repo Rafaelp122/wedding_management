@@ -9,6 +9,7 @@ import {
 import { useSearchParams } from "react-router-dom";
 
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { WeddingOverview } from "./WeddingOverview";
@@ -19,9 +20,10 @@ import { WeddingChecklistTab } from "@/features/scheduler/components/tasks/Check
 
 interface WeddingDetailTabsProps {
   wedding: WeddingOut;
+  overview?: WeddingDashboardOut | null;
 }
 
-export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
+export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "general";
 
@@ -74,7 +76,7 @@ export function WeddingDetailTabs({ wedding }: WeddingDetailTabsProps) {
       </TabsList>
 
       <TabsContent value="general" className="space-y-4 pt-4">
-        <WeddingOverview wedding={wedding} />
+        <WeddingOverview wedding={wedding} overview={overview} />
       </TabsContent>
 
       <TabsContent value="finances" className="space-y-4 pt-4">

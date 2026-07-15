@@ -14,6 +14,7 @@ from apps.weddings.schemas import (
     WeddingIn,
     WeddingLookupOut,
     WeddingOut,
+    WeddingOverviewOut,
     WeddingPatchIn,
 )
 from apps.weddings.services import WeddingService
@@ -103,3 +104,14 @@ def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     instance = WeddingService.get(company=user.company, uuid=uuid)
     WeddingService.delete(company=user.company, instance=instance)
     return 204, None
+
+
+@router.get(
+    "/{uuid:uuid}/overview/",
+    response={200: WeddingOverviewOut, **READ_ERROR_RESPONSES},
+    operation_id="weddings_overview_read",
+)
+def get_wedding_overview(request: AuthRequest, uuid: UUID4) -> WeddingOverviewOut:
+    """Retorna visão geral do casamento com métricas de finanças, agenda e contratos."""
+    user = require_user(request.user)
+    return WeddingService.overview(company=user.company, uuid=uuid)

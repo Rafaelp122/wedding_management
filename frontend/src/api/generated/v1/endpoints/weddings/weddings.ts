@@ -30,6 +30,7 @@ import type {
   WeddingIn,
   WeddingLookupOut,
   WeddingOut,
+  WeddingOverviewOut,
   WeddingPatchIn,
   WeddingsByMonthParams,
   WeddingsListParams
@@ -621,3 +622,96 @@ export const useWeddingsDelete = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getWeddingsDeleteMutationOptions(options), queryClient);
     }
+    /**
+ * Retorna visão geral do casamento com métricas de finanças, agenda e contratos.
+ * @summary Get Wedding Overview
+ */
+export const weddingsOverviewRead = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOverviewOut>(
+      {url: `/api/v1/weddings/${uuid}/overview/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsOverviewReadQueryKey = (uuid: string,) => {
+    return [
+    `/api/v1/weddings/${uuid}/overview/`
+    ] as const;
+    }
+
+
+export const getWeddingsOverviewReadQueryOptions = <TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getWeddingsOverviewReadQueryKey(uuid);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof weddingsOverviewRead>>> = ({ signal }) => weddingsOverviewRead(uuid, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: uuid !== null && uuid !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type WeddingsOverviewReadQueryResult = NonNullable<Awaited<ReturnType<typeof weddingsOverviewRead>>>
+export type WeddingsOverviewReadQueryError = ErrorType<ErrorResponse>
+
+
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weddingsOverviewRead>>,
+          TError,
+          Awaited<ReturnType<typeof weddingsOverviewRead>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof weddingsOverviewRead>>,
+          TError,
+          Awaited<ReturnType<typeof weddingsOverviewRead>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Wedding Overview
+ */
+
+export function useWeddingsOverviewRead<TData = Awaited<ReturnType<typeof weddingsOverviewRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof weddingsOverviewRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getWeddingsOverviewReadQueryOptions(uuid,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

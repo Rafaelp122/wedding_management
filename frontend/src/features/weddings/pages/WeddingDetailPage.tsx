@@ -2,8 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useWeddingDetail } from "../hooks/useWeddingDetail";
 import { TEMPLATE_MAP } from "../constants";
-import { getWeddingsReadQueryKey, getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
-import { useDashboardWedding, getDashboardWeddingQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { getWeddingsListQueryKey, getWeddingsReadQueryKey, useWeddingsOverviewRead, getWeddingsOverviewReadQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,12 +24,13 @@ export default function WeddingDetailPage() {
 
   const wedding = response?.data;
 
-  const { data: dashboardResponse, isLoading: isLoadingDashboard } = useDashboardWedding(uuid!, {
-    query: { enabled: !!uuid && !!wedding },
+  const overviewUuid = uuid!;
+  const { data: overviewResponse, isLoading: isLoadingOverview } = useWeddingsOverviewRead(overviewUuid, {
+    query: { enabled: !!overviewUuid },
   });
-
-  const weddingDate = wedding?.date;
-  const overview = dashboardResponse?.data;
+  const overview = overviewResponse?.data?.overview;
+  const overviewWedding = overviewResponse?.data?.wedding;
+  const weddingDate = overviewWedding?.date ?? wedding?.date;
 
   const displayDate = useMemo(() => {
     if (!weddingDate) return "";
@@ -213,7 +213,7 @@ export default function WeddingDetailPage() {
             <div className="text-left pl-4 space-y-1">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Checklist</span>
-                {isLoadingDashboard ? (
+                {isLoadingOverview ? (
                   <Skeleton className="h-3 w-8" />
                 ) : (
                   <span className="font-mono text-[10px] font-bold text-zinc-700 dark:text-zinc-300">
@@ -221,7 +221,7 @@ export default function WeddingDetailPage() {
                   </span>
                 )}
               </div>
-              {isLoadingDashboard ? (
+              {isLoadingOverview ? (
                 <Skeleton className="h-1.5 w-24 rounded-full" />
               ) : (
                 <Progress value={checklistPercentage} className="h-1.5 w-24" />
@@ -232,7 +232,7 @@ export default function WeddingDetailPage() {
       </div>
 
       {/* Tabs de conteúdo */}
-      <WeddingDetailTabs wedding={wedding} />
+      <WeddingDetailTabs wedding={wedding} overview={overview} />
 
       <EditWeddingDialog
         wedding={wedding}
@@ -241,7 +241,7 @@ export default function WeddingDetailPage() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: getWeddingsReadQueryKey(uuid!) });
           queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getDashboardWeddingQueryKey(uuid!) });
+          queryClient.invalidateQueries({ queryKey: getWeddingsOverviewReadQueryKey(uuid!) });
           setEditDialogOpen(false);
         }}
       />
