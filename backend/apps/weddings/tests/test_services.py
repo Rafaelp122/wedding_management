@@ -437,6 +437,60 @@ class TestWeddingServiceListAnnotations:
         with pytest.raises(BusinessRuleViolation, match="Status inválido"):
             WeddingService.list(company=user.company, status="INVALIDO")
 
+    def test_overview_success(self, user):
+        """overview() com dados completos deve retornar WeddingOverviewOut com métricas."""
+        wedding = WeddingFactory(company=user.company, bride_name="Overview Bride", date=date.today() + timedelta(days=60))
+
+        budget = BudgetFactory(wedding=wedding, company=user.company, total_estimated=Decimal("10000.00"))
+        BudgetCategoryFactory(budget=budget, name="Buffet", allocated_budget=Decimal("5000.00"), spent_amount=Decimal("2500.00"))
+        ExpenseFactory(wedding=wedding, company=user.company, category=budget.categories.first(), actual_amount=Decimal("2500.00"))
+        InstallmentFactory(wedding=wedding, company=user.company, installment_number=1, amount=Decimal("1000.00"), status="PENDING")
+        InstallmentFactory(wedding=wedding, company=user.company, installment_number=2, amount=Decimal("1000.00"), status="OVERDUE")
+        TaskFactory(wedding=wedding, company=user.company, title="Task 1", is_completed=True)
+        TaskFactory(wedding=wedding, company=user.company, title="Task 2", is_completed=False)
+        supplier = SupplierFactory(company=user.company)
+        ContractFactory(wedding=wedding, company=user.company, supplier=supplier, status="SIGNED")
+        ContractFactory(wedding=wedding, company=user.company, supplier=supplier, status="DRAFT")
+
+        result = WeddingService.overview(company=user.company, uuid=wedding.uuid)
+
+        assert result.wedding.uuid == wedding.uuid
+        assert result.wedding.bride_name == "Overview Bride"
+        assert result.wedding.groom_name == wedding.groom_name
+
+        overview = result.overview
+        assert overview.days_until_wedding == 60
+        assert overview.budget_percentage_used == 25.0
+        assert overview.tasks_completed == 1
+        assert overview.tasks_total == 2
+        assert overview.contracts_signed == 1
+        assert overview.contracts_total == 2
+        assert len(overview.upcoming_installments) == 2
+        assert len(overview.urgent_tasks) == 1
+        assert len(overview.categories_summary) == 1
+
+        # WeddingOut fields
+        assert result.wedding.total_budget == 10000.0
+        assert result.wedding.overdue_installments == 1
+        assert result.wedding.incomplete_tasks == 1
+
+    def test_overview_wedding_not_found_raises_object_not_found(self, user):
+        """overview() com uuid inexistente deve levantar ObjectNotFoundError."""
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            WeddingService.overview(company=user.company, uuid=uuid4())
+
+        assert exc_info.value.code == "wedding_not_found_or_denied"
+
+    def test_overview_other_tenant_raises_object_not_found(self, user):
+        """overview() de casamento de outro tenant deve levantar ObjectNotFoundError."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            WeddingService.overview(company=user.company, uuid=other_wedding.uuid)
+
+        assert exc_info.value.code == "wedding_not_found_or_denied"
+
 
 @pytest.mark.django_db
 class TestWeddingTemplateApplication:

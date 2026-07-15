@@ -120,5 +120,7 @@ class WeddingByMonthOut(Schema):
 
 
 class WeddingOverviewOut(Schema):
+    """Visão geral do casamento com dados básicos e métricas agregadas de finanças, agenda e contratos."""
+
     wedding: WeddingOut
     overview: WeddingDashboardOut
