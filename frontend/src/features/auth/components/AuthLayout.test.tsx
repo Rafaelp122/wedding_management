@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { AuthLayout } from "@/features/auth/components/AuthLayout";
 
 const defaultProps = {
@@ -61,14 +61,22 @@ describe("AuthLayout", () => {
     expect(screen.getByText("$200")).toBeInTheDocument();
   });
 
-  it("renders theme toggle button", () => {
+  it("renders theme toggle button with tooltip", async () => {
+    const user = userEvent.setup();
     render(
       <AuthLayout {...defaultProps}>
         <p>Child</p>
       </AuthLayout>,
     );
 
-    const toggle = screen.getByRole("switch");
+    const toggle = screen.getByRole("switch", { name: "Alternar tema" });
     expect(toggle).toBeInTheDocument();
+
+    await user.hover(toggle);
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip", { name: "Alternar tema" })).toBeInTheDocument();
+    });
+
+    await user.click(toggle);
   });
 });
