@@ -40,3 +40,34 @@ Para maximizar a facilidade de criação de testes nos componentes:
 1. Adotar o padrão **Container/Presentational Component**.
 2. **Extrair cálculos e formatação** para funções puras.
 3. **Desacoplar requisições e ações complexas** do componente que pinta a tela passando por `props` simples.
+
+## Feature: Scheduler (Agenda e Tarefas)
+
+A funcionalidade de Scheduler lida intensamente com renderização de calendário, tabelas e modais de criação/edição. Os seguintes componentes apresentam alta complexidade e dificultam os testes:
+
+### 1. `EditEventDialog.tsx` (369 linhas) e `CreateEventDialog.tsx` (333 linhas)
+**Problemas Identificados:**
+- **Acoplamento Extremo de Responsabilidades:** Ambos os componentes não são apenas "Diálogos", eles também estanciam os hooks de formulário do React Hook Form (`useForm` com `zodResolver`), configuram a query de submissão (mutations do `@tanstack/react-query`) e ainda renderizam toda a UI do formulário (com mais de uma dezena de tags `<FormField>`).
+- **Lógica de Conversão no JSX:** Utiliza funções como `toDateTimeLocalValue` e parseamento do DOM (ex: `e.target.value === "" ? 60 : Number(...)`) espalhados pelo JSX.
+- **Desafio de Teste:** Para testar que a validação de data final menor que inicial funciona (regra do Zod), hoje é preciso montar todo o diálogo, preencher os inputs via user-events, clicar em salvar e analisar se a mensagem de erro do DOM foi renderizada, o que é um teste lento (E2E na camada de unidade).
+
+**Recomendações:**
+- Separar o "Formulário" (regras de Zod, Hook Form) do "Modal" (o Dialog que apenas envolve o formulário).
+- Transformar `CreateEventForm` e `EditEventForm` em componentes que recebam a função `onSubmit` via prop e não chamem mutações da API diretamente. Isso permite testes unitários diretos na função onSubmit com Mocks, sem precisar testar a mutação da API em conjunto com a UI.
+- Extrair o esquema do Zod (`formSchema` com `.superRefine`) e os *resolvers* para um arquivo à parte `zod/events.schema.ts`, possibilitando que o modelo seja testado independentemente do componente React usando asserções Zod diretamente.
+
+### 2. `SchedulerPage.tsx` (289 linhas)
+**Problemas Identificados:**
+- **Inchaço de Estado:** O componente gere o estado de abas (`viewMode`), estado de "abrir/fechar" os *vários* diálogos de criação e edição (`createDialogOpen`, `editDialogOpen`), além de controlar o estado local dos eventos selecionados (`selectedEvent`, `createDefaultStart`).
+- **Fetchings Consolidados:** Carrega `useSchedulerEventsList` e `useWeddingsList` e processa ordenação (`sortedEvents`) e cruzamentos (`weddingsByUuid`) tudo no mesmo arquivo antes de repassar para os componentes filhos.
+- **Desafio de Teste:** O arquivo exige que sejam feitos mocks de ambas as APIs, configurações de página e instâncias de Query Client, transformando um simples teste de mudança de Tab num teste de alta complexidade (Heavy Mount).
+
+**Recomendações:**
+- Extrair o "Gerenciamento de Modais" para um Hook Customizado genérico (ex: `useDialogState()`) ou aplicar a inversão de controle passando essa responsabilidade para os filhos (ex: a tabela dispara um evento que uma "store" ou "provider" reage, ao invés do próprio page gerenciar N modais invisíveis na raiz).
+- Isolar a lógica complexa de derivação de estado (`useMemo` de `weddingsByUuid` e `sortedEvents`) para um Custom Hook chamado `useSchedulerPageData`, deixando o componente da página unicamente responsável pelo esqueleto do layout e exibição dos estados de Loading/Error/Success.
+
+### Padrão Geral Recomendado (Aplicável a todo o projeto)
+A raiz da complexidade de testes no frontend do WMS atualmente é a violação do Princípio da Responsabilidade Única nos componentes. A refatoração ideal deve focar em:
+1. **Modelos Zod testados isoladamente** (remover `.superRefine` de dentro do arquivo `.tsx`).
+2. **Presentational Forms** (`MeuForm.tsx` recebe `defaultValues` e a função `onSubmit` via Props, sem chamar Hook de Mutation do React Query).
+3. **Containers de Formulário** (`MeuFormDialog.tsx` ou "Smart Components" que renderizam o `MeuForm` e chamam a Mutation). Isso permite 100% de cobertura no formulário sem usar Mocks de rede/query.
