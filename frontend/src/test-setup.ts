@@ -1,3 +1,24 @@
+/**
+ * TEST SETUP GLOBAL - WMS Frontend
+ *
+ * Regras Críticas de Mock e Interceptação de Rede (Vitest isolate: false):
+ *
+ * 1. NUNCA use \`vi.mock("@/api/generated/...", () => ({...}))\` dentro de arquivos de teste individuais.
+ *    Sob a execução compartilhada de módulos (isolate: false), isso causará colisões e vazamento de estado
+ *    entre as execuções de testes concorrentes.
+ *
+ * 2. PREFIRA SEMPRE O MSW (Mock Service Worker) para testes integrados e de fluxos visuais.
+ *    Use o interceptador MSW (\`server.use(http.get("/api/...", () => ...))\`) para mockar endpoints de API.
+ *    Dessa forma, os testes rodam de forma síncrona/assíncrona confiável, testando a integração real com a
+ *    camada gerada do Orval e TanStack Query sem poluir o escopo global do Vitest.
+ *
+ * 3. MOCKS GLOBAIS DE HOOKS (Se estritamente inevitáveis):
+ *    Todos os mocks de hooks Orval globais permitidos devem ser registrados de forma centralizada e controlada
+ *    aqui no \`test-setup.ts\` usando a função helper \`registerMockHook\`.
+ *    A função \`registerMockHook\` permite usar \`vi.mocked\` e alterar implementações temporariamente nos testes
+ *    individuais, limpando e restaurando-as automaticamente no \`afterEach\` deste arquivo.
+ */
+
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
