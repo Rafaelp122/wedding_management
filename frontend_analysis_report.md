@@ -30,7 +30,7 @@ Nesta análise, focamos nos componentes da funcionalidade de `weddings` que apre
 **Problemas Identificados:**
 - **Condicionais e Listas Diretas:** Componente denso que recebe o objeto gigante e mapeia as seções (métricas em blocos e duas colunas de ações urgentes e vencimentos próximos) no mesmo escopo.
 - **Cálculos diretos:** Cálculos de `contracts_signed / contracts_total` e acesso profundo a dados como `urgentTasks` são feitos junto com a renderização.
-- **Desafio de Teste:** Um teste que queira apenas validar a lista de parcelas não pagas será obrigado a renderizar os cards de contagem regressiva e outras integrações.
+- **Desafio de Teste:** Um teste que queira apenas validar a lista de próximos vencimentos será obrigado a renderizar os cards de contagem regressiva e outras integrações.
 
 **Recomendações:**
 - Extrair sub-componentes independentes (ex: `WeddingCountdownCard`, `WeddingTasksCard`, `WeddingUpcomingInstallmentsCard`). Dessa maneira, você poderá escrever testes direcionados ("O componente `WeddingTasksCard` renderiza estado de fallback quando não há urgências") com mais clareza, diminuindo o *overhead* de Mock dos objetos complexos.
@@ -47,7 +47,7 @@ A funcionalidade de Scheduler lida intensamente com renderização de calendári
 
 ### 1. `EditEventDialog.tsx` (369 linhas) e `CreateEventDialog.tsx` (333 linhas)
 **Problemas Identificados:**
-- **Acoplamento Extremo de Responsabilidades:** Ambos os componentes não são apenas "Diálogos", eles também estanciam os hooks de formulário do React Hook Form (`useForm` com `zodResolver`), configuram a query de submissão (mutations do `@tanstack/react-query`) e ainda renderizam toda a UI do formulário (com mais de uma dezena de tags `<FormField>`).
+- **Acoplamento Extremo de Responsabilidades:** Ambos os componentes não são apenas "Diálogos", eles também instanciam os hooks de formulário do React Hook Form (`useForm` com `zodResolver`), configuram a query de submissão (mutations do `@tanstack/react-query`) e ainda renderizam toda a UI do formulário (com mais de uma dezena de tags `<FormField>`).
 - **Lógica de Conversão no JSX:** Utiliza funções como `toDateTimeLocalValue` e parseamento do DOM (ex: `e.target.value === "" ? 60 : Number(...)`) espalhados pelo JSX.
 - **Desafio de Teste:** Para testar que a validação de data final menor que inicial funciona (regra do Zod), hoje é preciso montar todo o diálogo, preencher os inputs via user-events, clicar em salvar e analisar se a mensagem de erro do DOM foi renderizada, o que é um teste lento (E2E na camada de unidade).
 
@@ -70,7 +70,7 @@ A funcionalidade de Scheduler lida intensamente com renderização de calendári
 A raiz da complexidade de testes no frontend do WMS atualmente é a violação do Princípio da Responsabilidade Única nos componentes. A refatoração ideal deve focar em:
 1. **Modelos Zod testados isoladamente** (remover `.superRefine` de dentro do arquivo `.tsx`).
 2. **Presentational Forms** (`MeuForm.tsx` recebe `defaultValues` e a função `onSubmit` via Props, sem chamar Hook de Mutation do React Query).
-3. **Containers de Formulário** (`MeuFormDialog.tsx` ou "Smart Components" que renderizam o `MeuForm` e chamam a Mutation). Isso permite 100% de cobertura no formulário sem usar Mocks de rede/query.
+3. **Containers de Formulário** (`MeuFormDialog.tsx` ou "Smart Components" que renderizam o `MeuForm` e chamam a Mutation). Isso facilita uma cobertura abrangente no formulário sem usar Mocks de rede/query.
 
 ## Feature: Logistics (Contratos, Fornecedores e Itens)
 
@@ -139,7 +139,7 @@ A funcionalidade de Finanças é o coração matemático do projeto. Como espera
 
 - **Lógica de Status Embutida:** Regras de negócio de "progresso de pagamento" (`progress = (totalPaid / actualAmount) * 100`) estão atreladas ao componente de visualização.
 
-- **Mutations Mistas:** O `Sheet` chama mutations de "Marcar Parcela como Paga" e "Desmarcar" (`togglePayment`), invalidando a si mesmo e lidando com Loading individual de botões.
+- **Mutations Mistas:** O `Sheet` chama mutations de "Marcar Parcela como Paga" e "Desmarcar" (`togglePayment`), invalidando as queries relacionadas e lidando com Loading individual de botões.
 
 
 
@@ -161,7 +161,7 @@ A funcionalidade de Finanças é o coração matemático do projeto. Como espera
 
 **Recomendações:**
 
-- Extrair ações para um menu que envia Eventos e um Componente "Modal Manager" acima dele, ou tratar as edições em uma aba lateral ligada a rotas.
+- Extrair ações para um menu que envia Eventos e um Componente "gestor de modais" acima dele, ou tratar as edições em uma aba lateral ligada a rotas.
 ## Conclusão Final do Padrão
 Em todo o Frontend, os maiores arquivos enfrentam o mesmo desafio: **misturar lógica de UI densa com lógicas pesadas de Fetch/Mutations do TanStack Query**.
 
