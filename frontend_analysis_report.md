@@ -71,3 +71,34 @@ A raiz da complexidade de testes no frontend do WMS atualmente é a violação d
 1. **Modelos Zod testados isoladamente** (remover `.superRefine` de dentro do arquivo `.tsx`).
 2. **Presentational Forms** (`MeuForm.tsx` recebe `defaultValues` e a função `onSubmit` via Props, sem chamar Hook de Mutation do React Query).
 3. **Containers de Formulário** (`MeuFormDialog.tsx` ou "Smart Components" que renderizam o `MeuForm` e chamam a Mutation). Isso permite 100% de cobertura no formulário sem usar Mocks de rede/query.
+
+## Feature: Logistics (Contratos, Fornecedores e Itens)
+
+A feature de logística lida com entidades que possuem múltiplos relacionamentos (Um Contrato pertence a um Fornecedor, possui Itens e pode gerar Despesas). A UI reflete essa complexidade.
+
+### 1. `ContractUploadDialog.tsx` (336 linhas)
+**Problemas Identificados:**
+- **Múltiplos Formulários em um só estado:** O componente lida com o formulário principal (Zod de `LogisticsContractsCreateBody`), estado de rascunhos de itens (`itemDrafts`), estado de formulário financeiro embutido (`expenseChecked`, `expenseCategory`, `expenseNumInstallments`) e com o `File` (upload de anexo).
+- **Submissão "Fat":** A função `onSubmit` possui quase 50 linhas de código estruturado imperativamente: solicita URL de upload na API -> faz o fetch do S3 -> constrói o payload do contrato -> mapeia drafts de itens -> mapeia despesas -> dispara `createFull`.
+- **Desafio de Teste:** É o caso mais extremo de dificuldade de teste no frontend. Para testar o "caminho feliz", o desenvolvedor precisa *mockar* a API de contratos, a API de S3 (upload do blob do arquivo) e *mockar* interações pesadas de usuário (incluindo checkbox dinâmico).
+
+**Recomendações:**
+- Extrair a lógica pesada do `onSubmit` para um **Custom Hook de Mutação de Negócio** (`useCreateContractWithUpload`). Isso permite testar a lógica do upload assíncrono encadeado com a criação usando apenas Node/Vitest, sem depender da árvore do DOM.
+- Dividir a View do Dialog em passos (Wizard) ou extrair sub-formulários. Componentizar os blocos `ContractCreateExpenseFields` e `ContractItemDrafts` como subcomponentes que gerenciam seu próprio pedaço do formulário usando a função `useFormContext` (React Hook Form).
+
+### 2. `ContractDetailDialog.tsx` (302 linhas)
+**Problemas Identificados:**
+- **Acúmulo de Endpoints:** O modal busca o contrato (`useLogisticsContractsRead`), os itens (`useLogisticsItemsList`) e os aditivos (`useLogisticsContractsList` passando `parent_id`).
+- **Gerenciamento de Navegação Embutida:** Recebe *callbacks* profundos (`onExpenseClick`, `onSupplierClick`, `onCreateAddendum`) para delegar navegação.
+
+**Recomendações:**
+- Este componente é um bom candidato ao padrão *Container/Presentational*.
+- `ContractDetailContainer`: Chama as Queries, trata os loadings e delega a injeção dos callbacks.
+- `ContractDetailDialog`: O Dumb Component que recebe `contract`, `items`, `addendums` e renderiza a UI puramente com base nas *props*. Muito mais fácil de injetar os dados falsos e verificar se os `badges` e detalhes renderizam corretamente usando o React Testing Library.
+
+### 3. `VendorsItemsView.tsx` (200 linhas)
+**Problemas Identificados:**
+- **Controlador de Modais:** A "View" gerencia a abertura, o fechamento e a injeção de estado de múltiplos diálogos distintos (`uploadOpen`, `detailContractUuid`, `createItemOpen`, `editItem`). Isso infla o componente que deveria ser apenas um Layout Agregador.
+
+**Recomendações:**
+- Adotar o padrão de "Slot Providers" ou roteamento por *Query Params*. Em vez do componente raiz guardar booleanos infinitos (`isEditModalOpen`), alterar a URL para `?action=edit-item&id=123`. Um componente superior "DialogRouter" intercepta e abre os modais correspondentes. Isso limpa a View e permite testar modais diretamente forçando o estado inicial via URL/MemRouter nos testes.
