@@ -7,7 +7,7 @@ import {
   getFinancesExpensesListQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
-import { useWeddingBudget } from "../hooks/useBudget";
+import { useWeddingBudget } from "@/features/finances/hooks/useBudget";
 import { WeddingFinancesSummaryCards } from "./FinancesSummaryCards";
 import { WeddingFinancesGroupsSummary } from "./FinancesGroupsSummary";
 import { WeddingFinancesRecentExpenses } from "./expenses/FinancesRecentExpenses";

@@ -35,7 +35,7 @@ vi.mock("@/features/finances/components/expenses/ExpensesTable", () => ({
   ),
 }));
 
-import { useWeddingBudget } from "../hooks/useBudget";
+import { useWeddingBudget } from "@/features/finances/hooks/useBudget";
 import { useFinancesExpensesList } from "@/api/generated/v1/endpoints/finances/finances";
 
 describe("WeddingFinancesView", () => {
