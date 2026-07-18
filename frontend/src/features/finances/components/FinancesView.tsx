@@ -6,6 +6,7 @@ import {
   getFinancesCategoriesListQueryKey,
   getFinancesExpensesListQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
+import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import { useWeddingBudget } from "../hooks/useBudget";
 import { WeddingFinancesSummaryCards } from "./FinancesSummaryCards";
 import { WeddingFinancesGroupsSummary } from "./FinancesGroupsSummary";
@@ -24,12 +25,27 @@ const CreateExpenseDialog = lazy(
   () => import("./expenses/CreateExpenseDialog").then((m) => ({ default: m.CreateExpenseDialog })),
 );
 
+const EditExpenseDialog = lazy(
+  () => import("./expenses/EditExpenseDialog").then((m) => ({ default: m.EditExpenseDialog })),
+);
+
+const DeleteExpenseDialog = lazy(
+  () => import("./expenses/DeleteExpenseDialog").then((m) => ({ default: m.DeleteExpenseDialog })),
+);
+
+const ExpenseDetailSheet = lazy(
+  () => import("./expenses/ExpenseDetailSheet").then((m) => ({ default: m.ExpenseDetailSheet })),
+);
+
 interface WeddingFinancesViewProps {
   weddingUuid: string;
 }
 
 export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<ExpenseOut | null>(null);
+  const [deletingExpense, setDeletingExpense] = useState<ExpenseOut | null>(null);
+  const [detailExpense, setDetailExpense] = useState<ExpenseOut | null>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -45,8 +61,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   const { data: recentExpensesResponse, isLoading: isRecentExpensesLoading } =
     useFinancesExpensesList({ wedding_id: weddingUuid, limit: 5 });
 
-  const handleExpenseCreated = () => {
-    setCreateDialogOpen(false);
+  const handleExpenseUpdated = () => {
     queryClient.invalidateQueries({
       queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid }),
     });
@@ -61,6 +76,11 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         wedding_id: weddingUuid,
       }),
     });
+  };
+
+  const handleExpenseCreated = () => {
+    setCreateDialogOpen(false);
+    handleExpenseUpdated();
   };
 
   const expenses = expensesResponse?.data?.items || [];
@@ -134,28 +154,9 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         ) : (
           <WeddingExpensesTable
             expenses={expenses}
-            weddingUuid={weddingUuid}
-            onExpenseUpdated={() => {
-              queryClient.invalidateQueries({
-                queryKey: getFinancesExpensesListQueryKey({
-                  wedding_id: weddingUuid,
-                }),
-              });
-              queryClient.invalidateQueries({
-                queryKey: getFinancesExpensesListQueryKey({
-                  wedding_id: weddingUuid,
-                  limit: 5,
-                }),
-              });
-              queryClient.invalidateQueries({
-                queryKey: getFinancesBudgetsForWeddingQueryKey(weddingUuid),
-              });
-              queryClient.invalidateQueries({
-                queryKey: getFinancesCategoriesListQueryKey({
-                  wedding_id: weddingUuid,
-                }),
-              });
-            }}
+            onEditExpense={setEditingExpense}
+            onDeleteExpense={setDeletingExpense}
+            onDetailExpense={setDetailExpense}
           />
         )}
       </div>
@@ -168,6 +169,51 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
           onSuccess={handleExpenseCreated}
         />
       </Suspense>
+
+      {editingExpense ? (
+        <Suspense fallback={null}>
+          <EditExpenseDialog
+            expense={editingExpense}
+            weddingUuid={weddingUuid}
+            open={!!editingExpense}
+            onOpenChange={(open) => {
+              if (!open) setEditingExpense(null);
+            }}
+            onSuccess={() => {
+              setEditingExpense(null);
+              handleExpenseUpdated();
+            }}
+          />
+        </Suspense>
+      ) : null}
+
+      {deletingExpense ? (
+        <Suspense fallback={null}>
+          <DeleteExpenseDialog
+            expense={deletingExpense}
+            open={!!deletingExpense}
+            onOpenChange={(open) => {
+              if (!open) setDeletingExpense(null);
+            }}
+            onSuccess={() => {
+              setDeletingExpense(null);
+              handleExpenseUpdated();
+            }}
+          />
+        </Suspense>
+      ) : null}
+
+      {detailExpense ? (
+        <Suspense fallback={null}>
+          <ExpenseDetailSheet
+            expense={detailExpense}
+            open={!!detailExpense}
+            onOpenChange={(open) => {
+              if (!open) setDetailExpense(null);
+            }}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 }
