@@ -125,6 +125,43 @@ A feature de Dashboard atua como o painel central, reunindo requisições de pra
 - Para `WeddingMonthlyChart.tsx`: Deve ser quebrado em *Wrapper/Container* e *View*. O arquivo do gráfico real (ex: `RechartsLineChart`) não pode conhecer a biblioteca TanStack Query. Isso facilita o teste de renderização do Gráfico.
 - Para `DashboardOperations.tsx`: Extrair a `List` renderizada nas abas para subcomponentes que gerenciam a sua própria parte da query (`TasksListTab`, `ContractsListTab`), removendo a montanha de variáveis acumuladas no topo do arquivo.
 
+## Feature: Finances (Despesas e Orçamento)
+
+
+
+A funcionalidade de Finanças é o coração matemático do projeto. Como esperado, o acoplamento afeta muito a testabilidade de tabelas e fluxos de despesa.
+
+
+
+### 1. `ExpenseDetailSheet.tsx` (220 linhas)
+
+**Problemas Identificados:**
+
+- **Lógica de Status Embutida:** Regras de negócio de "progresso de pagamento" (`progress = (totalPaid / actualAmount) * 100`) estão atreladas ao componente de visualização.
+
+- **Mutations Mistas:** O `Sheet` chama mutations de "Marcar Parcela como Paga" e "Desmarcar" (`togglePayment`), invalidando a si mesmo e lidando com Loading individual de botões.
+
+
+
+**Recomendações:**
+
+- Extrair os cálculos de Progresso e Sumarização para um `utils/finances.ts` puro para que sejam 100% cobertos por Testes Unitários simples.
+
+- Isolar a responsabilidade de "Pagar Parcela" da "Visualização de Detalhes da Despesa", talvez com a `ExpenseInstallmentRow` virando seu próprio Smart Component responsável pela Mutação.
+
+
+
+### 2. `ExpensesTable.tsx` (211 linhas)
+
+**Problemas Identificados:**
+
+- **Root State Hogs:** Semelhante a `VendorsItemsView`, a tabela de despesas tenta ser o pai de todos os modais da funcionalidade (`editingExpense`, `deletingExpense`, `detailExpense`), tornando um simples teste de layout num monstro de renderização dependente do Suspense/Lazy.
+
+
+
+**Recomendações:**
+
+- Extrair ações para um menu que envia Eventos e um Componente "Modal Manager" acima dele, ou tratar as edições em uma aba lateral ligada a rotas.
 ## Conclusão Final do Padrão
 Em todo o Frontend, os maiores arquivos enfrentam o mesmo desafio: **misturar lógica de UI densa com lógicas pesadas de Fetch/Mutations do TanStack Query**.
 
