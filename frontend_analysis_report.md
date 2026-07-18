@@ -102,3 +102,33 @@ A feature de logística lida com entidades que possuem múltiplos relacionamento
 
 **Recomendações:**
 - Adotar o padrão de "Slot Providers" ou roteamento por *Query Params*. Em vez do componente raiz guardar booleanos infinitos (`isEditModalOpen`), alterar a URL para `?action=edit-item&id=123`. Um componente superior "DialogRouter" intercepta e abre os modais correspondentes. Isso limpa a View e permite testar modais diretamente forçando o estado inicial via URL/MemRouter nos testes.
+
+## Feature: Dashboard (Agregador Global)
+
+A feature de Dashboard atua como o painel central, reunindo requisições de praticamente todos os domínios do sistema (Casamentos, Finanças, Logística e Tarefas).
+
+### 1. `DashboardPage.tsx` (309 linhas)
+**Problemas Identificados:**
+- **Excesso de Fetchings e Dependências:** Num único arquivo o componente utiliza `useWeddingsList`, `useWeddingsLookup`, `useWeddingsRead`, `useDashboardSummary` e `useDashboardWedding`. Múltiplos desses *hooks* usam lógicas condicionais de `enabled` dependendo do estado global `selectedWeddingUuid`.
+- **Desafio de Teste:** O arquivo exige *mocking* massivo para renderizar com sucesso. Para escrever um teste que garanta a renderização da mensagem de saudação correta, é preciso mockar 5 rotas de API, o Hook do Zustand (`useAuthStore`) e injeções de layout.
+
+**Recomendações:**
+- Delegar as chamadas de API aos próprios componentes filhos quando possível, em vez da raiz da página baixar tudo e fazer "Prop Drilling".
+- Caso a otimização exija chamadas na raiz (para evitar *Waterfalls*), extrair as lógicas agregadoras para um custom hook `useDashboardData()` que retorna os estados unificados (`isLoading`, `error`, `dados_para_telas`), permitindo testar as lógicas condicionais de `enabled` usando o `renderHook`.
+
+### 2. `WeddingMonthlyChart.tsx` (352 linhas) e `DashboardOperations.tsx` (357 linhas)
+**Problemas Identificados:**
+- **Quebra do padrão de Componente Burro (Dumb Component):** Estes componentes deveriam ser puramente visuais, recebendo listas de tarefas ou finanças para apenas desenhar os gráficos e abas. No entanto, eles instanciam seus próprios *Hooks* do *React Query* internamente (`useFinancesInstallmentsList` e `useSchedulerTasksList`), com buscas disparadas *lazy* via condição das *Tabs* ativas.
+- Em `DashboardOperations.tsx`, não há apenas a visualização, mas a implementação de Mutations de atualização de tarefas e invalidação pesada de Queries globais.
+
+**Recomendações:**
+- Para `WeddingMonthlyChart.tsx`: Deve ser quebrado em *Wrapper/Container* e *View*. O arquivo do gráfico real (ex: `RechartsLineChart`) não pode conhecer a biblioteca TanStack Query. Isso facilita o teste de renderização do Gráfico.
+- Para `DashboardOperations.tsx`: Extrair a `List` renderizada nas abas para subcomponentes que gerenciam a sua própria parte da query (`TasksListTab`, `ContractsListTab`), removendo a montanha de variáveis acumuladas no topo do arquivo.
+
+## Conclusão Final do Padrão
+Em todo o Frontend, os maiores arquivos enfrentam o mesmo desafio: **misturar lógica de UI densa com lógicas pesadas de Fetch/Mutations do TanStack Query**.
+
+### Plano Diretor para Refatoração e Testes (Guia Rápido)
+1. **Forms**: Isolar Schemas Zod em arquivos `.schema.ts` e tratar o Formulário como *Presentational* que apenas exibe inputs e invoca `onSubmit(data)`. O Hook que chama a API deve envolver este componente.
+2. **Modais Complexos (Wizard/Multi-passo)**: Para fluxos como o *Upload de Contratos com Despesas*, isolar as dezenas de linhas imperativas assíncronas do Submit num *Custom Hook* de negócio.
+3. **Páginas Agregadoras (Dashboards/Visões)**: Adotar um forte padrão *Container/Presentational Component*, onde os cálculos gigantes de `useMemo` viram Hooks locais, que preparam propriedades para serem entregues prontas para visualização, simplificando radicalmente os Mocks durante os testes unitários.
