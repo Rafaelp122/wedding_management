@@ -7,7 +7,7 @@ export interface SchedulerSummary {
 }
 
 /**
- * Sorts events by their start time in ascending order.
+ * Ordena os eventos por data/hora de início em ordem crescente.
  */
 export function sortEvents(events: EventOut[]): EventOut[] {
   return [...events].sort(
@@ -17,7 +17,7 @@ export function sortEvents(events: EventOut[]): EventOut[] {
 }
 
 /**
- * Paginates a list of events based on offset and limit.
+ * Pagina uma lista de eventos com base no deslocamento (offset) e limite (limit).
  */
 export function paginateEvents(
   events: EventOut[],
@@ -28,7 +28,7 @@ export function paginateEvents(
 }
 
 /**
- * Calculates scheduler summaries, using an optional reference date.
+ * Calcula o resumo dos eventos do cronograma, utilizando uma data de referência opcional.
  */
 export function calculateSchedulerSummary(
   events: EventOut[],

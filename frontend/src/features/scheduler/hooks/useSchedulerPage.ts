@@ -9,6 +9,14 @@ import { sortEvents, paginateEvents, calculateSchedulerSummary } from "../utils/
 
 type ViewMode = "table" | "calendar";
 
+/**
+ * Hook principal para gerenciar o estado, dados e interações da página do cronograma (Scheduler).
+ *
+ * Consolida a listagem de eventos e casamentos, paginação, modo de visualização (tabela/calendário),
+ * além do controle dos diálogos de criação e edição de eventos.
+ *
+ * @returns Estados compilados, dados calculados, paginação e manipuladores de eventos da página.
+ */
 export function useSchedulerPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const queryClient = useQueryClient();

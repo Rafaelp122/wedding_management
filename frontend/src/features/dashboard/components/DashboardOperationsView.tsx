@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Calendar,
@@ -32,6 +31,7 @@ interface DashboardOperationsViewProps {
   weddingMap: Record<string, string>;
   handleTaskToggle: (taskUuid: string, isCurrentlyCompleted: boolean) => void;
   todayStr: string;
+  onNavigateToWedding: (weddingUuid: string, tab?: string) => void;
 }
 
 export function DashboardOperationsView({
@@ -46,6 +46,7 @@ export function DashboardOperationsView({
   weddingMap,
   handleTaskToggle,
   todayStr,
+  onNavigateToWedding,
 }: DashboardOperationsViewProps) {
   return (
     <Card className="bg-card shadow-soft border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col h-full">
@@ -134,13 +135,13 @@ export function DashboardOperationsView({
                           </Badge>
                         </td>
                         <td className="py-4 px-6 text-right">
-                          <Link
-                            to={`/weddings/${wedding.uuid}`}
-                            className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-primary dark:hover:border-primary text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-primary dark:hover:text-primary px-3 py-1.5 rounded-md btn-transition shadow-sm"
+                          <button
+                            onClick={() => onNavigateToWedding(wedding.uuid)}
+                            className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-primary dark:hover:border-primary text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-primary dark:hover:text-primary px-3 py-1.5 rounded-md btn-transition shadow-sm cursor-pointer"
                           >
                             Ver Detalhes
                             <ArrowRight className="size-3" />
-                          </Link>
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -212,13 +213,13 @@ export function DashboardOperationsView({
                           </div>
                         </div>
                       </div>
-                      <Link
-                        to={`/weddings/${task.wedding}?tab=planning`}
-                        className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1 shrink-0"
+                      <button
+                        onClick={() => onNavigateToWedding(task.wedding, "planning")}
+                        className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1 shrink-0 cursor-pointer"
                       >
                         Ir para Cronograma
                         <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
+                      </button>
                     </div>
                   );
                 })}
@@ -288,13 +289,13 @@ export function DashboardOperationsView({
                           </Badge>
                         </td>
                         <td className="py-4 px-6 text-right">
-                          <Link
-                            to={`/weddings/${contract.wedding}?tab=logistics`}
-                            className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-primary dark:hover:border-primary text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-primary dark:hover:text-primary px-3 py-1.5 rounded-md btn-transition shadow-sm"
+                          <button
+                            onClick={() => onNavigateToWedding(contract.wedding, "logistics")}
+                            className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-primary dark:hover:border-primary text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-primary dark:hover:text-primary px-3 py-1.5 rounded-md btn-transition shadow-sm cursor-pointer"
                           >
                             <ExternalLink className="size-3" />
                             Ver Contrato
-                          </Link>
+                          </button>
                         </td>
                       </tr>
                     ))}

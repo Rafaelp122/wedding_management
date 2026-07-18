@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWeddingsList, useWeddingsLookup, useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { useDashboardSummary, useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { getApiErrorInfo } from "@/api/error-utils";
@@ -13,6 +14,12 @@ export default function DashboardPage() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedWeddingUuid, setSelectedWeddingUuid] = useState<string>("all");
   const firstName = useAuthStore((state) => state.user?.first_name);
+  const navigate = useNavigate();
+
+  const handleNavigateToWedding = (weddingUuid: string, tab?: string) => {
+    const url = `/weddings/${weddingUuid}${tab ? `?tab=${tab}` : ""}`;
+    navigate(url);
+  };
 
   // Hook enxuto para popular o combobox — apenas uuid, bride_name e groom_name
   const { data: lookupData, isLoading, error } = useWeddingsLookup();
@@ -111,6 +118,7 @@ export default function DashboardPage() {
       weddingDashboard={weddingDashboard}
       summary={summary}
       fullWeddingsArray={fullWeddingsArray}
+      onNavigateToWedding={handleNavigateToWedding}
     />
   );
 }

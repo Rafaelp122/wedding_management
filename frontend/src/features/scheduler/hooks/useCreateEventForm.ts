@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSchedulerEventsCreate } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
+import { z } from "zod";
 import { createEventSchema, type CreateEventFormData } from "../utils/validation";
 import { toISODateTime } from "../utils";
 
@@ -13,6 +14,12 @@ interface UseCreateEventFormProps {
   onOpenChange: (open: boolean) => void;
 }
 
+/**
+ * Hook para gerenciar o formulário de criação de eventos do cronograma.
+ *
+ * @param props Propriedades de configuração do formulário.
+ * @returns Instância do formulário, estados e callbacks de controle.
+ */
 export function useCreateEventForm({
   weddingUuid,
   defaultStartTime,
@@ -23,15 +30,14 @@ export function useCreateEventForm({
 
   const defaultStartTimeIso = defaultStartTime?.toISOString() ?? "";
 
-  const form = useForm({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(createEventSchema) as any,
+  const form = useForm<z.input<typeof createEventSchema>, undefined, CreateEventFormData>({
+    resolver: zodResolver(createEventSchema),
     defaultValues: {
       wedding: weddingUuid,
       title: "",
       event_type: "reuniao",
       start_time: defaultStartTimeIso,
-      end_time: null as string | null,
+      end_time: null,
       location: "",
       description: "",
       recurrence_rule: "none",

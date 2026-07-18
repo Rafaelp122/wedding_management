@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatCurrencyBR } from "@/lib/formatters";
+import { statusLabel, statusVariant } from "./constants";
 
 interface WeddingExpensesTableProps {
   expenses: ExpenseOut[];
@@ -26,17 +27,7 @@ interface WeddingExpensesTableProps {
   onDetailExpense: (expense: ExpenseOut) => void;
 }
 
-const statusVariant: Record<string, "default" | "destructive" | "outline"> = {
-  SETTLED: "default",
-  PARTIALLY_PAID: "outline",
-  PENDING: "outline",
-};
 
-const statusLabel: Record<string, string> = {
-  SETTLED: "Quitada",
-  PARTIALLY_PAID: "Parcial",
-  PENDING: "Pendente",
-};
 
 export const WeddingExpensesTable = memo(function WeddingExpensesTable({
   expenses,

@@ -17,6 +17,12 @@ interface UseEditEventFormProps {
 
 const isPaymentEvent = (event: EventOut) => event.event_type === "pagamento";
 
+/**
+ * Hook para gerenciar o formulário de edição de eventos do cronograma.
+ *
+ * @param props Propriedades de configuração do formulário.
+ * @returns Instância do formulário, estados, flag de somente leitura e callbacks.
+ */
 export function useEditEventForm({
   event,
   open,
@@ -26,9 +32,8 @@ export function useEditEventForm({
   const { mutate, isPending } = useSchedulerEventsUpdate();
   const readOnly = isPaymentEvent(event);
 
-  const form = useForm({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(SchedulerEventsUpdateBody) as any,
+  const form = useForm<z.input<typeof SchedulerEventsUpdateBody>, undefined, z.infer<typeof SchedulerEventsUpdateBody>>({
+    resolver: zodResolver(SchedulerEventsUpdateBody),
     defaultValues: {
       title: event.title || "",
       event_type: event.event_type,

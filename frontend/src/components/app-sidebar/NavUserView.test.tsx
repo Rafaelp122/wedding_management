@@ -71,7 +71,7 @@ describe("NavUserView", () => {
     const triggerButton = screen.getByRole("button", { name: /menu do usuário/i });
     await user.click(triggerButton);
 
-    const minhaContaItem = screen.getByText("Minha Conta");
+    const minhaContaItem = screen.getByRole("menuitem", { name: "Minha Conta" });
     await user.click(minhaContaItem);
 
     expect(onNavigate).toHaveBeenCalledWith("/settings");
@@ -95,7 +95,7 @@ describe("NavUserView", () => {
     const triggerButton = screen.getByRole("button", { name: /menu do usuário/i });
     await user.click(triggerButton);
 
-    const configuracoesItem = screen.getByText("Configurações");
+    const configuracoesItem = screen.getByRole("menuitem", { name: "Configurações" });
     await user.click(configuracoesItem);
 
     expect(onNavigate).toHaveBeenCalledWith("/settings");
@@ -119,7 +119,7 @@ describe("NavUserView", () => {
     const triggerButton = screen.getByRole("button", { name: /menu do usuário/i });
     await user.click(triggerButton);
 
-    const sairItem = screen.getByText("Sair");
+    const sairItem = screen.getByRole("menuitem", { name: "Sair" });
     await user.click(sairItem);
 
     expect(onLogout).toHaveBeenCalledTimes(1);

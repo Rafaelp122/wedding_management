@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, fireEvent } from "@/test-utils";
+import { render, screen, userEvent } from "@/test-utils";
 import { useForm, type Control } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import {
@@ -110,7 +110,9 @@ describe("Form Fields Components", () => {
       const input = screen.getByPlaceholderText("Digite a idade");
       expect(input).toHaveValue(25);
 
-      fireEvent.change(input, { target: { value: "30" } });
+      (input as HTMLInputElement).value = "";
+      await user.clear(input);
+      await user.type(input, "30");
       expect(input).toHaveValue(30);
 
       const submitButton = screen.getByRole("button", { name: "Enviar" });
@@ -137,8 +139,9 @@ describe("Form Fields Components", () => {
         </TestForm>
       );
 
-      const input = screen.getByLabelText("Idade");
-      fireEvent.change(input, { target: { value: "" } });
+      const input = screen.getByLabelText("Idade") as HTMLInputElement;
+      input.value = "5";
+      await user.type(input, "{backspace}");
       expect(input).toHaveValue(null);
 
       const submitButton = screen.getByRole("button", { name: "Enviar" });
@@ -192,7 +195,9 @@ describe("Form Fields Components", () => {
       const input = screen.getByLabelText("Orçamento");
       expect(input).toHaveValue(1500.5);
 
-      fireEvent.change(input, { target: { value: "2000.75" } });
+      (input as HTMLInputElement).value = "";
+      await user.clear(input);
+      await user.type(input, "2000.75");
       expect(input).toHaveValue(2000.75);
 
       const submitButton = screen.getByRole("button", { name: "Enviar" });

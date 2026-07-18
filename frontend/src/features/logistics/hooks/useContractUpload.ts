@@ -16,6 +16,14 @@ interface UseContractUploadProps {
   onSuccess: () => void;
 }
 
+/**
+ * Hook para gerenciar o upload de arquivos de contrato e a criação correspondente na API.
+ *
+ * @param props Propriedades de configuração.
+ * @param props.weddingUuid O UUID do casamento associado.
+ * @param props.onSuccess Callback executado em caso de sucesso.
+ * @returns Instância das funções de upload e estado de carregamento.
+ */
 export function useContractUpload({ weddingUuid, onSuccess }: UseContractUploadProps) {
   const [isPending, setIsPending] = useState(false);
   const { mutateAsync: createFull } = useLogisticsContractsCreateFull();

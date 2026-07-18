@@ -52,9 +52,11 @@ export function ReadOnlyEventDetails({
           </div>
           <div>
             <span className="font-medium">Início: </span>
-            {new Date(event.start_time).toLocaleString("pt-BR")}
+            {event.start_time && !isNaN(new Date(event.start_time).getTime())
+              ? new Date(event.start_time).toLocaleString("pt-BR")
+              : "Não informada"}
           </div>
-          {event.end_time && (
+          {event.end_time && !isNaN(new Date(event.end_time).getTime()) && (
             <div>
               <span className="font-medium">Fim: </span>
               {new Date(event.end_time).toLocaleString("pt-BR")}

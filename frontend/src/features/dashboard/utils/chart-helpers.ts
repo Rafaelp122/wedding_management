@@ -22,7 +22,10 @@ export interface TaskProgressData {
 }
 
 /**
- * Transforma dados de casamentos por mês para o gráfico
+ * Transforma dados de casamentos agrupados por mês para o formato consumido pelo gráfico.
+ *
+ * @param byMonthData Lista opcional contendo a quantidade de casamentos por mês.
+ * @returns Um objeto contendo a lista formatada de 12 meses e um booleano indicando se há dados reais.
  */
 export function getMonthlyWeddingsData(
   byMonthData: WeddingByMonthOut[] | undefined
@@ -45,7 +48,15 @@ export function getMonthlyWeddingsData(
 }
 
 /**
- * Transforma parcelas financeiras para o gráfico de fluxo de caixa
+ * Transforma as parcelas financeiras no formato necessário para o gráfico de fluxo de caixa.
+ *
+ * Filtra as parcelas pelo ano selecionado e calcula o total acumulado das parcelas
+ * pagas e pendentes para cada mês do ano, arredondando os valores acumulados finais
+ * para 2 casas decimais conforme a regra de precisão monetária BR-VAL01.
+ *
+ * @param installments Lista opcional contendo todas as parcelas cadastradas.
+ * @param selectedYear O ano para o qual o fluxo de caixa deve ser gerado.
+ * @returns Um objeto contendo a lista de dados mensais formatados e um indicador se há dados de caixa.
  */
 export function getCashFlowData(
   installments: InstallmentOut[] | undefined,
@@ -68,10 +79,11 @@ export function getCashFlowData(
     }
   }
 
+  // Garante o arredondamento dos acumulados para 2 casas decimais (BR-VAL01)
   const cashFlowData = MONTHS.map((name, index) => ({
     name,
-    pago: paidSums[index],
-    pendente: pendingSums[index],
+    pago: Math.round(paidSums[index] * 100) / 100,
+    pendente: Math.round(pendingSums[index] * 100) / 100,
   }));
 
   return {
@@ -81,7 +93,15 @@ export function getCashFlowData(
 }
 
 /**
- * Transforma tarefas e casamentos para o gráfico de progresso de tarefas (top 10)
+ * Transforma a lista de tarefas e casamentos no progresso geral de checklists (Top 10).
+ *
+ * Calcula a porcentagem de tarefas concluídas por casamento e ordena os 10 casamentos
+ * de maior progresso no ano selecionado.
+ *
+ * @param weddings Lista opcional de casamentos cadastrados.
+ * @param tasks Lista opcional de tarefas cadastradas.
+ * @param selectedYear Ano de referência para filtragem.
+ * @returns Um objeto contendo a lista dos 10 casamentos com melhor progresso e indicador se há tarefas.
  */
 export function getTasksProgressData(
   weddings: WeddingOut[] | undefined,
@@ -105,7 +125,6 @@ export function getTasksProgressData(
     const completed = weddingTasks.filter((t) => t.is_completed).length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Pega o primeiro nome da noiva e do noivo
     const brideFirst = w.bride_name ? w.bride_name.split(" ")[0] : "";
     const groomFirst = w.groom_name ? w.groom_name.split(" ")[0] : "";
     return {

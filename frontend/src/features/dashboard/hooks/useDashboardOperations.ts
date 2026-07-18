@@ -9,11 +9,28 @@ import {
 } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 
+/**
+ * Propriedades para o hook useDashboardOperations.
+ */
 interface UseDashboardOperationsProps {
+  /** Lista de casamentos a serem gerenciados pelo dashboard. */
   weddings: WeddingOut[];
+  /** Data de referência opcional para determinar a data atual (útil para testes). */
+  referenceDate?: Date;
 }
 
-export function useDashboardOperations({ weddings }: UseDashboardOperationsProps) {
+/**
+ * Hook personalizado para gerenciar as operações do painel (dashboard).
+ *
+ * Este hook encapsula as chamadas de API, mutações e lógica de filtragem para
+ * tarefas urgentes, casamentos futuros e contratos pendentes.
+ *
+ * @param props As propriedades de entrada do hook.
+ * @param props.weddings A lista completa de casamentos.
+ * @param props.referenceDate A data opcional que define o momento "atual".
+ * @returns Um objeto com estados e callbacks necessários para renderizar o painel.
+ */
+export function useDashboardOperations({ weddings, referenceDate }: UseDashboardOperationsProps) {
   const [activeTab, setActiveTab] = useState<string>("tarefas");
   const queryClient = useQueryClient();
 
@@ -57,7 +74,10 @@ export function useDashboardOperations({ weddings }: UseDashboardOperationsProps
   }, [weddings]);
 
   // 3. Urgent Tasks (Incomplete + sort by due date)
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => {
+    const refDate = referenceDate || new Date();
+    return refDate.toISOString().slice(0, 10);
+  }, [referenceDate]);
 
   const urgentTasks = useMemo(() => {
     return (tasksRes?.data?.items ?? [])

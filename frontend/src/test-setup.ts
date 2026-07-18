@@ -171,7 +171,7 @@ vi.mock("@/components/ui/dropdown-menu", () => {
       );
       return React.createElement(
         "div",
-        { className, onClick: handleClick, ...props },
+        { role: "menuitem", className, onClick: handleClick, ...props },
         children
       );
     },

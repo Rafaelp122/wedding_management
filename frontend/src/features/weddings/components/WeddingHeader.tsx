@@ -38,13 +38,13 @@ export const WeddingHeader = memo(function WeddingHeader({
 
   return (
     <div className="bg-white dark:bg-[#18181B] p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-      {/* Decorative corner background */}
+      {/* Fundo decorativo de canto */}
       <div className="absolute right-0 top-0 w-16 h-16 bg-primary/5 rounded-bl-full pointer-events-none" />
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
-        {/* Left Block: Names, Category, Date, Location & Guests */}
+        {/* Bloco da esquerda: Nomes, Categoria, Data, Local e Convidados */}
         <div className="flex flex-col gap-1.5">
-          {/* Row 1: Names and Style badge + Status badge + Edit button */}
+          {/* Linha 1: Nomes, badge de Estilo + badge de Status + botão de Edição */}
           <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="font-display text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
               {wedding.groom_name} & {wedding.bride_name}
@@ -86,7 +86,7 @@ export const WeddingHeader = memo(function WeddingHeader({
             </Button>
           </div>
 
-          {/* Row 2: Date, Address, and Guests consolidated */}
+          {/* Linha 2: Data, Endereço e Convidados consolidados */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             <span className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 opacity-80" /> {displayDate}
@@ -102,7 +102,7 @@ export const WeddingHeader = memo(function WeddingHeader({
           </div>
         </div>
 
-        {/* Right Block: Compact financial bar + Checklist slider in line */}
+        {/* Bloco da direita: Barra financeira compacta + indicador do Checklist em linha */}
         <div className="flex items-center gap-4 divide-x divide-zinc-200 dark:divide-zinc-800 shrink-0">
           <div className="text-left pl-0">
             <span className="block text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Orçado</span>

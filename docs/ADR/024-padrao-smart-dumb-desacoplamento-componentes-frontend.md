@@ -32,13 +32,13 @@ Componentes de nível de página ou wrappers que gerenciam a infraestrutura ass�
 ### 2. Dumb Components (Presenters ou Views)
 Componentes puramente visuais e focados na renderização da interface.
 * **Responsabilidades**: Exibir a UI com base em Props e disparar callbacks de evento passados pelo container (ex: `onSuccess`, `onEdit`, `onSubmit`).
-* **Regra Estrita**: Não podem conter dependências diretas de chamadas de API, roteamento ou hooks globais de dados assíncronos. Eles são síncronos e puros.
+* **Regra Estrita**: Não podem conter dependências diretas de chamadas de API, roteamento ou hooks globais de dados assíncronos. Eles são síncronos e puros. Como exceção permitida, podem importar tipos gerados da API (`import type { ... }`) para garantir a integridade da tipagem estrita no TypeScript.
 * **Benefício**: São testados unitariamente de forma instantânea sem necessidade de wrappers complexos (como `QueryClientProvider` ou `BrowserRouter`).
 
 ### 3. Funções Utilitárias Puras (Helpers)
 Cálculos e lógica de negócio de formatação de dados, gráficos e regras de status.
 * **Regra Estrita**: Devem ser extraídos para arquivos utilitários independentes (`utils/` ou `helpers.ts`) e parametrizados de forma determinística (ex: aceitando datas de referência como argumento em vez de chamarem `new Date()` interno).
-* **Benefício**: Cobertura de 100% de testes com testes de função puros e sem peso de renderização do DOM.
+* **Benefício**: Cobertura de testes abrangente com testes de função puros e sem peso de renderização do DOM.
 
 ### 4. Resolução de Import e Mocking sob `isolate: false`
 * Evita-se o uso de `vi.mock` local em arquivos de teste para hooks customizados.

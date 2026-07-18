@@ -1,5 +1,4 @@
 import { lazy, Suspense } from "react";
-import { Link } from "react-router-dom";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import type { WeddingLookupOut } from "@/api/generated/v1/models/weddingLookupOut";
 import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
@@ -55,6 +54,7 @@ interface DashboardPageViewProps {
   weddingDashboard: WeddingDashboardOut | undefined;
   summary: DashboardSummaryOut | undefined;
   fullWeddingsArray: WeddingOut[];
+  onNavigateToWedding: (weddingUuid: string, tab?: string) => void;
 }
 
 export function DashboardPageView({
@@ -76,6 +76,7 @@ export function DashboardPageView({
   weddingDashboard,
   summary,
   fullWeddingsArray,
+  onNavigateToWedding,
 }: DashboardPageViewProps) {
   return (
     <div className="flex-1 overflow-auto min-h-screen">
@@ -165,25 +166,21 @@ export function DashboardPageView({
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button
-                asChild
                 variant="outline"
                 size="sm"
-                className="border-aura-200 dark:border-aura-800/50 text-aura-700 dark:text-aura-400 hover:bg-aura-50 dark:hover:bg-aura-900/30 gap-1.5"
+                className="border-aura-200 dark:border-aura-800/50 text-aura-700 dark:text-aura-400 hover:bg-aura-50 dark:hover:bg-aura-900/30 gap-1.5 cursor-pointer"
+                onClick={() => onNavigateToWedding(selectedWeddingFull.uuid)}
               >
-                <Link to={`/weddings/${selectedWeddingFull.uuid}`}>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Abrir casamento
-                </Link>
+                <ExternalLink className="w-3.5 h-3.5" />
+                Abrir casamento
               </Button>
               <Button
-                asChild
                 variant="ghost"
                 size="sm"
-                className="text-zinc-500 gap-1"
+                className="text-zinc-500 gap-1 cursor-pointer"
+                onClick={() => onNavigateToWedding(selectedWeddingFull.uuid, "finances")}
               >
-                <Link to={`/weddings/${selectedWeddingFull.uuid}?tab=finances`}>
-                  Finanças <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                Finanças <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>

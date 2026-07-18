@@ -49,6 +49,21 @@ const tasksConfig = {
   },
 } satisfies ChartConfig;
 
+const heightClasses: Record<number, string> = {
+  30: "h-[30%]",
+  35: "h-[35%]",
+  40: "h-[40%]",
+  45: "h-[45%]",
+  50: "h-[50%]",
+  55: "h-[55%]",
+  60: "h-[60%]",
+  65: "h-[65%]",
+  70: "h-[70%]",
+  75: "h-[75%]",
+  80: "h-[80%]",
+  85: "h-[85%]",
+};
+
 export const WeddingMonthlyChartView = memo(function WeddingMonthlyChartView({
   selectedYear,
   onYearChange,
@@ -100,7 +115,7 @@ export const WeddingMonthlyChartView = memo(function WeddingMonthlyChartView({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-primary hover:bg-secondary focus-visible:ring-primary/50"
+                className="h-8 w-8 text-primary hover:bg-secondary focus-visible:ring-primary/50 cursor-pointer"
                 onClick={() => onYearChange(selectedYear - 1)}
                 aria-label="Ano anterior"
               >
@@ -112,7 +127,7 @@ export const WeddingMonthlyChartView = memo(function WeddingMonthlyChartView({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-primary hover:bg-secondary focus-visible:ring-primary/50"
+                className="h-8 w-8 text-primary hover:bg-secondary focus-visible:ring-primary/50 cursor-pointer"
                 onClick={() => onYearChange(selectedYear + 1)}
                 aria-label="Próximo ano"
               >
@@ -157,7 +172,7 @@ export const WeddingMonthlyChartView = memo(function WeddingMonthlyChartView({
               <div className="h-75 flex flex-col justify-end gap-3 pb-4">
                 <div className="flex items-end gap-4 h-full px-4">
                   {[35, 65, 45, 80, 50, 75, 40, 60, 30, 85, 55, 70].map((height, i) => (
-                    <Skeleton key={i} className="flex-1" style={{ height: `${height}%` }} />
+                    <Skeleton key={i} className={`flex-1 ${heightClasses[height] || "h-full"}`} />
                   ))}
                 </div>
               </div>

@@ -3,6 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logistics/logistics";
 
+/**
+ * Hook orquestrador para gerenciar estados de exibição e fluxo de contratos, aditivos e itens de fornecedores.
+ *
+ * @returns Estados e funções de controle para diálogos, edição de itens e atualização de listagem.
+ */
 export function useVendorsItemsOrchestrator() {
   const queryClient = useQueryClient();
 

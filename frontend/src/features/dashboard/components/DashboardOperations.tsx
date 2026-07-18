@@ -1,4 +1,5 @@
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import { useNavigate } from "react-router-dom";
 import { useDashboardOperations } from "../hooks/useDashboardOperations";
 import { DashboardOperationsView } from "./DashboardOperationsView";
 
@@ -8,6 +9,12 @@ interface DashboardOperationsProps {
 
 export function DashboardOperations({ weddings }: DashboardOperationsProps) {
   const operations = useDashboardOperations({ weddings });
+  const navigate = useNavigate();
+
+  const handleNavigateToWedding = (weddingUuid: string, tab?: string) => {
+    const url = `/weddings/${weddingUuid}${tab ? `?tab=${tab}` : ""}`;
+    navigate(url);
+  };
 
   return (
     <DashboardOperationsView
@@ -22,6 +29,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
       weddingMap={operations.weddingMap}
       handleTaskToggle={operations.handleTaskToggle}
       todayStr={operations.todayStr}
+      onNavigateToWedding={handleNavigateToWedding}
     />
   );
 }

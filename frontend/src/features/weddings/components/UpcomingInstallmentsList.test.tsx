@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { faker } from "@faker-js/faker";
 import { render, screen } from "@/test-utils";
 import { UpcomingInstallmentsList } from "./UpcomingInstallmentsList";
 
@@ -11,17 +12,17 @@ describe("UpcomingInstallmentsList", () => {
   it("renders list of upcoming installments", () => {
     const mockInstallments = [
       {
-        uuid: "inst-1",
+        uuid: faker.string.uuid(),
         installment_number: 1,
-        amount: "1500.00",
-        due_date: "2026-08-10",
+        amount: faker.finance.amount({ min: 1000, max: 2000, dec: 2 }),
+        due_date: faker.date.future().toISOString().split("T")[0],
         status: "PENDING",
       },
       {
-        uuid: "inst-2",
+        uuid: faker.string.uuid(),
         installment_number: 2,
-        amount: "2000.00",
-        due_date: "2026-07-20",
+        amount: faker.finance.amount({ min: 2001, max: 3000, dec: 2 }),
+        due_date: faker.date.past().toISOString().split("T")[0],
         status: "OVERDUE",
       },
     ];
