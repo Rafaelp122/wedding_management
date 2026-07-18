@@ -95,3 +95,8 @@ export function getWeddingInitials(groomName: string, brideName: string): string
 }
 
 export type WeddingStatusFilter = "all" | WeddingStatusEnum;
+
+export function calculateChecklistPercentage(completed: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.round((completed / total) * 100);
+}

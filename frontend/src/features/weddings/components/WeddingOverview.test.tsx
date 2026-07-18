@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@/test-utils";
+import { describe, expect, it, vi } from "vitest";
+import { render, screen, userEvent } from "@/test-utils";
 import { WeddingOverview } from "@/features/weddings/components/WeddingOverview";
 import { createMockWedding } from "@/test-data";
 import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
@@ -174,34 +174,29 @@ describe("WeddingOverview", () => {
     expect(screen.getByText("Pendente")).toBeInTheDocument();
   });
 
-  it("renders view planning and view finances links", () => {
-    render(<WeddingOverview wedding={mockWedding} overview={null} />);
+  it("renders view planning and view finances buttons and calls callbacks when clicked", async () => {
+    const onNavigateToPlanning = vi.fn();
+    const onNavigateToFinances = vi.fn();
 
-    expect(
-      screen.getByRole("link", { name: /ver planejamento/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /ver finanças/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("has correct link URLs", () => {
-    render(<WeddingOverview wedding={mockWedding} overview={null} />);
-
-    const planningLink = screen.getByRole("link", {
-      name: /ver planejamento/i,
-    });
-    expect(planningLink).toHaveAttribute(
-      "href",
-      "/weddings/w-1?tab=planning&subtab=checklist",
+    render(
+      <WeddingOverview
+        wedding={mockWedding}
+        overview={null}
+        onNavigateToPlanning={onNavigateToPlanning}
+        onNavigateToFinances={onNavigateToFinances}
+      />,
     );
 
-    const financesLink = screen.getByRole("link", {
-      name: /ver finanças/i,
-    });
-    expect(financesLink).toHaveAttribute(
-      "href",
-      "/weddings/w-1?tab=finances",
-    );
+    const planningBtn = screen.getByRole("button", { name: /ver planejamento/i });
+    const financesBtn = screen.getByRole("button", { name: /ver finanças/i });
+
+    expect(planningBtn).toBeInTheDocument();
+    expect(financesBtn).toBeInTheDocument();
+
+    await userEvent.click(planningBtn);
+    expect(onNavigateToPlanning).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(financesBtn);
+    expect(onNavigateToFinances).toHaveBeenCalledTimes(1);
   });
 });
