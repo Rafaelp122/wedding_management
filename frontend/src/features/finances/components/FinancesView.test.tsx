@@ -4,37 +4,50 @@ import { render, screen, waitFor, server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
 
-vi.mock("@/features/finances/components/FinancesDistributionChart", () => ({
-  WeddingFinancesDistributionChart: () => <div data-testid="distribution-chart" />,
-}));
+vi.mock("@/features/finances/components/FinancesDistributionChart", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/features/finances/components/FinancesDistributionChart")>();
+  return { ...mod, WeddingFinancesDistributionChart: () => <div data-testid="distribution-chart" /> };
+});
 
-vi.mock("@/features/finances/components/expenses/CreateExpenseDialog", () => ({
-  CreateExpenseDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="create-expense-dialog">Nova Despesa</div> : null,
-}));
+vi.mock("@/features/finances/components/expenses/CreateExpenseDialog", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/features/finances/components/expenses/CreateExpenseDialog")>();
+  return {
+    ...mod,
+    CreateExpenseDialog: ({ open }: { open: boolean }) =>
+      open ? <div data-testid="create-expense-dialog">Nova Despesa</div> : null,
+  };
+});
 
-vi.mock("@/features/finances/components/FinancesGroupsSummary", () => ({
-  WeddingFinancesGroupsSummary: ({ onCategoryChanged }: { onCategoryChanged: () => void }) => (
-    <div>
-      <button data-testid="mock-category-change-btn" onClick={onCategoryChanged}>
-        Change Category
-      </button>
-    </div>
-  ),
-}));
+vi.mock("@/features/finances/components/FinancesGroupsSummary", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/features/finances/components/FinancesGroupsSummary")>();
+  return {
+    ...mod,
+    WeddingFinancesGroupsSummary: ({ onCategoryChanged }: { onCategoryChanged: () => void }) => (
+      <div>
+        <button data-testid="mock-category-change-btn" onClick={onCategoryChanged}>
+          Change Category
+        </button>
+      </div>
+    ),
+  };
+});
 
-vi.mock("@/features/finances/components/expenses/ExpensesTable", () => ({
-  WeddingExpensesTable: ({ expenses, onExpenseUpdated }: { expenses: any[], onExpenseUpdated: () => void }) => (
-    <div>
-      {expenses.map((e) => (
-        <div key={e.uuid}>{e.name}</div>
-      ))}
-      <button data-testid="mock-expense-update-btn" onClick={onExpenseUpdated}>
-        Update Expense
-      </button>
-    </div>
-  ),
-}));
+vi.mock("@/features/finances/components/expenses/ExpensesTable", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/features/finances/components/expenses/ExpensesTable")>();
+  return {
+    ...mod,
+    WeddingExpensesTable: ({ expenses, onExpenseUpdated }: { expenses: any[], onExpenseUpdated: () => void }) => (
+      <div>
+        {expenses.map((e) => (
+          <div key={e.uuid}>{e.name}</div>
+        ))}
+        <button data-testid="mock-expense-update-btn" onClick={onExpenseUpdated}>
+          Update Expense
+        </button>
+      </div>
+    ),
+  };
+});
 
 describe("WeddingFinancesView", () => {
   beforeEach(() => {
