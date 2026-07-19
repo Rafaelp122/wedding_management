@@ -76,4 +76,10 @@ describe("useWeddingDetail", () => {
 
     expect(result.current.data).toBeUndefined();
   });
+
+  it("invalidates wedding queries on demand", () => {
+    const { result } = renderHook(() => useWeddingDetail("w-1"));
+
+    expect(() => result.current.invalidateWeddingQueries()).not.toThrow();
+  });
 });
