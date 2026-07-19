@@ -1,4 +1,4 @@
-import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
+import type { FieldValues, UseFormReturn } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -34,12 +34,14 @@ export function WeddingFormFields<
   placeholders,
   expectedGuestsLabel = "Número de Convidados",
 }: WeddingFormFieldsProps<TFormValues>) {
+  const typedForm = form as unknown as UseFormReturn<WeddingFormShape>;
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
         <FormField
-          control={form.control}
-          name={"groom_name" as FieldPath<TFormValues>}
+          control={typedForm.control}
+          name="groom_name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nome do Noivo</FormLabel>
@@ -56,8 +58,8 @@ export function WeddingFormFields<
         />
 
         <FormField
-          control={form.control}
-          name={"bride_name" as FieldPath<TFormValues>}
+          control={typedForm.control}
+          name="bride_name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nome da Noiva</FormLabel>
@@ -76,8 +78,8 @@ export function WeddingFormFields<
 
       <div className="grid grid-cols-2 gap-4">
         <FormField
-          control={form.control}
-          name={"date" as FieldPath<TFormValues>}
+          control={typedForm.control}
+          name="date"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Data do Casamento</FormLabel>
@@ -94,8 +96,8 @@ export function WeddingFormFields<
         />
 
         <FormField
-          control={form.control}
-          name={"expected_guests" as FieldPath<TFormValues>}
+          control={typedForm.control}
+          name="expected_guests"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{expectedGuestsLabel}</FormLabel>
@@ -117,8 +119,8 @@ export function WeddingFormFields<
       </div>
 
       <FormField
-        control={form.control}
-        name={"location" as FieldPath<TFormValues>}
+        control={typedForm.control}
+        name="location"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Local</FormLabel>

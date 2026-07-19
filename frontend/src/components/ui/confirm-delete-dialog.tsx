@@ -60,8 +60,8 @@ export const ConfirmDeleteDialog = memo(function ConfirmDeleteDialog({
             <Alert variant="destructive">
               <AlertDescription>
                 <ul className="list-disc list-inside flex flex-col gap-1 text-sm">
-                  {consequences.map((c, i) => (
-                    <li key={i}>{c}</li>
+                  {consequences.map((c) => (
+                    <li key={c}>{c}</li>
                   ))}
                 </ul>
               </AlertDescription>

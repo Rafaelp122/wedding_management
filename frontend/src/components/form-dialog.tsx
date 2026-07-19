@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { type UseFormReturn } from "react-hook-form";
+import { type FieldValues, type UseFormReturn } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -13,13 +13,12 @@ import {
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
-interface FormDialogProps {
+interface FormDialogProps<TFieldValues extends FieldValues = FieldValues> {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- UseFormReturn is invariant in practice
-  form: UseFormReturn<any>;
+  form: UseFormReturn<TFieldValues>;
   onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void> | void;
   isPending: boolean;
   submitLabel: string;
@@ -36,7 +35,7 @@ const MAX_WIDTH_MAP: Record<string, string> = {
   "600px": "sm:max-w-[600px]",
 };
 
-export function FormDialog({
+export function FormDialog<TFieldValues extends FieldValues = FieldValues>({
   open,
   onOpenChange,
   title,
@@ -48,7 +47,7 @@ export function FormDialog({
   children,
   maxWidth = "560px",
   submitDisabled,
-}: FormDialogProps) {
+}: FormDialogProps<TFieldValues>) {
   const disabled = submitDisabled ?? isPending;
   const contentClass = MAX_WIDTH_MAP[maxWidth] ?? "sm:max-w-[560px]";
   return (

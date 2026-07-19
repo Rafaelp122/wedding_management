@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyBRCompact } from "@/lib/formatters";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
+import { statusVariant } from "./constants";
 
 const ExpenseDetailSheet = lazy(
   () => import("./ExpenseDetailSheet").then((m) => ({ default: m.ExpenseDetailSheet })),
@@ -18,12 +19,6 @@ interface WeddingFinancesRecentExpensesProps {
   expenses: ExpenseOut[];
   onAddExpense?: () => void;
 }
-
-const statusVariant: Record<string, "default" | "destructive" | "outline"> = {
-  SETTLED: "default",
-  PARTIALLY_PAID: "outline",
-  PENDING: "outline",
-};
 
 const statusLabel: Record<string, string> = {
   SETTLED: "Quitada",
@@ -58,7 +53,7 @@ export function WeddingFinancesRecentExpenses({
         </div>
         <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
           {expenses.length > 0 ? (
-            expenses.slice(0, 10).map((expense) => {
+            expenses.map((expense) => {
               const count = expense.installments_count ?? 0;
               const status = expense.status ?? "PENDING";
 
