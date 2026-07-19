@@ -1,12 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useWeddingDetail } from "../hooks/useWeddingDetail";
-import { getWeddingsListQueryKey, getWeddingsReadQueryKey, useWeddingsOverviewRead, getWeddingsOverviewReadQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingsOverviewRead } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDialog";
 import { WeddingHeader } from "@/features/weddings/components/WeddingHeader";
 import { calculateChecklistPercentage } from "@/features/weddings/utils/wedding-status";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,10 +14,9 @@ import { AlertCircle } from "lucide-react";
 
 export default function WeddingDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
-  const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const { data: response, isLoading, error } = useWeddingDetail(uuid!);
+  const { data: response, isLoading, error, invalidateWeddingQueries } = useWeddingDetail(uuid!);
 
   const wedding = response?.data;
 
@@ -137,9 +135,7 @@ export default function WeddingDetailPage() {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: getWeddingsReadQueryKey(uuid!) });
-          queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getWeddingsOverviewReadQueryKey(uuid!) });
+          invalidateWeddingQueries();
           setEditDialogOpen(false);
         }}
       />
