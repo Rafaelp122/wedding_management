@@ -40,8 +40,6 @@ vi.mock("./ExpenseRedistributeForm", () => ({
 
 describe("ExpenseDetailSheet", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
     // Default MSW handlers
     server.use(
       http.get("*/api/v1/finances/installments/", () =>

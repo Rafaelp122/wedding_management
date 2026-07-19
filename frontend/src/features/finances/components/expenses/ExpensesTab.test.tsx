@@ -3,9 +3,9 @@ import { render, screen, waitFor, userEvent, server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { WeddingExpensesTab } from "@/features/finances/components/expenses/ExpensesTab";
 import { createMockExpense } from "@/test-data";
-import { ExpenseDetailSheet } from "./ExpenseDetailSheet";
-// Accessing ExpenseDetailSheet directly in imports ensures it is pre-loaded
-// in the test module registry, preventing async Suspense delay during test execution.
+
+// Pre-load ExpenseDetailSheet module into Vite registry to ensure lazy Suspense resolves synchronously in tests
+import "./ExpenseDetailSheet";
 
 const mockExpense = createMockExpense({
   uuid: "expense-1",
@@ -19,9 +19,6 @@ const mockExpense = createMockExpense({
 });
 
 describe("WeddingExpensesTab", () => {
-  it("ensures detail sheet component is loaded", () => {
-    expect(ExpenseDetailSheet).toBeDefined();
-  });
   it("shows loading state initially", () => {
     render(<WeddingExpensesTab weddingUuid="w-1" />);
 
