@@ -17,6 +17,8 @@ export const statusLabel: Record<string, string> = {
   OVERDUE: "Atrasado",
 };
 
+export const RECENT_EXPENSES_LIMIT = 10;
+
 export const installmentStatusBadge: Record<
   string,
   {

@@ -9,6 +9,7 @@ import io
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command
@@ -22,6 +23,10 @@ from apps.finances.tests.factories import (
 )
 from apps.tenants.tests.factories import CompanyFactory
 from apps.weddings.tests.factories import WeddingFactory
+
+
+# Data fixa para evitar flakiness em testes que dependem de date.today()
+FIXED_TODAY = date(2024, 6, 15)
 
 
 def _create_installment(company, status, due_date, amount=Decimal("100.00"), **kwargs):
@@ -57,11 +62,27 @@ def _create_installment(company, status, due_date, amount=Decimal("100.00"), **k
 class TestMarkOverdueInstallmentsCommand:
     """Testes do comando Django mark_overdue_installments."""
 
-    def test_mark_overdue_success(self, user):
+    @pytest.fixture()
+    def frozen_today(self):
+        """
+        Congela date.today() no módulo do comando para evitar flakiness em
+        testes com datas limite (ex: 'ontem', 'hoje', 'amanhã').
+
+        O side_effect preserva o construtor date() intacto — apenas .today()
+        é substituído pela constante FIXED_TODAY.
+        """
+        with patch(
+            "apps.finances.management.commands.mark_overdue_installments.date"
+        ) as mock_date:
+            mock_date.today.return_value = FIXED_TODAY
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            yield mock_date
+
+    def test_mark_overdue_success(self, user, frozen_today):
         """
         Verifica que parcelas PENDING com due_date menor que hoje mudam para OVERDUE.
         """
-        today = date.today()
+        today = FIXED_TODAY
         # Parcela vencida ontem
         inst1 = _create_installment(
             company=user.company,
@@ -88,11 +109,11 @@ class TestMarkOverdueInstallmentsCommand:
         assert "2 parcela(s) marcada(s) como OVERDUE" in output
         assert f"vencidas antes de {today}" in output
 
-    def test_mark_overdue_paid_not_changed(self, user):
+    def test_mark_overdue_paid_not_changed(self, user, frozen_today):
         """
         Verifica que parcelas PAID com due_date menor que hoje não são alteradas.
         """
-        today = date.today()
+        today = FIXED_TODAY
         # Parcela vencida ontem mas já paga
         inst = _create_installment(
             company=user.company,
@@ -110,11 +131,11 @@ class TestMarkOverdueInstallmentsCommand:
         output = out.getvalue()
         assert "Nenhuma parcela vencida encontrada." in output
 
-    def test_mark_overdue_pending_future_not_changed(self, user):
+    def test_mark_overdue_pending_future_not_changed(self, user, frozen_today):
         """
         Verifica que parcelas PENDING com due_date >= hoje não são alteradas.
         """
-        today = date.today()
+        today = FIXED_TODAY
         # Parcela vencendo hoje
         inst_today = _create_installment(
             company=user.company,
@@ -140,13 +161,13 @@ class TestMarkOverdueInstallmentsCommand:
         output = out.getvalue()
         assert "Nenhuma parcela vencida encontrada." in output
 
-    def test_mark_overdue_multitenancy(self, user):
+    def test_mark_overdue_multitenancy(self, user, frozen_today):
         """
         Verifica o comportamento correto do comando em ambiente multi-tenancy.
         Garante que parcelas pendentes e atrasadas de qualquer tenant sejam processadas,
         enquanto parcelas pagas ou futuras de todos os tenants não sejam afetadas.
         """
-        today = date.today()
+        today = FIXED_TODAY
         other_company = CompanyFactory()
 
         # Tenant 1 (user.company): parcelas
@@ -199,11 +220,11 @@ class TestMarkOverdueInstallmentsCommand:
         output = out.getvalue()
         assert "2 parcela(s) marcada(s) como OVERDUE" in output
 
-    def test_mark_overdue_logging(self, caplog, user):
+    def test_mark_overdue_logging(self, caplog, user, frozen_today):
         """
         Verifica que mensagens informativas de log são geradas apropriadamente.
         """
-        today = date.today()
+        today = FIXED_TODAY
         _create_installment(
             company=user.company,
             status=Installment.StatusChoices.PENDING,
