@@ -1,6 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import WeddingsListPage from "@/features/weddings/pages/WeddingsListPage";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
+import { toast } from "sonner";
+import { createMockWedding } from "@/test-data";
+
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+const mockWedding = createMockWedding({
+  uuid: "wedding-123",
+  groom_name: "João",
+  bride_name: "Maria",
+  location: "Buffet Castelo",
+  date: "2026-10-15",
+  status: "IN_PROGRESS",
+  total_budget: 50000,
+});
 
 describe("WeddingsListPage", () => {
   it("shows loading state initially", () => {
@@ -72,5 +95,146 @@ describe("WeddingsListPage", () => {
     await user.type(searchInput, "Casal Teste");
 
     expect(searchInput).toHaveValue("Casal Teste");
+  });
+
+  it("shows error state when query fails and recovers on retry", async () => {
+    let shouldFail = true;
+
+    server.use(
+      http.get("*/api/v1/weddings/", () => {
+        if (shouldFail) {
+          return HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
+        }
+        return HttpResponse.json({ items: [mockWedding], count: 1 }, { status: 200 });
+      })
+    );
+
+    render(<WeddingsListPage />);
+
+    // Assert error state is displayed
+    expect(
+      await screen.findByText("Erro interno")
+    ).toBeInTheDocument();
+
+    // Now set API to succeed, and click retry
+    shouldFail = false;
+    const user = userEvent.setup();
+    const retryBtn = screen.getByRole("button", { name: /tentar novamente/i });
+    await user.click(retryBtn);
+
+    // Verify it recovers and shows the list
+    expect(await screen.findByText("João & Maria")).toBeInTheDocument();
+  });
+
+  it("shows empty weddings state when count is 0 and items is empty", async () => {
+    server.use(
+      http.get("*/api/v1/weddings/", () => {
+        return HttpResponse.json({ items: [], count: 0 }, { status: 200 });
+      })
+    );
+
+    render(<WeddingsListPage />);
+
+    expect(
+      await screen.findByText(/Cada grande assessoria de casamentos/i)
+    ).toBeInTheDocument();
+  });
+
+  it("shows no weddings found warning when search result is empty but totalCount > 0", async () => {
+    server.use(
+      http.get("*/api/v1/weddings/", () => {
+        return HttpResponse.json({ items: [], count: 3 }, { status: 200 });
+      })
+    );
+
+    render(<WeddingsListPage />);
+
+    expect(
+      await screen.findByText("Nenhum casamento encontrado")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Tente ajustar os filtros de busca")
+    ).toBeInTheDocument();
+  });
+
+  it("allows navigating to wedding details page on row click", async () => {
+    server.use(
+      http.get("*/api/v1/weddings/", () => {
+        return HttpResponse.json({ items: [mockWedding], count: 1 }, { status: 200 });
+      })
+    );
+
+    render(<WeddingsListPage />);
+
+    // Click row using text
+    const cell = await screen.findByText("João & Maria");
+    const user = userEvent.setup();
+    await user.click(cell);
+
+    expect(mockNavigate).toHaveBeenCalledWith(`/weddings/${mockWedding.uuid}`);
+  });
+
+  it("allows editing a wedding in EditWeddingDialog", async () => {
+    server.use(
+      http.get("*/api/v1/weddings/", () => {
+        return HttpResponse.json({ items: [mockWedding], count: 1 }, { status: 200 });
+      }),
+      http.put("*/api/v1/weddings/:uuid/", () => {
+        return HttpResponse.json(mockWedding, { status: 200 });
+      })
+    );
+
+    render(<WeddingsListPage />);
+    const user = userEvent.setup();
+
+    // Click "Editar" button inside action menu
+    const editBtn = await screen.findByTitle("Editar");
+    await user.click(editBtn);
+
+    // Verify dialog is open
+    expect(await screen.findByRole("heading", { name: "Editar Casamento" })).toBeInTheDocument();
+
+    // Click save button
+    const saveBtn = screen.getByRole("button", { name: "Salvar Alterações" });
+    await user.click(saveBtn);
+
+    // Verify success toast
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Casamento atualizado com sucesso!");
+    });
+  });
+
+  it("allows deleting a wedding in DeleteWeddingDialog", async () => {
+    server.use(
+      http.get("*/api/v1/weddings/", () => {
+        return HttpResponse.json({ items: [mockWedding], count: 1 }, { status: 200 });
+      }),
+      http.delete("*/api/v1/weddings/:uuid/", () => {
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+
+    render(<WeddingsListPage />);
+    const user = userEvent.setup();
+
+    // Click "Excluir" button inside action menu
+    const deleteBtn = await screen.findByTitle("Excluir");
+    await user.click(deleteBtn);
+
+    // Verify dialog is open
+    expect(await screen.findByRole("heading", { name: "Deletar Casamento" })).toBeInTheDocument();
+
+    // Type name to confirm
+    const confirmInput = screen.getByPlaceholderText("Digite o nome aqui...");
+    await user.type(confirmInput, "João & Maria");
+
+    // Click delete button
+    const confirmBtn = screen.getByRole("button", { name: "Deletar Permanentemente" });
+    await user.click(confirmBtn);
+
+    // Verify success toast
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Casamento deletado com sucesso!");
+    });
   });
 });

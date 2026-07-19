@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   Calendar,
   ListChecks,
@@ -13,10 +14,30 @@ import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashb
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { WeddingOverview } from "./WeddingOverview";
-import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
-import { WeddingVendorsItemsTab } from "@/features/logistics/components/VendorsItemsView";
-import { WeddingTimelineTab } from "@/features/scheduler/components/events/TimelineView";
-import { WeddingChecklistTab } from "@/features/scheduler/components/tasks/ChecklistView";
+
+const WeddingFinancesView = lazy(() =>
+  import("@/features/finances/components/FinancesView").then((m) => ({
+    default: m.WeddingFinancesView,
+  })),
+);
+
+const WeddingVendorsItemsTab = lazy(() =>
+  import("@/features/logistics/components/VendorsItemsView").then((m) => ({
+    default: m.WeddingVendorsItemsTab,
+  })),
+);
+
+const WeddingTimelineTab = lazy(() =>
+  import("@/features/scheduler/components/events/TimelineView").then((m) => ({
+    default: m.WeddingTimelineTab,
+  })),
+);
+
+const WeddingChecklistTab = lazy(() =>
+  import("@/features/scheduler/components/tasks/ChecklistView").then((m) => ({
+    default: m.WeddingChecklistTab,
+  })),
+);
 
 interface WeddingDetailTabsProps {
   wedding: WeddingOut;
@@ -96,11 +117,15 @@ export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps)
       </TabsContent>
 
       <TabsContent value="finances" className="space-y-4 pt-4">
-        <WeddingFinancesView weddingUuid={wedding.uuid} />
+        <Suspense fallback={null}>
+          <WeddingFinancesView weddingUuid={wedding.uuid} />
+        </Suspense>
       </TabsContent>
 
       <TabsContent value="logistics" className="space-y-4 pt-4">
-        <WeddingVendorsItemsTab weddingUuid={wedding.uuid} />
+        <Suspense fallback={null}>
+          <WeddingVendorsItemsTab weddingUuid={wedding.uuid} />
+        </Suspense>
       </TabsContent>
 
       <TabsContent value="planning" className="space-y-4 pt-4">
@@ -116,10 +141,14 @@ export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps)
             </TabsTrigger>
           </TabsList>
           <TabsContent value="timeline">
-            <WeddingTimelineTab weddingUuid={wedding.uuid} />
+            <Suspense fallback={null}>
+              <WeddingTimelineTab weddingUuid={wedding.uuid} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="checklist">
-            <WeddingChecklistTab weddingUuid={wedding.uuid} />
+            <Suspense fallback={null}>
+              <WeddingChecklistTab weddingUuid={wedding.uuid} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </TabsContent>
