@@ -85,6 +85,7 @@ describe("WeddingDetailTabs", () => {
       contracts_total: 8,
       urgent_tasks: [],
       upcoming_installments: [],
+      categories_summary: [],
     };
 
     render(<WeddingDetailTabs wedding={mockWedding} overview={mockOverview} />);
@@ -109,6 +110,7 @@ describe("WeddingDetailTabs", () => {
       contracts_total: 8,
       urgent_tasks: [],
       upcoming_installments: [],
+      categories_summary: [],
     };
 
     render(<WeddingDetailTabs wedding={mockWedding} overview={mockOverview} />);
