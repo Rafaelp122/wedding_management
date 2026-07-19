@@ -1,15 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
-import { getApiErrorInfo } from "@/api/error-utils";
 import { createMutationCallbacks } from "./use-mutation-toast";
 
-// Mock the getApiErrorInfo function
-vi.mock("@/api/error-utils", () => ({
-  getApiErrorInfo: vi.fn(),
-}));
-
+/**
+ * Testes para createMutationCallbacks.
+ *
+ * Nota: não mockamos getApiErrorInfo pois é uma função pura interna que
+ * já possui cobertura própria. Testamos o comportamento de ponta a ponta
+ * do hook, verificando as chamadas reais ao toast do Sonner (já mockado
+ * globalmente em test-setup.ts).
+ */
 describe("createMutationCallbacks", () => {
-  it("should trigger toast.success and call onSuccess callback when operation succeeds", () => {
+  it("deve acionar toast.success e chamar onSuccess quando a operação é bem-sucedida", () => {
     const onSuccessMock = vi.fn();
     const callbacks = createMutationCallbacks({
       successMsg: "Operação realizada!",
@@ -19,18 +21,12 @@ describe("createMutationCallbacks", () => {
     const mockData = { id: 1, name: "Test" };
     callbacks.onSuccess(mockData);
 
-    // Assert global sonner mock has been called
     expect(toast.success).toHaveBeenCalledWith("Operação realizada!");
     expect(onSuccessMock).toHaveBeenCalledWith(mockData);
   });
 
-  it("should trigger toast.error using the message resolved from getApiErrorInfo when operation fails", () => {
-    const mockError = new Error("Erro interno");
-    vi.mocked(getApiErrorInfo).mockReturnValue({
-      message: "Mensagem de erro da API",
-      status: 500,
-    });
-
+  it("deve acionar toast.error com a mensagem do Error quando a operação falha", () => {
+    const mockError = new Error("Erro interno do servidor");
     const callbacks = createMutationCallbacks({
       successMsg: "Sucesso",
       fallbackErrorMsg: "Erro customizado",
@@ -38,24 +34,38 @@ describe("createMutationCallbacks", () => {
 
     callbacks.onError(mockError);
 
-    expect(getApiErrorInfo).toHaveBeenCalledWith(mockError, "Erro customizado");
-    expect(toast.error).toHaveBeenCalledWith("Mensagem de erro da API");
+    // getApiErrorInfo retorna error.message diretamente para instâncias de Error não-Axios
+    expect(toast.error).toHaveBeenCalledWith("Erro interno do servidor");
   });
 
-  it("should use default fallback error message if not provided", () => {
-    const mockError = new Error("Erro");
-    vi.mocked(getApiErrorInfo).mockReturnValue({
-      message: "Não foi possível concluir a operação.",
-      status: 400,
+  it("deve usar a mensagem de fallback quando o erro não possui mensagem", () => {
+    const callbacks = createMutationCallbacks({
+      successMsg: "Sucesso",
+      fallbackErrorMsg: "Falha ao realizar a operação.",
     });
 
+    // Erro sem mensagem (ex: objeto genérico lançado)
+    callbacks.onError({});
+
+    expect(toast.error).toHaveBeenCalledWith("Falha ao realizar a operação.");
+  });
+
+  it("deve usar a mensagem de fallback padrão quando fallbackErrorMsg não é fornecido", () => {
     const callbacks = createMutationCallbacks({
       successMsg: "Sucesso",
     });
 
-    callbacks.onError(mockError);
+    callbacks.onError({});
 
-    expect(getApiErrorInfo).toHaveBeenCalledWith(mockError, "Não foi possível concluir a operação.");
     expect(toast.error).toHaveBeenCalledWith("Não foi possível concluir a operação.");
+  });
+
+  it("deve chamar onSuccess sem o callback opcional sem erros", () => {
+    const callbacks = createMutationCallbacks({
+      successMsg: "Feito!",
+    });
+
+    expect(() => callbacks.onSuccess({ data: "any" })).not.toThrow();
+    expect(toast.success).toHaveBeenCalledWith("Feito!");
   });
 });
