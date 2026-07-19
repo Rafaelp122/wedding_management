@@ -45,6 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 import { FormInput, FormSelect, FormNumber, FormTextarea } from "@/components/form-fields";
+import { uploadFileToR2 } from "@/services/r2";
 import { ContractItemDrafts, type ItemDraft } from "./ContractItemDrafts";
 import { ContractCreateExpenseFields } from "./ContractCreateExpenseFields";
 
@@ -115,17 +116,7 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
           },
         });
 
-        const uploadResponse = await fetch(uploadUrlRes.data.upload_url, {
-          method: "PUT",
-          body: selectedFile,
-          headers: {
-            "Content-Type": selectedFile.type || "application/octet-stream",
-          },
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error(`Erro no envio do arquivo: ${uploadResponse.statusText}`);
-        }
+        await uploadFileToR2(uploadUrlRes.data.upload_url, selectedFile);
 
         pdfFileKey = uploadUrlRes.data.object_key;
       }
