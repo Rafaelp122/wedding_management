@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { WeddingVendorsTable } from "@/features/logistics/components/items/VendorsTable";
 import { createMockContract } from "@/test-data";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
+import { toast } from "sonner";
 
 describe("WeddingVendorsTable", () => {
   it("shows empty state when no contracts", () => {
@@ -80,5 +83,112 @@ describe("WeddingVendorsTable", () => {
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.getByText("75% pago")).toBeInTheDocument();
+  });
+
+  it("calls onEdit when Editar is clicked in dropdown", async () => {
+    const onEdit = vi.fn();
+    const contract = createMockContract();
+    render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onEdit={onEdit}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Editar"));
+
+    expect(onEdit).toHaveBeenCalledWith(contract);
+  });
+
+  it("calls onGenerateExpense when Gerar Despesa is clicked in dropdown", async () => {
+    const onGenerateExpense = vi.fn();
+    const contract = createMockContract();
+    render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onGenerateExpense={onGenerateExpense}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Gerar Despesa"));
+
+    expect(onGenerateExpense).toHaveBeenCalledWith(contract);
+  });
+
+  it("opens ConfirmDeleteDialog when Excluir is clicked in dropdown", async () => {
+    const contract = createMockContract();
+    render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onEdit={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Excluir"));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Excluir Contrato")).toBeInTheDocument();
+  });
+
+  it("successfully deletes contract when confirm button is clicked", async () => {
+    const onRefresh = vi.fn();
+    const contract = createMockContract();
+
+    // Mock API success for DELETE
+    server.use(
+      http.delete("*/api/v1/logistics/contracts/*", () => {
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+
+    render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onEdit={vi.fn()}
+        onRefresh={onRefresh}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Excluir"));
+    await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
+
+    expect(toast.success).toHaveBeenCalledWith("Contrato deletado com sucesso!");
+    expect(onRefresh).toHaveBeenCalled();
+  });
+
+  it("shows error toast when contract deletion fails", async () => {
+    const onRefresh = vi.fn();
+    const contract = createMockContract();
+
+    // Mock API failure for DELETE
+    server.use(
+      http.delete("*/api/v1/logistics/contracts/*", () => {
+        return HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
+      })
+    );
+
+    render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onEdit={vi.fn()}
+        onRefresh={onRefresh}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Excluir"));
+    await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
+
+    expect(toast.error).toHaveBeenCalledWith("Erro interno");
+    expect(onRefresh).not.toHaveBeenCalled();
   });
 });
