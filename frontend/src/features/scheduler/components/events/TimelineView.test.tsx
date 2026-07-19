@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+vi.unmock("@/features/scheduler/components/events/TimelineView");
 import { render, screen, waitFor } from "@/test-utils";
 import { WeddingTimelineTab } from "@/features/scheduler/components/events/TimelineView";
 

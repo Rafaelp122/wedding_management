@@ -18,6 +18,7 @@ const mockOverview = {
 };
 
 describe("WeddingDetailTabs", () => {
+
   it("renders tab triggers", () => {
     render(<WeddingDetailTabs wedding={mockWedding} />);
 

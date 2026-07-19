@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+vi.unmock("@/features/scheduler/components/tasks/ChecklistView");
 import { render, screen, waitFor } from "@/test-utils";
 import { WeddingChecklistTab } from "@/features/scheduler/components/tasks/ChecklistView";
 

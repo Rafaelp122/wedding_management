@@ -47,6 +47,21 @@ vi.mock("recharts", () => ({
   Tooltip: () => React.createElement("div", { "data-testid": "tooltip" }),
   Legend: () => React.createElement("div", { "data-testid": "legend" }),
 }));
+vi.mock("@/features/finances/components/FinancesView", () => ({
+  WeddingFinancesView: () => React.createElement("div", { "data-testid": "mock-finances-tab" }),
+}));
+
+vi.mock("@/features/logistics/components/VendorsItemsView", () => ({
+  WeddingVendorsItemsTab: () => React.createElement("div", { "data-testid": "mock-logistics-tab" }),
+}));
+
+vi.mock("@/features/scheduler/components/events/TimelineView", () => ({
+  WeddingTimelineTab: () => React.createElement("div", { "data-testid": "mock-timeline-tab" }),
+}));
+
+vi.mock("@/features/scheduler/components/tasks/ChecklistView", () => ({
+  WeddingChecklistTab: () => React.createElement("div", { "data-testid": "mock-checklist-tab" }),
+}));
 
 const dropdownListeners = new Set<() => void>();
 let hasAnyTriggerBeenClicked = false;

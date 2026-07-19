@@ -1,16 +1,35 @@
-
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent, waitFor, server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
+import { toast } from "sonner";
 import { ExpenseDetailSheet } from "./ExpenseDetailSheet";
-import { createMockExpense } from "@/test-data";
+import { createMockExpense, createMockInstallment } from "@/test-data";
 
 vi.mock("./ExpenseInstallmentRow", () => ({
-  ExpenseInstallmentRow: ({ installment }: { installment: { installment_number: number } }) => (
-    <tr data-testid="expense-installment-row">
-      <td>{installment.installment_number}</td>
-    </tr>
-  ),
+  ExpenseInstallmentRow: ({
+    installment,
+    onTogglePayment,
+    isPaying,
+  }: {
+    installment: { uuid: string; installment_number: number; status: string };
+    onTogglePayment: (uuid: string, isPaid: boolean) => void;
+    isPaying: boolean;
+  }) => {
+    const isPaid = installment.status === "PAID";
+    return (
+      <tr data-testid="expense-installment-row">
+        <td>{installment.installment_number}</td>
+        <td>
+          <button
+            onClick={() => onTogglePayment(installment.uuid, isPaid)}
+            disabled={isPaying}
+          >
+            {isPaid ? "Desmarcar" : "Marcar como Pago"}
+          </button>
+        </td>
+      </tr>
+    );
+  },
 }));
 
 vi.mock("./ExpenseRedistributeForm", () => ({
@@ -18,8 +37,6 @@ vi.mock("./ExpenseRedistributeForm", () => ({
     <div data-testid="expense-redistribute-form" />
   ),
 }));
-
-
 
 describe("ExpenseDetailSheet", () => {
   beforeEach(() => {
@@ -207,6 +224,146 @@ describe("ExpenseDetailSheet", () => {
       expect(
         screen.getByText("Nenhuma parcela encontrada."),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("allows marking an installment as paid successfully", async () => {
+    const expense = createMockExpense({ uuid: "exp-1" });
+    const installment = createMockInstallment({
+      uuid: "inst-1",
+      installment_number: 1,
+      status: "PENDING",
+    });
+
+    server.use(
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(expense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [installment], count: 1 }),
+      ),
+      http.post("*/api/v1/finances/installments/:uuid/mark-as-paid/", () => {
+        return HttpResponse.json(installment, { status: 200 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
+    );
+
+    // Click "Marcar como Pago" button
+    const payBtn = await screen.findByRole("button", { name: "Marcar como Pago" });
+    await user.click(payBtn);
+
+    // Verify success toast and reload
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Parcela marcada como paga!");
+    });
+  });
+
+  it("allows unmarking an installment as paid successfully", async () => {
+    const expense = createMockExpense({ uuid: "exp-1" });
+    const installment = createMockInstallment({
+      uuid: "inst-1",
+      installment_number: 1,
+      status: "PAID",
+    });
+
+    server.use(
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(expense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [installment], count: 1 }),
+      ),
+      http.post("*/api/v1/finances/installments/:uuid/unmark-as-paid/", () => {
+        return HttpResponse.json(installment, { status: 200 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
+    );
+
+    // Click "Desmarcar" button
+    const unpayBtn = await screen.findByRole("button", { name: "Desmarcar" });
+    await user.click(unpayBtn);
+
+    // Verify success toast and reload
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Parcela desmarcada como paga.");
+    });
+  });
+
+  it("shows error toast when marking installment fails", async () => {
+    const expense = createMockExpense({ uuid: "exp-1" });
+    const installment = createMockInstallment({
+      uuid: "inst-1",
+      installment_number: 1,
+      status: "PENDING",
+    });
+
+    server.use(
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(expense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [installment], count: 1 }),
+      ),
+      http.post("*/api/v1/finances/installments/:uuid/mark-as-paid/", () => {
+        return HttpResponse.json({ detail: "Operação inválida" }, { status: 400 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
+    );
+
+    // Click "Marcar como Pago" button
+    const payBtn = await screen.findByRole("button", { name: "Marcar como Pago" });
+    await user.click(payBtn);
+
+    // Verify error toast has API error message
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Operação inválida");
+    });
+  });
+
+  it("shows fallback error toast when unmarking installment fails without message detail", async () => {
+    const expense = createMockExpense({ uuid: "exp-1" });
+    const installment = createMockInstallment({
+      uuid: "inst-1",
+      installment_number: 1,
+      status: "PAID",
+    });
+
+    server.use(
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(expense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [installment], count: 1 }),
+      ),
+      http.post("*/api/v1/finances/installments/:uuid/unmark-as-paid/", () => {
+        return new HttpResponse(null, { status: 500 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(
+      <ExpenseDetailSheet expense={expense} open={true} onOpenChange={vi.fn()} />,
+    );
+
+    // Click "Desmarcar" button
+    const unpayBtn = await screen.findByRole("button", { name: "Desmarcar" });
+    await user.click(unpayBtn);
+
+    // Verify fallback error toast
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao desmarcar parcela.");
     });
   });
 });

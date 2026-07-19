@@ -1,5 +1,5 @@
- 
 import { describe, expect, it, vi, beforeEach } from "vitest";
+vi.unmock("@/features/logistics/components/VendorsItemsView");
 import { render, screen, userEvent } from "@/test-utils";
 import { WeddingVendorsItemsTab } from "./VendorsItemsView";
 import { createMockContract, createMockItem } from "@/test-data";
