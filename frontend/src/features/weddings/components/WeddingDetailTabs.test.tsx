@@ -1,20 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { createMockWedding } from "@/test-data";
-
-vi.mock("@/features/logistics/components/VendorsItemsView", () => ({
-  WeddingVendorsItemsTab: () => <div data-testid="mock-logistics-tab" />,
-}));
-vi.mock("@/features/finances/components/FinancesView", () => ({
-  WeddingFinancesView: () => <div data-testid="mock-finances-tab" />,
-}));
-vi.mock("@/features/scheduler/components/events/TimelineView", () => ({
-  WeddingTimelineTab: () => <div data-testid="mock-timeline-tab" />,
-}));
-vi.mock("@/features/scheduler/components/tasks/ChecklistView", () => ({
-  WeddingChecklistTab: () => <div data-testid="mock-checklist-tab" />,
-}));
 
 const mockWedding = createMockWedding({ groom_name: "João", bride_name: "Maria" });
 
