@@ -1,18 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { renderHook } from "@/test-utils";
+import { renderHook, server } from "@/test-utils";
 import { useWeddingDetail } from "@/features/weddings/hooks/useWeddingDetail";
-import { useWeddingsRead } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { http, HttpResponse } from "msw";
 import type { AxiosResponse } from "axios";
 import type { PagedWeddingOut } from "@/api/generated/v1/models/pagedWeddingOut";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 describe("useWeddingDetail", () => {
-  beforeEach(() => {
-    vi.mocked(useWeddingsRead).mockReset();
-  });
-
   it("uses cached weddings list data as placeholderData", async () => {
     const uuid = "test-wedding-uuid-123";
     const mockWedding = {
@@ -23,20 +19,16 @@ describe("useWeddingDetail", () => {
       status: "PLANNING" as const,
     };
 
+    server.use(
+      http.get("*/api/v1/weddings/test-wedding-uuid-123/", () => {
+        return HttpResponse.json(mockWedding);
+      })
+    );
+
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
       },
-    });
-
-    vi.mocked(useWeddingsRead).mockImplementation((_uuid, options) => {
-      const placeholder = options?.query?.placeholderData;
-      const data = typeof placeholder === "function" ? (placeholder as any)() : undefined;
-      return {
-        data,
-        isLoading: false,
-        error: null,
-      } as any;
     });
 
 
@@ -65,20 +57,17 @@ describe("useWeddingDetail", () => {
 
   it("returns undefined if no cached wedding matches the uuid", async () => {
     const uuid = "non-existent-uuid";
+
+    server.use(
+      http.get("*/api/v1/weddings/non-existent-uuid/", () => {
+        return new HttpResponse(null, { status: 404 });
+      })
+    );
+
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
       },
-    });
-
-    vi.mocked(useWeddingsRead).mockImplementation((_uuid, options) => {
-      const placeholder = options?.query?.placeholderData;
-      const data = typeof placeholder === "function" ? (placeholder as any)() : undefined;
-      return {
-        data,
-        isLoading: false,
-        error: null,
-      } as any;
     });
 
 

@@ -2,15 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@/test-utils";
 import { GlobalError } from "@/components/ui/globalError";
 
-// We need to mock useRouteError but keep other react-router-dom exports
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
-  return {
-    ...actual,
-    useRouteError: vi.fn(),
-  };
-});
-
 import { useRouteError } from "react-router-dom";
 
 const mockError = new Error("Falha na conexão com o servidor");

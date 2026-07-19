@@ -2,9 +2,8 @@ import { beforeEach, describe, expect, it, vi, beforeAll } from "vitest";
 import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
 import { ContractUploadDialog } from "./ContractUploadDialog";
 import { toast } from "sonner";
-
-import * as logisticsApi from "@/api/generated/v1/endpoints/logistics/logistics";
-import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
 
 beforeAll(() => {
   Element.prototype.hasPointerCapture ??= () => false;
@@ -36,47 +35,30 @@ describe("ContractUploadDialog", () => {
     updated_at: "2024-01-01T00:00:00Z",
   };
 
-  /**
-   * Retorna o shape padrão de um hook de listagem (query) vazio.
-   */
-  function emptyListResponse() {
-    return {
-      data: { data: { items: [], count: 0 } },
-      isLoading: false,
-      isError: false,
-      error: null,
-    };
-  }
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
 
-    vi.mocked(useFinancesCategoriesList).mockReturnValue({
-      data: { data: { items: [], count: 0 } },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useFinancesCategoriesList>);
-
-    // Por padrão, hooks de listagem retornam lista vazia
-    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue(
-      emptyListResponse() as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>,
+    server.use(
+      http.get("*/api/v1/finances/categories/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+      http.get("*/api/v1/logistics/suppliers/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+      http.post("*/api/v1/logistics/contracts/full/", () => {
+        return HttpResponse.json({ uuid: "contract-1" }, { status: 201 });
+      }),
+      http.post("*/api/v1/logistics/contracts/upload-url/", () => {
+        return HttpResponse.json({
+          upload_url: "https://r2.example.com/upload",
+          object_key: "r2-file-key",
+        });
+      })
     );
-    vi.spyOn(logisticsApi, "useLogisticsContractsList").mockReturnValue(
-      emptyListResponse() as ReturnType<typeof logisticsApi.useLogisticsContractsList>,
-    );
-
-    // Por padrão, hooks de mutation retornam mutateAsync genérico e isPending=false
-    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
-
-    vi.spyOn(logisticsApi, "useLogisticsContractsUploadUrl").mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsUploadUrl>);
   });
 
   it("renders nothing when closed", () => {
@@ -153,19 +135,18 @@ describe("ContractUploadDialog", () => {
 
   it("fills form and submits successfully", async () => {
     const user = userEvent.setup();
+    const mockMutateAsync = vi.fn();
 
-    const mockMutateAsync = vi.fn().mockResolvedValue({ uuid: "contract-1" });
-    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
-      mutateAsync: mockMutateAsync,
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
-
-    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
-      data: { data: { items: [mockSupplier], count: 1 } },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
+    server.use(
+      http.get("*/api/v1/logistics/suppliers/", () => {
+        return HttpResponse.json({ items: [mockSupplier], count: 1 });
+      }),
+      http.post("*/api/v1/logistics/contracts/full/", async ({ request }) => {
+        const body = await request.json();
+        mockMutateAsync(body);
+        return HttpResponse.json({ uuid: "contract-1" }, { status: 201 });
+      })
+    );
 
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -200,8 +181,8 @@ describe("ContractUploadDialog", () => {
       expect(mockMutateAsync).toHaveBeenCalled();
     });
 
-    expect(mockMutateAsync).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(mockMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
         wedding: weddingUuid,
         supplier: "supplier-1",
         name: "Contrato Teste",
@@ -210,24 +191,18 @@ describe("ContractUploadDialog", () => {
         description: "Descrição do contrato de teste",
         parent: null,
         pdf_file_key: null,
-      }),
-    });
+      })
+    );
   });
 
   it("shows success toast on successful creation", async () => {
     const user = userEvent.setup();
 
-    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
-      mutateAsync: vi.fn().mockResolvedValue({ uuid: "contract-1" }),
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
-
-    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
-      data: { data: { items: [mockSupplier], count: 1 } },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
+    server.use(
+      http.get("*/api/v1/logistics/suppliers/", () => {
+        return HttpResponse.json({ items: [mockSupplier], count: 1 });
+      })
+    );
 
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -264,17 +239,14 @@ describe("ContractUploadDialog", () => {
   it("shows error toast on API failure", async () => {
     const user = userEvent.setup();
 
-    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
-      mutateAsync: vi.fn().mockRejectedValue(new Error("API Error")),
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
-
-    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
-      data: { data: { items: [mockSupplier], count: 1 } },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
+    server.use(
+      http.get("*/api/v1/logistics/suppliers/", () => {
+        return HttpResponse.json({ items: [mockSupplier], count: 1 });
+      }),
+      http.post("*/api/v1/logistics/contracts/full/", () => {
+        return HttpResponse.json({ detail: "API Error" }, { status: 500 });
+      })
+    );
 
     render(<ContractUploadDialog {...defaultProps} />);
 
@@ -301,26 +273,25 @@ describe("ContractUploadDialog", () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        "Erro ao criar contrato: API Error",
+        "Erro ao criar contrato: Request failed with status code 500",
       );
     });
   });
 
   it("submits with parent contract", async () => {
     const user = userEvent.setup();
+    const mockMutateAsync = vi.fn();
 
-    const mockMutateAsync = vi.fn().mockResolvedValue({ uuid: "contract-1" });
-    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
-      mutateAsync: mockMutateAsync,
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
-
-    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
-      data: { data: { items: [mockSupplier], count: 1 } },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
+    server.use(
+      http.get("*/api/v1/logistics/suppliers/", () => {
+        return HttpResponse.json({ items: [mockSupplier], count: 1 });
+      }),
+      http.post("*/api/v1/logistics/contracts/full/", async ({ request }) => {
+        const body = await request.json();
+        mockMutateAsync(body);
+        return HttpResponse.json({ uuid: "contract-1" }, { status: 201 });
+      })
+    );
 
     render(
       <ContractUploadDialog
@@ -354,51 +325,79 @@ describe("ContractUploadDialog", () => {
       expect(mockMutateAsync).toHaveBeenCalled();
     });
 
-    expect(mockMutateAsync).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(mockMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
         parent: "parent-1",
       }),
-    });
+    );
   });
 
-  it("shows loading state while creating", () => {
-    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: true,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
+  it("shows loading state while creating", async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.get("*/api/v1/logistics/suppliers/", () => {
+        return HttpResponse.json({ items: [mockSupplier], count: 1 });
+      }),
+      http.post("*/api/v1/logistics/contracts/full/", async () => {
+        // Atrasar resposta indefinidamente para manter em loading
+        await new Promise(() => {});
+        return HttpResponse.json({ uuid: "contract-1" });
+      })
+    );
 
     render(<ContractUploadDialog {...defaultProps} />);
 
-    expect(screen.getByRole("button", { name: /criar contrato/i })).toBeDisabled();
+    await user.click(
+      screen.getByRole("combobox", { name: /fornecedor/i }),
+    );
+    const supplierOption = await screen.findByRole("option", {
+      name: /fornecedor teste/i,
+    });
+    await user.click(supplierOption);
+
+    await user.type(
+      screen.getByRole("textbox", { name: /nome do contrato/i }),
+      "Teste",
+    );
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: /valor total/i }),
+      { target: { value: "1000" } },
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /criar contrato/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /criar contrato/i })).toBeDisabled();
+    });
     expect(screen.getByText(/cancelar/i).closest("button")).toBeDisabled();
   });
 
   it("uploads file to R2 and submits pdf_file_key", async () => {
     const user = userEvent.setup();
+    const mockGetUploadUrl = vi.fn();
+    const mockCreateFull = vi.fn();
 
-    const mockGetUploadUrl = vi.fn().mockResolvedValue({
-      data: {
-        upload_url: "https://r2.example.com/upload",
-        object_key: "r2-file-key",
-      },
-    });
-    vi.spyOn(logisticsApi, "useLogisticsContractsUploadUrl").mockReturnValue({
-      mutateAsync: mockGetUploadUrl,
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsUploadUrl>);
-
-    const mockCreateFull = vi.fn().mockResolvedValue({ uuid: "contract-1" });
-    vi.spyOn(logisticsApi, "useLogisticsContractsCreateFull").mockReturnValue({
-      mutateAsync: mockCreateFull,
-      isPending: false,
-    } as unknown as ReturnType<typeof logisticsApi.useLogisticsContractsCreateFull>);
-
-    vi.spyOn(logisticsApi, "useLogisticsSuppliersList").mockReturnValue({
-      data: { data: { items: [mockSupplier], count: 1 } },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof logisticsApi.useLogisticsSuppliersList>);
+    server.use(
+      http.get("*/api/v1/logistics/suppliers/", () => {
+        return HttpResponse.json({ items: [mockSupplier], count: 1 });
+      }),
+      http.post("*/api/v1/logistics/contracts/upload-url/", async ({ request }) => {
+        const body = await request.json();
+        mockGetUploadUrl(body);
+        return HttpResponse.json({
+          upload_url: "https://r2.example.com/upload",
+          object_key: "r2-file-key",
+        });
+      }),
+      http.post("*/api/v1/logistics/contracts/full/", async ({ request }) => {
+        const body = await request.json();
+        mockCreateFull(body);
+        return HttpResponse.json({ uuid: "contract-1" }, { status: 201 });
+      })
+    );
 
     // Mock global fetch para simular o upload para o R2
     const mockFetch = vi.fn().mockResolvedValue({
@@ -436,19 +435,18 @@ describe("ContractUploadDialog", () => {
     await user.click(screen.getByRole("button", { name: /criar contrato/i }));
 
     await waitFor(() => {
-      expect(mockGetUploadUrl).toHaveBeenCalledWith({
-        data: {
+      expect(mockGetUploadUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
           filename: "contract.pdf",
           wedding_id: weddingUuid,
-        },
-      });
-      expect(mockCreateFull).toHaveBeenCalledWith({
-        data: expect.objectContaining({
+        })
+      );
+      expect(mockCreateFull).toHaveBeenCalledWith(
+        expect.objectContaining({
           name: "Contrato com PDF",
           pdf_file_key: "r2-file-key",
-        }),
-      });
+        })
+      );
     });
-
   });
 });

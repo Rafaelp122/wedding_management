@@ -5,11 +5,9 @@ import { ContractDetailDialog } from "./ContractDetailDialog";
 import { createMockContract } from "@/test-data";
 import {
   useLogisticsContractsRead,
-  useLogisticsItemsList,
-  useLogisticsContractsList,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
-
-
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
 
 /* Seções filhas são stub — não precisam ser testadas aqui */
 vi.mock("./ContractDocumentSection", () => ({
@@ -42,25 +40,17 @@ describe("ContractDetailDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    /* --- Configuração padrão dos mocks ---
-     * Por padrão, o contrato é carregado com sucesso, sem itens e sem aditivos.
-     * Cada teste pode sobrescrever com novos mockReturnValue. */
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: DEFAULT_CONTRACT },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
-
-    vi.mocked(useLogisticsItemsList).mockReturnValue({
-      data: { data: { items: [], count: 0 } },
-      isLoading: false,
-    } as any);
-
-    vi.mocked(useLogisticsContractsList).mockReturnValue({
-      data: { data: { items: [], count: 0 } },
-      isLoading: false,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(DEFAULT_CONTRACT);
+      }),
+      http.get("*/api/v1/logistics/items/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      })
+    );
   });
 
   /* ─────────────── Loading ─────────────── */
@@ -89,15 +79,6 @@ describe("ContractDetailDialog", () => {
   /* ─────────────── Contracto não encontrado ─────────────── */
 
   it('shows "Contrato não encontrado" when contractUuid is null', () => {
-    /* Quando contractUuid é null o hook não é executado (enabled: false),
-     * então o retorno do mock não importa — o data fica undefined. */
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
-
     renderDialog({ contractUuid: null });
 
     expect(
@@ -111,8 +92,7 @@ describe("ContractDetailDialog", () => {
   });
 
   /* ─────────────── Renderização de dados ─────────────── */
-
-  it("renders contract name, status badge, supplier info, signed date, total amount", () => {
+  it("renders contract name, status badge, supplier info, signed date, total amount", async () => {
     const contract = createMockContract({
       name: "Buffet Casamento",
       status: "SIGNED",
@@ -122,16 +102,15 @@ describe("ContractDetailDialog", () => {
       description: "Buffet completo",
     });
 
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: contract },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contract);
+      })
+    );
 
     renderDialog();
 
-    expect(screen.getByText("Buffet Casamento")).toBeInTheDocument();
+    expect(await screen.findByText("Buffet Casamento")).toBeInTheDocument();
     expect(screen.getByText("Assinado")).toBeInTheDocument();
     expect(screen.getByText(/Buffet Ltda/)).toBeInTheDocument();
     expect(screen.getByText(/15\/01\/2025/)).toBeInTheDocument();
@@ -147,16 +126,15 @@ describe("ContractDetailDialog", () => {
     });
     const user = userEvent.setup();
 
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: contract },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contract);
+      })
+    );
 
     renderDialog({ onSupplierClick });
 
-    const supplierButton = screen.getByRole("button", {
+    const supplierButton = await screen.findByRole("button", {
       name: /Buffet Ltda/i,
     });
     expect(supplierButton).toBeInTheDocument();
@@ -165,21 +143,23 @@ describe("ContractDetailDialog", () => {
     expect(onSupplierClick).toHaveBeenCalledWith("supplier-uuid-123");
   });
 
-  it("shows WhatsApp and Mail links when supplier_phone and supplier_email are present", () => {
+  it("shows WhatsApp and Mail links when supplier_phone and supplier_email are present", async () => {
     const contract = createMockContract({
       supplier_name: "Fornecedor Teste",
       supplier_phone: "(11) 99999-0000",
       supplier_email: "contato@fornecedor.com",
     });
 
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: contract },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contract);
+      })
+    );
 
     renderDialog();
+
+    // Aguarda carregar
+    await screen.findByText("Fornecedor Teste");
 
     /* wa.me com dígitos limpos */
     const waAnchor = document.querySelector(
@@ -197,7 +177,7 @@ describe("ContractDetailDialog", () => {
 
   /* ─────────────── Despesa Vinculada ─────────────── */
 
-  it("shows expense section with progress when has_linked_expense is true", () => {
+  it("shows expense section with progress when has_linked_expense is true", async () => {
     const contract = createMockContract({
       has_linked_expense: true,
       total_amount: "8000.00",
@@ -205,16 +185,15 @@ describe("ContractDetailDialog", () => {
       expense_uuid: "exp-1",
     });
 
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: contract },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contract);
+      })
+    );
 
     renderDialog();
 
-    expect(screen.getByText("Despesa Vinculada")).toBeInTheDocument();
+    expect(await screen.findByText("Despesa Vinculada")).toBeInTheDocument();
     expect(screen.getByText("60% pago")).toBeInTheDocument();
 
     const amounts = screen.getAllByText(/R\$\s*8\.000,00/);
@@ -232,16 +211,15 @@ describe("ContractDetailDialog", () => {
     });
     const user = userEvent.setup();
 
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: contract },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contract);
+      })
+    );
 
     renderDialog({ onExpenseClick });
 
-    const detailBtn = screen.getByRole("button", {
+    const detailBtn = await screen.findByRole("button", {
       name: /ver detalhes da despesa/i,
     });
     expect(detailBtn).toBeInTheDocument();
@@ -250,22 +228,21 @@ describe("ContractDetailDialog", () => {
     expect(onExpenseClick).toHaveBeenCalledWith("exp-1");
   });
 
-  it('shows "Nenhuma despesa vinculada" when has_linked_expense is false', () => {
+  it('shows "Nenhuma despesa vinculada" when has_linked_expense is false', async () => {
     const contract = createMockContract({
       has_linked_expense: false,
     });
 
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: contract },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contract);
+      })
+    );
 
     renderDialog();
 
     expect(
-      screen.getByText("Nenhuma despesa vinculada a este contrato."),
+      await screen.findByText("Nenhuma despesa vinculada a este contrato."),
     ).toBeInTheDocument();
 
     expect(
@@ -280,16 +257,15 @@ describe("ContractDetailDialog", () => {
     });
     const user = userEvent.setup();
 
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: { data: contract },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contract);
+      })
+    );
 
     renderDialog({ onGenerateExpense });
 
-    const generateBtn = screen.getByRole("button", {
+    const generateBtn = await screen.findByRole("button", {
       name: /gerar despesa/i,
     });
     expect(generateBtn).toBeInTheDocument();
@@ -300,7 +276,7 @@ describe("ContractDetailDialog", () => {
 
   /* ─────────────── Aditivos ─────────────── */
 
-  it("shows addendums table when addendums exist", () => {
+  it("shows addendums table when addendums exist", async () => {
     const addendum1 = createMockContract({
       uuid: "addendum-1",
       name: "Aditivo Prazo",
@@ -316,14 +292,15 @@ describe("ContractDetailDialog", () => {
       parent: CONTRACT_UUID,
     });
 
-    vi.mocked(useLogisticsContractsList).mockReturnValue({
-      data: { data: { items: [addendum1, addendum2], count: 2 } },
-      isLoading: false,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({ items: [addendum1, addendum2], count: 2 });
+      })
+    );
 
     renderDialog();
 
-    expect(screen.getByText("Aditivos")).toBeInTheDocument();
+    expect(await screen.findByText("Aditivos")).toBeInTheDocument();
     expect(screen.getByText("Aditivo Prazo")).toBeInTheDocument();
     expect(screen.getByText("Aditivo Escopo")).toBeInTheDocument();
     expect(screen.getByText(/1\.000,00/)).toBeInTheDocument();
@@ -340,7 +317,7 @@ describe("ContractDetailDialog", () => {
 
     renderDialog({ onCreateAddendum });
 
-    const addendumBtn = screen.getByRole("button", {
+    const addendumBtn = await screen.findByRole("button", {
       name: /criar aditivo/i,
     });
     expect(addendumBtn).toBeInTheDocument();

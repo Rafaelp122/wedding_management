@@ -1,4 +1,3 @@
-/** Mapeamento de estilos Tailwind por severidade (danger, warning, success, neutral). */
 export const severityStyles = {
   danger: {
     border: "border-red-200 dark:border-red-900/30",
@@ -32,12 +31,10 @@ export const severityStyles = {
 
 export type Severity = keyof typeof severityStyles;
 
-/** Formata o nome do casal para exibição. */
 export function formatWeddingName(bride: string, groom: string): string {
   return `${bride} & ${groom}`;
 }
 
-/** Pluraliza uma palavra baseada na contagem (português). */
 export function pluralize(count: number, singular: string, plural?: string): string {
   return count === 1 ? singular : (plural ?? `${singular}s`);
 }

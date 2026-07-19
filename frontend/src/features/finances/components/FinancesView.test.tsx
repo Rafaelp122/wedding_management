@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@/test-utils";
+import { render, screen, waitFor, server } from "@/test-utils";
+import { http, HttpResponse } from "msw";
 import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
 
 vi.mock("@/features/finances/components/FinancesDistributionChart", () => ({
@@ -36,38 +37,43 @@ vi.mock("@/features/finances/components/expenses/ExpensesTable", () => ({
 }));
 
 import { useWeddingBudget } from "@/features/finances/hooks/useBudget";
-import { useFinancesExpensesList } from "@/api/generated/v1/endpoints/finances/finances";
 
 describe("WeddingFinancesView", () => {
-  const defaultBudgetData = {
-    categories: [],
-    isLoading: false,
-    totalEstimated: 50000,
-    totalSpent: 25000,
-  };
+  beforeEach(async () => {
+    const { useWeddingBudget: originalUseWeddingBudget } = await vi.importActual<
+      typeof import("@/features/finances/hooks/useBudget")
+    >("@/features/finances/hooks/useBudget");
+    vi.mocked(useWeddingBudget).mockImplementation(originalUseWeddingBudget);
 
-  const defaultExpensesResponse = {
-    data: {
-      data: {
-        items: [],
-        count: 0,
-      },
-    },
-    isLoading: false,
-  };
-
-  beforeEach(() => {
-    vi.mocked(useWeddingBudget).mockReturnValue(defaultBudgetData as any);
-    vi.mocked(useFinancesExpensesList).mockImplementation(
-      () => defaultExpensesResponse as any,
+    server.use(
+      http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () =>
+        HttpResponse.json({
+          uuid: "b-1",
+          wedding: "w-1",
+          total_estimated: "50000.00",
+          total_overall_spent: "25000.00",
+          notes: "",
+        }),
+      ),
+      http.get("*/api/v1/finances/categories/", () =>
+        HttpResponse.json({
+          items: [],
+          count: 0,
+        }),
+      ),
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({
+          items: [],
+          count: 0,
+        }),
+      ),
     );
   });
 
   it("shows skeleton placeholders when budget is loading", () => {
-    vi.mocked(useWeddingBudget).mockReturnValue({
-      ...defaultBudgetData,
-      isLoading: true,
-    } as any);
+    server.use(
+      http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () => new Promise(() => {})),
+    );
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
@@ -76,26 +82,30 @@ describe("WeddingFinancesView", () => {
     expect(screen.queryByTestId("distribution-chart")).not.toBeInTheDocument();
   });
 
-  it("shows skeleton placeholders when expenses are loading", () => {
-    vi.mocked(useFinancesExpensesList).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    } as any);
+  it("shows skeleton placeholders when expenses are loading", async () => {
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () => new Promise(() => {})),
+    );
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    expect(screen.getByText("Orçamento Total")).toBeInTheDocument();
+    expect(await screen.findByText("Orçamento Total")).toBeInTheDocument();
 
     expect(screen.queryByText("Despesas Recentes")).not.toBeInTheDocument();
   });
 
   it("renders summary cards after loading", async () => {
-    vi.mocked(useWeddingBudget).mockReturnValue({
-      categories: [],
-      isLoading: false,
-      totalEstimated: 75000,
-      totalSpent: 30000,
-    } as any);
+    server.use(
+      http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () =>
+        HttpResponse.json({
+          uuid: "b-1",
+          wedding: "w-1",
+          total_estimated: "75000.00",
+          total_overall_spent: "30000.00",
+          notes: "",
+        }),
+      ),
+    );
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
@@ -163,33 +173,13 @@ describe("WeddingFinancesView", () => {
       status: "PARTIALLY_PAID",
     };
 
-    const fullExpensesData = {
-      data: {
-        data: {
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({
           items: [mockExpense],
           count: 1,
-        },
-      },
-      isLoading: false,
-    };
-
-    const recentExpensesData = {
-      data: {
-        data: {
-          items: [mockExpense],
-          count: 1,
-        },
-      },
-      isLoading: false,
-    };
-
-    vi.mocked(useFinancesExpensesList).mockImplementation(
-      (params?: { wedding_id?: string | null; limit?: number; offset?: number }) => {
-        if (params?.limit === 5) {
-          return recentExpensesData as any;
-        }
-        return fullExpensesData as any;
-      },
+        }),
+      ),
     );
 
     render(<WeddingFinancesView weddingUuid="w-1" />);
@@ -206,10 +196,10 @@ describe("WeddingFinancesView", () => {
 
     const user = userEvent.setup();
 
-    const categoryBtn = screen.getByTestId("mock-category-change-btn");
+    const categoryBtn = await screen.findByTestId("mock-category-change-btn");
     await user.click(categoryBtn);
 
-    const expenseBtn = screen.getByTestId("mock-expense-update-btn");
+    const expenseBtn = await screen.findByTestId("mock-expense-update-btn");
     await user.click(expenseBtn);
 
     expect(categoryBtn).toBeInTheDocument();

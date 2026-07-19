@@ -5,20 +5,17 @@ import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] as const;
 
-/** Dados mensais de casamentos formatados para o gráfico de barras. */
 export interface MonthlyWeddingData {
   name: string;
   casamentos: number;
 }
 
-/** Dados de fluxo de caixa mensal (pago vs pendente) para o gráfico. */
 export interface CashFlowData {
   name: string;
   pago: number;
   pendente: number;
 }
 
-/** Dados de progresso de tarefas por mês para o gráfico. */
 export interface TaskProgressData {
   name: string;
   concluido: number;

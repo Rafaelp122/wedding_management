@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { AppLayout } from "@/components/layouts/AppLayout";
@@ -28,20 +28,21 @@ vi.mock("@/hooks/useDocumentTitle", () => ({
   useDocumentTitle: vi.fn(),
 }));
 
-import { useWeddingsRead, useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { server } from "@/test-utils";
+import { http, HttpResponse } from "msw";
+import { getWeddingsListMockHandler } from "@/api/generated/v1/endpoints/weddings/weddings.msw";
 
 describe("AppLayout", () => {
   beforeEach(() => {
-    vi.mocked(useWeddingsRead).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: null,
-    } as any);
-    vi.mocked(useWeddingsList).mockReturnValue({
-      data: { data: { items: [], count: 0 } } as any,
-      isLoading: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/weddings/:uuid/", () => {
+        return new HttpResponse(null, { status: 404 });
+      }),
+      getWeddingsListMockHandler({
+        items: [],
+        count: 0
+      })
+    );
   });
   it("renders the page title for dashboard path", () => {
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
@@ -70,9 +71,9 @@ describe("AppLayout", () => {
     expect(bellButton.querySelector(".bg-destructive")).not.toBeInTheDocument();
   });
 
-  it("renders wedding detail title for wedding paths if not loaded yet", () => {
+  it("renders wedding detail title for wedding paths if not loaded yet", async () => {
     render(<AppLayout />, { initialEntries: ["/weddings/abc-123"] });
-    expect(screen.getByText("Detalhes do Casamento")).toBeInTheDocument();
+    expect(await screen.findByText("Detalhes do Casamento")).toBeInTheDocument();
   });
 
   it("renders supplier detail title for supplier paths", () => {
@@ -85,10 +86,10 @@ describe("AppLayout", () => {
     expect(screen.getByText("Painel de Controle")).toBeInTheDocument();
   });
 
-  it("renders dynamic breadcrumbs and status badge when wedding details are loaded", () => {
-    vi.mocked(useWeddingsRead).mockReturnValue({
-      data: {
-        data: {
+  it("renders dynamic breadcrumbs and status badge when wedding details are loaded", async () => {
+    server.use(
+      http.get("*/api/v1/weddings/abc-123/", () => {
+        return HttpResponse.json({
           uuid: "abc-123",
           groom_name: "Júlia",
           bride_name: "Marcos",
@@ -98,28 +99,19 @@ describe("AppLayout", () => {
           expected_guests: 250,
           created_at: "",
           updated_at: "",
-        },
-      },
-      isLoading: false,
-      error: null,
-    } as unknown as ReturnType<typeof useWeddingsRead>);
-
-    vi.mocked(useWeddingsList).mockReturnValue({
-      data: {
-        data: {
-          items: [
-            { uuid: "abc-123", groom_name: "Júlia", bride_name: "Marcos", status: "IN_PROGRESS", date: "2026-09-20", location: "Fazenda Vila Rica, SP", expected_guests: 250, created_at: "", updated_at: "" },
-            { uuid: "xyz-789", groom_name: "Outro", bride_name: "Casal", status: "IN_PROGRESS", date: "2026-09-20", location: "Outro Local", expected_guests: 150, created_at: "", updated_at: "" },
-          ],
-          count: 2,
-        },
-      },
-      isLoading: false,
-      error: null,
-    } as unknown as ReturnType<typeof useWeddingsList>);
+        });
+      }),
+      getWeddingsListMockHandler({
+        items: [
+          { uuid: "abc-123", groom_name: "Júlia", bride_name: "Marcos", status: "IN_PROGRESS", date: "2026-09-20", location: "Fazenda Vila Rica, SP", expected_guests: 250, created_at: "", updated_at: "", template: null },
+          { uuid: "xyz-789", groom_name: "Outro", bride_name: "Casal", status: "IN_PROGRESS", date: "2026-09-20", location: "Outro Local", expected_guests: 150, created_at: "", updated_at: "", template: null },
+        ],
+        count: 2,
+      })
+    );
 
     render(<AppLayout />, { initialEntries: ["/weddings/abc-123"] });
-    expect(screen.getByText("Casamentos")).toBeInTheDocument();
-    expect(screen.getAllByText(/Júlia & Marcos/i).length).toBeGreaterThan(0);
+    expect(await screen.findByText("Casamentos")).toBeInTheDocument();
+    expect((await screen.findAllByText(/Júlia & Marcos/i)).length).toBeGreaterThan(0);
   });
 });

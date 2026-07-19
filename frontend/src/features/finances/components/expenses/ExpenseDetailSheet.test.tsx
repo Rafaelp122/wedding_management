@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent, waitFor, server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
@@ -19,17 +19,18 @@ vi.mock("./ExpenseRedistributeForm", () => ({
   ),
 }));
 
-import { useFinancesInstallmentsList } from "@/api/generated/v1/endpoints/finances/finances";
+
 
 describe("ExpenseDetailSheet", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Default MSW handlers
-    vi.mocked(useFinancesInstallmentsList).mockReturnValue({
-      data: { data: { items: [], count: 0 } },
-      isLoading: false,
-    } as any);
+    server.use(
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0 }),
+      ),
+    );
   });
 
   it("renders expense name in the sheet title", () => {
@@ -167,10 +168,9 @@ describe("ExpenseDetailSheet", () => {
   });
 
   it("shows loading skeleton when installments are loading", () => {
-    vi.mocked(useFinancesInstallmentsList).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    } as any);
+    server.use(
+      http.get("*/api/v1/finances/installments/", () => new Promise(() => {})),
+    );
 
     render(
       <ExpenseDetailSheet

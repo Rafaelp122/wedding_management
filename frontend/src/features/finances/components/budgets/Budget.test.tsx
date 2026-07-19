@@ -1,38 +1,40 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@/test-utils";
+import { render, screen, waitFor, server } from "@/test-utils";
+import { http, HttpResponse } from "msw";
 import { WeddingBudget } from "@/features/finances/components/budgets/Budget";
 import { useWeddingBudget } from "../../hooks/useBudget";
 
-const defaultMockState = {
-  budget: {} as any,
-  categories: [],
-  isLoading: false,
-  budgetError: null,
-  isEditing: false,
-  editTotal: "",
-  isSaving: false,
-  totalEstimated: 50000,
-  totalAllocated: 30000,
-  totalSpent: 25000,
-  progressPercentage: 50,
-  progressColor: "bg-green-500",
-  setEditTotal: vi.fn(),
-  handleEditInit: vi.fn(),
-  handleSave: vi.fn(),
-  handleCancelEdit: vi.fn(),
-};
-
 describe("WeddingBudget", () => {
-  beforeEach(() => {
-    vi.mocked(useWeddingBudget).mockReturnValue(defaultMockState);
+  beforeEach(async () => {
+    const { useWeddingBudget: originalUseWeddingBudget } = await vi.importActual<
+      typeof import("../../hooks/useBudget")
+    >("../../hooks/useBudget");
+    vi.mocked(useWeddingBudget).mockImplementation(originalUseWeddingBudget);
+
+    server.use(
+      http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () =>
+        HttpResponse.json({
+          uuid: "b-1",
+          wedding: "w-1",
+          total_estimated: "50000.00",
+          total_overall_spent: "25000.00",
+          notes: "",
+        }),
+      ),
+      http.get("*/api/v1/finances/categories/", () =>
+        HttpResponse.json({
+          items: [],
+          count: 0,
+        }),
+      ),
+    );
   });
 
   it("shows loading state initially", () => {
-    vi.mocked(useWeddingBudget).mockReturnValue({
-      ...defaultMockState,
-      isLoading: true,
-    });
+    server.use(
+      http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () => new Promise(() => {})),
+    );
 
     render(<WeddingBudget weddingUuid="w-1" />);
 
