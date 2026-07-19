@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { WeddingVendorsTable } from "@/features/logistics/components/items/VendorsTable";
 import { createMockContract } from "@/test-data";
 import { server } from "@/mocks/server";
@@ -88,7 +88,7 @@ describe("WeddingVendorsTable", () => {
   it("calls onEdit when Editar is clicked in dropdown", async () => {
     const onEdit = vi.fn();
     const contract = createMockContract();
-    render(
+    const { container } = render(
       <WeddingVendorsTable
         contracts={[contract]}
         onEdit={onEdit}
@@ -96,8 +96,8 @@ describe("WeddingVendorsTable", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Editar"));
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Editar"));
 
     expect(onEdit).toHaveBeenCalledWith(contract);
   });
@@ -105,7 +105,7 @@ describe("WeddingVendorsTable", () => {
   it("calls onGenerateExpense when Gerar Despesa is clicked in dropdown", async () => {
     const onGenerateExpense = vi.fn();
     const contract = createMockContract();
-    render(
+    const { container } = render(
       <WeddingVendorsTable
         contracts={[contract]}
         onGenerateExpense={onGenerateExpense}
@@ -113,15 +113,15 @@ describe("WeddingVendorsTable", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Gerar Despesa"));
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Gerar Despesa"));
 
     expect(onGenerateExpense).toHaveBeenCalledWith(contract);
   });
 
   it("opens ConfirmDeleteDialog when Excluir is clicked in dropdown", async () => {
     const contract = createMockContract();
-    render(
+    const { container } = render(
       <WeddingVendorsTable
         contracts={[contract]}
         onEdit={vi.fn()}
@@ -129,8 +129,8 @@ describe("WeddingVendorsTable", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Excluir"));
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Excluir"));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Excluir Contrato")).toBeInTheDocument();
@@ -140,14 +140,14 @@ describe("WeddingVendorsTable", () => {
     const onRefresh = vi.fn();
     const contract = createMockContract();
 
-    // Mock API success for DELETE
+    // Mock API success for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/contracts/*", () => {
+      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
         return new HttpResponse(null, { status: 204 });
       })
     );
 
-    render(
+    const { container } = render(
       <WeddingVendorsTable
         contracts={[contract]}
         onEdit={vi.fn()}
@@ -156,26 +156,28 @@ describe("WeddingVendorsTable", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Excluir"));
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Excluir"));
     await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
 
-    expect(toast.success).toHaveBeenCalledWith("Contrato deletado com sucesso!");
-    expect(onRefresh).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Contrato deletado com sucesso!");
+      expect(onRefresh).toHaveBeenCalled();
+    });
   });
 
   it("shows error toast when contract deletion fails", async () => {
     const onRefresh = vi.fn();
     const contract = createMockContract();
 
-    // Mock API failure for DELETE
+    // Mock API failure for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/contracts/*", () => {
+      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
         return HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
       })
     );
 
-    render(
+    const { container } = render(
       <WeddingVendorsTable
         contracts={[contract]}
         onEdit={vi.fn()}
@@ -184,11 +186,60 @@ describe("WeddingVendorsTable", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Excluir"));
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Excluir"));
     await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
 
-    expect(toast.error).toHaveBeenCalledWith("Erro interno");
-    expect(onRefresh).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro interno");
+      expect(onRefresh).not.toHaveBeenCalled();
+    });
+  });
+
+  it("shows fallback error toast when contract deletion fails without detail in body", async () => {
+    const onRefresh = vi.fn();
+    const contract = createMockContract();
+
+    // Mock API failure for DELETE returning 500 and no body
+    server.use(
+      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    const { container } = render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onEdit={vi.fn()}
+        onRefresh={onRefresh}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Excluir"));
+    await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao deletar contrato.");
+      expect(onRefresh).not.toHaveBeenCalled();
+    });
+  });
+
+  it("renders only relevant actions when some callbacks are omitted", async () => {
+    const contract = createMockContract();
+    const { container } = render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onEdit={vi.fn()}
+        // onGenerateExpense is omitted
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(container.querySelector("button")!);
+
+    expect(await screen.findByText("Editar")).toBeInTheDocument();
+    expect(screen.queryByText("Gerar Despesa")).toBeNull();
   });
 });

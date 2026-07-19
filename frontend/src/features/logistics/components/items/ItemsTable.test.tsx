@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { WeddingItemsTable } from "@/features/logistics/components/items/ItemsTable";
 import { createMockItem } from "@/test-data";
 import { server } from "@/mocks/server";
@@ -37,28 +37,28 @@ describe("WeddingItemsTable", () => {
   it("calls onEdit when Editar is clicked in dropdown", async () => {
     const onEdit = vi.fn();
     const item = createMockItem();
-    render(<WeddingItemsTable items={[item]} onEdit={onEdit} />);
+    const { container } = render(<WeddingItemsTable items={[item]} onEdit={onEdit} />);
 
     const user = userEvent.setup();
-    // Open dropdown menu
-    await user.click(screen.getByRole("button"));
+    // Open dropdown menu using robust container selector
+    await user.click(container.querySelector("button")!);
 
-    // Find and click "Editar" item
-    await user.click(screen.getByText("Editar"));
+    // Find and click "Editar" item using async findByText to avoid transition flakiness
+    await user.click(await screen.findByText("Editar"));
 
     expect(onEdit).toHaveBeenCalledWith(item);
   });
 
   it("opens ConfirmDeleteDialog when Excluir is clicked", async () => {
     const item = createMockItem();
-    render(<WeddingItemsTable items={[item]} onEdit={vi.fn()} />);
+    const { container } = render(<WeddingItemsTable items={[item]} onEdit={vi.fn()} />);
 
     const user = userEvent.setup();
     // Open dropdown
-    await user.click(screen.getByRole("button"));
+    await user.click(container.querySelector("button")!);
 
-    // Click "Excluir"
-    await user.click(screen.getByText("Excluir"));
+    // Click "Excluir" using findByText
+    await user.click(await screen.findByText("Excluir"));
 
     // Verify dialog is open
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -69,53 +69,95 @@ describe("WeddingItemsTable", () => {
     const onRefresh = vi.fn();
     const item = createMockItem();
 
-    // Mock API success for DELETE
+    // Mock API success for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/items/*", () => {
+      http.delete("*/api/v1/logistics/items/:uuid", () => {
         return new HttpResponse(null, { status: 204 });
       })
     );
 
-    render(<WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />);
+    const { container } = render(
+      <WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />
+    );
 
     const user = userEvent.setup();
     // Open dropdown
-    await user.click(screen.getByRole("button"));
+    await user.click(container.querySelector("button")!);
 
     // Click "Excluir"
-    await user.click(screen.getByText("Excluir"));
+    await user.click(await screen.findByText("Excluir"));
 
     // Click "Deletar Permanentemente"
     await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
 
-    expect(toast.success).toHaveBeenCalledWith("Item deletado com sucesso!");
-    expect(onRefresh).toHaveBeenCalled();
+    // Wrap assertions in waitFor to avoid async callback race conditions
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Item deletado com sucesso!");
+      expect(onRefresh).toHaveBeenCalled();
+    });
   });
 
   it("shows error toast when item deletion fails", async () => {
     const onRefresh = vi.fn();
     const item = createMockItem();
 
-    // Mock API failure for DELETE
+    // Mock API failure for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/items/*", () => {
+      http.delete("*/api/v1/logistics/items/:uuid", () => {
         return HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
       })
     );
 
-    render(<WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />);
+    const { container } = render(
+      <WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />
+    );
 
     const user = userEvent.setup();
     // Open dropdown
-    await user.click(screen.getByRole("button"));
+    await user.click(container.querySelector("button")!);
 
     // Click "Excluir"
-    await user.click(screen.getByText("Excluir"));
+    await user.click(await screen.findByText("Excluir"));
 
     // Click "Deletar Permanentemente"
     await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
 
-    expect(toast.error).toHaveBeenCalledWith("Erro interno");
-    expect(onRefresh).not.toHaveBeenCalled();
+    // Wrap assertions in waitFor to avoid async callback race conditions
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro interno");
+      expect(onRefresh).not.toHaveBeenCalled();
+    });
+  });
+
+  it("shows fallback error toast when item deletion fails without detail in body", async () => {
+    const onRefresh = vi.fn();
+    const item = createMockItem();
+
+    // Mock API failure for DELETE returning status 500 and no body
+    server.use(
+      http.delete("*/api/v1/logistics/items/:uuid", () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    const { container } = render(
+      <WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />
+    );
+
+    const user = userEvent.setup();
+    // Open dropdown
+    await user.click(container.querySelector("button")!);
+
+    // Click "Excluir"
+    await user.click(await screen.findByText("Excluir"));
+
+    // Click "Deletar Permanentemente"
+    await user.click(screen.getByRole("button", { name: "Deletar Permanentemente" }));
+
+    // Wrap assertions in waitFor to avoid async callback race conditions
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao deletar item.");
+      expect(onRefresh).not.toHaveBeenCalled();
+    });
   });
 });
