@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { WeddingVendorsItemsTab } from "./VendorsItemsView";
