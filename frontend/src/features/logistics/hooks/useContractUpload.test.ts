@@ -97,7 +97,7 @@ describe("useContractUpload", () => {
       success = await result.current.uploadAndCreateContract(
         defaultFormData,
         file,
-        [{ name: "Arranjo de Mesa", quantity: 10, acquisition_status: "pending" }],
+        [{ key: "item-1", name: "Arranjo de Mesa", quantity: 10, acquisition_status: "pending" }],
         { ...defaultExpense, checked: true }
       );
     });
