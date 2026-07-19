@@ -49,6 +49,9 @@ export default mergeConfig(
         reporter: ["text", "lcov"],
         include: ["src/**/*.{ts,tsx}"],
         exclude: [
+          "src/instrument.ts",
+          "src/api/types/**",
+          "src/features/logistics/types.ts",
           "src/api/generated/**",
           "**/*.test.*",
           "**/*.spec.*",
