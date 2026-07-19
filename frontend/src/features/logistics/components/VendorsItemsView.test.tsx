@@ -1,17 +1,10 @@
-
+ 
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { WeddingVendorsItemsTab } from "./VendorsItemsView";
 import { createMockContract, createMockItem } from "@/test-data";
-
-// ---------------------------------------------------------------------------
-// Mock the data hook
-// ---------------------------------------------------------------------------
-const mockUseWeddingVendorsItems = vi.fn();
-vi.mock("../hooks/useVendorsItems", () => ({
-  useWeddingVendorsItems: (...args: unknown[]) =>
-    mockUseWeddingVendorsItems(...args),
-}));
+import { server } from "@/mocks/server";
+import { http, HttpResponse, delay } from "msw";
 
 // ---------------------------------------------------------------------------
 // Mock every sub-component so we only test orchestration
@@ -126,33 +119,47 @@ vi.mock("./items/EditItemDialog", () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 function mockLoading() {
-  mockUseWeddingVendorsItems.mockReturnValue({
-    contracts: [],
-    items: [],
-    isLoading: true,
-    error: null,
-  });
+  server.use(
+    http.get("*/api/v1/logistics/contracts/", async () => {
+      await delay("infinite");
+      return HttpResponse.json({ items: [], count: 0 });
+    }),
+    http.get("*/api/v1/logistics/items/", async () => {
+      await delay("infinite");
+      return HttpResponse.json({ items: [], count: 0 });
+    }),
+  );
 }
 
 function mockError() {
-  mockUseWeddingVendorsItems.mockReturnValue({
-    contracts: [],
-    items: [],
-    isLoading: false,
-    error: new Error("API failure"),
-  });
+  server.use(
+    http.get("*/api/v1/logistics/contracts/", () => {
+      return HttpResponse.json({ detail: "API failure" }, { status: 500 });
+    }),
+    http.get("*/api/v1/logistics/items/", () => {
+      return HttpResponse.json({ detail: "API failure" }, { status: 500 });
+    })
+  );
 }
 
 function mockData(
   contracts: ReturnType<typeof createMockContract>[] = [],
   items: ReturnType<typeof createMockItem>[] = [],
 ) {
-  mockUseWeddingVendorsItems.mockReturnValue({
-    contracts,
-    items,
-    isLoading: false,
-    error: null,
-  });
+  server.use(
+    http.get("*/api/v1/logistics/contracts/", () => {
+      return HttpResponse.json({
+        items: contracts,
+        count: contracts.length,
+      });
+    }),
+    http.get("*/api/v1/logistics/items/", () => {
+      return HttpResponse.json({
+        items,
+        count: items.length,
+      });
+    })
+  );
 }
 
 const weddingUuid = "w-1";
@@ -185,12 +192,12 @@ describe("WeddingVendorsItemsTab", () => {
   });
 
   describe("Error state", () => {
-    it("shows a destructive alert with error message", () => {
+    it("shows a destructive alert with error message", async () => {
       mockError();
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
       expect(
-        screen.getByText(
+        await screen.findByText(
           "Não foi possível carregar os dados de logística e fornecedores.",
         ),
       ).toBeInTheDocument();
@@ -203,13 +210,13 @@ describe("WeddingVendorsItemsTab", () => {
   });
 
   describe("Normal rendering", () => {
-    it("renders contracts card with Novo Contrato button", () => {
+    it("renders contracts card with Novo Contrato button", async () => {
       mockData([createMockContract()], []);
 
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
       expect(
-        screen.getByText("Contratos de Fornecedores"),
+        await screen.findByText("Contratos de Fornecedores"),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /novo contrato/i }),
@@ -218,13 +225,13 @@ describe("WeddingVendorsItemsTab", () => {
       expect(screen.getByTestId("contract-count")).toHaveTextContent("1");
     });
 
-    it("renders items card with Novo Item button", () => {
+    it("renders items card with Novo Item button", async () => {
       mockData([], [createMockItem()]);
 
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
       expect(
-        screen.getByText("Itens Logísticos"),
+        await screen.findByText("Itens Logísticos"),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /novo item/i }),
@@ -233,12 +240,12 @@ describe("WeddingVendorsItemsTab", () => {
       expect(screen.getByTestId("item-count")).toHaveTextContent("1");
     });
 
-    it("renders empty states when there are no contracts or items", () => {
+    it("renders empty states when there are no contracts or items", async () => {
       mockData([], []);
 
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
-      expect(screen.getByTestId("vendors-table")).toBeInTheDocument();
+      expect(await screen.findByTestId("vendors-table")).toBeInTheDocument();
       expect(screen.getByTestId("contract-count")).toHaveTextContent("0");
       expect(screen.getByTestId("items-table")).toBeInTheDocument();
       expect(screen.getByTestId("item-count")).toHaveTextContent("0");
@@ -250,13 +257,12 @@ describe("WeddingVendorsItemsTab", () => {
       mockData([], []);
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
+      const novoContratoBtn = await screen.findByRole("button", { name: /novo contrato/i });
       expect(
         screen.queryByTestId("contract-upload-dialog"),
       ).not.toBeInTheDocument();
 
-      await userEvent.click(
-        screen.getByRole("button", { name: /novo contrato/i }),
-      );
+      await userEvent.click(novoContratoBtn);
 
       expect(
         screen.getByTestId("contract-upload-dialog"),
@@ -267,13 +273,12 @@ describe("WeddingVendorsItemsTab", () => {
       mockData([], []);
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
+      const novoItemBtn = await screen.findByRole("button", { name: /novo item/i });
       expect(
         screen.queryByTestId("create-item-dialog"),
       ).not.toBeInTheDocument();
 
-      await userEvent.click(
-        screen.getByRole("button", { name: /novo item/i }),
-      );
+      await userEvent.click(novoItemBtn);
 
       expect(
         screen.getByTestId("create-item-dialog"),
@@ -284,11 +289,12 @@ describe("WeddingVendorsItemsTab", () => {
       mockData([createMockContract()], []);
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
+      const detailBtn = await screen.findByTestId("btn-vendor-detail");
       expect(
         screen.queryByTestId("contract-detail-dialog"),
       ).not.toBeInTheDocument();
 
-      await userEvent.click(screen.getByTestId("btn-vendor-detail"));
+      await userEvent.click(detailBtn);
 
       expect(
         screen.getByTestId("contract-detail-dialog"),
@@ -301,11 +307,12 @@ describe("WeddingVendorsItemsTab", () => {
       mockData([], [item]);
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
+      const editBtn = await screen.findByTestId("btn-item-edit");
       expect(
         screen.queryByTestId("edit-item-dialog"),
       ).not.toBeInTheDocument();
 
-      await userEvent.click(screen.getByTestId("btn-item-edit"));
+      await userEvent.click(editBtn);
 
       expect(
         screen.getByTestId("edit-item-dialog"),
@@ -318,16 +325,11 @@ describe("WeddingVendorsItemsTab", () => {
 
   describe("State transitions", () => {
     it("closes ContractUploadDialog and resets prefilledParentUuid on success", async () => {
-      // Mock onSuccess to simulate dialog's callback
-      // The actual dialog mock doesn't fire onSuccess automatically,
-      // but the component wires it up. We verify the contract exists.
       mockData([], []);
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
-      // Open the upload dialog
-      await userEvent.click(
-        screen.getByRole("button", { name: /novo contrato/i }),
-      );
+      const novoContratoBtn = await screen.findByRole("button", { name: /novo contrato/i });
+      await userEvent.click(novoContratoBtn);
       expect(
         screen.getByTestId("contract-upload-dialog"),
       ).toBeInTheDocument();
@@ -340,21 +342,18 @@ describe("WeddingVendorsItemsTab", () => {
       mockData([createMockContract()], []);
       render(<WeddingVendorsItemsTab weddingUuid={weddingUuid} />);
 
-      // Open detail dialog
-      await userEvent.click(screen.getByTestId("btn-vendor-detail"));
+      const detailBtn = await screen.findByTestId("btn-vendor-detail");
+      await userEvent.click(detailBtn);
       expect(
         screen.getByTestId("contract-detail-dialog"),
       ).toBeInTheDocument();
 
-      // Click addendum button — should close detail and open upload with prefilled parent
       await userEvent.click(screen.getByTestId("btn-create-addendum"));
 
-      // Detail should be closed
       expect(
         screen.queryByTestId("contract-detail-dialog"),
       ).not.toBeInTheDocument();
 
-      // Upload should be open with prefilled parent
       expect(
         screen.getByTestId("contract-upload-dialog"),
       ).toBeInTheDocument();

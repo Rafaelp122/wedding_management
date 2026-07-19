@@ -6,9 +6,7 @@ import {
   AlertCircle,
   Clock,
   ArrowRight,
-  Heart,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
@@ -17,14 +15,23 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getWeddingStatusInfo } from "@/features/weddings/utils/wedding-status";
-import { formatCurrencyBRCompact, formatDateBR } from "@/lib/formatters";
+import { formatDateBR } from "@/lib/formatters";
+import { UrgentTasksList } from "./UrgentTasksList";
+import { UpcomingInstallmentsList } from "./UpcomingInstallmentsList";
 
 interface WeddingOverviewProps {
   wedding: WeddingOut;
   overview?: WeddingDashboardOut | null;
+  onNavigateToPlanning?: () => void;
+  onNavigateToFinances?: () => void;
 }
 
-export function WeddingOverview({ wedding, overview }: WeddingOverviewProps) {
+export function WeddingOverview({
+  wedding,
+  overview,
+  onNavigateToPlanning,
+  onNavigateToFinances,
+}: WeddingOverviewProps) {
   const statusInfo = getWeddingStatusInfo(wedding.status);
 
   const urgentTasks = overview?.urgent_tasks ?? [];
@@ -155,38 +162,12 @@ export function WeddingOverview({ wedding, overview }: WeddingOverviewProps) {
                 Ações Necessárias
               </CardTitle>
             </div>
-            <Button asChild variant="ghost" size="sm" className="h-8 gap-1">
-              <Link to={`/weddings/${wedding.uuid}?tab=planning&subtab=checklist`}>
-                Ver planejamento <ArrowRight className="w-4 h-4" />
-              </Link>
+            <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={onNavigateToPlanning}>
+              Ver planejamento <ArrowRight className="w-4 h-4" />
             </Button>
           </CardHeader>
           <CardContent className="p-6 flex-1">
-            {urgentTasks.length > 0 ? (
-              <div className="space-y-4">
-                {urgentTasks.map((task) => (
-                  <div
-                    key={task.uuid}
-                    className="flex items-start gap-4 p-4 rounded-lg border border-destructive/20 bg-destructive/5"
-                  >
-                    <div className="mt-0.5">
-                      <div className="w-5 h-5 rounded border-2 border-destructive/30 flex items-center justify-center bg-background" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{task.title}</p>
-                      <p className="text-xs text-destructive mt-1 font-medium">
-                        Prioridade: Alta
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-8">
-                <Heart className="w-8 h-8 text-muted/30 mb-3" />
-                <p className="text-sm">Tudo em dia por aqui!</p>
-              </div>
-            )}
+            <UrgentTasksList tasks={urgentTasks} />
           </CardContent>
         </Card>
 
@@ -198,48 +179,12 @@ export function WeddingOverview({ wedding, overview }: WeddingOverviewProps) {
                 Próximos Vencimentos
               </CardTitle>
             </div>
-            <Button asChild variant="ghost" size="sm" className="h-8 gap-1">
-              <Link to={`/weddings/${wedding.uuid}?tab=finances`}>
-                Ver finanças <ArrowRight className="w-4 h-4" />
-              </Link>
+            <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={onNavigateToFinances}>
+              Ver finanças <ArrowRight className="w-4 h-4" />
             </Button>
           </CardHeader>
           <CardContent className="p-6 flex-1">
-            {upcomingInstallments.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingInstallments.map((inst) => (
-                  <div
-                    key={inst.uuid}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">
-                        Parcela #{inst.installment_number}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {new Intl.DateTimeFormat("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                        }).format(new Date(inst.due_date))}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold">
-                        {formatCurrencyBRCompact(Number(inst.amount), 0)}
-                      </p>
-                      <p className="text-xs text-orange-500 mt-0.5 font-medium">
-                        {inst.status === "OVERDUE" ? "Atrasado" : "Pendente"}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-8">
-                <Wallet className="w-8 h-8 text-muted/30 mb-3" />
-                <p className="text-sm">Nenhum pagamento próximo.</p>
-              </div>
-            )}
+            <UpcomingInstallmentsList installments={upcomingInstallments} />
           </CardContent>
         </Card>
       </div>

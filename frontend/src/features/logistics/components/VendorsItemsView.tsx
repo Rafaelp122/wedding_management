@@ -1,14 +1,15 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { AlertCircle, FileText, Package, Plus } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { useWeddingVendorsItems } from "../hooks/useVendorsItems";
+import { useVendorsItemsOrchestrator } from "../hooks/useVendorsItemsOrchestrator";
 import { WeddingVendorsTable } from "./items/VendorsTable";
 import { WeddingItemsTable } from "./items/ItemsTable";
 import { CreateItemDialog } from "./items/CreateItemDialog";
 import { EditItemDialog } from "./items/EditItemDialog";
+
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
-import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logistics/logistics";
+import type { ContractOut } from "@/api/generated/v1/models/contractOut";
 
 const ContractDetailDialog = lazy(
   () =>
@@ -35,24 +36,47 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-interface WeddingVendorsItemsTabProps {
+interface WeddingVendorsItemsTabViewProps {
   weddingUuid: string;
+  contracts: ContractOut[];
+  items: ItemOut[];
+  isLoading: boolean;
+  error: unknown;
+  detailContractUuid: string | null;
+  setDetailContractUuid: (uuid: string | null) => void;
+  uploadOpen: boolean;
+  setUploadOpen: (open: boolean) => void;
+  prefilledParentUuid: string | null;
+  setPrefilledParentUuid: (uuid: string | null) => void;
+  createItemOpen: boolean;
+  setCreateItemOpen: (open: boolean) => void;
+  editItem: ItemOut | null;
+  setEditItem: (item: ItemOut | null) => void;
+  refreshItems: () => void;
+  handleCreateAddendum: (parentUuid: string) => void;
+  handleNewContractClick: () => void;
 }
 
-export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabProps) {
-  const queryClient = useQueryClient();
-  const { contracts, items, isLoading, error } = useWeddingVendorsItems(weddingUuid);
-
-  const [detailContractUuid, setDetailContractUuid] = useState<string | null>(null);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [prefilledParentUuid, setPrefilledParentUuid] = useState<string | null>(null);
-  const [createItemOpen, setCreateItemOpen] = useState(false);
-  const [editItem, setEditItem] = useState<ItemOut | null>(null);
-
-  const refreshItems = () => {
-    queryClient.invalidateQueries({ queryKey: getLogisticsItemsListQueryKey() });
-  };
-
+export function WeddingVendorsItemsTabView({
+  weddingUuid,
+  contracts,
+  items,
+  isLoading,
+  error,
+  detailContractUuid,
+  setDetailContractUuid,
+  uploadOpen,
+  setUploadOpen,
+  prefilledParentUuid,
+  setPrefilledParentUuid,
+  createItemOpen,
+  setCreateItemOpen,
+  editItem,
+  setEditItem,
+  refreshItems,
+  handleCreateAddendum,
+  handleNewContractClick,
+}: WeddingVendorsItemsTabViewProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -91,10 +115,7 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
               variant="outline"
               size="sm"
               className="h-8 text-xs gap-1"
-              onClick={() => {
-                setPrefilledParentUuid(null);
-                setUploadOpen(true);
-              }}
+              onClick={handleNewContractClick}
             >
               <Plus className="size-3" />
               Novo Contrato
@@ -150,11 +171,7 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
           onOpenChange={(open) => {
             if (!open) setDetailContractUuid(null);
           }}
-          onCreateAddendum={(parentUuid) => {
-            setPrefilledParentUuid(parentUuid);
-            setUploadOpen(true);
-            setDetailContractUuid(null);
-          }}
+          onCreateAddendum={handleCreateAddendum}
         />
       </Suspense>
 
@@ -196,5 +213,25 @@ export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabPr
         />
       )}
     </div>
+  );
+}
+
+interface WeddingVendorsItemsTabProps {
+  weddingUuid: string;
+}
+
+export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabProps) {
+  const { contracts, items, isLoading, error } = useWeddingVendorsItems(weddingUuid);
+  const orchestrator = useVendorsItemsOrchestrator();
+
+  return (
+    <WeddingVendorsItemsTabView
+      weddingUuid={weddingUuid}
+      contracts={contracts}
+      items={items}
+      isLoading={isLoading}
+      error={error}
+      {...orchestrator}
+    />
   );
 }

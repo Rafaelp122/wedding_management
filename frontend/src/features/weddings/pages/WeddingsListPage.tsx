@@ -1,7 +1,11 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWeddingsPage } from "../hooks/useWeddingsPage";
 import { WeddingsTable } from "../components/WeddingsTable";
 import { WeddingFilters } from "../components/WeddingFilters";
 import { CreateWeddingDialog } from "../components/CreateWeddingDialog";
+import { EditWeddingDialog } from "../components/EditWeddingDialog";
+import { DeleteWeddingDialog } from "../components/DeleteWeddingDialog";
 import { EmptyWeddingsState } from "../components/EmptyWeddingsState";
 import {
   ListPageErrorState,
@@ -10,7 +14,10 @@ import {
 import { DataPagination } from "@/components/data-pagination";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { getDashboardSummaryQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/scheduler/scheduler";
+import { getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { useQueryClient } from "@tanstack/react-query";
+import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Plus } from "lucide-react";
@@ -32,7 +39,12 @@ export default function WeddingsListPage() {
     pagination,
   } = useWeddingsPage();
 
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [editingWedding, setEditingWedding] = useState<WeddingOut | null>(null);
+  const [deletingWedding, setDeletingWedding] = useState<WeddingOut | null>(
+    null,
+  );
 
   if (error) {
     const { message } = getApiErrorInfo(
@@ -88,8 +100,10 @@ export default function WeddingsListPage() {
           <>
             <WeddingsTable
               weddings={filteredWeddings}
-              onRefetch={refetch}
               pageSize={pagination.pageSize}
+              onWeddingClick={(wedding) => navigate(`/weddings/${wedding.uuid}`)}
+              onEditClick={(wedding) => setEditingWedding(wedding)}
+              onDeleteClick={(wedding) => setDeletingWedding(wedding)}
             />
             <DataPagination
               from={pagination.info.from}
@@ -119,6 +133,41 @@ export default function WeddingsListPage() {
           setCreateDialogOpen(false);
         }}
       />
+
+      {editingWedding && (
+        <EditWeddingDialog
+          key={editingWedding.uuid}
+          wedding={editingWedding}
+          open={!!editingWedding}
+          onOpenChange={(open) => !open && setEditingWedding(null)}
+          onSuccess={() => {
+            refetch();
+            setEditingWedding(null);
+          }}
+        />
+      )}
+
+      {deletingWedding && (
+        <DeleteWeddingDialog
+          key={deletingWedding.uuid}
+          wedding={deletingWedding}
+          open={!!deletingWedding}
+          onOpenChange={(open) => !open && setDeletingWedding(null)}
+          onSuccess={() => {
+            refetch();
+            queryClient.invalidateQueries({
+              queryKey: getDashboardSummaryQueryKey(),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getWeddingsListQueryKey(),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getSchedulerEventsListQueryKey(),
+            });
+            setDeletingWedding(null);
+          }}
+        />
+      )}
     </div>
   );
 }

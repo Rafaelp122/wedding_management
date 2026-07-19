@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 let capturedBody: unknown;
 
-import { useFinancesExpensesUpdate } from "@/api/generated/v1/endpoints/finances/finances";
+
 
 describe("ExpenseRedistributeForm", () => {
   beforeEach(() => {
@@ -142,12 +142,19 @@ describe("ExpenseRedistributeForm", () => {
     });
   });
 
-  it("button is disabled while mutation is pending", () => {
-    vi.mocked(useFinancesExpensesUpdate).mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: true,
-    } as any);
-
+  it("button is disabled while mutation is pending", async () => {
+    let resolveMutation: (value: any) => void = () => {};
+    const mutationPromise = new Promise((resolve) => {
+      resolveMutation = resolve;
+    });
+    server.use(
+      http.patch("*/api/v1/finances/expenses/:uuid/", () => {
+        return mutationPromise.then(() =>
+          HttpResponse.json({ uuid: EXPENSE_UUID, num_installments: 3 })
+        );
+      }),
+    );
+    const user = userEvent.setup();
     render(
       <ExpenseRedistributeForm
         expenseUuid={EXPENSE_UUID}
@@ -155,9 +162,9 @@ describe("ExpenseRedistributeForm", () => {
         firstExistingDate="2025-07-15"
       />,
     );
-
-    expect(
-      screen.getByRole("button", { name: /aplicar/i }),
-    ).toBeDisabled();
+    const button = screen.getByRole("button", { name: /aplicar/i });
+    await user.click(button);
+    expect(button).toBeDisabled();
+    resolveMutation(null);
   });
 });

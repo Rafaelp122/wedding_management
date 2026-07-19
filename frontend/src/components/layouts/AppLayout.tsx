@@ -4,12 +4,11 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Bell, ChevronRight, ChevronDown, Check } from "lucide-react";
 import { AppSidebar } from "../app-sidebar";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,48 +17,18 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { useWeddingsRead, useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard Geral",
-  "/weddings": "Casamentos",
-  "/scheduler": "Scheduler",
-  "/suppliers": "Fornecedores",
-  "/settings": "Configurações",
-};
+import { useAppLayoutData } from "./useAppLayoutData";
 
 export const AppLayout = () => {
-  const { pathname } = useLocation();
-
-  // Match /weddings/:uuid (ignoring trailing slash or query params)
-  const match = pathname.match(/^\/weddings\/([^/]+)$/);
-  const weddingUuid = match ? match[1] : null;
-
-  const { data: weddingResponse, isLoading: isLoadingWedding } = useWeddingsRead(
-    weddingUuid ?? "",
-    { query: { enabled: !!weddingUuid } }
-  );
-  const wedding = weddingResponse?.data;
-
-  const { data: weddingsListResponse } = useWeddingsList(
-    undefined,
-    { query: { enabled: !!weddingUuid } }
-  );
-  const weddingsList = weddingsListResponse?.data?.items ?? [];
-
-  const pageTitle = pathname.startsWith("/weddings/")
-    ? "Detalhes do Casamento"
-    : pathname.startsWith("/suppliers/")
-      ? "Detalhes do Fornecedor"
-      : (PAGE_TITLES[pathname] ?? "Painel de Controle");
-
-  useDocumentTitle(
-    pathname.startsWith("/weddings/") && wedding
-      ? `Casamento: ${wedding.groom_name} & ${wedding.bride_name}`
-      : pageTitle
-  );
+  const {
+    weddingUuid,
+    wedding,
+    isLoadingWedding,
+    weddingsList,
+    pageTitle,
+  } = useAppLayoutData();
 
   return (
     <SidebarProvider>

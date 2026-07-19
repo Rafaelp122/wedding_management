@@ -1,12 +1,5 @@
-import { useCallback, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod";
-import { Lock } from "lucide-react";
-
-import { useSchedulerEventsUpdate } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { SchedulerEventsUpdateBody } from "@/api/generated/v1/zod/scheduler/scheduler";
-import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
+import { useEditEventForm } from "../../hooks/useEditEventForm";
+import { ReadOnlyEventDetails } from "./ReadOnlyEventDetails";
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
 
 import { FormDialog } from "@/components/form-dialog";
@@ -27,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { EVENT_TYPE_OPTIONS, RECURRENCE_OPTIONS } from "../../constants";
 import { toDateTimeLocalValue, toISODateTime } from "../../utils";
 
@@ -38,145 +30,29 @@ interface EditEventDialogProps {
   onSuccess: () => void;
 }
 
-const NOOP = () => {};
-
-const isPaymentEvent = (event: EventOut) => event.event_type === "pagamento";
-
 export function EditEventDialog({
   event,
   open,
   onOpenChange,
   onSuccess,
 }: EditEventDialogProps) {
-  const { mutate, isPending } = useSchedulerEventsUpdate();
-  const readOnly = isPaymentEvent(event);
-
-  const form = useForm({
-    resolver: zodResolver(SchedulerEventsUpdateBody),
-    defaultValues: {
-      title: event.title || "",
-      event_type: event.event_type,
-      start_time: event.start_time,
-      end_time: event.end_time ?? null,
-      location: event.location ?? "",
-      description: event.description ?? "",
-      recurrence_rule: event.recurrence_rule ?? "none",
-      reminder_enabled: event.reminder_enabled,
-      reminder_minutes_before: event.reminder_minutes_before,
-    },
+  const { form, isPending, readOnly, onSubmit, handleOpenChange } = useEditEventForm({
+    event,
+    open,
+    onOpenChange,
+    onSuccess,
   });
-
-  // Reset form when event changes
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        title: event.title || "",
-        event_type: event.event_type,
-        start_time: event.start_time,
-        end_time: event.end_time ?? null,
-        location: event.location ?? "",
-        description: event.description ?? "",
-        recurrence_rule: event.recurrence_rule ?? "none",
-        reminder_enabled: event.reminder_enabled,
-        reminder_minutes_before: event.reminder_minutes_before,
-      });
-    }
-  }, [event, open, form]);
-
-  const handleOpenChange = useCallback(
-    (newOpen: boolean) => {
-      if (!newOpen) {
-        form.reset();
-      }
-      onOpenChange(newOpen);
-    },
-    [form, onOpenChange],
-  );
-
-  const onSubmit = (data: z.infer<typeof SchedulerEventsUpdateBody>) => {
-    if (readOnly) return;
-
-    const payload = {
-      ...data,
-      start_time: data.start_time
-        ? toISODateTime(data.start_time as string)
-        : null,
-      end_time: data.end_time
-        ? toISODateTime(data.end_time as string)
-        : null,
-    };
-
-    mutate(
-      { uuid: event.uuid, data: payload },
-      createMutationCallbacks({
-        successMsg: "Evento atualizado com sucesso!",
-        fallbackErrorMsg: "Erro ao atualizar evento.",
-        onSuccess: () => {
-          form.reset();
-          onSuccess();
-        },
-      }),
-    );
-  };
 
   if (readOnly) {
     return (
-      <FormDialog
+      <ReadOnlyEventDetails
+        event={event}
         open={open}
         onOpenChange={handleOpenChange}
-        title="Detalhes do Evento"
-        description="Evento de pagamento gerado automaticamente."
-        form={form}
-        onSubmit={NOOP}
-        isPending={false}
-        submitLabel="Fechar"
-        submitDisabled={true}
-        maxWidth="560px"
-      >
-        <Alert>
-          <Lock className="h-4 w-4" />
-          <AlertTitle>Evento somente leitura</AlertTitle>
-          <AlertDescription>
-            Este evento de pagamento foi gerado automaticamente a partir de
-            uma parcela. Para modificá-lo, ajuste a parcela correspondente
-            no módulo financeiro.
-          </AlertDescription>
-        </Alert>
-
-        <div className="space-y-3 text-sm">
-          <div>
-            <span className="font-medium">Título: </span>
-            {event.title}
-          </div>
-          <div>
-            <span className="font-medium">Tipo: </span>Pagamento
-          </div>
-          <div>
-            <span className="font-medium">Início: </span>
-            {new Date(event.start_time).toLocaleString("pt-BR")}
-          </div>
-          {event.end_time && (
-            <div>
-              <span className="font-medium">Fim: </span>
-              {new Date(event.end_time).toLocaleString("pt-BR")}
-            </div>
-          )}
-          {event.location && (
-            <div>
-              <span className="font-medium">Local: </span>
-              {event.location}
-            </div>
-          )}
-          {event.description && (
-            <div>
-              <span className="font-medium">Descrição: </span>
-              {event.description}
-            </div>
-          )}
-        </div>
-      </FormDialog>
+      />
     );
   }
+
 
   return (
     <FormDialog

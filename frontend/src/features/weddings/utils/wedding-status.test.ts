@@ -5,6 +5,7 @@ import {
   getWeddingStatusBadgeStyle,
   getWeddingAvatarStyle,
   getWeddingInitials,
+  calculateChecklistPercentage,
 } from "@/features/weddings/utils/wedding-status";
 import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 
@@ -105,5 +106,21 @@ describe("getWeddingInitials", () => {
 
   it("handles names with leading spaces", () => {
     expect(getWeddingInitials("  Pedro", "  Ana")).toBe("P&A");
+  });
+});
+
+describe("calculateChecklistPercentage", () => {
+  it("returns 0 if total is 0", () => {
+    expect(calculateChecklistPercentage(5, 0)).toBe(0);
+  });
+
+  it("returns 0 if total is negative", () => {
+    expect(calculateChecklistPercentage(5, -1)).toBe(0);
+  });
+
+  it("calculates percentage correctly and rounds it", () => {
+    expect(calculateChecklistPercentage(1, 3)).toBe(33);
+    expect(calculateChecklistPercentage(2, 3)).toBe(67);
+    expect(calculateChecklistPercentage(5, 10)).toBe(50);
   });
 });

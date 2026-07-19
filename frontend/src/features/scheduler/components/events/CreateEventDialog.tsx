@@ -1,12 +1,4 @@
-import { useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-import { useSchedulerEventsCreate } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { SchedulerEventsCreateBody } from "@/api/generated/v1/zod/scheduler/scheduler";
-import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
-
+import { useCreateEventForm } from "../../hooks/useCreateEventForm";
 import { FormDialog } from "@/components/form-dialog";
 import { FormInput, FormTextarea } from "@/components/form-fields";
 import {
@@ -27,23 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVENT_TYPE_OPTIONS, RECURRENCE_OPTIONS } from "../../constants";
 import { toDateTimeLocalValue, toISODateTime } from "../../utils";
-import { parseISO } from "date-fns";
-
-const formSchema = SchedulerEventsCreateBody.superRefine((data, ctx) => {
-  if (
-    data.end_time &&
-    data.start_time &&
-    parseISO(data.end_time) <= parseISO(data.start_time)
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Data/hora de término deve ser posterior ao início.",
-      path: ["end_time"],
-    });
-  }
-});
-
-type CreateEventFormData = z.infer<typeof formSchema>;
 
 interface CreateEventDialogProps {
   weddingUuid: string;
@@ -64,55 +39,12 @@ export function CreateEventDialog({
   defaultStartTime,
   weddingOptions,
 }: CreateEventDialogProps) {
-  const { mutate, isPending } = useSchedulerEventsCreate();
-
-  const defaultStartTimeIso = defaultStartTime?.toISOString() ?? "";
-
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      wedding: weddingUuid,
-      title: "",
-      event_type: "reuniao",
-      start_time: defaultStartTimeIso,
-      end_time: null,
-      location: "",
-      description: "",
-      recurrence_rule: "none",
-      reminder_enabled: false,
-      reminder_minutes_before: 60,
-    },
+  const { form, isPending, onSubmit, handleOpenChange } = useCreateEventForm({
+    weddingUuid,
+    defaultStartTime,
+    onSuccess,
+    onOpenChange,
   });
-
-  const handleOpenChange = useCallback(
-    (newOpen: boolean) => {
-      if (!newOpen) {
-        form.reset();
-      }
-      onOpenChange(newOpen);
-    },
-    [form, onOpenChange],
-  );
-
-  const onSubmit = (data: CreateEventFormData) => {
-    const payload = {
-      ...data,
-      start_time: toISODateTime(data.start_time),
-      end_time: data.end_time ? toISODateTime(data.end_time) : null,
-    };
-
-    mutate(
-      { data: payload },
-      createMutationCallbacks({
-        successMsg: "Evento criado com sucesso!",
-        fallbackErrorMsg: "Erro ao criar evento.",
-        onSuccess: () => {
-          form.reset();
-          onSuccess();
-        },
-      }),
-    );
-  };
 
   return (
     <FormDialog

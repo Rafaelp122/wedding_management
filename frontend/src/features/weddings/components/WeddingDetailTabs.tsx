@@ -76,7 +76,23 @@ export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps)
       </TabsList>
 
       <TabsContent value="general" className="space-y-4 pt-4">
-        <WeddingOverview wedding={wedding} overview={overview} />
+        <WeddingOverview
+          wedding={wedding}
+          overview={overview}
+          onNavigateToPlanning={() => {
+            setSearchParams((prev) => {
+              prev.set("tab", "planning");
+              prev.set("subtab", "checklist");
+              return prev;
+            }, { replace: true });
+          }}
+          onNavigateToFinances={() => {
+            setSearchParams((prev) => {
+              prev.set("tab", "finances");
+              return prev;
+            }, { replace: true });
+          }}
+        />
       </TabsContent>
 
       <TabsContent value="finances" className="space-y-4 pt-4">

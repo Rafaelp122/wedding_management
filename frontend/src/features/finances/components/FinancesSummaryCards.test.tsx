@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { render, screen, waitFor, server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { WeddingFinancesSummaryCards } from "@/features/finances/components/FinancesSummaryCards";
-import { useFinancesBudgetsList } from "@/api/generated/v1/endpoints/finances/finances";
+
 
 describe("WeddingFinancesSummaryCards", () => {
   beforeEach(() => {
@@ -137,10 +136,9 @@ describe("WeddingFinancesSummaryCards", () => {
   });
 
   it("shows loading skeleton when budgets are loading", () => {
-    vi.mocked(useFinancesBudgetsList).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    } as any);
+    server.use(
+      http.get("*/api/v1/finances/budgets/", () => new Promise(() => {})),
+    );
 
     render(
       <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,

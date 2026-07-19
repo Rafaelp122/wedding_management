@@ -1,11 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { useSchedulerEventsList, getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useSchedulerPage } from "../hooks/useSchedulerPage";
 import { getApiErrorInfo } from "@/api/error-utils";
-import type { EventOut } from "@/api/generated/v1/models/eventOut";
-import { getPaginationInfo, usePagination } from "@/hooks/use-pagination";
 import { DataPagination } from "@/components/data-pagination";
 import { SchedulerEventsTable } from "../components/SchedulerEventsTable";
 import { SchedulerCalendar } from "../components/SchedulerCalendar";
@@ -18,145 +12,34 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, CalendarIcon, Plus, TableIcon } from "lucide-react";
 
-type ViewMode = "table" | "calendar";
-
 export default function SchedulerPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>("table");
-  const queryClient = useQueryClient();
-
-  // Create event dialog state
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [createDefaultStart, setCreateDefaultStart] = useState<Date | undefined>();
-
-  // Edit event dialog state
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<EventOut | null>(null);
-
-  const WEDDINGS_PAGE_SIZE = 100;
-
-  const pagination = usePagination(10);
-
   const {
-    data: eventsResponse,
-    isLoading: isLoadingEvents,
-    error: eventsError,
-  } = useSchedulerEventsList({ limit: 500, offset: 0 });
-  const {
-    data: weddingsResponse,
-    isLoading: isLoadingWeddings,
-    error: weddingsError,
-  } = useWeddingsList({ limit: WEDDINGS_PAGE_SIZE });
-
-  const events = useMemo(() => eventsResponse?.data.items ?? [], [eventsResponse]);
-  const eventsCount = eventsResponse?.data.count ?? 0;
-  const weddings = useMemo(
-    () => weddingsResponse?.data.items ?? [],
-    [weddingsResponse],
-  );
-
-  const paginationInfo = getPaginationInfo(
-    pagination.page,
-    pagination.pageSize,
+    viewMode,
+    setViewMode,
+    createDialogOpen,
+    setCreateDialogOpen,
+    createDefaultStart,
+    editDialogOpen,
+    setEditDialogOpen,
+    selectedEvent,
+    pagination,
+    events,
     eventsCount,
-  );
+    paginatedEvents,
+    paginationInfo,
+    isLoading,
+    firstError,
+    weddingsByUuid,
+    summary,
+    weddingOptions,
+    defaultWeddingUuid,
+    handleSelectEvent,
+    handleEditSuccess,
+    handleSelectSlot,
+    handleCreateFromButton,
+    handleCreateSuccess,
+  } = useSchedulerPage();
 
-  const isLoading = isLoadingEvents || isLoadingWeddings;
-  const firstError = eventsError ?? weddingsError;
-
-  const weddingsByUuid = useMemo(
-    () =>
-      new Map(
-        weddings.map((wedding) => [
-          wedding.uuid,
-          `${wedding.groom_name} & ${wedding.bride_name}`,
-        ]),
-      ),
-    [weddings],
-  );
-
-  const sortedEvents = useMemo(
-    () =>
-      [...events].sort(
-        (left, right) =>
-          new Date(left.start_time).getTime() - new Date(right.start_time).getTime(),
-      ),
-    [events],
-  );
-
-  const paginatedEvents = useMemo(
-    () =>
-      sortedEvents.slice(pagination.offset, pagination.offset + pagination.limit),
-    [sortedEvents, pagination.offset, pagination.limit],
-  );
-
-  const summary = useMemo(() => {
-    const now = new Date();
-    const next7Days = new Date();
-    next7Days.setDate(now.getDate() + 7);
-
-    const upcoming = events.filter((event) => {
-      const startsAt = new Date(event.start_time);
-      return startsAt >= now && startsAt <= next7Days;
-    }).length;
-
-    const withReminder = events.filter(
-      (event) => event.reminder_enabled,
-    ).length;
-
-    return {
-      total: events.length,
-      upcoming,
-      withReminder,
-    };
-  }, [events]);
-
-  const handleSelectEvent = useCallback((event: EventOut) => {
-    setSelectedEvent(event);
-    setEditDialogOpen(true);
-  }, []);
-
-  const handleEditSuccess = useCallback(() => {
-    setEditDialogOpen(false);
-    setSelectedEvent(null);
-    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
-  }, [queryClient]);
-
-  const weddingOptions = useMemo(
-    () =>
-      weddings.map((w) => ({
-        uuid: w.uuid,
-        label: `${w.bride_name} & ${w.groom_name}`,
-      })),
-    [weddings],
-  );
-
-  const defaultWeddingUuid = weddingOptions.length > 0
-    ? weddingOptions[0].uuid
-    : "";
-
-  const handleSelectSlot = useCallback((startTime: Date) => {
-    if (weddingOptions.length === 0) {
-      toast.warning("Crie um casamento antes de adicionar eventos.");
-      return;
-    }
-    setCreateDefaultStart(startTime);
-    setCreateDialogOpen(true);
-  }, [weddingOptions]);
-
-  const handleCreateFromButton = useCallback(() => {
-    if (weddingOptions.length === 0) {
-      toast.warning("Crie um casamento antes de adicionar eventos.");
-      return;
-    }
-    setCreateDefaultStart(undefined);
-    setCreateDialogOpen(true);
-  }, [weddingOptions]);
-
-  const handleCreateSuccess = useCallback(() => {
-    setCreateDialogOpen(false);
-    setCreateDefaultStart(undefined);
-    queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
-  }, [queryClient]);
 
   if (firstError) {
     const { message } = getApiErrorInfo(

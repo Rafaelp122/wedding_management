@@ -1,3 +1,21 @@
+/**
+ * TEST SETUP GLOBAL - WMS Frontend
+ *
+ * Regras Críticas de Mock e Interceptação de Rede (Vitest isolate: false):
+ *
+ * 1. NUNCA use `vi.mock("@/api/generated/...", () => ({...}))` dentro de arquivos de teste individuais.
+ *    Sob a execução compartilhada de módulos (isolate: false), isso causará colisões e vazamento de estado
+ *    entre as execuções de testes concorrentes.
+ *
+ * 2. PREFIRA SEMPRE O MSW (Mock Service Worker) para testes integrados e de fluxos visuais.
+ *    Use o interceptador MSW (`server.use(http.get("/api/...", () => ...))`) para mockar endpoints de API.
+ *    Dessa forma, os testes rodam de forma síncrona/assíncrona confiável, testando a integração real com a
+ *    camada gerada do Orval e TanStack Query sem poluir o escopo global do Vitest.
+ *
+ * 3. MOCKS GLOBAIS DE HOOKS (Se estritamente inevitáveis):
+ *    Todos os mocks de hooks Orval globais permitidos devem ser registrados de forma centralizada e controlada
+ */
+
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
@@ -150,7 +168,7 @@ vi.mock("@/components/ui/dropdown-menu", () => {
       );
       return React.createElement(
         "div",
-        { className, onClick: handleClick, ...props },
+        { role: "menuitem", className, onClick: handleClick, ...props },
         children
       );
     },
@@ -199,93 +217,13 @@ vi.mock("sonner", async (importOriginal) => {
 });
 
 vi.mock("@sentry/react", () => globalAny.__SENTRY_MOCK__);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const registeredMockHooks: Array<{ mockFn: any; originalFn: any }> = [];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function registerMockHook(originalFn: any) {
-  const mockFn = vi.fn(originalFn);
-  registeredMockHooks.push({ mockFn, originalFn });
-  return mockFn;
-}
-
-vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
-    ...mod,
-    useFinancesBudgetsList: registerMockHook(mod.useFinancesBudgetsList),
-    useFinancesBudgetsUpdate: registerMockHook(mod.useFinancesBudgetsUpdate),
-    useFinancesCategoriesList: registerMockHook(mod.useFinancesCategoriesList),
-    useFinancesCategoriesCreate: registerMockHook(mod.useFinancesCategoriesCreate),
-    useFinancesCategoriesUpdate: registerMockHook(mod.useFinancesCategoriesUpdate),
-    useFinancesCategoriesDelete: registerMockHook(mod.useFinancesCategoriesDelete),
-    useFinancesExpensesList: registerMockHook(mod.useFinancesExpensesList),
-    useFinancesExpensesCreate: registerMockHook(mod.useFinancesExpensesCreate),
-    useFinancesExpensesUpdate: registerMockHook(mod.useFinancesExpensesUpdate),
-    useFinancesExpensesDelete: registerMockHook(mod.useFinancesExpensesDelete),
-    useFinancesExpensesFromDocument: registerMockHook(mod.useFinancesExpensesFromDocument),
-    useFinancesExpensesRead: registerMockHook(mod.useFinancesExpensesRead),
-    useFinancesInstallmentsList: registerMockHook(mod.useFinancesInstallmentsList),
-    useFinancesInstallmentsMarkAsPaid: registerMockHook(mod.useFinancesInstallmentsMarkAsPaid),
-    useFinancesInstallmentsUnmarkAsPaid: registerMockHook(mod.useFinancesInstallmentsUnmarkAsPaid),
-    useFinancesInstallmentsAdjust: registerMockHook(mod.useFinancesInstallmentsAdjust),
+    ...actual,
+    useRouteError: vi.fn(),
   };
 });
-
-vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/weddings/weddings")>();
-  return {
-    ...mod,
-    useWeddingsRead: registerMockHook(mod.useWeddingsRead),
-    useWeddingsLookup: registerMockHook(mod.useWeddingsLookup),
-    useWeddingsList: registerMockHook(mod.useWeddingsList),
-    useWeddingsCreate: registerMockHook(mod.useWeddingsCreate),
-    useWeddingsOverviewRead: registerMockHook(mod.useWeddingsOverviewRead),
-    getWeddingsOverviewReadQueryKey: vi.fn(mod.getWeddingsOverviewReadQueryKey),
-  };
-});
-
-vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", () => ({
-  useDashboardSummary: vi.fn().mockReturnValue({ data: undefined, isLoading: true }),
-  useDashboardWedding: vi.fn().mockReturnValue({ data: undefined, isLoading: true }),
-  getDashboardSummaryQueryKey: vi.fn(() => ["dashboard-summary"]),
-  getDashboardWeddingQueryKey: vi.fn((uuid: string) => ["dashboard-wedding", uuid]),
-  dashboardSummary: vi.fn(),
-  dashboardWedding: vi.fn(),
-  getDashboardSummaryQueryOptions: vi.fn(),
-  getDashboardWeddingQueryOptions: vi.fn(),
-}));
-
-vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/logistics/logistics")>();
-  return {
-    ...mod,
-    useLogisticsContractsRead: registerMockHook(mod.useLogisticsContractsRead),
-    useLogisticsItemsList: registerMockHook(mod.useLogisticsItemsList),
-    useLogisticsContractsList: registerMockHook(mod.useLogisticsContractsList),
-  };
-});
-
-vi.mock("@/features/finances/hooks/useBudget", () => ({
-  useWeddingBudget: vi.fn().mockReturnValue({
-    budget: undefined,
-    categories: [],
-    isLoading: true,
-    budgetError: null,
-    isEditing: false,
-    editTotal: "",
-    isSaving: false,
-    totalEstimated: 0,
-    totalAllocated: 0,
-    totalSpent: 0,
-    progressPercentage: 0,
-    progressColor: "bg-green-500",
-    setEditTotal: vi.fn(),
-    handleEditInit: vi.fn(),
-    handleSave: vi.fn(),
-    handleCancelEdit: vi.fn(),
-  }),
-}));
 
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
@@ -389,9 +327,6 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   vi.clearAllMocks();
-  registeredMockHooks.forEach(({ mockFn, originalFn }) => {
-    mockFn.mockImplementation(originalFn);
-  });
   setHasAnyTriggerBeenClicked(false);
   document.body.removeAttribute("data-scroll-locked");
   document.body.style.pointerEvents = "";
