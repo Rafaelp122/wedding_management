@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
+vi.unmock("@/features/finances/components/FinancesView");
 import { render, screen, waitFor, server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
