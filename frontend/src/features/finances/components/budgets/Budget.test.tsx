@@ -1,17 +1,10 @@
-
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { render, screen, waitFor, server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { WeddingBudget } from "@/features/finances/components/budgets/Budget";
-import { useWeddingBudget } from "../../hooks/useBudget";
 
 describe("WeddingBudget", () => {
-  beforeEach(async () => {
-    const { useWeddingBudget: originalUseWeddingBudget } = await vi.importActual<
-      typeof import("../../hooks/useBudget")
-    >("../../hooks/useBudget");
-    vi.mocked(useWeddingBudget).mockImplementation(originalUseWeddingBudget);
-
+  beforeEach(() => {
     server.use(
       http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () =>
         HttpResponse.json({

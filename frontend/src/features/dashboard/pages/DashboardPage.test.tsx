@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 
-import { useDashboardSummary, useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
@@ -37,9 +36,6 @@ describe("DashboardPage", () => {
   });
 
   it("shows loading skeletons initially", () => {
-    vi.mocked(useDashboardSummary).mockReturnValue({ data: undefined, isLoading: true } as any);
-    vi.mocked(useDashboardWedding).mockReturnValue({ data: undefined, isLoading: true } as any);
-
     render(<DashboardPage />);
 
     const skeletons = document.querySelectorAll("[class*='animate-pulse']");

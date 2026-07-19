@@ -3,11 +3,8 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { ContractDetailDialog } from "./ContractDetailDialog";
 import { createMockContract } from "@/test-data";
-import {
-  useLogisticsContractsRead,
-} from "@/api/generated/v1/endpoints/logistics/logistics";
 import { server } from "@/mocks/server";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, delay } from "msw";
 
 /* Seções filhas são stub — não precisam ser testadas aqui */
 vi.mock("./ContractDocumentSection", () => ({
@@ -56,12 +53,12 @@ describe("ContractDetailDialog", () => {
   /* ─────────────── Loading ─────────────── */
 
   it("shows loading skeleton while contract is loading", () => {
-    vi.mocked(useLogisticsContractsRead).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      isError: false,
-      error: null,
-    } as any);
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", async () => {
+        await delay("infinite");
+        return HttpResponse.json(DEFAULT_CONTRACT);
+      }),
+    );
 
     renderDialog();
 

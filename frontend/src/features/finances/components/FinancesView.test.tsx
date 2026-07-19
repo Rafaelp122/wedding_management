@@ -36,15 +36,8 @@ vi.mock("@/features/finances/components/expenses/ExpensesTable", () => ({
   ),
 }));
 
-import { useWeddingBudget } from "@/features/finances/hooks/useBudget";
-
 describe("WeddingFinancesView", () => {
-  beforeEach(async () => {
-    const { useWeddingBudget: originalUseWeddingBudget } = await vi.importActual<
-      typeof import("@/features/finances/hooks/useBudget")
-    >("@/features/finances/hooks/useBudget");
-    vi.mocked(useWeddingBudget).mockImplementation(originalUseWeddingBudget);
-
+  beforeEach(() => {
     server.use(
       http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () =>
         HttpResponse.json({

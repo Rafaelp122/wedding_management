@@ -3,9 +3,8 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { WeddingVendorsItemsTab } from "./VendorsItemsView";
 import { createMockContract, createMockItem } from "@/test-data";
-import { useLogisticsContractsList, useLogisticsItemsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { server } from "@/mocks/server";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, delay } from "msw";
 
 // ---------------------------------------------------------------------------
 // Mock every sub-component so we only test orchestration
@@ -120,16 +119,16 @@ vi.mock("./items/EditItemDialog", () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 function mockLoading() {
-  vi.mocked(useLogisticsContractsList).mockReturnValue({
-    data: undefined,
-    isLoading: true,
-    error: null,
-  } as any);
-  vi.mocked(useLogisticsItemsList).mockReturnValue({
-    data: undefined,
-    isLoading: true,
-    error: null,
-  } as any);
+  server.use(
+    http.get("*/api/v1/logistics/contracts/", async () => {
+      await delay("infinite");
+      return HttpResponse.json({ items: [], count: 0 });
+    }),
+    http.get("*/api/v1/logistics/items/", async () => {
+      await delay("infinite");
+      return HttpResponse.json({ items: [], count: 0 });
+    }),
+  );
 }
 
 function mockError() {

@@ -14,9 +14,6 @@
  *
  * 3. MOCKS GLOBAIS DE HOOKS (Se estritamente inevitáveis):
  *    Todos os mocks de hooks Orval globais permitidos devem ser registrados de forma centralizada e controlada
- *    aqui no `test-setup.ts` usando a função helper `registerMockHook`.
- *    A função \`registerMockHook\` permite usar \`vi.mocked\` e alterar implementações temporariamente nos testes
- *    individuais, limpando e restaurando-as automaticamente no \`afterEach\` deste arquivo.
  */
 
 import "@testing-library/jest-dom/vitest";
@@ -220,101 +217,13 @@ vi.mock("sonner", async (importOriginal) => {
 });
 
 vi.mock("@sentry/react", () => globalAny.__SENTRY_MOCK__);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const registeredMockHooks: Array<{ mockFn: any; originalFn: any }> = [];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function registerMockHook(originalFn: any) {
-  const mockFn = vi.fn(originalFn);
-  registeredMockHooks.push({ mockFn, originalFn });
-  return mockFn;
-}
-
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
     ...actual,
-    useRouteError: registerMockHook(actual.useRouteError),
+    useRouteError: vi.fn(),
   };
 });
-
-vi.mock("@/api/generated/v1/endpoints/finances/finances", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/finances/finances")>();
-  return {
-    ...mod,
-    useFinancesBudgetsList: registerMockHook(mod.useFinancesBudgetsList),
-    useFinancesBudgetsUpdate: registerMockHook(mod.useFinancesBudgetsUpdate),
-    useFinancesCategoriesList: registerMockHook(mod.useFinancesCategoriesList),
-    useFinancesCategoriesCreate: registerMockHook(mod.useFinancesCategoriesCreate),
-    useFinancesCategoriesUpdate: registerMockHook(mod.useFinancesCategoriesUpdate),
-    useFinancesCategoriesDelete: registerMockHook(mod.useFinancesCategoriesDelete),
-    useFinancesExpensesList: registerMockHook(mod.useFinancesExpensesList),
-    useFinancesExpensesCreate: registerMockHook(mod.useFinancesExpensesCreate),
-    useFinancesExpensesUpdate: registerMockHook(mod.useFinancesExpensesUpdate),
-    useFinancesExpensesDelete: registerMockHook(mod.useFinancesExpensesDelete),
-    useFinancesExpensesFromDocument: registerMockHook(mod.useFinancesExpensesFromDocument),
-    useFinancesExpensesRead: registerMockHook(mod.useFinancesExpensesRead),
-    useFinancesInstallmentsList: registerMockHook(mod.useFinancesInstallmentsList),
-    useFinancesInstallmentsMarkAsPaid: registerMockHook(mod.useFinancesInstallmentsMarkAsPaid),
-    useFinancesInstallmentsUnmarkAsPaid: registerMockHook(mod.useFinancesInstallmentsUnmarkAsPaid),
-    useFinancesInstallmentsAdjust: registerMockHook(mod.useFinancesInstallmentsAdjust),
-  };
-});
-
-vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/weddings/weddings")>();
-  return {
-    ...mod,
-    useWeddingsRead: registerMockHook(mod.useWeddingsRead),
-    useWeddingsLookup: registerMockHook(mod.useWeddingsLookup),
-    useWeddingsList: registerMockHook(mod.useWeddingsList),
-    useWeddingsCreate: registerMockHook(mod.useWeddingsCreate),
-    useWeddingsOverviewRead: registerMockHook(mod.useWeddingsOverviewRead),
-    getWeddingsOverviewReadQueryKey: vi.fn(mod.getWeddingsOverviewReadQueryKey),
-  };
-});
-
-vi.mock("@/api/generated/v1/endpoints/dashboard/dashboard", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/dashboard/dashboard")>();
-  return {
-    ...mod,
-    useDashboardSummary: registerMockHook(mod.useDashboardSummary),
-    useDashboardWedding: registerMockHook(mod.useDashboardWedding),
-  };
-});
-
-vi.mock("@/api/generated/v1/endpoints/logistics/logistics", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/api/generated/v1/endpoints/logistics/logistics")>();
-  return {
-    ...mod,
-    useLogisticsContractsRead: registerMockHook(mod.useLogisticsContractsRead),
-    useLogisticsItemsList: registerMockHook(mod.useLogisticsItemsList),
-    useLogisticsContractsList: registerMockHook(mod.useLogisticsContractsList),
-  };
-});
-
-const mockUseWeddingBudget = registerMockHook(() => ({
-  budget: undefined,
-  categories: [],
-  isLoading: true,
-  budgetError: null,
-  isEditing: false,
-  editTotal: "",
-  isSaving: false,
-  totalEstimated: 0,
-  totalAllocated: 0,
-  totalSpent: 0,
-  progressPercentage: 0,
-  progressColor: "bg-green-500",
-  setEditTotal: vi.fn(),
-  handleEditInit: vi.fn(),
-  handleSave: vi.fn(),
-  handleCancelEdit: vi.fn(),
-}));
-
-vi.mock("@/features/finances/hooks/useBudget", () => ({
-  useWeddingBudget: mockUseWeddingBudget,
-}));
 
 import { server } from "@/mocks/server";
 import { useAuthStore } from "@/stores/authStore";
@@ -418,10 +327,6 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   vi.clearAllMocks();
-  registeredMockHooks.forEach(({ mockFn, originalFn }) => {
-    mockFn.mockReset();
-    mockFn.mockImplementation(originalFn);
-  });
   setHasAnyTriggerBeenClicked(false);
   document.body.removeAttribute("data-scroll-locked");
   document.body.style.pointerEvents = "";
