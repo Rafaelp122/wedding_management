@@ -18,6 +18,18 @@ vi.mock("@/features/scheduler/components/tasks/ChecklistView", () => ({
 
 const mockWedding = createMockWedding({ groom_name: "João", bride_name: "Maria" });
 
+const mockOverview = {
+  days_until_wedding: 120,
+  budget_percentage_used: 45,
+  tasks_completed: 10,
+  tasks_total: 20,
+  contracts_signed: 4,
+  contracts_total: 8,
+  urgent_tasks: [],
+  upcoming_installments: [],
+  categories_summary: [],
+};
+
 describe("WeddingDetailTabs", () => {
   it("renders tab triggers", () => {
     render(<WeddingDetailTabs wedding={mockWedding} />);
@@ -28,10 +40,11 @@ describe("WeddingDetailTabs", () => {
     expect(screen.getByRole("tab", { name: /planejamento/i })).toBeInTheDocument();
   });
 
-  it("shows general tab content area by default", () => {
+  it("selects general tab by default", () => {
     render(<WeddingDetailTabs wedding={mockWedding} />);
 
-    expect(screen.getByText("Visão Geral")).toBeInTheDocument();
+    const generalTab = screen.getByRole("tab", { name: /visão geral/i });
+    expect(generalTab).toHaveAttribute("data-state", "active");
   });
 
   it("alternates tabs when clicked, updating searchParams", async () => {
@@ -75,19 +88,7 @@ describe("WeddingDetailTabs", () => {
     expect(timelineSubTab).toHaveAttribute("data-state", "active");
   });
 
-  it("navigates to planning tab when clicking 'Ver planejamento' in overview", async () => {
-    const mockOverview = {
-      days_until_wedding: 120,
-      budget_percentage_used: 45,
-      tasks_completed: 10,
-      tasks_total: 20,
-      contracts_signed: 4,
-      contracts_total: 8,
-      urgent_tasks: [],
-      upcoming_installments: [],
-      categories_summary: [],
-    };
-
+  it("navigates to planning tab and selects checklist subtab when clicking 'Ver planejamento' in overview", async () => {
     render(<WeddingDetailTabs wedding={mockWedding} overview={mockOverview} />);
     const user = userEvent.setup();
 
@@ -98,21 +99,13 @@ describe("WeddingDetailTabs", () => {
     // Verify "Planejamento" tab trigger is now active
     const planningTab = screen.getByRole("tab", { name: /planejamento/i });
     expect(planningTab).toHaveAttribute("data-state", "active");
+
+    // Verify "Checklist" subtab trigger is active (as defined by onNavigateToPlanning)
+    const checklistSubTab = screen.getByRole("tab", { name: /checklist/i });
+    expect(checklistSubTab).toHaveAttribute("data-state", "active");
   });
 
   it("navigates to finances tab when clicking 'Ver finanças' in overview", async () => {
-    const mockOverview = {
-      days_until_wedding: 120,
-      budget_percentage_used: 45,
-      tasks_completed: 10,
-      tasks_total: 20,
-      contracts_signed: 4,
-      contracts_total: 8,
-      urgent_tasks: [],
-      upcoming_installments: [],
-      categories_summary: [],
-    };
-
     render(<WeddingDetailTabs wedding={mockWedding} overview={mockOverview} />);
     const user = userEvent.setup();
 
