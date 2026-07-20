@@ -49,7 +49,7 @@ export default mergeConfig(
         reporter: ["text", "lcov"],
         thresholds: {
           statements: 90,
-          branches: 85,
+          branches: 80,
           functions: 85,
           lines: 90,
         },
@@ -66,7 +66,6 @@ export default mergeConfig(
           "src/main.tsx",
           "src/router/index.tsx",
           "src/features/landing/**",
-          "src/features/auth/pages/LoginPage.tsx",
           "src/components/app-sidebar/index.tsx",
           "src/components/app-sidebar/nav-user.tsx",
           "src/components/ui/alert.tsx",

@@ -1,13 +1,23 @@
- 
-import { describe, expect, it, beforeEach } from "vitest";
+
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 describe("DashboardPage", () => {
   beforeEach(() => {
+    mockNavigate.mockReset();
     server.use(
       http.get("*/api/v1/dashboard/summary/", () => {
         return HttpResponse.json({
@@ -132,5 +142,28 @@ describe("DashboardPage", () => {
 
     const options = await screen.findAllByRole("option");
     expect(options.length).toBeGreaterThan(1);
+  });
+
+  it("navigates to wedding detail page and finances tab when header buttons are clicked", async () => {
+    render(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(document.getElementById("wedding-filter")).toBeInTheDocument();
+    }, { timeout: 5000 });
+
+    const trigger = document.getElementById("wedding-filter")!;
+    const user = userEvent.setup();
+    await user.click(trigger);
+
+    const options = await screen.findAllByRole("option");
+    await user.click(options[1]);
+
+    const openBtn = await screen.findByRole("button", { name: /abrir casamento/i });
+    await user.click(openBtn);
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/weddings\/.+/));
+
+    const financesBtn = screen.getByRole("button", { name: /finanças/i });
+    await user.click(financesBtn);
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/weddings\/.+\?tab=finances/));
   });
 });
