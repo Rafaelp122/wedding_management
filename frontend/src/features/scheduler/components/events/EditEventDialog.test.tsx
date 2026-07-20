@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
 import { server } from "@/mocks/server";
 import { EditEventDialog } from "./EditEventDialog";
 import { createMockEvent } from "@/test-data";
@@ -120,6 +120,34 @@ describe("EditEventDialog", () => {
 
       const titleInput = screen.getByLabelText("Título");
       expect(titleInput).toHaveValue("Reunião com Buffet");
+    });
+
+    it("clears optional dates and restores empty reminder minutes", () => {
+      render(
+        <EditEventDialog
+          event={createMockEvent({
+            end_time: "2026-08-01T11:00:00Z",
+            reminder_minutes_before: 30,
+          })}
+          open={true}
+          onOpenChange={onOpenChange}
+          onSuccess={onSuccess}
+        />,
+      );
+
+      fireEvent.change(screen.getByLabelText("Data/Hora Início"), {
+        target: { value: "" },
+      });
+      fireEvent.change(screen.getByLabelText("Data/Hora Fim (opcional)"), {
+        target: { value: "" },
+      });
+      fireEvent.change(screen.getByLabelText("Minutos antes"), {
+        target: { value: "" },
+      });
+
+      expect(screen.getByLabelText("Data/Hora Início")).toHaveValue("");
+      expect(screen.getByLabelText("Data/Hora Fim (opcional)")).toHaveValue("");
+      expect(screen.getByLabelText("Minutos antes")).toHaveValue(60);
     });
 
     it("submits update and shows success toast", async () => {

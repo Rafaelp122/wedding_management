@@ -59,6 +59,59 @@ describe("CreateEventDialog", () => {
     expect(screen.getByText("Recorrência")).toBeInTheDocument();
   });
 
+  it("shows the wedding selector only when multiple options exist", () => {
+    const { rerender } = render(
+      <CreateEventDialog
+        weddingUuid="wedding-1"
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+        weddingOptions={[{ uuid: "wedding-1", label: "Maria & Joao" }]}
+      />,
+    );
+    expect(screen.queryByText("Casamento")).not.toBeInTheDocument();
+
+    rerender(
+      <CreateEventDialog
+        weddingUuid="wedding-1"
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+        weddingOptions={[
+          { uuid: "wedding-1", label: "Maria & Joao" },
+          { uuid: "wedding-2", label: "Ana & Luis" },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Casamento")).toBeInTheDocument();
+  });
+
+  it("resets optional date and reminder inputs", () => {
+    render(
+      <CreateEventDialog
+        weddingUuid="wedding-1"
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+        defaultStartTime={new Date("2026-08-15T09:00:00Z")}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Data/Hora Início *"), {
+      target: { value: "" },
+    });
+    fireEvent.change(screen.getByLabelText("Data/Hora Fim (opcional)"), {
+      target: { value: "" },
+    });
+    fireEvent.change(screen.getByLabelText("Minutos antes"), {
+      target: { value: "" },
+    });
+
+    expect(screen.getByLabelText("Data/Hora Início *")).toHaveValue("");
+    expect(screen.getByLabelText("Data/Hora Fim (opcional)")).toHaveValue("");
+    expect(screen.getByLabelText("Minutos antes")).toHaveValue(60);
+  });
+
   it("renders reminder checkbox", () => {
     render(
       <CreateEventDialog

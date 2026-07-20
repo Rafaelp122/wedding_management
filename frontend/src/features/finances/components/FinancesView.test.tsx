@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 vi.unmock("@/features/finances/components/FinancesView");
-import { render, screen, waitFor, server } from "@/test-utils";
+import { render, screen, waitFor, server, userEvent } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
+import { createMockExpense } from "@/test-data";
+import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 
 vi.mock("@/features/finances/components/FinancesDistributionChart", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/features/finances/components/FinancesDistributionChart")>();
@@ -14,8 +16,14 @@ vi.mock("@/features/finances/components/expenses/CreateExpenseDialog", async (im
   const mod = await importOriginal<typeof import("@/features/finances/components/expenses/CreateExpenseDialog")>();
   return {
     ...mod,
-    CreateExpenseDialog: ({ open }: { open: boolean }) =>
-      open ? <div data-testid="create-expense-dialog">Nova Despesa</div> : null,
+    CreateExpenseDialog: ({ open, onOpenChange, onSuccess }: any) =>
+      open ? (
+        <div data-testid="create-expense-dialog">
+          Nova Despesa
+          <button onClick={() => onOpenChange(false)}>Fechar criação</button>
+          <button onClick={onSuccess}>Concluir criação</button>
+        </div>
+      ) : null,
   };
 });
 
@@ -37,18 +45,57 @@ vi.mock("@/features/finances/components/expenses/ExpensesTable", async (importOr
   const mod = await importOriginal<typeof import("@/features/finances/components/expenses/ExpensesTable")>();
   return {
     ...mod,
-    WeddingExpensesTable: ({ expenses, onExpenseUpdated }: { expenses: any[], onExpenseUpdated: () => void }) => (
+    WeddingExpensesTable: ({
+      expenses,
+      onEditExpense,
+      onDeleteExpense,
+      onDetailExpense,
+    }: any) => (
       <div>
-        {expenses.map((e) => (
+        {expenses.map((e: ExpenseOut) => (
           <div key={e.uuid}>{e.name}</div>
         ))}
-        <button data-testid="mock-expense-update-btn" onClick={onExpenseUpdated}>
-          Update Expense
-        </button>
+        {expenses[0] ? (
+          <>
+            <button onClick={() => onEditExpense(expenses[0])}>Editar mock</button>
+            <button onClick={() => onDeleteExpense(expenses[0])}>Excluir mock</button>
+            <button onClick={() => onDetailExpense(expenses[0])}>Detalhar mock</button>
+          </>
+        ) : null}
       </div>
     ),
   };
 });
+
+vi.mock("@/features/finances/components/expenses/EditExpenseDialog", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/features/finances/components/expenses/EditExpenseDialog")>();
+  return {
+    ...mod,
+    EditExpenseDialog: ({ open, onOpenChange, onSuccess }: any) =>
+      open ? (
+        <div data-testid="edit-expense-dialog">
+          <button onClick={() => onOpenChange(false)}>Fechar edição</button>
+          <button onClick={onSuccess}>Concluir edição</button>
+        </div>
+      ) : null,
+  };
+});
+
+vi.mock("@/features/finances/components/expenses/DeleteExpenseDialog", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/features/finances/components/expenses/DeleteExpenseDialog")>();
+  return {
+    ...mod,
+    DeleteExpenseDialog: ({ open, onOpenChange, onSuccess }: any) =>
+      open ? (
+        <div data-testid="delete-expense-dialog">
+          <button onClick={() => onOpenChange(false)}>Fechar exclusão</button>
+          <button onClick={onSuccess}>Concluir exclusão</button>
+        </div>
+      ) : null,
+  };
+});
+
+const mockExpense = createMockExpense({ uuid: "e-1", name: "Buffet Premium" });
 
 describe("WeddingFinancesView", () => {
   beforeEach(() => {
@@ -145,7 +192,6 @@ describe("WeddingFinancesView", () => {
   });
 
   it("opens the create expense dialog when add button is clicked", async () => {
-    const userEvent = (await import("@/test-utils")).userEvent;
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
     await waitFor(() => {
@@ -167,19 +213,6 @@ describe("WeddingFinancesView", () => {
   });
 
   it("renders expense table when there are expenses", async () => {
-    const mockExpense = {
-      uuid: "e-1",
-      wedding: "w-1",
-      category: "c-1",
-      name: "Buffet Premium",
-      estimated_amount: "5000.00",
-      actual_amount: "4800.00",
-      category_name: "Alimentação",
-      installments_count: 3,
-      paid_installments_count: 1,
-      status: "PARTIALLY_PAID",
-    };
-
     server.use(
       http.get("*/api/v1/finances/expenses/", () =>
         HttpResponse.json({
@@ -197,18 +230,99 @@ describe("WeddingFinancesView", () => {
     });
   });
 
-  it("triggers refetch queries when category or expense changes", async () => {
-    const userEvent = (await import("@/test-utils")).userEvent;
+  it("refetches budget and categories when a category changes", async () => {
+    let budgetRequests = 0;
+    let categoryRequests = 0;
+    server.use(
+      http.get("*/api/v1/finances/budgets/for-wedding/:weddingUuid/", () => {
+        budgetRequests += 1;
+        return HttpResponse.json({
+          uuid: "b-1",
+          wedding: "w-1",
+          total_estimated: "50000.00",
+          total_overall_spent: "25000.00",
+          notes: "",
+        });
+      }),
+      http.get("*/api/v1/finances/categories/", () => {
+        categoryRequests += 1;
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+    );
+
     render(<WeddingFinancesView weddingUuid="w-1" />);
-
     const user = userEvent.setup();
-
     const categoryBtn = await screen.findByTestId("mock-category-change-btn");
     await user.click(categoryBtn);
 
-    const expenseBtn = await screen.findByTestId("mock-expense-update-btn");
-    await user.click(expenseBtn);
+    await waitFor(() => {
+      expect(budgetRequests).toBeGreaterThanOrEqual(2);
+      expect(categoryRequests).toBeGreaterThanOrEqual(2);
+    });
+  });
 
-    expect(categoryBtn).toBeInTheDocument();
+  it("closes creation and refreshes finance queries after success", async () => {
+    let expenseRequests = 0;
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () => {
+        expenseRequests += 1;
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<WeddingFinancesView weddingUuid="w-1" />);
+
+    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(2));
+    const requestsBeforeSuccess = expenseRequests;
+
+    await user.click(await screen.findByRole("button", { name: /adicionar despesa/i }));
+    await user.click(screen.getByRole("button", { name: "Fechar criação" }));
+    expect(screen.queryByTestId("create-expense-dialog")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /adicionar despesa/i }));
+    await user.click(screen.getByRole("button", { name: "Concluir criação" }));
+
+    expect(screen.queryByTestId("create-expense-dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(expenseRequests).toBeGreaterThan(requestsBeforeSuccess));
+  });
+
+  it("opens, closes and completes expense actions", async () => {
+    let expenseRequests = 0;
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () => {
+        expenseRequests += 1;
+        return HttpResponse.json({ items: [mockExpense], count: 1 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<WeddingFinancesView weddingUuid="w-1" />);
+
+    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(2));
+    const requestsBeforeActions = expenseRequests;
+
+    await user.click(await screen.findByRole("button", { name: "Editar mock" }));
+    expect(await screen.findByTestId("edit-expense-dialog")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fechar edição" }));
+    expect(screen.queryByTestId("edit-expense-dialog")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Editar mock" }));
+    await user.click(screen.getByRole("button", { name: "Concluir edição" }));
+    expect(screen.queryByTestId("edit-expense-dialog")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Excluir mock" }));
+    expect(await screen.findByTestId("delete-expense-dialog")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fechar exclusão" }));
+    expect(screen.queryByTestId("delete-expense-dialog")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Excluir mock" }));
+    await user.click(screen.getByRole("button", { name: "Concluir exclusão" }));
+    expect(screen.queryByTestId("delete-expense-dialog")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Detalhar mock" }));
+    expect(screen.getByRole("button", { name: "Detalhar mock" })).toBeInTheDocument();
+
+    await waitFor(() => expect(expenseRequests).toBeGreaterThan(requestsBeforeActions));
   });
 });

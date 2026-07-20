@@ -79,6 +79,9 @@ describe("WeddingExpensesTab", () => {
 
     // Verify dialog opens
     expect(await screen.findByRole("heading", { name: "Nova Despesa" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("heading", { name: "Nova Despesa" })).not.toBeInTheDocument();
   });
 
   it("opens EditExpenseDialog when clicking Editar in action menu", async () => {
@@ -104,6 +107,9 @@ describe("WeddingExpensesTab", () => {
 
     // Verify Edit dialog is open
     expect(await screen.findByRole("heading", { name: "Editar Despesa" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("heading", { name: "Editar Despesa" })).not.toBeInTheDocument();
   });
 
   it("opens DeleteExpenseDialog when clicking Excluir in action menu", async () => {
@@ -126,6 +132,9 @@ describe("WeddingExpensesTab", () => {
 
     // Verify Delete dialog is open
     expect(await screen.findByRole("heading", { name: "Deletar Despesa" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("heading", { name: "Deletar Despesa" })).not.toBeInTheDocument();
   });
 
   it("opens ExpenseDetailSheet when clicking expense name", async () => {
@@ -150,5 +159,8 @@ describe("WeddingExpensesTab", () => {
 
     // Verify details sheet is open
     expect(await screen.findByRole("heading", { name: /Banda Musical/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("heading", { name: /Banda Musical/i })).not.toBeInTheDocument();
   });
 });
