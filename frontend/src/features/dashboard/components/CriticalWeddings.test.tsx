@@ -86,4 +86,43 @@ describe("CriticalWeddings", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/weddings/cw-1");
   });
+
+  it("shows the appropriate warning for each deadline range", () => {
+    render(
+      <CriticalWeddings
+        weddings={[
+          createMockCriticalWedding({
+            uuid: "soon",
+            days_until: 20,
+            overdue_tasks: 0,
+            overdue_installments: 0,
+            incomplete_tasks: 0,
+            pending_installments: 0,
+          }),
+          createMockCriticalWedding({
+            uuid: "planning",
+            days_until: 45,
+            overdue_tasks: 0,
+            overdue_installments: 0,
+            incomplete_tasks: 2,
+            pending_installments: 0,
+          }),
+          createMockCriticalWedding({
+            uuid: "stable",
+            days_until: 120,
+            overdue_tasks: 0,
+            overdue_installments: 0,
+            incomplete_tasks: 0,
+            pending_installments: 2,
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Evento próximo — revisar pendências")).toBeInTheDocument();
+    expect(screen.getByText("Revisar planejamento")).toBeInTheDocument();
+    expect(screen.getByText("2 parcelas")).toBeInTheDocument();
+    expect(screen.getByText("45d").className).toContain("text-foreground");
+    expect(screen.getByText("120d").className).toContain("bg-secondary");
+  });
 });

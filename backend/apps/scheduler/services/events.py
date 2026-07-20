@@ -4,6 +4,7 @@ from uuid import UUID
 
 from django.db import transaction
 from django.db.models import QuerySet
+from django.utils import timezone
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -74,6 +75,7 @@ class EventService:
         payload: EventIn | dict[str, Any],
         *,
         _caller_internal: bool = False,
+        _allow_historical_start: bool = False,
     ) -> Event:
         """
         Cria um novo evento para o tenant especificado.
@@ -82,14 +84,17 @@ class EventService:
             company: O tenant atual para isolamento de dados.
             payload: Dados de entrada para criação do evento (EventIn ou dict).
             _caller_internal: Flag interna indicando se a chamada foi originada
-                por outro serviço do sistema (permite bypass de regras de negócio).
+                por outro serviço do sistema para gerar eventos financeiros.
+            _allow_historical_start: Permissão interna restrita à aplicação de
+                templates com marcos anteriores à data atual.
 
         Returns:
             O evento criado e salvo no banco de dados.
 
         Raises:
-            BusinessRuleViolation: Se for tentada a criação manual de um evento
-                de pagamento (_caller_internal=False).
+            BusinessRuleViolation: Se o início estiver no passado ou for tentada
+                a criação manual de um evento de pagamento
+                (_caller_internal=False).
             ObjectNotFoundError: Se o casamento associado não for encontrado ou
                 pertencer a outro tenant.
         """
@@ -99,6 +104,15 @@ class EventService:
             data = payload
         else:
             data = payload.model_dump(exclude_unset=True)
+
+        if (
+            not _allow_historical_start
+            and timezone.localdate(data["start_time"]) < timezone.localdate()
+        ):
+            raise BusinessRuleViolation(
+                detail="A data e hora de início do evento não pode estar no passado.",
+                code="event_start_time_in_past",
+            )
 
         wedding_input = data.pop("wedding", None)
 

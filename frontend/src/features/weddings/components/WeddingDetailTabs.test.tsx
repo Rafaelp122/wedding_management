@@ -3,7 +3,10 @@ import { render, screen, userEvent } from "@/test-utils";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { createMockWedding } from "@/test-data";
 
-const mockWedding = createMockWedding({ groom_name: "João", bride_name: "Maria" });
+const mockWedding = createMockWedding({
+  groom_name: "João",
+  bride_name: "Maria",
+});
 
 const mockOverview = {
   days_until_wedding: 120,
@@ -18,14 +21,17 @@ const mockOverview = {
 };
 
 describe("WeddingDetailTabs", () => {
-
   it("renders tab triggers", () => {
     render(<WeddingDetailTabs wedding={mockWedding} />);
 
-    expect(screen.getByRole("tab", { name: /visão geral/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /visão geral/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /finanças/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /logística/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /planejamento/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /planejamento/i }),
+    ).toBeInTheDocument();
   });
 
   it("selects general tab by default", () => {
@@ -104,5 +110,33 @@ describe("WeddingDetailTabs", () => {
     // Verify "Finanças" tab trigger is now active
     const financesTab = screen.getByRole("tab", { name: /finanças/i });
     expect(financesTab).toHaveAttribute("data-state", "active");
+  });
+
+  it("restores the finances tab from the URL", async () => {
+    render(<WeddingDetailTabs wedding={mockWedding} />, {
+      initialEntries: ["/weddings/w-1?tab=finances"],
+    });
+
+    expect(screen.getByRole("tab", { name: /finanças/i })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(await screen.findByTestId("mock-finances-tab")).toBeInTheDocument();
+  });
+
+  it("restores the planning checklist from the URL", async () => {
+    render(<WeddingDetailTabs wedding={mockWedding} />, {
+      initialEntries: ["/weddings/w-1?tab=planning&subtab=checklist"],
+    });
+
+    expect(screen.getByRole("tab", { name: /planejamento/i })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(screen.getByRole("tab", { name: /checklist/i })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(await screen.findByTestId("mock-checklist-tab")).toBeInTheDocument();
   });
 });

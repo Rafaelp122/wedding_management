@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@/test-utils";
+import { render, screen, userEvent } from "@/test-utils";
 import { SchedulerCalendar } from "./SchedulerCalendar";
 import { createMockEvent } from "@/test-data";
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
@@ -61,5 +61,58 @@ describe("SchedulerCalendar", () => {
     expect(screen.getByText("Mês")).toBeInTheDocument();
   });
 
+  it("changes calendar views and navigates dates", async () => {
+    const user = userEvent.setup();
+    render(
+      <SchedulerCalendar
+        events={[]}
+        weddingsByUuid={new Map()}
+        onSelectEvent={onSelectEvent}
+        onSelectSlot={onSelectSlot}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Semana" }));
+    expect(screen.getByRole("button", { name: "Semana" })).toHaveClass("rbc-active");
+
+    await user.click(screen.getByRole("button", { name: "Agenda" }));
+    expect(screen.getByRole("button", { name: "Agenda" })).toHaveClass("rbc-active");
+
+    const toolbarLabel = document.querySelector(".rbc-toolbar-label");
+    expect(toolbarLabel).not.toBeNull();
+    const initialPeriod = toolbarLabel?.textContent;
+
+    await user.click(screen.getByRole("button", { name: "Próximo" }));
+    expect(toolbarLabel).not.toHaveTextContent(initialPeriod ?? "");
+
+    await user.click(screen.getByRole("button", { name: "Anterior" }));
+    expect(toolbarLabel).toHaveTextContent(initialPeriod ?? "");
+  });
+
+  it("renders and selects an event in the current month", async () => {
+    const user = userEvent.setup();
+    const currentEvent = createMockEvent({
+      uuid: "current-event",
+      wedding: "wedding-without-label",
+      title: "Evento de hoje",
+      start_time: new Date().toISOString(),
+      end_time: undefined,
+      location: null,
+      event_type: "tipo-desconhecido",
+    });
+    const selectEvent = vi.fn();
+
+    render(
+      <SchedulerCalendar
+        events={[currentEvent]}
+        weddingsByUuid={new Map()}
+        onSelectEvent={selectEvent}
+        onSelectSlot={onSelectSlot}
+      />,
+    );
+
+    await user.click(screen.getByText(/Evento de hoje \(wedding-/));
+    expect(selectEvent).toHaveBeenCalledWith(currentEvent);
+  });
 
 });

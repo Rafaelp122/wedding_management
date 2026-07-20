@@ -21,6 +21,22 @@ import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import React from "react";
 
+const sonnerMock = vi.hoisted(() => {
+  const globalState = globalThis as typeof globalThis & {
+    __SONNER_MOCK__?: Record<string, ReturnType<typeof vi.fn>>;
+  };
+
+  return (globalState.__SONNER_MOCK__ ??= {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn(),
+    custom: vi.fn(),
+  });
+});
+
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({
     children,
@@ -204,18 +220,6 @@ vi.mock("@/components/ui/dropdown-menu", () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalAny = globalThis as any;
 
-if (!globalAny.__SONNER_MOCK__) {
-  globalAny.__SONNER_MOCK__ = {
-    success: vi.fn(),
-    error: vi.fn(),
-    warning: vi.fn(),
-    info: vi.fn(),
-    loading: vi.fn(),
-    dismiss: vi.fn(),
-    custom: vi.fn(),
-  };
-}
-
 if (!globalAny.__SENTRY_MOCK__) {
   globalAny.__SENTRY_MOCK__ = {
     setContext: vi.fn(),
@@ -223,13 +227,10 @@ if (!globalAny.__SENTRY_MOCK__) {
   };
 }
 
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: globalAny.__SONNER_MOCK__,
-  };
-});
+vi.mock("sonner", () => ({
+  toast: sonnerMock,
+  Toaster: () => null,
+}));
 
 vi.mock("@sentry/react", () => globalAny.__SENTRY_MOCK__);
 vi.mock("react-router-dom", async (importOriginal) => {

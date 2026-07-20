@@ -36,6 +36,22 @@ describe("DeleteExpenseDialog", () => {
     expect(screen.getByText("Buffet Principal")).toBeInTheDocument();
   });
 
+  it.each([
+    [createMockExpense({ name: undefined, description: "Decoração floral" }), "Decoração floral"],
+    [createMockExpense({ name: undefined, description: undefined, uuid: "expense-fallback" }), "expense-fallback"],
+  ])("uses the available expense identifier", (expense, identifier) => {
+    render(
+      <DeleteExpenseDialog
+        expense={expense}
+        open={true}
+        onOpenChange={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(identifier)).toBeInTheDocument();
+  });
+
   it("calls onSuccess after successful delete", async () => {
     const onSuccess = vi.fn();
     render(

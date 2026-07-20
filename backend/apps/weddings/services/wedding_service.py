@@ -530,4 +530,5 @@ def _apply_template_events(
                 location="",
                 description="",
             ),
+            _allow_historical_start=True,
         )

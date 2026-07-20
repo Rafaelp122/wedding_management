@@ -638,6 +638,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: deepseek/deepseek-v4-pro
+          use_github_token: "true"
           prompt: |
             Revise este pull request seguindo estritamente as regras de arquitetura, qualidade e testes do projeto:
             1. Diretrizes gerais: `AGENTS.md`
