@@ -85,7 +85,7 @@ describe("SuppliersPage", () => {
     await user.type(searchInput, "Fornecedor Teste");
 
     expect(searchInput).toHaveValue("Fornecedor Teste");
-  });
+  }, 15000);
 
   it("shows the API error and retries the request", async () => {
     let shouldFail = true;

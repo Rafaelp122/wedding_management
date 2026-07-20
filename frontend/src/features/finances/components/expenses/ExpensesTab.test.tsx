@@ -165,8 +165,10 @@ describe("WeddingExpensesTab", () => {
   });
 
   it("refreshes expenses list when EditExpenseDialog calls onSuccess", async () => {
+    let getExpensesCount = 0;
     server.use(
       http.get("*/api/v1/finances/expenses/", () => {
+        getExpensesCount++;
         return HttpResponse.json({ items: [mockExpense], count: 1 });
       }),
       http.get("*/api/v1/logistics/contracts/", () => {
@@ -191,12 +193,15 @@ describe("WeddingExpensesTab", () => {
 
     await waitFor(() => {
       expect(screen.queryByRole("heading", { name: "Editar Despesa" })).not.toBeInTheDocument();
+      expect(getExpensesCount).toBeGreaterThan(1);
     });
   });
 
   it("refreshes expenses list when DeleteExpenseDialog calls onSuccess", async () => {
+    let getExpensesCount = 0;
     server.use(
       http.get("*/api/v1/finances/expenses/", () => {
+        getExpensesCount++;
         return HttpResponse.json({ items: [mockExpense], count: 1 });
       }),
       http.delete("*/api/v1/finances/expenses/*", () => {
@@ -221,6 +226,7 @@ describe("WeddingExpensesTab", () => {
 
     await waitFor(() => {
       expect(screen.queryByRole("heading", { name: "Deletar Despesa" })).not.toBeInTheDocument();
+      expect(getExpensesCount).toBeGreaterThan(1);
     });
   });
 });

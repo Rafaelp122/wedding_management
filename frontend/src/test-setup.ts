@@ -75,6 +75,8 @@ vi.mock("@/features/scheduler/components/events/TimelineView", () => ({
   WeddingTimelineTab: () => React.createElement("div", { "data-testid": "mock-timeline-tab" }),
 }));
 
+
+
 vi.mock("@/features/scheduler/components/tasks/ChecklistView", () => ({
   WeddingChecklistTab: () => React.createElement("div", { "data-testid": "mock-checklist-tab" }),
 }));

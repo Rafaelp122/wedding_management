@@ -6,7 +6,7 @@ import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
-const mockNavigate = vi.fn();
+const mockNavigate = vi.hoisted(() => vi.fn());
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
@@ -97,7 +97,6 @@ describe("DashboardPage", () => {
   });
 
   it("shows error state when API fails", async () => {
-    const { http, HttpResponse } = await import("msw");
     server.use(
       http.get("*/api/v1/weddings/lookup/", () =>
         HttpResponse.json({ detail: "Erro ao carregar painel" }, { status: 500 }),
@@ -160,10 +159,10 @@ describe("DashboardPage", () => {
 
     const openBtn = await screen.findByRole("button", { name: /abrir casamento/i });
     await user.click(openBtn);
-    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/weddings\/.+/));
+    expect(mockNavigate).toHaveBeenLastCalledWith(expect.stringMatching(/\/weddings\/[A-Za-z0-9_-]+/));
 
     const financesBtn = screen.getByRole("button", { name: /finanças/i });
     await user.click(financesBtn);
-    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/weddings\/.+\?tab=finances/));
+    expect(mockNavigate).toHaveBeenLastCalledWith(expect.stringMatching(/\/weddings\/[A-Za-z0-9_-]+\?tab=finances/));
   });
 });

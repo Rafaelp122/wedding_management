@@ -476,6 +476,8 @@ describe("ContractUploadDialog", () => {
       name: /contrato principal/i,
     });
     await user.click(option);
+
+    expect(parentSelect).toHaveTextContent(/contrato principal/i);
   });
 
   it("allows toggling expense creation fields", async () => {
