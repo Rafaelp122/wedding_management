@@ -18,6 +18,25 @@ from apps.weddings.tests.factories import WeddingFactory
 class TestEventServiceCreate:
     """Testes de criação de eventos via EventService."""
 
+    @pytest.mark.parametrize("use_dict", [False, True])
+    def test_create_event_rejects_past_start_time(self, user, use_dict):
+        """BR-VAL02: criação rejeita início no passado em ambos os payloads."""
+        wedding = WeddingFactory(user_context=user)
+        data = {
+            "wedding": wedding.uuid,
+            "title": "Evento no passado",
+            "event_type": Event.TypeChoices.MEETING,
+            "start_time": timezone.now() - timedelta(days=1),
+        }
+        payload = data if use_dict else EventIn(**data)
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.create(user.company, payload)
+
+        assert exc_info.value.code == "event_start_time_in_past"
+        assert "não pode estar no passado" in exc_info.value.detail
+        assert Event.objects.count() == 0
+
     def test_create_event_success(self, user):
         """Criação de evento vinculado ao casamento."""
         wedding = WeddingFactory(user_context=user)
@@ -120,12 +139,18 @@ class TestEventServiceCreate:
     def test_create_payment_event_internal_allowed(self, user):
         """BR-S01: Chamadas internas (_caller_internal=True) podem criar PAYMENT."""
         wedding = WeddingFactory(user_context=user)
+        start_time_today = timezone.localtime().replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
         data = {
             "wedding": wedding.uuid,
             "title": "Pagamento: Buffet - Parcela 1/3",
             "event_type": Event.TypeChoices.PAYMENT,
-            "start_time": timezone.now() + timedelta(days=30),
+            "start_time": start_time_today,
         }
 
         event = EventService.create(user.company, data, _caller_internal=True)
@@ -137,6 +162,18 @@ class TestEventServiceCreate:
 @pytest.mark.django_db
 class TestEventServiceUpdate:
     """Testes de atualização de eventos via EventService."""
+
+    def test_update_event_allows_past_start_time(self, user):
+        """BR-VAL02: edição permite data passada para correção histórica."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(wedding=wedding)
+        past_start_time = timezone.now() - timedelta(days=1)
+
+        updated = EventService.update(
+            user.company, event, EventPatchIn(start_time=past_start_time)
+        )
+
+        assert updated.start_time == past_start_time
 
     def test_update_event_title(self, user):
         """Atualização de título é permitida."""

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, waitFor, fireEvent } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { server } from "@/mocks/server";
 import { CreateEventDialog } from "./CreateEventDialog";
 import { toast } from "sonner";
@@ -86,7 +86,7 @@ describe("CreateEventDialog", () => {
     expect(screen.getByText("Casamento")).toBeInTheDocument();
   });
 
-  it("resets optional date and reminder inputs", () => {
+  it("resets optional date and reminder inputs", async () => {
     render(
       <CreateEventDialog
         weddingUuid="wedding-1"
@@ -97,15 +97,9 @@ describe("CreateEventDialog", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Data/Hora Início *"), {
-      target: { value: "" },
-    });
-    fireEvent.change(screen.getByLabelText("Data/Hora Fim (opcional)"), {
-      target: { value: "" },
-    });
-    fireEvent.change(screen.getByLabelText("Minutos antes"), {
-      target: { value: "" },
-    });
+    await userEvent.clear(screen.getByLabelText("Data/Hora Início *"));
+    await userEvent.clear(screen.getByLabelText("Data/Hora Fim (opcional)"));
+    await userEvent.clear(screen.getByLabelText("Minutos antes"));
 
     expect(screen.getByLabelText("Data/Hora Início *")).toHaveValue("");
     expect(screen.getByLabelText("Data/Hora Fim (opcional)")).toHaveValue("");
@@ -141,9 +135,19 @@ describe("CreateEventDialog", () => {
   it("submits form and shows success toast", async () => {
     const { http, HttpResponse } = await import("msw");
     server.use(
-      http.post("*/api/v1/events/", () =>
-        HttpResponse.json({ uuid: "new-ev", title: "Novo Evento" }, { status: 201 }),
-      ),
+      http.post("*/api/v1/scheduler/events/", async ({ request }) => {
+        expect(await request.json()).toEqual(
+          expect.objectContaining({
+            wedding: "wedding-1",
+            title: "Minha Reunião",
+            start_time: "2026-08-15T09:00:00Z",
+          }),
+        );
+        return HttpResponse.json(
+          { uuid: "new-ev", title: "Novo Evento" },
+          { status: 201 },
+        );
+      }),
     );
 
     render(
@@ -158,7 +162,7 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Minha Reunião");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    fireEvent.change(startInput, { target: { value: "2026-08-15T09:00" } });
+    await userEvent.type(startInput, "2026-08-15T09:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 
@@ -181,10 +185,10 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Test");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    fireEvent.change(startInput, { target: { value: "2026-08-15T10:00" } });
+    await userEvent.type(startInput, "2026-08-15T10:00");
 
     const endInput = screen.getByLabelText("Data/Hora Fim (opcional)");
-    fireEvent.change(endInput, { target: { value: "2026-08-15T09:00" } });
+    await userEvent.type(endInput, "2026-08-15T09:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 
@@ -198,9 +202,18 @@ describe("CreateEventDialog", () => {
   it("allows submission when end_time is after start_time", async () => {
     const { http, HttpResponse } = await import("msw");
     server.use(
-      http.post("*/api/v1/events/", () =>
-        HttpResponse.json({ uuid: "new-ev", title: "Test" }, { status: 201 }),
-      ),
+      http.post("*/api/v1/scheduler/events/", async ({ request }) => {
+        expect(await request.json()).toEqual(
+          expect.objectContaining({
+            start_time: "2026-08-15T09:00:00Z",
+            end_time: "2026-08-15T10:00:00Z",
+          }),
+        );
+        return HttpResponse.json(
+          { uuid: "new-ev", title: "Test" },
+          { status: 201 },
+        );
+      }),
     );
 
     render(
@@ -215,10 +228,10 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Test");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    fireEvent.change(startInput, { target: { value: "2026-08-15T09:00" } });
+    await userEvent.type(startInput, "2026-08-15T09:00");
 
     const endInput = screen.getByLabelText("Data/Hora Fim (opcional)");
-    fireEvent.change(endInput, { target: { value: "2026-08-15T10:00" } });
+    await userEvent.type(endInput, "2026-08-15T10:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 
@@ -231,9 +244,18 @@ describe("CreateEventDialog", () => {
   it("allows submission when end_time is null (no validation needed)", async () => {
     const { http, HttpResponse } = await import("msw");
     server.use(
-      http.post("*/api/v1/events/", () =>
-        HttpResponse.json({ uuid: "new-ev", title: "Test" }, { status: 201 }),
-      ),
+      http.post("*/api/v1/scheduler/events/", async ({ request }) => {
+        expect(await request.json()).toEqual(
+          expect.objectContaining({
+            start_time: "2026-08-15T09:00:00Z",
+            end_time: null,
+          }),
+        );
+        return HttpResponse.json(
+          { uuid: "new-ev", title: "Test" },
+          { status: 201 },
+        );
+      }),
     );
 
     render(
@@ -248,7 +270,7 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Test");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    fireEvent.change(startInput, { target: { value: "2026-08-15T09:00" } });
+    await userEvent.type(startInput, "2026-08-15T09:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 

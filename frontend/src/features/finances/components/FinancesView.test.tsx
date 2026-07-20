@@ -6,6 +6,7 @@ import { http, HttpResponse } from "msw";
 import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
 import { createMockExpense } from "@/test-data";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
+import "@/features/finances/components/expenses/ExpenseDetailSheet";
 
 vi.mock("@/features/finances/components/FinancesDistributionChart", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/features/finances/components/FinancesDistributionChart")>();
@@ -64,34 +65,6 @@ vi.mock("@/features/finances/components/expenses/ExpensesTable", async (importOr
         ) : null}
       </div>
     ),
-  };
-});
-
-vi.mock("@/features/finances/components/expenses/EditExpenseDialog", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/features/finances/components/expenses/EditExpenseDialog")>();
-  return {
-    ...mod,
-    EditExpenseDialog: ({ open, onOpenChange, onSuccess }: any) =>
-      open ? (
-        <div data-testid="edit-expense-dialog">
-          <button onClick={() => onOpenChange(false)}>Fechar edição</button>
-          <button onClick={onSuccess}>Concluir edição</button>
-        </div>
-      ) : null,
-  };
-});
-
-vi.mock("@/features/finances/components/expenses/DeleteExpenseDialog", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/features/finances/components/expenses/DeleteExpenseDialog")>();
-  return {
-    ...mod,
-    DeleteExpenseDialog: ({ open, onOpenChange, onSuccess }: any) =>
-      open ? (
-        <div data-testid="delete-expense-dialog">
-          <button onClick={() => onOpenChange(false)}>Fechar exclusão</button>
-          <button onClick={onSuccess}>Concluir exclusão</button>
-        </div>
-      ) : null,
   };
 });
 
@@ -287,12 +260,17 @@ describe("WeddingFinancesView", () => {
     await waitFor(() => expect(expenseRequests).toBeGreaterThan(requestsBeforeSuccess));
   });
 
-  it("opens, closes and completes expense actions", async () => {
+  it("opens, closes and updates an expense", async () => {
     let expenseRequests = 0;
+    let updateRequests = 0;
     server.use(
       http.get("*/api/v1/finances/expenses/", () => {
         expenseRequests += 1;
         return HttpResponse.json({ items: [mockExpense], count: 1 });
+      }),
+      http.patch("*/api/v1/finances/expenses/:uuid/", () => {
+        updateRequests += 1;
+        return HttpResponse.json(mockExpense);
       }),
     );
 
@@ -303,26 +281,96 @@ describe("WeddingFinancesView", () => {
     const requestsBeforeActions = expenseRequests;
 
     await user.click(await screen.findByRole("button", { name: "Editar mock" }));
-    expect(await screen.findByTestId("edit-expense-dialog")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Fechar edição" }));
-    expect(screen.queryByTestId("edit-expense-dialog")).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Editar Despesa" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("heading", { name: "Editar Despesa" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Editar mock" }));
-    await user.click(screen.getByRole("button", { name: "Concluir edição" }));
-    expect(screen.queryByTestId("edit-expense-dialog")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Salvar Alterações" }));
+    await waitFor(() => {
+      expect(updateRequests).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.queryByRole("heading", { name: "Editar Despesa" }),
+      ).not.toBeInTheDocument();
+    });
+
+    await waitFor(() =>
+      expect(expenseRequests).toBeGreaterThan(requestsBeforeActions),
+    );
+  });
+
+  it("opens, closes and deletes an expense", async () => {
+    let expenseRequests = 0;
+    let deleteRequests = 0;
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () => {
+        expenseRequests += 1;
+        return HttpResponse.json({ items: [mockExpense], count: 1 });
+      }),
+      http.delete("*/api/v1/finances/expenses/:uuid/", () => {
+        deleteRequests += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<WeddingFinancesView weddingUuid="w-1" />);
+
+    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(2));
+    const requestsBeforeDelete = expenseRequests;
+
+    await user.click(await screen.findByRole("button", { name: "Excluir mock" }));
+    expect(
+      await screen.findByRole("heading", { name: "Deletar Despesa" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("heading", { name: "Deletar Despesa" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Excluir mock" }));
-    expect(await screen.findByTestId("delete-expense-dialog")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Fechar exclusão" }));
-    expect(screen.queryByTestId("delete-expense-dialog")).not.toBeInTheDocument();
+    await user.type(
+      screen.getByPlaceholderText(/digite o nome aqui/i),
+      "Buffet Premium",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Deletar Permanentemente" }),
+    );
+    await waitFor(() => {
+      expect(deleteRequests).toBe(1);
+      expect(screen.queryByRole("heading", { name: "Deletar Despesa" })).not.toBeInTheDocument();
+    });
 
-    await user.click(screen.getByRole("button", { name: "Excluir mock" }));
-    await user.click(screen.getByRole("button", { name: "Concluir exclusão" }));
-    expect(screen.queryByTestId("delete-expense-dialog")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(expenseRequests).toBeGreaterThan(requestsBeforeDelete),
+    );
+  });
 
-    await user.click(screen.getByRole("button", { name: "Detalhar mock" }));
-    expect(screen.getByRole("button", { name: "Detalhar mock" })).toBeInTheDocument();
+  it("opens and closes the expense detail sheet", async () => {
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({ items: [mockExpense], count: 1 }),
+      ),
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(mockExpense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0 }),
+      ),
+    );
 
-    await waitFor(() => expect(expenseRequests).toBeGreaterThan(requestsBeforeActions));
+    const user = userEvent.setup();
+    render(<WeddingFinancesView weddingUuid="w-1" />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Detalhar mock" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: /Buffet Premium/i }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(
+      screen.queryByRole("heading", { name: /Buffet Premium/i }),
+    ).not.toBeInTheDocument();
   });
 });

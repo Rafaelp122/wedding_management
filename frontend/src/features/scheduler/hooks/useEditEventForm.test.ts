@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { HttpResponse, http } from "msw";
 import { toast } from "sonner";
 import { describe, expect, it, vi } from "vitest";
@@ -40,21 +41,19 @@ describe("useEditEventForm", () => {
   });
 
   it("does not submit payment events", () => {
-    let requests = 0;
-    server.use(
-      http.patch("*/api/v1/scheduler/events/:uuid/", () => {
-        requests += 1;
-        return HttpResponse.json(createMockEvent());
-      }),
-    );
+    const queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    });
     const paymentEvent = createMockEvent({ event_type: "pagamento" });
-    const { result } = renderHook(() =>
-      useEditEventForm({
-        event: paymentEvent,
-        open: true,
-        onOpenChange: vi.fn(),
-        onSuccess: vi.fn(),
-      }),
+    const { result } = renderHook(
+      () =>
+        useEditEventForm({
+          event: paymentEvent,
+          open: true,
+          onOpenChange: vi.fn(),
+          onSuccess: vi.fn(),
+        }),
+      { queryClient },
     );
 
     act(() => result.current.onSubmit({
@@ -64,7 +63,7 @@ describe("useEditEventForm", () => {
       end_time: null,
     }));
     expect(result.current.readOnly).toBe(true);
-    expect(requests).toBe(0);
+    expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
   });
 
   it("submits nullable dates and reports API errors", async () => {

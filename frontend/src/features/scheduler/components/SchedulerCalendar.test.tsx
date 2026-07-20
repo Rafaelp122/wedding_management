@@ -78,8 +78,15 @@ describe("SchedulerCalendar", () => {
     await user.click(screen.getByRole("button", { name: "Agenda" }));
     expect(screen.getByRole("button", { name: "Agenda" })).toHaveClass("rbc-active");
 
+    const toolbarLabel = document.querySelector(".rbc-toolbar-label");
+    expect(toolbarLabel).not.toBeNull();
+    const initialPeriod = toolbarLabel?.textContent;
+
     await user.click(screen.getByRole("button", { name: "Próximo" }));
+    expect(toolbarLabel).not.toHaveTextContent(initialPeriod ?? "");
+
     await user.click(screen.getByRole("button", { name: "Anterior" }));
+    expect(toolbarLabel).toHaveTextContent(initialPeriod ?? "");
   });
 
   it("renders and selects an event in the current month", async () => {

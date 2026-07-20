@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { server } from "@/mocks/server";
 import { EditEventDialog } from "./EditEventDialog";
 import { createMockEvent } from "@/test-data";
@@ -122,7 +122,7 @@ describe("EditEventDialog", () => {
       expect(titleInput).toHaveValue("Reunião com Buffet");
     });
 
-    it("clears optional dates and restores empty reminder minutes", () => {
+    it("clears optional dates and restores empty reminder minutes", async () => {
       render(
         <EditEventDialog
           event={createMockEvent({
@@ -135,15 +135,9 @@ describe("EditEventDialog", () => {
         />,
       );
 
-      fireEvent.change(screen.getByLabelText("Data/Hora Início"), {
-        target: { value: "" },
-      });
-      fireEvent.change(screen.getByLabelText("Data/Hora Fim (opcional)"), {
-        target: { value: "" },
-      });
-      fireEvent.change(screen.getByLabelText("Minutos antes"), {
-        target: { value: "" },
-      });
+      await userEvent.clear(screen.getByLabelText("Data/Hora Início"));
+      await userEvent.clear(screen.getByLabelText("Data/Hora Fim (opcional)"));
+      await userEvent.clear(screen.getByLabelText("Minutos antes"));
 
       expect(screen.getByLabelText("Data/Hora Início")).toHaveValue("");
       expect(screen.getByLabelText("Data/Hora Fim (opcional)")).toHaveValue("");
@@ -153,12 +147,16 @@ describe("EditEventDialog", () => {
     it("submits update and shows success toast", async () => {
       const { http, HttpResponse } = await import("msw");
       server.use(
-        http.patch("*/api/v1/events/ev-mtg-1/", () =>
-          HttpResponse.json(
+        http.patch("*/api/v1/scheduler/events/:uuid/", async ({ request, params }) => {
+          expect(params.uuid).toBe("ev-mtg-1");
+          expect(await request.json()).toEqual(
+            expect.objectContaining({ title: "Reunião Atualizada" }),
+          );
+          return HttpResponse.json(
             { uuid: "ev-mtg-1", title: "Reunião Atualizada", event_type: "reuniao" },
             { status: 200 },
-          ),
-        ),
+          );
+        }),
       );
 
       render(

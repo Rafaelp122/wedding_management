@@ -1,7 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createEventSchema } from "./validation";
 
 describe("createEventSchema", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-19T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("should validate a valid event payload", () => {
     const validData = {
       wedding: "wedding-uuid-123",
@@ -26,7 +35,7 @@ describe("createEventSchema", () => {
       title: "Reunião de Alinhamento",
       event_type: "reuniao",
       start_time: "2026-07-20T10:00:00Z",
-      end_time: "2026-07-20T09:00:00Z", // end_time is earlier
+      end_time: "2026-07-20T09:00:00Z",
       location: "Escritório",
       description: "",
       recurrence_rule: "none",
@@ -42,6 +51,48 @@ describe("createEventSchema", () => {
       );
       expect(parsed.error.issues[0].path).toContain("end_time");
     }
+  });
+
+  it("should reject a start_time in the past", () => {
+    const invalidData = {
+      wedding: "wedding-uuid-123",
+      title: "Reunião retroativa",
+      event_type: "reuniao",
+      start_time: "2026-07-18T10:00:00Z",
+      end_time: null,
+      location: "Escritório",
+      description: "",
+      recurrence_rule: "none",
+      reminder_enabled: false,
+      reminder_minutes_before: 60,
+    };
+
+    const parsed = createEventSchema.safeParse(invalidData);
+
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues[0]).toMatchObject({
+        message: "Data/hora de início não pode estar no passado.",
+        path: ["start_time"],
+      });
+    }
+  });
+
+  it("should allow an earlier time on the current date", () => {
+    const parsed = createEventSchema.safeParse({
+      wedding: "wedding-uuid-123",
+      title: "Pagamento de hoje",
+      event_type: "pagamento",
+      start_time: "2026-07-19T09:00:00Z",
+      end_time: null,
+      location: "",
+      description: "",
+      recurrence_rule: "none",
+      reminder_enabled: false,
+      reminder_minutes_before: 60,
+    });
+
+    expect(parsed.success).toBe(true);
   });
 
   it("should allow end_time to be null", () => {

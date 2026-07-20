@@ -61,7 +61,9 @@ describe("useSchedulerPage", () => {
     const { result } = renderHook(() => useSchedulerPage());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.firstError).toBeTruthy();
+    expect(result.current.firstError).toMatchObject({
+      response: { status: 500 },
+    });
   });
 
   it("blocks event creation when there are no weddings", async () => {

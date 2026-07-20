@@ -54,10 +54,12 @@ describe("useCreateEventForm", () => {
   });
 
   it("keeps an optional end null and reports API errors", async () => {
+    let body: unknown;
     server.use(
-      http.post("*/api/v1/scheduler/events/", () =>
-        HttpResponse.json({ detail: "Falha ao criar" }, { status: 500 }),
-      ),
+      http.post("*/api/v1/scheduler/events/", async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ detail: "Falha ao criar" }, { status: 500 });
+      }),
     );
     const { result } = renderHook(() =>
       useCreateEventForm({
@@ -70,5 +72,6 @@ describe("useCreateEventForm", () => {
     act(() => result.current.onSubmit({ ...validEvent, end_time: null }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(body).toMatchObject({ end_time: null });
   });
 });

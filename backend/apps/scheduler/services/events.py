@@ -4,6 +4,7 @@ from uuid import UUID
 
 from django.db import transaction
 from django.db.models import QuerySet
+from django.utils import timezone
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -88,8 +89,9 @@ class EventService:
             O evento criado e salvo no banco de dados.
 
         Raises:
-            BusinessRuleViolation: Se for tentada a criação manual de um evento
-                de pagamento (_caller_internal=False).
+            BusinessRuleViolation: Se o início estiver no passado ou for tentada
+                a criação manual de um evento de pagamento
+                (_caller_internal=False).
             ObjectNotFoundError: Se o casamento associado não for encontrado ou
                 pertencer a outro tenant.
         """
@@ -99,6 +101,12 @@ class EventService:
             data = payload
         else:
             data = payload.model_dump(exclude_unset=True)
+
+        if timezone.localdate(data["start_time"]) < timezone.localdate():
+            raise BusinessRuleViolation(
+                detail="A data e hora de início do evento não pode estar no passado.",
+                code="event_start_time_in_past",
+            )
 
         wedding_input = data.pop("wedding", None)
 

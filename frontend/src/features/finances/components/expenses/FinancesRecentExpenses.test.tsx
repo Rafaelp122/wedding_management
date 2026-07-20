@@ -1,35 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, within } from "@/test-utils";
+import { render, screen, server, userEvent } from "@/test-utils";
+import { http, HttpResponse } from "msw";
 import { WeddingFinancesRecentExpenses } from "./FinancesRecentExpenses";
 import { createMockExpense } from "@/test-data";
-
-// ---------------------------------------------------------------------------
-// Mock the lazy-loaded ExpenseDetailSheet so it renders synchronously.
-// Because vi.mock is hoisted, the dynamic import inside React.lazy resolves
-// to this component immediately under test.
-// ---------------------------------------------------------------------------
-vi.mock("./ExpenseDetailSheet", () => ({
-  ExpenseDetailSheet: ({
-    expense,
-    open,
-    onOpenChange,
-  }: {
-    expense: { name: string };
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-  }) =>
-    open ? (
-      <div data-testid="expense-detail-sheet">
-        <span>{expense.name}</span>
-        <button onClick={() => onOpenChange(false)}>close</button>
-      </div>
-    ) : null,
-}));
+import "./ExpenseDetailSheet";
 
 describe("WeddingFinancesRecentExpenses", () => {
-  // -----------------------------------------------------------------------
-  // 1. Renders expense cards with correct info
-  // -----------------------------------------------------------------------
   it("renders expense cards with name, category, amount, status", () => {
     const expenses = [
       createMockExpense({
@@ -54,32 +30,23 @@ describe("WeddingFinancesRecentExpenses", () => {
 
     render(<WeddingFinancesRecentExpenses expenses={expenses} />);
 
-    // Card title
     expect(screen.getByText("Despesas Recentes")).toBeInTheDocument();
 
-    // Expense names
     expect(screen.getByText("Buffet Principal")).toBeInTheDocument();
     expect(screen.getByText("Decoração Luxo")).toBeInTheDocument();
 
-    // Category names
     expect(screen.getByText("Buffet")).toBeInTheDocument();
     expect(screen.getByText("Decoração")).toBeInTheDocument();
 
-    // Formatted amounts (R$ non-breaking-space value)
     expect(screen.getByText(/R\$\s*4\.800/)).toBeInTheDocument();
     expect(screen.getByText(/R\$\s*2\.500/)).toBeInTheDocument();
 
-    // Status badges
     expect(screen.getByText("Parcial")).toBeInTheDocument();
     expect(screen.getByText("Quitada")).toBeInTheDocument();
 
-    // Installment count
     expect(screen.getByText("1/3 parcelas")).toBeInTheDocument();
   });
 
-  // -----------------------------------------------------------------------
-  // 2. Shows empty state when no expenses
-  // -----------------------------------------------------------------------
   it("shows empty state when expenses is empty", () => {
     render(<WeddingFinancesRecentExpenses expenses={[]} />);
 
@@ -88,9 +55,6 @@ describe("WeddingFinancesRecentExpenses", () => {
     ).toBeInTheDocument();
   });
 
-  // -----------------------------------------------------------------------
-  // 3. Calls onAddExpense when "Adicionar Despesa" button is clicked
-  // -----------------------------------------------------------------------
   it("calls onAddExpense when Adicionar Despesa button is clicked", async () => {
     const onAddExpense = vi.fn();
     const user = userEvent.setup();
@@ -109,52 +73,53 @@ describe("WeddingFinancesRecentExpenses", () => {
     expect(onAddExpense).toHaveBeenCalledTimes(1);
   });
 
-  // -----------------------------------------------------------------------
-  // 4. Opens detail dialog when an expense card is clicked
-  // -----------------------------------------------------------------------
   it("opens detail dialog when an expense card is clicked", async () => {
     const user = userEvent.setup();
     const expense = createMockExpense({ uuid: "e-1", name: "Buffet Premium" });
+    server.use(
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(expense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0 }),
+      ),
+    );
 
     render(<WeddingFinancesRecentExpenses expenses={[expense]} />);
 
-    // Click on the expense name
     await user.click(screen.getByText("Buffet Premium"));
 
-    // The mocked dialog should appear (use findBy because React.lazy
-    // requires an extra render cycle even with the mock in place)
-    const dialog = await screen.findByTestId("expense-detail-sheet");
-    expect(dialog).toBeInTheDocument();
-
-    // Expense name is shown inside the dialog
-    expect(within(dialog).getByText("Buffet Premium")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /Buffet Premium/i }),
+    ).toBeInTheDocument();
   });
 
-  // -----------------------------------------------------------------------
-  // 5. Closes dialog when onOpenChange is called with false
-  // -----------------------------------------------------------------------
   it("closes dialog when close button is clicked", async () => {
     const user = userEvent.setup();
     const expense = createMockExpense({ uuid: "e-1", name: "Buffet Premium" });
+    server.use(
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(expense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0 }),
+      ),
+    );
 
     render(<WeddingFinancesRecentExpenses expenses={[expense]} />);
 
-    // Open the dialog
     await user.click(screen.getByText("Buffet Premium"));
-    const dialog = await screen.findByTestId("expense-detail-sheet");
-    expect(dialog).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /Buffet Premium/i }),
+    ).toBeInTheDocument();
 
-    // Close by clicking the "close" button rendered inside the mock
-    await user.click(within(dialog).getByRole("button", { name: /close/i }));
+    await user.click(screen.getByRole("button", { name: "Close" }));
 
     expect(
-      screen.queryByTestId("expense-detail-sheet"),
+      screen.queryByRole("heading", { name: /Buffet Premium/i }),
     ).not.toBeInTheDocument();
   });
 
-  // -----------------------------------------------------------------------
-  // 6. Renders a fallback when name/description is missing
-  // -----------------------------------------------------------------------
   it('renders "N/A" fallback when name and description are empty', () => {
     const expense = createMockExpense({
       name: undefined,

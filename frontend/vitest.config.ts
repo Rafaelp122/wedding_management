@@ -66,7 +66,7 @@ export default mergeConfig(
           "src/main.tsx",
           "src/router/index.tsx",
           "src/features/landing/**",
-          "src/features/auth/pages/*.tsx",
+          "src/features/auth/pages/LoginPage.tsx",
           "src/components/app-sidebar/index.tsx",
           "src/components/app-sidebar/nav-user.tsx",
           "src/components/ui/alert.tsx",
