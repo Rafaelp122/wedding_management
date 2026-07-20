@@ -158,6 +158,39 @@ class TestEventServiceCreate:
         assert event.event_type == Event.TypeChoices.PAYMENT
         assert event.title == "Pagamento: Buffet - Parcela 1/3"
 
+    def test_create_past_payment_event_internal_rejected(self, user):
+        """BR-VAL02: Eventos financeiros internos também rejeitam data passada."""
+        wedding = WeddingFactory(user_context=user)
+        data = {
+            "wedding": wedding.uuid,
+            "title": "Pagamento vencido",
+            "event_type": Event.TypeChoices.PAYMENT,
+            "start_time": timezone.now() - timedelta(days=1),
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.create(user.company, data, _caller_internal=True)
+
+        assert exc_info.value.code == "event_start_time_in_past"
+
+    def test_create_historical_template_event_allowed(self, user):
+        """Templates podem gerar marcos históricos anteriores à data atual."""
+        wedding = WeddingFactory(user_context=user)
+        data = {
+            "wedding": wedding.uuid,
+            "title": "Marco histórico do template",
+            "event_type": Event.TypeChoices.MEETING,
+            "start_time": timezone.now() - timedelta(days=1),
+        }
+
+        event = EventService.create(
+            user.company,
+            data,
+            _allow_historical_start=True,
+        )
+
+        assert event.start_time == data["start_time"]
+
 
 @pytest.mark.django_db
 class TestEventServiceUpdate:
