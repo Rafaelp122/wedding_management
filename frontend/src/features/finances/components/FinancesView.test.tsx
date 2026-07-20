@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ComponentProps } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 vi.unmock("@/features/finances/components/FinancesView");
 import { render, screen, waitFor, server, userEvent } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { WeddingFinancesView } from "@/features/finances/components/FinancesView";
 import { createMockExpense } from "@/test-data";
-import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import "@/features/finances/components/expenses/ExpenseDetailSheet";
 
 vi.mock("@/features/finances/components/FinancesDistributionChart", async (importOriginal) => {
@@ -17,7 +16,11 @@ vi.mock("@/features/finances/components/expenses/CreateExpenseDialog", async (im
   const mod = await importOriginal<typeof import("@/features/finances/components/expenses/CreateExpenseDialog")>();
   return {
     ...mod,
-    CreateExpenseDialog: ({ open, onOpenChange, onSuccess }: any) =>
+    CreateExpenseDialog: ({
+      open,
+      onOpenChange,
+      onSuccess,
+    }: ComponentProps<typeof mod.CreateExpenseDialog>) =>
       open ? (
         <div data-testid="create-expense-dialog">
           Nova Despesa
@@ -51,9 +54,9 @@ vi.mock("@/features/finances/components/expenses/ExpensesTable", async (importOr
       onEditExpense,
       onDeleteExpense,
       onDetailExpense,
-    }: any) => (
+    }: ComponentProps<typeof mod.WeddingExpensesTable>) => (
       <div>
-        {expenses.map((e: ExpenseOut) => (
+        {expenses.map((e) => (
           <div key={e.uuid}>{e.name}</div>
         ))}
         {expenses[0] ? (

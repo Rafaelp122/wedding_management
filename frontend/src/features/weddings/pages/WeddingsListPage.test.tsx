@@ -270,7 +270,7 @@ describe("WeddingsListPage", () => {
     const user = userEvent.setup();
 
     // Click "Editar" button inside action menu
-    const editBtn = await screen.findByTitle("Editar");
+    const editBtn = await screen.findByRole("button", { name: "Editar" });
     await user.click(editBtn);
 
     // Verify dialog is open
@@ -298,7 +298,9 @@ describe("WeddingsListPage", () => {
     );
     render(<WeddingsListPage />);
 
-    await userEvent.click(await screen.findByTitle("Editar"));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Editar" }),
+    );
     await userEvent.click(screen.getByRole("button", { name: /cancelar/i }));
 
     expect(
@@ -323,7 +325,7 @@ describe("WeddingsListPage", () => {
     const user = userEvent.setup();
 
     // Click "Excluir" button inside action menu
-    const deleteBtn = await screen.findByTitle("Excluir");
+    const deleteBtn = await screen.findByRole("button", { name: "Excluir" });
     await user.click(deleteBtn);
 
     // Verify dialog is open
@@ -357,7 +359,9 @@ describe("WeddingsListPage", () => {
     );
     render(<WeddingsListPage />);
 
-    await userEvent.click(await screen.findByTitle("Excluir"));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Excluir" }),
+    );
     await userEvent.click(screen.getByRole("button", { name: /cancelar/i }));
 
     expect(

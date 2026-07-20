@@ -87,7 +87,9 @@ describe("WeddingFinancesRecentExpenses", () => {
 
     render(<WeddingFinancesRecentExpenses expenses={[expense]} />);
 
-    await user.click(screen.getByText("Buffet Premium"));
+    await user.click(
+      screen.getByRole("button", { name: /Buffet Premium/i }),
+    );
 
     expect(
       await screen.findByRole("heading", { name: /Buffet Premium/i }),
@@ -108,7 +110,9 @@ describe("WeddingFinancesRecentExpenses", () => {
 
     render(<WeddingFinancesRecentExpenses expenses={[expense]} />);
 
-    await user.click(screen.getByText("Buffet Premium"));
+    await user.click(
+      screen.getByRole("button", { name: /Buffet Premium/i }),
+    );
     expect(
       await screen.findByRole("heading", { name: /Buffet Premium/i }),
     ).toBeInTheDocument();
