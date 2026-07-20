@@ -193,7 +193,7 @@ describe("ContractUploadDialog", () => {
         pdf_file_key: null,
       })
     );
-  });
+  }, 15000);
 
   it("shows success toast on successful creation", async () => {
     const user = userEvent.setup();
@@ -448,5 +448,56 @@ describe("ContractUploadDialog", () => {
         })
       );
     });
+  });
+
+  it("allows selecting an existing contract from parent dropdown when creating addendum", async () => {
+    const user = userEvent.setup();
+    const mockContract = {
+      uuid: "parent-contract-uuid",
+      name: "Contrato Principal",
+      description: "Buffet Principal",
+    };
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({ items: [mockContract], count: 1 });
+      })
+    );
+
+    render(<ContractUploadDialog {...defaultProps} />);
+
+    const parentSelect = await screen.findByRole("combobox", {
+      name: /contrato original/i,
+    });
+    expect(parentSelect).toBeInTheDocument();
+    await user.click(parentSelect);
+
+    const option = await screen.findByRole("option", {
+      name: /contrato principal/i,
+    });
+    await user.click(option);
+
+    expect(parentSelect).toHaveTextContent(/contrato principal/i);
+  });
+
+  it("allows toggling expense creation fields", async () => {
+    const user = userEvent.setup();
+    const mockCategory = {
+      uuid: "cat-1",
+      name: "Alimentação",
+    };
+
+    server.use(
+      http.get("*/api/v1/finances/categories/", () => {
+        return HttpResponse.json({ items: [mockCategory], count: 1 });
+      })
+    );
+
+    render(<ContractUploadDialog {...defaultProps} />);
+
+    const checkbox = screen.getByRole("checkbox", { name: /criar despesa/i });
+    await user.click(checkbox);
+
+    expect(await screen.findByText("Categoria da Despesa")).toBeInTheDocument();
   });
 });

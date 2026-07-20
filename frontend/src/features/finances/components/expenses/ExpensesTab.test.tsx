@@ -163,4 +163,70 @@ describe("WeddingExpensesTab", () => {
     await user.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("heading", { name: /Banda Musical/i })).not.toBeInTheDocument();
   });
+
+  it("refreshes expenses list when EditExpenseDialog calls onSuccess", async () => {
+    let getExpensesCount = 0;
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () => {
+        getExpensesCount++;
+        return HttpResponse.json({ items: [mockExpense], count: 1 });
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      }),
+      http.patch("*/api/v1/finances/expenses/*", () => {
+        return HttpResponse.json(mockExpense);
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<WeddingExpensesTab weddingUuid="w-1" />);
+
+    const actionsBtn = await screen.findByRole("button", { name: "Ações da despesa" });
+    await user.click(actionsBtn);
+
+    const editMenuItem = await screen.findByText("Editar");
+    await user.click(editMenuItem);
+
+    const saveBtn = await screen.findByRole("button", { name: "Salvar Alterações" });
+    await user.click(saveBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "Editar Despesa" })).not.toBeInTheDocument();
+      expect(getExpensesCount).toBeGreaterThan(1);
+    });
+  });
+
+  it("refreshes expenses list when DeleteExpenseDialog calls onSuccess", async () => {
+    let getExpensesCount = 0;
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () => {
+        getExpensesCount++;
+        return HttpResponse.json({ items: [mockExpense], count: 1 });
+      }),
+      http.delete("*/api/v1/finances/expenses/*", () => {
+        return HttpResponse.json({ success: true });
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<WeddingExpensesTab weddingUuid="w-1" />);
+
+    const actionsBtn = await screen.findByRole("button", { name: "Ações da despesa" });
+    await user.click(actionsBtn);
+
+    const deleteMenuItem = await screen.findByText("Excluir");
+    await user.click(deleteMenuItem);
+
+    const confirmInput = await screen.findByPlaceholderText(/digite o nome aqui/i);
+    await user.type(confirmInput, "Banda Musical");
+
+    const confirmDeleteBtn = screen.getByRole("button", { name: /deletar permanentemente/i });
+    await user.click(confirmDeleteBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "Deletar Despesa" })).not.toBeInTheDocument();
+      expect(getExpensesCount).toBeGreaterThan(1);
+    });
+  });
 });
