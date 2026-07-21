@@ -80,7 +80,7 @@ describe("WeddingExpensesTable", () => {
     expect(onDeleteExpense).toHaveBeenCalledWith(expenses[0]);
   });
 
-  it("renders tooltips for expense name and actions", async () => {
+  it("renders tooltip for expense name", async () => {
     const expenses = [createMockExpense({ name: "Despesa Longa " + "A".repeat(50) })];
     const user = userEvent.setup();
 
@@ -94,13 +94,26 @@ describe("WeddingExpensesTable", () => {
     );
 
     const nameBtn = screen.getByRole("button", { name: /despesa longa/i });
-    const actionsBtn = screen.getByRole("button", { name: /ações da despesa/i });
-
     await user.hover(nameBtn);
     await waitFor(() => {
       expect(screen.getByRole("tooltip", { name: expenses[0].name })).toBeInTheDocument();
     });
+  });
 
+  it("renders tooltip for actions menu button", async () => {
+    const expenses = [createMockExpense()];
+    const user = userEvent.setup();
+
+    render(
+      <WeddingExpensesTable
+        expenses={expenses}
+        onEditExpense={vi.fn()}
+        onDeleteExpense={vi.fn()}
+        onDetailExpense={vi.fn()}
+      />,
+    );
+
+    const actionsBtn = screen.getByRole("button", { name: /ações da despesa/i });
     await user.hover(actionsBtn);
     await waitFor(() => {
       expect(screen.getByRole("tooltip", { name: "Ações da despesa" })).toBeInTheDocument();

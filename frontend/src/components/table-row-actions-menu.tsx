@@ -15,11 +15,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+/**
+ * Props para o componente TableRowActionsMenu.
+ */
 interface TableRowActionsMenuProps {
+  /** Elementos DropdownMenuItem a serem exibidos dentro do menu. */
   children: ReactNode;
+  /** Rótulo acessível e texto do Tooltip para o menu de ações. */
   label?: string;
 }
 
+/**
+ * Componente reutilizável de menu de ações em tabelas.
+ * Encapsula o gatilho com ícone, acessibilidade ARIA e Tooltip.
+ */
 export function TableRowActionsMenu({
   children,
   label = "Ações",

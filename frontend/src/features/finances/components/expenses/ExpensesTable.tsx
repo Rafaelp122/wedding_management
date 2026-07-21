@@ -103,22 +103,14 @@ export const WeddingExpensesTable = memo(function WeddingExpensesTable({
                     {statusLabel[status] ?? status}
                   </Badge>
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell>
                   <TableRowActionsMenu label="Ações da despesa">
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditExpense(expense);
-                      }}
-                    >
+                    <DropdownMenuItem onClick={() => onEditExpense(expense)}>
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteExpense(expense);
-                      }}
+                      onClick={() => onDeleteExpense(expense)}
                     >
                       Excluir
                     </DropdownMenuItem>

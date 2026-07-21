@@ -65,8 +65,8 @@ describe("SuppliersTable", () => {
     const user = userEvent.setup();
     await user.click(actionButtons[0]);
 
-    const editOption = screen.getByText("Editar");
-    await user.click(editOption);
+    const editOptions = screen.getAllByText("Editar");
+    await user.click(editOptions[0]);
 
     expect(onEdit).toHaveBeenCalledWith(mockSuppliers[0]);
   });
@@ -80,8 +80,9 @@ describe("SuppliersTable", () => {
       />,
     );
 
-    const nameBtn = screen.getByRole("button", { name: "Buffet Gourmet" });
-    await userEvent.hover(nameBtn);
+    const user = userEvent.setup();
+    const nameText = screen.getByText("Buffet Gourmet");
+    await user.hover(nameText);
     await waitFor(() => {
       expect(screen.getByRole("tooltip", { name: "Buffet Gourmet" })).toBeInTheDocument();
     });

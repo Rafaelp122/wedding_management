@@ -61,13 +61,19 @@ export const SuppliersTable = memo(function SuppliersTable({
               <TableCell className="font-medium truncate max-w-40 p-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="link"
-                      className="h-auto w-full justify-start px-4 py-3 text-sm font-medium text-foreground hover:no-underline"
-                      onClick={() => onDetail?.(supplier.uuid)}
-                    >
-                      <span className="truncate">{supplier.name}</span>
-                    </Button>
+                    {onDetail ? (
+                      <Button
+                        variant="link"
+                        className="h-auto w-full justify-start px-4 py-3 text-sm font-medium text-foreground hover:no-underline"
+                        onClick={() => onDetail(supplier.uuid)}
+                      >
+                        <span className="truncate">{supplier.name}</span>
+                      </Button>
+                    ) : (
+                      <div className="px-4 py-3 text-sm font-medium text-foreground truncate cursor-default">
+                        {supplier.name}
+                      </div>
+                    )}
                   </TooltipTrigger>
                   <TooltipContent>{supplier.name}</TooltipContent>
                 </Tooltip>
@@ -81,7 +87,7 @@ export const SuppliersTable = memo(function SuppliersTable({
                 </Badge>
               </TableCell>
               <TableCell>{formatDateBR(supplier.created_at)}</TableCell>
-              <TableCell onClick={(event) => event.stopPropagation()}>
+              <TableCell>
                 <TableRowActionsMenu>
                   <DropdownMenuItem onClick={() => onEdit(supplier)}>
                     <Edit className="mr-2 h-4 w-4" />
