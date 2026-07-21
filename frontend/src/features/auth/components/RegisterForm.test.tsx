@@ -6,7 +6,7 @@ import { getAuthRegisterUserMockHandler } from "@/api/generated/v1/endpoints/aut
 import type { UserOut } from "@/api/generated/v1/models/userOut";
 import { toast } from "sonner";
 
-const mockNavigate = vi.fn();
+const mockNavigate = vi.hoisted(() => vi.fn());
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
@@ -132,8 +132,8 @@ describe("RegisterForm", () => {
       expect(toast.success).toHaveBeenCalledWith(
         "Conta criada com sucesso! Faça login para continuar.",
       );
+      expect(mockNavigate).toHaveBeenCalledWith("/login");
     });
-    expect(mockNavigate).toHaveBeenCalledWith("/login");
   });
 
   it("shows error toast on registration failure", async () => {

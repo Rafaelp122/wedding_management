@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, userEvent, server } from "@/test-utils";
 import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
@@ -16,6 +15,7 @@ vi.mock("react-router-dom", async () => {
   >("react-router-dom");
   return {
     ...actual,
+    useNavigate: () => (globalThis as any).__MOCK_NAVIGATE__,
     useParams: vi.fn(),
   };
 });

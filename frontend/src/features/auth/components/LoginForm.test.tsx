@@ -6,7 +6,7 @@ import { getAuthObtainTokenMockHandler } from "@/api/generated/v1/endpoints/auth
 import type { TokenOut } from "@/api/generated/v1/models/tokenOut";
 import { toast } from "sonner";
 
-const mockNavigate = vi.fn();
+const mockNavigate = vi.hoisted(() => vi.fn());
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
@@ -76,8 +76,8 @@ describe("LoginForm", () => {
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Bem-vindo, Admin!");
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
     });
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
 
   it("shows error toast on login failure", async () => {
