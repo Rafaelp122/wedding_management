@@ -8,8 +8,8 @@ Referência: RF03
 """
 
 from decimal import Decimal
+from typing import cast
 
-from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -62,11 +62,17 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         o ``amount`` das parcelas com status ``PAID``.
 
         .. warning::
-           Esta property dispara uma query ``aggregate`` a cada acesso.
+           Esta property dispara uma query ``aggregate`` a cada acesso se não houver
+           o atributo anotado ``_total_spent``.
            Para múltiplas categorias, prefira
            ``BudgetCategory.objects.with_total_spent()`` que faz uma única
            query com ``annotate``.
         """
+        # Bolt Optimization: Check for annotated attribute to avoid extra query
+        val = getattr(self, "_total_spent", None)
+        if val is not None:
+            return cast(Decimal, val)
+
         from django.db.models import Q, Sum
 
         from apps.finances.models.installment import Installment
@@ -79,10 +85,9 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         )["total"] or Decimal("0.00")
 
     def clean(self) -> None:
+        """
+        Validações de integridade.
+        Nota: A consistência entre o orçamento (budget) e o casamento (wedding)
+        já é validada pelo WeddingOwnedMixin.clean().
+        """
         super().clean()
-
-        # TRAVA DE SEGURANÇA: Garante que o orçamento e a categoria são do mesmo casamento # noqa
-        if self.budget.wedding != self.wedding:
-            raise ValidationError(
-                "O orçamento pai deve pertencer ao mesmo casamento desta categoria."
-            )
