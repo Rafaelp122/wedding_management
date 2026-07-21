@@ -53,7 +53,11 @@ class GoogleOAuthProvider:
             logger.warning("Tentativa de login com e-mail do Google não verificado.")
             raise HttpError(401, "E-mail do Google não verificado.")
 
-        email = id_info.get("email", "")
+        email = id_info.get("email")
+        if not email:
+            logger.warning("Token do Google válido mas sem campo e-mail.")
+            raise HttpError(401, "E-mail não fornecido pelo Google.")
+
         first_name = id_info.get("given_name", "")[:150]
         last_name = id_info.get("family_name", "")[:150]
         sub = id_info.get("sub", "")

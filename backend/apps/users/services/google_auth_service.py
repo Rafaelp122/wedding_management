@@ -17,6 +17,18 @@ from apps.users.schemas import TokenOut, UserDataOut
 logger = logging.getLogger(__name__)
 
 
+def _mask_email(email: str) -> str:
+    """Mascara e-mail para evitar vazamento de PII em logs de auditoria."""
+    if "@" not in email:
+        return "***"
+    name, domain = email.split("@", 1)
+    if len(name) <= 2:
+        masked_name = name[0] + "*"
+    else:
+        masked_name = name[0] + "*" * (len(name) - 2) + name[-1]
+    return f"{masked_name}@{domain}"
+
+
 class GoogleAuthService:
     """
     Serviço de autenticação e provisionamento via Google OAuth2.
@@ -62,7 +74,10 @@ class GoogleAuthService:
             ),
         )
 
-        logger.info(f"Autenticação via Google concluída para o usuário: {user.email}")
+        masked = _mask_email(user.email)
+        logger.info(
+            f"Autenticação via Google concluída para o usuário ID {user.id} ({masked})"
+        )
         return token_out
 
     @staticmethod
@@ -80,18 +95,18 @@ class GoogleAuthService:
         Raises:
             HttpError: Se a conta do usuário existente estiver desativada.
         """
+        # Busca global por e-mail único da plataforma (autenticação inicial)
         user = User.objects.filter(email=user_info.email).first()
+        masked_email = _mask_email(user_info.email)
 
         if user:
             if not user.is_active:
                 logger.warning(
-                    f"Tentativa de login via Google (conta inativa): {user_info.email}"
+                    f"Tentativa de login via Google em conta inativa: {masked_email}"
                 )
                 raise HttpError(401, "Credenciais inválidas ou conta desativada.")
         else:
-            logger.info(
-                f"Provisionando novo usuário via Google OAuth: {user_info.email}"
-            )
+            logger.info(f"Provisionando novo usuário via Google OAuth: {masked_email}")
             random_password = User.objects.make_random_password()
             display_name = (
                 f"{user_info.first_name} {user_info.last_name}".strip()
