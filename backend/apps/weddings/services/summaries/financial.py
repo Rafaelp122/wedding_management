@@ -129,7 +129,10 @@ class FinancialSummaryService:
             )
             .filter(
                 Q(status=Installment.StatusChoices.OVERDUE)
-                | Q(status=Installment.StatusChoices.PENDING)
+                | Q(
+                    status=Installment.StatusChoices.PENDING,
+                    due_date__gte=today,
+                )
             )
             .order_by("due_date")[:5]
         )

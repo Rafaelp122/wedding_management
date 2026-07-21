@@ -20,7 +20,7 @@ from apps.weddings.tests.factories import WeddingFactory
 
 @pytest.mark.django_db
 class TestFinancialOptimizations:
-    def setup_method(self):
+    def setup_method(self) -> None:
         self.company = CompanyFactory(name="Empresa Teste", slug="empresa-teste")
         self.wedding = WeddingFactory(company=self.company)
         self.budget = BudgetFactory(
@@ -51,7 +51,7 @@ class TestFinancialOptimizations:
             paid_date=timezone.localdate(),
         )
 
-    def test_budget_total_overall_spent_annotated(self):
+    def test_budget_total_overall_spent_annotated(self) -> None:
         """Tests that the property uses the annotated value if available."""
         budget = Budget.objects.with_total_spent().get(uuid=self.budget.uuid)
         assert hasattr(budget, "_total_overall_spent")
@@ -61,7 +61,7 @@ class TestFinancialOptimizations:
             assert spent == Decimal("200.00")
             assert len(ctx) == 0
 
-    def test_budget_total_overall_spent_fallback(self):
+    def test_budget_total_overall_spent_fallback(self) -> None:
         """Tests fallback query when annotated attribute is absent."""
         budget = Budget.objects.get(uuid=self.budget.uuid)
         assert not hasattr(budget, "_total_overall_spent")
@@ -71,7 +71,7 @@ class TestFinancialOptimizations:
             assert spent == Decimal("200.00")
             assert len(ctx) == 1
 
-    def test_budget_category_total_spent_annotated(self):
+    def test_budget_category_total_spent_annotated(self) -> None:
         """Tests that category property uses annotated value if available."""
         category = BudgetCategory.objects.with_total_spent().get(
             uuid=self.category.uuid
@@ -83,7 +83,7 @@ class TestFinancialOptimizations:
             assert spent == Decimal("200.00")
             assert len(ctx) == 0
 
-    def test_budget_category_total_spent_fallback(self):
+    def test_budget_category_total_spent_fallback(self) -> None:
         """Tests fallback query for category when annotated attribute is absent."""
         category = BudgetCategory.objects.get(uuid=self.category.uuid)
         assert not hasattr(category, "_total_spent")
@@ -93,7 +93,7 @@ class TestFinancialOptimizations:
             assert spent == Decimal("200.00")
             assert len(ctx) == 1
 
-    def test_budget_percentage_used_performance(self):
+    def test_budget_percentage_used_performance(self) -> None:
         """Tests that budget_percentage_used only performs 1 query."""
         with CaptureQueriesContext(connection) as ctx:
             pct = FinancialSummaryService.budget_percentage_used(
@@ -102,7 +102,7 @@ class TestFinancialOptimizations:
             assert pct == 20.0
             assert len(ctx) == 1
 
-    def test_budget_percentage_used_without_budget(self):
+    def test_budget_percentage_used_without_budget(self) -> None:
         """Tests budget_percentage_used returns 0.0 when wedding has no budget."""
         other_wedding = WeddingFactory(company=self.company)
         pct = FinancialSummaryService.budget_percentage_used(
@@ -110,7 +110,7 @@ class TestFinancialOptimizations:
         )
         assert pct == 0.0
 
-    def test_expense_with_details_annotation(self):
+    def test_expense_with_details_annotation(self) -> None:
         """Tests that ExpenseQuerySet.with_details annotates required fields."""
         expense = Expense.objects.with_details().get(uuid=self.expense.uuid)
         assert hasattr(expense, "installments_count")
@@ -123,7 +123,7 @@ class TestFinancialOptimizations:
         assert expense.total_paid == Decimal("200.00")
         assert expense.total_pending == Decimal("0.00")
 
-    def test_pending_installments_7d(self):
+    def test_pending_installments_7d(self) -> None:
         """Tests pending installments due in next 7 days."""
         today = timezone.localdate()
         # Due in 3 days
@@ -150,13 +150,13 @@ class TestFinancialOptimizations:
         )
         assert total == Decimal("150.00")
 
-    def test_pending_installments_7d_empty(self):
+    def test_pending_installments_7d_empty(self) -> None:
         """Tests pending installments returns Decimal 0.00 when empty."""
         other_company = CompanyFactory()
         total = FinancialSummaryService.pending_installments_7d(company=other_company)
         assert total == Decimal("0.00")
 
-    def test_overdue_installments(self):
+    def test_overdue_installments(self) -> None:
         """Tests overdue installments logic."""
         today = timezone.localdate()
         # Explicitly OVERDUE
@@ -183,7 +183,7 @@ class TestFinancialOptimizations:
         assert amount == Decimal("120.00")
         assert count == 2
 
-    def test_overdue_installments_empty(self):
+    def test_overdue_installments_empty(self) -> None:
         """Tests overdue installments returns (0.00, 0) when empty."""
         other_company = CompanyFactory()
         amount, count = FinancialSummaryService.overdue_installments(
@@ -192,7 +192,7 @@ class TestFinancialOptimizations:
         assert amount == Decimal("0.00")
         assert count == 0
 
-    def test_upcoming_installments(self):
+    def test_upcoming_installments(self) -> None:
         """Tests upcoming installments for a wedding."""
         today = timezone.localdate()
         InstallmentFactory(
@@ -210,7 +210,7 @@ class TestFinancialOptimizations:
         assert len(results) >= 1
         assert any(r["amount"] == "10.00" for r in results)
 
-    def test_upcoming_installments_empty(self):
+    def test_upcoming_installments_empty(self) -> None:
         """Tests upcoming_installments returns empty list when empty."""
         other_wedding = WeddingFactory(company=self.company)
         results = FinancialSummaryService.upcoming_installments(
@@ -218,7 +218,7 @@ class TestFinancialOptimizations:
         )
         assert results == []
 
-    def test_categories_summary(self):
+    def test_categories_summary(self) -> None:
         """Tests the categories summary for a wedding."""
         summary = FinancialSummaryService.categories_summary(
             company=self.company, wedding=self.wedding
@@ -227,7 +227,7 @@ class TestFinancialOptimizations:
         assert summary[0]["name"] == self.category.name
         assert float(summary[0]["spent"]) == 200.0
 
-    def test_categories_summary_empty(self):
+    def test_categories_summary_empty(self) -> None:
         """Tests categories_summary returns empty list when empty."""
         other_wedding = WeddingFactory(company=self.company)
         summary = FinancialSummaryService.categories_summary(
@@ -235,7 +235,7 @@ class TestFinancialOptimizations:
         )
         assert summary == []
 
-    def test_budget_category_clean_validation(self):
+    def test_budget_category_clean_validation(self) -> None:
         """Tests the safety check for cross-wedding budget categories."""
         other_wedding = WeddingFactory(company=self.company)
         assert self.budget.wedding_id != other_wedding.id
