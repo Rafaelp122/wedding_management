@@ -21,6 +21,8 @@ import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import React from "react";
 
+import.meta.env.VITE_GOOGLE_CLIENT_ID ||= "test-google-client-id";
+
 const sonnerMock = vi.hoisted(() => {
   const globalState = globalThis as typeof globalThis & {
     __SONNER_MOCK__?: Record<string, ReturnType<typeof vi.fn>>;
@@ -79,6 +81,34 @@ vi.mock("@/features/scheduler/components/events/TimelineView", () => ({
 
 vi.mock("@/features/scheduler/components/tasks/ChecklistView", () => ({
   WeddingChecklistTab: () => React.createElement("div", { "data-testid": "mock-checklist-tab" }),
+}));
+
+vi.mock("@react-oauth/google", () => ({
+  GoogleOAuthProvider: ({ children }: { children: React.ReactNode }) => children,
+  GoogleLogin: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess?: (res: { credential?: string }) => void;
+    onError?: () => void;
+  }) =>
+    React.createElement(
+      "div",
+      null,
+      React.createElement(
+        "button",
+        { onClick: () => onSuccess?.({ credential: "mock_id_token" }) },
+        "Google Login",
+      ),
+      React.createElement(
+        "button",
+        { onClick: () => onError?.() },
+        "Google Error",
+      ),
+    ),
+  useGoogleLogin: ({ onSuccess }: { onSuccess?: (res: { credential?: string }) => void }) => {
+    return () => onSuccess?.({ credential: "mock_id_token" });
+  },
 }));
 
 const dropdownListeners = new Set<() => void>();
@@ -229,6 +259,10 @@ if (!globalAny.__SENTRY_MOCK__) {
   };
 }
 
+if (!globalAny.__MOCK_NAVIGATE__) {
+  globalAny.__MOCK_NAVIGATE__ = vi.fn();
+}
+
 vi.mock("sonner", () => ({
   toast: sonnerMock,
   Toaster: () => null,
@@ -239,6 +273,7 @@ vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
     ...actual,
+    useNavigate: () => globalAny.__MOCK_NAVIGATE__,
     useRouteError: vi.fn(),
   };
 });

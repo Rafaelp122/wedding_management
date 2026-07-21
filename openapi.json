@@ -341,6 +341,99 @@
         }
       }
     },
+    "/api/v1/auth/google/": {
+      "post": {
+        "operationId": "auth_google_login",
+        "summary": "Google Login",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Autentica ou cadastra um usuário usando um ID Token do Google OAuth.\n\nValida o token com os servidores do Google. Se o usuário já existir,\nretorna os tokens JWT. Caso contrário, registra o usuário e cria um workspace.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleAuthIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
     "/api/v1/weddings/lookup/": {
       "get": {
         "operationId": "weddings_lookup",
@@ -4850,6 +4943,20 @@
           "token"
         ],
         "title": "TokenVerifyInputSchema",
+        "type": "object"
+      },
+      "GoogleAuthIn": {
+        "description": "Payload para autenticação via Google OAuth2.",
+        "properties": {
+          "id_token": {
+            "title": "Id Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id_token"
+        ],
+        "title": "GoogleAuthIn",
         "type": "object"
       },
       "WeddingLookupOut": {

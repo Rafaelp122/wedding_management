@@ -93,4 +93,5 @@ NINJA_EXTRA["THROTTLE_RATES"] = {
     "auth_login": "1000/m",
     "auth_refresh": "1000/m",
     "auth_verify": "1000/m",
+    "auth_google": "1000/m",
 }

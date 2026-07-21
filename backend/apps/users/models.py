@@ -103,6 +103,18 @@ class CustomUserManager(BaseUserManager):
 
         return self._create_user(email, password, **extra_fields)
 
+    def make_random_password(
+        self,
+        length: int = 16,
+        allowed_chars: str = (
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
+        ),
+    ) -> str:
+        """Gera uma senha aleatória segura."""
+        from django.utils.crypto import get_random_string
+
+        return get_random_string(length, allowed_chars)
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     """

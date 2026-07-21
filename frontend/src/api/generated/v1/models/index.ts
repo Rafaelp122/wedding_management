@@ -32,6 +32,7 @@ export * from './financesBudgetsListParams';
 export * from './financesCategoriesListParams';
 export * from './financesExpensesListParams';
 export * from './financesInstallmentsListParams';
+export * from './googleAuthIn';
 export * from './input';
 export * from './installmentAdjustIn';
 export * from './installmentOut';

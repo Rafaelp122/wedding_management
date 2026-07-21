@@ -9,6 +9,12 @@ class TokenPayloadIn(Schema):
     password: str
 
 
+class GoogleAuthIn(Schema):
+    """Payload para autenticação via Google OAuth2."""
+
+    id_token: str
+
+
 class UserDataOut(Schema):
     """Dados básicos do usuário retornados no token JWT."""
 

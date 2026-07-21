@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
 import { server } from "@/mocks/server";
@@ -6,14 +6,8 @@ import { getAuthRegisterUserMockHandler } from "@/api/generated/v1/endpoints/aut
 import type { UserOut } from "@/api/generated/v1/models/userOut";
 import { toast } from "sonner";
 
-const mockNavigate = vi.hoisted(() => vi.fn());
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockNavigate = (globalThis as any).__MOCK_NAVIGATE__;
 
 describe("RegisterForm", () => {
   it("renders the registration form", () => {

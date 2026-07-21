@@ -1,19 +1,13 @@
 
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
-const mockNavigate = vi.hoisted(() => vi.fn());
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockNavigate = (globalThis as any).__MOCK_NAVIGATE__;
 
 describe("DashboardPage", () => {
   beforeEach(() => {

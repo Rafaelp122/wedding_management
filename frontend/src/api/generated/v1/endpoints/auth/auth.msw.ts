@@ -32,6 +32,8 @@ export const getAuthRefreshTokenResponseMock = (overrideResponse: Partial<Extrac
 
 export const getAuthVerifyTokenResponseMock = (overrideResponse: Partial<Extract<VerifyTokenOut, object>> = {}): VerifyTokenOut => ({...overrideResponse})
 
+export const getAuthGoogleLoginResponseMock = (overrideResponse: Partial<Extract<TokenOut, object>> = {}): TokenOut => ({access: faker.string.alpha({length: {min: 10, max: 20}}), refresh: faker.string.alpha({length: {min: 10, max: 20}}), user: {id: faker.number.int(), email: faker.string.alpha({length: {min: 10, max: 20}}), first_name: faker.string.alpha({length: {min: 10, max: 20}}), last_name: faker.string.alpha({length: {min: 10, max: 20}})}, ...overrideResponse})
+
 
 export const getAuthRegisterUserMockHandler = (overrideResponse?: UserOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserOut> | UserOut), options?: RequestHandlerOptions) => {
   return http.post('*/api/v1/auth/register/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
@@ -80,9 +82,22 @@ export const getAuthVerifyTokenMockHandler = (overrideResponse?: VerifyTokenOut 
       })
   }, options)
 }
+
+export const getAuthGoogleLoginMockHandler = (overrideResponse?: TokenOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<TokenOut> | TokenOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/auth/google/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getAuthGoogleLoginResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getAuthMock = () => [
   getAuthRegisterUserMockHandler(),
   getAuthObtainTokenMockHandler(),
   getAuthRefreshTokenMockHandler(),
-  getAuthVerifyTokenMockHandler()
+  getAuthVerifyTokenMockHandler(),
+  getAuthGoogleLoginMockHandler()
 ]

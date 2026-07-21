@@ -88,3 +88,25 @@ export const AuthVerifyTokenResponse = zod.looseObject({
 
 }).describe('Resposta vazia para verificação de token bem-sucedida.')
 
+/**
+ * Autentica ou cadastra um usuário usando um ID Token do Google OAuth.
+ *
+ * Valida o token com os servidores do Google. Se o usuário já existir,
+ * retorna os tokens JWT. Caso contrário, registra o usuário e cria um workspace.
+ * @summary Google Login
+ */
+export const AuthGoogleLoginBody = zod.object({
+  "id_token": zod.string()
+}).describe('Payload para autenticação via Google OAuth2.')
+
+export const AuthGoogleLoginResponse = zod.object({
+  "access": zod.string(),
+  "refresh": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "first_name": zod.string(),
+  "last_name": zod.string()
+}).describe('Dados básicos do usuário retornados no token JWT.')
+}).describe('Resposta de autenticação com tokens JWT e dados do usuário.')
+

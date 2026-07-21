@@ -23,6 +23,8 @@ SECRET_KEY = env("SECRET_KEY")
 
 STORAGE_PROVIDER = env("STORAGE_PROVIDER", default="R2")
 
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -152,5 +154,6 @@ NINJA_EXTRA = {
         "auth_login": "5/m",
         "auth_refresh": "5/m",
         "auth_verify": "5/m",
+        "auth_google": "5/m",
     }
 }
