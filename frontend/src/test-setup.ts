@@ -21,6 +21,8 @@ import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import React from "react";
 
+import.meta.env.VITE_GOOGLE_CLIENT_ID ||= "test-google-client-id";
+
 const sonnerMock = vi.hoisted(() => {
   const globalState = globalThis as typeof globalThis & {
     __SONNER_MOCK__?: Record<string, ReturnType<typeof vi.fn>>;

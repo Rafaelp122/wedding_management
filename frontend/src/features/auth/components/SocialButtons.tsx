@@ -17,6 +17,10 @@ export function SocialButtons() {
   const login = useAuthStore((state) => state.login);
   const { mutate } = useAuthGoogleLogin<ErrorType>();
 
+  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+    return null;
+  }
+
   const handleSuccess = (credentialResponse: CredentialResponse) => {
     const credential = credentialResponse.credential;
     if (credential) {
