@@ -4,7 +4,11 @@ from django.db import transaction
 from ninja.errors import HttpError
 from ninja_jwt.tokens import RefreshToken
 
-from apps.core.services.social_auth import GoogleOAuthProvider, OAuthUserInfo
+from apps.core.services.social_auth import (
+    GoogleOAuthProvider,
+    OAuthProvider,
+    OAuthUserInfo,
+)
 from apps.tenants.services.tenant_service import TenantService
 from apps.users.models import User
 from apps.users.schemas import TokenOut, UserDataOut
@@ -21,13 +25,16 @@ class GoogleAuthService:
     usuários com seus respectivos tenants isolados e emissão de tokens JWT.
     """
 
-    @staticmethod
-    def authenticate_with_google(id_token: str) -> TokenOut:
+    @classmethod
+    def authenticate_with_google(
+        cls, id_token: str, provider: OAuthProvider | None = None
+    ) -> TokenOut:
         """
         Autentica usuário existente ou cadastra um novo via ID Token do Google.
 
         Args:
             id_token: O token JWT de identidade emitido pelo Google OAuth.
+            provider: Provedor OAuth opcional para injeção de dependência.
 
         Returns:
             TokenOut contendo os tokens de acesso, atualização e os dados do usuário.
@@ -38,10 +45,10 @@ class GoogleAuthService:
         """
         logger.info("Iniciando verificação de token de identidade do Google.")
 
-        provider = GoogleOAuthProvider()
-        user_info = provider.verify_token(id_token)
+        active_provider = provider or GoogleOAuthProvider()
+        user_info = active_provider.verify_token(id_token)
 
-        user = GoogleAuthService._get_or_create_user(user_info)
+        user = cls._get_or_create_user(user_info)
 
         refresh = RefreshToken.for_user(user)
         token_out = TokenOut(

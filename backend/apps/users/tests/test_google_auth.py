@@ -215,3 +215,29 @@ def test_api_google_login_invalid_token(auth_client):
         )
 
     assert response.status_code == 401
+
+
+def test_authenticate_with_google_dependency_injection():
+    """
+    Testa a injeção de dependência do OAuthProvider no GoogleAuthService
+    sem depender de mocks de biblioteca externa.
+    """
+    from apps.core.services.social_auth import OAuthUserInfo
+
+    class StubOAuthProvider:
+        def verify_token(self, token: str) -> OAuthUserInfo:
+            return OAuthUserInfo(
+                email="di_stub@example.com",
+                email_verified=True,
+                first_name="DI",
+                last_name="Stub",
+                sub="12345",
+            )
+
+    result = GoogleAuthService.authenticate_with_google(
+        "dummy_token", provider=StubOAuthProvider()
+    )
+
+    assert result.user.email == "di_stub@example.com"
+    assert result.user.first_name == "DI"
+    assert User.objects.filter(email="di_stub@example.com").exists()
