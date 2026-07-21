@@ -59,7 +59,8 @@ repos:
       # --- FRONTEND ---
       - id: frontend-lint
         name: ⚛️ React Lint (Fast)
-        entry: bash -c "cd frontend && pnpm exec oxlint"
+        entry: bash -c "cd frontend && pnpm exec oxlint --fix"
+        pass_filenames: false
         language: system
         types_or: [javascript, jsx, ts, tsx]
         files: ^frontend/src/
