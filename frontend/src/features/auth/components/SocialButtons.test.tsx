@@ -13,7 +13,7 @@ describe("SocialButtons", () => {
   it("renders Google button", () => {
     render(<SocialButtons />);
 
-    expect(screen.getByText("Google")).toBeInTheDocument();
+    expect(screen.getByText("Google Login")).toBeInTheDocument();
     expect(screen.getByRole("button")).toBeInTheDocument();
   });
 

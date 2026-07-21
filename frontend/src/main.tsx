@@ -74,7 +74,7 @@ ReactDOM.createRoot(document.getElementById("root")!, {
       <WarmupTrigger />
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
-          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "dummy-client-id"}>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
             <RouterProvider router={router} />
           </GoogleOAuthProvider>
           <Toaster />

@@ -2,19 +2,23 @@
 Testes para o fluxo de autenticação e registro via Google OAuth2.
 
 Cobre:
-- Autenticação de usuário existente com sucesso (sucesso no serviço)
+- Autenticação de usuário existente com sucesso
 - Provisionamento de novo usuário e empresa (tenant) com sucesso
 - Tentativa de login com usuário inativo (401)
 - Erro ao validar token inválido/expirado (ValueError -> 401)
-- Erro ao receber token sem e-mail (401)
+- Validação de GOOGLE_CLIENT_ID ausente (401)
+- Validação de e-mail não verificado (401)
+- Truncamento de first_name longo (>150 caracteres)
 - Integração via API Ninja no endpoint POST /api/v1/auth/google/
 """
 
 from unittest.mock import patch
 
 import pytest
+from django.test import override_settings
 from ninja.errors import HttpError
 
+from apps.core.services.social_auth import GoogleOAuthProvider
 from apps.users.models import User
 from apps.users.services.google_auth_service import GoogleAuthService
 
@@ -22,6 +26,7 @@ from apps.users.services.google_auth_service import GoogleAuthService
 pytestmark = pytest.mark.django_db
 
 
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_authenticate_with_google_existing_user(user_factory):
     """
     Testa a autenticação com sucesso para um usuário existente via Google OAuth.
@@ -32,6 +37,7 @@ def test_authenticate_with_google_existing_user(user_factory):
         "email": "existing@example.com",
         "given_name": existing_user.first_name,
         "family_name": existing_user.last_name,
+        "email_verified": True,
     }
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
@@ -43,6 +49,7 @@ def test_authenticate_with_google_existing_user(user_factory):
     assert result.refresh is not None
 
 
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_authenticate_with_google_new_user():
     """
     Testa a criação de um novo usuário e empresa ao autenticar via Google OAuth.
@@ -51,6 +58,7 @@ def test_authenticate_with_google_new_user():
         "email": "newgoogleuser@example.com",
         "given_name": "Maria",
         "family_name": "Silva",
+        "email_verified": True,
     }
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
@@ -69,6 +77,7 @@ def test_authenticate_with_google_new_user():
     assert result.refresh is not None
 
 
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_authenticate_with_google_inactive_user(user_factory):
     """
     Testa que a autenticação falha se a conta do usuário existente estiver inativa.
@@ -79,6 +88,7 @@ def test_authenticate_with_google_inactive_user(user_factory):
         "email": inactive_user.email,
         "given_name": inactive_user.first_name,
         "family_name": inactive_user.last_name,
+        "email_verified": True,
     }
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
@@ -89,6 +99,7 @@ def test_authenticate_with_google_inactive_user(user_factory):
     assert "Credenciais inválidas ou conta desativada." in str(exc_info.value)
 
 
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_authenticate_with_google_invalid_token():
     """
     Testa se ValueError ao verificar o token é convertido em HttpError 401.
@@ -104,22 +115,63 @@ def test_authenticate_with_google_invalid_token():
     assert "Token do Google inválido ou expirado." in str(exc_info.value)
 
 
-def test_authenticate_with_google_missing_email():
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
+def test_google_oauth_provider_missing_client_id():
     """
-    Testa se o token sem e-mail resulta em HttpError 401.
+    Testa que GoogleOAuthProvider gera 401 quando GOOGLE_CLIENT_ID está ausente.
+    """
+    with override_settings(GOOGLE_CLIENT_ID=""):
+        provider = GoogleOAuthProvider()
+        with pytest.raises(HttpError) as exc_info:
+            provider.verify_token("some_token")
+
+    assert exc_info.value.status_code == 401
+    assert "Configuração do Google OAuth ausente no servidor." in str(exc_info.value)
+
+
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
+def test_google_oauth_provider_email_not_verified():
+    """
+    Testa que GoogleOAuthProvider gera HttpError 401 se email_verified for False.
     """
     mock_id_info = {
-        "given_name": "NoEmail",
+        "email": "unverified@example.com",
+        "given_name": "João",
+        "email_verified": False,
     }
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
+        provider = GoogleOAuthProvider()
         with pytest.raises(HttpError) as exc_info:
-            GoogleAuthService.authenticate_with_google("token_without_email")
+            provider.verify_token("unverified_token")
 
     assert exc_info.value.status_code == 401
-    assert "Token do Google inválido ou expirado." in str(exc_info.value)
+    assert "E-mail do Google não verificado." in str(exc_info.value)
 
 
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
+def test_google_oauth_provider_long_given_name():
+    """
+    Testa que GoogleOAuthProvider trunca given_name com mais de 150 caracteres.
+    """
+    long_name = "A" * 200
+    mock_id_info = {
+        "email": "longname@example.com",
+        "given_name": long_name,
+        "family_name": "Sobrenome",
+        "email_verified": True,
+        "sub": "google_sub_123",
+    }
+
+    with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
+        provider = GoogleOAuthProvider()
+        user_info = provider.verify_token("token_long_name")
+
+    assert len(user_info.first_name) == 150
+    assert user_info.first_name == "A" * 150
+
+
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_api_google_login_success(auth_client, user_factory):
     """
     Testa o endpoint POST /api/v1/auth/google/ com payload válido via cliente API.
@@ -130,6 +182,7 @@ def test_api_google_login_success(auth_client, user_factory):
         "email": "api_google@example.com",
         "given_name": existing_user.first_name,
         "family_name": existing_user.last_name,
+        "email_verified": True,
     }
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
@@ -146,6 +199,7 @@ def test_api_google_login_success(auth_client, user_factory):
     assert data["user"]["email"] == "api_google@example.com"
 
 
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_api_google_login_invalid_token(auth_client):
     """
     Testa o endpoint POST /api/v1/auth/google/ com token inválido retornando 401.

@@ -138,7 +138,12 @@ def verify_token(
 
 @router.post(
     "/google/",
-    response={200: TokenOut, 401: ErrorResponse, **MUTATION_ERROR_RESPONSES},
+    response={
+        200: TokenOut,
+        401: ErrorResponse,
+        429: ErrorResponse,
+        **MUTATION_ERROR_RESPONSES,
+    },
     auth=None,
     throttle=[GoogleAuthAnonThrottle()],
     operation_id="auth_google_login",

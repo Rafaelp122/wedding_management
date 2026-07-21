@@ -83,17 +83,20 @@ vi.mock("@/features/scheduler/components/tasks/ChecklistView", () => ({
 
 vi.mock("@react-oauth/google", () => ({
   GoogleOAuthProvider: ({ children }: { children: React.ReactNode }) => children,
-  useGoogleLogin: ({ onSuccess }: { onSuccess?: (res: { credential?: string }) => void; onError?: () => void }) => {
-    return () => {
-      if (onSuccess) onSuccess({ credential: "mock_id_token" });
-    };
-  },
-  GoogleLogin: ({ onSuccess }: { onSuccess?: (res: { credential?: string }) => void }) =>
+  GoogleLogin: ({
+    onSuccess,
+  }: {
+    onSuccess?: (res: { credential?: string }) => void;
+    onError?: () => void;
+  }) =>
     React.createElement(
       "button",
       { onClick: () => onSuccess?.({ credential: "mock_id_token" }) },
       "Google Login",
     ),
+  useGoogleLogin: ({ onSuccess }: { onSuccess?: (res: { credential?: string }) => void }) => {
+    return () => onSuccess?.({ credential: "mock_id_token" });
+  },
 }));
 
 const dropdownListeners = new Set<() => void>();
