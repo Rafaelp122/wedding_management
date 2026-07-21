@@ -85,14 +85,24 @@ vi.mock("@react-oauth/google", () => ({
   GoogleOAuthProvider: ({ children }: { children: React.ReactNode }) => children,
   GoogleLogin: ({
     onSuccess,
+    onError,
   }: {
     onSuccess?: (res: { credential?: string }) => void;
     onError?: () => void;
   }) =>
     React.createElement(
-      "button",
-      { onClick: () => onSuccess?.({ credential: "mock_id_token" }) },
-      "Google Login",
+      "div",
+      null,
+      React.createElement(
+        "button",
+        { onClick: () => onSuccess?.({ credential: "mock_id_token" }) },
+        "Google Login",
+      ),
+      React.createElement(
+        "button",
+        { onClick: () => onError?.() },
+        "Google Error",
+      ),
     ),
   useGoogleLogin: ({ onSuccess }: { onSuccess?: (res: { credential?: string }) => void }) => {
     return () => onSuccess?.({ credential: "mock_id_token" });

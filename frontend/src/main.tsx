@@ -65,8 +65,6 @@ function WarmupTrigger() {
   return null;
 }
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
 ReactDOM.createRoot(document.getElementById("root")!, {
   onUncaughtError: Sentry.reactErrorHandler(),
   onRecoverableError: Sentry.reactErrorHandler(),
@@ -76,13 +74,9 @@ ReactDOM.createRoot(document.getElementById("root")!, {
       <WarmupTrigger />
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
-          {googleClientId ? (
-            <GoogleOAuthProvider clientId={googleClientId}>
-              <RouterProvider router={router} />
-            </GoogleOAuthProvider>
-          ) : (
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
             <RouterProvider router={router} />
-          )}
+          </GoogleOAuthProvider>
           <Toaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </TooltipProvider>

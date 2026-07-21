@@ -14,7 +14,9 @@ describe("SocialButtons", () => {
     render(<SocialButtons />);
 
     expect(screen.getByText("Google Login")).toBeInTheDocument();
-    expect(screen.getByRole("button")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Google Login" }),
+    ).toBeInTheDocument();
   });
 
   it("executes Google login flow and navigates to /dashboard on success", async () => {
@@ -33,7 +35,7 @@ describe("SocialButtons", () => {
     render(<SocialButtons />);
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Google Login" }));
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Bem-vindo, GoogleUser!");
@@ -55,10 +57,23 @@ describe("SocialButtons", () => {
     render(<SocialButtons />);
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Google Login" }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Token do Google inválido.");
+    });
+  });
+
+  it("shows error toast when Google OAuth widget triggers onError", async () => {
+    render(<SocialButtons />);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Google Error" }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "Falha na autenticação com o Google.",
+      );
     });
   });
 });
