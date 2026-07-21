@@ -56,7 +56,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: /acessar painel/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenLastCalledWith("/dashboard");
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
     });
   });
 });

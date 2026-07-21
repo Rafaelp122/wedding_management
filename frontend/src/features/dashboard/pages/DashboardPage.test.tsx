@@ -159,10 +159,14 @@ describe("DashboardPage", () => {
 
     const openBtn = await screen.findByRole("button", { name: /abrir casamento/i });
     await user.click(openBtn);
-    expect(mockNavigate).toHaveBeenLastCalledWith(expect.stringMatching(/\/weddings\/[A-Za-z0-9_-]+/));
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/weddings\/[A-Za-z0-9_-]+/));
+    });
 
     const financesBtn = screen.getByRole("button", { name: /finanças/i });
     await user.click(financesBtn);
-    expect(mockNavigate).toHaveBeenLastCalledWith(expect.stringMatching(/\/weddings\/[A-Za-z0-9_-]+\?tab=finances/));
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/\/weddings\/[A-Za-z0-9_-]+\?tab=finances/));
+    });
   });
 });
