@@ -32,11 +32,7 @@ vi.mock("./ExpenseInstallmentRow", () => ({
   },
 }));
 
-vi.mock("./ExpenseRedistributeForm", () => ({
-  ExpenseRedistributeForm: () => (
-    <div data-testid="expense-redistribute-form" />
-  ),
-}));
+
 
 describe("ExpenseDetailSheet", () => {
   beforeEach(() => {
@@ -151,17 +147,17 @@ describe("ExpenseDetailSheet", () => {
     expect(remanejarBtn).toBeInTheDocument();
 
     expect(
-      screen.queryByTestId("expense-redistribute-form"),
+      screen.queryByText("Nº de Parcelas"),
     ).not.toBeInTheDocument();
 
     await user.click(remanejarBtn);
     expect(
-      screen.getByTestId("expense-redistribute-form"),
+      screen.getByText("Nº de Parcelas"),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /remanejar/i }));
     expect(
-      screen.queryByTestId("expense-redistribute-form"),
+      screen.queryByText("Nº de Parcelas"),
     ).not.toBeInTheDocument();
   });
 

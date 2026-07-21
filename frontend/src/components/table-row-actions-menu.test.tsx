@@ -1,56 +1,56 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { TableRowActionsMenu } from "./table-row-actions-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 describe("TableRowActionsMenu", () => {
-  it("renders the trigger and label with default 'Ações' text", () => {
-    render(
-      <TableRowActionsMenu>
-        <DropdownMenuItem>Ação 1</DropdownMenuItem>
-      </TableRowActionsMenu>
-    );
-
-    // Assert that the trigger button is present
-    expect(screen.getByRole("button")).toBeInTheDocument();
-    expect(screen.getByText("Abrir menu")).toBeInTheDocument();
-
-    // Assert that the default label is rendered
-    expect(screen.getByText("Ações")).toBeInTheDocument();
-
-    // Assert children are rendered
-    expect(screen.getByText("Ação 1")).toBeInTheDocument();
-  });
-
-  it("renders the custom label when passed as prop", () => {
-    render(
-      <TableRowActionsMenu label="Opções de Item">
-        <DropdownMenuItem>Ação 1</DropdownMenuItem>
-      </TableRowActionsMenu>
-    );
-
-    expect(screen.getByText("Opções de Item")).toBeInTheDocument();
-    expect(screen.queryByText("Ações")).not.toBeInTheDocument();
-  });
-
-  it("should support interaction when trigger and items are clicked", async () => {
+  it("renders the menu with label and trigger tooltip", async () => {
+    const label = "Custom Actions";
     const user = userEvent.setup();
-    const actionClickMock = vi.fn();
 
     render(
-      <TableRowActionsMenu>
-        <DropdownMenuItem onClick={actionClickMock}>Clique Aqui</DropdownMenuItem>
+      <TableRowActionsMenu label={label}>
+        <DropdownMenuItem>Item 1</DropdownMenuItem>
       </TableRowActionsMenu>
     );
 
-    // Click trigger to open dropdown
-    const trigger = screen.getByRole("button");
+    const trigger = screen.getByRole("button", { name: label });
+    expect(trigger).toBeInTheDocument();
+
+    // Verify Tooltip
+    await user.hover(trigger);
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip", { name: label })).toBeInTheDocument();
+    });
+
+    // Open Menu
     await user.click(trigger);
+    expect(screen.getByText(label, { selector: 'div' })).toBeInTheDocument();
+    expect(screen.getByText("Item 1")).toBeInTheDocument();
+  });
 
-    // Click the item
-    const item = screen.getByText("Clique Aqui");
-    await user.click(item);
+  it("calls onClick of children items", async () => {
+    const onClick = vi.fn();
+    const user = userEvent.setup();
 
-    expect(actionClickMock).toHaveBeenCalledTimes(1);
+    render(
+      <TableRowActionsMenu>
+        <DropdownMenuItem onClick={onClick}>Click Me</DropdownMenuItem>
+      </TableRowActionsMenu>
+    );
+
+    await user.click(screen.getByRole("button", { name: /ações/i }));
+    await user.click(screen.getByText("Click Me"));
+
+    expect(onClick).toHaveBeenCalled();
+  });
+
+  it("uses default label when none provided", () => {
+    render(
+      <TableRowActionsMenu>
+        <DropdownMenuItem>Item 1</DropdownMenuItem>
+      </TableRowActionsMenu>
+    );
+    expect(screen.getByRole("button", { name: "Ações" })).toBeInTheDocument();
   });
 });

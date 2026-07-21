@@ -9,24 +9,43 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
+/**
+ * Props para o componente TableRowActionsMenu.
+ */
 interface TableRowActionsMenuProps {
+  /** Elementos DropdownMenuItem a serem exibidos dentro do menu. */
   children: ReactNode;
+  /** Rótulo acessível e texto do Tooltip para o menu de ações. */
   label?: string;
 }
 
+/**
+ * Componente reutilizável de menu de ações em tabelas.
+ * Encapsula o gatilho com ícone, acessibilidade ARIA e Tooltip.
+ */
 export function TableRowActionsMenu({
   children,
   label = "Ações",
 }: TableRowActionsMenuProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
-          <span className="sr-only">Abrir menu</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only">{label}</span>
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{label}</DropdownMenuLabel>
         <DropdownMenuSeparator />

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { SuppliersTable } from "@/features/logistics/components/suppliers/SuppliersTable";
 import { createMockSupplier } from "@/test-data";
 
@@ -61,17 +61,34 @@ describe("SuppliersTable", () => {
       />,
     );
 
-    const actionButtons = screen.getAllByRole("button", { name: /abrir menu/i });
+    const actionButtons = screen.getAllByRole("button", { name: /ações/i });
     const user = userEvent.setup();
     await user.click(actionButtons[0]);
 
-    const editOption = screen.getByText("Editar");
+    const editOption = screen.getAllByRole("menuitem", { name: "Editar" })[0];
     await user.click(editOption);
 
     expect(onEdit).toHaveBeenCalledWith(mockSuppliers[0]);
   });
 
-  it("calls onDetail when row is clicked", async () => {
+  it("renders tooltip for supplier name", async () => {
+    render(
+      <SuppliersTable
+        suppliers={mockSuppliers}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const nameText = screen.getByText("Buffet Gourmet");
+    await user.hover(nameText);
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip", { name: "Buffet Gourmet" })).toBeInTheDocument();
+    });
+  });
+
+  it("calls onDetail when name is clicked", async () => {
     const onDetail = vi.fn();
     render(
       <SuppliersTable
@@ -82,9 +99,8 @@ describe("SuppliersTable", () => {
       />,
     );
 
-    const rows = screen.getAllByRole("row");
     const user = userEvent.setup();
-    await user.click(rows[1]);
+    await user.click(screen.getByRole("button", { name: "Buffet Gourmet" }));
 
     expect(onDetail).toHaveBeenCalledWith("s-1");
   });
