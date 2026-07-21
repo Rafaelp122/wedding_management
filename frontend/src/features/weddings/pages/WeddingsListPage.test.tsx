@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import WeddingsListPage from "@/features/weddings/pages/WeddingsListPage";
 import { server } from "@/mocks/server";
@@ -6,14 +6,8 @@ import { http, HttpResponse } from "msw";
 import { toast } from "sonner";
 import { createMockWedding } from "@/test-data";
 
-const mockNavigate = vi.fn();
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockNavigate = (globalThis as any).__MOCK_NAVIGATE__;
 
 const mockWedding = createMockWedding({
   uuid: "wedding-123",

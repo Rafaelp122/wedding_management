@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { server } from "@/mocks/server";
@@ -6,14 +6,8 @@ import { getAuthObtainTokenMockHandler } from "@/api/generated/v1/endpoints/auth
 import type { TokenOut } from "@/api/generated/v1/models/tokenOut";
 import { toast } from "sonner";
 
-const mockNavigate = vi.hoisted(() => vi.fn());
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockNavigate = (globalThis as any).__MOCK_NAVIGATE__;
 
 describe("LoginForm", () => {
   it("renders the login form", () => {
