@@ -1,16 +1,12 @@
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from django.db.models import Q, Sum
 from django.utils import timezone
 
 from apps.finances.models import Budget, BudgetCategory, Installment
-
-
-if TYPE_CHECKING:
-    pass
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -39,7 +35,7 @@ class FinancialSummaryService:
         Returns:
             Valor decimal total acumulado das parcelas que vencem em 7 dias.
         """
-        today = today or date.today()
+        today = today or timezone.localdate()
         seven_days = today + timedelta(days=7)
         total = (
             Installment.objects.for_tenant(company)
@@ -128,7 +124,7 @@ class FinancialSummaryService:
         installments = (
             Installment.objects.for_tenant(company)
             .filter(
-                expense__wedding=wedding,
+                wedding=wedding,
                 due_date__lte=date_limit,
             )
             .filter(
@@ -183,6 +179,6 @@ class FinancialSummaryService:
                 }
             )
         logger.info(
-            f"Categorias computadas: wedding={wedding.uuid}, total={len(result)}"
+            "Categorias computadas: wedding=%s, total=%s", wedding.uuid, len(result)
         )
         return result

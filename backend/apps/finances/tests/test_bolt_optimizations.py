@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
@@ -101,6 +102,14 @@ class TestFinancialOptimizations:
             assert pct == 20.0
             assert len(ctx) == 1
 
+    def test_budget_percentage_used_without_budget(self):
+        """Tests budget_percentage_used returns 0.0 when wedding has no budget."""
+        other_wedding = WeddingFactory(company=self.company)
+        pct = FinancialSummaryService.budget_percentage_used(
+            company=self.company, wedding=other_wedding
+        )
+        assert pct == 0.0
+
     def test_expense_with_details_annotation(self):
         """Tests that ExpenseQuerySet.with_details annotates required fields."""
         expense = Expense.objects.with_details().get(uuid=self.expense.uuid)
@@ -141,6 +150,12 @@ class TestFinancialOptimizations:
         )
         assert total == Decimal("150.00")
 
+    def test_pending_installments_7d_empty(self):
+        """Tests pending installments returns Decimal 0.00 when empty."""
+        other_company = CompanyFactory()
+        total = FinancialSummaryService.pending_installments_7d(company=other_company)
+        assert total == Decimal("0.00")
+
     def test_overdue_installments(self):
         """Tests overdue installments logic."""
         today = timezone.localdate()
@@ -168,6 +183,15 @@ class TestFinancialOptimizations:
         assert amount == Decimal("120.00")
         assert count == 2
 
+    def test_overdue_installments_empty(self):
+        """Tests overdue installments returns (0.00, 0) when empty."""
+        other_company = CompanyFactory()
+        amount, count = FinancialSummaryService.overdue_installments(
+            company=other_company
+        )
+        assert amount == Decimal("0.00")
+        assert count == 0
+
     def test_upcoming_installments(self):
         """Tests upcoming installments for a wedding."""
         today = timezone.localdate()
@@ -186,6 +210,14 @@ class TestFinancialOptimizations:
         assert len(results) >= 1
         assert any(r["amount"] == "10.00" for r in results)
 
+    def test_upcoming_installments_empty(self):
+        """Tests upcoming_installments returns empty list when empty."""
+        other_wedding = WeddingFactory(company=self.company)
+        results = FinancialSummaryService.upcoming_installments(
+            company=self.company, wedding=other_wedding
+        )
+        assert results == []
+
     def test_categories_summary(self):
         """Tests the categories summary for a wedding."""
         summary = FinancialSummaryService.categories_summary(
@@ -195,12 +227,19 @@ class TestFinancialOptimizations:
         assert summary[0]["name"] == self.category.name
         assert float(summary[0]["spent"]) == 200.0
 
+    def test_categories_summary_empty(self):
+        """Tests categories_summary returns empty list when empty."""
+        other_wedding = WeddingFactory(company=self.company)
+        summary = FinancialSummaryService.categories_summary(
+            company=self.company, wedding=other_wedding
+        )
+        assert summary == []
+
     def test_budget_category_clean_validation(self):
         """Tests the safety check for cross-wedding budget categories."""
         other_wedding = WeddingFactory(company=self.company)
         assert self.budget.wedding_id != other_wedding.id
         self.category.wedding = other_wedding
-        from django.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as excinfo:
             self.category.clean()
