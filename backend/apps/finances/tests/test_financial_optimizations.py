@@ -1,4 +1,6 @@
+from datetime import timedelta
 from decimal import Decimal
+from typing import Any, cast
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -13,42 +15,65 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
+from apps.tenants.models import Company
 from apps.tenants.tests.factories import CompanyFactory
+from apps.weddings.models import Wedding
 from apps.weddings.services.summaries.financial import FinancialSummaryService
 from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
 class TestFinancialOptimizations:
+    company: Company
+    wedding: Wedding
+    budget: Budget
+    category: BudgetCategory
+    expense: Expense
+    installment: Installment
+
     def setup_method(self) -> None:
-        self.company = CompanyFactory(name="Empresa Teste", slug="empresa-teste")
-        self.wedding = WeddingFactory(company=self.company)
-        self.budget = BudgetFactory(
-            wedding=self.wedding,
-            company=self.company,
-            total_estimated=Decimal("1000.00"),
+        self.company = cast(
+            Company, CompanyFactory(name="Empresa Teste", slug="empresa-teste")
         )
-        self.category = BudgetCategoryFactory(
-            budget=self.budget,
-            wedding=self.wedding,
-            company=self.company,
-            allocated_budget=Decimal("500.00"),
+        self.wedding = cast(Wedding, WeddingFactory(company=self.company))
+        self.budget = cast(
+            Budget,
+            BudgetFactory(
+                wedding=self.wedding,
+                company=self.company,
+                total_estimated=Decimal("1000.00"),
+            ),
         )
-        self.expense = ExpenseFactory(
-            category=self.category,
-            wedding=self.wedding,
-            company=self.company,
-            actual_amount=Decimal("200.00"),
+        self.category = cast(
+            BudgetCategory,
+            BudgetCategoryFactory(
+                budget=self.budget,
+                wedding=self.wedding,
+                company=self.company,
+                allocated_budget=Decimal("500.00"),
+            ),
+        )
+        self.expense = cast(
+            Expense,
+            ExpenseFactory(
+                category=self.category,
+                wedding=self.wedding,
+                company=self.company,
+                actual_amount=Decimal("200.00"),
+            ),
         )
 
         # Create 1 paid installment
-        self.installment = InstallmentFactory(
-            expense=self.expense,
-            wedding=self.wedding,
-            company=self.company,
-            amount=Decimal("200.00"),
-            status=Installment.StatusChoices.PAID,
-            paid_date=timezone.localdate(),
+        self.installment = cast(
+            Installment,
+            InstallmentFactory(
+                expense=self.expense,
+                wedding=self.wedding,
+                company=self.company,
+                amount=Decimal("200.00"),
+                status=Installment.StatusChoices.PAID,
+                paid_date=timezone.localdate(),
+            ),
         )
 
     def test_budget_total_overall_spent_annotated(self) -> None:
@@ -104,7 +129,7 @@ class TestFinancialOptimizations:
 
     def test_budget_percentage_used_without_budget(self) -> None:
         """Tests budget_percentage_used returns 0.0 when wedding has no budget."""
-        other_wedding = WeddingFactory(company=self.company)
+        other_wedding = cast(Wedding, WeddingFactory(company=self.company))
         pct = FinancialSummaryService.budget_percentage_used(
             company=self.company, wedding=other_wedding
         )
@@ -112,7 +137,7 @@ class TestFinancialOptimizations:
 
     def test_expense_with_details_annotation(self) -> None:
         """Tests that ExpenseQuerySet.with_details annotates required fields."""
-        expense = Expense.objects.with_details().get(uuid=self.expense.uuid)
+        expense = cast(Any, Expense.objects.with_details().get(uuid=self.expense.uuid))
         assert hasattr(expense, "installments_count")
         assert hasattr(expense, "paid_installments_count")
         assert hasattr(expense, "total_paid")
@@ -133,7 +158,7 @@ class TestFinancialOptimizations:
             company=self.company,
             amount=Decimal("150.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=today + timezone.timedelta(days=3),
+            due_date=today + timedelta(days=3),
         )
         # Due in 10 days (should be ignored)
         InstallmentFactory(
@@ -142,7 +167,7 @@ class TestFinancialOptimizations:
             company=self.company,
             amount=Decimal("300.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=today + timezone.timedelta(days=10),
+            due_date=today + timedelta(days=10),
         )
 
         total = FinancialSummaryService.pending_installments_7d(
@@ -152,7 +177,7 @@ class TestFinancialOptimizations:
 
     def test_pending_installments_7d_empty(self) -> None:
         """Tests pending installments returns Decimal 0.00 when empty."""
-        other_company = CompanyFactory()
+        other_company = cast(Company, CompanyFactory())
         total = FinancialSummaryService.pending_installments_7d(company=other_company)
         assert total == Decimal("0.00")
 
@@ -174,7 +199,7 @@ class TestFinancialOptimizations:
             company=self.company,
             amount=Decimal("70.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=today - timezone.timedelta(days=1),
+            due_date=today - timedelta(days=1),
         )
 
         amount, count = FinancialSummaryService.overdue_installments(
@@ -185,7 +210,7 @@ class TestFinancialOptimizations:
 
     def test_overdue_installments_empty(self) -> None:
         """Tests overdue installments returns (0.00, 0) when empty."""
-        other_company = CompanyFactory()
+        other_company = cast(Company, CompanyFactory())
         amount, count = FinancialSummaryService.overdue_installments(
             company=other_company
         )
@@ -201,7 +226,7 @@ class TestFinancialOptimizations:
             company=self.company,
             amount=Decimal("10.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=today + timezone.timedelta(days=1),
+            due_date=today + timedelta(days=1),
         )
 
         results = FinancialSummaryService.upcoming_installments(
@@ -212,7 +237,7 @@ class TestFinancialOptimizations:
 
     def test_upcoming_installments_empty(self) -> None:
         """Tests upcoming_installments returns empty list when empty."""
-        other_wedding = WeddingFactory(company=self.company)
+        other_wedding = cast(Wedding, WeddingFactory(company=self.company))
         results = FinancialSummaryService.upcoming_installments(
             company=self.company, wedding=other_wedding
         )
@@ -229,7 +254,7 @@ class TestFinancialOptimizations:
 
     def test_categories_summary_empty(self) -> None:
         """Tests categories_summary returns empty list when empty."""
-        other_wedding = WeddingFactory(company=self.company)
+        other_wedding = cast(Wedding, WeddingFactory(company=self.company))
         summary = FinancialSummaryService.categories_summary(
             company=self.company, wedding=other_wedding
         )
@@ -237,8 +262,9 @@ class TestFinancialOptimizations:
 
     def test_budget_category_clean_validation(self) -> None:
         """Tests the safety check for cross-wedding budget categories."""
-        other_wedding = WeddingFactory(company=self.company)
-        assert self.budget.wedding_id != other_wedding.id
+        other_wedding = cast(Wedding, WeddingFactory(company=self.company))
+        budget_wedding = cast(Any, self.budget).wedding
+        assert budget_wedding.id != other_wedding.id
         self.category.wedding = other_wedding
 
         with pytest.raises(ValidationError) as excinfo:
