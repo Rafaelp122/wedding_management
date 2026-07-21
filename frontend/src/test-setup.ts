@@ -244,6 +244,10 @@ if (!globalAny.__SENTRY_MOCK__) {
   };
 }
 
+if (!globalAny.__MOCK_NAVIGATE__) {
+  globalAny.__MOCK_NAVIGATE__ = vi.fn();
+}
+
 vi.mock("sonner", () => ({
   toast: sonnerMock,
   Toaster: () => null,
@@ -254,6 +258,7 @@ vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
     ...actual,
+    useNavigate: () => globalAny.__MOCK_NAVIGATE__,
     useRouteError: vi.fn(),
   };
 });
