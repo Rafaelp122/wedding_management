@@ -16,6 +16,7 @@ vi.mock("react-router-dom", async () => {
   >("react-router-dom");
   return {
     ...actual,
+    useNavigate: () => (globalThis as any).__MOCK_NAVIGATE__,
     useParams: vi.fn(),
   };
 });

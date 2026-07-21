@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, userEvent } from "@/test-utils";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import { server } from "@/mocks/server";
-import { http, HttpResponse } from "msw";
+import { getAuthObtainTokenMockHandler } from "@/api/generated/v1/endpoints/auth/auth.msw";
 
 const mockNavigate = vi.hoisted(() => vi.fn());
 vi.mock("react-router-dom", async (importOriginal) => {
@@ -31,27 +31,26 @@ describe("LoginPage", () => {
   });
 
   it("submits login form and navigates to dashboard on success", async () => {
-    const user = userEvent.setup();
-    server.use(
-      http.post("*/api/v1/auth/token/", () => {
-        return HttpResponse.json({
-          access: "access-token-123",
-          refresh: "refresh-token-123",
-          user: {
-            id: 1,
-            uuid: "user-1",
-            first_name: "Helena",
-            last_name: "Silva",
-            email: "helena@simaceito.com",
-          },
-        });
-      })
-    );
+    const mockToken = {
+      access: "access-token-123",
+      refresh: "refresh-token-123",
+      user: {
+        id: 1,
+        first_name: "Helena",
+        last_name: "Silva",
+        email: "helena@simaceito.com",
+      },
+    };
+    server.use(getAuthObtainTokenMockHandler(mockToken));
 
     render(<LoginPage />);
 
-    await user.type(screen.getByRole("textbox", { name: /endereço de e-mail/i }), "helena@simaceito.com");
-    await user.type(screen.getByLabelText(/senha de acesso/i), "senha123456");
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByPlaceholderText("helena@simaceito.com"),
+      "helena@simaceito.com",
+    );
+    await user.type(screen.getByPlaceholderText("••••••••"), "senha123456");
 
     await user.click(screen.getByRole("button", { name: /acessar painel/i }));
 
