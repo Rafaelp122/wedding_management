@@ -81,6 +81,21 @@ vi.mock("@/features/scheduler/components/tasks/ChecklistView", () => ({
   WeddingChecklistTab: () => React.createElement("div", { "data-testid": "mock-checklist-tab" }),
 }));
 
+vi.mock("@react-oauth/google", () => ({
+  GoogleOAuthProvider: ({ children }: { children: React.ReactNode }) => children,
+  useGoogleLogin: ({ onSuccess }: { onSuccess?: (res: { credential?: string }) => void; onError?: () => void }) => {
+    return () => {
+      if (onSuccess) onSuccess({ credential: "mock_id_token" });
+    };
+  },
+  GoogleLogin: ({ onSuccess }: { onSuccess?: (res: { credential?: string }) => void }) =>
+    React.createElement(
+      "button",
+      { onClick: () => onSuccess?.({ credential: "mock_id_token" }) },
+      "Google Login",
+    ),
+}));
+
 const dropdownListeners = new Set<() => void>();
 let hasAnyTriggerBeenClicked = false;
 

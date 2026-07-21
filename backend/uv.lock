@@ -1,6 +1,10 @@
 version = 1
 revision = 3
 requires-python = ">=3.12"
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version < '3.14'",
+]
 
 [[package]]
 name = "annotated-types"
@@ -601,6 +605,19 @@ wheels = [
 ]
 
 [[package]]
+name = "google-auth"
+version = "2.56.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "pyasn1-modules" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ed/a6/be1b705ceadfbcbb20dd501ed3682560ed574ea3c756a3944deca5187df6/google_auth-2.56.1.tar.gz", hash = "sha256:9fd80dc51a58f44407d11f8e8e3ed3e26b407606e0ca181be728ad4dd77d1cdf", size = 364946, upload-time = "2026-07-21T16:34:03.206Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/fd/3a0c054918478bbb8d72a5401c3567d2173e51bb3a323679b4b02103d26d/google_auth-2.56.1-py3-none-any.whl", hash = "sha256:dd8a555988ca88c7158927fe22883ec065ca0f0f27d0077b419365a004df77d3", size = 258235, upload-time = "2026-07-21T16:33:59.596Z" },
+]
+
+[[package]]
 name = "gunicorn"
 version = "23.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1024,6 +1041,27 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/cd/05/0a34433a064256a578f1783a10da6df098ceaa4a57bbeaa96a6c0352786b/pure_eval-0.2.3.tar.gz", hash = "sha256:5f4e983f40564c576c7c8635ae88db5956bb2229d7e9237d03b3c0b0190eaf42", size = 19752, upload-time = "2024-07-21T12:58:21.801Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8e/37/efad0257dc6e593a18957422533ff0f87ede7c9c6ea010a2177d738fb82f/pure_eval-0.2.3-py3-none-any.whl", hash = "sha256:1db8e35b67b3d218d818ae653e27f06c3aa420901fa7b081ca98cbedc874e0d0", size = 11842, upload-time = "2024-07-21T12:58:20.04Z" },
+]
+
+[[package]]
+name = "pyasn1"
+version = "0.6.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/9a/23310166d960def5897e91fe20e5b724601b02a22e84ba1f94232c0b7f67/pyasn1-0.6.4.tar.gz", hash = "sha256:9c447d8431c947fe4c8febc4ed9e760bc29011a5b01e5c74b67025bd9fb8ce81", size = 151262, upload-time = "2026-07-09T01:12:33.988Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9a/3b/6163796d69c3977d1e4287bea4a6979161cbbdd170ebb430511e8e1999ce/pyasn1-0.6.4-py3-none-any.whl", hash = "sha256:deda9277cfd454080ec40b207fb6df82206a3a2688735233cdcd8d3d565f088b", size = 84410, upload-time = "2026-07-09T01:12:32.92Z" },
+]
+
+[[package]]
+name = "pyasn1-modules"
+version = "0.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyasn1" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e9/e6/78ebbb10a8c8e4b61a59249394a4a594c1a7af95593dc933a349c8d00964/pyasn1_modules-0.4.2.tar.gz", hash = "sha256:677091de870a80aae844b1ca6134f54652fa2c8c5a52aa396440ac3106e941e6", size = 307892, upload-time = "2025-03-28T02:41:22.17Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/8d/d529b5d697919ba8c11ad626e835d4039be708a35b0d22de83a269a6682c/pyasn1_modules-0.4.2-py3-none-any.whl", hash = "sha256:29253a9207ce32b64c3ac6600edc75368f98473906e8fd1043bd6b5b1de2c14a", size = 181259, upload-time = "2025-03-28T02:41:19.028Z" },
 ]
 
 [[package]]
@@ -1547,6 +1585,7 @@ dependencies = [
     { name = "django-ninja-jwt" },
     { name = "django-storages", extra = ["s3"] },
     { name = "email-validator" },
+    { name = "google-auth" },
     { name = "gunicorn" },
     { name = "psycopg", extra = ["binary"] },
     { name = "python-json-logger" },
@@ -1587,6 +1626,7 @@ requires-dist = [
     { name = "django-ninja-jwt", specifier = ">=5.4.4" },
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.4" },
     { name = "email-validator", specifier = ">=2.3.0" },
+    { name = "google-auth", specifier = ">=2.30.0" },
     { name = "gunicorn", specifier = ">=23.0.0,<27.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.0,<4.0" },
     { name = "python-json-logger", specifier = ">=4.0.0" },

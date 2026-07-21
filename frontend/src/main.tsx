@@ -13,6 +13,8 @@ import { RouterProvider } from "react-router-dom"; // O substituto do BrowserRou
 import { toast } from "sonner";
 import { ThemeProvider } from "next-themes";
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 import { useCoreHealthCheck } from "@/api/generated/v1/endpoints/default/default";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { router } from "./router"; // Importando sua nova configuração
@@ -72,7 +74,9 @@ ReactDOM.createRoot(document.getElementById("root")!, {
       <WarmupTrigger />
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
-          <RouterProvider router={router} />
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "dummy-client-id"}>
+            <RouterProvider router={router} />
+          </GoogleOAuthProvider>
           <Toaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </TooltipProvider>

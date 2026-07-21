@@ -24,3 +24,5 @@ export const getAuthRefreshTokenResponseMock = (overrideResponse: Partial<Extrac
 
 export const getAuthVerifyTokenResponseMock = (overrideResponse: Partial<Extract<VerifyTokenOut, object>> = {}): VerifyTokenOut => ({...overrideResponse})
 
+export const getAuthGoogleLoginResponseMock = (overrideResponse: Partial<Extract<TokenOut, object>> = {}): TokenOut => ({access: faker.string.alpha({length: {min: 10, max: 20}}), refresh: faker.string.alpha({length: {min: 10, max: 20}}), user: {id: faker.number.int(), email: faker.string.alpha({length: {min: 10, max: 20}}), first_name: faker.string.alpha({length: {min: 10, max: 20}}), last_name: faker.string.alpha({length: {min: 10, max: 20}})}, ...overrideResponse})
+

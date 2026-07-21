@@ -16,6 +16,7 @@ import type {
 
 import type {
   ErrorResponse,
+  GoogleAuthIn,
   RegisterIn,
   TokenOut,
   TokenPayloadIn,
@@ -303,4 +304,72 @@ export const useAuthVerifyToken = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getAuthVerifyTokenMutationOptions(options), queryClient);
+    }
+    /**
+ * Autentica ou cadastra um usuário usando um ID Token do Google OAuth.
+ *
+ * Valida o token com os servidores do Google. Se o usuário já existir,
+ * retorna os tokens JWT. Caso contrário, registra o usuário e cria um workspace.
+ * @summary Google Login
+ */
+export const authGoogleLogin = (
+    googleAuthIn: GoogleAuthIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TokenOut>(
+      {url: `/api/v1/auth/google/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: googleAuthIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthGoogleLoginMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authGoogleLogin>>, TError,{data: GoogleAuthIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authGoogleLogin>>, TError,{data: GoogleAuthIn}, TContext> => {
+
+const mutationKey = ['authGoogleLogin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authGoogleLogin>>, {data: GoogleAuthIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authGoogleLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthGoogleLoginMutationResult = NonNullable<Awaited<ReturnType<typeof authGoogleLogin>>>
+    export type AuthGoogleLoginMutationBody = GoogleAuthIn
+    export type AuthGoogleLoginMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Google Login
+ */
+export const useAuthGoogleLogin = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authGoogleLogin>>, TError,{data: GoogleAuthIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authGoogleLogin>>,
+        TError,
+        {data: GoogleAuthIn},
+        TContext
+      > => {
+      return useMutation(getAuthGoogleLoginMutationOptions(options), queryClient);
     }

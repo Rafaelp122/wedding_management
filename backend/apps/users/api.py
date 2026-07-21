@@ -12,7 +12,15 @@ from ninja_jwt.schema import (
 from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.core.schemas import ErrorResponse
 
-from .schemas import RegisterIn, TokenOut, TokenPayloadIn, UserOut, VerifyTokenOut
+from .schemas import (
+    GoogleAuthIn,
+    RegisterIn,
+    TokenOut,
+    TokenPayloadIn,
+    UserOut,
+    VerifyTokenOut,
+)
+from .services.google_auth_service import GoogleAuthService
 from .services.registration_service import RegistrationService
 from .services.token_service import TokenService
 
@@ -31,6 +39,10 @@ class RefreshAnonThrottle(AnonRateThrottle):
 
 class VerifyAnonThrottle(AnonRateThrottle):
     scope = "auth_verify"
+
+
+class GoogleAuthAnonThrottle(AnonRateThrottle):
+    scope = "auth_google"
 
 
 router = Router(tags=["auth"])
@@ -122,3 +134,20 @@ def verify_token(
     Ideal para o frontend checar o status do login antes de carregar uma página.
     """
     return TokenService.verify(payload.token)
+
+
+@router.post(
+    "/google/",
+    response={200: TokenOut, 401: ErrorResponse, **MUTATION_ERROR_RESPONSES},
+    auth=None,
+    throttle=[GoogleAuthAnonThrottle()],
+    operation_id="auth_google_login",
+)
+def google_login(request: HttpRequest, payload: GoogleAuthIn) -> TokenOut:
+    """
+    Autentica ou cadastra um usuário usando um ID Token do Google OAuth.
+
+    Valida o token com os servidores do Google. Se o usuário já existir,
+    retorna os tokens JWT. Caso contrário, registra o usuário e cria um workspace.
+    """
+    return GoogleAuthService.authenticate_with_google(payload.id_token)
