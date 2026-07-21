@@ -82,7 +82,7 @@ export const WeddingExpensesTable = memo(function WeddingExpensesTable({
                   </Tooltip>
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
-                  {expense.category_name || expense.category.substring(0, 8)}
+                  {expense.category_name || expense.category?.substring(0, 8) || "—"}
                 </TableCell>
                 <TableCell className="text-right text-xs">
                   R$ {formatCurrencyBR(Number(expense.estimated_amount))}

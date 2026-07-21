@@ -65,8 +65,8 @@ describe("SuppliersTable", () => {
     const user = userEvent.setup();
     await user.click(actionButtons[0]);
 
-    const editOptions = screen.getAllByText("Editar");
-    await user.click(editOptions[0]);
+    const editOption = screen.getAllByRole("menuitem", { name: "Editar" })[0];
+    await user.click(editOption);
 
     expect(onEdit).toHaveBeenCalledWith(mockSuppliers[0]);
   });

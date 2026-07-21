@@ -69,13 +69,13 @@ describe("WeddingExpensesTable", () => {
     await user.click(menuBtn);
 
     // Click edit
-    const editBtn = screen.getByText("Editar");
+    const editBtn = screen.getByRole("menuitem", { name: "Editar" });
     await user.click(editBtn);
     expect(onEditExpense).toHaveBeenCalledWith(expenses[0]);
 
     // Open dropdown menu again to click delete
     await user.click(menuBtn);
-    const deleteBtn = screen.getByText("Excluir");
+    const deleteBtn = screen.getByRole("menuitem", { name: "Excluir" });
     await user.click(deleteBtn);
     expect(onDeleteExpense).toHaveBeenCalledWith(expenses[0]);
   });
