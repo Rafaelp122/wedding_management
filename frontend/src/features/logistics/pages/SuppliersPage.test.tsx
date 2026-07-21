@@ -236,7 +236,7 @@ describe("SuppliersPage", () => {
     render(<SuppliersPage />);
 
     await screen.findByText("Buffet Primavera");
-    const actions = screen.getByRole("button", { name: /abrir menu/i });
+    const actions = screen.getByRole("button", { name: /ações/i });
     await userEvent.click(actions);
     await userEvent.click(screen.getByText("Editar"));
     expect(
@@ -266,7 +266,7 @@ describe("SuppliersPage", () => {
     render(<SuppliersPage />);
 
     await screen.findByText("Buffet Primavera");
-    await userEvent.click(screen.getByRole("button", { name: /abrir menu/i }));
+    await userEvent.click(screen.getByRole("button", { name: /ações/i }));
     await userEvent.click(screen.getByText("Deletar"));
     await userEvent.click(
       screen.getByRole("button", { name: "Deletar Permanentemente" }),
