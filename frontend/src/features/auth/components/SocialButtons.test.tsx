@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { SocialButtons } from "@/features/auth/components/SocialButtons";
 import { server } from "@/mocks/server";
