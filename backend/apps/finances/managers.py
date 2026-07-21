@@ -38,6 +38,7 @@ class BudgetManager(TenantManager):
         return BudgetQuerySet(self.model, using=self._db)
 
     def with_total_spent(self) -> BudgetQuerySet:
+        """Anota cada orçamento com o total geral pago."""
         return self.get_queryset().with_total_spent()
 
 
@@ -66,6 +67,7 @@ class BudgetCategoryManager(TenantManager):
         return BudgetCategoryQuerySet(self.model, using=self._db)
 
     def with_total_spent(self) -> BudgetCategoryQuerySet:
+        """Anota cada categoria com o total pago (soma de parcelas PAID)."""
         return self.get_queryset().with_total_spent()
 
 
@@ -109,4 +111,5 @@ class ExpenseManager(TenantManager):
         return ExpenseQuerySet(self.model, using=self._db)
 
     def with_details(self) -> ExpenseQuerySet:
+        """Anota cada despesa com contagem de parcelas e valores totais."""
         return self.get_queryset().with_details()

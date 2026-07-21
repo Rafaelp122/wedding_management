@@ -75,7 +75,6 @@ class Budget(TenantModel, WeddingOwnedMixin):
            ``Budget.objects.with_total_spent()`` que faz uma única
            query com ``annotate``.
         """
-        # Bolt Optimization: Check for annotated attribute to avoid extra query
         val = getattr(self, "_total_overall_spent", None)
         if val is not None:
             return cast(Decimal, val)

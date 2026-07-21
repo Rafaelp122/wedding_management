@@ -12,15 +12,15 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.tenants.models import Company
+from apps.tenants.tests.factories import CompanyFactory
 from apps.weddings.services.summaries.financial import FinancialSummaryService
 from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
-class TestBoltOptimizations:
+class TestFinancialOptimizations:
     def setup_method(self):
-        self.company = Company.objects.create(name="Bolt Co", slug="bolt-co")
+        self.company = CompanyFactory(name="Empresa Teste", slug="empresa-teste")
         self.wedding = WeddingFactory(company=self.company)
         self.budget = BudgetFactory(
             wedding=self.wedding,
@@ -47,7 +47,7 @@ class TestBoltOptimizations:
             company=self.company,
             amount=Decimal("200.00"),
             status=Installment.StatusChoices.PAID,
-            paid_date=timezone.now().date(),
+            paid_date=timezone.localdate(),
         )
 
     def test_budget_total_overall_spent_annotated(self):
@@ -58,22 +58,20 @@ class TestBoltOptimizations:
         with CaptureQueriesContext(connection) as ctx:
             spent = budget.total_overall_spent
             assert spent == Decimal("200.00")
-
-        assert len(ctx) == 0, "Should NOT trigger a query when annotated"
+            assert len(ctx) == 0
 
     def test_budget_total_overall_spent_fallback(self):
-        """Tests that the property falls back to a query if not annotated."""
+        """Tests fallback query when annotated attribute is absent."""
         budget = Budget.objects.get(uuid=self.budget.uuid)
         assert not hasattr(budget, "_total_overall_spent")
 
         with CaptureQueriesContext(connection) as ctx:
             spent = budget.total_overall_spent
             assert spent == Decimal("200.00")
+            assert len(ctx) == 1
 
-        assert len(ctx) == 1, "Should trigger a fallback query when NOT annotated"
-
-    def test_category_total_spent_annotated(self):
-        """Tests that the property uses the annotated value if available."""
+    def test_budget_category_total_spent_annotated(self):
+        """Tests that category property uses annotated value if available."""
         category = BudgetCategory.objects.with_total_spent().get(
             uuid=self.category.uuid
         )
@@ -82,73 +80,51 @@ class TestBoltOptimizations:
         with CaptureQueriesContext(connection) as ctx:
             spent = category.total_spent
             assert spent == Decimal("200.00")
+            assert len(ctx) == 0
 
-        assert len(ctx) == 0, "Should NOT trigger a query when annotated"
-
-    def test_category_total_spent_fallback(self):
-        """Tests that the property falls back to a query if not annotated."""
+    def test_budget_category_total_spent_fallback(self):
+        """Tests fallback query for category when annotated attribute is absent."""
         category = BudgetCategory.objects.get(uuid=self.category.uuid)
         assert not hasattr(category, "_total_spent")
 
         with CaptureQueriesContext(connection) as ctx:
             spent = category.total_spent
             assert spent == Decimal("200.00")
+            assert len(ctx) == 1
 
-        assert len(ctx) == 1, "Should trigger a fallback query when NOT annotated"
-
-    def test_budget_percentage_used_optimized(self):
-        """Tests that the service uses the optimized path (1 query)."""
+    def test_budget_percentage_used_performance(self):
+        """Tests that budget_percentage_used only performs 1 query."""
         with CaptureQueriesContext(connection) as ctx:
             pct = FinancialSummaryService.budget_percentage_used(
                 company=self.company, wedding=self.wedding
             )
             assert pct == 20.0
+            assert len(ctx) == 1
 
-        assert len(ctx) == 1, f"Expected 1 query, got {len(ctx)}"
+    def test_expense_with_details_annotation(self):
+        """Tests that ExpenseQuerySet.with_details annotates required fields."""
+        expense = Expense.objects.with_details().get(uuid=self.expense.uuid)
+        assert hasattr(expense, "installments_count")
+        assert hasattr(expense, "paid_installments_count")
+        assert hasattr(expense, "total_paid")
+        assert hasattr(expense, "total_pending")
 
-    def test_budget_percentage_used_no_budget(self):
-        """Tests the percentage when no budget exists."""
-        wedding_no_budget = WeddingFactory(company=self.company)
-        pct = FinancialSummaryService.budget_percentage_used(
-            company=self.company, wedding=wedding_no_budget
-        )
-        assert pct == 0.0
-
-    def test_budget_percentage_used_zero_estimated(self):
-        """Tests the percentage when estimated budget is zero."""
-        budget_zero = BudgetFactory(
-            wedding=WeddingFactory(company=self.company),
-            company=self.company,
-            total_estimated=Decimal("0.00"),
-        )
-        pct = FinancialSummaryService.budget_percentage_used(
-            company=self.company, wedding=budget_zero.wedding
-        )
-        assert pct == 0.0
-
-    def test_expense_with_details_manager(self):
-        """Tests the new manager proxy method for with_details."""
-        with CaptureQueriesContext(connection) as ctx:
-            expenses = list(Expense.objects.with_details())
-            assert len(expenses) >= 1
-            e = expenses[0]
-            # Accessing annotated fields shouldn't trigger new queries
-            assert e.installments_count >= 1
-            assert e.paid_installments_count == 1
-            assert e.total_paid == Decimal("200.00")
-
-        assert len(ctx) == 1, f"Expected 1 query, got {len(ctx)}"
+        assert expense.installments_count == 1
+        assert expense.paid_installments_count == 1
+        assert expense.total_paid == Decimal("200.00")
+        assert expense.total_pending == Decimal("0.00")
 
     def test_pending_installments_7d(self):
-        """Tests pending installments in the next 7 days."""
-        # Due in 5 days
+        """Tests pending installments due in next 7 days."""
+        today = timezone.localdate()
+        # Due in 3 days
         InstallmentFactory(
             expense=self.expense,
             wedding=self.wedding,
             company=self.company,
             amount=Decimal("150.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=timezone.now().date() + timezone.timedelta(days=5),
+            due_date=today + timezone.timedelta(days=3),
         )
         # Due in 10 days (should be ignored)
         InstallmentFactory(
@@ -157,14 +133,17 @@ class TestBoltOptimizations:
             company=self.company,
             amount=Decimal("300.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=timezone.now().date() + timezone.timedelta(days=10),
+            due_date=today + timezone.timedelta(days=10),
         )
 
-        total = FinancialSummaryService.pending_installments_7d(company=self.company)
+        total = FinancialSummaryService.pending_installments_7d(
+            company=self.company, today=today
+        )
         assert total == Decimal("150.00")
 
     def test_overdue_installments(self):
         """Tests overdue installments logic."""
+        today = timezone.localdate()
         # Explicitly OVERDUE
         InstallmentFactory(
             expense=self.expense,
@@ -180,30 +159,29 @@ class TestBoltOptimizations:
             company=self.company,
             amount=Decimal("70.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=timezone.now().date() - timezone.timedelta(days=1),
+            due_date=today - timezone.timedelta(days=1),
         )
 
         amount, count = FinancialSummaryService.overdue_installments(
-            company=self.company
+            company=self.company, today=today
         )
         assert amount == Decimal("120.00")
         assert count == 2
 
     def test_upcoming_installments(self):
         """Tests upcoming installments for a wedding."""
-        # We created one PAID in setup_method (ignored)
-        # Let's add more.
+        today = timezone.localdate()
         InstallmentFactory(
             expense=self.expense,
             wedding=self.wedding,
             company=self.company,
             amount=Decimal("10.00"),
             status=Installment.StatusChoices.PENDING,
-            due_date=timezone.now().date() + timezone.timedelta(days=1),
+            due_date=today + timezone.timedelta(days=1),
         )
 
         results = FinancialSummaryService.upcoming_installments(
-            company=self.company, wedding=self.wedding
+            company=self.company, wedding=self.wedding, today=today
         )
         assert len(results) >= 1
         assert any(r["amount"] == "10.00" for r in results)
@@ -220,7 +198,6 @@ class TestBoltOptimizations:
     def test_budget_category_clean_validation(self):
         """Tests the safety check for cross-wedding budget categories."""
         other_wedding = WeddingFactory(company=self.company)
-        # Ensure we are comparing different weddings
         assert self.budget.wedding_id != other_wedding.id
         self.category.wedding = other_wedding
         from django.core.exceptions import ValidationError

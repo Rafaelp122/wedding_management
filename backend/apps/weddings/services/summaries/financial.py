@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any, cast
 
 from django.db.models import Q, Sum
+from django.utils import timezone
 
 from apps.finances.models import Budget, BudgetCategory, Installment
 
@@ -68,7 +69,7 @@ class FinancialSummaryService:
         Returns:
             Uma tupla contendo (valor_total_atrasado, quantidade_de_parcelas).
         """
-        today = today or date.today()
+        today = today or timezone.localdate()
         qs = Installment.objects.for_tenant(company).filter(
             Q(status=Installment.StatusChoices.OVERDUE)
             | Q(status=Installment.StatusChoices.PENDING, due_date__lt=today)
@@ -91,8 +92,6 @@ class FinancialSummaryService:
             Percentual utilizado (float) arredondado para uma casa decimal.
         """
         try:
-            # Bolt Optimization: Use with_total_spent() to fetch budget and total
-            # spent in one query
             from apps.finances.managers import BudgetQuerySet
 
             budget = (
@@ -122,21 +121,19 @@ class FinancialSummaryService:
             company: O tenant atual para isolamento de dados.
             wedding: Instância do casamento associado.
             today: Data de referência (caso não informada, usa a data atual).
-
-        Returns:
-            Lista de dicionários contendo os dados das parcelas ordenadas por
-            data de vencimento. Cada dicionário possui chaves: `uuid`,
-            `installment_number`, `amount`, `due_date` e `status`.
         """
-        today = today or date.today()
-        thirty_days = today + timedelta(days=30)
+        today = today or timezone.localdate()
+        date_limit = today + timedelta(days=30)
+
         installments = (
             Installment.objects.for_tenant(company)
-            .filter(wedding=wedding)
-            .exclude(status=Installment.StatusChoices.PAID)
             .filter(
-                Q(due_date__lte=thirty_days)
-                | Q(status=Installment.StatusChoices.OVERDUE)
+                expense__wedding=wedding,
+                due_date__lte=date_limit,
+            )
+            .filter(
+                Q(status=Installment.StatusChoices.OVERDUE)
+                | Q(status=Installment.StatusChoices.PENDING)
             )
             .order_by("due_date")[:5]
         )
@@ -174,7 +171,7 @@ class FinancialSummaryService:
         )
         result = []
         for cat in categories:
-            spent = cat._total_spent
+            spent = cat.total_spent
             alloc = cat.allocated_budget
             pct = round(float(spent) / float(alloc) * 100) if alloc > 0 else 0
             result.append(
