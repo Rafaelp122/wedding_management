@@ -1,14 +1,6 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod";
-
-import { useFinancesExpensesUpdate } from "@/api/generated/v1/endpoints/finances/finances";
-import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
-import { FinancesExpensesUpdateBody } from "@/api/generated/v1/zod/finances/finances";
-import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import { selectOnFocus } from "@/lib/select-on-focus";
-import { buildPatchPayload } from "@/lib/patch-payload";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
+import { useEditExpenseForm } from "../../hooks/useEditExpenseForm";
 
 import { FormDialog } from "@/components/form-dialog";
 import {
@@ -26,8 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-type EditExpenseFormData = z.input<typeof FinancesExpensesUpdateBody>;
-
 interface EditExpenseDialogProps {
   expense: ExpenseOut;
   weddingUuid: string;
@@ -43,71 +33,18 @@ export function EditExpenseDialog({
   onOpenChange,
   onSuccess,
 }: EditExpenseDialogProps) {
-  const { mutate, isPending } = useFinancesExpensesUpdate();
-
-  const { data: contractsResponse } = useLogisticsContractsList({
-    wedding_id: weddingUuid,
-  });
-  const contracts = contractsResponse?.data?.items || [];
-
-  const hasPaid = (expense.paid_installments_count ?? 0) > 0;
-
-  const form = useForm<EditExpenseFormData>({
-    resolver: zodResolver(FinancesExpensesUpdateBody),
-    defaultValues: {
-      name: expense.name || "",
-      description: expense.description || "",
-      estimated_amount: Number(expense.estimated_amount) || 0,
-      actual_amount: Number(expense.actual_amount) || 0,
-      contract: expense.contract || null,
-      num_installments: null,
-      first_due_date: null,
-    },
-  });
-
-  const onSubmit = (data: EditExpenseFormData) => {
-    const original: Record<string, unknown> = {
-      name: expense.name || "",
-      description: expense.description || "",
-      estimated_amount: Number(expense.estimated_amount) || 0,
-      actual_amount: Number(expense.actual_amount) || 0,
-      contract: expense.contract || null,
-      num_installments: null,
-      first_due_date: null,
-    };
-    const modified: Record<string, unknown> = {
-      name: data.name,
-      description: data.description,
-      estimated_amount: Number(data.estimated_amount) || 0,
-      actual_amount: Number(data.actual_amount) || 0,
-      contract: data.contract,
-      num_installments: data.num_installments ?? null,
-      first_due_date: data.first_due_date ?? null,
-    };
-    const payload = buildPatchPayload(original, modified, [
-      "name",
-      "description",
-      "estimated_amount",
-      "actual_amount",
-      "contract",
-      "num_installments",
-      "first_due_date",
-    ]);
-
-    mutate(
-      { uuid: expense.uuid, data: payload },
-      createMutationCallbacks({
-        successMsg: "Despesa atualizada com sucesso!",
-        fallbackErrorMsg: "Erro ao atualizar despesa.",
-        onSuccess: () => onSuccess(),
-      }),
-    );
-  };
+  const { form, contracts, hasPaid, isPending, onSubmit, handleOpenChange } =
+    useEditExpenseForm({
+      expense,
+      weddingUuid,
+      onOpenChange,
+      onSuccess,
+    });
 
   return (
     <FormDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title="Editar Despesa"
       description="Altere os dados da despesa. A categoria não pode ser alterada."
       form={form}
