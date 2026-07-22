@@ -272,7 +272,7 @@ env-setup:
 	@if [ ! -f .env ]; then cp .env.example .env; fi
 
 secret-key:
-	@python3 generate_secret_key.py
+	@python3 -c 'import secrets; print(secrets.token_urlsafe(50))'
 
 fix-perms:
 	sudo chown -R $$USER:$$USER .

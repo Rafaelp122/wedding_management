@@ -103,7 +103,6 @@ frontend/blob-report/
 Thumbs.db
 logs
 *.local
-.jules/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
@@ -121,6 +120,3 @@ gha-creds-*.json
 .vercel
 coverage.json
 *.tsbuildinfo
-
-# Hermes Agent — session plans (scratch notes)
-.hermes/plans/
