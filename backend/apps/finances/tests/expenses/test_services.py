@@ -802,6 +802,7 @@ class TestExpenseServiceInstallmentDistribution:
             )
         assert exc.value.code == "invalid_installment_number"
 
+
 @pytest.mark.django_db
 class TestExpenseServiceValidateContractWedding:
     """Testes isolados para o método interno _validate_contract_wedding."""
@@ -833,6 +834,8 @@ class TestExpenseServiceValidateContractWedding:
         contract = ContractFactory(wedding=other_category.wedding, supplier=supplier)
 
         with pytest.raises(DomainIntegrityError) as exc:
-            ExpenseService._validate_contract_wedding(category=category, contract=contract)
+            ExpenseService._validate_contract_wedding(
+                category=category, contract=contract
+            )
 
         assert exc.value.code == "expense_contract_wedding_mismatch"
