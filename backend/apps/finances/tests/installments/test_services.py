@@ -533,6 +533,52 @@ class TestInstallmentServiceMarkAsPaid:
         with pytest.raises(ObjectNotFoundError):
             InstallmentService.mark_as_paid(user.company, other_installment)
 
+    def test_mark_as_paid_tolerance_zero_violation(self, user, mocker):
+        """Marcação de parcela como paga que quebra Tolerância Zero levanta erro.
+        Para forçar isso, simulamos um erro de validação (DjangoValidationError)
+        durante o `full_clean()` da despesa na hora do mark_as_paid."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+        )
+
+        mocker.patch(
+            "apps.finances.models.Expense.full_clean",
+            side_effect=DjangoValidationError("Mock error"),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.mark_as_paid(user.company, installment)
+
+        assert exc.value.code == "expense_math_violation"
+
+    def test_unmark_as_paid_tolerance_zero_violation(self, user, mocker):
+        """Desmarcação de parcela que quebra Tolerância Zero levanta erro.
+        Simulamos um erro de validação (DjangoValidationError) durante
+        o `full_clean()` da despesa na hora do unmark_as_paid."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        mocker.patch(
+            "apps.finances.models.Expense.full_clean",
+            side_effect=DjangoValidationError("Mock error"),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.unmark_as_paid(user.company, installment)
+
+        assert exc.value.code == "expense_math_violation"
+
     def test_unmark_as_paid_cross_tenant(self, user):
         """Parcela de outro tenant não pode ser desmarcada como paga."""
         other_user = UserFactory()
@@ -914,6 +960,33 @@ class TestInstallmentServiceListAndGet:
         qs_b = InstallmentService.list(user_b.company)
         assert qs_b.count() == 1
         assert qs_b.first().expense.company == user_b.company
+
+    def test_list_installments_filter_by_wedding_and_expense_id(self, user):
+        """list() filtra por wedding_id e expense_id."""
+        wedding1 = WeddingFactory(user_context=user)
+        wedding2 = WeddingFactory(user_context=user)
+
+        budget1 = BudgetFactory(wedding=wedding1)
+        budget2 = BudgetFactory(wedding=wedding2)
+
+        category1 = BudgetCategoryFactory(budget=budget1, wedding=wedding1)
+        category2 = BudgetCategoryFactory(budget=budget2, wedding=wedding2)
+
+        expense1 = ExpenseFactory(wedding=wedding1, category=category1, contract=None)
+        expense2 = ExpenseFactory(wedding=wedding2, category=category2, contract=None)
+
+        InstallmentFactory(expense=expense1, amount=Decimal("100.00"))
+        InstallmentFactory(expense=expense2, amount=Decimal("200.00"))
+
+        # Filtro por wedding_id
+        qs_wedding = InstallmentService.list(user.company, wedding_id=wedding1.uuid)
+        assert qs_wedding.count() == 1
+        assert qs_wedding.first().expense == expense1
+
+        # Filtro por expense_id
+        qs_expense = InstallmentService.list(user.company, expense_id=expense2.uuid)
+        assert qs_expense.count() == 1
+        assert qs_expense.first().expense == expense2
 
     def test_list_installments_filter_by_status(self, user):
         """list() com status filtra corretamente."""
