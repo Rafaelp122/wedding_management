@@ -801,3 +801,38 @@ class TestExpenseServiceInstallmentDistribution:
                 ),
             )
         assert exc.value.code == "invalid_installment_number"
+
+@pytest.mark.django_db
+class TestExpenseServiceValidateContractWedding:
+    """Testes isolados para o método interno _validate_contract_wedding."""
+
+    def test_validate_contract_wedding_none(self, user):
+        """Sucesso quando não há contrato vinculado."""
+        category = _setup_category(user)
+        # Deve passar sem levantar exceção
+        ExpenseService._validate_contract_wedding(category=category, contract=None)
+
+    def test_validate_contract_wedding_same_wedding(self, user):
+        """Sucesso quando o contrato pertence ao mesmo casamento da categoria."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        category = _setup_category(user)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(wedding=category.wedding, supplier=supplier)
+
+        # Deve passar sem levantar exceção
+        ExpenseService._validate_contract_wedding(category=category, contract=contract)
+
+    def test_validate_contract_wedding_different_wedding(self, user):
+        """Levanta erro quando o contrato pertence a outro casamento."""
+        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+
+        category = _setup_category(user)
+        other_category = _setup_category(user)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(wedding=other_category.wedding, supplier=supplier)
+
+        with pytest.raises(DomainIntegrityError) as exc:
+            ExpenseService._validate_contract_wedding(category=category, contract=contract)
+
+        assert exc.value.code == "expense_contract_wedding_mismatch"
