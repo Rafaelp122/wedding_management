@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import no_type_check
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -510,6 +511,25 @@ class TestInstallmentServiceMarkAsPaid:
         with pytest.raises(BusinessRuleViolation) as exc:
             InstallmentService.unmark_as_paid(user.company, installment)
         assert exc.value.code == "installment_not_paid"
+
+    @patch("apps.finances.models.Expense.full_clean")
+    def test_unmark_as_paid_math_violation(self, mock_full_clean, user):
+        """Erro de validação ao desmarcar levanta BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        mock_full_clean.side_effect = DjangoValidationError("Math error")
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            InstallmentService.unmark_as_paid(user.company, installment)
+        assert exc.value.code == "expense_math_violation"
 
     def test_mark_as_paid_cross_tenant(self, user):
         """Parcela de outro tenant não pode ser marcada como paga."""
