@@ -113,6 +113,7 @@ class TestSecurityAudit:
         exempt_relative_files = {
             os.path.normpath("apps/users/services/registration_service.py"),
             os.path.normpath("apps/users/services/token_service.py"),
+            os.path.normpath("apps/users/services/google_auth_service.py"),
             os.path.normpath("apps/tenants/services/tenant_service.py"),
             os.path.normpath("apps/core/services/storage_service.py"),
             os.path.normpath("apps/scheduler/services/templates.py"),

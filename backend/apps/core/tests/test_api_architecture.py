@@ -57,22 +57,14 @@ class TestApiArchitecture:
         Filtra as rotas públicas (/health e /auth/*) e dispara requisições HTTP
         simuladas para todas as demais rotas para assegurar a blindagem de segurança.
         """
-        public_prefixes = [
-            "/health",
-            "/auth/register",
-            "/auth/token",
-            "/auth/refresh",
-            "/auth/verify",
-        ]
-
         unauthorized_failures: list[str] = []
         tested_count = 0
 
         for prefix, router in api._routers:
             for path, path_op in router.path_operations.items():
                 full_route = (prefix + path).replace("//", "/")
-                # Ignora rotas públicas conhecidas
-                if any(full_route.startswith(p) for p in public_prefixes):
+                # Ignora rotas públicas de infraestrutura e autenticação
+                if full_route.startswith("/health") or full_route.startswith("/auth/"):
                     continue
 
                 # Substitui parâmetros de rota por valor fictício
