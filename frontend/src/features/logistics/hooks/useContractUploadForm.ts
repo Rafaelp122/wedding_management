@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import {
 import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
 import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { uploadFileToR2 } from "@/services/r2";
+import { getApiErrorInfo } from "@/api/error-utils";
 import type { ItemDraft } from "../components/contracts/ContractItemDrafts";
 
 export type CreateContractFormData = z.input<typeof LogisticsContractsCreateBody>;
@@ -51,11 +52,10 @@ export function useContractUploadForm({
   const [expenseCategory, setExpenseCategory] = useState("");
   const [expenseNumInstallments, setExpenseNumInstallments] = useState(1);
   const [expenseFirstDueDate, setExpenseFirstDueDate] = useState(
-    () => new Date().toISOString().slice(0, 10),
+    () => new Date().toLocaleDateString("sv"),
   );
 
-  const { mutateAsync: createFull, isPending: isCreating } =
-    useLogisticsContractsCreateFull();
+  const { mutateAsync: createFull } = useLogisticsContractsCreateFull();
   const { mutateAsync: getUploadUrl } = useLogisticsContractsUploadUrl();
 
   const { data: suppliersResponse } = useLogisticsSuppliersList();
@@ -84,6 +84,18 @@ export function useContractUploadForm({
     },
   });
 
+  useEffect(() => {
+    form.reset({
+      wedding: weddingUuid,
+      supplier: "",
+      name: "",
+      total_amount: undefined,
+      status: "DRAFT",
+      description: "",
+      parent: prefilledParentUuid || null,
+    });
+  }, [form, weddingUuid, prefilledParentUuid]);
+
   const handleExpenseChange = useCallback((v: ExpenseFieldsState) => {
     setExpenseChecked(v.checked);
     setExpenseCategory(v.category);
@@ -97,6 +109,10 @@ export function useContractUploadForm({
         form.reset();
         setItemDrafts([]);
         setSelectedFile(null);
+        setExpenseChecked(false);
+        setExpenseCategory("");
+        setExpenseNumInstallments(1);
+        setExpenseFirstDueDate(new Date().toLocaleDateString("sv"));
       }
       onOpenChange(open);
     },
@@ -153,9 +169,8 @@ export function useContractUploadForm({
       setSelectedFile(null);
       onSuccess();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error(`Erro ao criar contrato: ${message}`);
+      const { message } = getApiErrorInfo(error, "Erro ao criar contrato.");
+      toast.error(message);
     }
   };
 
@@ -168,7 +183,6 @@ export function useContractUploadForm({
     setSelectedFile,
     itemDrafts,
     setItemDrafts,
-    isCreating,
     isSubmitting: form.formState.isSubmitting,
     handleExpenseChange,
     handleOpenChange,

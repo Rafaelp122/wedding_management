@@ -272,9 +272,7 @@ describe("ContractUploadDialog", () => {
     );
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        "Erro ao criar contrato: Request failed with status code 500",
-      );
+      expect(toast.error).toHaveBeenCalledWith("API Error");
     });
   });
 

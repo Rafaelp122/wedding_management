@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -15,6 +15,7 @@ export type EditExpenseFormData = z.input<typeof FinancesExpensesUpdateBody>;
 export interface UseEditExpenseFormProps {
   expense: ExpenseOut;
   weddingUuid: string;
+  open?: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
@@ -30,6 +31,7 @@ export interface UseEditExpenseFormProps {
 export function useEditExpenseForm({
   expense,
   weddingUuid,
+  open,
   onOpenChange,
   onSuccess,
 }: UseEditExpenseFormProps) {
@@ -54,6 +56,20 @@ export function useEditExpenseForm({
       first_due_date: null,
     },
   });
+
+  useEffect(() => {
+    if (open !== false) {
+      form.reset({
+        name: expense.name || "",
+        description: expense.description || "",
+        estimated_amount: Number(expense.estimated_amount) || 0,
+        actual_amount: Number(expense.actual_amount) || 0,
+        contract: expense.contract || null,
+        num_installments: null,
+        first_due_date: null,
+      });
+    }
+  }, [form, expense, open]);
 
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {

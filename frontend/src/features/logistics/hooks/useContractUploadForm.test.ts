@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw";
 import { toast } from "sonner";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook, server, waitFor } from "@/test-utils";
 import { useContractUploadForm } from "./useContractUploadForm";
 
@@ -48,6 +48,10 @@ describe("useContractUploadForm", () => {
     );
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("fetches data and initializes form with defaults", async () => {
     const { result } = renderHook(() =>
       useContractUploadForm({
@@ -73,7 +77,15 @@ describe("useContractUploadForm", () => {
     });
   });
 
-  it("resets form, selected file, and item drafts on close", async () => {
+  it("resets form, selected file, item drafts, and expense fields on close", async () => {
+    let submittedPayload: unknown;
+    server.use(
+      http.post("*/api/v1/logistics/contracts/full/", async ({ request }) => {
+        submittedPayload = await request.json();
+        return HttpResponse.json({ uuid: "contract-new" }, { status: 201 });
+      }),
+    );
+
     const { result } = renderHook(() =>
       useContractUploadForm({
         weddingUuid,
@@ -88,6 +100,12 @@ describe("useContractUploadForm", () => {
       result.current.setItemDrafts([
         { key: "1", name: "Item 1", quantity: 2, acquisition_status: "PENDING" },
       ]);
+      result.current.handleExpenseChange({
+        checked: true,
+        category: "cat-1",
+        numInstallments: 5,
+        firstDueDate: "2026-12-01",
+      });
     });
 
     expect(result.current.selectedFile).toBe(file);
@@ -100,6 +118,43 @@ describe("useContractUploadForm", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(result.current.selectedFile).toBeNull();
     expect(result.current.itemDrafts).toEqual([]);
+
+    // Submit after reset to verify expense fields were reset
+    await act(async () => {
+      await result.current.onSubmit({
+        wedding: weddingUuid,
+        supplier: "supplier-1",
+        name: "Test",
+        total_amount: 100,
+        status: "DRAFT",
+      });
+    });
+
+    expect(submittedPayload).toMatchObject({
+      create_expense: false,
+      expense_category: null,
+      expense_num_installments: null,
+      expense_first_due_date: null,
+    });
+  });
+
+  it("updates form parent when prefilledParentUuid prop changes", () => {
+    let parentUuid: string | undefined = "parent-1";
+    const { result, rerender } = renderHook(() =>
+      useContractUploadForm({
+        weddingUuid,
+        prefilledParentUuid: parentUuid,
+        onOpenChange,
+        onSuccess,
+      }),
+    );
+
+    expect(result.current.form.getValues("parent")).toBe("parent-1");
+
+    parentUuid = "parent-2";
+    rerender();
+
+    expect(result.current.form.getValues("parent")).toBe("parent-2");
   });
 
   it("submits form data successfully without file", async () => {
@@ -252,9 +307,7 @@ describe("useContractUploadForm", () => {
     });
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Erro ao criar contrato: Request failed with status code 500"),
-      );
+      expect(toast.error).toHaveBeenCalledWith("Erro interno");
     });
   });
 });

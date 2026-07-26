@@ -142,4 +142,76 @@ describe("useEditExpenseForm", () => {
       expect(toast.error).toHaveBeenCalledWith("Erro");
     });
   });
+
+  it("resets form when expense prop or open state changes", () => {
+    let exp = mockExpense;
+    let isOpen = true;
+    const { result, rerender } = renderHook(() =>
+      useEditExpenseForm({
+        expense: exp,
+        weddingUuid,
+        open: isOpen,
+        onOpenChange,
+        onSuccess,
+      }),
+    );
+
+    expect(result.current.form.getValues("name")).toBe("Buffet Principal");
+
+    exp = createMockExpense({
+      ...mockExpense,
+      name: "Buffet Atualizado",
+    });
+
+    rerender();
+
+    expect(result.current.form.getValues("name")).toBe("Buffet Atualizado");
+  });
+
+  it("triggers onOpenChange when handleOpenChange is called", () => {
+    const { result } = renderHook(() =>
+      useEditExpenseForm({
+        expense: mockExpense,
+        weddingUuid,
+        onOpenChange,
+        onSuccess,
+      }),
+    );
+
+    act(() => {
+      result.current.handleOpenChange(false);
+    });
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("handles empty and null fields in expense object correctly", () => {
+    const emptyExpense = createMockExpense({
+      uuid: "exp-empty",
+      name: "",
+      description: "",
+      estimated_amount: "0.00",
+      actual_amount: "0.00",
+      contract: null,
+      paid_installments_count: undefined,
+    });
+
+    const { result } = renderHook(() =>
+      useEditExpenseForm({
+        expense: emptyExpense,
+        weddingUuid,
+        onOpenChange,
+        onSuccess,
+      }),
+    );
+
+    expect(result.current.hasPaid).toBe(false);
+    expect(result.current.form.getValues()).toMatchObject({
+      name: "",
+      description: "",
+      estimated_amount: 0,
+      actual_amount: 0,
+      contract: null,
+    });
+  });
 });

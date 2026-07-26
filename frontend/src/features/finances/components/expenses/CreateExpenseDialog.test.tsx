@@ -1,15 +1,41 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent } from "@/test-utils";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen, userEvent, server, waitFor, fireEvent } from "@/test-utils";
+import { HttpResponse, http } from "msw";
 import { CreateExpenseDialog } from "@/features/finances/components/expenses/CreateExpenseDialog";
 
 describe("CreateExpenseDialog", () => {
+  const weddingUuid = "w-1";
+  const onOpenChange = vi.fn();
+  const onSuccess = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    server.use(
+      http.get("*/api/v1/finances/categories/", () => {
+        return HttpResponse.json({
+          items: [{ uuid: "cat-1", name: "Alimentação" }],
+          count: 1,
+        });
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({
+          items: [{ uuid: "con-1", name: "Contrato Buffet" }],
+          count: 1,
+        });
+      }),
+      http.post("*/api/v1/finances/expenses/", () => {
+        return HttpResponse.json({ uuid: "exp-1" }, { status: 201 });
+      }),
+    );
+  });
+
   it("renders nothing when closed", () => {
     render(
       <CreateExpenseDialog
-        weddingUuid="w-1"
+        weddingUuid={weddingUuid}
         open={false}
-        onOpenChange={vi.fn()}
-        onSuccess={vi.fn()}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
       />,
     );
 
@@ -19,10 +45,10 @@ describe("CreateExpenseDialog", () => {
   it("renders form fields when open", () => {
     render(
       <CreateExpenseDialog
-        weddingUuid="w-1"
+        weddingUuid={weddingUuid}
         open={true}
-        onOpenChange={vi.fn()}
-        onSuccess={vi.fn()}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
       />,
     );
 
@@ -36,10 +62,10 @@ describe("CreateExpenseDialog", () => {
   it("shows validation error on empty submit", async () => {
     render(
       <CreateExpenseDialog
-        weddingUuid="w-1"
+        weddingUuid={weddingUuid}
         open={true}
-        onOpenChange={vi.fn()}
-        onSuccess={vi.fn()}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
       />,
     );
 
@@ -51,18 +77,57 @@ describe("CreateExpenseDialog", () => {
   });
 
   it("calls onOpenChange when cancel is clicked", async () => {
-    const onOpenChange = vi.fn();
     render(
       <CreateExpenseDialog
-        weddingUuid="w-1"
+        weddingUuid={weddingUuid}
         open={true}
         onOpenChange={onOpenChange}
-        onSuccess={vi.fn()}
+        onSuccess={onSuccess}
       />,
     );
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /cancelar/i }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("fills out form fields and submits successfully", async () => {
+    const user = userEvent.setup();
+    render(
+      <CreateExpenseDialog
+        weddingUuid={weddingUuid}
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    // Select category
+    await user.click(screen.getByRole("combobox", { name: /categoria/i }));
+    const categoryOption = await screen.findByRole("option", {
+      name: /alimentação/i,
+    });
+    await user.click(categoryOption);
+
+    // Fill name
+    await user.type(screen.getByLabelText("Nome da Despesa"), "Jantar dos Noivos");
+
+    // Fill estimated amount and actual amount
+    const estimatedInput = screen.getByLabelText("Valor Estimado");
+    fireEvent.change(estimatedInput, { target: { value: "3500" } });
+
+    const actualInput = screen.getByLabelText("Valor Real (Contratado)");
+    fireEvent.change(actualInput, { target: { value: "3500" } });
+
+    // Change due date
+    const dateInput = screen.getByLabelText("1º Vencimento");
+    fireEvent.change(dateInput, { target: { value: "2026-11-15" } });
+
+    // Submit
+    await user.click(screen.getByRole("button", { name: /criar despesa/i }));
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalled();
+    });
   });
 });

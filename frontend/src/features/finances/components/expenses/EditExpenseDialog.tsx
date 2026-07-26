@@ -37,6 +37,7 @@ export function EditExpenseDialog({
     useEditExpenseForm({
       expense,
       weddingUuid,
+      open,
       onOpenChange,
       onSuccess,
     });
