@@ -17,7 +17,7 @@ export interface WeddingOut {
   template: string | null;
   created_at: string;
   updated_at: string;
-  total_budget?: number | null;
+  total_budget?: string | null;
   /** @minimum 0 */
   overdue_installments?: number;
   /** @minimum 0 */
