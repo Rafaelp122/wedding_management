@@ -7,7 +7,6 @@ from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.logistics.models.supplier import Supplier
 from apps.logistics.schemas import SupplierIn, SupplierOut, SupplierPatchIn
 from apps.logistics.services.supplier_service import SupplierService
-from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -27,7 +26,7 @@ def list_suppliers(
     Lista todos os fornecedores cadastrados pelo Planner logado.
     Aceita filtros de busca textual e status.
     """
-    user = require_user(request.user)
+    user = request.user
     return SupplierService.list(
         company=user.company, search=search, is_active=is_active
     )
@@ -42,7 +41,7 @@ def retrieve_supplier(request: AuthRequest, uuid: UUID4) -> Supplier:
     """
     Retorna os detalhes de um fornecedor específico.
     """
-    user = require_user(request.user)
+    user = request.user
     return SupplierService.get(company=user.company, uuid=uuid)
 
 
@@ -55,7 +54,7 @@ def create_supplier(request: AuthRequest, payload: SupplierIn) -> tuple[int, Sup
     """
     Cadastra um novo fornecedor no sistema.
     """
-    user = require_user(request.user)
+    user = request.user
     supplier = SupplierService.create(company=user.company, payload=payload)
     return 201, supplier
 
@@ -71,7 +70,7 @@ def update_supplier(
     """
     Atualiza informações específicas de um fornecedor (nome, contato, categorias).
     """
-    user = require_user(request.user)
+    user = request.user
     supplier = SupplierService.get(company=user.company, uuid=uuid)
     return SupplierService.update(
         company=user.company, instance=supplier, payload=payload
@@ -87,7 +86,7 @@ def delete_supplier(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove o cadastro de um fornecedor do sistema.
     """
-    user = require_user(request.user)
+    user = request.user
     supplier = SupplierService.get(company=user.company, uuid=uuid)
     SupplierService.delete(company=user.company, instance=supplier)
     return 204, None

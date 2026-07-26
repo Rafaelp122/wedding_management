@@ -56,7 +56,7 @@ class GuestOut(Schema):
 
 @router.post("/guests", response={201: GuestOut}, operation_id="guests_create")
 def create_guest(request: HttpRequest, payload: GuestCreateIn):
-    user = require_user(request.user)
+    user = request.user
     guest = services.create_guest(
         company=user.company,
         first_name=payload.first_name,
@@ -93,19 +93,18 @@ def create_guest(*, company: Company, first_name: str, last_name: str, email: st
 ## 3. Authentication & Authorization
 
 - **API-level auth**: `JWTAuth()` is configured globally in `config/api.py` — all endpoints require JWT Bearer token by default.
-- **Endpoint guard**: Use `require_user(request.user)` from `apps.users.auth` as an explicit guard clause that narrows `AuthContextUser` to `User` and raises `AuthenticationRequiredError` (401) if unauthenticated.
-- **`user.company`**: Access the tenant company via `user.company`, never `request.user.company` directly.
+- **`request.user`**: In authenticated router functions (using `AuthRequest`), `request.user` is guaranteed to be an authenticated `User` instance.
+- **`user.company`**: Access the tenant company via `user.company` or `request.user.company`.
 
 ```python
 from ninja import Router
-from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 router = Router()
 
 @router.get("/items", response=list[ItemOut], operation_id="items_list")
 def list_items(request: AuthRequest):
-    user = require_user(request.user)
+    user = request.user
     return ItemService.list(company=user.company)
 ```
 
@@ -191,7 +190,6 @@ def handle_validation_error(request, exc):
 ### Project Exception Hierarchy (`apps/core/exceptions.py`)
 
 - `ApplicationError` (400) — base exception with `status_code`, `detail`, and `code`.
-- `AuthenticationRequiredError` (401) — authentication required. Raised by `require_user()`.
 - `ObjectNotFoundError` (404) — resource not found. Replaces `get_object_or_404` in the Service Layer.
 - `BusinessRuleViolation` (422) — business rule prevents processing (e.g. ADR-010 Zero Tolerance).
 - `DomainIntegrityError` (409) — cross-wedding validation, data integrity conflicts.
@@ -309,9 +307,6 @@ Orval hooks won't be generated. Every `@router.get/post/...` must have `operatio
 
 ### ❌ Using Django's `get_object_or_404` in Services
 Leaks existence information to unauthorized tenants and doesn't filter by company. Use `get_object_or_404_for_tenant` from `apps.core.shortcuts` instead — it's type-safe, tenant-aware, and already used 40+ times across the project.
-
-### ❌ Accessing `request.user.company` Directly
-Can fail if user is `AuthContextUser` instead of `User`. Always use `user = require_user(request.user)` first.
 
 ### ❌ Not Using `transaction.atomic` for Multi-Write Services
 If a service creates + updates multiple models, wrap in `with transaction.atomic():`. Otherwise a partial failure leaves inconsistent data.

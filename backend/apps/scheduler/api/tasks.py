@@ -7,7 +7,6 @@ from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.scheduler.models import Task
 from apps.scheduler.schemas import TaskIn, TaskOut, TaskPatchIn
 from apps.scheduler.services import TaskService
-from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -20,7 +19,7 @@ def list_tasks(request: AuthRequest, wedding_id: UUID4 | None = None) -> QuerySe
     """
     Lista tarefas e checklist.
     """
-    user = require_user(request.user)
+    user = request.user
     return TaskService.list(user.company, wedding_id=wedding_id)
 
 
@@ -33,7 +32,7 @@ def create_task(request: AuthRequest, payload: TaskIn) -> tuple[int, Task]:
     """
     Cria uma nova tarefa no checklist.
     """
-    user = require_user(request.user)
+    user = request.user
     return 201, TaskService.create(user.company, payload)
 
 
@@ -46,7 +45,7 @@ def update_task(request: AuthRequest, uuid: UUID4, payload: TaskPatchIn) -> Task
     """
     Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
     """
-    user = require_user(request.user)
+    user = request.user
     instance = TaskService.get(user.company, uuid)
     return TaskService.update(user.company, instance, payload)
 
@@ -60,7 +59,7 @@ def delete_task(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     """
     Remove uma tarefa permanentemente.
     """
-    user = require_user(request.user)
+    user = request.user
     instance = TaskService.get(user.company, uuid)
     TaskService.delete(user.company, instance)
     return 204, None

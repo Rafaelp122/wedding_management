@@ -2,7 +2,6 @@ from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import READ_ERROR_RESPONSES
-from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 from apps.weddings.schemas import DashboardSummaryOut, WeddingDashboardOut
 from apps.weddings.services import DashboardService
@@ -22,7 +21,7 @@ def dashboard_summary(request: AuthRequest) -> dict:
     Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
     overdue installments, pending contracts, and critical weddings.
     """
-    user = require_user(request.user)
+    user = request.user
     return DashboardService.get_summary(company=user.company)
 
 
@@ -38,7 +37,7 @@ def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict:
     task completion stats, contract status, upcoming installments, urgent tasks,
     and category breakdown.
     """
-    user = require_user(request.user)
+    user = request.user
     return DashboardService.get_wedding_overview(
         company=user.company,
         wedding_uuid=uuid,
