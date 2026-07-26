@@ -27,13 +27,15 @@ export const WeddingHeader = memo(function WeddingHeader({
   const statusStyle = getWeddingStatusBadgeStyle(wedding.status);
   const statusLabel = getWeddingStatusLabel(wedding.status);
 
-  const formatBudget = (amount?: number | null) => {
-    if (amount === undefined || amount === null) return "R$ —";
-    if (amount >= 1000) {
-      const value = amount / 1000;
+  const formatBudget = (amount?: number | string | null) => {
+    if (amount === undefined || amount === null || amount === "") return "R$ —";
+    const num = typeof amount === "number" ? amount : Number.parseFloat(amount);
+    if (Number.isNaN(num)) return "R$ —";
+    if (num >= 1000) {
+      const value = num / 1000;
       return `R$ ${value % 1 === 0 ? value : value.toFixed(1)}k`;
     }
-    return `R$ ${amount}`;
+    return `R$ ${num}`;
   };
 
   return (

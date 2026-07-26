@@ -16,7 +16,7 @@ const mockWedding = createMockWedding({
   location: "Buffet Castelo",
   date: "2026-10-15",
   status: "IN_PROGRESS",
-  total_budget: 50000,
+  total_budget: "50000",
 });
 
 describe("WeddingsListPage", () => {
