@@ -45,15 +45,16 @@ export function formatCurrencyBR(value: number): string {
 }
 
 export function formatCurrencyBRCompact(
-  value: number,
+  value: number | string,
   maximumFractionDigits = 2,
 ): string {
+  const num = typeof value === "number" ? value : parseDecimal(value);
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
     minimumFractionDigits: 0,
     maximumFractionDigits,
-  }).format(value);
+  }).format(num);
 }
 
 export function parseDecimal(value?: string | null): number {

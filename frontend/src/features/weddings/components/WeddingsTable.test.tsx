@@ -10,7 +10,7 @@ const mockWeddings = [
     bride_name: "Maria",
     status: "IN_PROGRESS",
     expected_guests: 150,
-    total_budget: 50000,
+    total_budget: "50000",
     overdue_installments: 1,
     incomplete_tasks: 2,
   }),

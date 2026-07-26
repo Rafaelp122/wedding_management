@@ -8,7 +8,7 @@ const mockWedding = createMockWedding({
   bride_name: "Maria",
   location: "Fazenda Vila Rica",
   expected_guests: 150,
-  total_budget: 75000,
+  total_budget: "75000",
   template: "beach_6m",
   status: "IN_PROGRESS",
 });

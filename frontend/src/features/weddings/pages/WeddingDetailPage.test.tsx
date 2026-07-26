@@ -39,7 +39,7 @@ const mockWedding = createMockWedding({
   date: "2026-09-20",
   location: "Fazenda Vila Rica, SP",
   expected_guests: 250,
-  total_budget: 145000,
+  total_budget: "145000",
   template: "beach_6m",
 });
 

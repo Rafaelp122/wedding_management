@@ -37,8 +37,7 @@ export const WeddingsListQueryParams = zod.object({
   "offset": zod.number().min(weddingsListQueryOffsetMin).default(weddingsListQueryOffsetDefault)
 })
 
-export const weddingsListResponseItemsItemTotalBudgetOneMin = 0;
-
+export const weddingsListResponseItemsItemTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const weddingsListResponseItemsItemOverdueInstallmentsDefault = 0;
 export const weddingsListResponseItemsItemOverdueInstallmentsMin = 0;
 
@@ -59,7 +58,7 @@ export const WeddingsListResponse = zod.object({
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
-  "total_budget": zod.union([zod.number().min(weddingsListResponseItemsItemTotalBudgetOneMin),zod.null()]).optional(),
+  "total_budget": zod.union([zod.string().regex(weddingsListResponseItemsItemTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.number().min(weddingsListResponseItemsItemOverdueInstallmentsMin).default(weddingsListResponseItemsItemOverdueInstallmentsDefault),
   "incomplete_tasks": zod.number().min(weddingsListResponseItemsItemIncompleteTasksMin).default(weddingsListResponseItemsItemIncompleteTasksDefault)
 })),
@@ -82,8 +81,7 @@ export const WeddingsCreateBody = zod.object({
   "template": zod.union([zod.string().max(weddingsCreateBodyTemplateOneMax),zod.null()]).optional()
 })
 
-export const weddingsCreateResponseTotalBudgetOneMin = 0;
-
+export const weddingsCreateResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const weddingsCreateResponseOverdueInstallmentsDefault = 0;
 export const weddingsCreateResponseOverdueInstallmentsMin = 0;
 
@@ -103,7 +101,7 @@ export const WeddingsCreateResponse = zod.object({
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
-  "total_budget": zod.union([zod.number().min(weddingsCreateResponseTotalBudgetOneMin),zod.null()]).optional(),
+  "total_budget": zod.union([zod.string().regex(weddingsCreateResponseTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.number().min(weddingsCreateResponseOverdueInstallmentsMin).default(weddingsCreateResponseOverdueInstallmentsDefault),
   "incomplete_tasks": zod.number().min(weddingsCreateResponseIncompleteTasksMin).default(weddingsCreateResponseIncompleteTasksDefault)
 })
@@ -135,8 +133,7 @@ export const WeddingsReadParams = zod.object({
   "uuid": zod.string()
 })
 
-export const weddingsReadResponseTotalBudgetOneMin = 0;
-
+export const weddingsReadResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const weddingsReadResponseOverdueInstallmentsDefault = 0;
 export const weddingsReadResponseOverdueInstallmentsMin = 0;
 
@@ -156,7 +153,7 @@ export const WeddingsReadResponse = zod.object({
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
-  "total_budget": zod.union([zod.number().min(weddingsReadResponseTotalBudgetOneMin),zod.null()]).optional(),
+  "total_budget": zod.union([zod.string().regex(weddingsReadResponseTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.number().min(weddingsReadResponseOverdueInstallmentsMin).default(weddingsReadResponseOverdueInstallmentsDefault),
   "incomplete_tasks": zod.number().min(weddingsReadResponseIncompleteTasksMin).default(weddingsReadResponseIncompleteTasksDefault)
 })
@@ -177,8 +174,7 @@ export const WeddingsUpdateBody = zod.object({
   "status": zod.union([zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),zod.null()]).optional()
 })
 
-export const weddingsUpdateResponseTotalBudgetOneMin = 0;
-
+export const weddingsUpdateResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const weddingsUpdateResponseOverdueInstallmentsDefault = 0;
 export const weddingsUpdateResponseOverdueInstallmentsMin = 0;
 
@@ -198,7 +194,7 @@ export const WeddingsUpdateResponse = zod.object({
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
-  "total_budget": zod.union([zod.number().min(weddingsUpdateResponseTotalBudgetOneMin),zod.null()]).optional(),
+  "total_budget": zod.union([zod.string().regex(weddingsUpdateResponseTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.number().min(weddingsUpdateResponseOverdueInstallmentsMin).default(weddingsUpdateResponseOverdueInstallmentsDefault),
   "incomplete_tasks": zod.number().min(weddingsUpdateResponseIncompleteTasksMin).default(weddingsUpdateResponseIncompleteTasksDefault)
 })
@@ -220,8 +216,7 @@ export const WeddingsOverviewReadParams = zod.object({
   "uuid": zod.string()
 })
 
-export const weddingsOverviewReadResponseWeddingTotalBudgetOneMin = 0;
-
+export const weddingsOverviewReadResponseWeddingTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const weddingsOverviewReadResponseWeddingOverdueInstallmentsDefault = 0;
 export const weddingsOverviewReadResponseWeddingOverdueInstallmentsMin = 0;
 
@@ -242,7 +237,7 @@ export const WeddingsOverviewReadResponse = zod.object({
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
-  "total_budget": zod.union([zod.number().min(weddingsOverviewReadResponseWeddingTotalBudgetOneMin),zod.null()]).optional(),
+  "total_budget": zod.union([zod.string().regex(weddingsOverviewReadResponseWeddingTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.number().min(weddingsOverviewReadResponseWeddingOverdueInstallmentsMin).default(weddingsOverviewReadResponseWeddingOverdueInstallmentsDefault),
   "incomplete_tasks": zod.number().min(weddingsOverviewReadResponseWeddingIncompleteTasksMin).default(weddingsOverviewReadResponseWeddingIncompleteTasksDefault)
 }),

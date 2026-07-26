@@ -39,7 +39,7 @@ class EventService:
         Returns:
             QuerySet contendo os eventos filtrados da empresa.
         """
-        qs = Event.objects.for_tenant(company).select_related("wedding")
+        qs = Event.objects.for_tenant(company).select_related("wedding", "company")
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
         return qs
