@@ -167,13 +167,14 @@ class TestBaseModelValidation:
         assert instance.created_at <= timezone.now()
         assert instance.updated_at <= timezone.now()
 
+        old_created_at = instance.created_at
         old_updated_at = instance.updated_at
         time.sleep(0.001)
         instance.name = "Updated"
         instance.save()
 
         assert instance.updated_at > old_updated_at
-        assert instance.created_at == instance.created_at
+        assert instance.created_at == old_created_at
 
     def test_base_model_uuid_unique_and_indexed(self) -> None:
         """Teste CRÍTICO: UUID é único e indexado."""

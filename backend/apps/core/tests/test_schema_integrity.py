@@ -75,13 +75,11 @@ def _get_all_schema_classes() -> set[type[pydantic.BaseModel]]:
     """Descobre dinamicamente todas as classes de Schema do Ninja/Pydantic em apps."""
     schemas: set[type[pydantic.BaseModel]] = set()
     for _, modname, _ in pkgutil.walk_packages(apps.__path__, apps.__name__ + "."):
-        if ".tests" in modname:
+        if ".tests" in modname or not (
+            modname.endswith(".schemas") or modname.endswith(".api")
+        ):
             continue
-        try:
-            mod = importlib.import_module(modname)
-        except Exception as exc:
-            logger.debug(f"Não foi possível importar {modname}: {exc}")
-            continue
+        mod = importlib.import_module(modname)
         for _, obj in inspect.getmembers(mod, inspect.isclass):
             if (
                 issubclass(obj, pydantic.BaseModel)

@@ -44,8 +44,6 @@ class TestConcurrencyLocks:
         A trava impede race condition (TOCTOU) ao verificar se a soma das categorias
         excede o teto estipulado.
         """
-        spy = mocker.spy(QuerySet, "select_for_update")
-
         company = cast(Company, CompanyFactory())
         wedding = cast(Wedding, WeddingFactory(company=company))
         budget = cast(
@@ -60,6 +58,8 @@ class TestConcurrencyLocks:
             name="Fotografia",
             allocated_budget=Decimal("3000.00"),
         )
+
+        spy = mocker.spy(QuerySet, "select_for_update")
 
         with CaptureQueriesContext(connection) as ctx:
             category = BudgetCategoryService.create(company=company, payload=payload)
@@ -82,8 +82,6 @@ class TestConcurrencyLocks:
 
         Verifica se a revalidação do teto orçamentário é protegida por trava pessimista.
         """
-        spy = mocker.spy(QuerySet, "select_for_update")
-
         company = cast(Company, CompanyFactory())
         wedding = cast(Wedding, WeddingFactory(company=company))
         budget = cast(
@@ -106,6 +104,8 @@ class TestConcurrencyLocks:
             name=category.name, allocated_budget=Decimal("5000.00")
         )
 
+        spy = mocker.spy(QuerySet, "select_for_update")
+
         with CaptureQueriesContext(connection) as ctx:
             updated = BudgetCategoryService.update(
                 company=company, instance=category, payload=payload
@@ -127,10 +127,10 @@ class TestConcurrencyLocks:
         """
         Garante que get_or_create_for_wedding trava o orçamento ao criar categorias.
         """
-        spy = mocker.spy(QuerySet, "select_for_update")
-
         company = cast(Company, CompanyFactory())
         wedding = cast(Wedding, WeddingFactory(company=company))
+
+        spy = mocker.spy(QuerySet, "select_for_update")
 
         with CaptureQueriesContext(connection) as ctx:
             budget = BudgetService.get_or_create_for_wedding(
