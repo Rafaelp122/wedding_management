@@ -11,7 +11,6 @@ from apps.finances.schemas import (
     BudgetCategoryPatchIn,
 )
 from apps.finances.services.budget_category_service import BudgetCategoryService
-from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -31,7 +30,7 @@ def list_categories(
     ``wedding_id`` é repassado ao service que detém a regra de filtragem;
     esta rota não conhece a lógica de tenancy.
     """
-    user = require_user(request.user)
+    user = request.user
     return BudgetCategoryService.list(user.company, wedding_id=wedding_id)
 
 
@@ -45,7 +44,7 @@ def get_category(request: AuthRequest, uuid: UUID4) -> BudgetCategory:
     Acessa os detalhamentos da categoria isolada de forma simples e visual.
     Garante a segurança contábil sem vazar detalhes restritos a terceiros.
     """
-    user = require_user(request.user)
+    user = request.user
     return BudgetCategoryService.get(user.company, uuid)
 
 
@@ -61,7 +60,7 @@ def create_category(
     Abre mais um bloco de centro de custo em conta específica da festa.
     Associa devidamente ao orçamento atrelado em tela.
     """
-    user = require_user(request.user)
+    user = request.user
     return 201, BudgetCategoryService.create(user.company, payload)
 
 
@@ -77,7 +76,7 @@ def update_category(
     Corrige o título, ou altera o valor dos gastos planejados.
     Evita sobrescrições acidentais errôneas em outras rotas.
     """
-    user = require_user(request.user)
+    user = request.user
     instance = BudgetCategoryService.get(user.company, uuid)
     return BudgetCategoryService.update(user.company, instance, payload)
 
@@ -92,7 +91,7 @@ def delete_category(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Fecha um agrupamento no orçamento permanentemente.
     Exclui anotações de faturas de modo destrutivo para balanceamento.
     """
-    user = require_user(request.user)
+    user = request.user
     instance = BudgetCategoryService.get(user.company, uuid)
     BudgetCategoryService.delete(user.company, instance)
     return 204, None

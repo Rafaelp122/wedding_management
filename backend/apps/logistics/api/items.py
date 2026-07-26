@@ -12,7 +12,6 @@ from apps.logistics.schemas import (
     ItemStatusTransitionIn,
 )
 from apps.logistics.services.item_service import ItemService
-from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -32,7 +31,7 @@ def list_items(
     Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
     Permite filtrar por casamento, status de aquisição, busca textual e contrato.
     """
-    user = require_user(request.user)
+    user = request.user
     return ItemService.list(
         company=user.company,
         wedding_id=wedding_id,
@@ -51,7 +50,7 @@ def retrieve_item(request: AuthRequest, uuid: UUID4) -> Item:
     """
     Mostra os detalhes nominais de um item logístico específico.
     """
-    user = require_user(request.user)
+    user = request.user
     return ItemService.get(company=user.company, uuid=uuid)
 
 
@@ -65,7 +64,7 @@ def create_item(request: AuthRequest, payload: ItemIn) -> tuple[int, Item]:
     Adiciona um recurso físico no painel de acompanhamento.
     Parte do planejamento logístico de um evento.
     """
-    user = require_user(request.user)
+    user = request.user
     item = ItemService.create(company=user.company, payload=payload)
     return 201, item
 
@@ -79,7 +78,7 @@ def update_item(request: AuthRequest, uuid: UUID4, payload: ItemPatchIn) -> Item
     """
     Atualiza quantidades ou informações de apoio do lote do item em questão.
     """
-    user = require_user(request.user)
+    user = request.user
     item = ItemService.get(company=user.company, uuid=uuid)
     return ItemService.update(company=user.company, instance=item, payload=payload)
 
@@ -94,7 +93,7 @@ def delete_item(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Exclui permanentemente o indicativo do item.
     Remove das listas logísticas rastreadas pelo Planner.
     """
-    user = require_user(request.user)
+    user = request.user
     item = ItemService.get(company=user.company, uuid=uuid)
     ItemService.delete(company=user.company, instance=item)
     return 204, None
@@ -111,7 +110,7 @@ def transition_item_status(
     """
     Transita o status de aquisição de um item logístico (PENDING → IN_PROGRESS → DONE).
     """
-    user = require_user(request.user)
+    user = request.user
     item = ItemService.get(company=user.company, uuid=uuid)
     return ItemService.transition_status(
         company=user.company,

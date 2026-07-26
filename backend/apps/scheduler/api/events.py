@@ -7,7 +7,6 @@ from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.scheduler.models import Event
 from apps.scheduler.schemas import EventIn, EventOut, EventPatchIn
 from apps.scheduler.services import EventService
-from apps.users.auth import require_user
 from apps.users.types import AuthRequest
 
 
@@ -25,7 +24,7 @@ def list_events(
     Retorna tanto tarefas isoladas quanto eventos atrelados aos diferentes casamentos.
     Garante que o usuário veja apenas os eventos de sua propriedade.
     """
-    user = require_user(request.user)
+    user = request.user
     return EventService.list(user.company, wedding_id=wedding_id)
 
 
@@ -40,7 +39,7 @@ def get_event(request: AuthRequest, uuid: UUID4) -> Event:
 
     Realiza a busca pelo UUID garantindo que o evento pertence ao Planner logado.
     """
-    user = require_user(request.user)
+    user = request.user
     return EventService.get(user.company, uuid)
 
 
@@ -57,7 +56,7 @@ def create_event(request: AuthRequest, payload: EventIn) -> tuple[int, Event]:
     - Garantir que a data de término não seja anterior à data de início.
     - Validar os minutos para o disparo de lembretes (reminder).
     """
-    user = require_user(request.user)
+    user = request.user
     return 201, EventService.create(user.company, payload)
 
 
@@ -72,7 +71,7 @@ def update_event(request: AuthRequest, uuid: UUID4, payload: EventPatchIn) -> Ev
 
     Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
     """
-    user = require_user(request.user)
+    user = request.user
     instance = EventService.get(user.company, uuid)
     return EventService.update(user.company, instance, payload)
 
@@ -89,7 +88,7 @@ def delete_event(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Deleta a tarefa permanentemente.
     Desativa também os alertas e lembretes associados a ela.
     """
-    user = require_user(request.user)
+    user = request.user
     instance = EventService.get(user.company, uuid)
     EventService.delete(user.company, instance)
     return 204, None
