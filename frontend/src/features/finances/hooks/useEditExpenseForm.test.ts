@@ -1,9 +1,11 @@
-import { HttpResponse, http } from "msw";
+import { HttpResponse } from "msw";
 import { toast } from "sonner";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, renderHook, server, waitFor } from "@/test-utils";
 import { createMockExpense } from "@/test-data";
 import { useEditExpenseForm } from "./useEditExpenseForm";
+import { getFinancesExpensesUpdateMockHandler } from "@/api/generated/v1/endpoints/finances/finances.msw";
+import { getLogisticsContractsListMockHandler } from "@/api/generated/v1/endpoints/logistics/logistics.msw";
 
 describe("useEditExpenseForm", () => {
   const weddingUuid = "wedding-1";
@@ -25,12 +27,8 @@ describe("useEditExpenseForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     server.use(
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({ items: [mockContract], count: 1 });
-      }),
-      http.patch("*/api/v1/finances/expenses/:uuid/", () => {
-        return HttpResponse.json({ ...mockExpense }, { status: 200 });
-      }),
+      getLogisticsContractsListMockHandler({ items: [mockContract as any], count: 1 }),
+      getFinancesExpensesUpdateMockHandler(mockExpense as any),
     );
   });
 
@@ -81,9 +79,9 @@ describe("useEditExpenseForm", () => {
   it("submits patch payload containing only modified fields", async () => {
     let patchBody: unknown;
     server.use(
-      http.patch("*/api/v1/finances/expenses/:uuid/", async ({ request }) => {
+      getFinancesExpensesUpdateMockHandler(async ({ request }) => {
         patchBody = await request.json();
-        return HttpResponse.json({ ...mockExpense, name: "Buffet Premium" });
+        return { ...mockExpense, name: "Buffet Premium" } as any;
       }),
     );
 
@@ -117,8 +115,8 @@ describe("useEditExpenseForm", () => {
 
   it("handles errors when expense update fails", async () => {
     server.use(
-      http.patch("*/api/v1/finances/expenses/:uuid/", () => {
-        return HttpResponse.json({ detail: "Erro" }, { status: 500 });
+      getFinancesExpensesUpdateMockHandler(() => {
+        throw HttpResponse.json({ detail: "Erro" }, { status: 500 });
       }),
     );
 
@@ -163,6 +161,19 @@ describe("useEditExpenseForm", () => {
       name: "Buffet Atualizado",
     });
 
+    rerender();
+
+    expect(result.current.form.getValues("name")).toBe("Buffet Atualizado");
+
+    act(() => {
+      result.current.form.setValue("name", "Nome Modificado");
+    });
+    expect(result.current.form.getValues("name")).toBe("Nome Modificado");
+
+    isOpen = false;
+    rerender();
+
+    isOpen = true;
     rerender();
 
     expect(result.current.form.getValues("name")).toBe("Buffet Atualizado");

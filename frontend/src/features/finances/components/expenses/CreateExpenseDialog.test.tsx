@@ -1,7 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent, server, waitFor, fireEvent } from "@/test-utils";
-import { HttpResponse, http } from "msw";
 import { CreateExpenseDialog } from "@/features/finances/components/expenses/CreateExpenseDialog";
+import {
+  getFinancesCategoriesListMockHandler,
+  getFinancesExpensesCreateMockHandler,
+} from "@/api/generated/v1/endpoints/finances/finances.msw";
+import { getLogisticsContractsListMockHandler } from "@/api/generated/v1/endpoints/logistics/logistics.msw";
 
 describe("CreateExpenseDialog", () => {
   const weddingUuid = "w-1";
@@ -11,21 +15,15 @@ describe("CreateExpenseDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     server.use(
-      http.get("*/api/v1/finances/categories/", () => {
-        return HttpResponse.json({
-          items: [{ uuid: "cat-1", name: "Alimentação" }],
-          count: 1,
-        });
+      getFinancesCategoriesListMockHandler({
+        items: [{ uuid: "cat-1", name: "Alimentação" } as any],
+        count: 1,
       }),
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({
-          items: [{ uuid: "con-1", name: "Contrato Buffet" }],
-          count: 1,
-        });
+      getLogisticsContractsListMockHandler({
+        items: [{ uuid: "con-1", name: "Contrato Buffet" } as any],
+        count: 1,
       }),
-      http.post("*/api/v1/finances/expenses/", () => {
-        return HttpResponse.json({ uuid: "exp-1" }, { status: 201 });
-      }),
+      getFinancesExpensesCreateMockHandler({ uuid: "exp-1" } as any),
     );
   });
 

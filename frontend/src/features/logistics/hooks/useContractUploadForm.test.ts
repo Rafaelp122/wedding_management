@@ -1,8 +1,15 @@
-import { HttpResponse, http } from "msw";
+import { HttpResponse } from "msw";
 import { toast } from "sonner";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook, server, waitFor } from "@/test-utils";
 import { useContractUploadForm } from "./useContractUploadForm";
+import {
+  getLogisticsSuppliersListMockHandler,
+  getLogisticsContractsListMockHandler,
+  getLogisticsContractsCreateFullMockHandler,
+  getLogisticsContractsUploadUrlMockHandler,
+} from "@/api/generated/v1/endpoints/logistics/logistics.msw";
+import { getFinancesCategoriesListMockHandler } from "@/api/generated/v1/endpoints/finances/finances.msw";
 
 describe("useContractUploadForm", () => {
   const weddingUuid = "wedding-1";
@@ -27,24 +34,14 @@ describe("useContractUploadForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     server.use(
-      http.get("*/api/v1/logistics/suppliers/", () => {
-        return HttpResponse.json({ items: [mockSupplier], count: 1 });
-      }),
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({ items: [mockContract], count: 1 });
-      }),
-      http.get("*/api/v1/finances/categories/", () => {
-        return HttpResponse.json({ items: [mockCategory], count: 1 });
-      }),
-      http.post("*/api/v1/logistics/contracts/full/", () => {
-        return HttpResponse.json({ uuid: "contract-new" }, { status: 201 });
-      }),
-      http.post("*/api/v1/logistics/contracts/upload-url/", () => {
-        return HttpResponse.json({
-          upload_url: "https://r2.example.com/upload",
-          object_key: "r2-file-key",
-        });
-      }),
+      getLogisticsSuppliersListMockHandler({ items: [mockSupplier as any], count: 1 }),
+      getLogisticsContractsListMockHandler({ items: [mockContract as any], count: 1 }),
+      getFinancesCategoriesListMockHandler({ items: [mockCategory as any], count: 1 }),
+      getLogisticsContractsCreateFullMockHandler({ uuid: "contract-new" } as any),
+      getLogisticsContractsUploadUrlMockHandler({
+        upload_url: "https://r2.example.com/upload",
+        object_key: "r2-file-key",
+      } as any),
     );
   });
 
@@ -80,9 +77,9 @@ describe("useContractUploadForm", () => {
   it("resets form, selected file, item drafts, and expense fields on close", async () => {
     let submittedPayload: unknown;
     server.use(
-      http.post("*/api/v1/logistics/contracts/full/", async ({ request }) => {
+      getLogisticsContractsCreateFullMockHandler(async ({ request }) => {
         submittedPayload = await request.json();
-        return HttpResponse.json({ uuid: "contract-new" }, { status: 201 });
+        return { uuid: "contract-new" } as any;
       }),
     );
 
@@ -160,9 +157,9 @@ describe("useContractUploadForm", () => {
   it("submits form data successfully without file", async () => {
     let submittedPayload: unknown;
     server.use(
-      http.post("*/api/v1/logistics/contracts/full/", async ({ request }) => {
+      getLogisticsContractsCreateFullMockHandler(async ({ request }) => {
         submittedPayload = await request.json();
-        return HttpResponse.json({ uuid: "contract-new" }, { status: 201 });
+        return { uuid: "contract-new" } as any;
       }),
     );
 
@@ -223,16 +220,16 @@ describe("useContractUploadForm", () => {
     let submittedPayload: Record<string, unknown> | undefined;
 
     server.use(
-      http.post("*/api/v1/logistics/contracts/upload-url/", () => {
+      getLogisticsContractsUploadUrlMockHandler(() => {
         uploadUrlRequested = true;
-        return HttpResponse.json({
+        return {
           upload_url: "https://r2.example.com/upload",
           object_key: "uploaded-pdf-key",
-        });
+        } as any;
       }),
-      http.post("*/api/v1/logistics/contracts/full/", async ({ request }) => {
+      getLogisticsContractsCreateFullMockHandler(async ({ request }) => {
         submittedPayload = (await request.json()) as Record<string, unknown>;
-        return HttpResponse.json({ uuid: "contract-new" }, { status: 201 });
+        return { uuid: "contract-new" } as any;
       }),
     );
 
@@ -279,8 +276,8 @@ describe("useContractUploadForm", () => {
 
   it("handles errors during submission", async () => {
     server.use(
-      http.post("*/api/v1/logistics/contracts/full/", () => {
-        return HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
+      getLogisticsContractsCreateFullMockHandler(() => {
+        throw HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
       }),
     );
 
