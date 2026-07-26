@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from enum import StrEnum
 
 from ninja import Field, Schema
@@ -44,7 +45,7 @@ class WeddingOut(Schema):
     template: str | None
     created_at: datetime.datetime
     updated_at: datetime.datetime
-    total_budget: float | None = Field(None, ge=0)
+    total_budget: Decimal | None = Field(None, ge=0)
     overdue_installments: int = Field(0, ge=0)
     incomplete_tasks: int = Field(0, ge=0)
 

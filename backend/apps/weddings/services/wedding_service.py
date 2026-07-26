@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from datetime import datetime, time, timedelta
+from decimal import Decimal
 from typing import cast
 from uuid import UUID
 
@@ -469,7 +470,9 @@ class WeddingService:
             template=wedding.template,
             created_at=wedding.created_at,
             updated_at=wedding.updated_at,
-            total_budget=total_estimated,
+            total_budget=(
+                Decimal(str(total_estimated)) if total_estimated is not None else None
+            ),
             overdue_installments=overdue_count,
             incomplete_tasks=incomplete_tasks,
         )
