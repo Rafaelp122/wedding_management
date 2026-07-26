@@ -8,6 +8,7 @@ import sentry_sdk
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpRequest
 from ninja.errors import HttpError
+from ninja.errors import ValidationError as NinjaValidationError
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from pydantic import ValidationError as PydanticValidationError
@@ -68,14 +69,46 @@ def django_validation_error_handler(request: HttpRequest, exc: DjangoValidationE
     )
 
 
-# --- Handler 3: O "Segurança" ---
-# Trata o que NÃO foi previsto (bugs reais).
-# Re-raise Pydantic validation errors para não mascarar erros 422 do Ninja.
+# --- Handler 3: Erros HTTP do Ninja (401, 403, 404, 405, etc.) ---
+@api.exception_handler(HttpError)
+def http_error_handler(request: HttpRequest, exc: HttpError):
+    status_code_map = {
+        400: "bad_request",
+        401: "unauthorized",
+        403: "forbidden",
+        404: "not_found",
+        405: "method_not_allowed",
+        422: "unprocessable_entity",
+    }
+    code = status_code_map.get(exc.status_code, "http_error")
+    msg = str(getattr(exc, "message", exc))
+    return api.create_response(
+        request,
+        {"detail": msg, "code": code},
+        status=exc.status_code,
+    )
+
+
+# --- Handler 4: Erros de validação de payload (Pydantic / Ninja) ---
+@api.exception_handler(NinjaValidationError)
+@api.exception_handler(PydanticValidationError)
+def validation_error_handler(request: HttpRequest, exc: Exception):
+    errors = (
+        exc.errors()
+        if hasattr(exc, "errors") and callable(exc.errors)
+        else getattr(exc, "errors", str(exc))
+    )
+    return api.create_response(
+        request,
+        {"detail": errors, "code": "validation_error"},
+        status=422,
+    )
+
+
+# --- Handler 5: O "Segurança" ---
+# Trata o que NÃO foi previsto (bugs reais) → HTTP 500.
 @api.exception_handler(Exception)
 def general_exception_handler(request: HttpRequest, exc: Exception):
-    if isinstance(exc, (PydanticValidationError, HttpError)):
-        raise exc
-
     logger.exception("Unhandled exception in API")
     sentry_sdk.capture_exception(exc)
 
