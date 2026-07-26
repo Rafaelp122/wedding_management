@@ -1,18 +1,6 @@
-import { useState, memo } from "react";
-import { useForm, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import type { z } from "zod";
+import { memo } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
-import {
-  useLogisticsContractsCreateFull,
-  useLogisticsContractsList,
-  useLogisticsSuppliersList,
-  useLogisticsContractsUploadUrl,
-} from "@/api/generated/v1/endpoints/logistics/logistics";
-import { useFinancesCategoriesList } from "@/api/generated/v1/endpoints/finances/finances";
-import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/logistics";
 import { SELECT_NONE_VALUE } from "@/lib/constants";
 import { CONTRACT_STATUS_OPTIONS } from "@/features/logistics/constants";
 
@@ -45,11 +33,9 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 import { FormInput, FormSelect, FormNumber, FormTextarea } from "@/components/form-fields";
-import { uploadFileToR2 } from "@/services/r2";
-import { ContractItemDrafts, type ItemDraft } from "./ContractItemDrafts";
+import { ContractItemDrafts } from "./ContractItemDrafts";
 import { ContractCreateExpenseFields } from "./ContractCreateExpenseFields";
-
-type CreateContractFormData = z.input<typeof LogisticsContractsCreateBody>;
+import { useContractUploadForm } from "../../hooks/useContractUploadForm";
 
 interface ContractUploadDialogProps {
   weddingUuid: string;
@@ -66,105 +52,27 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
   onSuccess,
   prefilledParentUuid,
 }: ContractUploadDialogProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { mutateAsync: createFull, isPending: isCreating } =
-    useLogisticsContractsCreateFull();
-  const { mutateAsync: getUploadUrl } = useLogisticsContractsUploadUrl();
-
-  const [itemDrafts, setItemDrafts] = useState<ItemDraft[]>([]);
-  const [expenseChecked, setExpenseChecked] = useState(false);
-  const [expenseCategory, setExpenseCategory] = useState("");
-  const [expenseNumInstallments, setExpenseNumInstallments] = useState(1);
-  const [expenseFirstDueDate, setExpenseFirstDueDate] = useState(
-    () => new Date().toISOString().slice(0, 10),
-  );
-
-  const { data: suppliersResponse } = useLogisticsSuppliersList();
-  const suppliers = suppliersResponse?.data?.items ?? [];
-
-  const { data: contractsResponse } = useLogisticsContractsList({
-    wedding_id: weddingUuid,
+  const {
+    form,
+    suppliers,
+    existingContracts,
+    categories,
+    setSelectedFile,
+    itemDrafts,
+    setItemDrafts,
+    handleExpenseChange,
+    isSubmitting,
+    onSubmit,
+    handleOpenChange,
+  } = useContractUploadForm({
+    weddingUuid,
+    prefilledParentUuid,
+    onOpenChange,
+    onSuccess,
   });
-  const existingContracts = contractsResponse?.data?.items ?? [];
-
-  const { data: categoriesResponse } = useFinancesCategoriesList({
-    wedding_id: weddingUuid,
-  });
-  const categories = categoriesResponse?.data?.items ?? [];
-
-  const form = useForm<CreateContractFormData>({
-    resolver: zodResolver(LogisticsContractsCreateBody) as Resolver<CreateContractFormData>,
-    defaultValues: {
-      wedding: weddingUuid,
-      supplier: "",
-      name: "",
-      total_amount: undefined,
-      status: "DRAFT",
-      description: "",
-      parent: prefilledParentUuid || null,
-    },
-  });
-
-  const onSubmit = async (data: CreateContractFormData) => {
-    try {
-      let pdfFileKey: string | null = null;
-      if (selectedFile) {
-        const uploadUrlRes = await getUploadUrl({
-          data: {
-            filename: selectedFile.name,
-            wedding_id: weddingUuid,
-          },
-        });
-
-        await uploadFileToR2(uploadUrlRes.data.upload_url, selectedFile);
-
-        pdfFileKey = uploadUrlRes.data.object_key;
-      }
-
-      const itemsData = JSON.stringify(
-        itemDrafts.map((d) => ({
-          name: d.name,
-          quantity: d.quantity,
-          acquisition_status: d.acquisition_status,
-        })),
-      );
-
-      await createFull({
-        data: {
-          wedding: data.wedding,
-          supplier: data.supplier,
-          name: data.name,
-          total_amount: data.total_amount,
-          status: data.status,
-          description: data.description,
-          parent: data.parent ?? null,
-          items_data: itemsData,
-          create_expense: expenseChecked,
-          expense_category: expenseChecked ? expenseCategory : null,
-          expense_num_installments: expenseChecked
-            ? expenseNumInstallments
-            : null,
-          expense_first_due_date: expenseChecked ? expenseFirstDueDate : null,
-          pdf_file_key: pdfFileKey,
-        },
-      });
-
-      toast.success("Contrato criado com sucesso!");
-      form.reset();
-      setItemDrafts([]);
-      setSelectedFile(null);
-      onSuccess();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error(`Erro ao criar contrato: ${message}`);
-    }
-  };
-
-  const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Contrato</DialogTitle>
@@ -297,25 +205,20 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
 
             <ContractCreateExpenseFields
               categories={categories}
-              onExpenseChange={(v) => {
-                setExpenseChecked(v.checked);
-                setExpenseCategory(v.category);
-                setExpenseNumInstallments(v.numInstallments);
-                setExpenseFirstDueDate(v.firstDueDate);
-              }}
+              onExpenseChange={handleExpenseChange}
             />
 
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isCreating || isSubmitting}
+                onClick={() => handleOpenChange(false)}
+                disabled={isSubmitting}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreating || isSubmitting}>
-                {(isCreating || isSubmitting) && <Loader2 className="mr-2 size-4 animate-spin" />}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Criar Contrato
               </Button>
             </DialogFooter>
