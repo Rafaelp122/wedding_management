@@ -9,6 +9,8 @@
 
 Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding Management System. Cada ADR documenta uma decisão estrutural relevante, seu contexto, alternativas consideradas e as consequências arquiteturais adotadas.
 
+> ℹ️ **Nota de Numeração Imutável:** A numeração das ADRs é mantida estritamente imutável para preservar a rastreabilidade histórica no código-fonte, comentários de classe e mensagens de commit do Git. A identificação `ADR-015` refere-se a uma proposta descontinuada na fase inicial do projeto, mantendo-se a sequência oficial das 23 ADRs ativas.
+
 ---
 
 ## 2. Índice de Decisões Arquiteturais (001 a 024)
