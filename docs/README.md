@@ -73,5 +73,5 @@ Contexto profundo de design, arquitetura e regras de negócio:
   - [contract-parent-child-hierarchy](4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md) | [contract-state-machine](4-explanation/business-rules/logistics/contract-state-machine.md) | [cnpj-validation-rules](4-explanation/business-rules/logistics/cnpj-validation-rules.md)
   - [recurrence-rules-engine](4-explanation/business-rules/scheduler/recurrence-rules-engine.md) | [payment-event-readonly-guard](4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) | [wedding-status-lifecycle](4-explanation/business-rules/weddings/wedding-status-lifecycle.md) | [wedding-schedule-templates](4-explanation/business-rules/weddings/wedding-schedule-templates.md)
 - **Histórico Arquitetural:**
-  - ADRs mantidas em `docs/4-explanation/adr/`.
+  - [Índice Completo de ADRs (001-024)](4-explanation/adr/README.md) — Registros de decisões arquiteturais e trade-offs.
   - [roadmap-pending-migration](4-explanation/roadmap-pending-migration.md) — Roadmap interno temporário.
