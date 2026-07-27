@@ -48,6 +48,24 @@ jobs:
               - '.github/workflows/integrity-ci.yml'
 
   # ----------------------------------------------------------------------------
+  # JOB 0.5: DOCUMENTATION LINKS LINT
+  # ----------------------------------------------------------------------------
+  docs-lint:
+    name: Documentation Links Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate Documentation Links
+        run: python3 scripts/validate_docs_links.py
+
+  # ----------------------------------------------------------------------------
   # JOB 1: STATIC ANALYSIS
   # ----------------------------------------------------------------------------
   lint:

@@ -133,30 +133,24 @@ Business rules centralized here. These rules are technology-agnostic and focus o
 
 ---
 
-## 7. References by Domain
+## 7. References by Domain (Single Source of Truth in `docs/`)
+
+### Weddings
+- **BR-W01 / BR-W02**: Status Lifecycle & Templates — see [wedding-status-lifecycle.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/weddings/wedding-status-lifecycle.md) and [wedding-schedule-templates.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/weddings/wedding-schedule-templates.md)
 
 ### Finances
-- **BR-F01**: Zero Tolerance — see ADR-010
-- **BR-F02**: Legal Anchor — expense amount = document amount
-- **BR-F03**: Payment Consistency — PAID requires date, date requires PAID
-- **BR-F04**: Budget Monitoring — soft warning on overspend
-- **BR-F05**: Status Transitions — PENDING → PAID or OVERDUE
-- **BR-F06**: Paid Installment Immutability — no edits after payment
-- **BR-F07**: Mandatory Installment — minimum 1 per expense
-- **BR-F08**: Redistribution — only if no PAID installments
-- **BR-F09**: Composite Status — derived from installments
-- **BR-F10**: Expense Identification — name required, description optional
-- **BR-F11**: Unmark Paid — reversal with conditional status
+- **BR-F01**: Zero Tolerance & Overdue Logic — see [installment-overdue-logic.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/installment-overdue-logic.md)
+- **BR-F02 to BR-F05**: Legal Anchor, Cross-Wedding Guard, Payment Immutability & Chronological Order — see [financial-integrity-rules.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
+- **BR-F04**: Budget Distribution & Categories — see [budget-category-distribution.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/budget-category-distribution.md)
 
 ### Logistics
-- **BR-L01**: Signed Document Requirements — file, value, date
-- **BR-L02**: Cross-Wedding Isolation — no shared categories
-- **BR-L03**: Supplier Sharing — reusable across weddings
-- **BR-L04**: Acquisition-Payment Decoupling — independent states
+- **BR-L01 / BR-L04**: Signed Document & Acquisition State Machine — see [contract-state-machine.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/logistics/contract-state-machine.md)
+- **BR-L02**: Contract Parent-Child Hierarchy & Addendum Guards — see [contract-parent-child-hierarchy.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)
+- **CNPJ Validation**: Supplier CNPJ Rules — see [cnpj-validation-rules.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/logistics/cnpj-validation-rules.md)
 
 ### Scheduler
-- **BR-S01**: Financial Event Automation — auto-generated from installments
-- **BR-S02**: Due Date Reminders — alerts for OVERDUE
+- **BR-S01**: Payment Event Automation & Read-Only Guard — see [payment-event-readonly-guard.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) and [payment-schedule-integration.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/payment-schedule-integration.md)
+- **BR-S02 / Recurrence**: Recurrence Rules Engine — see [recurrence-rules-engine.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/scheduler/recurrence-rules-engine.md)
 
 ### Validation
 - **BR-VAL01**: Decimal for Money — never float
