@@ -136,21 +136,21 @@ Business rules centralized here. These rules are technology-agnostic and focus o
 ## 7. References by Domain (Single Source of Truth in `docs/`)
 
 ### Weddings
-- **BR-W01 / BR-W02**: Status Lifecycle & Templates — see [wedding-status-lifecycle.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/weddings/wedding-status-lifecycle.md) and [wedding-schedule-templates.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/weddings/wedding-schedule-templates.md)
+- **BR-W01 / BR-W02**: Status Lifecycle & Templates — see [wedding-status-lifecycle.md](../../../docs/4-explanation/business-rules/weddings/wedding-status-lifecycle.md) and [wedding-schedule-templates.md](../../../docs/4-explanation/business-rules/weddings/wedding-schedule-templates.md)
 
 ### Finances
-- **BR-F01**: Zero Tolerance & Overdue Logic — see [installment-overdue-logic.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/installment-overdue-logic.md)
-- **BR-F02 to BR-F05**: Legal Anchor, Cross-Wedding Guard, Payment Immutability & Chronological Order — see [financial-integrity-rules.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
-- **BR-F04**: Budget Distribution & Categories — see [budget-category-distribution.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/budget-category-distribution.md)
+- **BR-F01**: Zero Tolerance & Overdue Logic — see [installment-overdue-logic.md](../../../docs/4-explanation/business-rules/finances/installment-overdue-logic.md)
+- **BR-F02 to BR-F05**: Legal Anchor, Cross-Wedding Guard, Payment Immutability & Chronological Order — see [financial-integrity-rules.md](../../../docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
+- **BR-F04**: Budget Distribution & Categories — see [budget-category-distribution.md](../../../docs/4-explanation/business-rules/finances/budget-category-distribution.md)
 
 ### Logistics
-- **BR-L01 / BR-L04**: Signed Document & Acquisition State Machine — see [contract-state-machine.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/logistics/contract-state-machine.md)
-- **BR-L02**: Contract Parent-Child Hierarchy & Addendum Guards — see [contract-parent-child-hierarchy.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)
-- **CNPJ Validation**: Supplier CNPJ Rules — see [cnpj-validation-rules.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/logistics/cnpj-validation-rules.md)
+- **BR-L01 / BR-L04**: Signed Document & Acquisition State Machine — see [contract-state-machine.md](../../../docs/4-explanation/business-rules/logistics/contract-state-machine.md)
+- **BR-L02**: Contract Parent-Child Hierarchy & Addendum Guards — see [contract-parent-child-hierarchy.md](../../../docs/4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)
+- **CNPJ Validation**: Supplier CNPJ Rules — see [cnpj-validation-rules.md](../../../docs/4-explanation/business-rules/logistics/cnpj-validation-rules.md)
 
 ### Scheduler
-- **BR-S01**: Payment Event Automation & Read-Only Guard — see [payment-event-readonly-guard.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) and [payment-schedule-integration.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/finances/payment-schedule-integration.md)
-- **BR-S02 / Recurrence**: Recurrence Rules Engine — see [recurrence-rules-engine.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/business-rules/scheduler/recurrence-rules-engine.md)
+- **BR-S01**: Payment Event Automation & Read-Only Guard — see [payment-event-readonly-guard.md](../../../docs/4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) and [payment-schedule-integration.md](../../../docs/4-explanation/business-rules/finances/payment-schedule-integration.md)
+- **BR-S02 / Recurrence**: Recurrence Rules Engine — see [recurrence-rules-engine.md](../../../docs/4-explanation/business-rules/scheduler/recurrence-rules-engine.md)
 
 ### Validation
 - **BR-VAL01**: Decimal for Money — never float

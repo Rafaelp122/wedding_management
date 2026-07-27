@@ -44,7 +44,7 @@ Descrições técnicas puras do código, APIs e schemas do banco:
 - **APIs e Contratos:** [openapi-schema](3-reference/api/openapi-schema.md) | [error-envelope-spec](3-reference/api/error-envelope-spec.md)
 - **Padrões Técnicos:** [commenting-standards](3-reference/architecture-standards/commenting-standards.md) | [testing-standards](3-reference/architecture-standards/testing-standards.md)
 - **Ambiente:** [environment-variables](3-reference/environment/environment-variables.md)
-- **Frontend UI:** [ui-components-spec](3-reference/frontend/ui-components-spec.md) | [store-state-spec](3-reference/frontend/store-state-spec.md)
+- **Frontend UI:** [DESIGN.md](DESIGN.md) | [ui-components-spec](3-reference/frontend/ui-components-spec.md) | [store-state-spec](3-reference/frontend/store-state-spec.md)
 - **Entidades de Banco (Models):**
   - [core-models](3-reference/models/core-models.md)
   - [budget-model](3-reference/models/finances/budget-model.md) | [budget-category-model](3-reference/models/finances/budget-category-model.md) | [expense-model](3-reference/models/finances/expense-model.md) | [installment-model](3-reference/models/finances/installment-model.md)
@@ -56,7 +56,8 @@ Descrições técnicas puras do código, APIs e schemas do banco:
 
 ### 💡 4. Explanation (Arquitetura & Domínio Fullstack)
 Contexto profundo de design, arquitetura e regras de negócio:
-- **Visões de Arquitetura:**
+- **Visões de Arquitetura & Requisitos:**
+  - [requirements](4-explanation/requirements.md) — Matriz de Requisitos Funcionais e Não-Funcionais (RF & RNF).
   - [system-overview](4-explanation/architecture/system-overview.md) — Visão geral da plataforma.
   - [multi-tenancy-strategy](4-explanation/architecture/multi-tenancy-strategy.md) — Estratégia de isolamento multi-tenant.
   - [service-layer-pattern](4-explanation/architecture/service-layer-pattern.md) — Padrão de Service Layer no backend.

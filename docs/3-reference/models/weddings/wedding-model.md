@@ -15,7 +15,7 @@ Herda de `TenantModel` (isolado por `company`).
 - `company`: `ForeignKey` (`tenants.Company`).
 - `groom_name`: `CharField(max_length=100)` — Nome do noivo.
 - `bride_name`: `CharField(max_length=100)` — Nome da noiva.
-- `date`: `DateField` (`validators=[validate_future_date]`) — Data do evento.
+- `date`: `DateField` (`validators=[validate_future_date]` na criação/agendamento) — Data do evento.
 - `location`: `CharField(max_length=255)` — Local do evento.
 - `expected_guests`: `PositiveIntegerField(null=True, blank=True)` — Estimativa de convidados.
 - `status`: `CharField(max_length=20, choices=StatusChoices, default='IN_PROGRESS')`:
@@ -30,7 +30,7 @@ Herda de `TenantModel` (isolado por `company`).
 - `models.Index(fields=["status"])` — Otimização de consultas globais de status.
 
 ### Validações do `clean()`:
-- Impede marcar o status como `COMPLETED` se a `date` do casamento for posterior à data atual (`date > hoje`).
+- O validador `validate_future_date` exige datas futuras no agendamento inicial. O método `clean()` valida o ciclo de vida: impede transição para `COMPLETED` enquanto a data do casamento for futura (`date > hoje`).
 
 ---
 

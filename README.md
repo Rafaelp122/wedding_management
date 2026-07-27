@@ -38,6 +38,7 @@ Nossa documentação técnica é mantida em [docs/README.md](docs/README.md) sob
 
 ### 💡 4. Explanation (Arquitetura & Regras de Negócio)
 *Decisões de design, segurança e regras de negócio:*
+- **[requirements](docs/4-explanation/requirements.md)**: Matriz de Requisitos Funcionais (RF01–RF12) e Não-Funcionais (RNF01–RNF05).
 - **[system-overview](docs/4-explanation/architecture/system-overview.md)** | **[multi-tenancy-strategy](docs/4-explanation/architecture/multi-tenancy-strategy.md)**
 - **[architectural-guard-rails-suite](docs/4-explanation/architecture/architectural-guard-rails-suite.md)**: Auditoria automatizada dos 12 pilares do sistema.
 - **[Regras de Negócio Atômicas](docs/README.md#regras-de-negócio-atômicas)**: Integridade contábil, ciclo de vida de casamentos, máquinas de estado de contratos e proteção da agenda.

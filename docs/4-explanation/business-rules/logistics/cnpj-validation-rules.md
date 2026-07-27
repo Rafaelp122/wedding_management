@@ -10,7 +10,7 @@
 No modelo `Supplier`, o campo `cnpj` utiliza o validador customizado `cnpj_validator`:
 
 - **Formato Aceito:** `XX.XXX.XXX/XXXX-XX` (18 caracteres).
-- **Algoritmo de Verificação:** Executa a checagem oficial dos 14 dígitos numéricos e valida o cálculo dos dois dígitos verificadores (DV1 e DV2).
+- **Validação de Formato e Máscara:** Aplica a verificação de formato e estrutura de 18 caracteres (`XX.XXX.XXX/XXXX-XX`).
 - **Unicidade por Tenant:** O CNPJ é único por empresa (`unique_together = [["company", "cnpj"]]`).
 
 ---

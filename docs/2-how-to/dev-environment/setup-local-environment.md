@@ -11,7 +11,7 @@ Edite `backend/.env` garantindo que as chaves de banco de dados e JWT estejam de
 ```env
 DEBUG=True
 SECRET_KEY=dev-secret-key-change-in-prod
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/wedding_db  # pragma: allowlist secret
+DATABASE_URL=postgres://user:password@localhost:5432/wedding_db  # pragma: allowlist secret
 ALLOWED_HOSTS=localhost,127.0.0.1
 CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```

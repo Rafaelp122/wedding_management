@@ -331,8 +331,8 @@ For numeric or size fields: `value = 0`, `value = -1`, `value = max`, `value = m
 ## 14. References (Single Source of Truth in `docs/`)
 
 For deep domain and architectural testing knowledge:
-- Architectural Guard-Rails Suite (12 Pillars) — see [architectural-guard-rails-suite.md](file:///home/rafael/projetos/wedding_management/docs/4-explanation/architecture/architectural-guard-rails-suite.md)
-- Seeding & Test Data — see [seed-database.md](file:///home/rafael/projetos/wedding_management/docs/2-how-to/backend/seed-database.md)
-- Running Pytest Suite — see [run-pytest-suite.md](file:///home/rafael/projetos/wedding_management/docs/2-how-to/backend/run-pytest-suite.md)
+- Architectural Guard-Rails Suite (12 Pillars) — see [architectural-guard-rails-suite.md](../../../docs/4-explanation/architecture/architectural-guard-rails-suite.md)
+- Seeding & Test Data — see [seed-database.md](../../../docs/2-how-to/backend/seed-database.md)
+- Running Pytest Suite — see [run-pytest-suite.md](../../../docs/2-how-to/backend/run-pytest-suite.md)
 - Load `wedding-backend` for Service Layer, Schemas, auth, transactions
 - Load `wedding-business-rules` for business rules (BR-F01 through BR-F11, etc.)

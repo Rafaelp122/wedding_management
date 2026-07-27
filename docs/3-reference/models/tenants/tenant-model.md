@@ -30,7 +30,7 @@ Modelo base abstrato para todas as entidades que pertencem a um Tenant. Garante 
 
 ## 3. Gerenciador de Banco (`TenantManager` / `TenantQuerySet`)
 
-Fornece o método `.for_tenant(company)`, que filtra automaticamente as consultas SQL do Django ORM reduzindo o risco de vazamento cross-tenant:
+Fornece o método `.for_tenant(company)`. **Atenção:** A filtragem por tenant não é aplicada automaticamente no `.all()`; ela exige a invocação explícita de `.for_tenant(company)` no QuerySet para garantir o isolamento:
 
 ```python
 # Exemplo de uso
