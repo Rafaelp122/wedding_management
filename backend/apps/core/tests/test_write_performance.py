@@ -35,6 +35,8 @@ class TestWritePerformance:
     def test_create_expense_with_twelve_installments_query_efficiency(self) -> None:
         """
         Valida eficiência de queries ao criar despesa com 12 parcelas.
+
+        Audita SELECTs repetidos nas tabelas tenants_company e weddings_wedding.
         """
         wedding = cast(Wedding, WeddingFactory())
         company = wedding.company
@@ -54,17 +56,24 @@ class TestWritePerformance:
         assert expense is not None
         assert expense.installments.count() == 12
 
-        # Analisa as queries capturadas buscando por consultas de seleção de Company
+        # Analisa as queries capturadas para Company e Wedding
         queries_text = [q["sql"].lower() for q in ctx.captured_queries]
 
         company_queries = [
             q for q in queries_text if "tenants_company" in q and "select" in q
         ]
+        wedding_queries = [
+            q for q in queries_text if "weddings_wedding" in q and "select" in q
+        ]
 
-        # Garante que a busca por Company ocorre no máximo 1 vez na operação
+        # Garante que a busca por Company ocorre no máximo 1 vez e Wedding é eficiente
         assert len(company_queries) <= 1, (
-            f"Consultas repetidas à Company ({len(company_queries)}x): "
+            f"Consultas repetidas à tabela tenants_company ({len(company_queries)}x): "
             f"{company_queries}"
+        )
+        assert len(wedding_queries) <= 30, (
+            f"Consultas repetidas à tabela weddings_wedding ({len(wedding_queries)}x): "
+            f"{wedding_queries}"
         )
 
         # O total de queries foi registrado e medido via CaptureQueriesContext
@@ -73,6 +82,8 @@ class TestWritePerformance:
     def test_create_contract_full_payload_query_efficiency(self) -> None:
         """
         Valida que a criação de contrato não realiza buscas redundantes.
+
+        Audita consultas repetidas nas tabelas tenants_company e weddings_wedding.
         """
         wedding = cast(Wedding, WeddingFactory())
         company = wedding.company
@@ -97,8 +108,18 @@ class TestWritePerformance:
         company_queries = [
             q for q in queries_text if "tenants_company" in q and "select" in q
         ]
+        wedding_queries = [
+            q for q in queries_text if "weddings_wedding" in q and "select" in q
+        ]
 
-        assert len(company_queries) <= 1, (
-            f"Consultas redundantes a Company ({len(company_queries)}x): "
+        err_company = (
+            f"Consultas redundantes em tenants_company ({len(company_queries)}x): "
             f"{company_queries}"
         )
+        assert len(company_queries) <= 1, err_company
+
+        err_wedding = (
+            f"Consultas redundantes em weddings_wedding ({len(wedding_queries)}x): "
+            f"{wedding_queries}"
+        )
+        assert len(wedding_queries) <= 5, err_wedding

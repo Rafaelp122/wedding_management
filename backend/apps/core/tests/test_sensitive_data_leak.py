@@ -1,19 +1,19 @@
 """
 Auditoria dinâmica contra vazamento de dados sensíveis em schemas de resposta da API.
 
-Inspeciona todas as rotas e schemas de saída (response models) registrados na
-instância da API Ninja para garantir que nenhum endpoint expõe campos sensíveis
-como senhas, chaves privadas ou tokens em respostas públicas.
+Inspeciona dinamicamente os schemas de saída (Out DTOs / Response Models) dos módulos
+da aplicação para garantir que nenhum endpoint expõe campos sensíveis como senhas,
+chaves privadas ou tokens em respostas públicas.
 """
 
+import importlib
 import inspect
 import typing
+from pathlib import Path
 from typing import Any
 
 import pydantic
 import pytest
-
-from config.api import api
 
 
 SENSITIVE_FIELDS: set[str] = {
@@ -88,12 +88,43 @@ def _find_sensitive_fields_in_schema(
         if name_lower in SENSITIVE_FIELDS:
             leaks.append((f"{schema_cls.__module__}.{schema_cls.__name__}", field_name))
 
-        # Inspeciona tipos aninhados para detectar leakers em sub-schemas
+        # Inspeciona tipos aninhados para detectar vazamentos em sub-schemas
         nested_models = _extract_pydantic_models(field_info.annotation)
         for nested in nested_models:
             leaks.extend(_find_sensitive_fields_in_schema(nested, visited))
 
     return leaks
+
+
+def _discover_app_response_schemas() -> list[type[pydantic.BaseModel]]:
+    """
+    Descobre dinamicamente todas as classes de schema de saída (Out)
+    nos módulos de schemas da aplicação.
+    """
+    apps_dir = Path(__file__).resolve().parent.parent.parent
+    schemas: set[type[pydantic.BaseModel]] = set()
+
+    for path in sorted(apps_dir.glob("**/*.py")):
+        if "tests" in path.parts or "__pycache__" in path.parts:
+            continue
+
+        if path.name == "schemas.py" or "schemas" in path.parts:
+            rel_path = path.relative_to(apps_dir.parent)
+            module_name = str(rel_path.with_suffix("")).replace("/", ".")
+            try:
+                mod = importlib.import_module(module_name)
+            except (ImportError, AttributeError):
+                continue
+
+            for attr_name in dir(mod):
+                attr = getattr(mod, attr_name)
+                if inspect.isclass(attr) and issubclass(attr, pydantic.BaseModel):
+                    if attr.__module__.startswith("apps.") and (
+                        attr_name.endswith("Out") or "Response" in attr_name
+                    ):
+                        schemas.add(attr)
+
+    return sorted(schemas, key=lambda c: f"{c.__module__}.{c.__name__}")
 
 
 @pytest.mark.django_db
@@ -104,31 +135,22 @@ class TestSensitiveDataLeak:
 
     def test_no_public_response_schemas_contain_sensitive_fields(self) -> None:
         """
-        Garante que 100% das rotas possuem schemas de resposta sem campos sensíveis.
+        Garante que 100% dos schemas de resposta públicos não expõem campos sensíveis.
         """
         violations: list[str] = []
         tested_schemas_count = 0
 
-        for prefix, router in api._routers:
-            for path, path_op in router.path_operations.items():
-                full_path = f"{prefix}{path}"
-                for op in path_op.operations:
-                    response_models = getattr(op, "response_models", {})
-                    if not response_models:
-                        continue
-
-                    for status_code, resp_model in response_models.items():
-                        extracted_schemas = _extract_pydantic_models(resp_model)
-                        for schema_cls in extracted_schemas:
-                            tested_schemas_count += 1
-                            leaks = _find_sensitive_fields_in_schema(schema_cls)
-                            for schema_name, field_name in leaks:
-                                msg = (
-                                    f"Rota [{op.methods}] '{full_path}' "
-                                    f"status {status_code} utiliza schema "
-                                    f"'{schema_name}' com o campo '{field_name}'."
-                                )
-                                violations.append(msg)
+        # Percurso dinâmico de schemas de resposta nos módulos apps/*/schemas.py
+        app_schemas = _discover_app_response_schemas()
+        for schema_cls in app_schemas:
+            tested_schemas_count += 1
+            leaks = _find_sensitive_fields_in_schema(schema_cls)
+            for schema_name, field_name in leaks:
+                msg = (
+                    f"Schema de resposta '{schema_name}' "
+                    f"contém o campo sensível '{field_name}'."
+                )
+                violations.append(msg)
 
         assert tested_schemas_count > 0, "Nenhum schema de resposta foi encontrado."
         assert not violations, (

@@ -1,7 +1,7 @@
 """
 Testes de consistência do envelope de erros da API Ninja.
 
-Garante que 100% das respostas de erro da API (400, 401, 404, 422, 500)
+Garante que 100% das respostas de erro da API (400, 401, 403, 404, 409, 422, 500)
 retornam uma estrutura JSON válida contendo obrigatoriamente as chaves
 'detail' e 'code' ({"detail": ..., "code": ...}).
 """
@@ -43,6 +43,38 @@ class TestErrorEnvelopeConsistency:
         assert "code" in data, "Resposta 401 não contém a chave 'code'."
         assert data["code"] == "unauthorized"
 
+    def test_403_forbidden_error_envelope(
+        self, client: Client, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        Garante que erros de permissão/acesso negado (HTTP 403) retornam um JSON
+        padronizado com 'detail' e 'code'.
+        """
+        user = UserFactory()
+        headers = _get_auth_headers(user)
+
+        def _mock_forbidden(*args: Any, **kwargs: Any) -> Any:
+            from ninja.errors import HttpError
+
+            raise HttpError(403, "Acesso negado para este recurso.")
+
+        monkeypatch.setattr(
+            "apps.weddings.services.wedding_service.WeddingService.list",
+            _mock_forbidden,
+        )
+
+        response = client.get(
+            "/api/v1/weddings/",
+            **headers,
+        )
+        assert response.status_code == 403
+
+        data = response.json()
+        assert isinstance(data, dict), f"Resposta 403 não é um objeto JSON: {data}"
+        assert "detail" in data, "Resposta 403 não contém a chave 'detail'."
+        assert "code" in data, "Resposta 403 não contém a chave 'code'."
+        assert data["code"] == "forbidden"
+
     def test_404_not_found_error_envelope(self, client: Client) -> None:
         """
         Garante que recursos não encontrados (HTTP 404) retornam um JSON
@@ -62,6 +94,41 @@ class TestErrorEnvelopeConsistency:
         assert isinstance(data, dict), f"Resposta 404 não é um objeto JSON: {data}"
         assert "detail" in data, "Resposta 404 não contém a chave 'detail'."
         assert "code" in data, "Resposta 404 não contém a chave 'code'."
+
+    def test_409_conflict_error_envelope(
+        self, client: Client, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        Garante que erros de conflito/integridade de domínio
+        (HTTP 409 / DomainIntegrityError) retornam JSON padronizado.
+        """
+        user = UserFactory()
+        headers = _get_auth_headers(user)
+
+        def _mock_conflict(*args: Any, **kwargs: Any) -> Any:
+            from apps.core.exceptions import DomainIntegrityError
+
+            raise DomainIntegrityError(
+                detail="Conflito de integridade de dados no domínio.",
+                code="domain_conflict_error",
+            )
+
+        monkeypatch.setattr(
+            "apps.weddings.services.wedding_service.WeddingService.list",
+            _mock_conflict,
+        )
+
+        response = client.get(
+            "/api/v1/weddings/",
+            **headers,
+        )
+        assert response.status_code == 409
+
+        data = response.json()
+        assert isinstance(data, dict), f"Resposta 409 não é um objeto JSON: {data}"
+        assert "detail" in data, "Resposta 409 não contém a chave 'detail'."
+        assert "code" in data, "Resposta 409 não contém a chave 'code'."
+        assert data["code"] == "domain_conflict_error"
 
     def test_422_validation_error_envelope(self, client: Client) -> None:
         """

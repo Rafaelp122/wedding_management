@@ -10,6 +10,10 @@ do projeto.
 import ast
 from pathlib import Path
 
+import pytest
+
+from apps.core.tests.utils import find_service_files
+
 
 FORBIDDEN_AI_TERMS: list[str] = [
     "bolt",
@@ -19,23 +23,6 @@ FORBIDDEN_AI_TERMS: list[str] = [
     "codeium",
     "ai generated",
 ]
-
-
-def _find_service_files() -> list[Path]:
-    """
-    Retorna a lista de arquivos de serviço sob apps/*/services.py
-    ou apps/*/services/*.py. Exclui módulos de teste e caches.
-    """
-    apps_dir = Path(__file__).resolve().parent.parent.parent
-    service_files: list[Path] = []
-
-    for path in apps_dir.glob("**/*.py"):
-        if "tests" in path.parts or "__pycache__" in path.parts:
-            continue
-        if path.name == "services.py" or "services" in path.parts:
-            service_files.append(path)
-
-    return sorted(service_files)
 
 
 def _find_all_python_files() -> list[Path]:
@@ -53,6 +40,75 @@ def _find_all_python_files() -> list[Path]:
     return sorted(python_files)
 
 
+def _get_func_args(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+    """Extrai nomes dos argumentos posicionais e nomeados de uma função."""
+    func_args = [a.arg for a in node.args.args if a.arg not in ("self", "cls")] + [
+        a.arg for a in node.args.kwonlyargs
+    ]
+    if node.args.vararg:
+        func_args.append(node.args.vararg.arg)
+    if node.args.kwarg:
+        func_args.append(node.args.kwarg.arg)
+    return func_args
+
+
+def _has_non_none_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Verifica se a função possui anotação de retorno diferente de None."""
+    if not node.returns:
+        return False
+    if isinstance(node.returns, ast.Constant) and node.returns.value is None:
+        return False
+    if isinstance(node.returns, ast.Name) and node.returns.id == "None":
+        return False
+    return True
+
+
+def _validate_google_style_docstring(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, docstring: str | None
+) -> list[str]:
+    """
+    Valida se a docstring de uma função pública possui formato Google Style.
+
+    Args:
+        node: Nó da função na árvore AST.
+        docstring: Texto da docstring extraída.
+
+    Returns:
+        Lista com as violações encontradas.
+    """
+    errors: list[str] = []
+    if not docstring or not docstring.strip():
+        errors.append("não possui docstring ou possui docstring vazia.")
+        return errors
+
+    func_args = _get_func_args(node)
+    if func_args:
+        has_args_section = any(
+            sec in docstring
+            for sec in ("Args:", "Parameters:", "Parâmetros:", "Argumentos:")
+        ) or any(arg in docstring for arg in func_args)
+        if not has_args_section:
+            args_str = ", ".join(func_args)
+            errors.append(
+                f"parâmetros ({args_str}) sem seção 'Args:' "
+                "ou descrição no formato Google Style."
+            )
+
+    if _has_non_none_return(node):
+        has_returns_section = any(
+            sec in docstring
+            for sec in ("Returns:", "Retorna:", "Return:", "Retorno:", "Retorna")
+        )
+        if not has_returns_section:
+            errors.append(
+                "declara retorno mas não contém "
+                "seção 'Returns:' ou descrição do retorno."
+            )
+
+    return errors
+
+
+@pytest.mark.unit
 class TestCommentingStandards:
     """
     Suíte de testes para padrões de comentários e auditoria de código limpo.
@@ -61,9 +117,9 @@ class TestCommentingStandards:
     def test_all_public_service_functions_have_docstrings(self) -> None:
         """
         Garante que 100% das funções e métodos públicos em arquivos de serviço
-        possuem docstrings preenchidas (não-vazias).
+        possuem docstrings em formato Google Style não-vazias.
         """
-        service_files = _find_service_files()
+        service_files = find_service_files()
         assert service_files, "Nenhum arquivo de serviço encontrado para validação."
 
         missing_docstrings: list[str] = []
@@ -78,20 +134,22 @@ class TestCommentingStandards:
 
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    # Ignora funções/métodos privados que começam com '_'
                     if node.name.startswith("_"):
                         continue
 
                     docstring = ast.get_docstring(node)
-                    if not docstring or not docstring.strip():
+                    doc_errors = _validate_google_style_docstring(node, docstring)
+                    if doc_errors:
                         rel_path = file_path.relative_to(root_dir)
-                        missing_docstrings.append(
-                            f"Função pública '{node.name}' em {rel_path}:{node.lineno} "
-                            "não possui docstring ou possui docstring vazia."
-                        )
+                        for err in doc_errors:
+                            msg = (
+                                f"Função pública '{node.name}' "
+                                f"em {rel_path}:{node.lineno} {err}"
+                            )
+                            missing_docstrings.append(msg)
 
         assert not missing_docstrings, (
-            "As seguintes funções públicas de serviço estão sem docstring:\n"
+            "Violações de docstring em formato Google Style em funções de serviço:\n"
             + "\n".join(missing_docstrings)
         )
 
@@ -108,7 +166,6 @@ class TestCommentingStandards:
         current_file = Path(__file__).resolve()
 
         for file_path in python_files:
-            # Exclui o próprio arquivo de auditoria para evitar falsos positivos
             if file_path.resolve() == current_file:
                 continue
 

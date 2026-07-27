@@ -9,11 +9,11 @@ Analisa a camada de serviços (apps/*/services/*.py ou services.py) para garanti
 """
 
 import ast
-import glob
-import os
 from pathlib import Path
 
 import pytest
+
+from apps.core.tests.utils import find_service_files
 
 
 def _check_node_for_get_object_or_404(node: ast.AST, filename: str) -> list[str]:
@@ -57,23 +57,8 @@ class TestSecurityAudit:
     def service_files(self) -> list[Path]:
         """
         Retorna a lista de caminhos para todos os arquivos de serviço do projeto.
-
-        Filtra arquivos contidos em diretórios de testes ou arquivos __init__.py.
         """
-        base_dir = Path(__file__).resolve().parents[3]  # backend/
-        pattern1 = str(base_dir / "apps" / "**" / "services" / "*.py")
-        pattern2 = str(base_dir / "apps" / "**" / "services.py")
-
-        files = glob.glob(pattern1, recursive=True) + glob.glob(
-            pattern2, recursive=True
-        )
-        unique_paths = set(files)
-
-        return [
-            Path(f)
-            for f in unique_paths
-            if "/tests/" not in f and not f.endswith("__init__.py")
-        ]
+        return find_service_files()
 
     def test_services_do_not_use_django_get_object_or_404(self) -> None:
         """
@@ -108,15 +93,17 @@ class TestSecurityAudit:
         Garante que funções públicas de serviços declaram o parâmetro 'company'.
 
         Isenções permitidas apenas para serviços globais/infraestrutura que não possuem
-        escopo de tenant (ex: autenticação inicial, registro de empresa).
+        escopo de tenant (ex: autenticação inicial, registro de empresa, social auth).
         """
         exempt_relative_files = {
-            os.path.normpath("apps/users/services/registration_service.py"),
-            os.path.normpath("apps/users/services/token_service.py"),
-            os.path.normpath("apps/users/services/google_auth_service.py"),
-            os.path.normpath("apps/tenants/services/tenant_service.py"),
-            os.path.normpath("apps/core/services/storage_service.py"),
-            os.path.normpath("apps/scheduler/services/templates.py"),
+            "apps/users/services/registration_service.py",
+            "apps/users/services/token_service.py",
+            "apps/users/services/google_auth_service.py",
+            "apps/tenants/services/tenant_service.py",
+            "apps/core/services/storage_service.py",
+            "apps/core/services/social_auth/base.py",
+            "apps/core/services/social_auth/google_provider.py",
+            "apps/scheduler/services/templates.py",
         }
 
         exempt_function_names = {
@@ -127,8 +114,8 @@ class TestSecurityAudit:
         missing_company: list[str] = []
 
         for filepath in self.service_files:
-            rel_path = os.path.normpath(str(filepath.relative_to(filepath.parents[3])))
-            if rel_path in exempt_relative_files:
+            posix_path = filepath.as_posix()
+            if any(posix_path.endswith(exempt) for exempt in exempt_relative_files):
                 continue
 
             try:
