@@ -512,8 +512,7 @@ class TestInstallmentServiceMarkAsPaid:
             InstallmentService.unmark_as_paid(user.company, installment)
         assert exc.value.code == "installment_not_paid"
 
-    @patch("apps.finances.models.Expense.full_clean")
-    def test_unmark_as_paid_math_violation(self, mock_full_clean, user):
+    def test_unmark_as_paid_math_violation(self, user) -> None:
         """Erro de validação ao desmarcar levanta BusinessRuleViolation."""
         from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -525,10 +524,13 @@ class TestInstallmentServiceMarkAsPaid:
             paid_date=date.today(),
         )
 
-        mock_full_clean.side_effect = DjangoValidationError("Math error")
+        with patch(
+            "apps.finances.models.Expense.full_clean",
+            side_effect=DjangoValidationError("Math error"),
+        ):
+            with pytest.raises(BusinessRuleViolation) as exc:
+                InstallmentService.unmark_as_paid(user.company, installment)
 
-        with pytest.raises(BusinessRuleViolation) as exc:
-            InstallmentService.unmark_as_paid(user.company, installment)
         assert exc.value.code == "expense_math_violation"
 
     def test_mark_as_paid_cross_tenant(self, user):
