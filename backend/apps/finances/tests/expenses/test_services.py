@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import no_type_check
 from uuid import uuid4
 
@@ -801,3 +802,41 @@ class TestExpenseServiceInstallmentDistribution:
                 ),
             )
         assert exc.value.code == "invalid_installment_number"
+
+
+class TestExpenseServiceValidateContractWedding:
+    """Testes isolados para o método interno _validate_contract_wedding."""
+
+    def test_validate_contract_wedding_none(self) -> None:
+        """Sucesso quando não há contrato vinculado."""
+        category = SimpleNamespace(wedding_id=uuid4())
+        result = ExpenseService._validate_contract_wedding(
+            category=category,  # type: ignore[arg-type]
+            contract=None,
+        )
+        assert result is None
+
+    def test_validate_contract_wedding_same_wedding(self) -> None:
+        """Sucesso quando o contrato pertence ao mesmo casamento da categoria."""
+        wedding_id = uuid4()
+        category = SimpleNamespace(wedding_id=wedding_id)
+        contract = SimpleNamespace(wedding_id=wedding_id)
+
+        result = ExpenseService._validate_contract_wedding(
+            category=category,  # type: ignore[arg-type]
+            contract=contract,  # type: ignore[arg-type]
+        )
+        assert result is None
+
+    def test_validate_contract_wedding_different_wedding(self) -> None:
+        """Levanta erro quando o contrato pertence a outro casamento."""
+        category = SimpleNamespace(wedding_id=uuid4())
+        contract = SimpleNamespace(wedding_id=uuid4())
+
+        with pytest.raises(DomainIntegrityError) as exc:
+            ExpenseService._validate_contract_wedding(
+                category=category,  # type: ignore[arg-type]
+                contract=contract,  # type: ignore[arg-type]
+            )
+
+        assert exc.value.code == "expense_contract_wedding_mismatch"
