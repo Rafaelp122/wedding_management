@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import no_type_check
 from uuid import uuid4
 
@@ -803,39 +804,39 @@ class TestExpenseServiceInstallmentDistribution:
         assert exc.value.code == "invalid_installment_number"
 
 
-@pytest.mark.django_db
 class TestExpenseServiceValidateContractWedding:
     """Testes isolados para o método interno _validate_contract_wedding."""
 
-    def test_validate_contract_wedding_none(self, user):
+    def test_validate_contract_wedding_none(self) -> None:
         """Sucesso quando não há contrato vinculado."""
-        category = _setup_category(user)
-        # Deve passar sem levantar exceção
-        ExpenseService._validate_contract_wedding(category=category, contract=None)
+        category = SimpleNamespace(wedding_id=uuid4())
+        result = ExpenseService._validate_contract_wedding(
+            category=category,
+            contract=None,  # type: ignore[arg-type]
+        )
+        assert result is None
 
-    def test_validate_contract_wedding_same_wedding(self, user):
+    def test_validate_contract_wedding_same_wedding(self) -> None:
         """Sucesso quando o contrato pertence ao mesmo casamento da categoria."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+        wedding_id = uuid4()
+        category = SimpleNamespace(wedding_id=wedding_id)
+        contract = SimpleNamespace(wedding_id=wedding_id)
 
-        category = _setup_category(user)
-        supplier = SupplierFactory(company=user.company)
-        contract = ContractFactory(wedding=category.wedding, supplier=supplier)
+        result = ExpenseService._validate_contract_wedding(
+            category=category,
+            contract=contract,  # type: ignore[arg-type]
+        )
+        assert result is None
 
-        # Deve passar sem levantar exceção
-        ExpenseService._validate_contract_wedding(category=category, contract=contract)
-
-    def test_validate_contract_wedding_different_wedding(self, user):
+    def test_validate_contract_wedding_different_wedding(self) -> None:
         """Levanta erro quando o contrato pertence a outro casamento."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
-        category = _setup_category(user)
-        other_category = _setup_category(user)
-        supplier = SupplierFactory(company=user.company)
-        contract = ContractFactory(wedding=other_category.wedding, supplier=supplier)
+        category = SimpleNamespace(wedding_id=uuid4())
+        contract = SimpleNamespace(wedding_id=uuid4())
 
         with pytest.raises(DomainIntegrityError) as exc:
             ExpenseService._validate_contract_wedding(
-                category=category, contract=contract
+                category=category,
+                contract=contract,  # type: ignore[arg-type]
             )
 
         assert exc.value.code == "expense_contract_wedding_mismatch"
