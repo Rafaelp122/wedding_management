@@ -811,8 +811,8 @@ class TestExpenseServiceValidateContractWedding:
         """Sucesso quando não há contrato vinculado."""
         category = SimpleNamespace(wedding_id=uuid4())
         result = ExpenseService._validate_contract_wedding(
-            category=category,
-            contract=None,  # type: ignore[arg-type]
+            category=category,  # type: ignore[arg-type]
+            contract=None,
         )
         assert result is None
 
@@ -823,7 +823,7 @@ class TestExpenseServiceValidateContractWedding:
         contract = SimpleNamespace(wedding_id=wedding_id)
 
         result = ExpenseService._validate_contract_wedding(
-            category=category,
+            category=category,  # type: ignore[arg-type]
             contract=contract,  # type: ignore[arg-type]
         )
         assert result is None
@@ -835,7 +835,7 @@ class TestExpenseServiceValidateContractWedding:
 
         with pytest.raises(DomainIntegrityError) as exc:
             ExpenseService._validate_contract_wedding(
-                category=category,
+                category=category,  # type: ignore[arg-type]
                 contract=contract,  # type: ignore[arg-type]
             )
 
