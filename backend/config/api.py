@@ -6,8 +6,9 @@ import logging
 
 import sentry_sdk
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.http import HttpRequest
+from django.http import Http404, HttpRequest, HttpResponse
 from ninja.errors import HttpError
+from ninja.errors import ValidationError as NinjaValidationError
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from pydantic import ValidationError as PydanticValidationError
@@ -42,7 +43,9 @@ api = NinjaExtraAPI(
 # --- Handler 1: O "Conversador" ---
 # Trata tudo que previsto na Service Layer
 @api.exception_handler(ApplicationError)
-def application_error_handler(request: HttpRequest, exc: ApplicationError):
+def application_error_handler(
+    request: HttpRequest, exc: ApplicationError
+) -> HttpResponse:
     return api.create_response(
         request,
         {"detail": exc.detail, "code": exc.code},
@@ -53,7 +56,9 @@ def application_error_handler(request: HttpRequest, exc: ApplicationError):
 # --- Handler 2: Validação de modelo/serviço ---
 # Django ValidationError vindo do model clean() ou service layer → HTTP 400.
 @api.exception_handler(DjangoValidationError)
-def django_validation_error_handler(request: HttpRequest, exc: DjangoValidationError):
+def django_validation_error_handler(
+    request: HttpRequest, exc: DjangoValidationError
+) -> HttpResponse:
     detail = (
         exc.message_dict
         if hasattr(exc, "message_dict") and exc.message_dict
@@ -68,14 +73,55 @@ def django_validation_error_handler(request: HttpRequest, exc: DjangoValidationE
     )
 
 
-# --- Handler 3: O "Segurança" ---
-# Trata o que NÃO foi previsto (bugs reais).
-# Re-raise Pydantic validation errors para não mascarar erros 422 do Ninja.
-@api.exception_handler(Exception)
-def general_exception_handler(request: HttpRequest, exc: Exception):
-    if isinstance(exc, (PydanticValidationError, HttpError)):
-        raise exc
+# --- Handler 3: Erros HTTP do Ninja (401, 403, 404, 405, etc.) ---
+@api.exception_handler(Http404)
+def http_404_handler(request: HttpRequest, exc: Http404) -> HttpResponse:
+    return api.create_response(
+        request,
+        {"detail": "Recurso não encontrado.", "code": "not_found"},
+        status=404,
+    )
 
+
+@api.exception_handler(HttpError)
+def http_error_handler(request: HttpRequest, exc: HttpError) -> HttpResponse:
+    status_code_map = {
+        400: "bad_request",
+        401: "unauthorized",
+        403: "forbidden",
+        404: "not_found",
+        405: "method_not_allowed",
+        422: "unprocessable_entity",
+    }
+    code = status_code_map.get(exc.status_code, "http_error")
+    msg = str(getattr(exc, "message", exc))
+    return api.create_response(
+        request,
+        {"detail": msg, "code": code},
+        status=exc.status_code,
+    )
+
+
+# --- Handler 4: Erros de validação de payload (Pydantic / Ninja) ---
+@api.exception_handler(NinjaValidationError)
+@api.exception_handler(PydanticValidationError)
+def validation_error_handler(request: HttpRequest, exc: Exception) -> HttpResponse:
+    if hasattr(exc, "errors"):
+        err_attr = exc.errors
+        errors = err_attr() if callable(err_attr) else err_attr
+    else:
+        errors = str(exc)
+    return api.create_response(
+        request,
+        {"detail": errors, "code": "validation_error"},
+        status=422,
+    )
+
+
+# --- Handler 5: O "Segurança" ---
+# Trata o que NÃO foi previsto (bugs reais) → HTTP 500.
+@api.exception_handler(Exception)
+def general_exception_handler(request: HttpRequest, exc: Exception) -> HttpResponse:
     logger.exception("Unhandled exception in API")
     sentry_sdk.capture_exception(exc)
 

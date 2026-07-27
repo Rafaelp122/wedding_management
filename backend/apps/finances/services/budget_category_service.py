@@ -4,7 +4,7 @@ from typing import cast
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import ProtectedError, QuerySet, Sum
+from django.db.models import QuerySet, Sum
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -245,14 +245,8 @@ class BudgetCategoryService:
             f"por company_id={company.id}"
         )
 
-        try:
-            instance.delete()
+        if instance.expenses.exists():
             logger.warning(
-                f"Categoria uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
-            )
-
-        except ProtectedError as e:
-            logger.exception(
                 f"Falha de integridade ao deletar Categoria uuid={instance.uuid}: "
                 "Possui despesas ativas."
             )
@@ -262,7 +256,12 @@ class BudgetCategoryService:
                     "despesas vinculadas a ela. Remova as despesas primeiro."
                 ),
                 code="category_protected_error",
-            ) from e
+            )
+
+        instance.delete()
+        logger.warning(
+            f"Categoria uuid={instance.uuid} DESTRUÍDA por company_id={company.id}"
+        )
 
     @staticmethod
     @transaction.atomic
