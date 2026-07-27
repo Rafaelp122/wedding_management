@@ -1,32 +1,7 @@
-from typing import Protocol
-
 import boto3  # type: ignore[import-untyped]
 from django.conf import settings
 
 from apps.core.exceptions import BusinessRuleViolation
-
-
-class StorageService(Protocol):
-    """
-    Protocolo definindo a interface para serviços de armazenamento de arquivos.
-    """
-
-    def generate_presigned_put_url(
-        self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
-    ) -> str:
-        """
-        Gera uma URL pré-assinada para upload direto via PUT.
-
-        Args:
-            bucket: O nome do bucket de destino no storage.
-            object_key: O caminho/nome único do objeto no bucket.
-            content_type: O tipo MIME do arquivo (ex: application/pdf).
-            expires_in: O tempo de expiração da URL em segundos.
-
-        Returns:
-            A URL pré-assinada em formato de string.
-        """
-        ...
 
 
 class CloudflareR2StorageService:
@@ -142,29 +117,3 @@ class CloudflareR2StorageService:
             ExpiresIn=expires_in,
         )
         return presigned_url
-
-
-def get_storage_service() -> StorageService:
-    """
-    Retorna a implementação ativa do StorageService.
-
-    A escolha do provedor é feita com base no settings do Django.
-
-    Returns:
-        Uma instância concreta de StorageService correspondente.
-
-    Raises:
-        BusinessRuleViolation: Se o provedor configurado no settings
-            não for suportado.
-    """
-    provider = getattr(settings, "STORAGE_PROVIDER", "R2").upper()
-
-    if provider == "R2":
-        return CloudflareR2StorageService()
-
-    # Outros provedores (como GCS, S3 padrão) podem ser
-    # facilmente adicionados aqui no futuro.
-    raise BusinessRuleViolation(
-        detail=f"Provedor de storage '{provider}' não suportado.",
-        code="unsupported_storage_provider",
-    )

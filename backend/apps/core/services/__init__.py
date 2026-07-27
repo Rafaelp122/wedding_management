@@ -1,4 +1,4 @@
-from .storage_service import (
+from .storage import (
     CloudflareR2StorageService,
     StorageService,
     get_storage_service,
