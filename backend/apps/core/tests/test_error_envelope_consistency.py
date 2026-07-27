@@ -7,7 +7,7 @@ retornam uma estrutura JSON válida contendo obrigatoriamente as chaves
 """
 
 import uuid
-from typing import NoReturn
+from typing import Any, NoReturn, cast
 
 import pytest
 from django.test import Client
@@ -17,7 +17,7 @@ from apps.users.models import User
 from apps.users.tests.factories import UserFactory
 
 
-def _get_auth_headers(user: User) -> dict[str, str]:
+def _get_auth_headers(user: User) -> dict[str, Any]:
     """Retorna os cabeçalhos HTTP com token Bearer válido para o usuário."""
     refresh = RefreshToken.for_user(user)
     access_token = str(getattr(refresh, "access_token", refresh))
@@ -51,7 +51,7 @@ class TestErrorEnvelopeConsistency:
         Garante que erros de permissão/acesso negado (HTTP 403) retornam um JSON
         padronizado com 'detail' e 'code'.
         """
-        user = UserFactory()
+        user = cast(User, UserFactory())
         headers = _get_auth_headers(user)
 
         def _mock_forbidden(*args: object, **kwargs: object) -> NoReturn:
@@ -81,7 +81,7 @@ class TestErrorEnvelopeConsistency:
         Garante que recursos não encontrados (HTTP 404) retornam um JSON
         padronizado com 'detail' e 'code'.
         """
-        user = UserFactory()
+        user = cast(User, UserFactory())
         headers = _get_auth_headers(user)
         random_uuid = str(uuid.uuid4())
 
@@ -104,7 +104,7 @@ class TestErrorEnvelopeConsistency:
         Garante que erros de conflito/integridade de domínio
         (HTTP 409 / DomainIntegrityError) retornam JSON padronizado.
         """
-        user = UserFactory()
+        user = cast(User, UserFactory())
         headers = _get_auth_headers(user)
 
         def _mock_conflict(*args: object, **kwargs: object) -> NoReturn:
@@ -174,7 +174,7 @@ class TestErrorEnvelopeConsistency:
         Garante que erros internos não previstos (HTTP 500) retornam um JSON
         padronizado com 'detail' e 'code'.
         """
-        user = UserFactory()
+        user = cast(User, UserFactory())
         headers = _get_auth_headers(user)
 
         def _mock_crash(*args: object, **kwargs: object) -> NoReturn:
