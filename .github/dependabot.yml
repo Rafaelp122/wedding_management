@@ -1,7 +1,7 @@
 version: 2
 updates:
   # 1. Monitorar o Backend Python (Django Ninja)
-  - package-ecosystem: "pip"
+  - package-ecosystem: "uv"
     directory: "/backend" # Aponta direto para a pasta do backend onde estão o pyproject.toml ou requirements
     schedule:
       interval: "weekly"
