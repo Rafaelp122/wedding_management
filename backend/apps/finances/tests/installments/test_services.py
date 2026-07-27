@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import no_type_check
+from typing import Any, no_type_check
 from uuid import uuid4
 
 import pytest
@@ -533,7 +533,9 @@ class TestInstallmentServiceMarkAsPaid:
         with pytest.raises(ObjectNotFoundError):
             InstallmentService.mark_as_paid(user.company, other_installment)
 
-    def test_mark_as_paid_tolerance_zero_violation(self, user, mocker) -> None:
+    def test_mark_as_paid_tolerance_zero_violation(
+        self, user: Any, mocker: Any
+    ) -> None:
         """Marcação de parcela como paga que quebra Tolerância Zero levanta erro.
         Para forçar isso, simulamos um erro de validação (DjangoValidationError)
         durante o `full_clean()` da despesa na hora do mark_as_paid."""
@@ -555,7 +557,9 @@ class TestInstallmentServiceMarkAsPaid:
 
         assert exc.value.code == "expense_math_violation"
 
-    def test_unmark_as_paid_tolerance_zero_violation(self, user, mocker) -> None:
+    def test_unmark_as_paid_tolerance_zero_violation(
+        self, user: Any, mocker: Any
+    ) -> None:
         """Desmarcação de parcela que quebra Tolerância Zero levanta erro.
         Simulamos um erro de validação (DjangoValidationError) durante
         o `full_clean()` da despesa na hora do unmark_as_paid."""
@@ -961,7 +965,9 @@ class TestInstallmentServiceListAndGet:
         assert qs_b.count() == 1
         assert qs_b.first().expense.company == user_b.company
 
-    def test_list_installments_filter_by_wedding_and_expense_id(self, user) -> None:
+    def test_list_installments_filter_by_wedding_and_expense_id(
+        self, user: Any
+    ) -> None:
         """list() filtra por wedding_id e expense_id."""
         wedding1 = WeddingFactory(user_context=user)
         wedding2 = WeddingFactory(user_context=user)
