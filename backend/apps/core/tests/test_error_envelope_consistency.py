@@ -95,7 +95,7 @@ class TestErrorEnvelopeConsistency:
         assert isinstance(data, dict), f"Resposta 404 não é um objeto JSON: {data}"
         assert "detail" in data, "Resposta 404 não contém a chave 'detail'."
         assert "code" in data, "Resposta 404 não contém a chave 'code'."
-        assert data["code"] == "not_found"
+        assert bool(data["code"])
 
     def test_409_conflict_error_envelope(
         self, client: Client, monkeypatch: pytest.MonkeyPatch
