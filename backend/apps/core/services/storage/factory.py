@@ -23,7 +23,6 @@ def get_storage_service() -> StorageService:
 
     if provider == "R2":
         return CloudflareR2StorageService()
-
     # Outros provedores (como GCS, S3 padrão) podem ser
     # facilmente adicionados aqui no futuro.
     raise BusinessRuleViolation(

@@ -21,4 +21,4 @@ class StorageService(Protocol):
         Returns:
             A URL pré-assinada em formato de string.
         """
-        ...
+        ...  # pragma: no cover
