@@ -49,7 +49,7 @@ dev = [
     "django-zeal>=2.0.4,<3.0",
     "ipython>=9.8.0,<10.0",
     # Code Quality & Linting
-    "ruff>=0.15.2,<0.16",
+    "ruff>=0.15.2,<0.17",
     "mypy>=1.18.2,<3.0",
     "django-stubs>=5.2.7,<7.0",
     "pre-commit>=3.7.1,<4.7",
