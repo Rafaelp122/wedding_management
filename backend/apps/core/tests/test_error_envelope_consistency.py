@@ -7,16 +7,17 @@ retornam uma estrutura JSON válida contendo obrigatoriamente as chaves
 """
 
 import uuid
-from typing import Any
+from typing import NoReturn
 
 import pytest
 from django.test import Client
 from ninja_jwt.tokens import RefreshToken
 
+from apps.users.models import User
 from apps.users.tests.factories import UserFactory
 
 
-def _get_auth_headers(user: Any) -> dict[str, Any]:
+def _get_auth_headers(user: User) -> dict[str, str]:
     """Retorna os cabeçalhos HTTP com token Bearer válido para o usuário."""
     refresh = RefreshToken.for_user(user)
     access_token = str(getattr(refresh, "access_token", refresh))
@@ -53,7 +54,7 @@ class TestErrorEnvelopeConsistency:
         user = UserFactory()
         headers = _get_auth_headers(user)
 
-        def _mock_forbidden(*args: Any, **kwargs: Any) -> Any:
+        def _mock_forbidden(*args: object, **kwargs: object) -> NoReturn:
             from ninja.errors import HttpError
 
             raise HttpError(403, "Acesso negado para este recurso.")
@@ -94,6 +95,7 @@ class TestErrorEnvelopeConsistency:
         assert isinstance(data, dict), f"Resposta 404 não é um objeto JSON: {data}"
         assert "detail" in data, "Resposta 404 não contém a chave 'detail'."
         assert "code" in data, "Resposta 404 não contém a chave 'code'."
+        assert data["code"] == "not_found"
 
     def test_409_conflict_error_envelope(
         self, client: Client, monkeypatch: pytest.MonkeyPatch
@@ -105,7 +107,7 @@ class TestErrorEnvelopeConsistency:
         user = UserFactory()
         headers = _get_auth_headers(user)
 
-        def _mock_conflict(*args: Any, **kwargs: Any) -> Any:
+        def _mock_conflict(*args: object, **kwargs: object) -> NoReturn:
             from apps.core.exceptions import DomainIntegrityError
 
             raise DomainIntegrityError(
@@ -175,7 +177,7 @@ class TestErrorEnvelopeConsistency:
         user = UserFactory()
         headers = _get_auth_headers(user)
 
-        def _mock_crash(*args: Any, **kwargs: Any) -> Any:
+        def _mock_crash(*args: object, **kwargs: object) -> NoReturn:
             raise RuntimeError("Falha interna simulada para teste de 500.")
 
         monkeypatch.setattr(

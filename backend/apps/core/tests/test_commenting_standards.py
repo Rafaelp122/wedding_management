@@ -8,6 +8,7 @@ do projeto.
 """
 
 import ast
+import re
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,10 @@ FORBIDDEN_AI_TERMS: list[str] = [
     "chatgpt",
     "codeium",
     "ai generated",
+]
+
+FORBIDDEN_AI_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(rf"\b{re.escape(t)}\b", re.IGNORECASE) for t in FORBIDDEN_AI_TERMS
 ]
 
 
@@ -173,9 +178,10 @@ class TestCommentingStandards:
             rel_path = file_path.relative_to(root_dir)
 
             for line_idx, line in enumerate(lines, start=1):
-                line_lower = line.lower()
-                for term in FORBIDDEN_AI_TERMS:
-                    if term in line_lower:
+                for term, pattern in zip(
+                    FORBIDDEN_AI_TERMS, FORBIDDEN_AI_PATTERNS, strict=True
+                ):
+                    if pattern.search(line):
                         msg = (
                             f"Termo proibido '{term}' em {rel_path}:{line_idx}: "
                             f"'{line.strip()}'"

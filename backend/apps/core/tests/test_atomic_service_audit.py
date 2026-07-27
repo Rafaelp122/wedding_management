@@ -52,11 +52,26 @@ def _has_atomic_decorator(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> 
     return False
 
 
+def _walk_own_body(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.AST]:
+    """Percorre nós da função ignorando corpos de funções aninhadas."""
+    result: list[ast.AST] = []
+    stack = list(ast.iter_child_nodes(func_node))
+    while stack:
+        node = stack.pop()
+        result.append(node)
+        if node is not func_node and isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef)
+        ):
+            continue
+        stack.extend(ast.iter_child_nodes(node))
+    return result
+
+
 def _has_atomic_with_block(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     """
     Verifica se a função possui bloco 'with transaction.atomic():'.
     """
-    for node in ast.walk(func_node):
+    for node in _walk_own_body(func_node):
         if isinstance(node, ast.With):
             for item in node.items:
                 if _is_atomic_expr(item.context_expr):
@@ -69,13 +84,7 @@ def _count_orm_writes(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     Conta o número de chamadas diretas a métodos de escrita do ORM.
     """
     write_count = 0
-    for node in ast.walk(func_node):
-        # Ignora nós internos de funções aninhadas para não duplicar contagem
-        if node is not func_node and isinstance(
-            node, (ast.FunctionDef, ast.AsyncFunctionDef)
-        ):
-            continue
-
+    for node in _walk_own_body(func_node):
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             if node.func.attr in WRITE_METHODS:
                 write_count += 1
