@@ -27,7 +27,7 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.core.services.storage_service import (
+from apps.core.services.storage import (
     StorageService,
     get_storage_service,
 )

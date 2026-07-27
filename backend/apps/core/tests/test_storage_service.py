@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from apps.core.exceptions import BusinessRuleViolation
-from apps.core.services.storage_service import (
+from apps.core.services.storage import (
     CloudflareR2StorageService,
     get_storage_service,
 )
