@@ -19,7 +19,7 @@ endif
 .PHONY: help setup up dev logs down build rebuild clean db-reset back-logs front-logs \
         frontend-dev landing-dev sync-api openapi orval frontend-test frontend-test-changed \
         migrate makemigrations superuser shell reqs back-install \
-        test test-cov lint mypy format check-backend check-frontend check-landing check-ci check \
+        test test-cov lint mypy format check-backend check-frontend check-landing check-docs lint-docs check-ci check \
         prod-build prod-up prod-migrate prod-shell \
         env-setup secret-key fix-perms
 
@@ -260,7 +260,12 @@ check-frontend:
 check-landing:
 	cd landing && pnpm install --frozen-lockfile && pnpm exec astro check && pnpm run build
 
-check-ci: check-backend check-frontend check-landing
+check-docs:
+	@python3 scripts/validate_docs_links.py
+
+lint-docs: check-docs
+
+check-ci: check-docs check-backend check-frontend check-landing
 	@echo "✅ Todos os gates locais passaram com sucesso!"
 
 check: check-backend

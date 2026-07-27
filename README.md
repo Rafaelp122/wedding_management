@@ -11,76 +11,92 @@
 
 Sistema completo de gestão de casamentos com arquitetura moderna **React SPA + Django Ninja API**.
 
-Este repositório centraliza o controle financeiro, logístico e de cronograma para cerimonialistas profissionais, garantindo integridade de dados e automação de processos.
+Este repositório centraliza o controle financeiro, logístico e de cronograma para cerimonialistas profissionais e casais, garantindo integridade de dados (Tolerância Zero) e isolamento multitenant estrito.
 
 ---
 
-## 📖 Guia de Navegação
+## 📖 Portal de Documentação (Princípio Diátaxis)
 
-Nossa documentação segue o princípio Diátaxis. Escolha sua rota de leitura conforme seu perfil:
+Nossa documentação técnica é mantida em [docs/README.md](docs/README.md) sob a metodologia **Diátaxis**. Escolha sua rota de leitura:
 
-### 👔 Product Manager / Stakeholder
-*Entenda o que o sistema faz e as regras de negócio.*
-1. **[Requisitos (docs/REQUIREMENTS.md)](docs/REQUIREMENTS.md)**: Problema, solução e visão de produto.
-2. **[Regras de Negócio (docs/BUSINESS_RULES.md)](docs/BUSINESS_RULES.md)**: Validações financeiras e operacionais.
+### 🎓 1. Tutorials (Aprendizado & Onboarding)
+*Passo a passo para novos desenvolvedores:*
+- **[onboarding-quickstart](docs/1-tutorials/onboarding-quickstart.md)**: Subindo o ambiente local completo (Docker, PostgreSQL, Backend, Frontend).
+- **[backend-first-feature](docs/1-tutorials/backend-first-feature.md)**: Criando endpoints no Django Ninja + Service Layer.
+- **[frontend-first-feature](docs/1-tutorials/frontend-first-feature.md)**: Criando telas no React + Orval + Zod.
 
-### 💻 Desenvolvedor
-*Configure o ambiente e entenda os padrões de implementação.*
-1. **[Ambiente (docs/ENVIRONMENT.md)](docs/ENVIRONMENT.md)**: Guia de instalação (Docker/Local) e comandos `make`.
-2. **[Arquitetura (docs/ARCHITECTURE.md)](docs/ARCHITECTURE.md)**: Visão técnica, Stack e padrões de código (Service Layer).
-3. **[API & Frontend (docs/API.md)](docs/API.md)**: Como consumir a API e usar os hooks gerados.
-4. **[Casos de Uso (docs/use-cases/)](docs/use-cases/index.md)**: Fluxos de tela e lógica funcional.
+### 🛠️ 2. How-To Guides (Receitas Práticas)
+*Guias orientados a tarefas do dia a dia:*
+- **[setup-local-environment](docs/2-how-to/dev-environment/setup-local-environment.md)**: Configuração de ambiente e comandos `make`.
+- **[seed-database](docs/2-how-to/backend/seed-database.md)**: Populando o banco de dados local com dados fictícios (Faker) e templates.
+- **[msw-testing-patterns](docs/2-how-to/frontend/msw-testing-patterns.md)**: Padrões de testes no React com MSW e RTL.
 
-### 🏗️ Arquiteto / Tech Lead
-*Entenda as decisões técnicas e trade-offs.*
-1. **[ADR (Architecture Decision Records)](docs/ARCHITECTURE.md#9-referências)**: Por que escolhemos Cloud Run, Neon, R2, etc.
+### 📋 3. Reference (Especificações Técnicas)
+*Contratos de API, schemas e especificações de banco:*
+- **[openapi-schema](docs/3-reference/api/openapi-schema.md)** | **[error-envelope-spec](docs/3-reference/api/error-envelope-spec.md)**
+- **[commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md)** | **[testing-standards](docs/3-reference/architecture-standards/testing-standards.md)**
+
+### 💡 4. Explanation (Arquitetura & Regras de Negócio)
+*Decisões de design, segurança e regras de negócio:*
+- **[requirements](docs/4-explanation/requirements.md)**: Matriz de Requisitos Funcionais (RF01–RF12) e Não-Funcionais (RNF01–RNF05).
+- **[system-overview](docs/4-explanation/architecture/system-overview.md)** | **[multi-tenancy-strategy](docs/4-explanation/architecture/multi-tenancy-strategy.md)**
+- **[architectural-guard-rails-suite](docs/4-explanation/architecture/architectural-guard-rails-suite.md)**: Auditoria automatizada dos 12 pilares do sistema.
+- **[Regras de Negócio Atômicas](docs/README.md#regras-de-negócio-atômicas)**: Integridade contábil, ciclo de vida de casamentos, máquinas de estado de contratos e proteção da agenda.
 
 ---
 
-## 🛠 Tech Stack (Resumo)
+## 🛠 Tech Stack
 
-- **Backend:** Django 5.2 + Django Ninja (API-First).
-- **Frontend (App):** React 19 + TypeScript + Tailwind CSS + shadcn/ui.
+- **Backend:** Python 3.12+ | Django 5.2 + Django Ninja (API-First).
+- **Frontend (App):** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui.
 - **Landing Page:** Astro 6 + React + Tailwind CSS (SEO-first).
-- **Database:** PostgreSQL (Neon).
-- **Infra:** Docker, Cloud Run, Vercel, Cloudflare R2.
-
-> 📖 **Detalhes completos da Stack:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- **Banco de Dados:** PostgreSQL (Neon).
+- **Infraestrutura:** Docker, Cloud Run, Vercel, Cloudflare R2 (ADR-004).
 
 ---
 
-## 🚀 Quick Start (Resumo)
+## 🚀 Quick Start Local
 
 ```bash
-cp .env.example .env  # Configure suas chaves
-make up               # Inicie via Docker
-make superuser        # Crie seu acesso admin
-```
+# 1. Copie e configure as variáveis de ambiente
+cp .env.example .env
 
-> 📖 **Guia Completo de Instalação:** [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
+# 2. Inicie os containers via Docker
+make up
+
+# 3. Execute as migrations e popule os dados fictícios locais
+make migrate
+make seed
+
+# 4. Inicie o servidor de desenvolvimento
+make dev
+```
 
 ---
 
-## 📁 Estrutura do Projeto
+## 📁 Estrutura do Monorepo
 
 ```
 wedding_management/
-├── backend/                  # Django Ninja API
-├── frontend/                # React SPA (App principal)
-├── landing/                 # Landing page institucional (Astro + SEO)
-├── docs/                    # Documentação técnica (Princípio Diátaxis)
-├── .env                     # Variáveis de ambiente
-├── Makefile                 # Automação de comandos
-└── docker-compose.yml       # Orquestração de containers
+├── backend/                  # Django Ninja API (Apps: weddings, finances, logistics, scheduler, core, tenants, users)
+├── frontend/                # React SPA Principal (Feature-based structure)
+├── landing/                 # Landing Page Institucional (Astro + SEO)
+├── docs/                    # Documentação Técnica Oficial (Princípio Diátaxis)
+├── .agents/                 # Customizações e Skills para Agentes de IA
+├── .github/workflows/       # Esteira de CI/CD (integrity-ci.yml)
+├── Makefile                 # Automação de Comandos
+└── docker-compose.yml       # Orquestração de Containers
 ```
 
 ---
 
-## 🧪 Qualidade e Troubleshooting
+## 🧪 Qualidade, CI/CD e Integridade
 
-- **Testes:** `make test`
-- **Linter/Format:** `make lint` / `make format`
-- **Problemas comuns:** [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- **Validação de CI Local:** `make check-ci`
+- **Validação da Documentação:** `make check-docs`
+- **Testes Backend (Pytest):** `make test` (ou `cd backend && uv run pytest`)
+- **Testes Frontend (Vitest):** `cd frontend && npm run test:ci`
+- **Análise Estática (Linter):** `make lint`
 
 ---
 

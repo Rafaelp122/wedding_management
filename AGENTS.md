@@ -45,15 +45,17 @@
 ## Workflow
 
 - **Commits**: Conventional Commits (e.g. `feat(weddings): add list endpoint`).
-- **ADRs**: New file in `docs/ADR/` for structural changes.
+- **ADRs**: New file in `docs/4-explanation/adr/` for structural changes.
 - **Lint**: `make lint` or `ruff check .` before push. Pre-commit active.
 - **Secrets**: Never commit. `detect-secrets` active.
 
-## AI Rules
+## AI Rules & Documentation Standards
 
+- **Single Source of Truth (`docs/`)**: The official project documentation follows Diátaxis in `docs/`. Always consult `docs/README.md`, `docs/4-explanation/business-rules/` and domain MOCs before proposing architectural changes or implementing new features.
+- **Documentation Maintenance**: Whenever altering business rules, models, or APIs, update the corresponding atomic note in `docs/` and run `make check-docs` to ensure zero broken links.
 - **Read `docs/DESIGN.md`** before UI work.
 - **Load skills on demand** (not proactively).
-- **Docstrings and Comments**: Must follow the standard defined in [COMMENTING_STANDARDS.md](docs/COMMENTING_STANDARDS.md). Write in Portuguese (PT-BR) for business explanations, use Google Style for docstrings, and never include references to AI/generation tools (like "Bolt", "Jules", "Copilot").
+- **Docstrings and Comments**: Must follow the standard defined in [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Write in Portuguese (PT-BR) for business explanations, use Google Style for docstrings, and never include references to AI/generation tools (like "Bolt", "Jules", "Copilot").
 
 ## Subagents
 

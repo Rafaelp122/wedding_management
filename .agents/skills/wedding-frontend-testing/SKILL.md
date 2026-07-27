@@ -500,9 +500,12 @@ export const test = base.extend({
 
 ---
 
-## 12. References
+## 12. References (Single Source of Truth in `docs/`)
 
-For complete tooling APIs, load these skills:
+For complete tooling APIs and project standards:
+- MSW & RTL Testing Patterns Guide — see [msw-testing-patterns.md](../../../docs/2-how-to/frontend/msw-testing-patterns.md)
+- Orval Client Generation — see [generate-orval-client.md](../../../docs/2-how-to/frontend/generate-orval-client.md)
+- Playwright E2E Setup — see [run-playwright-e2e.md](../../../docs/2-how-to/frontend/run-playwright-e2e.md)
 
 | Tool | Skill | Content |
 |------|-------|---------|

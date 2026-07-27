@@ -1,0 +1,19 @@
+# Referência do Modelo: Item
+
+> **Módulo:** [logistics-domain](../../../4-explanation/domains/logistics-domain.md) | [contract-parent-child-hierarchy](../../../4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)
+> **Código:** `backend/apps/logistics/models/item.py`
+
+---
+
+## Estrutura do Modelo `Item`
+
+Herda de `TenantModel` e `WeddingOwnedMixin`. Representa cada item ou serviço individual especificado em um contrato.
+
+### Campos:
+- `company`: ForeignKey (`tenants.Company`)
+- `wedding`: ForeignKey (`weddings.Wedding`)
+- `contract`: ForeignKey (`logistics.Contract`, on_delete=CASCADE, related_name="items")
+- `name`: CharField(max_length=255)
+- `quantity`: PositiveIntegerField(default=1)
+- `unit_price`: DecimalField(max_digits=12, decimal_places=2)
+- `total_price`: DecimalField(max_digits=12, decimal_places=2)
