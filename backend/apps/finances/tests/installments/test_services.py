@@ -533,7 +533,7 @@ class TestInstallmentServiceMarkAsPaid:
         with pytest.raises(ObjectNotFoundError):
             InstallmentService.mark_as_paid(user.company, other_installment)
 
-    def test_mark_as_paid_tolerance_zero_violation(self, user, mocker):
+    def test_mark_as_paid_tolerance_zero_violation(self, user, mocker) -> None:
         """Marcação de parcela como paga que quebra Tolerância Zero levanta erro.
         Para forçar isso, simulamos um erro de validação (DjangoValidationError)
         durante o `full_clean()` da despesa na hora do mark_as_paid."""
@@ -555,7 +555,7 @@ class TestInstallmentServiceMarkAsPaid:
 
         assert exc.value.code == "expense_math_violation"
 
-    def test_unmark_as_paid_tolerance_zero_violation(self, user, mocker):
+    def test_unmark_as_paid_tolerance_zero_violation(self, user, mocker) -> None:
         """Desmarcação de parcela que quebra Tolerância Zero levanta erro.
         Simulamos um erro de validação (DjangoValidationError) durante
         o `full_clean()` da despesa na hora do unmark_as_paid."""
@@ -961,7 +961,7 @@ class TestInstallmentServiceListAndGet:
         assert qs_b.count() == 1
         assert qs_b.first().expense.company == user_b.company
 
-    def test_list_installments_filter_by_wedding_and_expense_id(self, user):
+    def test_list_installments_filter_by_wedding_and_expense_id(self, user) -> None:
         """list() filtra por wedding_id e expense_id."""
         wedding1 = WeddingFactory(user_context=user)
         wedding2 = WeddingFactory(user_context=user)
@@ -987,6 +987,13 @@ class TestInstallmentServiceListAndGet:
         qs_expense = InstallmentService.list(user.company, expense_id=expense2.uuid)
         assert qs_expense.count() == 1
         assert qs_expense.first().expense == expense2
+
+        # Filtro por wedding_id e expense_id combinados
+        qs_both = InstallmentService.list(
+            user.company, wedding_id=wedding1.uuid, expense_id=expense1.uuid
+        )
+        assert qs_both.count() == 1
+        assert qs_both.first().expense == expense1
 
     def test_list_installments_filter_by_status(self, user):
         """list() com status filtra corretamente."""
