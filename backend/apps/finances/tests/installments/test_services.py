@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import no_type_check
+from typing import Any, no_type_check
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -512,7 +512,7 @@ class TestInstallmentServiceMarkAsPaid:
             InstallmentService.unmark_as_paid(user.company, installment)
         assert exc.value.code == "installment_not_paid"
 
-    def test_unmark_as_paid_math_violation(self, user) -> None:
+    def test_unmark_as_paid_math_violation(self, user: Any) -> None:
         """Erro de validação ao desmarcar levanta BusinessRuleViolation."""
         from django.core.exceptions import ValidationError as DjangoValidationError
 
