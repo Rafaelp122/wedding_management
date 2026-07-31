@@ -3,17 +3,6 @@ import Axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig 
 import { addAuthRefreshInterceptor } from "@/api/interceptors/auth-refresh";
 import { useAuthStore } from "@/stores/authStore";
 
-vi.mock("axios", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("axios")>();
-  return {
-    ...actual,
-    default: {
-      ...actual.default,
-      post: vi.fn(),
-    },
-  };
-});
-
 function createMockInstance() {
   const handlers = {
     responseSuccess: null as ((response: unknown) => unknown) | null,
@@ -41,7 +30,7 @@ function createMockInstance() {
 
 describe("addAuthRefreshInterceptor", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
     useAuthStore.setState({
       accessToken: null,
       refreshToken: null,
@@ -52,6 +41,7 @@ describe("addAuthRefreshInterceptor", () => {
 
   describe("Regression Tests — Auth endpoints exclusion", () => {
     it("does not attempt refresh when 401 occurs on /api/v1/auth/google/", async () => {
+      const postSpy = vi.spyOn(Axios, "post");
       const { handlers } = createMockInstance();
       const config = { url: "/api/v1/auth/google/" } as InternalAxiosRequestConfig;
       const error = new AxiosError("Unauthorized", "ERR_BAD_REQUEST", config, undefined, {
@@ -65,10 +55,11 @@ describe("addAuthRefreshInterceptor", () => {
       const result = handlers.responseError?.(error);
       await expect(result).rejects.toBe(error);
 
-      expect(Axios.post).not.toHaveBeenCalled();
+      expect(postSpy).not.toHaveBeenCalled();
     });
 
     it("does not attempt refresh when 401 occurs on /api/v1/auth/token/", async () => {
+      const postSpy = vi.spyOn(Axios, "post");
       const { handlers } = createMockInstance();
       const config = { url: "/api/v1/auth/token/" } as InternalAxiosRequestConfig;
       const error = new AxiosError("Unauthorized", "ERR_BAD_REQUEST", config, undefined, {
@@ -82,10 +73,11 @@ describe("addAuthRefreshInterceptor", () => {
       const result = handlers.responseError?.(error);
       await expect(result).rejects.toBe(error);
 
-      expect(Axios.post).not.toHaveBeenCalled();
+      expect(postSpy).not.toHaveBeenCalled();
     });
 
     it("does not attempt refresh when 401 occurs on /api/v1/auth/register/", async () => {
+      const postSpy = vi.spyOn(Axios, "post");
       const { handlers } = createMockInstance();
       const config = { url: "/api/v1/auth/register/" } as InternalAxiosRequestConfig;
       const error = new AxiosError("Unauthorized", "ERR_BAD_REQUEST", config, undefined, {
@@ -99,12 +91,13 @@ describe("addAuthRefreshInterceptor", () => {
       const result = handlers.responseError?.(error);
       await expect(result).rejects.toBe(error);
 
-      expect(Axios.post).not.toHaveBeenCalled();
+      expect(postSpy).not.toHaveBeenCalled();
     });
   });
 
   describe("Non-401 and Non-Auth handling", () => {
     it("passes non-401 errors through without attempting refresh", async () => {
+      const postSpy = vi.spyOn(Axios, "post");
       const { handlers } = createMockInstance();
       const config = { url: "/api/v1/weddings/" } as InternalAxiosRequestConfig;
       const error = new AxiosError("Not Found", "ERR_BAD_REQUEST", config, undefined, {
@@ -118,7 +111,7 @@ describe("addAuthRefreshInterceptor", () => {
       const result = handlers.responseError?.(error);
       await expect(result).rejects.toBe(error);
 
-      expect(Axios.post).not.toHaveBeenCalled();
+      expect(postSpy).not.toHaveBeenCalled();
     });
 
     it("logs out and rejects normalized error when 401 on protected route and refreshToken is absent", async () => {
@@ -145,11 +138,11 @@ describe("addAuthRefreshInterceptor", () => {
       useAuthStore.setState({
         accessToken: "old-access",
         refreshToken: "valid-refresh",
-        user: { id: "123-uuid", email: "user@test.com", first_name: "Test", last_name: "User" },
+        user: { id: 1, email: "user@test.com", first_name: "Test", last_name: "User" },
         isAuthenticated: true,
       });
 
-      vi.mocked(Axios.post).mockResolvedValueOnce({
+      const postSpy = vi.spyOn(Axios, "post").mockResolvedValueOnce({
         data: { access: "new-access", refresh: "new-refresh" },
       });
 
@@ -169,7 +162,7 @@ describe("addAuthRefreshInterceptor", () => {
 
       const result = await handlers.responseError?.(error);
 
-      expect(Axios.post).toHaveBeenCalledWith(
+      expect(postSpy).toHaveBeenCalledWith(
         "/api/v1/auth/refresh/",
         { refresh: "valid-refresh" },
         expect.objectContaining({ timeout: 5000 }),
