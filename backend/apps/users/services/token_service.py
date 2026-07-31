@@ -48,6 +48,7 @@ class TokenService:
             logger.warning(f"Falha de autenticação para email={email}")
             raise HttpError(401, "Credenciais inválidas ou conta desativada.")
 
+        # ninja_jwt v5.4.5 alterou a assinatura de for_user
         refresh = RefreshToken.for_user(user)  # type: ignore[misc]
         token_out = TokenOut(
             access=str(refresh.access_token),

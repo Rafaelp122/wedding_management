@@ -67,26 +67,25 @@ Se você alterar para `CASCADE` ou remover o Soft Delete:
 ### ❌ ERRADO (considera apenas categorias ativas):
 
 ```python
-total_spent = BudgetCategory.objects.filter(
-    budget=budget
-).aggregate(Sum('expenses__actual_amount'))
+total_spent = BudgetCategory.objects.filter(budget=budget).aggregate(
+    Sum("expenses__actual_amount")
+)
 ```
 
 ### ✅ CORRETO (considera todas despesas, mesmo de categorias deletadas):
 
 ```python
-total_spent = Expense.objects.filter(
-    category__budget=budget
-).aggregate(Sum('actual_amount'))
+total_spent = Expense.objects.filter(category__budget=budget).aggregate(
+    Sum("actual_amount")
+)
 ```
 
 ### ✅ CORRETO (saldo livre considerando apenas categorias ativas):
 
 ```python
 allocated_active = BudgetCategory.objects.filter(
-    budget=budget,
-    is_deleted=False
-).aggregate(Sum('allocated_budget'))['allocated_budget__sum'] or Decimal('0')
+    budget=budget, is_deleted=False
+).aggregate(Sum("allocated_budget"))["allocated_budget__sum"] or Decimal("0")
 
 free_budget = budget.total_estimated - allocated_active
 ```
@@ -100,12 +99,12 @@ Ao criar migrations:
 ```python
 # ✅ CORRETO
 migrations.AddField(
-    model_name='expense',
-    name='category',
+    model_name="expense",
+    name="category",
     field=models.ForeignKey(
         on_delete=django.db.models.deletion.PROTECT,  # ← NUNCA CASCADE
-        related_name='expenses',
-        to='finances.budgetcategory',
+        related_name="expenses",
+        to="finances.budgetcategory",
     ),
 )
 ```
