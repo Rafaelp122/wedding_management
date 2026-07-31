@@ -62,9 +62,9 @@ class GoogleAuthService:
 
         user = cls._get_or_create_user(user_info)
 
-        refresh = RefreshToken.for_user(user)
+        refresh = RefreshToken.for_user(user)  # type: ignore[misc]
         token_out = TokenOut(
-            access=str(refresh.access_token),  # type: ignore[attr-defined]
+            access=str(refresh.access_token),
             refresh=str(refresh),
             user=UserDataOut(
                 id=user.id,

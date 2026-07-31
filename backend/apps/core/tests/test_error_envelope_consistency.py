@@ -19,7 +19,7 @@ from apps.users.tests.factories import UserFactory
 
 def _get_auth_headers(user: User) -> dict[str, Any]:
     """Retorna os cabeçalhos HTTP com token Bearer válido para o usuário."""
-    refresh = RefreshToken.for_user(user)
+    refresh = RefreshToken.for_user(user)  # type: ignore[misc]
     access_token = str(getattr(refresh, "access_token", refresh))
     return {"HTTP_AUTHORIZATION": f"Bearer {access_token}"}
 

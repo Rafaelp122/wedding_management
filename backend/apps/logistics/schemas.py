@@ -230,7 +230,7 @@ class ContractOut(Schema):
 
     @staticmethod
     def resolve_file_name(obj: "Contract") -> str | None:
-        if obj.pdf_file:
+        if obj.pdf_file and obj.pdf_file.name:
             return obj.pdf_file.name.split("/")[-1]
         return None
 
