@@ -62,9 +62,10 @@ class GoogleAuthService:
 
         user = cls._get_or_create_user(user_info)
 
-        refresh = RefreshToken.for_user(user)
+        # ninja_jwt v5.4.5 alterou a assinatura de for_user
+        refresh = RefreshToken.for_user(user)  # type: ignore[misc]
         token_out = TokenOut(
-            access=str(refresh.access_token),  # type: ignore[attr-defined]
+            access=str(refresh.access_token),
             refresh=str(refresh),
             user=UserDataOut(
                 id=user.id,
@@ -95,7 +96,7 @@ class GoogleAuthService:
         Raises:
             HttpError: Se a conta do usuário existente estiver desativada.
         """
-        # Busca global por e-mail único da plataforma (autenticação inicial)
+        # Tenant desconhecido no fluxo de login — email é global único
         user = User.objects.filter(email=user_info.email).first()
         masked_email = _mask_email(user_info.email)
 
