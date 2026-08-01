@@ -6,7 +6,7 @@
 
 ## 1. Visão Geral do Workflow
 
-**Propósito:** Garantir a qualidade de código, integridade de contratos OpenAPI/Orval, suíte completa de testes (unitários, integração e E2E) e entrega contínua (CD) desacoplada para GCP Cloud Run e Vercel.
+**Propósito:** Garantir a qualidade de código, integridade de contratos OpenAPI/Orval, suíte de testes (unitários, integração e E2E selecionados @smoke/@critical) e entrega contínua (CD) desacoplada para GCP Cloud Run e Vercel.
 
 **Eventos Gatilho:** `push` na branch `main` e `pull_request` apontando para `main`.
 
@@ -109,8 +109,8 @@ graph LR
 
 | Tipo | Nome | Propósito | Escopo |
 |:---|:---|:---|:---|
-| Secret | `GCP_WIF_PROVIDER` | Provedor do Workload Identity Federation no GCP | Job 9 (`deploy`) |
-| Secret | `GCP_WIF_SERVICE_ACCOUNT` | Service Account com permissão `Artifact Registry Writer` e `Cloud Run Admin` | Job 9 (`deploy`) |
+| Secret | `GCP_WIF_PROVIDER` | Provedor do Workload Identity Federation no GCP | Job 9 (`deploy-backend`) |
+| Secret | `GCP_WIF_SERVICE_ACCOUNT` | Service Account com permissão `Artifact Registry Writer` e `Cloud Run Admin` | Job 9 (`deploy-backend`) |
 | Secret | `DATABASE_URL` | URL de conexão PostgreSQL (Neon) em produção/migrations | Job 9 (`deploy-backend`) |
 | Secret | `SECRET_KEY` | Chave secreta de runtime Django | Job 9 (`deploy-backend`) |
 | Secret | `R2_ACCESS_KEY_ID` | Access Key ID para armazenamento de contratos/arquivos no Cloudflare R2 | Job 9 (`deploy-backend`) |
@@ -128,6 +128,7 @@ graph LR
 ## 6. Gates de Qualidade & Erros Comuns
 
 ### Gates de Validação
+
 | Gate | Critério de Aceitação | Recuperação em Caso de Falha |
 |:---|:---|:---|
 | **Documentation Integrity** | Zero links quebrados em `docs/` (`make check-docs`) | Rodar `python3 scripts/validate_docs_links.py` e ajustar o caminho. |
