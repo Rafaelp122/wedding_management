@@ -171,3 +171,14 @@ git add .
 git commit -m "feat(scope): descrição da feature"
 git push
 ```
+
+---
+
+## 6. ADRs Relacionados
+
+- [ADR-006: Service Layer Architecture](../adr/006-service-layer.md) — Separação entre endpoints e lógica de negócio.
+- [ADR-011: BaseModel e Validação em Save](../adr/011-basemodel-save-full-clean.md) — Regra de integridade do modelo Django.
+- [ADR-012: Orval Contract-Driven Frontend](../adr/012-orval-contract-driven-frontend.md) — Geração estritamente tipada de hooks a partir do OpenAPI schema (`contract-sync`).
+- [ADR-013: Migração DRF para Django Ninja](../adr/013-migrate-drf-to-ninja.md) — Escolha do framework de API com schema OpenAPI embutido.
+- [ADR-018: Playwright E2E Testing](../adr/018-playwright-e2e-testing.md) — Testes de ponta a ponta em sharding no CI.
+- [ADR-021: Padrão de Comentários e Docstrings](../adr/021-padrao-comentarios-docstrings.md) — Diretrizes de documentação de código.

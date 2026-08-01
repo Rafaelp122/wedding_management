@@ -412,7 +412,7 @@ jobs:
           install-deps: "false"
 
       - name: Install Vercel CLI
-        run: pnpm install --global vercel@latest
+        run: pnpm add --global vercel@latest
 
       - name: Set Vercel Env
         id: env
@@ -469,7 +469,7 @@ jobs:
           install-deps: "false"
 
       - name: Install Vercel CLI
-        run: pnpm install --global vercel@latest
+        run: pnpm add --global vercel@latest
 
       - name: Set Vercel Env
         id: env
@@ -558,7 +558,7 @@ jobs:
               - Backend (Pytest, factories, mocks): `.agents/skills/wedding-backend-testing/SKILL.md`
               - Frontend (Vitest, RTL, MSW): `.agents/skills/wedding-frontend-testing/SKILL.md`
             6. Padrões de Documentação:
-              - Seguir estritamente as diretrizes de `docs/COMMENTING_STANDARDS.md`.
+              - Seguir estritamente as diretrizes de `docs/3-reference/architecture-standards/commenting-standards.md`.
               - Idioma: Comentários inline e docstrings devem ser escritos em Português (PT-BR).
               - Backend (apps/):
                 - Métodos públicos/complexos em services.py exigem docstrings em estilo Google Style.
