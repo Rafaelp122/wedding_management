@@ -15,7 +15,7 @@ on:
 
 jobs:
   # ----------------------------------------------------------------------------
-  # JOB 0: DETECT PATHS TO OPTIMIZE DEPLOYMENTS
+  # JOB 1: DETECT PATHS TO OPTIMIZE DEPLOYMENTS
   # ----------------------------------------------------------------------------
   detect-changes:
     name: Detect Code Changes
@@ -48,7 +48,7 @@ jobs:
               - '.github/workflows/integrity-ci.yml'
 
   # ----------------------------------------------------------------------------
-  # JOB 0.5: DOCUMENTATION LINKS LINT
+  # JOB 2: DOCUMENTATION LINKS LINT
   # ----------------------------------------------------------------------------
   docs-lint:
     name: Documentation Links Lint
@@ -64,7 +64,7 @@ jobs:
         run: python3 scripts/validate_docs_links.py
 
   # ----------------------------------------------------------------------------
-  # JOB 1: STATIC ANALYSIS
+  # JOB 3: STATIC ANALYSIS (LINT & TYPECHECK)
   # ----------------------------------------------------------------------------
   lint:
     name: Lint & Format Check
@@ -105,7 +105,7 @@ jobs:
           pnpm run type-check
 
   # ----------------------------------------------------------------------------
-  # JOB 2: BACKEND INTEGRITY
+  # JOB 4: BACKEND INTEGRITY (TESTS & MIGRATIONS)
   # ----------------------------------------------------------------------------
   backend-tests:
     name: Backend Tests & Migrations
@@ -140,7 +140,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   # ----------------------------------------------------------------------------
-  # JOB 3: FRONTEND INTEGRITY
+  # JOB 5: FRONTEND INTEGRITY (UNIT TESTS)
   # ----------------------------------------------------------------------------
   frontend-tests:
     name: Frontend Unit Tests
@@ -179,7 +179,7 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
   # ----------------------------------------------------------------------------
-  # JOB 3.4: PLAYWRIGHT E2E INTEGRITY
+  # JOB 6: PLAYWRIGHT E2E INTEGRITY
   # ----------------------------------------------------------------------------
   e2e-tests:
     name: Playwright E2E Tests - Shard ${{ matrix.shard }}/2
@@ -260,7 +260,7 @@ jobs:
           if-no-files-found: ignore
 
   # ----------------------------------------------------------------------------
-  # JOB 3.5: LANDING INTEGRITY
+  # JOB 7: LANDING INTEGRITY
   # ----------------------------------------------------------------------------
   landing-check:
     name: Landing Page Check
@@ -284,7 +284,7 @@ jobs:
           pnpm run build
 
   # ----------------------------------------------------------------------------
-  # JOB 4: CONTRACT VALIDATION (Runs if either backend or frontend changed)
+  # JOB 8: CONTRACT VALIDATION (OpenAPI & Orval Sync)
   # ----------------------------------------------------------------------------
   contract-sync:
     name: API Contract Sync
@@ -316,7 +316,7 @@ jobs:
           git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
 
   # ----------------------------------------------------------------------------
-  # JOB 5: CONTINUOUS DEPLOYMENT (GCP Cloud Run)
+  # JOB 9: CONTINUOUS DEPLOYMENT (GCP Cloud Run OCI)
   # ----------------------------------------------------------------------------
   deploy:
     name: Deploy to Cloud Run / Test Build
@@ -407,7 +407,7 @@ jobs:
             --quiet
 
   # ----------------------------------------------------------------------------
-  # JOB 6: VERCEL DEPLOY (Frontend React App)
+  # JOB 10: VERCEL DEPLOY (Frontend React App)
   # ----------------------------------------------------------------------------
   deploy-frontend:
     name: Deploy Frontend to Vercel
@@ -464,7 +464,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
 
   # ----------------------------------------------------------------------------
-  # JOB 7: VERCEL DEPLOY (Landing Page Astro) - DEPENDS ON LANDING-CHECK
+  # JOB 11: VERCEL DEPLOY (Landing Page Astro)
   # ----------------------------------------------------------------------------
   deploy-landing:
     name: Deploy Landing to Vercel
@@ -521,7 +521,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
 
   # ----------------------------------------------------------------------------
-  # JOB 8: AI CODE REVIEW (PR only, once per PR via label guard)
+  # JOB 12: AI CODE REVIEW (PR Reviewer)
   # ----------------------------------------------------------------------------
   review:
     name: AI Code Review
