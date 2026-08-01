@@ -318,8 +318,8 @@ jobs:
   # ----------------------------------------------------------------------------
   # JOB 9: CONTINUOUS DEPLOYMENT (GCP Cloud Run OCI)
   # ----------------------------------------------------------------------------
-  deploy:
-    name: Deploy to Cloud Run / Test Build
+  deploy-backend:
+    name: Deploy Backend to Cloud Run
     needs: [detect-changes, backend-tests, contract-sync]
     if: |
       success() &&

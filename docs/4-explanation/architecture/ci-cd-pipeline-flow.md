@@ -33,7 +33,7 @@ graph LR
     end
 
     subgraph Delivery ["Fase 3: Deploys e Review"]
-        J9["JOB 9: deploy (GCP Cloud Run OCI)"]
+        J9["JOB 9: deploy-backend (GCP Cloud Run OCI)"]
         J10["JOB 10: deploy-frontend (Vercel)"]
         J12["JOB 12: review (AI Code Review)"]
         J11["JOB 11: deploy-landing (Vercel)"]
@@ -83,7 +83,7 @@ graph LR
 | **JOB 6** | `e2e-tests` | Playwright E2E em matriz sharded (1/2 e 2/2). | `detect-changes` | Django local `runserver 8000` + Playwright |
 | **JOB 7** | `landing-check` | Validação de tipos Astro e build estático. | `detect-changes` | Composite Action `setup-node-pnpm` (`landing`) |
 | **JOB 8** | `contract-sync` | Valida sincronização entre schema Django Ninja e Orval. | `detect-changes` | Composite Actions `setup-python-uv` & `setup-node-pnpm` |
-| **JOB 9** | `deploy` | BuildX OCI com cache `type=gha`, Artifact Registry e Cloud Run. | `detect-changes`, `backend-tests`, `contract-sync` | Workload Identity Federation (WIF) + Docker BuildX |
+| **JOB 9** | `deploy-backend` | BuildX OCI com cache `type=gha`, Artifact Registry e Cloud Run. | `detect-changes`, `backend-tests`, `contract-sync` | Workload Identity Federation (WIF) + Docker BuildX |
 | **JOB 10** | `deploy-frontend` | Deploy do aplicativo React no Vercel (Preview/Prod). | `detect-changes`, `frontend-tests`, `contract-sync` | Vercel CLI via PNPM |
 | **JOB 11** | `deploy-landing` | Deploy da Landing Page Astro no Vercel (Preview/Prod). | `detect-changes`, `landing-check` | Vercel CLI via PNPM |
 | **JOB 12** | `review` | Revisão estática de código automatizada em PRs via IA. | `detect-changes`, `backend-tests`, `frontend-tests`, `landing-check` | OpenCode + DeepSeek modelo v4-pro |
