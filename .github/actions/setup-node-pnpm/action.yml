@@ -35,7 +35,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: ${{ inputs.working-directory }}/node_modules
-        key: node-modules-${{ inputs.working-directory }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.working-directory)) }}
+        key: node-modules-${{ runner.os }}-${{ inputs.working-directory }}-${{ inputs.pnpm-version }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.working-directory), format('{0}/.nvmrc', inputs.working-directory)) }}
 
     - name: Install Dependencies
       if: inputs.install-deps == 'true' && steps.cache-node-modules.outputs.cache-hit != 'true'

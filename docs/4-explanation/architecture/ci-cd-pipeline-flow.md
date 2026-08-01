@@ -10,7 +10,7 @@ O pipeline de CI (`integrity-ci.yml`) é acionado em eventos de `push` e `pull_r
 
 O pipeline utiliza **Composite Actions** nativas (`.github/actions/`) para abstrair a inicialização dos ambientes Python/UV e Node/PNPM e gerenciar o cache de dependências de forma padronizada.
 
-```
+```text
                          detect-changes & docs-lint
                                      │
                 ┌────────────────────┼────────────────────┐
