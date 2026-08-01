@@ -118,8 +118,14 @@ cd ../frontend && pnpm run generate:api
 git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
 ```
 
-### 3.9 `deploy` (Backend GCP Cloud Run)
-**Propósito:** Deploy do backend no Google Cloud Run em pushes na branch `main` (ou teste de build Docker em PRs).
+### 3.9 `deploy` (Backend GCP Cloud Run & Artifact Registry)
+**Propósito:** Compilação da imagem OCI de produção e deploy imutável no Google Cloud Run.
+
+| Evento | Comportamento |
+|--------|--------------|
+| `pull_request` | Teste de compilação da imagem OCI via `docker/build-push-action@v6` com `push: false` e cache de camadas (`type=gha`). |
+| `push` na `main` | Autenticação OAuth2 no GCP via WIF (`google-github-actions/auth@v2` + `docker/login-action@v3`), push da imagem com tag `$GITHUB_SHA` para o Google Artifact Registry (`us-central1-docker.pkg.dev`), execução de migrations e deploy no Cloud Run apontando para a imagem OCI imutável (`--image`). |
+
 
 ### 3.10 `deploy-frontend` & `deploy-landing` (Vercel)
 **Propósito:** Deploy do aplicativo React e da Landing Page no Vercel (Preview em PRs, Produção em pushes na branch `main`).

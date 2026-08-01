@@ -337,16 +337,37 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Test Docker Build (PR)
-        if: github.event_name == 'pull_request'
-        run: cd backend && docker build --target production --build-arg BUILD_SECRET_KEY=dummy-build-key-not-for-runtime . # pragma: allowlist secret
-
       - name: Google Auth
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+          token_format: "access_token"
+
+      - name: Log in to Google Artifact Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: us-central1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image (OCI)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: production
+          build-args: BUILD_SECRET_KEY=dummy-build-key-not-for-runtime # pragma: allowlist secret
+          tags: |
+            us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:${{ github.sha }}
+            us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:latest
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Set up Cloud SDK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -380,7 +401,7 @@ jobs:
         run: |
           gcloud run deploy wedding-backend \
             --project gen-lang-client-0194045282 \
-            --source ./backend \
+            --image us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:${{ github.sha }} \
             --region us-central1 \
             --allow-unauthenticated \
             --concurrency 15 \
