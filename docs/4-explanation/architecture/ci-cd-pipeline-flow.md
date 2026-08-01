@@ -17,52 +17,56 @@
 ## 2. Fluxo de Execução (Mermaid Diagram)
 
 ```mermaid
-graph TD
-    subgraph "Fase 1: Detecção & Infra Docs"
+graph LR
+    subgraph PreChecks ["Fase 1: Pre-checks"]
         J1["JOB 1: detect-changes"]
         J2["JOB 2: docs-lint"]
     end
 
-    subgraph "Fase 2: Qualidade Estática"
-        J3["JOB 3: lint (Ruff / mypy / Oxlint / tsc)"]
+    subgraph Validation ["Fase 2: Validações e Testes"]
+        J8["JOB 8: contract-sync"]
+        J4["JOB 4: backend-tests"]
+        J5["JOB 5: frontend-tests"]
+        J7["JOB 7: landing-check"]
+        J3["JOB 3: lint"]
+        J6["JOB 6: e2e-tests (Matrix 1/2, 2/2)"]
     end
 
-    subgraph "Fase 3: Suíte de Testes & Integridade"
-        J4["JOB 4: backend-tests (Pytest)"]
-        J5["JOB 5: frontend-tests (Vitest)"]
-        J6["JOB 6: e2e-tests (Playwright Shards)"]
-        J7["JOB 7: landing-check (Astro)"]
-        J8["JOB 8: contract-sync (OpenAPI + Orval)"]
-    end
-
-    subgraph "Fase 4: Implantação Contínua (CD)"
+    subgraph Delivery ["Fase 3: Deploys e Review"]
         J9["JOB 9: deploy (GCP Cloud Run OCI)"]
         J10["JOB 10: deploy-frontend (Vercel)"]
+        J12["JOB 12: review (AI Code Review)"]
         J11["JOB 11: deploy-landing (Vercel)"]
     end
 
-    subgraph "Fase 5: Revisão Automatizada"
-        J12["JOB 12: review (AI Code Review)"]
-    end
-
-    J1 --> J3
+    J1 --> J8
     J1 --> J4
     J1 --> J5
-    J1 --> J6
     J1 --> J7
-    J1 --> J8
+    J1 --> J3
+    J1 --> J6
 
     J1 & J4 & J8 --> J9
     J1 & J5 & J8 --> J10
+    J1 & J4 & J5 & J7 --> J12
     J1 & J7 --> J11
 
-    J1 & J4 & J5 & J7 --> J12
+    style PreChecks fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
+    style Validation fill:#181825,stroke:#45475a,color:#cdd6f4
+    style Delivery fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
 
-    style J1 fill:#e1f5fe
-    style J9 fill:#e8f5e8
-    style J10 fill:#e8f5e8
-    style J11 fill:#e8f5e8
-    style J12 fill:#f3e5f5
+    style J1 fill:#313244,stroke:#89b4fa,color:#cdd6f4
+    style J2 fill:#313244,stroke:#89b4fa,color:#cdd6f4
+    style J3 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J4 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J5 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J6 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J7 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J8 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J9 fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    style J10 fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    style J11 fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    style J12 fill:#313244,stroke:#cba6f7,color:#cdd6f4
 ```
 
 ---
