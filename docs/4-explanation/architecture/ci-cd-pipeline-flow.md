@@ -1,182 +1,146 @@
-# 🔁 Fluxo de CI/CD — Wedding Management System
+# 🔁 Especificação da Pipeline de CI/CD — Wedding Management System
 
-> **Última atualização:** 1 de agosto de 2026
-
----
-
-## 1. Visão Geral
-
-O pipeline de CI (`integrity-ci.yml`) é acionado em eventos de `push` e `pull_request` na branch `main`. Ele detecta quais partes do monorepo mudaram (backend, frontend ou landing page) e executa os jobs de validação e testes necessários de forma paralela e otimizada.
-
-O pipeline utiliza **Composite Actions** nativas (`.github/actions/`) para abstrair a inicialização dos ambientes Python/UV e Node/PNPM e gerenciar o cache de dependências de forma padronizada.
-
-```text
-                         detect-changes & docs-lint
-                                     │
-                ┌────────────────────┼────────────────────┐
-                ▼                    ▼                    ▼
-            backend?             frontend?             landing?
-                │                    │                    │
-          ┌─────┴─────┐        ┌─────┼─────┐              │
-          ▼           ▼        ▼     ▼     ▼              ▼
-        lint      backend-   lint  front-  e2e-        landing-
-                   tests           end-   tests         check
-          │           │        │   tests   │              │
-          │           │        │     │     │              │
-          │           └────────┼─────┼─────┘              │
-          │                    │     │                    │
-          ▼                    ▼     ▼                    │
-    contract-sync        contract-sync                    │
-          │                    │                          │
-          └───────────┬────────┘                          │
-                      │        │                          │
-                      ▼        ▼                          ▼
-                   deploy  deploy-frontend          deploy-landing
-                (Cloud Run)  (Vercel)                 (Vercel)
-
-    review ── needs: backend-tests, frontend-tests, landing-check
-    (AI Code Review, gate: !failure() && !cancelled())
-```
+> **Versão:** 2.0 | **Última atualização:** 1 de agosto de 2026
 
 ---
 
-## 2. Abstrações de Ambiente (Composite Actions)
+## 1. Visão Geral do Workflow
 
-Para eliminar a duplicação de boilerplate e garantir caching consistente entre os jobs, o pipeline consome duas ações compostas:
+**Propósito:** Garantir a qualidade de código, integridade de contratos OpenAPI/Orval, suíte de testes (unitários, integração e E2E selecionados @smoke/@critical) e entrega contínua (CD) desacoplada para GCP Cloud Run e Vercel.
 
-1. **`setup-python-uv` (`.github/actions/setup-python-uv/`)**:
-   - Inicializa Python 3.12 via `astral-sh/setup-uv@v5`.
-   - Ativa o cache automático baseado em `backend/uv.lock`.
-2. **`setup-node-pnpm` (`.github/actions/setup-node-pnpm/`)**:
-   - Inicializa PNPM 9.15.0 via `pnpm/action-setup@v4`.
-   - Inicializa o Node.js lendo o `.nvmrc` do diretório alvo (`working-directory`).
-   - Gerencia o cache de `node_modules` com chave hash baseada em `pnpm-lock.yaml`.
-   - Executa `pnpm install --frozen-lockfile` apenas em caso de cache miss.
+**Eventos Gatilho:** `push` na branch `main` e `pull_request` apontando para `main`.
+
+**Recursos de Infraestrutura:** GitHub Actions Runners (`ubuntu-latest`), GCP Cloud Run, Google Artifact Registry (`us-central1`), Vercel.
 
 ---
 
-## 3. Detalhamento dos Jobs
+## 2. Fluxo de Execução (Mermaid Diagram)
 
-### 3.1 `detect-changes`
-**Propósito:** Usa `dorny/paths-filter@v3` para determinar os escopos modificados no commit/PR. Outputs: `backend`, `frontend`, `landing`.
+```mermaid
+graph LR
+    subgraph PreChecks ["Fase 1: Pre-checks"]
+        J1["JOB 1: detect-changes"]
+        J2["JOB 2: docs-lint"]
+    end
 
-**Filtros:**
-- `backend`: Mudanças em `backend/**` ou no próprio `integrity-ci.yml`.
-- `frontend`: Mudanças em `frontend/**` ou no próprio `integrity-ci.yml`.
-- `landing`: Mudanças em `landing/**` ou no próprio `integrity-ci.yml`.
+    subgraph Validation ["Fase 2: Validações e Testes"]
+        J8["JOB 8: contract-sync"]
+        J4["JOB 4: backend-tests"]
+        J5["JOB 5: frontend-tests"]
+        J7["JOB 7: landing-check"]
+        J3["JOB 3: lint"]
+        J6["JOB 6: e2e-tests (Matrix 1/2, 2/2)"]
+    end
 
-### 3.2 `docs-lint`
-**Propósito:** Executa o script `scripts/validate_docs_links.py` para garantir que todos os links internos de documentação e anotações atômicas permaneçam válidos.
+    subgraph Delivery ["Fase 3: Deploys e Review"]
+        J9["JOB 9: deploy-backend (GCP Cloud Run OCI)"]
+        J10["JOB 10: deploy-frontend (Vercel)"]
+        J12["JOB 12: review (AI Code Review)"]
+        J11["JOB 11: deploy-landing (Vercel)"]
+    end
 
-### 3.3 `lint`
-**Propósito:** Análise estática e checagem de tipos nas áreas modificadas.
+    J1 --> J8
+    J1 --> J4
+    J1 --> J5
+    J1 --> J7
+    J1 --> J3
+    J1 --> J6
 
-| Escopo | Ferramenta | Comando |
-|--------|-----------|---------|
-| Backend | Ruff | `cd backend && uv run ruff check . && uv run ruff format --check .` |
-| Backend | mypy | `cd backend && uv run mypy . --show-error-codes --no-color-output` |
-| Frontend | Oxlint + tsc | `cd frontend && pnpm run lint && pnpm run type-check` |
+    J1 & J4 & J8 --> J9
+    J1 & J5 & J8 --> J10
+    J1 & J4 & J5 & J7 --> J12
+    J1 & J7 --> J11
 
-### 3.4 `backend-tests`
-**Propósito:** Validação de integridade do Django (migrations, check) e suíte Pytest com cobertura.
+    style PreChecks fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
+    style Validation fill:#181825,stroke:#45475a,color:#cdd6f4
+    style Delivery fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
 
-```bash
-cd backend
-uv run python manage.py check
-uv run python manage.py makemigrations --check --dry-run
-uv run python manage.py migrate --noinput
-uv run pytest --cov=apps --cov-report=term --cov-report=xml -v
-```
-
-### 3.5 `frontend-tests`
-**Propósito:** Testes unitários com Vitest e React Testing Library, além da validação de isolamento de mocks da API (`check-api-mock-isolation`).
-
-```bash
-cd frontend
-pnpm run test:ci
-```
-
-### 3.6 `e2e-tests`
-**Propósito:** Testes de ponta a ponta com Playwright em matriz dividida em shards (1/2 e 2/2). Sobe o servidor Django local (`runserver 8000`) alimentado por `seed_db`.
-
-### 3.7 `landing-check`
-**Propósito:** Validação de checagem de tipos Astro (`astro check`) e build da landing page.
-- **Node:** Configurado automaticamente pelo `.nvmrc` da pasta `landing/` (`24.18.0`).
-
-```bash
-cd landing
-pnpm exec astro check
-pnpm run build
-```
-
-### 3.8 `contract-sync`
-**Propósito:** Garante que o schema OpenAPI exportado pelo backend (`config.api.api`) esteja 100% em sintonia com os hooks gerados pelo Orval no frontend.
-
-```bash
-cd backend && uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2
-cd ../frontend && pnpm run generate:api
-git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
-```
-
-### 3.9 `deploy` (Backend GCP Cloud Run)
-**Propósito:** Deploy do backend no Google Cloud Run em pushes na branch `main` (ou teste de build Docker em PRs).
-
-### 3.10 `deploy-frontend` & `deploy-landing` (Vercel)
-**Propósito:** Deploy do aplicativo React e da Landing Page no Vercel (Preview em PRs, Produção em pushes na branch `main`).
-
-### 3.11 `review` (AI Code Review)
-**Propósito:** Revisão automatizada estática em PRs via OpenCode (modelo DeepSeek). Possui guard por label `ai-reviewed` para evitar execuções redundantes.
-
----
-
-## 4. Troubleshooting & Soluções Comuns
-
-### `contract-sync` falhou com "SCHEMA DESATUALIZADO"
-**Causa:** O arquivo `openapi.json` ou os hooks em `frontend/src/api/generated/` estão desalinhados em relação aos endpoints Django.
-
-**Solução:**
-```bash
-make sync-api
-git add openapi.json frontend/src/api/generated/
-git commit -m "chore(api): sync OpenAPI schema and Orval hooks"
-```
-
-### `makemigrations --check` falhou
-**Causa:** Foi feita uma alteração em modelos Django sem gerar a migration correspondente.
-
-**Solução:**
-```bash
-cd backend
-uv run python manage.py makemigrations
-git add apps/*/migrations/*.py
-git commit -m "fix(backend): add missing migration"
+    style J1 fill:#313244,stroke:#89b4fa,color:#cdd6f4
+    style J2 fill:#313244,stroke:#89b4fa,color:#cdd6f4
+    style J3 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J4 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J5 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J6 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J7 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J8 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
+    style J9 fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    style J10 fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    style J11 fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    style J12 fill:#313244,stroke:#cba6f7,color:#cdd6f4
 ```
 
 ---
 
-## 5. Workflow do Desenvolvedor
+## 3. Matriz de Jobs & Dependências (1 a 12)
 
-```bash
-# 1. Antes de enviar push, execute a verificação local
-make lint                      # ruff + mypy (backend) + oxlint + tsc (frontend)
-
-# 2. Se alterou APIs ou modelos
-make sync-api                  # export_openapi_schema + hooks Orval
-
-# 3. Valide a documentação e anotações atômicas
-make check-docs
-
-# 4. Commit e push
-git add .
-git commit -m "feat(scope): descrição da feature"
-git push
-```
+| ID | Nome do Job | Propósito | Dependências (`needs`) | Contexto de Execução |
+|:---|:---|:---|:---|:---|
+| **JOB 1** | `detect-changes` | Filtra caminhos alterados (`backend`, `frontend`, `landing`). | Nenhuma | `ubuntu-latest` (paths-filter v3) |
+| **JOB 2** | `docs-lint` | Valida integridade de links markdown e anotações atômicas. | Nenhuma | Composite Action `setup-python-uv` |
+| **JOB 3** | `lint` | Análise estática (Ruff, mypy, Oxlint, tsc). | `detect-changes` | Composite Actions `setup-python-uv` / `setup-node-pnpm` |
+| **JOB 4** | `backend-tests` | Migrations dry-run + Pytest com cobertura XML. | `detect-changes` | Composite Action `setup-python-uv` |
+| **JOB 5** | `frontend-tests` | Vitest + React Testing Library + teste isolamento mocks. | `detect-changes` | Composite Action `setup-node-pnpm` |
+| **JOB 6** | `e2e-tests` | Playwright E2E em matriz sharded (1/2 e 2/2). | `detect-changes` | Django local `runserver 8000` + Playwright |
+| **JOB 7** | `landing-check` | Validação de tipos Astro e build estático. | `detect-changes` | Composite Action `setup-node-pnpm` (`landing`) |
+| **JOB 8** | `contract-sync` | Valida sincronização entre schema Django Ninja e Orval. | `detect-changes` | Composite Actions `setup-python-uv` & `setup-node-pnpm` |
+| **JOB 9** | `deploy-backend` | BuildX OCI com cache `type=gha`, Artifact Registry e Cloud Run. | `detect-changes`, `backend-tests`, `contract-sync` | Workload Identity Federation (WIF) + Docker BuildX |
+| **JOB 10** | `deploy-frontend` | Deploy do aplicativo React no Vercel (Preview/Prod). | `detect-changes`, `frontend-tests`, `contract-sync` | Vercel CLI via PNPM |
+| **JOB 11** | `deploy-landing` | Deploy da Landing Page Astro no Vercel (Preview/Prod). | `detect-changes`, `landing-check` | Vercel CLI via PNPM |
+| **JOB 12** | `review` | Revisão estática de código automatizada em PRs via IA. | `detect-changes`, `backend-tests`, `frontend-tests`, `landing-check` | OpenCode + DeepSeek modelo v4-pro |
 
 ---
 
-## 6. ADRs Relacionados
+## 4. Abstrações de Ambiente (Composite Actions)
 
-- [ADR-006: Service Layer Architecture](../adr/006-service-layer.md) — Separação entre endpoints e lógica de negócio.
+- **`setup-python-uv` (`.github/actions/setup-python-uv/`)**:
+  - Python 3.12 via `astral-sh/setup-uv@v5`.
+  - Cache automático atrelado ao `backend/uv.lock`.
+- **`setup-node-pnpm` (`.github/actions/setup-node-pnpm/`)**:
+  - PNPM 9.15.0 via `pnpm/action-setup@v4`.
+  - Node.js lido de forma declarativa de `${working-directory}/.nvmrc` (`24.18.0`).
+  - Cache robusto de `node_modules` com chave composta:
+    `key: node-modules-${{ runner.os }}-${{ inputs.working-directory }}-${{ inputs.pnpm-version }}-${{ hashFiles(...) }}`.
+
+---
+
+## 5. Requisitos de Segurança & Contratos
+
+### Variáveis & Secrets Exigidos
+
+| Tipo | Nome | Propósito | Escopo |
+|:---|:---|:---|:---|
+| Secret | `GCP_WIF_PROVIDER` | Provedor do Workload Identity Federation no GCP | Job 9 (`deploy-backend`) |
+| Secret | `GCP_WIF_SERVICE_ACCOUNT` | Service Account com permissão `Artifact Registry Writer` e `Cloud Run Admin` | Job 9 (`deploy-backend`) |
+| Secret | `DATABASE_URL` | URL de conexão PostgreSQL (Neon) em produção/migrations | Job 9 (`deploy-backend`) |
+| Secret | `SECRET_KEY` | Chave secreta de runtime Django | Job 9 (`deploy-backend`) |
+| Secret | `R2_ACCESS_KEY_ID` | Access Key ID para armazenamento de contratos/arquivos no Cloudflare R2 | Job 9 (`deploy-backend`) |
+| Secret | `R2_SECRET_ACCESS_KEY` | Secret Access Key do Cloudflare R2 | Job 9 (`deploy-backend`) |
+| Secret | `R2_BUCKET` | Nome do bucket R2 para uploads de produção | Job 9 (`deploy-backend`) |
+| Secret | `R2_ENDPOINT_URL` | Endpoint customizado da API S3-compatible do Cloudflare R2 | Job 9 (`deploy-backend`) |
+| Secret | `VERCEL_TOKEN` | Token de autenticação da CLI do Vercel | Jobs 10 & 11 |
+| Secret | `VERCEL_ORG_ID` | Identificador da organização Vercel | Jobs 10 & 11 |
+| Secret | `VERCEL_PROJECT_ID_FRONTEND` | ID do projeto Frontend no Vercel | Job 10 |
+| Secret | `VERCEL_PROJECT_ID_LANDING` | ID do projeto Landing no Vercel | Job 11 |
+| Secret | `CODECOV_TOKEN` | Token para upload de cobertura de código | Jobs 4 & 5 |
+
+---
+
+## 6. Gates de Qualidade & Erros Comuns
+
+### Gates de Validação
+
+| Gate | Critério de Aceitação | Recuperação em Caso de Falha |
+|:---|:---|:---|
+| **Documentation Integrity** | Zero links quebrados em `docs/` (`make check-docs`) | Rodar `python3 scripts/validate_docs_links.py` e ajustar o caminho. |
+| **API Contract Sync** | Diff zero no schema `openapi.json` e hooks Orval | Executar `make sync-api` e comitar as alterações. |
+| **Backend Migrations** | `makemigrations --check --dry-run` zerado | Executar `uv run python manage.py makemigrations` na pasta `backend/`. |
+| **Mock Isolation** | Nenhum `vi.mock('@/api/generated')` fora do `test-setup.ts` | Centralizar todos os mocks Orval em `test-setup.ts` via `registerMockHook`. |
+
+---
+
+## 7. ADRs Relacionados
+
+- [ADR-006: Service Layer Architecture](../adr/006-service-layer.md) — Separação estrita entre endpoints e lógica de negócio.
 - [ADR-011: BaseModel e Validação em Save](../adr/011-basemodel-save-full-clean.md) — Regra de integridade do modelo Django.
 - [ADR-012: Orval Contract-Driven Frontend](../adr/012-orval-contract-driven-frontend.md) — Geração estritamente tipada de hooks a partir do OpenAPI schema (`contract-sync`).
 - [ADR-013: Migração DRF para Django Ninja](../adr/013-migrate-drf-to-ninja.md) — Escolha do framework de API com schema OpenAPI embutido.

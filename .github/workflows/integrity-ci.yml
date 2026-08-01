@@ -15,7 +15,7 @@ on:
 
 jobs:
   # ----------------------------------------------------------------------------
-  # JOB 0: DETECT PATHS TO OPTIMIZE DEPLOYMENTS
+  # JOB 1: DETECT PATHS TO OPTIMIZE DEPLOYMENTS
   # ----------------------------------------------------------------------------
   detect-changes:
     name: Detect Code Changes
@@ -48,7 +48,7 @@ jobs:
               - '.github/workflows/integrity-ci.yml'
 
   # ----------------------------------------------------------------------------
-  # JOB 0.5: DOCUMENTATION LINKS LINT
+  # JOB 2: DOCUMENTATION LINKS LINT
   # ----------------------------------------------------------------------------
   docs-lint:
     name: Documentation Links Lint
@@ -58,15 +58,13 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Setup Python & UV
+        uses: ./.github/actions/setup-python-uv
       - name: Validate Documentation Links
         run: python3 scripts/validate_docs_links.py
 
   # ----------------------------------------------------------------------------
-  # JOB 1: STATIC ANALYSIS
+  # JOB 3: STATIC ANALYSIS (LINT & TYPECHECK)
   # ----------------------------------------------------------------------------
   lint:
     name: Lint & Format Check
@@ -107,7 +105,7 @@ jobs:
           pnpm run type-check
 
   # ----------------------------------------------------------------------------
-  # JOB 2: BACKEND INTEGRITY
+  # JOB 4: BACKEND INTEGRITY (TESTS & MIGRATIONS)
   # ----------------------------------------------------------------------------
   backend-tests:
     name: Backend Tests & Migrations
@@ -142,7 +140,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   # ----------------------------------------------------------------------------
-  # JOB 3: FRONTEND INTEGRITY
+  # JOB 5: FRONTEND INTEGRITY (UNIT TESTS)
   # ----------------------------------------------------------------------------
   frontend-tests:
     name: Frontend Unit Tests
@@ -181,7 +179,7 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
   # ----------------------------------------------------------------------------
-  # JOB 3.4: PLAYWRIGHT E2E INTEGRITY
+  # JOB 6: PLAYWRIGHT E2E INTEGRITY
   # ----------------------------------------------------------------------------
   e2e-tests:
     name: Playwright E2E Tests - Shard ${{ matrix.shard }}/2
@@ -262,7 +260,7 @@ jobs:
           if-no-files-found: ignore
 
   # ----------------------------------------------------------------------------
-  # JOB 3.5: LANDING INTEGRITY
+  # JOB 7: LANDING INTEGRITY
   # ----------------------------------------------------------------------------
   landing-check:
     name: Landing Page Check
@@ -286,7 +284,7 @@ jobs:
           pnpm run build
 
   # ----------------------------------------------------------------------------
-  # JOB 4: CONTRACT VALIDATION (Runs if either backend or frontend changed)
+  # JOB 8: CONTRACT VALIDATION (OpenAPI & Orval Sync)
   # ----------------------------------------------------------------------------
   contract-sync:
     name: API Contract Sync
@@ -318,10 +316,10 @@ jobs:
           git diff --exit-code || (echo "❌ SCHEMA DESATUALIZADO. Rode 'make sync-api' localmente." && exit 1)
 
   # ----------------------------------------------------------------------------
-  # JOB 5: CONTINUOUS DEPLOYMENT (GCP Cloud Run)
+  # JOB 9: CONTINUOUS DEPLOYMENT (GCP Cloud Run OCI)
   # ----------------------------------------------------------------------------
-  deploy:
-    name: Deploy to Cloud Run / Test Build
+  deploy-backend:
+    name: Deploy Backend to Cloud Run
     needs: [detect-changes, backend-tests, contract-sync]
     if: |
       success() &&
@@ -337,16 +335,38 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Test Docker Build (PR)
-        if: github.event_name == 'pull_request'
-        run: cd backend && docker build --target production --build-arg BUILD_SECRET_KEY=dummy-build-key-not-for-runtime . # pragma: allowlist secret
-
       - name: Google Auth
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+          token_format: "access_token"
+
+      - name: Log in to Google Artifact Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: us-central1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image (OCI)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: production
+          build-args: BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
+          tags: |
+            us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:${{ github.sha }}
+            us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:latest
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Set up Cloud SDK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -380,7 +400,7 @@ jobs:
         run: |
           gcloud run deploy wedding-backend \
             --project gen-lang-client-0194045282 \
-            --source ./backend \
+            --image us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:${{ github.sha }} \
             --region us-central1 \
             --allow-unauthenticated \
             --concurrency 15 \
@@ -389,7 +409,7 @@ jobs:
             --quiet
 
   # ----------------------------------------------------------------------------
-  # JOB 6: VERCEL DEPLOY (Frontend React App)
+  # JOB 10: VERCEL DEPLOY (Frontend React App)
   # ----------------------------------------------------------------------------
   deploy-frontend:
     name: Deploy Frontend to Vercel
@@ -412,7 +432,7 @@ jobs:
           install-deps: "false"
 
       - name: Install Vercel CLI
-        run: pnpm add --global vercel@latest
+        run: pnpm add -g vercel@latest
 
       - name: Set Vercel Env
         id: env
@@ -446,7 +466,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
 
   # ----------------------------------------------------------------------------
-  # JOB 7: VERCEL DEPLOY (Landing Page Astro) - DEPENDS ON LANDING-CHECK
+  # JOB 11: VERCEL DEPLOY (Landing Page Astro)
   # ----------------------------------------------------------------------------
   deploy-landing:
     name: Deploy Landing to Vercel
@@ -469,7 +489,7 @@ jobs:
           install-deps: "false"
 
       - name: Install Vercel CLI
-        run: pnpm add --global vercel@latest
+        run: pnpm add -g vercel@latest
 
       - name: Set Vercel Env
         id: env
@@ -503,7 +523,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
 
   # ----------------------------------------------------------------------------
-  # JOB 8: AI CODE REVIEW (PR only, once per PR via label guard)
+  # JOB 12: AI CODE REVIEW (PR Reviewer)
   # ----------------------------------------------------------------------------
   review:
     name: AI Code Review
