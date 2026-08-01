@@ -1,0 +1,22 @@
+name: "Setup Python & UV"
+description: "Configura Python, UV e gerenciamento de cache para o backend"
+
+inputs:
+  python-version:
+    description: "Versão do Python a ser utilizada"
+    required: false
+    default: "3.12"
+  working-directory:
+    description: "Diretório do projeto Python"
+    required: false
+    default: "backend"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup UV & Python
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        enable-cache: true
+        cache-dependency-glob: "${{ inputs.working-directory }}/uv.lock"

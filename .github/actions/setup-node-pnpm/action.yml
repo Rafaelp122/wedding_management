@@ -1,0 +1,45 @@
+name: "Setup Node & PNPM"
+description: "Configura Node.js, PNPM e gerencia o cache de node_modules"
+
+inputs:
+  working-directory:
+    description: "Diretório de trabalho (ex: frontend, landing)"
+    required: false
+    default: "frontend"
+  pnpm-version:
+    description: "Versão do PNPM"
+    required: false
+    default: "9.15.0"
+  install-deps:
+    description: "Se deve executar pnpm install --frozen-lockfile quando houver cache miss"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup PNPM
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: "${{ inputs.working-directory }}/.nvmrc"
+        cache: "pnpm"
+        cache-dependency-path: "${{ inputs.working-directory }}/pnpm-lock.yaml"
+
+    - name: Cache Node Modules
+      id: cache-node-modules
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.working-directory }}/node_modules
+        key: node-modules-${{ inputs.working-directory }}-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.working-directory)) }}
+
+    - name: Install Dependencies
+      if: inputs.install-deps == 'true' && steps.cache-node-modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        cd ${{ inputs.working-directory }}
+        pnpm install --frozen-lockfile
