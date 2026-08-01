@@ -111,8 +111,12 @@ graph LR
 |:---|:---|:---|:---|
 | Secret | `GCP_WIF_PROVIDER` | Provedor do Workload Identity Federation no GCP | Job 9 (`deploy`) |
 | Secret | `GCP_WIF_SERVICE_ACCOUNT` | Service Account com permissão `Artifact Registry Writer` e `Cloud Run Admin` | Job 9 (`deploy`) |
-| Secret | `DATABASE_URL` | URL de conexão PostgreSQL (Neon) em produção/migrations | Job 9 (`deploy`) |
-| Secret | `SECRET_KEY` | Chave secreta de runtime Django | Job 9 (`deploy`) |
+| Secret | `DATABASE_URL` | URL de conexão PostgreSQL (Neon) em produção/migrations | Job 9 (`deploy-backend`) |
+| Secret | `SECRET_KEY` | Chave secreta de runtime Django | Job 9 (`deploy-backend`) |
+| Secret | `R2_ACCESS_KEY_ID` | Access Key ID para armazenamento de contratos/arquivos no Cloudflare R2 | Job 9 (`deploy-backend`) |
+| Secret | `R2_SECRET_ACCESS_KEY` | Secret Access Key do Cloudflare R2 | Job 9 (`deploy-backend`) |
+| Secret | `R2_BUCKET` | Nome do bucket R2 para uploads de produção | Job 9 (`deploy-backend`) |
+| Secret | `R2_ENDPOINT_URL` | Endpoint customizado da API S3-compatible do Cloudflare R2 | Job 9 (`deploy-backend`) |
 | Secret | `VERCEL_TOKEN` | Token de autenticação da CLI do Vercel | Jobs 10 & 11 |
 | Secret | `VERCEL_ORG_ID` | Identificador da organização Vercel | Jobs 10 & 11 |
 | Secret | `VERCEL_PROJECT_ID_FRONTEND` | ID do projeto Frontend no Vercel | Job 10 |

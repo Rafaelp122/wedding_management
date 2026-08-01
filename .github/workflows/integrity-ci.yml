@@ -336,6 +336,7 @@ jobs:
           persist-credentials: false
 
       - name: Google Auth
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: auth
         uses: google-github-actions/auth@v2
         with:
@@ -344,6 +345,7 @@ jobs:
           token_format: "access_token"
 
       - name: Log in to Google Artifact Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: us-central1-docker.pkg.dev
@@ -358,7 +360,7 @@ jobs:
         with:
           context: ./backend
           target: production
-          build-args: BUILD_SECRET_KEY=dummy-build-key-not-for-runtime # pragma: allowlist secret
+          build-args: BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
           tags: |
             us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:${{ github.sha }}
             us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-backend/backend:latest
