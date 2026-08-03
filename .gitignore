@@ -136,6 +136,7 @@ coverage.json
 # 3. Variáveis com segredos e tokens reais
 *.tfvars
 *.tfvars.json
+!terraform/environments/*.tfvars
 override.tf
 override.tf.json
 *_override.tf

@@ -53,7 +53,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -backend=false
+        run: terraform init
 
       - name: Terraform Validate
         id: validate
@@ -62,12 +62,22 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request' && env.GCP_WIF_PROVIDER != ''
-        run: terraform plan -no-color -input=false
+        run: |
+          terraform plan -var-file=environments/production.tfvars -no-color -input=false -out=tfplan | tee plan.txt
         env:
           GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          VERCEL_API_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
         continue-on-error: true
+
+      - name: Read Plan Output
+        id: read_plan
+        if: github.event_name == 'pull_request' && steps.plan.outcome != 'skipped'
+        run: |
+          PLAN_OUTPUT=$(cat plan.txt | tail -n 100)
+          echo "PLAN_STDOUT<<EOF" >> $GITHUB_ENV
+          echo "$PLAN_OUTPUT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Comment Plan on Pull Request
         uses: actions/github-script@v7
@@ -80,10 +90,10 @@ jobs:
             #### Terraform Validation 🤖\`${steps.validate.outcome}\`
             #### Terraform Plan 📖\`${steps.plan.outcome}\`
 
-            <details><summary>Show Plan</summary>
+            <details><summary>Show Plan Output</summary>
 
             \`\`\`hcl
-            ${process.env.PLAN_STDOUT || "Plan output not available in dry-run mode"}
+            ${process.env.PLAN_STDOUT || "Plan output not available"}
             \`\`\`
 
             </details>
@@ -101,6 +111,6 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.GCP_WIF_PROVIDER != ''
         env:
           GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          VERCEL_API_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: terraform apply -auto-approve -input=false
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
+        run: terraform apply -var-file=environments/production.tfvars -auto-approve -input=false

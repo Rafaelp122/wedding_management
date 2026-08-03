@@ -40,7 +40,7 @@ jobs:
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
 
       - name: Terraform Init
-        run: terraform init -backend=false
+        run: terraform init
 
       - name: Terraform Validate
         run: terraform validate -no-color
@@ -48,5 +48,5 @@ jobs:
       - name: Terraform Plan (Staging)
         run: terraform plan -var-file=environments/staging.tfvars -no-color -input=false
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          VERCEL_API_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
