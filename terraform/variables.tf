@@ -4,7 +4,6 @@
 variable "gcp_project_id" {
   type        = string
   description = "ID do projeto na Google Cloud Platform (GCP)"
-  default     = "gen-lang-client-0194045282"
 }
 
 variable "gcp_region" {
