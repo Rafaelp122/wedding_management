@@ -63,7 +63,7 @@ jobs:
           SECRET_KEY: dummy-ci-key-for-e2e-tests # pragma: allowlist secret
         run: |
           cd backend
-          uv run --with uvicorn uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
+          uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
           echo "Waiting for Uvicorn ASGI server..."
           SERVER_READY=0
           for i in {1..30}; do
