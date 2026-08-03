@@ -62,6 +62,8 @@ jobs:
       - name: Python Ruff Lint & Mypy Typecheck
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-static-analysis-only # pragma: allowlist secret
+          PYTHONPATH: .
         run: |
           cd backend
           uv run ruff check .
@@ -127,7 +129,7 @@ jobs:
       - name: Run Vitest Suite
         run: |
           cd frontend
-          pnpm test:run
+          pnpm test
 
   contract-sync:
     name: API OpenAPI & Orval Contract Sync
@@ -152,16 +154,10 @@ jobs:
           DJANGO_SETTINGS_MODULE: config.settings.development
         run: |
           cd backend
-          uv run python manage.py export_openapi_schema --api config.api.api --output openapi.json --settings=config.settings.development
+          uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2 --settings=config.settings.development
           cd ../frontend
-          pnpm exec openapi-typescript ../backend/openapi.json -o src/api/generated/schema.d.ts
           pnpm run generate:api
-          git status --porcelain
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::Os contratos OpenAPI ou hooks gerados pelo Orval estão desatualizados!"
-            git diff
-            exit 1
-          fi
+          git diff --exit-code || (echo "::error::Os contratos OpenAPI ou hooks gerados pelo Orval estão desatualizados! Rode 'make sync-api' localmente." && exit 1)
 
   landing-check:
     name: Landing Page Build Check

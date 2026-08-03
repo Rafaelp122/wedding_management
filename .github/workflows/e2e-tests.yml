@@ -49,6 +49,7 @@ jobs:
       - name: Prepare Backend & Seed Database
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-e2e-tests # pragma: allowlist secret
         run: |
           cd backend
           uv run python manage.py migrate --noinput
@@ -57,12 +58,13 @@ jobs:
       - name: Start ASGI Server (Uvicorn)
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-e2e-tests # pragma: allowlist secret
         run: |
           cd backend
           uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
           echo "Waiting for Uvicorn ASGI server..."
           for i in {1..30}; do
-            if curl -s http://127.0.0.1:8000/api/v1/health/ > /dev/null; then
+            if curl -s http://127.0.0.1:8000/api/v1/health > /dev/null; then
               echo "✅ Uvicorn ASGI server online!"
               break
             fi

@@ -25,10 +25,66 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check Existing Review
+        id: label-check
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          LABELS=$(gh api "/repos/${{ github.repository }}/issues/$PR_NUMBER/labels" --jq '[.[].name]' 2>/dev/null || echo "[]")
+          if echo "$LABELS" | grep -q '"ai-reviewed"'; then
+            echo "PR already has 'ai-reviewed' label. Skipping review."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run OpenCode AI Review
+        if: steps.label-check.outputs.skip != 'true'
         uses: anomalyco/opencode/github@v1.16.2
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: deepseek/deepseek-v4-pro
+          use_github_token: "true"
+          prompt: |
+            Revise este pull request seguindo estritamente as regras de arquitetura, qualidade e testes do projeto:
+            1. Diretrizes gerais: `AGENTS.md`
+            2. Regras de Backend (Django Ninja, Service Layer, Multi-tenancy, Exceptions, Validações): `.agents/skills/wedding-backend/SKILL.md`
+            3. Regras de Frontend (React, Vite, Orval hooks, React Hook Form + Zod, Zustand): `.agents/skills/wedding-frontend/SKILL.md`
+            4. Regras de Negócio (Finanças, Logística, Scheduler): `.agents/skills/wedding-business-rules/SKILL.md`
+            5. Padrões de Testes:
+              - Backend (Pytest, factories, mocks): `.agents/skills/wedding-backend-testing/SKILL.md`
+              - Frontend (Vitest, RTL, MSW): `.agents/skills/wedding-frontend-testing/SKILL.md`
+            6. Padrões de Documentação:
+              - Seguir estritamente as diretrizes de `docs/3-reference/architecture-standards/commenting-standards.md`.
+              - Idioma: Comentários inline e docstrings devem ser escritos em Português (PT-BR).
+              - Backend (apps/):
+                - Métodos públicos/complexos em services.py exigem docstrings em estilo Google Style.
+                - Endpoints em api.py precisam de operation_id e docstrings curtas (1-2 linhas).
+                - Modelos precisam de docstring de classe descritiva e campos com help_text.
+                - Mudanças estruturais importantes ou novos padrões exigem ADR em docs/ADR/ (ver ADR-021).
+                - É terminantemente PROIBIDO incluir referências a assistentes de codificação ou geradores nos comentários (ex: Bolt, Jules, Copilot).
+              - Frontend (src/): hooks, tipos e utils exportados em features/ precisam de JSDoc.
+                Stores Zustand precisam de comentário descrevendo o estado gerenciado.
+
+            IMPORTANTE — O pipeline de CI é independente e executa lint, type-check e testes paralelamente.
+            NÃO execute comandos de teste, build, lint ou type-check. Foque exclusivamente na revisão estática do diff.
+
+            Foque em apontar:
+            - Desvios arquiteturais (ex: lógica fora de services.py, falta de filtro de tenant, endpoints sem operation_id).
+            - Falhas de segurança, concorrência ou performance (como queries N+1, secrets em código).
+            - Falta de testes obrigatórios ou desvios de padrões de escrita.
+            - Pendências de documentação (docstring, JSDoc, help_text, ADRs faltantes).
+            - Seja conciso e direto ao ponto ao fazer os apontamentos.
+
+      - name: Mark PR as Reviewed
+        if: steps.label-check.outputs.skip != 'true' && success()
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          gh label create "ai-reviewed" --color "0e8a16" --force 2>/dev/null || true
+          gh pr edit "$PR_NUMBER" --add-label "ai-reviewed"
+          echo "✓ Added 'ai-reviewed' label to PR #$PR_NUMBER"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

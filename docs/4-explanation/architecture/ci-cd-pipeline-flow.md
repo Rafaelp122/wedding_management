@@ -73,7 +73,8 @@ graph TD
 | **[ci-pr-validation.yml](../../../.github/workflows/ci-pr-validation.yml)** | Validação de sintaxe, tipagem estrita (`mypy`), Pytest, Vitest e OpenAPI Contract Sync | `pull_request`, `push` (`develop`, `main`) | Código Backend, Frontend ou Landing | ~1.5 min |
 | **[docs-ci.yml](../../../.github/workflows/docs-ci.yml)** | Validação ultra-rápida de links de documentação e anotações atômicas Diátaxis | `pull_request`, `push` (`develop`, `main`) | `docs/**`, `*.md` | **~3 seg** |
 | **[e2e-tests.yml](../../../.github/workflows/e2e-tests.yml)** | Testes End-to-End com Playwright (Chromium e Mobile Safari) sobre servidor Uvicorn ASGI | `pull_request`, `push` (`develop`, `main`) | `backend/**`, `frontend/**` | ~2 min |
-| **[ai-code-review.yml](../../../.github/workflows/ai-code-review.yml)** | Revisão automatizada de código por IA (OpenCode + DeepSeek v4) | `pull_request` (`opened`, `synchronize`) | Qualquer alteração no PR | Imadiato ao abrir |
+| **[ai-code-review.yml](../../../.github/workflows/ai-code-review.yml)** | Revisão automatizada de código por IA (OpenCode + DeepSeek v4) | `pull_request` (`opened`, `synchronize`) | Qualquer alteração no PR | Imediato ao abrir |
+| **[cd-deploy.yml](../../../.github/workflows/cd-deploy.yml)** | Continuous Deployment (CD) de Produção (GCP Cloud Run OCI + Vercel) | `push` (`main`), `workflow_dispatch` | `backend/**`, `frontend/**`, `landing/**` | ~2 min |
 | **[staging-pipeline.yml](../../../.github/workflows/staging-pipeline.yml)** | Deploy automatizado no ambiente de **Homologação Privado** (Staging) | `push` (`develop`, `staging`) | Módulo Terraform & Staging | ~2 min |
 | **[terraform-ci.yml](../../../.github/workflows/terraform-ci.yml)** | Execução do `terraform plan` (em PRs) e `terraform apply` (no merge da `main`) | `pull_request`, `push` (`main`) | `terraform/**` | ~2 min |
 
