@@ -27,6 +27,7 @@ Guias práticos passo a passo para novos desenvolvedores:
 - [onboarding-quickstart](1-tutorials/onboarding-quickstart.md) — Subindo ambiente local completo (Docker, DB, Backend, Frontend).
 - [backend-first-feature](1-tutorials/backend-first-feature.md) — Criando endpoints no Django Ninja + Service Layer.
 - [frontend-first-feature](1-tutorials/frontend-first-feature.md) — Criando telas no React + Orval + Zod.
+- [gitops-sprint-workflow](1-tutorials/gitops-sprint-workflow.md) — Fluxo de trabalho por Sprints, Branches (`develop`/`main`), Staging e Hotfixes.
 
 ---
 
@@ -73,5 +74,5 @@ Contexto profundo de design, arquitetura e regras de negócio:
   - [contract-parent-child-hierarchy](4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md) | [contract-state-machine](4-explanation/business-rules/logistics/contract-state-machine.md) | [cnpj-validation-rules](4-explanation/business-rules/logistics/cnpj-validation-rules.md)
   - [recurrence-rules-engine](4-explanation/business-rules/scheduler/recurrence-rules-engine.md) | [payment-event-readonly-guard](4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) | [wedding-status-lifecycle](4-explanation/business-rules/weddings/wedding-status-lifecycle.md) | [wedding-schedule-templates](4-explanation/business-rules/weddings/wedding-schedule-templates.md)
 - **Histórico Arquitetural:**
-  - [Índice Completo de ADRs (001-024)](4-explanation/adr/README.md) — Registros de decisões arquiteturais e trade-offs.
+  - [Índice Completo de ADRs (001-026)](4-explanation/adr/README.md) — Registros de decisões arquiteturais e trade-offs.
   - [roadmap-pending-migration](4-explanation/roadmap-pending-migration.md) — Roadmap interno temporário.
