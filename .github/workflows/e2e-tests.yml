@@ -34,6 +34,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Python & UV
         uses: ./.github/actions/setup-python-uv
@@ -63,13 +65,19 @@ jobs:
           cd backend
           uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
           echo "Waiting for Uvicorn ASGI server..."
+          SERVER_READY=0
           for i in {1..30}; do
-            if curl -s http://127.0.0.1:8000/api/v1/health > /dev/null; then
+            if curl -fsS http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1; then
               echo "✅ Uvicorn ASGI server online!"
+              SERVER_READY=1
               break
             fi
             sleep 1
           done
+          if [ $SERVER_READY -eq 0 ]; then
+            echo "::error::Servidor Uvicorn ASGI não respondeu dentro do limite de 30 segundos!"
+            exit 1
+          fi
 
       - name: Run Playwright Test Suite
         run: |

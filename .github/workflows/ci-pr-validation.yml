@@ -8,8 +8,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,6 +25,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Filter Path Changes
         id: filter
@@ -45,6 +45,8 @@ jobs:
 
   lint-and-typecheck:
     name: Code Lint & Typecheck
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.landing == 'true' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -73,6 +75,7 @@ jobs:
         run: |
           cd frontend
           pnpm run lint
+          pnpm run type-check
 
   backend-tests:
     name: Backend Pytest & Migrations Check
@@ -92,6 +95,7 @@ jobs:
       - name: Django Integrity Check
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-backend-tests # pragma: allowlist secret
         run: |
           cd backend
           uv run python manage.py check
@@ -101,6 +105,7 @@ jobs:
       - name: Pytest Unit & Integration Tests
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-backend-tests # pragma: allowlist secret
         run: cd backend && uv run pytest --cov=apps --cov-report=term --cov-report=xml -v
 
       - name: Upload Coverage to Codecov
@@ -152,6 +157,7 @@ jobs:
       - name: Export OpenAPI & Generate Orval Client
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-contract-sync # pragma: allowlist secret
         run: |
           cd backend
           uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2 --settings=config.settings.development
@@ -168,9 +174,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node & PNPM
         uses: ./.github/actions/setup-node-pnpm
+        with:
+          working-directory: landing
 
       - name: Build Astro Landing Page
         run: |

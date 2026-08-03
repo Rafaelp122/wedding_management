@@ -13,7 +13,7 @@ O ecossistema de CI/CD do Wedding Management System adota uma **arquitetura de p
 1. **Desacoplamento por Responsabilidade**: Cada esteira possui gatilhos estritos (`paths`) e roda de forma independente.
 2. **Execução Ultra-rápida de Documentação (`docs-ci.yml`)**: Alterações exclusivas na pasta `docs/` executam apenas o linter de documentação em ~3 segundos, sem baixar dependências de código.
 3. **Revisão por IA Independente (`ai-code-review.yml`)**: A revisão automatizada por IA roda no momento exato de abertura do PR, sem esperar a conclusão dos testes de código.
-4. **Servidor ASGI Concorrente nos Testes E2E (`e2e-tests.yml`)**: O Playwright utiliza um servidor **Uvicorn (ASGI)** multi-thread em ambiente isolado.
+4. **Servidor ASGI Concorrente nos Testes E2E (`e2e-tests.yml`)**: O Playwright utiliza um servidor **Uvicorn (ASGI)** em processo único (`single-process`) em ambiente isolado.
 5. **GitOps Automatizado com Terraform (`terraform-ci.yml` & `staging-pipeline.yml`)**: O provisionamento de infraestrutura (Cloud Run, R2, Vercel, Artifact Registry) é orquestrado por código e parametrizado em arquivos `.tfvars`.
 
 ---
@@ -71,7 +71,7 @@ graph TD
 | Arquivo Workflow | Propósito & Responsabilidade | Gatilhos (`on`) | Condição de Execução (`paths`) | Tempo Médio |
 |:---|:---|:---|:---|:---|
 | **[ci-pr-validation.yml](../../../.github/workflows/ci-pr-validation.yml)** | Validação de sintaxe, tipagem estrita (`mypy`), Pytest, Vitest e OpenAPI Contract Sync | `pull_request`, `push` (`develop`, `main`) | Código Backend, Frontend ou Landing | ~1.5 min |
-| **[docs-ci.yml](../../../.github/workflows/docs-ci.yml)** | Validação ultra-rápida de links de documentação e anotações atômicas Diátaxis | `pull_request`, `push` (`develop`, `main`) | `docs/**`, `*.md` | **~3 seg** |
+| **[docs-ci.yml](../../../.github/workflows/docs-ci.yml)** | Validação ultra-rápida de links de documentação e anotações atômicas Diátaxis | `pull_request`, `push` (`develop`, `main`) | `docs/**` | **~3 seg** |
 | **[e2e-tests.yml](../../../.github/workflows/e2e-tests.yml)** | Testes End-to-End com Playwright (Chromium e Mobile Safari) sobre servidor Uvicorn ASGI | `pull_request`, `push` (`develop`, `main`) | `backend/**`, `frontend/**` | ~2 min |
 | **[ai-code-review.yml](../../../.github/workflows/ai-code-review.yml)** | Revisão automatizada de código por IA (OpenCode + DeepSeek v4) | `pull_request` (`opened`, `synchronize`) | Qualquer alteração no PR | Imediato ao abrir |
 | **[cd-deploy.yml](../../../.github/workflows/cd-deploy.yml)** | Continuous Deployment (CD) de Produção (GCP Cloud Run OCI + Vercel) | `push` (`main`), `workflow_dispatch` | `backend/**`, `frontend/**`, `landing/**` | ~2 min |
