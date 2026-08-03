@@ -47,12 +47,16 @@ jobs:
           pnpm exec playwright install --with-deps
 
       - name: Prepare Backend & Seed Database
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.development
         run: |
           cd backend
           uv run python manage.py migrate --noinput
           uv run python manage.py seed_db
 
       - name: Start ASGI Server (Uvicorn)
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.development
         run: |
           cd backend
           uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
