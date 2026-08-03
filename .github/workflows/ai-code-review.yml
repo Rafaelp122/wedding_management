@@ -18,7 +18,7 @@ jobs:
   ai-review:
     name: Independent AI Code Review
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -31,4 +31,4 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          model: deepseek/deepseek-v4-flash
+          model: deepseek/deepseek-v4-pro
