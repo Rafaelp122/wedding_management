@@ -120,3 +120,28 @@ gha-creds-*.json
 .vercel
 coverage.json
 *.tsbuildinfo
+
+# ==============================================================================
+# TERRAFORM / IAC
+# ==============================================================================
+
+# 1. Diretório de cache do init (binários baixados localmente)
+.terraform/
+
+# 2. Arquivos de estado local (O estado DEVE ficar no GCS)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# 3. Variáveis com segredos e tokens reais
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# 4. Logs de erro e planos de execução temporários
+crash.log
+crash.*.log
+*.tfplan

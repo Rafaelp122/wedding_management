@@ -1,0 +1,21 @@
+# terraform/terraform.tfvars.example
+# Exemplo de arquivo de variáveis locais para uso com terraform plan / apply.
+# COPIE este arquivo para terraform.tfvars e preencha os valores reais.
+# NUNCA commit o arquivo terraform.tfvars no Git (já incluído no .gitignore).
+
+gcp_project_id        = "seu-projeto-gcp-prod"
+gcp_region            = "us-central1"
+environment           = "production"
+github_owner          = "seu-usuario-github"
+github_repo_name      = "wedding_management"
+
+cloudflare_account_id = "seu_cloudflare_account_id"
+cloudflare_api_token  = "seu_cloudflare_api_token"
+vercel_api_token      = "seu_vercel_api_token"
+vercel_team_id        = "seu_vercel_team_id"
+github_token          = "seu_github_pat_token"
+
+allowed_frontend_origins = [
+  "https://meucasamento.com.br",
+  "https://app.meucasamento.com.br"
+]

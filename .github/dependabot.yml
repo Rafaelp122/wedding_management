@@ -2,7 +2,8 @@ version: 2
 updates:
   # 1. Monitorar o Backend Python (Django Ninja)
   - package-ecosystem: "uv"
-    directory: "/backend" # Aponta direto para a pasta do backend onde estão o pyproject.toml ou requirements
+    directory: "/backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -17,7 +18,8 @@ updates:
 
   # 2. Monitorar o Frontend (React / Vite)
   - package-ecosystem: "npm"
-    directory: "/frontend" # Aponta para onde está o package.json do painel administrativo
+    directory: "/frontend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "tuesday"
@@ -32,7 +34,8 @@ updates:
 
   # 3. Monitorar a Landing Page (Astro)
   - package-ecosystem: "npm"
-    directory: "/landing" # Aponta para o package.json da sua landing page
+    directory: "/landing"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -45,9 +48,26 @@ updates:
         patterns:
           - "*"
 
-  # 4. Manter as próprias GitHub Actions seguras e atualizadas
+  # 4. Monitorar Provedores e Módulos do Terraform (IaC)
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "terraform"
+    groups:
+      terraform-dependencies:
+        patterns:
+          - "*"
+
+  # 5. Manter as próprias GitHub Actions seguras e atualizadas
   - package-ecosystem: "github-actions"
-    directory: "/" # Actions ficam sempre na raiz do repositório
+    directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 2
@@ -59,9 +79,10 @@ updates:
         patterns:
           - "*"
 
-  # 5. Monitorar Imagens Docker (Dockerfile e docker-compose.yml)
+  # 6. Monitorar Imagens Docker (Dockerfile e docker-compose.yml)
   - package-ecosystem: "docker"
-    directory: "/" # Varre a raiz e subpastas para Dockerfile e docker-compose
+    directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 2

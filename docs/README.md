@@ -27,6 +27,7 @@ Guias práticos passo a passo para novos desenvolvedores:
 - [onboarding-quickstart](1-tutorials/onboarding-quickstart.md) — Subindo ambiente local completo (Docker, DB, Backend, Frontend).
 - [backend-first-feature](1-tutorials/backend-first-feature.md) — Criando endpoints no Django Ninja + Service Layer.
 - [frontend-first-feature](1-tutorials/frontend-first-feature.md) — Criando telas no React + Orval + Zod.
+- [gitops-sprint-workflow](1-tutorials/gitops-sprint-workflow.md) — Fluxo de trabalho por Sprints, Branches (`develop`/`main`), Staging e Hotfixes.
 
 ---
 
