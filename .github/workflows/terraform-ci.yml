@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
+      - develop
     paths:
       - "terraform/**"
       - ".github/workflows/terraform-ci.yml"
   pull_request:
     branches:
       - main
+      - develop
     paths:
       - "terraform/**"
       - ".github/workflows/terraform-ci.yml"
@@ -63,7 +65,12 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request' && env.GCP_WIF_PROVIDER != ''
         run: |
-          terraform plan -var-file=environments/production.tfvars -no-color -input=false -out=tfplan | tee plan.txt
+          if [ "${{ github.base_ref }}" = "main" ]; then
+            TF_VAR_FILE="environments/production.tfvars"
+          else
+            TF_VAR_FILE="environments/staging.tfvars"
+          fi
+          terraform plan -var-file=$TF_VAR_FILE -no-color -input=false -out=tfplan | tee plan.txt
         env:
           GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}

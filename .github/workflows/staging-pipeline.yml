@@ -3,7 +3,9 @@ name: "Staging Environment Pipeline"
 on:
   push:
     branches:
-      - staging
+      - develop
+  pull_request:
+    branches:
       - develop
   workflow_dispatch:
 
