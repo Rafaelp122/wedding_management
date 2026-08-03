@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
 
       - name: Path Filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -132,7 +132,7 @@ jobs:
         run: cd backend && uv run pytest --cov=apps --cov-report=term --cov-report=xml -v
 
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: backend/coverage.xml
           flags: backend
@@ -172,7 +172,7 @@ jobs:
           echo "All API mocks are properly centralized."
 
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: frontend/coverage/lcov.info
           flags: frontend
@@ -226,7 +226,7 @@ jobs:
 
       - name: Cache Playwright Browsers
         id: cache-playwright
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ hashFiles('frontend/pnpm-lock.yaml') }}
@@ -253,7 +253,7 @@ jobs:
 
       - name: Upload Playwright Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-shard-${{ matrix.shard }}
           path: frontend/playwright-report/
@@ -338,7 +338,7 @@ jobs:
       - name: Google Auth
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
@@ -346,17 +346,17 @@ jobs:
 
       - name: Log in to Google Artifact Registry
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: us-central1-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build and Push Docker Image (OCI)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           target: production
@@ -370,7 +370,7 @@ jobs:
 
       - name: Set up Cloud SDK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: gen-lang-client-0194045282
 
@@ -561,7 +561,7 @@ jobs:
 
       - name: Run OpenCode Reviewer
         if: steps.label-check.outputs.skip != 'true'
-        uses: anomalyco/opencode/github@v1.16.2
+        uses: anomalyco/opencode/github@v1.18.10
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

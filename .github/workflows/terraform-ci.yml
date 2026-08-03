@@ -30,15 +30,15 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.7.5"
 
       - name: Authenticate to GCP via Workload Identity Federation (WIF)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         env:
           GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
         if: env.GCP_WIF_PROVIDER != ''
@@ -80,7 +80,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Comment Plan on Pull Request
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         if: github.event_name == 'pull_request' && steps.plan.outcome != 'skipped'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
