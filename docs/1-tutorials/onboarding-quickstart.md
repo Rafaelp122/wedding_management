@@ -2,6 +2,7 @@
 
 > **Objetivo:** Subir o ambiente local completo (Docker, PostgreSQL, Django Backend e React Frontend) do zero.
 > **Público:** Novos desenvolvedores onboarding no projeto.
+> **Relacionados:** [gitops-sprint-workflow](gitops-sprint-workflow.md) | [ci-cd-pipeline-flow](../4-explanation/architecture/ci-cd-pipeline-flow.md)
 
 ---
 
