@@ -1,18 +1,14 @@
 name: "Continuous Deployment & Previews"
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: cd-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -37,20 +33,23 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - 'pyproject.toml'
-              - 'uv.lock'
             frontend:
               - 'frontend/**'
-              - 'package.json'
             landing:
               - 'landing/**'
 
   deploy-backend:
     name: Deploy Backend (Cloud Run)
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    if: |
+      (needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -60,13 +59,19 @@ jobs:
       - name: Set Target Environment & Service Name
         id: env
         run: |
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "service=wedding-backend-prod" >> "$GITHUB_OUTPUT"
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "service=wedding-api" >> "$GITHUB_OUTPUT"
           else
-            echo "service=wedding-backend-staging" >> "$GITHUB_OUTPUT"
-            echo "tag=staging" >> "$GITHUB_OUTPUT"
+            echo "service=wedding-api-staging" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Validate Database Secrets
+        env:
+          DATABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.DATABASE_URL || secrets.STAGING_DATABASE_URL }}
+          SECRET_KEY: ${{ github.ref == 'refs/heads/main' && secrets.SECRET_KEY || secrets.STAGING_SECRET_KEY }}
+        run: |
+          : "${DATABASE_URL:?DATABASE_URL de deploy não configurada}"
+          : "${SECRET_KEY:?SECRET_KEY de deploy não configurada}"
 
       - name: Google Auth (WIF)
         id: auth
@@ -91,24 +96,39 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile
+          target: production
+          build-args: BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
           push: true
-          tags: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/wedding-app/backend:${{ steps.env.outputs.tag }}
+          tags: us-central1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/wedding-management-repo/wedding-api:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Setup Python & UV
+        uses: ./.github/actions/setup-python-uv
+
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.DATABASE_URL || secrets.STAGING_DATABASE_URL }}
+          SECRET_KEY: ${{ github.ref == 'refs/heads/main' && secrets.SECRET_KEY || secrets.STAGING_SECRET_KEY }}
+          DJANGO_SETTINGS_MODULE: config.settings.production
+        run: cd backend && uv run python manage.py migrate --noinput
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ steps.env.outputs.service }}
-          image: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/wedding-app/backend:${{ steps.env.outputs.tag }}
+          image: us-central1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/wedding-management-repo/wedding-api:${{ github.sha }}
           region: us-central1
 
   deploy-frontend:
     name: Deploy Frontend (Vercel)
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    if: |
+      (needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -127,7 +147,7 @@ jobs:
       - name: Set Vercel Env
         id: env
         run: |
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "type=production" >> "$GITHUB_OUTPUT"
             echo "flag=--prod" >> "$GITHUB_OUTPUT"
           else
@@ -156,9 +176,12 @@ jobs:
   deploy-landing:
     name: Deploy Landing (Vercel)
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.landing == 'true' || github.event_name == 'workflow_dispatch'
+    if: |
+      (needs.detect-changes.outputs.landing == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -177,7 +200,7 @@ jobs:
       - name: Set Vercel Env
         id: env
         run: |
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "type=production" >> "$GITHUB_OUTPUT"
             echo "flag=--prod" >> "$GITHUB_OUTPUT"
           else

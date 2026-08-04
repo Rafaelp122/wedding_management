@@ -6,11 +6,17 @@ on:
     paths:
       - 'docs/**'
       - '**.md'
+      - '.github/workflows/docs-ci.yml'
+      - 'scripts/validate_docs_links.py'
+      - 'Makefile'
   pull_request:
     branches: [main, develop]
     paths:
       - 'docs/**'
       - '**.md'
+      - '.github/workflows/docs-ci.yml'
+      - 'scripts/validate_docs_links.py'
+      - 'Makefile'
 
 permissions:
   contents: read
@@ -27,6 +33,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Python & UV
         uses: ./.github/actions/setup-python-uv

@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   detect-changes:
@@ -35,13 +35,21 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - 'pyproject.toml'
-              - 'uv.lock'
+              - '.github/workflows/ci-pr-validation.yml'
+              - '.github/workflows/cd-deploy.yml'
+              - '.github/workflows/e2e-tests.yml'
+              - '.github/actions/setup-python-uv/**'
             frontend:
               - 'frontend/**'
-              - 'package.json'
+              - '.github/workflows/ci-pr-validation.yml'
+              - '.github/workflows/cd-deploy.yml'
+              - '.github/workflows/e2e-tests.yml'
+              - '.github/actions/setup-node-pnpm/**'
             landing:
               - 'landing/**'
+              - '.github/workflows/ci-pr-validation.yml'
+              - '.github/workflows/cd-deploy.yml'
+              - '.github/actions/setup-node-pnpm/**'
 
   lint-and-typecheck:
     name: Code Lint & Typecheck
@@ -69,6 +77,7 @@ jobs:
         run: |
           cd backend
           uv run ruff check .
+          uv run ruff format --check .
           uv run mypy .
 
       - name: Frontend Typecheck & Oxlint
@@ -116,6 +125,17 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Production Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: production
+          build-args: BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
+          push: false
+
   frontend-tests:
     name: Frontend Vitest Unit Tests
     needs: [detect-changes]
@@ -134,12 +154,28 @@ jobs:
       - name: Run Vitest Suite
         run: |
           cd frontend
-          pnpm test
+          pnpm run test:ci
+
+      - name: Check API Mock Isolation
+        run: |
+          if grep -rn -A2 'vi\.mock(' frontend/src/ --include='*.test.*' --include='*.spec.*' | grep '@/api/generated' | grep -v '/test-setup.ts'; then
+            echo "ERROR: vi.mock of @/api/generated found in test file. All API mocks must be in test-setup.ts."
+            exit 1
+          fi
+          echo "All API mocks are properly centralized."
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   contract-sync:
     name: API OpenAPI & Orval Contract Sync
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -185,4 +221,30 @@ jobs:
       - name: Build Astro Landing Page
         run: |
           cd landing
+          pnpm exec astro check
           pnpm build
+
+  e2e:
+    name: Playwright E2E
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/e2e-tests.yml
+
+  deploy:
+    name: Deploy Validated Push
+    needs:
+      - detect-changes
+      - lint-and-typecheck
+      - backend-tests
+      - frontend-tests
+      - contract-sync
+      - landing-check
+      - e2e
+    if: always() && github.event_name == 'push' && !failure() && !cancelled()
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/cd-deploy.yml
+    secrets: inherit # pragma: allowlist secret

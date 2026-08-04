@@ -25,22 +25,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Check Existing Review
-        id: label-check
-        run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          LABELS=$(gh api "/repos/${{ github.repository }}/issues/$PR_NUMBER/labels" --jq '[.[].name]' 2>/dev/null || echo "[]")
-          if echo "$LABELS" | grep -q '"ai-reviewed"'; then
-            echo "PR already has 'ai-reviewed' label. Skipping review."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Run OpenCode AI Review
-        if: steps.label-check.outputs.skip != 'true'
         uses: anomalyco/opencode/github@v1.16.2
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -78,13 +63,3 @@ jobs:
             - Falta de testes obrigatórios ou desvios de padrões de escrita.
             - Pendências de documentação (docstring, JSDoc, help_text, ADRs faltantes).
             - Seja conciso e direto ao ponto ao fazer os apontamentos.
-
-      - name: Mark PR as Reviewed
-        if: steps.label-check.outputs.skip != 'true' && success()
-        run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          gh label create "ai-reviewed" --color "0e8a16" --force 2>/dev/null || true
-          gh pr edit "$PR_NUMBER" --add-label "ai-reviewed"
-          echo "✓ Added 'ai-reviewed' label to PR #$PR_NUMBER"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

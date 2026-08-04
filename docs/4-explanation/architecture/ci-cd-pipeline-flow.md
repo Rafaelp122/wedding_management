@@ -1,119 +1,120 @@
 # 🔁 Especificação da Arquitetura Modular de CI/CD — Wedding Management System
 
-> **Versão:** 3.0 | **Última atualização:** 3 de agosto de 2026
+> **Versão:** 3.1 | **Última atualização:** 3 de agosto de 2026
 > **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [gitops-sprint-workflow](../../1-tutorials/gitops-sprint-workflow.md)
 
 ---
 
-## 1. Visão Geral da Arquitetura Modular
+## 1. Visão Geral
 
-O ecossistema de CI/CD do Wedding Management System adota uma **arquitetura de pipelines especializadas e desacopladas**. Em vez de manter um único arquivo monolítico de CI, o sistema é dividido em esteiras focadas com responsabilidades bem definidas, eliminando gargalos de execução, reduzindo o tempo de validação de PRs e garantindo deploys previsíveis via GitOps com Terraform.
+As pipelines separam validação, deploy da aplicação e gestão da infraestrutura:
 
-### Princípios da Arquitetura Modular:
-1. **Desacoplamento por Responsabilidade**: Cada esteira possui gatilhos estritos (`paths`) e roda de forma independente.
-2. **Execução Ultra-rápida de Documentação (`docs-ci.yml`)**: Alterações exclusivas na pasta `docs/` executam apenas o linter de documentação em ~3 segundos, sem baixar dependências de código.
-3. **Revisão por IA Independente (`ai-code-review.yml`)**: A revisão automatizada por IA roda no momento exato de abertura do PR, sem esperar a conclusão dos testes de código.
-4. **Servidor ASGI Concorrente nos Testes E2E (`e2e-tests.yml`)**: O Playwright utiliza um servidor **Uvicorn (ASGI)** em processo único (`single-process`) em ambiente isolado.
-5. **GitOps Automatizado com Terraform (`terraform-ci.yml` & `staging-pipeline.yml`)**: O provisionamento de infraestrutura (Cloud Run, R2, Vercel, Artifact Registry) é orquestrado por código e parametrizado em arquivos `.tfvars`.
-
----
-
-## 2. Visão Topológica de Pipelines (Mermaid Diagram)
+1. **CI** valida código, contratos, testes e a imagem do backend sem publicar artefatos.
+2. **CD** é um workflow reutilizável chamado pela CI somente após um `push` aprovado em `main` ou `develop`. Também aceita execução manual, restrita a essas branches.
+3. **Terraform** valida configuração de PR sem credenciais; operações com estado remoto e WIF ocorrem apenas em branches protegidas.
+4. **Revisão por IA** roda em cada SHA enviado ao PR, sem usar labels como estado.
 
 ```mermaid
-graph TD
-    subgraph Triggers ["Gatilhos de Eventos do Git"]
-        PR_DEV["Pull Request ➡️ develop"]
-        PR_MAIN["Pull Request ➡️ main"]
-        PUSH_DEV["Merge / Push ➡️ develop"]
-        PUSH_MAIN["Merge / Push ➡️ main"]
-    end
+flowchart TD
+    PR[PR para main ou develop] --> CI[CI: lint, tipos, testes, contratos e build Docker]
+    CI --> E2E[E2E reutilizável: Playwright Chromium]
+    PR --> AI[Revisão por IA em cada SHA]
+    PR --> TFV[Terraform: fmt, init sem backend e validate]
 
-    subgraph CI_Pipelines ["Esteiras de Validação (CI)"]
-        W1["ci-pr-validation.yml<br/>(Lint, Pytest, Vitest, Contract Sync)"]
-        W2["docs-ci.yml<br/>(Link Check - 3s)"]
-        W3["e2e-tests.yml<br/>(Playwright + Uvicorn ASGI)"]
-        W4["ai-code-review.yml<br/>(OpenCode + DeepSeek AI)"]
-    end
+    PUSH[Push aprovado em main ou develop] --> CI
+    E2E -->|sucesso em push| CD[CD reutilizável]
+    CD --> MIGRATE[Migrations Django]
+    MIGRATE --> RUN[Cloud Run]
+    CD --> VERCEL[Vercel]
 
-    subgraph CD_Pipelines ["Esteiras de Deploy GitOps (CD)"]
-        W5["staging-pipeline.yml<br/>(Deploy Homologação Staging)"]
-        W6["terraform-ci.yml<br/>(Terraform Plan / Apply Produção)"]
-    end
-
-    PR_DEV --> W1
-    PR_DEV --> W4
-    PR_DEV --> W2
-    PR_DEV --> W3
-
-    PUSH_DEV --> W5
-
-    PR_MAIN --> W1
-    PR_MAIN --> W6
-    PUSH_MAIN --> W6
-
-    style Triggers fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
-    style CI_Pipelines fill:#181825,stroke:#45475a,color:#cdd6f4
-    style CD_Pipelines fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
-
-    style W1 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style W2 fill:#313244,stroke:#89b4fa,color:#cdd6f4
-    style W3 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style W4 fill:#313244,stroke:#cba6f7,color:#cdd6f4
-    style W5 fill:#313244,stroke:#f9e2af,color:#cdd6f4
-    style W6 fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    MAIN[Push em main com mudança Terraform] --> APPLY[Terraform apply de produção]
+    DEVELOP[Push em develop] --> STAGING[Terraform plan de staging com estado remoto]
+    MANUAL[workflow_dispatch em main ou develop] --> CD
 ```
 
 ---
 
-## 3. Catálogo de Workflows Especializados
+## 2. Gatilhos e Escopos
 
-| Arquivo Workflow | Propósito & Responsabilidade | Gatilhos (`on`) | Condição de Execução (`paths`) | Tempo Médio |
-|:---|:---|:---|:---|:---|
-| **[ci-pr-validation.yml](../../../.github/workflows/ci-pr-validation.yml)** | Validação de sintaxe, tipagem estrita (`mypy`), Pytest, Vitest e OpenAPI Contract Sync | `pull_request`, `push` (`develop`, `main`) | Código Backend, Frontend ou Landing | ~1.5 min |
-| **[docs-ci.yml](../../../.github/workflows/docs-ci.yml)** | Validação ultra-rápida de links de documentação e anotações atômicas Diátaxis | `pull_request`, `push` (`develop`, `main`) | `docs/**` | **~3 seg** |
-| **[e2e-tests.yml](../../../.github/workflows/e2e-tests.yml)** | Testes End-to-End com Playwright (Chromium e Mobile Safari) sobre servidor Uvicorn ASGI | `pull_request`, `push` (`develop`, `main`) | `backend/**`, `frontend/**` | ~2 min |
-| **[ai-code-review.yml](../../../.github/workflows/ai-code-review.yml)** | Revisão automatizada de código por IA (OpenCode + DeepSeek v4) | `pull_request` (`opened`, `synchronize`) | Qualquer alteração no PR | Imediato ao abrir |
-| **[cd-deploy.yml](../../../.github/workflows/cd-deploy.yml)** | Continuous Deployment (CD) de Produção (GCP Cloud Run OCI + Vercel) | `push` (`main`), `workflow_dispatch` | `backend/**`, `frontend/**`, `landing/**` | ~2 min |
-| **[staging-pipeline.yml](../../../.github/workflows/staging-pipeline.yml)** | Deploy automatizado no ambiente de **Homologação Privado** (Staging) | `push` (`develop`, `staging`) | Módulo Terraform & Staging | ~2 min |
-| **[terraform-ci.yml](../../../.github/workflows/terraform-ci.yml)** | Execução do `terraform plan` (em PRs) e `terraform apply` (no merge da `main`) | `pull_request`, `push` (`main`) | `terraform/**` | ~2 min |
+| Workflow | Gatilho | Escopo de caminhos | Responsabilidade |
+|:---|:---|:---|:---|
+| **[ci-pr-validation.yml](../../../.github/workflows/ci-pr-validation.yml)** | `pull_request` e `push` em `main`/`develop` | Filtros internos para `backend/**`, `frontend/**`, `landing/**`, manifests compartilhados e arquivos da própria CI | Ruff format/lint, mypy, Pytest, migrations check, Vitest com cobertura, isolamento de mocks, Astro, contratos OpenAPI/Orval e build Docker sem push. Em `push`, chama o CD somente após sucesso dos gates. |
+| **[docs-ci.yml](../../../.github/workflows/docs-ci.yml)** | `pull_request` e `push` em `main`/`develop` | `docs/**`, Markdown, workflow de docs, `Makefile` e validador de links | Executa `make check-docs`. |
+| **[e2e-tests.yml](../../../.github/workflows/e2e-tests.yml)** | `workflow_call` pela CI | Alterações em backend, frontend ou no próprio workflow, detectadas pela CI | Executa Playwright em Chromium, dividido em duas shards, sobre Uvicorn ASGI; seu sucesso é obrigatório antes do CD automático. |
+| **[ai-code-review.yml](../../../.github/workflows/ai-code-review.yml)** | PR para `main`/`develop`: `opened`, `synchronize`, `reopened` | Todo o diff do PR | Executa OpenCode em cada novo SHA; não cria nem consulta a label `ai-reviewed`. |
+| **[cd-deploy.yml](../../../.github/workflows/cd-deploy.yml)** | `workflow_call` após CI de `push`; `workflow_dispatch` guardado | Filtros internos para backend, frontend e landing; execução manual implanta todos os componentes | Publica backend no Artifact Registry, migra o banco antes do Cloud Run e implanta frontend/landing na Vercel. Não roda em PR. |
+| **[terraform-ci.yml](../../../.github/workflows/terraform-ci.yml)** | PR e `push` em `main`/`develop` | `terraform/**` e workflows Terraform/staging | Sempre executa `fmt`, `init -backend=false` e `validate`, sem OIDC. Somente `push` em `main` autentica com WIF, gera um plano salvo e aplica exatamente esse plano em produção. |
+| **[staging-pipeline.yml](../../../.github/workflows/staging-pipeline.yml)** | `push` em `develop`; `workflow_dispatch` | Todos os pushes em `develop` | Autentica com WIF e executa um plano real de staging. Não roda em PR e não aplica mudanças. |
 
----
-
-## 4. Abstrações Reutilizáveis (Composite Actions)
-
-Para manter a consistência e o reuso de código entre as esteiras, utilizamos **Composite Actions** em `.github/actions/`:
-
-- **`setup-python-uv` (`.github/actions/setup-python-uv/`)**:
-  - Instalação e cache automatizado do Python 3.12+ e `uv` (gerenciador de pacotes atrelado ao `backend/uv.lock`).
-- **`setup-node-pnpm` (`.github/actions/setup-node-pnpm/`)**:
-  - Instalação declarativa do Node.js (`.nvmrc`) e PNPM 9.15+ com cache de `node_modules`.
+O `workflow_dispatch` do CD não executa deploy fora de `main` ou `develop`. Pull requests nunca recebem a identidade de deploy.
 
 ---
 
-## 5. Requisitos de Segurança & Autenticação (WIF)
+## 3. Fluxo de Validação e Deploy
 
-O deploy na nuvem é realizado sem chaves estáticas de longa duração na CI/CD. Utilizamos **Workload Identity Federation (WIF)** no GCP:
+### Pull request
 
-| Secret | Propósito | Escopo |
+- A CI executa apenas os jobs relacionados aos caminhos alterados; mudanças nos workflows e composite actions acionam seus consumidores.
+- O backend é compilado com `docker build`, sem login no Artifact Registry e sem publicação da imagem.
+- O E2E cobre somente Chromium e integra o gate da CI.
+- Cada evento `synchronize` inicia uma nova revisão por IA para o SHA atual.
+- Mudanças Terraform usam `terraform init -backend=false`; portanto, não acessam o state remoto nem solicitam token OIDC.
+
+### Push em branch protegida
+
+- A CI executa os gates e chama `cd-deploy.yml` apenas após todos os jobs obrigatórios terem sucesso.
+- `develop` seleciona o GitHub Environment `Preview`; `main`, `Production`.
+- O backend publica `us-central1-docker.pkg.dev/<project_id>/wedding-management-repo/wedding-api:<sha>` e usa os serviços `wedding-api-staging` ou `wedding-api`.
+- Antes de atualizar o serviço no Cloud Run, o CD executa `python manage.py migrate --noinput` com as variáveis do ambiente selecionado.
+- O frontend e a landing usam preview em `develop` e produção em `main`.
+
+Falha em qualquer gate impede a chamada automática do CD. A execução manual existe para recuperação operacional, mas mantém a restrição de branch e os mesmos ambientes.
+
+---
+
+## 4. Terraform e Concorrência de State
+
+Pull requests fazem apenas validação local e não disputam o lock do backend remoto. As operações que acessam state ficam separadas por branch:
+
+- `push` em `main`: `terraform-ci.yml` salva o plano de `environments/production.tfvars` e aplica exatamente esse artefato local.
+- `push` em `develop`: `staging-pipeline.yml` calcula o plano com `environments/staging.tfvars`.
+
+Os workflows não executam planos remotos concorrentes para o mesmo PR. A pipeline de staging não aplica infraestrutura automaticamente.
+As operações remotas de staging e produção compartilham o grupo de concorrência `terraform-remote-state`, evitando disputa pelo lock entre branches.
+
+---
+
+## 5. Autenticação, Secrets e Configuração
+
+O GitHub autentica no GCP por Workload Identity Federation. O provider aceita somente execuções de `main`/`develop` originadas dos workflows CI, CD, Terraform ou staging autorizados; PRs não podem representar a Service Account de deploy.
+
+| Nome | Tipo | Uso |
 |:---|:---|:---|
-| `GCP_WIF_PROVIDER` | Identificador OIDC do Workload Identity Federation | `terraform-ci.yml`, `staging-pipeline.yml` |
-| `GCP_WIF_SERVICE_ACCOUNT` | Email da Service Account com permissões `Cloud Run Admin` e `Artifact Registry Writer` | `terraform-ci.yml`, `staging-pipeline.yml` |
-| `CLOUDFLARE_API_TOKEN` | Token da API do Cloudflare para gerenciamento dos buckets R2 | Passado como `TF_VAR_cloudflare_api_token` |
-| `VERCEL_TOKEN` | Token da API da Vercel para gerenciamento dos projetos frontend | Passado como `TF_VAR_vercel_api_token` |
-| `CODECOV_TOKEN` | Token de upload de métricas de cobertura do Pytest | `ci-pr-validation.yml` |
-| `DEEPSEEK_API_KEY` | Chave de API para o revisor de código IA | `ai-code-review.yml`, `opencode-assistant.yml` |
+| `GCP_WIF_PROVIDER` | Secret | Identificador do provider WIF usado por CD e Terraform autenticado. |
+| `GCP_WIF_SERVICE_ACCOUNT` | Secret | Service Account de deploy com permissões mínimas no Artifact Registry, Cloud Run e Terraform. |
+| `DATABASE_URL`, `SECRET_KEY` | Secrets do repositório ou Environment `Production` | Banco e chave Django usados nas migrations de produção. |
+| `STAGING_DATABASE_URL`, `STAGING_SECRET_KEY` | Secrets do Environment `Preview` | Banco e chave Django exclusivos das migrations de staging. Devem ser cadastrados antes de habilitar deploys em `develop`. |
+| `VERCEL_TOKEN` | Secret | Autenticação dos deploys Vercel e do provider Terraform. |
+| `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_FRONTEND`, `VERCEL_PROJECT_ID_LANDING` | Secret | Destinos Vercel da aplicação e da landing. |
+| `CLOUDFLARE_API_TOKEN` | Secret | Credencial do provider Cloudflare no Terraform. |
+| `CODECOV_TOKEN` | Secret | Upload opcional de cobertura. |
+| `DEEPSEEK_API_KEY` | Secret | Revisor de código OpenCode. |
+
+`GCP_PROJECT_ID` não é cadastrado como secret. O CD usa `steps.auth.outputs.project_id`, fornecido pela ação de autenticação, para montar a URL do Artifact Registry. O Terraform recebe o projeto pelos arquivos `.tfvars` versionados.
 
 ---
 
-## 6. Gates de Qualidade & Regras de Integridade
+## 6. Gates de Qualidade
 
-| Gate | Critério de Aceitação | Ação em Caso de Falha |
-|:---|:---|:---|
-| **Documentation Integrity** | Zero links quebrados em `docs/` (`make check-docs`) | Corrigir os caminhos dos arquivos markdown citados. |
-| **API Contract Sync** | Diff zero no schema `openapi.json` e hooks Orval | Executar `make sync-api` localmente e comitar os hooks gerados. |
-| **Backend Migrations** | `makemigrations --check --dry-run` zerado no Django | Executar `uv run python manage.py makemigrations` na pasta `backend/`. |
-| **Playwright Sharding** | Suíte de testes E2E aprovada nas shards 1/2 e 2/2 | Baixar o artefato `playwright-report` gerado pelo workflow. |
+| Gate | Critério de aceitação |
+|:---|:---|
+| Documentação | `make check-docs` sem links quebrados. |
+| Contratos | Nenhum diff após exportar OpenAPI e gerar o cliente Orval. |
+| Backend | Ruff, mypy, Django checks, migrations e Pytest aprovados. |
+| Frontend | Lint, type-check, isolamento de mocks e Vitest com cobertura aprovados. |
+| Landing | `astro check` e build aprovados. |
+| Container | Build da imagem de produção do backend aprovado sem push em PR. |
+| E2E | Duas shards Playwright em Chromium aprovadas. |
 
 ---
 

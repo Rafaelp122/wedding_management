@@ -33,8 +33,12 @@ Decidimos adotar **Terraform (v1.5+)** com o modelo de automação **GitOps via 
 2. **Estratégia de Importação Sem Downtime**:
    - Uso de blocos `import {}` declarativos para incorporar recursos já existentes nos consoles sem destruição ou indisponibilidade.
 3. **Pipeline GitOps (`terraform-ci.yml`)**:
-   - `terraform plan` é executado em Pull Requests e os resultados são comentados automaticamente no PR.
-   - `terraform apply` executa exclusivamente após o merge na branch `main` via autenticação WIF.
+   - Pull Requests executam somente `fmt`, `init -backend=false` e `validate`, sem acesso a credenciais ou ao state remoto.
+   - Após o merge na `main`, a pipeline gera um plano salvo e aplica exatamente esse plano via autenticação WIF.
+   - Pushes em `develop` calculam o plano de staging, serializado com operações de produção pelo lock `terraform-remote-state`.
+4. **Restrição da Identidade Federada**:
+   - O provider WIF aceita somente tokens do repositório emitidos para `refs/heads/main` ou `refs/heads/develop` pelos workflows CI/CD e Terraform autorizados.
+   - Workflows de Pull Request não podem representar a Service Account de deploy.
 
 ---
 
@@ -44,7 +48,7 @@ Decidimos adotar **Terraform (v1.5+)** com o modelo de automação **GitOps via 
 - **Single Source of Truth**: O repositório Git passa a ser a única fonte da verdade para o estado da infraestrutura.
 - **Rastreabilidade & Compliance**: Qualquer alteração na infra exige aprovação de Pull Request.
 - **Injeção de Dependências Dinâmica**: A URL exportada do Cloud Run é propagada automaticamente para o frontend na Vercel via Terraform.
-- **Segurança Reforçada**: Eliminação total de chaves e senhas estáticas de longa duração na CI/CD graças ao WIF.
+- **Segurança Reforçada**: Eliminação de chaves estáticas e restrição da identidade WIF às branches protegidas.
 
 ### Negativas / Riscos Mitigados
 - **Gestão de Estado**: O estado do Terraform contém metadados sensíveis; mitigado utilizando armazenamento criptografado no GCS com controle de acesso restrito.
