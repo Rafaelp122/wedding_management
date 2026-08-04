@@ -52,7 +52,7 @@ test.describe("Dashboard KPIs", () => {
       name: "Casamentos que Precisam de Atenção",
     });
     if (await heading.count() > 0) {
-      await heading.locator("..").locator("..").getByText("Ver detalhes").first().click();
+      await page.getByRole("link", { name: /Ver detalhes/ }).first().click();
       await expect(page).toHaveURL(/\/weddings\/[\w-]+/);
     }
   });
