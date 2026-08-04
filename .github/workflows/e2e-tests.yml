@@ -31,7 +31,7 @@ jobs:
       - name: Install Playwright Browsers
         run: |
           cd frontend
-          pnpm exec playwright install --with-deps
+          pnpm exec playwright install --with-deps chromium
 
       - name: Prepare Backend & Seed Database
         env:

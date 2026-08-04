@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -48,8 +50,8 @@ jobs:
         run: terraform validate -no-color
 
   terraform-apply:
-    name: "Terraform Apply (Production)"
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: "Terraform Apply (Production, Repository Opt-In)"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.TERRAFORM_PRODUCTION_APPLY_ENABLED == 'true'
     needs: terraform-validation
     runs-on: ubuntu-latest
     concurrency:
@@ -67,6 +69,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
