@@ -48,7 +48,8 @@ jobs:
           SECRET_KEY: dummy-ci-key-for-e2e-tests # pragma: allowlist secret
         run: |
           cd backend
-          uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
+          setsid uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
+          echo $! > "$RUNNER_TEMP/uvicorn.pid"
           echo "Waiting for Uvicorn ASGI server..."
           SERVER_READY=0
           for i in {1..30}; do
@@ -68,6 +69,10 @@ jobs:
         run: |
           cd frontend
           VITE_API_URL=http://127.0.0.1:8000 pnpm test:e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+
+      - name: Stop ASGI Server
+        if: always()
+        run: kill -- -"$(cat "$RUNNER_TEMP/uvicorn.pid")" 2>/dev/null || true
 
       - name: Upload Playwright Report
         if: failure()
