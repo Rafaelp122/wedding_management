@@ -211,7 +211,12 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
 
       - name: Deploy Artifacts to Vercel
-        run: vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }})"
+          printf '%s\n' "$deployment_url"
+          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            vercel alias set "$deployment_url" wedding-web-app-staging.vercel.app --token=${{ secrets.VERCEL_TOKEN }}
+          fi
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
@@ -264,7 +269,12 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
 
       - name: Deploy Artifacts to Vercel
-        run: vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }})"
+          printf '%s\n' "$deployment_url"
+          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            vercel alias set "$deployment_url" wedding-landing-staging.vercel.app --token=${{ secrets.VERCEL_TOKEN }}
+          fi
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
