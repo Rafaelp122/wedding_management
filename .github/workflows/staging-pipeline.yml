@@ -3,19 +3,20 @@ name: "Staging Environment Pipeline"
 on:
   push:
     branches:
-      - staging
       - develop
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pull-requests: write
-  id-token: write
 
 jobs:
   staging-deploy:
     name: "Deploy Staging Environment"
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-remote-state
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
 
     defaults:
       run:
@@ -24,6 +25,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

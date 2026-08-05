@@ -4,25 +4,26 @@ on:
   push:
     branches:
       - main
+      - develop
     paths:
       - "terraform/**"
       - ".github/workflows/terraform-ci.yml"
+      - ".github/workflows/staging-pipeline.yml"
   pull_request:
     branches:
       - main
+      - develop
     paths:
       - "terraform/**"
       - ".github/workflows/terraform-ci.yml"
-
-permissions:
-  contents: read
-  pull-requests: write
-  id-token: write
+      - ".github/workflows/staging-pipeline.yml"
 
 jobs:
-  terraform:
-    name: "Terraform Lint, Plan & Apply"
+  terraform-validation:
+    name: "Terraform Format & Validate"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     defaults:
       run:
@@ -31,6 +32,45 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.5"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
+  terraform-apply:
+    name: "Terraform Apply (Production, Repository Opt-In)"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.TERRAFORM_PRODUCTION_APPLY_ENABLED == 'true'
+    needs: terraform-validation
+    runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-remote-state
+      cancel-in-progress: false
+    environment: Production
+    permissions:
+      contents: read
+      id-token: write
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -39,78 +79,18 @@ jobs:
 
       - name: Authenticate to GCP via Workload Identity Federation (WIF)
         uses: google-github-actions/auth@v2
-        env:
-          GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
-        if: env.GCP_WIF_PROVIDER != ''
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
 
-      - name: Terraform Format Check
-        id: fmt
-        run: terraform fmt -check
-        continue-on-error: true
-
       - name: Terraform Init
-        id: init
         run: terraform init
 
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate -no-color
-
       - name: Terraform Plan
-        id: plan
-        if: github.event_name == 'pull_request' && env.GCP_WIF_PROVIDER != ''
-        run: |
-          terraform plan -var-file=environments/production.tfvars -no-color -input=false -out=tfplan | tee plan.txt
         env:
-          GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
-        continue-on-error: true
-
-      - name: Read Plan Output
-        id: read_plan
-        if: github.event_name == 'pull_request' && steps.plan.outcome != 'skipped'
-        run: |
-          PLAN_OUTPUT=$(cat plan.txt | tail -n 100)
-          echo "PLAN_STDOUT<<EOF" >> $GITHUB_ENV
-          echo "$PLAN_OUTPUT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Comment Plan on Pull Request
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request' && steps.plan.outcome != 'skipped'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${steps.fmt.outcome}\`
-            #### Terraform Initialization ⚙️\`${steps.init.outcome}\`
-            #### Terraform Validation 🤖\`${steps.validate.outcome}\`
-            #### Terraform Plan 📖\`${steps.plan.outcome}\`
-
-            <details><summary>Show Plan Output</summary>
-
-            \`\`\`hcl
-            ${process.env.PLAN_STDOUT || "Plan output not available"}
-            \`\`\`
-
-            </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+        run: terraform plan -var-file=environments/production.tfvars -out=tfplan -input=false
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.GCP_WIF_PROVIDER != ''
-        env:
-          GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
-        run: terraform apply -var-file=environments/production.tfvars -auto-approve -input=false
+        run: terraform apply -auto-approve -input=false tfplan

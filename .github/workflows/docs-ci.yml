@@ -1,0 +1,40 @@
+name: "Documentation Quality CI"
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - '.github/workflows/docs-ci.yml'
+      - 'scripts/validate_docs_links.py'
+      - 'Makefile'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - '.github/workflows/docs-ci.yml'
+      - 'scripts/validate_docs_links.py'
+      - 'Makefile'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-lint:
+    name: Documentation Links & Diátaxis Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate Documentation Links & Standards
+        run: make check-docs

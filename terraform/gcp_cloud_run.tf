@@ -19,7 +19,7 @@ resource "google_artifact_registry_repository" "backend_repo" {
 
 # Serviço Cloud Run v2 executando o container Django Ninja
 resource "google_cloud_run_v2_service" "wedding_api" {
-  name     = var.environment == "production" ? "wedding-api" : "wedding-api-${var.environment}"
+  name     = var.environment == "production" ? "wedding-backend" : "wedding-backend-${var.environment}"
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_ALL"
 
@@ -53,6 +53,7 @@ resource "google_cloud_run_v2_service" "wedding_api" {
   lifecycle {
     ignore_changes = [
       template[0].containers[0].image,
+      template[0].containers[0].env,
     ]
   }
 }
@@ -68,5 +69,5 @@ resource "google_cloud_run_v2_service_iam_member" "public_access" {
 # Exemplo de Bloco de Importação (para adotar serviço Cloud Run existente)
 # import {
 #   to = google_cloud_run_v2_service.wedding_api
-#   id = "projects/${var.gcp_project_id}/locations/${var.gcp_region}/services/wedding-api"
+#   id = "projects/${var.gcp_project_id}/locations/${var.gcp_region}/services/wedding-backend"
 # }

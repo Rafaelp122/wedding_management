@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/auth.fixture";
+import { test } from "../fixtures/auth.fixture";
 import { DashboardPage } from "../pages/dashboard.page";
 
 test.describe("Dashboard KPIs", () => {
@@ -46,15 +46,7 @@ test.describe("Dashboard KPIs", () => {
 
     await dashboard.goto();
     await dashboard.expectCriticalWeddingsVisible();
-
-    // Click first "Ver detalhes" link within CriticalWeddings section
-    const heading = page.getByRole("heading", {
-      name: "Casamentos que Precisam de Atenção",
-    });
-    if (await heading.count() > 0) {
-      await heading.locator("..").locator("..").getByText("Ver detalhes").first().click();
-      await expect(page).toHaveURL(/\/weddings\/[\w-]+/);
-    }
+    await dashboard.clickFirstCriticalWedding();
   });
 
   test("@regression Próximas parcelas visíveis com valores corretos", async ({ authenticatedPage }) => {

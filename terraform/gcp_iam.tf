@@ -22,6 +22,17 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "attribute.repository" = "assertion.repository"
   }
 
+  attribute_condition = <<-EOT
+    assertion.repository == '${var.github_owner}/${var.github_repo_name}' &&
+    assertion.ref in ['refs/heads/main', 'refs/heads/develop'] &&
+    (
+      assertion.workflow_ref.startsWith('${var.github_owner}/${var.github_repo_name}/.github/workflows/ci-pr-validation.yml@') ||
+      assertion.workflow_ref.startsWith('${var.github_owner}/${var.github_repo_name}/.github/workflows/cd-deploy.yml@') ||
+      assertion.workflow_ref.startsWith('${var.github_owner}/${var.github_repo_name}/.github/workflows/terraform-ci.yml@') ||
+      assertion.workflow_ref.startsWith('${var.github_owner}/${var.github_repo_name}/.github/workflows/staging-pipeline.yml@')
+    )
+  EOT
+
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }

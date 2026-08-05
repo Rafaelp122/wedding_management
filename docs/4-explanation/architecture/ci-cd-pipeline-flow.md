@@ -1,148 +1,239 @@
-# 🔁 Especificação da Pipeline de CI/CD — Wedding Management System
+# 🔁 Especificação da Arquitetura Modular de CI/CD — Wedding Management System
 
-> **Versão:** 2.0 | **Última atualização:** 1 de agosto de 2026
-
----
-
-## 1. Visão Geral do Workflow
-
-**Propósito:** Garantir a qualidade de código, integridade de contratos OpenAPI/Orval, suíte de testes (unitários, integração e E2E selecionados @smoke/@critical) e entrega contínua (CD) desacoplada para GCP Cloud Run e Vercel.
-
-**Eventos Gatilho:** `push` na branch `main` e `pull_request` apontando para `main`.
-
-**Recursos de Infraestrutura:** GitHub Actions Runners (`ubuntu-latest`), GCP Cloud Run, Google Artifact Registry (`us-central1`), Vercel.
+> **Versão:** 3.1 | **Última atualização:** 3 de agosto de 2026
+> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [gitops-sprint-workflow](../../1-tutorials/gitops-sprint-workflow.md)
 
 ---
 
-## 2. Fluxo de Execução (Mermaid Diagram)
+## 1. Visão Geral
+
+As pipelines separam validação, deploy da aplicação e gestão da infraestrutura:
+
+1. **CI** valida código, contratos, testes, builds do frontend/landing e a imagem do backend com smoke test, sem publicar artefatos.
+2. **CD** é um workflow reutilizável chamado pela CI somente após um `push` aprovado em `main` ou `develop`. Também aceita execução manual, restrita a essas branches.
+3. **Terraform** valida configuração de PR sem credenciais; operações com estado remoto e WIF ocorrem apenas em branches protegidas.
+4. **Revisão por IA** roda em cada SHA enviado ao PR, sem usar labels como estado.
 
 ```mermaid
-graph LR
-    subgraph PreChecks ["Fase 1: Pre-checks"]
-        J1["JOB 1: detect-changes"]
-        J2["JOB 2: docs-lint"]
-    end
+flowchart TD
+    PR[PR para main ou develop] --> CI[CI: lint, tipos, testes, contratos e build Docker]
+    CI --> E2E[E2E reutilizável: Playwright Chromium]
+    PR --> AI[Revisão por IA em cada SHA]
+    PR --> TFV[Terraform: fmt, init sem backend e validate]
 
-    subgraph Validation ["Fase 2: Validações e Testes"]
-        J8["JOB 8: contract-sync"]
-        J4["JOB 4: backend-tests"]
-        J5["JOB 5: frontend-tests"]
-        J7["JOB 7: landing-check"]
-        J3["JOB 3: lint"]
-        J6["JOB 6: e2e-tests (Matrix 1/2, 2/2)"]
-    end
+    PUSH[Push aprovado em main ou develop] --> CI
+    E2E -->|sucesso em push| CD[CD reutilizável]
+    CD --> MIGRATE[Migrations Django]
+    MIGRATE --> RUN[Cloud Run]
+    CD --> VERCEL[Vercel]
 
-    subgraph Delivery ["Fase 3: Deploys e Review"]
-        J9["JOB 9: deploy-backend (GCP Cloud Run OCI)"]
-        J10["JOB 10: deploy-frontend (Vercel)"]
-        J12["JOB 12: review (AI Code Review)"]
-        J11["JOB 11: deploy-landing (Vercel)"]
-    end
-
-    J1 --> J8
-    J1 --> J4
-    J1 --> J5
-    J1 --> J7
-    J1 --> J3
-    J1 --> J6
-
-    J1 & J4 & J8 --> J9
-    J1 & J5 & J8 --> J10
-    J1 & J4 & J5 & J7 --> J12
-    J1 & J7 --> J11
-
-    style PreChecks fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
-    style Validation fill:#181825,stroke:#45475a,color:#cdd6f4
-    style Delivery fill:#1e1e2e,stroke:#45475a,color:#cdd6f4
-
-    style J1 fill:#313244,stroke:#89b4fa,color:#cdd6f4
-    style J2 fill:#313244,stroke:#89b4fa,color:#cdd6f4
-    style J3 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style J4 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style J5 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style J6 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style J7 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style J8 fill:#313244,stroke:#a6e3a1,color:#cdd6f4
-    style J9 fill:#313244,stroke:#f9e2af,color:#cdd6f4
-    style J10 fill:#313244,stroke:#f9e2af,color:#cdd6f4
-    style J11 fill:#313244,stroke:#f9e2af,color:#cdd6f4
-    style J12 fill:#313244,stroke:#cba6f7,color:#cdd6f4
+    MAIN[Push em main com mudança Terraform] --> APPLY[Apply de produção bloqueado até imports]
+    DEVELOP[Push em develop] --> STAGING[Terraform plan-only no state compartilhado]
+    MANUAL[workflow_dispatch em main ou develop] --> CD
 ```
 
 ---
 
-## 3. Matriz de Jobs & Dependências (1 a 12)
+## 2. Gatilhos e Escopos
 
-| ID | Nome do Job | Propósito | Dependências (`needs`) | Contexto de Execução |
-|:---|:---|:---|:---|:---|
-| **JOB 1** | `detect-changes` | Filtra caminhos alterados (`backend`, `frontend`, `landing`). | Nenhuma | `ubuntu-latest` (paths-filter v3) |
-| **JOB 2** | `docs-lint` | Valida integridade de links markdown e anotações atômicas. | Nenhuma | Composite Action `setup-python-uv` |
-| **JOB 3** | `lint` | Análise estática (Ruff, mypy, Oxlint, tsc). | `detect-changes` | Composite Actions `setup-python-uv` / `setup-node-pnpm` |
-| **JOB 4** | `backend-tests` | Migrations dry-run + Pytest com cobertura XML. | `detect-changes` | Composite Action `setup-python-uv` |
-| **JOB 5** | `frontend-tests` | Vitest + React Testing Library + teste isolamento mocks. | `detect-changes` | Composite Action `setup-node-pnpm` |
-| **JOB 6** | `e2e-tests` | Playwright E2E em matriz sharded (1/2 e 2/2). | `detect-changes` | Django local `runserver 8000` + Playwright |
-| **JOB 7** | `landing-check` | Validação de tipos Astro e build estático. | `detect-changes` | Composite Action `setup-node-pnpm` (`landing`) |
-| **JOB 8** | `contract-sync` | Valida sincronização entre schema Django Ninja e Orval. | `detect-changes` | Composite Actions `setup-python-uv` & `setup-node-pnpm` |
-| **JOB 9** | `deploy-backend` | BuildX OCI com cache `type=gha`, Artifact Registry e Cloud Run. | `detect-changes`, `backend-tests`, `contract-sync` | Workload Identity Federation (WIF) + Docker BuildX |
-| **JOB 10** | `deploy-frontend` | Deploy do aplicativo React no Vercel (Preview/Prod). | `detect-changes`, `frontend-tests`, `contract-sync` | Vercel CLI via PNPM |
-| **JOB 11** | `deploy-landing` | Deploy da Landing Page Astro no Vercel (Preview/Prod). | `detect-changes`, `landing-check` | Vercel CLI via PNPM |
-| **JOB 12** | `review` | Revisão estática de código automatizada em PRs via IA. | `detect-changes`, `backend-tests`, `frontend-tests`, `landing-check` | OpenCode + DeepSeek modelo v4-pro |
-
----
-
-## 4. Abstrações de Ambiente (Composite Actions)
-
-- **`setup-python-uv` (`.github/actions/setup-python-uv/`)**:
-  - Python 3.12 via `astral-sh/setup-uv@v5`.
-  - Cache automático atrelado ao `backend/uv.lock`.
-- **`setup-node-pnpm` (`.github/actions/setup-node-pnpm/`)**:
-  - PNPM 9.15.0 via `pnpm/action-setup@v4`.
-  - Node.js lido de forma declarativa de `${working-directory}/.nvmrc` (`24.18.0`).
-  - Cache robusto de `node_modules` com chave composta:
-    `key: node-modules-${{ runner.os }}-${{ inputs.working-directory }}-${{ inputs.pnpm-version }}-${{ hashFiles(...) }}`.
-
----
-
-## 5. Requisitos de Segurança & Contratos
-
-### Variáveis & Secrets Exigidos
-
-| Tipo | Nome | Propósito | Escopo |
+| Workflow | Gatilho | Escopo de caminhos | Responsabilidade |
 |:---|:---|:---|:---|
-| Secret | `GCP_WIF_PROVIDER` | Provedor do Workload Identity Federation no GCP | Job 9 (`deploy-backend`) |
-| Secret | `GCP_WIF_SERVICE_ACCOUNT` | Service Account com permissão `Artifact Registry Writer` e `Cloud Run Admin` | Job 9 (`deploy-backend`) |
-| Secret | `DATABASE_URL` | URL de conexão PostgreSQL (Neon) em produção/migrations | Job 9 (`deploy-backend`) |
-| Secret | `SECRET_KEY` | Chave secreta de runtime Django | Job 9 (`deploy-backend`) |
-| Secret | `R2_ACCESS_KEY_ID` | Access Key ID para armazenamento de contratos/arquivos no Cloudflare R2 | Job 9 (`deploy-backend`) |
-| Secret | `R2_SECRET_ACCESS_KEY` | Secret Access Key do Cloudflare R2 | Job 9 (`deploy-backend`) |
-| Secret | `R2_BUCKET` | Nome do bucket R2 para uploads de produção | Job 9 (`deploy-backend`) |
-| Secret | `R2_ENDPOINT_URL` | Endpoint customizado da API S3-compatible do Cloudflare R2 | Job 9 (`deploy-backend`) |
-| Secret | `VERCEL_TOKEN` | Token de autenticação da CLI do Vercel | Jobs 10 & 11 |
-| Secret | `VERCEL_ORG_ID` | Identificador da organização Vercel | Jobs 10 & 11 |
-| Secret | `VERCEL_PROJECT_ID_FRONTEND` | ID do projeto Frontend no Vercel | Job 10 |
-| Secret | `VERCEL_PROJECT_ID_LANDING` | ID do projeto Landing no Vercel | Job 11 |
-| Secret | `CODECOV_TOKEN` | Token para upload de cobertura de código | Jobs 4 & 5 |
+| **[ci-pr-validation.yml](../../../.github/workflows/ci-pr-validation.yml)** | `pull_request` e `push` em `main`/`develop` | Filtros internos para `backend/**`, `frontend/**`, `landing/**`, manifests compartilhados e arquivos da própria CI | Ruff format/lint, mypy, Pytest, migrations check, Vitest com cobertura, `pnpm build` no PR, isolamento de mocks, Astro, contratos OpenAPI/Orval e build Docker com smoke test sem push. Em `push`, chama o CD somente após sucesso dos gates. |
+| **[docs-ci.yml](../../../.github/workflows/docs-ci.yml)** | `pull_request` e `push` em `main`/`develop` | `docs/**`, Markdown, workflow de docs, `Makefile` e validador de links | Executa `make check-docs`. |
+| **[e2e-tests.yml](../../../.github/workflows/e2e-tests.yml)** | `workflow_call` pela CI | Alterações em backend, frontend ou no próprio workflow, detectadas pela CI | Executa Playwright em Chromium, dividido em duas shards, sobre Uvicorn ASGI; seu sucesso é obrigatório antes do CD automático. |
+| **[ai-code-review.yml](../../../.github/workflows/ai-code-review.yml)** | PR para `main`/`develop`: `opened`, `synchronize`, `reopened` | Todo o diff do PR | Executa OpenCode em cada novo SHA; não cria nem consulta a label `ai-reviewed`. |
+| **[cd-deploy.yml](../../../.github/workflows/cd-deploy.yml)** | `workflow_call` após CI de `push`; `workflow_dispatch` guardado | Filtros internos para backend, frontend e landing; execução manual implanta todos os componentes | Publica backend no Artifact Registry, migra o banco antes do Cloud Run e implanta frontend/landing na Vercel. Não roda em PR. |
+| **[terraform-ci.yml](../../../.github/workflows/terraform-ci.yml)** | PR e `push` em `main`/`develop` | `terraform/**` e workflows Terraform/staging | Sempre executa `fmt`, `init -backend=false` e `validate`, sem OIDC. O job de `apply` em `main` só roda quando a repository variable `TERRAFORM_PRODUCTION_APPLY_ENABLED` é exatamente `true`. |
+| **[staging-pipeline.yml](../../../.github/workflows/staging-pipeline.yml)** | `push` em `develop`; `workflow_dispatch` | Todos os pushes em `develop` | Autentica com WIF e executa somente um plano contra o state atualmente compartilhado. Não roda em PR e nunca deve aplicar esse plano. |
+
+O `workflow_dispatch` do CD não executa deploy fora de `main` ou `develop`. Pull requests nunca recebem a identidade de deploy.
 
 ---
 
-## 6. Gates de Qualidade & Erros Comuns
+## 3. Fluxo de Validação e Deploy
 
-### Gates de Validação
+### Pull request
 
-| Gate | Critério de Aceitação | Recuperação em Caso de Falha |
+- A CI executa apenas os jobs relacionados aos caminhos alterados; mudanças nos workflows e composite actions acionam seus consumidores.
+- O frontend executa `pnpm build`; a imagem de produção do backend é compilada, carregada localmente e precisa responder ao health check do smoke test. Não há login no Artifact Registry nem publicação da imagem.
+- O E2E cobre somente Chromium e integra o gate da CI.
+- Cada evento `synchronize` inicia uma nova revisão por IA para o SHA atual.
+- Mudanças Terraform usam `terraform init -backend=false`; portanto, não acessam o state remoto nem solicitam token OIDC.
+
+### Push em branch protegida
+
+- A CI executa os gates e chama `cd-deploy.yml` apenas após todos os jobs obrigatórios terem sucesso.
+- `develop` seleciona o GitHub Environment `Preview`; `main`, `Production`.
+- O backend publica `us-central1-docker.pkg.dev/<project_id>/wedding-management-repo/wedding-api:<sha>` e usa os serviços Cloud Run `wedding-backend-staging` em Preview ou `wedding-backend` em Production.
+- Após o WIF, `google-github-actions/get-secretmanager-secrets@v3` lê as versões pinadas de `DATABASE_URL` e `SECRET_KEY`; esses outputs alimentam somente a migration executada antes do deploy.
+- O Cloud Run recebe referências `secret-id:versão` nos campos de secret da action oficial de deploy e resolve os valores em runtime diretamente no Secret Manager.
+- O CD injeta `ALLOWED_HOSTS` e `CORS_ALLOWED_ORIGINS` com valores estáticos específicos da branch, além de `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` e `R2_ENDPOINT_URL` vindos dos GitHub Secrets existentes.
+- `google-github-actions/deploy-cloudrun` cria o serviço quando ausente ou atualiza o existente; `flags: --allow-unauthenticated` mantém a API pública.
+- O frontend e a landing usam preview em `develop` e produção em `main`.
+
+Falha em qualquer gate impede a chamada automática do CD. A execução manual existe para recuperação operacional, mas mantém a restrição de branch e os mesmos ambientes.
+
+---
+
+## 4. Terraform e Concorrência de State
+
+Pull requests fazem apenas validação local e não disputam o lock do backend remoto. Os workflows remotos estão serializados, mas ainda usam o mesmo bucket e prefixo de state:
+
+- `push` em `main`: `terraform-ci.yml` só gera e aplica o plano de `environments/production.tfvars` quando `TERRAFORM_PRODUCTION_APPLY_ENABLED == 'true'`; vazia, ausente ou com outro valor, a variável bloqueia o job.
+- `push` em `develop`: `staging-pipeline.yml` calcula um plano com `environments/staging.tfvars` contra o state compartilhado, somente para inspeção.
+
+As operações remotas compartilham o grupo de concorrência `terraform-remote-state`, evitando disputa simultânea pelo lock, mas isso não isola os ambientes.
+
+> [!WARNING]
+> O state GCS atual ainda não adotou os recursos que já existem no GCP, Vercel e demais providers. Mantenha `TERRAFORM_PRODUCTION_APPLY_ENABLED` ausente ou diferente de `true` até inventariar a infraestrutura real, importar cada recurso para o state de produção e revisar um plano sem criações, substituições ou remoções inesperadas. Aplicar antes disso pode tentar recriar ou destruir recursos ativos.
+>
+> Staging e produção também compartilham hoje o mesmo backend/prefixo. Separar os states e os targets por ambiente é uma dívida independente dos imports. Até essa separação, o plano de staging não comprova drift isolado e jamais deve ser aplicado.
+
+---
+
+## 5. Autenticação, Secret Manager e Configuração
+
+O GitHub autentica no GCP por Workload Identity Federation. O provider aceita somente execuções de `main`/`develop` originadas dos workflows CI, CD, Terraform ou staging autorizados; PRs não podem representar a Service Account de deploy.
+
+Os valores de `DATABASE_URL` e `SECRET_KEY` existem somente no GCP Secret Manager. Os GitHub Environments `Preview` e `Production` guardam estas variáveis não sensíveis:
+
+| Variável de Environment | Conteúdo |
+|:---|:---|
+| `GCP_DATABASE_SECRET_ID` | ID do secret que contém `DATABASE_URL`. |
+| `GCP_DATABASE_SECRET_VERSION` | Versão numérica habilitada; nunca usar `latest`. |
+| `GCP_DJANGO_SECRET_ID` | ID do secret que contém `SECRET_KEY`. |
+| `GCP_DJANGO_SECRET_VERSION` | Versão numérica habilitada; nunca usar `latest`. |
+
+Os outputs internos `database_url` e `django_secret_key` da action do Secret Manager não são exportados globalmente. O primeiro é usado com o segundo na migration; o Cloud Run recebe somente referências aos secrets pinados.
+
+As demais credenciais continuam como GitHub Secrets:
+
+| Nome | Tipo | Uso |
 |:---|:---|:---|
-| **Documentation Integrity** | Zero links quebrados em `docs/` (`make check-docs`) | Rodar `python3 scripts/validate_docs_links.py` e ajustar o caminho. |
-| **API Contract Sync** | Diff zero no schema `openapi.json` e hooks Orval | Executar `make sync-api` e comitar as alterações. |
-| **Backend Migrations** | `makemigrations --check --dry-run` zerado | Executar `uv run python manage.py makemigrations` na pasta `backend/`. |
-| **Mock Isolation** | Nenhum `vi.mock('@/api/generated')` fora do `test-setup.ts` | Centralizar todos os mocks Orval em `test-setup.ts` via `registerMockHook`. |
+| `GCP_WIF_PROVIDER` | Secret | Identificador do provider WIF usado por CD e Terraform autenticado. |
+| `GCP_WIF_SERVICE_ACCOUNT` | Secret | Service Account de deploy com permissões mínimas no Artifact Registry, Cloud Run e Terraform. |
+| `VERCEL_TOKEN` | Secret | Autenticação dos deploys Vercel e do provider Terraform. |
+| `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_FRONTEND`, `VERCEL_PROJECT_ID_LANDING` | Secret | Destinos Vercel da aplicação e da landing. |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT_URL` | Secret | Configuração R2 injetada no runtime do backend. |
+| `CLOUDFLARE_API_TOKEN` | Secret | Credencial do provider Cloudflare no Terraform. |
+| `CODECOV_TOKEN` | Secret | Upload opcional de cobertura. |
+| `DEEPSEEK_API_KEY` | Secret | Revisor de código OpenCode. |
+
+`GCP_PROJECT_ID` não é cadastrado como secret. O CD usa `steps.auth.outputs.project_id`, fornecido pela ação de autenticação, para montar a URL do Artifact Registry. O Terraform recebe o projeto pelos arquivos `.tfvars` versionados.
+
+`TERRAFORM_PRODUCTION_APPLY_ENABLED` é uma repository variable e não um secret. O padrão seguro é mantê-la vazia, removida ou como `false`, bloqueando o job de produção. Defina-a como `true` somente após concluir inventário, imports, separação segura do state de produção e revisão do plano; remova-a ou volte para `false` para bloquear novamente.
+
+### Bootstrap manual de IAM e Secret Manager
+
+O primeiro provisionamento não pode depender da identidade que ele próprio cria. Um operador autenticado no GCP deve executar inicialmente o Terraform com credenciais administrativas para criar o pool/provider WIF, a Service Account de deploy e seus bindings. Depois, cadastre `GCP_WIF_PROVIDER` e `GCP_WIF_SERVICE_ACCOUNT` no GitHub.
+
+Antes do primeiro deploy em `develop`, crie manualmente o repositório esperado pelo CD:
+
+```bash
+export PROJECT_ID="seu-projeto-gcp"
+gcloud artifacts repositories create wedding-management-repo \
+  --repository-format=docker \
+  --location=us-central1 \
+  --project="$PROJECT_ID"
+```
+
+Como esse repositório também é declarado pelo Terraform, importe-o em `google_artifact_registry_repository.backend_repo` antes de liberar o `apply`; caso contrário, o plano tentará criar um recurso que já existe. O ID de import é `projects/<project_id>/locations/us-central1/repositories/wedding-management-repo`.
+
+O primeiro deploy pode criar `wedding-backend-staging`; não é necessário criar o serviço Cloud Run antes. Porém, o Environment `Preview`, seus quatro `GCP_*_SECRET_*`, os secrets R2 e os secrets separados de banco/Django precisam existir, e a Service Account de deploy deve ter `roles/secretmanager.secretAccessor`, antes desse run.
+
+O conteúdo dos secrets não é gerenciado pelo Terraform nem versionado no repositório. Os IDs não são fixados pelo workflow: secrets existentes podem ser reutilizados, desde que o Environment aponte para o ID e a versão corretos. No estado atual, Production pode reutilizar `neon-database` versão `1` e `django-secret` versão `1`.
+
+Preview deve usar secrets próprios para nunca conectar o staging ao banco ou à chave de Production. Se ainda não existirem, crie-os com IDs distintos; os nomes abaixo são apenas uma sugestão:
+
+```bash
+gcloud services enable secretmanager.googleapis.com --project="$PROJECT_ID"
+
+export PREVIEW_DATABASE_SECRET_ID="neon-database-staging"
+export PREVIEW_DJANGO_SECRET_ID="django-secret-staging"
+
+for SECRET_ID in "$PREVIEW_DATABASE_SECRET_ID" "$PREVIEW_DJANGO_SECRET_ID"
+do
+  gcloud secrets create "$SECRET_ID" --replication-policy=automatic --project="$PROJECT_ID"
+done
+```
+
+Adicione somente os valores de Preview pela entrada padrão para não colocá-los no comando ou no repositório. Se os secrets já existirem, pule a criação e adicione uma nova versão apenas quando necessário:
+
+```bash
+gcloud secrets versions add "$PREVIEW_DATABASE_SECRET_ID" --data-file=- --project="$PROJECT_ID"
+gcloud secrets versions add "$PREVIEW_DJANGO_SECRET_ID" --data-file=- --project="$PROJECT_ID"
+```
+
+A Service Account de deploy precisa ler os valores durante migrations; a identidade de runtime do Cloud Run precisa resolver as referências. Enquanto os serviços usam a Compute Engine default Service Account, conceda acesso no nível de cada secret:
+
+```bash
+export DEPLOYER_SA="github-actions-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
+export PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+export RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+for SECRET_ID in \
+  neon-database \
+  django-secret \
+  "$PREVIEW_DATABASE_SECRET_ID" \
+  "$PREVIEW_DJANGO_SECRET_ID"
+do
+  gcloud secrets add-iam-policy-binding "$SECRET_ID" --project="$PROJECT_ID" \
+    --member="serviceAccount:${DEPLOYER_SA}" --role=roles/secretmanager.secretAccessor
+  gcloud secrets add-iam-policy-binding "$SECRET_ID" --project="$PROJECT_ID" \
+    --member="serviceAccount:${RUNTIME_SA}" --role=roles/secretmanager.secretAccessor
+done
+```
+
+Por fim, registre os IDs e as versões numéricas correspondentes como variables, não secrets, nos Environments:
+
+```bash
+gh variable set GCP_DATABASE_SECRET_ID --env Preview --body "$PREVIEW_DATABASE_SECRET_ID"
+gh variable set GCP_DATABASE_SECRET_VERSION --env Preview --body 1
+gh variable set GCP_DJANGO_SECRET_ID --env Preview --body "$PREVIEW_DJANGO_SECRET_ID"
+gh variable set GCP_DJANGO_SECRET_VERSION --env Preview --body 1
+
+gh variable set GCP_DATABASE_SECRET_ID --env Production --body neon-database
+gh variable set GCP_DATABASE_SECRET_VERSION --env Production --body 1
+gh variable set GCP_DJANGO_SECRET_ID --env Production --body django-secret
+gh variable set GCP_DJANGO_SECRET_VERSION --env Production --body 1
+```
+
+Ao rotacionar um valor, crie uma nova versão no Secret Manager e atualize somente a variável `*_VERSION` após validá-la. A versão anterior permanece disponível para rollback.
+
+### Bootstrap do target Preview na Vercel
+
+Depois que o primeiro deploy criar `wedding-backend-staging`, obtenha a URL pública do serviço e configure `VITE_API_URL` no target Preview do projeto frontend:
+
+```bash
+gcloud run services describe wedding-backend-staging \
+  --region=us-central1 \
+  --project="$PROJECT_ID" \
+  --format='value(status.url)'
+```
+
+Cadastre a URL retornada no painel da Vercel ou com `vercel env add VITE_API_URL preview`. Configure `PUBLIC_API_URL` no target Preview da landing somente se o projeto efetivamente consumir essa variável.
+
+O Terraform atual vincula os targets `production` e `preview` à mesma URL de API. Não use esse recurso para sobrescrever o Preview enquanto os states e targets não estiverem separados; esse acoplamento é parte da dívida que bloqueia o `apply`.
+
+---
+
+## 6. Gates de Qualidade
+
+| Gate | Critério de aceitação |
+|:---|:---|
+| Documentação | `make check-docs` sem links quebrados. |
+| Contratos | Nenhum diff após exportar OpenAPI e gerar o cliente Orval. |
+| Backend | Ruff, mypy, Django checks, migrations e Pytest aprovados. |
+| Frontend | Lint, type-check, isolamento de mocks, Vitest com cobertura e `pnpm build` no PR aprovados. |
+| Landing | `astro check` e build aprovados. |
+| Container | Build da imagem de produção e health check do container aprovados sem push em PR. |
+| E2E | Duas shards Playwright em Chromium aprovadas. |
 
 ---
 
 ## 7. ADRs Relacionados
 
-- [ADR-006: Service Layer Architecture](../adr/006-service-layer.md) — Separação estrita entre endpoints e lógica de negócio.
-- [ADR-011: BaseModel e Validação em Save](../adr/011-basemodel-save-full-clean.md) — Regra de integridade do modelo Django.
-- [ADR-012: Orval Contract-Driven Frontend](../adr/012-orval-contract-driven-frontend.md) — Geração estritamente tipada de hooks a partir do OpenAPI schema (`contract-sync`).
-- [ADR-013: Migração DRF para Django Ninja](../adr/013-migrate-drf-to-ninja.md) — Escolha do framework de API com schema OpenAPI embutido.
-- [ADR-018: Playwright E2E Testing](../adr/018-playwright-e2e-testing.md) — Testes de ponta a ponta em sharding no CI.
-- [ADR-021: Padrão de Comentários e Docstrings](../adr/021-padrao-comentarios-docstrings.md) — Diretrizes de documentação de código.
+- [ADR-025: Adoção de Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md)
+- [ADR-026: Estratégia de Branches, Homologação e Sprints](../adr/026-gitops-branching-and-deployment-strategy.md)
+- [ADR-012: Orval Contract-Driven Frontend](../adr/012-orval-contract-driven-frontend.md)
+- [ADR-018: Playwright E2E Testing](../adr/018-playwright-e2e-testing.md)
