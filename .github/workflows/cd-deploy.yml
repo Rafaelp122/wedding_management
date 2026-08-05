@@ -190,13 +190,15 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "type=production" >> "$GITHUB_OUTPUT"
             echo "flag=--prod" >> "$GITHUB_OUTPUT"
+            echo "git_branch_flag=" >> "$GITHUB_OUTPUT"
           else
             echo "type=preview" >> "$GITHUB_OUTPUT"
             echo "flag=" >> "$GITHUB_OUTPUT"
+            echo "git_branch_flag=--git-branch=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=${{ steps.env.outputs.type }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=${{ steps.env.outputs.type }} ${{ steps.env.outputs.git_branch_flag }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
