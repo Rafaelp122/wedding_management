@@ -129,6 +129,12 @@ class Command(BaseCommand):
                     wedding.status = Wedding.StatusChoices.COMPLETED
                     wedding.date = timezone.now().date() - timedelta(days=30)
                     wedding.save(skip_clean=True)
+                elif i == min(1, num_weddings - 1):
+                    wedding = WeddingFactory.create(
+                        user_context=planner,
+                        status=Wedding.StatusChoices.IN_PROGRESS,
+                        date=timezone.now().date() + timedelta(days=30),
+                    )
                 else:
                     wedding = WeddingFactory.create(user_context=planner)
 

@@ -35,26 +35,18 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - '.github/workflows/ci-pr-validation.yml'
-              - '.github/workflows/cd-deploy.yml'
-              - '.github/workflows/e2e-tests.yml'
-              - '.github/actions/setup-python-uv/**'
+              - '.github/**'
             frontend:
               - 'frontend/**'
-              - '.github/workflows/ci-pr-validation.yml'
-              - '.github/workflows/cd-deploy.yml'
-              - '.github/workflows/e2e-tests.yml'
-              - '.github/actions/setup-node-pnpm/**'
+              - '.github/**'
             landing:
               - 'landing/**'
-              - '.github/workflows/ci-pr-validation.yml'
-              - '.github/workflows/cd-deploy.yml'
-              - '.github/actions/setup-node-pnpm/**'
+              - '.github/**'
 
   lint-and-typecheck:
     name: Code Lint & Typecheck
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.landing == 'true' || github.event_name == 'push'
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -64,12 +56,15 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python & UV
+        if: needs.detect-changes.outputs.backend == 'true'
         uses: ./.github/actions/setup-python-uv
 
       - name: Setup Node & PNPM
+        if: needs.detect-changes.outputs.frontend == 'true'
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Python Ruff Lint & Mypy Typecheck
+        if: needs.detect-changes.outputs.backend == 'true'
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
           SECRET_KEY: dummy-ci-key-for-static-analysis-only # pragma: allowlist secret
@@ -81,6 +76,7 @@ jobs:
           uv run mypy .
 
       - name: Frontend Typecheck & Oxlint
+        if: needs.detect-changes.outputs.frontend == 'true'
         run: |
           cd frontend
           pnpm run lint
@@ -89,7 +85,7 @@ jobs:
   backend-tests:
     name: Backend Pytest & Migrations Check
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.backend == 'true' || github.event_name == 'push'
+    if: needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -162,7 +158,7 @@ jobs:
   frontend-tests:
     name: Frontend Vitest Unit Tests
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'push'
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -200,7 +196,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   contract-sync:
-    name: API OpenAPI & Orval Contract Sync
+    name: API Contract Sync
     needs: [detect-changes]
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -231,7 +227,7 @@ jobs:
   landing-check:
     name: Landing Page Build Check
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.landing == 'true' || github.event_name == 'push'
+    if: needs.detect-changes.outputs.landing == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
