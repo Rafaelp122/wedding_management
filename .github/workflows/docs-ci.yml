@@ -36,8 +36,5 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Python & UV
-        uses: ./.github/actions/setup-python-uv
-
       - name: Validate Documentation Links & Standards
         run: make check-docs
