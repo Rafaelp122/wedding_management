@@ -16,8 +16,8 @@ from unittest.mock import patch
 
 import pytest
 from django.test import override_settings
-from ninja.errors import HttpError
 
+from apps.core.exceptions import InvalidCredentialsError, InvalidTokenError
 from apps.core.services.social_auth import GoogleOAuthProvider
 from apps.users.models import User
 from apps.users.services.google_auth_service import GoogleAuthService
@@ -92,7 +92,7 @@ def test_authenticate_with_google_inactive_user(user_factory):
     }
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(InvalidCredentialsError) as exc_info:
             GoogleAuthService.authenticate_with_google("valid_id_token")
 
     assert exc_info.value.status_code == 401
@@ -102,13 +102,13 @@ def test_authenticate_with_google_inactive_user(user_factory):
 @override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_authenticate_with_google_invalid_token():
     """
-    Testa se ValueError ao verificar o token é convertido em HttpError 401.
+    Testa se ValueError ao verificar o token é convertido em InvalidTokenError.
     """
     with patch(
         "google.oauth2.id_token.verify_oauth2_token",
         side_effect=ValueError("Token inválido"),
     ):
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(InvalidTokenError) as exc_info:
             GoogleAuthService.authenticate_with_google("invalid_id_token")
 
     assert exc_info.value.status_code == 401
@@ -118,11 +118,12 @@ def test_authenticate_with_google_invalid_token():
 @override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_google_oauth_provider_missing_client_id():
     """
-    Testa que GoogleOAuthProvider gera 401 quando GOOGLE_CLIENT_ID está ausente.
+    Testa que GoogleOAuthProvider gera InvalidCredentialsError
+    quando GOOGLE_CLIENT_ID está ausente.
     """
     with override_settings(GOOGLE_CLIENT_ID=""):
         provider = GoogleOAuthProvider()
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(InvalidCredentialsError) as exc_info:
             provider.verify_token("some_token")
 
     assert exc_info.value.status_code == 401
@@ -132,7 +133,8 @@ def test_google_oauth_provider_missing_client_id():
 @override_settings(GOOGLE_CLIENT_ID="test_client_id")
 def test_google_oauth_provider_email_not_verified():
     """
-    Testa que GoogleOAuthProvider gera HttpError 401 se email_verified for False.
+    Testa que GoogleOAuthProvider gera InvalidCredentialsError
+    se email_verified for False ou estiver ausente.
     """
     mock_id_info = {
         "email": "unverified@example.com",
@@ -142,11 +144,46 @@ def test_google_oauth_provider_email_not_verified():
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
         provider = GoogleOAuthProvider()
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(InvalidCredentialsError) as exc_info:
             provider.verify_token("unverified_token")
 
     assert exc_info.value.status_code == 401
     assert "E-mail do Google não verificado." in str(exc_info.value)
+
+    # Testa chave ausente
+    mock_id_info_missing = {
+        "email": "unverified@example.com",
+    }
+    with patch(
+        "google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info_missing
+    ):
+        provider2 = GoogleOAuthProvider()
+        with pytest.raises(InvalidCredentialsError) as exc_info:
+            provider2.verify_token("unverified_token")
+
+    assert exc_info.value.status_code == 401
+    assert "E-mail do Google não verificado." in str(exc_info.value)
+
+
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
+def test_google_oauth_provider_email_empty():
+    """
+    Testa que GoogleOAuthProvider gera InvalidCredentialsError
+    se o e-mail estiver vazio.
+    """
+    mock_id_info = {
+        "email_verified": True,
+        "email": "",
+    }
+
+    with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
+        provider = GoogleOAuthProvider()
+        with pytest.raises(InvalidCredentialsError) as exc_info:
+            provider.verify_token("token")
+
+    assert exc_info.value.status_code == 401
+    assert "não fornecido" in str(exc_info.value)
 
 
 @override_settings(GOOGLE_CLIENT_ID="test_client_id")
@@ -169,6 +206,21 @@ def test_google_oauth_provider_long_given_name():
 
     assert len(user_info.first_name) == 150
     assert user_info.first_name == "A" * 150
+
+
+@override_settings(GOOGLE_CLIENT_ID="test_client_id")
+def test_mask_email_no_at():
+    """Cobre o fallback da mascaração de email sem o @."""
+    from apps.users.services.google_auth_service import _mask_email
+
+    assert _mask_email("invalidemail") == "***"
+
+
+def test_mask_email_short_name():
+    """Cobre o fallback da mascaração com nomes de usuário muito curtos."""
+    from apps.users.services.google_auth_service import _mask_email
+
+    assert _mask_email("ab@example.com") == "a*@example.com"
 
 
 @override_settings(GOOGLE_CLIENT_ID="test_client_id")

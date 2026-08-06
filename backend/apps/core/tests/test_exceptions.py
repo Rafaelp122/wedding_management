@@ -9,8 +9,11 @@ import pytest
 
 from apps.core.exceptions import (
     ApplicationError,
+    AuthenticationError,
     BusinessRuleViolation,
     DomainIntegrityError,
+    InvalidCredentialsError,
+    InvalidTokenError,
     ObjectNotFoundError,
 )
 
@@ -72,12 +75,37 @@ class TestExceptionHierarchy:
         assert custom_error.detail == "Conflito de dados detectado"
         assert custom_error.status_code == 409
 
+    def test_authentication_error(self):
+        """Teste CRÍTICO: Erros de autenticação mapeiam para 401."""
+        error = AuthenticationError()
+        assert error.status_code == 401
+        assert error.default_detail == "Falha de autenticação."
+        assert error.default_code == "unauthorized"
+        assert isinstance(error, ApplicationError)
+
+        custom_error = InvalidCredentialsError()
+        assert custom_error.status_code == 401
+        assert (
+            custom_error.default_detail == "Credenciais inválidas ou conta desativada."
+        )
+        assert custom_error.default_code == "invalid_credentials"
+        assert isinstance(custom_error, AuthenticationError)
+
+        token_error = InvalidTokenError(detail="Token expirou")
+        assert token_error.status_code == 401
+        assert token_error.detail == "Token expirou"
+        assert token_error.default_code == "invalid_token"
+        assert isinstance(token_error, AuthenticationError)
+
     def test_exception_hierarchy_inheritance(self):
         """Teste CRÍTICO: Verificar herança correta da hierarquia."""
         # Todas as exceções específicas herdam de ApplicationError
         assert issubclass(ObjectNotFoundError, ApplicationError)
         assert issubclass(BusinessRuleViolation, ApplicationError)
         assert issubclass(DomainIntegrityError, ApplicationError)
+        assert issubclass(AuthenticationError, ApplicationError)
+        assert issubclass(InvalidCredentialsError, AuthenticationError)
+        assert issubclass(InvalidTokenError, AuthenticationError)
 
         # Mas não são subclasses umas das outras
         assert not issubclass(ObjectNotFoundError, BusinessRuleViolation)
@@ -92,6 +120,9 @@ class TestExceptionHierarchy:
             (ObjectNotFoundError, 404, "Not Found"),
             (BusinessRuleViolation, 422, "Unprocessable Entity"),
             (DomainIntegrityError, 409, "Conflict"),
+            (AuthenticationError, 401, "Unauthorized"),
+            (InvalidCredentialsError, 401, "Unauthorized"),
+            (InvalidTokenError, 401, "Unauthorized"),
         ]
 
         for exception_class, expected_status, http_name in errors:
@@ -110,6 +141,9 @@ class TestExceptionHierarchy:
             (ObjectNotFoundError, {"detail": "Recurso ausente"}),
             (BusinessRuleViolation, {"detail": "Regra violada"}),
             (DomainIntegrityError, {"detail": "Conflito de integridade"}),
+            (AuthenticationError, {"detail": "Falha no Auth"}),
+            (InvalidCredentialsError, {"detail": "Senha errada"}),
+            (InvalidTokenError, {"detail": "Token corrompido"}),
         ]
 
         for exception_class, kwargs in test_cases:
@@ -136,6 +170,7 @@ class TestExceptionIntegration:
             (BusinessRuleViolation, "Regra de negócio violada", 422),
             (DomainIntegrityError, "Conflito de integridade", 409),
             (ApplicationError, "Erro genérico", 400),
+            (InvalidCredentialsError, "Senha errada", 401),
         ]
 
         for exc_class, detail, expected_status in errors:

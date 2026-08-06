@@ -11,10 +11,10 @@ e ≥1 teste de falha.
 """
 
 import pytest
-from ninja.errors import HttpError
 from ninja_jwt.schema import TokenRefreshOutputSchema
 from ninja_jwt.tokens import RefreshToken
 
+from apps.core.exceptions import InvalidCredentialsError
 from apps.users.schemas import TokenOut, UserDataOut, VerifyTokenOut
 from apps.users.services.token_service import TokenService
 
@@ -40,23 +40,23 @@ class TestTokenServiceObtain:
         assert result.user.email == "auth@example.com"
 
     def test_obtain_wrong_password_raises_401(self, user_factory):
-        """Senha incorreta levanta HttpError 401."""
+        """Senha incorreta levanta InvalidCredentialsError."""
         user_factory.create(
             email="auth@example.com", password="secure123", is_active=True
         )
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(InvalidCredentialsError) as exc_info:
             TokenService.obtain("auth@example.com", "wrong")
 
         assert exc_info.value.status_code == 401
 
     def test_obtain_inactive_user_raises_401(self, user_factory):
-        """Usuário inativo levanta HttpError 401."""
+        """Usuário inativo levanta InvalidCredentialsError."""
         user_factory.create(
             email="inactive@example.com", password="secure123", is_active=False
         )
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(InvalidCredentialsError) as exc_info:
             TokenService.obtain("inactive@example.com", "secure123")
 
         assert exc_info.value.status_code == 401
@@ -79,11 +79,11 @@ class TestTokenServiceRefresh:
         assert result.refresh != str(refresh)
 
     def test_refresh_invalid_token_raises_error(self):
-        """Refresh com token inválido levanta HttpError 401."""
-        with pytest.raises(HttpError) as exc_info:
-            TokenService.refresh("invalid.token.string")
+        """Refresh com token inválido levanta InvalidTokenError."""
+        from apps.core.exceptions import InvalidTokenError
 
-        assert exc_info.value.status_code == 401
+        with pytest.raises(InvalidTokenError):
+            TokenService.refresh("invalid.token.string")
 
 
 class TestTokenServiceVerify:
@@ -100,8 +100,8 @@ class TestTokenServiceVerify:
         assert isinstance(result, VerifyTokenOut)
 
     def test_verify_invalid_token_raises_error(self):
-        """Verificação de token inválido levanta HttpError 401."""
-        with pytest.raises(HttpError) as exc_info:
-            TokenService.verify("invalid.token.here")
+        """Verificação de token inválido levanta InvalidTokenError."""
+        from apps.core.exceptions import InvalidTokenError
 
-        assert exc_info.value.status_code == 401
+        with pytest.raises(InvalidTokenError):
+            TokenService.verify("invalid.token.here")
