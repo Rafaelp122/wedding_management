@@ -3,19 +3,18 @@ mock_provider "cloudflare" {}
 mock_provider "vercel" {}
 
 variables {
-  environment                = "staging"
-  service_name               = "wedding-backend-staging"
-  database_secret_id         = "neon-database-staging"
-  django_secret_id           = "django-secret-staging"
-  r2_bucket_name             = "wedding-management-staging"
-  cloudflare_account_id      = "81bf3d86c07ecf0f6181ea7e6aaf8dea"
-  deployer_email             = "github-actions-deployer@gen-lang-client-0194045282.iam.gserviceaccount.com"
-  runtime_email              = "597398840710-compute@developer.gserviceaccount.com"
-  artifact_registry_repo_url = "us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-management-repo"
-  web_app_project_id         = "prj_Nozh5iaNEpJxkMMq50HqR6IR9AIj"
-  vercel_target              = ["preview"]
-  vercel_git_branch          = "develop"
-  initial_image              = "us-central1-docker.pkg.dev/gen-lang-client-0194045282/wedding-management-repo/wedding-api:test"
+  environment           = "staging"
+  service_name          = "wedding-backend-staging"
+  database_secret_id    = "neon-database-staging"
+  django_secret_id      = "django-secret-staging"
+  r2_bucket_name        = "wedding-management-staging"
+  cloudflare_account_id = "dummy-cloudflare-account-id"
+  deployer_email        = "deployer@example.com"
+  runtime_email         = "runtime@example.com"
+  web_app_project_id    = "prj_dummy_web_app"
+  vercel_target         = ["preview"]
+  vercel_git_branch     = "develop"
+  initial_image         = "us-central1-docker.pkg.dev/dummy-project/wedding-repo/wedding-api:test"
 }
 
 run "validate_cloud_run_configuration" {
@@ -33,6 +32,6 @@ run "validate_cloud_run_configuration" {
 
   assert {
     condition     = google_cloud_run_v2_service_iam_member.public_access.role == "roles/run.invoker"
-    error_message = "Servico Cloud Run deve possuir acesso publico roles/run.invoker."
+    error_message = "Serviço Cloud Run deve possuir acesso público roles/run.invoker."
   }
 }

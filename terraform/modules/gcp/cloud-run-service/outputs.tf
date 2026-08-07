@@ -1,10 +1,10 @@
 output "service_uri" {
-  description = "URI publica do servico Cloud Run"
+  description = "URI pública do serviço Cloud Run"
   value       = google_cloud_run_v2_service.wedding_api.uri
 }
 
 output "service_name" {
-  description = "Nome do servico Cloud Run"
+  description = "Nome do serviço Cloud Run"
   value       = google_cloud_run_v2_service.wedding_api.name
 }
 

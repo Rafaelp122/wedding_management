@@ -9,6 +9,10 @@ resource "google_cloud_run_v2_service" "wedding_api" {
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_ALL"
 
+  labels = {
+    environment = var.environment
+  }
+
   template {
     service_account                  = var.runtime_email
     timeout                          = "300s"
@@ -40,6 +44,7 @@ resource "google_cloud_run_v2_service" "wedding_api" {
     ignore_changes = [
       client,
       client_version,
+      labels,
       template[0].containers[0].env,
       template[0].containers[0].image,
       template[0].containers[0].resources,
@@ -59,24 +64,38 @@ resource "google_cloud_run_v2_service_iam_member" "public_access" {
 resource "google_secret_manager_secret" "database" {
   secret_id = var.database_secret_id # pragma: allowlist secret
 
+  labels = {
+    environment = var.environment
+  }
+
   replication {
     auto {}
   }
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [
+      labels,
+    ]
   }
 }
 
 resource "google_secret_manager_secret" "django" {
   secret_id = var.django_secret_id # pragma: allowlist secret
 
+  labels = {
+    environment = var.environment
+  }
+
   replication {
     auto {}
   }
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes = [
+      labels,
+    ]
   }
 }
 

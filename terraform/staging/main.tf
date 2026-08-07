@@ -15,22 +15,20 @@ locals {
 module "backend_service" {
   source = "../modules/gcp/cloud-run-service"
 
-  environment                = local.environment
-  service_name               = local.service_name
-  gcp_project_id             = local.gcp_project_id
-  gcp_region                 = local.gcp_region
-  database_secret_id         = local.database_secret
-  django_secret_id           = local.django_secret
-  r2_bucket_name             = local.r2_bucket_name
-  cloudflare_account_id      = var.cloudflare_account_id
-  deployer_email             = local.deployer_email
-  runtime_email              = local.runtime_email
-  artifact_registry_repo_url = data.terraform_remote_state.shared.outputs.artifact_registry_repo_url
-  web_app_project_id         = data.terraform_remote_state.shared.outputs.web_app_project_id
-  vercel_target              = ["preview"]
-  vercel_git_branch          = "develop"
-  initial_image              = "${data.terraform_remote_state.shared.outputs.artifact_registry_repo_url}/wedding-api:6cc79ee97e64aeb2576ff8e2c114fbeebb660a1d"
-  max_concurrency            = 80
+  environment           = local.environment
+  service_name          = local.service_name
+  gcp_region            = local.gcp_region
+  database_secret_id    = local.database_secret
+  django_secret_id      = local.django_secret
+  r2_bucket_name        = local.r2_bucket_name
+  cloudflare_account_id = var.cloudflare_account_id
+  deployer_email        = local.deployer_email
+  runtime_email         = local.runtime_email
+  web_app_project_id    = data.terraform_remote_state.shared.outputs.web_app_project_id
+  vercel_target         = ["preview"]
+  vercel_git_branch     = "develop"
+  initial_image         = "${data.terraform_remote_state.shared.outputs.artifact_registry_repo_url}/wedding-api:6cc79ee97e64aeb2576ff8e2c114fbeebb660a1d"
+  max_concurrency       = 80
 }
 
 moved {

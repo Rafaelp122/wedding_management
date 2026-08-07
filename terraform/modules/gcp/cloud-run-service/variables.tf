@@ -13,12 +13,6 @@ variable "service_name" {
   type        = string
 }
 
-variable "gcp_project_id" {
-  description = "ID do projeto GCP"
-  type        = string
-  default     = "gen-lang-client-0194045282"
-}
-
 variable "gcp_region" {
   description = "Região do serviço no GCP"
   type        = string
@@ -52,11 +46,6 @@ variable "deployer_email" {
 
 variable "runtime_email" {
   description = "Email da Service Account de runtime"
-  type        = string
-}
-
-variable "artifact_registry_repo_url" {
-  description = "URL base do repositório Artifact Registry"
   type        = string
 }
 
