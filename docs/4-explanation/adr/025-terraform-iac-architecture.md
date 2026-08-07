@@ -2,7 +2,6 @@
 
 > **Status:** Aceito
 > **Data:** 1 de agosto de 2026
-> **Última revisão:** 6 de agosto de 2026
 > **Decisores:** Time de Arquitetura & Plataforma
 > **Relacionados:** [ADR-001](001-why-cloud-run.md) | [ADR-004](004-presigned-urls.md) | [ADR-027](027-terraform-state-topology.md) | [ci-cd-pipeline-flow](../architecture/ci-cd-pipeline-flow.md)
 

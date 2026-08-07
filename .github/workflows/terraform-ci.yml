@@ -104,7 +104,7 @@ jobs:
         env:
           TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
           TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
-        run: terraform apply -auto-approve -input=false tfplan
+        run: terraform apply -input=false tfplan
 
       - name: Terraform Init (Production)
         working-directory: terraform/production
@@ -127,4 +127,4 @@ jobs:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
           TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
-        run: terraform apply -auto-approve -input=false tfplan
+        run: terraform apply -input=false tfplan
