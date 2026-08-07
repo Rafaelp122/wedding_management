@@ -27,3 +27,8 @@ output "runtime_sa_email" {
   description = "Email da Service Account Compute default usada como runtime"
   value       = local.runtime_email
 }
+
+output "gcp_project_id" {
+  description = "ID do projeto GCP compartilhado"
+  value       = local.gcp_project_id
+}

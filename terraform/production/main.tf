@@ -1,5 +1,5 @@
 locals {
-  gcp_project_id = "gen-lang-client-0194045282"
+  gcp_project_id = data.terraform_remote_state.shared.outputs.gcp_project_id
   gcp_region     = "us-central1"
   environment    = "production"
 
@@ -26,7 +26,7 @@ module "backend_service" {
   web_app_project_id    = data.terraform_remote_state.shared.outputs.web_app_project_id
   vercel_target         = ["production"]
   vercel_git_branch     = "main"
-  initial_image         = "us-central1-docker.pkg.dev/gen-lang-client-0194045282/cloud-run-source-deploy/wedding-backend@sha256:bf3700344958f8ba991c73342c3f15f912919be7e483e13f275cc6f167e341d1"
+  initial_image         = "${data.terraform_remote_state.shared.outputs.artifact_registry_repo_url}/wedding-api:6cc79ee97e64aeb2576ff8e2c114fbeebb660a1d"
   max_concurrency       = 15
 }
 

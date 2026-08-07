@@ -117,9 +117,11 @@ moved {
 Antes de abrir o Pull Request, execute a suíte de validação:
 
 ```bash
-/tmp/terraform-1.7.5/terraform fmt -check -recursive terraform
-./.codex-terraform-gcloud.sh -chdir=terraform/staging validate
-./.codex-terraform-gcloud.sh -chdir=terraform/production validate
+terraform fmt -check -recursive terraform
+terraform -chdir=terraform/staging init -backend=false
+terraform -chdir=terraform/staging validate
+terraform -chdir=terraform/production init -backend=false
+terraform -chdir=terraform/production validate
 make check-docs
 ```
 

@@ -1,5 +1,5 @@
 locals {
-  gcp_project_id = "gen-lang-client-0194045282"
+  gcp_project_id = data.terraform_remote_state.shared.outputs.gcp_project_id
   gcp_region     = "us-central1"
   environment    = "staging"
 

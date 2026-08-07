@@ -34,6 +34,16 @@ run "validate_cloud_run_configuration" {
     condition     = google_cloud_run_v2_service_iam_member.public_access.role == "roles/run.invoker"
     error_message = "Serviço Cloud Run deve possuir acesso público roles/run.invoker."
   }
+
+  assert {
+    condition     = google_secret_manager_secret_iam_member.database_access["runtime"].role == "roles/secretmanager.secretAccessor"
+    error_message = "A Service Account de runtime deve possuir role secretAccessor no banco de dados."
+  }
+
+  assert {
+    condition     = google_secret_manager_secret_iam_member.django_access["runtime"].role == "roles/secretmanager.secretAccessor"
+    error_message = "A Service Account de runtime deve possuir role secretAccessor no Django."
+  }
 }
 
 run "validate_invalid_environment_rejection" {
