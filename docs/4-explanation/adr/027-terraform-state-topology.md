@@ -2,7 +2,7 @@
 
 > **Status:** Aceito
 > **Data:** 6 de agosto de 2026
-> **Relacionados:** [ADR-025](025-terraform-iac-architecture.md) | [ADR-026](026-gitops-branching-and-deployment-strategy.md) | [runbook de adoção](../../2-how-to/ops-troubleshooting/terraform-state-adoption.md)
+> **Relacionados:** [ADR-025](025-terraform-iac-architecture.md) | [ADR-026](026-gitops-branching-and-deployment-strategy.md) | [guia de onboarding](../../2-how-to/ops-troubleshooting/terraform-service-onboarding.md)
 
 ## Contexto
 

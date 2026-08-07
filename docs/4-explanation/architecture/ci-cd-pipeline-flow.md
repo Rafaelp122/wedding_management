@@ -79,7 +79,7 @@ O objeto legado `terraform/state/default.tfstate` permanece somente como backup 
 O backend GCS mantém locking automático. As operações remotas também usam o grupo de concorrência `terraform-remote-state`. Nunca use `-lock=false`, `force-unlock`, `state push -force` ou `init -force-copy` no fluxo normal.
 
 > [!IMPORTANT]
-> `TERRAFORM_PRODUCTION_APPLY_ENABLED` deve permanecer ausente ou `false` até os três states serem importados e seus planos não apresentarem criação, alteração, substituição ou remoção inesperada. Consulte o [runbook de adoção](../../2-how-to/ops-troubleshooting/terraform-state-adoption.md).
+> `TERRAFORM_PRODUCTION_APPLY_ENABLED` deve permanecer ausente ou `false` até os três states serem importados e seus planos não apresentarem criação, alteração, substituição ou remoção inesperada. Consulte a [especificação de módulos](../../3-reference/architecture-standards/terraform-modules-spec.md).
 
 ---
 
