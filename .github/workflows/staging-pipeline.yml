@@ -1,4 +1,4 @@
-name: "Staging Environment Pipeline"
+name: "Terraform Staging Plans"
 
 on:
   push:
@@ -8,19 +8,16 @@ on:
 
 jobs:
   staging-deploy:
-    name: "Deploy Staging Environment"
+    name: "Terraform Plan (Shared & Staging)"
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    environment: Preview
     concurrency:
       group: terraform-remote-state
       cancel-in-progress: false
     permissions:
       contents: read
       id-token: write
-
-    defaults:
-      run:
-        working-directory: ./terraform
 
     steps:
       - name: Checkout Repository
@@ -35,21 +32,34 @@ jobs:
 
       - name: Authenticate to GCP via Workload Identity Federation (WIF)
         uses: google-github-actions/auth@v2
-        env:
-          GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
-        if: env.GCP_WIF_PROVIDER != ''
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform Init & Validate (Shared)
+        working-directory: terraform/shared
+        run: |
+          terraform init
+          terraform validate -no-color
 
-      - name: Terraform Validate
-        run: terraform validate -no-color
+      - name: Terraform Plan (Shared)
+        working-directory: terraform/shared
+        env:
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+        run: terraform plan -no-color -input=false
+
+      - name: Terraform Init & Validate (Staging)
+        working-directory: terraform/staging
+        run: |
+          terraform init
+          terraform validate -no-color
 
       - name: Terraform Plan (Staging)
-        run: terraform plan -var-file=environments/staging.tfvars -no-color -input=false
+        working-directory: terraform/staging
         env:
+          TF_VAR_cloudflare_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+        run: terraform plan -no-color -input=false

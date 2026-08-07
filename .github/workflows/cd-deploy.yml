@@ -159,7 +159,6 @@ jobs:
             DATABASE_URL=${{ vars.GCP_DATABASE_SECRET_ID }}:${{ vars.GCP_DATABASE_SECRET_VERSION }}
             SECRET_KEY=${{ vars.GCP_DJANGO_SECRET_ID }}:${{ vars.GCP_DJANGO_SECRET_VERSION }}
           secrets_update_strategy: merge # pragma: allowlist secret
-          flags: "--allow-unauthenticated"
 
   deploy-frontend:
     name: Deploy Frontend (Vercel)
