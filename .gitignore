@@ -146,3 +146,6 @@ override.tf.json
 crash.log
 crash.*.log
 *.tfplan
+# 5. Lockfiles dentro de módulos reutilizáveis (lockfiles são responsabilidade dos roots)
+terraform/modules/*/.terraform.lock.hcl
+.codex-terraform-gcloud.sh

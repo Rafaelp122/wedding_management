@@ -9,8 +9,8 @@
 
 | Branch | Uso | Resultado após o merge |
 |:---|:---|:---|
-| `main` | Código estável | CI aprovada chama o CD no Environment `Production`; mudanças em `terraform/**` são validadas, mas o `apply` permanece bloqueado até inventário, imports e state separado. |
-| `develop` | Integração da Sprint | CI aprovada chama o CD no Environment `Preview`; a pipeline de staging calcula um plano Terraform, sem aplicar. |
+| `main` | Código estável | CI aprovada chama o CD no Environment `Production`; Terraform planeja `shared` e `production`, com apply condicionado ao opt-in. |
+| `develop` | Integração da Sprint | CI aprovada chama o CD no Environment `Preview`; Terraform planeja `shared` e `staging`, sem aplicar. |
 | `feature/*`, `fix/*`, `docs/*` | Trabalho da Sprint, criado a partir de `develop` | Apenas validação no PR; nenhum deploy. |
 | `hotfix/*` | Correção urgente, criada a partir de `main` | Apenas validação no PR; o deploy ocorre depois do merge em `main`. |
 
@@ -55,15 +55,16 @@ O push resultante executa a CI novamente. Depois do sucesso de todos os gates, e
 
 1. Alterações no backend publicam a imagem `wedding-api` no Artifact Registry, carregam os secrets da versão pinada, executam migrations e atualizam `wedding-backend-staging` no Cloud Run.
 2. Alterações no frontend ou landing fazem deploy de preview na Vercel.
-3. O Environment `Preview` protege as configurações do ambiente.
+3. O Environment `Preview` seleciona as configurações do staging fixo; ele não representa um preview efêmero de PR.
 
-Separadamente, `staging-pipeline.yml` autentica via WIF, acessa o state remoto e executa:
+Separadamente, `staging-pipeline.yml` autentica via WIF e planeja os dois roots relevantes:
 
 ```bash
-terraform plan -var-file=environments/staging.tfvars
+terraform -chdir=terraform/shared plan
+terraform -chdir=terraform/staging plan
 ```
 
-Esse plano mostra uma proposta contra o state atualmente compartilhado, mas não comprova drift isolado de staging. Use-o somente para inspeção e nunca o aplique.
+Cada plano usa seu próprio prefixo GCS. O workflow de staging nunca executa `apply`.
 
 Valide a aplicação no ambiente Preview antes de promover a Sprint.
 
@@ -77,9 +78,9 @@ Após aprovação e merge em `main`:
 
 1. a CI aprovada chama o CD no Environment `Production`;
 2. os componentes alterados são implantados; o backend atualiza `wedding-backend` no Cloud Run com a imagem `wedding-api`, e frontend/landing seguem para a Vercel;
-3. quando `terraform/**` ou o workflow Terraform mudou, `terraform-ci.yml` valida a configuração; o `apply` de produção deve permanecer bloqueado até inventariar e importar os recursos existentes para um state de produção separado.
+3. quando `terraform/**` ou o workflow Terraform mudou, `terraform-ci.yml` planeja `shared` e `production`; o apply permanece bloqueado até os imports convergirem e o opt-in ser habilitado manualmente.
 
-Staging e produção compartilham o grupo Terraform `terraform-remote-state`; o CD serializa seus próprios deploys por branch em grupos separados.
+As operações Terraform remotas são serializadas pelo grupo `terraform-remote-state`; os states permanecem separados por prefixo.
 
 ---
 

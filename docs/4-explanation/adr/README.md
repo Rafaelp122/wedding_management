@@ -9,11 +9,11 @@
 
 Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding Management System. Cada ADR documenta uma decisão estrutural relevante, seu contexto, alternativas consideradas e as consequências arquiteturais adotadas.
 
-> ℹ️ **Nota de Numeração Imutável:** A numeração das ADRs é mantida estritamente imutável para preservar a rastreabilidade histórica no código-fonte, comentários de classe e mensagens de commit do Git. A identificação `ADR-015` refere-se a uma proposta descontinuada na fase inicial do projeto, mantendo-se a sequência oficial das 26 ADRs ativas.
+> ℹ️ **Nota de Numeração Imutável:** A numeração das ADRs é mantida estritamente imutável para preservar a rastreabilidade histórica no código-fonte, comentários de classe e mensagens de commit do Git. A identificação `ADR-015` refere-se a uma proposta descontinuada na fase inicial do projeto, mantendo-se a sequência oficial das 27 ADRs ativas.
 
 ---
 
-## 2. Índice de Decisões Arquiteturais (001 a 026)
+## 2. Índice de Decisões Arquiteturais (001 a 027)
 
 ### ☁️ Infraestrutura & Cloud Storage
 - **[ADR-001: Cloud Run](001-why-cloud-run.md)** — Hospedagem Serverless do Backend Django Ninja no GCP Cloud Run.
@@ -22,8 +22,9 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-004: Presigned URLs](004-presigned-urls.md)** — Upload direto e seguro de contratos para o R2 sem sobrecarregar o backend.
 - **[ADR-005: Cloud Scheduler & OIDC](005-oidc-scheduler.md)** — Automação de tarefas cron via requisições autenticadas por OIDC Service Accounts.
 - **[ADR-020: StorageService Abstraction](020-storage-service-abstraction.md)** — Camada de abstração e injeção de dependência de serviço de storage.
-- **[ADR-025: Terraform & GitOps](025-terraform-iac-architecture.md)** — Infraestrutura como código (IaC) e esteira de automação GitOps multi-cloud.
+- **[ADR-025: Terraform & GitOps](025-terraform-iac-architecture.md)** — Infraestrutura como código (IaC), ownership e automação GitOps multi-cloud.
 - **[ADR-026: Estratégia de Branches & Staging](026-gitops-branching-and-deployment-strategy.md)** — Modelo de branches (`main`/`develop`), homologação privada e ciclo por Sprints.
+- **[ADR-027: Topologia dos States Terraform](027-terraform-state-topology.md)** — States isolados de `shared`, `staging` e `production`, com adoção sem recriação.
 
 ---
 
