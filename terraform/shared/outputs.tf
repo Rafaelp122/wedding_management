@@ -22,3 +22,13 @@ output "github_deployer_sa_email" {
   description = "Service Account representada pelo GitHub Actions"
   value       = google_service_account.github_deployer.email
 }
+
+output "runtime_sa_email" {
+  description = "Email da Service Account Compute default usada como runtime"
+  value       = local.runtime_email
+}
+
+output "gcp_project_id" {
+  description = "ID do projeto GCP compartilhado"
+  value       = local.gcp_project_id
+}

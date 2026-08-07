@@ -1,7 +1,7 @@
 # 🔁 Especificação da Arquitetura Modular de CI/CD — Wedding Management System
 
 > **Versão:** 3.2 | **Última atualização:** 6 de agosto de 2026
-> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [ADR-027](../adr/027-terraform-state-topology.md) | [gitops-sprint-workflow](../../1-tutorials/gitops-sprint-workflow.md)
+> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [ADR-027](../adr/027-terraform-state-topology.md) | [gitops-sprint-workflow](../../1-tutorials/gitops-sprint-workflow.md) | [terraform-modules-spec](../../3-reference/architecture-standards/terraform-modules-spec.md)
 
 ---
 
@@ -79,7 +79,7 @@ O objeto legado `terraform/state/default.tfstate` permanece somente como backup 
 O backend GCS mantém locking automático. As operações remotas também usam o grupo de concorrência `terraform-remote-state`. Nunca use `-lock=false`, `force-unlock`, `state push -force` ou `init -force-copy` no fluxo normal.
 
 > [!IMPORTANT]
-> `TERRAFORM_PRODUCTION_APPLY_ENABLED` deve permanecer ausente ou `false` até os três states serem importados e seus planos não apresentarem criação, alteração, substituição ou remoção inesperada. Consulte o [runbook de adoção](../../2-how-to/ops-troubleshooting/terraform-state-adoption.md).
+> `TERRAFORM_PRODUCTION_APPLY_ENABLED` deve permanecer ausente ou `false` até os três states serem importados e seus planos não apresentarem criação, alteração, substituição ou remoção inesperada. Consulte a [especificação de módulos](../../3-reference/architecture-standards/terraform-modules-spec.md).
 
 ---
 
