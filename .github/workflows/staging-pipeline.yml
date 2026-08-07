@@ -26,40 +26,27 @@ jobs:
           persist-credentials: false
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.7.5"
 
-      - name: Authenticate to GCP via Workload Identity Federation (WIF)
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive terraform
 
       - name: Terraform Init & Validate (Shared)
         working-directory: terraform/shared
         run: |
-          terraform init
+          terraform init -backend=false
           terraform validate -no-color
-
-      - name: Terraform Plan (Shared)
-        working-directory: terraform/shared
-        env:
-          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
-          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
-        run: terraform plan -no-color -input=false
 
       - name: Terraform Init & Validate (Staging)
         working-directory: terraform/staging
         run: |
-          terraform init
+          terraform init -backend=false
           terraform validate -no-color
 
-      - name: Terraform Plan (Staging)
-        working-directory: terraform/staging
-        env:
-          TF_VAR_cloudflare_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
-          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
-        run: terraform plan -no-color -input=false
+      - name: Terraform Module Unit Test
+        working-directory: terraform/modules/gcp/cloud-run-service
+        run: |
+          terraform init -backend=false
+          terraform test -no-color
