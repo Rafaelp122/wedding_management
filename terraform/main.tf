@@ -8,15 +8,15 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 5.0"
+      version = "~> 7.42"
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      version = "~> 5.22"
     }
     vercel = {
       source  = "vercel/vercel"
-      version = "~> 1.0"
+      version = "~> 5.6"
     }
     github = {
       source  = "integrations/github"
