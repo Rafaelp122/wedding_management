@@ -144,6 +144,7 @@ jobs:
           service: ${{ steps.env.outputs.service }}
           image: us-central1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/wedding-management-repo/wedding-api:${{ github.sha }}
           region: us-central1
+          flags: "--remove-env-vars=DATABASE_URL,SECRET_KEY"
           env_vars: |-
             ENVIRONMENT=${{ steps.env.outputs.environment }}
             DJANGO_SETTINGS_MODULE=config.settings.production
