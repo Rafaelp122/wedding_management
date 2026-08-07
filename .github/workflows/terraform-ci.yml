@@ -25,10 +25,6 @@ jobs:
     permissions:
       contents: read
 
-    defaults:
-      run:
-        working-directory: ./terraform
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -41,17 +37,29 @@ jobs:
           terraform_version: "1.7.5"
 
       - name: Terraform Format Check
-        run: terraform fmt -check
+        run: terraform fmt -check -recursive terraform
 
-      - name: Terraform Init
-        run: terraform init -backend=false
+      - name: Terraform Init & Validate (Shared)
+        working-directory: terraform/shared
+        run: |
+          terraform init -backend=false
+          terraform validate -no-color
 
-      - name: Terraform Validate
-        run: terraform validate -no-color
+      - name: Terraform Init & Validate (Staging)
+        working-directory: terraform/staging
+        run: |
+          terraform init -backend=false
+          terraform validate -no-color
+
+      - name: Terraform Init & Validate (Production)
+        working-directory: terraform/production
+        run: |
+          terraform init -backend=false
+          terraform validate -no-color
 
   terraform-apply:
     name: "Terraform Apply (Production, Repository Opt-In)"
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.TERRAFORM_PRODUCTION_APPLY_ENABLED == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: terraform-validation
     runs-on: ubuntu-latest
     concurrency:
@@ -61,10 +69,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-
-    defaults:
-      run:
-        working-directory: ./terraform
 
     steps:
       - name: Checkout Repository
@@ -83,14 +87,44 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
 
-      - name: Terraform Init
+      - name: Terraform Init (Shared)
+        working-directory: terraform/shared
         run: terraform init
 
-      - name: Terraform Plan
+      - name: Terraform Plan (Shared)
+        working-directory: terraform/shared
         env:
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+        run: terraform plan -no-color -input=false -out=tfplan
+
+      - name: Terraform Apply (Shared)
+        if: vars.TERRAFORM_PRODUCTION_APPLY_ENABLED == 'true'
+        working-directory: terraform/shared
+        env:
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+        run: terraform apply -input=false tfplan
+
+      - name: Terraform Init (Production)
+        working-directory: terraform/production
+        run: terraform init
+
+      - name: Terraform Plan (Production)
+        working-directory: terraform/production
+        env:
+          TF_VAR_cloudflare_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
-        run: terraform plan -var-file=environments/production.tfvars -out=tfplan -input=false
+          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+        run: terraform plan -no-color -input=false -out=tfplan
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve -input=false tfplan
+      - name: Terraform Apply (Production)
+        if: vars.TERRAFORM_PRODUCTION_APPLY_ENABLED == 'true'
+        working-directory: terraform/production
+        env:
+          TF_VAR_cloudflare_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+        run: terraform apply -input=false tfplan
