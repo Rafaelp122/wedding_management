@@ -1,0 +1,83 @@
+name: "Playwright E2E Tests"
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-tests:
+    name: Playwright E2E Tests (Shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2]
+        shardTotal: [2]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python & UV
+        uses: ./.github/actions/setup-python-uv
+
+      - name: Setup Node & PNPM
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Playwright Browsers
+        run: |
+          cd frontend
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Prepare Backend & Seed Database
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-e2e-tests # pragma: allowlist secret
+        run: |
+          cd backend
+          uv run python manage.py migrate --noinput
+          uv run python manage.py seed_db
+
+      - name: Start ASGI Server (Uvicorn)
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.development
+          SECRET_KEY: dummy-ci-key-for-e2e-tests # pragma: allowlist secret
+        run: |
+          cd backend
+          setsid uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000 &
+          echo $! > "$RUNNER_TEMP/uvicorn.pid"
+          echo "Waiting for Uvicorn ASGI server..."
+          SERVER_READY=0
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1; then
+              echo "✅ Uvicorn ASGI server online!"
+              SERVER_READY=1
+              break
+            fi
+            sleep 1
+          done
+          if [ $SERVER_READY -eq 0 ]; then
+            echo "::error::Servidor Uvicorn ASGI não respondeu dentro do limite de 30 segundos!"
+            exit 1
+          fi
+
+      - name: Run Playwright Test Suite
+        run: |
+          cd frontend
+          VITE_API_URL=http://127.0.0.1:8000 pnpm test:e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+
+      - name: Stop ASGI Server
+        if: always()
+        run: kill -- -"$(cat "$RUNNER_TEMP/uvicorn.pid")" 2>/dev/null || true
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-shard-${{ matrix.shardIndex }}
+          path: frontend/playwright-report/
+          retention-days: 7

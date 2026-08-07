@@ -6,6 +6,8 @@ desenvolvimento: planners, casamentos, contratos, despesas, parcelas,
 tarefas e eventos.
 """
 
+from datetime import date, timedelta
+
 import pytest
 from django.core.management import call_command
 
@@ -38,6 +40,23 @@ class TestSeedDbCommand:
         statuses = {w.status for w in weddings}
         assert Wedding.StatusChoices.COMPLETED in statuses
         assert Wedding.StatusChoices.IN_PROGRESS in statuses
+
+    @pytest.mark.parametrize("num_weddings", [1, 3])
+    def test_seed_db_creates_critical_wedding_for_each_planner(self, num_weddings):
+        call_command("seed_db", planners=1, weddings=num_weddings)
+
+        planners = User.objects.filter(is_superuser=False, is_staff=False)
+        for planner in planners:
+            wedding = (
+                Wedding.objects.filter(
+                    company=planner.company,
+                    status=Wedding.StatusChoices.IN_PROGRESS,
+                )
+                .order_by("created_at")
+                .first()
+            )
+            assert wedding is not None
+            assert date.today() <= wedding.date <= date.today() + timedelta(days=90)
 
     def test_seed_db_creates_suppliers_with_tenant_context(self):
         call_command("seed_db", planners=1, weddings=1)

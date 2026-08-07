@@ -1,6 +1,6 @@
 # 💍 Wedding Management System
 
-[![CI](https://github.com/Rafaelp122/wedding_management/actions/workflows/integrity-ci.yml/badge.svg)](https://github.com/Rafaelp122/wedding_management/actions/workflows/integrity-ci.yml)
+[![CI](https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml/badge.svg)](https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml)
 [![backend](https://img.shields.io/codecov/c/github/Rafaelp122/wedding_management?flag=backend&label=backend)](https://codecov.io/gh/Rafaelp122/wedding_management)
 [![frontend](https://img.shields.io/codecov/c/github/Rafaelp122/wedding_management?flag=frontend&label=frontend)](https://codecov.io/gh/Rafaelp122/wedding_management)
 [![Website](https://img.shields.io/badge/website-simaceito.site-0ea5e9)](https://simaceito.site)
@@ -83,7 +83,7 @@ wedding_management/
 ├── landing/                 # Landing Page Institucional (Astro + SEO)
 ├── docs/                    # Documentação Técnica Oficial (Princípio Diátaxis)
 ├── .agents/                 # Customizações e Skills para Agentes de IA
-├── .github/workflows/       # Esteira de CI/CD (integrity-ci.yml)
+├── .github/workflows/       # Esteiras modulares de CI, CD, E2E e Terraform
 ├── Makefile                 # Automação de Comandos
 └── docker-compose.yml       # Orquestração de Containers
 ```
@@ -95,7 +95,7 @@ wedding_management/
 - **Validação de CI Local:** `make check-ci`
 - **Validação da Documentação:** `make check-docs`
 - **Testes Backend (Pytest):** `make test` (ou `cd backend && uv run pytest`)
-- **Testes Frontend (Vitest):** `cd frontend && npm run test:ci`
+- **Testes Frontend (Vitest):** `cd frontend && pnpm run test:ci`
 - **Análise Estática (Linter):** `make lint`
 
 ---

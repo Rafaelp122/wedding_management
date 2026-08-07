@@ -1,0 +1,279 @@
+name: "Continuous Deployment & Previews"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect-changes:
+    name: Detect Deployment Scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      landing: ${{ steps.filter.outputs.landing }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Filter Path Changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/cd-deploy.yml'
+              - '.github/actions/setup-python-uv/**'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/cd-deploy.yml'
+              - '.github/actions/setup-node-pnpm/**'
+            landing:
+              - 'landing/**'
+              - '.github/workflows/cd-deploy.yml'
+              - '.github/actions/setup-node-pnpm/**'
+
+  deploy-backend:
+    name: Deploy Backend (Cloud Run)
+    needs: [detect-changes]
+    if: |
+      (needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set Target Environment & Service Name
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "service=wedding-backend" >> "$GITHUB_OUTPUT"
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+            echo 'allowed_hosts=api.simaceito.site\,simaceito.site\,www.simaceito.site\,app.simaceito.site\,.run.app\,localhost' >> "$GITHUB_OUTPUT"
+            echo 'cors_allowed_origins=https://simaceito.site\,https://www.simaceito.site\,https://app.simaceito.site' >> "$GITHUB_OUTPUT"
+          else
+            echo "service=wedding-backend-staging" >> "$GITHUB_OUTPUT"
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+            echo 'allowed_hosts=.run.app\,localhost' >> "$GITHUB_OUTPUT"
+            echo 'cors_allowed_origins=https://wedding-web-app-staging.vercel.app\,https://wedding-landing-staging.vercel.app' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate Secret Manager Configuration
+        env:
+          GCP_DATABASE_SECRET_ID: ${{ vars.GCP_DATABASE_SECRET_ID }}
+          GCP_DATABASE_SECRET_VERSION: ${{ vars.GCP_DATABASE_SECRET_VERSION }}
+          GCP_DJANGO_SECRET_ID: ${{ vars.GCP_DJANGO_SECRET_ID }}
+          GCP_DJANGO_SECRET_VERSION: ${{ vars.GCP_DJANGO_SECRET_VERSION }}
+        run: |
+          : "${GCP_DATABASE_SECRET_ID:?GCP_DATABASE_SECRET_ID não configurada}"
+          : "${GCP_DATABASE_SECRET_VERSION:?GCP_DATABASE_SECRET_VERSION não configurada}"
+          : "${GCP_DJANGO_SECRET_ID:?GCP_DJANGO_SECRET_ID não configurada}"
+          : "${GCP_DJANGO_SECRET_VERSION:?GCP_DJANGO_SECRET_VERSION não configurada}"
+
+      - name: Google Auth (WIF)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+          token_format: "access_token"
+
+      - name: Log in to Google Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: us-central1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image (OCI)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          target: production
+          build-args: BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
+          push: true
+          tags: us-central1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/wedding-management-repo/wedding-api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Setup Python & UV
+        uses: ./.github/actions/setup-python-uv
+
+      - name: Read Deployment Secrets
+        id: deployment-secrets
+        uses: google-github-actions/get-secretmanager-secrets@v3
+        with:
+          secrets: |- # pragma: allowlist secret
+            database_url:projects/${{ steps.auth.outputs.project_id }}/secrets/${{ vars.GCP_DATABASE_SECRET_ID }}/versions/${{ vars.GCP_DATABASE_SECRET_VERSION }}
+            django_secret_key:projects/${{ steps.auth.outputs.project_id }}/secrets/${{ vars.GCP_DJANGO_SECRET_ID }}/versions/${{ vars.GCP_DJANGO_SECRET_VERSION }}
+          export_to_environment: false
+
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: ${{ steps.deployment-secrets.outputs.database_url }}
+          SECRET_KEY: ${{ steps.deployment-secrets.outputs.django_secret_key }}
+          DJANGO_SETTINGS_MODULE: config.settings.production
+        run: cd backend && uv run python manage.py migrate --noinput
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.env.outputs.service }}
+          image: us-central1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/wedding-management-repo/wedding-api:${{ github.sha }}
+          region: us-central1
+          env_vars: |-
+            ENVIRONMENT=${{ steps.env.outputs.environment }}
+            DJANGO_SETTINGS_MODULE=config.settings.production
+            ALLOWED_HOSTS=${{ steps.env.outputs.allowed_hosts }}
+            CORS_ALLOWED_ORIGINS=${{ steps.env.outputs.cors_allowed_origins }}
+            GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
+            R2_ACCESS_KEY_ID="${{ secrets.R2_ACCESS_KEY_ID }}"
+            R2_SECRET_ACCESS_KEY="${{ secrets.R2_SECRET_ACCESS_KEY }}"
+            R2_BUCKET="${{ secrets.R2_BUCKET }}"
+            R2_ENDPOINT_URL="${{ secrets.R2_ENDPOINT_URL }}"
+          env_vars_update_strategy: merge
+          secrets: |- # pragma: allowlist secret
+            DATABASE_URL=${{ vars.GCP_DATABASE_SECRET_ID }}:${{ vars.GCP_DATABASE_SECRET_VERSION }}
+            SECRET_KEY=${{ vars.GCP_DJANGO_SECRET_ID }}:${{ vars.GCP_DJANGO_SECRET_VERSION }}
+          secrets_update_strategy: merge # pragma: allowlist secret
+
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
+    needs: [detect-changes]
+    if: |
+      (needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node & PNPM
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          working-directory: frontend
+          install-deps: "false"
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Set Vercel Env
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "type=production" >> "$GITHUB_OUTPUT"
+            echo "flag=--prod" >> "$GITHUB_OUTPUT"
+            echo "git_branch_flag=" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=preview" >> "$GITHUB_OUTPUT"
+            echo "flag=" >> "$GITHUB_OUTPUT"
+            echo "git_branch_flag=--git-branch=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=${{ steps.env.outputs.type }} ${{ steps.env.outputs.git_branch_flag }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
+      - name: Build Project Artifacts
+        run: vercel build ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
+      - name: Deploy Artifacts to Vercel
+        run: |
+          deployment_url="$(vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }})"
+          printf '%s\n' "$deployment_url"
+          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            vercel alias set "$deployment_url" wedding-web-app-staging.vercel.app --token=${{ secrets.VERCEL_TOKEN }}
+          fi
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+
+  deploy-landing:
+    name: Deploy Landing (Vercel)
+    needs: [detect-changes]
+    if: |
+      (needs.detect-changes.outputs.landing == 'true' || github.event_name == 'workflow_dispatch') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node & PNPM
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          working-directory: landing
+          install-deps: "false"
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Set Vercel Env
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "type=production" >> "$GITHUB_OUTPUT"
+            echo "flag=--prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=preview" >> "$GITHUB_OUTPUT"
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=${{ steps.env.outputs.type }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
+
+      - name: Build Project Artifacts
+        run: vercel build ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
+
+      - name: Deploy Artifacts to Vercel
+        run: |
+          deployment_url="$(vercel deploy --prebuilt ${{ steps.env.outputs.flag }} --token=${{ secrets.VERCEL_TOKEN }})"
+          printf '%s\n' "$deployment_url"
+          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            vercel alias set "$deployment_url" wedding-landing-staging.vercel.app --token=${{ secrets.VERCEL_TOKEN }}
+          fi
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}

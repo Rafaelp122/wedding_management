@@ -2,9 +2,9 @@ name: "CodeQL Security Analysis"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
   schedule:
     - cron: '0 3 * * 6' # Corre todos os sábados às 03:00 UTC
 
@@ -34,7 +34,7 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           config-file: .github/codeql-config.yml
@@ -43,6 +43,6 @@ jobs:
 
       # Como Python e JS/TS são linguagens interpretadas, não precisamos rodar build ou autobuild.
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "language:${{ matrix.language }}"

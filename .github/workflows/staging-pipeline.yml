@@ -1,0 +1,52 @@
+name: "Terraform Staging Plans"
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  staging-deploy:
+    name: "Terraform Plan (Shared & Staging)"
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: Preview
+    concurrency:
+      group: terraform-remote-state
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.7.5"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive terraform
+
+      - name: Terraform Init & Validate (Shared)
+        working-directory: terraform/shared
+        run: |
+          terraform init -backend=false
+          terraform validate -no-color
+
+      - name: Terraform Init & Validate (Staging)
+        working-directory: terraform/staging
+        run: |
+          terraform init -backend=false
+          terraform validate -no-color
+
+      - name: Terraform Module Unit Test
+        working-directory: terraform/modules/gcp/cloud-run-service
+        run: |
+          terraform init -backend=false
+          terraform test -no-color

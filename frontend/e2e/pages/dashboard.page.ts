@@ -72,18 +72,15 @@ export class DashboardPage {
     const heading = this.page.getByRole("heading", {
       name: "Casamentos que Precisam de Atenção",
     });
-    if (await heading.count() === 0) return;
     await expect(heading).toBeVisible();
   }
 
-  async clickCriticalWedding(name: string) {
-    // Scope link search within the CriticalWeddings card to avoid sidebar matches
+  async clickFirstCriticalWedding() {
     const heading = this.page.getByRole("heading", {
       name: "Casamentos que Precisam de Atenção",
     });
-    const card = heading.locator("..").locator("..");
-    const link = card.getByRole("link").filter({ hasText: name }).first();
-    await link.click();
+    const card = heading.locator("..").locator("..").locator("..");
+    await card.getByRole("link", { name: /Ver detalhes/ }).first().click();
     await expect(this.page).toHaveURL(/\/weddings\/[\w-]+/);
   }
 
