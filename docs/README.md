@@ -43,7 +43,7 @@ Guias focados na solução de problemas e procedimentos do dia a dia:
 ### 📋 3. Reference (Especificações Técnicas)
 Descrições técnicas puras do código, APIs e schemas do banco:
 - **APIs e Contratos:** [openapi-schema](3-reference/api/openapi-schema.md) | [error-envelope-spec](3-reference/api/error-envelope-spec.md)
-- **Padrões Técnicos:** [commenting-standards](3-reference/architecture-standards/commenting-standards.md) | [testing-standards](3-reference/architecture-standards/testing-standards.md)
+- **Padrões Técnicos:** [commenting-standards](3-reference/architecture-standards/commenting-standards.md) | [testing-standards](3-reference/architecture-standards/testing-standards.md) | [terraform-modules-spec](3-reference/architecture-standards/terraform-modules-spec.md)
 - **Ambiente:** [environment-variables](3-reference/environment/environment-variables.md)
 - **Frontend UI:** [DESIGN.md](DESIGN.md) | [ui-components-spec](3-reference/frontend/ui-components-spec.md) | [store-state-spec](3-reference/frontend/store-state-spec.md)
 - **Entidades de Banco (Models):**

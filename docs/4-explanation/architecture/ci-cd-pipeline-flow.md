@@ -1,7 +1,7 @@
 # 🔁 Especificação da Arquitetura Modular de CI/CD — Wedding Management System
 
 > **Versão:** 3.2 | **Última atualização:** 6 de agosto de 2026
-> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [ADR-027](../adr/027-terraform-state-topology.md) | [gitops-sprint-workflow](../../1-tutorials/gitops-sprint-workflow.md)
+> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [ADR-027](../adr/027-terraform-state-topology.md) | [gitops-sprint-workflow](../../1-tutorials/gitops-sprint-workflow.md) | [terraform-modules-spec](../../3-reference/architecture-standards/terraform-modules-spec.md)
 
 ---
 
