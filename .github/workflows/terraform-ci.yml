@@ -65,7 +65,7 @@ jobs:
 
   terraform-apply:
     name: "Terraform Apply (Production, Repository Opt-In)"
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.TERRAFORM_PRODUCTION_APPLY_ENABLED == 'true'
     needs: terraform-validation
     runs-on: ubuntu-latest
     concurrency:
