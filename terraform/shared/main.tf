@@ -16,7 +16,8 @@ locals {
     "roles/storage.admin",
   ])
   runtime_project_roles = toset([
-    "roles/editor",
+    "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
     "roles/secretmanager.secretAccessor",
   ])
 }

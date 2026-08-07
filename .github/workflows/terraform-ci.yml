@@ -57,6 +57,12 @@ jobs:
           terraform init -backend=false
           terraform validate -no-color
 
+      - name: Terraform Module Unit Test
+        working-directory: terraform/modules/gcp/cloud-run-service
+        run: |
+          terraform init -backend=false
+          terraform test -no-color
+
   terraform-apply:
     name: "Terraform Apply (Production, Repository Opt-In)"
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
