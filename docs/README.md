@@ -36,7 +36,7 @@ Guias focados na solução de problemas e procedimentos do dia a dia:
 - **Ambiente Dev:** [setup-local-environment](2-how-to/dev-environment/setup-local-environment.md) | [database-migrations](2-how-to/dev-environment/database-migrations.md)
 - **Frontend:** [generate-orval-client](2-how-to/frontend/generate-orval-client.md) | [create-hook-form-zod](2-how-to/frontend/create-hook-form-zod.md) | [msw-testing-patterns](2-how-to/frontend/msw-testing-patterns.md) | [run-playwright-e2e](2-how-to/frontend/run-playwright-e2e.md)
 - **Backend:** [run-pytest-suite](2-how-to/backend/run-pytest-suite.md) | [seed-database](2-how-to/backend/seed-database.md) | [mark-overdue-installments](2-how-to/backend/mark-overdue-installments.md)
-- **Troubleshooting / Ops:** [db-connection-locks](2-how-to/ops-troubleshooting/db-connection-locks.md) | [r2-upload-failures](2-how-to/ops-troubleshooting/r2-upload-failures.md) | [terraform-state-adoption](2-how-to/ops-troubleshooting/terraform-state-adoption.md)
+- **Troubleshooting / Ops:** [db-connection-locks](2-how-to/ops-troubleshooting/db-connection-locks.md) | [r2-upload-failures](2-how-to/ops-troubleshooting/r2-upload-failures.md) | [terraform-state-adoption](2-how-to/ops-troubleshooting/terraform-state-adoption.md) | [terraform-service-onboarding](2-how-to/ops-troubleshooting/terraform-service-onboarding.md)
 
 ---
 
