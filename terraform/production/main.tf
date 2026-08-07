@@ -9,7 +9,6 @@ locals {
   r2_bucket_name  = "wedding-management-prod"
 
   deployer_email = "github-actions-deployer@${local.gcp_project_id}.iam.gserviceaccount.com"
-  runtime_email  = "597398840710-compute@developer.gserviceaccount.com"
 }
 
 module "backend_service" {
@@ -23,9 +22,10 @@ module "backend_service" {
   r2_bucket_name        = local.r2_bucket_name
   cloudflare_account_id = var.cloudflare_account_id
   deployer_email        = local.deployer_email
-  runtime_email         = local.runtime_email
+  runtime_email         = data.terraform_remote_state.shared.outputs.runtime_sa_email
   web_app_project_id    = data.terraform_remote_state.shared.outputs.web_app_project_id
   vercel_target         = ["production"]
+  vercel_git_branch     = "main"
   initial_image         = "us-central1-docker.pkg.dev/gen-lang-client-0194045282/cloud-run-source-deploy/wedding-backend@sha256:bf3700344958f8ba991c73342c3f15f912919be7e483e13f275cc6f167e341d1"
   max_concurrency       = 15
 }

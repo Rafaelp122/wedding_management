@@ -1,9 +1,12 @@
 locals {
+  # Concede acesso de leitura aos segredos tanto para o deployer (CI/CD) quanto para a runtime SA do Cloud Run.
   secret_accessors = {
     deployer = "serviceAccount:${var.deployer_email}"
+    runtime  = "serviceAccount:${var.runtime_email}"
   }
 }
 
+# Servico Cloud Run v2 responsável por hospedar a API REST (Django Ninja).
 resource "google_cloud_run_v2_service" "wedding_api" {
   name     = var.service_name
   location = var.gcp_region
@@ -39,6 +42,8 @@ resource "google_cloud_run_v2_service" "wedding_api" {
     }
   }
 
+  # O CD do projeto (GitHub Actions/Cloud Build) atualiza imagens, variaveis de ambiente e recursos.
+  # ignore_changes evita que o Terraform reverta deployments de producao/staging para a imagem inicial.
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
@@ -54,6 +59,7 @@ resource "google_cloud_run_v2_service" "wedding_api" {
   }
 }
 
+# Concede permissao de invocacao publica para o Cloud Run.
 resource "google_cloud_run_v2_service_iam_member" "public_access" {
   location = google_cloud_run_v2_service.wedding_api.location
   name     = google_cloud_run_v2_service.wedding_api.name
@@ -61,6 +67,7 @@ resource "google_cloud_run_v2_service_iam_member" "public_access" {
   member   = "allUsers"
 }
 
+# Container do segredo de banco de dados no Secret Manager (conforme ADR-025, a payload e gerida fora do Terraform).
 resource "google_secret_manager_secret" "database" {
   secret_id = var.database_secret_id # pragma: allowlist secret
 
@@ -80,6 +87,7 @@ resource "google_secret_manager_secret" "database" {
   }
 }
 
+# Container do segredo Django no Secret Manager.
 resource "google_secret_manager_secret" "django" {
   secret_id = var.django_secret_id # pragma: allowlist secret
 
@@ -99,6 +107,7 @@ resource "google_secret_manager_secret" "django" {
   }
 }
 
+# Concede acesso de leitura ao segredo do banco de dados para deployer e runtime SA.
 resource "google_secret_manager_secret_iam_member" "database_access" {
   for_each = local.secret_accessors
 
@@ -107,6 +116,7 @@ resource "google_secret_manager_secret_iam_member" "database_access" {
   member    = each.value
 }
 
+# Concede acesso de leitura ao segredo Django para deployer e runtime SA.
 resource "google_secret_manager_secret_iam_member" "django_access" {
   for_each = local.secret_accessors
 
@@ -115,6 +125,7 @@ resource "google_secret_manager_secret_iam_member" "django_access" {
   member    = each.value
 }
 
+# Bucket de arquivos de contrato no Cloudflare R2 (ADR-004).
 resource "cloudflare_r2_bucket" "contracts" {
   account_id = var.cloudflare_account_id
   name       = var.r2_bucket_name
@@ -124,6 +135,7 @@ resource "cloudflare_r2_bucket" "contracts" {
   }
 }
 
+# Variavel de ambiente VITE_API_URL sincronizada com o projeto Vercel.
 resource "vercel_project_environment_variable" "web_app_api_url" {
   project_id = var.web_app_project_id
   key        = "VITE_API_URL"

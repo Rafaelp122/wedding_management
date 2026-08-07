@@ -1,3 +1,7 @@
+data "google_project" "current" {
+  project_id = local.gcp_project_id
+}
+
 locals {
   gcp_project_id = "gen-lang-client-0194045282"
   gcp_region     = "us-central1"
@@ -5,7 +9,7 @@ locals {
   github_repo    = "wedding_management"
 
   deployer_email = "github-actions-deployer@${local.gcp_project_id}.iam.gserviceaccount.com"
-  runtime_email  = "597398840710-compute@developer.gserviceaccount.com"
+  runtime_email  = "${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 
   # As permissões atuais são preservadas durante a adoção. O menor privilégio
   # será aplicado somente depois que os três states produzirem planos no-op.

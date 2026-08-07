@@ -9,7 +9,6 @@ locals {
   r2_bucket_name  = "wedding-management-staging"
 
   deployer_email = "github-actions-deployer@${local.gcp_project_id}.iam.gserviceaccount.com"
-  runtime_email  = "597398840710-compute@developer.gserviceaccount.com"
 }
 
 module "backend_service" {
@@ -23,7 +22,7 @@ module "backend_service" {
   r2_bucket_name        = local.r2_bucket_name
   cloudflare_account_id = var.cloudflare_account_id
   deployer_email        = local.deployer_email
-  runtime_email         = local.runtime_email
+  runtime_email         = data.terraform_remote_state.shared.outputs.runtime_sa_email
   web_app_project_id    = data.terraform_remote_state.shared.outputs.web_app_project_id
   vercel_target         = ["preview"]
   vercel_git_branch     = "develop"

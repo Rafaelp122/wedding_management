@@ -35,3 +35,28 @@ run "validate_cloud_run_configuration" {
     error_message = "Serviço Cloud Run deve possuir acesso público roles/run.invoker."
   }
 }
+
+run "validate_invalid_environment_rejection" {
+  command = plan
+
+  variables {
+    environment = "invalid-env"
+  }
+
+  expect_failures = [
+    var.environment,
+  ]
+}
+
+run "validate_custom_concurrency_propagation" {
+  command = plan
+
+  variables {
+    max_concurrency = 15
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_service.wedding_api.template[0].max_instance_request_concurrency == 15
+    error_message = "A concorrência customizada deve ser propagada para a template do Cloud Run."
+  }
+}
