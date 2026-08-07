@@ -44,6 +44,16 @@ run "validate_cloud_run_configuration" {
     condition     = google_secret_manager_secret_iam_member.django_access["runtime"].role == "roles/secretmanager.secretAccessor"
     error_message = "A Service Account de runtime deve possuir role secretAccessor no Django."
   }
+
+  assert {
+    condition     = google_secret_manager_secret_iam_member.database_access["deployer"].role == "roles/secretmanager.secretAccessor"
+    error_message = "A Service Account do deployer deve possuir role secretAccessor no banco de dados."
+  }
+
+  assert {
+    condition     = google_secret_manager_secret_iam_member.django_access["deployer"].role == "roles/secretmanager.secretAccessor"
+    error_message = "A Service Account do deployer deve possuir role secretAccessor no Django."
+  }
 }
 
 run "validate_invalid_environment_rejection" {

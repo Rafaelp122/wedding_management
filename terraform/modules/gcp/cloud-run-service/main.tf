@@ -65,6 +65,10 @@ resource "google_cloud_run_v2_service_iam_member" "public_access" {
   name     = google_cloud_run_v2_service.wedding_api.name
   role     = "roles/run.invoker"
   member   = "allUsers"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Container do segredo de banco de dados no Secret Manager (conforme ADR-025, a payload e gerida fora do Terraform).
