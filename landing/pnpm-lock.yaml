@@ -73,7 +73,7 @@ importers:
         specifier: 7.1.1
         version: 7.1.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(jiti@2.7.0)(yaml@2.9.0)
       oxlint:
-        specifier: ^1.76.0
+        specifier: ^1.77.0
         version: 1.77.0
       typescript:
         specifier: ^6.0.3
