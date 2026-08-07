@@ -37,6 +37,6 @@
     "@astrojs/check": "^0.9.10",
     "@astrojs/react": "^6.0.2",
     "astro": "^7.1.6",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }
