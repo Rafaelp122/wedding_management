@@ -36,5 +36,5 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate Documentation Links & Standards
+      - name: Validate Documentation Links & Design System Tokens
         run: make check-docs
