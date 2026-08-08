@@ -3,6 +3,7 @@ import { LoginPage } from "../pages/login.page";
 import { SidebarComponent } from "../components/sidebar.component";
 import { ToastComponent } from "../components/toast.component";
 import { API_BASE_URL, AUTH_STORAGE_KEY } from "../constants";
+import { injectAuthIntoStorage } from "../helpers/api.helper";
 
 test.describe("Authentication Flow", () => {
   test("@smoke Login with valid credentials redirects to '/dashboard'", async ({ page }) => {
@@ -53,23 +54,7 @@ test.describe("Authentication Flow", () => {
       data: { email: "planner@example.com", password: "password123" }, // pragma: allowlist secret
     });
     const authData = await loginRes.json();
-    await page.evaluate(
-      ({ key, authData }) => {
-        localStorage.setItem(
-          key,
-          JSON.stringify({
-            state: {
-              accessToken: authData.access,
-              refreshToken: authData.refresh,
-              user: authData.user,
-              isAuthenticated: true,
-            },
-            version: 0,
-          })
-        );
-      },
-      { key: AUTH_STORAGE_KEY, authData }
-    );
+    await injectAuthIntoStorage(page, authData);
 
     let weddingsRequestCount = 0;
     await page.route("**/api/v1/weddings**", async (route) => {

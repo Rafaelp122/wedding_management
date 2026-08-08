@@ -1,10 +1,10 @@
 import { test as setup } from "@playwright/test";
 import {
   API_BASE_URL,
-  AUTH_STORAGE_KEY,
   PLANNER_STORAGE_PATH,
   ADMIN_STORAGE_PATH,
 } from "../constants";
+import { injectAuthIntoStorage } from "../helpers/api.helper";
 
 /**
  * Playwright setup project step to authenticate planner@example.com,
@@ -22,23 +22,7 @@ setup("authenticate as planner", async ({ page, request }) => {
     throw new Error(`Failed to log in as planner: ${response.statusText()}`);
   }
   const data = await response.json();
-  await page.evaluate(
-    ({ key, authData }) => {
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          state: {
-            accessToken: authData.access,
-            refreshToken: authData.refresh,
-            user: authData.user,
-            isAuthenticated: true,
-          },
-          version: 0,
-        })
-      );
-    },
-    { key: AUTH_STORAGE_KEY, authData: data }
-  );
+  await injectAuthIntoStorage(page, data);
 
   await page.context().storageState({ path: PLANNER_STORAGE_PATH });
 });
@@ -59,23 +43,7 @@ setup("authenticate as admin", async ({ page, request }) => {
     throw new Error(`Failed to log in as admin: ${response.statusText()}`);
   }
   const data = await response.json();
-  await page.evaluate(
-    ({ key, authData }) => {
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          state: {
-            accessToken: authData.access,
-            refreshToken: authData.refresh,
-            user: authData.user,
-            isAuthenticated: true,
-          },
-          version: 0,
-        })
-      );
-    },
-    { key: AUTH_STORAGE_KEY, authData: data }
-  );
+  await injectAuthIntoStorage(page, data);
 
   await page.context().storageState({ path: ADMIN_STORAGE_PATH });
 });

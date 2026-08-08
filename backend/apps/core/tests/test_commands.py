@@ -206,4 +206,12 @@ class TestSeedE2ECommand:
 
         assert User.objects.filter(email="planner@example.com").count() == 1
         planner = User.objects.get(email="planner@example.com")
-        assert Wedding.objects.filter(company=planner.company).count() == 2
+        company = planner.company
+
+        assert Wedding.objects.filter(company=company).count() == 2
+        assert Budget.objects.filter(company=company).count() == 1
+        assert Contract.objects.filter(company=company).count() == 1
+        assert Expense.objects.filter(company=company).count() == 1
+        assert Installment.objects.filter(company=company).count() == 3
+        assert Task.objects.filter(wedding__company=company).count() == 5
+        assert Event.objects.filter(wedding__company=company).count() == 4

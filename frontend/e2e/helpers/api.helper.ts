@@ -1,5 +1,5 @@
-import { APIRequestContext } from "@playwright/test";
-import { API_BASE_URL } from "../constants";
+import { APIRequestContext, Page } from "@playwright/test";
+import { API_BASE_URL, AUTH_STORAGE_KEY } from "../constants";
 
 /**
  * Payload interface for creating a wedding via API.
@@ -38,6 +38,35 @@ export async function getAuthToken(
   }
   const data = await response.json();
   return data.access;
+}
+
+/**
+ * Injects authentication payload into browser localStorage under AUTH_STORAGE_KEY.
+ *
+ * @param page Playwright Page instance.
+ * @param authData Auth token response payload (access, refresh, user).
+ */
+export async function injectAuthIntoStorage(
+  page: Page,
+  authData: Record<string, unknown>
+): Promise<void> {
+  await page.evaluate(
+    ({ key, data }) => {
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          state: {
+            accessToken: data.access,
+            refreshToken: data.refresh,
+            user: data.user,
+            isAuthenticated: true,
+          },
+          version: 0,
+        })
+      );
+    },
+    { key: AUTH_STORAGE_KEY, data: authData }
+  );
 }
 
 /**
