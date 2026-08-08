@@ -80,3 +80,16 @@ run "validate_custom_concurrency_propagation" {
     error_message = "A concorrência customizada deve ser propagada para a template do Cloud Run."
   }
 }
+
+run "validate_tasks_backend_propagation" {
+  command = plan
+
+  variables {
+    tasks_backend = "immediate"
+  }
+
+  assert {
+    condition     = var.tasks_backend == "immediate"
+    error_message = "A variável tasks_backend deve ser aceita e validada."
+  }
+}

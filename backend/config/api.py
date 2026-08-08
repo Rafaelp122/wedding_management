@@ -13,6 +13,7 @@ from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from pydantic import ValidationError as PydanticValidationError
 
+from apps.core.cron_api import cron_router
 from apps.core.exceptions import ApplicationError
 from apps.finances.api import (
     budget_categories_router,
@@ -169,3 +170,4 @@ api.add_router("/finances/installments/", installments_router)
 
 api.add_router("/scheduler/events/", scheduler_events_router)
 api.add_router("/scheduler/tasks/", scheduler_tasks_router)
+api.add_router("/internal/cron/", cron_router, auth=None)

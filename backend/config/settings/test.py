@@ -6,7 +6,9 @@ from .base import *
 
 
 DEBUG = False
+TESTING = True
 ALLOWED_HOSTS = ["testserver"]
+
 
 ENABLE_ZEAL = False
 
@@ -30,4 +32,17 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "test-cache",
     }
+}
+
+# --- Tasks Configuration for Testing (Synchronous In-Memory) ---
+TASKS = {
+    "default": {
+        "BACKEND": "django.tasks.backends.immediate.ImmediateBackend",
+    }
+}
+
+HUEY = {
+    "huey_class": "huey.MemoryHuey",
+    "name": "test_tasks",
+    "immediate": True,
 }

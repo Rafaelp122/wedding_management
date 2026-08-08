@@ -2,6 +2,9 @@
 Development settings: DEBUG=True, django-zeal, console email, colored logging.
 """
 
+import socket
+from urllib.parse import urlparse
+
 from .base import *
 
 
@@ -78,13 +81,54 @@ LOGGING = {
     },
 }
 
-# --- Cache Configuration ---
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "development-cache",
+# --- Cache & Task Queue Configuration (Valkey / Redis DB 1 & DB 0 com Fallback) ---
+REDIS_URL = env("REDIS_URL", default="redis://localhost:6379")
+
+
+def _is_redis_available(url: str) -> bool:
+    """Verifica se o servidor Redis está acessível via socket em dev/E2E."""
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 6379
+        with socket.create_connection((host, port), timeout=0.3):
+            return True
+    except (OSError, ValueError):
+        return False
+
+
+if _is_redis_available(REDIS_URL):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": f"{REDIS_URL}/1",
+        }
     }
-}
+    HUEY = {
+        "huey_class": "huey.PriorityRedisHuey",
+        "name": "wedding_tasks",
+        "connection": {
+            "url": f"{REDIS_URL}/0",
+        },
+        "immediate": env.bool("HUEY_IMMEDIATE", default=False),
+        "consumer": {
+            "workers": 2,
+            "worker_type": "thread",
+        },
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "dev-fallback-cache",
+        }
+    }
+    HUEY = {
+        "huey_class": "huey.MemoryHuey",
+        "name": "dev_tasks",
+        "immediate": True,
+    }
+
 
 # Afrouxa limites de throttling em desenvolvimento para viabilizar
 # testes E2E concorrentes

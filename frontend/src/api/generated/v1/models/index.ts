@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './batchTaskResult';
 export * from './budgetCategoryIn';
 export * from './budgetCategoryOut';
 export * from './budgetCategoryPatchIn';
@@ -19,6 +20,7 @@ export * from './contractUploadIn';
 export * from './contractUploadUrlIn';
 export * from './contractUploadUrlOut';
 export * from './criticalWeddingOut';
+export * from './dailyBatchResponse';
 export * from './dashboardSummaryOut';
 export * from './errorResponse';
 export * from './eventIn';

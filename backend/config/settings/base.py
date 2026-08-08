@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "ninja_jwt.token_blacklist",
     "ninja_extra",
     "corsheaders",
+    "huey.contrib.djhuey",
     "apps.core",
     "apps.tenants",
     "apps.users",
@@ -156,4 +157,27 @@ NINJA_EXTRA = {
         "auth_verify": "5/m",
         "auth_google": "5/m",
     }
+}
+
+# --- Tasks Framework (Django 6.0 + Huey Integration) ---
+TASKS = {
+    "default": {
+        "BACKEND": "django.tasks.backends.immediate.ImmediateBackend",
+    }
+}
+
+
+REDIS_URL = env("REDIS_URL", default="redis://valkey:6379")
+
+HUEY = {
+    "huey_class": "huey.PriorityRedisHuey",
+    "name": "wedding_tasks",
+    "connection": {
+        "url": f"{REDIS_URL}/0",
+    },
+    "immediate": env.bool("HUEY_IMMEDIATE", default=False),
+    "consumer": {
+        "workers": 2,
+        "worker_type": "thread",
+    },
 }

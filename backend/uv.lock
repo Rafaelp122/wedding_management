@@ -683,6 +683,15 @@ wheels = [
 ]
 
 [[package]]
+name = "huey"
+version = "3.3.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/67/adfd477458ad70b73ce8311bbe84b1befbf986d0134fff2a1a55669ecd50/huey-3.3.4.tar.gz", hash = "sha256:6de196c6ece2e38b5173f7510600091ab035c0e86b0958d0e5b38a82b9984666", size = 614249, upload-time = "2026-08-05T12:51:51.836Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/30/49/7b49afcb523431db7bcb7b83d9911c754ee8138c3b5939830507359655d6/huey-3.3.4-py3-none-any.whl", hash = "sha256:a6e2e9a8fbda15c2dfb8e33b23a5e6e228326ea8e0087c11027957ef7c210e96", size = 123919, upload-time = "2026-08-05T12:51:50.539Z" },
+]
+
+[[package]]
 name = "identify"
 version = "2.6.16"
 source = { registry = "https://pypi.org/simple" }
@@ -1454,6 +1463,15 @@ wheels = [
 ]
 
 [[package]]
+name = "redis"
+version = "8.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/99/604f0b666d4c616d891cf77ebb9db6bb21601344c051aebf1b72b9ff915f/redis-8.1.0.tar.gz", hash = "sha256:6e1a19beef9225c83efd689c7e6b7da2d5215b1f42cd13b7fc3714d0a09c7b25", size = 5254356, upload-time = "2026-07-30T08:51:00.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/9d/c5731f6e3608663d4d3656fd8d3aecee8b509c3082818f5a13eae925baea/redis-8.1.0-py3-none-any.whl", hash = "sha256:a4fe1aac3d3b3cc791d4b3d5931c5a956045dc951ee74d1c913ee3ac4d2ee9fb", size = 560618, upload-time = "2026-07-30T08:50:58.497Z" },
+]
+
+[[package]]
 name = "requests"
 version = "2.34.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1686,8 +1704,10 @@ dependencies = [
     { name = "email-validator" },
     { name = "google-auth" },
     { name = "gunicorn" },
+    { name = "huey" },
     { name = "psycopg", extra = ["binary"] },
     { name = "python-json-logger" },
+    { name = "redis" },
     { name = "requests" },
     { name = "sentry-sdk", extra = ["django"] },
     { name = "whitenoise" },
@@ -1729,8 +1749,10 @@ requires-dist = [
     { name = "email-validator", specifier = ">=2.3.0" },
     { name = "google-auth", specifier = ">=2.56.2" },
     { name = "gunicorn", specifier = ">=26.0.0,<27.0" },
+    { name = "huey", specifier = ">=2.5.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4,<4.0" },
     { name = "python-json-logger", specifier = ">=4.1.0" },
+    { name = "redis", specifier = ">=5.0.0" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "sentry-sdk", extras = ["django"], specifier = ">=2.66.1" },
     { name = "whitenoise", specifier = ">=6.12.0" },

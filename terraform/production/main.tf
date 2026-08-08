@@ -69,3 +69,23 @@ moved {
   from = vercel_project_environment_variable.web_app_api_url
   to   = module.backend_service.vercel_project_environment_variable.web_app_api_url
 }
+
+# Cloud Scheduler Job para o lote diário de tarefas agendadas (Daily Batch Cron)
+resource "google_cloud_scheduler_job" "daily_batch_cron" {
+  name        = "wedding-daily-batch-cron-${local.environment}"
+  description = "Dispara a execução em lote das tarefas diárias (ADR-005 e ADR-017)"
+  schedule    = "0 2 * * *" # Diariamente às 02:00 AM (America/Sao_Paulo)
+  time_zone   = "America/Sao_Paulo"
+  region      = local.gcp_region
+
+  http_target {
+    http_method = "POST"
+    uri         = "${module.backend_service.service_uri}/api/v1/internal/cron/daily-batch/"
+
+    oidc_token {
+      service_account_email = data.terraform_remote_state.shared.outputs.runtime_sa_email
+      audience              = module.backend_service.service_uri
+    }
+  }
+
+}
