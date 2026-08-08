@@ -4711,6 +4711,39 @@
           }
         ]
       }
+    },
+    "/api/v1/internal/cron/daily-batch/": {
+      "post": {
+        "operationId": "core_cron_daily_batch",
+        "summary": "Run Daily Cron Batch",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyBatchResponse"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Multi-Status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyBatchResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Endpoint de disparo em lote (Daily Batch) para tarefas agendadas.\nInvocado pelo GCP Cloud Scheduler via POST seguro com OIDC (ADR-005).\nExecuta todas as tarefas registradas no CronRegistry em uma única chamada On-Demand.\n\nRetorna HTTP 200 se todas as tarefas obtiverem sucesso.\nRetorna HTTP 207 (Multi-Status) se houver falha parcial ou total no lote,\ngarantindo que o GCP Cloud Scheduler e alertas de monitoramento detectem o erro.",
+        "tags": [
+          "Internal Cron"
+        ]
+      }
     }
   },
   "components": {
@@ -7764,6 +7797,61 @@
           }
         },
         "title": "TaskPatchIn",
+        "type": "object"
+      },
+      "BatchTaskResult": {
+        "properties": {
+          "task": {
+            "title": "Task",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "executed_at": {
+            "title": "Executed At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task",
+          "status",
+          "message",
+          "executed_at"
+        ],
+        "title": "BatchTaskResult",
+        "type": "object"
+      },
+      "DailyBatchResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/BatchTaskResult"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "timestamp",
+          "tasks"
+        ],
+        "title": "DailyBatchResponse",
         "type": "object"
       }
     },

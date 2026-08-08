@@ -30,5 +30,5 @@ class MockOIDCVerifier:
                 "aud": "http://localhost:8000",
                 "email": "scheduler-dev@local.iam.gserviceaccount.com",
             }
-        logger.warning("MockOIDCVerifier rejeitou o token inválido: %s", token)
-        raise ValueError(f"Token OIDC inválido: {token}")
+        logger.warning("MockOIDCVerifier rejeitou o token OIDC inválido.")
+        raise ValueError("Token OIDC inválido.")
