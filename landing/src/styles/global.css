@@ -8,10 +8,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-display);
-    --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-    --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-heading: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-display: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
 
     --color-aura-50: #F5F3FF;
     --color-aura-100: #EDE9FE;
@@ -25,11 +25,11 @@
     --color-aura-900: #4C1D95;
 
     --color-surface-light: #FFFFFF;
-    --color-surface-dark: #080C14;
-    --color-surface-darkSecondary: #111827;
+    --color-surface-dark: #09090B;
+    --color-surface-darkSecondary: #18181B;
 
     --shadow-soft: 0 20px 40px rgba(0, 0, 0, 0.04);
-    --shadow-deep: 0 30px 60px rgba(99, 14, 212, 0.06), 0 10px 20px rgba(0, 0, 0, 0.02);
+    --shadow-deep: 0 30px 60px rgba(124, 58, 237, 0.06), 0 10px 20px rgba(0, 0, 0, 0.02);
     --shadow-glow: 0 0 25px -5px rgba(124, 58, 237, 0.4);
 
     --color-ring: var(--ring);
@@ -60,20 +60,20 @@
 }
 
 :root {
-    --background: #F8F9FF;
-    --foreground: #0B1C30;
+    --background: #FAFAFB;
+    --foreground: #09090B;
     --card: #FFFFFF;
-    --card-foreground: #0B1C30;
+    --card-foreground: #09090B;
     --popover: #FFFFFF;
-    --popover-foreground: #0B1C30;
-    --primary: #630ED4;
+    --popover-foreground: #09090B;
+    --primary: #7C3AED;
     --primary-foreground: #FFFFFF;
     --secondary: #F5F3FF;
     --secondary-foreground: #4C1D95;
     --muted: #F5F3FF;
     --muted-foreground: #71717A;
     --accent: #F5F3FF;
-    --accent-foreground: #630ED4;
+    --accent-foreground: #7C3AED;
     --destructive: #E91E63;
     --border: #E4E4E7;
     --input: #E4E4E7;
@@ -83,27 +83,27 @@
     --chart-3: #7C3AED;
     --chart-4: #6D28D9;
     --chart-5: #5B21B6;
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 }
 
 .dark {
-    --background: #080C14;
-    --foreground: #F8FAFC;
-    --card: #111827;
-    --card-foreground: #F8FAFC;
-    --popover: #111827;
-    --popover-foreground: #F8FAFC;
-    --primary: #9D52FD;
+    --background: #09090B;
+    --foreground: #FAFAFA;
+    --card: #18181B;
+    --card-foreground: #FAFAFA;
+    --popover: #18181B;
+    --popover-foreground: #FAFAFA;
+    --primary: #8B5CF6;
     --primary-foreground: #FFFFFF;
-    --secondary: #1E293B;
-    --secondary-foreground: #F8FAFC;
-    --muted: #1E293B;
-    --muted-foreground: #94A3B8;
-    --accent: #1E293B;
-    --accent-foreground: #F8FAFC;
+    --secondary: #27272A;
+    --secondary-foreground: #FAFAFA;
+    --muted: #27272A;
+    --muted-foreground: #A1A1AA;
+    --accent: #27272A;
+    --accent-foreground: #FAFAFA;
     --destructive: #F87171;
-    --border: #334155;
-    --input: #334155;
+    --border: #27272A;
+    --input: #27272A;
     --ring: #7C3AED;
     --chart-1: #A78BFA;
     --chart-2: #8B5CF6;
