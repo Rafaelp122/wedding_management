@@ -276,7 +276,7 @@ class Command(BaseCommand):
                         f"'{wedding}' expirou."
                     ),
                     notification_type=NotificationType.TASK_DEADLINE,
-                    link="/scheduler/tasks",
+                    link=f"/weddings/{wedding.uuid}",
                 )
 
                 EventFactory.create_batch(4, wedding=wedding)

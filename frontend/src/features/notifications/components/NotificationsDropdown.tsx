@@ -24,7 +24,8 @@ import { NotificationItem } from "./NotificationItem";
 
 export const resolveNotificationRoute = (link: string): string => {
   if (!link) return "/dashboard";
-  if (link.startsWith("/weddings")) return link;
+  if (link.startsWith("/weddings/")) return link;
+  if (link.startsWith("/weddings")) return "/weddings";
   if (link.startsWith("/finances")) return "/weddings";
   if (link.startsWith("/scheduler")) return "/scheduler";
   if (link.startsWith("/suppliers") || link.startsWith("/logistics")) return "/suppliers";
