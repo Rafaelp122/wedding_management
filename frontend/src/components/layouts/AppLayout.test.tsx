@@ -31,6 +31,10 @@ vi.mock("@/hooks/useDocumentTitle", () => ({
 import { server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { getWeddingsListMockHandler } from "@/api/generated/v1/endpoints/weddings/weddings.msw";
+import {
+  getNotificationsListMockHandler,
+  getNotificationsUnreadCountMockHandler,
+} from "@/api/generated/v1/endpoints/notifications/notifications.msw";
 
 describe("AppLayout", () => {
   beforeEach(() => {
@@ -41,7 +45,9 @@ describe("AppLayout", () => {
       getWeddingsListMockHandler({
         items: [],
         count: 0
-      })
+      }),
+      getNotificationsListMockHandler([]),
+      getNotificationsUnreadCountMockHandler({ count: 0 })
     );
   });
   it("renders the page title for dashboard path", () => {

@@ -6,19 +6,17 @@ import {
 } from "@/components/ui/sidebar";
 import { Outlet, Link } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
-import { Bell, ChevronRight, ChevronDown, Check } from "lucide-react";
+import { ChevronRight, ChevronDown, Check } from "lucide-react";
 import { AppSidebar } from "../app-sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NotificationsDropdown } from "@/features/notifications/components/NotificationsDropdown";
 import { useAppLayoutData } from "./useAppLayoutData";
 
 export const AppLayout = () => {
@@ -134,26 +132,7 @@ export const AppLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 focus-visible:ring-primary/50 cursor-pointer"
-                  aria-label="Notificações"
-                >
-                  <Bell aria-hidden="true" className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="p-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                  Você não tem novas notificações no momento.
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <NotificationsDropdown />
           </div>
         </header>
 

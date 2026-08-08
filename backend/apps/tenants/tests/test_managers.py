@@ -91,6 +91,7 @@ class TestTenantManager:
             Installment,
         )
         from apps.logistics.models import Contract, Item, Supplier
+        from apps.notifications.models import Notification
         from apps.scheduler.models import Event, Task
         from apps.weddings.models import Wedding
 
@@ -105,6 +106,7 @@ class TestTenantManager:
             Supplier,
             Event,
             Task,
+            Notification,
         ]
 
         for model_class in models_with_tenant:
