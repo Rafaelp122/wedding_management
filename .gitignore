@@ -99,6 +99,8 @@ frontend/coverage/
 frontend/playwright-report/
 frontend/test-results/
 frontend/blob-report/
+frontend/.auth/
+.auth/
 .DS_Store
 Thumbs.db
 logs

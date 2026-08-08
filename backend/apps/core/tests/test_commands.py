@@ -1,9 +1,7 @@
-"""
-Testes para o comando seed_db.
+"""Testes para os comandos de seed (seed_db e seed_e2e).
 
-Verifica se o comando popula o banco corretamente com dados de
-desenvolvimento: planners, casamentos, contratos, despesas, parcelas,
-tarefas e eventos.
+Verifica se os comandos populam o banco corretamente e de forma
+idempotente com dados de desenvolvimento e suíte E2E.
 """
 
 from datetime import date, timedelta
@@ -162,3 +160,58 @@ class TestSeedDbCommand:
 
         superusers = User.objects.filter(is_superuser=True)
         assert superusers.count() == 1
+
+
+@pytest.mark.django_db
+class TestSeedE2ECommand:
+    def test_seed_e2e_creates_expected_entities(self):
+        call_command("seed_e2e")
+
+        assert User.objects.filter(email="admin@admin.com", is_superuser=True).exists()
+        planner = User.objects.filter(email="planner@example.com").first()
+        assert planner is not None
+        assert User.objects.filter(email="staff@example.com", is_staff=True).exists()
+
+        weddings = Wedding.objects.filter(company=planner.company)
+        assert weddings.count() == 2
+
+        active_wedding = weddings.get(status=Wedding.StatusChoices.IN_PROGRESS)
+        assert active_wedding.groom_name == "João"
+        assert active_wedding.bride_name == "Maria"
+
+        completed_wedding = weddings.get(status=Wedding.StatusChoices.COMPLETED)
+        assert completed_wedding.groom_name == "Carlos"
+
+        budget = Budget.objects.get(wedding=active_wedding)
+        assert budget.categories.count() == 3
+
+        contract = Contract.objects.get(wedding=active_wedding)
+        assert contract.status == Contract.StatusChoices.SIGNED
+
+        installments = Installment.objects.filter(wedding=active_wedding)
+        assert installments.filter(status=Installment.StatusChoices.PAID).count() == 1
+        assert (
+            installments.filter(status=Installment.StatusChoices.OVERDUE).count() == 1
+        )
+        assert (
+            installments.filter(status=Installment.StatusChoices.PENDING).count() == 1
+        )
+
+        tasks = Task.objects.filter(wedding=active_wedding)
+        assert tasks.filter(is_completed=False).count() == 2
+
+    def test_seed_e2e_is_idempotent(self):
+        call_command("seed_e2e")
+        call_command("seed_e2e")
+
+        assert User.objects.filter(email="planner@example.com").count() == 1
+        planner = User.objects.get(email="planner@example.com")
+        company = planner.company
+
+        assert Wedding.objects.filter(company=company).count() == 2
+        assert Budget.objects.filter(company=company).count() == 1
+        assert Contract.objects.filter(company=company).count() == 1
+        assert Expense.objects.filter(company=company).count() == 1
+        assert Installment.objects.filter(company=company).count() == 3
+        assert Task.objects.filter(wedding__company=company).count() == 5
+        assert Event.objects.filter(wedding__company=company).count() == 4
