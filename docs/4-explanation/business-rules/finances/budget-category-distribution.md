@@ -1,7 +1,16 @@
+---
+title: "Distribuição de Orçamento por Categoria"
+domain: finances
+type: business-rule
+code: backend/apps/finances/services/budget_service.py
+tests: backend/apps/finances/tests/services/test_budget_service.py
+---
+
 # Regra de Negócio: Distribuição e Alocação por Categoria de Orçamento
 
 > **Módulo:** [finances-domain](../../domains/finances-domain.md) | [budget-model](../../../3-reference/models/finances/budget-model.md) | [budget-category-model](../../../3-reference/models/finances/budget-category-model.md)
 > **Código:** `backend/apps/finances/services/budget_service.py`
+> **Testes:** `backend/apps/finances/tests/services/test_budget_service.py`
 
 ---
 

@@ -1,3 +1,11 @@
+---
+title: "Modelo de Casamento"
+domain: weddings
+type: model-reference
+code: backend/apps/weddings/models.py
+tests: backend/apps/weddings/tests/test_models.py
+---
+
 # Referência do Modelo: Wedding
 
 > **Módulo:** [weddings-domain](../../../4-explanation/domains/weddings-domain.md) | [wedding-status-lifecycle](../../../4-explanation/business-rules/weddings/wedding-status-lifecycle.md)

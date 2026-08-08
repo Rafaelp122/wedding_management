@@ -1,6 +1,6 @@
 # 🎯 Requisitos Funcionais e Não-Funcionais (Matriz de Rastreabilidade)
 
-> **Módulo:** [system-overview](architecture/system-overview.md) | [roadmap-pending-migration](roadmap-pending-migration.md)
+> **Módulo:** [system-overview](architecture/system-overview.md)
 > **Escopo:** Matriz de Rastreabilidade de Requisitos de Produto e Arquitetura
 
 ---

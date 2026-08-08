@@ -1,157 +1,51 @@
 ---
 name: wedding-business-rules
-description: "Business rules for Wedding Management System — BR-F01 to BR-F11 (finances), BR-L01 to BR-L04 (logistics), BR-S01 to BR-S02 (scheduler), BR-VAL01 to BR-VAL02 (validation). Use when implementing services, writing tests, or reviewing code."
+description: "Validation Prompt for Wedding Management System Business Rules (Finances, Logistics, Scheduler, Weddings). Use when implementing services, validating domain rules, or performing code reviews."
 ---
 
-# Wedding Business Rules
+# Validation Prompt — Wedding Business Rules
 
-Business rules centralized here. These rules are technology-agnostic and focus on data integrity and business process consistency.
+Use this operational checklist when implementing, validating, or reviewing business rules across domain services. Each check links directly to its single source of truth in `docs/`.
 
 ---
 
-## 1. Domain: Weddings
+## 1. Domain: Weddings & Multi-Tenancy
 
-### BR-W01: Completion Status
-- **Rule**: A wedding can only be marked as CONCLUDED after the actual event date has passed.
-- **Purpose**: Prevent accidental closure of weddings still in progress.
-
-### BR-W02: Multi-tenancy Data Isolation
-- **Rule**: Access to weddings and data is isolated by `company` (tenant). Users of the same company share data; users from different companies cannot access each other's data.
-- **Purpose**: Ensure data privacy and security (LGPD compliance).
+- [ ] **BR-W01 (Completion Status)**: A wedding can only be marked as `CONCLUDED` after the event date has passed. Prevent premature closure. → [wedding-status-lifecycle.md](../../../docs/4-explanation/business-rules/weddings/wedding-status-lifecycle.md)
+- [ ] **BR-W02 (Multi-Tenancy Isolation)**: All access to weddings, categories, suppliers, and items is strictly isolated by tenant `company`. Use `for_tenant(company)`. → [multi-tenancy-strategy.md](../../../docs/4-explanation/architecture/multi-tenancy-strategy.md)
 
 ---
 
 ## 2. Domain: Finances
 
-### BR-F01: Installment Integrity (Zero Tolerance)
-- **Rule**: The exact sum of all installments must equal the total expense value.
-- **Math**: `base_value = total ÷ n` (rounded to 2 decimals). First `n−1` installments = `base_value`. Last installment = `total − (base_value × (n−1))` — absorbs rounding.
-- **Example**: R$ 10,000 ÷ 3 → base = 3,333.33 → Installments: 3,333.33, 3,333.33, 3,333.34. Sum = 10,000.00 ✅
-- **Purpose**: Absolute precision for accounting audit and bank reconciliation.
-
-### BR-F02: Legal Anchor (Document ↔ Expense)
-- **Rule**: When an expense is linked to a reference document (e.g. contract), the expense amount must be identical to the total amount in the document.
-- **Purpose**: Maintain consistency between legal commitment and financial execution.
-
-### BR-F03: Payment Consistency
-- **Rule**: Every installment marked as PAID must record the payment date. Conversely, installments with a payment date filled must be in PAID status.
-
-### BR-F04: Budget Monitoring
-- **Rule**: The system must alert the planner if the sum of expenses in a category exceeds the allocated budget.
-- **Note**: Soft warning — does not block the operation.
-
-### BR-F05: Installment Status Transitions
-- **Rule**: Lifecycle: PENDING → PAID (when paid) or PENDING → OVERDUE (when due date passes without payment).
-- **Conditions**:
-  - PENDING → PAID: requires payment date
-  - PENDING → OVERDUE: automatic when `due_date < today` and status is PENDING
-  - OVERDUE → PAID: allowed (late payment), records payment date
-
-### BR-F06: Paid Installment Immutability
-- **Rule**: PAID installments cannot have their value, due date, or number changed.
-- **Purpose**: Guarantee accounting integrity. Adjustments must be done via reversal and new installment.
-
-### BR-F07: Mandatory Installment
-- **Rule**: Every expense must have at least 1 installment. The system auto-generates 1 installment if none is specified.
-- **Default**: `num_installments = 1`, `first_due_date = today`.
-
-### BR-F08: Installment Redistribution
-- **Rule**: The number of installments can be changed only if NO installment is PAID. If any is paid, redistribution is blocked.
-- **Mechanism**: Deletes all existing installments and regenerates with the new count, recalculating Zero Tolerance (BR-F01) in an atomic transaction.
-
-### BR-F09: Composite Expense Status
-- **Rule**: Expense status is derived automatically from its installments:
-  - `PENDING`: no installment paid
-  - `PARTIALLY_PAID`: at least one paid, but not all
-  - `SETTLED`: all installments paid
-- **Note**: Computed in real-time via DB annotation (not persisted).
-
-### BR-F10: Expense Identification
-- **Rule**: Every expense requires a mandatory `name`. The `description` field is optional.
-- **Purpose**: Separate short identification from detailed description.
-
-### BR-F11: Unmarking Paid Installments
-- **Rule**: Paid installments can be unmarked (reversed). On unmark:
-  - `paid_date` is cleared (null)
-  - If `due_date < today` → status returns to OVERDUE
-  - Otherwise → status returns to PENDING
+- [ ] **BR-F01 (Installment Integrity / Zero Tolerance)**: Sum of all installment amounts MUST equal the exact total expense value. Last installment absorbs rounding. → [installment-overdue-logic.md](../../../docs/4-explanation/business-rules/finances/installment-overdue-logic.md)
+- [ ] **BR-F02 (Legal Anchor)**: Expenses linked to a contract MUST have an amount identical to the document amount. → [financial-integrity-rules.md](../../../docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
+- [ ] **BR-F03 (Payment Consistency)**: Installment marked `PAID` requires `paid_date`. Clearing `paid_date` reverts status to `PENDING` or `OVERDUE`. → [financial-integrity-rules.md](../../../docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
+- [ ] **BR-F04 (Budget Monitoring)**: Warn planner if category expenses exceed allocated budget. → [budget-category-distribution.md](../../../docs/4-explanation/business-rules/finances/budget-category-distribution.md)
+- [ ] **BR-F06 (Imutabilidade de Paga)**: `PAID` installments cannot change amount or due date directly. Adjustments require reversal or addendum. → [financial-integrity-rules.md](../../../docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
+- [ ] **BR-F08 (Redistribution Guard)**: Installments can only be redistributed if NO installment has been `PAID`. → [financial-integrity-rules.md](../../../docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
+- [ ] **BR-S01 / Payment Integration**: Payments auto-generate calendar events. → [payment-schedule-integration.md](../../../docs/4-explanation/business-rules/finances/payment-schedule-integration.md)
 
 ---
 
-## 3. Domain: Logistics
+## 3. Domain: Logistics & Contracts
 
-### BR-L01: Signed Document Requirements
-- **Rule**: Documents marked as SIGNED require:
-  1. Upload of file (PDF)
-  2. Total value greater than zero
-  3. Signature date recorded
-
-### BR-L02: Budget Isolation (Cross-Wedding)
-- **Rule**: Logistics items and budget categories cannot be shared between different weddings, even if under the same planner.
-- **Cross-Wedding Validation**: Every operation involving `BudgetCategory` must validate the category belongs to the same `wedding` as the related entity.
-
-### BR-L03: Supplier Sharing
-- **Rule**: Supplier registration is linked to the planner and can be reused across multiple weddings.
-
-### BR-L04: Acquisition-Payment Decoupling
-- **Rule**: Item delivery/acquisition status is independent of payment status. An item can be marked as delivered even with pending installments.
+- [ ] **BR-L01 (Signed Document Rules)**: Contracts marked `SIGNED` require PDF file upload, value > 0, and signature date. → [contract-state-machine.md](../../../docs/4-explanation/business-rules/logistics/contract-state-machine.md)
+- [ ] **BR-L02 (Cross-Wedding Guard)**: Parent-child contracts, addendums, and items MUST belong to the same wedding. → [contract-parent-child-hierarchy.md](../../../docs/4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)
+- [ ] **CNPJ Validation**: Supplier CNPJ validation and sanitization rules enforced. → [cnpj-validation-rules.md](../../../docs/4-explanation/business-rules/logistics/cnpj-validation-rules.md)
 
 ---
 
 ## 4. Domain: Scheduler
 
-### BR-S01: Financial Event Automation
-- **Rule**: Calendar events of type PAYMENT are auto-generated from financial installments and cannot be manually edited in the calendar.
-- **Purpose**: Ensure the schedule faithfully reflects planned cash flow.
-
-### BR-S02: Due Date Reminders
-- **Rule**: The system must generate automatic alerts for installments reaching their due date without payment (OVERDUE status).
+- [ ] **BR-S01 (Read-Only Payment Events)**: `PAYMENT` calendar events are auto-generated and read-only. → [payment-event-readonly-guard.md](../../../docs/4-explanation/business-rules/scheduler/payment-event-readonly-guard.md)
+- [ ] **BR-S02 (Recurrence Engine)**: Recurring task alerts and installment overdue notifications follow standard recurrence schedule. → [recurrence-rules-engine.md](../../../docs/4-explanation/business-rules/scheduler/recurrence-rules-engine.md)
 
 ---
 
-## 5. Cross-Cutting Validation Rules
+## 5. Cross-Cutting Validation
 
-### BR-VAL01: Decimal for Monetary Values
-- **Rule**: All monetary values MUST use fixed decimal precision (2 decimal places). Float is PROHIBITED for money.
-- **Purpose**: Ensure accuracy in financial calculations and bank reconciliation.
+- [ ] **BR-VAL01 (Decimal for Money)**: All monetary fields MUST use `Decimal` with 2 decimal places. `float` is strictly forbidden.
+- [ ] **BR-VAL02 (Future Due Dates)**: New installments/events CANNOT be created with past due dates.
 
-### BR-VAL02: Future Due Dates
-- **Rule**: When creating an installment or event, the due date CANNOT be in the past.
-- **Exception**: Allowed when editing existing records for historical correction.
-
----
-
-## 6. Business Glossary
-
-| Term | Definition |
-| :--- | :--- |
-| **Zero Tolerance** | Principle that not a single cent can be lost in installment rounding. |
-| **Cross-Wedding** | Accidental mixing of data between different weddings — prevented via validation. |
-| **Planner** | The wedding planner or company using the system. |
-| **Tenant** | Entity that isolates one company's data from another in the database. |
-| **OVERDUE** | Installment status when due date has passed without payment. |
-
----
-
-## 7. References by Domain (Single Source of Truth in `docs/`)
-
-### Weddings
-- **BR-W01 / BR-W02**: Status Lifecycle & Templates — see [wedding-status-lifecycle.md](../../../docs/4-explanation/business-rules/weddings/wedding-status-lifecycle.md) and [wedding-schedule-templates.md](../../../docs/4-explanation/business-rules/weddings/wedding-schedule-templates.md)
-
-### Finances
-- **BR-F01**: Zero Tolerance & Overdue Logic — see [installment-overdue-logic.md](../../../docs/4-explanation/business-rules/finances/installment-overdue-logic.md)
-- **BR-F02 to BR-F05**: Legal Anchor, Cross-Wedding Guard, Payment Immutability & Chronological Order — see [financial-integrity-rules.md](../../../docs/4-explanation/business-rules/finances/financial-integrity-rules.md)
-- **BR-F04**: Budget Distribution & Categories — see [budget-category-distribution.md](../../../docs/4-explanation/business-rules/finances/budget-category-distribution.md)
-
-### Logistics
-- **BR-L01 / BR-L04**: Signed Document & Acquisition State Machine — see [contract-state-machine.md](../../../docs/4-explanation/business-rules/logistics/contract-state-machine.md)
-- **BR-L02**: Contract Parent-Child Hierarchy & Addendum Guards — see [contract-parent-child-hierarchy.md](../../../docs/4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)
-- **CNPJ Validation**: Supplier CNPJ Rules — see [cnpj-validation-rules.md](../../../docs/4-explanation/business-rules/logistics/cnpj-validation-rules.md)
-
-### Scheduler
-- **BR-S01**: Payment Event Automation & Read-Only Guard — see [payment-event-readonly-guard.md](../../../docs/4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) and [payment-schedule-integration.md](../../../docs/4-explanation/business-rules/finances/payment-schedule-integration.md)
-- **BR-S02 / Recurrence**: Recurrence Rules Engine — see [recurrence-rules-engine.md](../../../docs/4-explanation/business-rules/scheduler/recurrence-rules-engine.md)
-
-### Validation
-- **BR-VAL01**: Decimal for Money — never float
-- **BR-VAL02**: Future Due Dates — no past dates on create
+> **Instruction for AI Agent:** If you need deeper architectural context, motivation, or exceptions for any rule above, read the linked atomic note in `docs/` before proceeding with code changes.

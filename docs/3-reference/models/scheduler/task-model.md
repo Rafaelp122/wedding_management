@@ -1,7 +1,16 @@
+---
+title: "Referência do Modelo: Task"
+domain: scheduler
+type: model-reference
+code: backend/apps/scheduler/models/task.py
+tests: backend/apps/scheduler/tests/tasks/test_models.py
+---
+
 # Referência do Modelo: Task
 
 > **Módulo:** [scheduler-domain](../../../4-explanation/domains/scheduler-domain.md) | [recurrence-rules-engine](../../../4-explanation/business-rules/scheduler/recurrence-rules-engine.md)
 > **Código:** `backend/apps/scheduler/models/task.py`
+> **Testes:** `backend/apps/scheduler/tests/tasks/test_models.py`
 
 ---
 

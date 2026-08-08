@@ -17,7 +17,7 @@ permission:
 You are a frontend designer specializing in distinct and memorable interfaces.
 
 ## Before starting
-Read `AGENTS.md` and `docs/DESIGN.md` for architecture, visual, and interaction standards.
+Read `AGENTS.md` and `DESIGN.md` for architecture, visual, and interaction standards.
 
 ## Skills (load for deep-dive knowledge)
 `frontend-design`, `wedding-frontend`, `shadcn`

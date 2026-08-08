@@ -1,3 +1,11 @@
+---
+title: "Máquina de Estados de Contratos"
+domain: logistics
+type: business-rule
+code: backend/apps/logistics/services/contract_service.py
+tests: backend/apps/logistics/tests/services/test_contract_service.py
+---
+
 # Regra de Negócio: Máquina de Estados de Contratos e Itens Logísticos
 
 > **Módulo:** [logistics-domain](../../domains/logistics-domain.md) | [contract-model](../../../3-reference/models/logistics/contract-model.md)
@@ -8,6 +16,18 @@
 ## 1. Máquina de Estados de Contratos (`Contract.ALLOWED_TRANSITIONS`)
 
 A entidade `Contract` possui quatro status possíveis com transições estritamente controladas:
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT
+    DRAFT --> PENDING
+    DRAFT --> CANCELED
+    PENDING --> SIGNED : PDF + total_amount > 0 + signed_date
+    PENDING --> DRAFT
+    PENDING --> CANCELED
+    SIGNED --> CANCELED
+    CANCELED --> DRAFT
+```
 
 ```text
 [DRAFT] <------> [PENDING] -------> [SIGNED]
@@ -32,6 +52,15 @@ Para que um contrato transite para `SIGNED`, o modelo exige obrigatoriamente:
 ## 2. Máquina de Estados de Itens Logísticos (`Item.ALLOWED_TRANSITIONS`)
 
 A entidade `Item` gerencia o ciclo de entrega de bens e serviços contratados:
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> IN_PROGRESS
+    IN_PROGRESS --> DONE
+    DONE --> IN_PROGRESS
+    IN_PROGRESS --> PENDING
+```
 
 ```text
 [PENDING] <------> [IN_PROGRESS] <------> [DONE]

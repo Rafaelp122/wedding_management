@@ -1,7 +1,16 @@
+---
+title: "Referência do Modelo: BudgetCategory"
+domain: finances
+type: model-reference
+code: backend/apps/finances/models/budget_category.py
+tests: backend/apps/finances/tests/categories/test_models.py
+---
+
 # Referência do Modelo: BudgetCategory
 
 > **Módulo:** [finances-domain](../../../4-explanation/domains/finances-domain.md) | [budget-category-distribution](../../../4-explanation/business-rules/finances/budget-category-distribution.md)
 > **Código:** `backend/apps/finances/models/budget_category.py`, `backend/apps/finances/managers.py`
+> **Testes:** `backend/apps/finances/tests/categories/test_models.py`
 
 ---
 
