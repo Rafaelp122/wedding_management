@@ -110,12 +110,12 @@ class Command(BaseCommand):
                 is_staff=True,
                 is_superuser=False,
             )
-            self.stdout.write(
-                self.style.SUCCESS("  ✓ Staff E2E: staff@example.com / password123")
-            )
-        planners = [e2e_planner, *UserFactory.create_batch(num_planners)]
+        existing_users = list(User.objects.filter(is_superuser=False))
+        extra_planners = UserFactory.create_batch(num_planners)
+        # Garante que todo usuário ativo local receba casamentos e notificações
+        planners = list(dict.fromkeys(existing_users + extra_planners))
         self.stdout.write(
-            self.style.SUCCESS(f"  ✓ {num_planners + 1} planners criados")
+            self.style.SUCCESS(f"  ✓ {len(planners)} planners populados no seed")
         )
 
         for planner in planners:
