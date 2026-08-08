@@ -34,7 +34,7 @@ Guias práticos passo a passo para novos desenvolvedores:
 ### 🛠️ 2. How-To Guides (Receitas Práticas do Dev)
 Guias focados na solução de problemas e procedimentos do dia a dia:
 - **Ambiente Dev:** [setup-local-environment](2-how-to/dev-environment/setup-local-environment.md) | [database-migrations](2-how-to/dev-environment/database-migrations.md)
-- **Frontend:** [generate-orval-client](2-how-to/frontend/generate-orval-client.md) | [create-hook-form-zod](2-how-to/frontend/create-hook-form-zod.md) | [msw-testing-patterns](2-how-to/frontend/msw-testing-patterns.md) | [run-playwright-e2e](2-how-to/frontend/run-playwright-e2e.md)
+- **Frontend:** [use-design-md-system](2-how-to/frontend/use-design-md-system.md) | [generate-orval-client](2-how-to/frontend/generate-orval-client.md) | [create-hook-form-zod](2-how-to/frontend/create-hook-form-zod.md) | [msw-testing-patterns](2-how-to/frontend/msw-testing-patterns.md) | [run-playwright-e2e](2-how-to/frontend/run-playwright-e2e.md)
 - **Backend:** [run-pytest-suite](2-how-to/backend/run-pytest-suite.md) | [seed-database](2-how-to/backend/seed-database.md) | [mark-overdue-installments](2-how-to/backend/mark-overdue-installments.md)
 - **Troubleshooting / Ops:** [db-connection-locks](2-how-to/ops-troubleshooting/db-connection-locks.md) | [r2-upload-failures](2-how-to/ops-troubleshooting/r2-upload-failures.md) | [terraform-service-onboarding](2-how-to/ops-troubleshooting/terraform-service-onboarding.md)
 
@@ -63,6 +63,7 @@ Contexto profundo de design, arquitetura e regras de negócio:
   - [multi-tenancy-strategy](4-explanation/architecture/multi-tenancy-strategy.md) — Estratégia de isolamento multi-tenant.
   - [service-layer-pattern](4-explanation/architecture/service-layer-pattern.md) — Padrão de Service Layer no backend.
   - [smart-dumb-components](4-explanation/architecture/smart-dumb-components.md) — Padrão de componentes no React.
+  - [design-system-rationale](4-explanation/architecture/design-system-rationale.md) — Racional de UX, ergonomia e psicologia das cores.
   - [auth-jwt-flow](4-explanation/architecture/auth-jwt-flow.md) — Autenticação JWT e Axios Interceptors.
   - [contract-pdf-upload-r2-flow](4-explanation/architecture/contract-pdf-upload-r2-flow.md) — Upload de contratos em PDF via Cloudflare R2.
   - [ci-cd-pipeline-flow](4-explanation/architecture/ci-cd-pipeline-flow.md) — Fluxo de CI/CD e ownership dos states Terraform.
