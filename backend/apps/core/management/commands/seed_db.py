@@ -224,7 +224,7 @@ class Command(BaseCommand):
                                 f"no valor de R$ {installment_amount:.2f} venceu."
                             ),
                             notification_type=NotificationType.OVERDUE_INSTALLMENT,
-                            link="/finances/expenses",
+                            link=f"/weddings/{wedding.uuid}",
                         )
                     else:
                         InstallmentFactory.create(
@@ -246,7 +246,7 @@ class Command(BaseCommand):
                                 f"de R$ {installment_amount:.2f} vence em 5 dias."
                             ),
                             notification_type=NotificationType.UPCOMING_INSTALLMENT,
-                            link="/finances/expenses",
+                            link=f"/weddings/{wedding.uuid}",
                         )
 
                     InstallmentFactory.create(

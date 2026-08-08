@@ -663,7 +663,11 @@ class InstallmentService:
                         f"venceu em {inst.due_date.strftime('%d/%m/%Y')}."
                     ),
                     notification_type=NotificationType.OVERDUE_INSTALLMENT,
-                    link=f"/finances/expenses/{inst.expense.uuid}",
+                    link=(
+                        f"/weddings/{inst.expense.wedding.uuid}"
+                        if inst.expense and inst.expense.wedding
+                        else "/weddings"
+                    ),
                 )
 
         return count

@@ -22,6 +22,17 @@ import {
 import type { NotificationOut } from "@/api/generated/v1/models";
 import { NotificationItem } from "./NotificationItem";
 
+export const resolveNotificationRoute = (link: string): string => {
+  if (!link) return "/dashboard";
+  if (link.startsWith("/weddings")) return link;
+  if (link.startsWith("/finances")) return "/weddings";
+  if (link.startsWith("/scheduler")) return "/scheduler";
+  if (link.startsWith("/suppliers") || link.startsWith("/logistics")) return "/suppliers";
+  if (link.startsWith("/settings")) return "/settings";
+  if (link.startsWith("/dashboard")) return "/dashboard";
+  return "/dashboard";
+};
+
 export const NotificationsDropdown: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -54,9 +65,8 @@ export const NotificationsDropdown: React.FC = () => {
     if (!notification.is_read) {
       markAsRead.mutate({ notificationId: notification.uuid });
     }
-    if (notification.link) {
-      navigate(notification.link);
-    }
+    const targetRoute = resolveNotificationRoute(notification.link);
+    navigate(targetRoute);
   };
 
   const handleMarkAllAsRead = (e: React.MouseEvent) => {
