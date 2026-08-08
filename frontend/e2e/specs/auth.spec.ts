@@ -4,8 +4,6 @@ import { SidebarComponent } from "../components/sidebar.component";
 import { ToastComponent } from "../components/toast.component";
 
 test.describe("Authentication Flow", () => {
-  test.describe.configure({ mode: "serial" });
-
   test("@smoke Login with valid credentials redirects to '/dashboard'", async ({ page }) => {
     const loginPage = new LoginPage(page);
     const toast = new ToastComponent(page);
@@ -24,6 +22,7 @@ test.describe("Authentication Flow", () => {
 
   test("@smoke Logout clears session and redirects to '/login'", async ({ authenticatedPage }) => {
     const page = authenticatedPage;
+    await page.goto("/dashboard");
     const sidebar = new SidebarComponent(page);
 
     await sidebar.logout();
@@ -47,8 +46,30 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("@regression Transparent token refresh", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("@regression Transparent token refresh", async ({ page, request }) => {
+    const apiBaseUrl = process.env.VITE_API_URL || "http://localhost:8000";
+    await page.goto("/");
+    const loginRes = await request.post(`${apiBaseUrl}/api/v1/auth/token/`, {
+      data: { email: "planner@example.com", password: "password123" }, // pragma: allowlist secret
+    });
+    const authData = await loginRes.json();
+    await page.evaluate(
+      ({ authData }) => {
+        localStorage.setItem(
+          "wedding-auth-storage",
+          JSON.stringify({
+            state: {
+              accessToken: authData.access,
+              refreshToken: authData.refresh,
+              user: authData.user,
+              isAuthenticated: true,
+            },
+            version: 0,
+          })
+        );
+      },
+      { authData }
+    );
 
     let weddingsRequestCount = 0;
     await page.route("**/api/v1/weddings**", async (route) => {
@@ -80,8 +101,8 @@ test.describe("Authentication Flow", () => {
   });
 
   test("@regression Admin page can bypass login and access dashboard", async ({ adminPage }) => {
+    await adminPage.goto("/dashboard");
     await expect(adminPage).toHaveURL(/\/dashboard/);
     await expect(adminPage.getByText("admin@admin.com")).toBeVisible();
   });
-
 });
