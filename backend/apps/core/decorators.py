@@ -43,13 +43,13 @@ def require_oidc_auth(view_func: Callable[..., Any]) -> Callable[..., Any]:
             raise PermissionDeniedError(
                 detail="Service account não autorizada.",
                 code="unauthorized_sa",
-            ) from pe
+            ) from None
         except Exception as e:
-            logger.error("OIDC token verification failed: %s", e)
+            logger.error("OIDC token verification failed: %s", type(e).__name__)
             raise PermissionDeniedError(
                 detail="Token OIDC inválido.",
                 code="invalid_token",
-            ) from e
+            ) from None
 
         return view_func(request, *args, **kwargs)
 
