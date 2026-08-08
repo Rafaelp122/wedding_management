@@ -13,7 +13,7 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 
 ---
 
-## 2. Índice de Decisões Arquiteturais (001 a 027)
+## 2. Índice de Decisões Arquiteturais (001 a 028)
 
 ### ☁️ Infraestrutura & Cloud Storage
 - **[ADR-001: Cloud Run](001-why-cloud-run.md)** — Hospedagem Serverless do Backend Django Ninja no GCP Cloud Run.
@@ -50,6 +50,7 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-018: Playwright E2E Testing](018-playwright-e2e-testing.md)** — Adoção do Playwright para testes de integração end-to-end do frontend.
 - **[ADR-021: Commenting & Docstring Standards](021-padrao-comentarios-docstrings.md)** — Padrão de comentários e Google Style docstrings (escritos em PT-BR para explicações de negócio).
 - **[ADR-024: Smart/Dumb Components Pattern](024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)** — Separação clara entre componentes de container síncronos e componentes visuais desacoplados.
+- **[ADR-028: Diátaxis & Anotações Atômicas](028-diataxis-atomic-notes.md)** — Adoção do framework Diátaxis e padrão de anotações atômicas na documentação.
 
 ---
 
