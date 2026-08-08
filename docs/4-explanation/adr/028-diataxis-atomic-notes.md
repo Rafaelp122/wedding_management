@@ -1,7 +1,7 @@
 # ADR-028: Adoção do Framework Diatáxis e Padrão de Anotações Atômicas na Documentação
 
 **Status:** Aceito
-**Data:** 2024-06-13 (Formalizado em 2026-08-08)
+**Data:** 2026-08-08
 **Módulo:** Documentação e Governança
 
 ---
@@ -24,17 +24,19 @@ Adotamos duas diretrizes rigorosas para governar o ciclo de vida de todo o conhe
    - `3-reference/`: Especificações técnicas de schemas, classes, modelos e dados secos.
    - `4-explanation/`: Porquês arquiteturais, regras de negócios atômicas e ADRs.
 2. **Anotações Atômicas (Atomic Notes):** Cada documento no repositório não deve exceder um único escopo de conceito ou regra de negócio. Se um arquivo começar a cruzar múltiplos assuntos ou for maior que ~250 linhas, ele deve ser desmembrado.
-   - *Regra semântica:* Um documento atômico deve ter **somente um cabeçalho H1 (`#`)**.
-   - *On-demand Skills:* Skills em `.agents/skills/` atuam como checklists operacionais enxutos que apontam para as notas atômicas em `docs/`.
+   - _Regra semântica:_ Um documento atômico deve ter **somente um cabeçalho H1 (`#`)**.
+   - _On-demand Skills:_ Skills em `.agents/skills/` atuam como checklists operacionais enxutos que apontam para as notas atômicas em `docs/`.
 
 ---
 
 ## 3. Consequências
 
 **Positivas:**
+
 - Reduz carga cognitiva: desenvolvedores com dúvidas práticas sabem que não precisam ler explicações conceituais da pasta `4-explanation/`.
-- Promove a reutilização: anotações atômicas podem ser linkadas livremente entre si criando uma rede de conhecimento orgânica (estilo *Zettelkasten*).
+- Promove a reutilização: anotações atômicas podem ser linkadas livremente entre si criando uma rede de conhecimento orgânica (estilo _Zettelkasten_).
 - Otimização de contexto para agentes de IA: subagentes e a IA revisora leem apenas a nota atômica relevante ao `git diff`, economizando tokens e eliminando alucinações.
 
 **Negativas / Trade-offs:**
+
 - Um maior número de arquivos pequenos e granulares. Desenvolvedores utilizam os índices `docs/README.md` e `docs/4-explanation/adr/README.md` ou a busca da IDE (`grep`) para navegação.

@@ -75,3 +75,9 @@ variable "max_concurrency" {
   type        = number
   default     = 80
 }
+
+variable "tasks_backend" {
+  description = "Tipo de backend de tarefas (db, immediate, valkey, etc.)"
+  type        = string
+  default     = "db"
+}

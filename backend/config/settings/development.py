@@ -78,13 +78,15 @@ LOGGING = {
     },
 }
 
-# --- Cache Configuration ---
+# --- Cache Configuration (Valkey / Redis DB 1) ---
+REDIS_URL = env("REDIS_URL", default="redis://localhost:6379")
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "development-cache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"{REDIS_URL}/1",
     }
 }
+
 
 # Afrouxa limites de throttling em desenvolvimento para viabilizar
 # testes E2E concorrentes

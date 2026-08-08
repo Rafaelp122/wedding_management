@@ -105,6 +105,10 @@ class TestSecurityAudit:
             "apps/core/services/storage/factory.py",
             "apps/core/services/social_auth/base.py",
             "apps/core/services/social_auth/google_provider.py",
+            "apps/core/services/oidc/base.py",
+            "apps/core/services/oidc/gcp.py",
+            "apps/core/services/oidc/mock.py",
+            "apps/core/services/oidc/factory.py",
             "apps/scheduler/services/templates.py",
         }
 
