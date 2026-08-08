@@ -35,7 +35,7 @@ jobs:
         id: pr_context
         env:
           PR_RAW_TITLE: ${{ github.event.pull_request.title }}
-          PR_RAW_AUTHOR: ${{ github.actor }}
+          PR_RAW_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           echo "PR_TITLE=$PR_RAW_TITLE" >> $GITHUB_ENV
           echo "PR_AUTHOR=$PR_RAW_AUTHOR" >> $GITHUB_ENV
