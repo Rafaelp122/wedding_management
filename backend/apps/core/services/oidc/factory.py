@@ -12,8 +12,9 @@ def get_oidc_verifier() -> OIDCVerifier:
     Returns:
         Instância concreta do OIDCVerifier correspondente ao ambiente.
     """
-    is_test = getattr(settings, "DEBUG", False) or getattr(settings, "TESTING", False)
-    env_name = getattr(settings, "ENVIRONMENT", "").lower()
-    if is_test or env_name in ("test", "testing", "development"):
+    is_dev_or_test = getattr(settings, "DEBUG", False) or getattr(
+        settings, "TESTING", False
+    )
+    if is_dev_or_test:
         return MockOIDCVerifier()
     return GCPOIDCVerifier()

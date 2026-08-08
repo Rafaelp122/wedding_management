@@ -3,8 +3,9 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse
 
+from apps.core.exceptions import AuthenticationFailedError, PermissionDeniedError
 from apps.core.services import get_oidc_verifier
 
 
@@ -15,6 +16,7 @@ def require_oidc_auth(view_func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator limpo para exigir autenticação OIDC service-to-service (ADR-005).
     Delega a injeção de dependência para get_oidc_verifier().
+    Lança ApplicationErrors (401/403) capturadas no pipeline do Django Ninja.
     """
 
     @wraps(view_func)
@@ -25,9 +27,9 @@ def require_oidc_auth(view_func: Callable[..., Any]) -> Callable[..., Any]:
             logger.warning(
                 "Cron request rejected: Missing Bearer token in Authorization header"
             )
-            return JsonResponse(
-                {"detail": "Token OIDC ausente.", "code": "missing_token"},
-                status=401,
+            raise AuthenticationFailedError(
+                detail="Token OIDC ausente.",
+                code="missing_token",
             )
 
         token = auth_header.replace("Bearer ", "").strip()
@@ -37,16 +39,16 @@ def require_oidc_auth(view_func: Callable[..., Any]) -> Callable[..., Any]:
             claim = verifier.verify_token(token)
             logger.info("OIDC authentication successful for %s", claim.get("email"))
         except PermissionError as pe:
-            return JsonResponse(
-                {"detail": str(pe), "code": "unauthorized_sa"},
-                status=403,
-            )
+            raise PermissionDeniedError(
+                detail=str(pe),
+                code="unauthorized_sa",
+            ) from pe
         except Exception as e:
             logger.error("OIDC token verification failed: %s", e)
-            return JsonResponse(
-                {"detail": "Token OIDC inválido.", "code": "invalid_token"},
-                status=403,
-            )
+            raise PermissionDeniedError(
+                detail="Token OIDC inválido.",
+                code="invalid_token",
+            ) from e
 
         return view_func(request, *args, **kwargs)
 

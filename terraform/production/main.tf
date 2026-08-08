@@ -80,11 +80,12 @@ resource "google_cloud_scheduler_job" "daily_batch_cron" {
 
   http_target {
     http_method = "POST"
-    uri         = "${module.backend_service.url}/api/v1/internal/cron/daily-batch/"
+    uri         = "${module.backend_service.service_uri}/api/v1/internal/cron/daily-batch/"
 
     oidc_token {
       service_account_email = data.terraform_remote_state.shared.outputs.runtime_sa_email
-      audience              = module.backend_service.url
+      audience              = module.backend_service.service_uri
     }
   }
+
 }

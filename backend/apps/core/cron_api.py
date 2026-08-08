@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest
 from ninja import Router, Schema
 
 from apps.core.cron import cron_registry
@@ -28,12 +28,12 @@ class DailyBatchResponse(Schema):
 
 @cron_router.post(
     "/daily-batch/",
-    response=DailyBatchResponse,
+    response={200: DailyBatchResponse, 207: DailyBatchResponse},
     auth=None,
     operation_id="core_cron_daily_batch",
 )
 @require_oidc_auth
-def run_daily_cron_batch(request: HttpRequest) -> HttpResponse:
+def run_daily_cron_batch(request: HttpRequest) -> tuple[int, DailyBatchResponse]:
     """
     Endpoint de disparo em lote (Daily Batch) para tarefas agendadas.
     Invocado pelo GCP Cloud Scheduler via POST seguro com OIDC (ADR-005).
@@ -55,9 +55,17 @@ def run_daily_cron_batch(request: HttpRequest) -> HttpResponse:
     if has_errors:
         logger.error("Lote diário finalizado com erros. Status HTTP: %d", http_status)
 
-    payload = {
-        "status": batch_status,
-        "timestamp": datetime.now(),
-        "tasks": tasks_executed,
-    }
-    return JsonResponse(payload, status=http_status)
+    payload = DailyBatchResponse(
+        status=batch_status,
+        timestamp=datetime.now(),
+        tasks=[
+            BatchTaskResult(
+                task=t["task"],
+                status=t["status"],
+                message=t["message"],
+                executed_at=t["executed_at"],
+            )
+            for t in tasks_executed
+        ],
+    )
+    return http_status, payload

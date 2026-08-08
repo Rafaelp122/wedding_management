@@ -15,21 +15,20 @@ class MockOIDCVerifier:
         Retorna claims simuladas para ambiente de testes e desenvolvimento.
 
         Args:
-            token: O token fake recebido nos testes.
+            token: O token recebido na requisição.
 
         Returns:
             Dicionário com as claims simuladas da service account.
+
+        Raises:
+            ValueError: Se o token for inválido no ambiente mock.
         """
         dev_token = "dev-cron-token"  # noqa: S105 # pragma: allowlist secret
-        if token == dev_token or not token:
+        if token in (dev_token, "valid-mock-token"):
             return {
                 "iss": "https://accounts.google.com",
                 "aud": "http://localhost:8000",
                 "email": "scheduler-dev@local.iam.gserviceaccount.com",
             }
-        logger.info("MockOIDCVerifier aceitou o token em ambiente local/dev: %s", token)
-        return {
-            "iss": "mock-issuer",
-            "aud": "mock-audience",
-            "email": "mock-scheduler@local.iam.gserviceaccount.com",
-        }
+        logger.warning("MockOIDCVerifier rejeitou o token inválido: %s", token)
+        raise ValueError(f"Token OIDC inválido: {token}")

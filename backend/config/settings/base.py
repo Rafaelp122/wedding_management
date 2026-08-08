@@ -162,9 +162,10 @@ NINJA_EXTRA = {
 # --- Tasks Framework (Django 6.0 + Huey Integration) ---
 TASKS = {
     "default": {
-        "BACKEND": "huey.contrib.djhuey.backend.HueyBackend",
+        "BACKEND": "django.tasks.backends.immediate.ImmediateBackend",
     }
 }
+
 
 REDIS_URL = env("REDIS_URL", default="redis://valkey:6379")
 
