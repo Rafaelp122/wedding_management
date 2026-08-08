@@ -23,10 +23,14 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "cd ../backend && DJANGO_SETTINGS_MODULE=config.settings.development SECRET_KEY=dummy-ci-key-for-e2e-tests uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000",
+      command: "cd ../backend && uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000",
       url: "http://127.0.0.1:8000/api/v1/health",
       reuseExistingServer: true,
       cwd: __dirname,
+      env: {
+        DJANGO_SETTINGS_MODULE: "config.settings.development",
+        SECRET_KEY: "dummy-ci-key-for-e2e-tests", // pragma: allowlist secret
+      },
     },
     {
       command: "pnpm run dev",

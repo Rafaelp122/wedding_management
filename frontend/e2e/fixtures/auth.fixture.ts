@@ -1,12 +1,5 @@
 import { test as base, Page } from "@playwright/test";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export const PLANNER_STORAGE_PATH = path.resolve(__dirname, "../.auth/planner.json");
-export const ADMIN_STORAGE_PATH = path.resolve(__dirname, "../.auth/admin.json");
+import { PLANNER_STORAGE_PATH, ADMIN_STORAGE_PATH } from "../constants";
 
 /**
  * Interface defining the custom Playwright fixtures for authenticated pages.

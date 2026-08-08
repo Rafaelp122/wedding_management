@@ -1,15 +1,30 @@
 import { APIRequestContext } from "@playwright/test";
+import { API_BASE_URL } from "../constants";
 
-const API_BASE_URL = process.env.VITE_API_URL || "http://localhost:8000";
-
+/**
+ * Payload interface for creating a wedding via API.
+ */
 export interface CreateWeddingApiData {
+  /** Groom's full name. */
   groom_name: string;
+  /** Bride's full name. */
   bride_name: string;
-  date: string; // YYYY-MM-DD
+  /** Wedding date in YYYY-MM-DD format. */
+  date: string;
+  /** Venue or city location. */
   location: string;
+  /** Optional estimated guest count. */
   expected_guests?: number;
 }
 
+/**
+ * Authenticates via backend API and returns JWT access token.
+ *
+ * @param request Playwright APIRequestContext.
+ * @param email User email address.
+ * @param password User password.
+ * @returns JWT access token string.
+ */
 export async function getAuthToken(
   request: APIRequestContext,
   email = "planner@example.com",
@@ -25,6 +40,14 @@ export async function getAuthToken(
   return data.access;
 }
 
+/**
+ * Creates a wedding entity directly via backend REST API.
+ *
+ * @param request Playwright APIRequestContext.
+ * @param token JWT access token.
+ * @param weddingData Wedding payload data.
+ * @returns Created wedding JSON object.
+ */
 export async function createWeddingViaApi(
   request: APIRequestContext,
   token: string,
@@ -46,6 +69,13 @@ export async function createWeddingViaApi(
   return await response.json();
 }
 
+/**
+ * Deletes a wedding entity directly via backend REST API.
+ *
+ * @param request Playwright APIRequestContext.
+ * @param token JWT access token.
+ * @param weddingUuid UUID of the wedding to delete.
+ */
 export async function deleteWeddingViaApi(
   request: APIRequestContext,
   token: string,

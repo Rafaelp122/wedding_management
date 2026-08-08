@@ -1,8 +1,11 @@
-"""
-Comando de seed leve e determinístico para testes E2E.
+"""Comando de seed leve e determinístico para testes E2E.
 
 Cria superusuário, planner, casamentos e entidades com dados fixos
 e previsíveis necessários para a suíte Playwright E2E.
+
+Nota de Idempotência:
+    A execução deste comando limpa previamente as entidades do planner E2E
+    para garantir que os testes rodem em um ambiente previsível.
 
 Uso:
     python manage.py seed_e2e
@@ -12,23 +15,25 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.finances.models import Installment
+from apps.finances.models import Budget, Expense, Installment
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
     BudgetFactory,
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.logistics.models import Contract
+from apps.logistics.models import Contract, Supplier
 from apps.logistics.tests.factories import (
     ContractFactory,
     ItemFactory,
     SupplierFactory,
 )
+from apps.scheduler.models import Event, Task
 from apps.scheduler.tests.factories import EventFactory, TaskFactory
 from apps.users.tests.factories import AdminFactory, UserFactory
 from apps.weddings.models import Wedding
@@ -36,10 +41,18 @@ from apps.weddings.tests.factories import WeddingFactory
 
 
 class Command(BaseCommand):
+    """Comando de gerenciamento para criação de seed determinístico E2E."""
+
     help = "Popula o banco com dados mínimos e determinísticos para a suíte E2E"
 
     @transaction.atomic
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **kwargs) -> None:
+        """Executa a rotina de criação determinística de dados para E2E.
+
+        Args:
+            *args: Argumentos posicionais do comando.
+            **kwargs: Argumentos chave-valor passados via CLI.
+        """
         self.stdout.write(
             self.style.MIGRATE_LABEL("Iniciando seed determinístico E2E...")
         )
@@ -85,10 +98,6 @@ class Command(BaseCommand):
         company = planner.company
 
         # Limpar dados anteriores do planner para garantir idempotência E2E
-        from apps.finances.models import Budget, Expense
-        from apps.logistics.models import Supplier
-        from apps.scheduler.models import Event, Task
-
         Task.objects.filter(wedding__company=company).delete()
         Event.objects.filter(wedding__company=company).delete()
         Expense.objects.filter(company=company).delete()
@@ -97,7 +106,10 @@ class Command(BaseCommand):
         Supplier.objects.filter(company=company).delete()
         Wedding.objects.filter(company=company).delete()
 
-        # 4. Casamento Concluído (data no passado e status concluído)
+        # 4. Casamento Concluído
+        # Nota: skip_clean=True é necessário para casamentos concluídos com data no
+        # passado, pois BaseModel.full_clean() exige datas futuras durante a
+        # validação de criação (ADR-011).
         completed_wedding = WeddingFactory.build(
             user_context=planner,
             groom_name="Carlos",
@@ -125,7 +137,9 @@ class Command(BaseCommand):
 
         # 7. Orçamento e Categorias
         budget = BudgetFactory.create(
-            wedding=active_wedding, company=company, total_estimated=Decimal("50000.00")
+            wedding=active_wedding,
+            company=company,
+            total_estimated=Decimal("50000.00"),
         )
         BudgetCategoryFactory.create(
             budget=budget, wedding=active_wedding, name="Decoração"
@@ -138,8 +152,6 @@ class Command(BaseCommand):
         )
 
         # 8. Contrato assinado com despesas e parcelas
-        from django.core.files.base import ContentFile
-
         contract = ContractFactory.create(
             wedding=active_wedding,
             supplier=supplier,
@@ -162,7 +174,8 @@ class Command(BaseCommand):
             estimated_amount=Decimal("15000.00"),
         )
 
-        # Parcelas determinísticas para cobrir os KPIs do Dashboard
+        # Parcelas determinísticas instanciadas explicitamente para garantir
+        # datas relativas exatas exigidas pelas asserções dos KPIs do Dashboard:
         # 1. Parcela Pago (Vencida a 30 dias, Paga a 28 dias)
         InstallmentFactory.create(
             expense=expense,

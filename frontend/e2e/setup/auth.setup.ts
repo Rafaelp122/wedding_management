@@ -1,16 +1,15 @@
 import { test as setup } from "@playwright/test";
-import path from "path";
-import { fileURLToPath } from "url";
+import {
+  API_BASE_URL,
+  AUTH_STORAGE_KEY,
+  PLANNER_STORAGE_PATH,
+  ADMIN_STORAGE_PATH,
+} from "../constants";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const API_BASE_URL = process.env.VITE_API_URL || "http://localhost:8000";
-const AUTH_STORAGE_KEY = "wedding-auth-storage";
-
-export const PLANNER_STORAGE_PATH = path.resolve(__dirname, "../.auth/planner.json");
-export const ADMIN_STORAGE_PATH = path.resolve(__dirname, "../.auth/admin.json");
-
+/**
+ * Playwright setup project step to authenticate planner@example.com,
+ * inject tokens into localStorage, and persist state to planner storageState file.
+ */
 setup("authenticate as planner", async ({ page, request }) => {
   await page.goto("/");
   const response = await request.post(`${API_BASE_URL}/api/v1/auth/token/`, {
@@ -44,6 +43,10 @@ setup("authenticate as planner", async ({ page, request }) => {
   await page.context().storageState({ path: PLANNER_STORAGE_PATH });
 });
 
+/**
+ * Playwright setup project step to authenticate admin@admin.com,
+ * inject tokens into localStorage, and persist state to admin storageState file.
+ */
 setup("authenticate as admin", async ({ page, request }) => {
   await page.goto("/");
   const response = await request.post(`${API_BASE_URL}/api/v1/auth/token/`, {

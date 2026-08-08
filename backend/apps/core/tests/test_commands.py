@@ -1,9 +1,7 @@
-"""
-Testes para o comando seed_db.
+"""Testes para os comandos de seed (seed_db e seed_e2e).
 
-Verifica se o comando popula o banco corretamente com dados de
-desenvolvimento: planners, casamentos, contratos, despesas, parcelas,
-tarefas e eventos.
+Verifica se os comandos populam o banco corretamente e de forma
+idempotente com dados de desenvolvimento e suíte E2E.
 """
 
 from datetime import date, timedelta

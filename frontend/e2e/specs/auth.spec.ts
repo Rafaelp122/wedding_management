@@ -2,6 +2,7 @@ import { test, expect } from "../fixtures/auth.fixture";
 import { LoginPage } from "../pages/login.page";
 import { SidebarComponent } from "../components/sidebar.component";
 import { ToastComponent } from "../components/toast.component";
+import { API_BASE_URL, AUTH_STORAGE_KEY } from "../constants";
 
 test.describe("Authentication Flow", () => {
   test("@smoke Login with valid credentials redirects to '/dashboard'", async ({ page }) => {
@@ -28,7 +29,7 @@ test.describe("Authentication Flow", () => {
     await sidebar.logout();
     await expect(page).toHaveURL(/\/login/);
 
-    const storage = await page.evaluate(() => localStorage.getItem("wedding-auth-storage"));
+    const storage = await page.evaluate((key) => localStorage.getItem(key), AUTH_STORAGE_KEY);
     if (storage) {
       const parsed = JSON.parse(storage);
       expect(parsed.state.isAuthenticated).toBe(false);
@@ -47,16 +48,15 @@ test.describe("Authentication Flow", () => {
   });
 
   test("@regression Transparent token refresh", async ({ page, request }) => {
-    const apiBaseUrl = process.env.VITE_API_URL || "http://localhost:8000";
     await page.goto("/");
-    const loginRes = await request.post(`${apiBaseUrl}/api/v1/auth/token/`, {
+    const loginRes = await request.post(`${API_BASE_URL}/api/v1/auth/token/`, {
       data: { email: "planner@example.com", password: "password123" }, // pragma: allowlist secret
     });
     const authData = await loginRes.json();
     await page.evaluate(
-      ({ authData }) => {
+      ({ key, authData }) => {
         localStorage.setItem(
-          "wedding-auth-storage",
+          key,
           JSON.stringify({
             state: {
               accessToken: authData.access,
@@ -68,7 +68,7 @@ test.describe("Authentication Flow", () => {
           })
         );
       },
-      { authData }
+      { key: AUTH_STORAGE_KEY, authData }
     );
 
     let weddingsRequestCount = 0;
