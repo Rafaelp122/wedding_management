@@ -9,6 +9,9 @@ def dispatch_async_notification_task(
     message: str,
     notification_type: str = "GENERAL",
     link: str = "",
+    target_type: str = "",
+    target_id: str | None = None,
+    wedding_id: str | None = None,
 ) -> None:
     """Tarefa assíncrona para despacho de notificações in-app.
 
@@ -19,6 +22,9 @@ def dispatch_async_notification_task(
         message: Conteúdo detalhado da notificação.
         notification_type: Tipo da notificação (NotificationType).
         link: Link de redirecionamento opcional.
+        target_type: Tipo da entidade ERP de destino.
+        target_id: UUID do recurso de destino.
+        wedding_id: UUID do casamento associado.
     """
     from apps.notifications.services import NotificationService
     from apps.tenants.models import Company
@@ -42,4 +48,7 @@ def dispatch_async_notification_task(
         message=message,
         notification_type=notification_type,
         link=link,
+        target_type=target_type,
+        target_id=target_id,
+        wedding_id=wedding_id,
     )

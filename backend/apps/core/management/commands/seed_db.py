@@ -205,7 +205,7 @@ class Command(BaseCommand):
                     )
 
                     if status == Contract.StatusChoices.SIGNED:
-                        InstallmentFactory.create(
+                        inst_2 = InstallmentFactory.create(
                             expense=expense,
                             company=planner.company,
                             wedding=wedding,
@@ -225,9 +225,12 @@ class Command(BaseCommand):
                             ),
                             notification_type=NotificationType.OVERDUE_INSTALLMENT,
                             link=f"/weddings/{wedding.uuid}?tab=finances",
+                            target_type="installment",
+                            target_id=inst_2.uuid,
+                            wedding_id=wedding.uuid,
                         )
                     else:
-                        InstallmentFactory.create(
+                        inst_2 = InstallmentFactory.create(
                             expense=expense,
                             company=planner.company,
                             wedding=wedding,
@@ -247,6 +250,9 @@ class Command(BaseCommand):
                             ),
                             notification_type=NotificationType.UPCOMING_INSTALLMENT,
                             link=f"/weddings/{wedding.uuid}?tab=finances",
+                            target_type="installment",
+                            target_id=inst_2.uuid,
+                            wedding_id=wedding.uuid,
                         )
 
                     InstallmentFactory.create(
@@ -277,6 +283,9 @@ class Command(BaseCommand):
                     ),
                     notification_type=NotificationType.TASK_DEADLINE,
                     link=f"/weddings/{wedding.uuid}?tab=planning&subtab=checklist",
+                    target_type="task",
+                    target_id=overdue_task.uuid,
+                    wedding_id=wedding.uuid,
                 )
 
                 EventFactory.create_batch(4, wedding=wedding)

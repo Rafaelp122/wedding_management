@@ -32,6 +32,9 @@ class NotificationService:
         message: str,
         notification_type: str = NotificationType.GENERAL,
         link: str = "",
+        target_type: str = "",
+        target_id: UUID | str | None = None,
+        wedding_id: UUID | str | None = None,
     ) -> Notification:
         """Cria e persiste uma nova notificação no banco de dados.
 
@@ -42,6 +45,9 @@ class NotificationService:
             message: Conteúdo textual detalhado da notificação.
             notification_type: Tipo da notificação (NotificationType).
             link: URL ou rota de atalho opcional.
+            target_type: Tipo da entidade ERP de destino.
+            target_id: UUID do recurso de destino.
+            wedding_id: UUID do casamento associado.
 
         Returns:
             Notification: A notificação criada.
@@ -66,6 +72,9 @@ class NotificationService:
             message=message,
             type=notification_type,
             link=link,
+            target_type=target_type,
+            target_id=target_id,
+            wedding_id=wedding_id,
             is_read=False,
         )
         notification.save()
@@ -84,6 +93,9 @@ class NotificationService:
         message: str,
         notification_type: str = NotificationType.GENERAL,
         link: str = "",
+        target_type: str = "",
+        target_id: UUID | str | None = None,
+        wedding_id: UUID | str | None = None,
     ) -> None:
         """Enfileira a criação assíncrona de uma notificação in-app via django.tasks.
 
@@ -94,6 +106,9 @@ class NotificationService:
             message: Conteúdo detalhado.
             notification_type: Tipo da notificação.
             link: Link opcional.
+            target_type: Tipo da entidade ERP de destino.
+            target_id: UUID do recurso de destino.
+            wedding_id: UUID do casamento associado.
         """
         company_id: int | str = (
             company.id
@@ -113,6 +128,9 @@ class NotificationService:
             message=message,
             notification_type=notification_type,
             link=link,
+            target_type=target_type,
+            target_id=str(target_id) if target_id else None,
+            wedding_id=str(wedding_id) if wedding_id else None,
         )
 
     @staticmethod

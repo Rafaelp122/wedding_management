@@ -1,7 +1,9 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useFinancesExpensesList,
+  useFinancesExpensesRead,
   getFinancesBudgetsForWeddingQueryKey,
   getFinancesCategoriesListQueryKey,
   getFinancesExpensesListQueryKey,
@@ -42,6 +44,10 @@ interface WeddingFinancesViewProps {
 }
 
 export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
+  const [searchParams] = useSearchParams();
+  const expenseIdParam = searchParams.get("expense_id");
+  const openedExpenseRef = useRef<string | null>(null);
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseOut | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<ExpenseOut | null>(null);
@@ -57,6 +63,25 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
 
   const { data: expensesResponse, isLoading: isExpensesLoading } =
     useFinancesExpensesList({ wedding_id: weddingUuid });
+
+  const { data: fetchedExpenseResponse } = useFinancesExpensesRead(
+    expenseIdParam ?? "",
+    { query: { enabled: !!expenseIdParam && detailExpense?.uuid !== expenseIdParam } }
+  );
+
+  useEffect(() => {
+    if (expenseIdParam && openedExpenseRef.current !== expenseIdParam) {
+      const expensesList = expensesResponse?.data?.items || [];
+      const found = expensesList.find((e) => e.uuid === expenseIdParam);
+      if (found) {
+        setDetailExpense(found);
+        openedExpenseRef.current = expenseIdParam;
+      } else if (fetchedExpenseResponse?.data) {
+        setDetailExpense(fetchedExpenseResponse.data);
+        openedExpenseRef.current = expenseIdParam;
+      }
+    }
+  }, [expenseIdParam, expensesResponse, fetchedExpenseResponse]);
 
   const { data: recentExpensesResponse, isLoading: isRecentExpensesLoading } =
     useFinancesExpensesList({ wedding_id: weddingUuid, limit: 5 });

@@ -9,6 +9,9 @@ class NotificationOut(Schema):
     title: str
     message: str
     type: str
+    target_type: str = ""
+    target_id: UUID4 | None = None
+    wedding_id: UUID4 | None = None
     is_read: bool
     link: str
     read_at: datetime | None = None

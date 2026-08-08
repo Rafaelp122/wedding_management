@@ -668,6 +668,13 @@ class InstallmentService:
                         if inst.expense and inst.expense.wedding
                         else "/weddings"
                     ),
+                    target_type="installment",
+                    target_id=inst.uuid,
+                    wedding_id=(
+                        inst.expense.wedding.uuid
+                        if inst.expense and inst.expense.wedding
+                        else None
+                    ),
                 )
 
         return count

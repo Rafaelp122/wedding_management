@@ -15,6 +15,15 @@ class NotificationType(models.TextChoices):
     GENERAL = "GENERAL", _("Geral")
 
 
+class NotificationTargetType(models.TextChoices):
+    INSTALLMENT = "installment", _("Parcela")
+    EXPENSE = "expense", _("Despesa")
+    TASK = "task", _("Tarefa")
+    CONTRACT = "contract", _("Contrato")
+    WEDDING = "wedding", _("Casamento")
+    GENERAL = "general", _("Geral")
+
+
 class Notification(BaseModel):
     """Modelo de Notificação In-App vinculada ao tenant e usuário."""
 
@@ -37,6 +46,17 @@ class Notification(BaseModel):
         max_length=50,
         choices=NotificationType.choices,
         default=NotificationType.GENERAL,
+    )
+    target_type = models.CharField(
+        _("Tipo de Alvo"),
+        max_length=50,
+        choices=NotificationTargetType.choices,
+        blank=True,
+        default="",
+    )
+    target_id = models.UUIDField(_("ID do Alvo"), null=True, blank=True, db_index=True)
+    wedding_id = models.UUIDField(
+        _("ID do Casamento"), null=True, blank=True, db_index=True
     )
     is_read = models.BooleanField(_("Lida"), default=False, db_index=True)
     link = models.CharField(_("Link"), max_length=500, blank=True, default="")

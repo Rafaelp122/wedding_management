@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from django.tasks import Task
@@ -36,6 +37,26 @@ class TestNotificationServiceCreate:
         assert notification.is_read is False
         assert notification.read_at is None
 
+    def test_create_notification_with_target_fields(self, user):
+        target_uuid = uuid4()
+        wedding_uuid = uuid4()
+
+        notification = NotificationService.create_notification(
+            company=user.company,
+            user=user,
+            title="Título com Alvo",
+            message="Mensagem detalhada",
+            notification_type=NotificationType.OVERDUE_INSTALLMENT,
+            link="/weddings",
+            target_type="installment",
+            target_id=target_uuid,
+            wedding_id=wedding_uuid,
+        )
+
+        assert notification.target_type == "installment"
+        assert notification.target_id == target_uuid
+        assert notification.wedding_id == wedding_uuid
+
     def test_create_notification_failure_invalid_user_id(self, user):
         with pytest.raises(User.DoesNotExist):
             NotificationService.create_notification(
@@ -67,6 +88,28 @@ class TestNotificationServiceCreateAsync:
             assert kwargs["title"] == "Async Title"
             assert kwargs["message"] == "Async Message"
             assert kwargs["notification_type"] == NotificationType.GENERAL
+
+    def test_create_async_notification_with_target_fields(self, user):
+        target_uuid = uuid4()
+        wedding_uuid = uuid4()
+
+        with patch.object(Task, "enqueue") as mock_enqueue:
+            NotificationService.create_async_notification(
+                company=user.company,
+                user=user,
+                title="Async Title",
+                message="Async Message",
+                notification_type=NotificationType.GENERAL,
+                target_type="installment",
+                target_id=target_uuid,
+                wedding_id=wedding_uuid,
+            )
+
+            mock_enqueue.assert_called_once()
+            _, kwargs = mock_enqueue.call_args
+            assert kwargs["target_type"] == "installment"
+            assert kwargs["target_id"] == str(target_uuid)
+            assert kwargs["wedding_id"] == str(wedding_uuid)
 
 
 @pytest.mark.django_db

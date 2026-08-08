@@ -1,6 +1,6 @@
 import { render, screen, userEvent, waitFor, server } from "@/test-utils";
 import { describe, expect, it, vi } from "vitest";
-import { NotificationsDropdown } from "./NotificationsDropdown";
+import { NotificationsDropdown, resolveEntityUrl } from "./NotificationsDropdown";
 import {
   getNotificationsListMockHandler,
   getNotificationsUnreadCountMockHandler,
@@ -29,6 +29,144 @@ const mockNotifications: NotificationOut[] = [
     created_at: "2026-08-07T08:30:00Z",
   },
 ];
+
+describe("resolveEntityUrl", () => {
+  it("resolves expense target route with wedding_id and target_id", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "EXPENSE",
+      target_type: "expense",
+      target_id: "exp-123",
+      wedding_id: "wed-456",
+      is_read: false,
+      link: "",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe(
+      "/weddings/wed-456?tab=finances&expense_id=exp-123",
+    );
+  });
+
+  it("resolves installment target route with wedding_id and target_id", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "INSTALLMENT",
+      target_type: "installment",
+      target_id: "inst-123",
+      wedding_id: "wed-456",
+      is_read: false,
+      link: "",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe(
+      "/weddings/wed-456?tab=finances&expense_id=inst-123",
+    );
+  });
+
+  it("resolves expense target route without target_id", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "EXPENSE",
+      target_type: "expense",
+      target_id: null,
+      wedding_id: "wed-456",
+      is_read: false,
+      link: "",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe("/weddings/wed-456?tab=finances");
+  });
+
+  it("resolves task target route with wedding_id and target_id", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "TASK",
+      target_type: "task",
+      target_id: "task-789",
+      wedding_id: "wed-456",
+      is_read: false,
+      link: "",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe(
+      "/weddings/wed-456?tab=planning&subtab=checklist&task_id=task-789",
+    );
+  });
+
+  it("resolves contract target route with wedding_id and target_id", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "CONTRACT",
+      target_type: "contract",
+      target_id: "contract-101",
+      wedding_id: "wed-456",
+      is_read: false,
+      link: "",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe(
+      "/weddings/wed-456?tab=logistics&contract_id=contract-101",
+    );
+  });
+
+  it("resolves wedding target route with wedding_id", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "WEDDING",
+      target_type: "wedding",
+      target_id: null,
+      wedding_id: "wed-456",
+      is_read: false,
+      link: "",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe("/weddings/wed-456");
+  });
+
+  it("falls back to link when wedding_id is missing", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "GENERAL",
+      target_type: undefined,
+      target_id: null,
+      wedding_id: null,
+      is_read: false,
+      link: "/suppliers",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe("/suppliers");
+  });
+
+  it("falls back to /dashboard when wedding_id and link are missing", () => {
+    const notification: NotificationOut = {
+      uuid: "1",
+      title: "Test",
+      message: "Test",
+      type: "GENERAL",
+      target_type: undefined,
+      target_id: null,
+      wedding_id: null,
+      is_read: false,
+      link: "",
+      created_at: "2026-08-08T12:00:00Z",
+    };
+    expect(resolveEntityUrl(notification)).toBe("/dashboard");
+  });
+});
 
 describe("NotificationsDropdown", () => {
   it("renders trigger button and unread count badge", async () => {

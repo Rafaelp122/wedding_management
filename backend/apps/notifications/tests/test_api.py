@@ -15,7 +15,15 @@ class TestNotificationsAPI:
         assert response.status_code == 401
 
     def test_list_notifications_success(self, auth_client, user):
-        n1 = NotificationFactory(user=user, is_read=False)
+        target_uuid = uuid4()
+        wedding_uuid = uuid4()
+        n1 = NotificationFactory(
+            user=user,
+            is_read=False,
+            target_type="installment",
+            target_id=target_uuid,
+            wedding_id=wedding_uuid,
+        )
         n2 = NotificationFactory(user=user, is_read=True)
 
         other_user = UserFactory()
@@ -28,6 +36,11 @@ class TestNotificationsAPI:
         uuids = {item["uuid"] for item in data}
         assert str(n1.uuid) in uuids
         assert str(n2.uuid) in uuids
+
+        n1_data = next(item for item in data if item["uuid"] == str(n1.uuid))
+        assert n1_data["target_type"] == "installment"
+        assert n1_data["target_id"] == str(target_uuid)
+        assert n1_data["wedding_id"] == str(wedding_uuid)
 
     def test_list_notifications_filter_by_is_read(self, auth_client, user):
         n1 = NotificationFactory(user=user, is_read=False)

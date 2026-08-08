@@ -8042,6 +8042,35 @@
             "title": "Type",
             "type": "string"
           },
+          "target_type": {
+            "default": "",
+            "title": "Target Type",
+            "type": "string"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "wedding_id": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wedding Id"
+          },
           "is_read": {
             "title": "Is Read",
             "type": "boolean"

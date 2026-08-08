@@ -46,7 +46,15 @@ interface WeddingDetailTabsProps {
 
 export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "general";
+
+  const tabParam = searchParams.get("tab");
+  const activeTab = (() => {
+    if (tabParam) return tabParam;
+    if (searchParams.has("expense_id")) return "finances";
+    if (searchParams.has("contract_id")) return "logistics";
+    if (searchParams.has("task_id")) return "planning";
+    return "general";
+  })();
 
   const handleTabChange = (value: string) => {
     setSearchParams((prev) => {
@@ -55,7 +63,12 @@ export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps)
     }, { replace: true });
   };
 
-  const activeSubTab = searchParams.get("subtab") || "timeline";
+  const subTabParam = searchParams.get("subtab");
+  const activeSubTab = (() => {
+    if (subTabParam) return subTabParam;
+    if (searchParams.has("task_id")) return "checklist";
+    return "timeline";
+  })();
   const handleSubTabChange = (value: string) => {
     setSearchParams((prev) => {
       prev.set("subtab", value);

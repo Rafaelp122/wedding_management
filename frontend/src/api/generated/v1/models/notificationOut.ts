@@ -10,6 +10,9 @@ export interface NotificationOut {
   title: string;
   message: string;
   type: string;
+  target_type?: string;
+  target_id?: string | null;
+  wedding_id?: string | null;
   is_read: boolean;
   link: string;
   read_at?: string | null;

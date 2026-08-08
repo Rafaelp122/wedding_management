@@ -15,11 +15,16 @@ export const NotificationsListQueryParams = zod.object({
   "is_read": zod.union([zod.boolean(),zod.null()]).optional()
 })
 
+export const notificationsListResponseTargetTypeDefault = ``;
+
 export const NotificationsListResponseItem = zod.object({
   "uuid": zod.string(),
   "title": zod.string(),
   "message": zod.string(),
   "type": zod.string(),
+  "target_type": zod.string().default(notificationsListResponseTargetTypeDefault),
+  "target_id": zod.union([zod.string(),zod.null()]).optional(),
+  "wedding_id": zod.union([zod.string(),zod.null()]).optional(),
   "is_read": zod.boolean(),
   "link": zod.string(),
   "read_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
@@ -43,11 +48,16 @@ export const NotificationsMarkAsReadParams = zod.object({
   "notification_id": zod.string()
 })
 
+export const notificationsMarkAsReadResponseTargetTypeDefault = ``;
+
 export const NotificationsMarkAsReadResponse = zod.object({
   "uuid": zod.string(),
   "title": zod.string(),
   "message": zod.string(),
   "type": zod.string(),
+  "target_type": zod.string().default(notificationsMarkAsReadResponseTargetTypeDefault),
+  "target_id": zod.union([zod.string(),zod.null()]).optional(),
+  "wedding_id": zod.union([zod.string(),zod.null()]).optional(),
   "is_read": zod.boolean(),
   "link": zod.string(),
   "read_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
