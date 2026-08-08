@@ -1,7 +1,16 @@
+---
+title: "Referência do Modelo: Event"
+domain: scheduler
+type: model-reference
+code: backend/apps/scheduler/models/event.py
+tests: backend/apps/scheduler/tests/appointments/test_models.py
+---
+
 # Referência do Modelo: Event
 
 > **Módulo:** [scheduler-domain](../../../4-explanation/domains/scheduler-domain.md) | [recurrence-rules-engine](../../../4-explanation/business-rules/scheduler/recurrence-rules-engine.md) | [payment-event-readonly-guard](../../../4-explanation/business-rules/scheduler/payment-event-readonly-guard.md)
 > **Código:** `backend/apps/scheduler/models/event.py`
+> **Testes:** `backend/apps/scheduler/tests/appointments/test_models.py`
 
 ---
 

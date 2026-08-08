@@ -1,3 +1,11 @@
+---
+title: "Ciclo de Vida do Status do Casamento"
+domain: weddings
+type: business-rule
+code: backend/apps/weddings/services/wedding_service.py
+tests: backend/apps/weddings/tests/services/test_wedding_service.py
+---
+
 # Regra de Negócio: Ciclo de Vida do Status e Validações do Casamento
 
 > **Módulo:** [weddings-domain](../../domains/weddings-domain.md) | [wedding-model](../../../3-reference/models/weddings/wedding-model.md)
@@ -8,6 +16,15 @@
 ## 1. Transição de Status (`StatusChoices`)
 
 A máquina de estados do casamento possui três estados possíveis:
+
+```mermaid
+stateDiagram-v2
+    [*] --> PLANNING : Criado (IN_PROGRESS)
+    PLANNING --> ACTIVE : Ativo em Planejamento
+    ACTIVE --> CONCLUDED : Evento Realizado (COMPLETED, date <= hoje)
+    PLANNING --> CANCELED : Cancelado
+    ACTIVE --> CANCELED : Cancelado
+```
 
 ```text
 [IN_PROGRESS] -------------> [COMPLETED]

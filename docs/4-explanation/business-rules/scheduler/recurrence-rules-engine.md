@@ -1,7 +1,16 @@
-# Regra de Negócio: Motor de Recorrência e Agendamentos
+---
+title: "Motor de Regras de Recorrência"
+domain: scheduler
+type: business-rule
+code: backend/apps/scheduler/services/task_service.py
+tests: backend/apps/scheduler/tests/services/test_task_service.py
+---
+
+# Regra de Negócio: Motor de Regras de Recorrência e Agendamentos
 
 > **Módulo:** [scheduler-domain](../../domains/scheduler-domain.md) | [event-model](../../../3-reference/models/scheduler/event-model.md) | [task-model](../../../3-reference/models/scheduler/task-model.md)
 > **Código:** `backend/apps/scheduler/services/scheduler_service.py`
+> **Testes:** `backend/apps/scheduler/tests/services/test_task_service.py`
 
 ---
 

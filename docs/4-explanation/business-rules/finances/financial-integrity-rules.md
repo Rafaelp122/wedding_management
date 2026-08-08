@@ -1,7 +1,16 @@
+---
+title: "Regras de Integridade Financeira"
+domain: finances
+type: business-rule
+code: backend/apps/finances/services/expense_service.py
+tests: backend/apps/finances/tests/services/test_expense_service.py
+---
+
 # Regra de Negócio: Integridade Contábil e Regras Financeiras
 
 > **Módulo:** [finances-domain](../../domains/finances-domain.md) | [expense-model](../../../3-reference/models/finances/expense-model.md)
 > **Código:** `backend/apps/finances/services/expense_service.py`, `backend/apps/finances/services/installment_service.py`
+> **Testes:** `backend/apps/finances/tests/services/test_expense_service.py`
 
 ---
 

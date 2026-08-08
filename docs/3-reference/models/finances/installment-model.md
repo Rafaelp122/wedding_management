@@ -1,7 +1,16 @@
+---
+title: "Referência do Modelo: Installment"
+domain: finances
+type: model-reference
+code: backend/apps/finances/models/installment.py
+tests: backend/apps/finances/tests/installments/test_models.py
+---
+
 # Referência do Modelo: Installment
 
 > **Módulo:** [finances-domain](../../../4-explanation/domains/finances-domain.md) | [installment-overdue-logic](../../../4-explanation/business-rules/finances/installment-overdue-logic.md)
 > **Código:** `backend/apps/finances/models/installment.py`
+> **Testes:** `backend/apps/finances/tests/installments/test_models.py`
 
 ---
 

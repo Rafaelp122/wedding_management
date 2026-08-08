@@ -1,3 +1,11 @@
+---
+title: "Hierarquia Pai-Filho e Aditivos de Contratos"
+domain: logistics
+type: business-rule
+code: backend/apps/logistics/services/contract_service.py
+tests: backend/apps/logistics/tests/services/test_contract_service.py
+---
+
 # Regra de Negócio: Hierarquia de Contratos e Termos Aditivos
 
 > **Módulo:** [logistics-domain](../../domains/logistics-domain.md) | [contract-model](../../../3-reference/models/logistics/contract-model.md)

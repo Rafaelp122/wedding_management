@@ -1,7 +1,16 @@
+---
+title: "Lógica de Vencimento e Parcelamento de Despesas"
+domain: finances
+type: business-rule
+code: backend/apps/finances/services/installment_service.py
+tests: backend/apps/finances/tests/services/test_installment_service.py
+---
+
 # Regra de Negócio: Lógica de Vencimento e Parcelamento de Despesas
 
 > **Módulo:** [finances-domain](../../domains/finances-domain.md) | [installment-model](../../../3-reference/models/finances/installment-model.md)
 > **Código:** `backend/apps/finances/services/installment_service.py`
+> **Testes:** `backend/apps/finances/tests/services/test_installment_service.py`
 
 ---
 
@@ -19,3 +28,11 @@ Ao criar uma `Expense` parcelada:
 - Parcelas com `status='PENDING'` cuja `due_date < hoje` e `paid_date is None` são marcadas como `OVERDUE`.
 - A transição é executada via comando de gerenciamento agendado `python manage.py mark_overdue_installments`.
 - O status da `Expense` pai é recalculado automaticamente em função do status das parcelas filhas.
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: Parcela criada
+    PENDING --> OVERDUE: due_date < hoje (sem paid_date)
+    PENDING --> PAID: paid_date informado
+    OVERDUE --> PAID: paid_date informado
+```

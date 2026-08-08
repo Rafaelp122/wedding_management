@@ -45,7 +45,7 @@ Descrições técnicas puras do código, APIs e schemas do banco:
 - **APIs e Contratos:** [openapi-schema](3-reference/api/openapi-schema.md) | [error-envelope-spec](3-reference/api/error-envelope-spec.md)
 - **Padrões Técnicos:** [commenting-standards](3-reference/architecture-standards/commenting-standards.md) | [testing-standards](3-reference/architecture-standards/testing-standards.md) | [terraform-modules-spec](3-reference/architecture-standards/terraform-modules-spec.md)
 - **Ambiente:** [environment-variables](3-reference/environment/environment-variables.md)
-- **Frontend UI:** [DESIGN.md](DESIGN.md) | [ui-components-spec](3-reference/frontend/ui-components-spec.md) | [store-state-spec](3-reference/frontend/store-state-spec.md)
+- **Frontend UI:** [DESIGN.md](../DESIGN.md) | [ui-components-spec](3-reference/frontend/ui-components-spec.md) | [store-state-spec](3-reference/frontend/store-state-spec.md)
 - **Entidades de Banco (Models):**
   - [core-models](3-reference/models/core-models.md)
   - [budget-model](3-reference/models/finances/budget-model.md) | [budget-category-model](3-reference/models/finances/budget-category-model.md) | [expense-model](3-reference/models/finances/expense-model.md) | [installment-model](3-reference/models/finances/installment-model.md)
@@ -75,4 +75,3 @@ Contexto profundo de design, arquitetura e regras de negócio:
   - [recurrence-rules-engine](4-explanation/business-rules/scheduler/recurrence-rules-engine.md) | [payment-event-readonly-guard](4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) | [wedding-status-lifecycle](4-explanation/business-rules/weddings/wedding-status-lifecycle.md) | [wedding-schedule-templates](4-explanation/business-rules/weddings/wedding-schedule-templates.md)
 - **Histórico Arquitetural:**
   - [Índice Completo de ADRs (001-027)](4-explanation/adr/README.md) — Registros de decisões arquiteturais e trade-offs.
-  - [roadmap-pending-migration](4-explanation/roadmap-pending-migration.md) — Roadmap interno temporário.

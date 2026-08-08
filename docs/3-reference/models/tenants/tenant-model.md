@@ -1,3 +1,11 @@
+---
+title: "Modelo de Tenant (Company)"
+domain: tenants
+type: model-reference
+code: backend/apps/tenants/models.py
+tests: backend/apps/tenants/tests/test_models.py
+---
+
 # Referência do Modelo: Company & TenantModel
 
 > **Módulo:** [tenants-domain](../../../4-explanation/domains/tenants-domain.md) | [multi-tenancy-strategy](../../../4-explanation/architecture/multi-tenancy-strategy.md)

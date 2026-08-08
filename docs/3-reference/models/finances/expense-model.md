@@ -1,7 +1,16 @@
+---
+title: "Referência do Modelo: Expense"
+domain: finances
+type: model-reference
+code: backend/apps/finances/models/expense.py
+tests: backend/apps/finances/tests/expenses/test_models.py
+---
+
 # Referência do Modelo: Expense
 
 > **Módulo:** [finances-domain](../../../4-explanation/domains/finances-domain.md) | [installment-overdue-logic](../../../4-explanation/business-rules/finances/installment-overdue-logic.md) | [financial-integrity-rules](../../../4-explanation/business-rules/finances/financial-integrity-rules.md)
 > **Código:** `backend/apps/finances/models/expense.py`, `backend/apps/finances/managers.py`
+> **Testes:** `backend/apps/finances/tests/expenses/test_models.py`
 
 ---
 
