@@ -80,4 +80,4 @@ class TestCronApi:
         failing_results = [t for t in data["tasks"] if t["task"] == "failing_task"]
         assert len(failing_results) == 1
         assert failing_results[0]["status"] == "error"
-        assert "Falha intencional" in failing_results[0]["message"]
+        assert failing_results[0]["message"] == "Erro interno ao executar a tarefa."

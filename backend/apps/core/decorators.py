@@ -39,8 +39,9 @@ def require_oidc_auth(view_func: Callable[..., Any]) -> Callable[..., Any]:
             claim = verifier.verify_token(token)
             logger.info("OIDC authentication successful for %s", claim.get("email"))
         except PermissionError as pe:
+            logger.warning("OIDC: SA não autorizada - %s", pe)
             raise PermissionDeniedError(
-                detail=str(pe),
+                detail="Service account não autorizada.",
                 code="unauthorized_sa",
             ) from pe
         except Exception as e:

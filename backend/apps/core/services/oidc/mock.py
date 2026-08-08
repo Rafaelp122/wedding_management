@@ -24,7 +24,7 @@ class MockOIDCVerifier:
             ValueError: Se o token for inválido no ambiente mock.
         """
         dev_token = "dev-cron-token"  # noqa: S105 # pragma: allowlist secret
-        if token in (dev_token, "valid-mock-token"):
+        if token == dev_token:
             return {
                 "iss": "https://accounts.google.com",
                 "aud": "http://localhost:8000",

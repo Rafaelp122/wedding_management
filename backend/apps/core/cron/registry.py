@@ -72,7 +72,7 @@ class CronRegistry:
                     {
                         "task": name,
                         "status": "error",
-                        "message": str(exc),
+                        "message": "Erro interno ao executar a tarefa.",
                         "executed_at": executed_at,
                     }
                 )
