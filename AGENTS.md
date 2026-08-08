@@ -1,69 +1,38 @@
-# Wedding Management - Engineering Context (Shared)
+# Wedding Management - Global Engineering Context
 
-## Tech Stack
+## Tech Stack & Architecture Overview
 
-- **Backend**: Python 3.12+, Django, Django Ninja (no DRF).
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS, shadcn/ui.
-- **Tools**: Orval, Docker, Makefile, uv.
-- **Infrastructure**: PostgreSQL (Neon), Cloud Run, R2 (ADR-004).
+- **Stack**: Python 3.12+ (Django Ninja) | React 19 + TypeScript + Vite + Tailwind CSS 4 + shadcn/ui.
+- **Single Source of Truth (`docs/`)**: Documentation follows **Diátaxis** in `docs/`. Always consult `docs/README.md` before architectural or domain changes.
+- **On-Demand Skills (`.agents/skills/`)**: Skills are task-specific operational playbooks loaded on demand (never proactively).
 
-## Architecture (Strict)
+## Universal Guard-Rails (Non-Negotiable)
 
 ### Backend
-
-- **Service Layer**: Endpoints in `api.py` MUST only call `services.py`. Business logic never in the API layer.
-- **Multi-tenancy**: Every service receives `company`, uses `Model.objects.for_tenant(company)` (ADR-009, ADR-016).
-- **Data Integrity**: Models inherit `BaseModel` which runs `full_clean()` on `save()` (ADR-011).
-- **operation_id** required on all routers (e.g. `weddings_list`).
-- **Typing**: Strict static typing — `mypy` must pass.
+- **Service Layer**: Route handlers in `api.py` MUST ONLY delegate to `services.py`. No business logic or queries in controllers.
+- **Multi-Tenancy**: Every service accepts `company` and queries via `Model.objects.for_tenant(company)` (ADR-009, ADR-016). Use `get_object_or_404_for_tenant` for single lookups.
+- **Data Integrity**: Models inherit `BaseModel` (`full_clean()` on `save()`). `mypy` strict static typing enforced.
+- **Router Endpoints**: `operation_id` required on all router endpoints.
 
 ### Frontend
+- **API Access**: FORBIDDEN to use `fetch` or `axios` directly. Use ONLY generated Orval hooks from `@/api/generated/`.
+- **UI & Components**: Follow [DESIGN.md](DESIGN.md). Compose shadcn/ui primitives with Tailwind in `src/features/<name>/components/`. NEVER modify `src/components/ui/` files directly.
+- **Forms & Icons**: `react-hook-form` + `zod`. `lucide-react` ONLY.
 
-- **Feature-based**: `src/features/<name>/` with `/components`, `/hooks`, `/pages`, `/types.ts`, `/utils`.
-- **Design**: Read `docs/DESIGN.md` before UI work (colors, Dialog vs Sheet, micro-interactions).
-- **shadcn/ui**: Base in `src/components/ui/`. Business components in feature folder. Compose + Tailwind over modifying ui/ files.
-- **API**: FORBIDDEN to use `fetch`/`axios`. Use only Orval hooks from `src/api/generated/`.
-- **Forms**: `react-hook-form` + `zod`. **Icons**: `lucide-react` only.
+### Testing (`isolate: false`)
+- **Backend**: FORBIDDEN `.objects.create()` — use factories in `apps/*/tests/factories.py`. `services.py` requires unit success/failure coverage.
+- **Frontend**: FORBIDDEN `vi.mock("@/api/generated/...")` or per-file data hook mocks. Centralize all mocks in `test-setup.ts` via `registerMockHook`. Import testing utilities from `@/test-utils`.
 
-## Testing
+### Documentation & Comments
+- **PT-BR & Standards**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
+- **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments.
 
-### Backend (Pytest)
-- FORBIDDEN `.objects.create()` — use factories in `backend/apps/*/tests/factories.py`.
-- Service tests must be unit/isolated.
-- Every `services.py` function needs success + failure tests.
+## Subagents Dispatch Matrix
 
-### Frontend (Vitest & RTL)
-- Import `render`/`screen`/`userEvent` from `@/test-utils` (never from `@testing-library/react` directly — it misses providers).
-- Sonner is globally mocked in `test-setup.ts` — import `toast` directly, **no per-file `vi.mock("sonner")`**.
-- Recharts: mock with `vi.mock("recharts", ...)` returning simple `<div>` elements with `data-testid`. See `FinancesDistributionChart.test.tsx` for the canonical pattern.
-- Dialogs: every `DialogContent` **must** render `DialogTitle` + `DialogDescription`. Use `className="sr-only"` for loading/error/empty states.
-- `isolate: false` — all `vi.mock` calls are shared. Centralize mocks in `test-setup.ts`, never per-file for shared deps.
-- FORBIDDEN `vi.mock("@/api/generated/...")` in test files — all API mocks go in `test-setup.ts` via `registerMockHook`.
-- FORBIDDEN `vi.mock` para hooks customizados de dados (`useBudget`, `useWedding`, `useContract` etc.) em arquivos de teste — centralizar no `test-setup.ts` e registrar com `registerMockHook`. Módulos carregados antes do `vi.mock` não são substituídos com `isolate: false`.
-- Prioritize `getByRole`/`getByLabelText`. Mock Orval hooks with `vi.mock` (only in test-setup). Use `faker` for test data.
+Dispatch subagents for multi-file changes, multi-step logic, or heavy investigations. Keep the main conversation thread for direct questions and coordination.
 
-## Workflow
-
-- **Commits**: Conventional Commits (e.g. `feat(weddings): add list endpoint`).
-- **ADRs**: New file in `docs/4-explanation/adr/` for structural changes.
-- **Lint**: `make lint` or `ruff check .` before push. Pre-commit active.
-- **Secrets**: Never commit. `detect-secrets` active.
-
-## AI Rules & Documentation Standards
-
-- **Single Source of Truth (`docs/`)**: The official project documentation follows Diátaxis in `docs/`. Always consult `docs/README.md`, `docs/4-explanation/business-rules/` and domain MOCs before proposing architectural changes or implementing new features.
-- **Documentation Maintenance**: Whenever altering business rules, models, or APIs, update the corresponding atomic note in `docs/` and run `make check-docs` to ensure zero broken links.
-- **Read `docs/DESIGN.md`** before UI work.
-- **Load skills on demand** (not proactively).
-- **Docstrings and Comments**: Must follow the standard defined in [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Write in Portuguese (PT-BR) for business explanations, use Google Style for docstrings, and never include references to AI/generation tools (like "Bolt", "Jules", "Copilot").
-
-## Subagents
-
-Dispatch subagents for 2+ file changes, multi-step logic, or complex searches.
-Main conversation = only direct questions, single edits, coordination.
-
-| Name | When to dispatch |
-|---|---|
-| **backend** | Django models, services, endpoints, migrations, tests, business logic |
-| **frontend** | React components, pages, hooks, forms, Orval, API integration, tests |
-| **design** | UI/UX design, layout, styling, theme, Tailwind, accessibility |
+| Subagent | Role & Trigger |
+| :--- | :--- |
+| **`backend`** | Django models, services, endpoints, migrations, backend tests, business logic |
+| **`frontend`** | React components, pages, custom hooks, forms, Orval integration, frontend tests |
+| **`design`** | UI/UX layouts, Tailwind styling, theme tweaks, component accessibility |

@@ -2,8 +2,6 @@ import { test } from "../fixtures/auth.fixture";
 import { DashboardPage } from "../pages/dashboard.page";
 
 test.describe("Dashboard KPIs", () => {
-  test.describe.configure({ mode: "serial" });
-
   test("@critical Dashboard carrega com todos os cards de KPI visíveis", async ({ authenticatedPage }) => {
     const page = authenticatedPage;
     const dashboard = new DashboardPage(page);

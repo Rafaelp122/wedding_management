@@ -1,3 +1,11 @@
+---
+title: "Modelo de Contrato"
+domain: logistics
+type: model-reference
+code: backend/apps/logistics/models/contract.py
+tests: backend/apps/logistics/tests/contracts/test_models.py
+---
+
 # Referência do Modelo: Contract
 
 > **Módulo:** [logistics-domain](../../../4-explanation/domains/logistics-domain.md) | [contract-parent-child-hierarchy](../../../4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)

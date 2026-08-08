@@ -1,3 +1,11 @@
+---
+title: "Modelos Core e Mixins"
+domain: core
+type: model-reference
+code: backend/apps/core/models.py
+tests: backend/apps/core/tests/test_base_model.py
+---
+
 # Referência do Modelo: Core (Base Models & Mixins)
 
 > **Módulo:** [core-domain](../../4-explanation/domains/core-domain.md) | [multi-tenancy-strategy](../../4-explanation/architecture/multi-tenancy-strategy.md)

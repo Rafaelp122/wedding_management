@@ -1,3 +1,11 @@
+---
+title: "Modelo de Usuário"
+domain: users
+type: model-reference
+code: backend/apps/users/models.py
+tests: backend/apps/users/tests/test_models.py
+---
+
 # Referência do Modelo: User (Custom User Model)
 
 > **Módulo:** [users-domain](../../../4-explanation/domains/users-domain.md) | [auth-jwt-flow](../../../4-explanation/architecture/auth-jwt-flow.md)

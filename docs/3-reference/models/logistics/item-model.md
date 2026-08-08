@@ -1,3 +1,11 @@
+---
+title: "Modelo de Item Contratado"
+domain: logistics
+type: model-reference
+code: backend/apps/logistics/models/item.py
+tests: backend/apps/logistics/tests/items/test_models.py
+---
+
 # Referência do Modelo: Item
 
 > **Módulo:** [logistics-domain](../../../4-explanation/domains/logistics-domain.md) | [contract-parent-child-hierarchy](../../../4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md)

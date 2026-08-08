@@ -1,3 +1,11 @@
+---
+title: "Validação e Sanitização de CNPJ"
+domain: logistics
+type: business-rule
+code: backend/apps/logistics/services/supplier_service.py
+tests: backend/apps/logistics/tests/services/test_supplier_service.py
+---
+
 # Regra de Negócio: Validação de CNPJ de Fornecedores
 
 > **Módulo:** [logistics-domain](../../domains/logistics-domain.md) | [supplier-model](../../../3-reference/models/logistics/supplier-model.md)

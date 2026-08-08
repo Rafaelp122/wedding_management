@@ -1,7 +1,16 @@
+---
+title: "Integração de Pagamentos com Calendário"
+domain: finances
+type: business-rule
+code: backend/apps/finances/services/installment_service.py
+tests: backend/apps/finances/tests/services/test_installment_service.py
+---
+
 # Regra de Negócio: Integração de Pagamentos com a Agenda de Compromissos (BR-S01)
 
 > **Módulo:** [finances-domain](../../domains/finances-domain.md) | [scheduler-domain](../../domains/scheduler-domain.md)
 > **Código:** `backend/apps/finances/services/installment_service.py` (`_create_payment_events`, `_delete_payment_events_for_expense`)
+> **Testes:** `backend/apps/finances/tests/services/test_installment_service.py`
 
 ---
 

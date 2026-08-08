@@ -1,3 +1,11 @@
+---
+title: "Modelo de Fornecedor"
+domain: logistics
+type: model-reference
+code: backend/apps/logistics/models/supplier.py
+tests: backend/apps/logistics/tests/suppliers/test_models.py
+---
+
 # Referência do Modelo: Supplier
 
 > **Módulo:** [logistics-domain](../../../4-explanation/domains/logistics-domain.md) | [cnpj-validation-rules](../../../4-explanation/business-rules/logistics/cnpj-validation-rules.md)

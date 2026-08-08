@@ -4,6 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [develop]
+    paths-ignore:
+      - '**.lock'
+      - 'uv.lock'
+      - 'package-lock.json'
+      - '.gitignore'
+      - '.vscode/**'
 
 permissions:
   contents: read
@@ -18,6 +24,7 @@ jobs:
     name: Independent AI Code Review
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,8 +32,21 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Prepare PR Context & Diff Stat
+        env:
+          PR_RAW_TITLE: ${{ github.event.pull_request.title }}
+          PR_RAW_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          echo "PR_TITLE=$PR_RAW_TITLE" >> $GITHUB_ENV
+          echo "PR_AUTHOR=$PR_RAW_AUTHOR" >> $GITHUB_ENV
+
+          DIFF_STAT=$(git diff origin/develop...HEAD --stat | head -n 40)
+          echo "DIFF_STAT<<EOF" >> $GITHUB_ENV
+          echo "$DIFF_STAT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Run OpenCode AI Review
-        uses: anomalyco/opencode/github@v1.16.2
+        uses: anomalyco/opencode/github@v1.18.10
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,32 +54,48 @@ jobs:
           model: deepseek/deepseek-v4-pro
           use_github_token: "true"
           prompt: |
-            Revise este pull request seguindo estritamente as regras de arquitetura, qualidade e testes do projeto:
-            1. Diretrizes gerais: `AGENTS.md`
-            2. Regras de Backend (Django Ninja, Service Layer, Multi-tenancy, Exceptions, Validações): `.agents/skills/wedding-backend/SKILL.md`
-            3. Regras de Frontend (React, Vite, Orval hooks, React Hook Form + Zod, Zustand): `.agents/skills/wedding-frontend/SKILL.md`
-            4. Regras de Negócio (Finanças, Logística, Scheduler): `.agents/skills/wedding-business-rules/SKILL.md`
-            5. Padrões de Testes:
-              - Backend (Pytest, factories, mocks): `.agents/skills/wedding-backend-testing/SKILL.md`
-              - Frontend (Vitest, RTL, MSW): `.agents/skills/wedding-frontend-testing/SKILL.md`
-            6. Padrões de Documentação:
-              - Seguir estritamente as diretrizes de `docs/3-reference/architecture-standards/commenting-standards.md`.
-              - Idioma: Comentários inline e docstrings devem ser escritos em Português (PT-BR).
-              - Backend (apps/):
-                - Métodos públicos/complexos em services.py exigem docstrings em estilo Google Style.
-                - Endpoints em api.py precisam de operation_id e docstrings curtas (1-2 linhas).
-                - Modelos precisam de docstring de classe descritiva e campos com help_text.
-                - Mudanças estruturais importantes ou novos padrões exigem ADR em docs/ADR/ (ver ADR-021).
-                - É terminantemente PROIBIDO incluir referências a assistentes de codificação ou geradores nos comentários (ex: Bolt, Jules, Copilot).
-              - Frontend (src/): hooks, tipos e utils exportados em features/ precisam de JSDoc.
-                Stores Zustand precisam de comentário descrevendo o estado gerenciado.
+            ### PERSONA & DIRETRIZES DO REVISOR:
+            Você é um Engenheiro de Software Senior e Arquiteto de Sistemas revisando este Pull Request.
+            Escreva TODAS as suas análises, pareceres e sugestões obrigatoriamente em Português (PT-BR).
+            Sua missão é realizar uma revisão estática de alta precisão, focando em arquitetura, qualidade, segurança e adesão ao sistema de design.
 
-            IMPORTANTE — O pipeline de CI é independente e executa lint, type-check e testes paralelamente.
-            NÃO execute comandos de teste, build, lint ou type-check. Foque exclusivamente na revisão estática do diff.
+            ### REGRAS DO PROJETO (FONTES DE VERDADE):
+            1. Visão Geral & Guard-Rails Globais: `AGENTS.md`
+            2. Design System Tokens & Estilo Visual: `DESIGN.md`
+            3. Backend (Django Ninja, Service Layer, Multi-Tenancy): `.agents/skills/wedding-backend/SKILL.md`
+            4. Frontend (React, Vite, Orval hooks, shadcn/ui composition): `.agents/skills/wedding-frontend/SKILL.md`
+            5. Regras de Negócio: `.agents/skills/wedding-business-rules/SKILL.md`
+            6. Padrões de Testes:
+               - Backend (Pytest, factories, unit/isolated): `.agents/skills/wedding-backend-testing/SKILL.md`
+               - Frontend (Vitest, RTL, MSW, isolate: false): `.agents/skills/wedding-frontend-testing/SKILL.md`
+            7. Documentação & Comentários (PT-BR): `docs/3-reference/architecture-standards/commenting-standards.md`
 
-            Foque em apontar:
-            - Desvios arquiteturais (ex: lógica fora de services.py, falta de filtro de tenant, endpoints sem operation_id).
-            - Falhas de segurança, concorrência ou performance (como queries N+1, secrets em código).
-            - Falta de testes obrigatórios ou desvios de padrões de escrita.
-            - Pendências de documentação (docstring, JSDoc, help_text, ADRs faltantes).
-            - Seja conciso e direto ao ponto ao fazer os apontamentos.
+            ### CONSULTA POR DEMANDA POR ESCOPO DO DIFF:
+            Inspecione a lista de arquivos alterados no Diff Stat e consulte APENAS as regras e notas atômicas em `docs/` relevantes:
+            - **Se alterar Backend (`backend/`):** Valide Service Layer em `services.py`, multi-tenancy `for_tenant(company)`, `operation_id` em `api.py` e factories em testes.
+            - **Se alterar Frontend (`frontend/`, `landing/`):** Valide conformidade com `DESIGN.md`, Orval hooks, sem `fetch`/`axios` direto, sem edição de `src/components/ui/`.
+            - **Se alterar Regras de Negócio:** Consulte a nota em `docs/4-explanation/business-rules/` e confirme `make check-docs`.
+
+            ### O QUE IGNORAR:
+            - NÃO comente sobre formatação ou estilo de código validados pela CI (ruff, prettier, actionlint).
+            - NÃO comente sobre arquivos de trava ou pacotes (`*.lock`).
+            - Se este PR tiver comentários anteriores ou for um evento de atualização (`synchronize`), analise as justificativas anteriores e foque no diff incremental do novo commit para não repetir apontamentos já resolvidos.
+            - Se não houver desvios arquiteturais, de segurança ou de design, conclua com: `"✅ Code Review Aprovado. As alterações cumprem os padrões do projeto."`
+
+            ### DIRETRIZES DE SAÍDA E CORREÇÕES INLINE:
+            - **Formato das Sugestões Inline:** Ao identificar uma correção objetiva de código (import não usado, erro de sintaxe, typo de token ou tipagem `mypy`), utilize a formatação de sugestão aplicável do GitHub para permitir aplicação com 1 clique:
+              ```suggestion
+              // código corrigido proposto
+              ```
+            - **Resumo no Rodapé:** Emita uma tabela síntese com o status de conformidade por diretriz (Arquitetura, Segurança, Design System, Qualidade/Docs).
+            - **Sem Execução de Testes:** O pipeline de CI já executa lint/testes. Não rode comandos de teste ou build; faça estritamente análise estática.
+
+            ---
+
+            ### CONTEXTO DO PULL REQUEST:
+            - **Título:** ${{ env.PR_TITLE }}
+            - **Autor:** ${{ env.PR_AUTHOR }}
+            - **Resumo Estatístico de Alterações (Diff Stat):**
+            ```text
+            ${{ env.DIFF_STAT }}
+            ```
