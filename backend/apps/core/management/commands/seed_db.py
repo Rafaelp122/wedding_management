@@ -224,7 +224,7 @@ class Command(BaseCommand):
                                 f"no valor de R$ {installment_amount:.2f} venceu."
                             ),
                             notification_type=NotificationType.OVERDUE_INSTALLMENT,
-                            link=f"/weddings/{wedding.uuid}",
+                            link=f"/weddings/{wedding.uuid}?tab=finances",
                         )
                     else:
                         InstallmentFactory.create(
@@ -246,7 +246,7 @@ class Command(BaseCommand):
                                 f"de R$ {installment_amount:.2f} vence em 5 dias."
                             ),
                             notification_type=NotificationType.UPCOMING_INSTALLMENT,
-                            link=f"/weddings/{wedding.uuid}",
+                            link=f"/weddings/{wedding.uuid}?tab=finances",
                         )
 
                     InstallmentFactory.create(
@@ -276,7 +276,7 @@ class Command(BaseCommand):
                         f"'{wedding}' expirou."
                     ),
                     notification_type=NotificationType.TASK_DEADLINE,
-                    link=f"/weddings/{wedding.uuid}",
+                    link=f"/weddings/{wedding.uuid}?tab=planning&subtab=checklist",
                 )
 
                 EventFactory.create_batch(4, wedding=wedding)

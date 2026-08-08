@@ -664,7 +664,7 @@ class InstallmentService:
                     ),
                     notification_type=NotificationType.OVERDUE_INSTALLMENT,
                     link=(
-                        f"/weddings/{inst.expense.wedding.uuid}"
+                        f"/weddings/{inst.expense.wedding.uuid}?tab=finances"
                         if inst.expense and inst.expense.wedding
                         else "/weddings"
                     ),
