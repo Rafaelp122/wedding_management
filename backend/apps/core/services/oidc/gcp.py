@@ -47,12 +47,8 @@ class GCPOIDCVerifier:
             self.expected_service_account
             and claim.get("email") != self.expected_service_account
         ):
-            logger.warning(
-                "OIDC Error: SA %s não autorizada (esperado: %s)",
-                claim.get("email"),
-                self.expected_service_account,
-            )
-            msg = f"Service account não autorizada: {claim.get('email')}"
+            logger.warning("OIDC Error: Service account não autorizada.")
+            msg = "Service account não autorizada."
             raise PermissionError(msg)
 
         return claim

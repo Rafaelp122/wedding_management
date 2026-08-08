@@ -81,13 +81,12 @@ LOGGING = {
     },
 }
 
-# --- Cache Configuration (Valkey / Redis DB 1 com Fallback Gracioso) ---
+# --- Cache & Task Queue Configuration (Valkey / Redis DB 1 & DB 0 com Fallback) ---
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379")
 
 
 def _is_redis_available(url: str) -> bool:
     """Verifica se o servidor Redis está acessível via socket em dev/E2E."""
-
     try:
         parsed = urlparse(url)
         host = parsed.hostname or "localhost"
@@ -105,12 +104,29 @@ if _is_redis_available(REDIS_URL):
             "LOCATION": f"{REDIS_URL}/1",
         }
     }
+    HUEY = {
+        "huey_class": "huey.PriorityRedisHuey",
+        "name": "wedding_tasks",
+        "connection": {
+            "url": f"{REDIS_URL}/0",
+        },
+        "immediate": env.bool("HUEY_IMMEDIATE", default=False),
+        "consumer": {
+            "workers": 2,
+            "worker_type": "thread",
+        },
+    }
 else:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
             "LOCATION": "dev-fallback-cache",
         }
+    }
+    HUEY = {
+        "huey_class": "huey.MemoryHuey",
+        "name": "dev_tasks",
+        "immediate": True,
     }
 
 
