@@ -17,7 +17,7 @@ jobs:
   ai-review:
     name: Independent AI Code Review
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -26,40 +26,47 @@ jobs:
           fetch-depth: 0
 
       - name: Run OpenCode AI Review
-        uses: anomalyco/opencode/github@v1.16.2
+        uses: anomalyco/opencode/github@v1.18.10
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: deepseek/deepseek-v4-pro
           use_github_token: "true"
           prompt: |
-            Revise este pull request seguindo estritamente as regras de arquitetura, qualidade e testes do projeto:
-            1. Diretrizes gerais: `AGENTS.md`
-            2. Regras de Backend (Django Ninja, Service Layer, Multi-tenancy, Exceptions, Validações): `.agents/skills/wedding-backend/SKILL.md`
-            3. Regras de Frontend (React, Vite, Orval hooks, React Hook Form + Zod, Zustand): `.agents/skills/wedding-frontend/SKILL.md`
-            4. Regras de Negócio (Finanças, Logística, Scheduler): `.agents/skills/wedding-business-rules/SKILL.md`
-            5. Padrões de Testes:
-              - Backend (Pytest, factories, mocks): `.agents/skills/wedding-backend-testing/SKILL.md`
-              - Frontend (Vitest, RTL, MSW): `.agents/skills/wedding-frontend-testing/SKILL.md`
-            6. Padrões de Documentação:
-              - Seguir estritamente as diretrizes de `docs/3-reference/architecture-standards/commenting-standards.md`.
-              - Idioma: Comentários inline e docstrings devem ser escritos em Português (PT-BR).
-              - Backend (apps/):
-                - Métodos públicos/complexos em services.py exigem docstrings em estilo Google Style.
-                - Endpoints em api.py precisam de operation_id e docstrings curtas (1-2 linhas).
-                - Modelos precisam de docstring de classe descritiva e campos com help_text.
-                - Mudanças estruturais importantes ou novos padrões exigem ADR em docs/ADR/ (ver ADR-021).
-                - É terminantemente PROIBIDO incluir referências a assistentes de codificação ou geradores nos comentários (ex: Bolt, Jules, Copilot).
-              - Frontend (src/): hooks, tipos e utils exportados em features/ precisam de JSDoc.
-                Stores Zustand precisam de comentário descrevendo o estado gerenciado.
+            Você é um Staff Engineer e especialista em Clean Architecture realizando Code Review deste Pull Request.
+            IMPORTANTE: NÃO execute comandos de terminal para rodar testes, build, lint ou type-check. Limite o uso do terminal estritamente aos comandos `gh` e `git diff` conforme instruído. Escreva todas as respostas e sugestões em Português (PT-BR).
 
-            IMPORTANTE — O pipeline de CI é independente e executa lint, type-check e testes paralelamente.
-            NÃO execute comandos de teste, build, lint ou type-check. Foque exclusivamente na revisão estática do diff.
+            MODO DE REVISÃO:
+            ${{ github.event.action == 'synchronize' && format('⚠️ PR ATUALIZADO (commits {0}..{1}).
+            1. Execute no terminal o comando para obter o histórico de comentários do PR: `gh api repos/{3}/issues/{2}/comments --jq ".[].body"`
+            2. Analise os comentários anteriores da revisão E as respostas/justificativas deixadas pelo desenvolvedor.
+            3. Execute `git diff {0}..{1}` para analisar APENAS as novas alterações.
+            4. Leve em consideração as justificativas do desenvolvedor. Verifique se os pontos pendentes foram corrigidos ou justificados e se as novas alterações introduziram novos problemas.', github.event.before, github.event.after, github.event.pull_request.number, github.repository) || format('Novo PR detectado. Avalie o diff completo do PR contra a branch base (origin/{0}).', github.base_ref) }}
 
-            Foque em apontar:
-            - Desvios arquiteturais (ex: lógica fora de services.py, falta de filtro de tenant, endpoints sem operation_id).
-            - Falhas de segurança, concorrência ou performance (como queries N+1, secrets em código).
-            - Falta de testes obrigatórios ou desvios de padrões de escrita.
-            - Pendências de documentação (docstring, JSDoc, help_text, ADRs faltantes).
-            - Seja conciso e direto ao ponto ao fazer os apontamentos.
+            ### ROTEAMENTO DE REGRAS POR ESCOPO DO DIFF:
+            Após ler o `git diff`, filtre e consulte APENAS os arquivos de regras relevantes para os arquivos alterados:
+            - **Se o diff alterar Backend (`backend/`):** Consulte `AGENTS.md`, `.agents/skills/wedding-backend/SKILL.md` e `.agents/skills/wedding-backend-testing/SKILL.md`.
+            - **Se o diff alterar Frontend (`frontend/` ou `landing/`):** Consulte `AGENTS.md`, `DESIGN.md`, `.agents/skills/wedding-frontend/SKILL.md` e `.agents/skills/wedding-frontend-testing/SKILL.md`.
+            - **Se o diff alterar Regras de Negócio/Modelos:** Consulte `.agents/skills/wedding-business-rules/SKILL.md` e siga o link para a nota atômica específica em `docs/`.
+
+            ### DIRETRIZES DE AVALIAÇÃO:
+            - **Arquitetura & Clean Code:** Regras de negócio fora da `services.py`, falta de isolamento por tenant, endpoints Django Ninja sem `operation_id`.
+            - **Segurança & Performance:** Queries N+1, vazamento de secrets, falhas de concorrência.
+            - **Design System & UI:** Desvios dos tokens do `DESIGN.md`, edições não autorizadas em `src/components/ui/` ou uso de inline styles.
+            - **Qualidade & Docs:** Ausência de testes para novos cenários, ausência de docstrings estilo Google em serviços/funções públicas (PT-BR), ausência de `help_text` em campos de modelos, ausência de JSDoc em exportações frontend, falta de ADR para mudanças estruturais importantes.
+
+            ### O QUE IGNORAR (CRÍTICO PARA ECONOMIA):
+            - IGNORE arquivos de lock (`uv.lock`, `package-lock.json`), assets estáticos minificados e arquivos gerados.
+            - IGNORE problemas de lint, formatação ou erros de sintaxe básicos (a pipeline de CI já valida isso).
+            - IGNORE preferências pessoais de estilo ou legibilidade subjetiva.
+            - SE O CÓDIGO ESTIVER BOM E TODOS OS PONTOS ANTERIORES RESOLVIDOS, responda apenas: "✅ **Code Review Aprovado.** As alterações resolveram as pendências e cumprem os padrões do projeto."
+
+            ### FORMATO DO FEEDBACK (EM CASO DE PENDÊNCIAS OU NOVOS ERROS):
+            Se houver pontos pendentes ou novos problemas, seja conciso e estruture:
+            - **[Status dos apontamentos anteriores]:** Indique brevemente quais itens anteriores foram resolvidos e quais foram justificados ou continuam pendentes.
+            - **[Novos achados]:**
+              - **[Severidade: ALTA / MÉDIA / BAIXA]** `Arquivo:Linha`
+              - **Problema:** Resumo do desvio.
+              - **Sugestão:** Como corrigir respeitando as regras do projeto.

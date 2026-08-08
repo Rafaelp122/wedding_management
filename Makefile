@@ -262,6 +262,7 @@ check-landing:
 
 check-docs:
 	@python3 scripts/validate_docs_links.py
+	@npx -y @google/design.md lint DESIGN.md
 
 lint-docs: check-docs
 
