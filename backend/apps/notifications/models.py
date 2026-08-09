@@ -62,10 +62,6 @@ class Notification(BaseModel):
     link = models.CharField(_("Link"), max_length=500, blank=True, default="")
     read_at = models.DateTimeField(_("Lida em"), null=True, blank=True)
 
-    # Atributo transitório injetado em tempo de execução
-    # para o DTO/Schema NotificationOut
-    wedding_name: str | None = None
-
     objects = TenantManager()
 
     class Meta:

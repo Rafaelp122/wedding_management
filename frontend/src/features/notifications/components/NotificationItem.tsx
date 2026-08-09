@@ -44,9 +44,8 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
       className,
       onClick,
       onKeyDown,
-      _asChild,
       ...props
-    }: NotificationItemProps & { _asChild?: boolean },
+    }: NotificationItemProps,
     ref
   ) => {
     const IconComponent = getNotificationIcon(notification.type);

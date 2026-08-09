@@ -1,8 +1,10 @@
 import logging
+from collections.abc import Sequence
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import OuterRef, QuerySet, Subquery, Value
+from django.db.models.functions import Concat
 from django.utils import timezone
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
@@ -13,6 +15,22 @@ from apps.users.models import User
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_wedding_name_subquery() -> Subquery:
+    """Retorna uma subquery anotando o nome formatado do casamento."""
+    from apps.weddings.models import Wedding
+
+    return Subquery(
+        Wedding.objects.filter(uuid=OuterRef("wedding_id")).values(
+            name=Concat(
+                Value("Casamento de "),
+                "bride_name",
+                Value(" e "),
+                "groom_name",
+            )
+        )[:1]
+    )
 
 
 class NotificationService:
@@ -149,26 +167,16 @@ class NotificationService:
             is_read: Filtro opcional por estado de leitura.
 
         Returns:
-            QuerySet[Notification]: Notificações filtradas do usuário.
+            QuerySet[Notification]: Notificações filtradas do usuário com
+                wedding_name anotado em SQL.
         """
-        qs = Notification.objects.for_tenant(company).filter(user=user)
+        qs = (
+            Notification.objects.for_tenant(company)
+            .filter(user=user)
+            .annotate(wedding_name=_get_wedding_name_subquery())
+        )
         if is_read is not None:
             qs = qs.filter(is_read=is_read)
-
-        # Mapeia nomes de casamentos sem N+1 queries
-        wedding_ids = [n.wedding_id for n in qs if n.wedding_id]
-        if wedding_ids:
-            from apps.weddings.models import Wedding
-
-            weddings = {
-                w.uuid: f"Casamento de {w.bride_name} e {w.groom_name}"
-                for w in Wedding.objects.for_tenant(company).filter(
-                    uuid__in=wedding_ids
-                )
-            }
-            for n in qs:
-                if n.wedding_id in weddings:
-                    n.wedding_name = weddings[n.wedding_id]
 
         return qs
 
@@ -212,6 +220,7 @@ class NotificationService:
         """
         notification = (
             Notification.objects.for_tenant(company)
+            .annotate(wedding_name=_get_wedding_name_subquery())
             .filter(uuid=notification_id, user=user)
             .first()
         )
@@ -227,19 +236,6 @@ class NotificationService:
                 notification.uuid,
                 user.id,
             )
-
-        if notification.wedding_id:
-            from apps.weddings.models import Wedding
-
-            wedding = (
-                Wedding.objects.for_tenant(company)
-                .filter(uuid=notification.wedding_id)
-                .first()
-            )
-            if wedding:
-                notification.wedding_name = (
-                    f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
-                )
 
         return notification
 
@@ -303,14 +299,14 @@ class NotificationService:
     def bulk_mark_as_read(
         company: Company,
         user: User,
-        notification_ids: list[UUID | str],
+        notification_ids: Sequence[UUID | str],
     ) -> int:
         """Marca uma lista de notificações selecionadas como lidas.
 
         Args:
             company: O tenant atual para isolamento multitenancy.
             user: O usuário cujas notificações serão atualizadas.
-            notification_ids: Lista de UUIDs das notificações.
+            notification_ids: Sequência de UUIDs das notificações.
 
         Returns:
             int: Quantidade de notificações atualizadas.
@@ -332,14 +328,14 @@ class NotificationService:
     def bulk_delete(
         company: Company,
         user: User,
-        notification_ids: list[UUID | str],
+        notification_ids: Sequence[UUID | str],
     ) -> int:
         """Exclui uma lista de notificações selecionadas.
 
         Args:
             company: O tenant atual para isolamento multitenancy.
             user: O usuário cujas notificações serão excluídas.
-            notification_ids: Lista de UUIDs das notificações.
+            notification_ids: Sequência de UUIDs das notificações.
 
         Returns:
             int: Quantidade de notificações excluídas.
