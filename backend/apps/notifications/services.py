@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.notifications.models import Notification, NotificationType
 from apps.notifications.tasks import dispatch_async_notification_task
 from apps.tenants.models import Company
@@ -65,7 +65,7 @@ class NotificationService:
             )
 
         if user.company_id != company.id:
-            raise ValueError("Usuário não pertence à empresa informada.")
+            raise BusinessRuleViolation("Usuário não pertence à empresa informada.")
 
         notification = Notification(
             company=company,
@@ -222,6 +222,11 @@ class NotificationService:
             notification.is_read = True
             notification.read_at = timezone.now()
             notification.save()
+            logger.info(
+                "Notificação marcada como lida: uuid=%s para user_id=%s",
+                notification.uuid,
+                user.id,
+            )
 
         if notification.wedding_id:
             from apps.weddings.models import Wedding
@@ -253,6 +258,11 @@ class NotificationService:
         now = timezone.now()
         qs = Notification.objects.for_tenant(company).filter(user=user, is_read=False)
         count = qs.update(is_read=True, read_at=now, updated_at=now)
+        logger.info(
+            "Todas as notificações marcadas como lidas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
         return count
 
     @staticmethod
@@ -282,6 +292,11 @@ class NotificationService:
             raise ObjectNotFoundError(detail="Notificação não encontrada.")
 
         notification.delete()
+        logger.info(
+            "Notificação excluída com sucesso: uuid=%s para user_id=%s",
+            notification_id,
+            user.id,
+        )
 
     @staticmethod
     @transaction.atomic
@@ -304,7 +319,13 @@ class NotificationService:
         qs = Notification.objects.for_tenant(company).filter(
             user=user, uuid__in=notification_ids, is_read=False
         )
-        return qs.update(is_read=True, read_at=now, updated_at=now)
+        count = qs.update(is_read=True, read_at=now, updated_at=now)
+        logger.info(
+            "Notificações em lote marcadas como lidas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
+        return count
 
     @staticmethod
     @transaction.atomic
@@ -327,6 +348,11 @@ class NotificationService:
             user=user, uuid__in=notification_ids
         )
         count, _ = qs.delete()
+        logger.info(
+            "Notificações em lote excluídas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
         return count
 
     @staticmethod
@@ -343,4 +369,9 @@ class NotificationService:
         """
         qs = Notification.objects.for_tenant(company).filter(user=user)
         count, _ = qs.delete()
+        logger.info(
+            "Todas as notificações foram limpas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
         return count

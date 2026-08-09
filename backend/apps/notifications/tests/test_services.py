@@ -5,13 +5,14 @@ import pytest
 from django.tasks import Task
 from django.utils import timezone
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.notifications.models import NotificationType
 from apps.notifications.services import NotificationService
 from apps.notifications.tests.factories import NotificationFactory
 from apps.tenants.tests.factories import CompanyFactory
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory
+from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -89,7 +90,7 @@ class TestNotificationServiceCreate:
     def test_create_notification_failure_user_company_mismatch(self, user):
         other_company = CompanyFactory()
         with pytest.raises(
-            ValueError, match=r"Usuário não pertence à empresa informada\."
+            BusinessRuleViolation, match=r"Usuário não pertence à empresa informada\."
         ):
             NotificationService.create_notification(
                 company=other_company,
@@ -176,6 +177,16 @@ class TestNotificationServiceList:
         assert user_notes.count() == 1
         assert user_notes.first().user == user
 
+    def test_list_notifications_with_wedding_name(self, user):
+        wedding = WeddingFactory(company=user.company)
+        NotificationFactory(user=user, wedding_id=wedding.uuid)
+
+        user_notes = NotificationService.list_notifications(user.company, user)
+        assert (
+            user_notes.first().wedding_name
+            == f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
+        )
+
 
 @pytest.mark.django_db
 class TestNotificationServiceUnreadCount:
@@ -237,6 +248,27 @@ class TestNotificationServiceMarkAsRead:
         )
         assert updated.is_read is True
         assert updated.read_at == read_at_before
+
+    def test_mark_as_read_populates_wedding_name(self, user):
+        wedding = WeddingFactory(company=user.company)
+        notification = NotificationFactory(
+            user=user, wedding_id=wedding.uuid, is_read=False
+        )
+
+        updated = NotificationService.mark_as_read(
+            user.company, user, notification.uuid
+        )
+        assert (
+            updated.wedding_name
+            == f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
+        )
+
+    def test_mark_as_read_with_nonexistent_wedding_id(self, user):
+        notification = NotificationFactory(user=user, wedding_id=uuid4(), is_read=False)
+        updated = NotificationService.mark_as_read(
+            user.company, user, notification.uuid
+        )
+        assert updated.wedding_name is None
 
 
 @pytest.mark.django_db
