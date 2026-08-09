@@ -679,7 +679,7 @@ class InstallmentService:
                         else "/weddings"
                     ),
                     target_type="installment",
-                    target_id=inst.uuid,
+                    target_id=inst.expense.uuid if inst.expense else inst.uuid,
                     wedding_id=(
                         inst.expense.wedding.uuid
                         if inst.expense and inst.expense.wedding
