@@ -35,10 +35,8 @@ jobs:
       - name: Prepare PR Context & Diff Stat
         env:
           PR_RAW_TITLE: ${{ github.event.pull_request.title }}
-          PR_RAW_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           echo "PR_TITLE=$PR_RAW_TITLE" >> $GITHUB_ENV
-          echo "PR_AUTHOR=$PR_RAW_AUTHOR" >> $GITHUB_ENV
 
           DIFF_STAT=$(git diff origin/develop...HEAD --stat | head -n 40)
           echo "DIFF_STAT<<EOF" >> $GITHUB_ENV
@@ -86,8 +84,10 @@ jobs:
             - **FAÇA APENAS ANÁLISE ESTÁTICA DO DIFF.** Não execute comandos de shell, scripts ou ferramentas (ex: `make check-docs`, `pytest`, `tsc`), pois o pipeline de CI já roda e valida tudo automaticamente.
             - NÃO comente sobre formatação ou estilo de código validados pela CI (ruff, prettier, actionlint).
             - NÃO comente sobre arquivos de trava ou pacotes (`*.lock`).
-            - Se este PR tiver comentários anteriores ou for um evento de atualização (`synchronize`), analise as justificativas anteriores e foque no diff incremental do novo commit para não repetir apontamentos já resolvidos.
-            - Se não houver desvios arquiteturais, de segurança ou de design, conclua com: `"✅ Code Review Aprovado. As alterações cumprem os padrões do projeto."`
+            - **FLUXO EM RE-REVISÃO (`synchronize` / NOVOS COMMITS):**
+              1. Verifique se as pendências apontadas anteriormente foram corrigidas ou justificadas (evite repetir apontamentos já resolvidos).
+              2. **REVISÃO COMPLETA DE NOVAS IMPLEMENTAÇÕES (OBRIGATÓRIO):** Inspecione rigorosamente todas as novas funções, arquivos, componentes e regras de negócio introduzidos no diff recente. NUNCA aprove o PR apenas porque as pendências anteriores foram sanadas; avalie o código novo com o mesmo rigor de um PR novo (validando Service Layer, Multi-Tenancy, Orval hooks, DESIGN.md, testes e Doc Drift).
+            - Se não houver desvios arquiteturais, de segurança ou de design nas alterações novas e anteriores, conclua com: `"✅ Code Review Aprovado. As alterações cumprem os padrões do projeto."`
 
             ### DIRETRIZES DE SAÍDA E CORREÇÕES INLINE:
             - **Formato das Sugestões Inline:** Ao identificar uma correção objetiva de código (import não usado, erro de sintaxe, typo de token ou tipagem `mypy`), utilize a formatação de sugestão aplicável do GitHub para permitir aplicação com 1 clique:
@@ -101,7 +101,6 @@ jobs:
 
             ### CONTEXTO DO PULL REQUEST:
             - **Título:** ${{ env.PR_TITLE }}
-            - **Autor:** ${{ env.PR_AUTHOR }}
             - **Resumo Estatístico de Alterações (Diff Stat):**
             ```text
             ${{ env.DIFF_STAT }}
