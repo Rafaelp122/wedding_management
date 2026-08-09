@@ -1,149 +1,74 @@
-# 🔁 Especificação da Arquitetura Modular de CI/CD — Wedding Management System
+# 🔁 Arquitetura e Fluxo da Pipeline GitOps (CI/CD)
 
-> **Versão:** 3.2 | **Última atualização:** 6 de agosto de 2026
-> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [ADR-027](../adr/027-terraform-state-topology.md) | [gitops-sprint-workflow](../../1-tutorials/gitops-sprint-workflow.md) | [terraform-modules-spec](../../3-reference/architecture-standards/terraform-modules-spec.md)
+> **Versão:** 4.0 | **Última atualização:** 9 de agosto de 2026
+> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [ADR-027](../adr/027-terraform-state-topology.md) | [ci-cd-index](../../3-reference/ci-cd/index.md) | [testing-index](../../3-reference/testing/index.md)
 
 ---
 
 ## 1. Visão Geral
 
-As pipelines separam validação, release da aplicação e gestão da infraestrutura:
+O **Wedding Management System** adota uma arquitetura modular de **GitOps e CI/CD** para garantir que todas as alterações de código, infraestrutura e banco de dados passem por validações automatizadas antes de atingir os ambientes de Staging ou Produção.
 
-1. **CI** valida código, contratos, testes e imagens sem publicar em Pull Requests.
-2. **CD** publica versões da aplicação somente após um `push` validado em `develop` ou `main`.
-3. **Terraform** possui três roots e states independentes: `shared`, `staging` e `production`.
-4. **Revisão por IA** analisa cada SHA do PR sem usar labels como estado.
+A pipeline separa claramente quatro responsabilidades:
+1. **CI (Validação)**: Executada em PRs sem publicar artefatos ou acessar credenciais da nuvem.
+2. **CD (Entrega da Aplicação)**: Publica imagens e atualiza o Cloud Run/Vercel somente após merges em `develop` ou `main`.
+3. **Terraform (Infraestrutura IaC)**: Gerencia 3 roots independentes (`shared`, `staging`, `production`) com travas de segurança.
+4. **Revisão por IA**: Analisa o SHA de cada commit nos PRs em busca de violações arquiteturais.
 
 ```mermaid
 flowchart TD
-    PR[PR para develop ou main] --> CI[Lint, tipos, testes, contratos e build]
-    CI --> E2E[Playwright Chromium]
-    PR --> TFV[Terraform: fmt + init sem backend + validate em 3 roots]
+    PR[PR para develop ou main] --> CI[CI: Ruff, mypy, Pytest, Vitest, Smoke]
+    CI --> E2E[E2E: Playwright]
+    PR --> TFV[Terraform: fmt, validate & tftest]
     PR --> AI[Revisão por IA]
 
     DEV[Push em develop] --> CI
     MAIN[Push em main] --> CI
-    E2E -->|push aprovado| CD[CD da aplicação]
-    CD --> MIGRATE[Migrations]
-    MIGRATE --> RUN[Cloud Run]
-    CD --> VERCEL[Vercel]
+    E2E -->|Push aprovado| CD[CD: Docker Push, Migrations & Cloud Run/Vercel]
 
-    DEV --> TFS[Plan shared + staging]
-    MAIN --> TFP[Plan shared + production]
-    TFP -->|opt-in true| APPLY[Apply shared + production]
+    DEV --> TFS[Plan: shared + staging]
+    MAIN --> TFP[Plan: shared + production]
+    TFP -->|opt-in true| APPLY[Apply: shared + production]
 ```
 
 ---
 
-## 2. Gatilhos e Responsabilidades
+## 2. Estratégia de Branches e Ambientes
 
-| Workflow | Gatilho | Responsabilidade |
+- **Pull Requests (Validação Isola)**: Executam apenas gates de leitura sem acesso ao backend remoto do Terraform ou credenciais da nuvem.
+- **Branch `develop` (Staging/Preview)**: Representa o ambiente de homologação. Dispara o CD de staging no Cloud Run e Vercel e gera os planos do Terraform.
+- **Branch `main` (Produção)**: Representa o ambiente produtivo. Dispara o CD de produção e gera planos do Terraform (com opt-in para apply).
+
+---
+
+## 3. Matriz de Specifications Técnicas de Workflows
+
+As especificações detalhadas de cada workflow reutilizável do GitHub Actions sob `.github/workflows/` estão modularizadas nas seguintes notas de referência:
+
+| Workflow | Especificação Técnica | Foco |
 |:---|:---|:---|
-| **[ci-pr-validation.yml](../../../.github/workflows/ci-pr-validation.yml)** | PR e `push` em `main`/`develop` | Ruff, mypy, Pytest, migrations check, Vitest, builds, contratos e smoke da imagem. Em `push`, chama o CD após todos os gates. |
-| **[e2e-tests.yml](../../../.github/workflows/e2e-tests.yml)** | `workflow_call` | Playwright em Chromium e duas shards. |
-| **[docs-ci.yml](../../../.github/workflows/docs-ci.yml)** | PR e `push` com documentação | Executa `make check-docs`. |
-| **[ai-code-review.yml](../../../.github/workflows/ai-code-review.yml)** | Abertura/atualização de PR | Executa OpenCode para o SHA atual. |
-| **[cd-deploy.yml](../../../.github/workflows/cd-deploy.yml)** | `workflow_call` após CI; `workflow_dispatch` | Publica imagens, executa migrations, atualiza revisões Cloud Run e faz deploy Vercel. Não cria IAM público. |
-| **[terraform-ci.yml](../../../.github/workflows/terraform-ci.yml)** | PR e `push` com Terraform | PR valida os três roots sem backend/OIDC. Em `main`, planeja `shared` e `production`; aplica os planos salvos somente com opt-in. |
-| **[staging-pipeline.yml](../../../.github/workflows/staging-pipeline.yml)** | `push` em `develop`; manual | Planeja `shared` e `staging` nos respectivos states. Nunca aplica. |
-
-Pull Requests nunca recebem a identidade de deploy nem acessam o backend GCS.
+| `ci-pr-validation.yml` | **[ci-pr-validation-spec](../../3-reference/ci-cd/ci-pr-validation-spec.md)** | Linting, checagem de tipos, Pytest, Vitest, migrations check e smoke test. |
+| `cd-deploy.yml` | **[cd-deploy-spec](../../3-reference/ci-cd/cd-deploy-spec.md)** | Build & Push no Artifact Registry, Migrations no Neon DB, Cloud Run e Vercel. |
+| `terraform-ci.yml` & `staging-pipeline.yml` | **[terraform-pipelines-spec](../../3-reference/ci-cd/terraform-pipelines-spec.md)** | Validação dos 3 roots, planejamento de state e opt-in de apply em produção. |
+| `ai-code-review.yml` | **[ai-code-review-spec](../../3-reference/ci-cd/ai-code-review-spec.md)** | Auditoria automatizada de código por SHA e suporte via `@opencode`. |
+| `e2e-tests.yml` | **[e2e-testing-spec](../../3-reference/testing/e2e-testing-spec.md)** | Execução distribuída em shards do Playwright. |
+| MOC Completo | **[ci-cd/index.md](../../3-reference/ci-cd/index.md)** | Índice técnico de todos os workflows do repositório. |
 
 ---
 
-## 3. Ownership
+## 4. Gates de Qualidade
 
-| Domínio | Terraform | CD/Operador |
+| Gate | Critério | Especificação Técnica |
 |:---|:---|:---|
-| GCP compartilhado | Bucket de state, Artifact Registry, WIF, Service Account e IAM | Tokens e aprovação operacional |
-| Cloud Run | Serviço-base, recursos, escala, porta, ingress e IAM invoker | Imagem por SHA, env vars, referências de secrets, revisão e tráfego |
-| Secret Manager | Containers e IAM por ambiente | Valores e versões dos secrets |
-| Cloudflare R2 | Buckets por ambiente | Objetos, access keys e API tokens |
-| Vercel | Projetos e `VITE_API_URL` por target/branch | Builds, deployments, aliases e tokens |
-| Neon | Fora do escopo da ADR-027 | Projetos, bancos, connection strings e rotação |
-
-Um recurso possui exatamente um state proprietário. O CD não usa mais `--allow-unauthenticated`; o binding público do Cloud Run pertence ao Terraform.
+| Documentação | `make check-docs` sem links quebrados | [documentation-standards](../../3-reference/architecture-standards/documentation-standards.md) |
+| Terraform | `fmt`, `validate` nos três roots e `terraform test` nativo | [terraform-testing-spec](../../3-reference/testing/terraform-testing-spec.md) |
+| Backend | Ruff, mypy, checks Django, migrations e Pytest com cobertura | [backend-testing-spec](../../3-reference/testing/backend-testing-spec.md) |
+| Frontend | Lint, type-check, Vitest, MSW e build | [frontend-testing-spec](../../3-reference/testing/frontend-testing-spec.md) |
+| E2E | Duas shards Playwright Chromium | [e2e-testing-spec](../../3-reference/testing/e2e-testing-spec.md) |
 
 ---
 
-## 4. States Terraform
-
-| Root | Prefixo GCS | Conteúdo |
-|:---|:---|:---|
-| `terraform/shared` | `terraform/shared` | State bucket, Artifact Registry, WIF, deployer IAM e projetos Vercel |
-| `terraform/staging` | `terraform/staging` | Cloud Run, Secret Manager/IAM, R2 e variável Vercel de staging |
-| `terraform/production` | `terraform/production` | Cloud Run, Secret Manager/IAM, R2 e variável Vercel de produção |
-
-O objeto legado `terraform/state/default.tfstate` permanece somente como backup de migração e nenhum workflow novo aponta para ele.
-
-O backend GCS mantém locking automático. As operações remotas também usam o grupo de concorrência `terraform-remote-state`. Nunca use `-lock=false`, `force-unlock`, `state push -force` ou `init -force-copy` no fluxo normal.
-
-> [!IMPORTANT]
-> `TERRAFORM_PRODUCTION_APPLY_ENABLED` deve permanecer ausente ou `false` até os três states serem importados e seus planos não apresentarem criação, alteração, substituição ou remoção inesperada. Consulte a [especificação de módulos](../../3-reference/architecture-standards/terraform-modules-spec.md).
-
----
-
-## 5. Fluxo da Aplicação
-
-### Pull request
-
-- Executa somente os jobs relacionados aos caminhos alterados.
-- Compila e testa a imagem do backend sem login ou push no Artifact Registry.
-- Executa E2E somente em Chromium.
-- Valida os três roots Terraform com `init -backend=false`.
-- Não publica previews efêmeros nem acessa recursos cloud.
-
-### Push em `develop`
-
-- Usa o GitHub Environment `Preview`, que representa o staging fixo.
-- Publica a imagem por SHA, executa migrations no Neon staging e atualiza `wedding-backend-staging`.
-- Atualiza os aliases Vercel fixos de staging.
-- Planeja os states `shared` e `staging`, sem apply.
-
-### Push em `main`
-
-- Usa o GitHub Environment `Production`.
-- Publica a aplicação e executa migrations de produção após os gates.
-- Planeja `shared` e `production`.
-- Aplica exatamente os planos locais salvos somente quando o opt-in for `true`.
-
----
-
-## 6. Secrets e Variáveis
-
-Os valores de `DATABASE_URL` e `SECRET_KEY` permanecem no Secret Manager. Terraform gerencia somente os containers e bindings IAM; o CD lê a versão pinada para migrations e entrega referências ao Cloud Run.
-
-Cada GitHub Environment define:
-
-| Variável | Uso |
-|:---|:---|
-| `GCP_DATABASE_SECRET_ID` | Secret do banco do ambiente |
-| `GCP_DATABASE_SECRET_VERSION` | Versão numérica pinada |
-| `GCP_DJANGO_SECRET_ID` | Secret Django do ambiente |
-| `GCP_DJANGO_SECRET_VERSION` | Versão numérica pinada |
-| `GOOGLE_CLIENT_ID` | OAuth do ambiente |
-
-O repositório define `CLOUDFLARE_ACCOUNT_ID` como variável não sensível. Tokens GCP/WIF, Cloudflare e Vercel continuam em GitHub Secrets. As credenciais R2 devem existir nos Environments `Preview` e `Production`; secrets de Environment substituem os repository secrets de mesmo nome.
-
-`TERRAFORM_PRODUCTION_APPLY_ENABLED` é uma repository variable, não um secret. Alterá-la para `true` é uma ação operacional separada do PR e exige planos convergentes.
-
----
-
-## 7. Gates de Qualidade
-
-| Gate | Critério |
-|:---|:---|
-| Documentação | `make check-docs` sem links quebrados |
-| Terraform | `fmt -check -recursive`, `init -backend=false` e `validate` nos três roots |
-| Backend | Ruff, mypy, checks Django, migrations e Pytest |
-| Frontend | Lint, type-check, Vitest, isolamento de mocks e build |
-| Landing | Astro check e build |
-| Container | Build e health check sem publicação no PR |
-| E2E | Duas shards Playwright Chromium |
-
----
-
-## 8. ADRs Relacionados
+## 5. ADRs Relacionados
 
 - [ADR-025: Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md)
 - [ADR-026: Branches e Staging](../adr/026-gitops-branching-and-deployment-strategy.md)

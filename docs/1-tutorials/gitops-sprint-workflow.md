@@ -28,7 +28,7 @@ git pull origin develop
 git switch -c feature/nome-da-funcionalidade
 ```
 
-Depois de desenvolver e criar commits Conventional Commits, publique a branch e abra o PR:
+Depois de desenvolver e criar commits no padrão [Conventional Commits](../3-reference/architecture-standards/commit-convention-spec.md), publique a branch e abra o PR:
 
 ```bash
 git push -u origin feature/nome-da-funcionalidade

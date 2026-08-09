@@ -18,4 +18,4 @@ Operational checklist for backend test suites (`pytest` + Django).
 - [ ] **No Empty Stubs or Debug Files**: Do not leave `pass` stubs or debug files with `breakpoint()`/`print()` in test packages; use `@pytest.mark.skip(reason=...)` when skipping tests.
 - [ ] **Execution & Standards Reference**:
   - Running pytest suite & test markers: [Run Pytest Suite Guide](../../../docs/2-how-to/backend/run-pytest-suite.md)
-  - Full architectural testing standards & cheat sheet: [Testing Standards](../../../docs/3-reference/architecture-standards/testing-standards.md)
+  - Full architectural testing standards & cheat sheet: [Backend Testing Spec](../../../docs/3-reference/testing/backend-testing-spec.md) | [Testing Index](../../../docs/3-reference/testing/index.md)
