@@ -13,6 +13,34 @@ class ApplicationError(Exception):
         super().__init__(self.detail)
 
 
+class AuthenticationError(ApplicationError):
+    """
+    Exceção base para erros de autenticação (Status 401).
+    """
+
+    status_code = 401
+    default_detail = "Falha de autenticação."
+    default_code = "unauthorized"
+
+
+class InvalidCredentialsError(AuthenticationError):
+    """
+    Status 401: Credenciais inválidas, usuário desativado ou não verificado.
+    """
+
+    default_detail = "Credenciais inválidas ou conta desativada."
+    default_code = "invalid_credentials"
+
+
+class InvalidTokenError(AuthenticationError):
+    """
+    Status 401: Token expirado, corrompido ou ausente.
+    """
+
+    default_detail = "Token inválido ou expirado."
+    default_code = "invalid_token"
+
+
 class ObjectNotFoundError(ApplicationError):
     """
     Status 404: Recurso não encontrado.

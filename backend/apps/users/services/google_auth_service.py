@@ -1,9 +1,9 @@
 import logging
 
 from django.db import transaction
-from ninja.errors import HttpError
 from ninja_jwt.tokens import RefreshToken
 
+from apps.core.exceptions import InvalidCredentialsError
 from apps.core.services.social_auth import (
     GoogleOAuthProvider,
     OAuthProvider,
@@ -52,8 +52,9 @@ class GoogleAuthService:
             TokenOut contendo os tokens de acesso, atualização e os dados do usuário.
 
         Raises:
-            HttpError: Se o token do Google for inválido ou expirado (HTTP 401),
-                ou se a conta do usuário estiver inativa (HTTP 401).
+            Exception: Se o token do Google for inválido ou expirado (HTTP 401),
+                tratado pelo provedor OAuth, ou InvalidCredentialsError se
+                a conta do usuário estiver inativa.
         """
         logger.info("Iniciando verificação de token de identidade do Google.")
 
@@ -94,7 +95,7 @@ class GoogleAuthService:
             A instância de User recuperada ou recém-criada.
 
         Raises:
-            HttpError: Se a conta do usuário existente estiver desativada.
+            InvalidCredentialsError: Se a conta do usuário existente estiver desativada.
         """
         # Tenant desconhecido no fluxo de login — email é global único
         user = User.objects.filter(email=user_info.email).first()
@@ -105,7 +106,7 @@ class GoogleAuthService:
                 logger.warning(
                     f"Tentativa de login via Google em conta inativa: {masked_email}"
                 )
-                raise HttpError(401, "Credenciais inválidas ou conta desativada.")
+                raise InvalidCredentialsError()
         else:
             logger.info(f"Provisionando novo usuário via Google OAuth: {masked_email}")
             random_password = User.objects.make_random_password()

@@ -4,7 +4,8 @@ from typing import Any
 from django.conf import settings
 from google.auth.transport import requests
 from google.oauth2 import id_token as google_id_token
-from ninja.errors import HttpError
+
+from apps.core.exceptions import InvalidCredentialsError, InvalidTokenError
 
 from .base import OAuthUserInfo
 
@@ -30,13 +31,15 @@ class GoogleOAuthProvider:
             OAuthUserInfo contendo os dados do usuário.
 
         Raises:
-            HttpError: Se a configuração estiver ausente (401), token for
-                inválido/expirado (401), ou e-mail não for verificado (401).
+            InvalidCredentialsError: Se a config estiver ausente ou dados incompletos.
+            InvalidTokenError: Se o token for inválido ou expirado.
         """
         client_id = getattr(settings, "GOOGLE_CLIENT_ID", "")
         if not client_id:
             logger.warning("Configuração GOOGLE_CLIENT_ID ausente no servidor.")
-            raise HttpError(401, "Configuração do Google OAuth ausente no servidor.")
+            raise InvalidCredentialsError(
+                "Configuração do Google OAuth ausente no servidor."
+            )
 
         try:
             id_info: dict[str, Any] = google_id_token.verify_oauth2_token(
@@ -46,17 +49,17 @@ class GoogleOAuthProvider:
             )
         except Exception as e:
             logger.warning(f"Falha ao validar token do Google: {e}")
-            raise HttpError(401, "Token do Google inválido ou expirado.") from e
+            raise InvalidTokenError("Token do Google inválido ou expirado.") from e
 
         email_verified = id_info.get("email_verified")
         if email_verified is not True:
             logger.warning("Tentativa de login com e-mail do Google não verificado.")
-            raise HttpError(401, "E-mail do Google não verificado.")
+            raise InvalidCredentialsError("E-mail do Google não verificado.")
 
         email = id_info.get("email")
         if not email:
             logger.warning("Token do Google válido mas sem campo e-mail.")
-            raise HttpError(401, "E-mail não fornecido pelo Google.")
+            raise InvalidCredentialsError("E-mail não fornecido pelo Google.")
 
         first_name = id_info.get("given_name", "")[:150]
         last_name = id_info.get("family_name", "")[:150]

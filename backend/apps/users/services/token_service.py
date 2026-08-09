@@ -2,7 +2,6 @@ import hashlib
 import logging
 
 from django.contrib.auth import authenticate
-from ninja.errors import HttpError
 from ninja_jwt.schema import (
     TokenRefreshInputSchema,
     TokenRefreshOutputSchema,
@@ -10,6 +9,7 @@ from ninja_jwt.schema import (
 )
 from ninja_jwt.tokens import RefreshToken
 
+from apps.core.exceptions import InvalidCredentialsError, InvalidTokenError
 from apps.users.schemas import TokenOut, UserDataOut, VerifyTokenOut
 
 
@@ -38,7 +38,7 @@ class TokenService:
             (refresh) e os dados básicos do usuário autenticado.
 
         Raises:
-            HttpError: Caso as credenciais sejam inválidas ou a conta esteja inativa.
+            InvalidCredentialsError: Credenciais inválidas ou conta inativa.
         """
         logger.info(f"Tentativa de obtenção de token para email={email}")
 
@@ -46,7 +46,7 @@ class TokenService:
 
         if user is None:
             logger.warning(f"Falha de autenticação para email={email}")
-            raise HttpError(401, "Credenciais inválidas ou conta desativada.")
+            raise InvalidCredentialsError()
 
         # ninja_jwt v5.4.5 alterou a assinatura de for_user
         refresh = RefreshToken.for_user(user)  # type: ignore[misc]
@@ -80,13 +80,18 @@ class TokenService:
             opcionalmente, o novo refresh token.
 
         Raises:
-            HttpError: Se o refresh token for inválido, estiver expirado ou
+            InvalidTokenError: Se o refresh token for inválido, estiver expirado ou
                 constar na blacklist.
         """
         token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de refresh de token (fp={token_fp})")
-        schema = TokenRefreshInputSchema(refresh=refresh_token)
-        result = schema.to_response_schema()
+        try:
+            schema = TokenRefreshInputSchema(refresh=refresh_token)
+            result = schema.to_response_schema()
+        except Exception as e:
+            logger.warning(f"Falha no refresh de token (fp={token_fp}): {e}")
+            raise InvalidTokenError() from e
+
         logger.info(f"Token refresh bem-sucedido (fp={token_fp})")
         return result
 
@@ -102,12 +107,16 @@ class TokenService:
             VerifyTokenOut indicando sucesso caso o token seja válido.
 
         Raises:
-            HttpError: Se o token for inválido, estiver corrompido ou expirado.
+            InvalidTokenError: Se o token for inválido, estiver corrompido ou expirado.
         """
         token_fp = hashlib.sha256(token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de verificação de token (fp={token_fp})")
-        schema = TokenVerifyInputSchema(token=token)
-        # O método levanta HttpError(401) caso o token seja inválido.
-        schema.to_response_schema()
+        try:
+            schema = TokenVerifyInputSchema(token=token)
+            schema.to_response_schema()
+        except Exception as e:
+            logger.warning(f"Falha na verificação de token (fp={token_fp}): {e}")
+            raise InvalidTokenError() from e
+
         logger.info(f"Token verificado com sucesso (fp={token_fp})")
         return VerifyTokenOut()
