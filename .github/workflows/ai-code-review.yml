@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Prepare PR Context & Diff Stat
+      - name: Prepare PR Context & Unified Diff
         env:
           PR_RAW_TITLE: ${{ github.event.pull_request.title }}
           PR_RAW_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -44,6 +44,25 @@ jobs:
           echo "DIFF_STAT<<EOF" >> $GITHUB_ENV
           echo "$DIFF_STAT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+
+          PR_DIFF=$(git diff origin/develop...HEAD -U2 | head -c 25000)
+          echo "PR_DIFF<<EOF" >> $GITHUB_ENV
+          echo "$PR_DIFF" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Clear Previous AI Review Comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
+          echo "Clearing previous bot review comments on PR #$PR_NUMBER..."
+
+          COMMENT_IDS=$(gh api "repos/$REPO/pulls/$PR_NUMBER/comments" --paginate --jq '.[] | select(.user.login == "github-actions[bot]" or .user.login == "app/github-actions") | .id' 2>/dev/null || true)
+          for cid in $COMMENT_IDS; do
+            echo "Deleting comment $cid..."
+            gh api -X DELETE "repos/$REPO/pulls/comments/$cid" || true
+          done
 
       - name: Run OpenCode AI Review
         uses: anomalyco/opencode/github@v1.18.10
@@ -98,4 +117,9 @@ jobs:
             - **Resumo Estatístico de Alterações (Diff Stat):**
             ```text
             ${{ env.DIFF_STAT }}
+            ```
+
+            - **Diff de Código Unificado (Patch Atual):**
+            ```diff
+            ${{ env.PR_DIFF }}
             ```
