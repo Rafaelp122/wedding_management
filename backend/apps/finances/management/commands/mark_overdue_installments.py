@@ -3,7 +3,7 @@ from datetime import date
 
 from django.core.management.base import BaseCommand
 
-from apps.finances.models.installment import Installment
+from apps.finances.services.installment_service import InstallmentService
 
 
 logger = logging.getLogger(__name__)
@@ -14,10 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         today = date.today()
-        updated = Installment.objects.filter(
-            status=Installment.StatusChoices.PENDING,
-            due_date__lt=today,
-        ).update(status=Installment.StatusChoices.OVERDUE)
+        updated = InstallmentService.mark_overdue_installments(today=today)
 
         if updated == 0:
             self.stdout.write(self.style.SUCCESS("Nenhuma parcela vencida encontrada."))

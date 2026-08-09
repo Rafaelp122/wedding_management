@@ -376,4 +376,26 @@ describe("WeddingFinancesView", () => {
       screen.queryByRole("heading", { name: /Buffet Premium/i }),
     ).not.toBeInTheDocument();
   });
+
+  it("auto opens expense detail sheet when expense_id URL parameter is present", async () => {
+    server.use(
+      http.get("*/api/v1/finances/expenses/", () =>
+        HttpResponse.json({ items: [mockExpense], count: 1 }),
+      ),
+      http.get("*/api/v1/finances/expenses/:uuid/", () =>
+        HttpResponse.json(mockExpense),
+      ),
+      http.get("*/api/v1/finances/installments/", () =>
+        HttpResponse.json({ items: [], count: 0 }),
+      ),
+    );
+
+    render(<WeddingFinancesView weddingUuid="w-1" />, {
+      initialEntries: ["/weddings/w-1?tab=finances&expense_id=e-1"],
+    });
+
+    expect(
+      await screen.findByRole("heading", { name: /Buffet Premium/i }),
+    ).toBeInTheDocument();
+  });
 });

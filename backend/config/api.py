@@ -22,6 +22,7 @@ from apps.finances.api import (
     installments_router,
 )
 from apps.logistics.api import contracts_router, items_router, suppliers_router
+from apps.notifications.api import notifications_router
 from apps.scheduler.api import events_router as scheduler_events_router
 from apps.scheduler.api import tasks_router as scheduler_tasks_router
 from apps.users.api import router as auth_router
@@ -170,4 +171,5 @@ api.add_router("/finances/installments/", installments_router)
 
 api.add_router("/scheduler/events/", scheduler_events_router)
 api.add_router("/scheduler/tasks/", scheduler_tasks_router)
+api.add_router("/notifications/", notifications_router)
 api.add_router("/internal/cron/", cron_router, auth=None)

@@ -550,6 +550,24 @@ class TestExpenseServiceListAndGet:
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.get(user_a.company, expense_b.uuid)
 
+    def test_get_expense_by_installment_uuid_fallback(self, user):
+        """Passar UUID da parcela retorna a despesa pai correspondente."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+        )
+        installment = InstallmentFactory(
+            expense=expense,
+            company=user.company,
+            wedding=category.wedding,
+        )
+
+        result = ExpenseService.get(user.company, installment.uuid)
+
+        assert result.uuid == expense.uuid
+
 
 @pytest.mark.django_db
 class TestExpenseServiceDelete:

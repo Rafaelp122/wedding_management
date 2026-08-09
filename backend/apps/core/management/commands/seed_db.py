@@ -31,6 +31,8 @@ from apps.logistics.tests.factories import (
     ItemFactory,
     SupplierFactory,
 )
+from apps.notifications.models import NotificationType
+from apps.notifications.services import NotificationService
 from apps.scheduler.tests.factories import EventFactory, TaskFactory
 from apps.users.tests.factories import AdminFactory, UserFactory
 from apps.weddings.models import Wedding
@@ -108,12 +110,12 @@ class Command(BaseCommand):
                 is_staff=True,
                 is_superuser=False,
             )
-            self.stdout.write(
-                self.style.SUCCESS("  ✓ Staff E2E: staff@example.com / password123")
-            )
-        planners = [e2e_planner, *UserFactory.create_batch(num_planners)]
+        existing_users = list(User.objects.filter(is_superuser=False))
+        extra_planners = UserFactory.create_batch(num_planners)
+        # Garante que todo usuário ativo local receba casamentos e notificações
+        planners = list(dict.fromkeys(existing_users + extra_planners))
         self.stdout.write(
-            self.style.SUCCESS(f"  ✓ {num_planners + 1} planners criados")
+            self.style.SUCCESS(f"  ✓ {len(planners)} planners populados no seed")
         )
 
         for planner in planners:
@@ -213,6 +215,20 @@ class Command(BaseCommand):
                             paid_date=None,
                             status=Installment.StatusChoices.OVERDUE,
                         )
+                        NotificationService.create_notification(
+                            company=planner.company,
+                            user=planner,
+                            title="Parcela Vencida",
+                            message=(
+                                f"A parcela 2/3 da despesa '{expense.name}' "
+                                f"no valor de R$ {installment_amount:.2f} venceu."
+                            ),
+                            notification_type=NotificationType.OVERDUE_INSTALLMENT,
+                            link=f"/weddings/{wedding.uuid}?tab=finances",
+                            target_type="installment",
+                            target_id=expense.uuid,
+                            wedding_id=wedding.uuid,
+                        )
                     else:
                         InstallmentFactory.create(
                             expense=expense,
@@ -223,6 +239,20 @@ class Command(BaseCommand):
                             due_date=date.today() + timedelta(days=5),
                             paid_date=None,
                             status=Installment.StatusChoices.PENDING,
+                        )
+                        NotificationService.create_notification(
+                            company=planner.company,
+                            user=planner,
+                            title="Parcela Próxima do Vencimento",
+                            message=(
+                                f"A parcela 2/3 da despesa '{expense.name}' "
+                                f"de R$ {installment_amount:.2f} vence em 5 dias."
+                            ),
+                            notification_type=NotificationType.UPCOMING_INSTALLMENT,
+                            link=f"/weddings/{wedding.uuid}?tab=finances",
+                            target_type="installment",
+                            target_id=expense.uuid,
+                            wedding_id=wedding.uuid,
                         )
 
                     InstallmentFactory.create(
@@ -238,10 +268,24 @@ class Command(BaseCommand):
 
                 TaskFactory.create_batch(3, wedding=wedding, is_completed=True)
                 TaskFactory.create(wedding=wedding, is_completed=False)
-                TaskFactory.create(
+                overdue_task = TaskFactory.create(
                     wedding=wedding,
                     is_completed=False,
                     due_date=date.today() - timedelta(days=2),
+                )
+                NotificationService.create_notification(
+                    company=planner.company,
+                    user=planner,
+                    title="Prazo de Tarefa Expirado",
+                    message=(
+                        f"A tarefa '{overdue_task.title}' do casamento "
+                        f"'{wedding}' expirou."
+                    ),
+                    notification_type=NotificationType.TASK_DEADLINE,
+                    link=f"/weddings/{wedding.uuid}?tab=planning&subtab=checklist",
+                    target_type="task",
+                    target_id=overdue_task.uuid,
+                    wedding_id=wedding.uuid,
                 )
 
                 EventFactory.create_batch(4, wedding=wedding)

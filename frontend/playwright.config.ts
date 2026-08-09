@@ -23,7 +23,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "cd ../backend && uv run uvicorn config.asgi:application --host 127.0.0.1 --port 8000",
+      command: "cd ../backend && .venv/bin/uvicorn config.asgi:application --host 127.0.0.1 --port 8000",
       url: "http://127.0.0.1:8000/api/v1/health",
       reuseExistingServer: true,
       cwd: __dirname,

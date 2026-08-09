@@ -35,7 +35,7 @@ Guias práticos passo a passo para novos desenvolvedores:
 Guias focados na solução de problemas e procedimentos do dia a dia:
 - **Ambiente Dev:** [setup-local-environment](2-how-to/dev-environment/setup-local-environment.md) | [database-migrations](2-how-to/dev-environment/database-migrations.md)
 - **Frontend:** [use-design-md-system](2-how-to/frontend/use-design-md-system.md) | [generate-orval-client](2-how-to/frontend/generate-orval-client.md) | [create-hook-form-zod](2-how-to/frontend/create-hook-form-zod.md) | [msw-testing-patterns](2-how-to/frontend/msw-testing-patterns.md) | [run-playwright-e2e](2-how-to/frontend/run-playwright-e2e.md)
-- **Backend:** [run-pytest-suite](2-how-to/backend/run-pytest-suite.md) | [seed-database](2-how-to/backend/seed-database.md) | [mark-overdue-installments](2-how-to/backend/mark-overdue-installments.md) | [register-cron-tasks](2-how-to/backend/register-cron-tasks.md) | [use-core-services](2-how-to/backend/use-core-services.md)
+- **Backend:** [run-pytest-suite](2-how-to/backend/run-pytest-suite.md) | [seed-database](2-how-to/backend/seed-database.md) | [mark-overdue-installments](2-how-to/backend/mark-overdue-installments.md) | [register-cron-tasks](2-how-to/backend/register-cron-tasks.md) | [use-core-services](2-how-to/backend/use-core-services.md) | [send-in-app-notifications](2-how-to/backend/send-in-app-notifications.md) | [create-background-tasks](2-how-to/backend/create-background-tasks.md)
 
 - **Troubleshooting / Ops:** [db-connection-locks](2-how-to/ops-troubleshooting/db-connection-locks.md) | [r2-upload-failures](2-how-to/ops-troubleshooting/r2-upload-failures.md) | [terraform-service-onboarding](2-how-to/ops-troubleshooting/terraform-service-onboarding.md)
 
@@ -52,7 +52,7 @@ Descrições técnicas puras do código, APIs e schemas do banco:
   - [budget-model](3-reference/models/finances/budget-model.md) | [budget-category-model](3-reference/models/finances/budget-category-model.md) | [expense-model](3-reference/models/finances/expense-model.md) | [installment-model](3-reference/models/finances/installment-model.md)
   - [contract-model](3-reference/models/logistics/contract-model.md) | [supplier-model](3-reference/models/logistics/supplier-model.md) | [item-model](3-reference/models/logistics/item-model.md)
   - [event-model](3-reference/models/scheduler/event-model.md) | [task-model](3-reference/models/scheduler/task-model.md)
-  - [tenant-model](3-reference/models/tenants/tenant-model.md) | [user-model](3-reference/models/users/user-model.md) | [wedding-model](3-reference/models/weddings/wedding-model.md)
+  - [tenant-model](3-reference/models/tenants/tenant-model.md) | [user-model](3-reference/models/users/user-model.md) | [wedding-model](3-reference/models/weddings/wedding-model.md) | [notification-model](3-reference/models/notifications/notification-model.md)
 
 ---
 
@@ -69,10 +69,11 @@ Contexto profundo de design, arquitetura e regras de negócio:
   - [contract-pdf-upload-r2-flow](4-explanation/architecture/contract-pdf-upload-r2-flow.md) — Upload de contratos em PDF via Cloudflare R2.
   - [ci-cd-pipeline-flow](4-explanation/architecture/ci-cd-pipeline-flow.md) — Fluxo de CI/CD e ownership dos states Terraform.
   - [architectural-guard-rails-suite](4-explanation/architecture/architectural-guard-rails-suite.md) — Suíte de testes de integridade e guard-rails de segurança.
+  - [async-tasks-architecture](4-explanation/architecture/async-tasks-architecture.md) — Arquitetura de tarefas em segundo plano e agendamentos.
 - **Hubs de Domínio Fullstack (MOCs):**
-  - [core-domain](4-explanation/domains/core-domain.md) | [dashboard-domain](4-explanation/domains/dashboard-domain.md) | [finances-domain](4-explanation/domains/finances-domain.md) | [logistics-domain](4-explanation/domains/logistics-domain.md) | [scheduler-domain](4-explanation/domains/scheduler-domain.md) | [tenants-domain](4-explanation/domains/tenants-domain.md) | [users-domain](4-explanation/domains/users-domain.md) | [weddings-domain](4-explanation/domains/weddings-domain.md)
+  - [core-domain](4-explanation/domains/core-domain.md) | [dashboard-domain](4-explanation/domains/dashboard-domain.md) | [finances-domain](4-explanation/domains/finances-domain.md) | [logistics-domain](4-explanation/domains/logistics-domain.md) | [scheduler-domain](4-explanation/domains/scheduler-domain.md) | [tenants-domain](4-explanation/domains/tenants-domain.md) | [users-domain](4-explanation/domains/users-domain.md) | [weddings-domain](4-explanation/domains/weddings-domain.md) | [notifications-domain](4-explanation/domains/notifications-domain.md)
 - **Regras de Negócio Atômicas:**
-  - [installment-overdue-logic](4-explanation/business-rules/finances/installment-overdue-logic.md) | [financial-integrity-rules](4-explanation/business-rules/finances/financial-integrity-rules.md) | [payment-schedule-integration](4-explanation/business-rules/finances/payment-schedule-integration.md) | [budget-category-distribution](4-explanation/business-rules/finances/budget-category-distribution.md)
+  - [installment-overdue-logic](4-explanation/business-rules/finances/installment-overdue-logic.md) | [financial-integrity-rules](4-explanation/business-rules/finances/financial-integrity-rules.md) | [payment-schedule-integration](4-explanation/business-rules/finances/payment-schedule-integration.md) | [budget-category-distribution](4-explanation/business-rules/finances/budget-category-distribution.md) | [in-app-notifications-rules](4-explanation/business-rules/notifications/in-app-notifications-rules.md)
   - [contract-parent-child-hierarchy](4-explanation/business-rules/logistics/contract-parent-child-hierarchy.md) | [contract-state-machine](4-explanation/business-rules/logistics/contract-state-machine.md) | [cnpj-validation-rules](4-explanation/business-rules/logistics/cnpj-validation-rules.md)
   - [recurrence-rules-engine](4-explanation/business-rules/scheduler/recurrence-rules-engine.md) | [payment-event-readonly-guard](4-explanation/business-rules/scheduler/payment-event-readonly-guard.md) | [wedding-status-lifecycle](4-explanation/business-rules/weddings/wedding-status-lifecycle.md) | [wedding-schedule-templates](4-explanation/business-rules/weddings/wedding-schedule-templates.md)
 - **Histórico Arquitetural:**

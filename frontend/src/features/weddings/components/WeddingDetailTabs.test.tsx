@@ -139,4 +139,44 @@ describe("WeddingDetailTabs", () => {
     );
     expect(await screen.findByTestId("mock-checklist-tab")).toBeInTheDocument();
   });
+
+  it("activates finances tab dynamically when expense_id parameter is present in URL", async () => {
+    render(<WeddingDetailTabs wedding={mockWedding} />, {
+      initialEntries: ["/weddings/w-1?expense_id=exp-123"],
+    });
+
+    expect(screen.getByRole("tab", { name: /finanças/i })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(await screen.findByTestId("mock-finances-tab")).toBeInTheDocument();
+  });
+
+  it("activates logistics tab dynamically when contract_id parameter is present in URL", async () => {
+    render(<WeddingDetailTabs wedding={mockWedding} />, {
+      initialEntries: ["/weddings/w-1?contract_id=contract-123"],
+    });
+
+    expect(screen.getByRole("tab", { name: /logística/i })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(await screen.findByTestId("mock-logistics-tab")).toBeInTheDocument();
+  });
+
+  it("activates planning tab and checklist subtab when task_id parameter is present in URL", async () => {
+    render(<WeddingDetailTabs wedding={mockWedding} />, {
+      initialEntries: ["/weddings/w-1?task_id=task-123"],
+    });
+
+    expect(screen.getByRole("tab", { name: /planejamento/i })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(screen.getByRole("tab", { name: /checklist/i })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
+    expect(await screen.findByTestId("mock-checklist-tab")).toBeInTheDocument();
+  });
 });

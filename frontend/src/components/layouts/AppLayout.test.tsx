@@ -31,6 +31,10 @@ vi.mock("@/hooks/useDocumentTitle", () => ({
 import { server } from "@/test-utils";
 import { http, HttpResponse } from "msw";
 import { getWeddingsListMockHandler } from "@/api/generated/v1/endpoints/weddings/weddings.msw";
+import {
+  getNotificationsListMockHandler,
+  getNotificationsUnreadCountMockHandler,
+} from "@/api/generated/v1/endpoints/notifications/notifications.msw";
 
 describe("AppLayout", () => {
   beforeEach(() => {
@@ -41,7 +45,9 @@ describe("AppLayout", () => {
       getWeddingsListMockHandler({
         items: [],
         count: 0
-      })
+      }),
+      getNotificationsListMockHandler({ items: [], count: 0 }),
+      getNotificationsUnreadCountMockHandler({ count: 0 })
     );
   });
   it("renders the page title for dashboard path", () => {
@@ -51,13 +57,13 @@ describe("AppLayout", () => {
 
   it("renders notification bell with correct aria-label", () => {
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
-    expect(screen.getByRole("button", { name: /notificações/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Notificações" })).toBeInTheDocument();
   });
 
   it("renders notification dropdown with empty state message", async () => {
     const user = userEvent.setup();
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
-    const bellButton = screen.getByRole("button", { name: /notificações/i });
+    const bellButton = screen.getByRole("button", { name: "Notificações" });
     await user.click(bellButton);
     expect(screen.getByText("Notificações")).toBeInTheDocument();
     expect(
@@ -67,7 +73,7 @@ describe("AppLayout", () => {
 
   it("does not render a static red badge", () => {
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
-    const bellButton = screen.getByRole("button", { name: /notificações/i });
+    const bellButton = screen.getByRole("button", { name: "Notificações" });
     expect(bellButton.querySelector(".bg-destructive")).not.toBeInTheDocument();
   });
 

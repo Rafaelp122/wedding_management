@@ -616,6 +616,79 @@ class InstallmentService:
                 code="installment_deletion_math_error",
             ) from e
 
+    @staticmethod
+    @transaction.atomic
+    def mark_overdue_installments(
+        company: Company | None = None,
+        today: date | None = None,
+    ) -> int:
+        """Marca como OVERDUE todas as parcelas PENDING com due_date anterior a hoje
+
+        e dispara a criação de Notificações In-App para os usuários da empresa.
+
+        Args:
+            company: Tenant opcional para restrição de escopo.
+            today: Data de referência para checagem de vencimento (opcional).
+
+        Returns:
+            int: Quantidade de parcelas atualizadas para OVERDUE.
+        """
+        if today is None:
+            today = date.today()
+
+        qs = Installment.objects.filter(
+            status=Installment.StatusChoices.PENDING,
+            due_date__lt=today,
+        )
+        if company is not None:
+            qs = qs.filter(company=company)
+
+        pending_overdue = list(
+            qs.select_related(
+                "company", "expense", "expense__wedding"
+            ).prefetch_related("company__users")
+        )
+
+        if not pending_overdue:
+            return 0
+
+        count = 0
+        from apps.notifications.models import NotificationType
+        from apps.notifications.services import NotificationService
+
+        for inst in pending_overdue:
+            inst.status = Installment.StatusChoices.OVERDUE
+            inst.save(skip_clean=True)
+            count += 1
+
+            users = [u for u in inst.company.users.all() if u.is_active]
+            for user in users:
+                NotificationService.create_async_notification(
+                    company=inst.company,
+                    user=user,
+                    title="Parcela Vencida",
+                    message=(
+                        f"A parcela {inst.installment_number} de "
+                        f"'{inst.expense.name}' no valor de R$ {inst.amount} "
+                        f"venceu em {inst.due_date.strftime('%d/%m/%Y')}."
+                    ),
+                    notification_type=NotificationType.OVERDUE_INSTALLMENT,
+                    link=(
+                        f"/weddings/{inst.expense.wedding.uuid}?tab=finances"
+                        if inst.expense and inst.expense.wedding
+                        else "/weddings"
+                    ),
+                    target_type="installment",
+                    target_id=inst.expense.uuid if inst.expense else inst.uuid,
+                    wedding_id=(
+                        inst.expense.wedding.uuid
+                        if inst.expense and inst.expense.wedding
+                        else None
+                    ),
+                )
+
+        return count
+
 
 @transaction.atomic
 def _delete_payment_events_for_expense(company: Company, expense: Expense) -> None:
