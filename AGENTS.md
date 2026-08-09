@@ -24,8 +24,9 @@
 - **Frontend**: FORBIDDEN `vi.mock("@/api/generated/...")` or per-file data hook mocks. Centralize all mocks in `test-setup.ts` via `registerMockHook`. Import testing utilities from `@/test-utils`.
 
 ### Documentation & Comments
-- **PT-BR & Standards**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
-- **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments.
+- **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/3-reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `make check-docs`.
+- **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
+- **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments or documentation.
 
 ## Subagents Dispatch Matrix
 

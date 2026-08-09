@@ -38,6 +38,10 @@ Operational guide and checklist for React 19 + TypeScript + Vite + Tailwind CSS 
 - **Server State**: Managed via Orval TanStack Query hooks. Invalidate via `queryClient.invalidateQueries()`.
 - **Routing**: Public routes use `PublicLayout`/`PublicRoute`. Protected routes use `/app` prefix with `AppLayout`. Core workflow routes static; secondary/admin routes lazy-loaded (`React.lazy` + `Suspense`).
 
-### 6. Verification
-- `cd frontend && npm run lint` (Lint + Typecheck)
-- `cd frontend && npm test` (Vitest suite)
+### 6. Component & Integration Testing
+- Every new React component, custom hook, or form MUST be accompanied by unit/integration tests (`.test.tsx`).
+- Follow `isolate: false` rules, MSW API mocks, and import utilities from `@/test-utils`. See [wedding-frontend-testing](../wedding-frontend-testing/SKILL.md) and [Frontend Testing Spec](../../../docs/3-reference/testing/frontend-testing-spec.md).
+
+### 7. Verification
+- `cd frontend && pnpm test` (Vitest suite)
+- `cd frontend && pnpm test:e2e` (Playwright E2E)

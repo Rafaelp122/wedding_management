@@ -33,7 +33,7 @@ Guias práticos passo a passo para novos desenvolvedores:
 
 ### 🛠️ 2. How-To Guides (Receitas Práticas do Dev)
 Guias focados na solução de problemas e procedimentos do dia a dia:
-- **Ambiente Dev:** [setup-local-environment](2-how-to/dev-environment/setup-local-environment.md) | [database-migrations](2-how-to/dev-environment/database-migrations.md)
+- **Ambiente & Doc:** [setup-local-environment](2-how-to/dev-environment/setup-local-environment.md) | [database-migrations](2-how-to/dev-environment/database-migrations.md) | [write-and-update-docs](2-how-to/documentation/write-and-update-docs.md)
 - **Frontend:** [use-design-md-system](2-how-to/frontend/use-design-md-system.md) | [generate-orval-client](2-how-to/frontend/generate-orval-client.md) | [create-hook-form-zod](2-how-to/frontend/create-hook-form-zod.md) | [msw-testing-patterns](2-how-to/frontend/msw-testing-patterns.md) | [run-playwright-e2e](2-how-to/frontend/run-playwright-e2e.md)
 - **Backend:** [run-pytest-suite](2-how-to/backend/run-pytest-suite.md) | [seed-database](2-how-to/backend/seed-database.md) | [mark-overdue-installments](2-how-to/backend/mark-overdue-installments.md) | [register-cron-tasks](2-how-to/backend/register-cron-tasks.md) | [use-core-services](2-how-to/backend/use-core-services.md)
 
@@ -44,7 +44,7 @@ Guias focados na solução de problemas e procedimentos do dia a dia:
 ### 📋 3. Reference (Especificações Técnicas)
 Descrições técnicas puras do código, APIs e schemas do banco:
 - **APIs e Contratos:** [openapi-schema](3-reference/api/openapi-schema.md) | [error-envelope-spec](3-reference/api/error-envelope-spec.md)
-- **Padrões Técnicos:** [commenting-standards](3-reference/architecture-standards/commenting-standards.md) | [testing-standards](3-reference/architecture-standards/testing-standards.md) | [terraform-modules-spec](3-reference/architecture-standards/terraform-modules-spec.md) | [infrastructure-services](3-reference/architecture-standards/infrastructure-services.md)
+- **Padrões Técnicos:** [documentation-standards](3-reference/architecture-standards/documentation-standards.md) | [commenting-standards](3-reference/architecture-standards/commenting-standards.md) | [commit-convention-spec](3-reference/architecture-standards/commit-convention-spec.md) | [testing-index](3-reference/testing/index.md) ([backend](3-reference/testing/backend-testing-spec.md) | [frontend](3-reference/testing/frontend-testing-spec.md) | [e2e](3-reference/testing/e2e-testing-spec.md) | [terraform](3-reference/testing/terraform-testing-spec.md)) | [ci-cd-index](3-reference/ci-cd/index.md) | [terraform-index](3-reference/terraform/index.md) | [guard-rails-index](3-reference/architecture-standards/guard-rails/index.md) | [infrastructure-services](3-reference/architecture-standards/infrastructure-services.md)
 - **Ambiente:** [environment-variables](3-reference/environment/environment-variables.md)
 - **Frontend UI:** [DESIGN.md](../DESIGN.md) | [ui-components-spec](3-reference/frontend/ui-components-spec.md) | [store-state-spec](3-reference/frontend/store-state-spec.md)
 - **Entidades de Banco (Models):**

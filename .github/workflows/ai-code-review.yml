@@ -66,17 +66,24 @@ jobs:
             4. Frontend (React, Vite, Orval hooks, shadcn/ui composition): `.agents/skills/wedding-frontend/SKILL.md`
             5. Regras de Negócio: `.agents/skills/wedding-business-rules/SKILL.md`
             6. Padrões de Testes:
-               - Backend (Pytest, factories, unit/isolated): `.agents/skills/wedding-backend-testing/SKILL.md`
-               - Frontend (Vitest, RTL, MSW, isolate: false): `.agents/skills/wedding-frontend-testing/SKILL.md`
-            7. Documentação & Comentários (PT-BR): `docs/3-reference/architecture-standards/commenting-standards.md`
+               - Backend (Pytest, factories, unit/isolated): `.agents/skills/wedding-backend-testing/SKILL.md` e `docs/3-reference/testing/backend-testing-spec.md`
+               - Frontend (Vitest, RTL, MSW, isolate: false): `.agents/skills/wedding-frontend-testing/SKILL.md` e `docs/3-reference/testing/frontend-testing-spec.md`
+               - Infraestrutura (Terraform tftest): `docs/3-reference/testing/terraform-testing-spec.md`
+            7. Padrões de Documentação & Comentários: `.agents/skills/wedding-documentation/SKILL.md`, `docs/3-reference/architecture-standards/documentation-standards.md` e `docs/3-reference/architecture-standards/commenting-standards.md`
 
             ### CONSULTA POR DEMANDA POR ESCOPO DO DIFF:
-            Inspecione a lista de arquivos alterados no Diff Stat e consulte APENAS as regras e notas atômicas em `docs/` relevantes:
-            - **Se alterar Backend (`backend/`):** Valide Service Layer em `services.py`, multi-tenancy `for_tenant(company)`, `operation_id` em `api.py` e factories em testes.
-            - **Se alterar Frontend (`frontend/`, `landing/`):** Valide conformidade com `DESIGN.md`, Orval hooks, sem `fetch`/`axios` direto, sem edição de `src/components/ui/`.
-            - **Se alterar Regras de Negócio:** Consulte a nota em `docs/4-explanation/business-rules/` e confirme `make check-docs`.
+            Inspecione a lista de arquivos alterados no Diff Stat e consulte APENAS as regras e notas atômicas em `docs/` daquela área específica:
+            - **Se alterar Backend (`backend/`):** Consulte `.agents/skills/wedding-backend/SKILL.md`. Valide a Service Layer em `services.py`, multi-tenancy `for_tenant(company)`, `operation_id` em `api.py` e uso de factories em testes.
+            - **Se alterar Frontend (`frontend/`, `landing/`):** Consulte `.agents/skills/wedding-frontend/SKILL.md` e `DESIGN.md`. Valide uso de Orval hooks, ausência de `fetch`/`axios` direto, sem edição de `src/components/ui/`.
+            - **Se alterar Regras de Negócio:** Consulte a nota atômica aplicável em `docs/4-explanation/business-rules/`.
+            - **Se alterar Documentação (`docs/`):** Consulte `.agents/skills/wedding-documentation/SKILL.md` e `docs/3-reference/architecture-standards/documentation-standards.md`. Valide enquadramento nos 4 quadrantes Diátaxis, princípio da Nota Atômica (assunto único por arquivo) e cross-linking sem duplicação de texto.
 
-            ### O QUE IGNORAR:
+            ### VALIDAÇÃO DE ATUALIZAÇÃO DA DOCUMENTAÇÃO (DOC DRIFT):
+            - Se o PR introduzir novos modelos de banco, novos endpoints de API, novas regras de negócio ou refatorações arquiteturais, verifique se a documentação técnica correspondente em `docs/` foi devidamente atualizada ou criada.
+            - Se identificar ausência de documentação para uma nova regra ou funcionalidade, sugira a criação da nota atômica correspondente seguindo o padrão do projeto.
+
+            ### O QUE IGNORAR & REGRAS DE EXECUÇÃO:
+            - **FAÇA APENAS ANÁLISE ESTÁTICA DO DIFF.** Não execute comandos de shell, scripts ou ferramentas (ex: `make check-docs`, `pytest`, `tsc`), pois o pipeline de CI já roda e valida tudo automaticamente.
             - NÃO comente sobre formatação ou estilo de código validados pela CI (ruff, prettier, actionlint).
             - NÃO comente sobre arquivos de trava ou pacotes (`*.lock`).
             - Se este PR tiver comentários anteriores ou for um evento de atualização (`synchronize`), analise as justificativas anteriores e foque no diff incremental do novo commit para não repetir apontamentos já resolvidos.
