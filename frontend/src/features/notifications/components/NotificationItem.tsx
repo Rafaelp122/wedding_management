@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, Bell, Clock, FileText } from "lucide-react";
 import React from "react";
 
-export interface NotificationItemProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NotificationItemProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onSelect"> {
   notification: NotificationOut;
   onSelect?: (notification: NotificationOut) => void;
 }
@@ -26,7 +26,7 @@ export const getNotificationIcon = (type: string) => {
 };
 
 export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationItemProps>(
-  ({ notification, onSelect, className, onClick, onKeyDown, asChild, ...props }: NotificationItemProps & { asChild?: boolean }, ref) => {
+  ({ notification, onSelect, className, onClick, onKeyDown, _asChild, ...props }: NotificationItemProps & { _asChild?: boolean }, ref) => {
     const IconComponent = getNotificationIcon(notification.type);
 
     const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {

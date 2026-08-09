@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from django.tasks import Task
+from django.utils import timezone
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.notifications.models import NotificationType
@@ -212,6 +213,18 @@ class TestNotificationServiceMarkAsRead:
 
         with pytest.raises(ObjectNotFoundError):
             NotificationService.mark_as_read(user.company, user, notification.uuid)
+
+    def test_mark_as_read_already_read_idempotent(self, user):
+        notification = NotificationFactory(
+            user=user, is_read=True, read_at=timezone.now()
+        )
+        read_at_before = notification.read_at
+
+        updated = NotificationService.mark_as_read(
+            user.company, user, notification.uuid
+        )
+        assert updated.is_read is True
+        assert updated.read_at == read_at_before
 
 
 @pytest.mark.django_db
