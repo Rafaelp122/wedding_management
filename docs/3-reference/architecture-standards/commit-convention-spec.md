@@ -44,5 +44,5 @@ Toda mensagem de commit DEVE seguir o seguinte formato:
 ## 4. Diretrizes de Mensagem
 
 1. **Idioma**: Escreva a mensagem em **Português do Brasil (PT-BR)**, em letras minúsculas e no imperativo/presente (ex: `adiciona`, `corrige`, `implementa`).
-2. **Escopo Opção**: O escopo indica o módulo alterado (ex: `finances`, `notifications`, `auth`, `terraform`, `docs`).
+2. **Escopo Opcional**: O escopo indica o módulo alterado (ex: `finances`, `notifications`, `auth`, `terraform`, `docs`).
 3. **Sem AI Mentions**: É estritamente **PROIBIDO** mencionar assistentes ou ferramentas de IA nas mensagens de commit.

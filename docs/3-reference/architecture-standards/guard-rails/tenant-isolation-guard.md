@@ -7,7 +7,7 @@
 
 ## 1. Visão Geral
 
-O guard-rail **`test_tenant_isolation.py`** audita metaprogramaticamente os modelos e consultas ORM para garantir que todas as consultas em modelos pertencentes a empresas utlizem obrigatoriamente o gerenciador `TenantManager` (`for_tenant(company)`).
+O guard-rail **`test_tenant_isolation.py`** audita metaprogramaticamente os modelos e consultas ORM para garantir que todas as consultas em modelos pertencentes a empresas utilizem obrigatoriamente o gerenciador `TenantManager` (`for_tenant(company)`).
 
 ---
 

@@ -1,10 +1,10 @@
 # 📚 Documentação Técnica — Wedding Management System
 
-Bem-vindo à documentação técnica oficial do **Wedding Management System**. Nossa documentação segue rigorosamente a metodologia **Diatázis**, dividida em 4 quadrantes conforme o objetivo do leitor:
+Bem-vindo à documentação técnica oficial do **Wedding Management System**. Nossa documentação segue rigorosamente a metodologia **Diátaxis**, dividida em 4 quadrantes conforme o objetivo do leitor:
 
 ---
 
-## 🧭 Navegação por Quadrantes (Diatázis Framework)
+## 🧭 Navegação por Quadrantes (Diátaxis Framework)
 
 ```text
                APRENDIZADO                       PRÁTICA
