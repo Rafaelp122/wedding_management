@@ -35,6 +35,11 @@ import {
 import type { NotificationOut } from "@/api/generated/v1/models";
 import { NotificationItem } from "./NotificationItem";
 
+/**
+ * Mapeia links de notificações para as rotas da aplicação.
+ * Nota Arquitetural: Os atalhos para '/finances' são intencionalmente redirecionados
+ * para '/weddings' enquanto o módulo de finanças for encapsulado como uma aba dentro do casamento.
+ */
 export const resolveNotificationRoute = (link: string): string => {
   if (!link) return "/dashboard";
   if (link.startsWith("/weddings/")) return link;

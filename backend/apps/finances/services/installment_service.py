@@ -663,7 +663,7 @@ class InstallmentService:
 
             users = [u for u in inst.company.users.all() if u.is_active]
             for user in users:
-                NotificationService.create_notification(
+                NotificationService.create_async_notification(
                     company=inst.company,
                     user=user,
                     title="Parcela Vencida",

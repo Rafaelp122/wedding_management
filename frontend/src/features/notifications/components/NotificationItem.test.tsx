@@ -139,4 +139,27 @@ describe("NotificationItem", () => {
     await user.keyboard(" ");
     expect(handleSelect).toHaveBeenCalledTimes(2);
   });
+
+  it("renders checkbox and calls onToggleSelect in selectable mode", async () => {
+    const handleToggleSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <NotificationItem
+        notification={mockNotification}
+        selectable={true}
+        selected={false}
+        onToggleSelect={handleToggleSelect}
+      />
+    );
+
+    const checkbox = screen.getByLabelText(`Selecionar notificação ${mockNotification.title}`);
+    expect(checkbox).toBeInTheDocument();
+
+    await user.click(checkbox);
+    expect(handleToggleSelect).toHaveBeenCalledWith(mockNotification);
+
+    await user.click(screen.getByRole("button"));
+    expect(handleToggleSelect).toHaveBeenCalledTimes(2);
+  });
 });
