@@ -13,22 +13,27 @@ import type {
 } from 'msw';
 
 import type {
+  BulkOperationOut,
   MarkAllReadOut,
   NotificationOut,
+  PagedNotificationOut,
   UnreadCountOut
 } from '../../models';
 
 import {
+  getNotificationsBulkDeleteResponseMock,
+  getNotificationsBulkMarkAsReadResponseMock,
+  getNotificationsClearAllResponseMock,
   getNotificationsListResponseMock,
   getNotificationsMarkAllAsReadResponseMock,
   getNotificationsMarkAsReadResponseMock,
   getNotificationsUnreadCountResponseMock
 } from './notifications.faker';
 
-export { getNotificationsListResponseMock, getNotificationsUnreadCountResponseMock, getNotificationsMarkAsReadResponseMock, getNotificationsMarkAllAsReadResponseMock } from './notifications.faker';
+export { getNotificationsListResponseMock, getNotificationsUnreadCountResponseMock, getNotificationsMarkAllAsReadResponseMock, getNotificationsBulkMarkAsReadResponseMock, getNotificationsBulkDeleteResponseMock, getNotificationsClearAllResponseMock, getNotificationsMarkAsReadResponseMock } from './notifications.faker';
 
 
-export const getNotificationsListMockHandler = (overrideResponse?: NotificationOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<NotificationOut[]> | NotificationOut[]), options?: RequestHandlerOptions) => {
+export const getNotificationsListMockHandler = (overrideResponse?: PagedNotificationOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedNotificationOut> | PagedNotificationOut), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/notifications/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 
@@ -52,6 +57,54 @@ export const getNotificationsUnreadCountMockHandler = (overrideResponse?: Unread
   }, options)
 }
 
+export const getNotificationsMarkAllAsReadMockHandler = (overrideResponse?: MarkAllReadOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<MarkAllReadOut> | MarkAllReadOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/notifications/read-all/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getNotificationsMarkAllAsReadResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getNotificationsBulkMarkAsReadMockHandler = (overrideResponse?: BulkOperationOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<BulkOperationOut> | BulkOperationOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/notifications/bulk-read/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getNotificationsBulkMarkAsReadResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getNotificationsBulkDeleteMockHandler = (overrideResponse?: BulkOperationOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<BulkOperationOut> | BulkOperationOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/notifications/bulk-delete/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getNotificationsBulkDeleteResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getNotificationsClearAllMockHandler = (overrideResponse?: BulkOperationOut | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<BulkOperationOut> | BulkOperationOut), options?: RequestHandlerOptions) => {
+  return http.delete('*/api/v1/notifications/clear-all/', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getNotificationsClearAllResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
 export const getNotificationsMarkAsReadMockHandler = (overrideResponse?: NotificationOut | ((info: Parameters<Parameters<typeof http.patch>[1]>[0]) => Promise<NotificationOut> | NotificationOut), options?: RequestHandlerOptions) => {
   return http.patch('*/api/v1/notifications/:notificationId/read/', async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
 
@@ -64,20 +117,22 @@ export const getNotificationsMarkAsReadMockHandler = (overrideResponse?: Notific
   }, options)
 }
 
-export const getNotificationsMarkAllAsReadMockHandler = (overrideResponse?: MarkAllReadOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<MarkAllReadOut> | MarkAllReadOut), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/notifications/read-all/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+export const getNotificationsDeleteMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
+  return http.delete('*/api/v1/notifications/:notificationId/', async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getNotificationsMarkAllAsReadResponseMock(),
-      { status: 200
+    return new HttpResponse(null,
+      { status: 204
       })
   }, options)
 }
 export const getNotificationsMock = () => [
   getNotificationsListMockHandler(),
   getNotificationsUnreadCountMockHandler(),
+  getNotificationsMarkAllAsReadMockHandler(),
+  getNotificationsBulkMarkAsReadMockHandler(),
+  getNotificationsBulkDeleteMockHandler(),
+  getNotificationsClearAllMockHandler(),
   getNotificationsMarkAsReadMockHandler(),
-  getNotificationsMarkAllAsReadMockHandler()
+  getNotificationsDeleteMockHandler()
 ]

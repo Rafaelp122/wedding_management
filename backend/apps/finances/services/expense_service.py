@@ -98,6 +98,21 @@ class ExpenseService:
                 .get(uuid=uuid)
             )
         except (Expense.DoesNotExist, ValueError, ValidationError) as e:
+            from apps.finances.models import Installment
+
+            installment = (
+                Installment.objects.for_tenant(company)
+                .filter(uuid=uuid)
+                .select_related("expense")
+                .first()
+            )
+            if installment and installment.expense:
+                return (
+                    cast(ExpenseQuerySet, Expense.objects.for_tenant(company))
+                    .with_details()
+                    .get(pk=installment.expense_id)
+                )
+
             raise ObjectNotFoundError(
                 detail="Despesa não encontrada ou acesso negado."
             ) from e

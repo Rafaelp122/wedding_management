@@ -1,12 +1,18 @@
 import type { NotificationOut } from "@/api/generated/v1/models";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatDateTimeBR } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Bell, Clock, FileText } from "lucide-react";
+import { AlertTriangle, Bell, Check, ChevronRight, Clock, FileText, Heart, Trash2 } from "lucide-react";
 import React from "react";
 
-export interface NotificationItemProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NotificationItemProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onSelect"> {
   notification: NotificationOut;
   onSelect?: (notification: NotificationOut) => void;
+  onMarkAsRead?: (notification: NotificationOut) => void;
+  onDelete?: (notification: NotificationOut) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (notification: NotificationOut) => void;
 }
 
 export const getNotificationIcon = (type: string) => {
@@ -26,19 +32,54 @@ export const getNotificationIcon = (type: string) => {
 };
 
 export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationItemProps>(
-  ({ notification, onSelect, className, onClick, onKeyDown, asChild, ...props }: NotificationItemProps & { asChild?: boolean }, ref) => {
+  (
+    {
+      notification,
+      onSelect,
+      onMarkAsRead,
+      onDelete,
+      selectable = false,
+      selected = false,
+      onToggleSelect,
+      className,
+      onClick,
+      onKeyDown,
+      ...props
+    }: NotificationItemProps,
+    ref
+  ) => {
     const IconComponent = getNotificationIcon(notification.type);
 
     const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
       onClick?.(e);
-      onSelect?.(notification);
+      if (selectable) {
+        onToggleSelect?.(notification);
+      } else {
+        onSelect?.(notification);
+      }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
       onKeyDown?.(e);
       if ((e.key === "Enter" || e.key === " ") && !e.defaultPrevented) {
-        onSelect?.(notification);
+        if (selectable) {
+          onToggleSelect?.(notification);
+        } else {
+          onSelect?.(notification);
+        }
       }
+    };
+
+    const handleMarkAsReadClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!notification.is_read) {
+        onMarkAsRead?.(notification);
+      }
+    };
+
+    const handleDeleteClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onDelete?.(notification);
     };
 
     return (
@@ -49,16 +90,32 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         className={cn(
-          "flex items-start gap-3 p-3 text-left rounded-lg transition-colors cursor-pointer select-none w-full",
-          "hover:bg-accent hover:text-accent-foreground",
-          !notification.is_read && "bg-muted/40 font-medium",
+          "group relative flex items-start gap-3.5 p-3.5 sm:p-4 text-left rounded-lg transition-all cursor-pointer select-none w-full border",
+          "hover:bg-accent/60 hover:text-accent-foreground",
+          !notification.is_read
+            ? "bg-muted/40 font-medium border-l-4 border-l-primary border-border"
+            : "bg-background border-border/50 text-muted-foreground",
+          selected && "bg-primary/5 border-primary/40",
           className
         )}
         {...props}
       >
+        {selectable && (
+          <div
+            className="flex items-center justify-center pt-1 pr-3 pl-1 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleSelect?.(notification)}
+              aria-label={`Selecionar notificação ${notification.title}`}
+            />
+          </div>
+        )}
+
         <div
           className={cn(
-            "p-2 rounded-full shrink-0 mt-0.5",
+            "p-2.5 rounded-full shrink-0 mt-0.5",
             notification.type === "OVERDUE_INSTALLMENT" ||
               notification.type === "CHECKLIST_ITEM_OVERDUE"
               ? "bg-destructive/10 text-destructive"
@@ -75,23 +132,84 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold truncate text-foreground">
+            <p className="text-sm font-semibold truncate text-foreground pr-1">
               {notification.title}
             </p>
-            {!notification.is_read && (
-              <span
-                data-testid="unread-indicator"
-                className="size-2 rounded-full bg-destructive shrink-0"
-                title="Não lida"
-              />
-            )}
+
+            <div className="flex items-center gap-1 shrink-0">
+              {onMarkAsRead && (
+                <button
+                  type="button"
+                  onClick={handleMarkAsReadClick}
+                  disabled={notification.is_read}
+                  title={
+                    notification.is_read
+                      ? "Esta notificação já foi marcada como lida"
+                      : "Marcar como lida"
+                  }
+                  aria-label={
+                    notification.is_read
+                      ? "Esta notificação já foi marcada como lida"
+                      : "Marcar notificação como lida"
+                  }
+                  className={cn(
+                    "p-1 rounded-md transition-colors",
+                    notification.is_read
+                      ? "text-muted-foreground/30 opacity-50 cursor-not-allowed"
+                      : "text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
+                  )}
+                >
+                  <Check className="size-3.5" />
+                </button>
+              )}
+
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  title="Apagar notificação"
+                  aria-label="Apagar notificação"
+                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              )}
+
+              {!notification.is_read && !onMarkAsRead && (
+                <span
+                  data-testid="unread-indicator"
+                  className="size-2 rounded-full bg-primary shrink-0"
+                  title="Não lida"
+                />
+              )}
+            </div>
           </div>
+
           <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
             {notification.message}
           </p>
-          <span className="text-[10px] text-muted-foreground/80 mt-1 block">
-            {formatDateTimeBR(notification.created_at)}
-          </span>
+
+          {notification.wedding_name && (
+            <div className="mt-1.5">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/50 px-2 py-0.5 rounded-full">
+                <Heart className="size-3 text-rose-500 fill-rose-500/20" aria-hidden="true" />
+                {notification.wedding_name}
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mt-2 pt-0.5">
+            <span className="text-[10px] text-muted-foreground/80">
+              {formatDateTimeBR(notification.created_at)}
+            </span>
+
+            {Boolean(notification.link) && !selectable && (
+              <div className="flex items-center gap-0.5 text-[11px] font-medium text-primary group-hover:underline">
+                <span>Ver detalhes</span>
+                <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

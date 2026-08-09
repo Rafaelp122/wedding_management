@@ -1,4 +1,5 @@
 import { render, screen, userEvent, waitFor, server } from "@/test-utils";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { NotificationsDropdown, resolveEntityUrl } from "./NotificationsDropdown";
 import {
@@ -172,12 +173,12 @@ describe("NotificationsDropdown", () => {
   it("renders trigger button and unread count badge", async () => {
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 3 }),
-      getNotificationsListMockHandler(mockNotifications)
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length })
     );
 
     render(<NotificationsDropdown />);
 
-    expect(screen.getByRole("button", { name: /notificações/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Notificações" })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("3")).toBeInTheDocument();
@@ -187,13 +188,13 @@ describe("NotificationsDropdown", () => {
   it("opens menu and displays list of notifications", async () => {
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 1 }),
-      getNotificationsListMockHandler(mockNotifications)
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length })
     );
 
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -205,13 +206,13 @@ describe("NotificationsDropdown", () => {
   it("renders empty state message when there are no notifications", async () => {
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 0 }),
-      getNotificationsListMockHandler([])
+      getNotificationsListMockHandler({ items: [], count: 0 })
     );
 
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -226,7 +227,7 @@ describe("NotificationsDropdown", () => {
 
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 1 }),
-      getNotificationsListMockHandler(mockNotifications),
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length }),
       getNotificationsMarkAsReadMockHandler((info) => {
         markAsReadSpy(info.params.notificationId);
         return {
@@ -239,7 +240,7 @@ describe("NotificationsDropdown", () => {
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -258,7 +259,7 @@ describe("NotificationsDropdown", () => {
 
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 2 }),
-      getNotificationsListMockHandler(mockNotifications),
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length }),
       getNotificationsMarkAllAsReadMockHandler(() => {
         markAllSpy();
         return { marked_count: 2 };
@@ -268,7 +269,7 @@ describe("NotificationsDropdown", () => {
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -280,5 +281,138 @@ describe("NotificationsDropdown", () => {
     await waitFor(() => {
       expect(markAllSpy).toHaveBeenCalled();
     });
+  });
+
+  it("disables mark all and clear all header buttons with tooltips when unreadCount is 0 or list is empty", async () => {
+    server.use(
+      getNotificationsUnreadCountMockHandler({ count: 0 }),
+      getNotificationsListMockHandler({ items: [], count: 0 })
+    );
+
+    const user = userEvent.setup();
+    render(<NotificationsDropdown />);
+
+    const trigger = screen.getByRole("button", { name: "Notificações" });
+    await user.click(trigger);
+
+    await waitFor(() => {
+      const markAllBtn = screen.getByTitle("Não há notificações pendentes para leitura");
+      const clearAllBtn = screen.getByTitle("Não há notificações para apagar");
+
+      expect(markAllBtn).toBeDisabled();
+      expect(clearAllBtn).toBeDisabled();
+    });
+  });
+
+  it("handles selection mode, toggling select all, and bulk operations", async () => {
+    const bulkMarkSpy = vi.fn();
+    const bulkDeleteSpy = vi.fn();
+
+    server.use(
+      getNotificationsUnreadCountMockHandler({ count: 2 }),
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length }),
+      http.post("*/api/v1/notifications/bulk-read/", async () => {
+        bulkMarkSpy();
+        return HttpResponse.json({ affected_count: 2 });
+      }),
+      http.post("*/api/v1/notifications/bulk-delete/", async () => {
+        bulkDeleteSpy();
+        return HttpResponse.json({ affected_count: 2 });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<NotificationsDropdown />);
+
+    await user.click(screen.getByRole("button", { name: "Notificações" }));
+    await waitFor(() => expect(screen.getByText("Selecionar")).toBeInTheDocument());
+
+    await user.click(screen.getByText("Selecionar"));
+    expect(screen.getByText("Selecionar todas")).toBeInTheDocument();
+
+    const selectAllCheckbox = screen.getByLabelText("Selecionar todas as notificações");
+    await user.click(selectAllCheckbox);
+    expect(screen.getByText("2 selecionada(s)")).toBeInTheDocument();
+
+    await user.click(screen.getByText("Lidas"));
+    await waitFor(() => expect(bulkMarkSpy).toHaveBeenCalled());
+
+    await user.click(selectAllCheckbox);
+    await user.click(screen.getByText("Excluir"));
+    await waitFor(() => expect(bulkDeleteSpy).toHaveBeenCalled());
+  });
+
+  it("handles single notification delete action", async () => {
+    const deleteSpy = vi.fn();
+
+    server.use(
+      getNotificationsUnreadCountMockHandler({ count: 1 }),
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length }),
+      http.delete("*/api/v1/notifications/:id/", () => {
+        deleteSpy();
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<NotificationsDropdown />);
+
+    await user.click(screen.getByRole("button", { name: "Notificações" }));
+    await waitFor(() => expect(screen.getByText("Pagamento Pendente")).toBeInTheDocument());
+
+    const deleteBtns = screen.getAllByTitle("Apagar notificação");
+    await user.click(deleteBtns[0]);
+    await waitFor(() => expect(deleteSpy).toHaveBeenCalled());
+  });
+
+  it("opens clear all dialog and calls clearAll mutation on confirm", async () => {
+    const clearAllSpy = vi.fn();
+
+    server.use(
+      getNotificationsUnreadCountMockHandler({ count: 1 }),
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length }),
+      http.delete("*/api/v1/notifications/clear-all/", () => {
+        clearAllSpy();
+        return HttpResponse.json({ affected_count: 2 });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<NotificationsDropdown />);
+
+    await user.click(screen.getByRole("button", { name: "Notificações" }));
+    await waitFor(() => expect(screen.getByTitle("Apagar todas as notificações")).toBeInTheDocument());
+
+    await user.click(screen.getByTitle("Apagar todas as notificações"));
+    expect(await screen.findByText("Apagar todas as notificações?")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /deletar/i }));
+    await waitFor(() => expect(clearAllSpy).toHaveBeenCalled());
+  });
+
+  it("renders pagination controls when total count exceeds items per page", async () => {
+    const pagedItems = Array.from({ length: 15 }, (_, i) => ({
+      ...mockNotifications[0],
+      uuid: `notif-page-${i}`,
+      title: `Notificação Pagina ${i + 1}`,
+    }));
+
+    server.use(
+      getNotificationsUnreadCountMockHandler({ count: 15 }),
+      getNotificationsListMockHandler({ items: pagedItems.slice(0, 10), count: 15 })
+    );
+
+    const user = userEvent.setup();
+    render(<NotificationsDropdown />);
+
+    await user.click(screen.getByRole("button", { name: "Notificações" }));
+    await waitFor(() => expect(screen.getByText("Página 1 de 2")).toBeInTheDocument());
+
+    const nextBtn = screen.getByRole("button", { name: /próxima/i });
+    expect(nextBtn).not.toBeDisabled();
+    await user.click(nextBtn);
+
+    const prevBtn = screen.getByRole("button", { name: /anterior/i });
+    expect(prevBtn).toBeInTheDocument();
   });
 });

@@ -663,7 +663,7 @@ class InstallmentService:
 
             users = [u for u in inst.company.users.all() if u.is_active]
             for user in users:
-                NotificationService.create_notification(
+                NotificationService.create_async_notification(
                     company=inst.company,
                     user=user,
                     title="Parcela Vencida",
@@ -679,7 +679,7 @@ class InstallmentService:
                         else "/weddings"
                     ),
                     target_type="installment",
-                    target_id=inst.uuid,
+                    target_id=inst.expense.uuid if inst.expense else inst.uuid,
                     wedding_id=(
                         inst.expense.wedding.uuid
                         if inst.expense and inst.expense.wedding

@@ -46,7 +46,7 @@ describe("AppLayout", () => {
         items: [],
         count: 0
       }),
-      getNotificationsListMockHandler([]),
+      getNotificationsListMockHandler({ items: [], count: 0 }),
       getNotificationsUnreadCountMockHandler({ count: 0 })
     );
   });
@@ -57,13 +57,13 @@ describe("AppLayout", () => {
 
   it("renders notification bell with correct aria-label", () => {
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
-    expect(screen.getByRole("button", { name: /notificações/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Notificações" })).toBeInTheDocument();
   });
 
   it("renders notification dropdown with empty state message", async () => {
     const user = userEvent.setup();
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
-    const bellButton = screen.getByRole("button", { name: /notificações/i });
+    const bellButton = screen.getByRole("button", { name: "Notificações" });
     await user.click(bellButton);
     expect(screen.getByText("Notificações")).toBeInTheDocument();
     expect(
@@ -73,7 +73,7 @@ describe("AppLayout", () => {
 
   it("does not render a static red badge", () => {
     render(<AppLayout />, { initialEntries: ["/dashboard"] });
-    const bellButton = screen.getByRole("button", { name: /notificações/i });
+    const bellButton = screen.getByRole("button", { name: "Notificações" });
     expect(bellButton.querySelector(".bg-destructive")).not.toBeInTheDocument();
   });
 

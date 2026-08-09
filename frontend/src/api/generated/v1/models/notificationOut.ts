@@ -13,6 +13,7 @@ export interface NotificationOut {
   target_type?: string;
   target_id?: string | null;
   wedding_id?: string | null;
+  wedding_name?: string | null;
   is_read: boolean;
   link: string;
   read_at?: string | null;

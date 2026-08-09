@@ -7,4 +7,12 @@
 
 export type NotificationsListParams = {
 is_read?: boolean | null;
+/**
+ * @minimum 1
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
 };

@@ -1,12 +1,13 @@
 import logging
+from collections.abc import Sequence
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import OuterRef, QuerySet, Subquery, Value
+from django.db.models.functions import Concat
 from django.utils import timezone
 
-from apps.core.exceptions import ObjectNotFoundError
-from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.notifications.models import Notification, NotificationType
 from apps.notifications.tasks import dispatch_async_notification_task
 from apps.tenants.models import Company
@@ -14,6 +15,22 @@ from apps.users.models import User
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_wedding_name_subquery() -> Subquery:
+    """Retorna uma subquery anotando o nome formatado do casamento."""
+    from apps.weddings.models import Wedding
+
+    return Subquery(
+        Wedding.objects.filter(uuid=OuterRef("wedding_id")).values(
+            name=Concat(
+                Value("Casamento de "),
+                "bride_name",
+                Value(" e "),
+                "groom_name",
+            )
+        )[:1]
+    )
 
 
 class NotificationService:
@@ -64,6 +81,9 @@ class NotificationService:
                 if isinstance(user, int)
                 else User.objects.get(uuid=user)
             )
+
+        if user.company_id != company.id:
+            raise BusinessRuleViolation("Usuário não pertence à empresa informada.")
 
         notification = Notification(
             company=company,
@@ -147,11 +167,17 @@ class NotificationService:
             is_read: Filtro opcional por estado de leitura.
 
         Returns:
-            QuerySet[Notification]: Notificações filtradas do usuário.
+            QuerySet[Notification]: Notificações filtradas do usuário com
+                wedding_name anotado em SQL.
         """
-        qs = Notification.objects.for_tenant(company).filter(user=user)
+        qs = (
+            Notification.objects.for_tenant(company)
+            .filter(user=user)
+            .annotate(wedding_name=_get_wedding_name_subquery())
+        )
         if is_read is not None:
             qs = qs.filter(is_read=is_read)
+
         return qs
 
     @staticmethod
@@ -192,19 +218,24 @@ class NotificationService:
             ObjectNotFoundError: Se a notificação não existir ou pertencer a outro
                 usuário/tenant.
         """
-        notification = get_object_or_404_for_tenant(
-            Notification,
-            company,
-            notification_id,
-            detail="Notificação não encontrada.",
+        notification = (
+            Notification.objects.for_tenant(company)
+            .annotate(wedding_name=_get_wedding_name_subquery())
+            .filter(uuid=notification_id, user=user)
+            .first()
         )
-        if notification.user_id != user.id:
+        if not notification:
             raise ObjectNotFoundError(detail="Notificação não encontrada.")
 
         if not notification.is_read:
             notification.is_read = True
             notification.read_at = timezone.now()
             notification.save()
+            logger.info(
+                "Notificação marcada como lida: uuid=%s para user_id=%s",
+                notification.uuid,
+                user.id,
+            )
 
         return notification
 
@@ -223,4 +254,120 @@ class NotificationService:
         now = timezone.now()
         qs = Notification.objects.for_tenant(company).filter(user=user, is_read=False)
         count = qs.update(is_read=True, read_at=now, updated_at=now)
+        logger.info(
+            "Todas as notificações marcadas como lidas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
+        return count
+
+    @staticmethod
+    @transaction.atomic
+    def delete_notification(
+        company: Company,
+        user: User,
+        notification_id: UUID | str,
+    ) -> None:
+        """Exclui uma notificação individual do usuário.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário autenticado solicitante.
+            notification_id: UUID público da notificação.
+
+        Raises:
+            ObjectNotFoundError: Se a notificação não existir ou pertencer
+                a outro usuário.
+        """
+        notification = (
+            Notification.objects.for_tenant(company)
+            .filter(uuid=notification_id, user=user)
+            .first()
+        )
+        if not notification:
+            raise ObjectNotFoundError(detail="Notificação não encontrada.")
+
+        notification.delete()
+        logger.info(
+            "Notificação excluída com sucesso: uuid=%s para user_id=%s",
+            notification_id,
+            user.id,
+        )
+
+    @staticmethod
+    @transaction.atomic
+    def bulk_mark_as_read(
+        company: Company,
+        user: User,
+        notification_ids: Sequence[UUID | str],
+    ) -> int:
+        """Marca uma lista de notificações selecionadas como lidas.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário cujas notificações serão atualizadas.
+            notification_ids: Sequência de UUIDs das notificações.
+
+        Returns:
+            int: Quantidade de notificações atualizadas.
+        """
+        now = timezone.now()
+        qs = Notification.objects.for_tenant(company).filter(
+            user=user, uuid__in=notification_ids, is_read=False
+        )
+        count = qs.update(is_read=True, read_at=now, updated_at=now)
+        logger.info(
+            "Notificações em lote marcadas como lidas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
+        return count
+
+    @staticmethod
+    @transaction.atomic
+    def bulk_delete(
+        company: Company,
+        user: User,
+        notification_ids: Sequence[UUID | str],
+    ) -> int:
+        """Exclui uma lista de notificações selecionadas.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário cujas notificações serão excluídas.
+            notification_ids: Sequência de UUIDs das notificações.
+
+        Returns:
+            int: Quantidade de notificações excluídas.
+        """
+        qs = Notification.objects.for_tenant(company).filter(
+            user=user, uuid__in=notification_ids
+        )
+        count, _ = qs.delete()
+        logger.info(
+            "Notificações em lote excluídas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
+        return count
+
+    @staticmethod
+    @transaction.atomic
+    def clear_all(company: Company, user: User) -> int:
+        """Exclui todas as notificações do usuário no tenant atual.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário cujas notificações serão limpas.
+
+        Returns:
+            int: Quantidade total de notificações excluídas.
+        """
+        qs = Notification.objects.for_tenant(company).filter(user=user)
+        count, _ = qs.delete()
+        logger.info(
+            "Todas as notificações foram limpas: count=%d para user_id=%s",
+            count,
+            user.id,
+        )
         return count

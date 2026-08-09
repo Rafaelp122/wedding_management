@@ -3,14 +3,16 @@ from uuid import uuid4
 
 import pytest
 from django.tasks import Task
+from django.utils import timezone
 
-from apps.core.exceptions import ObjectNotFoundError
+from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.notifications.models import NotificationType
 from apps.notifications.services import NotificationService
 from apps.notifications.tests.factories import NotificationFactory
 from apps.tenants.tests.factories import CompanyFactory
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory
+from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
@@ -81,6 +83,18 @@ class TestNotificationServiceCreate:
             NotificationService.create_notification(
                 company=user.company,
                 user=999999,
+                title="Título",
+                message="Mensagem",
+            )
+
+    def test_create_notification_failure_user_company_mismatch(self, user):
+        other_company = CompanyFactory()
+        with pytest.raises(
+            BusinessRuleViolation, match=r"Usuário não pertence à empresa informada\."
+        ):
+            NotificationService.create_notification(
+                company=other_company,
+                user=user,
                 title="Título",
                 message="Mensagem",
             )
@@ -163,6 +177,16 @@ class TestNotificationServiceList:
         assert user_notes.count() == 1
         assert user_notes.first().user == user
 
+    def test_list_notifications_with_wedding_name(self, user):
+        wedding = WeddingFactory(company=user.company)
+        NotificationFactory(user=user, wedding_id=wedding.uuid)
+
+        user_notes = NotificationService.list_notifications(user.company, user)
+        assert (
+            user_notes.first().wedding_name
+            == f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
+        )
+
 
 @pytest.mark.django_db
 class TestNotificationServiceUnreadCount:
@@ -213,6 +237,39 @@ class TestNotificationServiceMarkAsRead:
         with pytest.raises(ObjectNotFoundError):
             NotificationService.mark_as_read(user.company, user, notification.uuid)
 
+    def test_mark_as_read_already_read_idempotent(self, user):
+        notification = NotificationFactory(
+            user=user, is_read=True, read_at=timezone.now()
+        )
+        read_at_before = notification.read_at
+
+        updated = NotificationService.mark_as_read(
+            user.company, user, notification.uuid
+        )
+        assert updated.is_read is True
+        assert updated.read_at == read_at_before
+
+    def test_mark_as_read_populates_wedding_name(self, user):
+        wedding = WeddingFactory(company=user.company)
+        notification = NotificationFactory(
+            user=user, wedding_id=wedding.uuid, is_read=False
+        )
+
+        updated = NotificationService.mark_as_read(
+            user.company, user, notification.uuid
+        )
+        assert (
+            updated.wedding_name
+            == f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
+        )
+
+    def test_mark_as_read_with_nonexistent_wedding_id(self, user):
+        notification = NotificationFactory(user=user, wedding_id=uuid4(), is_read=False)
+        updated = NotificationService.mark_as_read(
+            user.company, user, notification.uuid
+        )
+        assert updated.wedding_name is None
+
 
 @pytest.mark.django_db
 class TestNotificationServiceMarkAllAsRead:
@@ -236,3 +293,60 @@ class TestNotificationServiceMarkAllAsRead:
 
         other_note.refresh_from_db()
         assert other_note.is_read is False
+
+
+@pytest.mark.django_db
+class TestNotificationServiceDelete:
+    """Testes para o método delete_notification."""
+
+    def test_delete_notification_success(self, user):
+        n = NotificationFactory(user=user)
+        NotificationService.delete_notification(user.company, user, n.uuid)
+        assert NotificationService.list_notifications(user.company, user).count() == 0
+
+    def test_delete_notification_other_user_failure(self, user):
+        other_user = UserFactory(company=user.company)
+        n = NotificationFactory(user=other_user)
+        with pytest.raises(ObjectNotFoundError):
+            NotificationService.delete_notification(user.company, user, n.uuid)
+
+
+@pytest.mark.django_db
+class TestNotificationServiceBulkOperations:
+    """Testes para os métodos de operações em lote (bulk)."""
+
+    def test_bulk_mark_as_read_success(self, user):
+        n1 = NotificationFactory(user=user, is_read=False)
+        n2 = NotificationFactory(user=user, is_read=False)
+        NotificationFactory(user=user, is_read=False)
+
+        count = NotificationService.bulk_mark_as_read(
+            user.company, user, [n1.uuid, n2.uuid]
+        )
+        assert count == 2
+        assert NotificationService.get_unread_count(user.company, user) == 1
+
+    def test_bulk_delete_success(self, user):
+        n1 = NotificationFactory(user=user)
+        n2 = NotificationFactory(user=user)
+        NotificationFactory(user=user)
+
+        count = NotificationService.bulk_delete(user.company, user, [n1.uuid, n2.uuid])
+        assert count == 2
+        assert NotificationService.list_notifications(user.company, user).count() == 1
+
+    def test_clear_all_success(self, user):
+        NotificationFactory(user=user)
+        NotificationFactory(user=user)
+        other_user = UserFactory()
+        NotificationFactory(user=other_user)
+
+        count = NotificationService.clear_all(user.company, user)
+        assert count == 2
+        assert NotificationService.list_notifications(user.company, user).count() == 0
+        assert (
+            NotificationService.list_notifications(
+                other_user.company, other_user
+            ).count()
+            == 1
+        )
