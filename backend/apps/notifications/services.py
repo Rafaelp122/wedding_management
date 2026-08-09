@@ -65,6 +65,9 @@ class NotificationService:
                 else User.objects.get(uuid=user)
             )
 
+        if user.company_id != company.id:
+            raise ValueError("Usuário não pertence à empresa informada.")
+
         notification = Notification(
             company=company,
             user=user,

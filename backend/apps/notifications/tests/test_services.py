@@ -86,6 +86,18 @@ class TestNotificationServiceCreate:
                 message="Mensagem",
             )
 
+    def test_create_notification_failure_user_company_mismatch(self, user):
+        other_company = CompanyFactory()
+        with pytest.raises(
+            ValueError, match=r"Usuário não pertence à empresa informada\."
+        ):
+            NotificationService.create_notification(
+                company=other_company,
+                user=user,
+                title="Título",
+                message="Mensagem",
+            )
+
     def test_notification_str_representation(self, user):
         notification = NotificationFactory(
             user=user, title="Novo Evento", type=NotificationType.GENERAL
