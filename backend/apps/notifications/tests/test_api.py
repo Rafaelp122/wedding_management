@@ -94,3 +94,42 @@ class TestNotificationsAPI:
 
         count_response = auth_client.get("/api/v1/notifications/unread-count/")
         assert count_response.json()["count"] == 0
+
+    def test_delete_notification_api_success(self, auth_client, user):
+        n = NotificationFactory(user=user)
+        response = auth_client.delete(f"/api/v1/notifications/{n.uuid}/")
+        assert response.status_code == 204
+
+    def test_bulk_mark_as_read_api_success(self, auth_client, user):
+        n1 = NotificationFactory(user=user, is_read=False)
+        n2 = NotificationFactory(user=user, is_read=False)
+        payload = {"notification_ids": [str(n1.uuid), str(n2.uuid)]}
+
+        response = auth_client.post(
+            "/api/v1/notifications/bulk-read/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["affected_count"] == 2
+
+    def test_bulk_delete_api_success(self, auth_client, user):
+        n1 = NotificationFactory(user=user)
+        n2 = NotificationFactory(user=user)
+        payload = {"notification_ids": [str(n1.uuid), str(n2.uuid)]}
+
+        response = auth_client.post(
+            "/api/v1/notifications/bulk-delete/",
+            data=payload,
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["affected_count"] == 2
+
+    def test_clear_all_api_success(self, auth_client, user):
+        NotificationFactory(user=user)
+        NotificationFactory(user=user)
+
+        response = auth_client.delete("/api/v1/notifications/clear-all/")
+        assert response.status_code == 200
+        assert response.json()["affected_count"] == 2

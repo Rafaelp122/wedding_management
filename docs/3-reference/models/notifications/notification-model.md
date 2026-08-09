@@ -36,6 +36,27 @@ O modelo `Notification` herda de `BaseModel` (`apps/core/models.py`), possuindo 
 
 ---
 
+## Schemas e Respostas Ninja API
+
+- `NotificationOut`: Inclui `wedding_name` resolvido dinamicamente sem N+1 queries.
+- `BulkNotificationIdsIn`: Aceita `notification_ids: list[UUID4]`.
+- `BulkOperationOut`: Retorna `affected_count: int`.
+
+---
+
+## Endpoints da API (`backend/apps/notifications/api.py`)
+
+- `GET /api/v1/notifications/` (`notifications_list`)
+- `GET /api/v1/notifications/unread-count/` (`notifications_unread_count`)
+- `PATCH /api/v1/notifications/{notification_id}/read/` (`notifications_mark_as_read`)
+- `POST /api/v1/notifications/read-all/` (`notifications_mark_all_as_read`)
+- `DELETE /api/v1/notifications/{notification_id}/` (`notifications_delete`)
+- `POST /api/v1/notifications/bulk-read/` (`notifications_bulk_mark_as_read`)
+- `POST /api/v1/notifications/bulk-delete/` (`notifications_bulk_delete`)
+- `DELETE /api/v1/notifications/clear-all/` (`notifications_clear_all`)
+
+---
+
 ## Enumerações (`TextChoices`)
 
 ### `NotificationType`

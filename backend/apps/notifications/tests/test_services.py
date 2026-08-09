@@ -261,3 +261,60 @@ class TestNotificationServiceMarkAllAsRead:
 
         other_note.refresh_from_db()
         assert other_note.is_read is False
+
+
+@pytest.mark.django_db
+class TestNotificationServiceDelete:
+    """Testes para o método delete_notification."""
+
+    def test_delete_notification_success(self, user):
+        n = NotificationFactory(user=user)
+        NotificationService.delete_notification(user.company, user, n.uuid)
+        assert NotificationService.list_notifications(user.company, user).count() == 0
+
+    def test_delete_notification_other_user_failure(self, user):
+        other_user = UserFactory(company=user.company)
+        n = NotificationFactory(user=other_user)
+        with pytest.raises(ObjectNotFoundError):
+            NotificationService.delete_notification(user.company, user, n.uuid)
+
+
+@pytest.mark.django_db
+class TestNotificationServiceBulkOperations:
+    """Testes para os métodos de operações em lote (bulk)."""
+
+    def test_bulk_mark_as_read_success(self, user):
+        n1 = NotificationFactory(user=user, is_read=False)
+        n2 = NotificationFactory(user=user, is_read=False)
+        NotificationFactory(user=user, is_read=False)
+
+        count = NotificationService.bulk_mark_as_read(
+            user.company, user, [n1.uuid, n2.uuid]
+        )
+        assert count == 2
+        assert NotificationService.get_unread_count(user.company, user) == 1
+
+    def test_bulk_delete_success(self, user):
+        n1 = NotificationFactory(user=user)
+        n2 = NotificationFactory(user=user)
+        NotificationFactory(user=user)
+
+        count = NotificationService.bulk_delete(user.company, user, [n1.uuid, n2.uuid])
+        assert count == 2
+        assert NotificationService.list_notifications(user.company, user).count() == 1
+
+    def test_clear_all_success(self, user):
+        NotificationFactory(user=user)
+        NotificationFactory(user=user)
+        other_user = UserFactory()
+        NotificationFactory(user=other_user)
+
+        count = NotificationService.clear_all(user.company, user)
+        assert count == 2
+        assert NotificationService.list_notifications(user.company, user).count() == 0
+        assert (
+            NotificationService.list_notifications(
+                other_user.company, other_user
+            ).count()
+            == 1
+        )

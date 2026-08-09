@@ -24,6 +24,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BulkNotificationIdsIn,
+  BulkOperationOut,
   ErrorResponse,
   MarkAllReadOut,
   NotificationOut,
@@ -242,6 +244,262 @@ export function useNotificationsUnreadCount<TData = Awaited<ReturnType<typeof no
 
 
 /**
+ * Marca todas as notificações pendentes do usuário como lidas.
+ * @summary Mark All As Read
+ */
+export const notificationsMarkAllAsRead = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MarkAllReadOut>(
+      {url: `/api/v1/notifications/read-all/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getNotificationsMarkAllAsReadMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, TError,void, TContext> => {
+
+const mutationKey = ['notificationsMarkAllAsRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, void> = () => {
+
+
+          return  notificationsMarkAllAsRead(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsMarkAllAsReadMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>>
+
+    export type NotificationsMarkAllAsReadMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Mark All As Read
+ */
+export const useNotificationsMarkAllAsRead = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsMarkAllAsRead>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getNotificationsMarkAllAsReadMutationOptions(options), queryClient);
+    }
+    /**
+ * Marca uma lista de notificações selecionadas como lidas.
+ * @summary Bulk Mark As Read
+ */
+export const notificationsBulkMarkAsRead = (
+    bulkNotificationIdsIn: BulkNotificationIdsIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BulkOperationOut>(
+      {url: `/api/v1/notifications/bulk-read/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkNotificationIdsIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getNotificationsBulkMarkAsReadMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsBulkMarkAsRead>>, TError,{data: BulkNotificationIdsIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsBulkMarkAsRead>>, TError,{data: BulkNotificationIdsIn}, TContext> => {
+
+const mutationKey = ['notificationsBulkMarkAsRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsBulkMarkAsRead>>, {data: BulkNotificationIdsIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  notificationsBulkMarkAsRead(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsBulkMarkAsReadMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsBulkMarkAsRead>>>
+    export type NotificationsBulkMarkAsReadMutationBody = BulkNotificationIdsIn
+    export type NotificationsBulkMarkAsReadMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Bulk Mark As Read
+ */
+export const useNotificationsBulkMarkAsRead = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsBulkMarkAsRead>>, TError,{data: BulkNotificationIdsIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsBulkMarkAsRead>>,
+        TError,
+        {data: BulkNotificationIdsIn},
+        TContext
+      > => {
+      return useMutation(getNotificationsBulkMarkAsReadMutationOptions(options), queryClient);
+    }
+    /**
+ * Exclui uma lista de notificações selecionadas.
+ * @summary Bulk Delete
+ */
+export const notificationsBulkDelete = (
+    bulkNotificationIdsIn: BulkNotificationIdsIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BulkOperationOut>(
+      {url: `/api/v1/notifications/bulk-delete/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkNotificationIdsIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getNotificationsBulkDeleteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsBulkDelete>>, TError,{data: BulkNotificationIdsIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsBulkDelete>>, TError,{data: BulkNotificationIdsIn}, TContext> => {
+
+const mutationKey = ['notificationsBulkDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsBulkDelete>>, {data: BulkNotificationIdsIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  notificationsBulkDelete(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsBulkDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsBulkDelete>>>
+    export type NotificationsBulkDeleteMutationBody = BulkNotificationIdsIn
+    export type NotificationsBulkDeleteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Bulk Delete
+ */
+export const useNotificationsBulkDelete = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsBulkDelete>>, TError,{data: BulkNotificationIdsIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsBulkDelete>>,
+        TError,
+        {data: BulkNotificationIdsIn},
+        TContext
+      > => {
+      return useMutation(getNotificationsBulkDeleteMutationOptions(options), queryClient);
+    }
+    /**
+ * Exclui todas as notificações do usuário no tenant atual.
+ * @summary Clear All
+ */
+export const notificationsClearAll = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BulkOperationOut>(
+      {url: `/api/v1/notifications/clear-all/`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+
+export const getNotificationsClearAllMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsClearAll>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsClearAll>>, TError,void, TContext> => {
+
+const mutationKey = ['notificationsClearAll'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsClearAll>>, void> = () => {
+
+
+          return  notificationsClearAll(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsClearAllMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsClearAll>>>
+
+    export type NotificationsClearAllMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Clear All
+ */
+export const useNotificationsClearAll = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsClearAll>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsClearAll>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getNotificationsClearAllMutationOptions(options), queryClient);
+    }
+    /**
  * Marca uma notificação específica como lida.
  * @summary Mark As Read
  */
@@ -305,17 +563,17 @@ export const useNotificationsMarkAsRead = <TError = ErrorType<ErrorResponse>,
       return useMutation(getNotificationsMarkAsReadMutationOptions(options), queryClient);
     }
     /**
- * Marca todas as notificações pendentes do usuário como lidas.
- * @summary Mark All As Read
+ * Exclui uma notificação individual do usuário.
+ * @summary Delete Notification
  */
-export const notificationsMarkAllAsRead = (
-
+export const notificationsDelete = (
+    notificationId: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<MarkAllReadOut>(
-      {url: `/api/v1/notifications/read-all/`, method: 'POST', signal
+      return customInstance<void>(
+      {url: `/api/v1/notifications/${notificationId}/`, method: 'DELETE', signal
     },
       options);
     }
@@ -323,11 +581,11 @@ export const notificationsMarkAllAsRead = (
 
 
 
-export const getNotificationsMarkAllAsReadMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, TError,void, TContext> => {
+export const getNotificationsDeleteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsDelete>>, TError,{notificationId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsDelete>>, TError,{notificationId: string}, TContext> => {
 
-const mutationKey = ['notificationsMarkAllAsRead'];
+const mutationKey = ['notificationsDelete'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -337,10 +595,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsDelete>>, {notificationId: string}> = (props) => {
+          const {notificationId} = props ?? {};
 
-
-          return  notificationsMarkAllAsRead(requestOptions)
+          return  notificationsDelete(notificationId,requestOptions)
         }
 
 
@@ -350,20 +608,20 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type NotificationsMarkAllAsReadMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>>
+    export type NotificationsDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsDelete>>>
 
-    export type NotificationsMarkAllAsReadMutationError = ErrorType<ErrorResponse>
+    export type NotificationsDeleteMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Mark All As Read
+ * @summary Delete Notification
  */
-export const useNotificationsMarkAllAsRead = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsMarkAllAsRead>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useNotificationsDelete = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsDelete>>, TError,{notificationId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof notificationsMarkAllAsRead>>,
+        Awaited<ReturnType<typeof notificationsDelete>>,
         TError,
-        void,
+        {notificationId: string},
         TContext
       > => {
-      return useMutation(getNotificationsMarkAllAsReadMutationOptions(options), queryClient);
+      return useMutation(getNotificationsDeleteMutationOptions(options), queryClient);
     }

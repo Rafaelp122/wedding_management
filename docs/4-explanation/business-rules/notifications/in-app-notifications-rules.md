@@ -32,3 +32,10 @@ Para simplificar chamadas síncronas e assíncronas no `NotificationService`:
 ### RN-NOTIF-05 — Estado de Leitura e Auditoria de Timestamps
 - Notificações são criadas com `is_read=False` e `read_at=None`.
 - Quando um usuário marca uma notificação individual como lida (`mark_as_read`) ou marca todas como lidas (`mark_all_as_read`), o sistema define `is_read=True`, registra `read_at=now()` e atualiza `updated_at=now()`.
+
+### RN-NOTIF-06 — Exclusão Individual e em Lote
+- O usuário pode excluir notificações individualmente (`delete_notification`) ou selecionar múltiplas notificações para exclusão em lote (`bulk_delete`).
+- As consultas de exclusão filtram estritamente por `company` e `user` (`.for_tenant(company).filter(user=user, uuid__in=ids)`), impedindo que requisições maliciosas alterem registros de outros usuários.
+
+### RN-NOTIF-07 — Apagar Todas com Confirmação Obrigatória
+- O botão "Apagar Todas" (`clear_all`) na interface de notificações deve exigir confirmação através de diálogo modal (`ConfirmDeleteDialog`), prevenindo a perda acidental do histórico de notificações.

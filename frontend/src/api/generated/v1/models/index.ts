@@ -11,6 +11,8 @@ export * from './budgetCategoryOut';
 export * from './budgetCategoryPatchIn';
 export * from './budgetOut';
 export * from './budgetPatchIn';
+export * from './bulkNotificationIdsIn';
+export * from './bulkOperationOut';
 export * from './contractFullCreateIn';
 export * from './contractIn';
 export * from './contractOut';

@@ -6,7 +6,6 @@ from django.db.models import QuerySet
 from django.utils import timezone
 
 from apps.core.exceptions import ObjectNotFoundError
-from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.notifications.models import Notification, NotificationType
 from apps.notifications.tasks import dispatch_async_notification_task
 from apps.tenants.models import Company
@@ -155,6 +154,22 @@ class NotificationService:
         qs = Notification.objects.for_tenant(company).filter(user=user)
         if is_read is not None:
             qs = qs.filter(is_read=is_read)
+
+        # Mapeia nomes de casamentos sem N+1 queries
+        wedding_ids = [n.wedding_id for n in qs if n.wedding_id]
+        if wedding_ids:
+            from apps.weddings.models import Wedding
+
+            weddings = {
+                w.uuid: f"Casamento de {w.bride_name} e {w.groom_name}"
+                for w in Wedding.objects.for_tenant(company).filter(
+                    uuid__in=wedding_ids
+                )
+            }
+            for n in qs:
+                if n.wedding_id in weddings:
+                    n.wedding_name = weddings[n.wedding_id]
+
         return qs
 
     @staticmethod
@@ -195,19 +210,31 @@ class NotificationService:
             ObjectNotFoundError: Se a notificação não existir ou pertencer a outro
                 usuário/tenant.
         """
-        notification = get_object_or_404_for_tenant(
-            Notification,
-            company,
-            notification_id,
-            detail="Notificação não encontrada.",
+        notification = (
+            Notification.objects.for_tenant(company)
+            .filter(uuid=notification_id, user=user)
+            .first()
         )
-        if notification.user_id != user.id:
+        if not notification:
             raise ObjectNotFoundError(detail="Notificação não encontrada.")
 
         if not notification.is_read:
             notification.is_read = True
             notification.read_at = timezone.now()
             notification.save()
+
+        if notification.wedding_id:
+            from apps.weddings.models import Wedding
+
+            wedding = (
+                Wedding.objects.for_tenant(company)
+                .filter(uuid=notification.wedding_id)
+                .first()
+            )
+            if wedding:
+                notification.wedding_name = (
+                    f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
+                )
 
         return notification
 
@@ -226,4 +253,94 @@ class NotificationService:
         now = timezone.now()
         qs = Notification.objects.for_tenant(company).filter(user=user, is_read=False)
         count = qs.update(is_read=True, read_at=now, updated_at=now)
+        return count
+
+    @staticmethod
+    @transaction.atomic
+    def delete_notification(
+        company: Company,
+        user: User,
+        notification_id: UUID | str,
+    ) -> None:
+        """Exclui uma notificação individual do usuário.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário autenticado solicitante.
+            notification_id: UUID público da notificação.
+
+        Raises:
+            ObjectNotFoundError: Se a notificação não existir ou pertencer
+                a outro usuário.
+        """
+        notification = (
+            Notification.objects.for_tenant(company)
+            .filter(uuid=notification_id, user=user)
+            .first()
+        )
+        if not notification:
+            raise ObjectNotFoundError(detail="Notificação não encontrada.")
+
+        notification.delete()
+
+    @staticmethod
+    @transaction.atomic
+    def bulk_mark_as_read(
+        company: Company,
+        user: User,
+        notification_ids: list[UUID | str],
+    ) -> int:
+        """Marca uma lista de notificações selecionadas como lidas.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário cujas notificações serão atualizadas.
+            notification_ids: Lista de UUIDs das notificações.
+
+        Returns:
+            int: Quantidade de notificações atualizadas.
+        """
+        now = timezone.now()
+        qs = Notification.objects.for_tenant(company).filter(
+            user=user, uuid__in=notification_ids, is_read=False
+        )
+        return qs.update(is_read=True, read_at=now, updated_at=now)
+
+    @staticmethod
+    @transaction.atomic
+    def bulk_delete(
+        company: Company,
+        user: User,
+        notification_ids: list[UUID | str],
+    ) -> int:
+        """Exclui uma lista de notificações selecionadas.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário cujas notificações serão excluídas.
+            notification_ids: Lista de UUIDs das notificações.
+
+        Returns:
+            int: Quantidade de notificações excluídas.
+        """
+        qs = Notification.objects.for_tenant(company).filter(
+            user=user, uuid__in=notification_ids
+        )
+        count, _ = qs.delete()
+        return count
+
+    @staticmethod
+    @transaction.atomic
+    def clear_all(company: Company, user: User) -> int:
+        """Exclui todas as notificações do usuário no tenant atual.
+
+        Args:
+            company: O tenant atual para isolamento multitenancy.
+            user: O usuário cujas notificações serão limpas.
+
+        Returns:
+            int: Quantidade total de notificações excluídas.
+        """
+        qs = Notification.objects.for_tenant(company).filter(user=user)
+        count, _ = qs.delete()
         return count
