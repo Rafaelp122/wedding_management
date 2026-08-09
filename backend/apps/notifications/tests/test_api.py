@@ -32,12 +32,13 @@ class TestNotificationsAPI:
         response = auth_client.get("/api/v1/notifications/")
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 2
-        uuids = {item["uuid"] for item in data}
+        items = data["items"] if isinstance(data, dict) and "items" in data else data
+        assert len(items) == 2
+        uuids = {item["uuid"] for item in items}
         assert str(n1.uuid) in uuids
         assert str(n2.uuid) in uuids
 
-        n1_data = next(item for item in data if item["uuid"] == str(n1.uuid))
+        n1_data = next(item for item in items if item["uuid"] == str(n1.uuid))
         assert n1_data["target_type"] == "installment"
         assert n1_data["target_id"] == str(target_uuid)
         assert n1_data["wedding_id"] == str(wedding_uuid)
@@ -49,8 +50,9 @@ class TestNotificationsAPI:
         response = auth_client.get("/api/v1/notifications/?is_read=false")
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 1
-        assert data[0]["uuid"] == str(n1.uuid)
+        items = data["items"] if isinstance(data, dict) and "items" in data else data
+        assert len(items) == 1
+        assert items[0]["uuid"] == str(n1.uuid)
 
     def test_get_unread_count_success(self, auth_client, user):
         NotificationFactory(user=user, is_read=False)

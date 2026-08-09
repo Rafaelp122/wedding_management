@@ -30,6 +30,7 @@ import type {
   MarkAllReadOut,
   NotificationOut,
   NotificationsListParams,
+  PagedNotificationOut,
   UnreadCountOut
 } from '../../models';
 
@@ -66,7 +67,7 @@ export const notificationsList = (
 ) => {
 
 
-      return customInstance<NotificationOut[]>(
+      return customInstance<PagedNotificationOut>(
       {url: `/api/v1/notifications/`, method: 'GET',
         params, signal
     },

@@ -16,6 +16,7 @@ import type {
   BulkOperationOut,
   MarkAllReadOut,
   NotificationOut,
+  PagedNotificationOut,
   UnreadCountOut
 } from '../../models';
 
@@ -32,7 +33,7 @@ import {
 export { getNotificationsListResponseMock, getNotificationsUnreadCountResponseMock, getNotificationsMarkAllAsReadResponseMock, getNotificationsBulkMarkAsReadResponseMock, getNotificationsBulkDeleteResponseMock, getNotificationsClearAllResponseMock, getNotificationsMarkAsReadResponseMock } from './notifications.faker';
 
 
-export const getNotificationsListMockHandler = (overrideResponse?: NotificationOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<NotificationOut[]> | NotificationOut[]), options?: RequestHandlerOptions) => {
+export const getNotificationsListMockHandler = (overrideResponse?: PagedNotificationOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedNotificationOut> | PagedNotificationOut), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/notifications/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
 

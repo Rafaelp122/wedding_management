@@ -4,6 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   CheckCheck,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
   Trash2,
 } from "lucide-react";
@@ -70,16 +72,25 @@ export const resolveEntityUrl = (notification: NotificationOut): string => {
   return "/dashboard";
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export const NotificationsDropdown: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const [page, setPage] = useState(1);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isClearAllDialogOpen, setIsClearAllDialogOpen] = useState(false);
 
-  const { data: notificationsResponse, isLoading } = useNotificationsList();
-  const notifications = notificationsResponse?.data ?? [];
+  const { data: notificationsResponse, isLoading } = useNotificationsList({
+    offset: (page - 1) * ITEMS_PER_PAGE,
+    limit: ITEMS_PER_PAGE,
+  });
+
+  const rawNotifications = notificationsResponse?.data?.items ?? [];
+  const totalCount = notificationsResponse?.data?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
 
   const { data: unreadResponse } = useNotificationsUnreadCount();
   const unreadCount = unreadResponse?.data?.count ?? 0;
@@ -126,6 +137,7 @@ export const NotificationsDropdown: React.FC = () => {
         setSelectedIds(new Set());
         setIsClearAllDialogOpen(false);
         setIsSelectionMode(false);
+        setPage(1);
       },
     },
   });
@@ -149,7 +161,9 @@ export const NotificationsDropdown: React.FC = () => {
   const handleMarkAllAsRead = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    markAllAsRead.mutate();
+    if (unreadCount > 0) {
+      markAllAsRead.mutate();
+    }
   };
 
   const toggleSelectNotification = (notification: NotificationOut) => {
@@ -165,10 +179,10 @@ export const NotificationsDropdown: React.FC = () => {
   };
 
   const handleToggleSelectAll = () => {
-    if (selectedIds.size === notifications.length) {
+    if (selectedIds.size === rawNotifications.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(notifications.map((n) => n.uuid)));
+      setSelectedIds(new Set(rawNotifications.map((n) => n.uuid)));
     }
   };
 
@@ -215,7 +229,7 @@ export const NotificationsDropdown: React.FC = () => {
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-80 sm:w-[420px] p-0 max-h-[85vh] flex flex-col">
+        <DropdownMenuContent align="end" className="w-80 sm:w-[480px] p-0 max-h-[85vh] flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2">
               <DropdownMenuLabel className="p-0 font-semibold text-sm">
@@ -228,8 +242,8 @@ export const NotificationsDropdown: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              {notifications.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {rawNotifications.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -243,32 +257,51 @@ export const NotificationsDropdown: React.FC = () => {
                 </Button>
               )}
 
-              {!isSelectionMode && unreadCount > 0 && (
+              {!isSelectionMode && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleMarkAllAsRead}
-                  disabled={markAllAsRead.isPending}
-                  className="h-7 text-xs px-2 text-primary hover:text-primary/80 font-normal cursor-pointer"
-                  title="Marcar todas como lidas"
+                  disabled={unreadCount === 0 || markAllAsRead.isPending}
+                  title={
+                    unreadCount === 0
+                      ? "Não há notificações pendentes para leitura"
+                      : "Marcar todas como lidas"
+                  }
+                  className={
+                    unreadCount === 0
+                      ? "h-7 text-xs px-2 text-muted-foreground/40 opacity-60 cursor-not-allowed font-normal"
+                      : "h-7 text-xs px-2 text-primary hover:text-primary/80 font-normal cursor-pointer"
+                  }
                 >
                   <CheckCheck className="size-3.5 mr-1" />
                   Marcar todas como lidas
                 </Button>
               )}
 
-              {!isSelectionMode && notifications.length > 0 && (
+              {!isSelectionMode && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setIsClearAllDialogOpen(true);
+                    if (rawNotifications.length > 0) {
+                      setIsClearAllDialogOpen(true);
+                    }
                   }}
-                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive cursor-pointer"
-                  title="Apagar todas as notificações"
+                  disabled={rawNotifications.length === 0}
+                  title={
+                    rawNotifications.length === 0
+                      ? "Não há notificações para apagar"
+                      : "Apagar todas as notificações"
+                  }
                   aria-label="Apagar todas as notificações"
+                  className={
+                    rawNotifications.length === 0
+                      ? "h-7 w-7 p-0 text-muted-foreground/40 opacity-60 cursor-not-allowed"
+                      : "h-7 w-7 p-0 text-muted-foreground hover:text-destructive cursor-pointer"
+                  }
                 >
                   <Trash2 className="size-3.5" />
                 </Button>
@@ -277,10 +310,10 @@ export const NotificationsDropdown: React.FC = () => {
           </div>
 
           {isSelectionMode && (
-            <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border text-xs">
+            <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted/50 border-b border-border text-xs">
               <div className="flex items-center gap-2">
                 <Checkbox
-                  checked={notifications.length > 0 && selectedIds.size === notifications.length}
+                  checked={rawNotifications.length > 0 && selectedIds.size === rawNotifications.length}
                   onCheckedChange={handleToggleSelectAll}
                   aria-label="Selecionar todas as notificações"
                 />
@@ -316,18 +349,18 @@ export const NotificationsDropdown: React.FC = () => {
             </div>
           )}
 
-          <div className="overflow-y-auto max-h-96 p-2 flex flex-col gap-1.5">
+          <div className="overflow-y-auto max-h-96 p-2.5 flex flex-col gap-2">
             {isLoading ? (
               <div className="flex items-center justify-center p-6 text-muted-foreground text-xs gap-2">
                 <Loader2 className="size-4 animate-spin" />
                 Carregando notificações...
               </div>
-            ) : notifications.length === 0 ? (
+            ) : rawNotifications.length === 0 ? (
               <div className="p-6 text-center text-xs text-muted-foreground">
                 Você não tem novas notificações no momento.
               </div>
             ) : (
-              notifications.map((notification) => (
+              rawNotifications.map((notification) => (
                 <DropdownMenuItem
                   key={notification.uuid}
                   asChild
@@ -346,6 +379,36 @@ export const NotificationsDropdown: React.FC = () => {
               ))
             )}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-card text-xs text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="h-7 text-xs px-2 gap-1 cursor-pointer disabled:opacity-40"
+              >
+                <ChevronLeft className="size-3.5" />
+                Anterior
+              </Button>
+
+              <span className="font-medium">
+                Página {page} de {totalPages}
+              </span>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="h-7 text-xs px-2 gap-1 cursor-pointer disabled:opacity-40"
+              >
+                Próxima
+                <ChevronRight className="size-3.5" />
+              </Button>
+            </div>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

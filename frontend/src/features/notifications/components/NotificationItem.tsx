@@ -73,7 +73,9 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
 
     const handleMarkAsReadClick = (e: React.MouseEvent) => {
       e.stopPropagation();
-      onMarkAsRead?.(notification);
+      if (!notification.is_read) {
+        onMarkAsRead?.(notification);
+      }
     };
 
     const handleDeleteClick = (e: React.MouseEvent) => {
@@ -89,7 +91,7 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         className={cn(
-          "group relative flex items-start gap-3 p-3 text-left rounded-lg transition-all cursor-pointer select-none w-full border",
+          "group relative flex items-start gap-3.5 p-3.5 sm:p-4 text-left rounded-lg transition-all cursor-pointer select-none w-full border",
           "hover:bg-accent/60 hover:text-accent-foreground",
           !notification.is_read
             ? "bg-muted/40 font-medium border-l-4 border-l-primary border-border"
@@ -101,7 +103,7 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
       >
         {selectable && (
           <div
-            className="flex items-center justify-center pt-1"
+            className="flex items-center justify-center pt-1 pr-3 pl-1 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
             <Checkbox
@@ -114,7 +116,7 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
 
         <div
           className={cn(
-            "p-2 rounded-full shrink-0 mt-0.5",
+            "p-2.5 rounded-full shrink-0 mt-0.5",
             notification.type === "OVERDUE_INSTALLMENT" ||
               notification.type === "CHECKLIST_ITEM_OVERDUE"
               ? "bg-destructive/10 text-destructive"
@@ -136,13 +138,27 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
             </p>
 
             <div className="flex items-center gap-1 shrink-0">
-              {!notification.is_read && onMarkAsRead && (
+              {onMarkAsRead && (
                 <button
                   type="button"
                   onClick={handleMarkAsReadClick}
-                  title="Marcar como lida"
-                  aria-label="Marcar notificação como lida"
-                  className="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  disabled={notification.is_read}
+                  title={
+                    notification.is_read
+                      ? "Esta notificação já foi marcada como lida"
+                      : "Marcar como lida"
+                  }
+                  aria-label={
+                    notification.is_read
+                      ? "Esta notificação já foi marcada como lida"
+                      : "Marcar notificação como lida"
+                  }
+                  className={cn(
+                    "p-1 rounded-md transition-colors",
+                    notification.is_read
+                      ? "text-muted-foreground/30 opacity-50 cursor-not-allowed"
+                      : "text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
+                  )}
                 >
                   <Check className="size-3.5" />
                 </button>
@@ -154,7 +170,7 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
                   onClick={handleDeleteClick}
                   title="Apagar notificação"
                   aria-label="Apagar notificação"
-                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
@@ -175,7 +191,7 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
           </p>
 
           {notification.wedding_name && (
-            <div className="mt-1">
+            <div className="mt-1.5">
               <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/50 px-2 py-0.5 rounded-full">
                 <Heart className="size-3 text-rose-500 fill-rose-500/20" aria-hidden="true" />
                 {notification.wedding_name}
@@ -183,7 +199,7 @@ export const NotificationItem = React.forwardRef<HTMLDivElement, NotificationIte
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-1.5 pt-0.5">
+          <div className="flex items-center justify-between mt-2 pt-0.5">
             <span className="text-[10px] text-muted-foreground/80">
               {formatDateTimeBR(notification.created_at)}
             </span>

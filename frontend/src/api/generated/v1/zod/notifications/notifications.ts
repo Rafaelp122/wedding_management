@@ -11,18 +11,28 @@ import * as zod from 'zod';
  * Lista as notificações do usuário logado no tenant atual.
  * @summary List Notifications
  */
+export const notificationsListQueryLimitDefault = 100;
+
+export const notificationsListQueryOffsetDefault = 0;
+export const notificationsListQueryOffsetMin = 0;
+
+
+
 export const NotificationsListQueryParams = zod.object({
-  "is_read": zod.union([zod.boolean(),zod.null()]).optional()
+  "is_read": zod.union([zod.boolean(),zod.null()]).optional(),
+  "limit": zod.int().min(1).default(notificationsListQueryLimitDefault),
+  "offset": zod.int().min(notificationsListQueryOffsetMin).default(notificationsListQueryOffsetDefault)
 })
 
-export const notificationsListResponseTargetTypeDefault = ``;
+export const notificationsListResponseItemsItemTargetTypeDefault = ``;
 
-export const NotificationsListResponseItem = zod.object({
+export const NotificationsListResponse = zod.object({
+  "items": zod.array(zod.object({
   "uuid": zod.string(),
   "title": zod.string(),
   "message": zod.string(),
   "type": zod.string(),
-  "target_type": zod.string().default(notificationsListResponseTargetTypeDefault),
+  "target_type": zod.string().default(notificationsListResponseItemsItemTargetTypeDefault),
   "target_id": zod.union([zod.string(),zod.null()]).optional(),
   "wedding_id": zod.union([zod.string(),zod.null()]).optional(),
   "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
@@ -30,8 +40,9 @@ export const NotificationsListResponseItem = zod.object({
   "link": zod.string(),
   "read_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
   "created_at": zod.iso.datetime({"offset":true})
+})),
+  "count": zod.int()
 })
-export const NotificationsListResponse = zod.array(NotificationsListResponseItem)
 
 /**
  * Retorna o total de notificações não lidas do usuário logado.

@@ -57,6 +57,7 @@ export * from './pagedEventOut';
 export * from './pagedExpenseOut';
 export * from './pagedInstallmentOut';
 export * from './pagedItemOut';
+export * from './pagedNotificationOut';
 export * from './pagedSupplierOut';
 export * from './pagedTaskOut';
 export * from './pagedWeddingOut';

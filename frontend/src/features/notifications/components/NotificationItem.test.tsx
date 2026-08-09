@@ -28,15 +28,19 @@ describe("NotificationItem", () => {
     expect(screen.getByText("Ver detalhes")).toBeInTheDocument();
   });
 
-  it("does not render unread indicator when is_read is true", () => {
+  it("renders affordance and disabled check icon when notification is read", () => {
     render(
       <NotificationItem
         notification={{ ...mockNotification, is_read: true }}
         onSelect={vi.fn()}
+        onMarkAsRead={vi.fn()}
       />
     );
 
     expect(screen.queryByTestId("unread-indicator")).not.toBeInTheDocument();
+    expect(screen.getByText("Ver detalhes")).toBeInTheDocument();
+    const disabledCheckBtn = screen.getByTitle("Esta notificação já foi marcada como lida");
+    expect(disabledCheckBtn).toBeDisabled();
   });
 
   it("calls onSelect when clicked", async () => {

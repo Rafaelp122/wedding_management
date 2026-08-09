@@ -172,12 +172,12 @@ describe("NotificationsDropdown", () => {
   it("renders trigger button and unread count badge", async () => {
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 3 }),
-      getNotificationsListMockHandler(mockNotifications)
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length })
     );
 
     render(<NotificationsDropdown />);
 
-    expect(screen.getByRole("button", { name: /notificações/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Notificações" })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("3")).toBeInTheDocument();
@@ -187,13 +187,13 @@ describe("NotificationsDropdown", () => {
   it("opens menu and displays list of notifications", async () => {
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 1 }),
-      getNotificationsListMockHandler(mockNotifications)
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length })
     );
 
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -205,13 +205,13 @@ describe("NotificationsDropdown", () => {
   it("renders empty state message when there are no notifications", async () => {
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 0 }),
-      getNotificationsListMockHandler([])
+      getNotificationsListMockHandler({ items: [], count: 0 })
     );
 
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -226,7 +226,7 @@ describe("NotificationsDropdown", () => {
 
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 1 }),
-      getNotificationsListMockHandler(mockNotifications),
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length }),
       getNotificationsMarkAsReadMockHandler((info) => {
         markAsReadSpy(info.params.notificationId);
         return {
@@ -239,7 +239,7 @@ describe("NotificationsDropdown", () => {
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -258,7 +258,7 @@ describe("NotificationsDropdown", () => {
 
     server.use(
       getNotificationsUnreadCountMockHandler({ count: 2 }),
-      getNotificationsListMockHandler(mockNotifications),
+      getNotificationsListMockHandler({ items: mockNotifications, count: mockNotifications.length }),
       getNotificationsMarkAllAsReadMockHandler(() => {
         markAllSpy();
         return { marked_count: 2 };
@@ -268,7 +268,7 @@ describe("NotificationsDropdown", () => {
     const user = userEvent.setup();
     render(<NotificationsDropdown />);
 
-    const trigger = screen.getByRole("button", { name: /notificações/i });
+    const trigger = screen.getByRole("button", { name: "Notificações" });
     await user.click(trigger);
 
     await waitFor(() => {
@@ -279,6 +279,27 @@ describe("NotificationsDropdown", () => {
 
     await waitFor(() => {
       expect(markAllSpy).toHaveBeenCalled();
+    });
+  });
+
+  it("disables mark all and clear all header buttons with tooltips when unreadCount is 0 or list is empty", async () => {
+    server.use(
+      getNotificationsUnreadCountMockHandler({ count: 0 }),
+      getNotificationsListMockHandler({ items: [], count: 0 })
+    );
+
+    const user = userEvent.setup();
+    render(<NotificationsDropdown />);
+
+    const trigger = screen.getByRole("button", { name: "Notificações" });
+    await user.click(trigger);
+
+    await waitFor(() => {
+      const markAllBtn = screen.getByTitle("Não há notificações pendentes para leitura");
+      const clearAllBtn = screen.getByTitle("Não há notificações para apagar");
+
+      expect(markAllBtn).toBeDisabled();
+      expect(clearAllBtn).toBeDisabled();
     });
   });
 });

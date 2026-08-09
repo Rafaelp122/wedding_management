@@ -1,5 +1,6 @@
 from typing import Any
 
+from ninja.pagination import paginate
 from ninja_extra import Router
 from pydantic import UUID4
 
@@ -23,6 +24,7 @@ notifications_router = Router(tags=["Notifications"])
     response=list[NotificationOut],
     operation_id="notifications_list",
 )
+@paginate
 def list_notifications(request: AuthRequest, is_read: bool | None = None) -> Any:
     """Lista as notificações do usuário logado no tenant atual."""
     user = request.user

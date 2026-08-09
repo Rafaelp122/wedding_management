@@ -46,7 +46,7 @@ describe("AppLayout", () => {
         items: [],
         count: 0
       }),
-      getNotificationsListMockHandler([]),
+      getNotificationsListMockHandler({ items: [], count: 0 }),
       getNotificationsUnreadCountMockHandler({ count: 0 })
     );
   });
