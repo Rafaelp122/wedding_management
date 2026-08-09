@@ -220,6 +220,7 @@ class NotificationService:
         Returns:
             int: Quantidade de notificações que mudaram para lidas.
         """
+        now = timezone.now()
         qs = Notification.objects.for_tenant(company).filter(user=user, is_read=False)
-        count = qs.update(is_read=True, read_at=timezone.now())
+        count = qs.update(is_read=True, read_at=now, updated_at=now)
         return count

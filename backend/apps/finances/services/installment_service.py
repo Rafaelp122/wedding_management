@@ -618,12 +618,16 @@ class InstallmentService:
 
     @staticmethod
     @transaction.atomic
-    def mark_overdue_installments(today: date | None = None) -> int:
+    def mark_overdue_installments(
+        company: Company | None = None,
+        today: date | None = None,
+    ) -> int:
         """Marca como OVERDUE todas as parcelas PENDING com due_date anterior a hoje
 
         e dispara a criação de Notificações In-App para os usuários da empresa.
 
         Args:
+            company: Tenant opcional para restrição de escopo.
             today: Data de referência para checagem de vencimento (opcional).
 
         Returns:
@@ -632,11 +636,17 @@ class InstallmentService:
         if today is None:
             today = date.today()
 
+        qs = Installment.objects.filter(
+            status=Installment.StatusChoices.PENDING,
+            due_date__lt=today,
+        )
+        if company is not None:
+            qs = qs.filter(company=company)
+
         pending_overdue = list(
-            Installment.objects.filter(
-                status=Installment.StatusChoices.PENDING,
-                due_date__lt=today,
-            ).select_related("company", "expense")
+            qs.select_related(
+                "company", "expense", "expense__wedding"
+            ).prefetch_related("company__users")
         )
 
         if not pending_overdue:
@@ -651,7 +661,7 @@ class InstallmentService:
             inst.save(skip_clean=True)
             count += 1
 
-            users = list(inst.company.users.filter(is_active=True))
+            users = [u for u in inst.company.users.all() if u.is_active]
             for user in users:
                 NotificationService.create_notification(
                     company=inst.company,

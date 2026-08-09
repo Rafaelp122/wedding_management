@@ -57,6 +57,25 @@ class TestNotificationServiceCreate:
         assert notification.target_id == target_uuid
         assert notification.wedding_id == wedding_uuid
 
+    def test_create_notification_with_company_and_user_ids(self, user):
+        notification_by_id = NotificationService.create_notification(
+            company=user.company.id,
+            user=user.id,
+            title="Title ID",
+            message="Message ID",
+        )
+        assert notification_by_id.company == user.company
+        assert notification_by_id.user == user
+
+        notification_by_uuid = NotificationService.create_notification(
+            company=user.company.uuid,
+            user=user.uuid,
+            title="Title UUID",
+            message="Message UUID",
+        )
+        assert notification_by_uuid.company == user.company
+        assert notification_by_uuid.user == user
+
     def test_create_notification_failure_invalid_user_id(self, user):
         with pytest.raises(User.DoesNotExist):
             NotificationService.create_notification(
@@ -65,6 +84,12 @@ class TestNotificationServiceCreate:
                 title="Título",
                 message="Mensagem",
             )
+
+    def test_notification_str_representation(self, user):
+        notification = NotificationFactory(
+            user=user, title="Novo Evento", type=NotificationType.GENERAL
+        )
+        assert str(notification) == f"[GENERAL] Novo Evento (user_id={user.id})"
 
 
 @pytest.mark.django_db

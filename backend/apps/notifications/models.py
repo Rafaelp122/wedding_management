@@ -74,4 +74,4 @@ class Notification(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"[{self.type}] {self.title} ({self.user})"
+        return f"[{self.type}] {self.title} (user_id={self.user_id})"

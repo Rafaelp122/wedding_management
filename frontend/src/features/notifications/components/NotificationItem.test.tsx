@@ -73,4 +73,24 @@ describe("NotificationItem", () => {
       unmount();
     });
   });
+
+  it("calls onSelect when Enter or Space key is pressed", async () => {
+    const handleSelect = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <NotificationItem
+        notification={mockNotification}
+        onSelect={handleSelect}
+      />
+    );
+
+    const button = screen.getByRole("button");
+    button.focus();
+    await user.keyboard("{Enter}");
+    expect(handleSelect).toHaveBeenCalledTimes(1);
+
+    await user.keyboard(" ");
+    expect(handleSelect).toHaveBeenCalledTimes(2);
+  });
 });
