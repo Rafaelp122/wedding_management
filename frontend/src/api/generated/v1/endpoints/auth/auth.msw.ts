@@ -13,6 +13,7 @@ import type {
 } from 'msw';
 
 import type {
+  PasswordResetResponseOut,
   TokenOut,
   TokenRefreshOutputSchema,
   UserOut,
@@ -22,12 +23,14 @@ import type {
 import {
   getAuthGoogleLoginResponseMock,
   getAuthObtainTokenResponseMock,
+  getAuthPasswordResetConfirmResponseMock,
+  getAuthPasswordResetRequestResponseMock,
   getAuthRefreshTokenResponseMock,
   getAuthRegisterUserResponseMock,
   getAuthVerifyTokenResponseMock
 } from './auth.faker';
 
-export { getAuthRegisterUserResponseMock, getAuthObtainTokenResponseMock, getAuthRefreshTokenResponseMock, getAuthVerifyTokenResponseMock, getAuthGoogleLoginResponseMock } from './auth.faker';
+export { getAuthRegisterUserResponseMock, getAuthObtainTokenResponseMock, getAuthRefreshTokenResponseMock, getAuthVerifyTokenResponseMock, getAuthGoogleLoginResponseMock, getAuthPasswordResetRequestResponseMock, getAuthPasswordResetConfirmResponseMock } from './auth.faker';
 
 
 export const getAuthRegisterUserMockHandler = (overrideResponse?: UserOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserOut> | UserOut), options?: RequestHandlerOptions) => {
@@ -89,10 +92,36 @@ export const getAuthGoogleLoginMockHandler = (overrideResponse?: TokenOut | ((in
       })
   }, options)
 }
+
+export const getAuthPasswordResetRequestMockHandler = (overrideResponse?: PasswordResetResponseOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<PasswordResetResponseOut> | PasswordResetResponseOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/auth/password-reset/request/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getAuthPasswordResetRequestResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getAuthPasswordResetConfirmMockHandler = (overrideResponse?: PasswordResetResponseOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<PasswordResetResponseOut> | PasswordResetResponseOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/auth/password-reset/confirm/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getAuthPasswordResetConfirmResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getAuthMock = () => [
   getAuthRegisterUserMockHandler(),
   getAuthObtainTokenMockHandler(),
   getAuthRefreshTokenMockHandler(),
   getAuthVerifyTokenMockHandler(),
-  getAuthGoogleLoginMockHandler()
+  getAuthGoogleLoginMockHandler(),
+  getAuthPasswordResetRequestMockHandler(),
+  getAuthPasswordResetConfirmMockHandler()
 ]

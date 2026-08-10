@@ -107,9 +107,12 @@ export function LoginForm() {
                   <FormLabel className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider">
                     Senha de Acesso
                   </FormLabel>
-                  <span className="text-[10px] font-semibold text-aura-600 dark:text-aura-400 hover:underline cursor-pointer">
+                  <Link
+                    to="/forgot-password"
+                    className="text-[10px] font-semibold text-aura-600 dark:text-aura-400 hover:underline cursor-pointer"
+                  >
                     Esqueceu sua senha?
-                  </span>
+                  </Link>
                 </div>
                 <FormControl>
                   <PasswordInput

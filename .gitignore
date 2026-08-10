@@ -35,6 +35,8 @@ coverage.xml
 *.py.cover
 .hypothesis/
 .pytest_cache/
+.obsidian/
+
 cover/
 *.mo
 *.pot

@@ -9,6 +9,7 @@ import {
 } from '@faker-js/faker';
 
 import type {
+  PasswordResetResponseOut,
   TokenOut,
   TokenRefreshOutputSchema,
   UserOut,
@@ -25,4 +26,8 @@ export const getAuthRefreshTokenResponseMock = (overrideResponse: Partial<Extrac
 export const getAuthVerifyTokenResponseMock = (overrideResponse: Partial<Extract<VerifyTokenOut, object>> = {}): VerifyTokenOut => ({...overrideResponse})
 
 export const getAuthGoogleLoginResponseMock = (overrideResponse: Partial<Extract<TokenOut, object>> = {}): TokenOut => ({access: faker.string.alpha({length: {min: 10, max: 20}}), refresh: faker.string.alpha({length: {min: 10, max: 20}}), user: {id: faker.number.int(), email: faker.string.alpha({length: {min: 10, max: 20}}), first_name: faker.string.alpha({length: {min: 10, max: 20}}), last_name: faker.string.alpha({length: {min: 10, max: 20}})}, ...overrideResponse})
+
+export const getAuthPasswordResetRequestResponseMock = (overrideResponse: Partial<Extract<PasswordResetResponseOut, object>> = {}): PasswordResetResponseOut => ({message: faker.string.alpha({length: {min: 10, max: 20}}), ...overrideResponse})
+
+export const getAuthPasswordResetConfirmResponseMock = (overrideResponse: Partial<Extract<PasswordResetResponseOut, object>> = {}): PasswordResetResponseOut => ({message: faker.string.alpha({length: {min: 10, max: 20}}), ...overrideResponse})
 
