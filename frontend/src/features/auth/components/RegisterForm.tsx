@@ -59,8 +59,8 @@ export function RegisterForm() {
       { data: payload },
       {
         onSuccess: () => {
-          toast.success("Conta criada com sucesso! Faça login para continuar.");
-          navigate("/login");
+          toast.success("Conta criada com sucesso! Verifique sua caixa de entrada para ativar a conta.");
+          navigate(`/verify-email-pending?email=${encodeURIComponent(data.email)}`);
         },
         onError: (error: ErrorType) => {
           const hasFieldErrors = mapErrorsToForm(error, form.setError);

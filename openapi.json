@@ -580,6 +580,152 @@
         }
       }
     },
+    "/api/v1/auth/verify-email/": {
+      "post": {
+        "operationId": "auth_verify_email",
+        "summary": "Verify Email",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponseOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Verifica o token de e-mail e ativa o usuário.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/resend-verification/": {
+      "post": {
+        "operationId": "auth_resend_verification",
+        "summary": "Resend Verification",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponseOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Reenvia o e-mail de verificação para o usuário (se não estiver verificado).",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
     "/api/v1/weddings/lookup/": {
       "get": {
         "operationId": "weddings_lookup",
@@ -5462,6 +5608,11 @@
               }
             ],
             "title": "Company Slug"
+          },
+          "is_email_verified": {
+            "default": false,
+            "title": "Is Email Verified",
+            "type": "boolean"
           }
         },
         "required": [
@@ -5574,6 +5725,11 @@
           "last_name": {
             "title": "Last Name",
             "type": "string"
+          },
+          "is_email_verified": {
+            "default": false,
+            "title": "Is Email Verified",
+            "type": "boolean"
           }
         },
         "required": [
@@ -5728,6 +5884,51 @@
           "new_password"
         ],
         "title": "PasswordResetConfirmIn",
+        "type": "object"
+      },
+      "VerifyEmailResponseOut": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "VerifyEmailResponseOut",
+        "type": "object"
+      },
+      "VerifyEmailIn": {
+        "properties": {
+          "uid": {
+            "title": "Uid",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "token"
+        ],
+        "title": "VerifyEmailIn",
+        "type": "object"
+      },
+      "ResendVerificationIn": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "ResendVerificationIn",
         "type": "object"
       },
       "WeddingLookupOut": {

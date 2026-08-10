@@ -159,6 +159,8 @@ NINJA_EXTRA = {
         "auth_google": "5/m",
         "auth_password_reset_request": "3/m",  # pragma: allowlist secret
         "auth_password_reset_confirm": "5/m",  # pragma: allowlist secret
+        "auth_verify_email_token": "5/m",  # pragma: allowlist secret
+        "auth_resend_verification": "3/m",  # pragma: allowlist secret
     }
 }
 

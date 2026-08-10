@@ -45,6 +45,19 @@ class TokenService:
         user = authenticate(request=None, username=email, password=password)
 
         if user is None:
+            from apps.users.models import User
+
+            potential_user = User.objects.filter(email=email).first()
+            if potential_user and potential_user.check_password(password):
+                if not potential_user.is_email_verified:
+                    from apps.core.exceptions import ApplicationError
+
+                    raise ApplicationError(
+                        "Sua conta ainda não foi ativada. "
+                        "Verifique sua caixa de entrada para confirmar seu e-mail.",
+                        code="email_not_verified",
+                    )
+
             logger.warning(f"Falha de autenticação para email={email}")
             raise HttpError(401, "Credenciais inválidas ou conta desativada.")
 
@@ -58,6 +71,7 @@ class TokenService:
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
+                is_email_verified=user.is_email_verified,
             ),
         )
 

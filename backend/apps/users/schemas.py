@@ -22,6 +22,7 @@ class UserDataOut(Schema):
     email: str
     first_name: str
     last_name: str
+    is_email_verified: bool = False
 
 
 class TokenOut(Schema):
@@ -56,6 +57,7 @@ class UserOut(Schema):
     first_name: str
     last_name: str
     company_slug: str | None = None
+    is_email_verified: bool = False
 
     @staticmethod
     def resolve_company_slug(obj):
@@ -79,4 +81,17 @@ class PasswordResetConfirmIn(Schema):
 class PasswordResetResponseOut(Schema):
     """Schema de resposta para operações de redefinição de senha."""
 
+    message: str
+
+
+class VerifyEmailIn(Schema):
+    uid: str
+    token: str
+
+
+class ResendVerificationIn(Schema):
+    email: EmailStr
+
+
+class VerifyEmailResponseOut(Schema):
     message: str

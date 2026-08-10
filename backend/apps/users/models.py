@@ -162,6 +162,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text="Indica se o usuário está ativo no sistema.",
     )
+    is_email_verified = models.BooleanField(
+        "E-mail Verificado",
+        default=False,
+        help_text="Indica se o e-mail do usuário foi verificado.",
+    )
+    email_verified_at = models.DateTimeField(
+        "Data de Verificação do E-mail",
+        null=True,
+        blank=True,
+        help_text="Data e hora da confirmação do e-mail.",
+    )
     date_joined = models.DateTimeField(
         "Data de Cadastro",
         default=timezone.now,

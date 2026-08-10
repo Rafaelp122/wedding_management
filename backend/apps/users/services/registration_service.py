@@ -73,8 +73,14 @@ class RegistrationService:
                 company=company,
                 first_name=first_name,
                 last_name=last_name,
-                is_active=True,
+                is_active=False,
+                is_email_verified=False,
             )
+            from apps.users.services.email_verification_service import (
+                EmailVerificationService,
+            )
+
+            EmailVerificationService.send_verification_email(user)
         except IntegrityError as e:
             logger.exception(f"Erro de integridade ao registrar usuário {email}")
             raise DomainIntegrityError(
