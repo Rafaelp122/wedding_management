@@ -4,25 +4,86 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
-import {
-  faker
-} from '@faker-js/faker';
+import { faker } from "@faker-js/faker";
 
 import type {
+  PasswordResetResponseOut,
   TokenOut,
   TokenRefreshOutputSchema,
   UserOut,
-  VerifyTokenOut
-} from '../../models';
+  VerifyTokenOut,
+} from "../../models";
 
+export const getAuthRegisterUserResponseMock = (
+  overrideResponse: Partial<Extract<UserOut, object>> = {},
+): UserOut => ({
+  uuid: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  first_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  last_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  company_slug: faker.helpers.arrayElement([
+    faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    undefined,
+  ]),
+  ...overrideResponse,
+});
 
-export const getAuthRegisterUserResponseMock = (overrideResponse: Partial<Extract<UserOut, object>> = {}): UserOut => ({uuid: faker.string.alpha({length: {min: 10, max: 20}}), email: faker.string.alpha({length: {min: 10, max: 20}}), first_name: faker.string.alpha({length: {min: 10, max: 20}}), last_name: faker.string.alpha({length: {min: 10, max: 20}}), company_slug: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), undefined]), ...overrideResponse})
+export const getAuthObtainTokenResponseMock = (
+  overrideResponse: Partial<Extract<TokenOut, object>> = {},
+): TokenOut => ({
+  access: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  refresh: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  user: {
+    id: faker.number.int(),
+    email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    first_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    last_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
 
-export const getAuthObtainTokenResponseMock = (overrideResponse: Partial<Extract<TokenOut, object>> = {}): TokenOut => ({access: faker.string.alpha({length: {min: 10, max: 20}}), refresh: faker.string.alpha({length: {min: 10, max: 20}}), user: {id: faker.number.int(), email: faker.string.alpha({length: {min: 10, max: 20}}), first_name: faker.string.alpha({length: {min: 10, max: 20}}), last_name: faker.string.alpha({length: {min: 10, max: 20}})}, ...overrideResponse})
+export const getAuthRefreshTokenResponseMock = (
+  overrideResponse: Partial<Extract<TokenRefreshOutputSchema, object>> = {},
+): TokenRefreshOutputSchema => ({
+  refresh: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  access: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  ...overrideResponse,
+});
 
-export const getAuthRefreshTokenResponseMock = (overrideResponse: Partial<Extract<TokenRefreshOutputSchema, object>> = {}): TokenRefreshOutputSchema => ({refresh: faker.string.alpha({length: {min: 10, max: 20}}), access: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), ...overrideResponse})
+export const getAuthVerifyTokenResponseMock = (
+  overrideResponse: Partial<Extract<VerifyTokenOut, object>> = {},
+): VerifyTokenOut => ({ ...overrideResponse });
 
-export const getAuthVerifyTokenResponseMock = (overrideResponse: Partial<Extract<VerifyTokenOut, object>> = {}): VerifyTokenOut => ({...overrideResponse})
+export const getAuthGoogleLoginResponseMock = (
+  overrideResponse: Partial<Extract<TokenOut, object>> = {},
+): TokenOut => ({
+  access: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  refresh: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  user: {
+    id: faker.number.int(),
+    email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    first_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    last_name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
 
-export const getAuthGoogleLoginResponseMock = (overrideResponse: Partial<Extract<TokenOut, object>> = {}): TokenOut => ({access: faker.string.alpha({length: {min: 10, max: 20}}), refresh: faker.string.alpha({length: {min: 10, max: 20}}), user: {id: faker.number.int(), email: faker.string.alpha({length: {min: 10, max: 20}}), first_name: faker.string.alpha({length: {min: 10, max: 20}}), last_name: faker.string.alpha({length: {min: 10, max: 20}})}, ...overrideResponse})
+export const getAuthPasswordResetRequestResponseMock = (
+  overrideResponse: Partial<Extract<PasswordResetResponseOut, object>> = {},
+): PasswordResetResponseOut => ({
+  message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});
 
+export const getAuthPasswordResetConfirmResponseMock = (
+  overrideResponse: Partial<Extract<PasswordResetResponseOut, object>> = {},
+): PasswordResetResponseOut => ({
+  message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});

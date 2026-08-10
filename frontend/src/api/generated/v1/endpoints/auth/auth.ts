@@ -17,6 +17,9 @@ import type {
 import type {
   ErrorResponse,
   GoogleAuthIn,
+  PasswordResetConfirmIn,
+  PasswordResetRequestIn,
+  PasswordResetResponseOut,
   RegisterIn,
   TokenOut,
   TokenPayloadIn,
@@ -372,4 +375,134 @@ export const useAuthGoogleLogin = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getAuthGoogleLoginMutationOptions(options), queryClient);
+    }
+    /**
+ * Solicita a redefinição de senha para um e-mail.
+ * @summary Request Password Reset
+ */
+export const authPasswordResetRequest = (
+    passwordResetRequestIn: PasswordResetRequestIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PasswordResetResponseOut>(
+      {url: `/api/v1/auth/password-reset/request/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: passwordResetRequestIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthPasswordResetRequestMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetRequest>>, TError,{data: PasswordResetRequestIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetRequest>>, TError,{data: PasswordResetRequestIn}, TContext> => {
+
+const mutationKey = ['authPasswordResetRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPasswordResetRequest>>, {data: PasswordResetRequestIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authPasswordResetRequest(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthPasswordResetRequestMutationResult = NonNullable<Awaited<ReturnType<typeof authPasswordResetRequest>>>
+    export type AuthPasswordResetRequestMutationBody = PasswordResetRequestIn
+    export type AuthPasswordResetRequestMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Request Password Reset
+ */
+export const useAuthPasswordResetRequest = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetRequest>>, TError,{data: PasswordResetRequestIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authPasswordResetRequest>>,
+        TError,
+        {data: PasswordResetRequestIn},
+        TContext
+      > => {
+      return useMutation(getAuthPasswordResetRequestMutationOptions(options), queryClient);
+    }
+    /**
+ * Confirma a redefinição de senha usando UID, token e a nova senha.
+ * @summary Confirm Password Reset
+ */
+export const authPasswordResetConfirm = (
+    passwordResetConfirmIn: PasswordResetConfirmIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PasswordResetResponseOut>(
+      {url: `/api/v1/auth/password-reset/confirm/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: passwordResetConfirmIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthPasswordResetConfirmMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetConfirm>>, TError,{data: PasswordResetConfirmIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetConfirm>>, TError,{data: PasswordResetConfirmIn}, TContext> => {
+
+const mutationKey = ['authPasswordResetConfirm'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPasswordResetConfirm>>, {data: PasswordResetConfirmIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authPasswordResetConfirm(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthPasswordResetConfirmMutationResult = NonNullable<Awaited<ReturnType<typeof authPasswordResetConfirm>>>
+    export type AuthPasswordResetConfirmMutationBody = PasswordResetConfirmIn
+    export type AuthPasswordResetConfirmMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Confirm Password Reset
+ */
+export const useAuthPasswordResetConfirm = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetConfirm>>, TError,{data: PasswordResetConfirmIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authPasswordResetConfirm>>,
+        TError,
+        {data: PasswordResetConfirmIn},
+        TContext
+      > => {
+      return useMutation(getAuthPasswordResetConfirmMutationOptions(options), queryClient);
     }
