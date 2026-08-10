@@ -1,5 +1,7 @@
 """Serviço de verificação de e-mail de usuários."""
 
+from typing import cast
+
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
@@ -28,8 +30,8 @@ class EmailVerificationService:
         uidb64 = urlsafe_base64_encode(force_bytes(str(user.uuid)))
         token = default_token_generator.make_token(user)
 
-        base_url = frontend_url or getattr(
-            settings, "FRONTEND_URL", "http://localhost:5173"
+        base_url = frontend_url or cast(
+            str, getattr(settings, "FRONTEND_URL", "http://localhost:5173")
         )
         verify_url = f"{base_url.rstrip('/')}/verify-email?uid={uidb64}&token={token}"
 
