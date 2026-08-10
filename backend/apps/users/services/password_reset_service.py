@@ -22,6 +22,14 @@ class PasswordResetService:
     def request_password_reset(email: str, frontend_url: str | None = None) -> None:
         """
         Inicia o fluxo de redefinição de senha para o e-mail fornecido.
+
+        Gera token seguro via PasswordResetTokenGenerator e envia o e-mail
+        transacional contendo o link de recuperação. Retorna silenciosamente
+        caso o usuário não exista para evitar enumeração de e-mails.
+
+        Args:
+            email: E-mail do usuário que solicita a redefinição.
+            frontend_url: URL base opcional do frontend para construção do link.
         """
         email_normalized = email.strip().lower()
         user = User.objects.filter(
@@ -65,7 +73,16 @@ class PasswordResetService:
     def confirm_password_reset(uid: str, token: str, new_password: str) -> None:
         """
         Confirma a redefinição de senha validando o uid e o token.
+
+        Args:
+            uid: Identificador do usuário em base64 (uidb64).
+            token: Token criptográfico de redefinição de senha.
+            new_password: Nova senha a ser validada e salva para o usuário.
+
+        Raises:
+            ApplicationError: Se o token for inválido, expirado ou se a senha for fraca.
         """
+
         try:
             uid_decoded = urlsafe_base64_decode(uid).decode("utf-8")
             user = User.objects.get(uuid=uid_decoded)

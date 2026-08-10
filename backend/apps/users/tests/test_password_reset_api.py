@@ -31,7 +31,22 @@ class TestPasswordResetAPI:
         )
         assert len(mail.outbox) == 1
 
+    def test_request_password_reset_non_existent_user(self, unauth_client):
+        response = unauth_client.post(
+            "/api/v1/auth/password-reset/request/",
+            {"email": "notfound@example.com"},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        assert (
+            response.json()["message"]
+            == "Se o e-mail existir, você receberá as instruções em breve."
+        )
+        assert len(mail.outbox) == 0
+
     def test_confirm_password_reset(self, unauth_client):
+
         user = UserFactory()
         uid = urlsafe_base64_encode(force_bytes(str(user.uuid)))
         token = default_token_generator.make_token(user)
