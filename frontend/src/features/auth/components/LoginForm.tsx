@@ -57,7 +57,7 @@ export function LoginForm() {
               error,
               "E-mail ou senha incorretos.",
             );
-            if (code === "email_not_verified" || message.toLowerCase().includes("verificado") || message.toLowerCase().includes("verified")) {
+            if (code === "email_not_verified") {
               toast.error("Sua conta ainda não foi ativada.", {
                 action: {
                   label: "Ativar conta",

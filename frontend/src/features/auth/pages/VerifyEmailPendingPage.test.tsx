@@ -38,6 +38,15 @@ describe("VerifyEmailPendingPage", () => {
     expect(screen.getByRole("button", { name: "Reenviar e-mail de ativação" })).toBeDisabled();
   });
 
+  it("should allow entering an email after an expired link", async () => {
+    render(<VerifyEmailPendingPage />, { initialEntries: ["/verify-email-pending"] });
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("E-mail"), "test@example.com");
+
+    expect(screen.getByRole("button", { name: "Reenviar e-mail de ativação" })).toBeEnabled();
+  });
+
   it("should successfully resend verification email", async () => {
     server.use(
       getAuthResendVerificationMockHandler()

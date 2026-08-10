@@ -80,7 +80,10 @@ class RegistrationService:
                 EmailVerificationService,
             )
 
-            EmailVerificationService.send_verification_email(user)
+            transaction.on_commit(
+                lambda: EmailVerificationService.send_verification_email(user),
+                robust=True,
+            )
         except IntegrityError as e:
             logger.exception(f"Erro de integridade ao registrar usuário {email}")
             raise DomainIntegrityError(

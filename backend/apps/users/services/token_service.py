@@ -2,7 +2,6 @@ import hashlib
 import logging
 
 from django.contrib.auth import authenticate
-from ninja.errors import HttpError
 from ninja_jwt.schema import (
     TokenRefreshInputSchema,
     TokenRefreshOutputSchema,
@@ -10,6 +9,7 @@ from ninja_jwt.schema import (
 )
 from ninja_jwt.tokens import RefreshToken
 
+from apps.core.exceptions import AuthenticationFailedError
 from apps.users.schemas import TokenOut, UserDataOut, VerifyTokenOut
 
 
@@ -38,7 +38,8 @@ class TokenService:
             (refresh) e os dados básicos do usuário autenticado.
 
         Raises:
-            HttpError: Caso as credenciais sejam inválidas ou a conta esteja inativa.
+            AuthenticationFailedError: Caso as credenciais sejam inválidas ou a conta
+                esteja inativa.
         """
         logger.info(f"Tentativa de obtenção de token para email={email}")
 
@@ -50,16 +51,17 @@ class TokenService:
             potential_user = User.objects.filter(email=email).first()
             if potential_user and potential_user.check_password(password):
                 if not potential_user.is_email_verified:
-                    from apps.core.exceptions import ApplicationError
-
-                    raise ApplicationError(
+                    raise AuthenticationFailedError(
                         "Sua conta ainda não foi ativada. "
                         "Verifique sua caixa de entrada para confirmar seu e-mail.",
                         code="email_not_verified",
                     )
 
             logger.warning(f"Falha de autenticação para email={email}")
-            raise HttpError(401, "Credenciais inválidas ou conta desativada.")
+            raise AuthenticationFailedError(
+                "Credenciais inválidas ou conta desativada.",
+                code="invalid_credentials",
+            )
 
         # ninja_jwt v5.4.5 alterou a assinatura de for_user
         refresh = RefreshToken.for_user(user)  # type: ignore[misc]

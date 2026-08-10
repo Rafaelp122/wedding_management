@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
@@ -5,20 +6,22 @@ import { useAuthResendVerification } from "@/api/generated/v1/endpoints/auth/aut
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { AuthLayout } from "../components/AuthLayout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ErrorType } from "@/api/api-client";
 import { getApiErrorInfo } from "@/api/error-utils";
 
 export function VerifyEmailPendingPage() {
   useDocumentTitle("Ativação de Conta Pendente");
   const [searchParams] = useSearchParams();
-  const email = searchParams.get("email") || "";
+  const [email, setEmail] = useState(searchParams.get("email") || "");
 
   const { mutate, isPending } = useAuthResendVerification<ErrorType>();
 
   const handleResend = () => {
-    if (!email) return;
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) return;
     mutate(
-      { data: { email } },
+      { data: { email: normalizedEmail } },
       {
         onSuccess: () => {
           toast.success("Novo e-mail de confirmação enviado com sucesso!");
@@ -58,9 +61,22 @@ export function VerifyEmailPendingPage() {
         </div>
 
         <div className="w-full space-y-4 pt-4">
+          <div className="space-y-2 text-left">
+            <label htmlFor="verification-email" className="text-sm font-medium">
+              E-mail
+            </label>
+            <Input
+              id="verification-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="seu@email.com"
+              autoComplete="email"
+            />
+          </div>
           <Button
             onClick={handleResend}
-            disabled={!email || isPending}
+            disabled={!email.trim() || isPending}
             variant="outline"
             className="w-full border-zinc-200 dark:border-zinc-800"
           >

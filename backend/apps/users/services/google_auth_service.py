@@ -1,9 +1,10 @@
 import logging
 
 from django.db import transaction
-from ninja.errors import HttpError
+from django.utils import timezone
 from ninja_jwt.tokens import RefreshToken
 
+from apps.core.exceptions import AuthenticationFailedError
 from apps.core.services.social_auth import (
     GoogleOAuthProvider,
     OAuthProvider,
@@ -72,6 +73,7 @@ class GoogleAuthService:
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
+                is_email_verified=user.is_email_verified,
             ),
         )
 
@@ -105,7 +107,14 @@ class GoogleAuthService:
                 logger.warning(
                     f"Tentativa de login via Google em conta inativa: {masked_email}"
                 )
-                raise HttpError(401, "Credenciais inválidas ou conta desativada.")
+                raise AuthenticationFailedError(
+                    "Credenciais inválidas ou conta desativada.",
+                    code="invalid_credentials",
+                )
+            if not user.is_email_verified and user_info.email_verified:
+                user.is_email_verified = True
+                user.email_verified_at = timezone.now()
+                user.save(update_fields=["is_email_verified", "email_verified_at"])
         else:
             logger.info(f"Provisionando novo usuário via Google OAuth: {masked_email}")
             random_password = User.objects.make_random_password()
@@ -122,6 +131,10 @@ class GoogleAuthService:
                 first_name=user_info.first_name,
                 last_name=user_info.last_name,
                 is_active=True,
+                is_email_verified=user_info.email_verified,
+                email_verified_at=(
+                    timezone.now() if user_info.email_verified else None
+                ),
             )
 
         return user
