@@ -14,6 +14,9 @@ from apps.core.schemas import ErrorResponse
 
 from .schemas import (
     GoogleAuthIn,
+    PasswordResetConfirmIn,
+    PasswordResetRequestIn,
+    PasswordResetResponseOut,
     RegisterIn,
     TokenOut,
     TokenPayloadIn,
@@ -21,6 +24,7 @@ from .schemas import (
     VerifyTokenOut,
 )
 from .services.google_auth_service import GoogleAuthService
+from .services.password_reset_service import PasswordResetService
 from .services.registration_service import RegistrationService
 from .services.token_service import TokenService
 
@@ -43,6 +47,14 @@ class VerifyAnonThrottle(AnonRateThrottle):
 
 class GoogleAuthAnonThrottle(AnonRateThrottle):
     scope = "auth_google"
+
+
+class PasswordResetRequestAnonThrottle(AnonRateThrottle):
+    scope = "auth_password_reset_request"
+
+
+class PasswordResetConfirmAnonThrottle(AnonRateThrottle):
+    scope = "auth_password_reset_confirm"
 
 
 router = Router(tags=["auth"])
@@ -156,3 +168,43 @@ def google_login(request: HttpRequest, payload: GoogleAuthIn) -> TokenOut:
     retorna os tokens JWT. Caso contrário, registra o usuário e cria um workspace.
     """
     return GoogleAuthService.authenticate_with_google(payload.id_token)
+
+
+@router.post(
+    "/password-reset/request/",
+    response={200: PasswordResetResponseOut, **MUTATION_ERROR_RESPONSES},
+    auth=None,
+    throttle=[PasswordResetRequestAnonThrottle()],
+    operation_id="auth_password_reset_request",
+)
+def request_password_reset(
+    request: HttpRequest, payload: PasswordResetRequestIn
+) -> tuple[int, Any]:
+    """
+    Solicita a redefinição de senha para um e-mail.
+    """
+    PasswordResetService.request_password_reset(email=payload.email)
+    return 200, PasswordResetResponseOut(
+        message="Se o e-mail existir, você receberá as instruções em breve."
+    )
+
+
+@router.post(
+    "/password-reset/confirm/",
+    response={200: PasswordResetResponseOut, **MUTATION_ERROR_RESPONSES},
+    auth=None,
+    throttle=[PasswordResetConfirmAnonThrottle()],
+    operation_id="auth_password_reset_confirm",
+)
+def confirm_password_reset(
+    request: HttpRequest, payload: PasswordResetConfirmIn
+) -> tuple[int, Any]:
+    """
+    Confirma a redefinição de senha usando UID, token e a nova senha.
+    """
+    PasswordResetService.confirm_password_reset(
+        uid=payload.uid,
+        token=payload.token,
+        new_password=payload.new_password,
+    )
+    return 200, PasswordResetResponseOut(message="Senha redefinida com sucesso.")

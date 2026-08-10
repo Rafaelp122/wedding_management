@@ -110,3 +110,33 @@ export const AuthGoogleLoginResponse = zod.object({
 }).describe('Dados básicos do usuário retornados no token JWT.')
 }).describe('Resposta de autenticação com tokens JWT e dados do usuário.')
 
+/**
+ * Solicita a redefinição de senha para um e-mail.
+ * @summary Request Password Reset
+ */
+export const AuthPasswordResetRequestBody = zod.object({
+  "email": zod.email()
+}).describe('Schema para solicitação de redefinição de senha.')
+
+export const AuthPasswordResetRequestResponse = zod.object({
+  "message": zod.string()
+}).describe('Schema de resposta para operações de redefinição de senha.')
+
+/**
+ * Confirma a redefinição de senha usando UID, token e a nova senha.
+ * @summary Confirm Password Reset
+ */
+export const authPasswordResetConfirmBodyNewPasswordMin = 8;
+
+
+
+export const AuthPasswordResetConfirmBody = zod.object({
+  "uid": zod.string(),
+  "token": zod.string(),
+  "new_password": zod.string().min(authPasswordResetConfirmBodyNewPasswordMin)
+}).describe('Schema para confirmação de redefinição de senha.')
+
+export const AuthPasswordResetConfirmResponse = zod.object({
+  "message": zod.string()
+}).describe('Schema de resposta para operações de redefinição de senha.')
+

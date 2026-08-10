@@ -60,3 +60,23 @@ class UserOut(Schema):
     @staticmethod
     def resolve_company_slug(obj):
         return obj.company.slug if obj.company else None
+
+
+class PasswordResetRequestIn(Schema):
+    """Schema para solicitação de redefinição de senha."""
+
+    email: EmailStr
+
+
+class PasswordResetConfirmIn(Schema):
+    """Schema para confirmação de redefinição de senha."""
+
+    uid: str
+    token: str
+    new_password: str = Field(min_length=8)
+
+
+class PasswordResetResponseOut(Schema):
+    """Schema de resposta para operações de redefinição de senha."""
+
+    message: str
