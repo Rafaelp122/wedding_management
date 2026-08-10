@@ -27,7 +27,8 @@ class TestRegistrationService:
         assert user.email == email
         assert user.first_name == first_name
         assert user.last_name == last_name
-        assert user.is_active is True
+        assert user.is_active is False
+        assert user.is_email_verified is False
 
         # Verifica se a empresa foi criada
         assert user.company is not None

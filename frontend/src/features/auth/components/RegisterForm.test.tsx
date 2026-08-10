@@ -91,7 +91,7 @@ describe("RegisterForm", () => {
     expect(passwordInputs[1]).toHaveValue("12345678");
   });
 
-  it("submits and navigates to login on success", async () => {
+  it("submits and navigates to pending verification on success", async () => {
     const mockUser: UserOut = {
       uuid: "abc-123",
       email: "joao@test.com",
@@ -124,9 +124,11 @@ describe("RegisterForm", () => {
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(
-        "Conta criada com sucesso! Faça login para continuar.",
+        "Conta criada com sucesso! Verifique sua caixa de entrada para ativar a conta.",
       );
-      expect(mockNavigate).toHaveBeenCalledWith("/login");
+      expect(mockNavigate).toHaveBeenCalledWith(
+        "/verify-email-pending?email=joao%40test.com",
+      );
     });
   });
 

@@ -18,6 +18,7 @@ import pytest
 from django.test import override_settings
 from ninja.errors import HttpError
 
+from apps.core.exceptions import AuthenticationFailedError
 from apps.core.services.social_auth import GoogleOAuthProvider
 from apps.users.models import User
 from apps.users.services.google_auth_service import GoogleAuthService
@@ -45,6 +46,7 @@ def test_authenticate_with_google_existing_user(user_factory):
 
     assert result.user.email == existing_user.email
     assert result.user.id == existing_user.id
+    assert result.user.is_email_verified is True
     assert result.access is not None
     assert result.refresh is not None
 
@@ -66,6 +68,8 @@ def test_authenticate_with_google_new_user():
 
     created_user = User.objects.get(email="newgoogleuser@example.com")
     assert created_user.is_active is True
+    assert created_user.is_email_verified is True
+    assert created_user.email_verified_at is not None
     assert created_user.first_name == "Maria"
     assert created_user.last_name == "Silva"
     assert created_user.company is not None
@@ -73,6 +77,7 @@ def test_authenticate_with_google_new_user():
 
     assert result.user.email == "newgoogleuser@example.com"
     assert result.user.id == created_user.id
+    assert result.user.is_email_verified is True
     assert result.access is not None
     assert result.refresh is not None
 
@@ -92,7 +97,7 @@ def test_authenticate_with_google_inactive_user(user_factory):
     }
 
     with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_id_info):
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(AuthenticationFailedError) as exc_info:
             GoogleAuthService.authenticate_with_google("valid_id_token")
 
     assert exc_info.value.status_code == 401

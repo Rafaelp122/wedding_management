@@ -53,11 +53,20 @@ export function LoginForm() {
         onError: (error: ErrorType) => {
           const hasFieldErrors = mapErrorsToForm(error, form.setError);
           if (!hasFieldErrors) {
-            const { message } = getApiErrorInfo(
+            const { message, code } = getApiErrorInfo(
               error,
               "E-mail ou senha incorretos.",
             );
-            toast.error(message);
+            if (code === "email_not_verified") {
+              toast.error("Sua conta ainda não foi ativada.", {
+                action: {
+                  label: "Ativar conta",
+                  onClick: () => navigate(`/verify-email-pending?email=${encodeURIComponent(data.email)}`),
+                },
+              });
+            } else {
+              toast.error(message);
+            }
           }
         },
       },

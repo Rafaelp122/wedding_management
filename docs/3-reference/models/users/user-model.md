@@ -26,6 +26,8 @@ Herda de `AbstractBaseUser` e `PermissionsMixin`. Utiliza o e-mail como `USERNAM
 - `last_name`: CharField(max_length=150) — Sobrenome.
 - `is_staff`: BooleanField (default=False) — Acesso ao admin Django.
 - `is_active`: BooleanField (default=False) — Status de ativação da conta.
+- `is_email_verified`: BooleanField (default=False) — Indica que o e-mail foi confirmado.
+- `email_verified_at`: DateTimeField (null=True) — Data e hora da confirmação do e-mail.
 - `date_joined`: DateTimeField (default=timezone.now) — Data de cadastro.
 - `created_at` / `updated_at`: DateTimeField — Timestamps de auditoria do registro.
 

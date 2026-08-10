@@ -17,6 +17,7 @@ import type {
   TokenOut,
   TokenRefreshOutputSchema,
   UserOut,
+  VerifyEmailResponseOut,
   VerifyTokenOut
 } from '../../models';
 
@@ -27,10 +28,12 @@ import {
   getAuthPasswordResetRequestResponseMock,
   getAuthRefreshTokenResponseMock,
   getAuthRegisterUserResponseMock,
+  getAuthResendVerificationResponseMock,
+  getAuthVerifyEmailResponseMock,
   getAuthVerifyTokenResponseMock
 } from './auth.faker';
 
-export { getAuthRegisterUserResponseMock, getAuthObtainTokenResponseMock, getAuthRefreshTokenResponseMock, getAuthVerifyTokenResponseMock, getAuthGoogleLoginResponseMock, getAuthPasswordResetRequestResponseMock, getAuthPasswordResetConfirmResponseMock } from './auth.faker';
+export { getAuthRegisterUserResponseMock, getAuthObtainTokenResponseMock, getAuthRefreshTokenResponseMock, getAuthVerifyTokenResponseMock, getAuthGoogleLoginResponseMock, getAuthPasswordResetRequestResponseMock, getAuthPasswordResetConfirmResponseMock, getAuthVerifyEmailResponseMock, getAuthResendVerificationResponseMock } from './auth.faker';
 
 
 export const getAuthRegisterUserMockHandler = (overrideResponse?: UserOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserOut> | UserOut), options?: RequestHandlerOptions) => {
@@ -116,6 +119,30 @@ export const getAuthPasswordResetConfirmMockHandler = (overrideResponse?: Passwo
       })
   }, options)
 }
+
+export const getAuthVerifyEmailMockHandler = (overrideResponse?: VerifyEmailResponseOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<VerifyEmailResponseOut> | VerifyEmailResponseOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/auth/verify-email/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getAuthVerifyEmailResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getAuthResendVerificationMockHandler = (overrideResponse?: VerifyEmailResponseOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<VerifyEmailResponseOut> | VerifyEmailResponseOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/auth/resend-verification/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getAuthResendVerificationResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getAuthMock = () => [
   getAuthRegisterUserMockHandler(),
   getAuthObtainTokenMockHandler(),
@@ -123,5 +150,7 @@ export const getAuthMock = () => [
   getAuthVerifyTokenMockHandler(),
   getAuthGoogleLoginMockHandler(),
   getAuthPasswordResetRequestMockHandler(),
-  getAuthPasswordResetConfirmMockHandler()
+  getAuthPasswordResetConfirmMockHandler(),
+  getAuthVerifyEmailMockHandler(),
+  getAuthResendVerificationMockHandler()
 ]

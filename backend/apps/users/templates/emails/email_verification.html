@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirme seu e-mail</title>
+</head>
+<body>
+    <p>Olá, {{ user.first_name }}!</p>
+    <p>Por favor, confirme seu e-mail clicando no link abaixo:</p>
+    <p><a href="{{ verify_url }}">{{ verify_url }}</a></p>
+    <p>Se você não se cadastrou, pode ignorar este e-mail.</p>
+</body>
+</html>

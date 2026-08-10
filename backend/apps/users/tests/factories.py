@@ -43,6 +43,14 @@ class UserFactory(factory.django.DjangoModelFactory):
     # No modelo o padrão é False, mas para testes a maioria dos fluxos
     # exige um usuário ativo para passar pelo JWT
     is_active = True
+    is_email_verified = True
+
+    @factory.lazy_attribute
+    def email_verified_at(self):
+        from django.utils import timezone
+
+        return timezone.now()
+
     is_staff = False
     is_superuser = False
 
