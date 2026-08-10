@@ -55,3 +55,13 @@ class TestPasswordResetService:
             )
 
         assert exc_info.value.code == "invalid_token"
+
+    def test_confirm_password_reset_weak_password(self):
+        user = UserFactory(email="weak@example.com")
+        uid = urlsafe_base64_encode(force_bytes(str(user.uuid)))
+        token = default_token_generator.make_token(user)
+
+        with pytest.raises(ApplicationError) as exc_info:
+            PasswordResetService.confirm_password_reset(uid, token, "12345678")
+
+        assert exc_info.value.code == "invalid_password"
