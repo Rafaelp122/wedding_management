@@ -9,7 +9,7 @@ from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from .models import User
 
 
-class CustomUserChangeForm(UserChangeForm):
+class CustomUserChangeForm(UserChangeForm):  # type: ignore[type-arg]
     """Formulário de edição de usuário existente.
 
     Herda de UserChangeForm do Django e adapta para o modelo User customizado.
@@ -21,7 +21,7 @@ class CustomUserChangeForm(UserChangeForm):
         fields = "__all__"
 
 
-class CustomUserCreationForm(UserCreationForm):
+class CustomUserCreationForm(UserCreationForm[User]):
     """Formulário de criação de novo usuário.
 
     Herda de UserCreationForm do Django e adapta para o modelo User customizado.

@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -10,7 +11,7 @@ from apps.notifications.tasks import dispatch_async_notification_task
 class TestNotificationTasks:
     """Testes de integração para as tarefas assíncronas de notificação."""
 
-    def test_dispatch_async_notification_task_with_pk_ids(self, user):
+    def test_dispatch_async_notification_task_with_pk_ids(self, user: Any) -> None:
         dispatch_async_notification_task.func(
             company_id=user.company.id,
             user_id=user.id,
@@ -23,7 +24,7 @@ class TestNotificationTasks:
         assert notification.message == "Async Task Message"
         assert notification.company == user.company
 
-    def test_dispatch_async_notification_task_with_uuids(self, user):
+    def test_dispatch_async_notification_task_with_uuids(self, user: Any) -> None:
         target_uuid = str(uuid4())
         wedding_uuid = str(uuid4())
 

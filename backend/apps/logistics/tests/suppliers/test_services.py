@@ -1,3 +1,4 @@
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
@@ -7,18 +8,41 @@ from apps.core.exceptions import ObjectNotFoundError
 from apps.logistics.models import Contract, Supplier
 from apps.logistics.schemas import SupplierIn, SupplierPatchIn
 from apps.logistics.services.supplier_service import SupplierService
-from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.logistics.tests.factories import (
+    ContractFactory as _ContractFactory,
+)
+from apps.logistics.tests.factories import (
+    SupplierFactory as _SupplierFactory,
+)
+from apps.users.models import User
+from apps.users.tests.factories import UserFactory as _UserFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
+    return cast(Supplier, _SupplierFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
 class TestSupplierServiceCreate:
     """Testes de criação de fornecedores via SupplierService."""
 
-    def test_create_supplier_success(self, user):
+    def test_create_supplier_success(self, user: Any) -> None:
         """Criação de fornecedor vinculado à empresa do planner."""
-        data = {
+        data: dict[str, Any] = {
             "name": "Buffet Master",
             "cnpj": "00.000.000/0001-00",
             "phone": "11999999999",
@@ -41,9 +65,11 @@ class TestSupplierServiceCreate:
         assert supplier.website == "https://buffetmaster.com.br"
         assert supplier.notes == "Fornecedor premium"
 
-    def test_create_supplier_with_invalid_cnpj_raises_validation_error(self, user):
+    def test_create_supplier_with_invalid_cnpj_raises_validation_error(
+        self, user: Any
+    ) -> None:
         """CNPJ com formato inválido deve disparar ValidationError."""
-        data = {
+        data: dict[str, Any] = {
             "name": "Fornecedor Inválido",
             "cnpj": "123",
             "phone": "11999999999",
@@ -58,44 +84,50 @@ class TestSupplierServiceCreate:
 class TestSupplierServiceUpdate:
     """Testes de atualização de fornecedores via SupplierService."""
 
-    def test_update_supplier_name(self, user):
+    def test_update_supplier_name(self, user: Any) -> None:
         """Atualização de nome é permitida."""
         supplier = SupplierFactory(company=user.company, name="Nome Antigo")
 
         updated = SupplierService.update(
-            user.company, supplier, SupplierPatchIn(name="Nome Novo")
+            user.company,
+            supplier,
+            SupplierPatchIn.model_construct(name="Nome Novo"),
         )
 
         assert updated.name == "Nome Novo"
 
-    def test_update_supplier_cross_tenant(self, user):
+    def test_update_supplier_cross_tenant(self, user: Any) -> None:
         """Fornecedor de outro tenant não pode ser atualizado."""
         other_user = UserFactory()
         other_supplier = SupplierFactory(company=other_user.company)
 
         with pytest.raises(ObjectNotFoundError):
             SupplierService.update(
-                user.company, other_supplier, SupplierPatchIn(name="Hack")
+                user.company,
+                other_supplier,
+                SupplierPatchIn.model_construct(name="Hack"),
             )
 
-    def test_update_supplier_toggle_active(self, user):
+    def test_update_supplier_toggle_active(self, user: Any) -> None:
         """Desativar/ativar fornecedor via is_active."""
         supplier = SupplierFactory(company=user.company, is_active=True)
 
         updated = SupplierService.update(
-            user.company, supplier, SupplierPatchIn(is_active=False)
+            user.company,
+            supplier,
+            SupplierPatchIn.model_construct(is_active=False),
         )
 
         assert updated.is_active is False
 
-    def test_update_supplier_new_fields(self, user):
+    def test_update_supplier_new_fields(self, user: Any) -> None:
         """Atualização dos campos address, city, state, website, notes."""
         supplier = SupplierFactory(company=user.company)
 
         updated = SupplierService.update(
             user.company,
             supplier,
-            SupplierPatchIn(
+            SupplierPatchIn.model_construct(
                 address="Av. Paulista, 1000",
                 city="São Paulo",
                 state="SP",
@@ -115,7 +147,7 @@ class TestSupplierServiceUpdate:
 class TestSupplierServiceDelete:
     """Testes de deleção de fornecedores via SupplierService."""
 
-    def test_delete_supplier_success(self, user):
+    def test_delete_supplier_success(self, user: Any) -> None:
         """Deleção de fornecedor sem contratos é permitida."""
         supplier = SupplierFactory(company=user.company)
 
@@ -123,7 +155,7 @@ class TestSupplierServiceDelete:
 
         assert Supplier.objects.filter(uuid=supplier.uuid).count() == 0
 
-    def test_delete_supplier_cascades_to_contracts(self, user):
+    def test_delete_supplier_cascades_to_contracts(self, user: Any) -> None:
         """Fornecedor com contratos: CASCADE deleta contratos junto.
         (Contract.supplier é on_delete=CASCADE, sem proteção de integridade via FK.)"""
         wedding = WeddingFactory(user_context=user)
@@ -136,7 +168,7 @@ class TestSupplierServiceDelete:
         assert Supplier.objects.filter(uuid=supplier.uuid).count() == 0
         assert Contract.objects.filter(uuid=contract.uuid).count() == 0
 
-    def test_delete_supplier_cross_tenant(self, user):
+    def test_delete_supplier_cross_tenant(self, user: Any) -> None:
         """Fornecedor de outro tenant não pode ser deletado."""
         other_user = UserFactory()
         other_supplier = SupplierFactory(company=other_user.company)
@@ -149,7 +181,7 @@ class TestSupplierServiceDelete:
 class TestSupplierServiceListAndGet:
     """Testes de listagem e obtenção de fornecedores."""
 
-    def test_list_suppliers_multitenancy(self):
+    def test_list_suppliers_multitenancy(self) -> None:
         """list() retorna apenas fornecedores do tenant."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -159,13 +191,17 @@ class TestSupplierServiceListAndGet:
 
         qs_a = SupplierService.list(user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().name == "Fornecedor A"
+        first_a = qs_a.first()
+        assert first_a is not None
+        assert first_a.name == "Fornecedor A"
 
         qs_b = SupplierService.list(user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().name == "Fornecedor B"
+        first_b = qs_b.first()
+        assert first_b is not None
+        assert first_b.name == "Fornecedor B"
 
-    def test_get_supplier_success(self, user):
+    def test_get_supplier_success(self, user: Any) -> None:
         """get() retorna fornecedor por UUID."""
         supplier = SupplierFactory(company=user.company, name="Decorações Ltda")
 
@@ -174,12 +210,12 @@ class TestSupplierServiceListAndGet:
         assert result.uuid == supplier.uuid
         assert result.name == "Decorações Ltda"
 
-    def test_get_supplier_not_found(self, user):
+    def test_get_supplier_not_found(self, user: Any) -> None:
         """UUID inexistente levanta ObjectNotFoundError."""
         with pytest.raises(ObjectNotFoundError):
             SupplierService.get(user.company, uuid4())
 
-    def test_get_supplier_multitenancy(self):
+    def test_get_supplier_multitenancy(self) -> None:
         """Usuário A não pode acessar fornecedor do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -188,7 +224,7 @@ class TestSupplierServiceListAndGet:
         with pytest.raises(ObjectNotFoundError):
             SupplierService.get(user_a.company, supplier_b.uuid)
 
-    def test_supplier_visible_across_weddings(self, user):
+    def test_supplier_visible_across_weddings(self, user: Any) -> None:
         """BR-L03: mesmo fornecedor é acessível em múltiplos casamentos."""
         supplier = SupplierFactory(company=user.company)
 
@@ -201,6 +237,7 @@ class TestSupplierServiceListAndGet:
         # Fornecedor deve aparecer apenas uma vez na listagem
         qs = SupplierService.list(user.company)
         assert qs.count() == 1
-        assert qs.first() == supplier
+        first = qs.first()
+        assert first == supplier
         # E ter 2 contratos associados
         assert supplier.contracts.count() == 2

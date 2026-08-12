@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from types import SimpleNamespace
-from typing import no_type_check
+from typing import Any, cast, no_type_check
 from uuid import uuid4
 
 import pytest
@@ -11,20 +11,62 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.finances.models import Expense, Installment
+from apps.finances.models import (
+    Budget,
+    BudgetCategory,
+    Expense,
+    Installment,
+)
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import (
-    BudgetCategoryFactory,
-    BudgetFactory,
-    ExpenseFactory,
-    InstallmentFactory,
+    BudgetCategoryFactory as _BudgetCategoryFactory,
 )
-from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.finances.tests.factories import BudgetFactory as _BudgetFactory
+from apps.finances.tests.factories import ExpenseFactory as _ExpenseFactory
+from apps.finances.tests.factories import InstallmentFactory as _InstallmentFactory
+from apps.logistics.models import Contract, Supplier
+from apps.logistics.tests.factories import ContractFactory as _ContractFactory
+from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
+from apps.users.models import User
+from apps.users.tests.factories import UserFactory as _UserFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
 
 
-def _setup_category(user):
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> BudgetCategory:
+    return cast(BudgetCategory, _BudgetCategoryFactory(*args, **kwargs))
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Budget:
+    return cast(Budget, _BudgetFactory(*args, **kwargs))
+
+
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def ExpenseFactory(*args: Any, **kwargs: Any) -> Expense:
+    return cast(Expense, _ExpenseFactory(*args, **kwargs))
+
+
+def InstallmentFactory(*args: Any, **kwargs: Any) -> Installment:
+    return cast(Installment, _InstallmentFactory(*args, **kwargs))
+
+
+def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
+    return cast(Supplier, _SupplierFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
+
+
+def _setup_category(user: User) -> BudgetCategory:
     """Helper: cria wedding + budget + category no contexto do user."""
     wedding = WeddingFactory(user_context=user)
     budget = BudgetFactory(wedding=wedding)
@@ -36,11 +78,11 @@ def _setup_category(user):
 class TestExpenseServiceCreate:
     """Testes de criação de despesas via ExpenseService."""
 
-    def test_create_expense_success(self, user):
+    def test_create_expense_success(self, user: Any) -> None:
         """Criação de despesa válida com categoria."""
         category = _setup_category(user)
 
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "name": "Buffet Premium",
             "description": "Buffet completo",
@@ -55,11 +97,11 @@ class TestExpenseServiceCreate:
         assert expense.name == "Buffet Premium"
         assert expense.actual_amount == Decimal("10000.00")
 
-    def test_create_expense_with_category_instance(self, user):
+    def test_create_expense_with_category_instance(self, user: Any) -> None:
         """create() aceita instância de BudgetCategory, não só UUID."""
         category = _setup_category(user)
 
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "name": "Fotografia",
             "estimated_amount": Decimal("5000.00"),
@@ -69,7 +111,7 @@ class TestExpenseServiceCreate:
         expense = ExpenseService.create(user.company, ExpenseIn(**data))
         assert expense.category == category
 
-    def test_create_expense_inherits_wedding_from_category(self, user):
+    def test_create_expense_inherits_wedding_from_category(self, user: Any) -> None:
         """Expense.wedding é injetado a partir da categoria."""
         category = _setup_category(user)
 
@@ -80,14 +122,15 @@ class TestExpenseServiceCreate:
                 name="Decoração",
                 estimated_amount=Decimal("3000.00"),
                 actual_amount=Decimal("3000.00"),
+                num_installments=None,
             ),
         )
 
         assert expense.wedding == category.wedding
 
-    def test_create_expense_category_not_found(self, user):
+    def test_create_expense_category_not_found(self, user: Any) -> None:
         """UUID de categoria inexistente levanta ObjectNotFoundError."""
-        data = {
+        data: dict[str, Any] = {
             "category": uuid4(),
             "name": "Fantasminha",
             "estimated_amount": Decimal("100.00"),
@@ -99,13 +142,13 @@ class TestExpenseServiceCreate:
 
         assert "budget_category_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_expense_multitenancy(self):
+    def test_create_expense_multitenancy(self) -> None:
         """Usuário A não pode criar despesa com categoria do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
         category_b = _setup_category(user_b)
 
-        data = {
+        data: dict[str, Any] = {
             "category": category_b.uuid,
             "name": "Invasão",
             "estimated_amount": Decimal("1000.00"),
@@ -117,11 +160,11 @@ class TestExpenseServiceCreate:
 
         assert "budget_category_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_expense_validation_error(self, user):
+    def test_create_expense_validation_error(self, user: Any) -> None:
         """Erro de negócio: num_installments < 1."""
         category = _setup_category(user)
 
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "name": "Buffet",
             "estimated_amount": Decimal("100.00"),
@@ -134,10 +177,10 @@ class TestExpenseServiceCreate:
 
         assert "invalid_installment_number" in str(exc_info.value.code)
 
-    def test_create_expense_defaults_to_one_installment(self, user):
+    def test_create_expense_defaults_to_one_installment(self, user: Any) -> None:
         """Sem informar parcelamento, gera 1 parcela com vencimento hoje."""
         category = _setup_category(user)
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "name": "Buffet",
             "estimated_amount": Decimal("1000.00"),
@@ -146,12 +189,14 @@ class TestExpenseServiceCreate:
 
         expense = ExpenseService.create(user.company, ExpenseIn(**data))
         assert expense.installments.count() == 1
-        assert expense.installments.first().due_date == date.today()
+        first = expense.installments.first()
+        assert first is not None
+        assert first.due_date == date.today()
 
-    def test_create_expense_amount_differs_from_contract_raises_error(self, user):
+    def test_create_expense_amount_differs_from_contract_raises_error(
+        self, user: Any
+    ) -> None:
         """BR-F02: despesa vinculada a contrato deve ter mesmo valor do contrato."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(
@@ -160,7 +205,7 @@ class TestExpenseServiceCreate:
             total_amount=Decimal("5000.00"),
         )
 
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "contract": contract.uuid,
             "name": "Despesa com contrato",
@@ -178,8 +223,6 @@ class TestExpenseServiceCreate:
         self, user
     ) -> None:
         """BR-L02: contrato e categoria devem pertencer ao mesmo casamento."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         other_category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
@@ -189,7 +232,7 @@ class TestExpenseServiceCreate:
             total_amount=Decimal("5000.00"),
         )
 
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "contract": contract.uuid,
             "name": "Despesa cross-wedding",
@@ -207,8 +250,6 @@ class TestExpenseServiceCreate:
         self,
     ) -> None:
         """Contrato pré-carregado de outro tenant deve ser rejeitado."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         user_a = UserFactory()
         user_b = UserFactory()
         category_a = _setup_category(user_a)
@@ -231,11 +272,11 @@ class TestExpenseServiceCreate:
 
         assert exc_info.value.code == "contract_not_found_or_denied"
 
-    def test_create_expense_triggers_tolerance_zero(self, user):
+    def test_create_expense_triggers_tolerance_zero(self, user: Any) -> None:
         """BR-F01: expense com actual_amount > 0 deve gerar parcelas que somam
         exatamente o valor total."""
         category = _setup_category(user)
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "name": "Tolerância Zero",
             "estimated_amount": Decimal("1000.00"),
@@ -255,7 +296,7 @@ class TestExpenseServiceCreate:
 class TestExpenseServiceUpdate:
     """Testes de atualização de despesas via ExpenseService."""
 
-    def test_update_expense_description(self, user):
+    def test_update_expense_description(self, user: Any) -> None:
         """Atualização de campos simples é permitida."""
         category = _setup_category(user)
         expense = ExpenseFactory(
@@ -272,12 +313,14 @@ class TestExpenseServiceUpdate:
         )
 
         updated = ExpenseService.update(
-            user.company, expense, ExpensePatchIn(description="Nova Descrição")
+            user.company,
+            expense,
+            ExpensePatchIn.model_construct(description="Nova Descrição"),
         )
 
         assert updated.description == "Nova Descrição"
 
-    def test_update_expense_partial_fields_only_name(self, user):
+    def test_update_expense_partial_fields_only_name(self, user: Any) -> None:
         """Atualização apenas do nome não redistribui parcelas nem falha."""
         category = _setup_category(user)
         expense = ExpenseFactory(
@@ -294,14 +337,16 @@ class TestExpenseServiceUpdate:
         )
 
         updated = ExpenseService.update(
-            user.company, expense, ExpensePatchIn(name="Nome Novo")
+            user.company,
+            expense,
+            ExpensePatchIn.model_construct(name="Nome Novo"),
         )
 
         assert updated.name == "Nome Novo"
         assert updated.actual_amount == Decimal("500.00")
         assert updated.installments.count() == 1
 
-    def test_update_expense_cross_tenant(self, user):
+    def test_update_expense_cross_tenant(self, user: Any) -> None:
         """Despesa de outro tenant não pode ser atualizada."""
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
@@ -318,10 +363,12 @@ class TestExpenseServiceUpdate:
 
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.update(
-                user.company, other_expense, ExpensePatchIn(name="Hack")
+                user.company,
+                other_expense,
+                ExpensePatchIn.model_construct(name="Hack"),
             )
 
-    def test_update_expense_amount_with_installment_count(self, user):
+    def test_update_expense_amount_with_installment_count(self, user: Any) -> None:
         """Alterar actual_amount + especificar num_installments redistribui
         com o número informado."""
         category = _setup_category(user)
@@ -344,7 +391,7 @@ class TestExpenseServiceUpdate:
         updated = ExpenseService.update(
             user.company,
             expense,
-            ExpensePatchIn(
+            ExpensePatchIn.model_construct(
                 actual_amount=Decimal("900.00"),
                 num_installments=3,
                 first_due_date=date.today(),
@@ -356,7 +403,7 @@ class TestExpenseServiceUpdate:
         total = sum(i.amount for i in updated.installments.all())
         assert total == Decimal("900.00")
 
-    def test_update_amount_auto_redistribute(self, user):
+    def test_update_amount_auto_redistribute(self, user: Any) -> None:
         """Alterar actual_amount sem num_installments redistribui parcelas."""
         category = _setup_category(user)
         expense = ExpenseFactory(
@@ -374,14 +421,14 @@ class TestExpenseServiceUpdate:
         updated = ExpenseService.update(
             user.company,
             expense,
-            ExpensePatchIn(actual_amount=Decimal("1000.00")),
+            ExpensePatchIn.model_construct(actual_amount=Decimal("1000.00")),
         )
 
         assert updated.actual_amount == Decimal("1000.00")
         total = sum(i.amount for i in updated.installments.all())
         assert total == Decimal("1000.00")
 
-    def test_update_amount_blocked_by_paid(self, user):
+    def test_update_amount_blocked_by_paid(self, user: Any) -> None:
         """Alterar actual_amount com parcelas PAID levanta erro."""
         category = _setup_category(user)
         expense = ExpenseFactory(
@@ -402,7 +449,7 @@ class TestExpenseServiceUpdate:
             ExpenseService.update(
                 user.company,
                 expense,
-                ExpensePatchIn(actual_amount=Decimal("1000.00")),
+                ExpensePatchIn.model_construct(actual_amount=Decimal("1000.00")),
             )
         assert exc.value.code == "amount_change_blocked_by_paid"
 
@@ -411,8 +458,6 @@ class TestExpenseServiceUpdate:
         self, user
     ) -> None:
         """BR-L02: despesa não pode ser religada a contrato de outro casamento."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         other_category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
@@ -447,8 +492,6 @@ class TestExpenseServiceUpdate:
         self, user
     ) -> None:
         """Falha de tenant não deve trocar o contrato em memória."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
         current_contract = ContractFactory(wedding=category.wedding, supplier=supplier)
@@ -478,7 +521,7 @@ class TestExpenseServiceUpdate:
 class TestExpenseServiceListAndGet:
     """Testes de listagem e obtenção de despesas."""
 
-    def test_list_expenses_multitenancy(self):
+    def test_list_expenses_multitenancy(self) -> None:
         """list() retorna apenas despesas do tenant."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -500,13 +543,17 @@ class TestExpenseServiceListAndGet:
 
         qs_a = ExpenseService.list(user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().company == user_a.company
+        first_a = qs_a.first()
+        assert first_a is not None
+        assert first_a.company == user_a.company
 
         qs_b = ExpenseService.list(user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().company == user_b.company
+        first_b = qs_b.first()
+        assert first_b is not None
+        assert first_b.company == user_b.company
 
-    def test_list_expenses_filter_by_wedding(self, user):
+    def test_list_expenses_filter_by_wedding(self, user: Any) -> None:
         """list() com wedding_id filtra por casamento."""
         cat1 = _setup_category(user)
         cat2 = _setup_category(user)
@@ -517,7 +564,7 @@ class TestExpenseServiceListAndGet:
         qs = ExpenseService.list(user.company, wedding_id=cat1.wedding.uuid)
         assert qs.count() == 1
 
-    def test_get_expense_success(self, user):
+    def test_get_expense_success(self, user: Any) -> None:
         """get() retorna despesa por UUID com select_related."""
         category = _setup_category(user)
         expense = ExpenseFactory(
@@ -531,12 +578,12 @@ class TestExpenseServiceListAndGet:
         assert result.uuid == expense.uuid
         assert result.category == expense.category
 
-    def test_get_expense_not_found(self, user):
+    def test_get_expense_not_found(self, user: Any) -> None:
         """UUID inexistente levanta ObjectNotFoundError."""
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.get(user.company, uuid4())
 
-    def test_get_expense_multitenancy(self):
+    def test_get_expense_multitenancy(self) -> None:
         """Usuário A não pode acessar despesa do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -550,7 +597,7 @@ class TestExpenseServiceListAndGet:
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.get(user_a.company, expense_b.uuid)
 
-    def test_get_expense_by_installment_uuid_fallback(self, user):
+    def test_get_expense_by_installment_uuid_fallback(self, user: Any) -> None:
         """Passar UUID da parcela retorna a despesa pai correspondente."""
         category = _setup_category(user)
         expense = ExpenseFactory(
@@ -573,7 +620,7 @@ class TestExpenseServiceListAndGet:
 class TestExpenseServiceDelete:
     """Testes de deleção de despesas via ExpenseService."""
 
-    def test_delete_expense_success(self, user, make_expense):
+    def test_delete_expense_success(self, user: Any, make_expense: Any) -> None:
         """Deleção de despesa existente é permitida."""
         expense = make_expense()
 
@@ -582,10 +629,8 @@ class TestExpenseServiceDelete:
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.get(user.company, expense.uuid)
 
-    def test_delete_expense_with_contract_is_allowed(self, user):
+    def test_delete_expense_with_contract_is_allowed(self, user: Any) -> None:
         """Excluir despesa vinculada a contrato é permitido."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(wedding=category.wedding, supplier=supplier)
@@ -601,7 +646,7 @@ class TestExpenseServiceDelete:
         with pytest.raises(Expense.DoesNotExist):
             Expense.objects.get(uuid=expense.uuid)
 
-    def test_delete_expense_cross_tenant(self, user):
+    def test_delete_expense_cross_tenant(self, user: Any) -> None:
         """Despesa de outro tenant não pode ser deletada."""
 
         other_user = UserFactory()
@@ -626,10 +671,8 @@ class TestExpenseServiceFromDocument:
     """Testes de criação de despesa a partir de contrato
     via ExpenseService.from_document()."""
 
-    def test_from_document_success(self, user):
+    def test_from_document_success(self, user: Any) -> None:
         """from_document() retorna dict com dados do contrato."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(
@@ -648,15 +691,13 @@ class TestExpenseServiceFromDocument:
         assert result["num_installments"] is None
         assert result["first_due_date"] is None
 
-    def test_from_document_contract_not_found(self, user):
+    def test_from_document_contract_not_found(self, user: Any) -> None:
         """UUID de contrato inexistente levanta ObjectNotFoundError."""
         with pytest.raises(ObjectNotFoundError):
             ExpenseService.from_document(user.company, uuid4())
 
-    def test_from_document_multitenancy(self, user):
+    def test_from_document_multitenancy(self, user: Any) -> None:
         """Usuário A não pode acessar contrato do Usuário B."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         user_b = UserFactory()
         wedding_b = WeddingFactory(company=user_b.company)
         supplier_b = SupplierFactory(company=user_b.company)
@@ -676,10 +717,8 @@ class TestExpenseServiceFromDocument:
 class TestExpenseServiceContractIntegration:
     """Testes de integração com Contract no ExpenseService."""
 
-    def test_create_expense_with_contract_uuid(self, user):
+    def test_create_expense_with_contract_uuid(self, user: Any) -> None:
         """Criação de despesa vinculada a contrato via UUID."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(
@@ -688,7 +727,7 @@ class TestExpenseServiceContractIntegration:
             total_amount=Decimal("5000.00"),
         )
 
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "contract": contract.uuid,
             "name": "Despesa com contrato",
@@ -701,10 +740,8 @@ class TestExpenseServiceContractIntegration:
         assert expense.contract == contract
         assert expense.wedding == category.wedding
 
-    def test_create_expense_with_contract_instance(self, user):
+    def test_create_expense_with_contract_instance(self, user: Any) -> None:
         """Criação de despesa vinculada a contrato via instância."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(
@@ -712,7 +749,7 @@ class TestExpenseServiceContractIntegration:
             supplier=supplier,
         )
 
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "contract": contract.uuid,
             "name": "Despesa com contrato",
@@ -723,10 +760,8 @@ class TestExpenseServiceContractIntegration:
         expense = ExpenseService.create(user.company, ExpenseIn(**data))
         assert expense.contract == contract
 
-    def test_update_expense_swap_contract(self, user):
+    def test_update_expense_swap_contract(self, user: Any) -> None:
         """Troca de contrato vinculado via update."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-
         category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)
         contract1 = ContractFactory(wedding=category.wedding, supplier=supplier)
@@ -745,12 +780,14 @@ class TestExpenseServiceContractIntegration:
         )
 
         updated = ExpenseService.update(
-            user.company, expense, ExpensePatchIn(contract=contract2.uuid)
+            user.company,
+            expense,
+            ExpensePatchIn.model_construct(contract=contract2.uuid),
         )
 
         assert updated.contract == contract2
 
-    def test_update_expense_clear_contract(self, user):
+    def test_update_expense_clear_contract(self, user: Any) -> None:
         """Desvinculação de contrato (contract=None) via update."""
         from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 
@@ -771,7 +808,9 @@ class TestExpenseServiceContractIntegration:
         )
 
         updated = ExpenseService.update(
-            user.company, expense, ExpensePatchIn(contract=None)
+            user.company,
+            expense,
+            ExpensePatchIn.model_construct(contract=None),
         )
 
         assert updated.contract is None
@@ -781,10 +820,10 @@ class TestExpenseServiceContractIntegration:
 class TestExpenseServiceInstallmentDistribution:
     """Testes de rateio de parcelas com valores quebrados."""
 
-    def test_create_expense_uneven_installments(self, user):
+    def test_create_expense_uneven_installments(self, user: Any) -> None:
         """R$ 100 / 3 deve criar parcelas que somam exatamente R$ 100."""
         category = _setup_category(user)
-        data = {
+        data: dict[str, Any] = {
             "category": category.uuid,
             "name": "Rateio Quebrado",
             "estimated_amount": Decimal("100.00"),
@@ -797,7 +836,7 @@ class TestExpenseServiceInstallmentDistribution:
         assert total == Decimal("100.00")
         assert expense.installments.count() == 3
 
-    def test_update_redistribute_invalid_number(self, user):
+    def test_update_redistribute_invalid_number(self, user: Any) -> None:
         """Redistribuir com num_installments < 1 levanta BusinessRuleViolation."""
         category = _setup_category(user)
         expense = ExpenseFactory(
@@ -814,7 +853,7 @@ class TestExpenseServiceInstallmentDistribution:
             ExpenseService.update(
                 user.company,
                 expense,
-                ExpensePatchIn(
+                ExpensePatchIn.model_construct(
                     actual_amount=Decimal("500.00"),
                     num_installments=0,
                 ),

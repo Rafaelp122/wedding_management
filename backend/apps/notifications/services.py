@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Sequence
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 from django.db import transaction
@@ -15,6 +16,17 @@ from apps.users.models import User
 
 
 logger = logging.getLogger(__name__)
+
+
+if TYPE_CHECKING:
+
+    class AnnotatedNotification(Notification):
+        """Notificação com o nome do casamento calculado pela consulta."""
+
+        wedding_name: str | None
+
+else:
+    AnnotatedNotification = Notification
 
 
 def _get_wedding_name_subquery() -> Subquery:
@@ -158,7 +170,7 @@ class NotificationService:
         company: Company,
         user: User,
         is_read: bool | None = None,
-    ) -> QuerySet[Notification]:
+    ) -> QuerySet[AnnotatedNotification]:
         """Lista todas as notificações de um usuário vinculadas à sua empresa.
 
         Args:
@@ -178,7 +190,7 @@ class NotificationService:
         if is_read is not None:
             qs = qs.filter(is_read=is_read)
 
-        return qs
+        return cast(QuerySet[AnnotatedNotification], qs)
 
     @staticmethod
     def get_unread_count(company: Company, user: User) -> int:
@@ -203,7 +215,7 @@ class NotificationService:
         company: Company,
         user: User,
         notification_id: UUID | str,
-    ) -> Notification:
+    ) -> AnnotatedNotification:
         """Marca notificação como lida se ela pertencer ao usuário e empresa.
 
         Args:
@@ -237,7 +249,7 @@ class NotificationService:
                 user.id,
             )
 
-        return notification
+        return cast(AnnotatedNotification, notification)
 
     @staticmethod
     @transaction.atomic

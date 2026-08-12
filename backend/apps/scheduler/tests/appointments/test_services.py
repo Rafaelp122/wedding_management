@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import no_type_check
+from typing import Any, cast, no_type_check
 from uuid import uuid4
 
 import pytest
@@ -9,9 +9,23 @@ from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.scheduler.models import Event
 from apps.scheduler.schemas import EventIn, EventPatchIn
 from apps.scheduler.services.events import EventService
-from apps.scheduler.tests.factories import EventFactory
-from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.scheduler.tests.factories import EventFactory as _EventFactory
+from apps.users.models import User
+from apps.users.tests.factories import UserFactory as _UserFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def EventFactory(*args: Any, **kwargs: Any) -> Event:
+    return cast(Event, _EventFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
@@ -19,10 +33,12 @@ class TestEventServiceCreate:
     """Testes de criação de eventos via EventService."""
 
     @pytest.mark.parametrize("use_dict", [False, True])
-    def test_create_event_rejects_past_start_time(self, user, use_dict):
+    def test_create_event_rejects_past_start_time(
+        self, user: Any, use_dict: bool
+    ) -> None:
         """BR-VAL02: criação rejeita início no passado em ambos os payloads."""
         wedding = WeddingFactory(user_context=user)
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "title": "Evento no passado",
             "event_type": Event.TypeChoices.MEETING,
@@ -37,12 +53,12 @@ class TestEventServiceCreate:
         assert "não pode estar no passado" in exc_info.value.detail
         assert Event.objects.count() == 0
 
-    def test_create_event_success(self, user):
+    def test_create_event_success(self, user: Any) -> None:
         """Criação de evento vinculado ao casamento."""
         wedding = WeddingFactory(user_context=user)
         now = timezone.now()
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "title": "Prova de Vestido",
             "event_type": Event.TypeChoices.MEETING,
@@ -55,11 +71,11 @@ class TestEventServiceCreate:
         assert event.title == "Prova de Vestido"
         assert event.company == user.company
 
-    def test_create_event_with_wedding_instance(self, user):
+    def test_create_event_with_wedding_instance(self, user: Any) -> None:
         """create() aceita instância de Wedding, não só UUID."""
         wedding = WeddingFactory(user_context=user)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding,
             "title": "Reunião com Buffet",
             "event_type": Event.TypeChoices.VISIT,
@@ -69,9 +85,9 @@ class TestEventServiceCreate:
         event = EventService.create(user.company, data)
         assert event.wedding == wedding
 
-    def test_create_event_wedding_not_found(self, user):
+    def test_create_event_wedding_not_found(self, user: Any) -> None:
         """UUID de wedding inexistente levanta ObjectNotFoundError."""
-        data = {
+        data: dict[str, Any] = {
             "wedding": uuid4(),
             "title": "Evento Fantasma",
             "event_type": Event.TypeChoices.OTHER,
@@ -83,13 +99,13 @@ class TestEventServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_event_multitenancy(self):
+    def test_create_event_multitenancy(self) -> None:
         """Usuário A não pode criar evento com wedding do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
         wedding_b = WeddingFactory(user_context=user_b)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding_b.uuid,
             "title": "Invasão",
             "event_type": Event.TypeChoices.OTHER,
@@ -107,7 +123,7 @@ class TestEventServiceCreate:
         user_a = UserFactory()
         user_b = UserFactory()
         wedding_b = WeddingFactory(user_context=user_b)
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding_b,
             "title": "Invasão por instância",
             "event_type": Event.TypeChoices.OTHER,
@@ -119,11 +135,11 @@ class TestEventServiceCreate:
 
         assert exc_info.value.code == "wedding_not_found_or_denied"
 
-    def test_create_payment_event_blocked(self, user):
+    def test_create_payment_event_blocked(self, user: Any) -> None:
         """BR-S01: Eventos PAYMENT não podem ser criados manualmente."""
         wedding = WeddingFactory(user_context=user)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "title": "Pagamento Manual",
             "event_type": Event.TypeChoices.PAYMENT,
@@ -136,7 +152,7 @@ class TestEventServiceCreate:
         assert exc_info.value.code == "payment_event_readonly"
         assert Event.objects.count() == 0
 
-    def test_create_payment_event_internal_allowed(self, user):
+    def test_create_payment_event_internal_allowed(self, user: Any) -> None:
         """BR-S01: Chamadas internas (_caller_internal=True) podem criar PAYMENT."""
         wedding = WeddingFactory(user_context=user)
         start_time_today = timezone.localtime().replace(
@@ -146,7 +162,7 @@ class TestEventServiceCreate:
             microsecond=0,
         )
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "title": "Pagamento: Buffet - Parcela 1/3",
             "event_type": Event.TypeChoices.PAYMENT,
@@ -158,10 +174,10 @@ class TestEventServiceCreate:
         assert event.event_type == Event.TypeChoices.PAYMENT
         assert event.title == "Pagamento: Buffet - Parcela 1/3"
 
-    def test_create_past_payment_event_internal_rejected(self, user):
+    def test_create_past_payment_event_internal_rejected(self, user: Any) -> None:
         """BR-VAL02: Eventos financeiros internos também rejeitam data passada."""
         wedding = WeddingFactory(user_context=user)
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "title": "Pagamento vencido",
             "event_type": Event.TypeChoices.PAYMENT,
@@ -173,7 +189,7 @@ class TestEventServiceCreate:
 
         assert exc_info.value.code == "event_start_time_in_past"
 
-    def test_create_historical_template_event_allowed(self, user):
+    def test_create_historical_template_event_allowed(self, user: Any) -> None:
         """Templates podem gerar marcos históricos anteriores à data atual."""
         wedding = WeddingFactory(user_context=user)
         data = {
@@ -196,53 +212,55 @@ class TestEventServiceCreate:
 class TestEventServiceUpdate:
     """Testes de atualização de eventos via EventService."""
 
-    def test_update_event_allows_past_start_time(self, user):
+    def test_update_event_allows_past_start_time(self, user: Any) -> None:
         """BR-VAL02: edição permite data passada para correção histórica."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding)
         past_start_time = timezone.now() - timedelta(days=1)
 
         updated = EventService.update(
-            user.company, event, EventPatchIn(start_time=past_start_time)
+            user.company,
+            event,
+            EventPatchIn.model_construct(start_time=past_start_time),
         )
 
         assert updated.start_time == past_start_time
 
-    def test_update_event_title(self, user):
+    def test_update_event_title(self, user: Any) -> None:
         """Atualização de título é permitida."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding, title="Título Antigo")
 
         updated = EventService.update(
-            user.company, event, EventPatchIn(title="Título Novo")
+            user.company, event, EventPatchIn.model_construct(title="Título Novo")
         )
 
         assert updated.title == "Título Novo"
 
-    def test_update_event_cannot_change_wedding(self, user):
+    def test_update_event_cannot_change_wedding(self, user: Any) -> None:
         """Wedding é bloqueado no update."""
         wedding1 = WeddingFactory(user_context=user)
         wedding2 = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding1)
 
         updated = EventService.update(
-            user.company, event, EventPatchIn(wedding=wedding2.uuid)
+            user.company, event, EventPatchIn.model_construct(wedding=wedding2.uuid)
         )
 
         assert updated.wedding == wedding1
 
-    def test_update_event_toggle_reminder(self, user):
+    def test_update_event_toggle_reminder(self, user: Any) -> None:
         """Habilitar/desabilitar lembrete é permitido."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding, reminder_enabled=False)
 
         updated = EventService.update(
-            user.company, event, EventPatchIn(reminder_enabled=True)
+            user.company, event, EventPatchIn.model_construct(reminder_enabled=True)
         )
 
         assert updated.reminder_enabled is True
 
-    def test_update_cannot_change_event_type_to_payment(self, user):
+    def test_update_cannot_change_event_type_to_payment(self, user: Any) -> None:
         """BR-S01: Não pode alterar event_type de um evento para PAYMENT."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(
@@ -253,12 +271,14 @@ class TestEventServiceUpdate:
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
             EventService.update(
-                user.company, event, EventPatchIn(event_type=Event.TypeChoices.PAYMENT)
+                user.company,
+                event,
+                EventPatchIn.model_construct(event_type=Event.TypeChoices.PAYMENT),
             )
 
         assert exc_info.value.code == "payment_event_readonly"
 
-    def test_update_payment_event_blocked(self, user):
+    def test_update_payment_event_blocked(self, user: Any) -> None:
         """BR-S01: Eventos PAYMENT não podem ser editados manualmente."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(
@@ -268,11 +288,15 @@ class TestEventServiceUpdate:
         )
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            EventService.update(user.company, event, EventPatchIn(title="Novo título"))
+            EventService.update(
+                user.company,
+                event,
+                EventPatchIn.model_construct(title="Novo título"),
+            )
 
         assert exc_info.value.code == "payment_event_readonly"
 
-    def test_update_payment_event_all_fields_blocked(self, user):
+    def test_update_payment_event_all_fields_blocked(self, user: Any) -> None:
         """BR-S01: Nenhum campo de evento PAYMENT pode ser alterado."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(
@@ -285,10 +309,12 @@ class TestEventServiceUpdate:
             EventService.update(
                 user.company,
                 event,
-                EventPatchIn(start_time=timezone.now() + timedelta(days=10)),
+                EventPatchIn.model_construct(
+                    start_time=timezone.now() + timedelta(days=10)
+                ),
             )
 
-    def test_update_non_payment_event_allowed(self, user):
+    def test_update_non_payment_event_allowed(self, user: Any) -> None:
         """Eventos não-PAYMENT podem ser editados normalmente."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(
@@ -298,26 +324,32 @@ class TestEventServiceUpdate:
         )
 
         updated = EventService.update(
-            user.company, event, EventPatchIn(title="Reunião com Buffet Atualizada")
+            user.company,
+            event,
+            EventPatchIn.model_construct(title="Reunião com Buffet Atualizada"),
         )
 
         assert updated.title == "Reunião com Buffet Atualizada"
 
-    def test_update_event_cross_tenant(self, user):
+    def test_update_event_cross_tenant(self, user: Any) -> None:
         """Evento de outro tenant não pode ser atualizado."""
         other_user = UserFactory()
         other_wedding = WeddingFactory(user_context=other_user)
         other_event = EventFactory(wedding=other_wedding)
 
         with pytest.raises(ObjectNotFoundError):
-            EventService.update(user.company, other_event, EventPatchIn(title="Hack"))
+            EventService.update(
+                user.company,
+                other_event,
+                EventPatchIn.model_construct(title="Hack"),
+            )
 
 
 @pytest.mark.django_db
 class TestEventServiceDelete:
     """Testes de deleção de eventos via EventService."""
 
-    def test_delete_event_success(self, user):
+    def test_delete_event_success(self, user: Any) -> None:
         """Deleção de evento sem dependências é permitida."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding)
@@ -326,7 +358,7 @@ class TestEventServiceDelete:
 
         assert Event.objects.filter(uuid=event.uuid).count() == 0
 
-    def test_delete_payment_event_blocked(self, user):
+    def test_delete_payment_event_blocked(self, user: Any) -> None:
         """BR-S01: Eventos PAYMENT não podem ser deletados manualmente."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(
@@ -341,7 +373,7 @@ class TestEventServiceDelete:
         assert exc_info.value.code == "payment_event_readonly"
         assert Event.objects.filter(uuid=event.uuid).exists()
 
-    def test_delete_non_payment_event_allowed(self, user):
+    def test_delete_non_payment_event_allowed(self, user: Any) -> None:
         """Eventos não-PAYMENT podem ser deletados normalmente."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(
@@ -353,7 +385,7 @@ class TestEventServiceDelete:
 
         assert Event.objects.filter(uuid=event.uuid).count() == 0
 
-    def test_delete_event_cross_tenant(self, user):
+    def test_delete_event_cross_tenant(self, user: Any) -> None:
         """Evento de outro tenant não pode ser deletado."""
         other_user = UserFactory()
         other_wedding = WeddingFactory(user_context=other_user)
@@ -367,7 +399,7 @@ class TestEventServiceDelete:
 class TestEventServiceListAndGet:
     """Testes de listagem e obtenção de eventos."""
 
-    def test_list_events_multitenancy(self):
+    def test_list_events_multitenancy(self) -> None:
         """list() retorna apenas eventos do tenant."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -379,13 +411,17 @@ class TestEventServiceListAndGet:
 
         qs_a = EventService.list(user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().title == "Evento A"
+        first_a = qs_a.first()
+        assert first_a is not None
+        assert first_a.title == "Evento A"
 
         qs_b = EventService.list(user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().title == "Evento B"
+        first_b = qs_b.first()
+        assert first_b is not None
+        assert first_b.title == "Evento B"
 
-    def test_list_events_filter_by_wedding(self, user):
+    def test_list_events_filter_by_wedding(self, user: Any) -> None:
         """list() com wedding_id filtra por casamento."""
         wedding1 = WeddingFactory(user_context=user)
         wedding2 = WeddingFactory(user_context=user)
@@ -395,9 +431,11 @@ class TestEventServiceListAndGet:
 
         qs = EventService.list(user.company, wedding_id=wedding1.uuid)
         assert qs.count() == 1
-        assert qs.first().title == "Evento W1"
+        first = qs.first()
+        assert first is not None
+        assert first.title == "Evento W1"
 
-    def test_get_event_success(self, user):
+    def test_get_event_success(self, user: Any) -> None:
         """get() retorna evento por UUID."""
         wedding = WeddingFactory(user_context=user)
         event = EventFactory(wedding=wedding, title="Degustação")
@@ -406,12 +444,12 @@ class TestEventServiceListAndGet:
         assert result.uuid == event.uuid
         assert result.title == "Degustação"
 
-    def test_get_event_not_found(self, user):
+    def test_get_event_not_found(self, user: Any) -> None:
         """UUID inexistente levanta ObjectNotFoundError."""
         with pytest.raises(ObjectNotFoundError):
             EventService.get(user.company, uuid4())
 
-    def test_get_event_multitenancy(self):
+    def test_get_event_multitenancy(self) -> None:
         """Usuário A não pode acessar evento do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -421,7 +459,7 @@ class TestEventServiceListAndGet:
         with pytest.raises(ObjectNotFoundError):
             EventService.get(user_a.company, event_b.uuid)
 
-    def test_list_events_empty_company(self, user):
+    def test_list_events_empty_company(self, user: Any) -> None:
         """list() sem eventos retorna QuerySet vazio."""
         qs = EventService.list(user.company)
         assert qs.count() == 0

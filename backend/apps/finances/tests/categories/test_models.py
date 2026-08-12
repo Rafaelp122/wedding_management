@@ -1,24 +1,45 @@
 from decimal import Decimal
+from typing import Any, cast
 
 import pytest
 from django.core.exceptions import ValidationError
 
-from apps.finances.models import BudgetCategory
-from apps.finances.models.installment import Installment
+from apps.finances.models import Budget, BudgetCategory, Expense, Installment
 from apps.finances.tests.factories import (
-    BudgetCategoryFactory,
-    BudgetFactory,
-    ExpenseFactory,
-    InstallmentFactory,
+    BudgetCategoryFactory as _BudgetCategoryFactory,
 )
-from apps.weddings.tests.factories import WeddingFactory
+from apps.finances.tests.factories import BudgetFactory as _BudgetFactory
+from apps.finances.tests.factories import ExpenseFactory as _ExpenseFactory
+from apps.finances.tests.factories import InstallmentFactory as _InstallmentFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> BudgetCategory:
+    return cast(BudgetCategory, _BudgetCategoryFactory(*args, **kwargs))
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Budget:
+    return cast(Budget, _BudgetFactory(*args, **kwargs))
+
+
+def ExpenseFactory(*args: Any, **kwargs: Any) -> Expense:
+    return cast(Expense, _ExpenseFactory(*args, **kwargs))
+
+
+def InstallmentFactory(*args: Any, **kwargs: Any) -> Installment:
+    return cast(Installment, _InstallmentFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
 class TestBudgetCategoryModelMetadata:
     """Testes de representação e metadados do modelo BudgetCategory."""
 
-    def test_budget_category_str_representation(self, user):
+    def test_budget_category_str_representation(self, user: Any) -> None:
         """__str__ deve conter o nome e o wedding."""
         wedding = WeddingFactory(
             user_context=user, bride_name="Ana", groom_name="Pedro"
@@ -35,7 +56,7 @@ class TestBudgetCategoryModelMetadata:
         assert "Decoração" in result
         assert "Ana" in result
 
-    def test_budget_category_ordering_by_name(self, user):
+    def test_budget_category_ordering_by_name(self, user: Any) -> None:
         """Ordenação padrão deve ser por name alfabético."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
@@ -49,7 +70,7 @@ class TestBudgetCategoryModelMetadata:
         assert categories[1].name == "Beta"
         assert categories[2].name == "Zeta"
 
-    def test_budget_category_unique_name_per_budget(self, user):
+    def test_budget_category_unique_name_per_budget(self, user: Any) -> None:
         """Nome deve ser único dentro do mesmo budget."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
@@ -61,7 +82,7 @@ class TestBudgetCategoryModelMetadata:
         with pytest.raises(ValidationError):
             BudgetCategoryFactory(budget=budget, wedding=wedding, name="Decoração")
 
-    def test_budget_category_allocated_budget_not_negative(self, user):
+    def test_budget_category_allocated_budget_not_negative(self, user: Any) -> None:
         """allocated_budget não pode ser negativo."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
@@ -81,7 +102,7 @@ class TestBudgetCategoryModelMetadata:
 class TestBudgetCategoryClean:
     """Testes das validações do método clean()."""
 
-    def test_clean_fails_when_budget_wedding_mismatch(self, user):
+    def test_clean_fails_when_budget_wedding_mismatch(self, user: Any) -> None:
         """TRAVA: orçamento pai deve pertencer ao mesmo casamento da categoria.
         O WeddingOwnedMixin captura essa violação antes do clean() customizado."""
         wedding1 = WeddingFactory(user_context=user)
@@ -106,14 +127,14 @@ class TestBudgetCategoryClean:
 class TestBudgetCategoryTotalSpent:
     """Testes da computed property total_spent."""
 
-    def test_total_spent_with_no_expenses(self, user):
+    def test_total_spent_with_no_expenses(self, user: Any) -> None:
         """Sem despesas, total_spent = 0."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
         category = BudgetCategoryFactory(budget=budget, wedding=wedding)
         assert category.total_spent == Decimal("0.00")
 
-    def test_total_spent_sums_expenses(self, user):
+    def test_total_spent_sums_expenses(self, user: Any) -> None:
         """total_spent soma apenas parcelas PAID das despesas."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
@@ -147,7 +168,7 @@ class TestBudgetCategoryTotalSpent:
 
         assert category.total_spent == Decimal("5000.00")
 
-    def test_total_spent_only_paid_installments(self, user):
+    def test_total_spent_only_paid_installments(self, user: Any) -> None:
         """total_spent soma apenas parcelas PAID, ignorando PENDING."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
@@ -173,7 +194,7 @@ class TestBudgetCategoryTotalSpent:
 
         assert category.total_spent == Decimal("3000.00")
 
-    def test_total_spent_all_pending_returns_zero(self, user):
+    def test_total_spent_all_pending_returns_zero(self, user: Any) -> None:
         """Todas as parcelas PENDING: total_spent = 0."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
@@ -193,7 +214,7 @@ class TestBudgetCategoryTotalSpent:
 
         assert category.total_spent == Decimal("0.00")
 
-    def test_total_spent_multiple_expenses_mixed_status(self, user):
+    def test_total_spent_multiple_expenses_mixed_status(self, user: Any) -> None:
         """Soma PAID de múltiplas despesas, ignorando PENDING em todas."""
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)

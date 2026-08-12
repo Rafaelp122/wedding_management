@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import datetime, time, timedelta
 from decimal import Decimal
-from typing import cast
+from typing import Protocol, cast
 from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -37,6 +37,14 @@ from ..schemas import (
 
 
 logger = logging.getLogger(__name__)
+
+
+class _BudgetCategorySummary(Protocol):
+    """Linha de categoria anotada por ``BudgetCategoryQuerySet.with_total_spent()``."""
+
+    name: str
+    allocated_budget: Decimal
+    _total_spent: Decimal
 
 
 class WeddingService:
@@ -146,7 +154,7 @@ class WeddingService:
         )
 
     @staticmethod
-    def count_by_month(company: Company, year: int) -> Sequence[dict]:
+    def count_by_month(company: Company, year: int) -> Sequence[dict[str, int]]:
         """
         Agrupa e conta os casamentos por mês para um determinado ano.
 
@@ -345,6 +353,34 @@ class WeddingService:
             ) from e
 
     @staticmethod
+    def _list_categories_with_total_spent(
+        company: Company, budget: Budget | None
+    ) -> Iterable[_BudgetCategorySummary]:
+        """Categorias do orçamento com ``_total_spent`` anotado
+        (invisível ao django-stubs).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            budget: Orçamento do casamento; ``None`` retorna iterável vazio.
+
+        Returns:
+            Iterável das categorias com os campos anotados pelo queryset.
+        """
+        from apps.finances.models import BudgetCategory
+
+        if not budget:
+            return cast(
+                Iterable[_BudgetCategorySummary],
+                BudgetCategory.objects.none(),
+            )
+        return cast(
+            Iterable[_BudgetCategorySummary],
+            BudgetCategory.objects.for_tenant(company)
+            .with_total_spent()
+            .filter(budget=budget),
+        )
+
+    @staticmethod
     def overview(company: Company, uuid: UUID | str) -> WeddingOverviewOut:
         """
         Retorna visão geral do casamento com métricas agregadas.
@@ -375,13 +411,12 @@ class WeddingService:
         today = date_type.today()
         days_until = max(0, (wedding.date - today).days) if wedding.date else 0
 
-        from apps.finances.managers import BudgetCategoryQuerySet, BudgetQuerySet
-        from apps.finances.models import Budget, BudgetCategory, Installment
+        from apps.finances.models import Budget, Installment
         from apps.logistics.models import Contract
         from apps.scheduler.models import Task
 
         budget = (
-            cast(BudgetQuerySet, Budget.objects.for_tenant(company))
+            Budget.objects.for_tenant(company)
             .with_total_spent()
             .filter(wedding=wedding)
             .first()
@@ -394,12 +429,8 @@ class WeddingService:
             else 0.0
         )
 
-        categories_list = (
-            cast(BudgetCategoryQuerySet, BudgetCategory.objects.for_tenant(company))
-            .with_total_spent()
-            .filter(budget=budget)
-            if budget
-            else []
+        categories_list = WeddingService._list_categories_with_total_spent(
+            company, budget
         )
         categories_summary = [
             WeddingDashboardCategoryOut(

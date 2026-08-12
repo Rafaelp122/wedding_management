@@ -1,3 +1,4 @@
+from typing import Any, cast
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -6,20 +7,40 @@ from django.tasks import Task
 from django.utils import timezone
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
-from apps.notifications.models import NotificationType
+from apps.notifications.models import Notification, NotificationType
 from apps.notifications.services import NotificationService
-from apps.notifications.tests.factories import NotificationFactory
-from apps.tenants.tests.factories import CompanyFactory
+from apps.notifications.tests.factories import (
+    NotificationFactory as _NotificationFactory,
+)
+from apps.tenants.models import Company
+from apps.tenants.tests.factories import CompanyFactory as _CompanyFactory
 from apps.users.models import User
-from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.users.tests.factories import UserFactory as _UserFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def NotificationFactory(*args: Any, **kwargs: Any) -> Notification:
+    return cast(Notification, _NotificationFactory(*args, **kwargs))
+
+
+def CompanyFactory(*args: Any, **kwargs: Any) -> Company:
+    return cast(Company, _CompanyFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
 class TestNotificationServiceCreate:
     """Testes para o método create_notification."""
 
-    def test_create_notification_success(self, user):
+    def test_create_notification_success(self, user: Any) -> None:
         notification = NotificationService.create_notification(
             company=user.company,
             user=user,
@@ -39,7 +60,7 @@ class TestNotificationServiceCreate:
         assert notification.is_read is False
         assert notification.read_at is None
 
-    def test_create_notification_with_target_fields(self, user):
+    def test_create_notification_with_target_fields(self, user: Any) -> None:
         target_uuid = uuid4()
         wedding_uuid = uuid4()
 
@@ -59,7 +80,7 @@ class TestNotificationServiceCreate:
         assert notification.target_id == target_uuid
         assert notification.wedding_id == wedding_uuid
 
-    def test_create_notification_with_company_and_user_ids(self, user):
+    def test_create_notification_with_company_and_user_ids(self, user: Any) -> None:
         notification_by_id = NotificationService.create_notification(
             company=user.company.id,
             user=user.id,
@@ -78,7 +99,7 @@ class TestNotificationServiceCreate:
         assert notification_by_uuid.company == user.company
         assert notification_by_uuid.user == user
 
-    def test_create_notification_failure_invalid_user_id(self, user):
+    def test_create_notification_failure_invalid_user_id(self, user: Any) -> None:
         with pytest.raises(User.DoesNotExist):
             NotificationService.create_notification(
                 company=user.company,
@@ -87,7 +108,7 @@ class TestNotificationServiceCreate:
                 message="Mensagem",
             )
 
-    def test_create_notification_failure_user_company_mismatch(self, user):
+    def test_create_notification_failure_user_company_mismatch(self, user: Any) -> None:
         other_company = CompanyFactory()
         with pytest.raises(
             BusinessRuleViolation, match=r"Usuário não pertence à empresa informada\."
@@ -99,7 +120,7 @@ class TestNotificationServiceCreate:
                 message="Mensagem",
             )
 
-    def test_notification_str_representation(self, user):
+    def test_notification_str_representation(self, user: Any) -> None:
         notification = NotificationFactory(
             user=user, title="Novo Evento", type=NotificationType.GENERAL
         )
@@ -110,7 +131,7 @@ class TestNotificationServiceCreate:
 class TestNotificationServiceCreateAsync:
     """Testes para o método create_async_notification."""
 
-    def test_create_async_notification_success(self, user):
+    def test_create_async_notification_success(self, user: Any) -> None:
         with patch.object(Task, "enqueue") as mock_enqueue:
             NotificationService.create_async_notification(
                 company=user.company,
@@ -128,7 +149,7 @@ class TestNotificationServiceCreateAsync:
             assert kwargs["message"] == "Async Message"
             assert kwargs["notification_type"] == NotificationType.GENERAL
 
-    def test_create_async_notification_with_target_fields(self, user):
+    def test_create_async_notification_with_target_fields(self, user: Any) -> None:
         target_uuid = uuid4()
         wedding_uuid = uuid4()
 
@@ -155,7 +176,7 @@ class TestNotificationServiceCreateAsync:
 class TestNotificationServiceList:
     """Testes para o método list_notifications."""
 
-    def test_list_notifications_success(self, user):
+    def test_list_notifications_success(self, user: Any) -> None:
         n1 = NotificationFactory(user=user, is_read=False)
         NotificationFactory(user=user, is_read=True)
 
@@ -166,24 +187,30 @@ class TestNotificationServiceList:
             user.company, user, is_read=False
         )
         assert unread_notes.count() == 1
-        assert unread_notes.first().id == n1.id
+        first = unread_notes.first()
+        assert first is not None
+        assert first.id == n1.id
 
-    def test_list_notifications_multitenancy_isolation(self, user):
+    def test_list_notifications_multitenancy_isolation(self, user: Any) -> None:
         other_user = UserFactory()
         NotificationFactory(user=user)
         NotificationFactory(user=other_user)
 
         user_notes = NotificationService.list_notifications(user.company, user)
         assert user_notes.count() == 1
-        assert user_notes.first().user == user
+        first = user_notes.first()
+        assert first is not None
+        assert first.user == user
 
-    def test_list_notifications_with_wedding_name(self, user):
+    def test_list_notifications_with_wedding_name(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
         NotificationFactory(user=user, wedding_id=wedding.uuid)
 
         user_notes = NotificationService.list_notifications(user.company, user)
+        first = user_notes.first()
+        assert first is not None
         assert (
-            user_notes.first().wedding_name
+            first.wedding_name
             == f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
         )
 
@@ -192,7 +219,7 @@ class TestNotificationServiceList:
 class TestNotificationServiceUnreadCount:
     """Testes para o método get_unread_count."""
 
-    def test_get_unread_count_success(self, user):
+    def test_get_unread_count_success(self, user: Any) -> None:
         NotificationFactory(user=user, is_read=False)
         NotificationFactory(user=user, is_read=False)
         NotificationFactory(user=user, is_read=True)
@@ -200,7 +227,7 @@ class TestNotificationServiceUnreadCount:
         count = NotificationService.get_unread_count(user.company, user)
         assert count == 2
 
-    def test_get_unread_count_multitenancy_isolated(self, user):
+    def test_get_unread_count_multitenancy_isolated(self, user: Any) -> None:
         other_user = UserFactory()
         NotificationFactory(user=other_user, is_read=False)
 
@@ -212,7 +239,7 @@ class TestNotificationServiceUnreadCount:
 class TestNotificationServiceMarkAsRead:
     """Testes para o método mark_as_read."""
 
-    def test_mark_as_read_success(self, user):
+    def test_mark_as_read_success(self, user: Any) -> None:
         notification = NotificationFactory(user=user, is_read=False)
 
         updated = NotificationService.mark_as_read(
@@ -221,14 +248,14 @@ class TestNotificationServiceMarkAsRead:
         assert updated.is_read is True
         assert updated.read_at is not None
 
-    def test_mark_as_read_failure_other_tenant(self, user):
+    def test_mark_as_read_failure_other_tenant(self, user: Any) -> None:
         other_company = CompanyFactory()
         notification = NotificationFactory(company=other_company, is_read=False)
 
         with pytest.raises(ObjectNotFoundError):
             NotificationService.mark_as_read(user.company, user, notification.uuid)
 
-    def test_mark_as_read_failure_other_user_same_company(self, user):
+    def test_mark_as_read_failure_other_user_same_company(self, user: Any) -> None:
         user2 = UserFactory(company=user.company)
         notification = NotificationFactory(
             company=user.company, user=user2, is_read=False
@@ -237,7 +264,7 @@ class TestNotificationServiceMarkAsRead:
         with pytest.raises(ObjectNotFoundError):
             NotificationService.mark_as_read(user.company, user, notification.uuid)
 
-    def test_mark_as_read_already_read_idempotent(self, user):
+    def test_mark_as_read_already_read_idempotent(self, user: Any) -> None:
         notification = NotificationFactory(
             user=user, is_read=True, read_at=timezone.now()
         )
@@ -249,7 +276,7 @@ class TestNotificationServiceMarkAsRead:
         assert updated.is_read is True
         assert updated.read_at == read_at_before
 
-    def test_mark_as_read_populates_wedding_name(self, user):
+    def test_mark_as_read_populates_wedding_name(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
         notification = NotificationFactory(
             user=user, wedding_id=wedding.uuid, is_read=False
@@ -263,7 +290,7 @@ class TestNotificationServiceMarkAsRead:
             == f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
         )
 
-    def test_mark_as_read_with_nonexistent_wedding_id(self, user):
+    def test_mark_as_read_with_nonexistent_wedding_id(self, user: Any) -> None:
         notification = NotificationFactory(user=user, wedding_id=uuid4(), is_read=False)
         updated = NotificationService.mark_as_read(
             user.company, user, notification.uuid
@@ -275,7 +302,7 @@ class TestNotificationServiceMarkAsRead:
 class TestNotificationServiceMarkAllAsRead:
     """Testes para o método mark_all_as_read."""
 
-    def test_mark_all_as_read_success(self, user):
+    def test_mark_all_as_read_success(self, user: Any) -> None:
         NotificationFactory(user=user, is_read=False)
         NotificationFactory(user=user, is_read=False)
         NotificationFactory(user=user, is_read=True)
@@ -284,7 +311,7 @@ class TestNotificationServiceMarkAllAsRead:
         assert marked_count == 2
         assert NotificationService.get_unread_count(user.company, user) == 0
 
-    def test_mark_all_as_read_multitenancy_isolated(self, user):
+    def test_mark_all_as_read_multitenancy_isolated(self, user: Any) -> None:
         other_user = UserFactory()
         other_note = NotificationFactory(user=other_user, is_read=False)
 
@@ -299,12 +326,12 @@ class TestNotificationServiceMarkAllAsRead:
 class TestNotificationServiceDelete:
     """Testes para o método delete_notification."""
 
-    def test_delete_notification_success(self, user):
+    def test_delete_notification_success(self, user: Any) -> None:
         n = NotificationFactory(user=user)
         NotificationService.delete_notification(user.company, user, n.uuid)
         assert NotificationService.list_notifications(user.company, user).count() == 0
 
-    def test_delete_notification_other_user_failure(self, user):
+    def test_delete_notification_other_user_failure(self, user: Any) -> None:
         other_user = UserFactory(company=user.company)
         n = NotificationFactory(user=other_user)
         with pytest.raises(ObjectNotFoundError):
@@ -315,7 +342,7 @@ class TestNotificationServiceDelete:
 class TestNotificationServiceBulkOperations:
     """Testes para os métodos de operações em lote (bulk)."""
 
-    def test_bulk_mark_as_read_success(self, user):
+    def test_bulk_mark_as_read_success(self, user: Any) -> None:
         n1 = NotificationFactory(user=user, is_read=False)
         n2 = NotificationFactory(user=user, is_read=False)
         NotificationFactory(user=user, is_read=False)
@@ -326,7 +353,7 @@ class TestNotificationServiceBulkOperations:
         assert count == 2
         assert NotificationService.get_unread_count(user.company, user) == 1
 
-    def test_bulk_delete_success(self, user):
+    def test_bulk_delete_success(self, user: Any) -> None:
         n1 = NotificationFactory(user=user)
         n2 = NotificationFactory(user=user)
         NotificationFactory(user=user)
@@ -335,7 +362,7 @@ class TestNotificationServiceBulkOperations:
         assert count == 2
         assert NotificationService.list_notifications(user.company, user).count() == 1
 
-    def test_clear_all_success(self, user):
+    def test_clear_all_success(self, user: Any) -> None:
         NotificationFactory(user=user)
         NotificationFactory(user=user)
         other_user = UserFactory()

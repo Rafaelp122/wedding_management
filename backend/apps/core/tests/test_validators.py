@@ -7,21 +7,21 @@ from apps.core.validators import MaxFileSizeValidator
 
 
 class TestMaxFileSizeValidator:
-    def test_valid_file_under_limit_passes(self):
+    def test_valid_file_under_limit_passes(self) -> None:
         validator = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         file_mock = MagicMock()
         file_mock.size = 5 * 1024 * 1024
 
         validator(file_mock)
 
-    def test_file_exactly_at_limit_passes(self):
+    def test_file_exactly_at_limit_passes(self) -> None:
         validator = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         file_mock = MagicMock()
         file_mock.size = 10 * 1024 * 1024
 
         validator(file_mock)
 
-    def test_file_over_limit_raises_validation_error(self):
+    def test_file_over_limit_raises_validation_error(self) -> None:
         validator = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         file_mock = MagicMock()
         file_mock.size = 15 * 1024 * 1024
@@ -32,21 +32,21 @@ class TestMaxFileSizeValidator:
         assert exc_info.value.code == "max_file_size"
         assert "10MB" in str(exc_info.value)
 
-    def test_size_none_bypasses_validation(self):
+    def test_size_none_bypasses_validation(self) -> None:
         validator = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         file_mock = MagicMock()
         file_mock.size = None
 
         validator(file_mock)
 
-    def test_oserror_bypasses_validation(self):
+    def test_oserror_bypasses_validation(self) -> None:
         validator = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         file_mock = MagicMock()
         type(file_mock).size = PropertyMock(side_effect=OSError("storage offline"))
 
         validator(file_mock)
 
-    def test_filenotfounderror_bypasses_validation(self):
+    def test_filenotfounderror_bypasses_validation(self) -> None:
         validator = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         file_mock = MagicMock()
         type(file_mock).size = PropertyMock(
@@ -55,24 +55,24 @@ class TestMaxFileSizeValidator:
 
         validator(file_mock)
 
-    def test_equality_same_max_size(self):
+    def test_equality_same_max_size(self) -> None:
         v1 = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         v2 = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
 
         assert v1 == v2
 
-    def test_equality_different_max_size(self):
+    def test_equality_different_max_size(self) -> None:
         v1 = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
         v2 = MaxFileSizeValidator(max_size=5 * 1024 * 1024)
 
         assert v1 != v2
 
-    def test_equality_different_type(self):
+    def test_equality_different_type(self) -> None:
         v1 = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
 
         assert v1 != "not a validator"
 
-    def test_deconstruct_returns_path_args_kwargs(self):
+    def test_deconstruct_returns_path_args_kwargs(self) -> None:
         validator = MaxFileSizeValidator(max_size=10 * 1024 * 1024)
 
         path, args, kwargs = validator.deconstruct()

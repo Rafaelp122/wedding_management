@@ -5,7 +5,7 @@ from .models import Event
 
 # Configuração do modelo Event no painel administrativo do Django
 @admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     """Define como o modelo Event será exibido e filtrado no admin."""
 
     # Campos exibidos na listagem

@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -13,7 +14,9 @@ class TestCloudflareR2StorageService:
     """Testes unitários isolados do CloudflareR2StorageService."""
 
     @patch("boto3.client")
-    def test_generate_presigned_put_url_success(self, mock_boto3_client, settings):
+    def test_generate_presigned_put_url_success(
+        self, mock_boto3_client: Any, settings: Any
+    ) -> None:
         settings.R2_ENDPOINT_URL = "https://r2-endpoint.com"
         settings.R2_ACCESS_KEY_ID = "test-key-id"
         settings.R2_SECRET_ACCESS_KEY = "test-secret-key"
@@ -49,7 +52,9 @@ class TestCloudflareR2StorageService:
             ExpiresIn=900,
         )
 
-    def test_generate_presigned_put_url_configuration_incomplete(self, settings):
+    def test_generate_presigned_put_url_configuration_incomplete(
+        self, settings: Any
+    ) -> None:
         settings.R2_ENDPOINT_URL = ""
         settings.AWS_S3_ENDPOINT_URL = ""
 
@@ -66,12 +71,12 @@ class TestCloudflareR2StorageService:
 class TestGetStorageService:
     """Testes da factory function get_storage_service."""
 
-    def test_get_storage_service_r2_success(self, settings):
+    def test_get_storage_service_r2_success(self, settings: Any) -> None:
         settings.STORAGE_PROVIDER = "R2"
         service = get_storage_service()
         assert isinstance(service, CloudflareR2StorageService)
 
-    def test_get_storage_service_unsupported_raises_error(self, settings):
+    def test_get_storage_service_unsupported_raises_error(self, settings: Any) -> None:
         settings.STORAGE_PROVIDER = "GCS"
         with pytest.raises(BusinessRuleViolation) as exc_info:
             get_storage_service()

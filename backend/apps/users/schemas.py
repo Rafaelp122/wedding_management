@@ -1,6 +1,8 @@
 from ninja import Schema
 from pydantic import UUID4, EmailStr, Field
 
+from apps.users.models import User
+
 
 class TokenPayloadIn(Schema):
     """Credenciais para autenticação (obtain token)."""
@@ -60,7 +62,7 @@ class UserOut(Schema):
     is_email_verified: bool = False
 
     @staticmethod
-    def resolve_company_slug(obj):
+    def resolve_company_slug(obj: "User") -> str | None:
         return obj.company.slug if obj.company else None
 
 

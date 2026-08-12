@@ -14,6 +14,6 @@ class RequestIDFilter(logging.Filter):
     assume o valor 'system'.
     """
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         record.request_id = getattr(_thread_locals, "request_id", "system")
         return True

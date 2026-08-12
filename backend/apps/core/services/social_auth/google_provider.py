@@ -1,12 +1,12 @@
 import logging
-from typing import Any
+from typing import cast
 
 from django.conf import settings
 from google.auth.transport import requests
 from google.oauth2 import id_token as google_id_token
 from ninja.errors import HttpError
 
-from .base import OAuthUserInfo
+from .base import GoogleIDTokenClaims, OAuthUserInfo
 
 
 logger = logging.getLogger(__name__)
@@ -39,10 +39,13 @@ class GoogleOAuthProvider:
             raise HttpError(401, "Configuração do Google OAuth ausente no servidor.")
 
         try:
-            id_info: dict[str, Any] = google_id_token.verify_oauth2_token(
-                token,
-                requests.Request(),
-                client_id,
+            id_info = cast(
+                GoogleIDTokenClaims,
+                google_id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
+                    token,
+                    requests.Request(),
+                    client_id,
+                ),
             )
         except Exception as e:
             logger.warning(f"Falha ao validar token do Google: {e}")

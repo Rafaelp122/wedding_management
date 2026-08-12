@@ -72,7 +72,9 @@ class Command(BaseCommand):
         )
 
         if (
-            not AdminFactory._get_manager(AdminFactory._meta.model)
+            not AdminFactory._get_manager(  # type: ignore[no-untyped-call]
+                AdminFactory._meta.model
+            )
             .filter(is_superuser=True)
             .exists()
         ):

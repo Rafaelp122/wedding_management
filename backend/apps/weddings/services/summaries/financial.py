@@ -1,7 +1,8 @@
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Any, cast
+from typing import TypedDict
+from uuid import UUID
 
 from django.db.models import Q, Sum
 from django.utils import timezone
@@ -12,6 +13,21 @@ from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
+
+
+class _UpcomingInstallment(TypedDict):
+    uuid: UUID
+    installment_number: int
+    amount: str
+    due_date: date
+    status: str
+
+
+class _CategorySummary(TypedDict):
+    name: str
+    allocated: str
+    spent: str
+    percentage: int
 
 
 class FinancialSummaryService:
@@ -88,10 +104,8 @@ class FinancialSummaryService:
             Percentual utilizado (float) arredondado para uma casa decimal.
         """
         try:
-            from apps.finances.managers import BudgetQuerySet
-
             budget = (
-                cast(BudgetQuerySet, Budget.objects.for_tenant(company))
+                Budget.objects.for_tenant(company)
                 .with_total_spent()
                 .get(wedding=wedding)
             )
@@ -107,7 +121,7 @@ class FinancialSummaryService:
     @staticmethod
     def upcoming_installments(
         *, company: Company, wedding: Wedding, today: date | None = None
-    ) -> list[dict[str, Any]]:
+    ) -> list[_UpcomingInstallment]:
         """
         Retorna até 5 parcelas a vencer nos próximos 30 dias de um casamento.
 
@@ -150,7 +164,7 @@ class FinancialSummaryService:
     @staticmethod
     def categories_summary(
         *, company: Company, wedding: Wedding
-    ) -> list[dict[str, Any]]:
+    ) -> list[_CategorySummary]:
         """
         Gera um resumo de categorias de orçamento com alocação e gastos.
 
@@ -166,9 +180,9 @@ class FinancialSummaryService:
             BudgetCategory.objects.for_tenant(company)
             .filter(wedding=wedding)
             .select_related("budget")
-            .with_total_spent()  # type: ignore[attr-defined]
+            .with_total_spent()
         )
-        result = []
+        result: list[_CategorySummary] = []
         for cat in categories:
             spent = cat.total_spent
             alloc = cat.allocated_budget

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from apps.users.models import User
@@ -7,7 +9,7 @@ from apps.users.models import User
 class TestAuthAPI:
     """Testes de integração para a API de autenticação e registro."""
 
-    def test_register_user_success(self, client):
+    def test_register_user_success(self, client: Any) -> None:
         """Garante que o registro de usuário com senha válida tem sucesso."""
         payload = {
             "email": "novo_user@exemplo.com",
@@ -26,7 +28,7 @@ class TestAuthAPI:
         assert data["email"] == "novo_user@exemplo.com"
         assert User.objects.filter(email="novo_user@exemplo.com").exists()
 
-    def test_register_user_short_password_fails(self, client):
+    def test_register_user_short_password_fails(self, client: Any) -> None:
         """Garante que a API rejeita registro com senha menor de 8 caracteres."""
         payload = {
             "email": "invalid_pwd@exemplo.com",
@@ -47,7 +49,7 @@ class TestAuthAPI:
         assert "password" in error["loc"]
         assert "string_too_short" in error["type"]
 
-    def test_register_user_duplicate_email_fails(self, client, user):
+    def test_register_user_duplicate_email_fails(self, client: Any, user: Any) -> None:
         """
         Garante que a API rejeita registro de e-mail
         já existente com 409 Conflict.

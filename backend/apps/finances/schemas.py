@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from ninja import Schema
 from pydantic import UUID4, Field
@@ -40,7 +40,7 @@ class BudgetOut(Schema):
         """Expõe o computed property ``Budget.total_overall_spent`` no payload JSON."""
         val = getattr(obj, "_total_overall_spent", None)
         if val is not None:
-            return val
+            return cast(Decimal, val)
         return obj.total_overall_spent
 
 
@@ -80,7 +80,7 @@ class BudgetCategoryOut(Schema):
         """Expõe o computed property ``BudgetCategory.total_spent`` no payload JSON."""
         val = getattr(obj, "_total_spent", None)
         if val is not None:
-            return val
+            return cast(Decimal, val)
         return obj.total_spent
 
 

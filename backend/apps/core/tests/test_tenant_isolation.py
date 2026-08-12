@@ -10,6 +10,8 @@ Destaques Técnicos:
 - Cobre modelos de weddings, finances, logistics e scheduler.
 """
 
+from typing import Any
+
 import factory
 import pytest
 from django.db import models
@@ -62,7 +64,7 @@ class TestTenantIsolation(BaseTenantIsolationTest):
     def test_model_tenant_isolation(
         self,
         model_cls: type[models.Model],
-        factory_cls: type[factory.django.DjangoModelFactory],
+        factory_cls: type[factory.django.DjangoModelFactory[Any]],
     ) -> None:
         """
         Executa os testes de isolamento de tenant para o modelo e fábrica especificados.

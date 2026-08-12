@@ -11,13 +11,15 @@ Cobre:
 - Verificação de token inválido (401)
 """
 
+from typing import Any
+
 import pytest
 
 
 pytestmark = pytest.mark.django_db
 
 
-def test_obtain_token_success(auth_client, user):
+def test_obtain_token_success(auth_client: Any, user: Any) -> None:
     """POST /api/v1/auth/token/ com credenciais válidas retorna 200 com tokens."""
     response = auth_client.post(
         "/api/v1/auth/token/",
@@ -32,7 +34,7 @@ def test_obtain_token_success(auth_client, user):
     assert data["user"]["email"] == user.email
 
 
-def test_obtain_token_invalid_password(auth_client, user):
+def test_obtain_token_invalid_password(auth_client: Any, user: Any) -> None:
     """POST /api/v1/auth/token/ com senha errada retorna 401."""
     response = auth_client.post(
         "/api/v1/auth/token/",
@@ -42,7 +44,7 @@ def test_obtain_token_invalid_password(auth_client, user):
     assert response.status_code == 401
 
 
-def test_obtain_token_inactive_user(auth_client, inactive_planner):
+def test_obtain_token_inactive_user(auth_client: Any, inactive_planner: Any) -> None:
     """POST /api/v1/auth/token/ com usuário inativo retorna 401."""
     response = auth_client.post(
         "/api/v1/auth/token/",
@@ -52,7 +54,7 @@ def test_obtain_token_inactive_user(auth_client, inactive_planner):
     assert response.status_code == 401
 
 
-def test_refresh_token_success(auth_client, user):
+def test_refresh_token_success(auth_client: Any, user: Any) -> None:
     """POST /api/v1/auth/refresh/ com refresh válido retorna 200 com novos tokens."""
     obtain_resp = auth_client.post(
         "/api/v1/auth/token/",
@@ -74,7 +76,7 @@ def test_refresh_token_success(auth_client, user):
     assert data["refresh"] != tokens["refresh"]
 
 
-def test_refresh_token_reuse_after_rotation(auth_client, user):
+def test_refresh_token_reuse_after_rotation(auth_client: Any, user: Any) -> None:
     """Usar o mesmo refresh token duas vezes deve falhar na segunda (blacklist)."""
     obtain_resp = auth_client.post(
         "/api/v1/auth/token/",
@@ -100,7 +102,7 @@ def test_refresh_token_reuse_after_rotation(auth_client, user):
     assert second.status_code == 401
 
 
-def test_verify_token_success(auth_client, user):
+def test_verify_token_success(auth_client: Any, user: Any) -> None:
     """POST /api/v1/auth/verify/ com access token válido retorna 200."""
     obtain_resp = auth_client.post(
         "/api/v1/auth/token/",
@@ -117,7 +119,7 @@ def test_verify_token_success(auth_client, user):
     assert response.status_code == 200
 
 
-def test_verify_token_invalid(auth_client):
+def test_verify_token_invalid(auth_client: Any) -> None:
     """POST /api/v1/auth/verify/ com token inválido retorna 401."""
     response = auth_client.post(
         "/api/v1/auth/verify/",

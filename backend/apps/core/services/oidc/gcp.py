@@ -1,9 +1,11 @@
 import logging
-from typing import Any
+from typing import cast
 
 from django.conf import settings
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+
+from .base import OIDCClaims
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +26,7 @@ class GCPOIDCVerifier:
             settings, "SCHEDULER_SERVICE_ACCOUNT", None
         )
 
-    def verify_token(self, token: str) -> dict[str, Any]:
+    def verify_token(self, token: str) -> OIDCClaims:
         """
         Valida o token OIDC criptograficamente contra o emissor Google.
 
@@ -37,10 +39,13 @@ class GCPOIDCVerifier:
         Raises:
             PermissionError: Se a service account não for autorizada.
         """
-        claim = id_token.verify_oauth2_token(
-            token,
-            google_requests.Request(),
-            audience=self.audience,
+        claim = cast(
+            OIDCClaims,
+            id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
+                token,
+                google_requests.Request(),
+                audience=self.audience,
+            ),
         )
 
         if (

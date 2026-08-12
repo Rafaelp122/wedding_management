@@ -1,4 +1,12 @@
-from typing import Any, Protocol
+from typing import Protocol, TypedDict
+
+
+class OIDCClaims(TypedDict, total=False):
+    """Claims usadas pelo fluxo OIDC de autenticação entre serviços."""
+
+    iss: str
+    aud: str
+    email: str
 
 
 class OIDCVerifier(Protocol):
@@ -6,7 +14,7 @@ class OIDCVerifier(Protocol):
     Protocolo definindo a interface para serviços de verificação OIDC (ADR-005).
     """
 
-    def verify_token(self, token: str) -> dict[str, Any]:
+    def verify_token(self, token: str) -> OIDCClaims:
         """
         Valida o token OIDC e retorna as claims contidas no token.
 

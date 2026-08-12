@@ -48,7 +48,7 @@ def list_weddings(
 def list_weddings_by_month(
     request: AuthRequest,
     year: int,
-) -> Sequence[dict]:
+) -> Sequence[dict[str, int]]:
     """Retorna a quantidade de casamentos por mês no ano informado."""
     user = request.user
     return WeddingService.count_by_month(company=user.company, year=year)
