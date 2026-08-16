@@ -12,6 +12,10 @@ from apps.notifications.schemas import (
     NotificationOut,
     UnreadCountOut,
 )
+from apps.notifications.selectors import (
+    notification_list_selector,
+    notification_unread_count_selector,
+)
 from apps.notifications.services import NotificationService
 from apps.users.types import AuthRequest
 
@@ -28,9 +32,14 @@ notifications_router = Router(tags=["Notifications"])
 def list_notifications(request: AuthRequest, is_read: bool | None = None) -> Any:
     """Lista as notificações do usuário logado no tenant atual."""
     user = request.user
-    return NotificationService.list_notifications(
-        company=user.company, user=user, is_read=is_read
+    qs = notification_list_selector(
+        company=user.company,
+        user=user,
+        unread_only=(is_read is False),
     )
+    if is_read is True:
+        qs = qs.read()
+    return qs
 
 
 @notifications_router.get(
@@ -41,7 +50,7 @@ def list_notifications(request: AuthRequest, is_read: bool | None = None) -> Any
 def get_unread_count(request: AuthRequest) -> UnreadCountOut:
     """Retorna o total de notificações não lidas do usuário logado."""
     user = request.user
-    count = NotificationService.get_unread_count(company=user.company, user=user)
+    count = notification_unread_count_selector(company=user.company, user=user)
     return UnreadCountOut(count=count)
 
 

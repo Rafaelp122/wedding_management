@@ -4,7 +4,10 @@ from pydantic import UUID4
 from apps.core.constants import READ_ERROR_RESPONSES
 from apps.users.types import AuthRequest
 from apps.weddings.schemas import DashboardSummaryOut, WeddingDashboardOut
-from apps.weddings.services import DashboardService
+from apps.weddings.selectors import (
+    dashboard_summary_selector,
+    wedding_overview_selector,
+)
 
 
 dashboard_router = Router(tags=["Dashboard"])
@@ -22,7 +25,7 @@ def dashboard_summary(request: AuthRequest) -> dict[str, object]:
     overdue installments, pending contracts, and critical weddings.
     """
     user = request.user
-    return DashboardService.get_summary(company=user.company)
+    return dashboard_summary_selector(company=user.company)
 
 
 @dashboard_router.get(
@@ -38,7 +41,7 @@ def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict[str, object]:
     and category breakdown.
     """
     user = request.user
-    return DashboardService.get_wedding_overview(
+    return wedding_overview_selector(
         company=user.company,
         wedding_uuid=uuid,
     )

@@ -6,7 +6,7 @@ from django.test.utils import CaptureQueriesContext
 
 from apps.logistics.models import Contract, Supplier
 from apps.logistics.schemas import ContractOut
-from apps.logistics.services.contract_service import ContractService
+from apps.logistics.selectors import contract_get_selector, contract_list_selector
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.tenants.models import Company
 from apps.tenants.tests.factories import CompanyFactory
@@ -27,8 +27,8 @@ def test_contract_out_resolvers_no_extra_queries() -> None:
     # Create 5 contracts
     ContractFactory.create_batch(5, wedding=wedding, company=company, supplier=supplier)
 
-    # Get contracts via service which annotates fields
-    qs = ContractService.list(company, wedding_id=wedding.uuid)
+    # Get contracts via selector which annotates fields
+    qs = contract_list_selector(company, wedding_id=wedding.uuid)
     contract_list = list(qs)
 
     # Measure queries during serialization
@@ -54,7 +54,7 @@ def test_contract_service_list_annotations() -> None:
     parent = cast(Contract, ContractFactory(wedding=wedding, company=company))
     ContractFactory.create_batch(3, wedding=wedding, company=company, parent=parent)
 
-    qs = ContractService.list(company, wedding_id=wedding.uuid)
+    qs = contract_list_selector(company, wedding_id=wedding.uuid)
     parent_contract = next(c for c in qs if c.uuid == parent.uuid)
 
     assert cast(Any, parent_contract).addendums_count == 3
@@ -64,7 +64,7 @@ def test_contract_service_list_annotations() -> None:
 @pytest.mark.django_db
 def test_single_contract_serialization_queries() -> None:
     """
-    Verifies that ContractService.get() annotates data so that serializing
+    Verifies that contract_get_selector() annotates data so that serializing
     a single detailed contract executes ZERO extra queries.
     """
     company = cast(Company, CompanyFactory())
@@ -76,8 +76,8 @@ def test_single_contract_serialization_queries() -> None:
         Contract, ContractFactory(wedding=wedding, company=company, supplier=supplier)
     )
 
-    # Get contract via service which annotates fields
-    db_contract = ContractService.get(company, uuid=contract.uuid)
+    # Get contract via selector which annotates fields
+    db_contract = contract_get_selector(company, uuid=contract.uuid)
 
     # Measure queries during serialization
     with CaptureQueriesContext(connection) as ctx:

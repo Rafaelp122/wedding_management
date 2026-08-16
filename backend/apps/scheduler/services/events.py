@@ -1,15 +1,13 @@
 import logging
 from typing import Any
-from uuid import UUID
 
 from django.db import transaction
-from django.db.models import QuerySet
 from django.utils import timezone
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
+from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Event
 from apps.scheduler.schemas import EventIn, EventPatchIn
@@ -25,48 +23,6 @@ class EventService:
     Camada de serviço para gestão de compromissos e calendário.
     Garante isolamento total (Multitenancy), auditoria e integridade de agendamento.
     """
-
-    @staticmethod
-    def list(company: Company, wedding_id: UUID | str | None = None) -> QuerySet[Event]:
-        """
-        Lista todos os eventos vinculados ao tenant (Company).
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: UUID ou string identificadora do casamento
-                (opcional, para filtragem).
-
-        Returns:
-            QuerySet contendo os eventos filtrados da empresa.
-        """
-        qs = Event.objects.for_tenant(company).select_related("wedding", "company")
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Event:
-        """
-        Recupera um evento específico pelo seu UUID, garantindo o tenant.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: O identificador único do evento.
-
-        Returns:
-            A instância do Event localizado.
-
-        Raises:
-            ObjectNotFoundError: Se o evento não for encontrado ou pertencer
-                a outro tenant.
-        """
-        return get_object_or_404_for_tenant(
-            Event,
-            company,
-            uuid,
-            select_related=["wedding"],
-            code="event_not_found_or_denied",
-        )
 
     @staticmethod
     @transaction.atomic

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import ProtectedError, QuerySet
+from django.db.models import ProtectedError
 
 from apps.core.exceptions import DomainIntegrityError
 from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
@@ -18,55 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 class BudgetService:
-    """Camada de serviço para gestão do orçamento mestre.
+    """Camada de serviço para mutações e orquestração do orçamento mestre.
 
     Garante que cada casamento tenha exatamente um teto financeiro (OneToOne)
     e isola a lógica de negócio por tenant.
     """
-
-    @staticmethod
-    def list(company: Company) -> QuerySet[Budget]:
-        """Lista os orçamentos de uma empresa.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-
-        Returns:
-            QuerySet[Budget]: QuerySet com os orçamentos contendo o gasto total.
-        """
-        return (
-            Budget.objects.for_tenant(company)
-            .with_total_spent()
-            .select_related("wedding")
-        )
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Budget:
-        """Obtém um orçamento específico pelo seu UUID.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: O UUID do orçamento desejado.
-
-        Returns:
-            Budget: A instância do orçamento encontrada.
-
-        Raises:
-            ObjectNotFoundError: Se o orçamento não for encontrado.
-        """
-        try:
-            return (
-                Budget.objects.for_tenant(company)
-                .with_total_spent()
-                .select_related("wedding")
-                .get(uuid=uuid)
-            )
-        except (Budget.DoesNotExist, ValueError, ValidationError) as e:
-            from apps.core.exceptions import ObjectNotFoundError
-
-            raise ObjectNotFoundError(
-                detail="Orçamento não encontrado ou acesso negado."
-            ) from e
 
     @staticmethod
     @transaction.atomic
@@ -225,8 +181,6 @@ class BudgetService:
         Returns:
             Budget: A instância do orçamento (existente ou recém-criado).
         """
-        from apps.weddings.models import Wedding
-
         wedding = get_object_or_404_for_tenant(
             Wedding,
             company,

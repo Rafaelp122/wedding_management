@@ -518,105 +518,6 @@ class TestExpenseServiceUpdate:
 
 
 @pytest.mark.django_db
-class TestExpenseServiceListAndGet:
-    """Testes de listagem e obtenção de despesas."""
-
-    def test_list_expenses_multitenancy(self) -> None:
-        """list() retorna apenas despesas do tenant."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        cat_a = _setup_category(user_a)
-        cat_b = _setup_category(user_b)
-
-        ExpenseFactory(
-            wedding=cat_a.wedding,
-            category=cat_a,
-            description="Despesa A",
-            contract=None,
-        )
-        ExpenseFactory(
-            wedding=cat_b.wedding,
-            category=cat_b,
-            description="Despesa B",
-            contract=None,
-        )
-
-        qs_a = ExpenseService.list(user_a.company)
-        assert qs_a.count() == 1
-        first_a = qs_a.first()
-        assert first_a is not None
-        assert first_a.company == user_a.company
-
-        qs_b = ExpenseService.list(user_b.company)
-        assert qs_b.count() == 1
-        first_b = qs_b.first()
-        assert first_b is not None
-        assert first_b.company == user_b.company
-
-    def test_list_expenses_filter_by_wedding(self, user: Any) -> None:
-        """list() com wedding_id filtra por casamento."""
-        cat1 = _setup_category(user)
-        cat2 = _setup_category(user)
-
-        ExpenseFactory(wedding=cat1.wedding, category=cat1, contract=None)
-        ExpenseFactory(wedding=cat2.wedding, category=cat2, contract=None)
-
-        qs = ExpenseService.list(user.company, wedding_id=cat1.wedding.uuid)
-        assert qs.count() == 1
-
-    def test_get_expense_success(self, user: Any) -> None:
-        """get() retorna despesa por UUID com select_related."""
-        category = _setup_category(user)
-        expense = ExpenseFactory(
-            wedding=category.wedding,
-            category=category,
-            contract=None,
-        )
-
-        result = ExpenseService.get(user.company, expense.uuid)
-
-        assert result.uuid == expense.uuid
-        assert result.category == expense.category
-
-    def test_get_expense_not_found(self, user: Any) -> None:
-        """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError):
-            ExpenseService.get(user.company, uuid4())
-
-    def test_get_expense_multitenancy(self) -> None:
-        """Usuário A não pode acessar despesa do Usuário B."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        cat_b = _setup_category(user_b)
-        expense_b = ExpenseFactory(
-            wedding=cat_b.wedding,
-            category=cat_b,
-            contract=None,
-        )
-
-        with pytest.raises(ObjectNotFoundError):
-            ExpenseService.get(user_a.company, expense_b.uuid)
-
-    def test_get_expense_by_installment_uuid_fallback(self, user: Any) -> None:
-        """Passar UUID da parcela retorna a despesa pai correspondente."""
-        category = _setup_category(user)
-        expense = ExpenseFactory(
-            wedding=category.wedding,
-            category=category,
-            contract=None,
-        )
-        installment = InstallmentFactory(
-            expense=expense,
-            company=user.company,
-            wedding=category.wedding,
-        )
-
-        result = ExpenseService.get(user.company, installment.uuid)
-
-        assert result.uuid == expense.uuid
-
-
-@pytest.mark.django_db
 class TestExpenseServiceDelete:
     """Testes de deleção de despesas via ExpenseService."""
 
@@ -626,8 +527,7 @@ class TestExpenseServiceDelete:
 
         ExpenseService.delete(user.company, expense)
 
-        with pytest.raises(ObjectNotFoundError):
-            ExpenseService.get(user.company, expense.uuid)
+        assert not Expense.objects.filter(uuid=expense.uuid).exists()
 
     def test_delete_expense_with_contract_is_allowed(self, user: Any) -> None:
         """Excluir despesa vinculada a contrato é permitido."""

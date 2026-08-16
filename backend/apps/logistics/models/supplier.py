@@ -13,6 +13,7 @@ from django.core.validators import (
 )
 from django.db import models
 
+from apps.logistics.managers import SupplierQuerySet
 from apps.tenants.models import TenantModel
 
 
@@ -27,6 +28,8 @@ class Supplier(TenantModel):
     Fornecedores de produtos e serviços para casamentos (RF09).
     Centraliza informações de contato e histórico de relacionamento.
     """
+
+    objects = SupplierQuerySet.as_manager()  # type: ignore[misc]
 
     # Informações básicas
     name = models.CharField(

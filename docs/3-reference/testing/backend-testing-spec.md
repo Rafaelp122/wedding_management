@@ -58,13 +58,26 @@ class TestExpenseServiceCreate:
             )
 ```
 
-### 2.3 Isolamento de Multi-Tenancy (HTTP 404)
+### 2.3 Padrões de Teste para Selectors e Custom QuerySets (`test_selectors.py` e `test_managers.py`)
+- **Sem Mock de Banco / ORM:** Selectors e Custom QuerySets DEVEM ser testados contra o banco de dados de teste (`@pytest.mark.django_db`) utilizando Model Factories. **Não fazemos mocking de ORM/Selectors** nesses testes, pois o objetivo é validar a geração real do SQL, anotações (Subqueries, Sum, Coalesce), filtros encadeáveis e comportamento de lazy evaluation.
+- **Cobertura Mínima de Selectors:**
+  - **Isolamento de Tenant:** Testar que registros de outra `Company` não aparecem na listagem (`for_tenant`).
+  - **Filtros e Encadeamento:** Validar filtros opcionais e métodos de escopo (`.pending()`, `.urgent(today)`, etc.).
+  - **Resolução 404:** Validar que `*_get_selector` com UUID inexistente ou de outro tenant levanta `ObjectNotFoundError`.
+
+### 2.4 Política de Mocking no Backend
+- **O que NUNCA é mockado:**
+  - O Django ORM, Models, Custom QuerySets e Selectors em testes de domínio/serviço. Usamos o banco de dados de teste transacional com rollback automático.
+- **O que DEVE ser mockado:**
+  - Provedores externos de I/O (ex: Cloudflare R2 para upload de contratos, envio de e-mails SES/SMTP, gateways de pagamento, APIs de terceiros).
+
+### 2.5 Isolamento de Multi-Tenancy (HTTP 404)
 Todo teste de API ou serviço deve assegurar que requisições acessando recursos de outra `Company` ou de outro `User` retornem estritamente `404 Not Found` (nunca 403 Forbidden ou erro 500 sem tratamento).
 
-### 2.4 Parâmetro `company` Obrigatório
-Funções públicas de serviço devem declarar `company` (ou `company: Company | None = None` para rotas de cron/sistema), auditado automaticamente por `test_security_audit.py`.
+### 2.6 Parâmetro `company` Obrigatório
+Funções públicas de serviço e seletores devem declarar `company` (ou `company: Company | None = None` para rotas de cron/sistema), auditado automaticamente por `test_security_audit.py`.
 
-### 2.5 Tipagem Estática em Testes (`mypy`)
+### 2.7 Tipagem Estática em Testes (`mypy`)
 - Toda função e método de teste deve declarar anotação explícita de retorno `-> None` e tipagem em parâmetros e fixtures.
 - O projeto configura explicitamente `disallow_untyped_calls = false` nos overrides da suíte de testes devido à natureza dinâmica das factories do `factory_boy`, garantindo checagem estrita de definições (`disallow_untyped_defs = true`) e de corpo (`check_untyped_defs = true`) sem exigir anotações artificiais nas instanciações de factories.
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -10,22 +9,13 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
-    Count,
-    F,
-    OuterRef,
     ProtectedError,
-    QuerySet,
-    Subquery,
-    Sum,
-    Value,
 )
-from django.db.models.functions import Coalesce
 from pydantic import ValidationError as PydanticValidationError
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
-    ObjectNotFoundError,
 )
 from apps.core.services.storage import (
     StorageService,
@@ -33,7 +23,6 @@ from apps.core.services.storage import (
 )
 from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.models import Expense, Installment
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.expense_service import ExpenseService
 from apps.logistics.models import Contract, Supplier
@@ -43,6 +32,7 @@ from apps.logistics.schemas import (
     ContractPatchIn,
     ItemIn,
 )
+from apps.logistics.selectors.contract_selectors import contract_get_selector
 from apps.logistics.services.item_service import ItemService
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
@@ -53,12 +43,10 @@ _ItemInList = list[ItemIn]
 logger = logging.getLogger(__name__)
 
 
-# Aliases para evitar colisão do método 'list'
-# com o built-in 'list' no escopo da classe
 class ContractService:
     """
     Camada de serviço para gestão de contratos.
-    Foco: Orquestração, Multitenancy Segura e Auditoria.
+    Foco: Orquestração de escrita, Multitenancy Segura e Auditoria.
     Validações de integridade do dado ficam delegadas ao Model.
     """
 
@@ -94,133 +82,6 @@ class ContractService:
             storage_service: Instância customizada ou mock de StorageService.
         """
         cls._storage_service = storage_service
-
-    @staticmethod
-    def list(
-        company: Company,
-        wedding_id: UUID | str | None = None,
-        status: str | None = None,
-        supplier_id: UUID | str | None = None,
-        parent_id: UUID | str | None = None,
-    ) -> QuerySet[Contract]:
-        """
-        Lista os contratos pertencentes ao tenant com filtros aplicados.
-
-        Aplica otimizações de banco de dados (select_related e subqueries)
-        para evitar queries redundantes ao carregar dados do fornecedor,
-        despesas e contagem de aditivos.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: Identificador do casamento para filtragem.
-            status: Status do contrato (ex: DRAFT, SIGNED).
-            supplier_id: Identificador do fornecedor associado.
-            parent_id: Identificador do contrato pai (aditivo).
-
-        Returns:
-            QuerySet contendo os contratos filtrados e anotados.
-        """
-        qs = (
-            Contract.objects.for_tenant(company)
-            .select_related("supplier", "wedding", "parent")
-            .annotate(
-                supplier_name=F("supplier__name"),
-                supplier_phone=F("supplier__phone"),
-                supplier_email=F("supplier__email"),
-                expense_id=Subquery(
-                    Expense.objects.for_tenant(company)
-                    .filter(contract=OuterRef("pk"))
-                    .values("uuid")[:1]
-                ),
-                total_paid=Coalesce(
-                    Subquery(
-                        Installment.objects.for_tenant(company)
-                        .filter(expense__contract=OuterRef("pk"), status="PAID")
-                        .values("expense__contract")
-                        .annotate(s=Sum("amount"))
-                        .values("s")[:1]
-                    ),
-                    Value(Decimal("0.00")),
-                ),
-                # Otimização: Uso de Subquery para contagem para evitar a
-                # explosão de JOINs.
-                addendums_count=Coalesce(
-                    Subquery(
-                        Contract.objects.for_tenant(company)
-                        .filter(parent=OuterRef("pk"))
-                        .values("parent")
-                        .annotate(cnt=Count("id"))
-                        .values("cnt")[:1]
-                    ),
-                    0,
-                ),
-            )
-        )
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
-        if status:
-            qs = qs.filter(status=status)
-        if supplier_id:
-            qs = qs.filter(supplier__uuid=supplier_id)
-        if parent_id:
-            qs = qs.filter(parent__uuid=parent_id)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Contract:
-        """
-        Busca um contrato específico pertencente ao tenant.
-
-        Garante a separação multitenant e anota contagem de aditivos
-        e despesa vinculada para evitar queries N+1.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: Identificador único (UUID ou string) do contrato.
-
-        Returns:
-            A instância do Contract correspondente.
-
-        Raises:
-            ObjectNotFoundError: Se o contrato não for encontrado.
-        """
-        try:
-            return (
-                Contract.objects.for_tenant(company)
-                .select_related("supplier", "wedding", "parent")
-                .annotate(
-                    # Otimização: Uso de Subquery para contagem para evitar a
-                    # explosão de JOINs.
-                    addendums_count=Coalesce(
-                        Subquery(
-                            Contract.objects.for_tenant(company)
-                            .filter(parent=OuterRef("pk"))
-                            .values("parent")
-                            .annotate(cnt=Count("id"))
-                            .values("cnt")[:1]
-                        ),
-                        0,
-                    ),
-                    expense_id=Subquery(
-                        Expense.objects.for_tenant(company)
-                        .filter(contract=OuterRef("pk"))
-                        .values("uuid")[:1]
-                    ),
-                    total_paid=Coalesce(
-                        Subquery(
-                            Installment.objects.for_tenant(company)
-                            .filter(expense__contract=OuterRef("pk"), status="PAID")
-                            .values("expense__contract")
-                            .annotate(s=Sum("amount"))
-                            .values("s")[:1]
-                        ),
-                        Value(Decimal("0.00")),
-                    ),
-                )
-                .get(uuid=uuid)
-            )
-        except (Contract.DoesNotExist, ValueError, ValidationError) as e:
-            raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
 
     @staticmethod
     @transaction.atomic
@@ -716,7 +577,7 @@ class ContractService:
         logger.info(
             f"Associando chave de arquivo {pdf_file_key} ao contrato uuid={uuid}"
         )
-        contract = ContractService.get(company, uuid)
+        contract = contract_get_selector(company, uuid)
         contract.pdf_file = pdf_file_key
         contract.save(update_fields=["pdf_file"])
         logger.info(f"Chave de arquivo associada ao contrato uuid={uuid}")
@@ -738,7 +599,7 @@ class ContractService:
             ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
         """
         logger.info(f"Removendo arquivo do contrato uuid={uuid}")
-        contract = ContractService.get(company, uuid)
+        contract = contract_get_selector(company, uuid)
         if contract.pdf_file:
             contract.pdf_file.delete(save=False)
         contract.pdf_file = None

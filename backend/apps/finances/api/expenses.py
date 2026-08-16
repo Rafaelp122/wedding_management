@@ -11,6 +11,7 @@ from apps.finances.schemas import (
     ExpenseOut,
     ExpensePatchIn,
 )
+from apps.finances.selectors import expense_get_selector, expense_list_selector
 from apps.finances.services.expense_service import ExpenseService
 from apps.users.types import AuthRequest
 
@@ -29,7 +30,7 @@ def list_expenses(
     Lista todas as compras e despachos que saíram dos painéis orçamentários.
     """
     user = request.user
-    return ExpenseService.list(user.company, wedding_id=wedding_id)
+    return expense_list_selector(company=user.company, wedding_id=wedding_id)
 
 
 @expenses_router.get(
@@ -42,7 +43,7 @@ def get_expense(request: AuthRequest, uuid: UUID4) -> Expense:
     Retorna recibo unitário simplificado nominal registrado no controle base.
     """
     user = request.user
-    return ExpenseService.get(user.company, uuid)
+    return expense_get_selector(company=user.company, uuid=uuid)
 
 
 @expenses_router.post(
@@ -71,7 +72,7 @@ def update_expense(
     Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
     """
     user = request.user
-    instance = ExpenseService.get(user.company, uuid)
+    instance = expense_get_selector(company=user.company, uuid=uuid)
     return ExpenseService.update(user.company, instance, payload)
 
 
@@ -85,7 +86,7 @@ def delete_expense(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Deleta uma compra revertendo seu efeito, estornando em painel os gastos.
     """
     user = request.user
-    instance = ExpenseService.get(user.company, uuid)
+    instance = expense_get_selector(company=user.company, uuid=uuid)
     ExpenseService.delete(user.company, instance)
     return 204, None
 
