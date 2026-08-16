@@ -64,6 +64,10 @@ Todo teste de API ou serviço deve assegurar que requisições acessando recurso
 ### 2.4 Parâmetro `company` Obrigatório
 Funções públicas de serviço devem declarar `company` (ou `company: Company | None = None` para rotas de cron/sistema), auditado automaticamente por `test_security_audit.py`.
 
+### 2.5 Tipagem Estática em Testes (`mypy`)
+- Toda função e método de teste deve declarar anotação explícita de retorno `-> None` e tipagem em parâmetros e fixtures.
+- O projeto mantém `disallow_untyped_calls = false` na suíte de testes devido à natureza dinâmica das factories do `factory_boy`, garantindo checagem estrita de definições (`disallow_untyped_defs = true`) e de corpo (`check_untyped_defs = true`) sem exigir anotações artificiais nas instanciações de factories.
+
 ---
 
 ## 3. Estrutura de Arquivos e Nomenclatura

@@ -206,8 +206,6 @@ module = [
     "apps.core.tests.test_commands",
     "apps.core.tests.test_concurrency_locks",
     "apps.core.tests.test_api_performance",
-    "apps.core.tests.test_api_architecture",
-    "apps.core.tests.test_cron_api",
     "apps.scheduler.tests.test_apis",
     "apps.finances.tests.test_apis",
     "apps.users.tests.test_email_verification_api",
@@ -219,7 +217,9 @@ module = [
     "apps.logistics.tests.contracts.test_performance",
     "apps.logistics.tests.contracts.test_services",
     "apps.logistics.tests.test_apis",
-  ]
+]
+# Exige assinatura completa e checagem de corpo. disallow_untyped_calls permanece false
+# herdado de apps.*.tests.* para suportar métodos dinâmicos de factories (factory_boy).
 disallow_untyped_defs = true
 check_untyped_defs = true
 
