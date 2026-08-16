@@ -66,7 +66,7 @@ Funções públicas de serviço devem declarar `company` (ou `company: Company |
 
 ### 2.5 Tipagem Estática em Testes (`mypy`)
 - Toda função e método de teste deve declarar anotação explícita de retorno `-> None` e tipagem em parâmetros e fixtures.
-- O projeto mantém `disallow_untyped_calls = false` na suíte de testes devido à natureza dinâmica das factories do `factory_boy`, garantindo checagem estrita de definições (`disallow_untyped_defs = true`) e de corpo (`check_untyped_defs = true`) sem exigir anotações artificiais nas instanciações de factories.
+- O projeto configura explicitamente `disallow_untyped_calls = false` nos overrides da suíte de testes devido à natureza dinâmica das factories do `factory_boy`, garantindo checagem estrita de definições (`disallow_untyped_defs = true`) e de corpo (`check_untyped_defs = true`) sem exigir anotações artificiais nas instanciações de factories.
 
 ---
 

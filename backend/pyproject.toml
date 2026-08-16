@@ -218,9 +218,10 @@ module = [
     "apps.logistics.tests.contracts.test_services",
     "apps.logistics.tests.test_apis",
 ]
-# Exige assinatura completa e checagem de corpo. disallow_untyped_calls permanece false
-# herdado de apps.*.tests.* para suportar métodos dinâmicos de factories (factory_boy).
+# Exige assinatura completa e checagem de corpo. disallow_untyped_calls é explicitamente false
+# para suportar métodos dinâmicos de factories (factory_boy).
 disallow_untyped_defs = true
+disallow_untyped_calls = false
 check_untyped_defs = true
 
 # 3. Management commands e scripts utilitários CLI
