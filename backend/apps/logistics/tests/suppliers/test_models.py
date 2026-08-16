@@ -9,12 +9,12 @@ from apps.logistics.tests.factories import SupplierFactory
 class TestSupplierModelMetadata:
     """Testes de representação e metadados do modelo Supplier."""
 
-    def test_supplier_str_is_name(self):
+    def test_supplier_str_is_name(self) -> None:
         """__str__ deve retornar o nome do fornecedor."""
         supplier = SupplierFactory.build(name="Buffet Master")
         assert str(supplier) == "Buffet Master"
 
-    def test_supplier_ordering_by_name(self):
+    def test_supplier_ordering_by_name(self) -> None:
         """Ordenação padrão deve ser alfabética por name."""
         SupplierFactory.create(name="Zeta")
         SupplierFactory.create(name="Alfa")
@@ -25,7 +25,7 @@ class TestSupplierModelMetadata:
         assert suppliers[1].name == "Beta"
         assert suppliers[2].name == "Zeta"
 
-    def test_supplier_is_active_default(self):
+    def test_supplier_is_active_default(self) -> None:
         """is_active deve ser True por padrão."""
         supplier = SupplierFactory.build()
         assert supplier.is_active is True
@@ -35,7 +35,7 @@ class TestSupplierModelMetadata:
 class TestSupplierFullAddress:
     """Testes da computed property full_address."""
 
-    def test_full_address_with_all_fields(self):
+    def test_full_address_with_all_fields(self) -> None:
         """full_address deve concatenar address, city e state."""
         supplier = SupplierFactory.build(
             address="Rua das Flores, 123",
@@ -48,7 +48,7 @@ class TestSupplierFullAddress:
         assert "São Paulo" in result
         assert "SP" in result
 
-    def test_full_address_without_state(self):
+    def test_full_address_without_state(self) -> None:
         """full_address sem state não deve incluir campo vazio."""
         supplier = SupplierFactory.build(
             address="Av. Paulista, 1000",
@@ -59,7 +59,7 @@ class TestSupplierFullAddress:
         result = supplier.full_address
         assert result == "Av. Paulista, 1000, São Paulo"
 
-    def test_full_address_minimal(self):
+    def test_full_address_minimal(self) -> None:
         """full_address com campos vazios deve retornar string enxuta."""
         supplier = SupplierFactory.build(
             address="",
@@ -76,7 +76,7 @@ class TestSupplierFullAddress:
 class TestSupplierCnpjValidation:
     """Testes de validação do campo CNPJ via full_clean()."""
 
-    def test_full_clean_rejects_invalid_cnpj(self):
+    def test_full_clean_rejects_invalid_cnpj(self) -> None:
         """full_clean() deve disparar ValidationError para CNPJ inválido."""
         supplier = SupplierFactory.build(cnpj="123")
 
@@ -84,7 +84,7 @@ class TestSupplierCnpjValidation:
             supplier.full_clean()
         assert "cnpj" in exc_info.value.message_dict
 
-    def test_full_clean_accepts_valid_cnpj(self):
+    def test_full_clean_accepts_valid_cnpj(self) -> None:
         """full_clean() deve aceitar CNPJ no formato correto."""
         supplier = SupplierFactory.create(
             cnpj="00.000.000/0001-00",
@@ -92,7 +92,7 @@ class TestSupplierCnpjValidation:
 
         supplier.full_clean()
 
-    def test_full_clean_accepts_empty_cnpj(self):
+    def test_full_clean_accepts_empty_cnpj(self) -> None:
         """full_clean() deve aceitar CNPJ vazio (blank=True)."""
         supplier = SupplierFactory.create(
             cnpj="",

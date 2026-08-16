@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import Any, Protocol, cast
 
 import pytest
 
@@ -14,19 +15,29 @@ from apps.finances.tests.factories import (
 from apps.weddings.tests.factories import WeddingFactory
 
 
-def _setup_expense(user):
+class _ExpenseDetails(Protocol):
+    installments_count: int
+    paid_installments_count: int
+    total_paid: Decimal
+    total_pending: Decimal
+
+
+def _setup_expense(user: Any) -> tuple[Any, Expense]:
     wedding = WeddingFactory(user_context=user)
     budget = BudgetFactory(wedding=wedding)
     category = BudgetCategoryFactory(budget=budget, wedding=wedding)
-    expense = ExpenseFactory(
-        wedding=wedding, category=category, actual_amount=Decimal("1500.00")
+    expense = cast(
+        Expense,
+        ExpenseFactory(
+            wedding=wedding, category=category, actual_amount=Decimal("1500.00")
+        ),
     )
     return wedding, expense
 
 
 @pytest.mark.django_db
 class TestExpenseQuerySet:
-    def test_with_details_returns_expense_queryset(self, user):
+    def test_with_details_returns_expense_queryset(self, user: Any) -> None:
         _setup_expense(user)
 
         qs = Expense.objects.for_tenant(user.company).with_details()
@@ -34,7 +45,7 @@ class TestExpenseQuerySet:
         assert isinstance(qs, ExpenseQuerySet)
         assert qs.count() == 1
 
-    def test_with_details_counts_mixed_installment_statuses(self, user):
+    def test_with_details_counts_mixed_installment_statuses(self, user: Any) -> None:
         wedding, expense = _setup_expense(user)
         InstallmentFactory(
             expense=expense,
@@ -59,10 +70,13 @@ class TestExpenseQuerySet:
             status=Installment.StatusChoices.OVERDUE,
         )
 
-        result = (
-            Expense.objects.for_tenant(user.company)
-            .with_details()
-            .get(uuid=expense.uuid)
+        result = cast(
+            _ExpenseDetails,
+            (
+                Expense.objects.for_tenant(user.company)
+                .with_details()
+                .get(uuid=expense.uuid)
+            ),
         )
 
         assert result.installments_count == 3
@@ -70,7 +84,7 @@ class TestExpenseQuerySet:
         assert result.total_paid == Decimal("500.00")
         assert result.total_pending == Decimal("1000.00")
 
-    def test_with_details_all_paid(self, user):
+    def test_with_details_all_paid(self, user: Any) -> None:
         wedding, expense = _setup_expense(user)
         InstallmentFactory(
             expense=expense,
@@ -81,10 +95,13 @@ class TestExpenseQuerySet:
             paid_date=date.today(),
         )
 
-        result = (
-            Expense.objects.for_tenant(user.company)
-            .with_details()
-            .get(uuid=expense.uuid)
+        result = cast(
+            _ExpenseDetails,
+            (
+                Expense.objects.for_tenant(user.company)
+                .with_details()
+                .get(uuid=expense.uuid)
+            ),
         )
 
         assert result.installments_count == 1
@@ -92,7 +109,7 @@ class TestExpenseQuerySet:
         assert result.total_paid == Decimal("1000.00")
         assert result.total_pending == Decimal("0.00")
 
-    def test_with_details_all_pending(self, user):
+    def test_with_details_all_pending(self, user: Any) -> None:
         wedding, expense = _setup_expense(user)
         InstallmentFactory(
             expense=expense,
@@ -102,22 +119,28 @@ class TestExpenseQuerySet:
             status=Installment.StatusChoices.PENDING,
         )
 
-        result = (
-            Expense.objects.for_tenant(user.company)
-            .with_details()
-            .get(uuid=expense.uuid)
+        result = cast(
+            _ExpenseDetails,
+            (
+                Expense.objects.for_tenant(user.company)
+                .with_details()
+                .get(uuid=expense.uuid)
+            ),
         )
 
         assert result.total_paid == Decimal("0.00")
         assert result.total_pending == Decimal("1000.00")
 
-    def test_with_details_no_installments(self, user):
+    def test_with_details_no_installments(self, user: Any) -> None:
         _, expense = _setup_expense(user)
 
-        result = (
-            Expense.objects.for_tenant(user.company)
-            .with_details()
-            .get(uuid=expense.uuid)
+        result = cast(
+            _ExpenseDetails,
+            (
+                Expense.objects.for_tenant(user.company)
+                .with_details()
+                .get(uuid=expense.uuid)
+            ),
         )
 
         assert result.installments_count == 0

@@ -1,4 +1,12 @@
+from typing import Protocol
+
 from django.core.exceptions import ValidationError
+
+
+class _FileLike(Protocol):
+    """Arquivo com atributo ``size`` (ex.: ``UploadedFile`` do Django)."""
+
+    size: int | None
 
 
 class MaxFileSizeValidator:
@@ -13,7 +21,7 @@ class MaxFileSizeValidator:
     def __init__(self, max_size: int) -> None:
         self.max_size = max_size
 
-    def __call__(self, value) -> None:
+    def __call__(self, value: _FileLike) -> None:
         try:
             size = value.size
         except OSError:
@@ -31,8 +39,8 @@ class MaxFileSizeValidator:
             return self.max_size == other.max_size
         return False
 
-    def deconstruct(self) -> tuple:
+    def deconstruct(self) -> tuple[str, tuple[int], dict[str, int]]:
         path = "apps.core.validators.MaxFileSizeValidator"
         args = (self.max_size,)
-        kwargs: dict = {}
+        kwargs: dict[str, int] = {}
         return path, args, kwargs

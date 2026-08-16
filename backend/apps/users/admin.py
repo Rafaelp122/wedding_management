@@ -13,7 +13,7 @@ from .models import User
 
 
 @admin.register(User)
-class CustomUserAdmin(BaseUserAdmin):
+class CustomUserAdmin(BaseUserAdmin):  # type: ignore[type-arg]
     """Admin customizado para o modelo User.
 
     Adapta o UserAdmin padrão do Django para trabalhar com o modelo User

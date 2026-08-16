@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import Contract, Item, Supplier
 
 
-class ItemInline(admin.TabularInline):
+class ItemInline(admin.TabularInline):  # type: ignore[type-arg]
     model = Item
     extra = 0
     fields = ["name", "quantity", "acquisition_status"]
@@ -12,7 +12,7 @@ class ItemInline(admin.TabularInline):
 
 
 @admin.register(Supplier)
-class SupplierAdmin(admin.ModelAdmin):
+class SupplierAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ["name", "phone", "email", "is_active"]
     list_filter = ["is_active", "created_at"]
     search_fields = ["name", "email"]
@@ -20,7 +20,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
 
 @admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
+class ItemAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = [
         "name",
         "wedding",
@@ -39,7 +39,7 @@ class ItemAdmin(admin.ModelAdmin):
 
 
 @admin.register(Contract)
-class ContractAdmin(admin.ModelAdmin):
+class ContractAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = [
         "wedding",
         "supplier",

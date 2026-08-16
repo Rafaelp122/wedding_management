@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any, Self, cast
 from uuid import UUID, uuid4
 
 from django.db import models
@@ -32,4 +32,4 @@ class BaseModel(models.Model):
     @classmethod
     def get_by_uuid(cls, uuid_value: UUID | str) -> Self | None:
         """Busca rápida por identificador público."""
-        return cls.objects.filter(uuid=uuid_value).first()  # type: ignore[attr-defined]
+        return cast(Self | None, cls.objects.filter(uuid=uuid_value).first())  # type: ignore[attr-defined]

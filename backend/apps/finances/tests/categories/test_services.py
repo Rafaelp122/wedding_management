@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import no_type_check
+from typing import Any, cast, no_type_check
 from uuid import uuid4
 
 import pytest
@@ -9,19 +9,45 @@ from apps.core.exceptions import (
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.finances.models import Budget, BudgetCategory
+from apps.finances.models import Budget, BudgetCategory, Expense
 from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.finances.tests.factories import (
-    BudgetCategoryFactory,
-    BudgetFactory,
-    ExpenseFactory,
+    BudgetCategoryFactory as _BudgetCategoryFactory,
 )
-from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.finances.tests.factories import (
+    BudgetFactory as _BudgetFactory,
+)
+from apps.finances.tests.factories import (
+    ExpenseFactory as _ExpenseFactory,
+)
+from apps.users.models import User
+from apps.users.tests.factories import UserFactory as _UserFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
 
 
-def _setup_budget(user, **kwargs):
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> BudgetCategory:
+    return cast(BudgetCategory, _BudgetCategoryFactory(*args, **kwargs))
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Budget:
+    return cast(Budget, _BudgetFactory(*args, **kwargs))
+
+
+def ExpenseFactory(*args: Any, **kwargs: Any) -> Expense:
+    return cast(Expense, _ExpenseFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
+
+
+def _setup_budget(user: Any, **kwargs: Any) -> tuple[Wedding, Budget]:
     """Helper: cria wedding + budget no contexto do user."""
     wedding = WeddingFactory(user_context=user)
     budget = BudgetFactory(wedding=wedding, **kwargs)
@@ -32,63 +58,67 @@ def _setup_budget(user, **kwargs):
 class TestBudgetCategoryServiceCreate:
     """Testes de criação de categorias via BudgetCategoryService."""
 
-    def test_create_category_success(self, user):
+    def test_create_category_success(self, user: Any) -> None:
         """Criação de categoria vinculada ao budget do casamento."""
         wedding, budget = _setup_budget(user)
 
-        data = {
-            "budget": budget.uuid,
-            "name": "Decoração",
-            "allocated_budget": Decimal("5000.00"),
-        }
-
-        category = BudgetCategoryService.create(user.company, BudgetCategoryIn(**data))
+        category = BudgetCategoryService.create(
+            user.company,
+            BudgetCategoryIn(
+                budget=budget.uuid,
+                name="Decoração",
+                allocated_budget=Decimal("5000.00"),
+            ),
+        )
 
         assert category.budget == budget
         assert category.wedding == wedding
         assert category.name == "Decoração"
         assert category.allocated_budget == Decimal("5000.00")
 
-    def test_create_category_with_budget_instance(self, user):
+    def test_create_category_with_budget_instance(self, user: Any) -> None:
         """create() aceita instância de Budget, não só UUID."""
         _, budget = _setup_budget(user)
 
-        data = {
-            "budget": budget.uuid,
-            "name": "Fotografia",
-            "allocated_budget": Decimal("3000.00"),
-        }
-
-        category = BudgetCategoryService.create(user.company, BudgetCategoryIn(**data))
+        category = BudgetCategoryService.create(
+            user.company,
+            BudgetCategoryIn(
+                budget=budget.uuid,
+                name="Fotografia",
+                allocated_budget=Decimal("3000.00"),
+            ),
+        )
         assert category.budget == budget
 
-    def test_create_category_budget_not_found(self, user):
+    def test_create_category_budget_not_found(self, user: Any) -> None:
         """UUID de orçamento inexistente levanta ObjectNotFoundError."""
-        data = {
-            "budget": uuid4(),
-            "name": "Fantasma",
-            "allocated_budget": Decimal("1000.00"),
-        }
-
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetCategoryService.create(user.company, BudgetCategoryIn(**data))
+            BudgetCategoryService.create(
+                user.company,
+                BudgetCategoryIn(
+                    budget=uuid4(),
+                    name="Fantasma",
+                    allocated_budget=Decimal("1000.00"),
+                ),
+            )
 
         assert "budget_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_category_multitenancy(self):
+    def test_create_category_multitenancy(self) -> None:
         """Usuário A não pode criar categoria com budget do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
         _, budget_b = _setup_budget(user_b)
 
-        data = {
-            "budget": budget_b.uuid,
-            "name": "Invasão",
-            "allocated_budget": Decimal("1000.00"),
-        }
-
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetCategoryService.create(user_a.company, BudgetCategoryIn(**data))
+            BudgetCategoryService.create(
+                user_a.company,
+                BudgetCategoryIn(
+                    budget=budget_b.uuid,
+                    name="Invasão",
+                    allocated_budget=Decimal("1000.00"),
+                ),
+            )
 
         assert "budget_not_found_or_denied" in str(exc_info.value.code)
 
@@ -110,7 +140,7 @@ class TestBudgetCategoryServiceCreate:
 
         assert exc_info.value.code == "budget_not_found_or_denied"
 
-    def test_create_category_exceeds_budget_cap_raises_error(self, user):
+    def test_create_category_exceeds_budget_cap_raises_error(self, user: Any) -> None:
         """
         TOCTOU: criar categoria que ultrapassa o teto do orçamento
         levanta BusinessRuleViolation.
@@ -122,35 +152,39 @@ class TestBudgetCategoryServiceCreate:
             allocated_budget=Decimal("9000.00"),
         )
 
-        data = {
-            "budget": budget.uuid,
-            "name": "Excedente",
-            "allocated_budget": Decimal("2000.00"),
-        }
-
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            BudgetCategoryService.create(user.company, BudgetCategoryIn(**data))
+            BudgetCategoryService.create(
+                user.company,
+                BudgetCategoryIn(
+                    budget=budget.uuid,
+                    name="Excedente",
+                    allocated_budget=Decimal("2000.00"),
+                ),
+            )
 
         assert "budget_cap_exceeded" in str(exc_info.value.code)
 
-    def test_create_category_uses_select_for_update(self, user, mocker):
+    def test_create_category_uses_select_for_update(
+        self, user: Any, mocker: Any
+    ) -> None:
         """
         TOCTOU: create() deve usar select_for_update() no budget
         para evitar race condition na leitura da soma das categorias.
         """
         _, budget = _setup_budget(user)
-        data = {
-            "budget": budget.uuid,
-            "name": "Teste Lock",
-            "allocated_budget": Decimal("1000.00"),
-        }
-
         mock_qs = mocker.MagicMock()
         mock_qs.select_for_update.return_value = mock_qs
         mock_qs.get.return_value = budget
         mocker.patch.object(Budget.objects, "for_tenant", return_value=mock_qs)
 
-        BudgetCategoryService.create(user.company, BudgetCategoryIn(**data))
+        BudgetCategoryService.create(
+            user.company,
+            BudgetCategoryIn(
+                budget=budget.uuid,
+                name="Teste Lock",
+                allocated_budget=Decimal("1000.00"),
+            ),
+        )
 
         mock_qs.select_for_update.assert_called_once()
 
@@ -159,7 +193,7 @@ class TestBudgetCategoryServiceCreate:
 class TestBudgetCategoryServiceUpdate:
     """Testes de atualização de categorias via BudgetCategoryService."""
 
-    def test_update_category_name(self, user):
+    def test_update_category_name(self, user: Any) -> None:
         """Atualização de campos simples é permitida."""
         wedding, budget = _setup_budget(user)
         category = BudgetCategoryFactory(
@@ -174,7 +208,9 @@ class TestBudgetCategoryServiceUpdate:
 
         assert updated.name == "Nova Categoria"
 
-    def test_update_category_allocated_budget_exceeds_cap_raises_error(self, user):
+    def test_update_category_allocated_budget_exceeds_cap_raises_error(
+        self, user: Any
+    ) -> None:
         """
         TOCTOU: atualizar allocated_budget ultrapassando o teto
         levanta BusinessRuleViolation.
@@ -196,12 +232,16 @@ class TestBudgetCategoryServiceUpdate:
             BudgetCategoryService.update(
                 user.company,
                 category2,
-                BudgetCategoryPatchIn(allocated_budget=Decimal("2000.00")),
+                BudgetCategoryPatchIn(
+                    name="Outra", allocated_budget=Decimal("2000.00")
+                ),
             )
 
         assert "budget_cap_exceeded" in str(exc_info.value.code)
 
-    def test_update_category_uses_select_for_update(self, user, mocker):
+    def test_update_category_uses_select_for_update(
+        self, user: Any, mocker: Any
+    ) -> None:
         """
         TOCTOU: update() deve usar select_for_update() no budget
         para evitar race condition na leitura da soma das categorias.
@@ -222,7 +262,7 @@ class TestBudgetCategoryServiceUpdate:
         )
         mock_qs.select_for_update.assert_called_once()
 
-    def test_update_category_cross_tenant(self, user):
+    def test_update_category_cross_tenant(self, user: Any) -> None:
         """Categoria de outro tenant não pode ser atualizada."""
         from apps.users.tests.factories import UserFactory
 
@@ -243,7 +283,7 @@ class TestBudgetCategoryServiceUpdate:
 class TestBudgetCategoryServiceDelete:
     """Testes de deleção de categorias via BudgetCategoryService."""
 
-    def test_delete_category_success(self, user):
+    def test_delete_category_success(self, user: Any) -> None:
         """Deleção de categoria sem despesas vinculadas é permitida."""
         wedding, budget = _setup_budget(user)
         category = BudgetCategoryFactory(
@@ -255,7 +295,7 @@ class TestBudgetCategoryServiceDelete:
 
         assert BudgetCategory.objects.filter(uuid=category.uuid).count() == 0
 
-    def test_delete_category_with_expenses_fails(self, user):
+    def test_delete_category_with_expenses_fails(self, user: Any) -> None:
         """Categoria com despesas vinculadas não pode ser deletada (PROTECT)."""
         wedding, budget = _setup_budget(user)
         category = BudgetCategoryFactory(
@@ -274,7 +314,7 @@ class TestBudgetCategoryServiceDelete:
         assert "category_protected_error" in str(exc_info.value.code)
         assert BudgetCategory.objects.filter(uuid=category.uuid).count() == 1
 
-    def test_delete_category_cross_tenant(self, user):
+    def test_delete_category_cross_tenant(self, user: Any) -> None:
         """Categoria de outro tenant não pode ser deletada."""
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
@@ -291,7 +331,7 @@ class TestBudgetCategoryServiceDelete:
 class TestBudgetCategoryServiceListAndGet:
     """Testes de listagem e obtenção de categorias."""
 
-    def test_list_categories_multitenancy(self):
+    def test_list_categories_multitenancy(self) -> None:
         """list() retorna apenas categorias do tenant."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -303,13 +343,17 @@ class TestBudgetCategoryServiceListAndGet:
 
         qs_a = BudgetCategoryService.list(user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().name == "Cat A"
+        category_a = qs_a.first()
+        assert category_a is not None
+        assert category_a.name == "Cat A"
 
         qs_b = BudgetCategoryService.list(user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().name == "Cat B"
+        category_b = qs_b.first()
+        assert category_b is not None
+        assert category_b.name == "Cat B"
 
-    def test_list_categories_filter_by_wedding(self, user):
+    def test_list_categories_filter_by_wedding(self, user: Any) -> None:
         """list() com wedding_id filtra por casamento."""
         wedding1, budget1 = _setup_budget(user)
         wedding2, budget2 = _setup_budget(user)
@@ -319,9 +363,11 @@ class TestBudgetCategoryServiceListAndGet:
 
         qs = BudgetCategoryService.list(user.company, wedding_id=wedding1.uuid)
         assert qs.count() == 1
-        assert qs.first().name == "Cat Wedding 1"
+        category = qs.first()
+        assert category is not None
+        assert category.name == "Cat Wedding 1"
 
-    def test_get_category_success(self, user):
+    def test_get_category_success(self, user: Any) -> None:
         """get() retorna categoria por UUID."""
         wedding, budget = _setup_budget(user)
         category = BudgetCategoryFactory(
@@ -334,14 +380,14 @@ class TestBudgetCategoryServiceListAndGet:
         assert result.uuid == category.uuid
         assert result.name == "Buffet"
 
-    def test_get_category_not_found(self, user):
+    def test_get_category_not_found(self, user: Any) -> None:
         """UUID inexistente levanta ObjectNotFoundError."""
         with pytest.raises(ObjectNotFoundError) as exc_info:
             BudgetCategoryService.get(user.company, uuid4())
 
         assert str(exc_info.value.detail) == "Categoria de orçamento não encontrada."
 
-    def test_get_category_multitenancy(self):
+    def test_get_category_multitenancy(self) -> None:
         """Usuário A não pode acessar categoria do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -361,7 +407,7 @@ class TestBudgetCategoryServiceListAndGet:
 class TestBudgetCategoryServiceSetupDefaults:
     """Testes de criação de categorias padrão via setup_defaults()."""
 
-    def test_setup_defaults_creates_six_categories(self, user):
+    def test_setup_defaults_creates_six_categories(self, user: Any) -> None:
         """setup_defaults() deve criar 6 categorias padrão."""
         wedding, budget = _setup_budget(user)
 
@@ -370,7 +416,7 @@ class TestBudgetCategoryServiceSetupDefaults:
         categories = BudgetCategory.objects.filter(budget=budget)
         assert categories.count() == 6
 
-    def test_setup_defaults_expected_names(self, user):
+    def test_setup_defaults_expected_names(self, user: Any) -> None:
         """Categorias padrão devem ter os nomes esperados."""
         wedding, budget = _setup_budget(user)
 
@@ -389,7 +435,7 @@ class TestBudgetCategoryServiceSetupDefaults:
         }
         assert names == expected
 
-    def test_setup_defaults_allocated_budget_is_zero(self, user):
+    def test_setup_defaults_allocated_budget_is_zero(self, user: Any) -> None:
         """Categorias padrão são criadas com allocated_budget = 0."""
         wedding, budget = _setup_budget(user)
 
@@ -399,7 +445,7 @@ class TestBudgetCategoryServiceSetupDefaults:
         for cat in categories:
             assert cat.allocated_budget == Decimal("0.00")
 
-    def test_setup_defaults_is_idempotent(self, user):
+    def test_setup_defaults_is_idempotent(self, user: Any) -> None:
         """
         TOCTOU: setup_defaults() não duplica categorias quando chamado
         múltiplas vezes.

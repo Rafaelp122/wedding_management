@@ -135,7 +135,7 @@ def general_exception_handler(request: HttpRequest, exc: Exception) -> HttpRespo
 
 
 @api.get("/health", auth=None, operation_id="core_health_check")
-def health_check(request: HttpRequest):
+def health_check(request: HttpRequest):  # type: ignore[no-untyped-def]
     """
     Verifica a saúde do serviço e a conectividade com o banco de dados.
     Pode ser pingado por serviços externos de monitoramento.

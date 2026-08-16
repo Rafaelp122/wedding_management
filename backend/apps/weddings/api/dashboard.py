@@ -15,7 +15,7 @@ dashboard_router = Router(tags=["Dashboard"])
     response={200: DashboardSummaryOut, **READ_ERROR_RESPONSES},
     operation_id="dashboard_summary",
 )
-def dashboard_summary(request: AuthRequest) -> dict:
+def dashboard_summary(request: AuthRequest) -> dict[str, object]:
     """Aggregated dashboard KPIs for the authenticated company.
 
     Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
@@ -30,7 +30,7 @@ def dashboard_summary(request: AuthRequest) -> dict:
     response={200: WeddingDashboardOut, **READ_ERROR_RESPONSES},
     operation_id="dashboard_wedding",
 )
-def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict:
+def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict[str, object]:
     """Per-wedding dashboard view.
 
     Returns a ``WeddingDashboardOut`` with days until the event, budget usage,

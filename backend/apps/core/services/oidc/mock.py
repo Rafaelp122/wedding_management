@@ -1,5 +1,6 @@
 import logging
-from typing import Any
+
+from .base import OIDCClaims
 
 
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ class MockOIDCVerifier:
     Implementação mock do OIDCVerifier para Dev e Testes (Pytest).
     """
 
-    def verify_token(self, token: str) -> dict[str, Any]:
+    def verify_token(self, token: str) -> OIDCClaims:
         """
         Retorna claims simuladas para ambiente de testes e desenvolvimento.
 

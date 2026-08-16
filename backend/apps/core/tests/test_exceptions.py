@@ -18,7 +18,7 @@ from apps.core.exceptions import (
 class TestExceptionHierarchy:
     """Testes para a hierarquia de exceções da aplicação."""
 
-    def test_application_error_base_class(self):
+    def test_application_error_base_class(self) -> None:
         """Teste CRÍTICO: ApplicationError é a classe base para todas."""
         # Testar instanciação básica
         error = ApplicationError()
@@ -33,7 +33,7 @@ class TestExceptionHierarchy:
         assert custom_error.code == "custom_code"
         assert str(custom_error) == "Erro personalizado"
 
-    def test_object_not_found_error(self):
+    def test_object_not_found_error(self) -> None:
         """Teste CRÍTICO: ObjectNotFoundError mapeia para 404."""
         error = ObjectNotFoundError()
         assert error.status_code == 404
@@ -46,7 +46,7 @@ class TestExceptionHierarchy:
         assert custom_error.detail == "Usuário não encontrado"
         assert custom_error.status_code == 404  # Sempre 404
 
-    def test_business_rule_violation(self):
+    def test_business_rule_violation(self) -> None:
         """Teste CRÍTICO: BusinessRuleViolation mapeia para 422."""
         error = BusinessRuleViolation()
         assert error.status_code == 422
@@ -59,7 +59,7 @@ class TestExceptionHierarchy:
         assert custom_error.detail == "Data não pode ser no passado"
         assert custom_error.status_code == 422
 
-    def test_domain_integrity_error(self):
+    def test_domain_integrity_error(self) -> None:
         """Teste CRÍTICO: DomainIntegrityError mapeia para 409."""
         error = DomainIntegrityError()
         assert error.status_code == 409
@@ -72,7 +72,7 @@ class TestExceptionHierarchy:
         assert custom_error.detail == "Conflito de dados detectado"
         assert custom_error.status_code == 409
 
-    def test_exception_hierarchy_inheritance(self):
+    def test_exception_hierarchy_inheritance(self) -> None:
         """Teste CRÍTICO: Verificar herança correta da hierarquia."""
         # Todas as exceções específicas herdam de ApplicationError
         assert issubclass(ObjectNotFoundError, ApplicationError)
@@ -84,7 +84,7 @@ class TestExceptionHierarchy:
         assert not issubclass(BusinessRuleViolation, DomainIntegrityError)
         assert not issubclass(DomainIntegrityError, ObjectNotFoundError)
 
-    def test_exception_http_status_mapping(self):
+    def test_exception_http_status_mapping(self) -> None:
         """Teste CRÍTICO: Mapeamento correto de status HTTP."""
         # Este teste garante que os códigos HTTP estão corretos para a API
         errors = [
@@ -102,7 +102,7 @@ class TestExceptionHierarchy:
                 f"mas retornou {error.status_code}"
             )
 
-    def test_exception_serialization_consistency(self):
+    def test_exception_serialization_consistency(self) -> None:
         """Teste CRÍTICO: Exceções serializam consistentemente para APIs."""
         # Testar que todas as exceções podem ser serializadas de forma consistente
         test_cases = [
@@ -129,7 +129,7 @@ class TestExceptionHierarchy:
 class TestExceptionIntegration:
     """Testes de integração para verificar exceções em contexto real."""
 
-    def test_service_raises_correct_exception_types(self):
+    def test_service_raises_correct_exception_types(self) -> None:
         """Serviços lançam tipos corretos de exceção com atributos esperados."""
         errors = [
             (ObjectNotFoundError, "Recurso não encontrado", 404),

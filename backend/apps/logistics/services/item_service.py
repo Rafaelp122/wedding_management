@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -118,14 +118,17 @@ class ItemService:
 
         from django.apps import apps
 
-        Wedding = apps.get_model("weddings", "Wedding")
+        wedding_model = apps.get_model("weddings", "Wedding")
 
-        return resolve_tenant_resource(
-            Wedding,
-            company,
-            wedding_input,
-            detail="Casamento não encontrado ou acesso negado.",
-            code="wedding_not_found_or_denied",
+        return cast(
+            "Wedding | None",
+            resolve_tenant_resource(
+                wedding_model,
+                company,
+                wedding_input,
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            ),
         )
 
     @staticmethod

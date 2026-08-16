@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from typing import cast
 
 from django.contrib.auth import authenticate
 from ninja_jwt.schema import (
@@ -102,9 +103,9 @@ class TokenService:
         token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de refresh de token (fp={token_fp})")
         schema = TokenRefreshInputSchema(refresh=refresh_token)
-        result = schema.to_response_schema()
+        result = schema.to_response_schema()  # type: ignore[no-untyped-call]
         logger.info(f"Token refresh bem-sucedido (fp={token_fp})")
-        return result
+        return cast(TokenRefreshOutputSchema, result)
 
     @staticmethod
     def verify(token: str) -> VerifyTokenOut:
@@ -124,6 +125,6 @@ class TokenService:
         logger.info(f"Tentativa de verificação de token (fp={token_fp})")
         schema = TokenVerifyInputSchema(token=token)
         # O método levanta HttpError(401) caso o token seja inválido.
-        schema.to_response_schema()
+        schema.to_response_schema()  # type: ignore[no-untyped-call]
         logger.info(f"Token verificado com sucesso (fp={token_fp})")
         return VerifyTokenOut()

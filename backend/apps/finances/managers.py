@@ -5,6 +5,7 @@ QuerySet e Manager customizados para o domínio financeiro.
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
@@ -13,7 +14,14 @@ from apps.finances.models.installment import Installment
 from apps.tenants.managers import TenantManager, TenantQuerySet
 
 
-class BudgetQuerySet(TenantQuerySet):
+if TYPE_CHECKING:
+    from apps.finances.models.budget import Budget  # noqa: F401
+    from apps.finances.models.budget_category import BudgetCategory  # noqa: F401
+    from apps.finances.models.expense import Expense  # noqa: F401
+    from apps.tenants.models import Company
+
+
+class BudgetQuerySet(TenantQuerySet["Budget"]):
     """QuerySet customizado para Budget."""
 
     def with_total_spent(self) -> BudgetQuerySet:
@@ -31,18 +39,21 @@ class BudgetQuerySet(TenantQuerySet):
         )
 
 
-class BudgetManager(TenantManager):
+class BudgetManager(TenantManager["Budget"]):
     """Manager customizado para Budget."""
 
     def get_queryset(self) -> BudgetQuerySet:
         return BudgetQuerySet(self.model, using=self._db)
+
+    def for_tenant(self, company: Company) -> BudgetQuerySet:
+        return self.get_queryset().filter(company=company)
 
     def with_total_spent(self) -> BudgetQuerySet:
         """Anota cada orçamento com o total geral pago."""
         return self.get_queryset().with_total_spent()
 
 
-class BudgetCategoryQuerySet(TenantQuerySet):
+class BudgetCategoryQuerySet(TenantQuerySet["BudgetCategory"]):
     """QuerySet customizado para BudgetCategory."""
 
     def with_total_spent(self) -> BudgetCategoryQuerySet:
@@ -60,18 +71,21 @@ class BudgetCategoryQuerySet(TenantQuerySet):
         )
 
 
-class BudgetCategoryManager(TenantManager):
+class BudgetCategoryManager(TenantManager["BudgetCategory"]):
     """Manager customizado para BudgetCategory."""
 
     def get_queryset(self) -> BudgetCategoryQuerySet:
         return BudgetCategoryQuerySet(self.model, using=self._db)
+
+    def for_tenant(self, company: Company) -> BudgetCategoryQuerySet:
+        return self.get_queryset().filter(company=company)
 
     def with_total_spent(self) -> BudgetCategoryQuerySet:
         """Anota cada categoria com o total pago (soma de parcelas PAID)."""
         return self.get_queryset().with_total_spent()
 
 
-class ExpenseQuerySet(TenantQuerySet):
+class ExpenseQuerySet(TenantQuerySet["Expense"]):
     """QuerySet customizado para Expense."""
 
     def with_details(self) -> ExpenseQuerySet:
@@ -104,11 +118,14 @@ class ExpenseQuerySet(TenantQuerySet):
         )
 
 
-class ExpenseManager(TenantManager):
+class ExpenseManager(TenantManager["Expense"]):
     """Manager customizado para Expense."""
 
     def get_queryset(self) -> ExpenseQuerySet:
         return ExpenseQuerySet(self.model, using=self._db)
+
+    def for_tenant(self, company: Company) -> ExpenseQuerySet:
+        return self.get_queryset().filter(company=company)
 
     def with_details(self) -> ExpenseQuerySet:
         """Anota cada despesa com contagem de parcelas e valores totais."""

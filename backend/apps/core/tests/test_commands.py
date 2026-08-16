@@ -18,18 +18,18 @@ from apps.weddings.models import Wedding
 
 @pytest.mark.django_db
 class TestSeedDbCommand:
-    def test_seed_db_creates_superuser(self):
+    def test_seed_db_creates_superuser(self) -> None:
         call_command("seed_db", planners=0, weddings=0)
 
         assert User.objects.filter(is_superuser=True).exists()
 
-    def test_seed_db_creates_planners(self):
+    def test_seed_db_creates_planners(self) -> None:
         call_command("seed_db", planners=3, weddings=0)
 
         planners = User.objects.filter(is_superuser=False, is_staff=False)
         assert planners.count() == 4  # 3 batch + 1 E2E
 
-    def test_seed_db_creates_weddings_with_mixed_statuses(self):
+    def test_seed_db_creates_weddings_with_mixed_statuses(self) -> None:
         call_command("seed_db", planners=1, weddings=3)
 
         weddings = Wedding.objects.order_by("-created_at")[:3]
@@ -40,7 +40,9 @@ class TestSeedDbCommand:
         assert Wedding.StatusChoices.IN_PROGRESS in statuses
 
     @pytest.mark.parametrize("num_weddings", [1, 3])
-    def test_seed_db_creates_critical_wedding_for_each_planner(self, num_weddings):
+    def test_seed_db_creates_critical_wedding_for_each_planner(
+        self, num_weddings: int
+    ) -> None:
         call_command("seed_db", planners=1, weddings=num_weddings)
 
         planners = User.objects.filter(is_superuser=False, is_staff=False)
@@ -56,7 +58,7 @@ class TestSeedDbCommand:
             assert wedding is not None
             assert date.today() <= wedding.date <= date.today() + timedelta(days=90)
 
-    def test_seed_db_creates_suppliers_with_tenant_context(self):
+    def test_seed_db_creates_suppliers_with_tenant_context(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -65,7 +67,7 @@ class TestSeedDbCommand:
         suppliers = Supplier.objects.filter(company=wedding.company)
         assert suppliers.count() == 5
 
-    def test_seed_db_creates_contracts_with_mixed_statuses(self):
+    def test_seed_db_creates_contracts_with_mixed_statuses(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -77,7 +79,7 @@ class TestSeedDbCommand:
         assert Contract.StatusChoices.SIGNED in statuses
         assert Contract.StatusChoices.DRAFT in statuses
 
-    def test_seed_db_creates_items_for_contracts(self):
+    def test_seed_db_creates_items_for_contracts(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -85,7 +87,7 @@ class TestSeedDbCommand:
 
         assert items.count() == 6
 
-    def test_seed_db_creates_expenses_linked_to_contracts(self):
+    def test_seed_db_creates_expenses_linked_to_contracts(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -95,7 +97,7 @@ class TestSeedDbCommand:
         for expense in expenses:
             assert expense.contract is not None
 
-    def test_seed_db_creates_installments_with_mixed_statuses(self):
+    def test_seed_db_creates_installments_with_mixed_statuses(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -108,7 +110,7 @@ class TestSeedDbCommand:
         assert Installment.StatusChoices.PENDING in statuses
         assert Installment.StatusChoices.OVERDUE in statuses
 
-    def test_seed_db_creates_budget_and_categories(self):
+    def test_seed_db_creates_budget_and_categories(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -118,7 +120,7 @@ class TestSeedDbCommand:
         assert budgets.count() == 1
         assert categories.count() == 3
 
-    def test_seed_db_creates_tasks_with_mixed_completion(self):
+    def test_seed_db_creates_tasks_with_mixed_completion(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -128,7 +130,7 @@ class TestSeedDbCommand:
         assert tasks.filter(is_completed=True).count() == 3
         assert tasks.filter(is_completed=False).count() == 2
 
-    def test_seed_db_creates_calendar_events(self):
+    def test_seed_db_creates_calendar_events(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
 
         wedding = Wedding.objects.order_by("-created_at").first()
@@ -136,13 +138,13 @@ class TestSeedDbCommand:
 
         assert events.count() == 4
 
-    def test_seed_db_generates_no_errors_on_default_run(self):
+    def test_seed_db_generates_no_errors_on_default_run(self) -> None:
         call_command("seed_db")
 
         assert Wedding.objects.count() > 0
         assert User.objects.filter(is_superuser=True).exists()
 
-    def test_seed_db_creates_e2e_planner(self):
+    def test_seed_db_creates_e2e_planner(self) -> None:
         call_command("seed_db", planners=0, weddings=0)
 
         e2e = User.objects.filter(email="planner@example.com").first()
@@ -151,7 +153,7 @@ class TestSeedDbCommand:
         assert e2e.is_staff is False
         assert e2e.is_superuser is False
 
-    def test_seed_db_is_idempotent(self):
+    def test_seed_db_is_idempotent(self) -> None:
         call_command("seed_db", planners=1, weddings=1)
         call_command("seed_db", planners=1, weddings=1)
 
@@ -164,7 +166,7 @@ class TestSeedDbCommand:
 
 @pytest.mark.django_db
 class TestSeedE2ECommand:
-    def test_seed_e2e_creates_expected_entities(self):
+    def test_seed_e2e_creates_expected_entities(self) -> None:
         call_command("seed_e2e")
 
         assert User.objects.filter(email="admin@admin.com", is_superuser=True).exists()
@@ -200,7 +202,7 @@ class TestSeedE2ECommand:
         tasks = Task.objects.filter(wedding=active_wedding)
         assert tasks.filter(is_completed=False).count() == 2
 
-    def test_seed_e2e_is_idempotent(self):
+    def test_seed_e2e_is_idempotent(self) -> None:
         call_command("seed_e2e")
         call_command("seed_e2e")
 

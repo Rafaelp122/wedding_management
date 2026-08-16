@@ -15,6 +15,7 @@ Operational checklist for backend test suites (`pytest` + Django).
 - [ ] **Directory & File Layout**: Follow standard placement (`apps/<app>/tests/test_models.py`, `test_services.py`, `test_apis.py`). Include `__init__.py` in nested entity test subdirectories.
 - [ ] **Multi-Tenancy Test Isolation**: Verify that API endpoints return `404 Not Found` (never 403 or raw exceptions) when attempting to access another tenant company's resources.
 - [ ] **Test Naming Convention**: Class `Test<Name>`, method `test_<behavior>_<scenario>_<expected_outcome>`.
+- [ ] **Strict Typing in Tests (`mypy`)**: All test functions and methods must declare explicit return types (`-> None`) and typed fixture parameters (`disallow_untyped_defs = true`, `check_untyped_defs = true`).
 - [ ] **No Empty Stubs or Debug Files**: Do not leave `pass` stubs or debug files with `breakpoint()`/`print()` in test packages; use `@pytest.mark.skip(reason=...)` when skipping tests.
 - [ ] **Execution & Standards Reference**:
   - Running pytest suite & test markers: [Run Pytest Suite Guide](../../../docs/2-how-to/backend/run-pytest-suite.md)

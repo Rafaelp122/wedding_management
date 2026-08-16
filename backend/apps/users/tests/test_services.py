@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import DataError
@@ -12,7 +14,7 @@ from apps.users.services.registration_service import RegistrationService
 class TestRegistrationService:
     """Testes unitários para o RegistrationService."""
 
-    def test_register_new_owner_success(self):
+    def test_register_new_owner_success(self) -> None:
         """Garante que um novo usuário e empresa são criados corretamente."""
         email = "novo@exemplo.com"
         password = "SecurePassword123!"
@@ -35,7 +37,7 @@ class TestRegistrationService:
         assert isinstance(user.company, Company)
         assert user.company.name == f"Workspace de {first_name} {last_name}"
 
-    def test_register_new_owner_duplicate_email_fails(self, user):
+    def test_register_new_owner_duplicate_email_fails(self, user: Any) -> None:
         """Garante que não é possível registrar dois usuários com o mesmo e-mail."""
         email = user.email
         password = "another_password"
@@ -46,7 +48,7 @@ class TestRegistrationService:
         assert exc_info.value.code == "email_already_exists"
         assert "e-mail já está cadastrado" in str(exc_info.value.detail)
 
-    def test_register_new_owner_transaction_rollback(self, db):
+    def test_register_new_owner_transaction_rollback(self, db: Any) -> None:
         """Garante que a empresa não é criada se o usuário falhar (Rollback)."""
         email = "falha@exemplo.com"
 
@@ -61,7 +63,7 @@ class TestRegistrationService:
         # Verifica que a empresa não foi criada ou foi revertida
         assert not Company.objects.filter(name__icontains=email).exists()
 
-    def test_register_new_owner_with_company_name(self):
+    def test_register_new_owner_with_company_name(self) -> None:
         """Garante que o nome da empresa é usado quando fornecido."""
         email = "agencia@exemplo.com"
         password = "SecurePassword123!"

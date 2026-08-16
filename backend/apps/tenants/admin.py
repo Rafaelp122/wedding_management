@@ -4,7 +4,7 @@ from apps.tenants.models import Company
 
 
 @admin.register(Company)
-class CompanyAdmin(admin.ModelAdmin):
+class CompanyAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ("name", "slug", "is_active", "created_at")
     search_fields = ("name", "slug")
     list_filter = ("is_active",)

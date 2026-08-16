@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any, cast
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -14,7 +15,7 @@ class TestWeddingModelMetadata:
     Testes de representação e metadados do modelo Wedding.
     """
 
-    def test_wedding_str_representation(self):
+    def test_wedding_str_representation(self) -> None:
         """
         RF: O método __str__ deve retornar 'Groom & Bride'.
         """
@@ -24,7 +25,7 @@ class TestWeddingModelMetadata:
         # 2. Asserção do método mágico __str__
         assert str(wedding) == "Diogo & Laura"
 
-    def test_wedding_ordering_by_date_descending(self, user):
+    def test_wedding_ordering_by_date_descending(self, user: Any) -> None:
         """
         RF: A ordenação padrão deve ser pela data mais futura primeiro (-date).
         """
@@ -45,7 +46,11 @@ class TestWeddingModelMetadata:
         queryset = list(Wedding.objects.all())
 
         # 3. Asserção da ordem lógica
-        assert queryset == [w_future, w_mid, w_soon]
+        assert queryset == [
+            cast(Wedding, w_future),
+            cast(Wedding, w_mid),
+            cast(Wedding, w_soon),
+        ]
 
         # Verificação matemática da ordem: date_i >= date_{i+1}
         for i in range(len(queryset) - 1):
@@ -59,7 +64,7 @@ class TestWeddingDateValidator:
     Usamos .build() + .full_clean() para isolar o validador do banco de dados.
     """
 
-    def test_wedding_date_future_passes(self, user):
+    def test_wedding_date_future_passes(self, user: Any) -> None:
         """Garante que data no futuro passa."""
         future_date = timezone.now().date() + timedelta(days=30)
         wedding = Wedding(
@@ -71,13 +76,13 @@ class TestWeddingDateValidator:
         )
         wedding.full_clean()  # Se não levantar erro, passou!
 
-    def test_wedding_date_today_passes(self, user):
+    def test_wedding_date_today_passes(self, user: Any) -> None:
         """Garante que data de hoje passa."""
         today = timezone.now().date()
         wedding = WeddingFactory.build(company=user.company, date=today)
         wedding.full_clean()
 
-    def test_wedding_date_past_fails(self, user):
+    def test_wedding_date_past_fails(self, user: Any) -> None:
         """
         Garante que datas passadas disparam ValidationError.
         Este é o teste que estava falhando.
@@ -101,7 +106,7 @@ class TestWeddingBusinessRules:
     Focamos apenas na lógica do status vs data.
     """
 
-    def test_status_completed_valid_past_date(self, user):
+    def test_status_completed_valid_past_date(self, user: Any) -> None:
         """
         Garante que um casamento que já aconteceu pode ser marcado como CONCLUÍDO.
         """
@@ -117,7 +122,7 @@ class TestWeddingBusinessRules:
         # Não deve lançar erro
         wedding.clean()
 
-    def test_status_completed_invalid_future_date(self, user):
+    def test_status_completed_invalid_future_date(self, user: Any) -> None:
         """
         Garante que NÃO se pode concluir um casamento que ainda não aconteceu (Precoce).
         """
@@ -139,7 +144,7 @@ class TestWeddingBusinessRules:
             excinfo.value
         )
 
-    def test_other_statuses_work_with_future_dates(self, user):
+    def test_other_statuses_work_with_future_dates(self, user: Any) -> None:
         """
         Garante que as travas do status COMPLETED não afetam outros status.
         """
@@ -168,21 +173,21 @@ class TestWeddingTemplateField:
     Testes de validação para o campo 'template' do modelo Wedding.
     """
 
-    def test_template_null_passes(self, user):
+    def test_template_null_passes(self, user: Any) -> None:
         """
         Garante que o campo template pode ser nulo.
         """
         wedding = WeddingFactory.build(company=user.company, template=None)
         wedding.full_clean()
 
-    def test_template_blank_passes(self, user):
+    def test_template_blank_passes(self, user: Any) -> None:
         """
         Garante que o campo template pode ser em branco (vazio).
         """
         wedding = WeddingFactory.build(company=user.company, template="")
         wedding.full_clean()
 
-    def test_template_max_length_exceeded_fails(self, user):
+    def test_template_max_length_exceeded_fails(self, user: Any) -> None:
         """
         Garante que o campo template falha na validação se exceder 50 caracteres.
         """

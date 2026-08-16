@@ -1,8 +1,10 @@
+from typing import Any
+
 import pytest
 
 
 @pytest.mark.django_db
-def test_register_user_weak_password_api_response(auth_client):
+def test_register_user_weak_password_api_response(auth_client: Any) -> None:
     """
     Testa se o endpoint de registro retorna uma mensagem de erro amigável (400)
     quando a validação de senha falha.

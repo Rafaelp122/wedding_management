@@ -1,6 +1,6 @@
 import logging
 from datetime import date
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -15,7 +15,6 @@ from apps.core.exceptions import (
 )
 from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.managers import ExpenseQuerySet
 from apps.finances.models import BudgetCategory, Expense
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
@@ -68,7 +67,7 @@ class ExpenseService:
         Returns:
             QuerySet[Expense]: QuerySet com as despesas filtradas e detalhadas.
         """
-        qs = cast(ExpenseQuerySet, Expense.objects.for_tenant(company)).with_details()
+        qs = Expense.objects.for_tenant(company).with_details()
         if wedding_id:
             qs = qs.filter(wedding__uuid=wedding_id)
         return qs
@@ -92,11 +91,7 @@ class ExpenseService:
         # Para manter with_details(), vamos fazer manualmente ou garantir que
         # with_details() seja chamado no queryset.
         try:
-            return (
-                cast(ExpenseQuerySet, Expense.objects.for_tenant(company))
-                .with_details()
-                .get(uuid=uuid)
-            )
+            return Expense.objects.for_tenant(company).with_details().get(uuid=uuid)
         except (Expense.DoesNotExist, ValueError, ValidationError) as e:
             from apps.finances.models import Installment
 
@@ -108,7 +103,7 @@ class ExpenseService:
             )
             if installment and installment.expense:
                 return (
-                    cast(ExpenseQuerySet, Expense.objects.for_tenant(company))
+                    Expense.objects.for_tenant(company)
                     .with_details()
                     .get(pk=installment.expense_id)
                 )

@@ -5,14 +5,26 @@ O clean() do mixin impede vazamento de dados entre tenants e entre
 casamentos, garantindo isolamento multitenant completo.
 """
 
+from typing import Any, cast
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
 from apps.core.models import BaseModel
-from apps.core.tests.factories import WeddingFactory
-from apps.tenants.tests.factories import CompanyFactory
+from apps.core.tests.factories import WeddingFactory as _WeddingFactory
+from apps.tenants.models import Company
+from apps.tenants.tests.factories import CompanyFactory as _CompanyFactory
+from apps.weddings.models import Wedding
+
+
+def CompanyFactory(*args: Any, **kwargs: Any) -> Company:
+    return cast(Company, _CompanyFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 class WeddingOwnedStub(BaseModel, WeddingOwnedMixin):
@@ -34,14 +46,14 @@ class WeddingOwnedStub(BaseModel, WeddingOwnedMixin):
 class TestWeddingOwnedMixinCrossTenant:
     """Blindagem vertical: impede que um recurso use casamento de outra empresa."""
 
-    def test_same_company_passes(self):
+    def test_same_company_passes(self) -> None:
         company = CompanyFactory()
         wedding = WeddingFactory(company=company)
 
         stub = WeddingOwnedStub(name="válido", company=company, wedding=wedding)
         stub.full_clean()
 
-    def test_different_company_raises_validation_error(self):
+    def test_different_company_raises_validation_error(self) -> None:
         company_a = CompanyFactory()
         company_b = CompanyFactory()
         wedding_b = WeddingFactory(company=company_b)
@@ -54,7 +66,7 @@ class TestWeddingOwnedMixinCrossTenant:
         assert "wedding" in exc_info.value.message_dict
         assert "outra organização" in str(exc_info.value)
 
-    def test_save_triggers_clean(self):
+    def test_save_triggers_clean(self) -> None:
         company_a = CompanyFactory()
         company_b = CompanyFactory()
         wedding_b = WeddingFactory(company=company_b)
@@ -69,7 +81,7 @@ class TestWeddingOwnedMixinCrossTenant:
 class TestWeddingOwnedMixinCrossWedding:
     """Consistência horizontal: FK de um recurso deve apontar para o mesmo casamento."""
 
-    def test_same_wedding_fk_passes(self):
+    def test_same_wedding_fk_passes(self) -> None:
         company = CompanyFactory()
         wedding = WeddingFactory(company=company)
 
@@ -81,7 +93,7 @@ class TestWeddingOwnedMixinCrossWedding:
         stub1.related_item = stub2
         stub1.full_clean()
 
-    def test_different_wedding_fk_raises_validation_error(self):
+    def test_different_wedding_fk_raises_validation_error(self) -> None:
         company = CompanyFactory()
         wedding_a = WeddingFactory(company=company)
         wedding_b = WeddingFactory(company=company)
@@ -102,7 +114,7 @@ class TestWeddingOwnedMixinCrossWedding:
 
 @pytest.mark.django_db
 class TestWeddingOwnedMixinEdgeCases:
-    def test_related_obj_none_skips_cross_wedding_check(self):
+    def test_related_obj_none_skips_cross_wedding_check(self) -> None:
         """FK nula (related_item=None) não dispara validação horizontal."""
         company = CompanyFactory()
         wedding = WeddingFactory(company=company)
@@ -113,7 +125,7 @@ class TestWeddingOwnedMixinEdgeCases:
 
         stub.full_clean()
 
-    def test_vertical_guard_fires_before_horizontal(self):
+    def test_vertical_guard_fires_before_horizontal(self) -> None:
         """Erro cross-tenant é detectado antes da validação cross-wedding."""
         company = CompanyFactory()
         company_b = CompanyFactory()
@@ -131,7 +143,7 @@ class TestWeddingOwnedMixinEdgeCases:
 
 @pytest.mark.django_db
 class TestWeddingOwnedMixinPerformance:
-    def test_null_fk_does_not_cause_extra_query(self):
+    def test_null_fk_does_not_cause_extra_query(self) -> None:
         """FK nula não dispara query extra durante full_clean()."""
         company = CompanyFactory()
         wedding = WeddingFactory(company=company)
@@ -142,7 +154,7 @@ class TestWeddingOwnedMixinPerformance:
 
         stub.full_clean()
 
-    def test_cross_wedding_fk_still_detected(self):
+    def test_cross_wedding_fk_still_detected(self) -> None:
         """FK não-nula com wedding diferente ainda é detectada e rejeitada."""
         company = CompanyFactory()
         wedding_a = WeddingFactory(company=company)

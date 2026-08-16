@@ -3,7 +3,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 
 from apps.core.exceptions import AuthenticationFailedError, PermissionDeniedError
 from apps.core.services import get_oidc_verifier
@@ -12,7 +12,7 @@ from apps.core.services import get_oidc_verifier
 logger = logging.getLogger(__name__)
 
 
-def require_oidc_auth(view_func: Callable[..., Any]) -> Callable[..., Any]:
+def require_oidc_auth[R](view_func: Callable[..., R]) -> Callable[..., R]:
     """
     Decorator limpo para exigir autenticação OIDC service-to-service (ADR-005).
     Delega a injeção de dependência para get_oidc_verifier().
@@ -20,7 +20,7 @@ def require_oidc_auth(view_func: Callable[..., Any]) -> Callable[..., Any]:
     """
 
     @wraps(view_func)
-    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> R:
         auth_header = request.META.get("HTTP_AUTHORIZATION", "")
 
         if not auth_header.startswith("Bearer "):

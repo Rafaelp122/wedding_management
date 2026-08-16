@@ -13,6 +13,7 @@ Uso:
 
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -46,7 +47,7 @@ class Command(BaseCommand):
     help = "Popula o banco com dados mínimos e determinísticos para a suíte E2E"
 
     @transaction.atomic
-    def handle(self, *args, **kwargs) -> None:
+    def handle(self, *args: Any, **kwargs: Any) -> None:
         """Executa a rotina de criação determinística de dados para E2E.
 
         Args:

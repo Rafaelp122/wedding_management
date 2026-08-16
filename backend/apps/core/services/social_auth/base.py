@@ -1,5 +1,15 @@
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, TypedDict
+
+
+class GoogleIDTokenClaims(TypedDict, total=False):
+    """Claims consumidas após a validação do ID token do Google."""
+
+    email: str
+    email_verified: bool
+    given_name: str
+    family_name: str
+    sub: str
 
 
 @dataclass(frozen=True)

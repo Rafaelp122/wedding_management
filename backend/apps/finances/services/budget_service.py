@@ -1,5 +1,4 @@
 import logging
-from typing import cast
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -9,7 +8,6 @@ from django.db.models import ProtectedError, QuerySet
 from apps.core.exceptions import DomainIntegrityError
 from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.managers import BudgetQuerySet
 from apps.finances.models import Budget
 from apps.finances.schemas import BudgetIn, BudgetPatchIn
 from apps.tenants.models import Company
@@ -37,7 +35,7 @@ class BudgetService:
             QuerySet[Budget]: QuerySet com os orçamentos contendo o gasto total.
         """
         return (
-            cast(BudgetQuerySet, Budget.objects.for_tenant(company))
+            Budget.objects.for_tenant(company)
             .with_total_spent()
             .select_related("wedding")
         )
@@ -58,7 +56,7 @@ class BudgetService:
         """
         try:
             return (
-                cast(BudgetQuerySet, Budget.objects.for_tenant(company))
+                Budget.objects.for_tenant(company)
                 .with_total_spent()
                 .select_related("wedding")
                 .get(uuid=uuid)
