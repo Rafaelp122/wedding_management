@@ -34,8 +34,6 @@ from apps.logistics.selectors import (
     contract_pending_count_selector,
     item_get_selector,
     item_list_selector,
-    supplier_category_get_selector,
-    supplier_category_list_selector,
     supplier_get_selector,
     supplier_list_selector,
 )
@@ -300,14 +298,6 @@ class TestSupplierSelectors:
 
         with pytest.raises(ObjectNotFoundError):
             supplier_get_selector(user_a.company, supplier_b.uuid)
-
-    def test_supplier_category_selectors(self, user: User) -> None:
-        """supplier_category_list_selector e supplier_category_get_selector."""
-        qs = supplier_category_list_selector(user.company)
-        assert qs.count() == 0
-
-        with pytest.raises(ObjectNotFoundError):
-            supplier_category_get_selector(user.company, uuid4())
 
 
 # ==============================================================================

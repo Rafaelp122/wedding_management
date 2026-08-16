@@ -61,6 +61,3 @@ class ContractSummarySelector:
         total = contracts.exclude(status=Contract.StatusChoices.CANCELED).count()
         signed = contracts.filter(status=Contract.StatusChoices.SIGNED).count()
         return signed, total
-
-
-ContractSummaryService = ContractSummarySelector

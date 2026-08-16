@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
-from apps.logistics.managers import ContractItemQuerySet
+from apps.logistics.managers import ItemQuerySet
 from apps.tenants.models import TenantModel
 
 from .contract import Contract
@@ -27,7 +27,7 @@ class Item(TenantModel, WeddingOwnedMixin):
     Representa a necessidade física ou o serviço contratado.
     """
 
-    objects = ContractItemQuerySet.as_manager()  # type: ignore[misc]
+    objects = ItemQuerySet.as_manager()  # type: ignore[misc]
 
     _original_acquisition_status: str | None = None
 
@@ -112,6 +112,3 @@ class Item(TenantModel, WeddingOwnedMixin):
     def supplier(self) -> Supplier | None:
         """Fornecedor vem do contrato associado."""
         return self.contract.supplier if self.contract else None
-
-
-ContractItem = Item

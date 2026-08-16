@@ -11,9 +11,9 @@ Este módulo expõe os modelos principais:
 """
 
 from .contract import Contract
-from .item import ContractItem, Item
+from .item import Item
 from .supplier import Supplier
 
 
 # Isso garante que o Django "veja" todos os modelos
-__all__ = ["Contract", "ContractItem", "Item", "Supplier"]
+__all__ = ["Contract", "Item", "Supplier"]

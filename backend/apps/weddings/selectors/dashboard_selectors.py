@@ -11,9 +11,9 @@ from uuid import UUID
 
 from apps.tenants.models import Company
 from apps.weddings.selectors.summaries import (
-    ContractSummaryService,
-    FinancialSummaryService,
-    TaskSummaryService,
+    ContractSummarySelector,
+    FinancialSummarySelector,
+    TaskSummarySelector,
 )
 from apps.weddings.selectors.wedding_selectors import (
     critical_weddings_selector,
@@ -47,16 +47,16 @@ def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
     logger.info(f"Computando resumo do dashboard para company_id={company.id}")
     today = date.today()
 
-    pending_7d = FinancialSummaryService.pending_installments_7d(
+    pending_7d = FinancialSummarySelector.pending_installments_7d(
         company=company, today=today
     )
-    overdue_amount, overdue_count = FinancialSummaryService.overdue_installments(
+    overdue_amount, overdue_count = FinancialSummarySelector.overdue_installments(
         company=company, today=today
     )
-    urgent_tasks_count = TaskSummaryService.urgent_tasks_count(
+    urgent_tasks_count = TaskSummarySelector.urgent_tasks_count(
         company=company, today=today
     )
-    pending_contracts_count = ContractSummaryService.pending_contracts_count(
+    pending_contracts_count = ContractSummarySelector.pending_contracts_count(
         company=company
     )
 
@@ -122,22 +122,22 @@ def wedding_overview_selector(
     today = date.today()
     days_until = max(0, (wedding.date - today).days)
 
-    budget_pct = FinancialSummaryService.budget_percentage_used(
+    budget_pct = FinancialSummarySelector.budget_percentage_used(
         company=company, wedding=wedding
     )
-    tasks_completed, tasks_total = TaskSummaryService.wedding_task_stats(
+    tasks_completed, tasks_total = TaskSummarySelector.wedding_task_stats(
         company=company, wedding=wedding
     )
-    contracts_signed, contracts_total = ContractSummaryService.wedding_contract_stats(
+    contracts_signed, contracts_total = ContractSummarySelector.wedding_contract_stats(
         company=company, wedding=wedding
     )
-    upcoming_installments = FinancialSummaryService.upcoming_installments(
+    upcoming_installments = FinancialSummarySelector.upcoming_installments(
         company=company, wedding=wedding, today=today
     )
-    urgent_tasks = TaskSummaryService.urgent_tasks(
+    urgent_tasks = TaskSummarySelector.urgent_tasks(
         company=company, wedding=wedding, today=today
     )
-    categories_summary = FinancialSummaryService.categories_summary(
+    categories_summary = FinancialSummarySelector.categories_summary(
         company=company, wedding=wedding
     )
 

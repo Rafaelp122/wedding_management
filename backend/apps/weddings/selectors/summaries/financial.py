@@ -208,6 +208,3 @@ class FinancialSummarySelector:
             "Categorias computadas: wedding=%s, total=%s", wedding.uuid, len(result)
         )
         return result
-
-
-FinancialSummaryService = FinancialSummarySelector

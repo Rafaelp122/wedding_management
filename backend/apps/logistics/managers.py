@@ -19,19 +19,6 @@ if TYPE_CHECKING:
     from apps.weddings.models import Wedding
 
 
-class SupplierCategoryQuerySet(TenantQuerySet["Any"]):
-    """QuerySet customizado para categorias de fornecedores."""
-
-    def with_suppliers_count(self) -> SupplierCategoryQuerySet:
-        """
-        Anota cada categoria com a contagem de fornecedores vinculados.
-
-        Returns:
-            SupplierCategoryQuerySet com a anotação suppliers_count.
-        """
-        return self.annotate(suppliers_count=Count("suppliers"))
-
-
 class SupplierQuerySet(TenantQuerySet["Supplier"]):
     """QuerySet customizado para Fornecedores."""
 
@@ -161,12 +148,12 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
         return self.filter(wedding__uuid=wedding)
 
 
-class ContractItemQuerySet(TenantQuerySet["Item"]):
-    """QuerySet customizado para itens de logística / contrato."""
+class ItemQuerySet(TenantQuerySet["Item"]):
+    """QuerySet customizado para itens de logística."""
 
     def for_contract(
         self, contract: UUID | str | Contract | None = None
-    ) -> ContractItemQuerySet:
+    ) -> ItemQuerySet:
         """
         Filtra itens associados a um contrato específico.
 
@@ -174,7 +161,7 @@ class ContractItemQuerySet(TenantQuerySet["Item"]):
             contract: Instância de Contract, UUID ou string identificadora.
 
         Returns:
-            ContractItemQuerySet filtrado pelo contrato.
+            ItemQuerySet filtrado pelo contrato.
         """
         if not contract:
             return self
@@ -182,9 +169,7 @@ class ContractItemQuerySet(TenantQuerySet["Item"]):
             return self.filter(contract__uuid=contract.uuid)
         return self.filter(contract__uuid=contract)
 
-    def for_wedding(
-        self, wedding: UUID | str | Wedding | None = None
-    ) -> ContractItemQuerySet:
+    def for_wedding(self, wedding: UUID | str | Wedding | None = None) -> ItemQuerySet:
         """
         Filtra itens associados a um casamento específico.
 
@@ -192,7 +177,7 @@ class ContractItemQuerySet(TenantQuerySet["Item"]):
             wedding: Instância de Wedding, UUID ou string identificadora.
 
         Returns:
-            ContractItemQuerySet filtrado pelo casamento.
+            ItemQuerySet filtrado pelo casamento.
         """
         if not wedding:
             return self
@@ -200,7 +185,7 @@ class ContractItemQuerySet(TenantQuerySet["Item"]):
             return self.filter(wedding__uuid=wedding.uuid)
         return self.filter(wedding__uuid=wedding)
 
-    def by_status(self, status: str | None = None) -> ContractItemQuerySet:
+    def by_status(self, status: str | None = None) -> ItemQuerySet:
         """
         Filtra itens pelo status de aquisição.
 
@@ -208,13 +193,13 @@ class ContractItemQuerySet(TenantQuerySet["Item"]):
             status: Status de aquisição (ex: PENDING, IN_PROGRESS, DONE).
 
         Returns:
-            ContractItemQuerySet filtrado pelo status.
+            ItemQuerySet filtrado pelo status.
         """
         if not status:
             return self
         return self.filter(acquisition_status=status)
 
-    def search(self, query: str | None = None) -> ContractItemQuerySet:
+    def search(self, query: str | None = None) -> ItemQuerySet:
         """
         Filtra itens por busca textual no nome.
 
@@ -222,20 +207,20 @@ class ContractItemQuerySet(TenantQuerySet["Item"]):
             query: Termo de busca.
 
         Returns:
-            ContractItemQuerySet filtrado pelo termo.
+            ItemQuerySet filtrado pelo termo.
         """
         if not query:
             return self
         return self.filter(name__icontains=query)
 
-    def with_details(self) -> ContractItemQuerySet:
+    def with_details(self) -> ItemQuerySet:
         """
         Carrega relacionamentos de wedding, contract e fornecedor para evitar N+1.
 
         Returns:
-            ContractItemQuerySet com select_related aplicado.
+            ItemQuerySet com select_related aplicado.
         """
         return self.select_related("wedding", "contract", "contract__supplier")
 
 
-ItemQuerySet = ContractItemQuerySet
+ContractItemQuerySet = ItemQuerySet

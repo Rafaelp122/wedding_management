@@ -99,6 +99,3 @@ class TaskSummarySelector:
             }
             for t in urgent
         ]
-
-
-TaskSummaryService = TaskSummarySelector

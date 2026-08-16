@@ -1,13 +1,10 @@
-from .contract import ContractSummarySelector, ContractSummaryService
-from .financial import FinancialSummarySelector, FinancialSummaryService
-from .task import TaskSummarySelector, TaskSummaryService
+from .contract import ContractSummarySelector
+from .financial import FinancialSummarySelector
+from .task import TaskSummarySelector
 
 
 __all__ = [
     "ContractSummarySelector",
-    "ContractSummaryService",
     "FinancialSummarySelector",
-    "FinancialSummaryService",
     "TaskSummarySelector",
-    "TaskSummaryService",
 ]

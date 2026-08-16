@@ -14,7 +14,8 @@ from uuid import UUID
 from django.db.models import Count
 
 from apps.core.shortcuts import get_object_or_404_for_tenant
-from apps.finances.models import Budget
+from apps.finances.models import Budget, Installment
+from apps.logistics.models import Contract
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import (
     WeddingDashboardCategoryOut,
@@ -218,8 +219,7 @@ def wedding_overview_detail_selector(
     today = date.today()
     days_until = max(0, (wedding.date - today).days) if wedding.date else 0
 
-    from apps.finances.models import Budget, Installment
-    from apps.logistics.models import Contract
+    from apps.finances.models import Budget
     from apps.scheduler.models import Task
 
     budget = (
@@ -268,11 +268,17 @@ def wedding_overview_detail_selector(
 
     contracts = Contract.objects.for_tenant(company).filter(wedding=wedding)
     contracts_total = contracts.count()
-    contracts_signed = contracts.filter(status="SIGNED").count()
+    contracts_signed = contracts.filter(status=Contract.StatusChoices.SIGNED).count()
 
     installments = (
         Installment.objects.for_tenant(company)
-        .filter(wedding=wedding, status__in=["PENDING", "OVERDUE"])
+        .filter(
+            wedding=wedding,
+            status__in=[
+                Installment.StatusChoices.PENDING,
+                Installment.StatusChoices.OVERDUE,
+            ],
+        )
         .order_by("due_date")[:10]
     )
     upcoming_out = [
@@ -287,7 +293,7 @@ def wedding_overview_detail_selector(
     ]
     overdue_count = (
         Installment.objects.for_tenant(company)
-        .filter(wedding=wedding, status="OVERDUE")
+        .filter(wedding=wedding, status=Installment.StatusChoices.OVERDUE)
         .count()
     )
 

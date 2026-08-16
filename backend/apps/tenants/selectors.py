@@ -4,15 +4,10 @@ Seletores de leitura para o domínio de Tenants (Empresas).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.tenants.models import Company
-
-
-if TYPE_CHECKING:
-    pass
 
 
 def company_get_selector(*, uuid: UUID | str) -> Company:

@@ -1,4 +1,4 @@
- 
+
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, userEvent } from "@/test-utils";
 import { ContractDetailDialog } from "./ContractDetailDialog";

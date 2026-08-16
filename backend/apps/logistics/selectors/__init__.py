@@ -15,8 +15,6 @@ from .item_selectors import (
     item_list_selector,
 )
 from .supplier_selectors import (
-    supplier_category_get_selector,
-    supplier_category_list_selector,
     supplier_get_selector,
     supplier_list_selector,
 )
@@ -30,8 +28,6 @@ __all__ = [
     "contract_pending_count_selector",
     "item_get_selector",
     "item_list_selector",
-    "supplier_category_get_selector",
-    "supplier_category_list_selector",
     "supplier_get_selector",
     "supplier_list_selector",
 ]
