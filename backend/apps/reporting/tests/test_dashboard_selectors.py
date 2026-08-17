@@ -1,5 +1,5 @@
 """
-Testes unitários e de integração para Dashboard Selectors.
+Testes unitários e de integração para Dashboard Selectors do módulo Reporting.
 """
 
 from datetime import date, timedelta
@@ -17,14 +17,14 @@ from apps.finances.tests.factories import (
     InstallmentFactory,
 )
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+from apps.reporting.selectors import (
+    dashboard_summary_selector,
+    wedding_overview_selector,
+)
 from apps.scheduler.tests.factories import TaskFactory
 from apps.tenants.models import Company
 from apps.tenants.tests.factories import CompanyFactory as _CompanyFactory
 from apps.weddings.models import Wedding
-from apps.weddings.selectors import (
-    dashboard_summary_selector,
-    wedding_overview_selector,
-)
 from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
 
 
@@ -38,7 +38,7 @@ def CompanyFactory(*args: Any, **kwargs: Any) -> Company:
 
 @pytest.mark.django_db
 class TestDashboardSelectors:
-    """Testes para selectors do painel de dashboard."""
+    """Testes para selectors do painel de dashboard no app Reporting."""
 
     def test_dashboard_summary_selector_success(self, user: Any) -> None:
         today = date.today()
@@ -125,7 +125,9 @@ class TestDashboardSelectors:
         assert summary["critical_weddings"] == []
 
     def test_dashboard_summary_selector_logs(self, user: Any) -> None:
-        with patch("apps.weddings.selectors.dashboard_selectors.logger") as mock_logger:
+        with patch(
+            "apps.reporting.selectors.dashboard_selectors.logger"
+        ) as mock_logger:
             dashboard_summary_selector(company=user.company)
 
         mock_logger.info.assert_any_call(
@@ -232,7 +234,9 @@ class TestDashboardSelectors:
 
     def test_wedding_overview_selector_logs(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
-        with patch("apps.weddings.selectors.dashboard_selectors.logger") as mock_logger:
+        with patch(
+            "apps.reporting.selectors.dashboard_selectors.logger"
+        ) as mock_logger:
             wedding_overview_selector(company=user.company, wedding_uuid=wedding.uuid)
 
         assert any(

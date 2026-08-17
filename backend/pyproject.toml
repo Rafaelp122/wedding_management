@@ -224,7 +224,8 @@ module = [
     "apps.scheduler.tests.test_selectors",
     "apps.logistics.tests.test_selectors",
     "apps.weddings.tests.test_selectors",
-    "apps.weddings.tests.test_dashboard_selectors",
+    "apps.reporting.tests.test_dashboard_selectors",
+    "apps.reporting.tests.test_apis",
 ]
 # Exige assinatura completa e checagem de corpo. disallow_untyped_calls é explicitamente false
 # para suportar métodos dinâmicos de factories (factory_boy).

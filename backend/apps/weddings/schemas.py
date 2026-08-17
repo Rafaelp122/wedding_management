@@ -56,32 +56,6 @@ class WeddingLookupOut(Schema):
     bride_name: str
 
 
-# ── Global Dashboard ──
-
-
-class CriticalWeddingOut(Schema):
-    uuid: UUID4
-    groom_name: str
-    bride_name: str
-    days_until: int
-    incomplete_tasks: int
-    pending_installments: int
-    overdue_tasks: int
-    overdue_installments: int
-
-
-class DashboardSummaryOut(Schema):
-    pending_installments_7d: str
-    urgent_tasks_count: int
-    overdue_installments_amount: str
-    overdue_installments_count: int
-    pending_contracts_count: int
-    critical_weddings: list[CriticalWeddingOut]
-
-
-# ── Wedding Dashboard ──
-
-
 class WeddingDashboardInstallmentOut(Schema):
     uuid: UUID4
     installment_number: int
