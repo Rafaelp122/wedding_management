@@ -1,10 +1,7 @@
 import logging
-from uuid import UUID
 
 from django.db import transaction
-from django.db.models import Q, QuerySet
 
-from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Supplier
 from apps.logistics.schemas import SupplierIn, SupplierPatchIn
@@ -19,66 +16,8 @@ class SupplierService:
     Camada de serviço para gestão de fornecedores.
     Centraliza a lógica de catálogo transversal à Company (RF09).
     Garante auditoria, validação estrita via Model e tratamento de integridade
-    referencial.
+    referencial para operações de escrita.
     """
-
-    @staticmethod
-    def list(
-        company: Company,
-        search: str = "",
-        is_active: bool | None = None,
-    ) -> QuerySet[Supplier]:
-        """
-        Lista os fornecedores associados ao tenant.
-
-        Permite filtrar os fornecedores por termo de busca geral (nome,
-        e-mail, telefone ou CNPJ) e status ativo/inativo.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            search: Termo para busca parcial nos campos do fornecedor.
-            is_active: Filtro opcional pelo status ativo/inativo.
-
-        Returns:
-            QuerySet contendo os fornecedores correspondentes.
-        """
-        qs = Supplier.objects.for_tenant(company)
-        if search:
-            qs = qs.filter(
-                Q(name__icontains=search)
-                | Q(email__icontains=search)
-                | Q(phone__icontains=search)
-                | Q(cnpj__icontains=search)
-            )
-        if is_active is not None:
-            qs = qs.filter(is_active=is_active)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Supplier:
-        """
-        Recupera um fornecedor específico pelo UUID.
-
-        Garante o isolamento por tenant na busca.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: Identificador único (UUID ou string) do fornecedor.
-
-        Returns:
-            A instância do Supplier correspondente.
-
-        Raises:
-            ObjectNotFoundError: Se o fornecedor não for encontrado ou acesso
-                for negado.
-        """
-        return get_object_or_404_for_tenant(
-            Supplier,
-            company,
-            uuid,
-            detail="Fornecedor não encontrado ou acesso negado.",
-            code="supplier_not_found_or_denied",
-        )
 
     @staticmethod
     @transaction.atomic
@@ -101,7 +40,7 @@ class SupplierService:
 
         supplier = Supplier(company=company, **data)
 
-        # 2. Validação Estrita no Model
+        # Validação Estrita no Model
         supplier.save()
 
         logger.info(f"Fornecedor criado com sucesso: uuid={supplier.uuid}")

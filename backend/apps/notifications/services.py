@@ -1,11 +1,15 @@
+"""
+Serviço para gerenciamento de Notificações In-App.
+"""
+
+from __future__ import annotations
+
 import logging
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 from django.db import transaction
-from django.db.models import OuterRef, QuerySet, Subquery, Value
-from django.db.models.functions import Concat
 from django.utils import timezone
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
@@ -29,26 +33,10 @@ else:
     AnnotatedNotification = Notification
 
 
-def _get_wedding_name_subquery() -> Subquery:
-    """Retorna uma subquery anotando o nome formatado do casamento."""
-    from apps.weddings.models import Wedding
-
-    return Subquery(
-        Wedding.objects.filter(uuid=OuterRef("wedding_id")).values(
-            name=Concat(
-                Value("Casamento de "),
-                "bride_name",
-                Value(" e "),
-                "groom_name",
-            )
-        )[:1]
-    )
-
-
 class NotificationService:
     """Serviço para gerenciamento de Notificações In-App.
 
-    Centraliza a criação, listagem e alteração do estado de notificações,
+    Centraliza a criação e alteração do estado de notificações (mutações),
     garantindo isolamento multitenant.
     """
 
@@ -118,6 +106,48 @@ class NotificationService:
         return notification
 
     @staticmethod
+    @transaction.atomic
+    def notify(
+        company: Company | UUID | str | int,
+        user: User | UUID | str | int,
+        title: str,
+        message: str,
+        notification_type: str = NotificationType.GENERAL,
+        link: str = "",
+        target_type: str = "",
+        target_id: UUID | str | None = None,
+        wedding_id: UUID | str | None = None,
+    ) -> Notification:
+        """
+        Atalho de conveniência para criação e envio de notificação.
+
+        Args:
+            company: Instância ou identificador da empresa (tenant).
+            user: Usuário destinatário da notificação.
+            title: Título da notificação.
+            message: Mensagem textual da notificação.
+            notification_type: Tipo da notificação (ex: GENERAL, REMINDER).
+            link: URL ou rota associada.
+            target_type: Tipo do recurso vinculado.
+            target_id: Identificador do recurso vinculado.
+            wedding_id: Identificador do casamento relacionado.
+
+        Returns:
+            A notificação criada e persistida.
+        """
+        return NotificationService.create_notification(
+            company=company,
+            user=user,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            link=link,
+            target_type=target_type,
+            target_id=target_id,
+            wedding_id=wedding_id,
+        )
+
+    @staticmethod
     def create_async_notification(
         company: Company | UUID | str | int,
         user: User | UUID | str | int,
@@ -166,50 +196,6 @@ class NotificationService:
         )
 
     @staticmethod
-    def list_notifications(
-        company: Company,
-        user: User,
-        is_read: bool | None = None,
-    ) -> QuerySet[AnnotatedNotification]:
-        """Lista todas as notificações de um usuário vinculadas à sua empresa.
-
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário destinatário das notificações.
-            is_read: Filtro opcional por estado de leitura.
-
-        Returns:
-            QuerySet[Notification]: Notificações filtradas do usuário com
-                wedding_name anotado em SQL.
-        """
-        qs = (
-            Notification.objects.for_tenant(company)
-            .filter(user=user)
-            .annotate(wedding_name=_get_wedding_name_subquery())
-        )
-        if is_read is not None:
-            qs = qs.filter(is_read=is_read)
-
-        return cast(QuerySet[AnnotatedNotification], qs)
-
-    @staticmethod
-    def get_unread_count(company: Company, user: User) -> int:
-        """Obtém a contagem de notificações não lidas de um usuário.
-
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário alvo da contagem.
-
-        Returns:
-            int: Quantidade de notificações com is_read=False.
-        """
-        return (
-            Notification.objects.for_tenant(company)
-            .filter(user=user, is_read=False)
-            .count()
-        )
-
-    @staticmethod
     @transaction.atomic
     def mark_as_read(
         company: Company,
@@ -232,8 +218,9 @@ class NotificationService:
         """
         notification = (
             Notification.objects.for_tenant(company)
-            .annotate(wedding_name=_get_wedding_name_subquery())
-            .filter(uuid=notification_id, user=user)
+            .for_user(user)
+            .with_wedding_name()
+            .filter(uuid=notification_id)
             .first()
         )
         if not notification:
@@ -264,8 +251,8 @@ class NotificationService:
             int: Quantidade de notificações que mudaram para lidas.
         """
         now = timezone.now()
-        qs = Notification.objects.for_tenant(company).filter(user=user, is_read=False)
-        count = qs.update(is_read=True, read_at=now, updated_at=now)
+        qs = Notification.objects.for_tenant(company).for_user(user).unread()
+        count = int(qs.update(is_read=True, read_at=now, updated_at=now))
         logger.info(
             "Todas as notificações marcadas como lidas: count=%d para user_id=%s",
             count,
@@ -293,7 +280,8 @@ class NotificationService:
         """
         notification = (
             Notification.objects.for_tenant(company)
-            .filter(uuid=notification_id, user=user)
+            .for_user(user)
+            .filter(uuid=notification_id)
             .first()
         )
         if not notification:
@@ -324,10 +312,13 @@ class NotificationService:
             int: Quantidade de notificações atualizadas.
         """
         now = timezone.now()
-        qs = Notification.objects.for_tenant(company).filter(
-            user=user, uuid__in=notification_ids, is_read=False
+        qs = (
+            Notification.objects.for_tenant(company)
+            .for_user(user)
+            .unread()
+            .filter(uuid__in=notification_ids)
         )
-        count = qs.update(is_read=True, read_at=now, updated_at=now)
+        count = int(qs.update(is_read=True, read_at=now, updated_at=now))
         logger.info(
             "Notificações em lote marcadas como lidas: count=%d para user_id=%s",
             count,
@@ -352,8 +343,10 @@ class NotificationService:
         Returns:
             int: Quantidade de notificações excluídas.
         """
-        qs = Notification.objects.for_tenant(company).filter(
-            user=user, uuid__in=notification_ids
+        qs = (
+            Notification.objects.for_tenant(company)
+            .for_user(user)
+            .filter(uuid__in=notification_ids)
         )
         count, _ = qs.delete()
         logger.info(
@@ -361,7 +354,7 @@ class NotificationService:
             count,
             user.id,
         )
-        return count
+        return int(count)
 
     @staticmethod
     @transaction.atomic
@@ -375,11 +368,11 @@ class NotificationService:
         Returns:
             int: Quantidade total de notificações excluídas.
         """
-        qs = Notification.objects.for_tenant(company).filter(user=user)
+        qs = Notification.objects.for_tenant(company).for_user(user)
         count, _ = qs.delete()
         logger.info(
             "Todas as notificações foram limpas: count=%d para user_id=%s",
             count,
             user.id,
         )
-        return count
+        return int(count)

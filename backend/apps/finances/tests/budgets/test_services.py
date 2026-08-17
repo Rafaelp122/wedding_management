@@ -137,8 +137,6 @@ class TestBudgetServiceCritical:
 
         Deve lançar ObjectNotFoundError, não criar budget fantasma.
         """
-        from uuid import uuid4
-
         invalid_uuid = uuid4()
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
@@ -198,93 +196,6 @@ class TestBudgetServiceCritical:
         # Pelo menos uma das categorias esperadas deve estar presente
         assert any(expected in category_names for expected in expected_categories)
 
-    def test_get_budget_success(self, user: Any) -> None:
-        """get() retorna budget por UUID com select_related."""
-        wedding = WeddingFactory(company=user.company)
-        budget = BudgetFactory(wedding=wedding)
-
-        result = BudgetService.get(user.company, budget.uuid)
-
-        assert result.uuid == budget.uuid
-        assert result.wedding == wedding
-
-    def test_get_budget_multi_tenancy(self) -> None:
-        """
-        Teste CRÍTICO: get() respeita multi-tenancy.
-
-        Usuário não pode acessar budget de outro usuário mesmo conhecendo o UUID.
-        """
-        user_a = UserFactory()
-        user_b = UserFactory()
-
-        # User A cria wedding e budget
-        wedding_a = WeddingFactory(user_context=user_a)
-        budget_a = BudgetService.get_or_create_for_wedding(
-            user_a.company, wedding_a.uuid
-        )
-
-        # User B tenta acessar budget de User A
-        with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.get(user_b.company, budget_a.uuid)
-
-        assert "Orçamento não encontrado" in str(exc_info.value.detail)
-
-    def test_get_budget_not_found(self, user: Any) -> None:
-        """get() lança ObjectNotFoundError para UUID inexistente."""
-        invalid_uuid = uuid4()
-
-        with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.get(user.company, invalid_uuid)
-
-        assert "Orçamento não encontrado ou acesso negado." in str(
-            exc_info.value.detail
-        )
-
-    def test_get_budget_invalid_uuid_format(self, user: Any) -> None:
-        """get() lança ObjectNotFoundError para formato de UUID inválido."""
-        invalid_format = "not-a-uuid"
-
-        with pytest.raises(ObjectNotFoundError) as exc_info:
-            BudgetService.get(user.company, invalid_format)
-
-        assert "Orçamento não encontrado ou acesso negado." in str(
-            exc_info.value.detail
-        )
-
-    def test_list_budgets_multi_tenancy(self) -> None:
-        """
-        Teste CRÍTICO: list() retorna apenas budgets do usuário.
-
-        Isolamento completo na listagem.
-        """
-        user_a = UserFactory()
-        user_b = UserFactory()
-
-        # Cada usuário cria seu próprio wedding e budget
-        wedding_a = WeddingFactory(user_context=user_a)
-        wedding_b = WeddingFactory(user_context=user_b)
-
-        budget_a = BudgetService.get_or_create_for_wedding(
-            user_a.company, wedding_a.uuid
-        )
-        budget_b = BudgetService.get_or_create_for_wedding(
-            user_b.company, wedding_b.uuid
-        )
-
-        # User A vê apenas seu budget
-        budgets_a = BudgetService.list(user_a.company)
-        assert budgets_a.count() == 1
-        listed_budget_a = budgets_a.first()
-        assert listed_budget_a is not None
-        assert listed_budget_a.uuid == budget_a.uuid
-
-        # User B vê apenas seu budget
-        budgets_b = BudgetService.list(user_b.company)
-        assert budgets_b.count() == 1
-        listed_budget_b = budgets_b.first()
-        assert listed_budget_b is not None
-        assert listed_budget_b.uuid == budget_b.uuid
-
     def test_create_budget_duplicate_prevention(self, user: Any) -> None:
         """
         Teste CRÍTICO: Impedir criação de múltiplos budgets para mesmo wedding.
@@ -322,8 +233,6 @@ class TestBudgetServiceCritical:
 
         Deve validar acesso/pertencimento antes de qualquer operação.
         """
-        from uuid import uuid4
-
         invalid_uuid = uuid4()
 
         with pytest.raises(ObjectNotFoundError) as exc_info:
@@ -340,8 +249,6 @@ class TestBudgetServiceCritical:
 
         Usuário anônimo não pode chamar serviços.
         """
-        from uuid import uuid4
-
         from django.contrib.auth.models import AnonymousUser
 
         anonymous_user = AnonymousUser()

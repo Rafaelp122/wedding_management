@@ -15,6 +15,7 @@ from apps.logistics.schemas import (
     ContractUploadUrlIn,
     ContractUploadUrlOut,
 )
+from apps.logistics.selectors import contract_get_selector, contract_list_selector
 from apps.logistics.services.contract_service import ContractService
 from apps.users.types import AuthRequest
 
@@ -38,7 +39,7 @@ def list_contracts(
     Permite filtrar por casamento, status, fornecedor e contrato pai (aditivos).
     """
     user = request.user
-    return ContractService.list(
+    return contract_list_selector(
         company=user.company,
         wedding_id=wedding_id,
         status=status,
@@ -57,7 +58,7 @@ def retrieve_contract(request: AuthRequest, uuid: UUID4) -> Contract:
     Exibe as cláusulas e informações completas de um contrato.
     """
     user = request.user
-    return ContractService.get(company=user.company, uuid=uuid)
+    return contract_get_selector(company=user.company, uuid=uuid)
 
 
 @contracts_router.post(
@@ -126,7 +127,7 @@ def update_contract(
     Altera o status, valores agregados ou observações de um contrato existente na base.
     """
     user = request.user
-    contract = ContractService.get(company=user.company, uuid=uuid)
+    contract = contract_get_selector(company=user.company, uuid=uuid)
     return ContractService.update(
         company=user.company, instance=contract, payload=payload
     )
@@ -142,7 +143,7 @@ def delete_contract(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.
     """
     user = request.user
-    contract = ContractService.get(company=user.company, uuid=uuid)
+    contract = contract_get_selector(company=user.company, uuid=uuid)
     ContractService.delete(company=user.company, instance=contract)
     return 204, None
 
@@ -191,7 +192,7 @@ def transition_contract_status(
     Transita o status do contrato (DRAFT → PENDING → SIGNED → CANCELED).
     """
     user = request.user
-    contract = ContractService.get(company=user.company, uuid=uuid)
+    contract = contract_get_selector(company=user.company, uuid=uuid)
     return ContractService.transition_status(
         company=user.company,
         instance=contract,

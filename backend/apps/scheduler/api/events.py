@@ -6,6 +6,7 @@ from pydantic import UUID4
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.scheduler.models import Event
 from apps.scheduler.schemas import EventIn, EventOut, EventPatchIn
+from apps.scheduler.selectors import event_get_selector, event_list_selector
 from apps.scheduler.services import EventService
 from apps.users.types import AuthRequest
 
@@ -16,7 +17,8 @@ events_router = Router(tags=["Scheduler"])
 @events_router.get("/", response=list[EventOut], operation_id="scheduler_events_list")
 @paginate
 def list_events(
-    request: AuthRequest, wedding_id: UUID4 | None = None
+    request: AuthRequest,
+    wedding_id: UUID4 | None = None,
 ) -> QuerySet[Event]:
     """
     Lista todos os eventos do cronograma do Planner logado.
@@ -25,7 +27,10 @@ def list_events(
     Garante que o usuário veja apenas os eventos de sua propriedade.
     """
     user = request.user
-    return EventService.list(user.company, wedding_id=wedding_id)
+    return event_list_selector(
+        company=user.company,
+        wedding_id=wedding_id,
+    )
 
 
 @events_router.get(
@@ -40,7 +45,7 @@ def get_event(request: AuthRequest, uuid: UUID4) -> Event:
     Realiza a busca pelo UUID garantindo que o evento pertence ao Planner logado.
     """
     user = request.user
-    return EventService.get(user.company, uuid)
+    return event_get_selector(company=user.company, uuid=uuid)
 
 
 @events_router.post(
@@ -72,7 +77,7 @@ def update_event(request: AuthRequest, uuid: UUID4, payload: EventPatchIn) -> Ev
     Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
     """
     user = request.user
-    instance = EventService.get(user.company, uuid)
+    instance = event_get_selector(company=user.company, uuid=uuid)
     return EventService.update(user.company, instance, payload)
 
 
@@ -89,6 +94,6 @@ def delete_event(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Desativa também os alertas e lembretes associados a ela.
     """
     user = request.user
-    instance = EventService.get(user.company, uuid)
+    instance = event_get_selector(company=user.company, uuid=uuid)
     EventService.delete(user.company, instance)
     return 204, None

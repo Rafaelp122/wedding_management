@@ -11,6 +11,10 @@ from apps.finances.schemas import (
     InstallmentAdjustIn,
     InstallmentOut,
 )
+from apps.finances.selectors import (
+    installment_get_selector,
+    installment_list_selector,
+)
 from apps.finances.services.installment_service import InstallmentService
 from apps.users.types import AuthRequest
 
@@ -35,8 +39,8 @@ def list_installments(
     status e período de vencimento.
     """
     user = request.user
-    return InstallmentService.list(
-        user.company,
+    return installment_list_selector(
+        company=user.company,
         wedding_id=wedding_id,
         expense_id=expense_id,
         status=status,
@@ -55,7 +59,7 @@ def get_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     Retorna os detalhes de uma parcela específica.
     """
     user = request.user
-    return InstallmentService.get(user.company, uuid)
+    return installment_get_selector(company=user.company, uuid=uuid)
 
 
 @installments_router.post(
@@ -69,7 +73,7 @@ def mark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     Bloqueia se já estiver paga (BR-F06).
     """
     user = request.user
-    instance = InstallmentService.get(user.company, uuid)
+    instance = installment_get_selector(company=user.company, uuid=uuid)
     return InstallmentService.mark_as_paid(user.company, instance)
 
 
@@ -83,7 +87,7 @@ def unmark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment
     Desmarca uma parcela paga, revertendo para PENDING ou OVERDUE.
     """
     user = request.user
-    instance = InstallmentService.get(user.company, uuid)
+    instance = installment_get_selector(company=user.company, uuid=uuid)
     return InstallmentService.unmark_as_paid(user.company, instance)
 
 
@@ -100,5 +104,5 @@ def adjust_installment(
     Valida que due_date não pode ser anterior à parcela anterior.
     """
     user = request.user
-    instance = InstallmentService.get(user.company, uuid)
+    instance = installment_get_selector(company=user.company, uuid=uuid)
     return InstallmentService.adjust(user.company, instance, payload)

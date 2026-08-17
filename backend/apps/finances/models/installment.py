@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
+from apps.finances.managers import InstallmentManager
 from apps.tenants.models import TenantModel
 
 
@@ -19,6 +20,8 @@ class Installment(TenantModel, WeddingOwnedMixin):
     Parcelamento (RF04).
     Representa uma fatia financeira de uma Despesa.
     """
+
+    objects = InstallmentManager()  # type: ignore[misc]
 
     class StatusChoices(models.TextChoices):
         PAID = "PAID", "Pago"

@@ -18,7 +18,7 @@ from apps.finances.tests.factories import (
 from apps.tenants.models import Company
 from apps.tenants.tests.factories import CompanyFactory
 from apps.weddings.models import Wedding
-from apps.weddings.services.summaries.financial import FinancialSummaryService
+from apps.weddings.selectors.summaries.financial import FinancialSummarySelector
 from apps.weddings.tests.factories import WeddingFactory
 
 
@@ -121,7 +121,7 @@ class TestFinancialOptimizations:
     def test_budget_percentage_used_performance(self) -> None:
         """Tests that budget_percentage_used only performs 1 query."""
         with CaptureQueriesContext(connection) as ctx:
-            pct = FinancialSummaryService.budget_percentage_used(
+            pct = FinancialSummarySelector.budget_percentage_used(
                 company=self.company, wedding=self.wedding
             )
             assert pct == 20.0
@@ -130,7 +130,7 @@ class TestFinancialOptimizations:
     def test_budget_percentage_used_without_budget(self) -> None:
         """Tests budget_percentage_used returns 0.0 when wedding has no budget."""
         other_wedding = cast(Wedding, WeddingFactory(company=self.company))
-        pct = FinancialSummaryService.budget_percentage_used(
+        pct = FinancialSummarySelector.budget_percentage_used(
             company=self.company, wedding=other_wedding
         )
         assert pct == 0.0
@@ -170,7 +170,7 @@ class TestFinancialOptimizations:
             due_date=today + timedelta(days=10),
         )
 
-        total = FinancialSummaryService.pending_installments_7d(
+        total = FinancialSummarySelector.pending_installments_7d(
             company=self.company, today=today
         )
         assert total == Decimal("150.00")
@@ -178,7 +178,7 @@ class TestFinancialOptimizations:
     def test_pending_installments_7d_empty(self) -> None:
         """Tests pending installments returns Decimal 0.00 when empty."""
         other_company = cast(Company, CompanyFactory())
-        total = FinancialSummaryService.pending_installments_7d(company=other_company)
+        total = FinancialSummarySelector.pending_installments_7d(company=other_company)
         assert total == Decimal("0.00")
 
     def test_overdue_installments(self) -> None:
@@ -202,7 +202,7 @@ class TestFinancialOptimizations:
             due_date=today - timedelta(days=1),
         )
 
-        amount, count = FinancialSummaryService.overdue_installments(
+        amount, count = FinancialSummarySelector.overdue_installments(
             company=self.company, today=today
         )
         assert amount == Decimal("120.00")
@@ -211,7 +211,7 @@ class TestFinancialOptimizations:
     def test_overdue_installments_empty(self) -> None:
         """Tests overdue installments returns (0.00, 0) when empty."""
         other_company = cast(Company, CompanyFactory())
-        amount, count = FinancialSummaryService.overdue_installments(
+        amount, count = FinancialSummarySelector.overdue_installments(
             company=other_company
         )
         assert amount == Decimal("0.00")
@@ -229,7 +229,7 @@ class TestFinancialOptimizations:
             due_date=today + timedelta(days=1),
         )
 
-        results = FinancialSummaryService.upcoming_installments(
+        results = FinancialSummarySelector.upcoming_installments(
             company=self.company, wedding=self.wedding, today=today
         )
         assert len(results) >= 1
@@ -238,14 +238,14 @@ class TestFinancialOptimizations:
     def test_upcoming_installments_empty(self) -> None:
         """Tests upcoming_installments returns empty list when empty."""
         other_wedding = cast(Wedding, WeddingFactory(company=self.company))
-        results = FinancialSummaryService.upcoming_installments(
+        results = FinancialSummarySelector.upcoming_installments(
             company=self.company, wedding=other_wedding
         )
         assert results == []
 
     def test_categories_summary(self) -> None:
         """Tests the categories summary for a wedding."""
-        summary = FinancialSummaryService.categories_summary(
+        summary = FinancialSummarySelector.categories_summary(
             company=self.company, wedding=self.wedding
         )
         assert len(summary) >= 1
@@ -255,7 +255,7 @@ class TestFinancialOptimizations:
     def test_categories_summary_empty(self) -> None:
         """Tests categories_summary returns empty list when empty."""
         other_wedding = cast(Wedding, WeddingFactory(company=self.company))
-        summary = FinancialSummaryService.categories_summary(
+        summary = FinancialSummarySelector.categories_summary(
             company=self.company, wedding=other_wedding
         )
         assert summary == []

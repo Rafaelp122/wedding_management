@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from uuid import UUID
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
+from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn, InstallmentPatchIn
@@ -23,70 +21,11 @@ logger = logging.getLogger(__name__)
 
 
 class InstallmentService:
-    """Camada de serviço para orquestração de Parcelas.
+    """Camada de serviço para mutações e orquestração de Parcelas.
 
     Garante o isolamento multitenant e a integridade da Tolerância Zero (ADR-010)
     nas despesas pai.
     """
-
-    @staticmethod
-    def list(
-        company: Company,
-        wedding_id: UUID | str | None = None,
-        expense_id: UUID | str | None = None,
-        status: str | None = None,
-        due_date_gte: date | None = None,
-        due_date_lte: date | None = None,
-    ) -> QuerySet[Installment]:
-        """Lista parcelas com filtros opcionais.
-
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            wedding_id: UUID ou string do casamento para filtragem opcional.
-            expense_id: UUID ou string da despesa para filtragem opcional.
-            status: Status das parcelas (PENDING, PAID, OVERDUE).
-            due_date_gte: Data de vencimento inicial para intervalo de busca.
-            due_date_lte: Data de vencimento final para intervalo de busca.
-
-        Returns:
-            QuerySet[Installment]: QuerySet com as parcelas encontradas.
-        """
-        qs = Installment.objects.for_tenant(company).select_related(
-            "expense", "wedding"
-        )
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
-        if expense_id:
-            qs = qs.filter(expense__uuid=expense_id)
-        if status:
-            qs = qs.filter(status=status)
-        if due_date_gte:
-            qs = qs.filter(due_date__gte=due_date_gte)
-        if due_date_lte:
-            qs = qs.filter(due_date__lte=due_date_lte)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Installment:
-        """Obtém uma parcela específica pelo seu UUID.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: O UUID da parcela desejada.
-
-        Returns:
-            Installment: A instância da parcela encontrada.
-
-        Raises:
-            ObjectNotFoundError: Se a parcela não for encontrada.
-        """
-        return get_object_or_404_for_tenant(
-            Installment,
-            company,
-            uuid,
-            select_related=["expense", "wedding"],
-            detail="Parcela não encontrada.",
-        )
 
     @staticmethod
     @transaction.atomic
@@ -95,7 +34,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> list[Installment]:  # type: ignore[valid-type]
+    ) -> list[Installment]:
         """Gera parcelas de despesa com ajuste na última (Tolerância Zero).
 
         Para cada parcela gerada, cria um evento PAYMENT no scheduler (BR-S01)
@@ -190,7 +129,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> list[Installment]:  # type: ignore[valid-type]
+    ) -> list[Installment]:
         """Redistribui as parcelas de uma despesa.
 
         Remove as parcelas anteriores (e seus respectivos eventos de pagamento)

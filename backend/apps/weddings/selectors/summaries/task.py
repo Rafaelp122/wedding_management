@@ -1,20 +1,29 @@
+"""
+Selectors para consolidação de resumos e estatísticas de tarefas.
+"""
+
+from __future__ import annotations
+
 import logging
 from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.db.models import F, Q
 
 from apps.scheduler.models import Task
-from apps.tenants.models import Company
-from apps.weddings.models import Wedding
+
+
+if TYPE_CHECKING:
+    from apps.tenants.models import Company
+    from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
 
 
-class TaskSummaryService:
+class TaskSummarySelector:
     """
-    Camada de serviço para consolidação de resumos e estatísticas de tarefas.
+    Camada de consulta para consolidação de resumos e estatísticas de tarefas.
     Agrega informações sobre tarefas atrasadas, totais por casamento
     e listagens de pendências urgentes do tenant.
     """
@@ -32,7 +41,7 @@ class TaskSummaryService:
             Quantidade total de tarefas atrasadas.
         """
         today = today or date.today()
-        return (
+        return int(
             Task.objects.for_tenant(company)
             .filter(is_completed=False, due_date__lte=today)
             .count()
@@ -51,8 +60,8 @@ class TaskSummaryService:
             Uma tupla contendo (tarefas_concluidas, total_tarefas).
         """
         tasks = Task.objects.for_tenant(company).filter(wedding=wedding)
-        total = tasks.count()
-        completed = tasks.filter(is_completed=True).count()
+        total = int(tasks.count())
+        completed = int(tasks.filter(is_completed=True).count())
         return completed, total
 
     @staticmethod

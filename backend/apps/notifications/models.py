@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BaseModel
-from apps.tenants.managers import TenantManager
+from apps.notifications.managers import NotificationQuerySet
 from apps.tenants.models import Company
 
 
@@ -62,7 +62,7 @@ class Notification(BaseModel):
     link = models.CharField(_("Link"), max_length=500, blank=True, default="")
     read_at = models.DateTimeField(_("Lida em"), null=True, blank=True)
 
-    objects = TenantManager()
+    objects = NotificationQuerySet.as_manager()
 
     class Meta:
         verbose_name = _("Notificação")

@@ -71,7 +71,11 @@ jobs:
 
             ### CONSULTA POR DEMANDA POR ESCOPO DO DIFF:
             Inspecione a lista de arquivos alterados no Diff Stat e consulte APENAS as regras e notas atômicas em `docs/` daquela área específica:
-            - **Se alterar Backend (`backend/`):** Consulte `.agents/skills/wedding-backend/SKILL.md`. Valide a Service Layer em `services.py`, multi-tenancy `for_tenant(company)`, `operation_id` em `api.py` e uso de factories em testes.
+            - **Se alterar Backend (`backend/`):** Consulte `.agents/skills/wedding-backend/SKILL.md` e `docs/3-reference/architecture-standards/query-selectors-spec.md`. Valide:
+              1. **CQRS / Selectors vs Services:** Rotas `GET` em `api.py` DEVEM delegar para `selectors/`. Rotas de mutação (`POST`, `PUT`, `PATCH`, `DELETE`) DEVEM delegar para `services/`.
+              2. **Custom QuerySets:** Filtros de leitura reutilizáveis e anotações SQL DEVEM residir em `managers.py` (`TenantQuerySet`) ou `selectors/`. É PROIBIDO manter métodos de leitura pura (`list`, `get`) em `services.py`.
+              3. **Multi-Tenancy:** Todo service/selector DEVE receber `company` e filtrar por `for_tenant(company)`.
+              4. **API & Testes:** `operation_id` obrigatório em endpoints. Testes de selectors em `test_selectors.py` e services em `test_services.py` usando factories (proibido `.objects.create()`).
             - **Se alterar Frontend (`frontend/`, `landing/`):** Consulte `.agents/skills/wedding-frontend/SKILL.md` e `DESIGN.md`. Valide uso de Orval hooks, ausência de `fetch`/`axios` direto, sem edição de `src/components/ui/`.
             - **Se alterar Regras de Negócio:** Consulte a nota atômica aplicável em `docs/4-explanation/business-rules/`.
             - **Se alterar Documentação (`docs/`):** Consulte `.agents/skills/wedding-documentation/SKILL.md` e `docs/3-reference/architecture-standards/documentation-standards.md`. Valide enquadramento nos 4 quadrantes Diátaxis, princípio da Nota Atômica (assunto único por arquivo) e cross-linking sem duplicação de texto.

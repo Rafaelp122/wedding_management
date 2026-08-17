@@ -1,13 +1,22 @@
+"""
+Selectors para resumos e estatísticas de contratos.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from apps.logistics.models import Contract
-from apps.tenants.models import Company
-from apps.weddings.models import Wedding
 
 
-class ContractSummaryService:
+if TYPE_CHECKING:
+    from apps.tenants.models import Company
+    from apps.weddings.models import Wedding
+
+
+class ContractSummarySelector:
     """
-    Camada de serviço para consolidação de resumos e estatísticas de contratos.
-    Agrega informações sobre o status de assinatura de contratos vinculados
-    a casamentos específicos ou de maneira global por tenant.
+    Camada de consulta para consolidação de resumos e estatísticas de contratos.
     """
 
     @staticmethod
@@ -21,7 +30,7 @@ class ContractSummaryService:
         Returns:
             Quantidade total de contratos nos status DRAFT ou PENDING.
         """
-        return (
+        return int(
             Contract.objects.for_tenant(company)
             .filter(
                 status__in=[
@@ -49,6 +58,6 @@ class ContractSummaryService:
             Uma tupla contendo (contratos_assinados, total_contratos_ativos).
         """
         contracts = Contract.objects.for_tenant(company).filter(wedding=wedding)
-        total = contracts.exclude(status=Contract.StatusChoices.CANCELED).count()
-        signed = contracts.filter(status=Contract.StatusChoices.SIGNED).count()
+        total = int(contracts.exclude(status=Contract.StatusChoices.CANCELED).count())
+        signed = int(contracts.filter(status=Contract.StatusChoices.SIGNED).count())
         return signed, total

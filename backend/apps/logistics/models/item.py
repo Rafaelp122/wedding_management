@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
+from apps.logistics.managers import ItemQuerySet
 from apps.tenants.models import TenantModel
 
 from .contract import Contract
@@ -25,6 +26,8 @@ class Item(TenantModel, WeddingOwnedMixin):
     Item de logística (RF07-RF08).
     Representa a necessidade física ou o serviço contratado.
     """
+
+    objects = ItemQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     _original_acquisition_status: str | None = None
 

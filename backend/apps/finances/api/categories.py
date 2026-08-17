@@ -10,6 +10,10 @@ from apps.finances.schemas import (
     BudgetCategoryOut,
     BudgetCategoryPatchIn,
 )
+from apps.finances.selectors import (
+    budget_category_get_selector,
+    budget_category_list_selector,
+)
 from apps.finances.services.budget_category_service import BudgetCategoryService
 from apps.users.types import AuthRequest
 
@@ -26,12 +30,9 @@ def list_categories(
 ) -> QuerySet[BudgetCategory]:
     """
     Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
-
-    ``wedding_id`` é repassado ao service que detém a regra de filtragem;
-    esta rota não conhece a lógica de tenancy.
     """
     user = request.user
-    return BudgetCategoryService.list(user.company, wedding_id=wedding_id)
+    return budget_category_list_selector(company=user.company, wedding_id=wedding_id)
 
 
 @budget_categories_router.get(
@@ -45,7 +46,7 @@ def get_category(request: AuthRequest, uuid: UUID4) -> BudgetCategory:
     Garante a segurança contábil sem vazar detalhes restritos a terceiros.
     """
     user = request.user
-    return BudgetCategoryService.get(user.company, uuid)
+    return budget_category_get_selector(company=user.company, uuid=uuid)
 
 
 @budget_categories_router.post(
@@ -77,7 +78,7 @@ def update_category(
     Evita sobrescrições acidentais errôneas em outras rotas.
     """
     user = request.user
-    instance = BudgetCategoryService.get(user.company, uuid)
+    instance = budget_category_get_selector(company=user.company, uuid=uuid)
     return BudgetCategoryService.update(user.company, instance, payload)
 
 
@@ -92,6 +93,6 @@ def delete_category(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Exclui anotações de faturas de modo destrutivo para balanceamento.
     """
     user = request.user
-    instance = BudgetCategoryService.get(user.company, uuid)
+    instance = budget_category_get_selector(company=user.company, uuid=uuid)
     BudgetCategoryService.delete(user.company, instance)
     return 204, None

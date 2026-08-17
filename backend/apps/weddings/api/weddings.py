@@ -16,6 +16,13 @@ from apps.weddings.schemas import (
     WeddingOverviewOut,
     WeddingPatchIn,
 )
+from apps.weddings.selectors import (
+    wedding_count_by_month_selector,
+    wedding_get_selector,
+    wedding_list_selector,
+    wedding_lookup_selector,
+    wedding_overview_detail_selector,
+)
 from apps.weddings.services import WeddingService
 
 
@@ -26,7 +33,7 @@ router = Router(tags=["Weddings"])
 def list_weddings_lookup(request: AuthRequest) -> QuerySet[Wedding]:
     """Retorna lista simplificada de casamentos para comboboxes."""
     user = request.user
-    return WeddingService.list_lookup(company=user.company)
+    return wedding_lookup_selector(company=user.company)
 
 
 @router.get("/", response=list[WeddingOut], operation_id="weddings_list")
@@ -37,7 +44,7 @@ def list_weddings(
     status: str = "",
 ) -> QuerySet[Wedding]:
     user = request.user
-    return WeddingService.list(company=user.company, search=search, status=status)
+    return wedding_list_selector(company=user.company, search=search, status=status)
 
 
 @router.get(
@@ -51,7 +58,7 @@ def list_weddings_by_month(
 ) -> Sequence[dict[str, int]]:
     """Retorna a quantidade de casamentos por mês no ano informado."""
     user = request.user
-    return WeddingService.count_by_month(company=user.company, year=year)
+    return wedding_count_by_month_selector(company=user.company, year=year)
 
 
 @router.get(
@@ -61,7 +68,7 @@ def list_weddings_by_month(
 )
 def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     user = request.user
-    return WeddingService.get(company=user.company, uuid=uuid)
+    return wedding_get_selector(company=user.company, uuid=uuid)
 
 
 @router.post(
@@ -86,7 +93,7 @@ def update_wedding(
     payload: WeddingPatchIn,
 ) -> Wedding:
     user = request.user
-    instance = WeddingService.get(company=user.company, uuid=uuid)
+    instance = wedding_get_selector(company=user.company, uuid=uuid)
     updated_wedding = WeddingService.update(
         company=user.company, instance=instance, payload=payload
     )
@@ -100,7 +107,7 @@ def update_wedding(
 )
 def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     user = request.user
-    instance = WeddingService.get(company=user.company, uuid=uuid)
+    instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.delete(company=user.company, instance=instance)
     return 204, None
 
@@ -113,4 +120,4 @@ def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
 def get_wedding_overview(request: AuthRequest, uuid: UUID4) -> WeddingOverviewOut:
     """Retorna visão geral do casamento com métricas de finanças, agenda e contratos."""
     user = request.user
-    return WeddingService.overview(company=user.company, uuid=uuid)
+    return wedding_overview_detail_selector(company=user.company, uuid=uuid)

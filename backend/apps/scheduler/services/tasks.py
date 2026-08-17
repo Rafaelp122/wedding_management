@@ -1,10 +1,8 @@
 import logging
-from uuid import UUID
 
 from django.db import transaction
-from django.db.models import QuerySet
 
-from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
+from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Task
 from apps.scheduler.schemas import TaskIn, TaskPatchIn
@@ -20,48 +18,6 @@ class TaskService:
     Camada de serviço para gestão de tarefas (checklist).
     Garante isolamento total (Multitenancy), lógicas de negócio e integridade.
     """
-
-    @staticmethod
-    def list(company: Company, wedding_id: UUID | str | None = None) -> QuerySet[Task]:
-        """
-        Lista todas as tarefas vinculadas ao tenant (Company).
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: UUID ou string identificadora do casamento
-                (opcional, para filtragem).
-
-        Returns:
-            QuerySet contendo as tarefas filtradas da empresa.
-        """
-        qs = Task.objects.for_tenant(company).select_related("wedding")
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Task:
-        """
-        Recupera uma tarefa específica pelo seu UUID, garantindo o tenant.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: O identificador único da tarefa.
-
-        Returns:
-            A instância da Task localizada.
-
-        Raises:
-            ObjectNotFoundError: Se a tarefa não for encontrada ou pertencer
-                a outro tenant.
-        """
-        return get_object_or_404_for_tenant(
-            Task,
-            company,
-            uuid,
-            select_related=["wedding"],
-            code="task_not_found_or_denied",
-        )
 
     @staticmethod
     @transaction.atomic

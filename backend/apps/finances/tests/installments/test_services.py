@@ -189,11 +189,8 @@ class TestInstallmentServiceAutoGeneration:
         expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
         first_date = date.today() + timedelta(days=30)
 
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 3, first_date
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 3, first_date
         )
 
         assert len(installments) == 3
@@ -283,11 +280,8 @@ class TestInstallmentServiceAutoGeneration:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
         first_date = date.today() + timedelta(days=30)
 
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 1, first_date
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 1, first_date
         )
 
         assert len(installments) == 1
@@ -683,14 +677,11 @@ class TestInstallmentServiceRedistribute:
             date.today(),
         )
 
-        result = cast(
-            list[Installment],
-            InstallmentService.redistribute(
-                user.company,
-                expense,
-                5,
-                date.today(),
-            ),
+        result = InstallmentService.redistribute(
+            user.company,
+            expense,
+            5,
+            date.today(),
         )
 
         assert len(result) == 5
@@ -707,14 +698,11 @@ class TestInstallmentServiceRedistribute:
             date.today(),
         )
 
-        result = cast(
-            list[Installment],
-            InstallmentService.redistribute(
-                user.company,
-                expense,
-                2,
-                date.today(),
-            ),
+        result = InstallmentService.redistribute(
+            user.company,
+            expense,
+            2,
+            date.today(),
         )
 
         assert len(result) == 2
@@ -755,11 +743,8 @@ class TestInstallmentServiceRedistribute:
         expense = _setup_expense(
             user, actual_amount=Decimal("1000.00"), name="Buffet Teste"
         )
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 3, date_type.today()
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 3, date_type.today()
         )
 
         # Verify FK is set on created events
@@ -802,11 +787,8 @@ class TestInstallmentServiceRedistribute:
         expense = _setup_expense(
             user, actual_amount=Decimal("500.00"), name="Flores Teste"
         )
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 2, date_type.today()
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 2, date_type.today()
         )
 
         # Verify FK is set
@@ -1014,166 +996,3 @@ class TestInstallmentServiceAdjust:
                 other_installment,
                 InstallmentAdjustIn(amount=Decimal("300.00")),
             )
-
-
-@pytest.mark.django_db
-class TestInstallmentServiceListAndGet:
-    """Testes de listagem e obtenção de parcelas."""
-
-    def test_list_installments_multitenancy(self) -> None:
-        """list() retorna apenas parcelas do tenant."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        expense_a = _setup_expense(user_a)
-        expense_b = _setup_expense(user_b)
-
-        InstallmentFactory(expense=expense_a, amount=Decimal("500.00"))
-        InstallmentFactory(expense=expense_b, amount=Decimal("300.00"))
-
-        qs_a = InstallmentService.list(user_a.company)
-        assert qs_a.count() == 1
-        installment_a = qs_a.first()
-        assert installment_a is not None
-        assert installment_a.expense.company == user_a.company
-
-        qs_b = InstallmentService.list(user_b.company)
-        assert qs_b.count() == 1
-        installment_b = qs_b.first()
-        assert installment_b is not None
-        assert installment_b.expense.company == user_b.company
-
-    def test_list_installments_filter_by_wedding_and_expense_id(
-        self, user: User
-    ) -> None:
-        """list() filtra por wedding_id e expense_id."""
-        wedding1 = WeddingFactory(user_context=user)
-        wedding2 = WeddingFactory(user_context=user)
-
-        budget1 = BudgetFactory(wedding=wedding1)
-        budget2 = BudgetFactory(wedding=wedding2)
-
-        category1 = BudgetCategoryFactory(budget=budget1, wedding=wedding1)
-        category2 = BudgetCategoryFactory(budget=budget2, wedding=wedding2)
-
-        expense1 = ExpenseFactory(wedding=wedding1, category=category1, contract=None)
-        expense2 = ExpenseFactory(wedding=wedding2, category=category2, contract=None)
-
-        InstallmentFactory(expense=expense1, amount=Decimal("100.00"))
-        InstallmentFactory(expense=expense2, amount=Decimal("200.00"))
-
-        # Filtro por wedding_id
-        qs_wedding = InstallmentService.list(user.company, wedding_id=wedding1.uuid)
-        assert qs_wedding.count() == 1
-        installment_wedding = qs_wedding.first()
-        assert installment_wedding is not None
-        assert installment_wedding.expense == expense1
-
-        # Filtro por expense_id
-        qs_expense = InstallmentService.list(user.company, expense_id=expense2.uuid)
-        assert qs_expense.count() == 1
-        installment_expense = qs_expense.first()
-        assert installment_expense is not None
-        assert installment_expense.expense == expense2
-
-        # Filtro por wedding_id e expense_id combinados
-        qs_both = InstallmentService.list(
-            user.company, wedding_id=wedding1.uuid, expense_id=expense1.uuid
-        )
-        assert qs_both.count() == 1
-        installment_both = qs_both.first()
-        assert installment_both is not None
-        assert installment_both.expense == expense1
-
-    def test_list_installments_filter_by_status(self, user: User) -> None:
-        """list() com status filtra corretamente."""
-        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
-        InstallmentFactory(expense=expense, amount=Decimal("500.00"), status="PENDING")
-        InstallmentFactory(
-            expense=expense,
-            amount=Decimal("500.00"),
-            status="PAID",
-            paid_date=date.today(),
-        )
-
-        qs = InstallmentService.list(user.company, status="PAID")
-        assert qs.count() == 1
-        installment = qs.first()
-        assert installment is not None
-        assert installment.status == "PAID"
-
-    def test_list_installments_filter_by_due_date_gte(self, user: User) -> None:
-        """list() com due_date_gte filtra corretamente."""
-        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
-        InstallmentFactory(expense=expense, due_date=date(2026, 1, 1))
-        InstallmentFactory(expense=expense, due_date=date(2026, 6, 1))
-
-        qs = InstallmentService.list(user.company, due_date_gte=date(2026, 3, 1))
-        assert qs.count() == 1
-        installment = qs.first()
-        assert installment is not None
-        assert installment.due_date == date(2026, 6, 1)
-
-    def test_list_installments_filter_by_due_date_lte(self, user: User) -> None:
-        """list() com due_date_lte filtra corretamente."""
-        expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
-        InstallmentFactory(expense=expense, due_date=date(2026, 1, 1))
-        InstallmentFactory(expense=expense, due_date=date(2026, 6, 1))
-
-        qs = InstallmentService.list(user.company, due_date_lte=date(2026, 3, 1))
-        assert qs.count() == 1
-        installment = qs.first()
-        assert installment is not None
-        assert installment.due_date == date(2026, 1, 1)
-
-    def test_list_installments_filter_by_status_and_date_range(
-        self, user: User
-    ) -> None:
-        """list() combina status + date range."""
-        expense = _setup_expense(user, actual_amount=Decimal("2000.00"))
-        InstallmentFactory(expense=expense, due_date=date(2026, 1, 1), status="PENDING")
-        InstallmentFactory(expense=expense, due_date=date(2026, 6, 1), status="PENDING")
-        InstallmentFactory(
-            expense=expense,
-            due_date=date(2026, 6, 15),
-            status="PAID",
-            paid_date=date(2026, 6, 15),
-        )
-
-        qs = InstallmentService.list(
-            user.company,
-            status="PENDING",
-            due_date_gte=date(2026, 5, 1),
-            due_date_lte=date(2026, 7, 1),
-        )
-        assert qs.count() == 1
-        installment = qs.first()
-        assert installment is not None
-        assert installment.due_date == date(2026, 6, 1)
-
-    def test_get_installment_success(self, user: User) -> None:
-        """get() retorna parcela por UUID com select_related."""
-        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
-        installment = InstallmentFactory(expense=expense, amount=Decimal("500.00"))
-
-        result = InstallmentService.get(user.company, installment.uuid)
-        assert result.uuid == installment.uuid
-        assert result.expense == expense
-
-    def test_get_installment_not_found(self, user: User) -> None:
-        """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError) as exc_info:
-            InstallmentService.get(user.company, uuid4())
-
-        assert str(exc_info.value.detail) == "Parcela não encontrada."
-
-    def test_get_installment_multitenancy(self) -> None:
-        """Usuário A não pode acessar parcela do Usuário B."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        expense_b = _setup_expense(user_b)
-        installment_b = InstallmentFactory(expense=expense_b)
-
-        with pytest.raises(ObjectNotFoundError) as exc_info:
-            InstallmentService.get(user_a.company, installment_b.uuid)
-
-        assert str(exc_info.value.detail) == "Parcela não encontrada."

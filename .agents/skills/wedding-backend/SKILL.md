@@ -9,11 +9,19 @@ Operational checklist for backend development (Django 5.2 + Django Ninja).
 
 ## Backend Development Checklist
 
-- [ ] **Service Layer Pattern**: Keep `api.py` strictly for routing, auth, request validation, and payload serialization. Delegate all business logic and database queries to `services.py`. See [Service Layer Pattern](../../../docs/4-explanation/architecture/service-layer-pattern.md).
+- [ ] **Service Layer & CQRS Pattern**:
+  - Delegate `GET` endpoints in `api.py` to `selectors/`.
+  - Delegate mutation endpoints (`POST`, `PUT`, `PATCH`, `DELETE`) to `services/`.
+  - Prohibit raw queries and business logic inside controllers (`api.py`).
+  - See [Service Layer Pattern](../../../docs/4-explanation/architecture/service-layer-pattern.md) and [Query Selectors Pattern](../../../docs/4-explanation/architecture/query-selectors-pattern.md).
+- [ ] **Query Selectors & Custom QuerySets**:
+  - Keep pure read queries and aggregations in `selectors/` returning chainable lazy `CustomQuerySet` instances (subclasses of `TenantQuerySet` in `managers.py`).
+  - Keep write rules and mutations exclusively in `services/`. FORBIDDEN pure read methods in `services/`.
+  - See [Query Selectors Spec](../../../docs/3-reference/architecture-standards/query-selectors-spec.md) and [Create Query Selectors Guide](../../../docs/2-how-to/backend/create-query-selectors.md).
 - [ ] **Router operation_id**: Define an explicit `operation_id` on all `@router.<method>` endpoints for Orval client code generation.
 - [ ] **Multi-Tenancy Enforcement**:
   - Query tenant models using `Model.objects.for_tenant(company)`. Never use unfiltered `.objects.all()` or `.objects.create()`.
-  - Use `get_object_or_404_for_tenant(Model, company=company, uuid=uuid)` from `apps.core.shortcuts` for tenant-isolated lookups returning 404 on missing/unauthorized resources.
+  - Use `get_object_or_404_for_tenant(Model, company=company, uuid=uuid)` or `*_get_selector` for tenant-isolated lookups returning 404 on missing/unauthorized resources.
   - See [Multi-Tenancy Strategy](../../../docs/4-explanation/architecture/multi-tenancy-strategy.md).
 - [ ] **Data Integrity & Model Validation**:
   - Inherit models from `BaseModel` (`apps/core/models.py`), which executes `full_clean()` automatically inside `save()`.

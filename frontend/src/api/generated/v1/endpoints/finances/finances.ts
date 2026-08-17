@@ -418,9 +418,6 @@ export function useFinancesBudgetsForWedding<TData = Awaited<ReturnType<typeof f
 
 /**
  * Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
- *
- * ``wedding_id`` é repassado ao service que detém a regra de filtragem;
- * esta rota não conhece a lógica de tenancy.
  * @summary List Categories
  */
 export const financesCategoriesList = (

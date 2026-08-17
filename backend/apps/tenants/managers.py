@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, TypeVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Self, TypeVar
 
 from django.db import models
 
@@ -12,7 +14,7 @@ _ModelT = TypeVar("_ModelT", bound=models.Model)
 class TenantQuerySet(models.QuerySet[_ModelT]):
     """QuerySet base para isolamento de dados por Tenant (Company)."""
 
-    def for_tenant(self, company: "Company") -> "TenantQuerySet[_ModelT]":
+    def for_tenant(self, company: Company) -> Self:
         """Filtra os registros estritamente pela empresa fornecida."""
         return self.filter(company=company)
 
@@ -20,8 +22,10 @@ class TenantQuerySet(models.QuerySet[_ModelT]):
 class TenantManager(models.Manager[_ModelT]):
     """Manager padrão para modelos vinculados a um Tenant."""
 
-    def get_queryset(self) -> TenantQuerySet[_ModelT]:
-        return TenantQuerySet(self.model, using=self._db)
+    _queryset_class = TenantQuerySet
 
-    def for_tenant(self, company: "Company") -> TenantQuerySet[_ModelT]:
+    def get_queryset(self) -> TenantQuerySet[_ModelT]:
+        return self._queryset_class(self.model, using=self._db)
+
+    def for_tenant(self, company: Company) -> TenantQuerySet[_ModelT]:
         return self.get_queryset().for_tenant(company)

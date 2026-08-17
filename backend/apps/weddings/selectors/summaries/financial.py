@@ -1,15 +1,24 @@
+"""
+Selectors para consolidação de resumos e relatórios financeiros.
+"""
+
+from __future__ import annotations
+
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 from uuid import UUID
 
 from django.db.models import Q, Sum
 from django.utils import timezone
 
 from apps.finances.models import Budget, BudgetCategory, Installment
-from apps.tenants.models import Company
-from apps.weddings.models import Wedding
+
+
+if TYPE_CHECKING:
+    from apps.tenants.models import Company
+    from apps.weddings.models import Wedding
 
 
 logger = logging.getLogger(__name__)
@@ -30,9 +39,9 @@ class _CategorySummary(TypedDict):
     percentage: int
 
 
-class FinancialSummaryService:
+class FinancialSummarySelector:
     """
-    Camada de serviço para consolidação de resumos e relatórios financeiros.
+    Camada de consulta para consolidação de resumos e relatórios financeiros.
     Agrega informações sobre parcelas pendentes, vencidas, uso de orçamento
     e distribuição de gastos por categorias de orçamento do tenant.
     """

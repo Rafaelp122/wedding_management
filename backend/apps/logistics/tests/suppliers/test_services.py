@@ -1,5 +1,4 @@
 from typing import Any, cast
-from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
@@ -175,69 +174,3 @@ class TestSupplierServiceDelete:
 
         with pytest.raises(ObjectNotFoundError):
             SupplierService.delete(user.company, instance=other_supplier)
-
-
-@pytest.mark.django_db
-class TestSupplierServiceListAndGet:
-    """Testes de listagem e obtenção de fornecedores."""
-
-    def test_list_suppliers_multitenancy(self) -> None:
-        """list() retorna apenas fornecedores do tenant."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-
-        SupplierFactory(company=user_a.company, name="Fornecedor A")
-        SupplierFactory(company=user_b.company, name="Fornecedor B")
-
-        qs_a = SupplierService.list(user_a.company)
-        assert qs_a.count() == 1
-        first_a = qs_a.first()
-        assert first_a is not None
-        assert first_a.name == "Fornecedor A"
-
-        qs_b = SupplierService.list(user_b.company)
-        assert qs_b.count() == 1
-        first_b = qs_b.first()
-        assert first_b is not None
-        assert first_b.name == "Fornecedor B"
-
-    def test_get_supplier_success(self, user: Any) -> None:
-        """get() retorna fornecedor por UUID."""
-        supplier = SupplierFactory(company=user.company, name="Decorações Ltda")
-
-        result = SupplierService.get(user.company, supplier.uuid)
-
-        assert result.uuid == supplier.uuid
-        assert result.name == "Decorações Ltda"
-
-    def test_get_supplier_not_found(self, user: Any) -> None:
-        """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError):
-            SupplierService.get(user.company, uuid4())
-
-    def test_get_supplier_multitenancy(self) -> None:
-        """Usuário A não pode acessar fornecedor do Usuário B."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        supplier_b = SupplierFactory(company=user_b.company)
-
-        with pytest.raises(ObjectNotFoundError):
-            SupplierService.get(user_a.company, supplier_b.uuid)
-
-    def test_supplier_visible_across_weddings(self, user: Any) -> None:
-        """BR-L03: mesmo fornecedor é acessível em múltiplos casamentos."""
-        supplier = SupplierFactory(company=user.company)
-
-        # Criar dois casamentos, ambos vinculam o mesmo fornecedor
-        wedding1 = WeddingFactory(user_context=user)
-        wedding2 = WeddingFactory(user_context=user)
-        ContractFactory(wedding=wedding1, supplier=supplier)
-        ContractFactory(wedding=wedding2, supplier=supplier)
-
-        # Fornecedor deve aparecer apenas uma vez na listagem
-        qs = SupplierService.list(user.company)
-        assert qs.count() == 1
-        first = qs.first()
-        assert first == supplier
-        # E ter 2 contratos associados
-        assert supplier.contracts.count() == 2
