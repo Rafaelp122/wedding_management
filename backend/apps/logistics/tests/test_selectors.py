@@ -15,21 +15,25 @@ import pytest
 from apps.core.exceptions import ObjectNotFoundError
 from apps.finances.models import Installment
 from apps.finances.tests.factories import (
-    BudgetCategoryFactory,
-    BudgetFactory,
-    ExpenseFactory,
-    InstallmentFactory,
+    BudgetCategoryFactory as _BudgetCategoryFactory,
+)
+from apps.finances.tests.factories import (
+    BudgetFactory as _BudgetFactory,
+)
+from apps.finances.tests.factories import (
+    ExpenseFactory as _ExpenseFactory,
+)
+from apps.finances.tests.factories import (
+    InstallmentFactory as _InstallmentFactory,
 )
 from apps.logistics.managers import (
-    ContractItemQuerySet,
     ContractQuerySet,
+    ItemQuerySet,
     SupplierQuerySet,
 )
 from apps.logistics.models import Contract, Item, Supplier
 from apps.logistics.selectors import (
     contract_get_selector,
-    contract_item_get_selector,
-    contract_item_list_selector,
     contract_list_selector,
     contract_pending_count_selector,
     item_get_selector,
@@ -38,13 +42,54 @@ from apps.logistics.selectors import (
     supplier_list_selector,
 )
 from apps.logistics.tests.factories import (
-    ContractFactory,
-    ItemFactory,
-    SupplierFactory,
+    ContractFactory as _ContractFactory,
+)
+from apps.logistics.tests.factories import (
+    ItemFactory as _ItemFactory,
+)
+from apps.logistics.tests.factories import (
+    SupplierFactory as _SupplierFactory,
 )
 from apps.users.models import User
-from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.users.tests.factories import UserFactory as _UserFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> Any:
+    return _BudgetCategoryFactory(*args, **kwargs)
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Any:
+    return _BudgetFactory(*args, **kwargs)
+
+
+def ExpenseFactory(*args: Any, **kwargs: Any) -> Any:
+    return _ExpenseFactory(*args, **kwargs)
+
+
+def InstallmentFactory(*args: Any, **kwargs: Any) -> Installment:
+    return cast(Installment, _InstallmentFactory(*args, **kwargs))
+
+
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def ItemFactory(*args: Any, **kwargs: Any) -> Item:
+    return cast(Item, _ItemFactory(*args, **kwargs))
+
+
+def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
+    return cast(Supplier, _SupplierFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 # ==============================================================================
@@ -60,7 +105,7 @@ class TestSupplierQuerySet:
         """Anotação contracts_count contabiliza corretamente contratos."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
-        ContractFactory.create_batch(
+        _ContractFactory.create_batch(
             2, wedding=wedding, company=user.company, supplier=supplier
         )
 
@@ -93,12 +138,6 @@ class TestSupplierQuerySet:
         assert qs.search("999990000").count() == 1
         assert qs.search("Inexistente").count() == 0
         assert qs.search("").count() == 2
-
-    def test_by_category_noop_if_none(self, user: User) -> None:
-        """by_category(None) retorna o próprio QuerySet sem filtrar."""
-        SupplierFactory(company=user.company)
-        qs = Supplier.objects.for_tenant(user.company).by_category(None)
-        assert qs.count() == 1
 
     def test_chaining_supplier_queryset(self, user: User) -> None:
         """Garante encadeamento fluente de métodos em SupplierQuerySet."""
@@ -136,7 +175,7 @@ class TestContractQuerySet:
             supplier=supplier,
             total_amount=Decimal("1000.00"),
         )
-        ContractFactory.create_batch(
+        _ContractFactory.create_batch(
             2, wedding=wedding, company=user.company, supplier=supplier, parent=parent
         )
 
@@ -202,7 +241,7 @@ class TestContractItemQuerySet:
         ItemFactory(wedding=wedding, contract=c2, company=user.company)
 
         qs = Item.objects.for_tenant(user.company)
-        assert isinstance(qs, ContractItemQuerySet)
+        assert isinstance(qs, ItemQuerySet)
         assert qs.for_contract(c1).count() == 1
         assert qs.for_contract(c1.uuid).count() == 1
         assert qs.for_contract(str(c2.uuid)).count() == 1
@@ -260,11 +299,13 @@ class TestSupplierSelectors:
 
         qs_a = supplier_list_selector(user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().name == "Fornecedor A"
+        supp_a = qs_a.first()
+        assert supp_a is not None and supp_a.name == "Fornecedor A"
 
         qs_b = supplier_list_selector(user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().name == "Fornecedor B"
+        supp_b = qs_b.first()
+        assert supp_b is not None and supp_b.name == "Fornecedor B"
 
     def test_supplier_list_selector_filters(self, user: User) -> None:
         """supplier_list_selector filtra por busca e status ativo."""
@@ -408,8 +449,8 @@ class TestContractSelectors:
 class TestItemSelectors:
     """Testes para os seletores de leitura de itens de logística."""
 
-    def test_contract_item_list_selector_multitenancy(self) -> None:
-        """contract_item_list_selector respeita isolamento multitenant."""
+    def test_item_list_selector_multitenancy(self) -> None:
+        """item_list_selector respeita isolamento multitenant."""
         user_a = UserFactory()
         user_b = UserFactory()
         wedding_a = WeddingFactory(user_context=user_a)
@@ -417,17 +458,19 @@ class TestItemSelectors:
         ItemFactory(wedding=wedding_a, company=user_a.company, name="Item A")
         ItemFactory(wedding=wedding_b, company=user_b.company, name="Item B")
 
-        qs_a = contract_item_list_selector(user_a.company)
+        qs_a = item_list_selector(user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().name == "Item A"
+        item_a = qs_a.first()
+        assert item_a is not None and item_a.name == "Item A"
 
         qs_b = item_list_selector(user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().name == "Item B"
+        item_b = qs_b.first()
+        assert item_b is not None and item_b.name == "Item B"
 
-    def test_contract_item_list_selector_filters(self, user: User) -> None:
+    def test_item_list_selector_filters(self, user: User) -> None:
         """
-        contract_item_list_selector filtra por casamento, status, busca e contrato.
+        item_list_selector filtra por casamento, status, busca e contrato.
         """
         wedding = WeddingFactory(user_context=user)
         contract = ContractFactory(wedding=wedding, company=user.company)
@@ -446,45 +489,34 @@ class TestItemSelectors:
             acquisition_status=Item.AcquisitionStatus.PENDING,
         )
 
+        assert item_list_selector(user.company, wedding_id=wedding.uuid).count() == 2
         assert (
-            contract_item_list_selector(user.company, wedding_id=wedding.uuid).count()
-            == 2
-        )
-        assert (
-            contract_item_list_selector(
-                user.company, status=Item.AcquisitionStatus.DONE
-            ).count()
+            item_list_selector(user.company, status=Item.AcquisitionStatus.DONE).count()
             == 1
         )
-        assert contract_item_list_selector(user.company, search="Taças").count() == 1
-        assert (
-            contract_item_list_selector(user.company, contract_id=contract.uuid).count()
-            == 1
-        )
+        assert item_list_selector(user.company, search="Taças").count() == 1
+        assert item_list_selector(user.company, contract_id=contract.uuid).count() == 1
 
-    def test_contract_item_get_selector_success(self, user: User) -> None:
-        """contract_item_get_selector recupera item corretamente."""
+    def test_item_get_selector_success(self, user: User) -> None:
+        """item_get_selector recupera item corretamente."""
         wedding = WeddingFactory(user_context=user)
         item = ItemFactory(
             wedding=wedding, company=user.company, name="Microfone sem Fio"
         )
 
-        res = contract_item_get_selector(user.company, item.uuid)
+        res = item_get_selector(user.company, item.uuid)
         assert res.uuid == item.uuid
         assert res.name == "Microfone sem Fio"
 
-        res_alias = item_get_selector(user.company, item.uuid)
-        assert res_alias.uuid == item.uuid
-
-    def test_contract_item_get_selector_not_found_and_multitenancy(self) -> None:
-        """contract_item_get_selector valida inexistência e isolamento."""
+    def test_item_get_selector_not_found_and_multitenancy(self) -> None:
+        """item_get_selector valida inexistência e isolamento."""
         user_a = UserFactory()
         user_b = UserFactory()
         wedding_b = WeddingFactory(user_context=user_b)
         item_b = ItemFactory(wedding=wedding_b, company=user_b.company)
 
         with pytest.raises(ObjectNotFoundError):
-            contract_item_get_selector(user_a.company, uuid4())
+            item_get_selector(user_a.company, uuid4())
 
         with pytest.raises(ObjectNotFoundError):
-            contract_item_get_selector(user_a.company, item_b.uuid)
+            item_get_selector(user_a.company, item_b.uuid)

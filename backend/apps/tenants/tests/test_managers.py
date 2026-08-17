@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import pytest
 
-from apps.tenants.managers import TenantManager, TenantQuerySet
+from apps.tenants.managers import TenantQuerySet
 from apps.tenants.models import TenantModel
 from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory
@@ -112,8 +112,13 @@ class TestTenantManager:
         ]
 
         for model_class in models_with_tenant:
-            assert isinstance(cast(Any, model_class).objects, TenantManager), (
-                f"{model_class.__name__}.objects não é TenantManager"
+            manager = cast(Any, model_class).objects
+            assert hasattr(manager, "for_tenant"), (
+                f"{model_class.__name__}.objects não possui método for_tenant"
+            )
+            assert issubclass(manager._queryset_class, TenantQuerySet), (
+                f"{model_class.__name__}.objects._queryset_class "
+                "não herda de TenantQuerySet"
             )
 
     def test_tenant_model_is_abstract(self) -> None:

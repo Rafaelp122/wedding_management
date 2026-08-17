@@ -79,9 +79,10 @@ class TestWeddingQuerySet:
 
         assert result is not None
         assert isinstance(qs, WeddingQuerySet)
-        assert float(result.total_budget) == 50000.0
-        assert result.overdue_installments == 1
-        assert result.incomplete_tasks == 1
+        annotated = cast(Any, result)
+        assert float(annotated.total_budget) == 50000.0
+        assert annotated.overdue_installments == 1
+        assert annotated.incomplete_tasks == 1
 
     def test_with_metrics_without_budget(self, user: Any) -> None:
         """total_budget é None quando não há orçamento associado."""
@@ -91,9 +92,10 @@ class TestWeddingQuerySet:
         result = qs.first()
 
         assert result is not None
-        assert result.total_budget is None
-        assert result.overdue_installments == 0
-        assert result.incomplete_tasks == 0
+        annotated = cast(Any, result)
+        assert annotated.total_budget is None
+        assert annotated.overdue_installments == 0
+        assert annotated.incomplete_tasks == 0
 
     def test_with_critical_metrics(self, user: Any) -> None:
         """with_critical_metrics() anota métricas para o dashboard crítico."""
@@ -149,10 +151,11 @@ class TestWeddingQuerySet:
         result = qs.first()
 
         assert result is not None
-        assert result.incomplete_tasks == 2
-        assert result.pending_installments == 1
-        assert result.overdue_tasks == 1
-        assert result.overdue_installments == 1
+        annotated = cast(Any, result)
+        assert annotated.incomplete_tasks == 2
+        assert annotated.pending_installments == 1
+        assert annotated.overdue_tasks == 1
+        assert annotated.overdue_installments == 1
 
     def test_search_by_groom_bride_location(self, user: Any) -> None:
         """search() filtra case-insensitive por noivo, noiva e local."""

@@ -71,10 +71,10 @@ def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
                 "groom_name": w.groom_name,
                 "bride_name": w.bride_name,
                 "days_until": days_until,
-                "incomplete_tasks": w.incomplete_tasks,
-                "pending_installments": w.pending_installments,
-                "overdue_tasks": w.overdue_tasks,
-                "overdue_installments": w.overdue_installments,
+                "incomplete_tasks": getattr(w, "incomplete_tasks", 0),
+                "pending_installments": getattr(w, "pending_installments", 0),
+                "overdue_tasks": getattr(w, "overdue_tasks", 0),
+                "overdue_installments": getattr(w, "overdue_installments", 0),
             }
         )
 

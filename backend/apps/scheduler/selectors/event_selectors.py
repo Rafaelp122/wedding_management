@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.scheduler.managers import EventQuerySet
 from apps.scheduler.models import Event
 
 
 if TYPE_CHECKING:
-    from apps.scheduler.managers import EventQuerySet
     from apps.tenants.models import Company
 
 
@@ -37,9 +37,7 @@ def event_list_selector(
     Returns:
         EventQuerySet com os eventos filtrados e ordenados cronologicamente.
     """
-    qs: EventQuerySet = Event.objects.for_tenant(company).select_related(
-        "wedding", "company"
-    )
+    qs = Event.objects.for_tenant(company).select_related("wedding", "company")
     if wedding_id:
         qs = qs.for_wedding(wedding_id)
     if start_date is not None or end_date is not None:

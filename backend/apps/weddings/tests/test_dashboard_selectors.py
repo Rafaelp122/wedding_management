@@ -3,7 +3,7 @@ Testes unitários e de integração para Dashboard Selectors.
 """
 
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
@@ -18,13 +18,22 @@ from apps.finances.tests.factories import (
 )
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.scheduler.tests.factories import TaskFactory
-from apps.tenants.tests.factories import CompanyFactory
+from apps.tenants.models import Company
+from apps.tenants.tests.factories import CompanyFactory as _CompanyFactory
 from apps.weddings.models import Wedding
 from apps.weddings.selectors import (
     dashboard_summary_selector,
     wedding_overview_selector,
 )
-from apps.weddings.tests.factories import WeddingFactory
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
+
+
+def CompanyFactory(*args: Any, **kwargs: Any) -> Company:
+    return cast(Company, _CompanyFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db

@@ -27,7 +27,7 @@ class Item(TenantModel, WeddingOwnedMixin):
     Representa a necessidade física ou o serviço contratado.
     """
 
-    objects = ItemQuerySet.as_manager()  # type: ignore[misc]
+    objects = ItemQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     _original_acquisition_status: str | None = None
 

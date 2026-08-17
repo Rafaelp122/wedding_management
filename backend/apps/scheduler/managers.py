@@ -14,6 +14,7 @@ from apps.tenants.managers import TenantQuerySet
 
 
 if TYPE_CHECKING:
+    from apps.scheduler.models import Event, Task  # noqa: F401
     from apps.weddings.models import Wedding
 
 
@@ -33,7 +34,7 @@ class TaskQuerySet(TenantQuerySet["Task"]):
             TaskQuerySet filtrado pelo casamento.
         """
         if hasattr(wedding_id_or_instance, "_meta"):
-            return self.filter(wedding=wedding_id_or_instance)
+            return self.filter(wedding=wedding_id_or_instance)  # type: ignore[misc]
         if isinstance(wedding_id_or_instance, int):
             return self.filter(wedding_id=wedding_id_or_instance)
         return self.filter(wedding__uuid=wedding_id_or_instance)
@@ -105,7 +106,7 @@ class EventQuerySet(TenantQuerySet["Event"]):
             EventQuerySet filtrado pelo casamento.
         """
         if hasattr(wedding_id_or_instance, "_meta"):
-            return self.filter(wedding=wedding_id_or_instance)
+            return self.filter(wedding=wedding_id_or_instance)  # type: ignore[misc]
         if isinstance(wedding_id_or_instance, int):
             return self.filter(wedding_id=wedding_id_or_instance)
         return self.filter(wedding__uuid=wedding_id_or_instance)

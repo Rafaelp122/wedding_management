@@ -29,7 +29,7 @@ class Supplier(TenantModel):
     Centraliza informações de contato e histórico de relacionamento.
     """
 
-    objects = SupplierQuerySet.as_manager()  # type: ignore[misc]
+    objects = SupplierQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     # Informações básicas
     name = models.CharField(

@@ -1,14 +1,10 @@
-"""
-Selectors de leitura para o domínio de itens de logística / contrato.
-"""
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from apps.core.shortcuts import get_object_or_404_for_tenant
-from apps.logistics.managers import ContractItemQuerySet
+from apps.logistics.managers import ItemQuerySet
 from apps.logistics.models import Item
 from apps.tenants.models import Company
 
@@ -18,13 +14,13 @@ if TYPE_CHECKING:
     from apps.weddings.models import Wedding
 
 
-def contract_item_list_selector(
+def item_list_selector(
     company: Company,
     wedding_id: UUID | str | Wedding | None = None,
     status: str | None = None,
     search: str | None = None,
     contract_id: UUID | str | Contract | None = None,
-) -> ContractItemQuerySet:
+) -> ItemQuerySet:
     """
     Lista os itens de logística pertencentes ao tenant com filtros aplicados.
 
@@ -36,9 +32,9 @@ def contract_item_list_selector(
         contract_id: Identificador único do contrato associado ou instância de Contract.
 
     Returns:
-        ContractItemQuerySet contendo os itens filtrados com relacionamentos carregados.
+        ItemQuerySet contendo os itens filtrados com relacionamentos carregados.
     """
-    qs = cast(ContractItemQuerySet, Item.objects.for_tenant(company)).with_details()
+    qs = Item.objects.for_tenant(company).with_details()
     if wedding_id:
         qs = qs.for_wedding(wedding_id)
     if status:
@@ -50,7 +46,7 @@ def contract_item_list_selector(
     return qs
 
 
-def contract_item_get_selector(company: Company, uuid: UUID | str) -> Item:
+def item_get_selector(company: Company, uuid: UUID | str) -> Item:
     """
     Recupera um item de logística específico pelo UUID com isolamento por tenant.
 
@@ -71,8 +67,3 @@ def contract_item_get_selector(company: Company, uuid: UUID | str) -> Item:
         select_related=["wedding", "contract", "contract__supplier"],
         detail="Item de logística não encontrado.",
     )
-
-
-# Aliases para conveniência
-item_list_selector = contract_item_list_selector
-item_get_selector = contract_item_get_selector

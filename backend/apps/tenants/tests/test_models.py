@@ -10,7 +10,7 @@ from typing import cast
 import pytest
 from django.db import models
 
-from apps.tenants.managers import TenantManager
+from apps.tenants.managers import TenantQuerySet
 from apps.tenants.models import Company, TenantModel
 from apps.weddings.models import Wedding
 
@@ -36,7 +36,8 @@ class TestTenantModelStructure:
         assert ("company", "uuid") in index_fields
 
     def test_concrete_model_inherits_tenant_manager(self) -> None:
-        assert isinstance(Wedding.objects, TenantManager)
+        assert hasattr(Wedding.objects, "for_tenant")
+        assert issubclass(Wedding.objects.all().__class__, TenantQuerySet)
 
 
 class TestCompanyModel:

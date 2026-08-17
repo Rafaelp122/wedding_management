@@ -8,7 +8,7 @@ from apps.tenants.models import TenantModel
 class Task(TenantModel, WeddingOwnedMixin):
     """Modelo que representa um item no checklist do casamento."""
 
-    objects = TaskQuerySet.as_manager()
+    objects = TaskQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     title = models.CharField(max_length=255, verbose_name="Título da Tarefa")
     description = models.TextField(blank=True, verbose_name="Descrição detalhada")

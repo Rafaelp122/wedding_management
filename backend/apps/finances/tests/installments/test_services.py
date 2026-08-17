@@ -189,11 +189,8 @@ class TestInstallmentServiceAutoGeneration:
         expense = _setup_expense(user, actual_amount=Decimal("1000.00"))
         first_date = date.today() + timedelta(days=30)
 
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 3, first_date
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 3, first_date
         )
 
         assert len(installments) == 3
@@ -283,11 +280,8 @@ class TestInstallmentServiceAutoGeneration:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
         first_date = date.today() + timedelta(days=30)
 
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 1, first_date
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 1, first_date
         )
 
         assert len(installments) == 1
@@ -683,14 +677,11 @@ class TestInstallmentServiceRedistribute:
             date.today(),
         )
 
-        result = cast(
-            list[Installment],
-            InstallmentService.redistribute(
-                user.company,
-                expense,
-                5,
-                date.today(),
-            ),
+        result = InstallmentService.redistribute(
+            user.company,
+            expense,
+            5,
+            date.today(),
         )
 
         assert len(result) == 5
@@ -707,14 +698,11 @@ class TestInstallmentServiceRedistribute:
             date.today(),
         )
 
-        result = cast(
-            list[Installment],
-            InstallmentService.redistribute(
-                user.company,
-                expense,
-                2,
-                date.today(),
-            ),
+        result = InstallmentService.redistribute(
+            user.company,
+            expense,
+            2,
+            date.today(),
         )
 
         assert len(result) == 2
@@ -755,11 +743,8 @@ class TestInstallmentServiceRedistribute:
         expense = _setup_expense(
             user, actual_amount=Decimal("1000.00"), name="Buffet Teste"
         )
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 3, date_type.today()
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 3, date_type.today()
         )
 
         # Verify FK is set on created events
@@ -802,11 +787,8 @@ class TestInstallmentServiceRedistribute:
         expense = _setup_expense(
             user, actual_amount=Decimal("500.00"), name="Flores Teste"
         )
-        installments = cast(
-            list[Installment],
-            InstallmentService.auto_generate_installments(
-                user.company, expense, 2, date_type.today()
-            ),
+        installments = InstallmentService.auto_generate_installments(
+            user.company, expense, 2, date_type.today()
         )
 
         # Verify FK is set

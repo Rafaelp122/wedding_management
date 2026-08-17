@@ -30,7 +30,7 @@ class ContractSummarySelector:
         Returns:
             Quantidade total de contratos nos status DRAFT ou PENDING.
         """
-        return (
+        return int(
             Contract.objects.for_tenant(company)
             .filter(
                 status__in=[
@@ -58,6 +58,6 @@ class ContractSummarySelector:
             Uma tupla contendo (contratos_assinados, total_contratos_ativos).
         """
         contracts = Contract.objects.for_tenant(company).filter(wedding=wedding)
-        total = contracts.exclude(status=Contract.StatusChoices.CANCELED).count()
-        signed = contracts.filter(status=Contract.StatusChoices.SIGNED).count()
+        total = int(contracts.exclude(status=Contract.StatusChoices.CANCELED).count())
+        signed = int(contracts.filter(status=Contract.StatusChoices.SIGNED).count())
         return signed, total

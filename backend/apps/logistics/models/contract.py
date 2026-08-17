@@ -21,7 +21,7 @@ from apps.tenants.models import TenantModel
 
 
 class Contract(TenantModel, WeddingOwnedMixin):
-    objects = ContractQuerySet.as_manager()  # type: ignore[misc]
+    objects = ContractQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     _original_status: str | None = None
 

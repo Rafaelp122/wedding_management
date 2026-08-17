@@ -252,7 +252,7 @@ class NotificationService:
         """
         now = timezone.now()
         qs = Notification.objects.for_tenant(company).for_user(user).unread()
-        count = qs.update(is_read=True, read_at=now, updated_at=now)
+        count = int(qs.update(is_read=True, read_at=now, updated_at=now))
         logger.info(
             "Todas as notificações marcadas como lidas: count=%d para user_id=%s",
             count,
@@ -318,7 +318,7 @@ class NotificationService:
             .unread()
             .filter(uuid__in=notification_ids)
         )
-        count = qs.update(is_read=True, read_at=now, updated_at=now)
+        count = int(qs.update(is_read=True, read_at=now, updated_at=now))
         logger.info(
             "Notificações em lote marcadas como lidas: count=%d para user_id=%s",
             count,
@@ -354,7 +354,7 @@ class NotificationService:
             count,
             user.id,
         )
-        return count
+        return int(count)
 
     @staticmethod
     @transaction.atomic
@@ -375,4 +375,4 @@ class NotificationService:
             count,
             user.id,
         )
-        return count
+        return int(count)

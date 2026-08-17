@@ -59,7 +59,7 @@ class BudgetQuerySet(TenantQuerySet["Budget"]):
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
-            return self.filter(wedding=wedding)
+            return self.filter(wedding=wedding)  # type: ignore[misc]
         if hasattr(wedding, "uuid"):
             return self.filter(wedding__uuid=wedding.uuid)
         if isinstance(wedding, int):
@@ -121,7 +121,7 @@ class BudgetCategoryQuerySet(TenantQuerySet["BudgetCategory"]):
         if not budget:
             return self
         if hasattr(budget, "_meta"):
-            return self.filter(budget=budget)
+            return self.filter(budget=budget)  # type: ignore[misc]
         if hasattr(budget, "uuid"):
             return self.filter(budget__uuid=budget.uuid)
         if isinstance(budget, int):
@@ -143,7 +143,7 @@ class BudgetCategoryQuerySet(TenantQuerySet["BudgetCategory"]):
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
-            return self.filter(wedding=wedding)
+            return self.filter(wedding=wedding)  # type: ignore[misc]
         if hasattr(wedding, "uuid"):
             return self.filter(wedding__uuid=wedding.uuid)
         if isinstance(wedding, int):
@@ -226,7 +226,7 @@ class ExpenseQuerySet(TenantQuerySet["Expense"]):
         if not category:
             return self
         if hasattr(category, "_meta"):
-            return self.filter(category=category)
+            return self.filter(category=category)  # type: ignore[misc]
         if hasattr(category, "uuid"):
             return self.filter(category__uuid=category.uuid)
         if isinstance(category, int):
@@ -248,7 +248,7 @@ class ExpenseQuerySet(TenantQuerySet["Expense"]):
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
-            return self.filter(wedding=wedding)
+            return self.filter(wedding=wedding)  # type: ignore[misc]
         if hasattr(wedding, "uuid"):
             return self.filter(wedding__uuid=wedding.uuid)
         if isinstance(wedding, int):
@@ -413,7 +413,7 @@ class InstallmentQuerySet(TenantQuerySet["Installment"]):
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
-            return self.filter(wedding=wedding)
+            return self.filter(wedding=wedding)  # type: ignore[misc]
         if hasattr(wedding, "uuid"):
             return self.filter(wedding__uuid=wedding.uuid)
         if isinstance(wedding, int):
@@ -435,7 +435,7 @@ class InstallmentQuerySet(TenantQuerySet["Installment"]):
         if not expense:
             return self
         if hasattr(expense, "_meta"):
-            return self.filter(expense=expense)
+            return self.filter(expense=expense)  # type: ignore[misc]
         if hasattr(expense, "uuid"):
             return self.filter(expense__uuid=expense.uuid)
         if isinstance(expense, int):

@@ -76,7 +76,7 @@ def wedding_list_selector(
     status: str = "",
 ) -> WeddingQuerySet:
     """
-    Lista os casamentos da empresa com filtros de texto/status e métricas anotadas.
+    Retorna o QuerySet encadeável de casamentos do tenant com métricas embutidas.
 
     Args:
         company: O tenant atual para isolamento de dados.
@@ -87,13 +87,8 @@ def wedding_list_selector(
         WeddingQuerySet com casamentos filtrados e anotados com total_budget,
         overdue_installments e incomplete_tasks.
     """
-    return (
-        Wedding.objects.for_tenant(company)
-        .select_related("company")
-        .search(search)
-        .by_status(status)
-        .with_metrics()
-    )
+    qs = Wedding.objects.for_tenant(company)
+    return qs.select_related("company").search(search).by_status(status).with_metrics()
 
 
 def wedding_get_selector(
@@ -137,7 +132,8 @@ def wedding_lookup_selector(
         WeddingQuerySet restrito aos campos uuid, bride_name e groom_name,
         ordenado por bride_name.
     """
-    return Wedding.objects.for_tenant(company).only_lookup()
+    qs = Wedding.objects.for_tenant(company)
+    return qs.only_lookup()
 
 
 def wedding_count_by_month_selector(
@@ -184,9 +180,9 @@ def critical_weddings_selector(
         WeddingQuerySet com casamentos ordenados por data e anotados com
         métricas críticas.
     """
+    qs = Wedding.objects.for_tenant(company)
     return (
-        Wedding.objects.for_tenant(company)
-        .by_status(Wedding.StatusChoices.IN_PROGRESS)
+        qs.by_status(Wedding.StatusChoices.IN_PROGRESS)
         .upcoming(today=today, days=90)
         .with_critical_metrics(today=today)
         .order_by("date")[:limit]

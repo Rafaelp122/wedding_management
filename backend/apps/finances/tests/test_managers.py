@@ -12,12 +12,39 @@ from apps.finances.managers import (
 )
 from apps.finances.models import Budget, BudgetCategory, Expense, Installment
 from apps.finances.tests.factories import (
-    BudgetCategoryFactory,
-    BudgetFactory,
-    ExpenseFactory,
-    InstallmentFactory,
+    BudgetCategoryFactory as _BudgetCategoryFactory,
 )
-from apps.weddings.tests.factories import WeddingFactory
+from apps.finances.tests.factories import (
+    BudgetFactory as _BudgetFactory,
+)
+from apps.finances.tests.factories import (
+    ExpenseFactory as _ExpenseFactory,
+)
+from apps.finances.tests.factories import (
+    InstallmentFactory as _InstallmentFactory,
+)
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> BudgetCategory:
+    return cast(BudgetCategory, _BudgetCategoryFactory(*args, **kwargs))
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Budget:
+    return cast(Budget, _BudgetFactory(*args, **kwargs))
+
+
+def ExpenseFactory(*args: Any, **kwargs: Any) -> Expense:
+    return cast(Expense, _ExpenseFactory(*args, **kwargs))
+
+
+def InstallmentFactory(*args: Any, **kwargs: Any) -> Installment:
+    return cast(Installment, _InstallmentFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 class _ExpenseDetails(Protocol):
@@ -31,11 +58,8 @@ def _setup_expense(user: Any) -> tuple[Any, Expense]:
     wedding = WeddingFactory(user_context=user)
     budget = BudgetFactory(wedding=wedding)
     category = BudgetCategoryFactory(budget=budget, wedding=wedding)
-    expense = cast(
-        Expense,
-        ExpenseFactory(
-            wedding=wedding, category=category, actual_amount=Decimal("1500.00")
-        ),
+    expense = ExpenseFactory(
+        wedding=wedding, category=category, actual_amount=Decimal("1500.00")
     )
     return wedding, expense
 

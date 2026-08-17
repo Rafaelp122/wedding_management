@@ -14,7 +14,7 @@ def validate_future_date(value: date) -> None:
 
 
 class Wedding(TenantModel):
-    objects = WeddingQuerySet.as_manager()
+    objects = WeddingQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     class StatusChoices(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "Em Andamento"

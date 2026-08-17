@@ -80,11 +80,13 @@ class TestBudgetSelectors:
 
         qs_a = budget_list_selector(company=user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().uuid == budget_a.uuid
+        first_a = qs_a.first()
+        assert first_a is not None and first_a.uuid == budget_a.uuid
 
         qs_b = budget_list_selector(company=user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().uuid == budget_b.uuid
+        first_b = qs_b.first()
+        assert first_b is not None and first_b.uuid == budget_b.uuid
 
     def test_budget_list_selector_filter_by_wedding(self, user: Any) -> None:
         wedding1 = WeddingFactory(user_context=user)

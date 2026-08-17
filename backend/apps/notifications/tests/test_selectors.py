@@ -53,7 +53,8 @@ class TestNotificationQuerySet:
 
         qs = Notification.objects.for_tenant(user.company).for_user(user)
         assert qs.count() == 1
-        assert qs.first().id == n1.id  # type: ignore[union-attr]
+        first_1 = qs.first()
+        assert first_1 is not None and first_1.id == n1.id
 
     def test_unread_filters_is_read_false(self, user: Any) -> None:
         n_unread = NotificationFactory(user=user, is_read=False)
@@ -61,7 +62,8 @@ class TestNotificationQuerySet:
 
         qs = Notification.objects.for_tenant(user.company).for_user(user).unread()
         assert qs.count() == 1
-        assert qs.first().id == n_unread.id  # type: ignore[union-attr]
+        first_unread = qs.first()
+        assert first_unread is not None and first_unread.id == n_unread.id
 
     def test_read_filters_is_read_true(self, user: Any) -> None:
         NotificationFactory(user=user, is_read=False)
@@ -69,7 +71,8 @@ class TestNotificationQuerySet:
 
         qs = Notification.objects.for_tenant(user.company).for_user(user).read()
         assert qs.count() == 1
-        assert qs.first().id == n_read.id  # type: ignore[union-attr]
+        first_read = qs.first()
+        assert first_read is not None and first_read.id == n_read.id
 
     def test_recent_orders_by_created_at_desc(self, user: Any) -> None:
         n1 = NotificationFactory(user=user)
@@ -91,7 +94,7 @@ class TestNotificationQuerySet:
         )
         first = qs.first()
         assert first is not None
-        assert first.wedding_name == (
+        assert getattr(first, "wedding_name", None) == (
             f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
         )
 
@@ -110,7 +113,7 @@ class TestNotificationQuerySet:
         assert qs.count() == 1
         item = qs.first()
         assert item is not None
-        assert item.wedding_name == (
+        assert getattr(item, "wedding_name", None) == (
             f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
         )
 
@@ -137,7 +140,8 @@ class TestNotificationListSelector:
             company=user.company, user=user, unread_only=True
         )
         assert qs.count() == 1
-        assert qs.first().id == n1.id  # type: ignore[union-attr]
+        first_un = qs.first()
+        assert first_un is not None and first_un.id == n1.id
 
     def test_list_notifications_multitenant_isolation(self, user: Any) -> None:
         other_user = UserFactory()
@@ -146,7 +150,8 @@ class TestNotificationListSelector:
 
         qs = notification_list_selector(company=user.company, user=user)
         assert qs.count() == 1
-        assert qs.first().user == user  # type: ignore[union-attr]
+        first_user = qs.first()
+        assert first_user is not None and first_user.user == user
 
     def test_list_notifications_wedding_name_annotation(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
@@ -155,7 +160,7 @@ class TestNotificationListSelector:
         qs = notification_list_selector(company=user.company, user=user)
         first = qs.first()
         assert first is not None
-        assert first.wedding_name == (
+        assert getattr(first, "wedding_name", None) == (
             f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
         )
 
@@ -190,7 +195,7 @@ class TestNotificationGetSelector:
 
         result = notification_get_selector(company=user.company, user=user, uuid=n.uuid)
         assert result.id == n.id
-        assert result.wedding_name == (
+        assert getattr(result, "wedding_name", None) == (
             f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
         )
 

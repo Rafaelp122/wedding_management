@@ -3228,7 +3228,7 @@
             }
           }
         },
-        "description": "Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.\n\n``wedding_id`` é repassado ao service que detém a regra de filtragem;\nesta rota não conhece a lógica de tenancy.",
+        "description": "Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.",
         "tags": [
           "Finances"
         ],

@@ -34,7 +34,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> list[Installment]:  # type: ignore[valid-type]
+    ) -> list[Installment]:
         """Gera parcelas de despesa com ajuste na última (Tolerância Zero).
 
         Para cada parcela gerada, cria um evento PAYMENT no scheduler (BR-S01)
@@ -129,7 +129,7 @@ class InstallmentService:
         expense: Expense,
         num_installments: int,
         first_due_date: date,
-    ) -> list[Installment]:  # type: ignore[valid-type]
+    ) -> list[Installment]:
         """Redistribui as parcelas de uma despesa.
 
         Remove as parcelas anteriores (e seus respectivos eventos de pagamento)

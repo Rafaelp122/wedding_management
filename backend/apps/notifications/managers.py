@@ -13,6 +13,7 @@ from apps.tenants.managers import TenantQuerySet
 
 
 if TYPE_CHECKING:
+    from apps.notifications.models import Notification  # noqa: F401
     from apps.users.models import User
 
 

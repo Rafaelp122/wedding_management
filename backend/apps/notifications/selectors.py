@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from apps.core.exceptions import ObjectNotFoundError
-from apps.notifications.managers import NotificationQuerySet
 from apps.notifications.models import Notification
 
 
 if TYPE_CHECKING:
+    from apps.notifications.managers import NotificationQuerySet
     from apps.tenants.models import Company
     from apps.users.models import User
 
@@ -54,7 +54,7 @@ def notification_unread_count_selector(*, company: Company, user: User) -> int:
     Returns:
         int: Quantidade de notificações não lidas (is_read=False).
     """
-    return Notification.objects.for_tenant(company).for_user(user).unread().count()
+    return int(Notification.objects.for_tenant(company).for_user(user).unread().count())
 
 
 def notification_get_selector(

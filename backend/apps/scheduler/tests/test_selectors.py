@@ -190,11 +190,13 @@ class TestTaskSelectors:
 
         qs_a = task_list_selector(company=user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().title == "Tarefa A"
+        t_a = qs_a.first()
+        assert t_a is not None and t_a.title == "Tarefa A"
 
         qs_b = task_list_selector(company=user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().title == "Tarefa B"
+        t_b = qs_b.first()
+        assert t_b is not None and t_b.title == "Tarefa B"
 
     def test_task_list_selector_filters(self, user: Any) -> None:
         wedding1 = WeddingFactory(user_context=user)
@@ -269,11 +271,13 @@ class TestEventSelectors:
 
         qs_a = event_list_selector(company=user_a.company)
         assert qs_a.count() == 1
-        assert qs_a.first().title == "Evento A"
+        ev_a = qs_a.first()
+        assert ev_a is not None and ev_a.title == "Evento A"
 
         qs_b = event_list_selector(company=user_b.company)
         assert qs_b.count() == 1
-        assert qs_b.first().title == "Evento B"
+        ev_b = qs_b.first()
+        assert ev_b is not None and ev_b.title == "Evento B"
 
     def test_event_list_selector_filter_by_wedding_and_dates(self, user: Any) -> None:
         wedding1 = WeddingFactory(user_context=user)

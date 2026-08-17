@@ -41,7 +41,7 @@ class TaskSummarySelector:
             Quantidade total de tarefas atrasadas.
         """
         today = today or date.today()
-        return (
+        return int(
             Task.objects.for_tenant(company)
             .filter(is_completed=False, due_date__lte=today)
             .count()
@@ -60,8 +60,8 @@ class TaskSummarySelector:
             Uma tupla contendo (tarefas_concluidas, total_tarefas).
         """
         tasks = Task.objects.for_tenant(company).filter(wedding=wedding)
-        total = tasks.count()
-        completed = tasks.filter(is_completed=True).count()
+        total = int(tasks.count())
+        completed = int(tasks.filter(is_completed=True).count())
         return completed, total
 
     @staticmethod

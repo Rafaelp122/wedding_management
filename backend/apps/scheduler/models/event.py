@@ -8,7 +8,7 @@ from apps.tenants.models import TenantModel
 class Event(TenantModel, WeddingOwnedMixin):
     """Modelo que representa um evento/compromisso no calendário."""
 
-    objects = EventQuerySet.as_manager()
+    objects = EventQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     class TypeChoices(models.TextChoices):
         """Tipos de eventos disponíveis no calendário."""

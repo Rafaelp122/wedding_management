@@ -4,7 +4,7 @@ Selectors de leitura para o domínio de contratos.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -40,7 +40,7 @@ def contract_list_selector(
     Returns:
         ContractQuerySet filtrado e anotado com totais e dados relacionados.
     """
-    qs = cast(ContractQuerySet, Contract.objects.for_tenant(company)).with_totals()
+    qs = Contract.objects.for_tenant(company).with_totals()
     if wedding_id:
         qs = qs.for_wedding(wedding_id)
     if status:
@@ -68,11 +68,7 @@ def contract_get_selector(company: Company, uuid: UUID | str) -> Contract:
             não pertencer ao tenant.
     """
     try:
-        return (
-            cast(ContractQuerySet, Contract.objects.for_tenant(company))
-            .with_totals()
-            .get(uuid=uuid)
-        )
+        return Contract.objects.for_tenant(company).with_totals().get(uuid=uuid)
     except (Contract.DoesNotExist, ValueError, ValidationError) as e:
         raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
 
@@ -91,9 +87,7 @@ def contract_pending_count_selector(
     Returns:
         Número inteiro de contratos com status PENDING.
     """
-    qs = cast(ContractQuerySet, Contract.objects.for_tenant(company)).by_status(
-        Contract.StatusChoices.PENDING
-    )
+    qs = Contract.objects.for_tenant(company).by_status(Contract.StatusChoices.PENDING)
     if wedding_id:
         qs = qs.for_wedding(wedding_id)
     return qs.count()

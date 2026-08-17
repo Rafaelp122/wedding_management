@@ -16,6 +16,8 @@ from apps.tenants.managers import TenantQuerySet
 
 if TYPE_CHECKING:
     from apps.logistics.models.contract import Contract
+    from apps.logistics.models.item import Item  # noqa: F401
+    from apps.logistics.models.supplier import Supplier  # noqa: F401
     from apps.weddings.models import Wedding
 
 
@@ -49,20 +51,6 @@ class SupplierQuerySet(TenantQuerySet["Supplier"]):
             | Q(phone__icontains=query)
             | Q(cnpj__icontains=query)
         )
-
-    def by_category(self, category_id: UUID | str | None = None) -> SupplierQuerySet:
-        """
-        Filtra fornecedores por identificador de categoria.
-
-        Args:
-            category_id: UUID ou string identificadora da categoria.
-
-        Returns:
-            SupplierQuerySet filtrado pela categoria informada.
-        """
-        if not category_id:
-            return self
-        return self.filter(category_id=category_id)
 
 
 class ContractQuerySet(TenantQuerySet["Contract"]):
@@ -221,6 +209,3 @@ class ItemQuerySet(TenantQuerySet["Item"]):
             ItemQuerySet com select_related aplicado.
         """
         return self.select_related("wedding", "contract", "contract__supplier")
-
-
-ContractItemQuerySet = ItemQuerySet

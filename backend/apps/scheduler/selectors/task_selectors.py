@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from apps.core.shortcuts import get_object_or_404_for_tenant
+from apps.scheduler.managers import TaskQuerySet
 from apps.scheduler.models import Task
 
 
 if TYPE_CHECKING:
-    from apps.scheduler.managers import TaskQuerySet
     from apps.tenants.models import Company
 
 
@@ -35,7 +35,7 @@ def task_list_selector(
     Returns:
         TaskQuerySet com as tarefas filtradas e relacionamento com wedding carregado.
     """
-    qs: TaskQuerySet = Task.objects.for_tenant(company).select_related("wedding")
+    qs = Task.objects.for_tenant(company).select_related("wedding")
     if wedding_id:
         qs = qs.for_wedding(wedding_id)
     if is_completed is not None:
