@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Métricas de tarefa no resumo do casamento.
+ */
 export interface WeddingDashboardTaskOut {
   uuid: string;
   title: string;

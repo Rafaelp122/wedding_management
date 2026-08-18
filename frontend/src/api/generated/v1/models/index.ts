@@ -93,7 +93,6 @@ export * from './weddingDashboardTaskOut';
 export * from './weddingIn';
 export * from './weddingLookupOut';
 export * from './weddingOut';
-export * from './weddingOverviewOut';
 export * from './weddingPatchIn';
 export * from './weddingsByMonthParams';
 export * from './weddingsListParams';

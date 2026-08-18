@@ -56,46 +56,6 @@ class WeddingLookupOut(Schema):
     bride_name: str
 
 
-class WeddingDashboardInstallmentOut(Schema):
-    uuid: UUID4
-    installment_number: int
-    amount: str
-    due_date: datetime.date
-    status: str
-
-
-class WeddingDashboardTaskOut(Schema):
-    uuid: UUID4
-    title: str
-    due_date: datetime.date | None = None
-
-
-class WeddingDashboardCategoryOut(Schema):
-    name: str
-    allocated: str
-    spent: str
-    percentage: float
-
-
-class WeddingDashboardOut(Schema):
-    days_until_wedding: int
-    budget_percentage_used: float
-    tasks_completed: int
-    tasks_total: int
-    contracts_signed: int
-    contracts_total: int
-    upcoming_installments: list[WeddingDashboardInstallmentOut]
-    urgent_tasks: list[WeddingDashboardTaskOut]
-    categories_summary: list[WeddingDashboardCategoryOut]
-
-
 class WeddingByMonthOut(Schema):
     month: int = Field(..., ge=1, le=12)
     count: int = Field(..., ge=0)
-
-
-class WeddingOverviewOut(Schema):
-    """Visão geral do casamento com métricas de finanças, agenda e contratos."""
-
-    wedding: WeddingOut
-    overview: WeddingDashboardOut

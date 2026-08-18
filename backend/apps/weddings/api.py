@@ -13,7 +13,6 @@ from apps.weddings.schemas import (
     WeddingIn,
     WeddingLookupOut,
     WeddingOut,
-    WeddingOverviewOut,
     WeddingPatchIn,
 )
 from apps.weddings.selectors import (
@@ -21,7 +20,6 @@ from apps.weddings.selectors import (
     wedding_get_selector,
     wedding_list_selector,
     wedding_lookup_selector,
-    wedding_overview_detail_selector,
 )
 from apps.weddings.services import WeddingService
 
@@ -110,14 +108,3 @@ def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.delete(company=user.company, instance=instance)
     return 204, None
-
-
-@router.get(
-    "/{uuid:uuid}/overview/",
-    response={200: WeddingOverviewOut, **READ_ERROR_RESPONSES},
-    operation_id="weddings_overview_read",
-)
-def get_wedding_overview(request: AuthRequest, uuid: UUID4) -> WeddingOverviewOut:
-    """Retorna visão geral do casamento com métricas de finanças, agenda e contratos."""
-    user = request.user
-    return wedding_overview_detail_selector(company=user.company, uuid=uuid)

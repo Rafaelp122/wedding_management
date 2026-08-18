@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { getDashboardWeddingQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import {
   useWeddingsRead,
   getWeddingsReadQueryKey,
   getWeddingsListQueryKey,
-  getWeddingsOverviewReadQueryKey,
 } from "@/api/generated/v1/endpoints/weddings/weddings";
 import type { PagedWeddingOut } from "@/api/generated/v1/models/pagedWeddingOut";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
@@ -16,7 +16,7 @@ export function useWeddingDetail(uuid: string) {
   const invalidateWeddingQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: getWeddingsReadQueryKey(uuid) });
     queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
-    queryClient.invalidateQueries({ queryKey: getWeddingsOverviewReadQueryKey(uuid) });
+    queryClient.invalidateQueries({ queryKey: getDashboardWeddingQueryKey(uuid) });
   }, [uuid, queryClient]);
 
   const queryResult = useWeddingsRead(uuid, {
