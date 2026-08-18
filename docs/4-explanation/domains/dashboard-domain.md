@@ -1,25 +1,27 @@
 # MOC de Domínio: Dashboard (Painel de Métricas e Operações)
 
 > **Hub de Domínio:** [dashboard-domain](dashboard-domain.md) | [system-overview](../architecture/system-overview.md)
-> **Camadas Mapeadas:** `backend/apps/weddings/services/dashboard_service.py` & `frontend/src/features/dashboard/`
+> **Camadas Mapeadas:** `backend/apps/reporting/` & `frontend/src/features/dashboard/`
 
 ---
 
 ## Visão Geral do Domínio
 
-O domínio de **Dashboard** consolida as métricas financeiras, operacionais e de cronograma da plataforma, oferecendo visões tanto no nível da assessoria de eventos quanto no nível de um casamento específico.
+O domínio de **Dashboard e Reporting** consolida as métricas financeiras, operacionais e de cronograma da plataforma, oferecendo visões tanto no nível da assessoria de eventos quanto no nível de um casamento específico.
 
 ---
 
 ## Mapeamento de Camadas (Fullstack)
 
-### 1. Camada de Backend (`backend/apps/weddings/services/`)
-- **Service Aggregator:** `dashboard_service.py` — Agrega dados de casamentos, orçamento consolidado, próximos eventos e parcelas a vencer.
-- **Sub-serviços de Resumo:**
-  - `summaries/financial.py` — Cálculo de gasto total, saldo livre e resumo financeiro.
-  - `summaries/contract.py` — Status de contratos e fornecedores vinculados.
-  - `summaries/task.py` — Contagem de tarefas pendentes e atrasadas.
-- **Endpoints:** GET `/api/v1/dashboard/summary` e GET `/api/v1/weddings/{uuid}/dashboard`. Veja [openapi-schema](../../3-reference/api/openapi-schema.md).
+### 1. Camada de Backend (`backend/apps/reporting/`)
+- **Query Selectors:**
+  - `selectors/dashboard_selectors.py` (`dashboard_summary_selector`, `wedding_overview_selector`) — Agrega KPIs consolidados da empresa e métricas do casamento.
+  - `selectors/summaries/financial.py` — Cálculo de gasto total, saldo livre, parcelas pendentes e atrasadas.
+  - `selectors/summaries/contract.py` — Status de contratos e fornecedores vinculados.
+  - `selectors/summaries/task.py` — Contagem e listagem de tarefas pendentes e urgentes.
+- **Service Layer (`services.py`):** Camada reservada para operações analíticas e geração de relatórios (Issue #339).
+- **Endpoints (`api.py`):** GET `/api/v1/dashboard/summary/` e GET `/api/v1/dashboard/wedding/{uuid}/`. Veja [openapi-schema](../../3-reference/api/openapi-schema.md).
+
 
 ### 2. Camada de Frontend (`frontend/src/features/dashboard/`)
 - **Containers (Smart):**

@@ -9,7 +9,7 @@ tests: backend/apps/weddings/tests/test_models.py
 # Referência do Modelo: Wedding
 
 > **Módulo:** [weddings-domain](../../../4-explanation/domains/weddings-domain.md) | [wedding-status-lifecycle](../../../4-explanation/business-rules/weddings/wedding-status-lifecycle.md)
-> **Código:** `backend/apps/weddings/models.py`, `backend/apps/weddings/services/wedding_service.py`
+> **Código:** `backend/apps/weddings/models.py`, `backend/apps/weddings/services.py`, `backend/apps/weddings/selectors.py`
 
 ---
 
@@ -42,8 +42,8 @@ Herda de `TenantModel` (isolado por `company`).
 
 ---
 
-## Otimizações da Camada de Serviço (`WeddingService.list`)
+## Otimizações da Camada de Consulta (`wedding_list_selector`)
 
-Na listagem de casamentos, o `WeddingService.list()` utiliza **`Subquery`** e **`Coalesce`** em vez de `Count(distinct=True)` no Django ORM para anotar o orçamento total (`total_budget`), parcelas atrasadas (`overdue_installments`) e tarefas incompletas (`incomplete_tasks`).
+Na listagem de casamentos, o seletor `wedding_list_selector()` e o `WeddingQuerySet.with_metrics()` utilizam **`Subquery`** e **`Coalesce`** em vez de `Count(distinct=True)` no Django ORM para anotar o orçamento total (`total_budget`), parcelas atrasadas (`overdue_installments`) e tarefas incompletas (`incomplete_tasks`).
 
 Isso evita o problema de **JOIN Explosion (explosão do produto cartesiano)**, garantindo respostas rápidas da API mesmo em workspaces com centenas de despesas e tarefas.

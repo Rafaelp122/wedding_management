@@ -43,9 +43,7 @@ backend/apps/reporting/
 ├── __init__.py
 ├── apps.py                          # Configuração ReportingConfig
 ├── schemas.py                       # Schemas de visualização/dashboard
-├── api/
-│   ├── __init__.py                  # Exporta dashboard_router
-│   └── dashboard.py                 # Rotas /api/v1/dashboard/
+├── api.py                           # Rotas /api/v1/dashboard/
 ├── selectors/
 │   ├── __init__.py                  # Re-exporta selectors de reporting
 │   ├── dashboard_selectors.py       # Agregação global de KPIs do tenant
@@ -54,11 +52,9 @@ backend/apps/reporting/
 │       ├── contract.py              # ContractSummarySelector
 │       ├── financial.py             # FinancialSummarySelector
 │       └── task.py                  # TaskSummarySelector
-├── services/
-│   └── __init__.py                  # Camada de serviços para relatórios (ex: ReportGenerationService)
+├── services.py                      # Camada de serviços para relatórios (ex: ReportGenerationService)
 └── tests/
     ├── __init__.py
-    ├── conftest.py
     ├── test_apis.py
     └── test_dashboard_selectors.py
 ```
@@ -66,8 +62,8 @@ backend/apps/reporting/
 ### 2. Padrão CQRS e Leitura Cross-Domain
 
 - Os `selectors/` em `apps/reporting` consultam os modelos dos domínios (`Wedding`, `Budget`, `Installment`, `Task`, `Contract`) estritamente via `.objects.for_tenant(company)`.
-- O controller (`api/dashboard.py`) delega 100% das leituras aos selectors.
-- A camada de `services/` do `reporting` fica reservada para operações complexas de mutação/geração pesada de arquivos binários (PDF / Excel da Issue #339).
+- O controller (`api.py`) delega 100% das leituras aos selectors.
+- A camada de `services.py` do `reporting` fica reservada para operações complexas de mutação/geração pesada de arquivos binários (PDF / Excel da Issue #339).
 
 ### 3. Rejeição de Camada Adicional de Orquestração
 
