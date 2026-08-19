@@ -8,6 +8,9 @@ import type { WeddingDashboardCategoryOut } from './weddingDashboardCategoryOut'
 import type { WeddingDashboardInstallmentOut } from './weddingDashboardInstallmentOut';
 import type { WeddingDashboardTaskOut } from './weddingDashboardTaskOut';
 
+/**
+ * Visão geral agregada de indicadores de um casamento específico.
+ */
 export interface WeddingDashboardOut {
   days_until_wedding: number;
   budget_percentage_used: number;

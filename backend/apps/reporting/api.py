@@ -2,12 +2,12 @@ from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import READ_ERROR_RESPONSES
-from apps.users.types import AuthRequest
-from apps.weddings.schemas import DashboardSummaryOut, WeddingDashboardOut
-from apps.weddings.selectors import (
+from apps.reporting.schemas import DashboardSummaryOut, WeddingDashboardOut
+from apps.reporting.selectors import (
     dashboard_summary_selector,
     wedding_overview_selector,
 )
+from apps.users.types import AuthRequest
 
 
 dashboard_router = Router(tags=["Dashboard"])
@@ -19,10 +19,11 @@ dashboard_router = Router(tags=["Dashboard"])
     operation_id="dashboard_summary",
 )
 def dashboard_summary(request: AuthRequest) -> dict[str, object]:
-    """Aggregated dashboard KPIs for the authenticated company.
+    """
+    Retorna os KPIs agregados de desempenho para a empresa autenticada.
 
-    Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
-    overdue installments, pending contracts, and critical weddings.
+    Gera um DashboardSummaryOut contendo parcelas pendentes (próximos 7 dias),
+    tarefas urgentes, parcelas atrasadas, contratos pendentes e casamentos críticos.
     """
     user = request.user
     return dashboard_summary_selector(company=user.company)
@@ -34,11 +35,12 @@ def dashboard_summary(request: AuthRequest) -> dict[str, object]:
     operation_id="dashboard_wedding",
 )
 def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict[str, object]:
-    """Per-wedding dashboard view.
+    """
+    Retorna a visão detalhada de indicadores e métricas de um casamento.
 
-    Returns a ``WeddingDashboardOut`` with days until the event, budget usage,
-    task completion stats, contract status, upcoming installments, urgent tasks,
-    and category breakdown.
+    Gera um WeddingDashboardOut contendo contagem regressiva, percentual de
+    uso do orçamento, estatísticas de tarefas e contratos, parcelas a vencer,
+    tarefas urgentes e distribuição de despesas por categoria.
     """
     user = request.user
     return wedding_overview_selector(

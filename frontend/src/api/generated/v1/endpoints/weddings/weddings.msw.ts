@@ -16,8 +16,7 @@ import type {
   PagedWeddingOut,
   WeddingByMonthOut,
   WeddingLookupOut,
-  WeddingOut,
-  WeddingOverviewOut
+  WeddingOut
 } from '../../models';
 
 import {
@@ -25,12 +24,11 @@ import {
   getWeddingsCreateResponseMock,
   getWeddingsListResponseMock,
   getWeddingsLookupResponseMock,
-  getWeddingsOverviewReadResponseMock,
   getWeddingsReadResponseMock,
   getWeddingsUpdateResponseMock
 } from './weddings.faker';
 
-export { getWeddingsLookupResponseMock, getWeddingsListResponseMock, getWeddingsCreateResponseMock, getWeddingsByMonthResponseMock, getWeddingsReadResponseMock, getWeddingsUpdateResponseMock, getWeddingsOverviewReadResponseMock } from './weddings.faker';
+export { getWeddingsLookupResponseMock, getWeddingsListResponseMock, getWeddingsCreateResponseMock, getWeddingsByMonthResponseMock, getWeddingsReadResponseMock, getWeddingsUpdateResponseMock } from './weddings.faker';
 
 
 export const getWeddingsLookupMockHandler = (overrideResponse?: WeddingLookupOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingLookupOut[]> | WeddingLookupOut[]), options?: RequestHandlerOptions) => {
@@ -114,18 +112,6 @@ export const getWeddingsDeleteMockHandler = (overrideResponse?: void | ((info: P
       })
   }, options)
 }
-
-export const getWeddingsOverviewReadMockHandler = (overrideResponse?: WeddingOverviewOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingOverviewOut> | WeddingOverviewOut), options?: RequestHandlerOptions) => {
-  return http.get('*/api/v1/weddings/:uuid/overview/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getWeddingsOverviewReadResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
 export const getWeddingsMock = () => [
   getWeddingsLookupMockHandler(),
   getWeddingsListMockHandler(),
@@ -133,6 +119,5 @@ export const getWeddingsMock = () => [
   getWeddingsByMonthMockHandler(),
   getWeddingsReadMockHandler(),
   getWeddingsUpdateMockHandler(),
-  getWeddingsDeleteMockHandler(),
-  getWeddingsOverviewReadMockHandler()
+  getWeddingsDeleteMockHandler()
 ]

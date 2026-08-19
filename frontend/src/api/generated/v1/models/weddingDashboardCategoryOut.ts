@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Resumo de gastos por categoria no orçamento do casamento.
+ */
 export interface WeddingDashboardCategoryOut {
   name: string;
   allocated: string;

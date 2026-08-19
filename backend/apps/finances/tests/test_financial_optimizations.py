@@ -15,10 +15,10 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
+from apps.reporting.selectors.summaries.financial import FinancialSummarySelector
 from apps.tenants.models import Company
 from apps.tenants.tests.factories import CompanyFactory
 from apps.weddings.models import Wedding
-from apps.weddings.selectors.summaries.financial import FinancialSummarySelector
 from apps.weddings.tests.factories import WeddingFactory
 
 

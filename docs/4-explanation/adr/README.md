@@ -41,7 +41,8 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-017: Async Task Infrastructure](017-async-task-infrastructure.md)** — Infraestrutura de tarefas assíncronas e agendadas.
 - **[ADR-019: Tenant Validation in Services](019-tenant-validation-service-layer.md)** — Recebimento obrigatório do parâmetro `company` em métodos de serviço.
 - **[ADR-022: Static Routes Optimization](022-static-routes-for-performance.md)** — Priorização de rotas estáticas para otimização de performance de resposta da API.
-- **[ADR-023: Desacoplamento de Módulos](023-desacoplamento-modulos-scheduler-finances-weddings.md)** — Desacoplamento entre os domínios Scheduler, Finances e Weddings.
+- **[ADR-023: Desacoplamento dos Módulos Core e Extração do Módulo Reporting](023-desacoplamento-modulos-scheduler-finances-weddings.md)** — Desacoplamento entre os domínios Scheduler, Finances e Weddings e extração do app Reporting.
+
 
 ---
 

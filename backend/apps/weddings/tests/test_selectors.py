@@ -17,7 +17,6 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.scheduler.tests.factories import TaskFactory
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
@@ -29,7 +28,6 @@ from apps.weddings.selectors import (
     wedding_get_selector,
     wedding_list_selector,
     wedding_lookup_selector,
-    wedding_overview_detail_selector,
 )
 from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
 
@@ -361,87 +359,3 @@ class TestWeddingSelectors:
         assert list(qs) == [w1, w2]
         assert hasattr(qs[0], "incomplete_tasks")
         assert hasattr(qs[0], "overdue_installments")
-
-    def test_wedding_overview_detail_selector_success(self, user: Any) -> None:
-        today = date.today()
-        wedding = WeddingFactory(
-            company=user.company,
-            bride_name="Overview Bride",
-            date=today + timedelta(days=60),
-        )
-
-        budget = BudgetFactory(
-            wedding=wedding, company=user.company, total_estimated=Decimal("10000.00")
-        )
-        category = BudgetCategoryFactory(
-            budget=budget,
-            name="Buffet",
-            allocated_budget=Decimal("5000.00"),
-        )
-        expense = ExpenseFactory(
-            wedding=wedding,
-            company=user.company,
-            category=category,
-            actual_amount=Decimal("2500.00"),
-        )
-        InstallmentFactory(
-            expense=expense,
-            wedding=wedding,
-            company=user.company,
-            installment_number=1,
-            amount=Decimal("1000.00"),
-            status="PAID",
-            paid_date=today,
-        )
-        InstallmentFactory(
-            expense=expense,
-            wedding=wedding,
-            company=user.company,
-            installment_number=2,
-            amount=Decimal("1000.00"),
-            status="OVERDUE",
-        )
-        TaskFactory(
-            wedding=wedding, company=user.company, title="Task 1", is_completed=True
-        )
-        TaskFactory(
-            wedding=wedding,
-            company=user.company,
-            title="Task 2",
-            is_completed=False,
-            due_date=today - timedelta(days=1),
-        )
-        supplier = SupplierFactory(company=user.company)
-        ContractFactory(
-            wedding=wedding,
-            company=user.company,
-            supplier=supplier,
-            status="SIGNED",
-            pdf_file="contracts/dummy.pdf",
-            signed_date=today,
-        )
-        ContractFactory(
-            wedding=wedding, company=user.company, supplier=supplier, status="DRAFT"
-        )
-
-        result = wedding_overview_detail_selector(
-            company=user.company, uuid=wedding.uuid
-        )
-
-        assert result.wedding.uuid == wedding.uuid
-        assert result.wedding.bride_name == "Overview Bride"
-        assert result.overview.days_until_wedding == 60
-        assert result.overview.budget_percentage_used == 10.0
-        assert result.overview.tasks_completed == 1
-        assert result.overview.tasks_total == 2
-        assert result.overview.contracts_signed == 1
-        assert result.overview.contracts_total == 2
-        assert len(result.overview.upcoming_installments) == 1
-        assert len(result.overview.urgent_tasks) == 1
-        assert len(result.overview.categories_summary) == 1
-
-    def test_wedding_overview_detail_selector_not_found(self, user: Any) -> None:
-        with pytest.raises(ObjectNotFoundError) as exc_info:
-            wedding_overview_detail_selector(company=user.company, uuid=uuid4())
-
-        assert exc_info.value.code == "wedding_not_found_or_denied"

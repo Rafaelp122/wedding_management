@@ -1,5 +1,5 @@
 """
-Selectors para o Dashboard consolidado e visão geral de casamento.
+Selectors para o Dashboard consolidado e visão geral de casamento no app Reporting.
 """
 
 from __future__ import annotations
@@ -9,13 +9,13 @@ from datetime import date
 from typing import Any
 from uuid import UUID
 
-from apps.tenants.models import Company
-from apps.weddings.selectors.summaries import (
+from apps.reporting.selectors.summaries import (
     ContractSummarySelector,
     FinancialSummarySelector,
     TaskSummarySelector,
 )
-from apps.weddings.selectors.wedding_selectors import (
+from apps.tenants.models import Company
+from apps.weddings.selectors import (
     critical_weddings_selector,
     wedding_get_selector,
 )

@@ -15,8 +15,8 @@ from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.schemas import EventIn
 from apps.tenants.models import Company
 
-from ..models import Wedding
-from ..schemas import (
+from .models import Wedding
+from .schemas import (
     WeddingIn,
     WeddingPatchIn,
 )

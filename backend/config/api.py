@@ -23,10 +23,10 @@ from apps.finances.api import (
 )
 from apps.logistics.api import contracts_router, items_router, suppliers_router
 from apps.notifications.api import notifications_router
+from apps.reporting.api import dashboard_router
 from apps.scheduler.api import events_router as scheduler_events_router
 from apps.scheduler.api import tasks_router as scheduler_tasks_router
 from apps.users.api import router as auth_router
-from apps.weddings.api import dashboard_router
 from apps.weddings.api import router as weddings_router
 
 
