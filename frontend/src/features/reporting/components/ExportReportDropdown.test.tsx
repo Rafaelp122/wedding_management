@@ -1,13 +1,27 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { http, HttpResponse } from "msw";
+import { toast } from "sonner";
 import { render, screen, userEvent, server, waitFor } from "@/test-utils";
 import { ExportReportDropdown } from "./ExportReportDropdown";
+
+vi.mock("sonner", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("sonner")>();
+  return {
+    ...actual,
+    toast: {
+      ...actual.toast,
+      success: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+    },
+  };
+});
 
 describe("ExportReportDropdown", () => {
   const weddingUuid = "123e4567-e89b-12d3-a456-426614174000";
 
   beforeEach(() => {
-    // Mock URL.createObjectURL e URL.revokeObjectURL
+    vi.clearAllMocks();
     window.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
     window.URL.revokeObjectURL = vi.fn();
   });
@@ -31,7 +45,7 @@ describe("ExportReportDropdown", () => {
     expect(screen.getByTestId("export-excel")).toBeInTheDocument();
   });
 
-  it("triggers PDF export on click", async () => {
+  it("triggers PDF export on click and displays success toast", async () => {
     server.use(
       http.get("*/api/v1/reports/weddings/:uuid/", () => {
         return new HttpResponse("%PDF-1.4 Mock Binary", {
@@ -59,10 +73,11 @@ describe("ExportReportDropdown", () => {
 
     await waitFor(() => {
       expect(window.URL.createObjectURL).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith("Relatório em PDF exportado com sucesso!");
     });
   });
 
-  it("triggers Excel export on click", async () => {
+  it("triggers Excel export on click and displays success toast", async () => {
     server.use(
       http.get("*/api/v1/reports/weddings/:uuid/", () => {
         return new HttpResponse("PK\x03\x04 Mock Binary", {
@@ -85,6 +100,31 @@ describe("ExportReportDropdown", () => {
 
     await waitFor(() => {
       expect(window.URL.createObjectURL).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith("Relatório em Excel exportado com sucesso!");
+    });
+  });
+
+  it("handles API error gracefully displaying error toast", async () => {
+    server.use(
+      http.get("*/api/v1/reports/weddings/:uuid/", () => {
+        return HttpResponse.json(
+          { message: "Erro ao gerar relatório no servidor" },
+          { status: 500 },
+        );
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<ExportReportDropdown weddingUuid={weddingUuid} />);
+
+    const button = screen.getByTestId("export-report-dropdown-trigger");
+    await user.click(button);
+
+    const pdfOption = screen.getByTestId("export-pdf");
+    await user.click(pdfOption);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
     });
   });
 });

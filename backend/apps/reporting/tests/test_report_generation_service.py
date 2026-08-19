@@ -102,6 +102,63 @@ class TestReportGenerationService:
         assert len(pdf_bytes) > 0
         assert pdf_bytes.startswith(b"%PDF-")
 
+    def test_generate_wedding_pdf_escapes_xml_characters(self) -> None:
+        """Valida que caracteres especiais XML/HTML não quebram o parser do PDF."""
+        user = UserFactory()
+        company = user.company
+        wedding = WeddingFactory(
+            company=company,
+            groom_name="Romeo & Julieta <Special>",
+            bride_name="Clara > Helena & Friends",
+            location="Espaço Luz & Arte <VIP>",
+        )
+
+        budget = _BudgetFactory(
+            company=company,
+            wedding=wedding,
+            total_estimated=Decimal("30000.00"),
+        )
+        cat = _BudgetCategoryFactory(
+            company=company,
+            budget=budget,
+            name="Decoração & Flores <Importadas>",
+            allocated_budget=Decimal("10000.00"),
+        )
+        expense = _ExpenseFactory(
+            company=company,
+            category=cat,
+            wedding=wedding,
+            description="Flores & Arranjos <Nobre>",
+        )
+        _InstallmentFactory(
+            company=company,
+            expense=expense,
+            wedding=wedding,
+            amount=Decimal("5000.00"),
+            status=Installment.StatusChoices.PENDING,
+        )
+        supplier = _SupplierFactory(company=company, name="Buffet & Cia <Premium>")
+        _ContractFactory(
+            company=company,
+            wedding=wedding,
+            supplier=supplier,
+            name="Contrato Buffet & Bebidas <Full>",
+            total_amount=Decimal("15000.00"),
+        )
+        _TaskFactory(
+            company=company,
+            wedding=wedding,
+            title="Revisar & Assinar <Contratos>",
+            description="Detalhes & Prazos <Urgentes>",
+        )
+
+        pdf_bytes = ReportGenerationService.generate_wedding_pdf(
+            company=company,
+            wedding_uuid=wedding.uuid,
+        )
+        assert isinstance(pdf_bytes, bytes)
+        assert pdf_bytes.startswith(b"%PDF-")
+
     def test_generate_wedding_pdf_empty_wedding(self) -> None:
         """Gera PDF consistente para casamento recém-criado sem finanças."""
         user = UserFactory()
@@ -148,6 +205,20 @@ class TestReportGenerationService:
         assert isinstance(excel_bytes, bytes)
         assert len(excel_bytes) > 0
         # Assinatura mágica de arquivos ZIP / XLSX
+        assert excel_bytes.startswith(b"PK\x03\x04")
+
+    def test_generate_wedding_excel_empty_wedding(self) -> None:
+        """Gera Excel consistente para casamento sem finanças ou tarefas."""
+        user = UserFactory()
+        company = user.company
+        wedding = WeddingFactory(company=company)
+
+        excel_bytes = ReportGenerationService.generate_wedding_excel(
+            company=company,
+            wedding_uuid=wedding.uuid,
+        )
+
+        assert isinstance(excel_bytes, bytes)
         assert excel_bytes.startswith(b"PK\x03\x04")
 
     def test_generate_wedding_report_rejects_cross_tenant(self) -> None:

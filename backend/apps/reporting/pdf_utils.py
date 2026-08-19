@@ -6,6 +6,7 @@ import io
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
+from xml.sax.saxutils import escape as xml_escape
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -91,8 +92,11 @@ def _build_pdf_header(
     subtitle_style: ParagraphStyle,
     border_color: colors.HexColor,
 ) -> list[Any]:
-    """Constrói o cabeçalho executivo do casamento."""
-    couple_names = f"{wedding.groom_name} & {wedding.bride_name}"
+    """Constrói o cabeçalho executivo do casamento com escape seguro."""
+    groom_safe = xml_escape(wedding.groom_name or "")
+    bride_safe = xml_escape(wedding.bride_name or "")
+    couple_names = f"{groom_safe} &amp; {bride_safe}"
+
     date_str = (
         wedding.date.strftime("%d/%m/%Y") if wedding.date else "Data não definida"
     )
@@ -101,14 +105,14 @@ def _build_pdf_header(
         if wedding.expected_guests
         else "Convidados não informados"
     )
-    location_str = wedding.location or "Local não informado"
-    status_label = wedding.get_status_display()
+    location_safe = xml_escape(wedding.location or "Local não informado")
+    status_label_safe = xml_escape(wedding.get_status_display())
 
     header_info = (
         f"<b>Data:</b> {date_str} &nbsp;|&nbsp; "
-        f"<b>Local:</b> {location_str} &nbsp;|&nbsp; "
+        f"<b>Local:</b> {location_safe} &nbsp;|&nbsp; "
         f"<b>Esperado:</b> {guests_str} &nbsp;|&nbsp; "
-        f"<b>Status:</b> {status_label}"
+        f"<b>Status:</b> {status_label_safe}"
     )
     return [
         Paragraph(couple_names, title_style),
@@ -190,7 +194,7 @@ def _build_pdf_categories_table(
     cell_header_style: ParagraphStyle,
     palette: dict[str, colors.HexColor],
 ) -> Table:
-    """Constrói a tabela de categorias orçamentárias."""
+    """Constrói a tabela de categorias orçamentárias com escape."""
     cat_data = [
         [
             Paragraph("Categoria", cell_header_style),
@@ -210,7 +214,7 @@ def _build_pdf_categories_table(
         )
         cat_data.append(
             [
-                Paragraph(cat.name, cell_style),
+                Paragraph(xml_escape(cat.name or ""), cell_style),
                 Paragraph(format_currency_br(cat.allocated_budget), cell_style),
                 Paragraph(format_currency_br(spent), cell_style),
                 Paragraph(format_currency_br(remaining), cell_style),
@@ -257,7 +261,7 @@ def _build_pdf_installments_table(
     cell_header_style: ParagraphStyle,
     palette: dict[str, colors.HexColor],
 ) -> Table:
-    """Constrói a tabela do cronograma de parcelas."""
+    """Constrói a tabela do cronograma de parcelas com escape."""
     inst_data = [
         [
             Paragraph("Despesa / Descrição", cell_header_style),
@@ -271,8 +275,12 @@ def _build_pdf_installments_table(
     for inst in installments:
         due_str = inst.due_date.strftime("%d/%m/%Y")
         paid_str = inst.paid_date.strftime("%d/%m/%Y") if inst.paid_date else "—"
-        status_desc = inst.get_status_display()
-        desc = inst.expense.description if inst.expense else "Parcela"
+        status_desc = xml_escape(inst.get_status_display())
+        desc = (
+            xml_escape(inst.expense.description)
+            if inst.expense and inst.expense.description
+            else "Parcela"
+        )
         inst_data.append(
             [
                 Paragraph(desc, cell_style),
@@ -332,7 +340,7 @@ def _build_pdf_contracts_table(
     cell_header_style: ParagraphStyle,
     palette: dict[str, colors.HexColor],
 ) -> Table:
-    """Constrói a tabela de contratos e fornecedores."""
+    """Constrói a tabela de contratos e fornecedores com escape."""
     contr_data = [
         [
             Paragraph("Fornecedor", cell_header_style),
@@ -341,12 +349,17 @@ def _build_pdf_contracts_table(
         ]
     ]
     for contr in contracts:
-        sup_name = contr.supplier.name if contr.supplier else "Fornecedor Direto"
+        sup_name = (
+            xml_escape(contr.supplier.name)
+            if contr.supplier and contr.supplier.name
+            else "Fornecedor Direto"
+        )
+        status_safe = xml_escape(contr.get_status_display())
         contr_data.append(
             [
                 Paragraph(sup_name, cell_style),
                 Paragraph(format_currency_br(contr.total_amount), cell_style),
-                Paragraph(contr.get_status_display(), cell_style),
+                Paragraph(status_safe, cell_style),
             ]
         )
     if len(contr_data) == 1:

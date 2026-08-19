@@ -50,7 +50,6 @@ export function ExportReportDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem
-          onSelect={() => exportReport(weddingUuid, "pdf", filenamePrefix)}
           onClick={() => exportReport(weddingUuid, "pdf", filenamePrefix)}
           className="cursor-pointer"
           data-testid="export-pdf"
@@ -59,7 +58,6 @@ export function ExportReportDropdown({
           <span>Relatório (PDF)</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onSelect={() => exportReport(weddingUuid, "excel", filenamePrefix)}
           onClick={() => exportReport(weddingUuid, "excel", filenamePrefix)}
           className="cursor-pointer"
           data-testid="export-excel"

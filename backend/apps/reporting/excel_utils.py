@@ -30,6 +30,10 @@ def _build_excel_summary_sheet(
 
     title_font = Font(name="Calibri", size=14, bold=True, color="7C3AED")
     regular_font = Font(name="Calibri", size=11, color="1A1C1E")
+    section_fill = PatternFill(
+        start_color="F5F3FF", end_color="F5F3FF", fill_type="solid"
+    )
+    section_font = Font(name="Calibri", size=11, bold=True, color="7C3AED")
 
     now_label = datetime.now(UTC).strftime("%d/%m/%Y às %H:%M UTC")
     ws_summary.cell(
@@ -44,7 +48,13 @@ def _build_excel_summary_sheet(
     ).font = regular_font
 
     ws_summary.append([])
+
+    # Seção 1: Informações Gerais
     ws_summary.append(["Informações Gerais", "Valor"])
+    for cell in ws_summary[ws_summary.max_row]:
+        cell.fill = section_fill
+        cell.font = section_font
+
     ws_summary.append(["Noivo", wedding.groom_name])
     ws_summary.append(["Noiva", wedding.bride_name])
     wedding_date_str = wedding.date.strftime("%d/%m/%Y") if wedding.date else "—"
@@ -54,7 +64,13 @@ def _build_excel_summary_sheet(
     ws_summary.append(["Status do Casamento", wedding.get_status_display()])
 
     ws_summary.append([])
+
+    # Seção 2: Métrica Financeira
     ws_summary.append(["Métrica Financeira", "Valor"])
+    for cell in ws_summary[ws_summary.max_row]:
+        cell.fill = section_fill
+        cell.font = section_font
+
     budget_obj = getattr(wedding, "budget", None)
     total_budget_val = float(budget_obj.total_estimated) if budget_obj else 0.0
     ws_summary.append(["Orçamento Total", total_budget_val])
@@ -211,24 +227,14 @@ def _style_excel_workbook(wb: Workbook, ws_summary: Worksheet) -> None:
     header_fill = PatternFill(
         start_color="7C3AED", end_color="7C3AED", fill_type="solid"
     )
-    section_fill = PatternFill(
-        start_color="F5F3FF", end_color="F5F3FF", fill_type="solid"
-    )
     header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-    section_font = Font(name="Calibri", size=11, bold=True, color="7C3AED")
 
     for sheet in wb.worksheets:
-        for cell in sheet[1]:
-            if sheet != ws_summary:
+        if sheet != ws_summary:
+            for cell in sheet[1]:
                 cell.fill = header_fill
                 cell.font = header_font
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-
-        if sheet == ws_summary:
-            for row_num in (4, 12):
-                for cell in sheet[row_num]:
-                    cell.fill = section_fill
-                    cell.font = section_font
 
         _format_columns_and_borders(sheet)
 
