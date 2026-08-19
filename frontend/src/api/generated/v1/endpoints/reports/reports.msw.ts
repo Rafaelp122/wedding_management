@@ -12,15 +12,6 @@ import type {
   RequestHandlerOptions
 } from 'msw';
 
-import type {
-  ReportTaskQueuedOut
-} from '../../models';
-
-import {
-  getReportsWeddingExportAsyncResponseMock
-} from './reports.faker';
-
-export { getReportsWeddingExportAsyncResponseMock } from './reports.faker';
 
 
 export const getReportsWeddingExportMockHandler = (overrideResponse?: void | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<void> | void), options?: RequestHandlerOptions) => {
@@ -32,19 +23,6 @@ export const getReportsWeddingExportMockHandler = (overrideResponse?: void | ((i
       })
   }, options)
 }
-
-export const getReportsWeddingExportAsyncMockHandler = (overrideResponse?: ReportTaskQueuedOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ReportTaskQueuedOut> | ReportTaskQueuedOut), options?: RequestHandlerOptions) => {
-  return http.post('*/api/v1/reports/weddings/:uuid/async/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-
-
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getReportsWeddingExportAsyncResponseMock(),
-      { status: 202
-      })
-  }, options)
-}
 export const getReportsMock = () => [
-  getReportsWeddingExportMockHandler(),
-  getReportsWeddingExportAsyncMockHandler()
+  getReportsWeddingExportMockHandler()
 ]

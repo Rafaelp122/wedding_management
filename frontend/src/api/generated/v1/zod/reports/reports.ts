@@ -8,7 +8,7 @@ import * as zod from 'zod';
 
 
 /**
- * Gera e exporta em fluxo binário síncrono o relatório consolidado do casamento.
+ * Gera e exporta em fluxo binário o relatório consolidado do casamento.
  *
  * Retorna o arquivo binário com Content-Disposition correspondente ao formato.
  * @summary Export Wedding Report
@@ -24,28 +24,4 @@ export const ReportsWeddingExportQueryParams = zod.object({
 })
 
 export const ReportsWeddingExportResponse = zod.unknown()
-
-/**
- * Dispara a geração de relatório em background task (django.tasks).
- *
- * O arquivo é processado pelo worker, salvo no Cloudflare R2 / S3 e uma
- * notificação in-app é enviada ao usuário com o link seguro de download.
- * @summary Export Wedding Report Async
- */
-export const ReportsWeddingExportAsyncParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const reportsWeddingExportAsyncQueryFormatDefault = `pdf`;
-
-export const ReportsWeddingExportAsyncQueryParams = zod.object({
-  "format": zod.enum(['pdf', 'excel']).default(reportsWeddingExportAsyncQueryFormatDefault)
-})
-
-export const reportsWeddingExportAsyncResponseStatusDefault = `enqueued`;
-
-export const ReportsWeddingExportAsyncResponse = zod.object({
-  "status": zod.string().default(reportsWeddingExportAsyncResponseStatusDefault),
-  "detail": zod.string()
-}).describe('Resposta de enfileiramento de relatório em segundo plano.')
 

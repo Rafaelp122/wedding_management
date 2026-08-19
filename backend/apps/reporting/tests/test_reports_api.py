@@ -3,7 +3,6 @@ Testes de integração para as rotas do reports_router (/api/v1/reports/).
 """
 
 from typing import Any, cast
-from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -24,7 +23,7 @@ def CompanyFactory(*args: Any, **kwargs: Any) -> Company:
 
 @pytest.mark.django_db
 class TestReportsAPI:
-    """Testes de integração para exportação de relatórios síncronos e assíncronos."""
+    """Testes de integração para exportação de relatórios síncronos."""
 
     def test_export_wedding_report_pdf_success(
         self, auth_client: Any, user: Any
@@ -79,39 +78,3 @@ class TestReportsAPI:
         """Bloqueia requisição não autenticada com HTTP 401."""
         response = client.get(f"/api/v1/reports/weddings/{uuid4()}/?format=pdf")
         assert response.status_code == 401
-
-    def test_export_wedding_report_async_success(
-        self, auth_client: Any, user: Any
-    ) -> None:
-        """Enfileira geração assíncrona com status 202 e resposta padronizada."""
-        from django.tasks import Task
-
-        wedding = WeddingFactory(company=user.company)
-
-        with patch.object(Task, "enqueue") as mock_enqueue:
-            response = auth_client.post(
-                f"/api/v1/reports/weddings/{wedding.uuid}/async/?format=pdf"
-            )
-            assert response.status_code == 202
-            data = response.json()
-            assert data["status"] == "enqueued"
-            assert "Geração do relatório" in data["detail"]
-
-            mock_enqueue.assert_called_once_with(
-                company_id=str(user.company.uuid),
-                user_id=str(user.uuid),
-                wedding_id=str(wedding.uuid),
-                report_format="pdf",
-            )
-
-    def test_export_wedding_report_async_cross_tenant_returns_404(
-        self, auth_client: Any
-    ) -> None:
-        """Bloqueia enfileiramento assíncrono para casamento de outro tenant."""
-        other_company = CompanyFactory()
-        other_wedding = WeddingFactory(company=other_company)
-
-        response = auth_client.post(
-            f"/api/v1/reports/weddings/{other_wedding.uuid}/async/?format=pdf"
-        )
-        assert response.status_code == 404

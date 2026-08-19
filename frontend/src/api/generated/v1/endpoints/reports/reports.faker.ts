@@ -4,14 +4,4 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
-import {
-  faker
-} from '@faker-js/faker';
-
-import type {
-  ReportTaskQueuedOut
-} from '../../models';
-
-
-export const getReportsWeddingExportAsyncResponseMock = (overrideResponse: Partial<Extract<ReportTaskQueuedOut, object>> = {}): ReportTaskQueuedOut => ({status: faker.string.alpha({length: {min: 10, max: 20}}), detail: faker.string.alpha({length: {min: 10, max: 20}}), ...overrideResponse})
 

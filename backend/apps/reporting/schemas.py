@@ -75,10 +75,3 @@ class WeddingDashboardOut(Schema):
     upcoming_installments: list[WeddingDashboardInstallmentOut]
     urgent_tasks: list[WeddingDashboardTaskOut]
     categories_summary: list[WeddingDashboardCategoryOut]
-
-
-class ReportTaskQueuedOut(Schema):
-    """Resposta de enfileiramento de relatório em segundo plano."""
-
-    status: str = "enqueued"
-    detail: str

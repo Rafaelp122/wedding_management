@@ -5,28 +5,21 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
-  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
-  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
-  ErrorResponse,
-  ReportTaskQueuedOut,
-  ReportsWeddingExportAsyncParams,
   ReportsWeddingExportParams
 } from '../../models';
 
@@ -54,7 +47,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Gera e exporta em fluxo binário síncrono o relatório consolidado do casamento.
+ * Gera e exporta em fluxo binário o relatório consolidado do casamento.
  *
  * Retorna o arquivo binário com Content-Disposition correspondente ao formato.
  * @summary Export Wedding Report
@@ -156,71 +149,3 @@ export function useReportsWeddingExport<TData = Awaited<ReturnType<typeof report
 
 
 
-/**
- * Dispara a geração de relatório em background task (django.tasks).
- *
- * O arquivo é processado pelo worker, salvo no Cloudflare R2 / S3 e uma
- * notificação in-app é enviada ao usuário com o link seguro de download.
- * @summary Export Wedding Report Async
- */
-export const reportsWeddingExportAsync = (
-    uuid: string,
-    params?: ReportsWeddingExportAsyncParams,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<ReportTaskQueuedOut>(
-      {url: `/api/v1/reports/weddings/${uuid}/async/`, method: 'POST',
-        params, signal
-    },
-      options);
-    }
-
-
-
-
-export const getReportsWeddingExportAsyncMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportsWeddingExportAsync>>, TError,{uuid: string;params?: ReportsWeddingExportAsyncParams}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof reportsWeddingExportAsync>>, TError,{uuid: string;params?: ReportsWeddingExportAsyncParams}, TContext> => {
-
-const mutationKey = ['reportsWeddingExportAsync'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportsWeddingExportAsync>>, {uuid: string;params?: ReportsWeddingExportAsyncParams}> = (props) => {
-          const {uuid,params} = props ?? {};
-
-          return  reportsWeddingExportAsync(uuid,params,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReportsWeddingExportAsyncMutationResult = NonNullable<Awaited<ReturnType<typeof reportsWeddingExportAsync>>>
-
-    export type ReportsWeddingExportAsyncMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Export Wedding Report Async
- */
-export const useReportsWeddingExportAsync = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportsWeddingExportAsync>>, TError,{uuid: string;params?: ReportsWeddingExportAsyncParams}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof reportsWeddingExportAsync>>,
-        TError,
-        {uuid: string;params?: ReportsWeddingExportAsyncParams},
-        TContext
-      > => {
-      return useMutation(getReportsWeddingExportAsyncMutationOptions(options), queryClient);
-    }

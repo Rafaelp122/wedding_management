@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { reportsWeddingExport, useReportsWeddingExportAsync } from "@/api/generated/v1/endpoints/reports/reports";
+import { reportsWeddingExport } from "@/api/generated/v1/endpoints/reports/reports";
 import { getApiErrorInfo } from "@/api/error-utils";
 
 export type ReportFormat = "pdf" | "excel";
@@ -10,15 +10,14 @@ interface UseExportReportOptions {
 }
 
 export function useExportReport(options?: UseExportReportOptions) {
-  const [isExportingSync, setIsExportingSync] = useState(false);
-  const asyncMutation = useReportsWeddingExportAsync();
+  const [exportingFormat, setExportingFormat] = useState<ReportFormat | null>(null);
 
-  const exportSync = async (
+  const exportReport = async (
     weddingUuid: string,
     format: ReportFormat = "pdf",
     filenamePrefix = "relatorio-casamento",
   ) => {
-    setIsExportingSync(true);
+    setExportingFormat(format);
     try {
       const response = await reportsWeddingExport(
         weddingUuid,
@@ -52,37 +51,13 @@ export function useExportReport(options?: UseExportReportOptions) {
       );
       toast.error(message);
     } finally {
-      setIsExportingSync(false);
-    }
-  };
-
-  const exportAsync = async (weddingUuid: string, format: ReportFormat = "pdf") => {
-    try {
-      const response = await asyncMutation.mutateAsync({
-        uuid: weddingUuid,
-        params: { format },
-      });
-
-      const formatLabel = format === "excel" ? "Excel" : "PDF";
-      toast.info(
-        response.data.detail ||
-          `Geração do relatório (${formatLabel}) iniciada em segundo plano. Você será notificado quando estiver pronto.`,
-      );
-      options?.onSuccess?.();
-    } catch (error) {
-      const { message } = getApiErrorInfo(
-        error,
-        "Não foi possível iniciar a geração em segundo plano.",
-      );
-      toast.error(message);
+      setExportingFormat(null);
     }
   };
 
   return {
-    exportSync,
-    exportAsync,
-    isExportingSync,
-    isExportingAsync: asyncMutation.isPending,
-    isLoading: isExportingSync || asyncMutation.isPending,
+    exportReport,
+    exportingFormat,
+    isExporting: exportingFormat !== null,
   };
 }

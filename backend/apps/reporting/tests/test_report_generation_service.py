@@ -1,11 +1,10 @@
 """
-Testes unitários para o ReportGenerationService (geração de PDF, Excel e Storage).
+Testes unitários para o ReportGenerationService (geração de PDF, Excel e Exportação).
 """
 
 from datetime import date
 from decimal import Decimal
 from typing import Any, cast
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -169,33 +168,35 @@ class TestReportGenerationService:
                 wedding_uuid=wedding_b.uuid,
             )
 
-    def test_generate_and_store_report_storage_integration(self) -> None:
-        """Valida que generate_and_store_report envia bytes ao StorageService."""
+    def test_export_wedding_report_helper(self) -> None:
+        """Valida método de serviço export_wedding_report para PDF e Excel."""
         user = UserFactory()
         company = user.company
         wedding = WeddingFactory(company=company)
 
-        mock_storage = MagicMock()
-        mock_storage.upload_bytes.return_value = "reports/mock-key.pdf"
-        mock_storage.generate_presigned_get_url.return_value = (
-            "https://r2.com/download.pdf"
-        )
-
-        ReportGenerationService._set_storage_service(mock_storage)
-        try:
-            key, url = ReportGenerationService.generate_and_store_report(
+        # PDF
+        file_bytes, content_type, filename = (
+            ReportGenerationService.export_wedding_report(
                 company=company,
                 wedding_uuid=wedding.uuid,
                 report_format="pdf",
             )
+        )
+        assert file_bytes.startswith(b"%PDF-")
+        assert content_type == "application/pdf"
+        assert filename == f"relatorio-casamento-{wedding.uuid}.pdf"
 
-            assert key == "reports/mock-key.pdf"
-            assert url == "https://r2.com/download.pdf"
-            mock_storage.upload_bytes.assert_called_once()
-            mock_storage.generate_presigned_get_url.assert_called_once_with(
-                bucket="wedding-reports",
-                object_key="reports/mock-key.pdf",
-                expires_in=3600,
+        # Excel
+        file_bytes, content_type, filename = (
+            ReportGenerationService.export_wedding_report(
+                company=company,
+                wedding_uuid=wedding.uuid,
+                report_format="excel",
             )
-        finally:
-            ReportGenerationService._set_storage_service(None)
+        )
+        assert file_bytes.startswith(b"PK\x03\x04")
+        assert (
+            content_type
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        assert filename == f"relatorio-casamento-{wedding.uuid}.xlsx"
