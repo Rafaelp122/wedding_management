@@ -583,6 +583,16 @@ class DummyStorageService:
     ) -> str:
         return f"https://r2.com/{bucket}/{object_key}"
 
+    def upload_bytes(
+        self, bucket: str, object_key: str, data: bytes, content_type: str
+    ) -> str:
+        return object_key
+
+    def generate_presigned_get_url(
+        self, bucket: str, object_key: str, expires_in: int = 3600
+    ) -> str:
+        return f"https://r2.com/{bucket}/{object_key}"
+
 
 @pytest.mark.django_db
 class TestContractCreateFullAPI:

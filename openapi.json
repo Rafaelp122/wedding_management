@@ -1235,6 +1235,115 @@
         ]
       }
     },
+    "/api/v1/reports/weddings/{uuid}/": {
+      "get": {
+        "operationId": "reports_wedding_export",
+        "summary": "Export Wedding Report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "pdf",
+              "enum": [
+                "pdf",
+                "excel"
+              ],
+              "title": "Format",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "description": "Gera e exporta em fluxo binário síncrono o relatório consolidado do casamento.\n\nRetorna o arquivo binário com Content-Disposition correspondente ao formato.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/weddings/{uuid}/async/": {
+      "post": {
+        "operationId": "reports_wedding_export_async",
+        "summary": "Export Wedding Report Async",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "pdf",
+              "enum": [
+                "pdf",
+                "excel"
+              ],
+              "title": "Format",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportTaskQueuedOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Dispara a geração de relatório em background task (django.tasks).\n\nO arquivo é processado pelo worker, salvo no Cloudflare R2 / S3 e uma\nnotificação in-app é enviada ao usuário com o link seguro de download.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/logistics/suppliers/": {
       "get": {
         "operationId": "logistics_suppliers_list",
@@ -6448,6 +6557,25 @@
           "title"
         ],
         "title": "WeddingDashboardTaskOut",
+        "type": "object"
+      },
+      "ReportTaskQueuedOut": {
+        "description": "Resposta de enfileiramento de relatório em segundo plano.",
+        "properties": {
+          "status": {
+            "default": "enqueued",
+            "title": "Status",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ReportTaskQueuedOut",
         "type": "object"
       },
       "PagedSupplierOut": {

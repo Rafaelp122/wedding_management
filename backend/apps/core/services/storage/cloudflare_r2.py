@@ -117,3 +117,88 @@ class CloudflareR2StorageService:
             ExpiresIn=expires_in,
         )
         return presigned_url
+
+    def generate_presigned_get_url(
+        self, bucket: str, object_key: str, expires_in: int = 900
+    ) -> str:
+        """
+        Gera uma URL pré-assinada para download/leitura segura de um objeto via GET.
+
+        Args:
+            bucket: O nome do bucket no storage.
+            object_key: O caminho/nome único do objeto no bucket.
+            expires_in: Tempo em segundos para a URL expirar.
+
+        Returns:
+            A URL pré-assinada gerada para leitura do arquivo.
+
+        Raises:
+            BusinessRuleViolation: Se a configuração do storage estiver incompleta.
+        """
+        if not all(
+            [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
+        ):
+            raise BusinessRuleViolation(
+                detail="Configuração de storage R2/S3 incompleta no servidor.",
+                code="storage_configuration_incomplete",
+            )
+
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=self.endpoint_url,
+            aws_access_key_id=self.access_key_id,
+            aws_secret_access_key=self.secret_access_key,
+            region_name=self.region_name,
+        )
+
+        presigned_url: str = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": bucket,
+                "Key": object_key,
+            },
+            ExpiresIn=expires_in,
+        )
+        return presigned_url
+
+    def upload_bytes(
+        self, bucket: str, object_key: str, data: bytes, content_type: str
+    ) -> str:
+        """
+        Faz upload direto de uma sequência de bytes para o bucket de storage.
+
+        Args:
+            bucket: O nome do bucket de destino no storage.
+            object_key: O caminho/nome único do objeto no bucket.
+            data: Conteúdo binário a ser persistido.
+            content_type: O tipo MIME do arquivo (ex: application/pdf).
+
+        Returns:
+            A chave única do objeto persistido no storage (object_key).
+
+        Raises:
+            BusinessRuleViolation: Se a configuração do storage estiver incompleta.
+        """
+        if not all(
+            [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
+        ):
+            raise BusinessRuleViolation(
+                detail="Configuração de storage R2/S3 incompleta no servidor.",
+                code="storage_configuration_incomplete",
+            )
+
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=self.endpoint_url,
+            aws_access_key_id=self.access_key_id,
+            aws_secret_access_key=self.secret_access_key,
+            region_name=self.region_name,
+        )
+
+        s3_client.put_object(
+            Bucket=bucket,
+            Key=object_key,
+            Body=data,
+            ContentType=content_type,
+        )
+        return object_key
