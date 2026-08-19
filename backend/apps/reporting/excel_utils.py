@@ -73,12 +73,17 @@ def _build_excel_summary_sheet(
 
     budget_obj = getattr(wedding, "budget", None)
     total_budget_val = float(budget_obj.total_estimated) if budget_obj else 0.0
+    currency_format = '"R$" #,##0.00'
+
     ws_summary.append(["Orçamento Total", total_budget_val])
+    ws_summary.cell(row=ws_summary.max_row, column=2).number_format = currency_format
+
     paid_sum = sum(
         (i.amount for i in installments if i.status == Installment.StatusChoices.PAID),
         Decimal("0.00"),
     )
     ws_summary.append(["Total Pago", float(paid_sum)])
+    ws_summary.cell(row=ws_summary.max_row, column=2).number_format = currency_format
 
     pending_sum = sum(
         (
@@ -93,6 +98,7 @@ def _build_excel_summary_sheet(
         Decimal("0.00"),
     )
     ws_summary.append(["Total Pendente / Atrasado", float(pending_sum)])
+    ws_summary.cell(row=ws_summary.max_row, column=2).number_format = currency_format
 
     budget_pct_used = overview.get("budget_percentage_used", 0)
     ws_summary.append(["Saúde Financeira Utilizada (%)", f"{budget_pct_used}%"])

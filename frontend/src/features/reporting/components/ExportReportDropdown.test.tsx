@@ -4,19 +4,6 @@ import { toast } from "sonner";
 import { render, screen, userEvent, server, waitFor } from "@/test-utils";
 import { ExportReportDropdown } from "./ExportReportDropdown";
 
-vi.mock("sonner", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("sonner")>();
-  return {
-    ...actual,
-    toast: {
-      ...actual.toast,
-      success: vi.fn(),
-      error: vi.fn(),
-      info: vi.fn(),
-    },
-  };
-});
-
 describe("ExportReportDropdown", () => {
   const weddingUuid = "123e4567-e89b-12d3-a456-426614174000";
 

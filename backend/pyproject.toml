@@ -230,6 +230,8 @@ module = [
     "apps.weddings.tests.test_selectors",
     "apps.reporting.tests.test_dashboard_selectors",
     "apps.reporting.tests.test_apis",
+    "apps.reporting.tests.test_reports_api",
+    "apps.reporting.tests.test_report_generation_service",
 ]
 # Exige assinatura completa e checagem de corpo. disallow_untyped_calls é explicitamente false
 # para suportar métodos dinâmicos de factories (factory_boy).

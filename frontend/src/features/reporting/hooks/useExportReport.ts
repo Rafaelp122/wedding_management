@@ -44,12 +44,29 @@ export function useExportReport(options?: UseExportReportOptions) {
       const formatLabel = format === "excel" ? "Excel" : "PDF";
       toast.success(`Relatório em ${formatLabel} exportado com sucesso!`);
       options?.onSuccess?.();
-    } catch (error) {
-      const { message } = getApiErrorInfo(
-        error,
-        "Não foi possível exportar o relatório. Tente novamente.",
-      );
-      toast.error(message);
+    } catch (error: unknown) {
+      let errorMessage = "Não foi possível exportar o relatório. Tente novamente.";
+      const axiosError = error as { response?: { data?: unknown } };
+
+      if (axiosError?.response?.data instanceof Blob) {
+        try {
+          const text = await axiosError.response.data.text();
+          const parsed = JSON.parse(text) as { message?: string; detail?: string };
+          if (parsed.message) {
+            errorMessage = parsed.message;
+          } else if (parsed.detail) {
+            errorMessage = parsed.detail;
+          }
+        } catch {
+          const { message } = getApiErrorInfo(error, errorMessage);
+          errorMessage = message;
+        }
+      } else {
+        const { message } = getApiErrorInfo(error, errorMessage);
+        errorMessage = message;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setExportingFormat(null);
     }

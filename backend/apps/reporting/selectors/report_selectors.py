@@ -63,6 +63,7 @@ def wedding_report_data_selector(
     categories = list(
         BudgetCategory.objects.for_tenant(company)
         .filter(budget__wedding=wedding)
+        .with_total_spent()
         .order_by("name")
     )
     installments = list(
