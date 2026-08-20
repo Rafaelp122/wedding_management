@@ -1,21 +1,36 @@
 from datetime import date
 from decimal import Decimal
+from typing import Any, cast
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.core.validators import MaxFileSizeValidator
-from apps.logistics.models import Contract
-from apps.logistics.tests.factories import ContractFactory, SupplierFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.logistics.models import Contract, Supplier
+from apps.logistics.tests.factories import ContractFactory as _ContractFactory
+from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
+    return cast(Supplier, _SupplierFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
 class TestContractModelMetadata:
     """Testes de representação e metadados do modelo Contract."""
 
-    def test_contract_str_contains_supplier_and_wedding(self, user):
+    def test_contract_str_contains_supplier_and_wedding(self, user: Any) -> None:
         """__str__ deve conter supplier, wedding e total_amount."""
         wedding = WeddingFactory(user_context=user, bride_name="Ana", groom_name="João")
         supplier = SupplierFactory(company=user.company, name="Buffet Premium")
@@ -31,7 +46,7 @@ class TestContractModelMetadata:
         assert "João" in result
         assert "15000.00" in result
 
-    def test_contract_ordering_by_created_at_descending(self, user):
+    def test_contract_ordering_by_created_at_descending(self, user: Any) -> None:
         """Ordenação padrão deve ser por -created_at."""
         wedding = WeddingFactory(user_context=user)
         c1 = ContractFactory(wedding=wedding, description="Contrato Antigo")
@@ -41,7 +56,7 @@ class TestContractModelMetadata:
         assert contracts[0] == c2
         assert contracts[1] == c1
 
-    def test_contract_status_default_is_draft(self, user):
+    def test_contract_status_default_is_draft(self, user: Any) -> None:
         """Status padrão deve ser DRAFT."""
         wedding = WeddingFactory(user_context=user)
         contract = ContractFactory(wedding=wedding)
@@ -52,7 +67,7 @@ class TestContractModelMetadata:
 class TestContractSignedValidation:
     """Testes da regra BR-L01: contrato ASSINADO exige PDF, valor positivo e data."""
 
-    def test_signed_without_pdf_fails(self, user):
+    def test_signed_without_pdf_fails(self, user: Any) -> None:
         """Contrato ASSINADO sem PDF deve falhar validação."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -71,7 +86,7 @@ class TestContractSignedValidation:
 
         assert "PDF" in str(exc_info.value).upper()
 
-    def test_signed_without_positive_amount_fails(self, user):
+    def test_signed_without_positive_amount_fails(self, user: Any) -> None:
         """Contrato ASSINADO com valor zero ou negativo deve falhar.
         As validações acumulam — PDF também será exigido, mas valor pega também."""
         wedding = WeddingFactory(user_context=user)
@@ -89,7 +104,7 @@ class TestContractSignedValidation:
         with pytest.raises(ValidationError):
             contract.full_clean()
 
-    def test_signed_without_signed_date_fails(self, user):
+    def test_signed_without_signed_date_fails(self, user: Any) -> None:
         """Contrato ASSINADO sem signed_date deve falhar."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -106,13 +121,13 @@ class TestContractSignedValidation:
         with pytest.raises(ValidationError):
             contract.full_clean()
 
-    def test_draft_passes_without_requirements(self, user):
+    def test_draft_passes_without_requirements(self, user: Any) -> None:
         """Contrato DRAFT não exige PDF, valor ou assinatura."""
         wedding = WeddingFactory(user_context=user)
         contract = ContractFactory(wedding=wedding, status=Contract.StatusChoices.DRAFT)
         contract.full_clean()
 
-    def test_pending_passes_without_requirements(self, user):
+    def test_pending_passes_without_requirements(self, user: Any) -> None:
         """Contrato PENDING não exige PDF, valor ou assinatura."""
         wedding = WeddingFactory(user_context=user)
         contract = ContractFactory(
@@ -126,7 +141,7 @@ class TestContractSignedValidation:
 class TestContractFileValidation:
     """Testes de validação de tipo e tamanho do arquivo pdf_file."""
 
-    def test_pdf_file_invalid_extension_fails(self, user):
+    def test_pdf_file_invalid_extension_fails(self, user: Any) -> None:
         """Extensão inválida (exe) deve falhar validação."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -152,7 +167,7 @@ class TestContractFileValidation:
             or "extensão" in str(exc_info.value).lower()
         )
 
-    def test_pdf_file_exceeds_max_size_fails(self, user):
+    def test_pdf_file_exceeds_max_size_fails(self, user: Any) -> None:
         """Arquivo > 10MB deve falhar validação."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -175,7 +190,7 @@ class TestContractFileValidation:
 
         assert "10mb" in str(exc_info.value).lower()
 
-    def test_pdf_file_valid_extension_passes(self, user):
+    def test_pdf_file_valid_extension_passes(self, user: Any) -> None:
         """Extensão válida (pdf) deve passar sem erro."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -194,7 +209,7 @@ class TestContractFileValidation:
         )
         contract.full_clean()
 
-    def test_pdf_file_valid_png_passes(self, user):
+    def test_pdf_file_valid_png_passes(self, user: Any) -> None:
         """Extensão válida (png) deve passar sem erro."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -213,7 +228,7 @@ class TestContractFileValidation:
         )
         contract.full_clean()
 
-    def test_pdf_file_valid_jpeg_passes(self, user):
+    def test_pdf_file_valid_jpeg_passes(self, user: Any) -> None:
         """Extensão válida (jpeg) deve passar sem erro."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -232,7 +247,7 @@ class TestContractFileValidation:
         )
         contract.full_clean()
 
-    def test_pdf_file_null_passes(self, user):
+    def test_pdf_file_null_passes(self, user: Any) -> None:
         """pdf_file nulo deve passar sem erro (campo opcional)."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(company=user.company)
@@ -246,7 +261,7 @@ class TestContractFileValidation:
         )
         contract.full_clean()
 
-    def test_max_file_size_validator_is_wired_on_field(self, user):
+    def test_max_file_size_validator_is_wired_on_field(self, user: Any) -> None:
         """MaxFileSizeValidator deve estar configurado no campo pdf_file."""
         field = Contract._meta.get_field("pdf_file")
 
@@ -267,7 +282,7 @@ class TestContractStatusTransitionValidation:
         "total_amount": Decimal("5000.00"),
     }
 
-    _VALID: list[tuple[str, str, dict]] = [
+    _VALID: list[tuple[str, str, dict[str, object]]] = [
         ("DRAFT", "PENDING", {}),
         ("DRAFT", "CANCELED", {}),
         ("PENDING", "SIGNED", {}),
@@ -277,7 +292,7 @@ class TestContractStatusTransitionValidation:
         ("CANCELED", "DRAFT", {}),
     ]
 
-    _INVALID: list[tuple[str, str, dict]] = [
+    _INVALID: list[tuple[str, str, dict[str, object]]] = [
         ("DRAFT", "SIGNED", {}),
         ("SIGNED", "DRAFT", _SIGNED_KWARGS),
         ("CANCELED", "SIGNED", {}),
@@ -285,7 +300,9 @@ class TestContractStatusTransitionValidation:
     ]
 
     @pytest.mark.parametrize("from_status, to_status, kwargs", _VALID)
-    def test_valid_transitions(self, make_contract, from_status, to_status, kwargs):
+    def test_valid_transitions(
+        self, make_contract: Any, from_status: Any, to_status: Any, kwargs: Any
+    ) -> None:
         contract = make_contract(from_status, **kwargs)
         if to_status == "SIGNED":
             contract.pdf_file = "contracts/test.pdf"
@@ -295,13 +312,15 @@ class TestContractStatusTransitionValidation:
         contract.full_clean()
 
     @pytest.mark.parametrize("from_status, to_status, kwargs", _INVALID)
-    def test_invalid_transitions(self, make_contract, from_status, to_status, kwargs):
+    def test_invalid_transitions(
+        self, make_contract: Any, from_status: Any, to_status: Any, kwargs: Any
+    ) -> None:
         contract = make_contract(from_status, **kwargs)
         contract.status = to_status
         with pytest.raises(ValidationError):
             contract.full_clean()
 
-    def test_new_instance_not_validated_as_transition(self):
+    def test_new_instance_not_validated_as_transition(self) -> None:
         """Criação direta de contrato ASSINADO não deve falhar por transição,
         apenas pelas regras de SIGNED (PDF, valor, data)."""
         with pytest.raises(ValidationError) as exc_info:

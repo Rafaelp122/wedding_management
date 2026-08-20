@@ -1,11 +1,14 @@
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
+from apps.scheduler.managers import EventQuerySet
 from apps.tenants.models import TenantModel
 
 
 class Event(TenantModel, WeddingOwnedMixin):
     """Modelo que representa um evento/compromisso no calendário."""
+
+    objects = EventQuerySet.as_manager()  # type: ignore[assignment,misc]
 
     class TypeChoices(models.TextChoices):
         """Tipos de eventos disponíveis no calendário."""

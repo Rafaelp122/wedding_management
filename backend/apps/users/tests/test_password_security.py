@@ -8,7 +8,7 @@ from apps.users.services.registration_service import RegistrationService
 class TestRegistrationPasswordSecurity:
     """Testes de segurança para validação de senha no registro."""
 
-    def test_register_new_owner_with_weak_password_fails(self):
+    def test_register_new_owner_with_weak_password_fails(self) -> None:
         """
         Garante que senhas fracas (comuns) são rejeitadas durante o registro.
         """

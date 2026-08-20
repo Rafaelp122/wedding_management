@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
+from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.models import Contract, Item
 from apps.logistics.schemas import ItemIn, ItemPatchIn
@@ -28,71 +27,8 @@ logger = logging.getLogger(__name__)
 class ItemService:
     """
     Camada de serviço para gestão de itens de logística.
-    Garante a integridade entre contratos e casamentos.
+    Garante a integridade entre contratos e casamentos em operações de escrita.
     """
-
-    @staticmethod
-    def list(
-        company: Company,
-        wedding_id: UUID | str | None = None,
-        status: str | None = None,
-        search: str | None = None,
-        contract_id: UUID | str | None = None,
-    ) -> QuerySet[Item]:
-        """
-        Lista os itens de logística pertencentes ao tenant.
-
-        Permite filtrar os itens por casamento, status de aquisição, termo
-        de busca no nome do item ou contrato associado.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: Identificador único (UUID ou string) do casamento.
-            status: Status de aquisição do item para filtragem.
-            search: Termo de busca para busca parcial no nome do item.
-            contract_id: Identificador único (UUID ou string) do contrato.
-
-        Returns:
-            QuerySet contendo os itens que atendem aos filtros aplicados.
-        """
-        qs = Item.objects.for_tenant(company).select_related(
-            "wedding", "contract", "contract__supplier"
-        )
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
-        if status:
-            qs = qs.filter(acquisition_status=status)
-        if search:
-            qs = qs.filter(name__icontains=search)
-        if contract_id:
-            qs = qs.filter(contract__uuid=contract_id)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Item:
-        """
-        Recupera um item de logística específico pelo UUID.
-
-        Realiza a busca garantindo o isolamento multitenant.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: Identificador único (UUID ou string) do item.
-
-        Returns:
-            O objeto Item correspondente.
-
-        Raises:
-            ObjectNotFoundError: Se o item não for encontrado ou não pertencer
-                ao tenant.
-        """
-        return get_object_or_404_for_tenant(
-            Item,
-            company,
-            uuid,
-            select_related=["wedding", "contract", "contract__supplier"],
-            detail="Item de logística não encontrado.",
-        )
 
     @staticmethod
     def _resolve_wedding(
@@ -118,14 +54,17 @@ class ItemService:
 
         from django.apps import apps
 
-        Wedding = apps.get_model("weddings", "Wedding")
+        wedding_model = apps.get_model("weddings", "Wedding")
 
-        return resolve_tenant_resource(
-            Wedding,
-            company,
-            wedding_input,
-            detail="Casamento não encontrado ou acesso negado.",
-            code="wedding_not_found_or_denied",
+        return cast(
+            "Wedding | None",
+            resolve_tenant_resource(
+                wedding_model,
+                company,
+                wedding_input,
+                detail="Casamento não encontrado ou acesso negado.",
+                code="wedding_not_found_or_denied",
+            ),
         )
 
     @staticmethod

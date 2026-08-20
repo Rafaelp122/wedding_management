@@ -15,6 +15,7 @@ from ninja.errors import HttpError
 from ninja_jwt.schema import TokenRefreshOutputSchema
 from ninja_jwt.tokens import RefreshToken
 
+from apps.core.exceptions import AuthenticationFailedError
 from apps.users.schemas import TokenOut, UserDataOut, VerifyTokenOut
 from apps.users.services.token_service import TokenService
 
@@ -40,26 +41,40 @@ class TestTokenServiceObtain:
         assert result.user.email == "auth@example.com"
 
     def test_obtain_wrong_password_raises_401(self, user_factory):
-        """Senha incorreta levanta HttpError 401."""
+        """Senha incorreta levanta AuthenticationFailedError 401."""
         user_factory.create(
             email="auth@example.com", password="secure123", is_active=True
         )
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(AuthenticationFailedError) as exc_info:
             TokenService.obtain("auth@example.com", "wrong")
 
         assert exc_info.value.status_code == 401
 
     def test_obtain_inactive_user_raises_401(self, user_factory):
-        """Usuário inativo levanta HttpError 401."""
+        """Usuário inativo levanta AuthenticationFailedError 401."""
         user_factory.create(
             email="inactive@example.com", password="secure123", is_active=False
         )
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(AuthenticationFailedError) as exc_info:
             TokenService.obtain("inactive@example.com", "secure123")
 
         assert exc_info.value.status_code == 401
+
+    def test_obtain_unverified_user_raises_custom_401(self, user_factory):
+        user_factory.create(
+            email="unverified@example.com",
+            password="secure123",
+            is_active=False,
+            is_email_verified=False,
+        )
+
+        with pytest.raises(AuthenticationFailedError) as exc_info:
+            TokenService.obtain("unverified@example.com", "secure123")
+
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.code == "email_not_verified"
 
 
 class TestTokenServiceRefresh:

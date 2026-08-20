@@ -18,6 +18,11 @@ output "django_secret_id" {
   value       = google_secret_manager_secret.django.secret_id
 }
 
+output "email_smtp_password_secret_id" {
+  description = "ID do segredo da senha/API key SMTP no Secret Manager"
+  value       = google_secret_manager_secret.email_smtp_password.secret_id
+}
+
 output "r2_bucket_name" {
   description = "Nome do bucket R2 criado/gerenciado"
   value       = cloudflare_r2_bucket.contracts.name

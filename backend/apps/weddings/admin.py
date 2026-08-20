@@ -4,7 +4,7 @@ from .models import Wedding
 
 
 @admin.register(Wedding)
-class WeddingAdmin(admin.ModelAdmin):
+class WeddingAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = [
         "id",
         "groom_name",

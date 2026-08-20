@@ -1,21 +1,17 @@
 import logging
 from datetime import date
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
-from django.core.exceptions import ValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import QuerySet
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
-    ObjectNotFoundError,
 )
 from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.managers import ExpenseQuerySet
 from apps.finances.models import BudgetCategory, Expense
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
@@ -27,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExpenseService:
-    """Camada de serviço para orquestração de Despesas.
+    """Camada de serviço para mutações e orquestração de Despesas.
 
     Garante que gastos reais respeitem o contexto do casamento, os contratos
     e assegura a rastreabilidade estrita da operação.
@@ -54,53 +50,6 @@ class ExpenseService:
                 ),
                 code="expense_contract_wedding_mismatch",
             )
-
-    @staticmethod
-    def list(
-        company: Company, wedding_id: UUID | str | None = None
-    ) -> QuerySet[Expense]:
-        """Lista despesas de uma empresa.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: UUID ou string do casamento para filtragem opcional.
-
-        Returns:
-            QuerySet[Expense]: QuerySet com as despesas filtradas e detalhadas.
-        """
-        qs = cast(ExpenseQuerySet, Expense.objects.for_tenant(company)).with_details()
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> Expense:
-        """Obtém uma despesa específica pelo seu UUID.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: O UUID da despesa desejada.
-
-        Returns:
-            Expense: A instância da despesa encontrada com detalhes.
-
-        Raises:
-            ObjectNotFoundError: Se a despesa não for encontrada.
-        """
-        # Nota: with_details() é um método do manager customizado.
-        # get_object_or_404_for_tenant usa objects.for_tenant(company).
-        # Para manter with_details(), vamos fazer manualmente ou garantir que
-        # with_details() seja chamado no queryset.
-        try:
-            return (
-                cast(ExpenseQuerySet, Expense.objects.for_tenant(company))
-                .with_details()
-                .get(uuid=uuid)
-            )
-        except (Expense.DoesNotExist, ValueError, ValidationError) as e:
-            raise ObjectNotFoundError(
-                detail="Despesa não encontrada ou acesso negado."
-            ) from e
 
     @staticmethod
     def from_document(company: Company, contract_uuid: UUID | str) -> dict[str, Any]:

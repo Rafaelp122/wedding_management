@@ -1,6 +1,6 @@
 # Arquitetura: Padrão Service Layer
 
-> **Módulo:** [service-layer-pattern](service-layer-pattern.md) | [system-overview](system-overview.md)
+> **Módulo:** [service-layer-pattern](service-layer-pattern.md) | [query-selectors-pattern](query-selectors-pattern.md) | [system-overview](system-overview.md)
 > **ADR de Referência:** ADR-006
 
 ---
@@ -21,7 +21,19 @@ HTTP Request -> Django Ninja Router (api.py) -> Service Function (services.py) -
 
 ## Regras Obrigatórias da Service Layer
 
-1. **Assinatura Explicita de Tenant:** Toda função de serviço deve receber a `Company` como primeiro argumento (ex: `def create_expense(company: Company, ...)`).
-2. **Validação de Modelo Integrada (`full_clean`):** Conforme a ADR-011, a Service Layer garante que `full_clean()` seja chamado antes de persistir alterações no banco.
-3. **Transações Atômicas:** Transações que afetam múltiplas tabelas (ex: criação de despesa com geração automática de parcelas) são envolvidas por `@transaction.atomic`.
-4. **Exceções de Domínio:** A camada de serviço lança exceções de validação (`ValidationError` ou exceções customizadas) que são interceptadas e envelopeadas pelo Django Ninja Exception Handler.
+1. **Assinatura Explícita de Tenant:** Toda função de serviço/seletor deve receber a `Company` como primeiro argumento ou keyword argument obrigatório (ex: `def create_expense(company: Company, ...)`).
+2. **Separação CQRS (Selectors vs Services):**
+   - **Selectors (`selectors/`):** Funções puras dedicadas exclusivamente a consultas e leituras de dados. Retornam instâncias ou `CustomQuerySet` encadeáveis e lazy com isolamento de tenant (`for_tenant`).
+   - **Services (`services/`):** Classes/funções dedicadas exclusivamente a mutações, regras de escrita, orquestração de domínio e efeitos colaterais.
+3. **Validação de Modelo Integrada (`full_clean`):** Conforme a ADR-011, a Service Layer garante que `full_clean()` seja chamado antes de persistir alterações no banco.
+4. **Transações Atômicas:** Transações que afetam múltiplas tabelas (ex: criação de despesa com geração automática de parcelas) são envolvidas por `@transaction.atomic`.
+5. **Exceções de Domínio:** A camada de serviço lança exceções de validação (`ValidationError` ou exceções customizadas como `BusinessRuleViolation` e `DomainIntegrityError`) que são interceptadas e envelopeadas pelo Django Ninja Exception Handler.
+
+---
+
+## Fluxo de Leitura vs. Escrita
+
+```text
+[HTTP GET]  -> Django Ninja Router (api.py) -> Selector Function (selectors/) -> Custom QuerySet (managers.py) -> ORM
+[HTTP POST] -> Django Ninja Router (api.py) -> Service Function (services/)   -> Domain Validation (models.py)  -> DB
+```

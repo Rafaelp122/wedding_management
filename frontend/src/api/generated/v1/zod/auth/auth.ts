@@ -25,12 +25,15 @@ export const AuthRegisterUserBody = zod.object({
   "company_name": zod.string().default(authRegisterUserBodyCompanyNameDefault)
 }).describe('Schema para entrada de novos usuários (Owners).')
 
+export const authRegisterUserResponseIsEmailVerifiedDefault = false;
+
 export const AuthRegisterUserResponse = zod.object({
   "uuid": zod.string(),
   "email": zod.string(),
   "first_name": zod.string(),
   "last_name": zod.string(),
-  "company_slug": zod.union([zod.string(),zod.null()]).optional()
+  "company_slug": zod.union([zod.string(),zod.null()]).optional(),
+  "is_email_verified": zod.boolean().default(authRegisterUserResponseIsEmailVerifiedDefault)
 }).describe('Schema de saída simplificado do usuário.')
 
 /**
@@ -46,6 +49,8 @@ export const AuthObtainTokenBody = zod.object({
   "password": zod.string()
 }).describe('Credenciais para autenticação (obtain token).')
 
+export const authObtainTokenResponseUserIsEmailVerifiedDefault = false;
+
 export const AuthObtainTokenResponse = zod.object({
   "access": zod.string(),
   "refresh": zod.string(),
@@ -53,7 +58,8 @@ export const AuthObtainTokenResponse = zod.object({
   "id": zod.int(),
   "email": zod.string(),
   "first_name": zod.string(),
-  "last_name": zod.string()
+  "last_name": zod.string(),
+  "is_email_verified": zod.boolean().default(authObtainTokenResponseUserIsEmailVerifiedDefault)
 }).describe('Dados básicos do usuário retornados no token JWT.')
 }).describe('Resposta de autenticação com tokens JWT e dados do usuário.')
 
@@ -99,6 +105,8 @@ export const AuthGoogleLoginBody = zod.object({
   "id_token": zod.string()
 }).describe('Payload para autenticação via Google OAuth2.')
 
+export const authGoogleLoginResponseUserIsEmailVerifiedDefault = false;
+
 export const AuthGoogleLoginResponse = zod.object({
   "access": zod.string(),
   "refresh": zod.string(),
@@ -106,7 +114,63 @@ export const AuthGoogleLoginResponse = zod.object({
   "id": zod.int(),
   "email": zod.string(),
   "first_name": zod.string(),
-  "last_name": zod.string()
+  "last_name": zod.string(),
+  "is_email_verified": zod.boolean().default(authGoogleLoginResponseUserIsEmailVerifiedDefault)
 }).describe('Dados básicos do usuário retornados no token JWT.')
 }).describe('Resposta de autenticação com tokens JWT e dados do usuário.')
+
+/**
+ * Solicita a redefinição de senha para um e-mail.
+ * @summary Request Password Reset
+ */
+export const AuthPasswordResetRequestBody = zod.object({
+  "email": zod.email()
+}).describe('Schema para solicitação de redefinição de senha.')
+
+export const AuthPasswordResetRequestResponse = zod.object({
+  "message": zod.string()
+}).describe('Schema de resposta para operações de redefinição de senha.')
+
+/**
+ * Confirma a redefinição de senha usando UID, token e a nova senha.
+ * @summary Confirm Password Reset
+ */
+export const authPasswordResetConfirmBodyNewPasswordMin = 8;
+
+
+
+export const AuthPasswordResetConfirmBody = zod.object({
+  "uid": zod.string(),
+  "token": zod.string(),
+  "new_password": zod.string().min(authPasswordResetConfirmBodyNewPasswordMin)
+}).describe('Schema para confirmação de redefinição de senha.')
+
+export const AuthPasswordResetConfirmResponse = zod.object({
+  "message": zod.string()
+}).describe('Schema de resposta para operações de redefinição de senha.')
+
+/**
+ * Verifica o token de e-mail e ativa o usuário.
+ * @summary Verify Email
+ */
+export const AuthVerifyEmailBody = zod.object({
+  "uid": zod.string(),
+  "token": zod.string()
+})
+
+export const AuthVerifyEmailResponse = zod.object({
+  "message": zod.string()
+})
+
+/**
+ * Reenvia o e-mail de verificação para o usuário (se não estiver verificado).
+ * @summary Resend Verification
+ */
+export const AuthResendVerificationBody = zod.object({
+  "email": zod.email()
+})
+
+export const AuthResendVerificationResponse = zod.object({
+  "message": zod.string()
+})
 

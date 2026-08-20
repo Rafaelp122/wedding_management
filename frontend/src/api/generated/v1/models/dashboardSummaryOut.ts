@@ -6,6 +6,9 @@
  */
 import type { CriticalWeddingOut } from './criticalWeddingOut';
 
+/**
+ * Resumo consolidado de indicadores importantes para o dashboard da empresa.
+ */
 export interface DashboardSummaryOut {
   pending_installments_7d: string;
   urgent_tasks_count: number;

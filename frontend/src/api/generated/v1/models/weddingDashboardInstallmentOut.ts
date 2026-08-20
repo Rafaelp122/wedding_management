@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Métricas de parcela financeira no resumo do casamento.
+ */
 export interface WeddingDashboardInstallmentOut {
   uuid: string;
   installment_number: number;

@@ -1,19 +1,42 @@
 from decimal import Decimal
+from typing import Any, cast
 
 import pytest
 from django.core.exceptions import ValidationError
 
-from apps.finances.models import Expense
+from apps.finances.models import Budget, BudgetCategory, Expense, Installment
 from apps.finances.tests.factories import (
-    BudgetCategoryFactory,
-    BudgetFactory,
-    ExpenseFactory,
-    InstallmentFactory,
+    BudgetCategoryFactory as _BudgetCategoryFactory,
 )
-from apps.weddings.tests.factories import WeddingFactory
+from apps.finances.tests.factories import BudgetFactory as _BudgetFactory
+from apps.finances.tests.factories import ExpenseFactory as _ExpenseFactory
+from apps.finances.tests.factories import InstallmentFactory as _InstallmentFactory
+from apps.users.models import User
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
 
 
-def _setup_expense(user):
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> BudgetCategory:
+    return cast(BudgetCategory, _BudgetCategoryFactory(*args, **kwargs))
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Budget:
+    return cast(Budget, _BudgetFactory(*args, **kwargs))
+
+
+def ExpenseFactory(*args: Any, **kwargs: Any) -> Expense:
+    return cast(Expense, _ExpenseFactory(*args, **kwargs))
+
+
+def InstallmentFactory(*args: Any, **kwargs: Any) -> Installment:
+    return cast(Installment, _InstallmentFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
+
+
+def _setup_expense(user: User) -> tuple[Wedding, BudgetCategory]:
     """Helper: cria wedding + budget + category no contexto do user."""
     wedding = WeddingFactory(user_context=user)
     budget = BudgetFactory(wedding=wedding)
@@ -21,7 +44,7 @@ def _setup_expense(user):
     return wedding, category
 
 
-def _make_expense(user, category, **kwargs):
+def _make_expense(user: User, category: BudgetCategory, **kwargs: Any) -> Expense:
     """Helper: cria expense vinculado ao wedding da categoria."""
     return ExpenseFactory(
         wedding=category.wedding, category=category, contract=None, **kwargs
@@ -32,7 +55,7 @@ def _make_expense(user, category, **kwargs):
 class TestExpenseModelMetadata:
     """Testes de representação e metadados do modelo Expense."""
 
-    def test_expense_ordering_by_created_at_descending(self, user):
+    def test_expense_ordering_by_created_at_descending(self, user: Any) -> None:
         """Ordenação padrão deve ser por -created_at (mais recente primeiro)."""
         _, category = _setup_expense(user)
         e1 = _make_expense(user, category, description="Despesa Antiga")
@@ -42,7 +65,7 @@ class TestExpenseModelMetadata:
         assert expenses[0] == e2
         assert expenses[1] == e1
 
-    def test_expense_str_representation(self, user):
+    def test_expense_str_representation(self, user: Any) -> None:
         """__str__ deve conter o nome da despesa."""
         _, category = _setup_expense(user)
         expense = _make_expense(user, category, name="Buffet Premium")
@@ -54,7 +77,7 @@ class TestExpenseModelMetadata:
 class TestExpenseToleranceZero:
     """Testes da regra de Tolerância Zero (ADR-010 / BR-F01)."""
 
-    def test_expense_clean_passes_when_sum_matches(self, user):
+    def test_expense_clean_passes_when_sum_matches(self, user: Any) -> None:
         """Soma das parcelas == actual_amount deve passar na validação."""
         _, category = _setup_expense(user)
         expense = _make_expense(user, category, actual_amount=Decimal("1000.00"))
@@ -71,7 +94,7 @@ class TestExpenseToleranceZero:
 
         expense.full_clean()
 
-    def test_expense_clean_fails_when_sum_mismatch(self, user):
+    def test_expense_clean_fails_when_sum_mismatch(self, user: Any) -> None:
         """Soma das parcelas != actual_amount deve levantar ValidationError."""
         _, category = _setup_expense(user)
         expense = _make_expense(user, category, actual_amount=Decimal("1000.00"))
@@ -88,13 +111,13 @@ class TestExpenseToleranceZero:
 
         assert "não bate" in str(exc_info.value).lower()
 
-    def test_expense_clean_passes_with_zero_actual_amount(self, user):
+    def test_expense_clean_passes_with_zero_actual_amount(self, user: Any) -> None:
         """Despesa com actual_amount = 0 deve passar (sem parcelas)."""
         _, category = _setup_expense(user)
         expense = _make_expense(user, category, actual_amount=Decimal("0.00"))
         expense.full_clean()
 
-    def test_expense_clean_when_no_installments(self, user):
+    def test_expense_clean_when_no_installments(self, user: Any) -> None:
         """Sem parcelas criadas e actual_amount > 0: soma = 0, deve falhar."""
         _, category = _setup_expense(user)
         expense = _make_expense(user, category, actual_amount=Decimal("500.00"))
@@ -104,7 +127,7 @@ class TestExpenseToleranceZero:
 
         assert "não bate" in str(exc_info.value).lower()
 
-    def test_expense_creation_skips_tolerance_validation(self, user):
+    def test_expense_creation_skips_tolerance_validation(self, user: Any) -> None:
         """Criação (primeiro save) não valida Tolerância Zero — gap intencional.
 
         O guard self.pk em Expense.clean() impede a validação durante o

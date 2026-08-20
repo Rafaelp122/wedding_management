@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from typing import no_type_check
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
@@ -9,14 +9,21 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
+from apps.finances.models import Budget, BudgetCategory, Expense, Installment
 from apps.finances.schemas import ExpenseIn
 from apps.finances.tests.factories import (
-    BudgetCategoryFactory,
-    BudgetFactory,
-    ExpenseFactory,
-    InstallmentFactory,
+    BudgetCategoryFactory as _BudgetCategoryFactory,
 )
-from apps.logistics.models import Contract
+from apps.finances.tests.factories import (
+    BudgetFactory as _BudgetFactory,
+)
+from apps.finances.tests.factories import (
+    ExpenseFactory as _ExpenseFactory,
+)
+from apps.finances.tests.factories import (
+    InstallmentFactory as _InstallmentFactory,
+)
+from apps.logistics.models import Contract, Item, Supplier
 from apps.logistics.schemas import (
     ContractFullCreateIn,
     ContractIn,
@@ -25,12 +32,58 @@ from apps.logistics.schemas import (
     ItemIn,
 )
 from apps.logistics.services.contract_service import ContractService
-from apps.logistics.tests.factories import ContractFactory, ItemFactory, SupplierFactory
-from apps.users.tests.factories import UserFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.logistics.tests.factories import (
+    ContractFactory as _ContractFactory,
+)
+from apps.logistics.tests.factories import (
+    ItemFactory as _ItemFactory,
+)
+from apps.logistics.tests.factories import (
+    SupplierFactory as _SupplierFactory,
+)
+from apps.users.models import User
+from apps.users.tests.factories import UserFactory as _UserFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
 
 
-def _setup_contract_context(user):
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def ItemFactory(*args: Any, **kwargs: Any) -> Item:
+    return cast(Item, _ItemFactory(*args, **kwargs))
+
+
+def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
+    return cast(Supplier, _SupplierFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Budget:
+    return cast(Budget, _BudgetFactory(*args, **kwargs))
+
+
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> BudgetCategory:
+    return cast(BudgetCategory, _BudgetCategoryFactory(*args, **kwargs))
+
+
+def ExpenseFactory(*args: Any, **kwargs: Any) -> Expense:
+    return cast(Expense, _ExpenseFactory(*args, **kwargs))
+
+
+def InstallmentFactory(*args: Any, **kwargs: Any) -> Installment:
+    return cast(Installment, _InstallmentFactory(*args, **kwargs))
+
+
+def _setup_contract_context(user: User) -> tuple[Wedding, Supplier]:
     """Helper: cria wedding + supplier no contexto do user."""
     wedding = WeddingFactory(user_context=user)
     supplier = SupplierFactory(company=user.company)
@@ -41,11 +94,11 @@ def _setup_contract_context(user):
 class TestContractServiceCreate:
     """Testes de criação de contratos via ContractService."""
 
-    def test_create_contract_success(self, user):
+    def test_create_contract_success(self, user: Any) -> None:
         """Criação de contrato com wedding e supplier."""
         wedding, supplier = _setup_contract_context(user)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "supplier": supplier.uuid,
             "name": "Buffet Completo",
@@ -60,11 +113,11 @@ class TestContractServiceCreate:
         assert contract.total_amount == Decimal("10000.00")
         assert contract.status == Contract.StatusChoices.DRAFT
 
-    def test_create_contract_with_instances(self, user):
+    def test_create_contract_with_instances(self, user: Any) -> None:
         """create() aceita instâncias de Wedding e Supplier."""
         wedding, supplier = _setup_contract_context(user)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "supplier": supplier.uuid,
             "name": "Buffet Teste",
@@ -75,11 +128,11 @@ class TestContractServiceCreate:
         assert contract.wedding == wedding
         assert contract.supplier == supplier
 
-    def test_create_contract_wedding_not_found(self, user):
+    def test_create_contract_wedding_not_found(self, user: Any) -> None:
         """UUID de wedding inexistente levanta ObjectNotFoundError."""
         _, supplier = _setup_contract_context(user)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": uuid4(),
             "supplier": supplier.uuid,
             "total_amount": Decimal("1000.00"),
@@ -91,11 +144,11 @@ class TestContractServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_contract_supplier_not_found(self, user):
+    def test_create_contract_supplier_not_found(self, user: Any) -> None:
         """UUID de supplier inexistente levanta ObjectNotFoundError."""
         wedding, _ = _setup_contract_context(user)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "supplier": uuid4(),
             "total_amount": Decimal("1000.00"),
@@ -107,14 +160,14 @@ class TestContractServiceCreate:
 
         assert "supplier_not_found_or_denied" in str(exc_info.value.code)
 
-    def test_create_contract_multitenancy_wedding(self):
+    def test_create_contract_multitenancy_wedding(self) -> None:
         """Usuário A não pode criar contrato com wedding do Usuário B."""
         user_a = UserFactory()
         user_b = UserFactory()
         wedding_b = WeddingFactory(user_context=user_b)
         supplier_a = SupplierFactory(company=user_a.company)
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding_b.uuid,
             "supplier": supplier_a.uuid,
             "total_amount": Decimal("1000.00"),
@@ -126,7 +179,6 @@ class TestContractServiceCreate:
 
         assert "wedding_not_found_or_denied" in str(exc_info.value.code)
 
-    @no_type_check
     def test_create_contract_rejects_supplier_instance_from_other_tenant(self) -> None:
         """Instâncias pré-carregadas também precisam respeitar o tenant."""
         user_a = UserFactory()
@@ -153,13 +205,13 @@ class TestContractServiceCreate:
     # O status is_active do supplier é um controle interno, não uma validação
     # de integridade referencial. O contrato pode referenciar um supplier que
     # foi desativado após a criação.
-    def test_create_contract_with_inactive_supplier(self, user):
+    def test_create_contract_with_inactive_supplier(self, user: Any) -> None:
         """Criação de contrato com fornecedor inativo deve funcionar."""
         wedding, supplier = _setup_contract_context(user)
         supplier.is_active = False
         supplier.save()
 
-        data = {
+        data: dict[str, Any] = {
             "wedding": wedding.uuid,
             "supplier": supplier.uuid,
             "name": "Contrato Fornecedor Inativo",
@@ -175,7 +227,7 @@ class TestContractServiceCreate:
 class TestContractServiceUpdate:
     """Testes de atualização de contratos via ContractService."""
 
-    def test_update_contract_description(self, user):
+    def test_update_contract_description(self, user: Any) -> None:
         """Atualização de campos simples é permitida."""
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(
@@ -188,7 +240,7 @@ class TestContractServiceUpdate:
 
         assert updated.description == "Nova descrição"
 
-    def test_update_contract_change_supplier(self, user):
+    def test_update_contract_change_supplier(self, user: Any) -> None:
         """Troca de supplier é permitida com validação multitenant."""
         wedding, supplier1 = _setup_contract_context(user)
         supplier2 = SupplierFactory(company=user.company)
@@ -200,7 +252,9 @@ class TestContractServiceUpdate:
 
         assert updated.supplier == supplier2
 
-    def test_update_expiration_date_with_alert_days_before(self, make_contract):
+    def test_update_expiration_date_with_alert_days_before(
+        self, make_contract: Any
+    ) -> None:
         """Atualizar expiration_date e alert_days_before juntos."""
         contract = make_contract("DRAFT")
         future_date = date(2027, 12, 31)
@@ -213,7 +267,7 @@ class TestContractServiceUpdate:
         assert updated.expiration_date == future_date
         assert updated.alert_days_before == 30
 
-    def test_update_with_valid_status_transition(self, make_contract):
+    def test_update_with_valid_status_transition(self, make_contract: Any) -> None:
         """update() com status válido chama transition_status internamente."""
         contract = make_contract("DRAFT")
 
@@ -223,7 +277,9 @@ class TestContractServiceUpdate:
 
         assert updated.status == "PENDING"
 
-    def test_update_with_invalid_status_transition_raises_error(self, make_contract):
+    def test_update_with_invalid_status_transition_raises_error(
+        self, make_contract: Any
+    ) -> None:
         """update() com transição inválida propaga BusinessRuleViolation."""
         contract = make_contract("DRAFT")
 
@@ -234,7 +290,7 @@ class TestContractServiceUpdate:
 
         assert "Não é permitido transitar" in str(exc_info.value)
 
-    def test_update_contract_cross_tenant(self, user):
+    def test_update_contract_cross_tenant(self, user: Any) -> None:
         """Contrato de outro tenant não pode ser atualizado."""
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
@@ -246,9 +302,8 @@ class TestContractServiceUpdate:
                 user.company, other_contract, ContractPatchIn(description="Hack")
             )
 
-    @no_type_check
     def test_update_contract_rejects_supplier_instance_from_other_tenant(
-        self, user
+        self, user: Any
     ) -> None:
         """Update não pode receber Supplier pré-carregado de outro tenant."""
         wedding, supplier = _setup_contract_context(user)
@@ -267,7 +322,7 @@ class TestContractServiceUpdate:
 class TestContractServiceDelete:
     """Testes de deleção de contratos via ContractService."""
 
-    def test_delete_contract_orphans_items(self, user):
+    def test_delete_contract_orphans_items(self, user: Any) -> None:
         """Deleção de contrato desvincula itens (contract=None) antes de deletar."""
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(wedding=wedding, supplier=supplier)
@@ -281,7 +336,7 @@ class TestContractServiceDelete:
         item.refresh_from_db()
         assert item.contract is None
 
-    def test_delete_contract_with_expenses_succeeds(self, user):
+    def test_delete_contract_with_expenses_succeeds(self, user: Any) -> None:
         """Contrato com Expense vinculada pode ser deletado (SET_NULL).
         Diferente de amarras de integridade pesada, o vínculo Contrato-Despesa
         é flexível: deletar o contrato apenas deixa a despesa sem referência,
@@ -301,7 +356,7 @@ class TestContractServiceDelete:
 
         assert Contract.objects.filter(uuid=contract.uuid).count() == 0
 
-    def test_delete_contract_with_file_removes_physical_file(self, user):
+    def test_delete_contract_with_file_removes_physical_file(self, user: Any) -> None:
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(
             wedding=wedding, supplier=supplier, pdf_file="contracts/dummy.pdf"
@@ -310,7 +365,7 @@ class TestContractServiceDelete:
         ContractService.delete(user.company, contract)
         assert Contract.objects.filter(uuid=contract.uuid).count() == 0
 
-    def test_delete_contract_cross_tenant(self, user):
+    def test_delete_contract_cross_tenant(self, user: Any) -> None:
         """Contrato de outro tenant não pode ser deletado."""
         other_user = UserFactory()
         other_wedding = WeddingFactory(company=other_user.company)
@@ -322,191 +377,11 @@ class TestContractServiceDelete:
 
 
 @pytest.mark.django_db
-class TestContractServiceListAndGet:
-    """Testes de listagem e obtenção de contratos."""
-
-    def test_list_contracts_multitenancy(self):
-        """list() retorna apenas contratos do tenant."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        wedding_a = WeddingFactory(user_context=user_a)
-        wedding_b = WeddingFactory(user_context=user_b)
-        supplier_a = SupplierFactory(company=user_a.company)
-        supplier_b = SupplierFactory(company=user_b.company)
-
-        ContractFactory(
-            wedding=wedding_a, supplier=supplier_a, description="Contrato A"
-        )
-        ContractFactory(
-            wedding=wedding_b, supplier=supplier_b, description="Contrato B"
-        )
-
-        qs_a = ContractService.list(user_a.company)
-        assert qs_a.count() == 1
-        assert qs_a.first().description == "Contrato A"
-
-        qs_b = ContractService.list(user_b.company)
-        assert qs_b.count() == 1
-        assert qs_b.first().description == "Contrato B"
-
-    def test_list_contracts_filter_by_wedding(self, user):
-        """list() com wedding_id filtra por casamento."""
-        wedding1, supplier = _setup_contract_context(user)
-        wedding2 = WeddingFactory(user_context=user)
-
-        ContractFactory(wedding=wedding1, supplier=supplier, description="C1")
-        ContractFactory(wedding=wedding2, supplier=supplier, description="C2")
-
-        qs = ContractService.list(user.company, wedding_id=wedding1.uuid)
-        assert qs.count() == 1
-        assert qs.first().description == "C1"
-
-    def test_get_contract_success(self, user):
-        """get() retorna contrato com select_related."""
-        wedding, supplier = _setup_contract_context(user)
-        contract = ContractFactory(wedding=wedding, supplier=supplier)
-
-        result = ContractService.get(user.company, contract.uuid)
-        assert result.uuid == contract.uuid
-        assert result.supplier == supplier
-        assert result.wedding == wedding
-
-    def test_get_contract_with_expense(self, user):
-        wedding, supplier = _setup_contract_context(user)
-        contract = ContractFactory(wedding=wedding, supplier=supplier)
-        budget = BudgetFactory(wedding=wedding)
-        category = BudgetCategoryFactory(budget=budget, wedding=wedding)
-        expense = ExpenseFactory(
-            wedding=wedding,
-            category=category,
-            contract=contract,
-            actual_amount=contract.total_amount,
-        )
-
-        result = ContractService.get(user.company, contract.uuid)
-        assert result.uuid == contract.uuid
-        assert result.expense_id == expense.uuid
-
-    def test_list_contracts_filter_by_parent(self, user):
-        """list() com parent_id filtra apenas aditivos do contrato pai."""
-        wedding, supplier = _setup_contract_context(user)
-        parent = ContractFactory(
-            wedding=wedding, supplier=supplier, description="Contrato Pai"
-        )
-        ContractFactory(
-            wedding=wedding,
-            supplier=supplier,
-            description="Aditivo 1",
-            parent=parent,
-        )
-        ContractFactory(
-            wedding=wedding, supplier=supplier, description="Outro Contrato"
-        )
-
-        qs = ContractService.list(user.company, parent_id=parent.uuid)
-        assert qs.count() == 1
-        assert qs.first().description == "Aditivo 1"
-
-    def test_get_contract_not_found(self, user):
-        """UUID inexistente levanta ObjectNotFoundError."""
-        with pytest.raises(ObjectNotFoundError):
-            ContractService.get(user.company, uuid4())
-
-    def test_get_contract_multitenancy(self):
-        """Usuário A não pode acessar contrato do Usuário B."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        wedding_b = WeddingFactory(user_context=user_b)
-        supplier_b = SupplierFactory(company=user_b.company)
-        contract_b = ContractFactory(wedding=wedding_b, supplier=supplier_b)
-
-        with pytest.raises(ObjectNotFoundError):
-            ContractService.get(user_a.company, contract_b.uuid)
-
-    @no_type_check
-    def test_list_annotations_ignore_cross_tenant_related_records(self) -> None:
-        """Subqueries de list() não consideram vínculos corrompidos de outro tenant."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        wedding_a = WeddingFactory(user_context=user_a)
-        wedding_b = WeddingFactory(user_context=user_b)
-        supplier_a = SupplierFactory(company=user_a.company)
-        supplier_b = SupplierFactory(company=user_b.company)
-        contract = ContractFactory(wedding=wedding_a, supplier=supplier_a)
-        other_category = BudgetCategoryFactory(
-            budget=BudgetFactory(wedding=wedding_b),
-            wedding=wedding_b,
-        )
-        other_expense = ExpenseFactory(
-            wedding=wedding_b,
-            category=other_category,
-            contract=None,
-        )
-        other_addendum = ContractFactory(wedding=wedding_b, supplier=supplier_b)
-
-        ExpenseFactory._meta.model.objects.filter(pk=other_expense.pk).update(
-            contract=contract,
-            company=user_b.company,
-        )
-        InstallmentFactory(
-            expense=other_expense,
-            amount=Decimal("123.45"),
-            status="PAID",
-            paid_date=date.today(),
-        )
-        Contract.objects.filter(pk=other_addendum.pk).update(parent=contract)
-
-        result = ContractService.list(user_a.company).get(uuid=contract.uuid)
-
-        assert result.expense_id is None
-        assert result.total_paid == Decimal("0.00")
-        assert result.addendums_count == 0
-
-    @no_type_check
-    def test_get_annotations_ignore_cross_tenant_related_records(self) -> None:
-        """Subqueries de get() não consideram vínculos corrompidos de outro tenant."""
-        user_a = UserFactory()
-        user_b = UserFactory()
-        wedding_a = WeddingFactory(user_context=user_a)
-        wedding_b = WeddingFactory(user_context=user_b)
-        supplier_a = SupplierFactory(company=user_a.company)
-        supplier_b = SupplierFactory(company=user_b.company)
-        contract = ContractFactory(wedding=wedding_a, supplier=supplier_a)
-        other_category = BudgetCategoryFactory(
-            budget=BudgetFactory(wedding=wedding_b),
-            wedding=wedding_b,
-        )
-        other_expense = ExpenseFactory(
-            wedding=wedding_b,
-            category=other_category,
-            contract=None,
-        )
-        other_addendum = ContractFactory(wedding=wedding_b, supplier=supplier_b)
-
-        ExpenseFactory._meta.model.objects.filter(pk=other_expense.pk).update(
-            contract=contract,
-            company=user_b.company,
-        )
-        InstallmentFactory(
-            expense=other_expense,
-            amount=Decimal("123.45"),
-            status="PAID",
-            paid_date=date.today(),
-        )
-        Contract.objects.filter(pk=other_addendum.pk).update(parent=contract)
-
-        result = ContractService.get(user_a.company, contract.uuid)
-
-        assert result.expense_id is None
-        assert result.total_paid == Decimal("0.00")
-        assert result.addendums_count == 0
-
-
 @pytest.mark.django_db
 class TestContractServiceUploadFile:
     """Testes de upload de arquivo para contrato via ContractService."""
 
-    def test_upload_file_invalid_extension_fails(self, user):
+    def test_upload_file_invalid_extension_fails(self, user: Any) -> None:
         """upload_file com extensão inválida deve falhar na validação do model."""
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(wedding=wedding, supplier=supplier)
@@ -518,7 +393,7 @@ class TestContractServiceUploadFile:
 
         assert "não suportado" in str(exc_info.value).lower()
 
-    def test_upload_file_valid_key_succeeds(self, user):
+    def test_upload_file_valid_key_succeeds(self, user: Any) -> None:
         """upload_file com key válida deve salvar com sucesso."""
         wedding, supplier = _setup_contract_context(user)
         contract = ContractFactory(wedding=wedding, supplier=supplier)
@@ -535,21 +410,21 @@ class TestContractServiceUploadFile:
 class TestContractServiceTransitionStatus:
     """Testes da máquina de estados de contratos."""
 
-    def test_draft_to_pending(self, make_contract):
+    def test_draft_to_pending(self, make_contract: Any) -> None:
         contract = make_contract("DRAFT")
         result = ContractService.transition_status(
             contract.company, contract, "PENDING"
         )
         assert result.status == "PENDING"
 
-    def test_draft_to_canceled(self, make_contract):
+    def test_draft_to_canceled(self, make_contract: Any) -> None:
         contract = make_contract("DRAFT")
         result = ContractService.transition_status(
             contract.company, contract, "CANCELED"
         )
         assert result.status == "CANCELED"
 
-    def test_pending_to_signed(self, make_contract):
+    def test_pending_to_signed(self, make_contract: Any) -> None:
         contract = make_contract("PENDING")
         contract.pdf_file = "contracts/test.pdf"
         contract.signed_date = date.today()
@@ -558,19 +433,19 @@ class TestContractServiceTransitionStatus:
         result = ContractService.transition_status(contract.company, contract, "SIGNED")
         assert result.status == "SIGNED"
 
-    def test_pending_to_draft(self, make_contract):
+    def test_pending_to_draft(self, make_contract: Any) -> None:
         contract = make_contract("PENDING")
         result = ContractService.transition_status(contract.company, contract, "DRAFT")
         assert result.status == "DRAFT"
 
-    def test_pending_to_canceled(self, make_contract):
+    def test_pending_to_canceled(self, make_contract: Any) -> None:
         contract = make_contract("PENDING")
         result = ContractService.transition_status(
             contract.company, contract, "CANCELED"
         )
         assert result.status == "CANCELED"
 
-    def test_signed_to_canceled(self, user):
+    def test_signed_to_canceled(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(
@@ -586,18 +461,18 @@ class TestContractServiceTransitionStatus:
         )
         assert result.status == "CANCELED"
 
-    def test_canceled_to_draft(self, make_contract):
+    def test_canceled_to_draft(self, make_contract: Any) -> None:
         contract = make_contract("CANCELED")
         result = ContractService.transition_status(contract.company, contract, "DRAFT")
         assert result.status == "DRAFT"
 
-    def test_invalid_transition_raises_error(self, make_contract):
+    def test_invalid_transition_raises_error(self, make_contract: Any) -> None:
         contract = make_contract("DRAFT")
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.transition_status(contract.company, contract, "SIGNED")
         assert "Não é permitido transitar" in str(exc_info.value)
 
-    def test_signed_to_draft_invalid(self, user):
+    def test_signed_to_draft_invalid(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         contract = ContractFactory(
@@ -611,12 +486,12 @@ class TestContractServiceTransitionStatus:
         with pytest.raises(BusinessRuleViolation):
             ContractService.transition_status(contract.company, contract, "DRAFT")
 
-    def test_canceled_to_signed_invalid(self, make_contract):
+    def test_canceled_to_signed_invalid(self, make_contract: Any) -> None:
         contract = make_contract("CANCELED")
         with pytest.raises(BusinessRuleViolation):
             ContractService.transition_status(contract.company, contract, "SIGNED")
 
-    def test_transition_status_multitenancy(self, make_contract):
+    def test_transition_status_multitenancy(self, make_contract: Any) -> None:
         """Transição com company diferente deve falhar — ou o service
         deve validar que instance pertence à company passada."""
         contract = make_contract("DRAFT")
@@ -625,7 +500,9 @@ class TestContractServiceTransitionStatus:
         with pytest.raises(ObjectNotFoundError):
             ContractService.transition_status(other_user.company, contract, "PENDING")
 
-    def test_transition_to_signed_without_pdf_raises_error(self, make_contract):
+    def test_transition_to_signed_without_pdf_raises_error(
+        self, make_contract: Any
+    ) -> None:
         """Transição para SIGNED sem PDF vinculado deve falhar."""
         contract = make_contract("PENDING", pdf_file=None)
 
@@ -633,7 +510,9 @@ class TestContractServiceTransitionStatus:
             ContractService.transition_status(contract.company, contract, "SIGNED")
         assert "PDF" in str(exc_info.value.detail)
 
-    def test_transition_to_signed_without_signed_date_raises_error(self, make_contract):
+    def test_transition_to_signed_without_signed_date_raises_error(
+        self, make_contract: Any
+    ) -> None:
         """Transição para SIGNED sem signed_date deve falhar."""
         contract = make_contract(
             "PENDING",
@@ -645,7 +524,9 @@ class TestContractServiceTransitionStatus:
             ContractService.transition_status(contract.company, contract, "SIGNED")
         assert "data" in str(exc_info.value.detail).lower()
 
-    def test_cancel_contract_with_pending_installments(self, make_contract, user):
+    def test_cancel_contract_with_pending_installments(
+        self, make_contract: Any, user: Any
+    ) -> None:
         """Cancelar contrato com parcelas pendentes deve ser permitido."""
         from apps.finances.tests.factories import (
             BudgetCategoryFactory,
@@ -684,7 +565,7 @@ class TestContractServiceTransitionStatus:
 class TestContractServiceDeleteFile:
     """Testes de remoção de arquivo de contrato."""
 
-    def test_delete_file_success(self, contract_with_file):
+    def test_delete_file_success(self, contract_with_file: Any) -> None:
         assert contract_with_file.pdf_file.name
 
         ContractService.delete_file(contract_with_file.company, contract_with_file.uuid)
@@ -692,11 +573,11 @@ class TestContractServiceDeleteFile:
         contract_with_file.refresh_from_db()
         assert contract_with_file.pdf_file.name == ""
 
-    def test_delete_file_contract_not_found(self, user):
+    def test_delete_file_contract_not_found(self, user: Any) -> None:
         with pytest.raises(ObjectNotFoundError):
             ContractService.delete_file(user.company, uuid4())
 
-    def test_delete_file_multitenancy(self, contract_with_file, user):
+    def test_delete_file_multitenancy(self, contract_with_file: Any, user: Any) -> None:
         other_user = UserFactory()
         with pytest.raises(ObjectNotFoundError):
             ContractService.delete_file(other_user.company, contract_with_file.uuid)
@@ -706,7 +587,7 @@ class TestContractServiceDeleteFile:
 class TestContractServiceResolveParent:
     """Testes de vinculação de contrato pai via update()."""
 
-    def test_update_parent_success(self, user):
+    def test_update_parent_success(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         parent = ContractFactory(
@@ -719,13 +600,13 @@ class TestContractServiceResolveParent:
         )
         child = ContractFactory(wedding=wedding, supplier=supplier, status="DRAFT")
         ContractService.update(
-            child.company, child, ContractPatchIn(parent=str(parent.uuid))
+            child.company, child, ContractPatchIn(parent=parent.uuid)
         )
 
         child.refresh_from_db()
         assert child.parent == parent
 
-    def test_update_parent_self_raises_error(self, make_contract):
+    def test_update_parent_self_raises_error(self, make_contract: Any) -> None:
         contract = make_contract("DRAFT")
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.update(
@@ -733,7 +614,7 @@ class TestContractServiceResolveParent:
             )
         assert "não pode ser pai de si mesmo" in str(exc_info.value)
 
-    def test_update_parent_cross_wedding_raises_error(self, user):
+    def test_update_parent_cross_wedding_raises_error(self, user: Any) -> None:
         parent = ContractFactory(
             wedding__company=user.company,
             status="SIGNED",
@@ -749,11 +630,11 @@ class TestContractServiceResolveParent:
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.update(
-                child.company, child, ContractPatchIn(parent=str(parent.uuid))
+                child.company, child, ContractPatchIn(parent=parent.uuid)
             )
         assert "deve pertencer ao mesmo casamento" in str(exc_info.value)
 
-    def test_update_parent_circular_raises_error(self, user):
+    def test_update_parent_circular_raises_error(self, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         ancestor = ContractFactory(
@@ -782,11 +663,11 @@ class TestContractServiceResolveParent:
             )
         assert "descendente" in str(exc_info.value)
 
-    def test_update_parent_not_found_raises_error(self, make_contract):
+    def test_update_parent_not_found_raises_error(self, make_contract: Any) -> None:
         contract = make_contract("DRAFT")
         with pytest.raises(ObjectNotFoundError):
             ContractService.update(
-                contract.company, contract, ContractPatchIn(parent=str(uuid4()))
+                contract.company, contract, ContractPatchIn(parent=uuid4())
             )
 
 
@@ -794,7 +675,7 @@ class TestContractServiceResolveParent:
 class TestContractServiceCreateFull:
     """Testes de criação completa de contrato via ContractService.create_full()."""
 
-    def _setup(self, user):
+    def _setup(self, user: Any) -> tuple[Wedding, Supplier, BudgetCategory]:
         """
         Cria o contexto mínimo para criação completa de contratos.
 
@@ -808,7 +689,7 @@ class TestContractServiceCreateFull:
         category = BudgetCategoryFactory(budget=budget)
         return wedding, supplier, category
 
-    def test_create_full_contract_only(self, user):
+    def test_create_full_contract_only(self, user: Any) -> None:
         """Cria contrato sem file, items ou expense."""
         wedding, supplier, _ = self._setup(user)
         contract_data = ContractIn(
@@ -825,7 +706,7 @@ class TestContractServiceCreateFull:
         assert contract.total_amount == Decimal("10000.00")
         assert not contract.pdf_file
 
-    def test_create_full_with_file(self, user):
+    def test_create_full_with_file(self, user: Any) -> None:
         """Cria contrato com upload de arquivo."""
         wedding, supplier, _ = self._setup(user)
         contract_data = ContractIn(
@@ -841,7 +722,7 @@ class TestContractServiceCreateFull:
         )
         assert contract.pdf_file.name == "contracts/contrato.pdf"
 
-    def test_create_full_with_items(self, user):
+    def test_create_full_with_items(self, user: Any) -> None:
         """Cria contrato com itens via items_data."""
         wedding, supplier, _ = self._setup(user)
         contract_data = ContractIn(
@@ -861,7 +742,7 @@ class TestContractServiceCreateFull:
         )
         assert contract.items.count() == 2
 
-    def test_create_full_with_expense(self, user):
+    def test_create_full_with_expense(self, user: Any) -> None:
         """Cria contrato com despesa vinculada."""
         wedding, supplier, category = self._setup(user)
         contract_data = ContractIn(
@@ -896,7 +777,7 @@ class TestContractServiceCreateFull:
             "finances_expense" in query["sql"] for query in ctx.captured_queries
         )
 
-    def test_create_full_with_all(self, user):
+    def test_create_full_with_all(self, user: Any) -> None:
         """Cria contrato completo: file + items + expense."""
         wedding, supplier, category = self._setup(user)
         contract_data = ContractIn(
@@ -928,8 +809,7 @@ class TestContractServiceCreateFull:
         assert contract.expense is not None
         assert contract.expense.installments.count() == 3
 
-    @no_type_check
-    def test_create_full_from_payload_with_all(self, user) -> None:
+    def test_create_full_from_payload_with_all(self, user: Any) -> None:
         """Cria contrato completo a partir do schema usado pela API."""
         wedding, supplier, category = self._setup(user)
         payload = ContractFullCreateIn(
@@ -959,8 +839,9 @@ class TestContractServiceCreateFull:
         assert contract.expense is not None
         assert contract.expense.installments.count() == 2
 
-    @no_type_check
-    def test_create_full_from_payload_rejects_non_list_items_data(self, user) -> None:
+    def test_create_full_from_payload_rejects_non_list_items_data(
+        self, user: Any
+    ) -> None:
         """items_data precisa ser uma lista JSON de objetos."""
         wedding, supplier, _ = self._setup(user)
         payload = ContractFullCreateIn(
@@ -979,8 +860,7 @@ class TestContractServiceCreateFull:
 
         assert exc_info.value.code == "invalid_items_data"
 
-    @no_type_check
-    def test_create_full_from_payload_rejects_non_object_items(self, user) -> None:
+    def test_create_full_from_payload_rejects_non_object_items(self, user: Any) -> None:
         """Cada item de items_data precisa ser um objeto JSON."""
         wedding, supplier, _ = self._setup(user)
         payload = ContractFullCreateIn(
@@ -999,7 +879,6 @@ class TestContractServiceCreateFull:
 
         assert exc_info.value.code == "invalid_items_data"
 
-    @no_type_check
     def test_create_full_from_payload_cross_tenant_wedding_raises_error(self) -> None:
         """Payload da API preserva isolamento ao delegar a criação completa."""
         user_a = UserFactory()
@@ -1019,7 +898,7 @@ class TestContractServiceCreateFull:
                 payload=payload,
             )
 
-    def test_create_full_invalid_file_type(self, user):
+    def test_create_full_invalid_file_type(self, user: Any) -> None:
         """Arquivo com tipo inválido deve falhar."""
         wedding, supplier, _ = self._setup(user)
         contract_data = ContractIn(
@@ -1036,7 +915,7 @@ class TestContractServiceCreateFull:
             )
         assert "não suportado" in str(exc_info.value)
 
-    def test_create_full_invalid_file_size(self, user):
+    def test_create_full_invalid_file_size(self, user: Any) -> None:
         """Arquivo com tamanho acima de 10MB deve falhar via model."""
         from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -1061,7 +940,7 @@ class TestContractServiceCreateFull:
             contract.full_clean()
         assert "excede o limite" in str(exc_info.value).lower()
 
-    def test_create_full_with_parent(self, user):
+    def test_create_full_with_parent(self, user: Any) -> None:
         """Cria contrato como aditivo de outro contrato."""
         wedding, supplier, _ = self._setup(user)
         parent = ContractFactory(
@@ -1088,7 +967,7 @@ class TestContractServiceCreateFull:
     # Regra intencional: contratos cancelados podem receber aditivos.
     # O cancelamento não é um estado terminal absoluto — um contrato
     # cancelado pode ser regularizado via aditivo.
-    def test_create_full_addendum_with_canceled_parent(self, user):
+    def test_create_full_addendum_with_canceled_parent(self, user: Any) -> None:
         """Criar aditivo de contrato cancelado — documenta comportamento."""
         wedding, supplier, _ = self._setup(user)
         parent = ContractFactory(
@@ -1110,7 +989,7 @@ class TestContractServiceCreateFull:
         )
         assert contract.parent == parent
 
-    def test_create_full_multitenancy_isolation(self):
+    def test_create_full_multitenancy_isolation(self) -> None:
         """Usuário B não pode criar contrato com wedding do Usuário A."""
         user_a = UserFactory()
         user_b = UserFactory()
@@ -1128,7 +1007,7 @@ class TestContractServiceCreateFull:
                 contract_data=contract_data,
             )
 
-    def test_create_full_expense_category_not_found(self, user):
+    def test_create_full_expense_category_not_found(self, user: Any) -> None:
         """Expense com categoria inexistente deve falhar."""
         wedding, supplier, _ = self._setup(user)
         contract_data = ContractIn(
@@ -1142,6 +1021,8 @@ class TestContractServiceCreateFull:
             name="Despesa Inválida",
             estimated_amount=Decimal("5000.00"),
             actual_amount=Decimal("5000.00"),
+            num_installments=1,
+            first_due_date=date.today(),
         )
         with pytest.raises(ObjectNotFoundError) as exc_info:
             ContractService.create_full(
@@ -1151,7 +1032,7 @@ class TestContractServiceCreateFull:
             )
         assert exc_info.value.code == "budget_category_not_found_or_denied"
 
-    def test_create_full_expense_amount_mismatch_contract(self, user):
+    def test_create_full_expense_amount_mismatch_contract(self, user: Any) -> None:
         """Expense com valor divergente do contrato deve falhar (BR-F02)."""
         wedding, supplier, category = self._setup(user)
         contract_data = ContractIn(
@@ -1165,6 +1046,8 @@ class TestContractServiceCreateFull:
             name="Despesa Divergente",
             estimated_amount=Decimal("3000.00"),
             actual_amount=Decimal("3000.00"),
+            num_installments=1,
+            first_due_date=date.today(),
         )
         with pytest.raises(BusinessRuleViolation) as exc_info:
             ContractService.create_full(
@@ -1181,12 +1064,24 @@ class DummyStorageService:
     ) -> str:
         return f"https://r2.com/{bucket}/{object_key}"
 
+    def upload_bytes(
+        self, bucket: str, object_key: str, data: bytes, content_type: str
+    ) -> str:
+        return object_key
+
+    def generate_presigned_get_url(
+        self, bucket: str, object_key: str, expires_in: int = 3600
+    ) -> str:
+        return f"https://r2.com/{bucket}/{object_key}"
+
 
 @pytest.mark.django_db
 class TestContractServiceGenerateUploadUrl:
     """Testes de geração de upload URL pré-assinada."""
 
-    def test_generate_upload_url_success_with_injection(self, user, settings):
+    def test_generate_upload_url_success_with_injection(
+        self, user: Any, settings: Any
+    ) -> None:
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
         wedding, _ = _setup_contract_context(user)
         dummy_storage = DummyStorageService()
@@ -1206,7 +1101,9 @@ class TestContractServiceGenerateUploadUrl:
         assert result["object_key"].startswith(f"contracts/{wedding.uuid}/")
         assert result["object_key"].endswith("/contrato.pdf")
 
-    def test_generate_upload_url_success_with_class_setter(self, user, settings):
+    def test_generate_upload_url_success_with_class_setter(
+        self, user: Any, settings: Any
+    ) -> None:
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
         wedding, _ = _setup_contract_context(user)
 
@@ -1225,9 +1122,11 @@ class TestContractServiceGenerateUploadUrl:
                 == f"https://r2.com/test-bucket/{result['object_key']}"
             )
         finally:
-            ContractService.set_storage_service(original_storage)
+            ContractService.set_storage_service(cast(Any, original_storage))
 
-    def test_generate_upload_url_wedding_not_found(self, user, settings):
+    def test_generate_upload_url_wedding_not_found(
+        self, user: Any, settings: Any
+    ) -> None:
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
 
         with pytest.raises(ObjectNotFoundError):
@@ -1238,7 +1137,7 @@ class TestContractServiceGenerateUploadUrl:
                 storage_service=DummyStorageService(),
             )
 
-    def test_generate_upload_url_multitenancy(self, user, settings):
+    def test_generate_upload_url_multitenancy(self, user: Any, settings: Any) -> None:
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
 
         other_user = UserFactory()
@@ -1251,7 +1150,9 @@ class TestContractServiceGenerateUploadUrl:
                 storage_service=DummyStorageService(),
             )
 
-    def test_generate_upload_url_configuration_incomplete(self, user, settings):
+    def test_generate_upload_url_configuration_incomplete(
+        self, user: Any, settings: Any
+    ) -> None:
         settings.AWS_STORAGE_BUCKET_NAME = ""
         settings.R2_BUCKET = ""
 
@@ -1265,7 +1166,7 @@ class TestContractServiceGenerateUploadUrl:
             )
         assert exc_info.value.code == "storage_configuration_incomplete"
 
-    def test_contract_service_get_storage_client_lazy_load(self):
+    def test_contract_service_get_storage_client_lazy_load(self) -> None:
         # Salva o estado original
         original_storage = ContractService._storage_service
 

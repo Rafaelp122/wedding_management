@@ -8,10 +8,10 @@ import * as zod from 'zod';
 
 
 /**
- * Aggregated dashboard KPIs for the authenticated company.
+ * Retorna os KPIs agregados de desempenho para a empresa autenticada.
  *
- * Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
- * overdue installments, pending contracts, and critical weddings.
+ * Gera um DashboardSummaryOut contendo parcelas pendentes (próximos 7 dias),
+ * tarefas urgentes, parcelas atrasadas, contratos pendentes e casamentos críticos.
  * @summary Dashboard Summary
  */
 export const DashboardSummaryResponse = zod.object({
@@ -29,15 +29,15 @@ export const DashboardSummaryResponse = zod.object({
   "pending_installments": zod.int(),
   "overdue_tasks": zod.int(),
   "overdue_installments": zod.int()
-}))
-})
+}).describe('Métricas de atenção de um casamento crítico nos próximos 90 dias.'))
+}).describe('Resumo consolidado de indicadores importantes para o dashboard da empresa.')
 
 /**
- * Per-wedding dashboard view.
+ * Retorna a visão detalhada de indicadores e métricas de um casamento.
  *
- * Returns a ``WeddingDashboardOut`` with days until the event, budget usage,
- * task completion stats, contract status, upcoming installments, urgent tasks,
- * and category breakdown.
+ * Gera um WeddingDashboardOut contendo contagem regressiva, percentual de
+ * uso do orçamento, estatísticas de tarefas e contratos, parcelas a vencer,
+ * tarefas urgentes e distribuição de despesas por categoria.
  * @summary Wedding Dashboard
  */
 export const DashboardWeddingParams = zod.object({
@@ -57,17 +57,17 @@ export const DashboardWeddingResponse = zod.object({
   "amount": zod.string(),
   "due_date": zod.iso.date(),
   "status": zod.string()
-})),
+}).describe('Métricas de parcela financeira no resumo do casamento.')),
   "urgent_tasks": zod.array(zod.object({
   "uuid": zod.string(),
   "title": zod.string(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional()
-})),
+}).describe('Métricas de tarefa no resumo do casamento.')),
   "categories_summary": zod.array(zod.object({
   "name": zod.string(),
   "allocated": zod.string(),
   "spent": zod.string(),
   "percentage": zod.number()
-}))
-})
+}).describe('Resumo de gastos por categoria no orçamento do casamento.'))
+}).describe('Visão geral agregada de indicadores de um casamento específico.')
 

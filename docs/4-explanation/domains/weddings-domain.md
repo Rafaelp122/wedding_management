@@ -15,7 +15,8 @@ O domínio de **Weddings** é o eixo central da plataforma. Define os casamentos
 
 ### 1. Camada de Backend (`backend/apps/weddings/`)
 - **Modelo de Dados:** [wedding-model](../../3-reference/models/weddings/wedding-model.md) — Entidade `Wedding`.
-- **Service Layer:** `services/wedding_service.py` e `services/dashboard_service.py`.
+- **Camadas Arquiteturais:** `services.py` (mutação), `selectors.py` (consultas CQRS) e `api.py` (rotas Django Ninja).
+
 
 ### 2. Camada de Frontend (`frontend/src/features/weddings/`)
 - **Páginas (Smart Containers):**

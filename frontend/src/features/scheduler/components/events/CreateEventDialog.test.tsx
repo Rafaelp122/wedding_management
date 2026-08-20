@@ -93,7 +93,7 @@ describe("CreateEventDialog", () => {
         open={true}
         onOpenChange={onOpenChange}
         onSuccess={onSuccess}
-        defaultStartTime={new Date("2026-08-15T09:00:00Z")}
+        defaultStartTime={new Date("2028-08-15T09:00:00Z")}
       />,
     );
 
@@ -140,7 +140,7 @@ describe("CreateEventDialog", () => {
           expect.objectContaining({
             wedding: "wedding-1",
             title: "Minha Reunião",
-            start_time: "2026-08-15T09:00:00Z",
+            start_time: "2028-08-15T09:00:00Z",
           }),
         );
         return HttpResponse.json(
@@ -162,7 +162,7 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Minha Reunião");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    await userEvent.type(startInput, "2026-08-15T09:00");
+    await userEvent.type(startInput, "2028-08-15T09:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 
@@ -185,10 +185,10 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Test");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    await userEvent.type(startInput, "2026-08-15T10:00");
+    await userEvent.type(startInput, "2028-08-15T10:00");
 
     const endInput = screen.getByLabelText("Data/Hora Fim (opcional)");
-    await userEvent.type(endInput, "2026-08-15T09:00");
+    await userEvent.type(endInput, "2028-08-15T09:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 
@@ -205,8 +205,8 @@ describe("CreateEventDialog", () => {
       http.post("*/api/v1/scheduler/events/", async ({ request }) => {
         expect(await request.json()).toEqual(
           expect.objectContaining({
-            start_time: "2026-08-15T09:00:00Z",
-            end_time: "2026-08-15T10:00:00Z",
+            start_time: "2028-08-15T09:00:00Z",
+            end_time: "2028-08-15T10:00:00Z",
           }),
         );
         return HttpResponse.json(
@@ -228,10 +228,10 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Test");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    await userEvent.type(startInput, "2026-08-15T09:00");
+    await userEvent.type(startInput, "2028-08-15T09:00");
 
     const endInput = screen.getByLabelText("Data/Hora Fim (opcional)");
-    await userEvent.type(endInput, "2026-08-15T10:00");
+    await userEvent.type(endInput, "2028-08-15T10:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 
@@ -247,7 +247,7 @@ describe("CreateEventDialog", () => {
       http.post("*/api/v1/scheduler/events/", async ({ request }) => {
         expect(await request.json()).toEqual(
           expect.objectContaining({
-            start_time: "2026-08-15T09:00:00Z",
+            start_time: "2028-08-15T09:00:00Z",
             end_time: null,
           }),
         );
@@ -270,7 +270,7 @@ describe("CreateEventDialog", () => {
     await userEvent.type(screen.getByLabelText("Título"), "Test");
 
     const startInput = screen.getByLabelText("Data/Hora Início *");
-    await userEvent.type(startInput, "2026-08-15T09:00");
+    await userEvent.type(startInput, "2028-08-15T09:00");
 
     await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
 

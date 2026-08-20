@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
@@ -7,22 +8,43 @@ import pytest
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.services.expense_service import ExpenseService
-from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+from apps.logistics.models import Contract, Supplier
+from apps.logistics.tests.factories import ContractFactory as _ContractFactory
+from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
+from apps.users.models import User
+from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.schemas import WeddingIn
 from apps.weddings.services import WeddingService
 
 
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
+    return cast(Supplier, _SupplierFactory(*args, **kwargs))
+
+
+def UserFactory(*args: Any, **kwargs: Any) -> User:
+    return cast(User, _UserFactory(*args, **kwargs))
+
+
 @pytest.fixture
-def seed_data(user, django_user_model):
+def seed_data(user: Any, django_user_model: Any) -> dict[str, Any]:
     # Planner alvo
     my_wedding = WeddingService.create(
         user.company,
         WeddingIn(
-            bride_name="Minha", groom_name="Noz", location="A", date=date(2026, 10, 11)
+            bride_name="Minha",
+            groom_name="Noz",
+            location="A",
+            date=date(2026, 10, 11),
+            template="civil_buffet_3m",
         ),
     )
     my_budget = BudgetService.get_or_create_for_wedding(user.company, my_wedding.uuid)
     my_category = my_budget.categories.first()
+    assert my_category is not None
     my_expense = ExpenseService.create(
         user.company,
         ExpenseIn(
@@ -30,12 +52,11 @@ def seed_data(user, django_user_model):
             name="Despesa A",
             estimated_amount=Decimal("100.00"),
             actual_amount=Decimal("100.00"),
+            num_installments=None,
         ),
     )
 
     # Planner alheio
-    from apps.users.tests.factories import UserFactory
-
     other_user = UserFactory(email="b@b.com")
     other_user.set_password("123")
     other_user.save()
@@ -47,12 +68,14 @@ def seed_data(user, django_user_model):
             groom_name="Alheio",
             location="B",
             date=date(2026, 10, 11),
+            template="civil_buffet_3m",
         ),
     )
     other_budget = BudgetService.get_or_create_for_wedding(
         other_user.company, other_wedding.uuid
     )
     other_category = other_budget.categories.first()
+    assert other_category is not None
     ExpenseService.create(
         other_user.company,
         ExpenseIn(
@@ -60,6 +83,7 @@ def seed_data(user, django_user_model):
             name="Despesa B",
             estimated_amount=Decimal("200.00"),
             actual_amount=Decimal("200.00"),
+            num_installments=None,
         ),
     )
 
@@ -72,7 +96,7 @@ def seed_data(user, django_user_model):
 
 @pytest.mark.django_db
 class TestFinancesNinjaAPI:
-    def test_list_budgets_isolation(self, auth_client, seed_data):
+    def test_list_budgets_isolation(self, auth_client: Any, seed_data: Any) -> None:
         response = auth_client.get("/api/v1/finances/budgets/")
         assert response.status_code == 200
         data = response.json()
@@ -80,28 +104,30 @@ class TestFinancesNinjaAPI:
         assert data["items"][0]["uuid"] == str(seed_data["my_budget"].uuid)
         assert data["items"][0]["total_estimated"] == "0.00"
 
-    def test_list_categories_isolation(self, auth_client, seed_data):
+    def test_list_categories_isolation(self, auth_client: Any, seed_data: Any) -> None:
         response = auth_client.get("/api/v1/finances/categories/")
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 6
 
-    def test_list_expenses_isolation(self, auth_client, seed_data):
+    def test_list_expenses_isolation(self, auth_client: Any, seed_data: Any) -> None:
         response = auth_client.get("/api/v1/finances/expenses/")
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 1
         assert data["items"][0]["name"] == "Despesa A"
 
-    def test_list_installments_isolation(self, auth_client, seed_data):
+    def test_list_installments_isolation(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         response = auth_client.get("/api/v1/finances/installments/")
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 1  # 1 parcela auto-gerada (min 1)
 
     def test_update_expense_returns_422_on_business_rule_violation(
-        self, auth_client, seed_data
-    ):
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         expense_uuid = seed_data["my_expense"].uuid
 
         response = auth_client.patch(
@@ -112,7 +138,7 @@ class TestFinancesNinjaAPI:
 
         assert response.status_code == 422
 
-    def test_update_budget_success(self, auth_client, seed_data):
+    def test_update_budget_success(self, auth_client: Any, seed_data: Any) -> None:
         """PATCH orçamento — altera total_estimated com sucesso."""
         response = auth_client.patch(
             f"/api/v1/finances/budgets/{seed_data['my_budget'].uuid}/",
@@ -122,7 +148,7 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["total_estimated"] == "50000.00"
 
-    def test_create_category_success(self, auth_client, seed_data):
+    def test_create_category_success(self, auth_client: Any, seed_data: Any) -> None:
         """POST categoria — cria nova categoria no orçamento."""
         # Aumenta teto do orçamento primeiro (está em 0.00)
         auth_client.patch(
@@ -144,7 +170,7 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 201, response.json()
         assert response.json()["name"] == "Buffet Extra"
 
-    def test_update_category_success(self, auth_client, seed_data):
+    def test_update_category_success(self, auth_client: Any, seed_data: Any) -> None:
         """PATCH categoria — altera nome com sucesso."""
         response = auth_client.patch(
             f"/api/v1/finances/categories/{seed_data['my_category'].uuid}/",
@@ -154,7 +180,7 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["name"] == "Buffet Premium"
 
-    def test_delete_category_success(self, auth_client, seed_data):
+    def test_delete_category_success(self, auth_client: Any, seed_data: Any) -> None:
         """DELETE categoria — remove categoria recém-criada (sem despesas)."""
         # Aumenta teto do orçamento primeiro
         auth_client.patch(
@@ -178,7 +204,7 @@ class TestFinancesNinjaAPI:
         response = auth_client.delete(f"/api/v1/finances/categories/{new_uuid}/")
         assert response.status_code == 204
 
-    def test_update_expense_success(self, auth_client, seed_data):
+    def test_update_expense_success(self, auth_client: Any, seed_data: Any) -> None:
         """PATCH despesa — altera nome com sucesso."""
         response = auth_client.patch(
             f"/api/v1/finances/expenses/{seed_data['my_expense'].uuid}/",
@@ -188,7 +214,7 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["name"] == "Despesa Atualizada"
 
-    def test_create_expense_success(self, auth_client, seed_data):
+    def test_create_expense_success(self, auth_client: Any, seed_data: Any) -> None:
         """POST despesa — cria com sucesso."""
         response = auth_client.patch(
             f"/api/v1/finances/budgets/{seed_data['my_budget'].uuid}/",
@@ -211,14 +237,16 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 201
         assert response.json()["name"] == "Nova Despesa"
 
-    def test_delete_expense_success(self, auth_client, seed_data):
+    def test_delete_expense_success(self, auth_client: Any, seed_data: Any) -> None:
         """DELETE despesa — remove com sucesso."""
         response = auth_client.delete(
             f"/api/v1/finances/expenses/{seed_data['my_expense'].uuid}/",
         )
         assert response.status_code == 204
 
-    def test_mark_installment_as_paid_success(self, auth_client, seed_data):
+    def test_mark_installment_as_paid_success(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         """POST marcar parcela como paga — status PAID."""
         installment = seed_data["my_expense"].installments.first()
         response = auth_client.post(
@@ -227,7 +255,9 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["status"] == "PAID"
 
-    def test_unmark_installment_as_paid_success(self, auth_client, seed_data):
+    def test_unmark_installment_as_paid_success(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         """POST desmarcar parcela como paga — status PENDING."""
         installment = seed_data["my_expense"].installments.first()
 
@@ -242,7 +272,7 @@ class TestFinancesNinjaAPI:
         )
         assert response.status_code == 200
 
-    def test_adjust_installment_success(self, auth_client, seed_data):
+    def test_adjust_installment_success(self, auth_client: Any, seed_data: Any) -> None:
         """PATCH ajustar parcela — altera valor com sucesso."""
         # Atualiza expense para 200 primeiro (Tolerância Zero exige soma = valor)
         auth_client.patch(
@@ -259,7 +289,7 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["amount"] == "200.00"
 
-    def test_get_budget_for_wedding(self, auth_client, seed_data):
+    def test_get_budget_for_wedding(self, auth_client: Any, seed_data: Any) -> None:
         """GET orçamento por wedding_uuid — lazy-create."""
         wedding_uuid = seed_data["my_budget"].wedding.uuid
         response = auth_client.get(
@@ -268,7 +298,7 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert "total_estimated" in response.json()
 
-    def test_get_expense(self, auth_client, seed_data):
+    def test_get_expense(self, auth_client: Any, seed_data: Any) -> None:
         """GET despesa por UUID."""
         response = auth_client.get(
             f"/api/v1/finances/expenses/{seed_data['my_expense'].uuid}/"
@@ -276,14 +306,14 @@ class TestFinancesNinjaAPI:
         assert response.status_code == 200
         assert response.json()["name"] == "Despesa A"
 
-    def test_get_installment(self, auth_client, seed_data):
+    def test_get_installment(self, auth_client: Any, seed_data: Any) -> None:
         """GET parcela por UUID."""
         installment = seed_data["my_expense"].installments.first()
         response = auth_client.get(f"/api/v1/finances/installments/{installment.uuid}/")
         assert response.status_code == 200
         assert "amount" in response.json()
 
-    def test_from_document(self, auth_client, seed_data):
+    def test_from_document(self, auth_client: Any, seed_data: Any) -> None:
         """POST from-document — sugere payload de despesa a partir de contrato."""
         wedding = seed_data["my_budget"].wedding
         supplier = SupplierFactory(company=wedding.company)
@@ -296,7 +326,9 @@ class TestFinancesNinjaAPI:
         data = response.json()
         assert "description" in data
 
-    def test_mark_as_paid_already_paid_returns_422(self, auth_client, seed_data):
+    def test_mark_as_paid_already_paid_returns_422(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         """Marcar parcela já paga deve retornar 422."""
         installment = seed_data["my_expense"].installments.first()
         auth_client.post(
@@ -307,7 +339,9 @@ class TestFinancesNinjaAPI:
         )
         assert response.status_code == 422
 
-    def test_unmark_as_paid_not_paid_returns_422(self, auth_client, seed_data):
+    def test_unmark_as_paid_not_paid_returns_422(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         """Desmarcar parcela não paga deve retornar 422."""
         installment = seed_data["my_expense"].installments.first()
         response = auth_client.post(
@@ -315,7 +349,9 @@ class TestFinancesNinjaAPI:
         )
         assert response.status_code == 422
 
-    def test_adjust_paid_installment_returns_422(self, auth_client, seed_data):
+    def test_adjust_paid_installment_returns_422(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         """Ajustar parcela já paga deve retornar 422 (BR-F06)."""
         installment = seed_data["my_expense"].installments.first()
         auth_client.post(
@@ -328,7 +364,9 @@ class TestFinancesNinjaAPI:
         )
         assert response.status_code == 422
 
-    def test_delete_category_with_expenses_returns_409(self, auth_client, seed_data):
+    def test_delete_category_with_expenses_returns_409(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
         """Deletar categoria com despesas ativas deve retornar 409."""
         response = auth_client.delete(
             f"/api/v1/finances/categories/{seed_data['my_category'].uuid}/",
@@ -338,14 +376,14 @@ class TestFinancesNinjaAPI:
 
 @pytest.mark.django_db
 class TestFinancesAPIErrorHandling:
-    def test_get_budget_not_found(self, auth_client):
+    def test_get_budget_not_found(self, auth_client: Any) -> None:
         response = auth_client.get(f"/api/v1/finances/budgets/{uuid4()}/")
         assert response.status_code == 404
 
-    def test_get_category_not_found(self, auth_client):
+    def test_get_category_not_found(self, auth_client: Any) -> None:
         response = auth_client.get(f"/api/v1/finances/categories/{uuid4()}/")
         assert response.status_code == 404
 
-    def test_get_expense_not_found(self, auth_client):
+    def test_get_expense_not_found(self, auth_client: Any) -> None:
         response = auth_client.get(f"/api/v1/finances/expenses/{uuid4()}/")
         assert response.status_code == 404

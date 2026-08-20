@@ -2,14 +2,15 @@
 title: "Ciclo de Vida do Status do Casamento"
 domain: weddings
 type: business-rule
-code: backend/apps/weddings/services/wedding_service.py
-tests: backend/apps/weddings/tests/services/test_wedding_service.py
+code: backend/apps/weddings/services.py
+tests: backend/apps/weddings/tests/test_services.py
 ---
 
 # Regra de Negócio: Ciclo de Vida do Status e Validações do Casamento
 
 > **Módulo:** [weddings-domain](../../domains/weddings-domain.md) | [wedding-model](../../../3-reference/models/weddings/wedding-model.md)
-> **Código:** `backend/apps/weddings/models.py`, `backend/apps/weddings/services/wedding_service.py`
+> **Código:** `backend/apps/weddings/models.py`, `backend/apps/weddings/services.py`
+
 
 ---
 

@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useWeddingDetail } from "../hooks/useWeddingDetail";
-import { useWeddingsOverviewRead } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDialog";
 import { WeddingHeader } from "@/features/weddings/components/WeddingHeader";
@@ -21,12 +21,11 @@ export default function WeddingDetailPage() {
   const wedding = response?.data;
 
   const overviewUuid = uuid!;
-  const { data: overviewResponse, isLoading: isLoadingOverview } = useWeddingsOverviewRead(overviewUuid, {
+  const { data: overviewResponse, isLoading: isLoadingOverview } = useDashboardWedding(overviewUuid, {
     query: { enabled: !!overviewUuid },
   });
-  const overview = overviewResponse?.data?.overview;
-  const overviewWedding = overviewResponse?.data?.wedding;
-  const weddingDate = overviewWedding?.date ?? wedding?.date;
+  const overview = overviewResponse?.data;
+  const weddingDate = wedding?.date;
 
   const displayDate = useMemo(() => {
     if (!weddingDate) return "";

@@ -9,8 +9,9 @@
 ## Universal Guard-Rails (Non-Negotiable)
 
 ### Backend
-- **Service Layer**: Route handlers in `api.py` MUST ONLY delegate to `services.py`. No business logic or queries in controllers.
-- **Multi-Tenancy**: Every service accepts `company` and queries via `Model.objects.for_tenant(company)` (ADR-009, ADR-016). Use `get_object_or_404_for_tenant` for single lookups.
+- **Service Layer & CQRS**: Route handlers in `api.py` MUST delegate `GET` queries to `selectors/` and mutations (`POST`, `PUT`, `PATCH`, `DELETE`) to `services/`. No business logic or raw queries in controllers.
+- **Query Selectors & Custom QuerySets**: Read queries and annotations reside in `selectors/` and `managers.py` (`TenantQuerySet`), returning chainable lazy querysets. FORBIDDEN pure read methods in `services/`.
+- **Multi-Tenancy**: Every service/selector accepts `company` and queries via `Model.objects.for_tenant(company)` (ADR-009, ADR-016). Use `get_object_or_404_for_tenant` or `*_get_selector` for single lookups.
 - **Data Integrity**: Models inherit `BaseModel` (`full_clean()` on `save()`). `mypy` strict static typing enforced.
 - **Router Endpoints**: `operation_id` required on all router endpoints.
 
@@ -20,12 +21,13 @@
 - **Forms & Icons**: `react-hook-form` + `zod`. `lucide-react` ONLY.
 
 ### Testing (`isolate: false`)
-- **Backend**: FORBIDDEN `.objects.create()` — use factories in `apps/*/tests/factories.py`. `services.py` requires unit success/failure coverage.
+- **Backend**: FORBIDDEN `.objects.create()` — use factories in `apps/*/tests/factories.py`. `services.py` requires unit success/failure coverage. `selectors/` requires unit/isolated tenant coverage in `test_selectors.py`.
 - **Frontend**: FORBIDDEN `vi.mock("@/api/generated/...")` or per-file data hook mocks. Centralize all mocks in `test-setup.ts` via `registerMockHook`. Import testing utilities from `@/test-utils`.
 
 ### Documentation & Comments
-- **PT-BR & Standards**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
-- **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments.
+- **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/3-reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `make check-docs`.
+- **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
+- **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments or documentation.
 
 ## Subagents Dispatch Matrix
 

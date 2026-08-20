@@ -2,6 +2,9 @@
 Development settings: DEBUG=True, django-zeal, console email, colored logging.
 """
 
+import socket
+from urllib.parse import urlparse
+
 from .base import *
 
 
@@ -31,7 +34,7 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "contato@weddingmanagement.com"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="contato@simaceito.site")
 ADMIN_EMAIL = "admin@weddingmanagement.com"
 
 LOGGING = {
@@ -78,13 +81,54 @@ LOGGING = {
     },
 }
 
-# --- Cache Configuration ---
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "development-cache",
+# --- Cache & Task Queue Configuration (Valkey / Redis DB 1 & DB 0 com Fallback) ---
+REDIS_URL = env("REDIS_URL", default="redis://localhost:6379")
+
+
+def _is_redis_available(url: str) -> bool:
+    """Verifica se o servidor Redis está acessível via socket em dev/E2E."""
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 6379
+        with socket.create_connection((host, port), timeout=0.3):
+            return True
+    except (OSError, ValueError):
+        return False
+
+
+if _is_redis_available(REDIS_URL):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": f"{REDIS_URL}/1",
+        }
     }
-}
+    HUEY = {
+        "huey_class": "huey.PriorityRedisHuey",
+        "name": "wedding_tasks",
+        "connection": {
+            "url": f"{REDIS_URL}/0",
+        },
+        "immediate": env.bool("HUEY_IMMEDIATE", default=False),
+        "consumer": {
+            "workers": 2,
+            "worker_type": "thread",
+        },
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "dev-fallback-cache",
+        }
+    }
+    HUEY = {
+        "huey_class": "huey.MemoryHuey",
+        "name": "dev_tasks",
+        "immediate": True,
+    }
+
 
 # Afrouxa limites de throttling em desenvolvimento para viabilizar
 # testes E2E concorrentes
@@ -94,4 +138,8 @@ NINJA_EXTRA["THROTTLE_RATES"] = {
     "auth_refresh": "1000/m",
     "auth_verify": "1000/m",
     "auth_google": "1000/m",
+    "auth_password_reset_request": "1000/m",  # pragma: allowlist secret
+    "auth_password_reset_confirm": "1000/m",  # pragma: allowlist secret
+    "auth_verify_email_token": "1000/m",  # pragma: allowlist secret
+    "auth_resend_verification": "1000/m",  # pragma: allowlist secret
 }

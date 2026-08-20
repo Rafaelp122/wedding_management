@@ -1,10 +1,8 @@
 import logging
 from decimal import Decimal
-from typing import cast
-from uuid import UUID
 
 from django.db import transaction
-from django.db.models import QuerySet, Sum
+from django.db.models import Sum
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -12,7 +10,6 @@ from apps.core.exceptions import (
 )
 from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.managers import BudgetCategoryQuerySet
 from apps.finances.models import Budget, BudgetCategory
 from apps.finances.schemas import BudgetCategoryIn, BudgetCategoryPatchIn
 from apps.tenants.models import Company
@@ -56,63 +53,11 @@ def _validate_budget_cap(
 
 
 class BudgetCategoryService:
-    """Camada de serviço para gestão de categorias de orçamento.
+    """Camada de serviço para mutações e orquestração de categorias de orçamento.
 
     Validação de teto financeiro (_validate_budget_cap) executada com
     select_for_update() para evitar TOCTOU (Time-of-Check to Time-of-Use).
     """
-
-    @staticmethod
-    def list(
-        company: Company, wedding_id: UUID | None = None
-    ) -> QuerySet[BudgetCategory]:
-        """Lista categorias de orçamento de uma empresa.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: UUID do casamento para filtragem opcional.
-
-        Returns:
-            QuerySet[BudgetCategory]: QuerySet com as categorias de orçamento.
-        """
-        qs = (
-            cast(BudgetCategoryQuerySet, BudgetCategory.objects.for_tenant(company))
-            .with_total_spent()
-            .select_related("budget", "wedding")
-        )
-        if wedding_id:
-            qs = qs.filter(wedding__uuid=wedding_id)
-        return qs
-
-    @staticmethod
-    def get(company: Company, uuid: UUID | str) -> BudgetCategory:
-        """Obtém uma categoria de orçamento pelo seu UUID.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: O UUID da categoria de orçamento desejada.
-
-        Returns:
-            BudgetCategory: A instância da categoria encontrada.
-
-        Raises:
-            ObjectNotFoundError: Se a categoria não for encontrada.
-        """
-        from django.core.exceptions import ValidationError
-
-        from apps.core.exceptions import ObjectNotFoundError
-
-        try:
-            return (
-                cast(BudgetCategoryQuerySet, BudgetCategory.objects.for_tenant(company))
-                .with_total_spent()
-                .select_related("budget", "wedding")
-                .get(uuid=uuid)
-            )
-        except (BudgetCategory.DoesNotExist, ValueError, ValidationError) as e:
-            raise ObjectNotFoundError(
-                detail="Categoria de orçamento não encontrada."
-            ) from e
 
     @staticmethod
     @transaction.atomic

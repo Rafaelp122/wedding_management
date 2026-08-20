@@ -29,6 +29,11 @@ variable "django_secret_id" {
   type        = string
 }
 
+variable "email_smtp_password_secret_id" {
+  description = "ID do segredo da senha/API key SMTP no Secret Manager"
+  type        = string
+}
+
 variable "r2_bucket_name" {
   description = "Nome do bucket R2 no Cloudflare"
   type        = string
@@ -74,4 +79,10 @@ variable "max_concurrency" {
   description = "Concorrência máxima de requisições por instância"
   type        = number
   default     = 80
+}
+
+variable "tasks_backend" {
+  description = "Tipo de backend de tarefas (db, immediate, valkey, etc.)"
+  type        = string
+  default     = "db"
 }

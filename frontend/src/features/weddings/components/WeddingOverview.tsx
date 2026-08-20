@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getWeddingStatusInfo } from "@/features/weddings/utils/wedding-status";
 import { formatDateBR } from "@/lib/formatters";
+import { ExportReportDropdown } from "@/features/reporting/components/ExportReportDropdown";
 import { UrgentTasksList } from "./UrgentTasksList";
 import { UpcomingInstallmentsList } from "./UpcomingInstallmentsList";
 
@@ -55,9 +56,15 @@ export function WeddingOverview({
             • {wedding.location}
           </p>
         </div>
-        <Badge variant={statusInfo.variant} className="w-fit text-sm py-1 px-3">
-          {statusInfo.label}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <ExportReportDropdown
+            weddingUuid={wedding.uuid}
+            weddingName={`${wedding.groom_name}-${wedding.bride_name}`}
+          />
+          <Badge variant={statusInfo.variant} className="w-fit text-sm py-1 px-3">
+            {statusInfo.label}
+          </Badge>
+        </div>
       </div>
 
       {/* Metrics Grid */}

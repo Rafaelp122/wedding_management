@@ -11,6 +11,10 @@ from apps.logistics.schemas import (
     ItemPatchIn,
     ItemStatusTransitionIn,
 )
+from apps.logistics.selectors import (
+    item_get_selector,
+    item_list_selector,
+)
 from apps.logistics.services.item_service import ItemService
 from apps.users.types import AuthRequest
 
@@ -32,7 +36,7 @@ def list_items(
     Permite filtrar por casamento, status de aquisição, busca textual e contrato.
     """
     user = request.user
-    return ItemService.list(
+    return item_list_selector(
         company=user.company,
         wedding_id=wedding_id,
         status=status,
@@ -51,7 +55,7 @@ def retrieve_item(request: AuthRequest, uuid: UUID4) -> Item:
     Mostra os detalhes nominais de um item logístico específico.
     """
     user = request.user
-    return ItemService.get(company=user.company, uuid=uuid)
+    return item_get_selector(company=user.company, uuid=uuid)
 
 
 @items_router.post(
@@ -79,7 +83,7 @@ def update_item(request: AuthRequest, uuid: UUID4, payload: ItemPatchIn) -> Item
     Atualiza quantidades ou informações de apoio do lote do item em questão.
     """
     user = request.user
-    item = ItemService.get(company=user.company, uuid=uuid)
+    item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.update(company=user.company, instance=item, payload=payload)
 
 
@@ -94,7 +98,7 @@ def delete_item(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Remove das listas logísticas rastreadas pelo Planner.
     """
     user = request.user
-    item = ItemService.get(company=user.company, uuid=uuid)
+    item = item_get_selector(company=user.company, uuid=uuid)
     ItemService.delete(company=user.company, instance=item)
     return 204, None
 
@@ -111,7 +115,7 @@ def transition_item_status(
     Transita o status de aquisição de um item logístico (PENDING → IN_PROGRESS → DONE).
     """
     user = request.user
-    item = ItemService.get(company=user.company, uuid=uuid)
+    item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.transition_status(
         company=user.company,
         instance=item,

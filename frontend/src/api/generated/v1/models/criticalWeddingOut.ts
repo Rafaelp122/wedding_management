@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Métricas de atenção de um casamento crítico nos próximos 90 dias.
+ */
 export interface CriticalWeddingOut {
   uuid: string;
   groom_name: string;

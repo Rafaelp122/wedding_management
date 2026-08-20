@@ -14,4 +14,5 @@ export interface UserOut {
   first_name: string;
   last_name: string;
   company_slug?: string | null;
+  is_email_verified?: boolean;
 }

@@ -6,6 +6,7 @@ from pydantic import UUID4
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.budget import Budget
 from apps.finances.schemas import BudgetOut, BudgetPatchIn
+from apps.finances.selectors import budget_get_selector, budget_list_selector
 from apps.finances.services.budget_service import BudgetService
 from apps.users.types import AuthRequest
 
@@ -20,7 +21,7 @@ def list_budgets(request: AuthRequest) -> QuerySet[Budget]:
     Lista as estatísticas de orçamento geral de todos os casamentos.
     """
     user = request.user
-    return BudgetService.list(user.company)
+    return budget_list_selector(company=user.company)
 
 
 @budgets_router.get(
@@ -33,7 +34,7 @@ def get_budget(request: AuthRequest, uuid: UUID4) -> Budget:
     Retorna os totais e os saldos remanescentes autorizados de um projeto macro.
     """
     user = request.user
-    return BudgetService.get(user.company, uuid)
+    return budget_get_selector(company=user.company, uuid=uuid)
 
 
 @budgets_router.get(
@@ -60,5 +61,5 @@ def update_budget(request: AuthRequest, uuid: UUID4, payload: BudgetPatchIn) -> 
     Contorna referências numéricas totais.
     """
     user = request.user
-    instance = BudgetService.get(user.company, uuid)
+    instance = budget_get_selector(company=user.company, uuid=uuid)
     return BudgetService.update(user.company, instance, payload)

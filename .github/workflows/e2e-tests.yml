@@ -72,7 +72,9 @@ jobs:
 
       - name: Stop ASGI Server
         if: always()
-        run: kill -- -"$(cat "$RUNNER_TEMP/uvicorn.pid")" 2>/dev/null || true
+        run: |
+          kill -- -"$(cat "$RUNNER_TEMP/uvicorn.pid")" 2>/dev/null || true
+          pkill -f uvicorn 2>/dev/null || true
 
       - name: Upload Playwright Report
         if: failure()

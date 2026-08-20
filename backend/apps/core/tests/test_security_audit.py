@@ -99,12 +99,18 @@ class TestSecurityAudit:
             "apps/users/services/registration_service.py",
             "apps/users/services/token_service.py",
             "apps/users/services/google_auth_service.py",
+            "apps/users/services/password_reset_service.py",
+            "apps/users/services/email_verification_service.py",
             "apps/tenants/services/tenant_service.py",
             "apps/core/services/storage/base.py",
             "apps/core/services/storage/cloudflare_r2.py",
             "apps/core/services/storage/factory.py",
             "apps/core/services/social_auth/base.py",
             "apps/core/services/social_auth/google_provider.py",
+            "apps/core/services/oidc/base.py",
+            "apps/core/services/oidc/gcp.py",
+            "apps/core/services/oidc/mock.py",
+            "apps/core/services/oidc/factory.py",
             "apps/scheduler/services/templates.py",
         }
 

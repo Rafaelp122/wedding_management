@@ -2,14 +2,15 @@
 title: "Templates de Cronograma do Casamento"
 domain: weddings
 type: business-rule
-code: backend/apps/weddings/services/wedding_service.py
-tests: backend/apps/weddings/tests/services/test_wedding_service.py
+code: backend/apps/weddings/services.py
+tests: backend/apps/weddings/tests/test_services.py
 ---
 
 # Regra de Negócio: Aplicação de Templates de Cronograma
 
 > **Módulo:** [weddings-domain](../../domains/weddings-domain.md) | [scheduler-domain](../../domains/scheduler-domain.md)
-> **Código:** `backend/apps/weddings/services/wedding_service.py` (`_apply_template_events`)
+> **Código:** `backend/apps/weddings/services.py` (`_apply_template_events`)
+
 
 ---
 

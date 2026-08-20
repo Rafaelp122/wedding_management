@@ -61,7 +61,7 @@ class TestErrorEnvelopeConsistency:
             raise HttpError(403, "Acesso negado para este recurso.")
 
         monkeypatch.setattr(
-            "apps.weddings.services.wedding_service.WeddingService.list",
+            "apps.weddings.api.wedding_list_selector",
             _mock_forbidden,
         )
 
@@ -117,7 +117,7 @@ class TestErrorEnvelopeConsistency:
             )
 
         monkeypatch.setattr(
-            "apps.weddings.services.wedding_service.WeddingService.list",
+            "apps.weddings.api.wedding_list_selector",
             _mock_conflict,
         )
 
@@ -182,7 +182,7 @@ class TestErrorEnvelopeConsistency:
             raise RuntimeError("Falha interna simulada para teste de 500.")
 
         monkeypatch.setattr(
-            "apps.weddings.services.wedding_service.WeddingService.list",
+            "apps.weddings.api.wedding_list_selector",
             _mock_crash,
         )
 

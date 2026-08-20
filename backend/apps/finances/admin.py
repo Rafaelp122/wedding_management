@@ -4,14 +4,14 @@ from django.contrib import admin
 from .models import Budget, BudgetCategory, Expense, Installment
 
 
-class BudgetCategoryInline(admin.TabularInline):
+class BudgetCategoryInline(admin.TabularInline):  # type: ignore[type-arg]
     model = BudgetCategory
     extra = 1
     fields = ["name", "allocated_budget", "description"]
     show_change_link = True
 
 
-class ExpenseInline(admin.TabularInline):
+class ExpenseInline(admin.TabularInline):  # type: ignore[type-arg]
     # AJUSTE: Removido estimated_amount se ele não existir mais no model
     model = Expense
     extra = 0
@@ -20,7 +20,7 @@ class ExpenseInline(admin.TabularInline):
 
 
 @admin.register(Budget)
-class BudgetAdmin(admin.ModelAdmin):
+class BudgetAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     # AJUSTE: search_fields corrigido para o novo modelo de Wedding
     list_display = ["wedding", "created_at"]
     list_filter = ["created_at"]
@@ -33,7 +33,7 @@ class BudgetAdmin(admin.ModelAdmin):
 
 
 @admin.register(BudgetCategory)
-class BudgetCategoryAdmin(admin.ModelAdmin):
+class BudgetCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ["name", "budget", "allocated_budget"]
     list_filter = ["budget", "created_at"]
     # AJUSTE: search_fields corrigido
@@ -49,14 +49,14 @@ class BudgetCategoryAdmin(admin.ModelAdmin):
         return False
 
 
-class InstallmentInline(admin.TabularInline):
+class InstallmentInline(admin.TabularInline):  # type: ignore[type-arg]
     model = Installment
     extra = 1
     fields = ["installment_number", "due_date", "amount", "paid_date", "status"]
 
 
 @admin.register(Expense)
-class ExpenseAdmin(admin.ModelAdmin):
+class ExpenseAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = [
         "description",
         "category",
@@ -79,7 +79,7 @@ class ExpenseAdmin(admin.ModelAdmin):
 
 
 @admin.register(Installment)
-class InstallmentAdmin(admin.ModelAdmin):
+class InstallmentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ["expense", "installment_number", "due_date", "amount", "status"]
     list_filter = ["status", "due_date"]
     search_fields = ["expense__description"]

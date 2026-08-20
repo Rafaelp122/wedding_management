@@ -24,7 +24,19 @@ services:
       - wedding_network
 
   # ==========================================================
-  # BACKEND: Django 5.2 + UV + DRF
+  # VALKEY: Broker de Tarefas Assíncronas e Cache (Valkey 8)
+  # ==========================================================
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: wedding_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - wedding_network
+
+  # ==========================================================
+  # BACKEND: Django 6.0 + UV
   # ==========================================================
   backend:
     build:
@@ -43,12 +55,40 @@ services:
       - media_volume:/app/media
     ports:
       - "8000:8000"
-    # Aguarda o DB passar no healthcheck antes de tentar conectar
+    # Aguarda o DB passar no healthcheck e Valkey estar ativo
     depends_on:
       db:
         condition: service_healthy
+      valkey:
+        condition: service_started
     networks:
       - wedding_network
+
+  # ==========================================================
+  # WORKER: Huey Task Consumer (Processa Tarefas em Segundo Plano)
+  # ==========================================================
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: wedding_worker
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+    command: python manage.py run_huey
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+    networks:
+      - wedding_network
+
 
   # ==========================================================
   # FRONTEND: React + Vite

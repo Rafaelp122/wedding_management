@@ -22,12 +22,17 @@ dependencies = [
     "django-ninja-jwt>=5.4.5",
     "email-validator>=2.3.0",
     "whitenoise>=6.12.0",
-    "sentry-sdk[django]>=2.66.1",
     # Cloud Storage (R2/S3)
     "django-storages[s3]>=1.14.6",
     "boto3>=1.43.63",
     "google-auth>=2.56.2",
     "requests>=2.34.2",
+    # Tasks & Cache (Huey + Valkey/Redis)
+    "huey>=2.5.0",
+    "redis>=5.0.0",
+    "sentry-sdk[django]>=2.66.1",
+    "reportlab>=5.0.0",
+    "openpyxl>=3.1.5",
 ]
 
 # ==============================================================================
@@ -57,6 +62,7 @@ dev = [
     "pre-commit>=4.6.1,<4.7",
     "detect-secrets>=1.5.0",
     "bandit>=1.9.4,<2.0",
+    "types-openpyxl>=3.1.5.20260807",
 ]
 
 # ==============================================================================
@@ -112,50 +118,136 @@ line-ending = "lf"
 plugins = ["mypy_django_plugin.main"]
 python_version = "3.12"
 exclude = ["migrations"]
+strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true
-
-[[tool.mypy.overrides]]
-module = [
-    "environ",
-    "google.*",
-]
-ignore_missing_imports = true
 
 [tool.django-stubs]
 django_settings_module = "config.settings.development"
 
+# 1. Módulos terceiros sem stubs/tipagem
+[[tool.mypy.overrides]]
+module = [
+    "environ",
+    "google.*",
+    "sentry_sdk.*",
+    "huey.*",
+    "reportlab.*",
+]
+ignore_missing_imports = true
+
+# 2. Testes ainda não migrados e pontos de integração dinâmicos
+# A verificação dos corpos é ativada por camadas no override específico abaixo.
 [[tool.mypy.overrides]]
 module = [
     "apps.*.admin",
-    "apps.*.tests.factories",
+    "apps.*.tests.*",
 ]
-ignore_errors = true
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = false
 
 [[tool.mypy.overrides]]
 module = [
-    "apps.weddings.services",
-    "apps.scheduler.services",
-    "apps.finances.services.*",
-    "apps.logistics.services.*",
-    "apps.users.api",
-    "apps.weddings.api",
-    "apps.scheduler.api",
-    "apps.logistics.api",
-    "apps.finances.api",
-    "apps.weddings.deps",
-    "apps.core.exceptions",
-    "apps.core.mixins",
-    "apps.core.models",
-    "apps.users.models",
-    "apps.weddings.models",
-    "apps.scheduler.models",
-    "apps.finances.models.*",
-    "apps.logistics.models.*",
+    "apps.*.tests.factories",
+    "apps.*.tests.factories.*",
 ]
+ignore_errors = true
+
+# Primeira camada migrada: testes unitários sem dependências dinâmicas.
+[[tool.mypy.overrides]]
+module = [
+    "apps.core.tests.test_validators",
+    "apps.core.tests.test_health",
+    "apps.core.tests.test_exceptions",
+    "apps.core.tests.test_oidc_verifier",
+    "apps.core.tests.test_shortcuts",
+    "apps.core.tests.test_transactions",
+    "apps.core.tests.test_write_performance",
+    "apps.core.tests.test_cascade_delete_safety",
+    "apps.tenants.tests.test_services",
+    "apps.tenants.tests.test_managers",
+    "apps.finances.tests.test_managers",
+    "apps.core.tests.test_storage_service",
+    "apps.core.tests.test_cache_fallback",
+    "apps.core.tests.test_api_architecture",
+    "apps.core.tests.test_cron_api",
+    "apps.core.tests.test_error_envelope_consistency",
+    "apps.core.tests.test_schema_integrity",
+    "apps.core.tests.test_security_audit",
+    "apps.core.tests.test_sensitive_data_leak",
+    "apps.scheduler.tests.appointments.test_templates",
+    "apps.users.tests.test_email_verification_service",
+    "apps.users.tests.test_password_security",
+    "apps.users.tests.test_password_reset_service",
+    "apps.finances.tests.budgets.test_services",
+    "apps.finances.tests.categories.test_services",
+    "apps.tenants.tests.test_models",
+    "apps.scheduler.tests.tasks.test_models",
+    "apps.scheduler.tests.appointments.test_models",
+    "apps.scheduler.tests.appointments.test_services",
+    "apps.scheduler.tests.tasks.test_services",
+    "apps.notifications.tests.test_services",
+    "apps.users.tests.test_services",
+    "apps.logistics.tests.suppliers.test_services",
+    "apps.users.tests.test_models",
+    "apps.logistics.tests.items.test_services",
+    "apps.finances.tests.expenses.test_services",
+    "apps.finances.tests.expenses.test_models",
+    "apps.finances.tests.categories.test_models",
+    "apps.finances.tests.installments.test_models",
+    "apps.finances.tests.installments.test_services",
+    "apps.finances.tests.budgets.test_models",
+    "apps.logistics.tests.contracts.test_models",
+    "apps.logistics.tests.suppliers.test_models",
+    "apps.logistics.tests.items.test_models",
+    "apps.weddings.tests.test_models",
+    "apps.core.tests.test_base_model",
+    "apps.core.tests.test_middleware",
+    "apps.core.tests.test_mixins",
+    "apps.notifications.tests.test_tasks",
+    "apps.notifications.tests.test_api",
+    "apps.core.tests.test_commands",
+    "apps.core.tests.test_concurrency_locks",
+    "apps.core.tests.test_api_performance",
+    "apps.scheduler.tests.test_apis",
+    "apps.finances.tests.test_apis",
+    "apps.users.tests.test_email_verification_api",
+    "apps.users.tests.test_password_reset_api",
+    "apps.users.tests.test_register_api_security",
+    "apps.users.tests.test_auth_throttling",
+    "apps.users.tests.test_apis",
+    "apps.users.tests.test_auth_api",
+    "apps.logistics.tests.contracts.test_performance",
+    "apps.logistics.tests.contracts.test_services",
+    "apps.logistics.tests.test_apis",
+    "apps.notifications.tests.test_selectors",
+    "apps.users.tests.test_selectors",
+    "apps.tenants.tests.test_selectors",
+    "apps.finances.tests.test_selectors",
+    "apps.scheduler.tests.test_selectors",
+    "apps.logistics.tests.test_selectors",
+    "apps.weddings.tests.test_selectors",
+    "apps.reporting.tests.test_dashboard_selectors",
+    "apps.reporting.tests.test_apis",
+    "apps.reporting.tests.test_reports_api",
+    "apps.reporting.tests.test_report_generation_service",
+]
+# Exige assinatura completa e checagem de corpo. disallow_untyped_calls é explicitamente false
+# para suportar métodos dinâmicos de factories (factory_boy).
 disallow_untyped_defs = true
+disallow_untyped_calls = false
 check_untyped_defs = true
 
+# 3. Management commands e scripts utilitários CLI
+# Permite rodar sem obrigar anotação estrita no handle(*args, **options)
+[[tool.mypy.overrides]]
+module = [
+    "apps.*.management.*",
+    "manage",
+]
+disallow_untyped_defs = false
+check_untyped_defs = true
 
 # ==============================================================================
 # TESTING: PYTEST CONFIGURATION

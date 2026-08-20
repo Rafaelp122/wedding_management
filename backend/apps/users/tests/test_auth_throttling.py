@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 
@@ -23,7 +25,9 @@ import pytest
         ("/api/v1/auth/verify/", {"token": "invalid-token-value"}),
     ],
 )
-def test_auth_endpoint_exceeds_rate_limit_returns_429(client, url, payload):
+def test_auth_endpoint_exceeds_rate_limit_returns_429(
+    client: Any, url: str, payload: dict[str, str]
+) -> None:
     """
     Garante que os endpoints de autenticação retornam 429
     após exceder o limite de 5 req/min.
@@ -39,7 +43,7 @@ def test_auth_endpoint_exceeds_rate_limit_returns_429(client, url, payload):
 
 
 @pytest.mark.django_db
-def test_auth_throttling_scopes_are_isolated_and_independent(client):
+def test_auth_throttling_scopes_are_isolated_and_independent(client: Any) -> None:
     """
     Garante que requisições em um endpoint de autenticação
     não interferem no limite do outro.

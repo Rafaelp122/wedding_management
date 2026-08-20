@@ -5,7 +5,7 @@ e o CustomUserManager para gerenciar a criação de usuários e superusuários.
 """
 
 import uuid
-from typing import Any, cast
+from typing import Any
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -16,7 +16,7 @@ from django.db import models
 from django.utils import timezone
 
 
-class CustomUserManager(BaseUserManager):
+class CustomUserManager(BaseUserManager["User"]):
     """Manager customizado para o modelo User.
 
     Gerencia a criação de usuários regulares e superusuários,
@@ -57,7 +57,7 @@ class CustomUserManager(BaseUserManager):
             company = TenantService.create_company(display_name)
             extra_fields["company"] = company
 
-        user = cast("User", self.model(email=email, **extra_fields))
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -161,6 +161,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         "Ativo",
         default=False,
         help_text="Indica se o usuário está ativo no sistema.",
+    )
+    is_email_verified = models.BooleanField(
+        "E-mail Verificado",
+        default=False,
+        help_text="Indica se o e-mail do usuário foi verificado.",
+    )
+    email_verified_at = models.DateTimeField(
+        "Data de Verificação do E-mail",
+        null=True,
+        blank=True,
+        help_text="Data e hora da confirmação do e-mail.",
     )
     date_joined = models.DateTimeField(
         "Data de Cadastro",

@@ -62,11 +62,8 @@ describe("WeddingDetailPage", () => {
       http.get("*/api/v1/weddings/some-uuid/", () => {
         return HttpResponse.json(mockWedding);
       }),
-      http.get("*/api/v1/weddings/some-uuid/overview/", () => {
-        return HttpResponse.json({
-          wedding: mockWedding,
-          overview: defaultDashboard,
-        });
+      http.get("*/api/v1/dashboard/wedding/some-uuid/", () => {
+        return HttpResponse.json(defaultDashboard);
       })
     );
   });
@@ -188,14 +185,8 @@ describe("WeddingDetailPage", () => {
           template: null,
         });
       }),
-      http.get("*/api/v1/weddings/some-uuid/overview/", () => {
-        return HttpResponse.json({
-          wedding: {
-            ...mockWedding,
-            template: null,
-          },
-          overview: defaultDashboard,
-        });
+      http.get("*/api/v1/dashboard/wedding/some-uuid/", () => {
+        return HttpResponse.json(defaultDashboard);
       })
     );
 
@@ -212,7 +203,7 @@ describe("WeddingDetailPage", () => {
   it("renders budget immediately and checklist skeleton when dashboard is loading", async () => {
     vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
     server.use(
-      http.get("*/api/v1/weddings/some-uuid/overview/", () => {
+      http.get("*/api/v1/dashboard/wedding/some-uuid/", () => {
         return new Promise(() => {});
       })
     );
@@ -265,20 +256,17 @@ describe("WeddingDetailPage", () => {
   it("calculates 0% checklist percentage when tasks_total is 0", async () => {
     vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
     server.use(
-      http.get("*/api/v1/weddings/some-uuid/overview/", () => {
+      http.get("*/api/v1/dashboard/wedding/some-uuid/", () => {
         return HttpResponse.json({
-          wedding: mockWedding,
-          overview: {
-            tasks_completed: 0,
-            tasks_total: 0,
-            days_until_wedding: 30,
-            budget_percentage_used: 10,
-            contracts_signed: 1,
-            contracts_total: 2,
-            upcoming_installments: [],
-            urgent_tasks: [],
-            categories_summary: [],
-          },
+          tasks_completed: 0,
+          tasks_total: 0,
+          days_until_wedding: 30,
+          budget_percentage_used: 10,
+          contracts_signed: 1,
+          contracts_total: 2,
+          upcoming_installments: [],
+          urgent_tasks: [],
+          categories_summary: [],
         });
       })
     );

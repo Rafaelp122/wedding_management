@@ -1,0 +1,7 @@
+Olá, {{ user.first_name }}!
+
+Por favor, confirme seu e-mail acessando o link abaixo:
+
+{{ verify_url }}
+
+Se você não se cadastrou, pode ignorar este e-mail.

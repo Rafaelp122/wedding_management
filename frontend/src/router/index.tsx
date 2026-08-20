@@ -10,6 +10,10 @@ import { LoadingScreen } from "@/components/ui/loadingScreen";
 // Static imports for main pages — loaded eagerly for instant navigation
 import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
+import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
+import { VerifyEmailPendingPage } from "@/features/auth/pages/VerifyEmailPendingPage";
+import { VerifyEmailPage } from "@/features/auth/pages/VerifyEmailPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import SchedulerPage from "@/features/scheduler/pages/SchedulerPage";
 import SuppliersPage from "@/features/logistics/pages/SuppliersPage";
@@ -37,10 +41,42 @@ export const router = sentryCreateBrowserRouter([
     ),
   },
   {
+    path: "/forgot-password",
+    element: (
+      <PublicRoute>
+        <ForgotPasswordPage />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/reset-password",
+    element: (
+      <PublicRoute>
+        <ResetPasswordPage />
+      </PublicRoute>
+    ),
+  },
+  {
     path: "/register",
     element: (
       <PublicRoute>
         <RegisterPage />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/verify-email-pending",
+    element: (
+      <PublicRoute>
+        <VerifyEmailPendingPage />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/verify-email",
+    element: (
+      <PublicRoute>
+        <VerifyEmailPage />
       </PublicRoute>
     ),
   },

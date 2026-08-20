@@ -17,13 +17,19 @@ import type {
 import type {
   ErrorResponse,
   GoogleAuthIn,
+  PasswordResetConfirmIn,
+  PasswordResetRequestIn,
+  PasswordResetResponseOut,
   RegisterIn,
+  ResendVerificationIn,
   TokenOut,
   TokenPayloadIn,
   TokenRefreshInputSchema,
   TokenRefreshOutputSchema,
   TokenVerifyInputSchema,
   UserOut,
+  VerifyEmailIn,
+  VerifyEmailResponseOut,
   VerifyTokenOut
 } from '../../models';
 
@@ -372,4 +378,264 @@ export const useAuthGoogleLogin = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getAuthGoogleLoginMutationOptions(options), queryClient);
+    }
+    /**
+ * Solicita a redefinição de senha para um e-mail.
+ * @summary Request Password Reset
+ */
+export const authPasswordResetRequest = (
+    passwordResetRequestIn: PasswordResetRequestIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PasswordResetResponseOut>(
+      {url: `/api/v1/auth/password-reset/request/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: passwordResetRequestIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthPasswordResetRequestMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetRequest>>, TError,{data: PasswordResetRequestIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetRequest>>, TError,{data: PasswordResetRequestIn}, TContext> => {
+
+const mutationKey = ['authPasswordResetRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPasswordResetRequest>>, {data: PasswordResetRequestIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authPasswordResetRequest(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthPasswordResetRequestMutationResult = NonNullable<Awaited<ReturnType<typeof authPasswordResetRequest>>>
+    export type AuthPasswordResetRequestMutationBody = PasswordResetRequestIn
+    export type AuthPasswordResetRequestMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Request Password Reset
+ */
+export const useAuthPasswordResetRequest = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetRequest>>, TError,{data: PasswordResetRequestIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authPasswordResetRequest>>,
+        TError,
+        {data: PasswordResetRequestIn},
+        TContext
+      > => {
+      return useMutation(getAuthPasswordResetRequestMutationOptions(options), queryClient);
+    }
+    /**
+ * Confirma a redefinição de senha usando UID, token e a nova senha.
+ * @summary Confirm Password Reset
+ */
+export const authPasswordResetConfirm = (
+    passwordResetConfirmIn: PasswordResetConfirmIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PasswordResetResponseOut>(
+      {url: `/api/v1/auth/password-reset/confirm/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: passwordResetConfirmIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthPasswordResetConfirmMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetConfirm>>, TError,{data: PasswordResetConfirmIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetConfirm>>, TError,{data: PasswordResetConfirmIn}, TContext> => {
+
+const mutationKey = ['authPasswordResetConfirm'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authPasswordResetConfirm>>, {data: PasswordResetConfirmIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authPasswordResetConfirm(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthPasswordResetConfirmMutationResult = NonNullable<Awaited<ReturnType<typeof authPasswordResetConfirm>>>
+    export type AuthPasswordResetConfirmMutationBody = PasswordResetConfirmIn
+    export type AuthPasswordResetConfirmMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Confirm Password Reset
+ */
+export const useAuthPasswordResetConfirm = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authPasswordResetConfirm>>, TError,{data: PasswordResetConfirmIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authPasswordResetConfirm>>,
+        TError,
+        {data: PasswordResetConfirmIn},
+        TContext
+      > => {
+      return useMutation(getAuthPasswordResetConfirmMutationOptions(options), queryClient);
+    }
+    /**
+ * Verifica o token de e-mail e ativa o usuário.
+ * @summary Verify Email
+ */
+export const authVerifyEmail = (
+    verifyEmailIn: VerifyEmailIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<VerifyEmailResponseOut>(
+      {url: `/api/v1/auth/verify-email/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: verifyEmailIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthVerifyEmailMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authVerifyEmail>>, TError,{data: VerifyEmailIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authVerifyEmail>>, TError,{data: VerifyEmailIn}, TContext> => {
+
+const mutationKey = ['authVerifyEmail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authVerifyEmail>>, {data: VerifyEmailIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authVerifyEmail(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthVerifyEmailMutationResult = NonNullable<Awaited<ReturnType<typeof authVerifyEmail>>>
+    export type AuthVerifyEmailMutationBody = VerifyEmailIn
+    export type AuthVerifyEmailMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Verify Email
+ */
+export const useAuthVerifyEmail = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authVerifyEmail>>, TError,{data: VerifyEmailIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authVerifyEmail>>,
+        TError,
+        {data: VerifyEmailIn},
+        TContext
+      > => {
+      return useMutation(getAuthVerifyEmailMutationOptions(options), queryClient);
+    }
+    /**
+ * Reenvia o e-mail de verificação para o usuário (se não estiver verificado).
+ * @summary Resend Verification
+ */
+export const authResendVerification = (
+    resendVerificationIn: ResendVerificationIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<VerifyEmailResponseOut>(
+      {url: `/api/v1/auth/resend-verification/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: resendVerificationIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthResendVerificationMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authResendVerification>>, TError,{data: ResendVerificationIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authResendVerification>>, TError,{data: ResendVerificationIn}, TContext> => {
+
+const mutationKey = ['authResendVerification'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authResendVerification>>, {data: ResendVerificationIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authResendVerification(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthResendVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof authResendVerification>>>
+    export type AuthResendVerificationMutationBody = ResendVerificationIn
+    export type AuthResendVerificationMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Resend Verification
+ */
+export const useAuthResendVerification = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authResendVerification>>, TError,{data: ResendVerificationIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authResendVerification>>,
+        TError,
+        {data: ResendVerificationIn},
+        TContext
+      > => {
+      return useMutation(getAuthResendVerificationMutationOptions(options), queryClient);
     }

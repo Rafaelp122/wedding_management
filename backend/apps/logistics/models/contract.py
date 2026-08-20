@@ -16,10 +16,13 @@ from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
 from apps.core.validators import MaxFileSizeValidator
+from apps.logistics.managers import ContractQuerySet
 from apps.tenants.models import TenantModel
 
 
 class Contract(TenantModel, WeddingOwnedMixin):
+    objects = ContractQuerySet.as_manager()  # type: ignore[assignment,misc]
+
     _original_status: str | None = None
 
     wedding = models.ForeignKey(

@@ -6,6 +6,7 @@ from pydantic import UUID4
 from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.scheduler.models import Task
 from apps.scheduler.schemas import TaskIn, TaskOut, TaskPatchIn
+from apps.scheduler.selectors import task_get_selector, task_list_selector
 from apps.scheduler.services import TaskService
 from apps.users.types import AuthRequest
 
@@ -15,12 +16,18 @@ tasks_router = Router(tags=["Scheduler"])
 
 @tasks_router.get("/", response=list[TaskOut], operation_id="scheduler_tasks_list")
 @paginate
-def list_tasks(request: AuthRequest, wedding_id: UUID4 | None = None) -> QuerySet[Task]:
+def list_tasks(
+    request: AuthRequest,
+    wedding_id: UUID4 | None = None,
+) -> QuerySet[Task]:
     """
     Lista tarefas e checklist.
     """
     user = request.user
-    return TaskService.list(user.company, wedding_id=wedding_id)
+    return task_list_selector(
+        company=user.company,
+        wedding_id=wedding_id,
+    )
 
 
 @tasks_router.post(
@@ -46,7 +53,7 @@ def update_task(request: AuthRequest, uuid: UUID4, payload: TaskPatchIn) -> Task
     Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
     """
     user = request.user
-    instance = TaskService.get(user.company, uuid)
+    instance = task_get_selector(company=user.company, uuid=uuid)
     return TaskService.update(user.company, instance, payload)
 
 
@@ -60,6 +67,6 @@ def delete_task(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     Remove uma tarefa permanentemente.
     """
     user = request.user
-    instance = TaskService.get(user.company, uuid)
+    instance = task_get_selector(company=user.company, uuid=uuid)
     TaskService.delete(user.company, instance)
     return 204, None

@@ -49,10 +49,10 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * Aggregated dashboard KPIs for the authenticated company.
+ * Retorna os KPIs agregados de desempenho para a empresa autenticada.
  *
- * Returns a ``DashboardSummaryOut`` with pending installments, urgent tasks,
- * overdue installments, pending contracts, and critical weddings.
+ * Gera um DashboardSummaryOut contendo parcelas pendentes (próximos 7 dias),
+ * tarefas urgentes, parcelas atrasadas, contratos pendentes e casamentos críticos.
  * @summary Dashboard Summary
  */
 export const dashboardSummary = (
@@ -145,11 +145,11 @@ export function useDashboardSummary<TData = Awaited<ReturnType<typeof dashboardS
 
 
 /**
- * Per-wedding dashboard view.
+ * Retorna a visão detalhada de indicadores e métricas de um casamento.
  *
- * Returns a ``WeddingDashboardOut`` with days until the event, budget usage,
- * task completion stats, contract status, upcoming installments, urgent tasks,
- * and category breakdown.
+ * Gera um WeddingDashboardOut contendo contagem regressiva, percentual de
+ * uso do orçamento, estatísticas de tarefas e contratos, parcelas a vencer,
+ * tarefas urgentes e distribuição de despesas por categoria.
  * @summary Wedding Dashboard
  */
 export const dashboardWedding = (

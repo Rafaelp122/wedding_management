@@ -13,4 +13,5 @@ export interface UserDataOut {
   email: string;
   first_name: string;
   last_name: string;
+  is_email_verified?: boolean;
 }

@@ -1,29 +1,34 @@
+from typing import Any, cast
+
 import pytest
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
+from apps.logistics.models import Contract, Supplier
 from apps.logistics.schemas import ContractOut
-from apps.logistics.services.contract_service import ContractService
+from apps.logistics.selectors import contract_get_selector, contract_list_selector
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+from apps.tenants.models import Company
 from apps.tenants.tests.factories import CompanyFactory
+from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory
 
 
 @pytest.mark.django_db
-def test_contract_out_resolvers_no_extra_queries():
+def test_contract_out_resolvers_no_extra_queries() -> None:
     """
     Verifies that ContractOut resolvers do NOT trigger extra queries when
     annotated data is available.
     """
-    company = CompanyFactory()
-    wedding = WeddingFactory(company=company)
-    supplier = SupplierFactory(company=company)
+    company = cast(Company, CompanyFactory())
+    wedding = cast(Wedding, WeddingFactory(company=company))
+    supplier = cast(Supplier, SupplierFactory(company=company))
 
     # Create 5 contracts
     ContractFactory.create_batch(5, wedding=wedding, company=company, supplier=supplier)
 
-    # Get contracts via service which annotates fields
-    qs = ContractService.list(company, wedding_id=wedding.uuid)
+    # Get contracts via selector which annotates fields
+    qs = contract_list_selector(company, wedding_id=wedding.uuid)
     contract_list = list(qs)
 
     # Measure queries during serialization
@@ -39,38 +44,40 @@ def test_contract_out_resolvers_no_extra_queries():
 
 
 @pytest.mark.django_db
-def test_contract_service_list_annotations():
+def test_contract_service_list_annotations() -> None:
     """
     Verifies that addendums_count is correctly calculated using Subquery.
     """
-    company = CompanyFactory()
-    wedding = WeddingFactory(company=company)
+    company = cast(Company, CompanyFactory())
+    wedding = cast(Wedding, WeddingFactory(company=company))
 
-    parent = ContractFactory(wedding=wedding, company=company)
+    parent = cast(Contract, ContractFactory(wedding=wedding, company=company))
     ContractFactory.create_batch(3, wedding=wedding, company=company, parent=parent)
 
-    qs = ContractService.list(company, wedding_id=wedding.uuid)
+    qs = contract_list_selector(company, wedding_id=wedding.uuid)
     parent_contract = next(c for c in qs if c.uuid == parent.uuid)
 
-    assert parent_contract.addendums_count == 3
-    print(f"\nAddendums count verified: {parent_contract.addendums_count}")
+    assert cast(Any, parent_contract).addendums_count == 3
+    print(f"\nAddendums count verified: {cast(Any, parent_contract).addendums_count}")
 
 
 @pytest.mark.django_db
-def test_single_contract_serialization_queries():
+def test_single_contract_serialization_queries() -> None:
     """
-    Verifies that ContractService.get() annotates data so that serializing
+    Verifies that contract_get_selector() annotates data so that serializing
     a single detailed contract executes ZERO extra queries.
     """
-    company = CompanyFactory()
-    wedding = WeddingFactory(company=company)
-    supplier = SupplierFactory(company=company)
+    company = cast(Company, CompanyFactory())
+    wedding = cast(Wedding, WeddingFactory(company=company))
+    supplier = cast(Supplier, SupplierFactory(company=company))
 
     # Create 1 contract to test with
-    contract = ContractFactory(wedding=wedding, company=company, supplier=supplier)
+    contract = cast(
+        Contract, ContractFactory(wedding=wedding, company=company, supplier=supplier)
+    )
 
-    # Get contract via service which annotates fields
-    db_contract = ContractService.get(company, uuid=contract.uuid)
+    # Get contract via selector which annotates fields
+    db_contract = contract_get_selector(company, uuid=contract.uuid)
 
     # Measure queries during serialization
     with CaptureQueriesContext(connection) as ctx:

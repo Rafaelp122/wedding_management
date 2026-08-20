@@ -51,4 +51,21 @@ describe("useVendorsItemsOrchestrator", () => {
 
     expect(spy).toHaveBeenCalled();
   });
+
+  it("handles state setters correctly", () => {
+    const mockItem = { uuid: "item-1", name: "Som e Iluminação" } as any;
+    const { result } = renderHook(() => useVendorsItemsOrchestrator());
+
+    act(() => {
+      result.current.setDetailContractUuid("contract-2");
+      result.current.setUploadOpen(true);
+      result.current.setCreateItemOpen(true);
+      result.current.setEditItem(mockItem);
+    });
+
+    expect(result.current.detailContractUuid).toBe("contract-2");
+    expect(result.current.uploadOpen).toBe(true);
+    expect(result.current.createItemOpen).toBe(true);
+    expect(result.current.editItem).toBe(mockItem);
+  });
 });

@@ -44,3 +44,23 @@ class DomainIntegrityError(ApplicationError):
     status_code = 409
     default_detail = "Erro de integridade ou conflito de dados."
     default_code = "domain_integrity_error"
+
+
+class AuthenticationFailedError(ApplicationError):
+    """
+    Status 401: Falha ou ausência de autenticação.
+    """
+
+    status_code = 401
+    default_detail = "Autenticação necessária."
+    default_code = "missing_token"
+
+
+class PermissionDeniedError(ApplicationError):
+    """
+    Status 403: Permissão negada ou Service Account não autorizada.
+    """
+
+    status_code = 403
+    default_detail = "Acesso negado."
+    default_code = "unauthorized_sa"

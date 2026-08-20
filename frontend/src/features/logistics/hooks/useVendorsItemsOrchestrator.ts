@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logistics/logistics";
@@ -10,8 +11,18 @@ import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logi
  */
 export function useVendorsItemsOrchestrator() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const contractIdParam = searchParams.get("contract_id");
+  const openedContractRef = useRef<string | null>(null);
 
-  const [detailContractUuid, setDetailContractUuid] = useState<string | null>(null);
+  const [detailContractUuid, setDetailContractUuid] = useState<string | null>(contractIdParam);
+
+  useEffect(() => {
+    if (contractIdParam && openedContractRef.current !== contractIdParam) {
+      setDetailContractUuid(contractIdParam);
+      openedContractRef.current = contractIdParam;
+    }
+  }, [contractIdParam]);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [prefilledParentUuid, setPrefilledParentUuid] = useState<string | null>(null);
   const [createItemOpen, setCreateItemOpen] = useState(false);

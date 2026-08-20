@@ -97,6 +97,40 @@ describe("LoginForm", () => {
     });
   });
 
+  it("offers email activation for an unverified account", async () => {
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.post("*/api/v1/auth/token/", () =>
+        HttpResponse.json(
+          {
+            detail: "Sua conta ainda não foi ativada.",
+            code: "email_not_verified",
+          },
+          { status: 401 },
+        ),
+      ),
+    );
+
+    render(<LoginForm />);
+
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByPlaceholderText("helena@simaceito.com"),
+      "pending@test.com",
+    );
+    await user.type(screen.getByPlaceholderText("••••••••"), "wrongpass");
+    await user.click(screen.getByRole("button", { name: /acessar painel/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "Sua conta ainda não foi ativada.",
+        expect.objectContaining({
+          action: expect.objectContaining({ label: "Ativar conta" }),
+        }),
+      );
+    });
+  });
+
   it("disables button during submit", async () => {
     const { http, HttpResponse } = await import("msw");
     let resolvePromise: () => void;

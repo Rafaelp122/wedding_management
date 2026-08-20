@@ -17,7 +17,7 @@ Conforme padronizado na arquitetura (ADR-012), todos os endpoints utilizam o atr
 
 | Router | Prefixo | Descrição | `operation_id` Principal |
 | :--- | :--- | :--- | :--- |
-| `auth` | `/api/v1/auth/` | Autenticação, token JWT e refresh token | `auth_login`, `auth_refresh`, `auth_me` |
+| `auth` | `/api/v1/auth/` | Cadastro, login JWT, OAuth2, redefinição e verificação de e-mail | `auth_register_user`, `auth_obtain_token`, `auth_password_reset_request`, `auth_password_reset_confirm`, `auth_verify_email`, `auth_resend_verification` |
 | `weddings` | `/api/v1/weddings/` | Gestão de casamentos e membros | `weddings_list`, `weddings_create`, `weddings_retrieve` |
 | `finances` | `/api/v1/finances/` | Orçamentos, categorias, despesas e parcelas | `finances_budgets_list`, `finances_expenses_create` |
 | `logistics` | `/api/v1/logistics/` | Fornecedores, contratos e itens | `logistics_suppliers_list`, `logistics_contracts_create` |
@@ -30,6 +30,17 @@ Conforme padronizado na arquitetura (ADR-012), todos os endpoints utilizam o atr
 
 - **Header de Autenticação:** `Authorization: Bearer <access_token>`
 - **Header de Multi-tenancy:** O tenant é identificado automaticamente através do token JWT do usuário autenticado (`user.company_id`).
+
+## Endpoints de Recuperação e Verificação
+
+| Endpoint | Finalidade | Resposta de erro relevante |
+| :--- | :--- | :--- |
+| `POST /api/v1/auth/password-reset/request/` | Solicita o envio de instruções para redefinir a senha. | Resposta genérica para evitar enumeração de e-mails. |
+| `POST /api/v1/auth/password-reset/confirm/` | Valida `uid` + token e salva a nova senha. | `invalid_token` ou `invalid_password`. |
+| `POST /api/v1/auth/verify-email/` | Confirma o e-mail e ativa a conta. | `invalid_token`. |
+| `POST /api/v1/auth/resend-verification/` | Reenvia o link para uma conta não verificada. | Resposta genérica e throttle anônimo. |
+
+Os fluxos de token usam o `default_token_generator` do Django. Os endpoints públicos possuem throttles específicos e não expõem a existência de contas.
 
 ---
 

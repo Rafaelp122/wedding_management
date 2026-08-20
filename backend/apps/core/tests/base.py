@@ -31,7 +31,7 @@ class BaseTenantIsolationTest:
     """
 
     model_class: ClassVar[type[models.Model] | None] = None
-    factory_class: ClassVar[type[factory.django.DjangoModelFactory] | None] = None
+    factory_class: ClassVar[type[factory.django.DjangoModelFactory[Any]] | None] = None
 
     def create_company(self) -> Company:
         """
@@ -44,7 +44,7 @@ class BaseTenantIsolationTest:
 
     def create_factory_instance(
         self,
-        factory_cls: type[factory.django.DjangoModelFactory],
+        factory_cls: type[factory.django.DjangoModelFactory[Any]],
         company: Company,
         **kwargs: Any,
     ) -> models.Model:
@@ -100,7 +100,7 @@ class BaseTenantIsolationTest:
     def assert_for_tenant_isolation(
         self,
         model_cls: type[models.Model],
-        factory_cls: type[factory.django.DjangoModelFactory],
+        factory_cls: type[factory.django.DjangoModelFactory[Any]],
     ) -> None:
         """
         Valida que Model.objects.for_tenant(company) filtra rigorosamente por tenant.
@@ -138,7 +138,7 @@ class BaseTenantIsolationTest:
     def assert_get_object_or_404_for_tenant_isolation(
         self,
         model_cls: type[models.Model],
-        factory_cls: type[factory.django.DjangoModelFactory],
+        factory_cls: type[factory.django.DjangoModelFactory[Any]],
     ) -> None:
         """
         Valida que get_object_or_404_for_tenant nega acesso cross-tenant com 404.
@@ -168,7 +168,7 @@ class BaseTenantIsolationTest:
     def assert_resolve_tenant_resource_isolation(
         self,
         model_cls: type[models.Model],
-        factory_cls: type[factory.django.DjangoModelFactory],
+        factory_cls: type[factory.django.DjangoModelFactory[Any]],
     ) -> None:
         """
         Valida que resolve_tenant_resource bloqueia acessos cross-tenant.
@@ -203,7 +203,7 @@ class BaseTenantIsolationTest:
     def assert_tenant_isolation(
         self,
         model_cls: type[models.Model],
-        factory_cls: type[factory.django.DjangoModelFactory],
+        factory_cls: type[factory.django.DjangoModelFactory[Any]],
     ) -> None:
         """
         Executa a suíte completa de testes de isolamento multi-tenant para um modelo.

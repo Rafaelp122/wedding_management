@@ -131,24 +131,6 @@ class TestWeddingNinjaAPI:
         assert data["count"] == 1
         assert data["items"][0]["bride_name"] == "Maria B"
 
-    def test_dashboard_summary_api_success(self, auth_client, user):
-        WeddingFactory(company=user.company)
-
-        response = auth_client.get("/api/v1/dashboard/summary/")
-        assert response.status_code == 200
-        data = response.json()
-        assert "overdue_installments_count" in data
-        assert "pending_installments_7d" in data
-
-    def test_dashboard_wedding_api_success(self, auth_client, user):
-        wedding = WeddingFactory(company=user.company)
-
-        response = auth_client.get(f"/api/v1/dashboard/wedding/{wedding.uuid}/")
-        assert response.status_code == 200
-        data = response.json()
-        assert "days_until_wedding" in data
-        assert "budget_percentage_used" in data
-
     def test_update_wedding_success(self, auth_client, user):
         """PATCH deve atualizar parcialmente um casamento."""
         wedding = WeddingFactory(company=user.company)
@@ -196,15 +178,6 @@ class TestWeddingNinjaAPI:
         response = auth_client.delete(f"/api/v1/weddings/{wedding.uuid}/")
 
         assert response.status_code == 204
-
-    def test_dashboard_wedding_api_unauthorized(self, auth_client):
-        from apps.tenants.tests.factories import CompanyFactory
-
-        other_company = CompanyFactory()
-        other_wedding = WeddingFactory(company=other_company)
-
-        response = auth_client.get(f"/api/v1/dashboard/wedding/{other_wedding.uuid}/")
-        assert response.status_code == 404
 
     def test_list_weddings_by_month_success(self, auth_client, user):
         """GET /api/v1/weddings/by-month/?year=<future> retorna contagens."""
