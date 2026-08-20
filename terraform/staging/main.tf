@@ -4,9 +4,9 @@ locals {
   environment    = "staging"
 
   service_name               = "wedding-backend-staging"
-  database_secret            = "neon-database-staging"           # pragma: allowlist secret
-  django_secret              = "django-secret-staging"           # pragma: allowlist secret
-  email_smtp_password_secret = "email-smtp-password-staging"     # pragma: allowlist secret
+  database_secret            = "neon-database-staging"       # pragma: allowlist secret
+  django_secret              = "django-secret-staging"       # pragma: allowlist secret
+  email_smtp_password_secret = "email-smtp-password-staging" # pragma: allowlist secret
   r2_bucket_name             = "wedding-management-staging"
 
   deployer_email = "github-actions-deployer@${local.gcp_project_id}.iam.gserviceaccount.com"

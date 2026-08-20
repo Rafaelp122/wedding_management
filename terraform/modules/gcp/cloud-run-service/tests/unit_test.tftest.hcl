@@ -3,8 +3,8 @@ mock_provider "cloudflare" {}
 mock_provider "vercel" {}
 
 variables {
-  environment           = "staging"
-  service_name          = "wedding-backend-staging"
+  environment                   = "staging"
+  service_name                  = "wedding-backend-staging"
   database_secret_id            = "neon-database-staging"
   django_secret_id              = "django-secret-staging"
   email_smtp_password_secret_id = "email-smtp-password-staging"
