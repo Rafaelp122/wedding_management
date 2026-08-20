@@ -6,7 +6,6 @@ locals {
   service_name               = "wedding-backend"
   database_secret            = "neon-database"           # pragma: allowlist secret
   django_secret              = "django-secret"           # pragma: allowlist secret
-  email_smtp_user_secret     = "email-smtp-user"         # pragma: allowlist secret
   email_smtp_password_secret = "email-smtp-password"     # pragma: allowlist secret
   r2_bucket_name             = "wedding-management-prod"
 
@@ -21,7 +20,6 @@ module "backend_service" {
   gcp_region                    = local.gcp_region
   database_secret_id            = local.database_secret
   django_secret_id              = local.django_secret
-  email_smtp_user_secret_id     = local.email_smtp_user_secret
   email_smtp_password_secret_id = local.email_smtp_password_secret
   r2_bucket_name                = local.r2_bucket_name
   cloudflare_account_id         = var.cloudflare_account_id

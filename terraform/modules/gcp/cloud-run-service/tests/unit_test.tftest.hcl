@@ -7,7 +7,6 @@ variables {
   service_name          = "wedding-backend-staging"
   database_secret_id            = "neon-database-staging"
   django_secret_id              = "django-secret-staging"
-  email_smtp_user_secret_id     = "email-smtp-user-staging"
   email_smtp_password_secret_id = "email-smtp-password-staging"
   r2_bucket_name                = "wedding-management-staging"
   cloudflare_account_id         = "dummy-cloudflare-account-id"
@@ -48,11 +47,6 @@ run "validate_cloud_run_configuration" {
   }
 
   assert {
-    condition     = google_secret_manager_secret_iam_member.email_smtp_user_access["runtime"].role == "roles/secretmanager.secretAccessor"
-    error_message = "A Service Account de runtime deve possuir role secretAccessor no usuário SMTP."
-  }
-
-  assert {
     condition     = google_secret_manager_secret_iam_member.email_smtp_password_access["runtime"].role == "roles/secretmanager.secretAccessor"
     error_message = "A Service Account de runtime deve possuir role secretAccessor na senha SMTP."
   }
@@ -65,11 +59,6 @@ run "validate_cloud_run_configuration" {
   assert {
     condition     = google_secret_manager_secret_iam_member.django_access["deployer"].role == "roles/secretmanager.secretAccessor"
     error_message = "A Service Account do deployer deve possuir role secretAccessor no Django."
-  }
-
-  assert {
-    condition     = google_secret_manager_secret_iam_member.email_smtp_user_access["deployer"].role == "roles/secretmanager.secretAccessor"
-    error_message = "A Service Account do deployer deve possuir role secretAccessor no usuário SMTP."
   }
 
   assert {

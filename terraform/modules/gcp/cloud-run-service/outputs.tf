@@ -18,11 +18,6 @@ output "django_secret_id" {
   value       = google_secret_manager_secret.django.secret_id
 }
 
-output "email_smtp_user_secret_id" {
-  description = "ID do segredo do usuário SMTP no Secret Manager"
-  value       = google_secret_manager_secret.email_smtp_user.secret_id
-}
-
 output "email_smtp_password_secret_id" {
   description = "ID do segredo da senha/API key SMTP no Secret Manager"
   value       = google_secret_manager_secret.email_smtp_password.secret_id

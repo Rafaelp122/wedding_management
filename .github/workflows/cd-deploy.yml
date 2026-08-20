@@ -83,8 +83,6 @@ jobs:
           GCP_DATABASE_SECRET_VERSION: ${{ vars.GCP_DATABASE_SECRET_VERSION }}
           GCP_DJANGO_SECRET_ID: ${{ vars.GCP_DJANGO_SECRET_ID }}
           GCP_DJANGO_SECRET_VERSION: ${{ vars.GCP_DJANGO_SECRET_VERSION }}
-          GCP_EMAIL_SMTP_USER_SECRET_ID: ${{ vars.GCP_EMAIL_SMTP_USER_SECRET_ID }}
-          GCP_EMAIL_SMTP_USER_SECRET_VERSION: ${{ vars.GCP_EMAIL_SMTP_USER_SECRET_VERSION }}
           GCP_EMAIL_SMTP_PASSWORD_SECRET_ID: ${{ vars.GCP_EMAIL_SMTP_PASSWORD_SECRET_ID }}
           GCP_EMAIL_SMTP_PASSWORD_SECRET_VERSION: ${{ vars.GCP_EMAIL_SMTP_PASSWORD_SECRET_VERSION }}
         run: |
@@ -92,8 +90,6 @@ jobs:
           : "${GCP_DATABASE_SECRET_VERSION:?GCP_DATABASE_SECRET_VERSION não configurada}"
           : "${GCP_DJANGO_SECRET_ID:?GCP_DJANGO_SECRET_ID não configurada}"
           : "${GCP_DJANGO_SECRET_VERSION:?GCP_DJANGO_SECRET_VERSION não configurada}"
-          : "${GCP_EMAIL_SMTP_USER_SECRET_ID:?GCP_EMAIL_SMTP_USER_SECRET_ID não configurada}"
-          : "${GCP_EMAIL_SMTP_USER_SECRET_VERSION:?GCP_EMAIL_SMTP_USER_SECRET_VERSION não configurada}"
           : "${GCP_EMAIL_SMTP_PASSWORD_SECRET_ID:?GCP_EMAIL_SMTP_PASSWORD_SECRET_ID não configurada}"
           : "${GCP_EMAIL_SMTP_PASSWORD_SECRET_VERSION:?GCP_EMAIL_SMTP_PASSWORD_SECRET_VERSION não configurada}"
 
@@ -152,7 +148,7 @@ jobs:
           service: ${{ steps.env.outputs.service }}
           image: us-central1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/wedding-management-repo/wedding-api:${{ github.sha }}
           region: us-central1
-          flags: "--remove-env-vars=DATABASE_URL,SECRET_KEY,EMAIL_HOST_USER,EMAIL_HOST_PASSWORD"
+          flags: "--remove-env-vars=DATABASE_URL,SECRET_KEY,EMAIL_HOST_PASSWORD"
           env_vars: |-
             ENVIRONMENT=${{ steps.env.outputs.environment }}
             DJANGO_SETTINGS_MODULE=config.settings.production
@@ -162,6 +158,7 @@ jobs:
             EMAIL_HOST=${{ vars.EMAIL_HOST }}
             EMAIL_PORT=${{ vars.EMAIL_PORT || '587' }}
             EMAIL_USE_TLS=${{ vars.EMAIL_USE_TLS || 'true' }}
+            EMAIL_HOST_USER=${{ vars.EMAIL_HOST_USER || 'resend' }}
             DEFAULT_FROM_EMAIL=${{ vars.DEFAULT_FROM_EMAIL || 'contato@simaceito.site' }}
             R2_ACCESS_KEY_ID="${{ secrets.R2_ACCESS_KEY_ID }}"
             R2_SECRET_ACCESS_KEY="${{ secrets.R2_SECRET_ACCESS_KEY }}"
@@ -171,7 +168,6 @@ jobs:
           secrets: |- # pragma: allowlist secret
             DATABASE_URL=${{ vars.GCP_DATABASE_SECRET_ID }}:${{ vars.GCP_DATABASE_SECRET_VERSION }}
             SECRET_KEY=${{ vars.GCP_DJANGO_SECRET_ID }}:${{ vars.GCP_DJANGO_SECRET_VERSION }}
-            EMAIL_HOST_USER=${{ vars.GCP_EMAIL_SMTP_USER_SECRET_ID }}:${{ vars.GCP_EMAIL_SMTP_USER_SECRET_VERSION }}
             EMAIL_HOST_PASSWORD=${{ vars.GCP_EMAIL_SMTP_PASSWORD_SECRET_ID }}:${{ vars.GCP_EMAIL_SMTP_PASSWORD_SECRET_VERSION }}
           secrets_update_strategy: merge # pragma: allowlist secret
 

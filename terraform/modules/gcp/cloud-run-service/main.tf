@@ -129,26 +129,6 @@ resource "google_secret_manager_secret_iam_member" "django_access" {
   member    = each.value
 }
 
-# Container do segredo do usuário SMTP no Secret Manager.
-resource "google_secret_manager_secret" "email_smtp_user" {
-  secret_id = var.email_smtp_user_secret_id # pragma: allowlist secret
-
-  labels = {
-    environment = var.environment
-  }
-
-  replication {
-    auto {}
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [
-      labels,
-    ]
-  }
-}
-
 # Container do segredo da senha/API key SMTP no Secret Manager.
 resource "google_secret_manager_secret" "email_smtp_password" {
   secret_id = var.email_smtp_password_secret_id # pragma: allowlist secret
@@ -167,15 +147,6 @@ resource "google_secret_manager_secret" "email_smtp_password" {
       labels,
     ]
   }
-}
-
-# Concede acesso de leitura ao segredo de usuário SMTP para deployer e runtime SA.
-resource "google_secret_manager_secret_iam_member" "email_smtp_user_access" {
-  for_each = local.secret_accessors
-
-  secret_id = google_secret_manager_secret.email_smtp_user.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = each.value
 }
 
 # Concede acesso de leitura ao segredo de senha SMTP para deployer e runtime SA.
