@@ -155,7 +155,7 @@ jobs:
             ALLOWED_HOSTS=${{ steps.env.outputs.allowed_hosts }}
             CORS_ALLOWED_ORIGINS=${{ steps.env.outputs.cors_allowed_origins }}
             GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
-            EMAIL_HOST=${{ vars.EMAIL_HOST }}
+            EMAIL_HOST=${{ vars.EMAIL_HOST || 'smtp.resend.com' }}
             EMAIL_PORT=${{ vars.EMAIL_PORT || '587' }}
             EMAIL_USE_TLS=${{ vars.EMAIL_USE_TLS || 'true' }}
             EMAIL_HOST_USER=${{ vars.EMAIL_HOST_USER || 'resend' }}
