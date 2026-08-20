@@ -17,6 +17,20 @@ from apps.logistics.models import Contract
 from apps.scheduler.models import Task
 
 
+_EXCEL_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _sanitize_excel_value(val: Any) -> Any:
+    """
+    Neutraliza injeção de fórmulas (CWE-1236) em células de texto exportadas.
+
+    Prefixa apóstrofo em strings iniciadas por fórmula (=, +, -, @, \\t, \\r).
+    """
+    if isinstance(val, str) and val.startswith(_EXCEL_FORMULA_PREFIXES):
+        return f"'{val}"
+    return val
+
+
 def _build_excel_summary_sheet(
     wb: Workbook,
     wedding: Any,
@@ -35,11 +49,14 @@ def _build_excel_summary_sheet(
     )
     section_font = Font(name="Calibri", size=11, bold=True, color="7C3AED")
 
+    groom_safe = _sanitize_excel_value(wedding.groom_name)
+    bride_safe = _sanitize_excel_value(wedding.bride_name)
     now_label = datetime.now(UTC).strftime("%d/%m/%Y às %H:%M UTC")
+
     ws_summary.cell(
         row=1,
         column=1,
-        value=f"Relatório: {wedding.groom_name} & {wedding.bride_name}",
+        value=f"Relatório: {groom_safe} & {bride_safe}",
     ).font = title_font
     ws_summary.cell(
         row=2,
@@ -55,13 +72,18 @@ def _build_excel_summary_sheet(
         cell.fill = section_fill
         cell.font = section_font
 
-    ws_summary.append(["Noivo", wedding.groom_name])
-    ws_summary.append(["Noiva", wedding.bride_name])
+    ws_summary.append(["Noivo", groom_safe])
+    ws_summary.append(["Noiva", bride_safe])
     wedding_date_str = wedding.date.strftime("%d/%m/%Y") if wedding.date else "—"
     ws_summary.append(["Data do Casamento", wedding_date_str])
-    ws_summary.append(["Local", wedding.location or "—"])
+    ws_summary.append(["Local", _sanitize_excel_value(wedding.location or "—")])
     ws_summary.append(["Convidados Estimados", wedding.expected_guests or "—"])
-    ws_summary.append(["Status do Casamento", wedding.get_status_display()])
+    ws_summary.append(
+        [
+            "Status do Casamento",
+            _sanitize_excel_value(wedding.get_status_display()),
+        ]
+    )
 
     ws_summary.append([])
 
@@ -72,7 +94,7 @@ def _build_excel_summary_sheet(
         cell.font = section_font
 
     budget_obj = getattr(wedding, "budget", None)
-    total_budget_val = float(budget_obj.total_estimated) if budget_obj else 0.0
+    total_budget_val = budget_obj.total_estimated if budget_obj else Decimal("0.00")
     currency_format = '"R$" #,##0.00'
 
     ws_summary.append(["Orçamento Total", total_budget_val])
@@ -82,7 +104,7 @@ def _build_excel_summary_sheet(
         (i.amount for i in installments if i.status == Installment.StatusChoices.PAID),
         Decimal("0.00"),
     )
-    ws_summary.append(["Total Pago", float(paid_sum)])
+    ws_summary.append(["Total Pago", paid_sum])
     ws_summary.cell(row=ws_summary.max_row, column=2).number_format = currency_format
 
     pending_sum = sum(
@@ -97,7 +119,7 @@ def _build_excel_summary_sheet(
         ),
         Decimal("0.00"),
     )
-    ws_summary.append(["Total Pendente / Atrasado", float(pending_sum)])
+    ws_summary.append(["Total Pendente / Atrasado", pending_sum])
     ws_summary.cell(row=ws_summary.max_row, column=2).number_format = currency_format
 
     budget_pct_used = overview.get("budget_percentage_used", 0)
@@ -114,7 +136,7 @@ def _build_excel_summary_sheet(
 def _build_excel_categories_sheet(
     wb: Workbook, categories: list[BudgetCategory]
 ) -> None:
-    """Constrói a aba de Categorias Orçamentárias."""
+    """Constrói a aba de Categorias Orçamentárias com Decimal nativo."""
     ws_cat = wb.create_sheet(title="Categorias Orçamentárias")
     ws_cat.append(
         [
@@ -126,17 +148,18 @@ def _build_excel_categories_sheet(
         ]
     )
     for cat in categories:
-        spent = float(cat.total_spent)
-        allocated = float(cat.allocated_budget)
+        spent = cat.total_spent
+        allocated = cat.allocated_budget
         remaining = allocated - spent
-        pct = round((spent / allocated) * 100, 1) if allocated > 0 else 0
-        ws_cat.append([cat.name, allocated, spent, remaining, f"{pct}%"])
+        pct = round((spent / allocated) * 100, 1) if allocated > Decimal("0") else 0
+        cat_name_safe = _sanitize_excel_value(cat.name)
+        ws_cat.append([cat_name_safe, allocated, spent, remaining, f"{pct}%"])
 
 
 def _build_excel_installments_sheet(
     wb: Workbook, installments: list[Installment]
 ) -> None:
-    """Constrói a aba de Cronograma de Parcelas."""
+    """Constrói a aba de Cronograma de Parcelas com Decimal nativo."""
     ws_inst = wb.create_sheet(title="Cronograma de Parcelas")
     ws_inst.append(
         [
@@ -149,23 +172,28 @@ def _build_excel_installments_sheet(
         ]
     )
     for inst in installments:
-        desc = inst.expense.description if inst.expense else "Parcela"
+        desc = (
+            _sanitize_excel_value(inst.expense.description)
+            if inst.expense and inst.expense.description
+            else "Parcela"
+        )
         due_str = inst.due_date.strftime("%d/%m/%Y")
         paid_str = inst.paid_date.strftime("%d/%m/%Y") if inst.paid_date else "—"
+        status_safe = _sanitize_excel_value(inst.get_status_display())
         ws_inst.append(
             [
                 desc,
                 inst.installment_number,
                 due_str,
-                float(inst.amount),
-                inst.get_status_display(),
+                inst.amount,
+                status_safe,
                 paid_str,
             ]
         )
 
 
 def _build_excel_contracts_sheet(wb: Workbook, contracts: list[Contract]) -> None:
-    """Constrói a aba de Contratos & Fornecedores."""
+    """Constrói a aba de Contratos & Fornecedores com Decimal nativo."""
     ws_contr = wb.create_sheet(title="Contratos & Fornecedores")
     ws_contr.append(
         [
@@ -177,14 +205,20 @@ def _build_excel_contracts_sheet(wb: Workbook, contracts: list[Contract]) -> Non
         ]
     )
     for c in contracts:
-        sup_name = c.supplier.name if c.supplier else "Fornecedor Direto"
+        sup_name = (
+            _sanitize_excel_value(c.supplier.name)
+            if c.supplier
+            else "Fornecedor Direto"
+        )
+        c_name_safe = _sanitize_excel_value(c.name)
+        status_safe = _sanitize_excel_value(c.get_status_display())
         exp_str = c.expiration_date.strftime("%d/%m/%Y") if c.expiration_date else "—"
         ws_contr.append(
             [
                 sup_name,
-                c.name,
-                float(c.total_amount),
-                c.get_status_display(),
+                c_name_safe,
+                c.total_amount,
+                status_safe,
                 exp_str,
             ]
         )
@@ -197,7 +231,9 @@ def _build_excel_tasks_sheet(wb: Workbook, tasks: list[Task]) -> None:
     for t in tasks:
         status_sym = "Concluída" if t.is_completed else "Pendente"
         due_str = t.due_date.strftime("%d/%m/%Y") if t.due_date else "—"
-        ws_tasks.append([status_sym, t.title, due_str, t.description])
+        title_safe = _sanitize_excel_value(t.title)
+        desc_safe = _sanitize_excel_value(t.description or "—")
+        ws_tasks.append([status_sym, title_safe, due_str, desc_safe])
 
 
 def _format_columns_and_borders(sheet: Worksheet) -> None:
@@ -218,7 +254,7 @@ def _format_columns_and_borders(sheet: Worksheet) -> None:
             cell.border = thin_border
             col_idx = cast(int, cell.column)
             header_val = str(sheet.cell(row=1, column=col_idx).value).lower()
-            if isinstance(cell.value, (int, float)) and any(
+            if isinstance(cell.value, (int, float, Decimal)) and any(
                 k in header_val for k in monetary_keys
             ):
                 cell.number_format = currency_format

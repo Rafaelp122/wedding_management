@@ -2,11 +2,13 @@
 Testes unitários para o ReportGenerationService (geração de PDF, Excel e Exportação).
 """
 
+import io
 from datetime import date
 from decimal import Decimal
 from typing import Any, cast
 
 import pytest
+from openpyxl import load_workbook
 
 from apps.core.exceptions import ObjectNotFoundError
 from apps.finances.models import Installment
@@ -204,8 +206,90 @@ class TestReportGenerationService:
 
         assert isinstance(excel_bytes, bytes)
         assert len(excel_bytes) > 0
-        # Assinatura mágica de arquivos ZIP / XLSX
         assert excel_bytes.startswith(b"PK\x03\x04")
+
+        # Inspeciona integridade do workbook e precisão de decimais
+        wb = load_workbook(io.BytesIO(excel_bytes))
+        assert "Resumo Executivo" in wb.sheetnames
+        assert "Categorias Orçamentárias" in wb.sheetnames
+        assert "Cronograma de Parcelas" in wb.sheetnames
+        assert "Contratos & Fornecedores" in wb.sheetnames
+        assert "Checklist de Tarefas" in wb.sheetnames
+
+    def test_generate_wedding_excel_sanitizes_formula_injection(self) -> None:
+        """
+        Valida que prefixos de fórmula Excel (=, +, -, @) são neutralizados.
+        """
+        user = UserFactory()
+        company = user.company
+        wedding = WeddingFactory(
+            company=company,
+            groom_name="=SUM(A1:A10)",
+            bride_name="+CMD|' /C calc'!A0",
+            location="@LocationSpecial",
+        )
+
+        budget = _BudgetFactory(
+            company=company,
+            wedding=wedding,
+            total_estimated=Decimal("60000.00"),
+        )
+        cat = _BudgetCategoryFactory(
+            company=company,
+            budget=budget,
+            name="=1+1",
+            allocated_budget=Decimal("20000.00"),
+        )
+        expense = _ExpenseFactory(
+            company=company,
+            category=cat,
+            wedding=wedding,
+            description="-DespesaMaliciosa",
+        )
+        _InstallmentFactory(
+            company=company,
+            expense=expense,
+            wedding=wedding,
+            amount=Decimal("5000.00"),
+            status=Installment.StatusChoices.PENDING,
+        )
+        supplier = _SupplierFactory(company=company, name="@VendorSpecial")
+        _ContractFactory(
+            company=company,
+            wedding=wedding,
+            supplier=supplier,
+            name="=2*3",
+            total_amount=Decimal("15000.00"),
+        )
+        _TaskFactory(
+            company=company,
+            wedding=wedding,
+            title="+TarefaInjetada",
+            description="=HYPERLINK('http://malicious.com')",
+        )
+
+        excel_bytes = ReportGenerationService.generate_wedding_excel(
+            company=company,
+            wedding_uuid=wedding.uuid,
+        )
+        assert excel_bytes.startswith(b"PK\x03\x04")
+
+        wb = load_workbook(io.BytesIO(excel_bytes))
+        ws_summary = wb["Resumo Executivo"]
+        # Verifica que o nome do noivo recebeu o apóstrofo sanitizador
+        assert ws_summary["B5"].value == "'=SUM(A1:A10)"
+        assert ws_summary["B6"].value == "'+CMD|' /C calc'!A0"
+
+        ws_cat = wb["Categorias Orçamentárias"]
+        assert ws_cat["A2"].value == "'=1+1"
+
+        ws_contracts = wb["Contratos & Fornecedores"]
+        assert ws_contracts["A2"].value == "'@VendorSpecial"
+        assert ws_contracts["B2"].value == "'=2*3"
+
+        ws_tasks = wb["Checklist de Tarefas"]
+        assert ws_tasks["B2"].value == "'+TarefaInjetada"
+        assert ws_tasks["D2"].value == "'=HYPERLINK('http://malicious.com')"
 
     def test_generate_wedding_excel_empty_wedding(self) -> None:
         """Gera Excel consistente para casamento sem finanças ou tarefas."""
