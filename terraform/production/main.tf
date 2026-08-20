@@ -3,10 +3,11 @@ locals {
   gcp_region     = "us-central1"
   environment    = "production"
 
-  service_name    = "wedding-backend"
-  database_secret = "neon-database" # pragma: allowlist secret
-  django_secret   = "django-secret" # pragma: allowlist secret
-  r2_bucket_name  = "wedding-management-prod"
+  service_name               = "wedding-backend"
+  database_secret            = "neon-database"       # pragma: allowlist secret
+  django_secret              = "django-secret"       # pragma: allowlist secret
+  email_smtp_password_secret = "email-smtp-password" # pragma: allowlist secret
+  r2_bucket_name             = "wedding-management-prod"
 
   deployer_email = "github-actions-deployer@${local.gcp_project_id}.iam.gserviceaccount.com"
 }
@@ -14,20 +15,21 @@ locals {
 module "backend_service" {
   source = "../modules/gcp/cloud-run-service"
 
-  environment           = local.environment
-  service_name          = local.service_name
-  gcp_region            = local.gcp_region
-  database_secret_id    = local.database_secret
-  django_secret_id      = local.django_secret
-  r2_bucket_name        = local.r2_bucket_name
-  cloudflare_account_id = var.cloudflare_account_id
-  deployer_email        = local.deployer_email
-  runtime_email         = data.terraform_remote_state.shared.outputs.runtime_sa_email
-  web_app_project_id    = data.terraform_remote_state.shared.outputs.web_app_project_id
-  vercel_target         = ["production"]
-  vercel_git_branch     = "main"
-  initial_image         = "${data.terraform_remote_state.shared.outputs.artifact_registry_repo_url}/wedding-api:6cc79ee97e64aeb2576ff8e2c114fbeebb660a1d"
-  max_concurrency       = 15
+  environment                   = local.environment
+  service_name                  = local.service_name
+  gcp_region                    = local.gcp_region
+  database_secret_id            = local.database_secret
+  django_secret_id              = local.django_secret
+  email_smtp_password_secret_id = local.email_smtp_password_secret
+  r2_bucket_name                = local.r2_bucket_name
+  cloudflare_account_id         = var.cloudflare_account_id
+  deployer_email                = local.deployer_email
+  runtime_email                 = data.terraform_remote_state.shared.outputs.runtime_sa_email
+  web_app_project_id            = data.terraform_remote_state.shared.outputs.web_app_project_id
+  vercel_target                 = ["production"]
+  vercel_git_branch             = "main"
+  initial_image                 = "${data.terraform_remote_state.shared.outputs.artifact_registry_repo_url}/wedding-api:6cc79ee97e64aeb2576ff8e2c114fbeebb660a1d"
+  max_concurrency               = 15
 }
 
 moved {

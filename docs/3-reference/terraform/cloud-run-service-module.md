@@ -17,8 +17,10 @@ O módulo **`gcp/cloud-run-service`** é responsável pelo provisionamento decla
 - `google_cloud_run_v2_service_iam_member.public_access`: Binding público `roles/run.invoker` para `allUsers`.
 - `google_secret_manager_secret.database`: Container do segredo de banco de dados (`prevent_destroy = true`).
 - `google_secret_manager_secret.django`: Container do segredo Django (`prevent_destroy = true`).
-- `google_secret_manager_secret_iam_member.database_access`: Permissão `roles/secretmanager.secretAccessor` para a runtime SA.
-- `google_secret_manager_secret_iam_member.django_access`: Permissão `roles/secretmanager.secretAccessor` para a runtime SA.
+- `google_secret_manager_secret.email_smtp_password`: Container do segredo da senha/API key SMTP (`prevent_destroy = true`).
+- `google_secret_manager_secret_iam_member.database_access`: Permissão `roles/secretmanager.secretAccessor` para deployer e runtime SA.
+- `google_secret_manager_secret_iam_member.django_access`: Permissão `roles/secretmanager.secretAccessor` para deployer e runtime SA.
+- `google_secret_manager_secret_iam_member.email_smtp_password_access`: Permissão `roles/secretmanager.secretAccessor` para deployer e runtime SA.
 - `cloudflare_r2_bucket.contracts`: Bucket R2 no Cloudflare para contratos (`prevent_destroy = true`).
 - `vercel_project_environment_variable.web_app_api_url`: Registro automático da variável `VITE_API_URL` na Vercel.
 

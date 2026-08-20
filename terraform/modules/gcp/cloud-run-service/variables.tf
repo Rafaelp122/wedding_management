@@ -29,6 +29,11 @@ variable "django_secret_id" {
   type        = string
 }
 
+variable "email_smtp_password_secret_id" {
+  description = "ID do segredo da senha/API key SMTP no Secret Manager"
+  type        = string
+}
+
 variable "r2_bucket_name" {
   description = "Nome do bucket R2 no Cloudflare"
   type        = string
