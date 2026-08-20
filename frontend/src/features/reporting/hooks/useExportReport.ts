@@ -39,7 +39,7 @@ export function useExportReport(options?: UseExportReportOptions) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
 
       const formatLabel = format === "excel" ? "Excel" : "PDF";
       toast.success(`Relatório em ${formatLabel} exportado com sucesso!`);

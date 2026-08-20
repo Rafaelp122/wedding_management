@@ -10,6 +10,7 @@ mockError.stack = "Error: Falha na conexão com o servidor\n  at Component (file
 describe("GlobalError", () => {
   beforeEach(() => {
     vi.mocked(useRouteError).mockReturnValue(mockError);
+    window.location.href = "http://localhost/error";
   });
 
   it("renders error title 'Erro Inesperado'", () => {
