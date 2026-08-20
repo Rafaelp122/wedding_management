@@ -31,6 +31,8 @@ dependencies = [
     "huey>=2.5.0",
     "redis>=5.0.0",
     "sentry-sdk[django]>=2.66.1",
+    "reportlab>=5.0.0",
+    "openpyxl>=3.1.5",
 ]
 
 # ==============================================================================
@@ -60,6 +62,7 @@ dev = [
     "pre-commit>=4.6.1,<4.7",
     "detect-secrets>=1.5.0",
     "bandit>=1.9.4,<2.0",
+    "types-openpyxl>=3.1.5.20260807",
 ]
 
 # ==============================================================================
@@ -129,6 +132,7 @@ module = [
     "google.*",
     "sentry_sdk.*",
     "huey.*",
+    "reportlab.*",
 ]
 ignore_missing_imports = true
 
@@ -226,6 +230,8 @@ module = [
     "apps.weddings.tests.test_selectors",
     "apps.reporting.tests.test_dashboard_selectors",
     "apps.reporting.tests.test_apis",
+    "apps.reporting.tests.test_reports_api",
+    "apps.reporting.tests.test_report_generation_service",
 ]
 # Exige assinatura completa e checagem de corpo. disallow_untyped_calls é explicitamente false
 # para suportar métodos dinâmicos de factories (factory_boy).

@@ -26,12 +26,27 @@ from apps.core.services import get_storage_service
 # Obter a instância ativa (injetada pela Factory)
 storage_service = get_storage_service()
 
-# Gerar URL pré-assinada de upload
+# Gerar URL pré-assinada de upload (PUT)
 upload_url = storage_service.generate_presigned_put_url(
     bucket="wedding-contracts",
     object_key="contracts/123/contrato.pdf",
     content_type="application/pdf",
     expires_in=900,
+)
+
+# Upload direto de bytes gerados em memória (ex: relatórios PDF/Excel)
+saved_key = storage_service.upload_bytes(
+    bucket="wedding-reports",
+    object_key="reports/company-id/wedding-id/relatorio.pdf",
+    data=b"%PDF-...",
+    content_type="application/pdf",
+)
+
+# Gerar URL pré-assinada de download seguro (GET)
+download_url = storage_service.generate_presigned_get_url(
+    bucket="wedding-reports",
+    object_key=saved_key,
+    expires_in=3600,
 )
 ```
 

@@ -11,7 +11,7 @@ Este guia prático ensina passo a passo como declarar, enfileirar e testar **Tar
 
 ## 1. Como Declarar uma Tarefa em Segundo Plano
 
-Em qualquer módulo de domínio no backend (ex: `apps/logistics/tasks.py`, `apps/finances/tasks.py`), crie ou edite o arquivo `tasks.py` e utilize o decorator `@task()` do Django:
+Em qualquer módulo de domínio no backend (ex: `apps/reporting/tasks.py`, `apps/logistics/tasks.py`, `apps/finances/tasks.py`), crie ou edite o arquivo `tasks.py` e utilize o decorator `@task()` do Django:
 
 ```python
 # backend/apps/logistics/tasks.py

@@ -65,6 +65,8 @@ export * from './passwordResetConfirmIn';
 export * from './passwordResetRequestIn';
 export * from './passwordResetResponseOut';
 export * from './registerIn';
+export * from './reportsWeddingExportFormat';
+export * from './reportsWeddingExportParams';
 export * from './resendVerificationIn';
 export * from './schedulerEventsListParams';
 export * from './schedulerTasksListParams';

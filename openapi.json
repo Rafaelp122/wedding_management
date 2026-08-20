@@ -1235,6 +1235,52 @@
         ]
       }
     },
+    "/api/v1/reports/weddings/{uuid}/": {
+      "get": {
+        "operationId": "reports_wedding_export",
+        "summary": "Export Wedding Report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "pdf",
+              "enum": [
+                "pdf",
+                "excel"
+              ],
+              "title": "Format",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "description": "Gera e exporta em fluxo binário o relatório consolidado do casamento.\n\nRetorna o arquivo binário com Content-Disposition correspondente ao formato.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/logistics/suppliers/": {
       "get": {
         "operationId": "logistics_suppliers_list",

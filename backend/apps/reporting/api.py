@@ -1,18 +1,31 @@
+"""
+Roteadores e endpoints para o módulo de reporting (dashboard e relatórios).
+"""
+
+from typing import Literal
+
+from django.http import HttpResponse
 from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import READ_ERROR_RESPONSES
-from apps.reporting.schemas import DashboardSummaryOut, WeddingDashboardOut
+from apps.reporting.schemas import (
+    DashboardSummaryOut,
+    WeddingDashboardOut,
+)
 from apps.reporting.selectors import (
     dashboard_summary_selector,
     wedding_overview_selector,
 )
+from apps.reporting.services import ReportGenerationService
 from apps.users.types import AuthRequest
 
 
 dashboard_router = Router(tags=["Dashboard"])
+reports_router = Router(tags=["Reports"])
 
 
+# ── Rotas de Dashboard ──
 @dashboard_router.get(
     "/summary/",
     response={200: DashboardSummaryOut, **READ_ERROR_RESPONSES},
@@ -47,3 +60,30 @@ def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict[str, object]:
         company=user.company,
         wedding_uuid=uuid,
     )
+
+
+# ── Rotas de Relatórios (Exportações) ──
+@reports_router.get(
+    "/weddings/{uuid}/",
+    response=None,
+    operation_id="reports_wedding_export",
+)
+def export_wedding_report(
+    request: AuthRequest,
+    uuid: UUID4,
+    format: Literal["pdf", "excel"] = "pdf",
+) -> HttpResponse:
+    """
+    Gera e exporta em fluxo binário o relatório consolidado do casamento.
+
+    Retorna o arquivo binário com Content-Disposition correspondente ao formato.
+    """
+    file_bytes, content_type, filename = ReportGenerationService.export_wedding_report(
+        company=request.user.company,
+        wedding_uuid=uuid,
+        report_format=format,
+    )
+
+    response = HttpResponse(file_bytes, content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
