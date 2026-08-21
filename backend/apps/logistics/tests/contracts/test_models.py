@@ -334,3 +334,52 @@ class TestContractStatusTransitionValidation:
         errors = str(exc_info.value)
         assert "PDF" in errors.upper() or "data" in errors.lower()
         assert "transitar" not in errors
+
+
+@pytest.mark.django_db
+class TestContractHierarchyValidation:
+    """Testes de validação de integridade da hierarquia e termos aditivos."""
+
+    def test_contract_self_parent_fails(self, user: Any) -> None:
+        """Um contrato não pode ser pai de si mesmo."""
+        wedding = WeddingFactory(user_context=user)
+        contract = ContractFactory(wedding=wedding, company=user.company)
+        contract.parent = contract
+
+        with pytest.raises(ValidationError) as exc_info:
+            contract.clean()
+
+        assert "não pode ser pai de si mesmo" in str(exc_info.value)
+
+    def test_contract_cross_wedding_parent_fails(self, user: Any) -> None:
+        """Contrato pai deve pertencer ao mesmo casamento."""
+        wedding1 = WeddingFactory(user_context=user)
+        wedding2 = WeddingFactory(user_context=user)
+        parent = ContractFactory(wedding=wedding1, company=user.company)
+        child = ContractFactory(wedding=wedding2, company=user.company)
+        child.parent = parent
+
+        with pytest.raises(ValidationError) as exc_info:
+            child.clean()
+
+        assert "outro casamento" in str(exc_info.value)
+
+    def test_contract_circular_parent_fails(self, user: Any) -> None:
+        """Cadeia circular de parentesco é bloqueada."""
+        wedding = WeddingFactory(user_context=user)
+        c1 = ContractFactory(wedding=wedding, company=user.company)
+        c2 = ContractFactory(wedding=wedding, company=user.company, parent=c1)
+        c3 = ContractFactory(wedding=wedding, company=user.company, parent=c2)
+
+        c1.parent = c3
+        with pytest.raises(ValidationError) as exc_info:
+            c1.clean()
+
+        assert "descendente" in str(exc_info.value)
+
+    def test_contract_valid_parent_passes(self, user: Any) -> None:
+        """Vínculo de aditivo válido com pai do mesmo casamento passa com sucesso."""
+        wedding = WeddingFactory(user_context=user)
+        parent = ContractFactory(wedding=wedding, company=user.company)
+        child = ContractFactory(wedding=wedding, company=user.company, parent=parent)
+        child.clean()

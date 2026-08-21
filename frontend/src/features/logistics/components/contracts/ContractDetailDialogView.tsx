@@ -137,12 +137,68 @@ export const ContractDetailDialogView = memo(function ContractDetailDialogView({
                       </span>
                     </p>
                   )}
-                  <p className="text-sm">
-                    Valor Total:{" "}
-                    <span className="font-medium text-foreground">
-                      R$ {formatCurrencyBR(Number(contract.total_amount))}
-                    </span>
-                  </p>
+                  {(contract.addendums_count ?? 0) > 0 ||
+                  Number(contract.addendums_total_amount || 0) > 0 ||
+                  addendums.length > 0 ? (
+                    <div className="rounded-md bg-muted/40 p-2.5 space-y-1 text-sm border mt-1.5">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Valor Principal:</span>
+                        <span className="font-medium text-foreground">
+                          R$ {formatCurrencyBR(Number(contract.total_amount))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>
+                          Aditivos ({contract.addendums_count || addendums.length}):
+                        </span>
+                        <span className="font-medium text-foreground">
+                          + R${" "}
+                          {formatCurrencyBR(
+                            Number(
+                              contract.addendums_total_amount ??
+                                addendums.reduce(
+                                  (acc, curr) =>
+                                    curr.status !== "CANCELED"
+                                      ? acc + Number(curr.total_amount)
+                                      : acc,
+                                  0,
+                                ),
+                            ),
+                          )}
+                        </span>
+                      </div>
+                      <Separator className="my-1" />
+                      <div className="flex justify-between font-semibold text-foreground pt-0.5">
+                        <span>Total Consolidado:</span>
+                        <span>
+                          R${" "}
+                          {formatCurrencyBR(
+                            Number(
+                              contract.total_amount_with_addendums ??
+                                Number(contract.total_amount) +
+                                  Number(
+                                    contract.addendums_total_amount ??
+                                      addendums.reduce(
+                                        (acc, curr) =>
+                                          curr.status !== "CANCELED"
+                                            ? acc + Number(curr.total_amount)
+                                            : acc,
+                                        0,
+                                      ),
+                                  ),
+                            ),
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm">
+                      Valor Total:{" "}
+                      <span className="font-medium text-foreground">
+                        R$ {formatCurrencyBR(Number(contract.total_amount))}
+                      </span>
+                    </p>
+                  )}
                   {contract.description && (
                     <p className="text-sm text-muted-foreground pt-1">
                       {contract.description}
@@ -263,6 +319,27 @@ export const ContractDetailDialogView = memo(function ContractDetailDialogView({
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot>
+                        <tr className="border-t bg-muted/50 font-medium">
+                          <td className="px-3 py-2 text-xs">Total dos Aditivos</td>
+                          <td className="px-3 py-2 text-right text-xs">
+                            R${" "}
+                            {formatCurrencyBR(
+                              Number(
+                                contract.addendums_total_amount ??
+                                  addendums.reduce(
+                                    (acc, curr) =>
+                                      curr.status !== "CANCELED"
+                                        ? acc + Number(curr.total_amount)
+                                        : acc,
+                                    0,
+                                  ),
+                              ),
+                            )}
+                          </td>
+                          <td className="px-3 py-2" />
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>

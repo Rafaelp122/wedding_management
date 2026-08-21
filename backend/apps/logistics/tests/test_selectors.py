@@ -198,6 +198,7 @@ class TestContractQuerySet:
         assert cast(Any, c).expense_id == expense.uuid
         assert cast(Any, c).total_paid == Decimal("400.00")
         assert cast(Any, c).addendums_count == 2
+        assert cast(Any, c).addendums_total_amount == Decimal("10000.00")
 
     def test_by_status(self, user: User) -> None:
         """by_status filtra pelo status informado."""

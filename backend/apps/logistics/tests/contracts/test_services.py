@@ -222,6 +222,43 @@ class TestContractServiceCreate:
         assert contract.supplier == supplier
         assert contract.status == Contract.StatusChoices.DRAFT
 
+    def test_create_contract_with_parent_success(self, user: Any) -> None:
+        """Criação de contrato com vínculo de pai válido."""
+        wedding, supplier = _setup_contract_context(user)
+        parent = ContractFactory(
+            wedding=wedding, supplier=supplier, company=user.company
+        )
+        data: dict[str, Any] = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Termo Aditivo 1",
+            "total_amount": Decimal("2000.00"),
+            "parent": parent.uuid,
+        }
+
+        addendum = ContractService.create(user.company, ContractIn(**data))
+        assert addendum.parent == parent
+
+    def test_create_contract_cross_wedding_parent_raises_error(self, user: Any) -> None:
+        """Criação de contrato com pai de outro casamento dispara erro de negócio."""
+        wedding_a, supplier = _setup_contract_context(user)
+        wedding_b = WeddingFactory(user_context=user)
+        parent = ContractFactory(
+            wedding=wedding_b, supplier=supplier, company=user.company
+        )
+        data: dict[str, Any] = {
+            "wedding": wedding_a.uuid,
+            "supplier": supplier.uuid,
+            "name": "Aditivo Inválido",
+            "total_amount": Decimal("1000.00"),
+            "parent": parent.uuid,
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.create(user.company, ContractIn(**data))
+
+        assert exc_info.value.code == "contract_cross_wedding_parent"
+
 
 @pytest.mark.django_db
 class TestContractServiceUpdate:
@@ -1178,3 +1215,147 @@ class TestContractServiceGenerateUploadUrl:
         finally:
             # Restaura o estado original
             ContractService._storage_service = original_storage
+
+
+@pytest.mark.django_db
+class TestContractServiceCalculateTotalWithAddendums:
+    """Testes do cálculo consolidado de contratos e aditivos (Issue #403)."""
+
+    def test_calculate_total_without_addendums(self, user: Any) -> None:
+        """Contrato simples sem aditivos retorna apenas seu valor de face."""
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("15000.00"),
+        )
+
+        total = ContractService.calculate_total_with_addendums(user.company, contract)
+        assert total == Decimal("15000.00")
+
+    def test_calculate_total_with_single_addendum(self, user: Any) -> None:
+        """Contrato com 1 aditivo soma o valor principal com o aditivo."""
+        wedding, supplier = _setup_contract_context(user)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("2500.00"),
+            status=Contract.StatusChoices.DRAFT,
+        )
+
+        total = ContractService.calculate_total_with_addendums(user.company, parent)
+        assert total == Decimal("12500.00")
+
+    def test_calculate_total_with_multiple_addendums(self, user: Any) -> None:
+        """Contrato com múltiplos aditivos ativos acumula todos os valores."""
+        wedding, supplier = _setup_contract_context(user)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("2000.00"),
+            status=Contract.StatusChoices.SIGNED,
+            pdf_file="contracts/ad1.pdf",
+            signed_date=date.today(),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("3500.50"),
+            status=Contract.StatusChoices.PENDING,
+        )
+
+        total = ContractService.calculate_total_with_addendums(user.company, parent)
+        assert total == Decimal("15500.50")
+
+    def test_calculate_total_ignores_canceled_addendums(self, user: Any) -> None:
+        """Aditivos com status CANCELED não entram no cálculo consolidado."""
+        wedding, supplier = _setup_contract_context(user)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("3000.00"),
+            status=Contract.StatusChoices.SIGNED,
+            pdf_file="contracts/ad1.pdf",
+            signed_date=date.today(),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("5000.00"),
+            status=Contract.StatusChoices.CANCELED,
+        )
+
+        total = ContractService.calculate_total_with_addendums(user.company, parent)
+        assert total == Decimal("13000.00")
+
+    def test_calculate_total_multitenancy_isolation(self, user: Any) -> None:
+        """Contratos de outros tenants não interferem no total consolidado."""
+        wedding, supplier = _setup_contract_context(user)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("2000.00"),
+        )
+
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_supplier = SupplierFactory(company=other_user.company)
+        ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+            company=other_user.company,
+            total_amount=Decimal("8000.00"),
+        )
+
+        total = ContractService.calculate_total_with_addendums(user.company, parent)
+        assert total == Decimal("12000.00")
+
+    def test_calculate_total_cross_tenant_raises_error(self, user: Any) -> None:
+        """Tentativa de calcular total de contrato de outro tenant dispara erro."""
+        other_user = UserFactory()
+        other_wedding, other_supplier = _setup_contract_context(other_user)
+        other_contract = ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+            company=other_user.company,
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.calculate_total_with_addendums(user.company, other_contract)

@@ -300,12 +300,41 @@ describe("ContractDetailDialog", () => {
     expect(await screen.findByText("Aditivos")).toBeInTheDocument();
     expect(screen.getByText("Aditivo Prazo")).toBeInTheDocument();
     expect(screen.getByText("Aditivo Escopo")).toBeInTheDocument();
-    expect(screen.getByText(/1\.000,00/)).toBeInTheDocument();
-    expect(screen.getByText(/2\.500,00/)).toBeInTheDocument();
+    expect(screen.getAllByText(/1\.000,00/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/2\.500,00/).length).toBeGreaterThanOrEqual(1);
+
+    // Verifica exibição do resumo financeiro consolidado
+    expect(screen.getByText("Valor Principal:")).toBeInTheDocument();
+    expect(screen.getByText("Total Consolidado:")).toBeInTheDocument();
+    expect(screen.getByText("Total dos Aditivos")).toBeInTheDocument();
 
     const assinadoBadges = screen.getAllByText("Assinado");
     expect(assinadoBadges.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Rascunho")).toBeInTheDocument();
+  });
+
+  it("shows consolidated total from API fields when provided", async () => {
+    const contractWithAddendums = createMockContract({
+      total_amount: "10000.00",
+      addendums_count: 2,
+      addendums_total_amount: "3500.00",
+      total_amount_with_addendums: "13500.00",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contractWithAddendums);
+      })
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText("Valor Principal:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*10\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText("Aditivos (2):")).toBeInTheDocument();
+    expect(screen.getByText(/\+\s*R\$\s*3\.500,00/)).toBeInTheDocument();
+    expect(screen.getByText("Total Consolidado:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*13\.500,00/)).toBeInTheDocument();
   });
 
   it('shows "Criar Aditivo" button when onCreateAddendum is provided', async () => {
