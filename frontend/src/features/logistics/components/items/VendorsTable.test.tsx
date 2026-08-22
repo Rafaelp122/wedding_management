@@ -242,4 +242,43 @@ describe("WeddingVendorsTable", () => {
     expect(await screen.findByText("Editar")).toBeInTheDocument();
     expect(screen.queryByText("Gerar Despesa")).toBeNull();
   });
+
+  it("renders consolidated total and addendums indicator when contract has addendums", () => {
+    const contract = createMockContract({
+      total_amount: "5000.00",
+      addendums_count: 2,
+      total_amount_with_addendums: "8500.00",
+    });
+
+    render(<WeddingVendorsTable contracts={[contract]} />);
+
+    expect(screen.getByText(/R\$\s*8\.500,00/)).toBeInTheDocument();
+    expect(screen.getByText("inclui 2 aditivos")).toBeInTheDocument();
+  });
+
+  it("renders singular 'aditivo' text when contract has exactly 1 addendum", () => {
+    const contract = createMockContract({
+      total_amount: "5000.00",
+      addendums_count: 1,
+      total_amount_with_addendums: "6000.00",
+    });
+
+    render(<WeddingVendorsTable contracts={[contract]} />);
+
+    expect(screen.getByText(/R\$\s*6\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText("inclui 1 aditivo")).toBeInTheDocument();
+  });
+
+  it("renders total_amount as fallback when total_amount_with_addendums is undefined and hides addendums text when count is 0", () => {
+    const contract = createMockContract({
+      total_amount: "7500.00",
+      addendums_count: 0,
+      total_amount_with_addendums: undefined,
+    });
+
+    render(<WeddingVendorsTable contracts={[contract]} />);
+
+    expect(screen.getByText(/R\$\s*7\.500,00/)).toBeInTheDocument();
+    expect(screen.queryByText(/aditivo/i)).toBeNull();
+  });
 });

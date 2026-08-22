@@ -152,9 +152,25 @@ export const WeddingVendorsTable = memo(function WeddingVendorsTable({
                     {contract.signed_date ? formatDateBR(contract.signed_date) : "N/A"}
                   </TableCell>
                   <TableCell className="text-right font-medium whitespace-nowrap">
-                    <div>R$ {formatCurrencyBR(Number(contract.total_amount))}</div>
+                    <div>
+                      R${" "}
+                      {formatCurrencyBR(
+                        Number(
+                          contract.total_amount_with_addendums ??
+                            contract.total_amount,
+                        ),
+                      )}
+                    </div>
+                    {(contract.addendums_count ?? 0) > 0 && (
+                      <div className="text-[11px] text-muted-foreground font-normal">
+                        inclui {contract.addendums_count}{" "}
+                        {contract.addendums_count === 1
+                          ? "aditivo"
+                          : "aditivos"}
+                      </div>
+                    )}
                     {contract.has_linked_expense && (
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex items-center gap-1 mt-1 justify-end">
                         <Progress
                           value={contract.progress_percent || 0}
                           className="h-1.5 w-20"

@@ -101,6 +101,19 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
                 ),
                 0,
             ),
+            addendums_total_amount=Coalesce(
+                Subquery(
+                    self.model.objects.filter(
+                        company=OuterRef("company"),
+                        parent=OuterRef("pk"),
+                    )
+                    .exclude(status=self.model.StatusChoices.CANCELED)
+                    .values("parent")
+                    .annotate(s=Sum("total_amount"))
+                    .values("s")[:1]
+                ),
+                Value(Decimal("0.00")),
+            ),
         )
 
     def by_status(self, status: str | None = None) -> ContractQuerySet:

@@ -6911,6 +6911,18 @@
             "title": "Addendums Count",
             "type": "integer"
           },
+          "addendums_total_amount": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Addendums Total Amount",
+            "type": "string"
+          },
+          "total_amount_with_addendums": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount With Addendums",
+            "type": "string"
+          },
           "has_file": {
             "default": false,
             "title": "Has File",
