@@ -2,14 +2,14 @@
 title: "Hierarquia Pai-Filho e Aditivos de Contratos"
 domain: logistics
 type: business-rule
-code: backend/apps/logistics/services/contract_service.py
-tests: backend/apps/logistics/tests/contracts/test_services.py
+code: backend/apps/logistics/selectors/contract_selectors.py
+tests: backend/apps/logistics/tests/test_selectors.py
 ---
 
 # Regra de Negócio: Hierarquia de Contratos e Termos Aditivos
 
 > **Módulo:** [logistics-domain](../../domains/logistics-domain.md) | [contract-model](../../../3-reference/models/logistics/contract-model.md)
-> **Código:** `backend/apps/logistics/models/contract.py`, `backend/apps/logistics/services/contract_service.py` (`_resolve_parent`, `calculate_total_with_addendums`)
+> **Código:** `backend/apps/logistics/models/contract.py`, `backend/apps/logistics/selectors/contract_selectors.py` (`contract_consolidated_total_selector`)
 
 ---
 
@@ -32,7 +32,7 @@ Ao criar ou atualizar um contrato pai, o sistema aplica quatro travas de seguran
 
 ---
 
-## 3. Cálculo Consolidado de Contratos e Aditivos (`ContractService.calculate_total_with_addendums`)
+## 3. Cálculo Consolidado de Contratos e Aditivos (`contract_consolidated_total_selector`)
 
 Para exibir o compromisso financeiro real de uma contratação com aditivos:
 - **Fórmula:** `Valor Consolidado = Valor Contrato Principal + Σ(Valor dos Termos Aditivos Ativos)`.

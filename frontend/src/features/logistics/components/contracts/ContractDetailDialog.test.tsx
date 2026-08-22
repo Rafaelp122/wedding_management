@@ -337,6 +337,74 @@ describe("ContractDetailDialog", () => {
     expect(screen.getByText(/R\$\s*13\.500,00/)).toBeInTheDocument();
   });
 
+  it("ignores canceled addendums when calculating fallback sum without API fields", async () => {
+    const mainContract = createMockContract({
+      total_amount: "5000.00",
+      addendums_count: 0,
+      addendums_total_amount: undefined,
+      total_amount_with_addendums: undefined,
+    });
+    const activeAddendum = createMockContract({
+      uuid: "ad-1",
+      name: "Aditivo Ativo",
+      total_amount: "2000.00",
+      status: "SIGNED",
+      parent: CONTRACT_UUID,
+    });
+    const canceledAddendum = createMockContract({
+      uuid: "ad-2",
+      name: "Aditivo Cancelado",
+      total_amount: "3000.00",
+      status: "CANCELED",
+      parent: CONTRACT_UUID,
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(mainContract);
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({
+          items: [activeAddendum, canceledAddendum],
+          count: 2,
+        });
+      })
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText("Valor Principal:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*5\.000,00/)).toBeInTheDocument();
+    // Apenas o aditivo ativo de 2000 é somado
+    expect(screen.getByText(/\+\s*R\$\s*2\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*7\.000,00/)).toBeInTheDocument();
+  });
+
+  it("renders simple 'Valor Total' when contract has no addendums", async () => {
+    const simpleContract = createMockContract({
+      total_amount: "8000.00",
+      addendums_count: 0,
+      addendums_total_amount: "0.00",
+      total_amount_with_addendums: "8000.00",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(simpleContract);
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      })
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText("Valor Total:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*8\.000,00/)).toBeInTheDocument();
+    expect(screen.queryByText("Valor Principal:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Total Consolidado:")).not.toBeInTheDocument();
+  });
+
   it('shows "Criar Aditivo" button when onCreateAddendum is provided', async () => {
     const onCreateAddendum = vi.fn();
     const user = userEvent.setup();

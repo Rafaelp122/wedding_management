@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import json
 import logging
-from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import (
-    ProtectedError,
-    Sum,
-)
+from django.db.models import ProtectedError
 from pydantic import ValidationError as PydanticValidationError
 
 from apps.core.exceptions import (
@@ -84,40 +80,6 @@ class ContractService:
             storage_service: Instância customizada ou mock de StorageService.
         """
         cls._storage_service = storage_service
-
-    @staticmethod
-    def calculate_total_with_addendums(company: Company, contract: Contract) -> Decimal:
-        """
-        Calcula o valor total consolidado de um contrato somado aos seus
-        aditivos ativos.
-
-        Exclui termos aditivos com status CANCELED.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract: Instância do contrato a ser calculado.
-
-        Returns:
-            Decimal com a soma do valor de face do contrato mais seus
-            aditivos ativos.
-
-        Raises:
-            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
-        """
-        validate_tenant_ownership(
-            company,
-            contract,
-            detail="Contrato não encontrado ou acesso negado.",
-            code="contract_not_found_or_denied",
-        )
-        addendums_sum = (
-            contract.addendums.for_tenant(company)
-            .exclude(status=Contract.StatusChoices.CANCELED)
-            .aggregate(total=Sum("total_amount"))["total"]
-        )
-        return (contract.total_amount or Decimal("0.00")) + (
-            addendums_sum or Decimal("0.00")
-        )
 
     @staticmethod
     @transaction.atomic

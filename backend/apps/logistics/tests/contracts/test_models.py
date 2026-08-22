@@ -383,3 +383,20 @@ class TestContractHierarchyValidation:
         parent = ContractFactory(wedding=wedding, company=user.company)
         child = ContractFactory(wedding=wedding, company=user.company, parent=parent)
         child.clean()
+
+    def test_unsaved_contract_with_parent_passes(self, user: Any) -> None:
+        """Contrato novo (sem pk) com pai válido passa na validação."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding, company=user.company, supplier=supplier
+        )
+        new_contract = Contract(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            parent=parent,
+            total_amount=Decimal("1000.00"),
+            status=Contract.StatusChoices.DRAFT,
+        )
+        new_contract.clean()

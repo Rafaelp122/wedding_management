@@ -8,6 +8,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja import Field, Schema
 from pydantic import UUID4, field_validator, model_validator
 
+from apps.logistics.selectors.contract_selectors import (
+    contract_consolidated_total_selector,
+)
+
 
 if TYPE_CHECKING:
     from apps.logistics.models.contract import Contract
@@ -227,21 +231,16 @@ class ContractOut(Schema):
         val = getattr(obj, "addendums_total_amount", None)
         if val is not None:
             return Decimal(str(val))
-        from django.db.models import Sum
-
-        from apps.logistics.models.contract import Contract as ContractModel
-
-        total = (
-            obj.addendums.filter(company=obj.company)
-            .exclude(status=ContractModel.StatusChoices.CANCELED)
-            .aggregate(s=Sum("total_amount"))["s"]
+        return contract_consolidated_total_selector(obj.company, obj) - (
+            obj.total_amount or Decimal("0.00")
         )
-        return total or Decimal("0.00")
 
     @staticmethod
     def resolve_total_amount_with_addendums(obj: "Contract") -> Decimal:
-        addendums_total = ContractOut.resolve_addendums_total_amount(obj)
-        return (obj.total_amount or Decimal("0.00")) + addendums_total
+        val = getattr(obj, "addendums_total_amount", None)
+        if val is not None:
+            return (obj.total_amount or Decimal("0.00")) + Decimal(str(val))
+        return contract_consolidated_total_selector(obj.company, obj)
 
     @staticmethod
     def resolve_supplier(obj: "Contract") -> UUID4:

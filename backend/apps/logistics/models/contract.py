@@ -174,19 +174,14 @@ class Contract(TenantModel, WeddingOwnedMixin):
                 raise ValidationError("Informe a data em que o contrato foi assinado.")
 
     def _clean_parent_hierarchy(self) -> None:
-        if self.parent:
-            if self.pk and self.parent_id == self.pk:
+        if self.parent and self.pk:
+            if self.parent_id == self.pk:
                 raise ValidationError("Um contrato não pode ser pai de si mesmo.")
-            if self.wedding_id and self.parent.wedding_id != self.wedding_id:
-                raise ValidationError(
-                    "O contrato pai deve pertencer ao mesmo casamento."
-                )
-            if self.pk:
-                current: Contract | None = self.parent
-                while current:
-                    if current.pk == self.pk:
-                        raise ValidationError(
-                            "Não é possível vincular um contrato pai que é "
-                            "descendente deste contrato."
-                        )
-                    current = current.parent
+            current: Contract | None = self.parent
+            while current:
+                if current.pk == self.pk:
+                    raise ValidationError(
+                        "Não é possível vincular um contrato pai que é "
+                        "descendente deste contrato."
+                    )
+                current = current.parent

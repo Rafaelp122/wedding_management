@@ -268,4 +268,17 @@ describe("WeddingVendorsTable", () => {
     expect(screen.getByText(/R\$\s*6\.000,00/)).toBeInTheDocument();
     expect(screen.getByText("inclui 1 aditivo")).toBeInTheDocument();
   });
+
+  it("renders total_amount as fallback when total_amount_with_addendums is undefined and hides addendums text when count is 0", () => {
+    const contract = createMockContract({
+      total_amount: "7500.00",
+      addendums_count: 0,
+      total_amount_with_addendums: undefined,
+    });
+
+    render(<WeddingVendorsTable contracts={[contract]} />);
+
+    expect(screen.getByText(/R\$\s*7\.500,00/)).toBeInTheDocument();
+    expect(screen.queryByText(/aditivo/i)).toBeNull();
+  });
 });
