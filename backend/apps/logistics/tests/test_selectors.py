@@ -33,6 +33,7 @@ from apps.logistics.managers import (
 )
 from apps.logistics.models import Contract, Item, Supplier
 from apps.logistics.selectors import (
+    contract_consolidated_total_selector,
     contract_get_selector,
     contract_list_selector,
     contract_pending_count_selector,
@@ -178,6 +179,14 @@ class TestContractQuerySet:
         _ContractFactory.create_batch(
             2, wedding=wedding, company=user.company, supplier=supplier, parent=parent
         )
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            parent=parent,
+            total_amount=Decimal("5000.00"),
+            status=Contract.StatusChoices.CANCELED,
+        )
 
         budget = BudgetFactory(wedding=wedding)
         cat = BudgetCategoryFactory(budget=budget, wedding=wedding)
@@ -198,6 +207,7 @@ class TestContractQuerySet:
         assert cast(Any, c).expense_id == expense.uuid
         assert cast(Any, c).total_paid == Decimal("400.00")
         assert cast(Any, c).addendums_count == 2
+        assert cast(Any, c).addendums_total_amount == Decimal("10000.00")
 
     def test_by_status(self, user: User) -> None:
         """by_status filtra pelo status informado."""
@@ -520,3 +530,153 @@ class TestItemSelectors:
 
         with pytest.raises(ObjectNotFoundError):
             item_get_selector(user_a.company, item_b.uuid)
+
+
+@pytest.mark.django_db
+class TestContractConsolidatedTotalSelector:
+    """Testes do seletor de cálculo consolidado de contratos e aditivos."""
+
+    def test_calculate_total_without_addendums(self, user: User) -> None:
+        """Contrato simples sem aditivos retorna apenas seu valor de face."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("15000.00"),
+        )
+
+        total = contract_consolidated_total_selector(user.company, contract)
+        assert total == Decimal("15000.00")
+
+    def test_calculate_total_with_single_addendum(self, user: User) -> None:
+        """Contrato com 1 aditivo soma o valor principal com o aditivo."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("2500.00"),
+            status=Contract.StatusChoices.DRAFT,
+        )
+
+        total = contract_consolidated_total_selector(user.company, parent)
+        assert total == Decimal("12500.00")
+
+    def test_calculate_total_with_multiple_addendums(self, user: User) -> None:
+        """Contrato com múltiplos aditivos ativos acumula todos os valores."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("2000.00"),
+            status=Contract.StatusChoices.SIGNED,
+            pdf_file="contracts/ad1.pdf",
+            signed_date=date.today(),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("3500.50"),
+            status=Contract.StatusChoices.PENDING,
+        )
+
+        total = contract_consolidated_total_selector(user.company, parent)
+        assert total == Decimal("15500.50")
+
+    def test_calculate_total_ignores_canceled_addendums(self, user: User) -> None:
+        """Aditivos com status CANCELED não entram no cálculo consolidado."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("3000.00"),
+            status=Contract.StatusChoices.SIGNED,
+            pdf_file="contracts/ad1.pdf",
+            signed_date=date.today(),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("5000.00"),
+            status=Contract.StatusChoices.CANCELED,
+        )
+
+        total = contract_consolidated_total_selector(user.company, parent)
+        assert total == Decimal("13000.00")
+
+    def test_calculate_total_multitenancy_isolation(self, user: User) -> None:
+        """Contratos de outros tenants não interferem no total consolidado."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("2000.00"),
+        )
+
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_supplier = SupplierFactory(company=other_user.company)
+        ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+            company=other_user.company,
+            total_amount=Decimal("8000.00"),
+        )
+
+        total = contract_consolidated_total_selector(user.company, parent)
+        assert total == Decimal("12000.00")
+
+    def test_calculate_total_cross_tenant_raises_error(self, user: User) -> None:
+        """Tentativa de calcular total de contrato de outro tenant dispara erro."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+            company=other_user.company,
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            contract_consolidated_total_selector(user.company, other_contract)

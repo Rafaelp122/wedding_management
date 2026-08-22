@@ -8,9 +8,7 @@ from uuid import UUID
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import (
-    ProtectedError,
-)
+from django.db.models import ProtectedError
 from pydantic import ValidationError as PydanticValidationError
 
 from apps.core.exceptions import (
@@ -248,6 +246,11 @@ class ContractService:
                 detail="Contrato pai não encontrado.",
                 code="parent_contract_not_found",
             )
+            if parent.wedding_id != wedding.id:
+                raise BusinessRuleViolation(
+                    detail="O contrato pai deve pertencer ao mesmo casamento.",
+                    code="contract_cross_wedding_parent",
+                )
 
         # 2. Instanciação em Memória
         contract = Contract(

@@ -469,6 +469,36 @@ class TestLogisticsNinjaAPI:
         )
         assert response.status_code == 200
         assert response.json()["name"] == "Contrato Teste"
+        assert "addendums_total_amount" in response.json()
+        assert "total_amount_with_addendums" in response.json()
+
+    def test_retrieve_contract_with_addendums_consolidated_totals(
+        self, auth_client: Any, seed_data: dict[str, Any]
+    ) -> None:
+        parent = seed_data["my_contract"]
+        addendum_payload = {
+            "wedding": str(parent.wedding.uuid),
+            "supplier": str(seed_data["my_supplier"].uuid),
+            "name": "Aditivo 1",
+            "total_amount": "2500.00",
+            "status": "DRAFT",
+            "parent": str(parent.uuid),
+        }
+        res_create = auth_client.post(
+            "/api/v1/logistics/contracts/",
+            data=addendum_payload,
+            content_type="application/json",
+        )
+        assert res_create.status_code == 201
+
+        response = auth_client.get(f"/api/v1/logistics/contracts/{parent.uuid}/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["addendums_count"] == 1
+        assert Decimal(str(data["addendums_total_amount"])) == Decimal("2500.00")
+        assert Decimal(str(data["total_amount_with_addendums"])) == Decimal(
+            str(parent.total_amount)
+        ) + Decimal("2500.00")
 
     def test_create_contract_via_api(
         self, auth_client: Any, seed_data: dict[str, Any]

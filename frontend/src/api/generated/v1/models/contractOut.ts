@@ -27,6 +27,10 @@ export interface ContractOut {
   expense_uuid?: string | null;
   parent?: string | null;
   addendums_count?: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  addendums_total_amount?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_amount_with_addendums?: string;
   has_file?: boolean;
   file_name?: string | null;
 }

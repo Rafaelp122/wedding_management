@@ -137,7 +137,11 @@ class Contract(TenantModel, WeddingOwnedMixin):
 
     def clean(self) -> None:
         super().clean()
+        self._clean_status_transition()
+        self._clean_signed_requirements()
+        self._clean_parent_hierarchy()
 
+    def _clean_status_transition(self) -> None:
         if not self._state.adding:
             original = self._original_status
             if original is None:
@@ -155,6 +159,7 @@ class Contract(TenantModel, WeddingOwnedMixin):
                     )
                     raise ValidationError(msg)
 
+    def _clean_signed_requirements(self) -> None:
         if self.status == self.StatusChoices.SIGNED:
             if not self.pdf_file:
                 raise ValidationError(
@@ -167,3 +172,19 @@ class Contract(TenantModel, WeddingOwnedMixin):
                 )
             if not self.signed_date:
                 raise ValidationError("Informe a data em que o contrato foi assinado.")
+
+    def _clean_parent_hierarchy(self) -> None:
+        if self.parent:
+            if self.pk and self.parent_id == self.pk:
+                raise ValidationError("Um contrato não pode ser pai de si mesmo.")
+            if self.wedding_id and self.parent.wedding_id != self.wedding_id:
+                raise ValidationError("O contrato pai pertence a outro casamento.")
+            if self.pk:
+                current: Contract | None = self.parent
+                while current:
+                    if current.pk == self.pk:
+                        raise ValidationError(
+                            "Não é possível vincular um contrato pai que é "
+                            "descendente deste contrato."
+                        )
+                    current = current.parent
