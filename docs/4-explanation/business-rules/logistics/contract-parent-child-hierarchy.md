@@ -21,14 +21,14 @@ O modelo `Contract` permite vincular um contrato como filho de outro através do
 
 ---
 
-## 2. Travas de Segurança da Hierarquia (`Contract.clean()` e `ContractService`)
+## 2. Travas de Segurança da Hierarquia (`Contract.clean()`, Banco de Dados e `ContractService`)
 
-Ao criar ou atualizar um contrato pai, o sistema aplica quatro travas de segurança atômicas no modelo e na camada de serviço:
+Ao criar, atualizar ou excluir contratos na árvore hierárquica, o sistema aplica quatro travas de segurança atômicas distribuídas em camadas:
 
-1. **Bloqueio de Auto-vínculo:** Um contrato não pode ser pai de si mesmo (`contract_self_parent`).
-2. **Bloqueio Cross-Wedding:** O contrato pai deve pertencer obrigatoriamente ao mesmo casamento (`wedding_id`) do aditivo (`contract_cross_wedding_parent`).
-3. **Prevenção de Ciclos no Grafo (Graph Cycle Guard):** O sistema percorre a árvore de ancestrais para garantir que o contrato pai selecionado não seja um descendente do contrato atual (`contract_circular_parent`).
-4. **Proteção na Exclusão (`ProtectedError`):** A exclusão física de um contrato principal que possua termos aditivos filhos ativos é bloqueada pelo banco de dados. O serviço dispara `DomainIntegrityError` (`contract_protected_by_addendums`) exigindo a remoção prévia dos aditivos.
+1. **Bloqueio de Auto-vínculo:** Um contrato não pode ser pai de si mesmo — validado no modelo (`Contract.clean()`) e no serviço (`ContractService._resolve_parent`, erro `contract_self_parent`).
+2. **Bloqueio Cross-Wedding:** O contrato pai deve pertencer obrigatoriamente ao mesmo casamento (`wedding_id`) do aditivo — validado no modelo (`Contract.clean()` e `WeddingOwnedMixin.clean()`) e no serviço (`ContractService.create`/`_resolve_parent`, erro `contract_cross_wedding_parent`).
+3. **Prevenção de Ciclos no Grafo (Graph Cycle Guard):** O sistema percorre a árvore de ancestrais para garantir que o contrato pai selecionado não seja um descendente do contrato atual — validado no modelo (`Contract.clean()`) e no serviço (`ContractService._resolve_parent`, erro `contract_circular_parent`).
+4. **Proteção na Exclusão (`ProtectedError`):** A exclusão física de um contrato principal que possua termos aditivos filhos é bloqueada por integridade referencial no banco de dados (`on_delete=models.PROTECT`). O serviço intercepta `ProtectedError` e dispara `DomainIntegrityError` (`contract_protected_by_addendums`), exigindo a remoção ou desvinculação prévia dos aditivos.
 
 ---
 

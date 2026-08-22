@@ -224,7 +224,13 @@ class ContractOut(Schema):
         val = getattr(obj, "addendums_count", None)
         if val is not None:
             return int(val)
-        return obj.addendums.count()
+        from apps.logistics.models.contract import Contract as ContractModel
+
+        return (
+            obj.addendums.filter(company=obj.company)
+            .exclude(status=ContractModel.StatusChoices.CANCELED)
+            .count()
+        )
 
     @staticmethod
     def resolve_addendums_total_amount(obj: "Contract") -> Decimal:

@@ -95,6 +95,7 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
                         company=OuterRef("company"),
                         parent=OuterRef("pk"),
                     )
+                    .exclude(status=self.model.StatusChoices.CANCELED)
                     .values("parent")
                     .annotate(cnt=Count("id"))
                     .values("cnt")[:1]

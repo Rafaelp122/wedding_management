@@ -179,6 +179,14 @@ class TestContractQuerySet:
         _ContractFactory.create_batch(
             2, wedding=wedding, company=user.company, supplier=supplier, parent=parent
         )
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            parent=parent,
+            total_amount=Decimal("5000.00"),
+            status=Contract.StatusChoices.CANCELED,
+        )
 
         budget = BudgetFactory(wedding=wedding)
         cat = BudgetCategoryFactory(budget=budget, wedding=wedding)

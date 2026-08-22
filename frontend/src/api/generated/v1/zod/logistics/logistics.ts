@@ -234,6 +234,10 @@ export const logisticsContractsListResponseItemsItemSupplierEmailDefault = ``;
 export const logisticsContractsListResponseItemsItemHasLinkedExpenseDefault = false;
 export const logisticsContractsListResponseItemsItemProgressPercentDefault = 0;
 export const logisticsContractsListResponseItemsItemAddendumsCountDefault = 0;
+export const logisticsContractsListResponseItemsItemAddendumsTotalAmountDefault = `0.00`;
+export const logisticsContractsListResponseItemsItemAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const logisticsContractsListResponseItemsItemTotalAmountWithAddendumsDefault = `0.00`;
+export const logisticsContractsListResponseItemsItemTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const logisticsContractsListResponseItemsItemHasFileDefault = false;
 
 export const LogisticsContractsListResponse = zod.object({
@@ -258,6 +262,8 @@ export const LogisticsContractsListResponse = zod.object({
   "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
   "parent": zod.union([zod.string(),zod.null()]).optional(),
   "addendums_count": zod.int().default(logisticsContractsListResponseItemsItemAddendumsCountDefault),
+  "addendums_total_amount": zod.string().regex(logisticsContractsListResponseItemsItemAddendumsTotalAmountRegExp).default(logisticsContractsListResponseItemsItemAddendumsTotalAmountDefault),
+  "total_amount_with_addendums": zod.string().regex(logisticsContractsListResponseItemsItemTotalAmountWithAddendumsRegExp).default(logisticsContractsListResponseItemsItemTotalAmountWithAddendumsDefault),
   "has_file": zod.boolean().default(logisticsContractsListResponseItemsItemHasFileDefault),
   "file_name": zod.union([zod.string(),zod.null()]).optional()
 })),
@@ -292,6 +298,10 @@ export const logisticsContractsCreateResponseSupplierEmailDefault = ``;
 export const logisticsContractsCreateResponseHasLinkedExpenseDefault = false;
 export const logisticsContractsCreateResponseProgressPercentDefault = 0;
 export const logisticsContractsCreateResponseAddendumsCountDefault = 0;
+export const logisticsContractsCreateResponseAddendumsTotalAmountDefault = `0.00`;
+export const logisticsContractsCreateResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const logisticsContractsCreateResponseTotalAmountWithAddendumsDefault = `0.00`;
+export const logisticsContractsCreateResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const logisticsContractsCreateResponseHasFileDefault = false;
 
 export const LogisticsContractsCreateResponse = zod.object({
@@ -315,6 +325,8 @@ export const LogisticsContractsCreateResponse = zod.object({
   "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
   "parent": zod.union([zod.string(),zod.null()]).optional(),
   "addendums_count": zod.int().default(logisticsContractsCreateResponseAddendumsCountDefault),
+  "addendums_total_amount": zod.string().regex(logisticsContractsCreateResponseAddendumsTotalAmountRegExp).default(logisticsContractsCreateResponseAddendumsTotalAmountDefault),
+  "total_amount_with_addendums": zod.string().regex(logisticsContractsCreateResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsCreateResponseTotalAmountWithAddendumsDefault),
   "has_file": zod.boolean().default(logisticsContractsCreateResponseHasFileDefault),
   "file_name": zod.union([zod.string(),zod.null()]).optional()
 })
@@ -336,6 +348,10 @@ export const logisticsContractsReadResponseSupplierEmailDefault = ``;
 export const logisticsContractsReadResponseHasLinkedExpenseDefault = false;
 export const logisticsContractsReadResponseProgressPercentDefault = 0;
 export const logisticsContractsReadResponseAddendumsCountDefault = 0;
+export const logisticsContractsReadResponseAddendumsTotalAmountDefault = `0.00`;
+export const logisticsContractsReadResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const logisticsContractsReadResponseTotalAmountWithAddendumsDefault = `0.00`;
+export const logisticsContractsReadResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const logisticsContractsReadResponseHasFileDefault = false;
 
 export const LogisticsContractsReadResponse = zod.object({
@@ -359,6 +375,8 @@ export const LogisticsContractsReadResponse = zod.object({
   "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
   "parent": zod.union([zod.string(),zod.null()]).optional(),
   "addendums_count": zod.int().default(logisticsContractsReadResponseAddendumsCountDefault),
+  "addendums_total_amount": zod.string().regex(logisticsContractsReadResponseAddendumsTotalAmountRegExp).default(logisticsContractsReadResponseAddendumsTotalAmountDefault),
+  "total_amount_with_addendums": zod.string().regex(logisticsContractsReadResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsReadResponseTotalAmountWithAddendumsDefault),
   "has_file": zod.boolean().default(logisticsContractsReadResponseHasFileDefault),
   "file_name": zod.union([zod.string(),zod.null()]).optional()
 })
@@ -395,6 +413,10 @@ export const logisticsContractsUpdateResponseSupplierEmailDefault = ``;
 export const logisticsContractsUpdateResponseHasLinkedExpenseDefault = false;
 export const logisticsContractsUpdateResponseProgressPercentDefault = 0;
 export const logisticsContractsUpdateResponseAddendumsCountDefault = 0;
+export const logisticsContractsUpdateResponseAddendumsTotalAmountDefault = `0.00`;
+export const logisticsContractsUpdateResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const logisticsContractsUpdateResponseTotalAmountWithAddendumsDefault = `0.00`;
+export const logisticsContractsUpdateResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const logisticsContractsUpdateResponseHasFileDefault = false;
 
 export const LogisticsContractsUpdateResponse = zod.object({
@@ -418,6 +440,8 @@ export const LogisticsContractsUpdateResponse = zod.object({
   "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
   "parent": zod.union([zod.string(),zod.null()]).optional(),
   "addendums_count": zod.int().default(logisticsContractsUpdateResponseAddendumsCountDefault),
+  "addendums_total_amount": zod.string().regex(logisticsContractsUpdateResponseAddendumsTotalAmountRegExp).default(logisticsContractsUpdateResponseAddendumsTotalAmountDefault),
+  "total_amount_with_addendums": zod.string().regex(logisticsContractsUpdateResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsUpdateResponseTotalAmountWithAddendumsDefault),
   "has_file": zod.boolean().default(logisticsContractsUpdateResponseHasFileDefault),
   "file_name": zod.union([zod.string(),zod.null()]).optional()
 })
@@ -481,6 +505,10 @@ export const logisticsContractsCreateFullResponseSupplierEmailDefault = ``;
 export const logisticsContractsCreateFullResponseHasLinkedExpenseDefault = false;
 export const logisticsContractsCreateFullResponseProgressPercentDefault = 0;
 export const logisticsContractsCreateFullResponseAddendumsCountDefault = 0;
+export const logisticsContractsCreateFullResponseAddendumsTotalAmountDefault = `0.00`;
+export const logisticsContractsCreateFullResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const logisticsContractsCreateFullResponseTotalAmountWithAddendumsDefault = `0.00`;
+export const logisticsContractsCreateFullResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const logisticsContractsCreateFullResponseHasFileDefault = false;
 
 export const LogisticsContractsCreateFullResponse = zod.object({
@@ -504,6 +532,8 @@ export const LogisticsContractsCreateFullResponse = zod.object({
   "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
   "parent": zod.union([zod.string(),zod.null()]).optional(),
   "addendums_count": zod.int().default(logisticsContractsCreateFullResponseAddendumsCountDefault),
+  "addendums_total_amount": zod.string().regex(logisticsContractsCreateFullResponseAddendumsTotalAmountRegExp).default(logisticsContractsCreateFullResponseAddendumsTotalAmountDefault),
+  "total_amount_with_addendums": zod.string().regex(logisticsContractsCreateFullResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsCreateFullResponseTotalAmountWithAddendumsDefault),
   "has_file": zod.boolean().default(logisticsContractsCreateFullResponseHasFileDefault),
   "file_name": zod.union([zod.string(),zod.null()]).optional()
 })
@@ -529,6 +559,10 @@ export const logisticsContractsUploadResponseSupplierEmailDefault = ``;
 export const logisticsContractsUploadResponseHasLinkedExpenseDefault = false;
 export const logisticsContractsUploadResponseProgressPercentDefault = 0;
 export const logisticsContractsUploadResponseAddendumsCountDefault = 0;
+export const logisticsContractsUploadResponseAddendumsTotalAmountDefault = `0.00`;
+export const logisticsContractsUploadResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const logisticsContractsUploadResponseTotalAmountWithAddendumsDefault = `0.00`;
+export const logisticsContractsUploadResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const logisticsContractsUploadResponseHasFileDefault = false;
 
 export const LogisticsContractsUploadResponse = zod.object({
@@ -552,6 +586,8 @@ export const LogisticsContractsUploadResponse = zod.object({
   "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
   "parent": zod.union([zod.string(),zod.null()]).optional(),
   "addendums_count": zod.int().default(logisticsContractsUploadResponseAddendumsCountDefault),
+  "addendums_total_amount": zod.string().regex(logisticsContractsUploadResponseAddendumsTotalAmountRegExp).default(logisticsContractsUploadResponseAddendumsTotalAmountDefault),
+  "total_amount_with_addendums": zod.string().regex(logisticsContractsUploadResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsUploadResponseTotalAmountWithAddendumsDefault),
   "has_file": zod.boolean().default(logisticsContractsUploadResponseHasFileDefault),
   "file_name": zod.union([zod.string(),zod.null()]).optional()
 })
@@ -587,6 +623,10 @@ export const logisticsContractsTransitionStatusResponseSupplierEmailDefault = ``
 export const logisticsContractsTransitionStatusResponseHasLinkedExpenseDefault = false;
 export const logisticsContractsTransitionStatusResponseProgressPercentDefault = 0;
 export const logisticsContractsTransitionStatusResponseAddendumsCountDefault = 0;
+export const logisticsContractsTransitionStatusResponseAddendumsTotalAmountDefault = `0.00`;
+export const logisticsContractsTransitionStatusResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsDefault = `0.00`;
+export const logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const logisticsContractsTransitionStatusResponseHasFileDefault = false;
 
 export const LogisticsContractsTransitionStatusResponse = zod.object({
@@ -610,6 +650,8 @@ export const LogisticsContractsTransitionStatusResponse = zod.object({
   "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
   "parent": zod.union([zod.string(),zod.null()]).optional(),
   "addendums_count": zod.int().default(logisticsContractsTransitionStatusResponseAddendumsCountDefault),
+  "addendums_total_amount": zod.string().regex(logisticsContractsTransitionStatusResponseAddendumsTotalAmountRegExp).default(logisticsContractsTransitionStatusResponseAddendumsTotalAmountDefault),
+  "total_amount_with_addendums": zod.string().regex(logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsDefault),
   "has_file": zod.boolean().default(logisticsContractsTransitionStatusResponseHasFileDefault),
   "file_name": zod.union([zod.string(),zod.null()]).optional()
 })
