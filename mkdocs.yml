@@ -134,6 +134,7 @@ nav:
           - Lógica de Parcelas Atrasadas: guides/backend/mark-overdue-installments.md
 
   - Arquitetura & Domínio:
+      - Visão Geral & MOC: architecture/index.md
       - Padrões Arquiteturais:
           - Service Layer Pattern: architecture/concepts/service-layer-pattern.md
           - Query Selectors & QuerySets: architecture/concepts/query-selectors-pattern.md

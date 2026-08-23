@@ -30,7 +30,7 @@ Bem-vindo à documentação técnica oficial da plataforma **Wedding Management 
 
     Entenda a estratégia de Multi-Tenancy, o padrão Service Layer e o cálculo de Tolerância Zero.
 
-    [:octicons-arrow-right-24: Explorar Arquitetura](architecture/concepts/system-overview.md)
+    [:octicons-arrow-right-24: Explorar Arquitetura](architecture/index.md)
 
 -   :material-code-json:{ .lg .middle } **Referência Técnica e APIs**
 
