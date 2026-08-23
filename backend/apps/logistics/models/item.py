@@ -83,9 +83,14 @@ class Item(TenantModel, WeddingOwnedMixin):
 
     @classmethod
     def from_db(
-        cls, db: str | None, field_names: Collection[str], values: Collection[Any]
+        cls,
+        db: str | None,
+        field_names: Collection[str],
+        values: Collection[Any],
+        *args: Any,
+        **kwargs: Any,
     ) -> Self:
-        instance = super().from_db(db, field_names, values)
+        instance = super().from_db(db, field_names, values, *args, **kwargs)
         instance._original_acquisition_status = instance.acquisition_status
         return instance
 
