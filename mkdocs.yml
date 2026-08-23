@@ -84,7 +84,8 @@ markdown_extensions:
 plugins:
   - search:
       lang: pt
-  - awesome-pages
+  - minify:
+      minify_html: true
 
 validation:
   nav:

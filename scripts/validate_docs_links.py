@@ -93,7 +93,13 @@ def main():
     links_checked = 0
     errors = []
 
-    target_files = sorted(DOCS_DIR.glob("**/*.md"))
+    # 1. Arquivos Markdown na raiz do repositório (README.md, AGENTS.md, DESIGN.md)
+    target_files = sorted(BASE_DIR.glob("*.md"))
+
+    # 2. Documentação sob docs/
+    target_files.extend(sorted(DOCS_DIR.glob("**/*.md")))
+
+    # 3. Skills dos agentes
     if SKILLS_DIR.exists():
         for skill_dir in sorted(SKILLS_DIR.glob("wedding-*")):
             target_files.extend(sorted(skill_dir.glob("**/*.md")))

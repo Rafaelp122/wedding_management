@@ -34,7 +34,7 @@ Nossa documentação técnica é mantida em [docs/index.md](docs/index.md) sob a
 ### 3. Reference (Especificações Técnicas)
 *Contratos de API, schemas e especificações de banco:*
 - **[openapi-schema](docs/reference/api/openapi-schema.md)** | **[error-envelope-spec](docs/reference/api/error-envelope-spec.md)**
-- **[commenting-standards](docs/reference/architecture-standards/commenting-standards.md)** | **[testing-standards](docs/reference/architecture-standards/testing-standards.md)**
+- **[commenting-standards](docs/reference/architecture-standards/commenting-standards.md)** | **[testing-standards](docs/reference/testing/index.md)**
 
 ### 4. Explanation (Arquitetura & Regras de Negócio)
 *Decisões de design, segurança e regras de negócio:*
