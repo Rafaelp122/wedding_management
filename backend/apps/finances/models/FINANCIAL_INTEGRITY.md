@@ -64,7 +64,7 @@ Se você alterar para `CASCADE` ou remover o Soft Delete:
 
 ## 5. Queries Seguras para Dashboard
 
-### ❌ ERRADO (considera apenas categorias ativas):
+### ERRADO (considera apenas categorias ativas):
 
 ```python
 total_spent = BudgetCategory.objects.filter(budget=budget).aggregate(
@@ -72,7 +72,7 @@ total_spent = BudgetCategory.objects.filter(budget=budget).aggregate(
 )
 ```
 
-### ✅ CORRETO (considera todas despesas, mesmo de categorias deletadas):
+### CORRETO (considera todas despesas, mesmo de categorias deletadas):
 
 ```python
 total_spent = Expense.objects.filter(category__budget=budget).aggregate(
@@ -80,7 +80,7 @@ total_spent = Expense.objects.filter(category__budget=budget).aggregate(
 )
 ```
 
-### ✅ CORRETO (saldo livre considerando apenas categorias ativas):
+### CORRETO (saldo livre considerando apenas categorias ativas):
 
 ```python
 allocated_active = BudgetCategory.objects.filter(
@@ -97,7 +97,7 @@ free_budget = budget.total_estimated - allocated_active
 Ao criar migrations:
 
 ```python
-# ✅ CORRETO
+# CORRETO
 migrations.AddField(
     model_name="expense",
     name="category",

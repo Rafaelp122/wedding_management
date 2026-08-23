@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+:root {
+  --md-text-font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --md-code-font: "JetBrains Mono", monospace;
+  --md-shape-radius: 8px;
+}
+
+/* Tipografia de Cabeçalhos (DESIGN.md) */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Tema Claro — Sim, Aceito! Violet Aura (#7C3AED / #FAFAFB) */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #7C3AED;
+  --md-primary-fg-color--light: #F5F3FF;
+  --md-primary-fg-color--dark: #6D28D9;
+  --md-primary-bg-color: #FAFAFB;
+  --md-accent-fg-color: #7C3AED;
+  --md-default-bg-color: #FAFAFB;
+  --md-default-bg-color--light: #FFFFFF;
+  --md-default-fg-color: #1A1C1E;
+  --md-default-fg-color--light: #52585E;
+}
+
+/* Tema Escuro — Surface Dark (#09090B / #18181B) */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #7C3AED;
+  --md-primary-fg-color--light: #8B5CF6;
+  --md-primary-fg-color--dark: #6D28D9;
+  --md-primary-bg-color: #18181B;
+  --md-accent-fg-color: #A78BFA;
+  --md-default-bg-color: #09090B;
+  --md-default-bg-color--light: #18181B;
+  --md-default-bg-color--lighter: #27272A;
+  --md-default-fg-color: #FAFAFB;
+  --md-default-fg-color--light: #A1A1AA;
+}
+
+/* Grid Cards (DESIGN.md 12px rounded cards com elevação sutil) */
+.md-typeset .grid.cards > ul > li {
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  transform: translateY(-2px);
+  border-color: #7C3AED;
+}

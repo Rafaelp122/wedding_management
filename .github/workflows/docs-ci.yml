@@ -1,21 +1,29 @@
-name: "Documentation Quality CI"
+name: "Documentation Quality CI & Deploy"
 
 on:
   push:
     branches: [main, develop]
     paths:
       - 'docs/**'
+      - 'mkdocs.yml'
+      - 'DESIGN.md'
       - '**.md'
       - '.github/workflows/docs-ci.yml'
       - 'scripts/validate_docs_links.py'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
       - 'Makefile'
   pull_request:
     branches: [main, develop]
     paths:
       - 'docs/**'
+      - 'mkdocs.yml'
+      - 'DESIGN.md'
       - '**.md'
       - '.github/workflows/docs-ci.yml'
       - 'scripts/validate_docs_links.py'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
       - 'Makefile'
 
 permissions:
@@ -27,7 +35,7 @@ concurrency:
 
 jobs:
   docs-lint:
-    name: Documentation Links & Diátaxis Audit
+    name: Documentation Links, Diátaxis & MkDocs Build
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -36,5 +44,39 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate Documentation Links & Design System Tokens
+      - name: Setup Python & UV
+        uses: ./.github/actions/setup-python-uv
+
+      - name: Install Docs Dependencies
+        run: |
+          cd backend
+          uv sync --group docs
+
+      - name: Validate Documentation Links & Build MkDocs Site
         run: make check-docs
+
+  docs-deploy:
+    name: Deploy MkDocs to GitHub Pages
+    needs: [docs-lint]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Python & UV
+        uses: ./.github/actions/setup-python-uv
+
+      - name: Install Docs Dependencies
+        run: |
+          cd backend
+          uv sync --group docs
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        run: make docs-gh-deploy

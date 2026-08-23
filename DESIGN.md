@@ -123,7 +123,7 @@ The visual identity is designed for professional wedding planners who use the pl
 - **Ergonomics:** Eye-friendly tinted light backgrounds (`#FAFAFB` / `#F5F3FF`) instead of harsh pure whites.
 - **Typography Strategy:** High-density data legibility using `Plus Jakarta Sans` for headers, `IBM Plex Sans` for UI prose, and `JetBrains Mono` for financial tables.
 
-Detailed architectural rationale is documented in [design-system-rationale.md](docs/4-explanation/architecture/design-system-rationale.md).
+Detailed architectural rationale is documented in [design-system-rationale.md](docs/architecture/concepts/design-system-rationale.md).
 
 ---
 
