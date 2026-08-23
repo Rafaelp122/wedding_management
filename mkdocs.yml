@@ -6,6 +6,8 @@ docs_dir: docs
 theme:
   name: material
   language: pt
+  logo: assets/favicon.svg
+  favicon: assets/favicon.svg
   palette:
     # Modo automático conforme preferência do sistema
     - media: "(prefers-color-scheme)"
