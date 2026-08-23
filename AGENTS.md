@@ -3,7 +3,7 @@
 ## Tech Stack & Architecture Overview
 
 - **Stack**: Python 3.12+ (Django Ninja) | React 19 + TypeScript + Vite + Tailwind CSS 4 + shadcn/ui.
-- **Single Source of Truth (`docs/`)**: Documentation follows **Diátaxis** in `docs/`. Always consult `docs/README.md` before architectural or domain changes.
+- **Single Source of Truth (`docs/`)**: Documentation follows **Diátaxis** in `docs/`. Always consult `docs/index.md` before architectural or domain changes.
 - **On-Demand Skills (`.agents/skills/`)**: Skills are task-specific operational playbooks loaded on demand (never proactively).
 
 ## Universal Guard-Rails (Non-Negotiable)
@@ -25,8 +25,8 @@
 - **Frontend**: FORBIDDEN `vi.mock("@/api/generated/...")` or per-file data hook mocks. Centralize all mocks in `test-setup.ts` via `registerMockHook`. Import testing utilities from `@/test-utils`.
 
 ### Documentation & Comments
-- **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/3-reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `make check-docs`.
-- **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
+- **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `make check-docs`.
+- **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
 - **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments or documentation.
 
 ## Subagents Dispatch Matrix

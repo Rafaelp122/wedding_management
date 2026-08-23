@@ -1,4 +1,4 @@
-# 💍 Wedding Management System
+# Wedding Management System
 
 [![CI](https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml/badge.svg)](https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml)
 [![backend](https://img.shields.io/codecov/c/github/Rafaelp122/wedding_management?flag=backend&label=backend)](https://codecov.io/gh/Rafaelp122/wedding_management)
@@ -15,37 +15,37 @@ Este repositório centraliza o controle financeiro, logístico e de cronograma p
 
 ---
 
-## 📖 Portal de Documentação (Princípio Diátaxis)
+## Portal de Documentação (Princípio Diátaxis)
 
-Nossa documentação técnica é mantida em [docs/README.md](docs/README.md) sob a metodologia **Diátaxis**. Escolha sua rota de leitura:
+Nossa documentação técnica é mantida em [docs/index.md](docs/index.md) sob a metodologia **Diátaxis**. Escolha sua rota de leitura:
 
-### 🎓 1. Tutorials (Aprendizado & Onboarding)
+### 1. Tutorials (Aprendizado & Onboarding)
 *Passo a passo para novos desenvolvedores:*
-- **[onboarding-quickstart](docs/1-tutorials/onboarding-quickstart.md)**: Subindo o ambiente local completo (Docker, PostgreSQL, Backend, Frontend).
-- **[backend-first-feature](docs/1-tutorials/backend-first-feature.md)**: Criando endpoints no Django Ninja + Service Layer.
-- **[frontend-first-feature](docs/1-tutorials/frontend-first-feature.md)**: Criando telas no React + Orval + Zod.
+- **[onboarding-quickstart](docs/onboarding/onboarding-quickstart.md)**: Subindo o ambiente local completo (Docker, PostgreSQL, Backend, Frontend).
+- **[backend-first-feature](docs/onboarding/backend-first-feature.md)**: Criando endpoints no Django Ninja + Service Layer.
+- **[frontend-first-feature](docs/onboarding/frontend-first-feature.md)**: Criando telas no React + Orval + Zod.
 
-### 🛠️ 2. How-To Guides (Receitas Práticas)
+### 2. How-To Guides (Receitas Práticas)
 *Guias orientados a tarefas do dia a dia:*
-- **[setup-local-environment](docs/2-how-to/dev-environment/setup-local-environment.md)**: Configuração de ambiente e comandos `make`.
-- **[seed-database](docs/2-how-to/backend/seed-database.md)**: Populando o banco de dados local com dados fictícios (Faker) e templates.
-- **[msw-testing-patterns](docs/2-how-to/frontend/msw-testing-patterns.md)**: Padrões de testes no React com MSW e RTL.
+- **[setup-local-environment](docs/guides/dev-environment/setup-local-environment.md)**: Configuração de ambiente e comandos `make`.
+- **[seed-database](docs/guides/backend/seed-database.md)**: Populando o banco de dados local com dados fictícios (Faker) e templates.
+- **[msw-testing-patterns](docs/guides/frontend/msw-testing-patterns.md)**: Padrões de testes no React com MSW e RTL.
 
-### 📋 3. Reference (Especificações Técnicas)
+### 3. Reference (Especificações Técnicas)
 *Contratos de API, schemas e especificações de banco:*
-- **[openapi-schema](docs/3-reference/api/openapi-schema.md)** | **[error-envelope-spec](docs/3-reference/api/error-envelope-spec.md)**
-- **[commenting-standards](docs/3-reference/architecture-standards/commenting-standards.md)** | **[testing-standards](docs/3-reference/architecture-standards/testing-standards.md)**
+- **[openapi-schema](docs/reference/api/openapi-schema.md)** | **[error-envelope-spec](docs/reference/api/error-envelope-spec.md)**
+- **[commenting-standards](docs/reference/architecture-standards/commenting-standards.md)** | **[testing-standards](docs/reference/architecture-standards/testing-standards.md)**
 
-### 💡 4. Explanation (Arquitetura & Regras de Negócio)
+### 4. Explanation (Arquitetura & Regras de Negócio)
 *Decisões de design, segurança e regras de negócio:*
-- **[requirements](docs/4-explanation/requirements.md)**: Matriz de Requisitos Funcionais (RF01–RF12) e Não-Funcionais (RNF01–RNF05).
-- **[system-overview](docs/4-explanation/architecture/system-overview.md)** | **[multi-tenancy-strategy](docs/4-explanation/architecture/multi-tenancy-strategy.md)**
-- **[architectural-guard-rails-suite](docs/4-explanation/architecture/architectural-guard-rails-suite.md)**: Auditoria automatizada dos 12 pilares do sistema.
-- **[Regras de Negócio Atômicas](docs/README.md#regras-de-negócio-atômicas)**: Integridade contábil, ciclo de vida de casamentos, máquinas de estado de contratos e proteção da agenda.
+- **[requirements](docs/architecture/requirements.md)**: Matriz de Requisitos Funcionais (RF01–RF12) e Não-Funcionais (RNF01–RNF05).
+- **[system-overview](docs/architecture/concepts/system-overview.md)** | **[multi-tenancy-strategy](docs/architecture/concepts/multi-tenancy-strategy.md)**
+- **[architectural-guard-rails-suite](docs/architecture/concepts/architectural-guard-rails-suite.md)**: Auditoria automatizada dos 12 pilares do sistema.
+- **[Regras de Negócio Atômicas](docs/architecture/index.md)**: Integridade contábil, ciclo de vida de casamentos, máquinas de estado de contratos e proteção da agenda.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Backend:** Python 3.12+ | Django 5.2 + Django Ninja (API-First).
 - **Frontend (App):** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui.
@@ -55,7 +55,7 @@ Nossa documentação técnica é mantida em [docs/README.md](docs/README.md) sob
 
 ---
 
-## 🚀 Quick Start Local
+## Quick Start Local
 
 ```bash
 # 1. Copie e configure as variáveis de ambiente
@@ -74,7 +74,7 @@ make dev
 
 ---
 
-## 📁 Estrutura do Monorepo
+## Estrutura do Monorepo
 
 ```
 wedding_management/
@@ -90,7 +90,7 @@ wedding_management/
 
 ---
 
-## 🧪 Qualidade, CI/CD e Integridade
+## Qualidade, CI/CD e Integridade
 
 - **Validação de CI Local:** `make check-ci`
 - **Validação da Documentação:** `make check-docs`
@@ -100,5 +100,5 @@ wedding_management/
 
 ---
 
-## 📝 Licença
+## Licença
 Este projeto está licenciado sob a [MIT License](LICENSE).

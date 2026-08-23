@@ -19,6 +19,7 @@ endif
 .PHONY: help setup up dev logs down build rebuild clean db-reset back-logs front-logs \
         frontend-dev landing-dev sync-api openapi orval frontend-test frontend-test-changed \
         migrate makemigrations superuser shell reqs back-install \
+        docs-dev docs-build docs-gh-deploy \
         test test-cov lint mypy format check-backend check-frontend check-landing check-docs lint-docs check-ci check \
         prod-build prod-up prod-migrate prod-shell \
         env-setup secret-key fix-perms
@@ -57,6 +58,9 @@ help:
 	@echo "  make sync-api            - 🔄 Sincroniza API: gera OpenAPI + Hooks do Orval"
 	@echo "  make openapi             - Gera openapi.json a partir do container backend"
 	@echo "  make orval               - Gera os hooks do frontend a partir do openapi.json"
+	@echo "  make docs-dev            - 🔥 Inicia servidor MkDocs com livereload (porta 8001)"
+	@echo "  make docs-build          - 🔨 Gera o build estático estrito do MkDocs"
+	@echo "  make docs-gh-deploy      - 🚀 Publica a documentação no GitHub Pages"
 	@echo ""
 	@echo "🚀 PRODUÇÃO"
 	@echo "  make prod-build          - Build da imagem de produção"
@@ -260,9 +264,22 @@ check-frontend:
 check-landing:
 	cd landing && pnpm install --frozen-lockfile && pnpm exec astro check && pnpm run build
 
+# ==============================================================================
+# 📚 DOCUMENTAÇÃO (MKDOCS MATERIAL)
+# ==============================================================================
+docs-dev:
+	uv run --project backend --group docs mkdocs serve -a 0.0.0.0:8001
+
+docs-build:
+	uv run --project backend --group docs mkdocs build --strict
+
+docs-gh-deploy:
+	uv run --project backend --group docs mkdocs gh-deploy --force
+
 check-docs:
 	@python3 scripts/validate_docs_links.py
 	@npx -y @google/design.md lint DESIGN.md
+	@$(MAKE) docs-build
 
 lint-docs: check-docs
 

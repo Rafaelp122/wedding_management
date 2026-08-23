@@ -1,0 +1,204 @@
+site_name: Wedding Management System — Documentação Técnica
+site_description: Plataforma SaaS de Gestão de Casamentos (Arquitetura, APIs, Regras de Negócio e Playbooks)
+site_author: Rafael Pereira de Araújo
+docs_dir: docs
+
+theme:
+  name: material
+  language: pt
+  palette:
+    # Modo automático conforme preferência do sistema
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/lightbulb-auto
+        name: Alternar para tema claro
+    # Modo Claro (Light Mode — Sim, Aceito! Violet Aura)
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/lightbulb
+        name: Alternar para tema escuro
+    # Modo Escuro (Dark Mode — Surface Dark #09090B / #18181B)
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/lightbulb-outline
+        name: Alternar para modo automático
+
+  font:
+    text: IBM Plex Sans
+    code: JetBrains Mono
+
+  features:
+    - navigation.instant           # SPA instant loading
+    - navigation.instant.prefetch  # Prefetch ao passar o mouse
+    - navigation.instant.progress  # Barra de progresso no topo
+    - navigation.tabs              # Abas de navegação superiores
+    - navigation.tabs.sticky       # Abas fixas no scroll
+    - navigation.sections          # Seções organizadas no menu lateral
+    - navigation.expand            # Expande navegação por padrão
+    - navigation.top               # Botão de voltar ao topo
+    - navigation.tracking          # Sincroniza âncoras na URL
+    - content.code.annotate        # Anotações em blocos de código
+    - content.code.copy            # Botão de cópia de código
+    - content.tabs.link            # Abas de código sincronizadas
+    - search.suggest               # Sugestões inteligentes de busca
+    - search.highlight             # Destaque de termos buscados
+    - toc.follow                   # Scrollspy no sumário lateral
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search:
+      lang: pt
+  - awesome-pages
+
+validation:
+  nav:
+    omitted_files: info
+  links:
+    not_found: ignore
+    absolute_links: ignore
+    unrecognized_links: ignore
+
+nav:
+  - Visão Geral:
+      - Apresentação da Plataforma: index.md
+      - Matriz de Requisitos (RF & RNF): architecture/requirements.md
+      - Visão Geral de Arquitetura: architecture/concepts/system-overview.md
+      - Estratégia Multi-Tenancy: architecture/concepts/multi-tenancy-strategy.md
+      - Ergonomia UX & Design System: architecture/concepts/design-system-rationale.md
+
+  - Onboarding:
+      - Quickstart (Ambiente Local): onboarding/onboarding-quickstart.md
+      - Criando Endpoints Backend: onboarding/backend-first-feature.md
+      - Criando Telas Frontend: onboarding/frontend-first-feature.md
+      - GitOps & Fluxo por Sprints: onboarding/gitops-sprint-workflow.md
+      - Atualização da Documentação: guides/documentation/write-and-update-docs.md
+
+  - Guias Práticos:
+      - Ambiente & Troubleshooting:
+          - Setup Local Completo: guides/dev-environment/setup-local-environment.md
+          - Migrações do Banco: guides/dev-environment/database-migrations.md
+          - DB Connection Locks: guides/ops-troubleshooting/db-connection-locks.md
+          - Uploads R2 Failures: guides/ops-troubleshooting/r2-upload-failures.md
+          - Terraform Onboarding: guides/ops-troubleshooting/terraform-service-onboarding.md
+      - Frontend:
+          - Design System: guides/frontend/use-design-md-system.md
+          - Geração de Cliente Orval: guides/frontend/generate-orval-client.md
+          - Hook Form + Zod: guides/frontend/create-hook-form-zod.md
+          - Testes MSW: guides/frontend/msw-testing-patterns.md
+          - Testes E2E Playwright: guides/frontend/run-playwright-e2e.md
+      - Backend:
+          - Suíte Pytest: guides/backend/run-pytest-suite.md
+          - População de Banco (Seed): guides/backend/seed-database.md
+          - Service Layer Pattern: guides/backend/use-core-services.md
+          - Query Selectors Customizados: guides/backend/create-query-selectors.md
+          - Notificações In-App: guides/backend/send-in-app-notifications.md
+          - Background Tasks: guides/backend/create-background-tasks.md
+          - Cron Tasks: guides/backend/register-cron-tasks.md
+          - Lógica de Parcelas Atrasadas: guides/backend/mark-overdue-installments.md
+
+  - Arquitetura & Domínio:
+      - Padrões Arquiteturais:
+          - Service Layer Pattern: architecture/concepts/service-layer-pattern.md
+          - Query Selectors & QuerySets: architecture/concepts/query-selectors-pattern.md
+          - Smart vs Dumb Components: architecture/concepts/smart-dumb-components.md
+          - Autenticação JWT & Axios: architecture/concepts/auth-jwt-flow.md
+          - Upload de Contratos R2: architecture/concepts/contract-pdf-upload-r2-flow.md
+          - CI/CD & Ownership Terraform: architecture/concepts/ci-cd-pipeline-flow.md
+          - Suíte de Guard-Rails: architecture/concepts/architectural-guard-rails-suite.md
+          - Tarefas Assíncronas & Crons: architecture/concepts/async-tasks-architecture.md
+      - Hubs de Domínio (MOCs):
+          - Visão Geral dos Domínios: architecture/domains/index.md
+          - Core Domain: architecture/domains/core-domain.md
+          - Dashboard Domain: architecture/domains/dashboard-domain.md
+          - Reporting Domain: architecture/domains/reporting-domain.md
+          - Finances Domain: architecture/domains/finances-domain.md
+          - Logistics Domain: architecture/domains/logistics-domain.md
+          - Scheduler Domain: architecture/domains/scheduler-domain.md
+          - Tenants Domain: architecture/domains/tenants-domain.md
+          - Users Domain: architecture/domains/users-domain.md
+          - Weddings Domain: architecture/domains/weddings-domain.md
+          - Notifications Domain: architecture/domains/notifications-domain.md
+      - Regras de Negócio Atômicas:
+          - Finanças:
+              - Tolerância Zero & Integridade: architecture/business-rules/finances/financial-integrity-rules.md
+              - Lógica de Parcelas Vencidas: architecture/business-rules/finances/installment-overdue-logic.md
+              - Integração de Pagamentos: architecture/business-rules/finances/payment-schedule-integration.md
+              - Distribuição Orçamentária: architecture/business-rules/finances/budget-category-distribution.md
+          - Logística:
+              - Hierarquia de Contratos: architecture/business-rules/logistics/contract-parent-child-hierarchy.md
+              - Máquina de Estados de Contratos: architecture/business-rules/logistics/contract-state-machine.md
+              - Validação de CNPJ: architecture/business-rules/logistics/cnpj-validation-rules.md
+          - Scheduler & Casamentos:
+              - Motor de Recorrência: architecture/business-rules/scheduler/recurrence-rules-engine.md
+              - Guard Read-Only de Pagamentos: architecture/business-rules/scheduler/payment-event-readonly-guard.md
+              - Ciclo de Vida do Casamento: architecture/business-rules/weddings/wedding-status-lifecycle.md
+              - Templates de Cronograma: architecture/business-rules/weddings/wedding-schedule-templates.md
+          - Notificações:
+              - Regras de Notificação In-App: architecture/business-rules/notifications/in-app-notifications-rules.md
+      - Registros de Decisão (ADRs):
+          - architecture/adr/README.md
+
+  - Referência Técnica:
+      - APIs & Contratos:
+          - Hub de APIs: reference/api/index.md
+          - Contrato OpenAPI: reference/api/openapi-schema.md
+          - Envelope de Erros: reference/api/error-envelope-spec.md
+      - Modelos do Banco (Entidades):
+          - Core & Base Models: reference/models/core-models.md
+          - Finanças: reference/models/finances/budget-model.md
+          - Logística: reference/models/logistics/contract-model.md
+          - Agenda: reference/models/scheduler/event-model.md
+          - Tenants & Weddings: reference/models/tenants/tenant-model.md
+          - Notificações: reference/models/notifications/notification-model.md
+      - Infraestrutura & IaC:
+          - Módulos Terraform (MOC): reference/terraform/index.md
+          - Módulo GCP Cloud Run: reference/terraform/cloud-run-service-module.md
+          - Variáveis de Ambiente (.env): reference/environment/environment-variables.md
+          - Serviços de Infraestrutura Core: reference/architecture-standards/infrastructure-services.md
+      - Padrões Técnicos & Guard-Rails:
+          - Padrões de Documentação: reference/architecture-standards/documentation-standards.md
+          - Padrão Query Selectors: reference/architecture-standards/query-selectors-spec.md
+          - Convencional de Commits: reference/architecture-standards/commit-convention-spec.md
+          - Padrão de Comentários & Docstrings: reference/architecture-standards/commenting-standards.md
+          - MOC de Testes Automatizados: reference/testing/index.md
+          - MOC de CI/CD Pipelines: reference/ci-cd/index.md
+          - MOC de Guard-Rails de Integridade: reference/architecture-standards/guard-rails/index.md
+      - Frontend Specs:
+          - Componentes UI (shadcn/ui): reference/frontend/ui-components-spec.md
+          - Estado Global & Cache (Zustand/Query): reference/frontend/store-state-spec.md

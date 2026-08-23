@@ -58,4 +58,4 @@ Overrides patch only the `model:` line in the installed agent's frontmatter; the
 - [`agents/cavecrew-investigator.md`](../../agents/cavecrew-investigator.md)
 - [`agents/cavecrew-builder.md`](../../agents/cavecrew-builder.md)
 - [`agents/cavecrew-reviewer.md`](../../agents/cavecrew-reviewer.md)
-- [Caveman README](../../README.md) — repo overview
+- [Caveman README](../../index.md) — repo overview

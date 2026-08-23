@@ -9,20 +9,20 @@ Operational guide and checklist for React 19 + TypeScript + Vite + Tailwind CSS 
 
 ## Documentation References
 
-- **Smart/Dumb Architecture**: [smart-dumb-components.md](../../../docs/4-explanation/architecture/smart-dumb-components.md)
+- **Smart/Dumb Architecture**: [smart-dumb-components.md](../../../docs/architecture/concepts/smart-dumb-components.md)
 - **UI Design System**: [DESIGN.md](../../../DESIGN.md)
-- **UI Components Spec**: [ui-components-spec.md](../../../docs/3-reference/frontend/ui-components-spec.md)
-- **Orval Code Generation**: [generate-orval-client.md](../../../docs/2-how-to/frontend/generate-orval-client.md)
+- **UI Components Spec**: [ui-components-spec.md](../../../docs/reference/frontend/ui-components-spec.md)
+- **Orval Code Generation**: [generate-orval-client.md](../../../docs/guides/frontend/generate-orval-client.md)
 
 ## Development Checklist
 
 ### 1. Feature Structure & Smart/Dumb Pattern
 - Place code in `src/features/<feature_name>/` (`components/`, `hooks/`, `pages/`, `types.ts`, `utils.ts`).
-- Separate Smart Components (containers: API queries, routes, form state) from Dumb Components (presenters: pure UI, props only). See [smart-dumb-components.md](../../../docs/4-explanation/architecture/smart-dumb-components.md).
+- Separate Smart Components (containers: API queries, routes, form state) from Dumb Components (presenters: pure UI, props only). See [smart-dumb-components.md](../../../docs/architecture/concepts/smart-dumb-components.md).
 
 ### 2. API Integration (Strict Rule)
 - **FORBIDDEN**: `fetch()` or `axios`. Use ONLY Orval-generated hooks in `@/api/generated/v1/endpoints/`.
-- Regenerate hooks after backend changes using `make orval`. See [generate-orval-client.md](../../../docs/2-how-to/frontend/generate-orval-client.md).
+- Regenerate hooks after backend changes using `make orval`. See [generate-orval-client.md](../../../docs/guides/frontend/generate-orval-client.md).
 
 ### 3. Forms & Validation
 - Always use `react-hook-form` with `zod` schema validation via `@hookform/resolvers/zod`.
@@ -31,7 +31,7 @@ Operational guide and checklist for React 19 + TypeScript + Vite + Tailwind CSS 
 ### 4. Icons & UI Composition (shadcn/ui + Tailwind v4)
 - **Icons**: Use ONLY `lucide-react`. Never import from other icon libraries.
 - **shadcn/ui**: Base components reside in `src/components/ui/`. NEVER modify files inside `ui/` directly.
-- **Composition**: Customize styling by composing shadcn components with Tailwind CSS v4 utility classes. Avoid inline `style={{}}` and CSS modules. Follow design rules in [DESIGN.md](../../../DESIGN.md) and [ui-components-spec.md](../../../docs/3-reference/frontend/ui-components-spec.md).
+- **Composition**: Customize styling by composing shadcn components with Tailwind CSS v4 utility classes. Avoid inline `style={{}}` and CSS modules. Follow design rules in [DESIGN.md](../../../DESIGN.md) and [ui-components-spec.md](../../../docs/reference/frontend/ui-components-spec.md).
 
 ### 5. State Management & Routing
 - **Global Client State**: Use Zustand (`src/stores/`).
@@ -40,7 +40,7 @@ Operational guide and checklist for React 19 + TypeScript + Vite + Tailwind CSS 
 
 ### 6. Component & Integration Testing
 - Every new React component, custom hook, or form MUST be accompanied by unit/integration tests (`.test.tsx`).
-- Follow `isolate: false` rules, MSW API mocks, and import utilities from `@/test-utils`. See [wedding-frontend-testing](../wedding-frontend-testing/SKILL.md) and [Frontend Testing Spec](../../../docs/3-reference/testing/frontend-testing-spec.md).
+- Follow `isolate: false` rules, MSW API mocks, and import utilities from `@/test-utils`. See [wedding-frontend-testing](../wedding-frontend-testing/SKILL.md) and [Frontend Testing Spec](../../../docs/reference/testing/frontend-testing-spec.md).
 
 ### 7. Verification
 - `cd frontend && pnpm test` (Vitest suite)

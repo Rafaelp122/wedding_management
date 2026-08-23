@@ -64,6 +64,12 @@ dev = [
     "bandit>=1.9.4,<2.0",
     "types-openpyxl>=3.1.5.20260807",
 ]
+docs = [
+    "mkdocs-material>=9.5.0",
+    "pymdown-extensions>=10.7",
+    "mkdocs-minify-plugin>=0.8.0",
+    "mkdocs-awesome-pages-plugin>=2.9.0",
+]
 
 # ==============================================================================
 # CODE QUALITY: RUFF CONFIGURATION
