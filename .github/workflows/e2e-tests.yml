@@ -39,8 +39,8 @@ jobs:
           SECRET_KEY: dummy-ci-key-for-e2e-tests # pragma: allowlist secret
         run: |
           cd backend
-          uv run python manage.py migrate --noinput --traceback
-          uv run python manage.py seed_e2e --traceback
+          uv run python manage.py migrate --noinput
+          uv run python manage.py seed_e2e
 
       - name: Start ASGI Server (Uvicorn)
         env:
