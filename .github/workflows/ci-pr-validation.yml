@@ -71,9 +71,18 @@ jobs:
           PYTHONPATH: .
         run: |
           cd backend
-          uv run ruff check .
-          uv run ruff format --check .
-          uv run mypy . --show-error-codes --no-color-output
+          output=$(uv run ruff check . 2>&1) || {
+            while IFS= read -r line; do echo "::error title=Ruff Check::$line"; done <<< "$output"
+            exit 1
+          }
+          output=$(uv run ruff format --check . 2>&1) || {
+            while IFS= read -r line; do echo "::error title=Ruff Format::$line"; done <<< "$output"
+            exit 1
+          }
+          output=$(uv run mypy . --show-error-codes --no-color-output 2>&1) || {
+            while IFS= read -r line; do echo "::error title=Mypy::$line"; done <<< "$output"
+            exit 1
+          }
 
       - name: Frontend Typecheck & Oxlint
         if: needs.detect-changes.outputs.frontend == 'true'
@@ -103,9 +112,18 @@ jobs:
           SECRET_KEY: dummy-ci-key-for-backend-tests # pragma: allowlist secret
         run: |
           cd backend
-          uv run python manage.py check --traceback
-          uv run python manage.py makemigrations --check --dry-run --traceback
-          uv run python manage.py migrate --noinput --traceback
+          output=$(uv run python manage.py check --traceback 2>&1) || {
+            while IFS= read -r line; do echo "::error title=Django Check::$line"; done <<< "$output"
+            exit 1
+          }
+          output=$(uv run python manage.py makemigrations --check --dry-run --traceback 2>&1) || {
+            while IFS= read -r line; do echo "::error title=Makemigrations Check::$line"; done <<< "$output"
+            exit 1
+          }
+          output=$(uv run python manage.py migrate --noinput --traceback 2>&1) || {
+            while IFS= read -r line; do echo "::error title=Migrate::$line"; done <<< "$output"
+            exit 1
+          }
 
       - name: Pytest Unit & Integration Tests
         env:
@@ -219,10 +237,13 @@ jobs:
           SECRET_KEY: dummy-ci-key-for-contract-sync # pragma: allowlist secret
         run: |
           cd backend
-          uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2 --settings=config.settings.development --traceback
+          output=$(uv run python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2 --settings=config.settings.development --traceback 2>&1) || {
+            while IFS= read -r line; do echo "::error title=OpenAPI Export::$line"; done <<< "$output"
+            exit 1
+          }
           cd ../frontend
           pnpm run generate:api
-          git diff --exit-code || (echo "::error::Os contratos OpenAPI ou hooks gerados pelo Orval estão desatualizados! Rode 'make sync-api' localmente." && exit 1)
+          git diff --exit-code || (echo "::error title=Contract Sync::Os contratos OpenAPI ou hooks gerados pelo Orval estão desatualizados! Rode 'make sync-api' localmente." && exit 1)
 
   landing-check:
     name: Landing Page Build Check
