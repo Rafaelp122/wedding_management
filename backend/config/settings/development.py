@@ -14,13 +14,18 @@ INSTALLED_APPS += ["django_extensions"]
 DEBUG = env.bool("DEBUG", default=True)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "0.0.0.0"])
 
-ENABLE_ZEAL = env.bool("ENABLE_ZEAL", default=True)
+ENABLE_ZEAL = env.bool("ENABLE_ZEAL", default=False)
 
 if ENABLE_ZEAL:
-    INSTALLED_APPS += ["zeal"]
-    MIDDLEWARE = ["zeal.middleware.zeal_middleware", *MIDDLEWARE]
-    ZEAL_FAIL = env.bool("ZEAL_FAIL", default=False)
-    ZEAL_LOG = True
+    from django.contrib.contenttypes.fields import GenericForeignKey
+
+    # django-zeal 2.2.2 faz monkeypatch em GenericForeignKey.__get__,
+    # incompatível com Django 6.1+
+    if hasattr(GenericForeignKey, "__get__"):
+        INSTALLED_APPS += ["zeal"]
+        MIDDLEWARE = ["zeal.middleware.zeal_middleware", *MIDDLEWARE]
+        ZEAL_FAIL = env.bool("ZEAL_FAIL", default=False)
+        ZEAL_LOG = True
 
 DATABASES = {
     "default": {

@@ -11,6 +11,11 @@ inputs:
     required: false
     default: "backend"
 
+  sync:
+    description: "Se deve executar uv sync automaticamente"
+    required: false
+    default: "true"
+
 runs:
   using: "composite"
   steps:
@@ -20,3 +25,10 @@ runs:
         python-version: ${{ inputs.python-version }}
         enable-cache: true
         cache-dependency-glob: "${{ inputs.working-directory }}/uv.lock"
+
+    - name: Install Python Dependencies
+      if: inputs.sync == 'true'
+      shell: bash
+      run: |
+        cd ${{ inputs.working-directory }}
+        uv sync --frozen --all-groups

@@ -2,7 +2,7 @@
 # Backend Commands (Django Ninja) - Executado no Ambiente do Container
 # ==============================================================================
 SHELL := /bin/bash
-PYTHON := python manage.py
+PYTHON := uv run python manage.py
 
 .PHONY: migrate makemigrations superuser shell reqs back-install \
         test test-cov lint mypy format openapi check-backend
