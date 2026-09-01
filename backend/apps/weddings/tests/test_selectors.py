@@ -8,6 +8,7 @@ from typing import Any, cast
 from uuid import uuid4
 
 import pytest
+from django.utils import timezone
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.finances.models import Installment
@@ -331,7 +332,7 @@ class TestWeddingSelectors:
         assert counts == []
 
     def test_critical_weddings_selector(self, user: Any) -> None:
-        today = date(2026, 8, 16)
+        today = timezone.localdate()
         w1 = WeddingFactory(
             company=user.company,
             date=today + timedelta(days=10),

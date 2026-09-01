@@ -46,3 +46,13 @@ HUEY = {
     "name": "test_tasks",
     "immediate": True,
 }
+
+MEDIA_ROOT = "/tmp/test_media"  # noqa: S108
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.InMemoryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
