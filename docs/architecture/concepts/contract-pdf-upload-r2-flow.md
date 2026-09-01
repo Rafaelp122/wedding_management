@@ -1,62 +1,101 @@
-# Visão de Arquitetura: Fluxo de Upload de Contrato PDF (Cloudflare R2)
+---
+title: "Fluxo de Upload de Contratos PDF (Cloudflare R2 Direct Upload)"
+domain: architecture
+type: concept
+source_code:
+  - backend/apps/core/services/storage/cloudflare_r2.py
+  - backend/apps/logistics/services/contract_service.py
+  - frontend/src/features/logistics/hooks/useContractUpload.ts
+tests:
+  - backend/apps/core/tests/test_storage_service.py
+  - backend/apps/logistics/tests/contracts/test_services.py
+  - frontend/src/features/logistics/hooks/useContractUpload.test.ts
+---
 
-> **Módulo:** [logistics-domain](../domains/logistics-domain.md) | [finances-domain](../domains/finances-domain.md)
-> **Código:** `frontend/src/features/logistics/components/contracts/ContractUploadDialog.tsx`, `frontend/src/features/logistics/hooks/useContractUploadForm.ts`, `backend/apps/logistics/services/contract_service.py`
+# Fluxo de Upload de Contratos PDF (Cloudflare R2 Direct Upload)
+
+> **Categoria:** Conceito Arquitetural
+> **Relacionados:** [ADR-004: URLs Pré-Assinadas](../adr/004-presigned-urls.md) · [ADR-020: Abstração do StorageService](../adr/020-storage-service-abstraction.md) · [Domínio de Logística](../domains/logistics-domain.md) · [Domínio de Finanças](../domains/finances-domain.md) · [Padrão Service Layer](service-layer-pattern.md)
 
 ---
 
-## Visão Geral do Fluxo
+## 1. Visão Geral e Racional Arquitetural
 
-O upload de contratos em PDF utiliza o armazenamento de objetos no **Cloudflare R2** via URLs pré-assinadas (*Presigned URLs*), evitando o tráfego pesado de arquivos binários no servidor de aplicação Python Cloud Run (ADR-004 / ADR-020).
+O upload de contratos e documentos jurídicos em PDF utiliza o armazenamento de objetos no **Cloudflare R2** via URLs pré-assinadas (*Presigned URLs*), desacoplando o tráfego pesado de arquivos binários do servidor de aplicação Python no Cloud Run.
 
-Ao enviar um contrato, a plataforma orquestra automaticamente:
-1. Geração de URL segura de upload (`PUT`).
-2. Envio direto do arquivo do navegador para o Cloudflare R2.
-3. Criação da entidade `Contract` no banco de dados.
-4. Criação da despesa vinculada (`Expense` + `Installment`) no módulo financeiro.
-5. Cadastro inicial dos itens/serviços contratados (`Item`).
+### Benefícios da Abordagem Direct Upload:
+1. **Zero Carga no Servidor Python:** O container do backend não recebe nem armazena streams de arquivos pesados (até 10 MB), poupando memória RAM e CPU.
+2. **Zero Custos de Transferência (*Zero Egress Fees*):** O Cloudflare R2 não cobra taxa de saída de dados (diferente da AWS S3 ou GCP GCS).
+3. **Compatibilidade S3 Nativa:** Integração via `boto3` com autenticação por chave de acesso padrão S3.
 
 ---
 
-## Sequência de Execução (Diagrama de Fluxo)
+## 2. Diagrama Fullstack do Fluxo de Upload e Persistência Atômica
 
-```text
-[Navegador / React]              [Backend Django Ninja]           [Cloudflare R2 Storage]
-        |                                   |                                |
-        | 1. Solicita Presigned Upload URL  |                                |
-        |---------------------------------->|                                |
-        |                                   | Generates S3 Presigned PUT URL |
-        | 2. Retorna upload_url + key       |                                |
-        |<----------------------------------|                                |
-        |                                                                    |
-        | 3. HTTP PUT (Binary Upload Direct)                                 |
-        |------------------------------------------------------------------->|
-        | 4. HTTP 200 OK (Upload Concluído)                                  |
-        |<-------------------------------------------------------------------|
-        |                                                                    |
-        | 5. Criação Completa (POST /contracts/full com key do R2 + dados)   |
-        |---------------------------------->|                                |
-        |                                   | Valida integridade e inicia    |
-        |                                   | transação atômica DB (DB TX):   |
-        |                                   |  - Salva Contract (com R2 key) |
-        |                                   |  - Salva Expense + Installment |
-        |                                   |  - Salva Itens contratados     |
-        | 6. HTTP 201 Created               |                                |
-        |<----------------------------------|                                |
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Cerimonialista
+    participant UI as Frontend React 19 (ContractUploadDialog)
+    participant API as Django Ninja Router (api/contracts.py)
+    participant Storage as CloudflareR2StorageService
+    participant R2 as Cloudflare R2 (S3 API)
+    participant Service as ContractService (contract_service.py)
+    participant DB as PostgreSQL (Neon DB)
+
+    User->>UI: Seleciona PDF e preenche dados do Contrato
+    UI->>API: POST /api/v1/logistics/contracts/upload-url/ (Payload: {filename, wedding_id})
+    API->>Storage: generate_presigned_put_url(bucket, key, content_type)
+    Storage-->>API: URL pré-assinada com validade de 900 segundos (15 min)
+    API-->>UI: HTTP 200 OK ({upload_url, key})
+
+    Note over UI,R2: Upload Direto Browser -> R2 (Sem passar pelo backend)
+    UI->>R2: HTTP PUT <upload_url> (Body: Binary Blob do PDF)
+    R2-->>UI: HTTP 200 OK (Upload Concluído no Bucket)
+
+    Note over UI,API: Persistência Atômica do Contrato e Entidades Vinculadas
+    UI->>API: POST /api/v1/logistics/contracts/full/ (Payload: dados + key do R2)
+    API->>Service: ContractService.create_full(company, payload)
+    Note over Service: Executa em transação atômica (@transaction.atomic)
+    Service->>DB: 1. Cria Contract com chave do PDF no R2
+    Service->>DB: 2. Cria Expense + Installments (Domínio Finances)
+    Service->>DB: 3. Cria Itens/Serviços contratados (Domínio Logistics)
+    DB-->>Service: Confirmação de todas as tabelas
+    Service-->>API: Instância do Contrato consolidado
+    API-->>UI: HTTP 201 Created
+    UI-->>User: Feedback de sucesso e atualização imediata da lista
 ```
 
 ---
 
-## Injeção de Dependência de Storage (`set_storage_service`)
+## 3. Implementação Técnica
 
-Na camada de serviço (`ContractService`), o cliente de storage é gerenciado via injeção de dependência (`_storage_service` / `get_storage_client()`).
+### A. Geração de URLs Pré-Assinadas no Backend (`cloudflare_r2.py`)
+O serviço de storage gera URLs assinadas criptograficamente com parâmetros de cabeçalho estritos (`Bucket`, `Key`, `ContentType`) e tempo de expiração de 15 minutos:
 
-- **Utilidade para Testes:** Permite que os testes unitários injetem instâncias customizadas ou mocks via `ContractService.set_storage_service(mock_storage)` sem disparar chamadas de rede reais para a API do Cloudflare R2 nem exigir credenciais no ambiente de testes.
+```python
+--8<-- "backend/apps/core/services/storage/cloudflare_r2.py:75:120"
+```
+
+### B. Upload Direto pelo Frontend (`useContractUpload.ts`)
+O hook do cliente executa o ciclo de vida completo: obtém a URL assinada, envia o arquivo via `PUT` diretamente para a nuvem e, em seguida, dispara a criação atômica dos registros de banco de dados:
+
+```typescript
+--8<-- "frontend/src/features/logistics/hooks/useContractUpload.ts:42:61"
+```
 
 ---
 
-## Tratamento de Erros e Resiliência
+## 4. Injeção de Dependência e Testabilidade (`set_storage_service`)
 
-- **Expiração da URL:** A URL pré-assinada possui validade de 15 minutos (900 segundos).
-- **Validação no Frontend:** O formulário valida o tipo de arquivo (`application/pdf`, `image/png`, `image/jpeg`) e o tamanho máximo de 10 MB antes de solicitar a URL.
-- **Atomicidade no Backend:** A rota `/contracts/full` executa em transação atômica (`transaction.atomic()`). Se a criação das parcelas ou itens falhar, o contrato não é mantido inconsistente.
+Para viabilizar testes unitários rápidos e sem dependência de credenciais reais da nuvem ou conexão à internet:
+- A camada de serviço consome a abstração `StorageService` via protocolo.
+- Nos testes (`test_services.py`), a suite injeta um `DummyStorageService` via `ContractService.set_storage_service(dummy_storage)`, permitindo validar a geração de URLs e persistência sem chamadas de rede externas.
+
+---
+
+## 5. Resiliência e Tolerância a Falhas
+
+1. **Falha no Upload do PDF:** Se a requisição `PUT` para o Cloudflare R2 for interrompida, a chamada subsequente de criação no banco não é disparada, impedindo contratos órfãos sem arquivo.
+2. **Falha na Transação do Banco:** Caso ocorra erro de integridade ao criar a despesa financeira ou as parcelas, o rollback do `@transaction.atomic` garante que nenhum registro do contrato permaneça no banco de dados.
+3. **Expiração Segura:** A URL pré-assinada perde a validade após 900 segundos, impedindo o reuso não autorizado da URL temporária.

@@ -1,104 +1,153 @@
 # Wedding Management System
 
-[![CI](https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml/badge.svg)](https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml)
-[![backend](https://img.shields.io/codecov/c/github/Rafaelp122/wedding_management?flag=backend&label=backend)](https://codecov.io/gh/Rafaelp122/wedding_management)
-[![frontend](https://img.shields.io/codecov/c/github/Rafaelp122/wedding_management?flag=frontend&label=frontend)](https://codecov.io/gh/Rafaelp122/wedding_management)
-[![Website](https://img.shields.io/badge/website-simaceito.site-0ea5e9)](https://simaceito.site)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.12+-3776AB)](https://python.org)
-[![Django](https://img.shields.io/badge/django-5.2-092E20)](https://djangoproject.com)
-[![React](https://img.shields.io/badge/react-19-61DAFB)](https://react.dev)
+<p align="center">
+  <strong>Plataforma SaaS Multi-Tenant de Alta Confiabilidade para Gestão de Casamentos, Orçamentos e Fornecedores.</strong>
+</p>
 
-Sistema completo de gestão de casamentos com arquitetura moderna **React SPA + Django Ninja API**.
+<p align="center">
+  <a href="https://rafaelp122.github.io/wedding_management/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-7C3AED?logo=materialformkdocs&logoColor=white&style=flat-square" alt="Documentation"></a>
+  <a href="https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rafaelp122/wedding_management/ci-pr-validation.yml?branch=main&label=CI&style=flat-square" alt="CI"></a>
+  <a href="https://github.com/Rafaelp122/wedding_management/actions/workflows/docs-ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rafaelp122/wedding_management/docs-ci.yml?branch=main&label=Docs%20CI&style=flat-square" alt="Docs CI"></a>
+  <a href="https://codecov.io/gh/Rafaelp122/wedding_management"><img src="https://img.shields.io/codecov/c/github/Rafaelp122/wedding_management?flag=backend&label=backend&style=flat-square" alt="Backend Coverage"></a>
+  <a href="https://simaceito.site"><img src="https://img.shields.io/badge/website-simaceito.site-0ea5e9?style=flat-square" alt="Website"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
+</p>
 
-Este repositório centraliza o controle financeiro, logístico e de cronograma para cerimonialistas profissionais e casais, garantindo integridade de dados (Tolerância Zero) e isolamento multitenant estrito.
-
----
-
-## Portal de Documentação (Princípio Diátaxis)
-
-Nossa documentação técnica é mantida em [docs/index.md](docs/index.md) sob a metodologia **Diátaxis**. Escolha sua rota de leitura:
-
-### 1. Tutorials (Aprendizado & Onboarding)
-*Passo a passo para novos desenvolvedores:*
-- **[onboarding-quickstart](docs/onboarding/onboarding-quickstart.md)**: Subindo o ambiente local completo (Docker, PostgreSQL, Backend, Frontend).
-- **[backend-first-feature](docs/onboarding/backend-first-feature.md)**: Criando endpoints no Django Ninja + Service Layer.
-- **[frontend-first-feature](docs/onboarding/frontend-first-feature.md)**: Criando telas no React + Orval + Zod.
-
-### 2. How-To Guides (Receitas Práticas)
-*Guias orientados a tarefas do dia a dia:*
-- **[setup-local-environment](docs/guides/dev-environment/setup-local-environment.md)**: Configuração de ambiente e comandos `make`.
-- **[seed-database](docs/guides/backend/seed-database.md)**: Populando o banco de dados local com dados fictícios (Faker) e templates.
-- **[msw-testing-patterns](docs/guides/frontend/msw-testing-patterns.md)**: Padrões de testes no React com MSW e RTL.
-
-### 3. Reference (Especificações Técnicas)
-*Contratos de API, schemas e especificações de banco:*
-- **[openapi-schema](docs/reference/api/openapi-schema.md)** | **[error-envelope-spec](docs/reference/api/error-envelope-spec.md)**
-- **[commenting-standards](docs/reference/architecture-standards/commenting-standards.md)** | **[testing-standards](docs/reference/testing/index.md)**
-
-### 4. Explanation (Arquitetura & Regras de Negócio)
-*Decisões de design, segurança e regras de negócio:*
-- **[requirements](docs/architecture/requirements.md)**: Matriz de Requisitos Funcionais (RF01–RF12) e Não-Funcionais (RNF01–RNF05).
-- **[system-overview](docs/architecture/concepts/system-overview.md)** | **[multi-tenancy-strategy](docs/architecture/concepts/multi-tenancy-strategy.md)**
-- **[architectural-guard-rails-suite](docs/architecture/concepts/architectural-guard-rails-suite.md)**: Auditoria automatizada dos 12 pilares do sistema.
-- **[Regras de Negócio Atômicas](docs/architecture/index.md)**: Integridade contábil, ciclo de vida de casamentos, máquinas de estado de contratos e proteção da agenda.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12+-3776AB?logo=python&logoColor=white&style=flat-square" alt="Python">
+  <img src="https://img.shields.io/badge/django-6.0-092E20?logo=django&logoColor=white&style=flat-square" alt="Django">
+  <img src="https://img.shields.io/badge/django--ninja-1.6+-087EA4?style=flat-square" alt="Django Ninja">
+  <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black&style=flat-square" alt="React 19">
+  <img src="https://img.shields.io/badge/astro-7.1-FF5D01?logo=astro&logoColor=white&style=flat-square" alt="Astro 7">
+  <img src="https://img.shields.io/badge/tailwind-v4-38B2AC?logo=tailwindcss&logoColor=white&style=flat-square" alt="Tailwind CSS v4">
+  <img src="https://img.shields.io/badge/postgresql-neon-00E599?logo=postgresql&logoColor=black&style=flat-square" alt="Neon DB">
+  <img src="https://img.shields.io/badge/storage-cloudflare--r2-F38020?logo=cloudflare&logoColor=white&style=flat-square" alt="Cloudflare R2">
+  <img src="https://img.shields.io/badge/iac-terraform-7B42BC?logo=terraform&logoColor=white&style=flat-square" alt="Terraform">
+  <img src="https://img.shields.io/badge/e2e-playwright-2EAD33?logo=playwright&logoColor=white&style=flat-square" alt="Playwright">
+</p>
 
 ---
 
-## Tech Stack
+## 📖 Portal Oficial de Documentação Técnica
 
-- **Backend:** Python 3.12+ | Django 5.2 + Django Ninja (API-First).
-- **Frontend (App):** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui.
-- **Landing Page:** Astro 6 + React + Tailwind CSS (SEO-first).
-- **Banco de Dados:** PostgreSQL (Neon).
-- **Infraestrutura:** Docker, Cloud Run, Vercel, Cloudflare R2 (ADR-004).
+A documentação técnica oficial da plataforma está disponível online via GitHub Pages:
+
+👉 **[https://rafaelp122.github.io/wedding_management/](https://rafaelp122.github.io/wedding_management/)**
+
+Construída sob a metodologia **Diátaxis** e o modelo de **Notas Atômicas (Zettelkasten)**, a documentação é 100% sincronizada com o código-fonte da aplicação através de transclusão de snippets (`--8<--`) auditados continuamente em CI/CD:
+
+| Seção do Portal | URL / Destino | O que você encontra |
+| :--- | :--- | :--- |
+| **1. Início** | [`/`](https://rafaelp122.github.io/wedding_management/) | Visão executiva, pilares de engenharia, quickstart e diagrama fullstack. |
+| **2. Funcionalidades** | [`/features/`](https://rafaelp122.github.io/wedding_management/features/) | Showcase de produto: Módulo Financeiro, Gestão de Contratos e Agenda com templates. |
+| **3. Arquitetura** | [`/architecture/`](https://rafaelp122.github.io/wedding_management/architecture/) | System Design fullstack, os 10 Bounded Contexts (ERDs), Regras de Negócio e Catálogo de ADRs (001–028). |
+| **4. Guias & Onboarding** | [`/guides/`](https://rafaelp122.github.io/wedding_management/guides/) | Trilhas passo a passo para novos engenheiros, receitas de backend/frontend e playbooks de troubleshooting. |
+| **5. Referência Técnica** | [`/reference/`](https://rafaelp122.github.io/wedding_management/reference/) | Contratos OpenAPI 3.1, Modelos Core (`BaseModel`/`TenantModel`), Módulos Terraform, Suíte de Testes e Guard-Rails. |
 
 ---
 
-## Quick Start Local
+## 🏛️ Pilares de Engenharia & Arquitetura
+
+- **Tolerância Zero Financeira ([ADR-010](https://rafaelp122.github.io/wedding_management/architecture/adr/010-tolerance-zero/)):** Conservação exata de centavos em rateios de despesas (`DecimalField(12, 2)`) com absorção de resíduos na última parcela e proteção contra desvios contábeis.
+- **Isolamento Multi-Tenant Pragmático ([ADR-009](https://rafaelp122.github.io/wedding_management/architecture/adr/009-multitenancy/), [ADR-016](https://rafaelp122.github.io/wedding_management/architecture/adr/016-pragmatic-multi-tenancy/)):** Isolamento lógico por coluna (`company_id`), encapsulado em `TenantQuerySet` e validado obrigatoriamente no Service Layer.
+- **Service Layer Pattern & CQRS ([ADR-006](https://rafaelp122.github.io/wedding_management/architecture/adr/006-service-layer/)):** Rotas do Django Ninja delegam mutações a `services/` (envolvidos em `@transaction.atomic` e `full_clean()`) e consultas a `selectors/`.
+- **Contratos Tipados de Ponta a Ponta ([ADR-012](https://rafaelp122.github.io/wedding_management/architecture/adr/012-orval-contract-driven-frontend/)):** Django Ninja -> OpenAPI 3.1 -> Orval -> TanStack Query + Zod no React 19, eliminando clientes HTTP manuais.
+- **Upload Direto no Cloudflare R2 ([ADR-003](https://rafaelp122.github.io/wedding_management/architecture/adr/003-why-r2/), [ADR-004](https://rafaelp122.github.io/wedding_management/architecture/adr/004-presigned-urls/)):** Upload de PDFs contratuais direto do browser via Presigned URLs com custo zero de egresso.
+- **Barreira Dinâmica de Guard-Rails:** Testes arquiteturais com análise de AST Python que bloqueiam chamadas ORM desprotegidas e mutações sem transações atômicas.
+
+---
+
+## 🛠️ Stack Tecnológica
+
+| Camada | Tecnologia | Detalhes & Responsabilidades |
+| :--- | :--- | :--- |
+| **Backend REST API** | Python 3.12+ · Django 6.0 · Django Ninja 1.6+ | API-First fortemente tipada com Pydantic v2, autenticação JWT e documentação Swagger nativa. |
+| **Frontend SPA** | React 19.2 · TypeScript 7 · Vite 8.2 · Tailwind CSS v4 | Interface rica e autenticada com shadcn/ui, TanStack Query e formulários React Hook Form + Zod. |
+| **Landing Page Comercial**| Astro 7.1 · React 19 Islands · Tailwind CSS v4 | Portal institucional público de alta conversão com Static Site Generation (SSG) e SEO otimizado. |
+| **Persistência de Dados** | Neon Serverless PostgreSQL (`psycopg 3`) | Banco relacional escalável com isolamento lógico multi-tenant. |
+| **Armazenamento de PDFs** | Cloudflare R2 (S3-Compatible API) | Armazenamento de arquivos anexos com transferência direta e custo zero de egress. |
+| **Tarefas & Workers** | Huey · Redis/Valkey · GCP Cloud Scheduler | Filas assíncronas em segundo plano e cron tasks automatizadas via OIDC. |
+| **Infraestrutura & IaC** | Terraform 1.10+ · GCP Cloud Run · GitHub Actions | Infraestrutura como código declarativa e esteiras automatizadas de GitOps. |
+| **Qualidade & Testes** | Pytest · Vitest · Playwright E2E · Ruff · Mypy | Pirâmide completa de testes unitários, integração e automação ponta a ponta. |
+
+---
+
+## 🚀 Quickstart Local (Ambiente em 2 Minutos)
+
+### Método 1: Via Makefile (Recomendado)
 
 ```bash
-# 1. Copie e configure as variáveis de ambiente
-cp .env.example .env
+# 1. Clonar repositório e preparar variáveis de ambiente
+git clone git@github.com:Rafaelp122/wedding_management.git
+cd wedding_management
+make env-setup
 
-# 2. Inicie os containers via Docker
+# 2. Inicializar banco de dados e backend no Docker (com migrações)
 make up
 
-# 3. Execute as migrations e popule os dados fictícios locais
-make migrate
-make seed
+# 3. Criar superusuário administrativo
+make superuser
 
-# 4. Inicie o servidor de desenvolvimento
-make dev
+# 4. Iniciar servidores de desenvolvimento no Host
+make frontend-dev   # Terminal 1: SPA React 19 na porta 5173
+make landing-dev    # Terminal 2: Landing Page Astro na porta 4321
+make docs-dev       # Terminal 3: Documentação MkDocs na porta 8001
 ```
+
+### Painel de Serviços Locais
+
+| Serviço | URL Local | Comando |
+| :--- | :--- | :--- |
+| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | `make landing-dev` |
+| **Frontend SPA (App)** | [`http://localhost:5173`](http://localhost:5173) | `make frontend-dev` |
+| **Backend Swagger OpenAPI**| [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | `make up` / `make dev` |
+| **Documentação MkDocs** | [`http://localhost:8001`](http://localhost:8001) | `make docs-dev` |
 
 ---
 
-## Estrutura do Monorepo
+## 📂 Estrutura do Monorepo
 
-```
+```text
 wedding_management/
-├── backend/                  # Django Ninja API (Apps: weddings, finances, logistics, scheduler, core, tenants, users)
-├── frontend/                # React SPA Principal (Feature-based structure)
-├── landing/                 # Landing Page Institucional (Astro + SEO)
-├── docs/                    # Documentação Técnica Oficial (Princípio Diátaxis)
-├── .agents/                 # Customizações e Skills para Agentes de IA
-├── .github/workflows/       # Esteiras modulares de CI, CD, E2E e Terraform
-├── Makefile                 # Automação de Comandos
-└── docker-compose.yml       # Orquestração de Containers
+├── backend/                  # Django 6.0 + Django Ninja REST API
+│   ├── apps/                 # 10 Bounded Contexts (core, tenants, users, weddings, finances, logistics, scheduler...)
+│   └── config/               # Settings por ambiente (development, test, production)
+├── frontend/                 # React 19 SPA (Feature-based structure com Orval e Tailwind v4)
+├── landing/                  # Landing Page Comercial (Astro 7 + React Islands)
+├── docs/                     # Portal de Documentação Oficial (Diátaxis & Notas Atômicas)
+├── scripts/                  # Scripts de validação de links, snippets e auditoria
+├── .agents/                  # Skills operacionais para agentes e subagentes
+├── .github/workflows/        # Workflows modulares de CI, CD, Docs e Terraform
+├── Makefile                  # Orquestração centralizada de comandos
+└── docker-compose.yml        # Orquestração de containers locais
 ```
 
 ---
 
-## Qualidade, CI/CD e Integridade
+## 🧪 Comandos Essenciais de Qualidade & CI
 
-- **Validação de CI Local:** `make check-ci`
-- **Validação da Documentação:** `make check-docs`
-- **Testes Backend (Pytest):** `make test` (ou `cd backend && uv run pytest`)
-- **Testes Frontend (Vitest):** `cd frontend && pnpm run test:ci`
-- **Análise Estática (Linter):** `make lint`
+```bash
+# Executa todos os testes e gates de CI locais
+make check-ci
+
+# Validação e build estrito da documentação
+make check-docs
+
+# Testes unitários e de integração do backend (Pytest)
+make test
+
+# Testes do frontend (Vitest)
+make frontend-test
+
+# Testes ponta a ponta (Playwright E2E)
+make frontend-e2e
+
+# Sincronização de contratos (OpenAPI -> Orval -> TypeScript)
+make sync-api
+```
 
 ---
 
-## Licença
+## 📄 Licença
+
 Este projeto está licenciado sob a [MIT License](LICENSE).

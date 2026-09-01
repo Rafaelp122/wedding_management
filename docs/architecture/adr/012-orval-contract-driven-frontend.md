@@ -62,7 +62,7 @@ O comando `make sync-api` executa ambos os passos em sequência.
 frontend/src/api/
 ├── axios-client.ts              # Instância Axios + interceptors (MANUAL)
 ├── custom-instance.ts           # Mutator do Orval — adapta Axios (MANUAL)
-└── generated/                   # ⚠️ NUNCA EDITAR — sobrescrito pelo Orval
+└── generated/                   # :material-alert: NUNCA EDITAR — sobrescrito pelo Orval
     └── v1/
         ├── endpoints/           # Hooks React Query (useQuery, useMutation)
         │   ├── auth/

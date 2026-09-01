@@ -61,7 +61,7 @@ npx -y @google/design.md export --format css-tailwind DESIGN.md
 - **Nunca edite arquivos em `src/components/ui/`:** Os componentes base do shadcn são imutáveis.
 - **Estilização por Composição:** Aplique variações visuais no componente da feature usando utilitários do Tailwind:
   ```tsx
-  // ✅ CORRETO — Composição com utilitários Tailwind baseados nos tokens
+  // CORRETO — Composição com utilitários Tailwind baseados nos tokens
   <Card className="bg-surface border-border p-6 rounded-lg">
     <CardHeader>
       <CardTitle className="font-display text-xl text-foreground">Título</CardTitle>

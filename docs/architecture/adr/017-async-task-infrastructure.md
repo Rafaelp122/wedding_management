@@ -72,11 +72,11 @@ Adotaremos a **API nativa `django.tasks` do Django 6.0 (DEP 0014)** aliada ao **
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 - **Zero Lock-In**: O código do projeto usa apenas a interface padrão do Django 6.0.
 - **Zero Custo Ocioso**: Produção no Cloud Run roda 100% On-Demand.
 - **Cache + Tasks Unificados**: Valkey 8 atende tanto a fila de tarefas quanto o cache do backend em dev local.
 - **Economia no GCP**: Cloud Scheduler Batch dispara apenas 1 requisição diária segura por OIDC.
 
-### Negativas / Riscos ❌
+### Negativas / Riscos :material-close-circle:
 - Necessidade de manter o token OIDC validado no endpoint de cron diário em produção.

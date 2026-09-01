@@ -28,8 +28,8 @@ Hard delete (`DELETE FROM table WHERE id=X`) tem problemas:
 
 Aplicar **soft delete seletivo**:
 
-- ✅ **COM soft delete:** Wedding, Category, Item, Contract, Supplier
-- ❌ **SEM soft delete:** Installment, Event, Notification
+- :material-check-circle: **COM soft delete:** Wedding, Category, Item, Contract, Supplier
+- :material-close-circle: **SEM soft delete:** Installment, Event, Notification
 
 ---
 
@@ -39,11 +39,11 @@ Aplicar **soft delete seletivo**:
 
 | Critério                       | Usar Soft Delete? |
 | ------------------------------ | ----------------- |
-| Dado pode ser restaurado       | ✅ Sim            |
-| Histórico auditável            | ✅ Sim            |
-| FKs importantes (ex: Contract) | ✅ Sim            |
-| Dado transitório (Event)       | ❌ Não            |
-| Volume alto (Notification)     | ❌ Não            |
+| Dado pode ser restaurado       | :material-check-circle: Sim            |
+| Histórico auditável            | :material-check-circle: Sim            |
+| FKs importantes (ex: Contract) | :material-check-circle: Sim            |
+| Dado transitório (Event)       | :material-close-circle: Não            |
+| Volume alto (Notification)     | :material-close-circle: Não            |
 
 ---
 
@@ -51,14 +51,14 @@ Aplicar **soft delete seletivo**:
 
 | Model            | Soft Delete? | Justificativa                                |
 | ---------------- | ------------ | -------------------------------------------- |
-| **Wedding**      | ✅ Sim       | Restaurar casamento completo                 |
-| **Category**     | ✅ Sim       | Restaurar categoria de despesas              |
-| **Item**         | ✅ Sim       | Restaurar item orçamentário                  |
-| **Contract**     | ✅ Sim       | Auditoria legal, restaurar contrato          |
-| **Supplier**     | ✅ Sim       | Histórico de fornecedores                    |
-| **Installment**  | ❌ Não       | Registro financeiro (imutável após criado)   |
-| **Event**        | ❌ Não       | Transitório (tarefa agendada descartável)    |
-| **Notification** | ❌ Não       | Volume alto (1000+ por wedding), descartável |
+| **Wedding**      | :material-check-circle: Sim       | Restaurar casamento completo                 |
+| **Category**     | :material-check-circle: Sim       | Restaurar categoria de despesas              |
+| **Item**         | :material-check-circle: Sim       | Restaurar item orçamentário                  |
+| **Contract**     | :material-check-circle: Sim       | Auditoria legal, restaurar contrato          |
+| **Supplier**     | :material-check-circle: Sim       | Histórico de fornecedores                    |
+| **Installment**  | :material-close-circle: Não       | Registro financeiro (imutável após criado)   |
+| **Event**        | :material-close-circle: Não       | Transitório (tarefa agendada descartável)    |
+| **Notification** | :material-close-circle: Não       | Volume alto (1000+ por wedding), descartável |
 
 ---
 
@@ -251,7 +251,7 @@ Notification.objects.filter(
 
 ## Trade-offs Aceitos
 
-**❌ Complexidade de queries:**
+**:material-close-circle: Complexidade de queries:**
 
 ```python
 # Precisa lembrar qual Manager usar
@@ -259,12 +259,12 @@ Contract.objects.all()      # Sem deletados
 Contract.all_objects.all()  # Com deletados
 ```
 
-**❌ Espaço em disco:**
+**:material-close-circle: Espaço em disco:**
 
 - Soft delete acumula registros deletados
 - Requer cleanup periódico (task agendada)
 
-**❌ Performance:**
+**:material-close-circle: Performance:**
 
 - Índice em `deleted_at` adiciona overhead
 - Queries precisam filtrar `deleted_at IS NULL`
@@ -273,19 +273,19 @@ Contract.all_objects.all()  # Com deletados
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 - **Recuperação:** User pode restaurar contrato deletado acidentalmente
 - **Auditoria:** Histórico completo de exclusões
 - **Integridade:** FKs continuam válidas após delete
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 - **Complexidade:** Dois managers (objects vs all_objects)
 - **Espaço:** Registros deletados acumulam
 - **Performance:** Índice adicional em deleted_at
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 - Alternativa (hard delete) é mais simples, mas irrecuperável
 

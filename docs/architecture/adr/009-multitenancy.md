@@ -44,10 +44,10 @@ Usar **multitenancy denormalizado**:
 
 | Aspecto            | Denormalizado (escolhido) | Normalizado (4 JOINs) | Schema-based            |
 | ------------------ | ------------------------- | --------------------- | ----------------------- |
-| **Performance**    | ✅ 1 query                | ❌ 4 JOINs            | ✅ Isolamento total     |
-| **Simplicidade**   | ✅ Simples                | ⚠️ Complexo           | ❌ Muito complexo       |
-| **Escalabilidade** | ✅ Escala horizontal      | ⚠️ JOINs custosos     | ❌ Limite schemas (~1k) |
-| **Migração**       | ✅ Zero mudanças          | ✅ Zero mudanças      | ❌ Requer migrations    |
+| **Performance**    | :material-check-circle: 1 query                | :material-close-circle: 4 JOINs            | :material-check-circle: Isolamento total     |
+| **Simplicidade**   | :material-check-circle: Simples                | :material-alert: Complexo           | :material-close-circle: Muito complexo       |
+| **Escalabilidade** | :material-check-circle: Escala horizontal      | :material-alert: JOINs custosos     | :material-close-circle: Limite schemas (~1k) |
+| **Migração**       | :material-check-circle: Zero mudanças          | :material-check-circle: Zero mudanças      | :material-close-circle: Requer migrations    |
 
 ---
 
@@ -219,7 +219,7 @@ expense = Expense(
     value=Decimal('1000.00')
 )
 
-expense.full_clean()  # ❌ ValidationError: Item pertence a outro casamento
+expense.full_clean()  # :material-close-circle: ValidationError: Item pertence a outro casamento
 ```
 
 ---
@@ -322,17 +322,17 @@ CREATE TRIGGER expense_wedding_check
 
 ## Trade-offs Aceitos
 
-**❌ Denormalização:**
+**:material-close-circle: Denormalização:**
 
 - Campo `wedding_id` duplicado em todos models
 - Requer sincronizar wedding_id entre models relacionados
 
-**❌ Espaço em disco:**
+**:material-close-circle: Espaço em disco:**
 
 - +8 bytes (BigInt) por registro
 - Índice em `wedding_id` em todas tabelas
 
-**❌ Complexidade de validação:**
+**:material-close-circle: Complexidade de validação:**
 
 - Precisa validar consistência de wedding_id em FKs
 
@@ -340,20 +340,20 @@ CREATE TRIGGER expense_wedding_check
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 - **Performance:** Queries 93% mais rápidas (zero JOINs)
 - **Simplicidade:** Filtro direto por `wedding_id`
 - **Escalabilidade:** Escala horizontal (sharding por wedding_id)
 - **Segurança:** Validação cross-wedding em múltiplas camadas
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 - **Denormalização:** wedding_id duplicado
 - **Espaço:** +8 bytes por registro
 - **Validação:** Precisa garantir consistência
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 - Alternativa (normalizado) é mais "correta", mas 93% mais lenta
 

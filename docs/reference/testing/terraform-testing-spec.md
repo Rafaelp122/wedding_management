@@ -22,7 +22,7 @@ terraform/modules/gcp/cloud-run-service/
 ├── outputs.tf
 ├── versions.tf
 └── tests/
-    └── unit_test.tftest.hcl   👈 Suíte de testes unitários do módulo
+    └── unit_test.tftest.hcl   # Suíte de testes unitários do módulo
 ```
 
 ---
