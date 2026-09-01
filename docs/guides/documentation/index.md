@@ -73,12 +73,11 @@ INFO    -  Documentation built in 0.85 seconds
 
 ---
 
-## 4. Tabela de Comandos de Documentação (`Makefile`)
+## 4. Tabela de Comandos de Documentação (`justfile` & UV)
 
-| Comando | Descrição |
-| :--- | :--- |
-| `make docs-dev` | Inicia o servidor local MkDocs com hot-reload na porta `8001`. |
-| `make docs-build` | Compila os arquivos estáticos da documentação em modo estrito (`--strict`). |
-| `make check-docs` | Executa a suíte completa de validação (links, snippets, design.md e build). |
-| `make lint-docs` | Alias para `make check-docs`. |
-| `make docs-gh-deploy` | Publica a documentação no branch `gh-pages` do GitHub. |
+| Atalho Just | Comando Nativo Direto | Descrição |
+| :--- | :--- | :--- |
+| `just docs-dev` | `uv run --project backend --group docs mkdocs serve -a 0.0.0.0:8001` | Inicia o servidor local MkDocs com hot-reload na porta `8001`. |
+| `just docs-build` | `uv run --project backend --group docs mkdocs build --strict` | Compila os arquivos estáticos da documentação em modo estrito (`--strict`). |
+| `just check-docs` | `uv run python scripts/validate_docs_links.py && uv run python scripts/validate_docs_snippets.py && just docs-build` | Executa a suíte completa de validação (links, snippets, design.md e build). |
+| `just docs-gh-deploy` | `uv run --project backend --group docs mkdocs gh-deploy --force` | Publica a documentação no branch `gh-pages` do GitHub. |

@@ -1,7 +1,7 @@
 # Como Criar ou Atualizar Documentação Técnica no Repositório
 
 > **Categoria:** How-To Guide (`guides/documentation`)
-> **Relacionados:** [documentation-standards](../../reference/architecture-standards/documentation-standards.md) | [make check-docs](../../reference/architecture-standards/documentation-standards.md#5-validacao-automatizada-de-links-make-check-docs)
+> **Relacionados:** [documentation-standards](../../reference/architecture-standards/documentation-standards.md) | [Task Runner Just](../dev-environment/task-runner-just.md)
 
 ---
 
@@ -80,10 +80,17 @@ Para garantir que a nota não fique "órfã" e inacessível:
 
 ## Passo 5: Validar os Links Locais
 
-Antes de abrir o Pull Request ou realizar o commit, execute o validador de links:
+Antes de abrir o Pull Request ou realizar o commit, execute a validação de documentação:
 
 ```bash
-make check-docs
+# Via Just (Recomendado):
+just check-docs
+
+# Ou Trilha Nativa Direta:
+uv run python scripts/validate_docs_links.py && \
+uv run python scripts/validate_docs_snippets.py && \
+npx -y @google/design.md lint DESIGN.md && \
+uv run --project backend --group docs mkdocs build --strict
 ```
 
 Se o comando concluir sem erros, sua documentação está pronta e validada para integração no repositório!

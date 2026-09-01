@@ -102,12 +102,12 @@ landing/src/
 
 ## 5. Fluxo de Desenvolvimento e Comandos
 
-Todos os comandos de ciclo de vida da Landing Page estão encapsulados no `Makefile` raiz do repositório:
+Todos os comandos de ciclo de vida da Landing Page estão encapsulados no `justfile` raiz do repositório:
 
-| Ação | Comando Makefile | Comando Nativo | Descrição |
+| Ação | Atalho Just (`justfile`) | Comando Nativo | Descrição |
 | :--- | :--- | :--- | :--- |
-| **Iniciar Dev Server** | `make landing-dev` | `cd landing && pnpm dev` | Inicia o servidor local do Astro com HMR na porta `4321`. |
-| **Verificação Completa**| `make check-landing` | `cd landing && pnpm exec astro check && pnpm run build` | Executa validação de tipos TypeScript, checagem do Astro e build de produção. |
+| **Iniciar Dev Server** | `just landing-dev` | `cd landing && pnpm dev` | Inicia o servidor local do Astro com HMR na porta `4321`. |
+| **Verificação Completa**| `just check-landing` | `cd landing && pnpm exec astro check && pnpm run build` | Executa validação de tipos TypeScript, checagem do Astro e build de produção. |
 | **Análise de Linter** | `cd landing && pnpm run lint` | `oxlint .` | Executa o linter ultrarrápido Oxlint no código-fonte da landing. |
 | **Visualizar Build** | `cd landing && pnpm run preview` | `astro preview` | Roda servidor local servindo a pasta `landing/dist/`. |
 

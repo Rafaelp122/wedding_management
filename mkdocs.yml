@@ -186,6 +186,7 @@ nav:
           - 026 - Estratégia de Branching GitOps: architecture/adr/026-gitops-branching-and-deployment-strategy.md
           - 027 - Topologia de States do Terraform: architecture/adr/027-terraform-state-topology.md
           - 028 - Documentação Diátaxis & Notas Atômicas: architecture/adr/028-diataxis-atomic-notes.md
+          - 029 - Task Runner Moderno (Just): architecture/adr/029-modern-task-runner-just.md
       - Design System & Racional de UX: architecture/concepts/design-system-rationale.md
 
   - Guias & Onboarding:
@@ -197,6 +198,7 @@ nav:
           - GitOps & Fluxo por Sprints: onboarding/gitops-sprint-workflow.md
       - Ambiente & Migrações:
           - MOC de Ambiente: guides/dev-environment/index.md
+          - Task Runner Just & Comandos: guides/dev-environment/task-runner-just.md
           - Setup Local Completo: guides/dev-environment/setup-local-environment.md
           - Migrações do Banco: guides/dev-environment/database-migrations.md
       - Frontend (React & Orval):

@@ -16,7 +16,7 @@ A suíte de testes de ponta a ponta (E2E) valida os fluxos críticos de negócio
 
 ```mermaid
 flowchart TD
-    Start["make frontend-e2e"] --> DBReset["1. Reset & Seed do DB
+    Start["just frontend-e2e"] --> DBReset["1. Reset & Seed do DB
     (flush + seed_db)"]
     DBReset --> StartServers["2. Inicia WebServers
     (Backend Uvicorn :8000 & Vite :5173)"]
@@ -33,19 +33,26 @@ flowchart TD
 ## 2. Playbook de Execução Rápida
 
 ### 2.1 Execução Completa Automatizada (Recomendado)
-O comando do Makefile cuida de todo o ciclo: limpa a base de dados, popula os registros iniciais (seeds) e roda os testes com 1 worker para evitar concorrência no banco:
+O comando do Just (`just frontend-e2e`) cuida de todo o ciclo: limpa a base de dados, popula os registros iniciais (seeds) e roda os testes com 1 worker para evitar concorrência no banco:
 
 ```bash
-# Executa flush, seed_db e roda a suíte E2E
-make frontend-e2e
+# Via Just (Recomendado):
+just frontend-e2e
+
+# Ou Trilha Nativa Direta:
+docker compose exec backend uv run python manage.py flush --noinput && \
+docker compose exec backend uv run poe seed-db && \
+cd frontend && pnpm exec playwright test --workers=1
 ```
 
 ### 2.2 Visualização do Relatório HTML
 Após a execução dos testes, abra o relatório visual interativo:
 
 ```bash
-make frontend-e2e-report
-# Ou diretamente pelo pnpm:
+# Via Just:
+just frontend-e2e-report
+
+# Ou Trilha Nativa pelo pnpm:
 cd frontend && pnpm exec playwright show-report
 ```
 
@@ -111,5 +118,5 @@ Para evitar fazer login manualmente em cada cenário, o Playwright utiliza um pr
 | Problema | Causa Raiz | Solução |
 | :--- | :--- | :--- |
 | **Porta 8000 ou 5173 ocupada** | Processo antigo preso em segundo plano | Execute `kill -9 $(lsof -t -i:8000)` e `kill -9 $(lsof -t -i:5173)`. |
-| **Erro 401 Unauthorized nos testes** | Cache do `storageState.json` expirado ou banco resetado sem novo seed | Execute `rm -rf frontend/playwright/.auth` e rode `make frontend-e2e`. |
+| **Erro 401 Unauthorized nos testes** | Cache do `storageState.json` expirado ou banco resetado sem novo seed | Execute `rm -rf frontend/playwright/.auth` e rode `just frontend-e2e`. |
 | **Timeout de 60s em elementos dinâmicos** | Seletor frágil ou animação do Radix UI não finalizada | Utilize seletores semânticos acessíveis (`page.getByRole('button', { name: 'Salvar' })`) em vez de classes CSS. |

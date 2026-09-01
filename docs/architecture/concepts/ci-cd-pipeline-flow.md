@@ -3,7 +3,7 @@ title: "Arquitetura e Fluxo da Pipeline GitOps (CI/CD & IaC)"
 domain: architecture
 type: concept
 source_code:
-  - Makefile
+  - justfile
   - .github/workflows/ci-pr-validation.yml
   - .github/workflows/cd-deploy.yml
   - terraform/shared/main.tf
@@ -17,7 +17,7 @@ tests:
 # Arquitetura e Fluxo da Pipeline GitOps (CI/CD & IaC)
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [ADR-025: Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md) · [ADR-026: Estratégia de Branches e Deploy](../adr/026-gitops-branching-and-deployment-strategy.md) · [ADR-027: Topologia de States do Terraform](../adr/027-terraform-state-topology.md) · [Índice de CI/CD](../../reference/ci-cd/index.md) · [Índice de Testes](../../reference/testing/index.md)
+> **Relacionados:** [ADR-025: Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md) · [ADR-026: Estratégia de Branches e Deploy](../adr/026-gitops-branching-and-deployment-strategy.md) · [ADR-027: Topologia de States do Terraform](../adr/027-terraform-state-topology.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Índice de CI/CD](../../reference/ci-cd/index.md) · [Índice de Testes](../../reference/testing/index.md)
 
 ---
 
@@ -29,7 +29,7 @@ O **Wedding Management System** implementa uma arquitetura automatizada de **Git
 1. **CI (Validação Estrita em PRs):** Executada de forma hermética e isolada, sem credenciais de nuvem com privilégios de escrita nem acesso aos backends remotos de produção.
 2. **CD (Entrega Contínua da Aplicação):** Publica imagens de container no Google Artifact Registry, roda migrações de banco no Neon DB e atualiza Cloud Run e Vercel apenas após merge nas branches protegidas (`develop` e `main`).
 3. **IaC (Infraestrutura Declarativa com Terraform):** Gerencia 3 roots totalmente isolados (`shared`, `staging`, `production`), com arquivos de estado (*statefiles*) separados em buckets GCS dedicados para blindar o raio de impacto (*blast radius*).
-4. **Paridade Local/Remota:** O comando local `make check-ci` executa exatamente os mesmos linters, checagens estáticas e testes que rodam no GitHub Actions.
+4. **Paridade Local/Remota:** O comando local `just check-ci` executa exatamente os mesmos linters, checagens estáticas e testes que rodam no GitHub Actions.
 
 ---
 
@@ -38,11 +38,11 @@ O **Wedding Management System** implementa uma arquitetura automatizada de **Git
 ```mermaid
 flowchart TD
     subgraph DEV_FLOW["1. Desenvolvimento & PR"]
-        DEV_LOCAL["Desenvolvedor (make check-ci)"] -->|Git Push| PR["Pull Request (develop / main)"]
+        DEV_LOCAL["Desenvolvedor (just check-ci)"] -->|Git Push| PR["Pull Request (develop / main)"]
         PR --> CI_GATE["GitHub Actions: ci-pr-validation.yml"]
         CI_GATE --> LINT["Lint & Mypy (Ruff/Types)"]
         CI_GATE --> TESTS["Testes (Pytest + Vitest)"]
-        CI_GATE --> DOCS["Docs Check (make check-docs)"]
+        CI_GATE --> DOCS["Docs Check (just check-docs)"]
         CI_GATE --> TF_CHECK["Terraform (fmt, validate, tftest)"]
     end
 
@@ -87,12 +87,12 @@ terraform/
 
 ---
 
-## 4. Gates de Qualidade no `Makefile`
+## 4. Gates de Qualidade no `justfile`
 
-O `Makefile` centraliza todos os comandos de validação local para evitar discrepâncias entre o ambiente de desenvolvimento e o CI:
+O `justfile` centraliza todos os comandos de validação local para evitar discrepâncias entre o ambiente de desenvolvimento e o CI:
 
-```makefile
---8<-- "Makefile:280:288"
+```just
+--8<-- "justfile:170:178"
 ```
 
 ---

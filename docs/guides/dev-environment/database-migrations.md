@@ -1,7 +1,7 @@
 # Como Executar Migrações de Banco de Dados com Segurança
 
 > **Categoria:** [dev-environment](index.md) | [setup-local-environment](setup-local-environment.md) | [db-connection-locks](../ops-troubleshooting/db-connection-locks.md)
-> **Comandos Principais:** `make makemigrations`, `make migrate`, `uv run python manage.py showmigrations`
+> **Comandos Principais:** `just makemigrations`, `just migrate` / `uv run poe migrate`, `uv run python manage.py showmigrations`
 
 ---
 
@@ -11,10 +11,10 @@ No **Wedding Management System (WMS)**, o gerenciamento do esquema relacional no
 
 ```mermaid
 flowchart TD
-    A["1. Modificação de Models<br/>(models.py)"] --> B["2. Gerar Migration<br/>(make makemigrations)"]
+    A["1. Modificação de Models<br/>(models.py)"] --> B["2. Gerar Migration<br/>(just makemigrations)"]
     B --> C{"3. Auditoria de Segurança<br/>(Inspeção Manual do Arquivo)"}
     C -- "Violou Regra (ex: FK sem PROTECT)" --> A
-    C -- "Aprovado" --> D["4. Aplicar no Banco Local<br/>(make migrate)"]
+    C -- "Aprovado" --> D["4. Aplicar no Banco Local<br/>(just migrate)"]
     D --> E["5. Validação de Integridade<br/>(makemigrations --check --dry-run)"]
     E --> F["6. Commit & CI Pipeline"]
 ```
@@ -26,8 +26,8 @@ flowchart TD
 Após alterar ou criar modelos em qualquer aplicativo em `backend/apps/`:
 
 ```bash
-# Executando no container Docker via Makefile:
-make makemigrations
+# Executando no container Docker via Just:
+just makemigrations
 
 # Ou executando diretamente no ambiente virtual do host:
 cd backend
@@ -71,8 +71,8 @@ Novos modelos devem herdar de `BaseModel` (`apps.core.models`), garantindo a pre
 Aplique as alterações pendentes no banco de dados local:
 
 ```bash
-# Via Makefile:
-make migrate
+# Via Just:
+just migrate
 
 # Ou diretamente com uv no Host:
 cd backend
@@ -82,6 +82,7 @@ uv run python manage.py migrate
 Para verificar quais migrações foram aplicadas e quais estão pendentes:
 
 ```bash
+cd backend
 uv run python manage.py showmigrations
 ```
 

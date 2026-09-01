@@ -61,7 +61,7 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Casamentos por Mês")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    });
 
     const currentYear = new Date().getFullYear().toString();
     expect(screen.getByText(currentYear)).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("DashboardPage", () => {
       expect(
         screen.getByText("Agenda"),
       ).toBeInTheDocument();
-    }, { timeout: 5000 });
+    });
   });
 
   it("shows error state when API fails", async () => {
@@ -112,7 +112,7 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Casamentos por Mês")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    });
 
     const user = userEvent.setup();
     const prevBtn = screen.getByRole("button", { name: /ano anterior/i });
@@ -127,7 +127,7 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(document.getElementById("wedding-filter")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    });
 
     const trigger = document.getElementById("wedding-filter")!;
     const user = userEvent.setup();
@@ -142,7 +142,7 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(document.getElementById("wedding-filter")).toBeInTheDocument();
-    }, { timeout: 5000 });
+    });
 
     const trigger = document.getElementById("wedding-filter")!;
     const user = userEvent.setup();

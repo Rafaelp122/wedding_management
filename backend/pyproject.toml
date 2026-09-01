@@ -63,12 +63,33 @@ dev = [
     "detect-secrets>=1.5.0",
     "bandit>=1.9.4,<2.0",
     "types-openpyxl>=3.1.5.20260807",
+    "poethepoet>=0.32.0,<1.0",
 ]
 docs = [
     "mkdocs-material>=9.5.0",
     "pymdown-extensions>=10.7",
     "mkdocs-minify-plugin>=0.8.0",
 ]
+
+# ==============================================================================
+# BACKEND SCRIPTS & TASKS (PoeThePoet)
+# ==============================================================================
+[tool.poe.tasks]
+test       = "pytest -v"
+test-cov   = "pytest --cov=apps --cov-report=term -v"
+lint       = "ruff check ."
+lint-fix   = "ruff check . --fix"
+format-code = "ruff format ."
+format     = ["format-code", "lint-fix"]
+mypy       = "mypy . --show-error-codes --no-color-output"
+migrate    = "python manage.py migrate"
+makemigrations = "python manage.py makemigrations"
+superuser  = "python manage.py createsuperuser"
+shell      = "python manage.py shell"
+seed-db    = "python manage.py seed_db"
+seed-e2e   = "python manage.py seed_e2e"
+openapi    = "python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2 --settings=config.settings.development"
+check      = ["lint", "mypy", "test", "openapi"]
 
 # ==============================================================================
 # CODE QUALITY: RUFF CONFIGURATION

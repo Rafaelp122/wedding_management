@@ -9,13 +9,13 @@
 
 Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding Management System. Cada ADR documenta uma decisão estrutural relevante, seu contexto, alternativas consideradas e as consequências arquiteturais adotadas.
 
-> **Nota de Numeração Imutável:** A numeração das ADRs é mantida estritamente imutável para preservar a rastreabilidade histórica no código-fonte, comentários de classe e mensagens de commit do Git. A identificação `ADR-015` refere-se a uma proposta descontinuada na fase inicial do projeto, mantendo-se a sequência oficial das 27 ADRs ativas.
+> **Nota de Numeração Imutável:** A numeração das ADRs é mantida estritamente imutável para preservar a rastreabilidade histórica no código-fonte, comentários de classe e mensagens de commit do Git. A identificação `ADR-015` refere-se a uma proposta descontinuada na fase inicial do projeto, mantendo-se a sequência oficial das 28 ADRs ativas.
 
 ---
 
-## 2. Índice de Decisões Arquiteturais (001 a 028)
+## 2. Índice de Decisões Arquiteturais (001 a 029)
 
-### Infraestrutura & Cloud Storage
+### Infraestrutura, Automação & Cloud Storage
 - **[ADR-001: Cloud Run](001-why-cloud-run.md)** — Hospedagem Serverless do Backend Django Ninja no GCP Cloud Run.
 - **[ADR-002: Neon PostgreSQL](002-why-neon.md)** — Banco de dados PostgreSQL Serverless com suporte a Database Branching.
 - **[ADR-003: Cloudflare R2](003-why-r2.md)** — Armazenamento de PDFs e anexos com custo zero de transferência (egress).
@@ -25,6 +25,7 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-025: Terraform & GitOps](025-terraform-iac-architecture.md)** — Infraestrutura como código (IaC), ownership e automação GitOps multi-cloud.
 - **[ADR-026: Estratégia de Branches & Staging](026-gitops-branching-and-deployment-strategy.md)** — Modelo de branches (`main`/`develop`), homologação privada e ciclo por Sprints.
 - **[ADR-027: Topologia dos States Terraform](027-terraform-state-topology.md)** — States isolados de `shared`, `staging` e `production`, com adoção sem recriação.
+- **[ADR-029: Modern Task Runner (Just)](029-modern-task-runner-just.md)** — Adoção do Just e PoeThePoet para orquestração multiplataforma e paridade com trilha nativa.
 
 ---
 

@@ -1,6 +1,7 @@
 # Como Executar a Suíte de Testes Pytest no Backend
 
 > **Categoria:** [backend](../../reference/architecture-standards/index.md) | [backend-testing-spec](../../reference/testing/backend-testing-spec.md) | [use-core-services](use-core-services.md)
+> **Comandos Principais:** `just test`, `just test-cov` / `uv run poe test`, `uv run poe test-cov`
 > **Stack & Ferramentas:** Pytest, `pytest-django`, `pytest-xdist`, `pytest-cov`, FactoryBoy
 
 ---
@@ -20,10 +21,17 @@ A suíte de testes backend do **Wedding Management System (WMS)** é construída
 Para executar toda a suíte de testes no ambiente local:
 
 ```bash
-# Executando no container Docker via Makefile:
-make test
+# Via Just (executa no container Docker):
+just test
 
-# Ou diretamente no terminal do Host com uv:
+# Trilha Nativa no Container Docker:
+docker compose exec backend uv run poe test
+
+# Trilha Nativa no Host Local (com Poe):
+cd backend
+uv run poe test
+
+# Ou diretamente com Pytest:
 cd backend
 uv run pytest -v
 ```
@@ -87,10 +95,17 @@ uv run pytest -n 4
 Para medir a cobertura da suíte sobre o código de domínio (`apps/`):
 
 ```bash
-# Relatório resumido no terminal via Makefile:
-make test-cov
+# Relatório resumido no terminal via Just:
+just test-cov
 
-# Gerar relatório detalhado em HTML:
+# Trilha Nativa no Container Docker:
+docker compose exec backend uv run poe test-cov
+
+# Trilha Nativa no Host Local (com Poe):
+cd backend
+uv run poe test-cov
+
+# Gerar relatório detalhado em HTML com Pytest:
 cd backend
 uv run pytest --cov=apps --cov-report=html
 ```

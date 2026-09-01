@@ -14,7 +14,7 @@ tests:
 # Suíte de Guard-Rails Arquiteturais e Integridade Estática
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [Índice de Guard-Rails](../../reference/architecture-standards/guard-rails/index.md) · [Tenant Isolation Guard](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md) · [Atomic Service Audit Guard](../../reference/architecture-standards/guard-rails/atomic-service-audit-guard.md) · [Security Permissions Guard](../../reference/architecture-standards/guard-rails/security-permissions-guard.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [Visão Geral do Sistema](system-overview.md)
+> **Relacionados:** [Índice de Guard-Rails](../../reference/architecture-standards/guard-rails/index.md) · [Tenant Isolation Guard](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md) · [Atomic Service Audit Guard](../../reference/architecture-standards/guard-rails/atomic-service-audit-guard.md) · [Security Permissions Guard](../../reference/architecture-standards/guard-rails/security-permissions-guard.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Visão Geral do Sistema](system-overview.md)
 
 ---
 
@@ -27,7 +27,7 @@ Em vez de testar regras de negócio específicas de um domínio isolado, esses t
 ### Por que Guard-Rails Automatizados?
 1. **Prevenção de Erosão Arquitetural (*Architecture Drift*):** Impede que novas implementações quebrem convenções de projeto (ex: esquecer `operation_id` em um endpoint ou realizar escrita fora de transação).
 2. **Auditoria de Segurança Contínua:** Bloqueia automaticamente vazamentos de PII, senhas ou quebras de isolamento multitenant antes do merge em staging ou produção.
-3. **Feedback Imediato no Developer Loop:** Executados em menos de 3 segundos no comando local `make check-ci`.
+3. **Feedback Imediato no Developer Loop:** Executados em menos de 3 segundos no comando local `just check-ci` (ou `just test` / `uv run poe test`).
 
 ---
 
@@ -95,5 +95,5 @@ Varre a árvore sintática (AST) de todos os arquivos em `apps/*/services/` e de
 ## 4. Execução e Integração Contínua (CI/CD)
 
 Os guard-rails arquiteturais rodam em dois momentos obrigatórios:
-1. **Localmente:** `pytest backend/apps/core/tests/` ou como parte de `make check-ci`.
+1. **Localmente:** `pytest backend/apps/core/tests/` ou como parte de `just check-ci` (ou `just test` / `uv run poe test`).
 2. **GitHub Actions:** No workflow `.github/workflows/ci-pr-validation.yml` em todo Pull Request aberto para `develop` ou `main`.

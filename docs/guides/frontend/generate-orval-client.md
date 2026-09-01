@@ -1,7 +1,7 @@
 # Como Sincronizar Contratos OpenAPI e Gerar Hooks Orval
 
 > **Categoria:** [frontend](../../reference/frontend/index.md) | [create-hook-form-zod](create-hook-form-zod.md) | [msw-testing-patterns](msw-testing-patterns.md)
-> **Comandos Principais:** `make sync-api`, `make openapi`, `make orval`
+> **Comandos Principais:** `just sync-api`, `just openapi`, `just orval` / `pnpm run generate:api`
 
 ---
 
@@ -14,7 +14,7 @@ graph LR
     subgraph Backend ["Backend (Django Ninja)"]
         Routes["Endpoints da API<br/>(com operation_id)"]
         Pydantic["Schemas Pydantic<br/>(In / Out)"]
-        Routes --> Export["make openapi<br/>(export_openapi_schema)"]
+        Routes --> Export["just openapi<br/>(export_openapi_schema)"]
         Pydantic --> Export
     end
 
@@ -23,7 +23,7 @@ graph LR
     end
 
     subgraph Frontend ["Frontend (Orval Engine)"]
-        JSON --> OrvalCLI["make orval<br/>(orval.config.ts)"]
+        JSON --> OrvalCLI["just orval<br/>(orval.config.ts)"]
         OrvalCLI --> Hooks["@/api/generated/v1/endpoints/<br/>(Hooks TanStack Query)"]
         OrvalCLI --> Models["@/api/generated/v1/models/<br/>(Tipos TypeScript)"]
         OrvalCLI --> Zod["@/api/generated/v1/zod/<br/>(Validadores Zod)"]
@@ -61,31 +61,32 @@ def create_budget(request: AuthRequest, payload: BudgetIn) -> tuple[int, Budget]
 
 ---
 
-## Passo 2: Exportar o Schema OpenAPI (`make openapi`)
+## Passo 2: Exportar o Schema OpenAPI (`just openapi`)
 
 Extraia o esquema formal da API Django Ninja diretamente para o arquivo `openapi.json` na raiz do projeto:
 
 ```bash
-# Executa a extração no container backend e copia para a raiz:
-make openapi
-```
+# Via Just (executa no container backend e salva na raiz):
+just openapi
 
-*Comando executado internamente:*
-```bash
-python manage.py export_openapi_schema --api config.api.api --output openapi.json --settings=config.settings.development --indent 2
+# Trilha Nativa no Container Docker:
+docker compose exec backend uv run poe openapi
+
+# Trilha Nativa no Host Local:
+cd backend && uv run poe openapi
 ```
 
 ---
 
-## Passo 3: Gerar os Hooks e Tipos no Frontend (`make orval`)
+## Passo 3: Gerar os Hooks e Tipos no Frontend (`just orval`)
 
 Com o `openapi.json` atualizado na raiz, processe a geração dos artefatos TypeScript no frontend:
 
 ```bash
-# Executa a compilação do Orval:
-make orval
+# Via Just:
+just orval
 
-# Ou diretamente dentro da pasta frontend:
+# Ou Trilha Nativa diretamente na pasta frontend:
 cd frontend && pnpm run generate:api
 ```
 
@@ -97,12 +98,16 @@ cd frontend && pnpm run generate:api
 
 ---
 
-## Passo 4: Atalho Unificado (`make sync-api`)
+## Passo 4: Atalho Unificado (`just sync-api`)
 
 Para executar o pipeline completo (OpenAPI + Orval) em uma única instrução:
 
 ```bash
-make sync-api
+# Via Just:
+just sync-api
+
+# Ou Trilha Nativa Direta:
+docker compose exec backend uv run poe openapi && cd frontend && pnpm run generate:api
 ```
 
 ---
@@ -163,12 +168,12 @@ export function CreateBudgetButton({ weddingUuid }: { weddingUuid: string }) {
 ### 1. Nomes Genéricos de Hooks (`usePostApiV1...`)
 - **Sintoma:** O Orval gerou nomes de hooks com a URL crua em vez de nomes semânticos.
 - **Causa:** O endpoint no Django Ninja não possui o parâmetro `operation_id`.
-- **Solução:** Adicione `operation_id="<modulo>_<entidade>_<acao>"` no decorator `@router.post(...)` ou `@router.get(...)` no backend e reexecute `make sync-api`.
+- **Solução:** Adicione `operation_id="<modulo>_<entidade>_<acao>"` no decorator `@router.post(...)` ou `@router.get(...)` no backend e reexecute `just sync-api`.
 
 ### 2. Erro de Schema OpenAPI Desatualizado
 - **Sintoma:** Novos campos do backend não aparecem no autocomplete do TypeScript.
-- **Solução:** Execute `make sync-api` para garantir que tanto o `openapi.json` quanto a pasta `@/api/generated/` sejam atualizados com base no código backend mais recente.
+- **Solução:** Execute `just sync-api` para garantir que tanto o `openapi.json` quanto a pasta `@/api/generated/` sejam atualizados com base no código backend mais recente.
 
 ### 3. Erro de Mutator `customInstance`
 - **Sintoma:** `Cannot find module 'src/api/api-client'`.
-- **Solução:** O `orval.config.ts` utiliza o caminho relativo `src/api/api-client.ts`. Certifique-se de executar o comando `pnpm run generate:api` a partir do diretório `frontend/` ou utilize `make orval` na raiz.
+- **Solução:** O `orval.config.ts` utiliza o caminho relativo `src/api/api-client.ts`. Certifique-se de executar o comando `pnpm run generate:api` a partir do diretório `frontend/` ou utilize `just orval` na raiz.

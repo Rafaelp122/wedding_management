@@ -74,34 +74,61 @@ Construída sob a metodologia **Diátaxis** e o modelo de **Notas Atômicas (Zet
 
 ## 🚀 Quickstart Local (Ambiente em 2 Minutos)
 
-### Método 1: Via Makefile (Recomendado)
+### Instalação Rápida do Just (Runner Universal)
+
+O projeto utiliza o **[just](https://github.com/casey/just)** como executor de tarefas moderno e multiplataforma:
+
+- **Windows**: `winget install Casey.Just` ou `scoop install just` ou `choco install just`
+- **macOS**: `brew install just`
+- **Linux (Ubuntu/Debian)**: `sudo apt install just` (ou `cargo install just` / `pacman -S just`)
+
+---
+
+### Método 1: Via Just (Recomendado)
 
 ```bash
-# 1. Clonar repositório e preparar variáveis de ambiente
+# 1. Clonar repositório e preparar ambiente
 git clone git@github.com:Rafaelp122/wedding_management.git
 cd wedding_management
-make env-setup
+
+# 2. Inicializar variáveis de ambiente, containers e banco de dados
+just setup        # Executa env-setup, sobe os containers e cria o superusuário
+
+# 3. Iniciar servidores de desenvolvimento no Host
+just frontend-dev   # Terminal 1: SPA React 19 na porta 5173
+just landing-dev    # Terminal 2: Landing Page Astro na porta 4321
+just docs-dev       # Terminal 3: Documentação MkDocs na porta 8001
+```
+
+---
+
+### Método 2: Nativo Direto (Docker Compose, uv & pnpm)
+
+Caso prefira executar as etapas diretamente no terminal sem o `just`:
+
+```bash
+# 1. Preparar variáveis de ambiente
+cp .env.example .env
 
 # 2. Inicializar banco de dados e backend no Docker (com migrações)
-make up
+docker compose up -d backend
+docker compose exec backend uv run poe migrate
+docker compose exec backend uv run poe superuser
 
-# 3. Criar superusuário administrativo
-make superuser
-
-# 4. Iniciar servidores de desenvolvimento no Host
-make frontend-dev   # Terminal 1: SPA React 19 na porta 5173
-make landing-dev    # Terminal 2: Landing Page Astro na porta 4321
-make docs-dev       # Terminal 3: Documentação MkDocs na porta 8001
+# 3. Iniciar servidores de desenvolvimento no Host
+cd frontend && pnpm dev                # Terminal 1: SPA React 19 na porta 5173
+cd landing && pnpm dev                 # Terminal 2: Landing Page Astro na porta 4321
+uv run --project backend --group docs mkdocs serve -a 0.0.0.0:8001 # Terminal 3: MkDocs na porta 8001
 ```
 
 ### Painel de Serviços Locais
 
-| Serviço | URL Local | Comando |
-| :--- | :--- | :--- |
-| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | `make landing-dev` |
-| **Frontend SPA (App)** | [`http://localhost:5173`](http://localhost:5173) | `make frontend-dev` |
-| **Backend Swagger OpenAPI**| [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | `make up` / `make dev` |
-| **Documentação MkDocs** | [`http://localhost:8001`](http://localhost:8001) | `make docs-dev` |
+| Serviço | URL Local | Comando (`just`) | Comando Nativo |
+| :--- | :--- | :--- | :--- |
+| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | `just landing-dev` | `cd landing && pnpm dev` |
+| **Frontend SPA (App)** | [`http://localhost:5173`](http://localhost:5173) | `just frontend-dev` | `cd frontend && pnpm dev` |
+| **Backend Swagger OpenAPI**| [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | `just up` / `just dev` | `docker compose up -d backend` |
+| **Documentação MkDocs** | [`http://localhost:8001`](http://localhost:8001) | `just docs-dev` | `uv run --project backend --group docs mkdocs serve` |
 
 ---
 
@@ -118,7 +145,7 @@ wedding_management/
 ├── scripts/                  # Scripts de validação de links, snippets e auditoria
 ├── .agents/                  # Skills operacionais para agentes e subagentes
 ├── .github/workflows/        # Workflows modulares de CI, CD, Docs e Terraform
-├── Makefile                  # Orquestração centralizada de comandos
+├── justfile                  # Orquestração de comandos moderna e multiplataforma
 └── docker-compose.yml        # Orquestração de containers locais
 ```
 
@@ -127,23 +154,23 @@ wedding_management/
 ## 🧪 Comandos Essenciais de Qualidade & CI
 
 ```bash
-# Executa todos os testes e gates de CI locais
-make check-ci
+# Executa todos os testes e gates de CI locais (Docs, Backend, Frontend e Landing)
+just check-ci
 
 # Validação e build estrito da documentação
-make check-docs
+just check-docs
 
 # Testes unitários e de integração do backend (Pytest)
-make test
+just test
 
 # Testes do frontend (Vitest)
-make frontend-test
+just frontend-test
 
 # Testes ponta a ponta (Playwright E2E)
-make frontend-e2e
+just frontend-e2e
 
 # Sincronização de contratos (OpenAPI -> Orval -> TypeScript)
-make sync-api
+just sync-api
 ```
 
 ---

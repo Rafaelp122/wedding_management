@@ -2,7 +2,7 @@
 
 > **Objetivo:** Subir o ambiente local completo (Docker, PostgreSQL, Django Backend, React Frontend SPA e Landing Page em Astro) do zero.
 > **Público:** Novos desenvolvedores onboarding no projeto.
-> **Relacionados:** [Workflow GitOps](gitops-sprint-workflow.md) · [Primeira Feature Backend](backend-first-feature.md) · [Primeira Feature Frontend](frontend-first-feature.md) · [Landing Page Spec](../reference/frontend/landing-page-spec.md)
+> **Relacionados:** [Workflow GitOps](gitops-sprint-workflow.md) · [Primeira Feature Backend](backend-first-feature.md) · [Primeira Feature Frontend](frontend-first-feature.md) · [Setup Local Completo](../guides/dev-environment/setup-local-environment.md) · [Task Runner Just](../guides/dev-environment/task-runner-just.md) · [Landing Page Spec](../reference/frontend/landing-page-spec.md)
 
 ---
 
@@ -13,64 +13,73 @@ Certifique-se de ter instalado em sua máquina local:
 - **Node.js 22+** e [`pnpm`](https://pnpm.io/) (versão 9.15+)
 - **Docker & Docker Compose**
 - **Git**
+- **`just`** (Opcional / Recomendado — [Guia do Task Runner Just](../guides/dev-environment/task-runner-just.md))
 
 ---
 
-## Método 1: Setup Expresso via Makefile (Recomendado)
+## Trilha 1: Trilha Rápida com `just` (Recomendada)
 
-O repositório possui um `Makefile` automatizado que configura todo o ambiente em poucos comandos:
+O repositório disponibiliza um `justfile` orquestrador que automatiza todo o ciclo de vida do ambiente:
 
 ```bash
-# 1. Clonar repositório e preparar arquivos .env
+# 1. Clonar repositório e executar setup completo (.env, containers e migrações)
 git clone git@github.com:Rafaelp122/wedding_management.git
 cd wedding_management
-make env-setup
+just setup
 
-# 2. Inicializar banco de dados e backend no Docker com migrações
-make up
-
-# 3. Criar superusuário administrativo
-make superuser
-
-# 4. Iniciar servidores de desenvolvimento (no Host)
-make frontend-dev   # Terminal 1: SPA React 19 na porta 5173
-make landing-dev    # Terminal 2: Landing Page Astro na porta 4321
+# 2. Iniciar servidores de desenvolvimento (no Host)
+just frontend-dev   # Terminal 1: SPA React 19 na porta 5173
+just landing-dev    # Terminal 2: Landing Page Astro na porta 4321
 ```
+
+> [!TIP]
+> Caso prefira executar o passo a passo com `just`:
+> ```bash
+> just env-setup   # Cria o .env local a partir do template
+> just up          # Sobe db + backend e aplica migrações
+> just superuser   # Cria o superusuário administrativo
+> ```
 
 ---
 
-## Método 2: Setup Manual por Aplicação
+## Trilha 2: Trilha Nativa Direta (Docker, `uv` e `pnpm`)
 
-Se você preferir executar cada serviço individualmente no host local com `uv` e `pnpm`:
+Caso prefira não utilizar o `just` ou precise rodar comandos diretamente em ambientes isolados:
 
 ### Passo 1: Configurar Variáveis de Ambiente
 
 ```bash
-# Backend .env
-cp backend/.env.example backend/.env
-
-# Frontend .env
-cp frontend/.env.example frontend/.env
+# Cria o arquivo .env a partir do template .env.example
+python3 -c "import os, shutil; shutil.copyfile('.env.example', '.env') if not os.path.exists('.env') else None"
 ```
 
-### Passo 2: Subir o Banco de Dados (PostgreSQL Docker)
+### Passo 2: Inicializar o Banco de Dados e Backend no Docker
 
 ```bash
-docker compose up -d db
+# Sobe os containers essenciais (db e backend)
+docker compose up -d backend
+
+# Aplica as migrações no banco de dados
+docker compose exec backend uv run poe migrate
+
+# Cria o superusuário administrativo interativo
+docker compose exec backend uv run poe superuser
 ```
 
-### Passo 3: Inicializar o Backend Python (Django Ninja)
-
-```bash
-cd backend
-uv sync --all-groups
-uv run python manage.py migrate
-uv run python manage.py createsuperuser
-uv run python manage.py runserver 0.0.0.0:8000
-```
 O backend estará acessível em [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) (OpenAPI Swagger UI).
 
-### Passo 4: Inicializar o Frontend SPA (React 19 + Vite)
+> [!NOTE]
+> Se preferir rodar o Backend diretamente no Host (sem container Docker para o backend):
+> ```bash
+> docker compose up -d db
+> cd backend
+> uv sync --all-groups
+> uv run poe migrate
+> uv run poe superuser
+> uv run python manage.py runserver 0.0.0.0:8000
+> ```
+
+### Passo 3: Inicializar o Frontend SPA (React 19 + Vite)
 
 Em outro terminal:
 ```bash
@@ -80,7 +89,7 @@ pnpm run dev
 ```
 O frontend SPA estará acessível em [`http://localhost:5173`](http://localhost:5173).
 
-### Passo 5: Inicializar a Landing Page Comercial (Astro 7)
+### Passo 4: Inicializar a Landing Page Comercial (Astro 7)
 
 Em outro terminal:
 ```bash
@@ -92,11 +101,26 @@ A Landing Page estará acessível em [`http://localhost:4321`](http://localhost:
 
 ---
 
+## Comandos Essenciais de Validação e Testes
+
+| Ação | Trilha com `just` | Trilha Nativa Direta |
+| :--- | :--- | :--- |
+| **Testes do Backend** | `just test` | `docker compose exec backend uv run poe test` |
+| **Testes com Cobertura** | `just test-cov` | `docker compose exec backend uv run poe test-cov` |
+| **Testes do Frontend** | `just frontend-test` | `cd frontend && pnpm test` |
+| **Testes E2E (Playwright)** | `just frontend-e2e` | `docker compose exec backend uv run python manage.py flush --noinput && docker compose exec backend uv run poe seed-db && cd frontend && pnpm exec playwright test --workers=1` |
+| **Sincronizar API (Orval)** | `just sync-api` | `docker compose exec backend uv run poe openapi && cd frontend && pnpm run generate:api` |
+| **Validação de Docs & Links**| `just check-docs` | `uv run python scripts/validate_docs_links.py && uv run python scripts/validate_docs_snippets.py && npx -y @google/design.md lint DESIGN.md && uv run --project backend --group docs mkdocs build --strict` |
+| **Quality Gate Completo (CI)**| `just check-ci` | Execução sequencial de docs, backend, frontend e landing |
+
+---
+
 ## Painel de Serviços e Portas Locais
 
-| Serviço | URL Local | Descrição |
-| :--- | :--- | :--- |
-| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | Portal público e comercial em Astro 7 com React Islands |
-| **Frontend SPA** | [`http://localhost:5173`](http://localhost:5173) | Interface autenticada em React 19 + Vite |
-| **Backend REST API** | [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | Swagger UI interativo do Django Ninja |
-| **Portal MkDocs** | [`http://localhost:8001`](http://localhost:8001) | Documentação técnica local (`make docs-dev`) |
+| Serviço | URL Local | Trilha `just` | Trilha Nativa Direta | Descrição |
+| :--- | :--- | :--- | :--- | :--- |
+| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | `just landing-dev` | `cd landing && pnpm run dev` | Portal público em Astro 7 com React Islands |
+| **Frontend SPA** | [`http://localhost:5173`](http://localhost:5173) | `just frontend-dev` | `cd frontend && pnpm run dev` | Interface autenticada em React 19 + Vite |
+| **Backend REST API** | [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | `just up` / `just dev` | `docker compose up -d backend` | Swagger UI interativo do Django Ninja |
+| **Portal MkDocs** | [`http://localhost:8001`](http://localhost:8001) | `just docs-dev` | `uv run --project backend --group docs mkdocs serve -a 0.0.0.0:8001` | Documentação técnica local com live-reload |
+| **PostgreSQL Database** | `localhost:5432` | `just up` | `docker compose up -d db` | Banco de dados relacional (PostgreSQL 17) |
