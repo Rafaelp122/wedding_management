@@ -39,10 +39,10 @@ Escolhemos **OIDC (OpenID Connect)** para autenticar Cloud Scheduler.
 
 | Aspecto          | OIDC                | API Key      | IP Whitelist |
 | ---------------- | ------------------- | ------------ | ------------ |
-| **Zero secrets** | ✅ Sim              | ❌ Não (key) | ⚠️ Parcial   |
-| **Auditável**    | ✅ Email do SA      | ❌ Não       | ❌ Apenas IP |
-| **Rotação**      | ✅ Automática (GCP) | ❌ Manual    | N/A          |
-| **Vendor lock**  | ⚠️ GCP-specific     | ✅ Portável  | ✅ Portável  |
+| **Zero secrets** | :material-check-circle: Sim              | :material-close-circle: Não (key) | :material-alert: Parcial   |
+| **Auditável**    | :material-check-circle: Email do SA      | :material-close-circle: Não       | :material-close-circle: Apenas IP |
+| **Rotação**      | :material-check-circle: Automática (GCP) | :material-close-circle: Manual    | N/A          |
+| **Vendor lock**  | :material-alert: GCP-specific     | :material-check-circle: Portável  | :material-check-circle: Portável  |
 
 ---
 
@@ -214,13 +214,13 @@ def check_overdue(request):
 
 ## Trade-offs Aceitos
 
-**❌ Vendor Lock-in (GCP):**
+**:material-close-circle: Vendor Lock-in (GCP):**
 
 - OIDC específico do GCP
 - Migrar para AWS/Azure requer reescrever autenticação
 - **Mitigação:** Lógica isolada em decorator (fácil substituir)
 
-**❌ Complexidade Setup:**
+**:material-close-circle: Complexidade Setup:**
 
 - Requer criar Service Account
 - Configurar IAM roles
@@ -230,19 +230,19 @@ def check_overdue(request):
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 - **Zero secrets** no código
 - **Auditável:** Logs mostram email do service account
 - **Rotação automática:** GCP gerencia chaves
 - **Segurança:** Validação criptográfica
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 - **Vendor lock-in:** GCP-specific
 - **Complexidade:** Setup IAM/Service Accounts
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 - Alternativas (API key) são mais simples, mas menos seguras
 

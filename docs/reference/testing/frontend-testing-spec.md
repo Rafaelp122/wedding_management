@@ -60,7 +60,7 @@ vi.mock("@/api/generated/v1/endpoints/weddings/weddings", async (importOriginal)
 
 **SEMPRE** importe utilitários de teste de `@/test-utils` (nunca diretamente de `@testing-library/react`):
 ```tsx
-// ✅ CORRETO
+// CORRETO
 import { render, screen, userEvent, waitFor } from "@/test-utils";
 ```
 O `@/test-utils` injeta automaticamente os providers globais (`QueryClientProvider`, `ThemeProvider`, `RouterProvider`, `Toaster`).

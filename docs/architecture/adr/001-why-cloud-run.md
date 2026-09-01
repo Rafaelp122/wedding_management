@@ -83,29 +83,29 @@ CMD gunicorn config.wsgi:application
 | -------------------- | ---------- | ---------- | ----------- | ----------- |
 | **Free Tier**        | 2M req/mês | 1M req/mês | 500h/mês    | 1000h/mês   |
 | **Cold Start**       | ~2s        | ~3s        | 0s (always) | 0s (always) |
-| **Scale-to-zero**    | ✅ Sim     | ✅ Sim     | ❌ Não      | ❌ Não      |
-| **Container native** | ✅ Sim     | ⚠️ Parcial | ✅ Sim      | ❌ Não      |
-| **Vendor lock-in**   | ⚠️ Médio   | ❌ Alto    | ⚠️ Médio    | ❌ Alto     |
-| **OIDC support**     | ✅ Nativo  | ⚠️ Manual  | ❌ Não      | ❌ Não      |
-| **PostgreSQL**       | ⚠️ Externo | ⚠️ RDS     | ✅ Incluso  | ✅ Incluso  |
+| **Scale-to-zero**    | :material-check-circle: Sim     | :material-check-circle: Sim     | :material-close-circle: Não      | :material-close-circle: Não      |
+| **Container native** | :material-check-circle: Sim     | :material-alert: Parcial | :material-check-circle: Sim      | :material-close-circle: Não      |
+| **Vendor lock-in**   | :material-alert: Médio   | :material-close-circle: Alto    | :material-alert: Médio    | :material-close-circle: Alto     |
+| **OIDC support**     | :material-check-circle: Nativo  | :material-alert: Manual  | :material-close-circle: Não      | :material-close-circle: Não      |
+| **PostgreSQL**       | :material-alert: Externo | :material-alert: RDS     | :material-check-circle: Incluso  | :material-check-circle: Incluso  |
 
 ---
 
 ### Trade-offs Aceitos
 
-**❌ Cold Start (2-3s):**
+**:material-close-circle: Cold Start (2-3s):**
 
 - **Impacto:** Primeira requisição após inatividade é lenta
 - **Mitigação:** Aceitável para MVP (não é sistema crítico)
 - **Solução futura:** Min instances = 1 (USD 5/mês)
 
-**❌ PostgreSQL Separado:**
+**:material-close-circle: PostgreSQL Separado:**
 
 - Cloud Run não oferece database gerenciado
 - **Solução:** Neon PostgreSQL (free tier 3GB)
 - **Vantagem:** Banco independente = mais flexibilidade
 
-**❌ Curva de Aprendizado GCP:**
+**:material-close-circle: Curva de Aprendizado GCP:**
 
 - Ferramentas menos conhecidas que AWS
 - **Mitigação:** Documentação excelente, comunidade ativa
@@ -155,7 +155,7 @@ gcloud run deploy wedding-api \
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 1. **Custo zero no MVP** (dentro do free tier)
 2. **Escalabilidade automática** (0 → 100 instâncias)
@@ -163,14 +163,14 @@ gcloud run deploy wedding-api \
 4. **Logs estruturados** nativos (Cloud Logging)
 5. **Portabilidade** (Dockerfile padrão)
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 1. **Cold start** de 2-3s após inatividade
 2. **Vendor lock-in médio** (OIDC, Cloud Scheduler)
 3. **Requer setup externo** para PostgreSQL
 4. **Complexidade inicial** (IAM, Service Accounts)
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 1. Requer conhecimento de GCP (curva de aprendizado)
 2. Free tier pode não ser suficiente em escala (previsível)

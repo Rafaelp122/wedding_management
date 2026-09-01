@@ -36,10 +36,10 @@ Introduzir **Service Layer** para encapsular lógica de negócio complexa.
 
 | Aspecto           | Service Layer (escolhido)  | Fat Serializer     | Fat Model          |
 | ----------------- | -------------------------- | ------------------ | ------------------ |
-| **Testabilidade** | ✅ Unit test direto        | ❌ Precisa request | ⚠️ Precisa DB      |
-| **Reusabilidade** | ✅ Isolado                 | ❌ Acoplado ao DRF | ⚠️ Acoplado ao ORM |
-| **Separação**     | ✅ SRP (1 serviço/domínio) | ❌ God serializer  | ❌ God model       |
-| **Curva**         | ⚠️ Mais abstrações         | ✅ Padrão DRF      | ✅ Padrão Django   |
+| **Testabilidade** | :material-check-circle: Unit test direto        | :material-close-circle: Precisa request | :material-alert: Precisa DB      |
+| **Reusabilidade** | :material-check-circle: Isolado                 | :material-close-circle: Acoplado ao DRF | :material-alert: Acoplado ao ORM |
+| **Separação**     | :material-check-circle: SRP (1 serviço/domínio) | :material-close-circle: God serializer  | :material-close-circle: God model       |
+| **Curva**         | :material-alert: Mais abstrações         | :material-check-circle: Padrão DRF      | :material-check-circle: Padrão Django   |
 
 ---
 
@@ -49,7 +49,7 @@ Introduzir **Service Layer** para encapsular lógica de negócio complexa.
 apps/finances/
 ├── models.py          # APENAS models (zero lógica de negócio)
 ├── serializers.py     # APENAS validação de tipos/formato
-├── services.py        # ✅ TODA lógica de negócio aqui
+├── services.py        # :material-check-circle: TODA lógica de negócio aqui
 └── views.py           # APENAS HTTP (deserializa → service → serializa)
 ```
 
@@ -229,14 +229,14 @@ def test_create_installment_validates_zero_tolerance():
 
 ## Quando Usar Service Layer?
 
-**✅ USE quando:**
+**:material-check-circle: USE quando:**
 
 - Lógica envolve múltiplos models (Contract + Installment)
 - Validação complexa (tolerância zero, duplicatas)
 - Efeitos colaterais (emails, notificações)
 - Precisa reutilizar lógica (API + task agendada)
 
-**❌ NÃO USE quando:**
+**:material-close-circle: NÃO USE quando:**
 
 - CRUD simples (list, retrieve, delete)
 - Zero lógica de negócio (apenas persistência)
@@ -293,17 +293,17 @@ class ContractService:
 
 ## Trade-offs Aceitos
 
-**❌ Mais arquivos:**
+**:material-close-circle: Mais arquivos:**
 
 - Antes: 3 arquivos (models, serializers, views)
 - Depois: 4 arquivos (+ services)
 
-**❌ Curva de aprendizado:**
+**:material-close-circle: Curva de aprendizado:**
 
 - Devs precisam entender novo padrão
 - Documentação necessária
 
-**❌ Over-engineering em CRUDs simples:**
+**:material-close-circle: Over-engineering em CRUDs simples:**
 
 - Service para `Supplier` (name, contact) é overkill
 
@@ -311,20 +311,20 @@ class ContractService:
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 - **Testabilidade:** Unit tests sem mocks HTTP
 - **Reusabilidade:** Service usado em views + tasks
 - **Separação:** SRP (1 responsabilidade por classe)
 - **Manutenibilidade:** Lógica isolada (fácil refatorar)
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 - **Complexidade:** Mais abstrações
 - **Curva:** Devs precisam aprender padrão
 - **Boilerplate:** Arquivo extra para lógica simples
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 - Service Layer é padrão em outras linguagens (Java, C#)
 - Django/DRF comunidade prefere Fat Models/Serializers

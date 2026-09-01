@@ -70,6 +70,6 @@ apps/<domain>/
 
 ## 4. Guard-Rails e Proibições
 
-- 🚫 **Proibido Mutações em Selectors:** É estritamente proibido chamar `.save()`, `.delete()`, `.create()`, `.update()` ou alterar estado de banco dentro de qualquer função em `selectors/`.
-- 🚫 **Proibido Queries Brutas em Controllers:** Rotas no `api.py` não devem instanciar queries ORM diretamente. Rotas `GET` devem chamar `selectors`, e rotas de mutação devem delegar para `services`.
-- 🚫 **Proibido Métodos de Leitura em Services:** Classes de serviço em `services/` não devem conter métodos estáticos de busca como `list()` ou `get()`.
+- :material-cancel: **Proibido Mutações em Selectors:** É estritamente proibido chamar `.save()`, `.delete()`, `.create()`, `.update()` ou alterar estado de banco dentro de qualquer função em `selectors/`.
+- :material-cancel: **Proibido Queries Brutas em Controllers:** Rotas no `api.py` não devem instanciar queries ORM diretamente. Rotas `GET` devem chamar `selectors`, e rotas de mutação devem delegar para `services`.
+- :material-cancel: **Proibido Métodos de Leitura em Services:** Classes de serviço em `services/` não devem conter métodos estáticos de busca como `list()` ou `get()`.

@@ -1,7 +1,13 @@
 site_name: Wedding Management System — Documentação Técnica
 site_description: Plataforma SaaS de Gestão de Casamentos (Arquitetura, APIs, Regras de Negócio e Playbooks)
 site_author: Rafael Pereira de Araújo
+site_url: https://rafaelp122.github.io/wedding_management/
+repo_url: https://github.com/Rafaelp122/wedding_management
+repo_name: Rafaelp122/wedding_management
 docs_dir: docs
+
+exclude_docs: |
+  superpowers/**
 
 theme:
   name: material
@@ -43,6 +49,7 @@ theme:
     - navigation.tabs.sticky       # Abas fixas no scroll
     - navigation.sections          # Seções organizadas no menu lateral
     - navigation.expand            # Expande navegação por padrão
+    - navigation.indexes           # Páginas de índice de seção automáticas
     - navigation.top               # Botão de voltar ao topo
     - navigation.tracking          # Sincroniza âncoras na URL
     - content.code.annotate        # Anotações em blocos de código
@@ -71,8 +78,9 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.keys
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path: [".", "docs"]
+      check_paths: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -98,46 +106,20 @@ validation:
     unrecognized_links: ignore
 
 nav:
-  - Visão Geral:
-      - Apresentação da Plataforma: index.md
+  - Início: index.md
+
+  - Funcionalidades:
+      - Visão Geral das Funcionalidades: features/index.md
+      - Módulo Financeiro: features/finances.md
+      - Módulo de Logística e Contratos: features/logistics.md
+      - Agenda e Cronograma: features/scheduler.md
+
+  - Arquitetura:
+      - Visão Geral & System Design: architecture/index.md
       - Matriz de Requisitos (RF & RNF): architecture/requirements.md
-      - Visão Geral de Arquitetura: architecture/concepts/system-overview.md
-      - Estratégia Multi-Tenancy: architecture/concepts/multi-tenancy-strategy.md
-      - Ergonomia UX & Design System: architecture/concepts/design-system-rationale.md
-
-  - Onboarding:
-      - Quickstart (Ambiente Local): onboarding/onboarding-quickstart.md
-      - Criando Endpoints Backend: onboarding/backend-first-feature.md
-      - Criando Telas Frontend: onboarding/frontend-first-feature.md
-      - GitOps & Fluxo por Sprints: onboarding/gitops-sprint-workflow.md
-      - Atualização da Documentação: guides/documentation/write-and-update-docs.md
-
-  - Guias Práticos:
-      - Ambiente & Troubleshooting:
-          - Setup Local Completo: guides/dev-environment/setup-local-environment.md
-          - Migrações do Banco: guides/dev-environment/database-migrations.md
-          - DB Connection Locks: guides/ops-troubleshooting/db-connection-locks.md
-          - Uploads R2 Failures: guides/ops-troubleshooting/r2-upload-failures.md
-          - Terraform Onboarding: guides/ops-troubleshooting/terraform-service-onboarding.md
-      - Frontend:
-          - Design System: guides/frontend/use-design-md-system.md
-          - Geração de Cliente Orval: guides/frontend/generate-orval-client.md
-          - Hook Form + Zod: guides/frontend/create-hook-form-zod.md
-          - Testes MSW: guides/frontend/msw-testing-patterns.md
-          - Testes E2E Playwright: guides/frontend/run-playwright-e2e.md
-      - Backend:
-          - Suíte Pytest: guides/backend/run-pytest-suite.md
-          - População de Banco (Seed): guides/backend/seed-database.md
-          - Service Layer Pattern: guides/backend/use-core-services.md
-          - Query Selectors Customizados: guides/backend/create-query-selectors.md
-          - Notificações In-App: guides/backend/send-in-app-notifications.md
-          - Background Tasks: guides/backend/create-background-tasks.md
-          - Cron Tasks: guides/backend/register-cron-tasks.md
-          - Lógica de Parcelas Atrasadas: guides/backend/mark-overdue-installments.md
-
-  - Arquitetura & Domínio:
-      - Visão Geral & MOC: architecture/index.md
       - Padrões Arquiteturais:
+          - Visão Geral do Sistema: architecture/concepts/system-overview.md
+          - Estratégia Multi-Tenancy: architecture/concepts/multi-tenancy-strategy.md
           - Service Layer Pattern: architecture/concepts/service-layer-pattern.md
           - Query Selectors & QuerySets: architecture/concepts/query-selectors-pattern.md
           - Smart vs Dumb Components: architecture/concepts/smart-dumb-components.md
@@ -146,7 +128,7 @@ nav:
           - CI/CD & Ownership Terraform: architecture/concepts/ci-cd-pipeline-flow.md
           - Suíte de Guard-Rails: architecture/concepts/architectural-guard-rails-suite.md
           - Tarefas Assíncronas & Crons: architecture/concepts/async-tasks-architecture.md
-      - Hubs de Domínio (MOCs):
+      - Domínios da Plataforma (Bounded Contexts):
           - Visão Geral dos Domínios: architecture/domains/index.md
           - Core Domain: architecture/domains/core-domain.md
           - Dashboard Domain: architecture/domains/dashboard-domain.md
@@ -158,7 +140,7 @@ nav:
           - Users Domain: architecture/domains/users-domain.md
           - Weddings Domain: architecture/domains/weddings-domain.md
           - Notifications Domain: architecture/domains/notifications-domain.md
-      - Regras de Negócio Atômicas:
+      - Regras de Negócio:
           - Finanças:
               - Tolerância Zero & Integridade: architecture/business-rules/finances/financial-integrity-rules.md
               - Lógica de Parcelas Vencidas: architecture/business-rules/finances/installment-overdue-logic.md
@@ -175,34 +157,109 @@ nav:
               - Templates de Cronograma: architecture/business-rules/weddings/wedding-schedule-templates.md
           - Notificações:
               - Regras de Notificação In-App: architecture/business-rules/notifications/in-app-notifications-rules.md
-      - Registros de Decisão (ADRs):
+      - Decisões Arquiteturais (ADRs):
           - architecture/adr/README.md
+          - 001 - Por que Cloud Run: architecture/adr/001-why-cloud-run.md
+          - 002 - Por que Neon DB: architecture/adr/002-why-neon.md
+          - 003 - Por que Cloudflare R2: architecture/adr/003-why-r2.md
+          - 004 - Presigned URLs no R2: architecture/adr/004-presigned-urls.md
+          - 005 - OIDC no Cloud Scheduler: architecture/adr/005-oidc-scheduler.md
+          - 006 - Service Layer Pattern: architecture/adr/006-service-layer.md
+          - 007 - Hybrid Keys no Banco: architecture/adr/007-hybrid-keys.md
+          - 008 - Estratégia de Soft Delete: architecture/adr/008-soft-delete.md
+          - 009 - Isolamento Multi-Tenancy: architecture/adr/009-multitenancy.md
+          - 010 - Tolerância Zero Financeira: architecture/adr/010-tolerance-zero.md
+          - 011 - BaseModel com full_clean: architecture/adr/011-basemodel-save-full-clean.md
+          - 012 - Orval Contract-Driven Frontend: architecture/adr/012-orval-contract-driven-frontend.md
+          - 013 - Migração DRF para Django Ninja: architecture/adr/013-migrate-drf-to-ninja.md
+          - 014 - Tipagem Estática Estrita Mypy: architecture/adr/014-adocao-tipagem-estatica-mypy.md
+          - 016 - Multi-Tenancy Pragmático: architecture/adr/016-pragmatic-multi-tenancy.md
+          - 017 - Infraestrutura de Tarefas Assíncronas: architecture/adr/017-async-task-infrastructure.md
+          - 018 - Testes E2E com Playwright: architecture/adr/018-playwright-e2e-testing.md
+          - 019 - Validação de Tenants no Service Layer: architecture/adr/019-tenant-validation-service-layer.md
+          - 020 - Abstração do Serviço de Storage: architecture/adr/020-storage-service-abstraction.md
+          - 021 - Padrão de Comentários & Docstrings: architecture/adr/021-padrao-comentarios-docstrings.md
+          - 022 - Rotas Estáticas para Performance: architecture/adr/022-static-routes-for-performance.md
+          - 023 - Desacoplamento de Módulos Core: architecture/adr/023-desacoplamento-modulos-scheduler-finances-weddings.md
+          - 024 - Padrão Smart & Dumb Components: architecture/adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md
+          - 025 - Arquitetura de IaC com Terraform: architecture/adr/025-terraform-iac-architecture.md
+          - 026 - Estratégia de Branching GitOps: architecture/adr/026-gitops-branching-and-deployment-strategy.md
+          - 027 - Topologia de States do Terraform: architecture/adr/027-terraform-state-topology.md
+          - 028 - Documentação Diátaxis & Notas Atômicas: architecture/adr/028-diataxis-atomic-notes.md
+      - Design System & Racional de UX: architecture/concepts/design-system-rationale.md
+
+  - Guias & Onboarding:
+      - Visão Geral dos Guias & Onboarding: guides/index.md
+      - Onboarding & Primeiros Passos:
+          - Quickstart do Ambiente Local: onboarding/onboarding-quickstart.md
+          - Criando Endpoints no Backend: onboarding/backend-first-feature.md
+          - Criando Telas no Frontend: onboarding/frontend-first-feature.md
+          - GitOps & Fluxo por Sprints: onboarding/gitops-sprint-workflow.md
+      - Ambiente & Migrações:
+          - MOC de Ambiente: guides/dev-environment/index.md
+          - Setup Local Completo: guides/dev-environment/setup-local-environment.md
+          - Migrações do Banco: guides/dev-environment/database-migrations.md
+      - Frontend (React & Orval):
+          - Uso do Design System: guides/frontend/use-design-md-system.md
+          - Geração de Cliente Orval: guides/frontend/generate-orval-client.md
+          - Formulários com Hook Form + Zod: guides/frontend/create-hook-form-zod.md
+          - Testes MSW: guides/frontend/msw-testing-patterns.md
+          - Testes E2E com Playwright: guides/frontend/run-playwright-e2e.md
+      - Backend (Django Ninja):
+          - Padrão Service Layer: guides/backend/use-core-services.md
+          - Query Selectors Customizados: guides/backend/create-query-selectors.md
+          - Suíte Pytest & Factories: guides/backend/run-pytest-suite.md
+          - Notificações In-App: guides/backend/send-in-app-notifications.md
+          - Background Tasks: guides/backend/create-background-tasks.md
+          - Tarefas Cron no Cloud Scheduler: guides/backend/register-cron-tasks.md
+          - Lógica de Parcelas Atrasadas: guides/backend/mark-overdue-installments.md
+          - População de Banco (Seed): guides/backend/seed-database.md
+      - Operações & Troubleshooting:
+          - DB Connection Locks: guides/ops-troubleshooting/db-connection-locks.md
+          - Uploads R2 Failures: guides/ops-troubleshooting/r2-upload-failures.md
+          - Terraform Onboarding: guides/ops-troubleshooting/terraform-service-onboarding.md
+      - Governança & Documentação:
+          - MOC de Guias de Docs: guides/documentation/index.md
+          - Como Escrever Docs: guides/documentation/write-and-update-docs.md
 
   - Referência Técnica:
-      - APIs & Contratos:
+      - Visão Geral da Referência: reference/index.md
+      - APIs & Contratos OpenAPI:
           - Hub de APIs: reference/api/index.md
           - Contrato OpenAPI: reference/api/openapi-schema.md
           - Envelope de Erros: reference/api/error-envelope-spec.md
-      - Modelos do Banco (Entidades):
-          - Core & Base Models: reference/models/core-models.md
-          - Finanças: reference/models/finances/budget-model.md
-          - Logística: reference/models/logistics/contract-model.md
-          - Agenda: reference/models/scheduler/event-model.md
-          - Tenants & Weddings: reference/models/tenants/tenant-model.md
-          - Notificações: reference/models/notifications/notification-model.md
-      - Infraestrutura & IaC:
+      - Modelos do Banco de Dados:
+          - Modelos Base & Padrões Core: reference/models/core-models.md
+          - Modelos por Domínio (ERD & Agregados): architecture/domains/index.md
+      - Infraestrutura & IaC (Terraform):
           - Módulos Terraform (MOC): reference/terraform/index.md
           - Módulo GCP Cloud Run: reference/terraform/cloud-run-service-module.md
           - Variáveis de Ambiente (.env): reference/environment/environment-variables.md
           - Serviços de Infraestrutura Core: reference/architecture-standards/infrastructure-services.md
+      - Suíte de Testes Automatizados:
+          - MOC de Testes: reference/testing/index.md
+          - Testes de Backend (Pytest): reference/testing/backend-testing-spec.md
+          - Testes de Frontend (Vitest): reference/testing/frontend-testing-spec.md
+          - Testes E2E (Playwright): reference/testing/e2e-testing-spec.md
+          - Testes de Infraestrutura (Terraform): reference/testing/terraform-testing-spec.md
+      - CI/CD & Esteiras de Entrega:
+          - MOC de CI/CD: reference/ci-cd/index.md
+          - Validação de Pull Requests (CI): reference/ci-cd/ci-pr-validation-spec.md
+          - Deploy Contínuo (CD): reference/ci-cd/cd-deploy-spec.md
+          - Pipelines do Terraform: reference/ci-cd/terraform-pipelines-spec.md
+          - Revisão Automatizada de Código: reference/ci-cd/ai-code-review-spec.md
       - Padrões Técnicos & Guard-Rails:
+          - Visão Geral dos Padrões: reference/architecture-standards/index.md
           - Padrões de Documentação: reference/architecture-standards/documentation-standards.md
           - Padrão Query Selectors: reference/architecture-standards/query-selectors-spec.md
           - Convencional de Commits: reference/architecture-standards/commit-convention-spec.md
           - Padrão de Comentários & Docstrings: reference/architecture-standards/commenting-standards.md
-          - MOC de Testes Automatizados: reference/testing/index.md
-          - MOC de CI/CD Pipelines: reference/ci-cd/index.md
-          - MOC de Guard-Rails de Integridade: reference/architecture-standards/guard-rails/index.md
+          - Guard-Rails de Integridade (MOC): reference/architecture-standards/guard-rails/index.md
+          - Guard-Rail de Isolamento de Tenant: reference/architecture-standards/guard-rails/tenant-isolation-guard.md
+          - Guard-Rail de Permissões & Segurança: reference/architecture-standards/guard-rails/security-permissions-guard.md
+          - Guard-Rail de Auditoria de Serviços Atômicos: reference/architecture-standards/guard-rails/atomic-service-audit-guard.md
       - Frontend Specs:
+          - Visão Geral do Frontend: reference/frontend/index.md
+          - Landing Page Comercial (Astro): reference/frontend/landing-page-spec.md
           - Componentes UI (shadcn/ui): reference/frontend/ui-components-spec.md
           - Estado Global & Cache (Zustand/Query): reference/frontend/store-state-spec.md

@@ -31,12 +31,12 @@ Anteriormente, o `ContractService` (no app `logistics`) continha lógica de neg�
 
 ## Justificativa e Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 - **Desacoplamento do Domínio**: `ContractService` lida apenas com contratos; não tem conhecimento de `boto3`, S3 ou endpoints de rede do R2.
 - **Substituição Transparente**: Para migrar de provedor, basta implementar um novo serviço que atenda ao protocolo e alterar a variável `STORAGE_PROVIDER` no `.env`.
 - **Testes Limpos**: A suíte de testes de logística agora injeta um `DummyStorageService` simples nas chamadas, acelerando os testes e eliminando a fragilidade de mockar bibliotecas de terceiros.
 
-### Negativas ❌
+### Negativas :material-close-circle:
 - Pequeno aumento no número de classes e arquivos de infraestrutura do sistema.
 
 ---

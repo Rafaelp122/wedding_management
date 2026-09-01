@@ -1,77 +1,102 @@
-# Arquitetura de Tarefas Assíncronas e Agendamentos (`django.tasks`)
+---
+title: "Arquitetura de Tarefas Assíncronas, Crons & OIDC (`django.tasks`)"
+domain: architecture
+type: concept
+source_code:
+  - backend/apps/core/cron_api.py
+  - backend/apps/core/cron.py
+  - backend/apps/core/decorators.py
+tests:
+  - backend/apps/core/tests/test_cron_api.py
+  - backend/apps/core/tests/test_oidc_verifier.py
+---
 
-> **Módulo:** [system-overview](system-overview.md) | [ci-cd-pipeline-flow](ci-cd-pipeline-flow.md)
-> **Código:** `backend/apps/core/cron.py` | `backend/config/settings/`
-> **ADRs:** [ADR-017](../adr/017-async-task-infrastructure.md) | [ADR-005](../adr/005-oidc-scheduler.md)
+# Arquitetura de Tarefas Assíncronas, Crons & OIDC (`django.tasks`)
+
+> **Categoria:** Conceito Arquitetural
+> **Relacionados:** [ADR-017: Infraestrutura de Tarefas Assíncronas](../adr/017-async-task-infrastructure.md) · [ADR-005: Autenticação OIDC no Scheduler](../adr/005-oidc-scheduler.md) · [Visão Geral do Sistema](system-overview.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [Guia de Tarefas em Background](../../guides/backend/create-background-tasks.md) · [Guia de Crons](../../guides/backend/register-cron-tasks.md)
 
 ---
 
-## 1. Visão Geral e Princípios Arquiteturais
+## 1. Visão Geral e Princípios Fundamentais
 
-A infraestrutura de tarefas em segundo plano e agendamentos periódicos do sistema foi projetada para atender a dois pilares fundamentais:
+A infraestrutura de execução assíncrona e agendamentos periódicos é orientada por dois pilares:
 
-1. **Zero Lock-In na Aplicação**: A camada de código Python não possui acoplamento direto com bibliotecas de filas (como Celery ou RQ) nem com provedores de nuvem específicos. O desenvolvimento consome **exclusivamente a API nativa `django.tasks` do Django 6.0 (DEP 0014)**.
-2. **Zero Custo Ocioso 24/7 em Produção**: No ambiente serverless do **Google Cloud Run**, a infraestrutura escala até **zero instâncias** quando não há tráfego. Não existem containers de workers ou instâncias Redis mantidas ligadas 24 horas por dia consumindo recursos desnecessariamente.
-
----
-
-## 2. Matriz Comparativa: Tarefas Agendadas vs Tarefas em Segundo Plano
-
-| Característica | ⏰ Tarefas Agendadas (Crons / Daily Batch) | ⚡ Tarefas em Segundo Plano (Async / Background) |
-| :--- | :--- | :--- |
-| **Gatilho (*Trigger*)** | **Tempo (Relógio / Cron Schedule)**. Ex: "Todos os dias às 02:00 AM". | **Evento de Usuário ou Sistema**. Ex: "Usuário fez upload de contrato". |
-| **Previsibilidade** | Horário fixo e pré-programado (Periódico). | Imprevisível, ocorre a qualquer momento sob demanda dos usuários. |
-| **Origem do Disparo** | **GCP Cloud Scheduler** via requisição HTTP POST autenticada por OIDC. | **Código Python do ERP** via `minha_tarefa.enqueue(...)` dentro de endpoints/serviços. |
-| **Exemplo no ERP** | Verificação noturna de parcelas vencidas (`mark_overdue_installments`). | Processamento assíncrono de OCR de PDFs ou geração de relatórios extensos. |
-| **Guia Prático** | [register-cron-tasks](../../guides/backend/register-cron-tasks.md) | [create-background-tasks](../../guides/backend/create-background-tasks.md) |
+1. **Zero Lock-In na Aplicação:** A camada de código Python não se acopla a drivers proprietários ou bibliotecas pesadas de fila. Consome a API unificada do padrão `django.tasks` (DEP 0014) e decorators padronizados.
+2. **Zero Custo Ocioso 24/7 (Arquitetura Serverless):** No ambiente **Google Cloud Run**, a aplicação escala até **0 instâncias** na ausência de tráfego. Não existem instâncias Redis ou containers de workers permanentemente ativos em produção consumindo recursos ociosos.
 
 ---
 
-## 3. Comportamento Multi-Ambiente
-
-A backend de execução (`TASKS["default"]` no `settings.py`) adapta-se transparente e automaticamente a cada ambiente:
+## 2. Diagrama de Topologia e Segurança OIDC
 
 ```mermaid
-flowchart TD
-    subgraph DEV["1. Desenvolvimento Local (Docker Compose)"]
-        DEV_CODE["django.tasks.enqueue()"] -->|Fila DB 0| VALKEY[(Valkey 8 / Redis)]
-        VALKEY -->|python manage.py run_huey| HUEY[Worker Huey]
-    end
+sequenceDiagram
+    autonumber
+    participant GCP as GCP Cloud Scheduler (02:00 AM America/Sao_Paulo)
+    participant Auth as Google OAuth2 / OIDC Token Provider
+    participant Ingress as Cloud Run Ingress (Django Ninja)
+    participant OIDC as Decorator @require_oidc_auth
+    participant API as Cron API (/daily-batch/)
+    participant Registry as CronRegistry (cron.py)
+    participant Tasks as Tarefas de Domínio (Finances/Logistics/Scheduler)
 
-    subgraph PYTEST["2. Testes Automatizados (Pytest)"]
-        TEST_CODE["django.tasks.enqueue()"] -->|ImmediateBackend| MEMORY[Execução Síncrona em Memória]
-    end
-
-    subgraph PROD["3. Produção Serverless (GCP Cloud Run)"]
-        SCHEDULER["GCP Cloud Scheduler (02:00 AM)"] -->|POST + OIDC Token| BATCH_ENDPOINT["/api/v1/internal/cron/daily-batch/"]
-        BATCH_ENDPOINT -->|Execução em Lote| CRON_REGISTRY[CronRegistry]
-
-        APP_CODE["django.tasks.enqueue()"] -->|On-Demand Backend| CLOUD_TASKS["CloudTasksBackend / DatabaseBackend"]
+    GCP->>Auth: Solicita token OIDC assinado pela Runtime SA
+    Auth-->>GCP: Retorna JWT OIDC assinado
+    GCP->>Ingress: HTTP POST /api/v1/internal/cron/daily-batch/ (Header: Bearer <OIDC_TOKEN>)
+    Ingress->>OIDC: Intercepta requisição antes de executar o handler
+    Note over OIDC: Valida assinatura com Google JWKS e email da Service Account autorizada
+    alt Token Inválido ou SA não autorizada
+        OIDC-->>GCP: HTTP 401 Unauthorized / HTTP 403 Forbidden
+    else Token Criptograficamente Válido
+        OIDC->>API: Permite execução de run_daily_cron_batch()
+        API->>Registry: cron_registry.run_batch()
+        Registry->>Tasks: 1. mark_overdue_installments() (Finances)
+        Registry->>Tasks: 2. sync_scheduled_events() (Scheduler)
+        Registry->>Tasks: 3. audit_contract_deadlines() (Logistics)
+        Tasks-->>Registry: Resultados consolidados de cada tarefa
+        Registry-->>API: Lista de status de execução
+        alt Todas as tarefas sucederam
+            API-->>GCP: HTTP 200 OK (DailyBatchResponse)
+        else Houve erro em alguma tarefa
+            API-->>GCP: HTTP 207 Multi-Status (Alerta Cloud Monitoring)
+        end
     end
 ```
 
 ---
 
-## 4. Arquitetura de Segurança de Crons (GCP Cloud Scheduler + OIDC)
+## 3. Matriz Multi-Ambiente de Execução
 
-Para disparar as tarefas agendadas diárias sem armazenar senhas ou chaves estáticas no código:
-
-1. **Agendamento no GCP**: O Cloud Scheduler dispara um `HTTP POST` para o endpoint `/api/v1/internal/cron/daily-batch/` às 02:00 AM (`time_zone = "America/Sao_Paulo"`).
-2. **Autenticação OIDC**: O GCP assina criptograficamente um token JWT com a Service Account do sistema (`runtime_sa_email`).
-3. **Validação Criptográfica**: O decorator `@require_oidc_auth` valida a chave pública do Google JWKS e garante que apenas a Service Account autorizada execute o lote diário ([ADR-005](../adr/005-oidc-scheduler.md)).
-
----
-
-## 5. Estratégia de Evolução em IaC (Terraform)
-
-- **Provisionado Atualmente**: O Cloud Scheduler Job (`google_cloud_scheduler_job.daily_batch_cron`) está **100% declarado no Terraform** em `terraform/production/main.tf`.
-- **Evolução sob Demanda**: Se a carga de tarefas concorrentes em background crescer (ex: centenas de uploads de contratos simultâneos), o recurso `google_cloud_tasks_queue` será instanciado no Terraform para desacoplamento extremo no GCP, **sem exigir alteração em nenhuma linha de código Python** da aplicação.
+| Ambiente | Backend de Execução (`TASKS["default"]`) | Fila de Mensagens / Broker | Mecanismo de Worker |
+| :--- | :--- | :--- | :--- |
+| **Desenvolvimento Local** | `HueyTasksBackend` | Valkey 8 / Redis (`db=0`) | Container dedicado (`python manage.py run_huey`) |
+| **Testes (Pytest)** | `ImmediateBackend` | Memória local do processo | Execução síncrona imediata no mesmo thread |
+| **Produção (Cloud Run)** | `CloudTasksBackend` / `DatabaseBackend` | On-Demand HTTP / Cloud Tasks | Disparo via GCP Cloud Scheduler com OIDC |
 
 ---
 
-## 6. Documentação Relacionada
+## 4. Implementação Técnica
 
-- **Guia How-To Crons:** [register-cron-tasks](../../guides/backend/register-cron-tasks.md)
-- **Guia How-To Async Tasks:** [create-background-tasks](../../guides/backend/create-background-tasks.md)
-- **Decisão Arquitetural:** [ADR-017](../adr/017-async-task-infrastructure.md)
-- **Decisão OIDC:** [ADR-005](../adr/005-oidc-scheduler.md)
+### A. Endpoint de Disparo em Lote (`cron_api.py`)
+O endpoint `/daily-batch/` é protegido pelo decorator `@require_oidc_auth` e orquestra a execução de todas as tarefas cadastradas no `CronRegistry`, respondendo com status `207 Multi-Status` em caso de falha parcial para alertar os monitores do GCP:
+
+```python
+--8<-- "backend/apps/core/cron_api.py:29:72"
+```
+
+### B. Decorator de Validação Criptográfica OIDC (`decorators.py`)
+A autenticação extrai o token JWT do cabeçalho `Authorization: Bearer <token>`, valida as chaves públicas via Google JWKS e assegura que a requisição partiu exclusivamente da Service Account autorizada:
+
+```python
+--8<-- "backend/apps/core/decorators.py:15:57"
+```
+
+---
+
+## 5. Infraestrutura como Código (Terraform)
+
+O gatilho periódico é provisionado de forma imutável no arquivo `terraform/production/main.tf`:
+- **Recurso:** `google_cloud_scheduler_job.daily_batch_cron`
+- **Frequência:** `0 2 * * *` (Todos os dias às 02:00 da manhã)
+- **Timezone:** `America/Sao_Paulo`
+- **Autenticação:** Configurado com `oidc_token` vinculado à `google_service_account.runtime_sa.email`.
