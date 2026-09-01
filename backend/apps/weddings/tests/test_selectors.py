@@ -98,7 +98,7 @@ class TestWeddingQuerySet:
 
     def test_with_critical_metrics(self, user: Any) -> None:
         """with_critical_metrics() anota métricas para o dashboard crítico."""
-        today = date(2026, 8, 16)
+        today = timezone.localdate()
         wedding = WeddingFactory(company=user.company)
         budget = BudgetFactory(wedding=wedding, company=user.company)
         category = BudgetCategoryFactory(
@@ -208,7 +208,7 @@ class TestWeddingQuerySet:
 
     def test_upcoming(self, user: Any) -> None:
         """upcoming() filtra casamentos até today + days."""
-        today = date(2026, 8, 16)
+        today = timezone.localdate()
         w_near = WeddingFactory(company=user.company, date=today + timedelta(days=30))
         WeddingFactory(company=user.company, date=today + timedelta(days=120))
 
@@ -229,7 +229,7 @@ class TestWeddingQuerySet:
 
     def test_chainable_methods(self, user: Any) -> None:
         """Garante encadeamento fluente de múltiplos métodos no QuerySet."""
-        today = date(2026, 8, 16)
+        today = timezone.localdate()
         w = WeddingFactory(
             company=user.company,
             bride_name="Mariana",

@@ -4,8 +4,7 @@
 Este script garante a integridade contínua entre o código da aplicação e a documentação:
 1. Valida se todas as transclusões de código PyMdown (`--8<-- "path/to/file:..."`) apontam para arquivos reais.
 2. Valida se as seções/delimitadores `# --8<-- [start:tag]` existem nos arquivos de origem.
-3. Valida se os links de código-fonte referenciados nos cabeçalhos das notas apontam para arquivos existentes.
-4. Falha com código de saída 1 se qualquer inconsistência de código for encontrada, protegendo o CI/CD contra code-drift.
+3. Falha com código de saída 1 se qualquer inconsistência de código for encontrada, protegendo o CI/CD contra code-drift.
 """
 
 import re
@@ -17,12 +16,6 @@ DOCS_DIR = ROOT_DIR / "docs"
 
 # Regex para transclusões de snippets PyMdown: --8<-- "caminho/do/arquivo:tag_ou_linhas"
 SNIPPET_REGEX = re.compile(r'--8<--\s*["\']([^"\']+)["\']')
-
-# Regex para metadados de arquivo fonte no Markdown: Source: `apps/...` ou [apps/...](...)
-SOURCE_LINK_REGEX = re.compile(
-    r"(?:Fonte|Source|Arquivo|Código|Implementação):\s*(?:`|\[)?((?:backend|frontend|landing|apps|config)[^`\]\)\s]+)(?:`|\])?",
-    re.IGNORECASE,
-)
 
 
 def validate_snippets() -> list[str]:

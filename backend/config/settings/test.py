@@ -2,6 +2,8 @@
 Test settings: in-memory SQLite, fast password hashers, disabled zeal.
 """
 
+from pathlib import Path
+
 from .base import *
 
 
@@ -47,7 +49,7 @@ HUEY = {
     "immediate": True,
 }
 
-MEDIA_ROOT = "/tmp/test_media"  # noqa: S108
+MEDIA_ROOT = Path("/tmp/test_media")  # noqa: S108
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.InMemoryStorage",
