@@ -232,14 +232,14 @@ if not Wedding.objects.filter(id=wedding_id, planner=request.user).exists():
 
 ## Trade-offs Aceitos
 
-**❌ Complexidade (2 requests):**
+**:material-close-circle: Complexidade (2 requests):**
 
 - Frontend precisa fazer 2 chamadas:
   1. Backend: Gerar URL
   2. R2: Upload arquivo
 - **Mitigação:** Abstrair em função `uploadContract()`
 
-**❌ Validação de tipo no backend:**
+**:material-close-circle: Validação de tipo no backend:**
 
 - Backend não valida se arquivo é realmente PDF
 - **Mitigação:**
@@ -251,19 +251,19 @@ if not Wedding.objects.filter(id=wedding_id, planner=request.user).exists():
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 - **Performance:** Backend gasta 50ms (não 5s)
 - **Escalabilidade:** Uploads ilimitados (R2 escala)
 - **Custo:** R$ 0 em compute time
 - **Segurança:** URL temporária (15min)
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 - **Complexidade:** 2 requests (vs 1)
 - **Validação limitada:** Backend não vê o arquivo
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 - Requer configuração de CORS no R2
 

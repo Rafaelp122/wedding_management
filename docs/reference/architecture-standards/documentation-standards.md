@@ -23,10 +23,10 @@ Esta diretriz estabelece as regras de autoria, estruturação, vinculação e ma
 - **Single Source of Truth (SSOT)**: A explicação técnica de um assunto deve residir em exatamente um único arquivo de referência.
 - **Link ao Invés de Repetição**: Se um documento precisar mencionar outro tópico (ex: a especificação de CI/CD mencionar os gates de testes automatizados), **É PROIBIDO duplicar o texto**. Em vez disso, insira um link Markdown direto para a nota atômica especializada:
   ```markdown
-  <!-- ✅ CORRETO: Link para a nota atômica especializada -->
+  <!-- CORRETO: Link para a nota atômica especializada -->
   Para a especificação detalhada dos testes nativos do Terraform, consulte [terraform-testing-spec](../testing/terraform-testing-spec.md).
 
-  <!-- ❌ ERRADO: Redigitar as regras e códigos de teste do Terraform dentro do arquivo de CI/CD -->
+  <!-- ERRADO: Redigitar as regras e códigos de teste do Terraform dentro do arquivo de CI/CD -->
   ```
 
 ### 2.3 Map of Content (MOC / Arquivos `index.md`)

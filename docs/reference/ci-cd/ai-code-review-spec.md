@@ -81,7 +81,7 @@ flowchart TD
     J --> K
 
     K --> L{"Houve desvios nas alterações novas ou anteriores?"}
-    L -- Não --> M["Emite aprovação: ✅ Code Review Aprovado"]
+    L -- Não --> M["Emite aprovação: Code Review Aprovado"]
     L -- Sim --> N["Emite sugestões inline (```suggestion) e Tabela Síntese no rodapé"]
 ````
 

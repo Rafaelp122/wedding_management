@@ -41,10 +41,10 @@ Usar **chave híbrida**:
 
 | Aspecto               | BigInt (interno) + UUID (público) | UUID apenas         | Integer apenas      |
 | --------------------- | --------------------------------- | ------------------- | ------------------- |
-| **Performance JOINs** | ✅ 3x mais rápido                 | ❌ Lento (36 bytes) | ✅ Rápido (8 bytes) |
-| **Segurança**         | ✅ UUID não sequencial            | ✅ Não sequencial   | ❌ Sequencial       |
-| **Índices**           | ✅ 8 bytes                        | ❌ 36 bytes         | ✅ 4-8 bytes        |
-| **Compatibilidade**   | ✅ Django padrão                  | ⚠️ Requer ajustes   | ✅ Django padrão    |
+| **Performance JOINs** | :material-check-circle: 3x mais rápido                 | :material-close-circle: Lento (36 bytes) | :material-check-circle: Rápido (8 bytes) |
+| **Segurança**         | :material-check-circle: UUID não sequencial            | :material-check-circle: Não sequencial   | :material-close-circle: Sequencial       |
+| **Índices**           | :material-check-circle: 8 bytes                        | :material-close-circle: 36 bytes         | :material-check-circle: 4-8 bytes        |
+| **Compatibilidade**   | :material-check-circle: Django padrão                  | :material-alert: Requer ajustes   | :material-check-circle: Django padrão    |
 
 ---
 
@@ -241,17 +241,17 @@ router.register(r'contracts', ContractViewSet)
 
 ## Trade-offs Aceitos
 
-**❌ Complexidade:**
+**:material-close-circle: Complexidade:**
 
 - Dois campos de identificação (id + uuid)
 - Devs precisam saber quando usar cada um
 
-**❌ Espaço em disco:**
+**:material-close-circle: Espaço em disco:**
 
 - UUID adiciona 36 bytes por registro
 - Índice UUID adiciona overhead
 
-**❌ Migração:**
+**:material-close-circle: Migração:**
 
 - Projetos existentes precisam adicionar coluna `uuid`
 - Requer data migration
@@ -260,20 +260,20 @@ router.register(r'contracts', ContractViewSet)
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 - **Performance:** JOINs 3x mais rápidos (BigInt)
 - **Segurança:** URLs não revelam quantidade de registros
 - **IDOR Protection:** UUID não sequencial previne iteração
 - **Compatibilidade:** Django padrão (BigInt é nativo)
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 - **Complexidade:** Dois campos de identificação
 - **Espaço:** +36 bytes por registro (UUID)
 - **Índices:** Índice UUID adicional (overhead)
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 - Alternativa (UUID apenas) é mais simples, mas 3x mais lenta
 

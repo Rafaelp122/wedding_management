@@ -63,7 +63,7 @@ Crie o arquivo Markdown contendo obrigatoriamente o cabeçalho de navegação:
 ### Regra Importante de Cross-Linking:
 Se o texto precisar mencionar outro conceito (ex: como o CI valida a doc), **NÃO** redigite a explicação. Insira apenas um link para a nota existente:
 ```markdown
-<!-- ✅ CORRETO: Link direto para a nota responsável -->
+<!-- CORRETO: Link direto para a nota responsável -->
 A validação de links da documentação é explicada em [documentation-standards](../../reference/architecture-standards/documentation-standards.md).
 ```
 

@@ -81,12 +81,12 @@ for user in active_users:
 Ao criar uma notificação, passe os enums e parâmetros corretos para garantir a melhor experiência no frontend:
 
 ### `NotificationType`
-- `OVERDUE_INSTALLMENT`: Parcela vencida (Ícone: ⚠️ Alerta).
-- `UPCOMING_INSTALLMENT`: Parcela a vencer (Ícone: ⏰ Relógio).
-- `EXPIRING_CONTRACT`: Contrato prestes a vencer (Ícone: 📄 Documento).
-- `TASK_DEADLINE`: Prazo de tarefa (Ícone: ⏰ Relógio).
-- `CHECKLIST_ITEM_OVERDUE`: Item de checklist vencido (Ícone: ⚠️ Alerta).
-- `GENERAL`: Alerta geral (Ícone: 🔔 Sino).
+- `OVERDUE_INSTALLMENT`: Parcela vencida (Ícone: :material-alert: Alerta).
+- `UPCOMING_INSTALLMENT`: Parcela a vencer (Ícone: :material-clock-outline: Relógio).
+- `EXPIRING_CONTRACT`: Contrato prestes a vencer (Ícone: :material-file-document-outline: Documento).
+- `TASK_DEADLINE`: Prazo de tarefa (Ícone: :material-clock-outline: Relógio).
+- `CHECKLIST_ITEM_OVERDUE`: Item de checklist vencido (Ícone: :material-alert: Alerta).
+- `GENERAL`: Alerta geral (Ícone: :material-bell-outline: Sino).
 
 ### `NotificationTargetType`
 - `installment`, `expense`, `task`, `contract`, `wedding`, `general`.

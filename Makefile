@@ -278,6 +278,7 @@ docs-gh-deploy:
 
 check-docs:
 	@python3 scripts/validate_docs_links.py
+	@python3 scripts/validate_docs_snippets.py
 	@npx -y @google/design.md lint DESIGN.md
 	@$(MAKE) docs-build
 

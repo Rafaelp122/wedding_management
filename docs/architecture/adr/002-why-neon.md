@@ -43,7 +43,7 @@ Escolhemos **Neon PostgreSQL** como banco de dados gerenciado.
 | ------------- | ------------ | --------- | --------- | -------- |
 | **Storage**   | **3GB**      | 1GB       | 500MB     | 20GB     |
 | **Compute**   | 191h/mês     | Sempre-on | Ilimitado | 750h/mês |
-| **Branching** | ✅ Ilimitado | ❌ Não    | ❌ Não    | ❌ Não   |
+| **Branching** | :material-check-circle: Ilimitado | :material-close-circle: Não    | :material-close-circle: Não    | :material-close-circle: Não   |
 | **Backups**   | 7 dias       | 7 dias    | Ilimitado | Manual   |
 
 **2. Serverless Verdadeiro:**
@@ -67,9 +67,9 @@ neon branches merge dev --to main
 
 **Casos de uso:**
 
-- ✅ Testar migrations complexas sem risco
-- ✅ Staging com dados reais (branch de prod)
-- ✅ Desenvolvimento local sem contaminar prod
+- :material-check-circle: Testar migrations complexas sem risco
+- :material-check-circle: Staging com dados reais (branch de prod)
+- :material-check-circle: Desenvolvimento local sem contaminar prod
 
 **4. Performance:**
 
@@ -111,7 +111,7 @@ DATABASES = {
 | **Storage**       | 3GB (3x maior)     | 1GB                  |
 | **Compute**       | 191h/mês (hiberna) | Sempre-on (500h/mês) |
 | **Cold start**    | 1-2s               | 0s (sempre ativo)    |
-| **Branching**     | ✅ Nativo          | ❌ Não               |
+| **Branching**     | :material-check-circle: Nativo          | :material-close-circle: Não               |
 | **Custo escala**  | USD 15/mês (prod)  | USD 5/mês            |
 | **Portabilidade** | PostgreSQL puro    | PostgreSQL puro      |
 
@@ -133,8 +133,8 @@ DATABASES = {
 | ---------------- | ------------- | -------------------- |
 | **Storage**      | 3GB           | 20GB                 |
 | **Compute**      | 191h/mês      | 750h/mês (12 meses)  |
-| **Hibernação**   | ✅ Automática | ❌ Manual            |
-| **Branching**    | ✅ Nativo     | ❌ Não               |
+| **Hibernação**   | :material-check-circle: Automática | :material-close-circle: Manual            |
+| **Branching**    | :material-check-circle: Nativo     | :material-close-circle: Não               |
 | **Setup**        | 5 minutos     | 30 minutos (VPC, SG) |
 | **Custo escala** | USD 15/mês    | USD 50-100/mês       |
 
@@ -149,20 +149,20 @@ DATABASES = {
 
 ### Trade-offs Aceitos
 
-**❌ Cold Start (1-2s):**
+**:material-close-circle: Cold Start (1-2s):**
 
 - **Impacto:** Primeira query após inatividade é lenta
 - **Mitigação:**
   - Keep-alive ping (opcional, USD 1/mês)
   - Aceitável para MVP (não é sistema crítico)
 
-**❌ Storage Limitado (3GB):**
+**:material-close-circle: Storage Limitado (3GB):**
 
 - **Estimativa MVP:** ~500MB (10% do limite)
 - **Projeção 500 usuários:** ~2GB (60% do limite)
 - **Mitigação:** Monitorar uso, upgrade para Pro (USD 15/mês)
 
-**❌ Compute Limitado (191h):**
+**:material-close-circle: Compute Limitado (191h):**
 
 - **Cálculo:** 191h ÷ 30 dias = ~6.3h/dia ativo
 - **Estimativa MVP:** ~50h/mês (26% do limite)
@@ -219,7 +219,7 @@ neon branches merge dev --to main
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 1. **Free tier generoso:** 3GB storage (3x Railway)
 2. **Branching nativo:** Testa migrations sem risco
@@ -228,14 +228,14 @@ neon branches merge dev --to main
 5. **Portabilidade:** PostgreSQL puro (sem vendor lock-in)
 6. **Setup simples:** 5 minutos vs 30 minutos (RDS)
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 1. **Cold start:** 1-2s após hibernação
 2. **Storage limitado:** 3GB (suficiente para MVP, mas requer monitoramento)
 3. **Compute limitado:** 191h/mês (hibernação mitiga)
 4. **Startup relativamente nova:** Menos maduro que RDS/Railway
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 1. Requer monitoramento de usage (storage, compute)
 2. Free tier permanente (sem prazo de 12 meses como RDS)

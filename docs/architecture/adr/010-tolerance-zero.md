@@ -21,7 +21,7 @@ installment_3 = total / 3  # 333.33333...
 sum_installments = installment_1 + installment_2 + installment_3
 # 999.99999... (faltam R$0.00001 centavos!)
 
-sum_installments == total  # False ❌
+sum_installments == total  # False :material-close-circle:
 ```
 
 **Requisitos:**
@@ -54,10 +54,10 @@ Usar **`Decimal` com tolerância zero**:
 
 | Aspecto          | Decimal (tolerância zero) | Float (tolerância 0.01) | Decimal (tolerância 0.01) |
 | ---------------- | ------------------------- | ----------------------- | ------------------------- |
-| **Precisão**     | ✅ Exata                  | ❌ Aproximada           | ⚠️ Quase exata            |
-| **Auditoria**    | ✅ Sem discrepâncias      | ❌ Aceita erros         | ⚠️ Aceita erros pequenos  |
-| **Complexidade** | ⚠️ Ajuste última parcela  | ✅ Simples              | ✅ Simples                |
-| **Conformidade** | ✅ Bancário/Legal         | ❌ Não conforme         | ⚠️ Pode não ser conforme  |
+| **Precisão**     | :material-check-circle: Exata                  | :material-close-circle: Aproximada           | :material-alert: Quase exata            |
+| **Auditoria**    | :material-check-circle: Sem discrepâncias      | :material-close-circle: Aceita erros         | :material-alert: Aceita erros pequenos  |
+| **Complexidade** | :material-alert: Ajuste última parcela  | :material-check-circle: Simples              | :material-check-circle: Simples                |
+| **Conformidade** | :material-check-circle: Bancário/Legal         | :material-close-circle: Não conforme         | :material-alert: Pode não ser conforme  |
 
 ---
 
@@ -76,7 +76,7 @@ installments = [
 ]
 
 sum(installments) == contract_value
-# False ❌ (999.9999999999998 != 1000.00)
+# False :material-close-circle: (999.9999999999998 != 1000.00)
 
 # Diferença:
 abs(sum(installments) - contract_value)
@@ -130,7 +130,7 @@ print(installments)
 #                                       ↑ Ajuste de R$0.01
 
 sum(installments) == total
-# True ✅ (1000.00 == 1000.00)
+# True :material-check-circle: (1000.00 == 1000.00)
 ```
 
 ---
@@ -305,7 +305,7 @@ for installment in installments:
 
 # Validação:
 sum([i.value for i in installments]) == contract.total_value
-# True ✅ (1000.00 == 1000.00)
+# True :material-check-circle: (1000.00 == 1000.00)
 ```
 
 ---
@@ -328,7 +328,7 @@ def test_distribute_installments_3_parcelas():
         Decimal('333.34')  # Ajuste
     ]
 
-    assert sum(values) == total  # Tolerância zero ✅
+    assert sum(values) == total  # Tolerância zero :material-check-circle:
 
 def test_distribute_installments_7_parcelas():
     """Testa distribuição em 7 parcelas."""
@@ -345,7 +345,7 @@ def test_distribute_installments_7_parcelas():
         Decimal('142.90')  # Ajuste de R$0.05
     ]
 
-    assert sum(values) == total  # Tolerância zero ✅
+    assert sum(values) == total  # Tolerância zero :material-check-circle:
 
 def test_distribute_installments_100_parcelas():
     """Testa distribuição em 100 parcelas."""
@@ -356,7 +356,7 @@ def test_distribute_installments_100_parcelas():
     assert values[0] == Decimal('99.99')
     assert values[-1] == Decimal('100.00')  # Ajuste de R$0.01
 
-    assert sum(values) == total  # Tolerância zero ✅
+    assert sum(values) == total  # Tolerância zero :material-check-circle:
 
 def test_tolerance_zero_validation():
     """Testa validação de tolerância zero."""
@@ -394,16 +394,16 @@ def test_tolerance_zero_validation():
 
 ## Trade-offs Aceitos
 
-**❌ Complexidade:**
+**:material-close-circle: Complexidade:**
 
 - Lógica de ajuste na última parcela
 - Precisa validar tolerância zero em múltiplas camadas
 
-**❌ Performance:**
+**:material-close-circle: Performance:**
 
 - Query `SUM(value)` para validar tolerância
 
-**❌ UX:**
+**:material-close-circle: UX:**
 
 - Última parcela pode ter valor diferente (confuso para user)
 
@@ -411,20 +411,20 @@ def test_tolerance_zero_validation():
 
 ## Consequências
 
-### Positivas ✅
+### Positivas :material-check-circle:
 
 - **Precisão:** Zero erros de arredondamento
 - **Auditoria:** Soma sempre bate (fácil reconciliar)
 - **Conformidade:** Padrão bancário/legal
 - **Confiança:** User sabe que cálculos estão corretos
 
-### Negativas ❌
+### Negativas :material-close-circle:
 
 - **Complexidade:** Lógica de ajuste
 - **Performance:** Query SUM para validar
 - **UX:** Última parcela com valor diferente
 
-### Neutras ⚠️
+### Neutras :material-alert:
 
 - Alternativa (tolerância 0.01) é mais simples, mas viola precisão
 

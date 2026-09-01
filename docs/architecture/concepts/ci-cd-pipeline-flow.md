@@ -1,75 +1,108 @@
-# Arquitetura e Fluxo da Pipeline GitOps (CI/CD)
+---
+title: "Arquitetura e Fluxo da Pipeline GitOps (CI/CD & IaC)"
+domain: architecture
+type: concept
+source_code:
+  - Makefile
+  - .github/workflows/ci-pr-validation.yml
+  - .github/workflows/cd-deploy.yml
+  - terraform/shared/main.tf
+  - terraform/staging/main.tf
+  - terraform/production/main.tf
+tests:
+  - backend/apps/core/tests/
+  - terraform/
+---
 
-> **Versão:** 4.0 | **Última atualização:** 9 de agosto de 2026
-> **Relacionados:** [ADR-025](../adr/025-terraform-iac-architecture.md) | [ADR-026](../adr/026-gitops-branching-and-deployment-strategy.md) | [ADR-027](../adr/027-terraform-state-topology.md) | [ci-cd-index](../../reference/ci-cd/index.md) | [testing-index](../../reference/testing/index.md)
+# Arquitetura e Fluxo da Pipeline GitOps (CI/CD & IaC)
+
+> **Categoria:** Conceito Arquitetural
+> **Relacionados:** [ADR-025: Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md) · [ADR-026: Estratégia de Branches e Deploy](../adr/026-gitops-branching-and-deployment-strategy.md) · [ADR-027: Topologia de States do Terraform](../adr/027-terraform-state-topology.md) · [Índice de CI/CD](../../reference/ci-cd/index.md) · [Índice de Testes](../../reference/testing/index.md)
 
 ---
 
-## 1. Visão Geral
+## 1. Visão Geral e Princípios GitOps
 
-O **Wedding Management System** adota uma arquitetura modular de **GitOps e CI/CD** para garantir que todas as alterações de código, infraestrutura e banco de dados passem por validações automatizadas antes de atingir os ambientes de Staging ou Produção.
+O **Wedding Management System** implementa uma arquitetura automatizada de **GitOps e CI/CD** onde o repositório Git é a única fonte da verdade (*Single Source of Truth*) para código-fonte, infraestrutura em nuvem e banco de dados.
 
-A pipeline separa claramente quatro responsabilidades:
-1. **CI (Validação)**: Executada em PRs sem publicar artefatos ou acessar credenciais da nuvem.
-2. **CD (Entrega da Aplicação)**: Publica imagens e atualiza o Cloud Run/Vercel somente após merges em `develop` ou `main`.
-3. **Terraform (Infraestrutura IaC)**: Gerencia 3 roots independentes (`shared`, `staging`, `production`) com travas de segurança.
-4. **Revisão por IA**: Analisa o SHA de cada commit nos PRs em busca de violações arquiteturais.
+### Quatro Pilares de Separação de Responsabilidade:
+1. **CI (Validação Estrita em PRs):** Executada de forma hermética e isolada, sem credenciais de nuvem com privilégios de escrita nem acesso aos backends remotos de produção.
+2. **CD (Entrega Contínua da Aplicação):** Publica imagens de container no Google Artifact Registry, roda migrações de banco no Neon DB e atualiza Cloud Run e Vercel apenas após merge nas branches protegidas (`develop` e `main`).
+3. **IaC (Infraestrutura Declarativa com Terraform):** Gerencia 3 roots totalmente isolados (`shared`, `staging`, `production`), com arquivos de estado (*statefiles*) separados em buckets GCS dedicados para blindar o raio de impacto (*blast radius*).
+4. **Paridade Local/Remota:** O comando local `make check-ci` executa exatamente os mesmos linters, checagens estáticas e testes que rodam no GitHub Actions.
+
+---
+
+## 2. Diagrama Fullstack do Fluxo GitOps & Deploy
 
 ```mermaid
 flowchart TD
-    PR[PR para develop ou main] --> CI[CI: Ruff, mypy, Pytest, Vitest, Smoke]
-    CI --> E2E[E2E: Playwright]
-    PR --> TFV[Terraform: fmt, validate & tftest]
-    PR --> AI[Revisão por IA]
+    subgraph DEV_FLOW["1. Desenvolvimento & PR"]
+        DEV_LOCAL["Desenvolvedor (make check-ci)"] -->|Git Push| PR["Pull Request (develop / main)"]
+        PR --> CI_GATE["GitHub Actions: ci-pr-validation.yml"]
+        CI_GATE --> LINT["Lint & Mypy (Ruff/Types)"]
+        CI_GATE --> TESTS["Testes (Pytest + Vitest)"]
+        CI_GATE --> DOCS["Docs Check (make check-docs)"]
+        CI_GATE --> TF_CHECK["Terraform (fmt, validate, tftest)"]
+    end
 
-    DEV[Push em develop] --> CI
-    MAIN[Push em main] --> CI
-    E2E -->|Push aprovado| CD[CD: Docker Push, Migrations & Cloud Run/Vercel]
+    subgraph STAGING_DEPLOY["2. Homologação (Branch develop)"]
+        MERGE_DEV["Merge em develop"] --> CD_STG["cd-deploy.yml (Staging)"]
+        CD_STG --> DOCKER_STG["Build & Push Docker (Artifact Registry)"]
+        DOCKER_STG --> MIGRATE_STG["Aplica Migrations (Neon DB Staging)"]
+        MIGRATE_STG --> CLOUD_RUN_STG["Deploy Cloud Run Staging"]
+        CLOUD_RUN_STG --> VERCEL_PREVIEW["Deploy Frontend Preview (Vercel)"]
+        MERGE_DEV --> TF_PLAN_STG["Terraform Plan (shared + staging)"]
+    end
 
-    DEV --> TFS[Plan: shared + staging]
-    MAIN --> TFP[Plan: shared + production]
-    TFP -->|opt-in true| APPLY[Apply: shared + production]
+    subgraph PROD_DEPLOY["3. Produção (Branch main)"]
+        MERGE_MAIN["Merge em main"] --> CD_PROD["cd-deploy.yml (Production)"]
+        CD_PROD --> DOCKER_PROD["Build & Push Docker (Artifact Registry)"]
+        DOCKER_PROD --> MIGRATE_PROD["Aplica Migrations (Neon DB Prod)"]
+        MIGRATE_PROD --> CLOUD_RUN_PROD["Deploy Cloud Run Production"]
+        CLOUD_RUN_PROD --> VERCEL_PROD["Deploy Frontend Production (Vercel)"]
+        MERGE_MAIN --> TF_PLAN_PROD["Terraform Plan (shared + production)"]
+        TF_PLAN_PROD -->|Aprovação Explícita (opt-in)| TF_APPLY_PROD["Terraform Apply"]
+    end
+
+    CI_GATE -->|Todos os Gates Aprovados| MERGE_DEV
+    CI_GATE -->|Todos os Gates Aprovados| MERGE_MAIN
 ```
 
 ---
 
-## 2. Estratégia de Branches e Ambientes
+## 3. Topologia de States do Terraform (ADR-027)
 
-- **Pull Requests (Validação Isola)**: Executam apenas gates de leitura sem acesso ao backend remoto do Terraform ou credenciais da nuvem.
-- **Branch `develop` (Staging/Preview)**: Representa o ambiente de homologação. Dispara o CD de staging no Cloud Run e Vercel e gera os planos do Terraform.
-- **Branch `main` (Produção)**: Representa o ambiente produtivo. Dispara o CD de produção e gera planos do Terraform (com opt-in para apply).
+Para mitigar qualquer risco de alterações acidentais afetarem recursos produtivos, o repositório divide a infraestrutura em **3 roots independentes**:
 
----
+```text
+terraform/
+├── shared/       # Artefatos globais (GCP Artifact Registry, DNS, IAM base)
+├── staging/      # Ambiente de homologação (Cloud Run Staging, Cloud Scheduler Staging)
+└── production/   # Ambiente produtivo (Cloud Run Prod, Cloud Scheduler Prod)
+```
 
-## 3. Matriz de Specifications Técnicas de Workflows
-
-As especificações detalhadas de cada workflow reutilizável do GitHub Actions sob `.github/workflows/` estão modularizadas nas seguintes notas de referência:
-
-| Workflow | Especificação Técnica | Foco |
-|:---|:---|:---|
-| `ci-pr-validation.yml` | **[ci-pr-validation-spec](../../reference/ci-cd/ci-pr-validation-spec.md)** | Linting, checagem de tipos, Pytest, Vitest, migrations check e smoke test. |
-| `cd-deploy.yml` | **[cd-deploy-spec](../../reference/ci-cd/cd-deploy-spec.md)** | Build & Push no Artifact Registry, Migrations no Neon DB, Cloud Run e Vercel. |
-| `terraform-ci.yml` & `staging-pipeline.yml` | **[terraform-pipelines-spec](../../reference/ci-cd/terraform-pipelines-spec.md)** | Validação dos 3 roots, planejamento de state e opt-in de apply em produção. |
-| `ai-code-review.yml` | **[ai-code-review-spec](../../reference/ci-cd/ai-code-review-spec.md)** | Auditoria automatizada de código por SHA e suporte via `@opencode`. |
-| `e2e-tests.yml` | **[e2e-testing-spec](../../reference/testing/e2e-testing-spec.md)** | Execução distribuída em shards do Playwright. |
-| MOC Completo | **[ci-cd/index.md](../../reference/ci-cd/index.md)** | Índice técnico de todos os workflows do repositório. |
+- Cada root possui seu próprio bucket GCS de state (`backend "gcs"`).
+- O root `staging` nunca referencia nem pode sobrescrever recursos do root `production`.
 
 ---
 
-## 4. Gates de Qualidade
+## 4. Gates de Qualidade no `Makefile`
 
-| Gate | Critério | Especificação Técnica |
-|:---|:---|:---|
-| Documentação | `make check-docs` sem links quebrados | [documentation-standards](../../reference/architecture-standards/documentation-standards.md) |
-| Terraform | `fmt`, `validate` nos três roots e `terraform test` nativo | [terraform-testing-spec](../../reference/testing/terraform-testing-spec.md) |
-| Backend | Ruff, mypy, checks Django, migrations e Pytest com cobertura | [backend-testing-spec](../../reference/testing/backend-testing-spec.md) |
-| Frontend | Lint, type-check, Vitest, MSW e build | [frontend-testing-spec](../../reference/testing/frontend-testing-spec.md) |
-| E2E | Duas shards Playwright Chromium | [e2e-testing-spec](../../reference/testing/e2e-testing-spec.md) |
+O `Makefile` centraliza todos os comandos de validação local para evitar discrepâncias entre o ambiente de desenvolvimento e o CI:
+
+```makefile
+--8<-- "Makefile:280:288"
+```
 
 ---
 
-## 5. ADRs Relacionados
+## 5. Matriz Técnica de Workflows do GitHub Actions
 
-- [ADR-025: Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md)
-- [ADR-026: Branches e Staging](../adr/026-gitops-branching-and-deployment-strategy.md)
-- [ADR-027: Topologia de States Terraform](../adr/027-terraform-state-topology.md)
+| Workflow | Foco Principal | Gatilho | Especificação Técnica |
+| :--- | :--- | :--- | :--- |
+| **`ci-pr-validation.yml`** | Lint, tipos, Pytest, Vitest, Docs, Terraform | Pull Requests para `develop` / `main` | [ci-pr-validation-spec](../../reference/ci-cd/ci-pr-validation-spec.md) |
+| **`cd-deploy.yml`** | Docker Build, Neon Migrations, Cloud Run, Vercel | Pushes / Merges em `develop` e `main` | [cd-deploy-spec](../../reference/ci-cd/cd-deploy-spec.md) |
+| **`terraform-ci.yml`** | Validação sintática e `terraform test` | Alterações em `terraform/**` | [terraform-pipelines-spec](../../reference/ci-cd/terraform-pipelines-spec.md) |
+| **`e2e-tests.yml`** | Testes ponta-a-ponta distribuídos em shards | Pushes em branches principais | [e2e-testing-spec](../../reference/testing/e2e-testing-spec.md) |
+| **`ai-code-review.yml`** | Auditoria automática de conformidade arquitetural | Pull Requests | [ai-code-review-spec](../../reference/ci-cd/ai-code-review-spec.md) |
