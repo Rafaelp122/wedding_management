@@ -14,7 +14,7 @@ Read `AGENTS.md` for architecture (feature-based, API rules, forms, icons).
 
 ## Stack
 - React 19, TypeScript, Vite 7, Tailwind CSS 4, shadcn/ui
-- Node 22.18.0, npm
+- Node 22.18.0, pnpm
 
 ## Workflow
 - After API changes: run `just orval` to regenerate hooks

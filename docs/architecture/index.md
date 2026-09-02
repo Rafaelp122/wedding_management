@@ -1,7 +1,7 @@
 # Arquitetura & System Design da Plataforma
 
 > **Categoria:** Arquitetura (System Design & Decision Records)
-> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [Índice de ADRs (001–028)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
+> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [Índice de ADRs (001–029)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
 
 <p class="mdx-hero__subtitle" style="font-size: 1.15rem; font-weight: 500; color: var(--md-default-fg-color--light); margin-top: -0.5rem; margin-bottom: 1.5rem;">
 Hub executivo de engenharia, topologia de microsserviços e padrões de projeto do Wedding Management System.
@@ -19,7 +19,7 @@ Hub executivo de engenharia, topologia de microsserviços e padrões de projeto 
 [:material-sitemap: System Design Unificado](#system-design-unificado){ .md-button .md-button--primary }
 [:material-shield-star: Pilares de Engenharia](#pilares-de-engenharia-padroes-arquiteturais){ .md-button }
 [:material-view-grid: Bounded Contexts (10 Domínios)](#bounded-contexts-10-dominios-da-plataforma){ .md-button }
-[:material-file-document-multiple: Catálogo de ADRs](#catalogo-de-decisoes-arquiteturais-adrs-001028){ .md-button }
+[:material-file-document-multiple: Catálogo de ADRs](#catalogo-de-decisoes-arquiteturais-adrs-001029){ .md-button }
 [:material-palette: Design System](#design-system-ergonomia-visual){ .md-button }
 
 ---
@@ -221,8 +221,8 @@ Para uma navegação aprofundada em cada bounded context, consulte o [MOC Geral 
 
 ---
 
-<a id="catalogo-de-decisoes-arquiteturais-adrs-001028"></a>
-## Catálogo de Decisões Arquiteturais (ADRs 001–028)
+<a id="catalogo-de-decisoes-arquiteturais-adrs-001029"></a>
+## Catálogo de Decisões Arquiteturais (ADRs 001–029)
 
 Todas as decisões arquiteturais fundamentais, alternativas descartadas e trade-offs técnicos são registrados formalmente em **Architecture Decision Records (ADRs)** com numeração sequencial imutável.
 
@@ -269,6 +269,7 @@ Todas as decisões arquiteturais fundamentais, alternativas descartadas e trade-
     | **[ADR-021](adr/021-padrao-comentarios-docstrings.md)** | **Padrão de Comentários & Docstrings** | Docstrings em formato Google Style escritas em PT-BR para documentar regras de negócio no código-fonte. | `Aceita` |
     | **[ADR-024](adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)** | **Smart vs Dumb Components** | Desacoplamento arquitetural entre componentes lógicos/orquestradores e componentes puramente visuais. | `Aceita` |
     | **[ADR-028](adr/028-diataxis-atomic-notes.md)** | **Framework Diátaxis & Notas Atômicas** | Estruturação de toda a documentação técnica sob os 4 quadrantes Diátaxis com anotações atômicas e SSOT. | `Aceita` |
+    | **[ADR-029](adr/029-modern-task-runner-just.md)** | **Modern Task Runner (Just & PoeThePoet)** | Orquestrador multiplataforma rápido, desacoplado e com suporte a dual-track nativo. | `Aceita` |
 
 ---
 

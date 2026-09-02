@@ -40,7 +40,7 @@ Construída sob a metodologia **Diátaxis** e o modelo de **Notas Atômicas (Zet
 | :--- | :--- | :--- |
 | **1. Início** | [`/`](https://rafaelp122.github.io/wedding_management/) | Visão executiva, pilares de engenharia, quickstart e diagrama fullstack. |
 | **2. Funcionalidades** | [`/features/`](https://rafaelp122.github.io/wedding_management/features/) | Showcase de produto: Módulo Financeiro, Gestão de Contratos e Agenda com templates. |
-| **3. Arquitetura** | [`/architecture/`](https://rafaelp122.github.io/wedding_management/architecture/) | System Design fullstack, os 10 Bounded Contexts (ERDs), Regras de Negócio e Catálogo de ADRs (001–028). |
+| **3. Arquitetura** | [`/architecture/`](https://rafaelp122.github.io/wedding_management/architecture/) | System Design fullstack, os 10 Bounded Contexts (ERDs), Regras de Negócio e Catálogo de ADRs (001–029). |
 | **4. Guias & Onboarding** | [`/guides/`](https://rafaelp122.github.io/wedding_management/guides/) | Trilhas passo a passo para novos engenheiros, receitas de backend/frontend e playbooks de troubleshooting. |
 | **5. Referência Técnica** | [`/reference/`](https://rafaelp122.github.io/wedding_management/reference/) | Contratos OpenAPI 3.1, Modelos Core (`BaseModel`/`TenantModel`), Módulos Terraform, Suíte de Testes e Guard-Rails. |
 
