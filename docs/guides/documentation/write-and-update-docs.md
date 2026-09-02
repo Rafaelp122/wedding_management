@@ -87,8 +87,8 @@ Antes de abrir o Pull Request ou realizar o commit, execute a validação de doc
 just check-docs
 
 # Ou Trilha Nativa Direta:
-uv run python scripts/validate_docs_links.py && \
-uv run python scripts/validate_docs_snippets.py && \
+uv run --project backend python scripts/validate_docs_links.py && \
+uv run --project backend python scripts/validate_docs_snippets.py && \
 npx -y @google/design.md lint DESIGN.md && \
 uv run --project backend --group docs mkdocs build --strict
 ```

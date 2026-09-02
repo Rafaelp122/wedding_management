@@ -124,6 +124,7 @@ gha-creds-*.json
 .vercel
 coverage.json
 *.tsbuildinfo
+backend/openapi.json
 
 # ==============================================================================
 # TERRAFORM / IAC

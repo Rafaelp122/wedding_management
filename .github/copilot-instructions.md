@@ -47,7 +47,7 @@ A complete wedding management system with a modern **React SPA + Django Ninja AP
 - **Generate API**: `just sync-api` ou `cd frontend && pnpm run generate:api`.
 - **Test**: `just test` (backend), `just frontend-test` ou `cd frontend && pnpm test` (frontend).
 - **Lint & Format**: `just lint` / `just format` (backend), `cd frontend && pnpm run lint` (frontend).
-- **Docs Check**: `just check-docs` ou `uv run python scripts/validate_docs_links.py`.
+- **Docs Check**: `just check-docs` ou `uv run --project backend python scripts/validate_docs_links.py`.
 - **CI Suite**: `just check-ci`.
 
 ## 📁 Key Paths

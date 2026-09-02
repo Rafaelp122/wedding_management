@@ -25,7 +25,7 @@
 - **Frontend**: FORBIDDEN `vi.mock("@/api/generated/...")` or per-file data hook mocks. Centralize all mocks in `test-setup.ts` via `registerMockHook`. Import testing utilities from `@/test-utils`.
 
 ### Documentation & Comments
-- **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `just check-docs` (or `uv run python scripts/validate_docs_links.py`).
+- **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `just check-docs` (or `uv run --project backend python scripts/validate_docs_links.py`).
 - **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
 - **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments or documentation.
 
