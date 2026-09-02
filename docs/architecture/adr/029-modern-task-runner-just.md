@@ -88,7 +88,7 @@ flowchart TD
 | **Lint & Formatação** | `just format` | `docker compose exec backend uv run poe format` |
 | **Frontend Dev** | `just frontend-dev` | `cd frontend && pnpm run dev` |
 | **Landing Page Dev** | `just landing-dev` | `cd landing && pnpm run dev` |
-| **Sync API & Orval** | `just sync-api` | `docker compose exec backend uv run poe openapi && cd frontend && pnpm run generate:api` |
+| **Sync API & Orval** | `just sync-api` | `docker compose exec backend uv run poe openapi && mv backend/openapi.json openapi.json && cd frontend && pnpm run generate:api` |
 | **Testes Frontend** | `just frontend-test` | `cd frontend && pnpm test` |
 | **Gate Completo CI** | `just check-ci` | Execução sequencial dos comandos nativos de validação |
 

@@ -18,6 +18,6 @@ Read `AGENTS.md` for architectural rules (Service Layer, Multi-tenancy, Data Int
 - Docker, `uv` package manager
 
 ## Workflow
-- After API changes: run `make sync-api`
-- Before finishing: `make lint`, `make mypy`, `make test`
+- After API changes: run `just sync-api`
+- Before finishing: `just lint`, `just mypy`, `just test`
 - Commits: Conventional Commits (`feat(weddings): add list endpoint`)

@@ -22,7 +22,7 @@ Operational guide and checklist for React 19 + TypeScript + Vite + Tailwind CSS 
 
 ### 2. API Integration (Strict Rule)
 - **FORBIDDEN**: `fetch()` or `axios`. Use ONLY Orval-generated hooks in `@/api/generated/v1/endpoints/`.
-- Regenerate hooks after backend changes using `make orval`. See [generate-orval-client.md](../../../docs/guides/frontend/generate-orval-client.md).
+- Regenerate hooks after backend changes using `just orval`. See [generate-orval-client.md](../../../docs/guides/frontend/generate-orval-client.md).
 
 ### 3. Forms & Validation
 - Always use `react-hook-form` with `zod` schema validation via `@hookform/resolvers/zod`.

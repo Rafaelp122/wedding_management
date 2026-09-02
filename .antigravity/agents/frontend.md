@@ -17,6 +17,6 @@ Read `AGENTS.md` for architecture (feature-based, API rules, forms, icons).
 - Node 22.18.0, npm
 
 ## Workflow
-- After API changes: run `make orval` to regenerate hooks
-- Tests: `docker compose exec frontend npm test`
-- Before finishing: `make check-frontend`
+- After API changes: run `just orval` to regenerate hooks
+- Tests: `just frontend-test` (or `cd frontend && pnpm test`)
+- Before finishing: `just check-frontend`
