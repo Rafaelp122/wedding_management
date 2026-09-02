@@ -85,7 +85,7 @@ jobs:
             - Se identificar ausência de documentação para uma nova regra ou funcionalidade, sugira a criação da nota atômica correspondente seguindo o padrão do projeto.
 
             ### O QUE IGNORAR & REGRAS DE EXECUÇÃO:
-            - **FAÇA APENAS ANÁLISE ESTÁTICA DO DIFF.** Não execute comandos de shell, scripts ou ferramentas (ex: `make check-docs`, `pytest`, `tsc`), pois o pipeline de CI já roda e valida tudo automaticamente.
+            - **FAÇA APENAS ANÁLISE ESTÁTICA DO DIFF.** Não execute comandos de shell, scripts ou ferramentas (ex: `just check-docs`, `pytest`, `tsc`), pois o pipeline de CI já roda e valida tudo automaticamente.
             - NÃO comente sobre formatação ou estilo de código validados pela CI (ruff, prettier, actionlint).
             - NÃO comente sobre arquivos de trava ou pacotes (`*.lock`).
             - **FLUXO EM RE-REVISÃO (`synchronize` / NOVOS COMMITS):**

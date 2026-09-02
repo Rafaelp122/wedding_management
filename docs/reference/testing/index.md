@@ -50,15 +50,15 @@ flowchart TD
 
 ## 3. Tabela Rápida de Comandos de Execução
 
-| Alvo de Teste | Comando Makefile | Descrição |
-| :--- | :--- | :--- |
-| **Todos os Testes Backend** | `make test` | Executa a suíte Pytest com banco em memória/PostgreSQL. |
-| **Cobertura Backend** | `make test-cov` | Gera relatório de cobertura HTML e terminal. |
-| **Todos os Testes Frontend** | `make frontend-test` | Executa toda a suíte Vitest no frontend. |
-| **Frontend Modificados** | `make frontend-test-changed` | Executa apenas os testes afetados pelo `git diff`. |
-| **Suíte Ponta a Ponta (E2E)** | `make frontend-e2e` | Reseta o banco (`flush`), popula seeds e roda o Playwright. |
-| **Relatório E2E** | `make frontend-e2e-report` | Abre o relatório visual interativo do Playwright. |
-| **Portão Completo Local** | `make check-ci` | Executa testes, linters, tipagem e build em todos os subsistemas. |
+| Alvo de Teste | Atalho Just (`justfile`) | Trilha Nativa Direta | Descrição |
+| :--- | :--- | :--- | :--- |
+| **Todos os Testes Backend** | `just test` | `docker compose exec backend uv run poe test` | Executa a suíte Pytest com banco em memória/PostgreSQL. |
+| **Cobertura Backend** | `just test-cov` | `docker compose exec backend uv run poe test-cov` | Gera relatório de cobertura HTML e terminal. |
+| **Todos os Testes Frontend** | `just frontend-test` | `cd frontend && pnpm test` | Executa toda a suíte Vitest no frontend. |
+| **Frontend Modificados** | `just frontend-test-changed` | `cd frontend && pnpm exec vitest run --changed` | Executa apenas os testes afetados pelo `git diff`. |
+| **Suíte Ponta a Ponta (E2E)** | `just frontend-e2e` | `docker compose exec backend uv run poe seed-db && cd frontend && pnpm exec playwright test` | Reseta o banco (`flush`), popula seeds e roda o Playwright. |
+| **Relatório E2E** | `just frontend-e2e-report` | `cd frontend && pnpm exec playwright show-report` | Abre o relatório visual interativo do Playwright. |
+| **Portão Completo Local** | `just check-ci` | Execução sequencial dos checks locais | Executa testes, linters, tipagem e build em todos os subsistemas. |
 
 ---
 

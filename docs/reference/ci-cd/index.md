@@ -12,7 +12,7 @@ A infraestrutura de integração e entrega contínua (CI/CD) do **Wedding Manage
 ```mermaid
 flowchart TD
     subgraph Local_Dev["1. Portão Local (Dev Machine)"]
-        Dev["Desenvolvedor / Agente"] --> LocalCheck["make check-ci
+        Dev["Desenvolvedor / Agente"] --> LocalCheck["just check-ci
         (lint + mypy + tests + docs)"]
     end
 
@@ -24,7 +24,7 @@ flowchart TD
         (Playwright 2 Shards)"]
         OpenPR --> TerraformCI["terraform-ci.yml
         (fmt + validate + unit test)"]
-        OpenPR --> DocsCI["docs-ci.yml (make check-docs)"]
+        OpenPR --> DocsCI["docs-ci.yml (just check-docs)"]
     end
 
     subgraph CD_Pipeline["3. Deploy Contínuo (Push em main)"]
@@ -38,20 +38,20 @@ flowchart TD
 
 ---
 
-## 2. Portão de Validação Local (`make check-ci`)
+## 2. Portão de Validação Local (`just check-ci`)
 
 Antes de submeter qualquer Pull Request, o desenvolvedor deve rodar o portão local unificado:
 
 ```bash
 # Executa a verificação completa de todos os subsistemas
-make check-ci
+just check-ci
 ```
 
 Este comando orquestra:
-1. `make check-docs`: Validação de links, tags PyMdown e build estrito do MkDocs.
-2. `make check-backend`: Ruff lint/format, Mypy strict, suíte Pytest e guard-rails.
-3. `make check-frontend`: ESLint, TypeScript `tsc`, Vitest e build de produção do Vite.
-4. `make check-landing`: Astro check e build da Landing Page.
+1. `just check-docs`: Validação de links, tags PyMdown e build estrito do MkDocs.
+2. `just check-backend`: Ruff lint/format, Mypy strict, suíte Pytest e guard-rails.
+3. `just check-frontend`: ESLint/Oxlint, TypeScript `tsc`, Vitest e build de produção do Vite.
+4. `just check-landing`: Astro check e build da Landing Page.
 
 ---
 

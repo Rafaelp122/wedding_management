@@ -9,12 +9,13 @@ tools:
   bash: true
 permission:
   bash:
-    "npm*": "allow"
+    "pnpm*": "allow"
     "npx*": "allow"
-    "make orval*": "allow"
-    "make openapi*": "allow"
-    "make check-frontend*": "allow"
-    "make frontend-refresh-deps*": "allow"
+    "just orval*": "allow"
+    "just openapi*": "allow"
+    "just sync-api*": "allow"
+    "just check-frontend*": "allow"
+    "just frontend-test*": "allow"
     "docker compose exec frontend*": "allow"
 ---
 
@@ -28,9 +29,9 @@ Read `AGENTS.md` for architecture (feature-based, API rules, forms, icons).
 
 ## Stack
 - React 19, TypeScript, Vite 7, Tailwind CSS 4, shadcn/ui
-- Node 22.18.0, npm
+- Node 22.18.0, pnpm
 
 ## Workflow
-- After API changes: run `make orval` to regenerate hooks
-- Tests: `docker compose exec frontend npm test`
-- Before finishing: `make check-frontend`
+- After API changes: run `just orval` to regenerate hooks
+- Tests: `just frontend-test` (or `cd frontend && pnpm test`)
+- Before finishing: `just check-frontend`

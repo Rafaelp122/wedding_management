@@ -1,6 +1,6 @@
 ---
 name: wedding-documentation
-description: "Documentation standards and workflow for Wedding Management System — Diátaxis framework, Atomic Notes methodology, Single Source of Truth (SSOT), MOC indexes, cross-linking without duplication, and link checking with make check-docs. Load when creating, editing, or reviewing documentation files under docs/."
+description: "Documentation standards and workflow for Wedding Management System — Diátaxis framework, Atomic Notes methodology, Single Source of Truth (SSOT), MOC indexes, cross-linking without duplication, and link checking with just check-docs. Load when creating, editing, or reviewing documentation files under docs/."
 ---
 
 # Wedding Documentation Playbook
@@ -26,7 +26,7 @@ Operational checklist for authoring, refactoring, and reviewing documentation fi
   ```
 - [ ] **Language & Tone (PT-BR)**: All documentation under `docs/` MUST be written in Brazilian Portuguese (PT-BR) with proper accents, clear technical terminology, and professional tone.
 - [ ] **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot", "Claude") in documentation or code comments.
-- [ ] **Link Verification**: Always run `make check-docs` before committing or submitting Pull Requests to confirm zero broken links.
+- [ ] **Link Verification**: Always run `just check-docs` before committing or submitting Pull Requests to confirm zero broken links.
 - [ ] **Reference Documentation**:
   - Technical Specification & Rules: [Documentation Standards](../../../docs/reference/architecture-standards/documentation-standards.md)
   - Practical How-To Guide: [Write and Update Docs Guide](../../../docs/guides/documentation/write-and-update-docs.md)

@@ -104,15 +104,15 @@ Navegue pelos guias e tutoriais práticos organizados por foco de atuação:
 
 ## Cheatsheet de Comandos Essenciais do Desenvolvedor
 
-| Ação | Comando Makefile | Descrição Operacional |
-| :--- | :--- | :--- |
-| **Setup do Ambiente** | `make setup` | Cria `.env`, sobe containers Docker, aplica migrações e cria o superusuário. |
-| **Subir Aplicações** | `make up` / `make dev` | Sobe o banco e backend Django no Docker com streaming de logs. |
-| **Frontend SPA** | `make frontend-dev` | Inicia o servidor Vite local no host na porta `5173`. |
-| **Landing Page** | `make landing-dev` | Inicia o servidor Astro local no host na porta `4321`. |
-| **Sincronizar API** | `make sync-api` | Exporta `openapi.json` do Django Ninja e regenera hooks Orval e tipos Zod. |
-| **Testes Backend** | `make test` | Executa a suíte Pytest dentro do container backend. |
-| **Testes Frontend** | `make frontend-test` | Executa a suíte Vitest com RTL e mocks MSW no frontend. |
-| **Testes E2E** | `make frontend-e2e` | Reseta o banco de testes com seed e roda a suíte Playwright. |
-| **Gate Local de CI** | `make check-ci` | Executa todos os testes, linters e checagens estritas do repositório. |
-| **Documentação Local**| `make docs-dev` | Inicia o servidor MkDocs com live-reload na porta `8001`. |
+| Ação | Atalho Just (`justfile`) | Trilha Nativa Direta | Descrição Operacional |
+| :--- | :--- | :--- | :--- |
+| **Setup do Ambiente** | `just setup` | `docker compose up -d backend && docker compose exec backend uv run poe migrate` | Cria `.env`, sobe containers Docker, aplica migrações e cria o superusuário. |
+| **Subir Aplicações** | `just up` / `just dev` | `docker compose up -d backend` | Sobe o banco e backend Django no Docker com streaming de logs. |
+| **Frontend SPA** | `just frontend-dev` | `cd frontend && pnpm run dev` | Inicia o servidor Vite local no host na porta `5173`. |
+| **Landing Page** | `just landing-dev` | `cd landing && pnpm run dev` | Inicia o servidor Astro local no host na porta `4321`. |
+| **Sincronizar API** | `just sync-api` | `docker compose exec backend uv run poe openapi && cd frontend && pnpm run generate:api` | Exporta `openapi.json` do Django Ninja e regenera hooks Orval e tipos Zod. |
+| **Testes Backend** | `just test` | `docker compose exec backend uv run poe test` | Executa a suíte Pytest dentro do container backend. |
+| **Testes Frontend** | `just frontend-test` | `cd frontend && pnpm test` | Executa a suíte Vitest com RTL e mocks MSW no frontend. |
+| **Testes E2E** | `just frontend-e2e` | `docker compose exec backend uv run poe seed-db && cd frontend && pnpm exec playwright test` | Reseta o banco de testes com seed e roda a suíte Playwright. |
+| **Gate Local de CI** | `just check-ci` | Execução sequencial dos checks locais | Executa todos os testes, linters e checagens estritas do repositório. |
+| **Documentação Local**| `just docs-dev` | `uv run --project backend --group docs mkdocs serve -a 0.0.0.0:8001` | Inicia o servidor MkDocs com live-reload na porta `8001`. |

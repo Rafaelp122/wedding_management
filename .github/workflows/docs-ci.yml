@@ -14,7 +14,7 @@ on:
       - 'scripts/**'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
-      - 'Makefile'
+      - 'justfile'
   pull_request:
     branches: [main, develop]
     paths:
@@ -28,7 +28,7 @@ on:
       - 'scripts/**'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
-      - 'Makefile'
+      - 'justfile'
 
 permissions:
   contents: read
@@ -57,7 +57,11 @@ jobs:
           uv sync --group docs
 
       - name: Validate Documentation Links & Build MkDocs Site
-        run: make check-docs
+        run: |
+          uv run --project backend python scripts/validate_docs_links.py
+          uv run --project backend python scripts/validate_docs_snippets.py
+          npx -y @google/design.md lint DESIGN.md
+          uv run --project backend --group docs mkdocs build --strict
 
   docs-deploy:
     name: Deploy MkDocs to GitHub Pages
@@ -83,4 +87,4 @@ jobs:
           uv sync --group docs
 
       - name: Deploy to GitHub Pages (gh-pages branch)
-        run: make docs-gh-deploy
+        run: uv run --project backend --group docs mkdocs gh-deploy --force

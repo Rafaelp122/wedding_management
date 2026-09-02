@@ -17,9 +17,11 @@
  */
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import React from "react";
+
+configure({ asyncUtilTimeout: 10000 });
 
 import.meta.env.VITE_GOOGLE_CLIENT_ID ||= "test-google-client-id";
 

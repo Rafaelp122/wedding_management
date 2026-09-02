@@ -42,10 +42,13 @@ A complete wedding management system with a modern **React SPA + Django Ninja AP
 
 ## 💻 Essential Commands
 
-- **Install**: `uv sync` (backend), `npm install` (frontend).
-- **Generate API**: `make orval` or `cd frontend && npm run generate:api`.
-- **Test**: `make test` (backend), `cd frontend && npm test` (frontend).
-- **Lint**: `make lint` or `ruff check .`.
+- **Setup & Containers**: `just setup` ou `just up`.
+- **Install**: `uv sync` (backend), `pnpm install` (frontend).
+- **Generate API**: `just sync-api` ou `cd frontend && pnpm run generate:api`.
+- **Test**: `just test` (backend), `just frontend-test` ou `cd frontend && pnpm test` (frontend).
+- **Lint & Format**: `just lint` / `just format` (backend), `cd frontend && pnpm run lint` (frontend).
+- **Docs Check**: `just check-docs` ou `uv run --project backend python scripts/validate_docs_links.py`.
+- **CI Suite**: `just check-ci`.
 
 ## 📁 Key Paths
 

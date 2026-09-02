@@ -216,22 +216,22 @@ graph LR
 
 Escolha a modalidade de ambiente de desenvolvimento preferida:
 
-=== "Docker Compose (Recomendado)"
+=== "Just Runner & Docker Compose (Recomendado)"
 
     ```bash
     # 1. Clonar repositório e preparar variáveis de ambiente
     git clone git@github.com:Rafaelp122/wedding_management.git
     cd wedding_management
-    make env-setup
+    just env-setup
 
     # 2. Inicializar banco de dados e backend no Docker
-    make up
+    just up
 
     # 3. Iniciar o servidor de desenvolvimento do Frontend SPA (no Host)
-    make frontend-dev
+    just frontend-dev
 
     # 4. Iniciar a Landing Page comercial (no Host)
-    make landing-dev
+    just landing-dev
     ```
 
 === "Host Local (uv + pnpm)"
@@ -260,12 +260,12 @@ Escolha a modalidade de ambiente de desenvolvimento preferida:
 
 ### Painel de Acesso aos Serviços Locais
 
-| Serviço | URL Local | Comando Makefile | Descrição |
-| :--- | :--- | :--- | :--- |
-| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | `make landing-dev` | Portal de marketing institucional em Astro 7 |
-| **Frontend SPA** | [`http://localhost:5173`](http://localhost:5173) | `make frontend-dev` | Aplicação web principal em React 19 com Vite |
-| **Backend & Swagger API** | [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | `make up` / `make dev` | Documentação OpenAPI interativa do Django Ninja |
-| **MkDocs Documentação** | [`http://localhost:8001`](http://localhost:8001) | `make docs-dev` | Portal de documentação técnica com live-reload |
+| Serviço | URL Local | Atalho Just | Comando Nativo Direto | Descrição |
+| :--- | :--- | :--- | :--- | :--- |
+| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | `just landing-dev` | `cd landing && pnpm run dev` | Portal de marketing institucional em Astro 7 |
+| **Frontend SPA** | [`http://localhost:5173`](http://localhost:5173) | `just frontend-dev` | `cd frontend && pnpm run dev` | Aplicação web principal em React 19 com Vite |
+| **Backend & Swagger API** | [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | `just up` / `just dev` | `docker compose up -d backend` | Documentação OpenAPI interativa do Django Ninja |
+| **MkDocs Documentação** | [`http://localhost:8001`](http://localhost:8001) | `just docs-dev` | `uv run --project backend --group docs mkdocs serve -a 0.0.0.0:8001` | Portal de documentação técnica com live-reload |
 
 ---
 
