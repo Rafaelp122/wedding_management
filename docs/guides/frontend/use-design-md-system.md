@@ -27,7 +27,7 @@ npx -y @google/design.md lint DESIGN.md
 Ou execute a checagem completa da documentação que já inclui o linter:
 
 ```bash
-make check-docs
+just check-docs
 ```
 
 ---

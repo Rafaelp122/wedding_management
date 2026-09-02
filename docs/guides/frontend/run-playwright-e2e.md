@@ -17,7 +17,7 @@ A suíte de testes de ponta a ponta (E2E) valida os fluxos críticos de negócio
 ```mermaid
 flowchart TD
     Start["just frontend-e2e"] --> DBReset["1. Reset & Seed do DB
-    (flush + seed_db)"]
+    (flush + seed_e2e)"]
     DBReset --> StartServers["2. Inicia WebServers
     (Backend Uvicorn :8000 & Vite :5173)"]
     StartServers --> AuthSetup["3. Setup de Autenticação
@@ -41,7 +41,7 @@ just frontend-e2e
 
 # Ou Trilha Nativa Direta:
 docker compose exec backend uv run python manage.py flush --noinput && \
-docker compose exec backend uv run poe seed-db && \
+docker compose exec backend uv run poe seed-e2e && \
 cd frontend && pnpm exec playwright test --workers=1
 ```
 

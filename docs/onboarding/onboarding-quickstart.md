@@ -50,7 +50,7 @@ Caso prefira não utilizar o `just` ou precise rodar comandos diretamente em amb
 
 ```bash
 # Cria o arquivo .env a partir do template .env.example
-python3 -c "import os, shutil; shutil.copyfile('.env.example', '.env') if not os.path.exists('.env') else None"
+python -c "import os, shutil; shutil.copyfile('.env.example', '.env') if not os.path.exists('.env') else None"
 ```
 
 ### Passo 2: Inicializar o Banco de Dados e Backend no Docker
@@ -108,9 +108,9 @@ A Landing Page estará acessível em [`http://localhost:4321`](http://localhost:
 | **Testes do Backend** | `just test` | `docker compose exec backend uv run poe test` |
 | **Testes com Cobertura** | `just test-cov` | `docker compose exec backend uv run poe test-cov` |
 | **Testes do Frontend** | `just frontend-test` | `cd frontend && pnpm test` |
-| **Testes E2E (Playwright)** | `just frontend-e2e` | `docker compose exec backend uv run python manage.py flush --noinput && docker compose exec backend uv run poe seed-db && cd frontend && pnpm exec playwright test --workers=1` |
-| **Sincronizar API (Orval)** | `just sync-api` | `docker compose exec backend uv run poe openapi && cd frontend && pnpm run generate:api` |
-| **Validação de Docs & Links**| `just check-docs` | `uv run python scripts/validate_docs_links.py && uv run python scripts/validate_docs_snippets.py && npx -y @google/design.md lint DESIGN.md && uv run --project backend --group docs mkdocs build --strict` |
+| **Testes E2E (Playwright)** | `just frontend-e2e` | `docker compose exec backend uv run python manage.py flush --noinput && docker compose exec backend uv run poe seed-e2e && cd frontend && pnpm exec playwright test --workers=1` |
+| **Sincronizar API (Orval)** | `just sync-api` | `docker compose exec backend uv run poe openapi && mv backend/openapi.json openapi.json && cd frontend && pnpm run generate:api` |
+| **Validação de Docs & Links**| `just check-docs` | `uv run --project backend python scripts/validate_docs_links.py && uv run --project backend python scripts/validate_docs_snippets.py && npx -y @google/design.md lint DESIGN.md && uv run --project backend --group docs mkdocs build --strict` |
 | **Quality Gate Completo (CI)**| `just check-ci` | Execução sequencial de docs, backend, frontend e landing |
 
 ---

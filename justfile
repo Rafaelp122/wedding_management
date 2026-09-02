@@ -13,9 +13,9 @@ list:
 # 📦 DOCKER & AMBIENTE LOCAL
 # ==============================================================================
 
-# Executa o setup inicial do ambiente (.env, containers e migrations)
+# Executa o setup inicial do ambiente (.env, build de containers e migrations)
 [group('Docker & Ambiente')]
-setup: env-setup up
+setup: env-setup build
     @echo "✨ Setup completo! Criando superusuário..."
     just superuser
 
@@ -122,10 +122,11 @@ frontend-dev:
 landing-dev:
     cd landing && pnpm run dev
 
-# Exporta o schema OpenAPI do backend
+# Exporta o schema OpenAPI do backend e atualiza openapi.json na raiz
 [group('Frontend & Landing')]
 openapi:
     docker compose exec backend uv run poe openapi
+    mv -f backend/openapi.json openapi.json
 
 # Gera os hooks tipados do Orval no Frontend
 [group('Frontend & Landing')]
@@ -206,8 +207,8 @@ check-landing:
 # Executa todas as checagens e builds da documentação
 [group('Qualidade & CI')]
 check-docs:
-    uv run python scripts/validate_docs_links.py
-    uv run python scripts/validate_docs_snippets.py
+    uv run --project backend python scripts/validate_docs_links.py
+    uv run --project backend python scripts/validate_docs_snippets.py
     npx -y @google/design.md lint DESIGN.md
     just docs-build
 
@@ -242,9 +243,9 @@ docs-gh-deploy:
 # Cria o arquivo .env a partir do .env.example caso não exista
 [group('Utilitários')]
 env-setup:
-    python3 -c "import os, shutil; shutil.copyfile('.env.example', '.env') if not os.path.exists('.env') else None"
+    python -c "import os, shutil; shutil.copyfile('.env.example', '.env') if not os.path.exists('.env') else None"
 
 # Gera uma nova SECRET_KEY aleatória
 [group('Utilitários')]
 secret-key:
-    python3 -c "import secrets; print(secrets.token_urlsafe(50))"
+    python -c "import secrets; print(secrets.token_urlsafe(50))"

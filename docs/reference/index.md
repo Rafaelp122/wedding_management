@@ -67,7 +67,7 @@ graph LR
 1. **Modelos & BaseModel (`full_clean`):** Todas as entidades herdam de `BaseModel` e `TenantModel`, forçando validação rigorosa (`full_clean()`) em qualquer operação de persistência (`save()`).
 2. **Segregação CQRS:** Mutações de estado residem exclusivamente em `services/` envolvidas em `@transaction.atomic`. Leituras e projeções residem em `selectors/` com filtros de tenant obrigatórios.
 3. **Routers & OpenAPI 3.1:** Endpoints Django Ninja validam payloads com Pydantic v2 e exigem `operation_id` explícito para padronizar o nome das operações.
-4. **Sincronização com Orval:** O comando `make sync-api` exporta o schema OpenAPI do backend e gera automaticamente hooks do TanStack Query e validadores Zod.
+4. **Sincronização com Orval:** O comando `just sync-api` exporta o schema OpenAPI do backend e gera automaticamente hooks do TanStack Query e validadores Zod.
 5. **Apresentação no React 19:** Componentes consom hooks tipados (`use*Query`, `use*Mutation`) integrados a `react-hook-form` e `zodResolver`, sem chamadas manuais a `fetch` ou `axios`.
 
 ---

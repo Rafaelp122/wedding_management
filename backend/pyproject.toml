@@ -88,7 +88,7 @@ superuser  = "python manage.py createsuperuser"
 shell      = "python manage.py shell"
 seed-db    = "python manage.py seed_db"
 seed-e2e   = "python manage.py seed_e2e"
-openapi    = "python manage.py export_openapi_schema --api config.api.api --output ../openapi.json --indent 2 --settings=config.settings.development"
+openapi    = "python manage.py export_openapi_schema --api config.api.api --output openapi.json --indent 2 --settings=config.settings.development"
 check      = ["lint", "mypy", "test", "openapi"]
 
 # ==============================================================================

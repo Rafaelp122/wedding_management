@@ -70,10 +70,10 @@ Extraia o esquema formal da API Django Ninja diretamente para o arquivo `openapi
 just openapi
 
 # Trilha Nativa no Container Docker:
-docker compose exec backend uv run poe openapi
+docker compose exec backend uv run poe openapi && mv backend/openapi.json openapi.json
 
 # Trilha Nativa no Host Local:
-cd backend && uv run poe openapi
+cd backend && uv run poe openapi && mv openapi.json ../openapi.json
 ```
 
 ---
@@ -107,7 +107,7 @@ Para executar o pipeline completo (OpenAPI + Orval) em uma única instrução:
 just sync-api
 
 # Ou Trilha Nativa Direta:
-docker compose exec backend uv run poe openapi && cd frontend && pnpm run generate:api
+docker compose exec backend uv run poe openapi && mv backend/openapi.json openapi.json && cd frontend && pnpm run generate:api
 ```
 
 ---

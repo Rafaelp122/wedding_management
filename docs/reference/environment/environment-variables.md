@@ -90,5 +90,5 @@ flowchart LR
 ## 6. Diretrizes de Segurança
 
 1. **Proibição de Commit de Segredos:** O arquivo `.gitignore` bloqueia `.env`, `.env.local` e `*.pem`.
-2. **Rotação de Chaves:** A chave `SECRET_KEY` pode ser rotacionada sem downtime executando `make secret-key`.
+2. **Rotação de Chaves:** A chave `SECRET_KEY` pode ser rotacionada sem downtime executando `just secret-key`.
 3. **Guard-Rail de Schemas:** O teste `test_sensitive_data_leak.py` garante que nenhuma variável de segredo seja serializada na API pública.

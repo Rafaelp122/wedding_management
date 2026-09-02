@@ -153,12 +153,12 @@ Abaixo está o catálogo completo comparando cada atalho do `justfile` com o res
 | :--- | :--- | :--- |
 | **Frontend SPA Dev (Vite)** | `just frontend-dev` | `cd frontend && pnpm run dev` |
 | **Landing Page Dev (Astro)** | `just landing-dev` | `cd landing && pnpm run dev` |
-| **Exportar OpenAPI Schema** | `just openapi` | `docker compose exec backend uv run poe openapi` |
+| **Exportar OpenAPI Schema** | `just openapi` | `docker compose exec backend uv run poe openapi && mv backend/openapi.json openapi.json` |
 | **Gerar Hooks Orval** | `just orval` | `cd frontend && pnpm run generate:api` |
-| **Sincronizar API + Orval** | `just sync-api` | `docker compose exec backend uv run poe openapi && cd frontend && pnpm run generate:api` |
+| **Sincronizar API + Orval** | `just sync-api` | `docker compose exec backend uv run poe openapi && mv backend/openapi.json openapi.json && cd frontend && pnpm run generate:api` |
 | **Testes Unitários (Vitest)**| `just frontend-test` | `cd frontend && pnpm test` |
 | **Testes do Git Modificados**| `just frontend-test-changed` | `cd frontend && pnpm exec vitest run --changed` |
-| **Testes E2E (Playwright)** | `just frontend-e2e` | Flush/Seed no banco + `cd frontend && pnpm exec playwright test --workers=1` |
+| **Testes E2E (Playwright)** | `just frontend-e2e` | `docker compose exec backend uv run python manage.py flush --noinput && docker compose exec backend uv run poe seed-e2e && cd frontend && pnpm exec playwright test --workers=1` |
 | **Relatório do Playwright** | `just frontend-e2e-report` | `cd frontend && pnpm exec playwright show-report` |
 
 ---
@@ -175,7 +175,7 @@ Abaixo está o catálogo completo comparando cada atalho do `justfile` com o res
 | **Quality Gate Backend** | `just check-backend` | `docker compose exec backend uv run poe check` |
 | **Quality Gate Frontend** | `just check-frontend` | `cd frontend && pnpm install --frozen-lockfile && pnpm run lint && pnpm run type-check && pnpm test && pnpm run build` |
 | **Quality Gate Landing** | `just check-landing` | `cd landing && pnpm install --frozen-lockfile && pnpm exec astro check && pnpm run build` |
-| **Quality Gate Docs** | `just check-docs` | `uv run python scripts/validate_docs_links.py && uv run python scripts/validate_docs_snippets.py && npx -y @google/design.md lint DESIGN.md && uv run --project backend --group docs mkdocs build --strict` |
+| **Quality Gate Docs** | `just check-docs` | `uv run --project backend python scripts/validate_docs_links.py && uv run --project backend python scripts/validate_docs_snippets.py && npx -y @google/design.md lint DESIGN.md && uv run --project backend --group docs mkdocs build --strict` |
 | **Quality Gate Total (CI)** | `just check-ci` | Execução dos 4 checks (`check-docs`, `check-backend`, `check-frontend`, `check-landing`) |
 
 ---
@@ -194,8 +194,8 @@ Abaixo está o catálogo completo comparando cada atalho do `justfile` com o res
 
 | Ação / Propósito | Atalho Just | Trilha Nativa Direta |
 | :--- | :--- | :--- |
-| **Gerar arquivo `.env`** | `just env-setup` | `python3 -c "import os, shutil; shutil.copyfile('.env.example', '.env') if not os.path.exists('.env') else None"` |
-| **Gerar SECRET_KEY segura** | `just secret-key` | `python3 -c "import secrets; print(secrets.token_urlsafe(50))"` |
+| **Gerar arquivo `.env`** | `just env-setup` | `python -c "import os, shutil; shutil.copyfile('.env.example', '.env') if not os.path.exists('.env') else None"` |
+| **Gerar SECRET_KEY segura** | `just secret-key` | `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
 
 ---
 

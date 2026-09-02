@@ -122,7 +122,7 @@ terraform -chdir=terraform/staging init -backend=false
 terraform -chdir=terraform/staging validate
 terraform -chdir=terraform/production init -backend=false
 terraform -chdir=terraform/production validate
-make check-docs
+just check-docs
 ```
 
 ---

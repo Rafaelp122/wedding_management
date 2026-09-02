@@ -58,12 +58,12 @@ Toda nova documentação deve ser classificada em um dos 4 quadrantes do Diátax
 
 ---
 
-## 5. Validação Automatizada de Links (`make check-docs`)
+## 5. Validação Automatizada de Links (`just check-docs`)
 
 Para garantir que nenhum link para notas atômicas seja quebrado durante refatorações:
 
 ```bash
-make check-docs
+just check-docs
 ```
 
-A pipeline de CI ([docs-ci.yml](../../../.github/workflows/docs-ci.yml)) executa `make check-docs` em todo Pull Request e rejeita alterações com links de documentação quebrados ou inválidos.
+A pipeline de CI ([docs-ci.yml](../../../.github/workflows/docs-ci.yml)) executa `just check-docs` em todo Pull Request e rejeita alterações com links de documentação quebrados ou inválidos.

@@ -15,13 +15,13 @@ Esta seção consolida os **padrões normativos e regras de engenharia** do **We
 flowchart TD
     subgraph DevWork["Desenvolvimento Local"]
         Code["Código & Documentação"] --> PreCommit["Ruff Formatter & Linter"]
-        Code --> LocalGate["make check-ci"]
+        Code --> LocalGate["just check-ci"]
     end
 
     subgraph CI_Gates["Portões de Qualidade (CI / GitHub Actions)"]
         LocalGate --> MypyStrict["Mypy Strict Type Check"]
         LocalGate --> GuardRails["Guard-Rails de Integridade (pytest)"]
-        LocalGate --> DocsAudit["make check-docs (Links & Snippets)"]
+        LocalGate --> DocsAudit["just check-docs (Links & Snippets)"]
         LocalGate --> VitestSuite["Vitest (isolate: false)"]
         LocalGate --> PlaywrightE2E["Playwright E2E Shards"]
     end
@@ -51,5 +51,5 @@ flowchart TD
 ## 3. Diretrizes de Contribuição e Conformidade
 
 1. **Leitura Prévia Obrigatória:** Antes de propor alterações estruturais, consulte os ADRs em [docs/architecture/adr/](../../architecture/adr/README.md).
-2. **Execução de Gates Locais:** Todo Pull Request deve ser validado localmente com `make check-ci` antes da abertura no GitHub.
+2. **Execução de Gates Locais:** Todo Pull Request deve ser validado localmente com `just check-ci` antes da abertura no GitHub.
 3. **Preservação de Guard-Rails:** É terminantemente proibido desativar ou suprimir asserções de guard-rails (`@pytest.mark.skip`) sem aprovação explícita de arquitetura.

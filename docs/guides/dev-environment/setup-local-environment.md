@@ -69,7 +69,7 @@ CLOUDFLARE_R2_ENDPOINT_URL=https://dummy.r2.cloudflarestorage.com
 > just secret-key
 >
 > # Ou Trilha Nativa:
-> python3 -c "import secrets; print(secrets.token_urlsafe(50))"
+> python -c "import secrets; print(secrets.token_urlsafe(50))"
 > ```
 
 ---
