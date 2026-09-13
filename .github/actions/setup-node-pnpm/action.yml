@@ -27,8 +27,6 @@ runs:
       uses: actions/setup-node@v6
       with:
         node-version-file: "${{ inputs.working-directory }}/.nvmrc"
-        cache: "pnpm"
-        cache-dependency-path: "${{ inputs.working-directory }}/pnpm-lock.yaml"
 
     - name: Cache Node Modules
       id: cache-node-modules
