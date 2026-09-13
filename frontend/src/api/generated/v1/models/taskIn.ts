@@ -5,9 +5,15 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para criação de tarefa.
+ */
 export interface TaskIn {
   wedding: string;
-  /** @maxLength 255 */
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
   title: string;
   description?: string;
   due_date?: string | null;

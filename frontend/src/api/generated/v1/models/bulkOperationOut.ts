@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída com a quantidade de registros afetados na operação.
+ */
 export interface BulkOperationOut {
   /** Quantidade de registros afetados */
   affected_count: number;

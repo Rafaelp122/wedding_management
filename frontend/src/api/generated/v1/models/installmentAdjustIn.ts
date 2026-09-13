@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para ajuste financeiro de parcela.
+ */
 export interface InstallmentAdjustIn {
   amount?: number | string | null;
   due_date?: string | null;

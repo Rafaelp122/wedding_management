@@ -6,9 +6,21 @@
  */
 
 export interface WeddingIn {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
   groom_name: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
   bride_name: string;
   date: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
   location: string;
   expected_guests?: number | null;
   template?: string | null;

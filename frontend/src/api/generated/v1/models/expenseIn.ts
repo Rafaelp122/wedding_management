@@ -5,11 +5,18 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para criação de despesa.
+ */
 export interface ExpenseIn {
   category: string;
   contract?: string | null;
-  /** @maxLength 255 */
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
   name: string;
+  /** @maxLength 1000 */
   description?: string;
   estimated_amount: number | string;
   actual_amount: number | string;

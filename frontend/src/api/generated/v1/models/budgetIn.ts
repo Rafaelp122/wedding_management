@@ -6,10 +6,11 @@
  */
 
 /**
- * Schema de entrada para atualização parcial de orçamento.
+ * Schema de entrada para criação de orçamento.
  */
-export interface BudgetPatchIn {
-  total_estimated?: number | string | null;
+export interface BudgetIn {
+  wedding: string;
+  total_estimated: number | string;
   /** @maxLength 1000 */
   notes?: string;
 }

@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída para exibição de despesa (CQRS puro sem queries ORM).
+ */
 export interface ExpenseOut {
   uuid: string;
   wedding: string;

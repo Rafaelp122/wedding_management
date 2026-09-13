@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para atualização parcial de contrato.
+ */
 export interface ContractPatchIn {
   supplier?: string | null;
   name?: string | null;

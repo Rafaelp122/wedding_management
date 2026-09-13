@@ -5,8 +5,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para atualização parcial de categoria de orçamento.
+ */
 export interface BudgetCategoryPatchIn {
   name?: string | null;
+  /** @maxLength 500 */
   description?: string;
   allocated_budget?: number | string | null;
 }

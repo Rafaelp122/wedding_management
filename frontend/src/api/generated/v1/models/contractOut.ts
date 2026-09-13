@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída para exibição de contrato.
+ */
 export interface ContractOut {
   uuid: string;
   wedding: string;

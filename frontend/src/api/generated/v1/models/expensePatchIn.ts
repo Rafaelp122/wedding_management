@@ -5,9 +5,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para atualização parcial de despesa.
+ */
 export interface ExpensePatchIn {
   contract?: string | null;
   name?: string | null;
+  /** @maxLength 1000 */
   description?: string;
   estimated_amount?: number | string | null;
   actual_amount?: number | string | null;

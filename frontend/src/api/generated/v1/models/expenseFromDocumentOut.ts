@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída com dados extraídos de documento/contrato.
+ */
 export interface ExpenseFromDocumentOut {
   name: string;
   description?: string;

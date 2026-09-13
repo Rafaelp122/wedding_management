@@ -5,9 +5,16 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para criação de contrato.
+ */
 export interface ContractIn {
   wedding: string;
   supplier: string;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
   name: string;
   total_amount: number | string;
   status?: string;
