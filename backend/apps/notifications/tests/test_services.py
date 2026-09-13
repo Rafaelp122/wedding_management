@@ -200,9 +200,30 @@ class TestNotificationServiceMarkAsRead:
         assert updated.is_read is True
         assert updated.read_at is not None
 
+    def test_mark_as_read_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """mark_as_read() persiste cirurgicamente com update_fields."""
+        notification = NotificationFactory(user=user, is_read=False)
+        spy_save = mocker.spy(Notification, "save")
+
+        updated = NotificationService.mark_as_read(
+            user.company, user, notification.uuid
+        )
+
+        assert updated.is_read is True
+        assert updated.read_at is not None
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"is_read", "read_at", "updated_at"}
+
     def test_mark_as_read_failure_other_tenant(self, user: Any) -> None:
         other_company = CompanyFactory()
-        notification = NotificationFactory(company=other_company, is_read=False)
+        other_user = UserFactory(company=other_company)
+        notification = NotificationFactory(
+            company=other_company, user=other_user, is_read=False
+        )
 
         with pytest.raises(ObjectNotFoundError):
             NotificationService.mark_as_read(user.company, user, notification.uuid)

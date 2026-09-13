@@ -40,7 +40,8 @@ def create_task(request: AuthRequest, payload: TaskIn) -> tuple[int, Task]:
     Cria uma nova tarefa no checklist.
     """
     user = request.user
-    return 201, TaskService.create(user.company, payload)
+    created = TaskService.create(user.company, payload)
+    return 201, task_get_selector(company=user.company, uuid=created.uuid)
 
 
 @tasks_router.patch(
@@ -54,7 +55,8 @@ def update_task(request: AuthRequest, uuid: UUID4, payload: TaskPatchIn) -> Task
     """
     user = request.user
     instance = task_get_selector(company=user.company, uuid=uuid)
-    return TaskService.update(user.company, instance, payload)
+    updated = TaskService.update(user.company, instance, payload)
+    return task_get_selector(company=user.company, uuid=updated.uuid)
 
 
 @tasks_router.delete(

@@ -76,3 +76,68 @@ class TestTaskModelMetadata:
         wedding = WeddingFactory(user_context=user)
         task = TaskFactory(wedding=wedding, due_date=None)
         task.full_clean()
+
+
+@pytest.mark.django_db
+class TestTaskRichDomainModel:
+    """Testes dos métodos de ciclo de vida e propriedades de domínio de Task."""
+
+    def test_complete_and_reopen(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, is_completed=False)
+        assert task.is_completed is False
+
+        task.complete()
+        assert task.is_completed is True
+
+        task.reopen()
+        assert task.is_completed is False
+
+    def test_is_overdue_and_days_overdue(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        today = date.today()
+
+        # Tarefa atrasada não concluída
+        task_overdue = TaskFactory(
+            wedding=wedding,
+            is_completed=False,
+            due_date=today - timedelta(days=4),
+        )
+        assert task_overdue.is_overdue is True
+        assert task_overdue.days_overdue == 4
+
+        # Tarefa com prazo futuro
+        task_future = TaskFactory(
+            wedding=wedding,
+            is_completed=False,
+            due_date=today + timedelta(days=3),
+        )
+        assert task_future.is_overdue is False
+        assert task_future.days_overdue == 0
+
+        # Tarefa hoje
+        task_today = TaskFactory(
+            wedding=wedding,
+            is_completed=False,
+            due_date=today,
+        )
+        assert task_today.is_overdue is False
+        assert task_today.days_overdue == 0
+
+        # Tarefa vencida mas já concluída
+        task_done_past = TaskFactory(
+            wedding=wedding,
+            is_completed=True,
+            due_date=today - timedelta(days=5),
+        )
+        assert task_done_past.is_overdue is False
+        assert task_done_past.days_overdue == 0
+
+        # Tarefa sem prazo
+        task_no_date = TaskFactory(
+            wedding=wedding,
+            is_completed=False,
+            due_date=None,
+        )
+        assert task_no_date.is_overdue is False
+        assert task_no_date.days_overdue == 0

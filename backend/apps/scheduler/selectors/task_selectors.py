@@ -61,7 +61,7 @@ def task_get_selector(*, company: Company, uuid: UUID | str) -> Task:
         Task,
         company,
         uuid,
-        select_related=["wedding"],
+        select_related=["wedding", "company"],
         code="task_not_found_or_denied",
     )
 

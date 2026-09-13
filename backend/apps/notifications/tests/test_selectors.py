@@ -212,7 +212,8 @@ class TestNotificationGetSelector:
 
     def test_get_notification_other_tenant_raises_not_found(self, user: Any) -> None:
         other_company = CompanyFactory()
-        n = NotificationFactory(company=other_company)
+        other_user = UserFactory(company=other_company)
+        n = NotificationFactory(company=other_company, user=other_user)
 
         with pytest.raises(ObjectNotFoundError):
             notification_get_selector(company=user.company, user=user, uuid=n.uuid)
