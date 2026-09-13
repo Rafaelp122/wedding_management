@@ -287,11 +287,13 @@ class ExpenseService:
             f"Atualizando Despesa uuid={instance.uuid} por company_id={company.id}"
         )
 
+        updated_fields: set[str] = set()
         data = payload.model_dump(exclude_unset=True)
 
         contract_changed = "contract" in data
         if contract_changed:
             ExpenseService._resolve_contract(company, instance, data.pop("contract"))
+            updated_fields.add("contract")
 
         amount_changed = (
             "actual_amount" in data and data["actual_amount"] != instance.actual_amount
@@ -307,6 +309,7 @@ class ExpenseService:
         # Atualização dinâmica dos campos
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
         if amount_changed and num_installments is None:
             # Auto-redistribute: usa mesmo número de parcelas com novo valor
@@ -336,18 +339,20 @@ class ExpenseService:
                 company, instance, num_installments, first_due_date
             )
 
-        try:
-            instance.save()
-        except DjangoValidationError as e:
-            logger.warning(
-                f"Falha de validação ao atualizar despesa uuid={instance.uuid} "
-                f"por company_id={company.id}: {e}"
-            )
-            detail = "; ".join(e.messages) if e.messages else str(e)
-            raise BusinessRuleViolation(
-                detail=detail,
-                code="expense_validation_error",
-            ) from e
+        if updated_fields:
+            updated_fields.add("updated_at")
+            try:
+                instance.save(update_fields=list(updated_fields))
+            except DjangoValidationError as e:
+                logger.warning(
+                    f"Falha de validação ao atualizar despesa uuid={instance.uuid} "
+                    f"por company_id={company.id}: {e}"
+                )
+                detail = "; ".join(e.messages) if e.messages else str(e)
+                raise BusinessRuleViolation(
+                    detail=detail,
+                    code="expense_validation_error",
+                ) from e
 
         logger.info(f"Despesa uuid={instance.uuid} atualizado com sucesso.")
         return instance

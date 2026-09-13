@@ -252,3 +252,66 @@ class TestBudgetCategoryTotalSpent:
         )
 
         assert category.total_spent == Decimal("4000.00")
+
+
+@pytest.mark.django_db
+class TestBudgetCategoryConvenienceProperties:
+    """Testes de propriedades de conveniência em BudgetCategory."""
+
+    def test_remaining_budget_and_is_over_budget(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("5000.00"),
+        )
+        assert category.remaining_budget == Decimal("5000.00")
+        assert category.is_over_budget is False
+        assert category.budget_utilization_percent == 0
+
+        # Adiciona despesa paga de 2000
+        expense = ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            actual_amount=Decimal("2000.00"),
+            contract=None,
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=Decimal("2000.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-01-15",
+        )
+
+        assert category.remaining_budget == Decimal("3000.00")
+        assert category.is_over_budget is False
+        assert category.budget_utilization_percent == 40
+
+        # Adiciona mais 4000 pago (total 6000 pago em verba de 5000)
+        expense2 = ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            actual_amount=Decimal("4000.00"),
+            contract=None,
+        )
+        InstallmentFactory(
+            expense=expense2,
+            amount=Decimal("4000.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-02-15",
+        )
+
+        assert category.remaining_budget == Decimal("-1000.00")
+        assert category.is_over_budget is True
+        assert category.budget_utilization_percent == 120
+
+    def test_budget_utilization_percent_zero_allocated(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("0.00"),
+        )
+        assert category.budget_utilization_percent == 0

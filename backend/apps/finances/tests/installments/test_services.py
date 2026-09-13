@@ -420,6 +420,32 @@ class TestInstallmentServiceUpdate:
                 InstallmentPatchIn(amount=Decimal("300.00")),
             )
 
+    def test_update_installment_persists_with_update_fields(
+        self, user: User, mocker: Any
+    ) -> None:
+        """Verifica que update() persiste cirurgicamente apenas campos alterados."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        installment = InstallmentFactory(
+            expense=expense,
+            amount=Decimal("500.00"),
+            due_date=date.today() + timedelta(days=30),
+        )
+        spy_save = mocker.spy(installment, "save")
+
+        new_due_date = date.today() + timedelta(days=60)
+        updated = InstallmentService.update(
+            user.company,
+            installment,
+            InstallmentPatchIn(due_date=new_due_date, notes="Observação teste"),
+        )
+
+        assert updated.due_date == new_due_date
+        assert updated.notes == "Observação teste"
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"due_date", "notes", "updated_at"}
+
 
 @pytest.mark.django_db
 class TestInstallmentServiceDelete:
@@ -460,18 +486,24 @@ class TestInstallmentServiceDelete:
 class TestInstallmentServiceMarkAsPaid:
     """Testes de mark_as_paid e unmark_as_paid."""
 
-    def test_mark_as_paid_success(self, user: User) -> None:
-        """Parcela PENDING é marcada como PAID com paid_date=today."""
+    def test_mark_as_paid_success(self, user: User, mocker: Any) -> None:
+        """Parcela PENDING é marcada como PAID com paid_date=today
+        e salva com update_fields."""
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
         installment = InstallmentFactory(
             expense=expense,
             amount=Decimal("500.00"),
         )
+        spy_save = mocker.spy(installment, "save")
 
         result = InstallmentService.mark_as_paid(user.company, installment)
 
         assert result.status == Installment.StatusChoices.PAID
         assert result.paid_date == date.today()
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"status", "paid_date", "updated_at"}
 
     def test_mark_as_paid_already_paid(self, user: User) -> None:
         """Parcela já PAID levanta BusinessRuleViolation."""
@@ -499,8 +531,8 @@ class TestInstallmentServiceMarkAsPaid:
         expense.refresh_from_db()
         expense.full_clean()  # não deve lançar exceção
 
-    def test_unmark_as_paid_success(self, user: User) -> None:
-        """Parcela PAID é desmarcada voltando para PENDING."""
+    def test_unmark_as_paid_success(self, user: User, mocker: Any) -> None:
+        """Parcela PAID é desmarcada voltando para PENDING e salva com update_fields."""
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
         installment = InstallmentFactory(
             expense=expense,
@@ -508,11 +540,16 @@ class TestInstallmentServiceMarkAsPaid:
             status=Installment.StatusChoices.PAID,
             paid_date=date.today(),
         )
+        spy_save = mocker.spy(installment, "save")
 
         result = InstallmentService.unmark_as_paid(user.company, installment)
 
         assert result.status == Installment.StatusChoices.PENDING
         assert result.paid_date is None
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"status", "paid_date", "updated_at"}
 
     def test_unmark_as_paid_overdue(self, user: User) -> None:
         """Parcela PAID vencida volta para OVERDUE."""

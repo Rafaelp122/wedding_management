@@ -110,15 +110,19 @@ class BudgetService:
             f"Atualizando Orçamento uuid={instance.uuid} por company_id={company.id}"
         )
 
+        updated_fields: set[str] = set()
         data = payload.model_dump(exclude_unset=True)
         data.pop("wedding", None)
         data.pop("company", None)
 
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
         # O full_clean() garante a validação de regras como MinValueValidator
-        instance.save()
+        if updated_fields:
+            updated_fields.add("updated_at")
+            instance.save(update_fields=list(updated_fields))
 
         logger.info(f"Orçamento uuid={instance.uuid} atualizado com sucesso.")
         return instance

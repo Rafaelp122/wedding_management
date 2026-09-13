@@ -425,3 +425,58 @@ class TestBudgetServiceIntegration:
 
         with pytest.raises(ObjectNotFoundError):
             BudgetService.delete(user.company, instance=other_budget)
+
+
+@pytest.mark.django_db
+class TestBudgetServiceUpdate:
+    """Testes de atualização de orçamento via BudgetService."""
+
+    def test_update_budget_success(self, user: Any) -> None:
+        """Atualização de total_estimated e notes com sucesso."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("50000.00"))
+
+        updated = BudgetService.update(
+            user.company,
+            budget,
+            BudgetPatchIn(
+                total_estimated=Decimal("60000.00"),
+                notes="Notas atualizadas",
+            ),
+        )
+
+        assert updated.total_estimated == Decimal("60000.00")
+        assert updated.notes == "Notas atualizadas"
+
+    def test_update_budget_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """Verifica que update() persiste cirurgicamente apenas campos alterados."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("50000.00"))
+        spy_save = mocker.spy(budget, "save")
+
+        updated = BudgetService.update(
+            user.company,
+            budget,
+            BudgetPatchIn(total_estimated=Decimal("55000.00")),
+        )
+
+        assert updated.total_estimated == Decimal("55000.00")
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"total_estimated", "updated_at"}
+
+    def test_update_budget_cross_tenant(self, user: Any) -> None:
+        """Orçamento de outro tenant não pode ser atualizado."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+
+        with pytest.raises(ObjectNotFoundError):
+            BudgetService.update(
+                user.company,
+                other_budget,
+                BudgetPatchIn(total_estimated=Decimal("99999.00")),
+            )

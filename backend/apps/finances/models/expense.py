@@ -77,3 +77,58 @@ class Expense(TenantModel, WeddingOwnedMixin):
                     f"ERRO DE INTEGRIDADE: A soma das parcelas (R${total_installments})"
                     f" não bate com o valor total (R${self.actual_amount})."
                 )
+
+    # ── Propriedades de Domínio ──────────────────────────────────────────
+
+    @property
+    def is_settled(self) -> bool:
+        """Indica se todas as parcelas da despesa estão pagas."""
+        total = getattr(self, "installments_count", None)
+        if total is None:
+            total = self.installments.count()
+
+        paid = getattr(self, "paid_installments_count", None)
+        if paid is None:
+            paid = self.installments.filter(status="PAID").count()
+
+        return total > 0 and paid >= total
+
+    @property
+    def is_partially_paid(self) -> bool:
+        """Indica se a despesa possui parcelas pagas, sem estar quitada."""
+        total = getattr(self, "installments_count", None)
+        if total is None:
+            total = self.installments.count()
+
+        paid = getattr(self, "paid_installments_count", None)
+        if paid is None:
+            paid = self.installments.filter(status="PAID").count()
+
+        return 0 < paid < total
+
+    @property
+    def balance_due(self) -> Decimal:
+        """Saldo devedor restante da despesa."""
+        total_paid = getattr(self, "total_paid", None)
+        if total_paid is None:
+            from apps.finances.models.installment import Installment
+
+            total_paid = self.installments.filter(
+                status=Installment.StatusChoices.PAID
+            ).aggregate(models.Sum("amount"))["amount__sum"] or Decimal("0.00")
+        return self.actual_amount - total_paid
+
+    @property
+    def payment_progress_percent(self) -> int:
+        """Percentual do valor pago em relação ao valor total da despesa (0 a 100)."""
+        if not self.actual_amount or self.actual_amount <= Decimal("0.00"):
+            return 0
+        total_paid = getattr(self, "total_paid", None)
+        if total_paid is None:
+            from apps.finances.models.installment import Installment
+
+            total_paid = self.installments.filter(
+                status=Installment.StatusChoices.PAID
+            ).aggregate(models.Sum("amount"))["amount__sum"] or Decimal("0.00")
+        percent = int((total_paid / self.actual_amount) * 100)
+        return min(100, max(0, percent))

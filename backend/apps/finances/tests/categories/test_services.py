@@ -278,6 +278,30 @@ class TestBudgetCategoryServiceUpdate:
                 user.company, other_category, BudgetCategoryPatchIn(name="Hack")
             )
 
+    def test_update_category_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """Verifica que update() persiste cirurgicamente apenas campos
+        alterados com skip_clean=True."""
+        wedding, budget = _setup_budget(user)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            name="Decoração",
+        )
+        spy_save = mocker.spy(category, "save")
+
+        updated = BudgetCategoryService.update(
+            user.company, category, BudgetCategoryPatchIn(name="Decoração Floral")
+        )
+
+        assert updated.name == "Decoração Floral"
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert kwargs.get("skip_clean") is True
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"name", "updated_at"}
+
 
 @pytest.mark.django_db
 class TestBudgetCategoryServiceDelete:

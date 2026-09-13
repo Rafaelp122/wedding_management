@@ -40,6 +40,7 @@ def seed_data(user: Any, django_user_model: Any) -> dict[str, Any]:
             location="A",
             date=date(2026, 10, 11),
             template="civil_buffet_3m",
+            expected_guests=100,
         ),
     )
     my_budget = BudgetService.get_or_create_for_wedding(user.company, my_wedding.uuid)
@@ -69,6 +70,7 @@ def seed_data(user: Any, django_user_model: Any) -> dict[str, Any]:
             location="B",
             date=date(2026, 10, 11),
             template="civil_buffet_3m",
+            expected_guests=100,
         ),
     )
     other_budget = BudgetService.get_or_create_for_wedding(
