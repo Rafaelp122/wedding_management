@@ -3,6 +3,7 @@ from typing import Any, cast
 import pytest
 from django.core.exceptions import ValidationError
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.logistics.models import Contract, Item
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
 from apps.logistics.tests.factories import ItemFactory as _ItemFactory
@@ -116,8 +117,26 @@ class TestItemAcquisitionStatus:
 
 
 @pytest.mark.django_db
+class TestItemQuantityValidation:
+    """Testes da regra invariante de quantidade mínima do item (clean)."""
+
+    def test_item_quantity_zero_raises_validation_error(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        item = Item(wedding=wedding, company=user.company, name="Flores", quantity=0)
+        with pytest.raises(ValidationError) as exc_info:
+            item.clean()
+        assert "quantity" in exc_info.value.message_dict
+        assert "no mínimo 1 unidade" in str(exc_info.value.message_dict["quantity"])
+
+    def test_item_quantity_positive_passes_clean(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        item = Item(wedding=wedding, company=user.company, name="Flores", quantity=1)
+        item.clean()
+
+
+@pytest.mark.django_db
 class TestItemStatusTransitionValidation:
-    """Testes da máquina de estados de item em Item.clean()."""
+    """Testes da máquina de estados e métodos de ciclo de vida do modelo Item."""
 
     _VALID: list[tuple[str, str]] = [
         ("PENDING", "IN_PROGRESS"),
@@ -137,23 +156,75 @@ class TestItemStatusTransitionValidation:
         return lambda status: ItemFactory(wedding=wedding, acquisition_status=status)
 
     @pytest.mark.parametrize("from_status, to_status", _VALID)
-    def test_valid_transitions(
+    def test_can_transition_to_valid(
         self, item_for_transition: Any, from_status: str, to_status: str
     ) -> None:
         item = item_for_transition(from_status)
-        item.acquisition_status = to_status
-        item.full_clean()
+        assert item.can_transition_to(to_status) is True
 
     @pytest.mark.parametrize("from_status, to_status", _INVALID)
-    def test_invalid_transitions(
+    def test_can_transition_to_invalid(
         self, item_for_transition: Any, from_status: str, to_status: str
     ) -> None:
         item = item_for_transition(from_status)
-        item.acquisition_status = to_status
-        with pytest.raises(ValidationError):
-            item.full_clean()
+        assert item.can_transition_to(to_status) is False
 
-    def test_no_change_does_not_validate(self, item_for_transition: Any) -> None:
+    def test_can_transition_to_same_status_is_true(
+        self, item_for_transition: Any
+    ) -> None:
         item = item_for_transition("PENDING")
-        item.acquisition_status = "PENDING"
-        item.full_clean()
+        assert item.can_transition_to("PENDING") is True
+        assert item.can_transition_to(Item.AcquisitionStatus.PENDING) is True
+
+    @pytest.mark.parametrize("from_status, to_status", _VALID)
+    def test_transition_to_valid(
+        self, item_for_transition: Any, from_status: str, to_status: str
+    ) -> None:
+        item = item_for_transition(from_status)
+        item.transition_to(to_status)
+        assert item.acquisition_status == to_status
+
+    @pytest.mark.parametrize("from_status, to_status", _INVALID)
+    def test_transition_to_invalid_raises_violation(
+        self, item_for_transition: Any, from_status: str, to_status: str
+    ) -> None:
+        item = item_for_transition(from_status)
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            item.transition_to(to_status)
+        msg = f"Não é permitido transitar de '{from_status}' para '{to_status}'"
+        assert msg in str(exc_info.value.detail)
+
+    def test_transition_to_same_status_noop(self, item_for_transition: Any) -> None:
+        item = item_for_transition("PENDING")
+        item.transition_to("PENDING")
+        assert item.acquisition_status == "PENDING"
+
+    def test_semantic_start(self, item_for_transition: Any) -> None:
+        item = item_for_transition("PENDING")
+        item.start()
+        assert item.acquisition_status == Item.AcquisitionStatus.IN_PROGRESS
+        assert item.is_in_progress is True
+
+    def test_semantic_complete(self, item_for_transition: Any) -> None:
+        item = item_for_transition("IN_PROGRESS")
+        item.complete()
+        assert item.acquisition_status == Item.AcquisitionStatus.DONE
+        assert item.is_done is True
+
+    def test_semantic_reopen(self, item_for_transition: Any) -> None:
+        item = item_for_transition("DONE")
+        item.reopen()
+        assert item.acquisition_status == Item.AcquisitionStatus.IN_PROGRESS
+        assert item.is_in_progress is True
+
+    def test_semantic_revert_to_pending(self, item_for_transition: Any) -> None:
+        item = item_for_transition("IN_PROGRESS")
+        item.revert_to_pending()
+        assert item.acquisition_status == Item.AcquisitionStatus.PENDING
+        assert item.is_pending is True
+
+    def test_convenience_properties(self, item_for_transition: Any) -> None:
+        item = item_for_transition("PENDING")
+        assert item.is_pending is True
+        assert item.is_in_progress is False
+        assert item.is_done is False

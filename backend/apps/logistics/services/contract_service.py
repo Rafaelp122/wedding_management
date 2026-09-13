@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -304,7 +305,7 @@ class ContractService:
 
         if pdf_file_key:
             contract.pdf_file = pdf_file_key
-            contract.save(update_fields=["pdf_file"])
+            contract.save(update_fields=["pdf_file", "updated_at"])
 
         if items_data:
             for item in items_data:
@@ -417,10 +418,13 @@ class ContractService:
             f"Atualizando Contrato uuid={instance.uuid} por company_id={company.id}"
         )
 
+        updated_fields: set[str] = set()
+
         data = payload.model_dump(exclude_unset=True)
         pdf_file_key = data.pop("pdf_file_key", None)
         if pdf_file_key is not None:
             instance.pdf_file = pdf_file_key
+            updated_fields.add("pdf_file")
 
         supplier_input = data.pop("supplier", None)
         if supplier_input:
@@ -431,30 +435,37 @@ class ContractService:
                 detail="Fornecedor inválido ou acesso negado.",
                 code="supplier_not_found_or_denied",
             )
+            updated_fields.add("supplier")
 
         parent_input = data.pop("parent", None)
         if parent_input is not None:
             ContractService._resolve_parent(company, instance, parent_input)
+            updated_fields.add("parent")
 
         status_input = data.pop("status", None)
         if status_input is not None and status_input != instance.status:
-            instance.status = status_input
+            instance.transition_to(status_input)
+            updated_fields.add("status")
 
-        ContractService._apply_fields(instance, data)
+        ContractService._apply_fields(instance, data, updated_fields)
 
-        try:
-            instance.save()
-        except ValidationError as e:
-            raise BusinessRuleViolation(
-                detail="; ".join(e.messages),
-                code="contract_update_validation_error",
-            ) from e
+        if updated_fields:
+            updated_fields.add("updated_at")
+            try:
+                instance.save(update_fields=list(updated_fields))
+            except ValidationError as e:
+                raise BusinessRuleViolation(
+                    detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                    code="contract_update_validation_error",
+                ) from e
 
         logger.info(f"Contrato uuid={instance.uuid} atualizado com sucesso.")
         return instance
 
     @staticmethod
-    def _apply_fields(instance: Contract, data: dict[str, Any]) -> None:
+    def _apply_fields(
+        instance: Contract, data: dict[str, Any], updated_fields: set[str]
+    ) -> None:
         """
         Aplica campos simples de dicionário na instância do contrato.
 
@@ -463,11 +474,13 @@ class ContractService:
         Args:
             instance: A instância de Contract que receberá as alterações.
             data: Dicionário mapeando os campos do model a valores.
+            updated_fields: Conjunto de campos atualizados para rastreamento.
         """
         for field, value in data.items():
             if field == "pdf_file" and value is None:
                 continue
             setattr(instance, field, value)
+            updated_fields.add(field)
 
     @staticmethod
     @transaction.atomic
@@ -548,9 +561,9 @@ class ContractService:
             code="contract_not_found_or_denied",
         )
 
-        instance.status = new_status
+        instance.transition_to(new_status)
         try:
-            instance.save()
+            instance.save(update_fields=["status", "updated_at"])
         except ValidationError as e:
             raise BusinessRuleViolation(
                 detail="; ".join(e.messages),
@@ -558,6 +571,149 @@ class ContractService:
             ) from e
 
         logger.info(f"Contrato uuid={instance.uuid} transitado para '{new_status}'.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def send_to_pending(company: Company, instance: Contract) -> Contract:
+        """Transita o contrato para pendente de assinaturas externas.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Contract a ter o status alterado.
+
+        Returns:
+            A instância atualizada de Contract.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
+        instance.send_to_pending()
+        try:
+            instance.save(update_fields=["status", "updated_at"])
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="contract_invalid_status_transition",
+            ) from e
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def sign(
+        company: Company,
+        instance: Contract,
+        *,
+        signed_date: date | None = None,
+        pdf_file_key: str | None = None,
+    ) -> Contract:
+        """Formaliza a assinatura do contrato externamente.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Contract a ser assinada.
+            signed_date: Data opcional em que o contrato foi assinado.
+            pdf_file_key: Chave opcional do arquivo PDF no storage.
+
+        Returns:
+            A instância atualizada de Contract.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida ou campos
+                obrigatórios faltarem.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
+        instance.sign(signed_date=signed_date, pdf_file=pdf_file_key)
+        updated_fields = {"status", "updated_at"}
+        if signed_date is not None:
+            updated_fields.add("signed_date")
+        if pdf_file_key is not None:
+            updated_fields.add("pdf_file")
+
+        try:
+            instance.save(update_fields=list(updated_fields))
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="contract_invalid_status_transition",
+            ) from e
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def cancel(company: Company, instance: Contract) -> Contract:
+        """Cancela o contrato.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Contract a ser cancelada.
+
+        Returns:
+            A instância atualizada de Contract.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
+        instance.cancel()
+        try:
+            instance.save(update_fields=["status", "updated_at"])
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="contract_invalid_status_transition",
+            ) from e
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def revert_to_draft(company: Company, instance: Contract) -> Contract:
+        """Reverte o contrato para o estado de rascunho.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Contract a ser revertida.
+
+        Returns:
+            A instância atualizada de Contract.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o contrato não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Contrato não encontrado ou acesso negado.",
+            code="contract_not_found_or_denied",
+        )
+        instance.revert_to_draft()
+        try:
+            instance.save(update_fields=["status", "updated_at"])
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="contract_invalid_status_transition",
+            ) from e
         return instance
 
     @staticmethod
@@ -582,7 +738,7 @@ class ContractService:
         )
         contract = contract_get_selector(company, uuid)
         contract.pdf_file = pdf_file_key
-        contract.save(update_fields=["pdf_file"])
+        contract.save(update_fields=["pdf_file", "updated_at"])
         logger.info(f"Chave de arquivo associada ao contrato uuid={uuid}")
         return contract
 
@@ -606,7 +762,7 @@ class ContractService:
         if contract.pdf_file:
             contract.pdf_file.delete(save=False)
         contract.pdf_file = None
-        contract.save(update_fields=["pdf_file"])
+        contract.save(update_fields=["pdf_file", "updated_at"])
         logger.info(f"Arquivo removido do contrato uuid={uuid}")
 
     @staticmethod

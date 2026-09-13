@@ -337,6 +337,26 @@ class TestItemServiceUpdate:
 
         assert "item_contract_wedding_mismatch" in str(exc_info.value.code)
 
+    def test_update_item_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """update() persiste alterações com update_fields contendo updated_at."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(contract=contract, wedding=wedding, name="Nome Antigo")
+        spy_save = mocker.spy(item, "save")
+
+        ItemService.update(
+            user.company,
+            item,
+            ItemPatchIn.model_construct(name="Nome Novo", quantity=10),
+        )
+
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        update_fields = set(kwargs["update_fields"])
+        assert update_fields == {"name", "quantity", "updated_at"}
+
 
 @pytest.mark.django_db
 class TestItemServiceDelete:
@@ -425,3 +445,128 @@ class TestItemServiceTransitionStatus:
 
         with pytest.raises(ObjectNotFoundError):
             ItemService.transition_status(other_user.company, item, "IN_PROGRESS")
+
+
+@pytest.mark.django_db
+class TestItemServiceSemanticLifecycle:
+    """Testes dos métodos semânticos de ciclo de vida de itens."""
+
+    def test_start_success(self, user: Any, mocker: Any) -> None:
+        """start transita de PENDING para IN_PROGRESS e persiste update_fields."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="PENDING"
+        )
+        spy_save = mocker.spy(item, "save")
+
+        result = ItemService.start(user.company, item)
+
+        assert result.acquisition_status == Item.AcquisitionStatus.IN_PROGRESS
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {"acquisition_status", "updated_at"}
+
+    def test_start_cross_tenant(self, user: Any) -> None:
+        """start para item de outro tenant levanta ObjectNotFoundError."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="PENDING"
+        )
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ItemService.start(other_user.company, item)
+
+    def test_complete_success(self, user: Any, mocker: Any) -> None:
+        """complete transita de IN_PROGRESS para DONE e persiste update_fields."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="IN_PROGRESS"
+        )
+        spy_save = mocker.spy(item, "save")
+
+        result = ItemService.complete(user.company, item)
+
+        assert result.acquisition_status == Item.AcquisitionStatus.DONE
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {"acquisition_status", "updated_at"}
+
+    def test_complete_invalid_transition(self, user: Any) -> None:
+        """complete a partir de PENDING levanta BusinessRuleViolation."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="PENDING"
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ItemService.complete(user.company, item)
+        assert exc_info.value.code == "item_invalid_status_transition"
+
+    def test_complete_cross_tenant(self, user: Any) -> None:
+        """complete para item de outro tenant levanta ObjectNotFoundError."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="IN_PROGRESS"
+        )
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ItemService.complete(other_user.company, item)
+
+    def test_reopen_success(self, user: Any, mocker: Any) -> None:
+        """reopen transita de DONE para IN_PROGRESS e persiste update_fields."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="DONE"
+        )
+        spy_save = mocker.spy(item, "save")
+
+        result = ItemService.reopen(user.company, item)
+
+        assert result.acquisition_status == Item.AcquisitionStatus.IN_PROGRESS
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {"acquisition_status", "updated_at"}
+
+    def test_reopen_cross_tenant(self, user: Any) -> None:
+        """reopen para item de outro tenant levanta ObjectNotFoundError."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="DONE"
+        )
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ItemService.reopen(other_user.company, item)
+
+    def test_revert_to_pending_success(self, user: Any, mocker: Any) -> None:
+        """revert_to_pending transita para PENDING e persiste update_fields."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="IN_PROGRESS"
+        )
+        spy_save = mocker.spy(item, "save")
+
+        result = ItemService.revert_to_pending(user.company, item)
+
+        assert result.acquisition_status == Item.AcquisitionStatus.PENDING
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {"acquisition_status", "updated_at"}
+
+    def test_revert_to_pending_invalid_transition(self, user: Any) -> None:
+        """revert_to_pending a partir de DONE levanta BusinessRuleViolation."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="DONE"
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ItemService.revert_to_pending(user.company, item)
+        assert exc_info.value.code == "item_invalid_status_transition"
+
+    def test_revert_to_pending_cross_tenant(self, user: Any) -> None:
+        """revert_to_pending para item de outro tenant levanta ObjectNotFoundError."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(
+            contract=contract, wedding=wedding, acquisition_status="IN_PROGRESS"
+        )
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ItemService.revert_to_pending(other_user.company, item)

@@ -7,12 +7,12 @@ serviços contratados.
 Referências: RF07-RF08
 """
 
-from collections.abc import Collection
-from typing import Any, ClassVar, Self
+from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.core.mixins import WeddingOwnedMixin
 from apps.logistics.managers import ItemQuerySet
 from apps.tenants.models import TenantModel
@@ -28,8 +28,6 @@ class Item(TenantModel, WeddingOwnedMixin):
     """
 
     objects = ItemQuerySet.as_manager()  # type: ignore[assignment,misc]
-
-    _original_acquisition_status: str | None = None
 
     ALLOWED_TRANSITIONS: ClassVar[dict[str, list[str]]] = {
         "PENDING": ["IN_PROGRESS"],
@@ -74,44 +72,89 @@ class Item(TenantModel, WeddingOwnedMixin):
             models.Index(fields=["acquisition_status"]),
         ]
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self._original_acquisition_status = self.acquisition_status
-
     def __str__(self) -> str:
         return f"{self.name} ({self.quantity}x)"
 
-    @classmethod
-    def from_db(
-        cls,
-        db: str | None,
-        field_names: Collection[str],
-        values: Collection[Any],
-        *args: Any,
-        **kwargs: Any,
-    ) -> Self:
-        instance = super().from_db(db, field_names, values, *args, **kwargs)
-        instance._original_acquisition_status = instance.acquisition_status
-        return instance
-
     def clean(self) -> None:
         super().clean()
+        if self.quantity is not None and self.quantity < 1:
+            raise ValidationError(
+                {"quantity": "A quantidade deve ser de no mínimo 1 unidade."}
+            )
 
-        if not self._state.adding:
-            original = self._original_acquisition_status
-            if original is None:
-                msg = (
-                    "Não foi possível determinar o status original do item. "
-                    "Recarregue a instância do banco e tente novamente."
-                )
-                raise ValidationError(msg)
-            if self.acquisition_status != original:
-                allowed = self.ALLOWED_TRANSITIONS.get(original, [])
-                if self.acquisition_status not in allowed:
-                    raise ValidationError(
-                        f"Não é permitido transitar de '{original}' para "
-                        f"'{self.acquisition_status}'."
-                    )
+    # ── Métodos de Ciclo de Vida da Entidade ─────────────────────────────
+
+    def can_transition_to(self, target_status: str | AcquisitionStatus) -> bool:
+        """Verifica se a transição para o status de aquisição informado é válida.
+
+        Args:
+            target_status: Status de destino a ser avaliado.
+
+        Returns:
+            True se a transição for permitida, False caso contrário.
+        """
+        target = str(target_status)
+        if self.acquisition_status == target:
+            return True
+        allowed = self.ALLOWED_TRANSITIONS.get(self.acquisition_status, [])
+        return target in allowed
+
+    def transition_to(self, target_status: str | AcquisitionStatus) -> None:
+        """Executa a transição de status de aquisição validando as regras do domínio.
+
+        Args:
+            target_status: Status de destino para a transição.
+
+        Raises:
+            BusinessRuleViolation: Se a transição de status não for permitida.
+        """
+        target = str(target_status)
+        if self.acquisition_status == target:
+            return
+
+        if not self.can_transition_to(target):
+            raise BusinessRuleViolation(
+                detail=(
+                    f"Não é permitido transitar de '{self.acquisition_status}' "
+                    f"para '{target}'."
+                ),
+                code="item_invalid_status_transition",
+            )
+
+        self.acquisition_status = str(target_status)
+
+    def start(self) -> None:
+        """Inicia a aquisição/execução do item, transitando para EM ANDAMENTO."""
+        self.transition_to(self.AcquisitionStatus.IN_PROGRESS)
+
+    def complete(self) -> None:
+        """Conclui a aquisição do item, transitando para CONCLUÍDO."""
+        self.transition_to(self.AcquisitionStatus.DONE)
+
+    def reopen(self) -> None:
+        """Reabre item concluído, transitando de DONE para IN_PROGRESS."""
+        self.transition_to(self.AcquisitionStatus.IN_PROGRESS)
+
+    def revert_to_pending(self) -> None:
+        """Reverte o item em andamento de volta para PENDENTE."""
+        self.transition_to(self.AcquisitionStatus.PENDING)
+
+    # ── Propriedades de Conveniência ─────────────────────────────────────
+
+    @property
+    def is_pending(self) -> bool:
+        """Indica se o item está pendente de aquisição."""
+        return self.acquisition_status == self.AcquisitionStatus.PENDING
+
+    @property
+    def is_in_progress(self) -> bool:
+        """Indica se o item está em andamento/aquisição."""
+        return self.acquisition_status == self.AcquisitionStatus.IN_PROGRESS
+
+    @property
+    def is_done(self) -> bool:
+        """Indica se o item já foi concluído."""
+        return self.acquisition_status == self.AcquisitionStatus.DONE
 
     @property
     def supplier(self) -> Supplier | None:

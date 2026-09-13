@@ -92,7 +92,7 @@ def create_contract(request: AuthRequest, payload: ContractIn) -> tuple[int, Con
     """
     user = request.user
     contract = ContractService.create(company=user.company, payload=payload)
-    return 201, contract
+    return 201, contract_get_selector(company=user.company, uuid=contract.uuid)
 
 
 @contracts_router.post(
@@ -112,7 +112,7 @@ def create_contract_full(
         company=user.company,
         payload=payload,
     )
-    return 201, contract
+    return 201, contract_get_selector(company=user.company, uuid=contract.uuid)
 
 
 @contracts_router.patch(
@@ -128,9 +128,8 @@ def update_contract(
     """
     user = request.user
     contract = contract_get_selector(company=user.company, uuid=uuid)
-    return ContractService.update(
-        company=user.company, instance=contract, payload=payload
-    )
+    ContractService.update(company=user.company, instance=contract, payload=payload)
+    return contract_get_selector(company=user.company, uuid=uuid)
 
 
 @contracts_router.delete(
@@ -160,10 +159,10 @@ def upload_contract_file(
     Associa um arquivo já carregado no R2/S3 (chave) ao contrato.
     """
     user = request.user
-    contract = ContractService.upload_file(
+    ContractService.upload_file(
         company=user.company, uuid=uuid, pdf_file_key=payload.pdf_file_key
     )
-    return contract
+    return contract_get_selector(company=user.company, uuid=uuid)
 
 
 @contracts_router.delete(
@@ -193,8 +192,9 @@ def transition_contract_status(
     """
     user = request.user
     contract = contract_get_selector(company=user.company, uuid=uuid)
-    return ContractService.transition_status(
+    ContractService.transition_status(
         company=user.company,
         instance=contract,
         new_status=payload.status,
     )
+    return contract_get_selector(company=user.company, uuid=uuid)
