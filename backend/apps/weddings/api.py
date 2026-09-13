@@ -77,7 +77,7 @@ def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
 def create_wedding(request: AuthRequest, payload: WeddingIn) -> tuple[int, Wedding]:
     user = request.user
     wedding = WeddingService.create(company=user.company, payload=payload)
-    return 201, wedding
+    return 201, wedding_get_selector(company=user.company, uuid=wedding.uuid)
 
 
 @router.patch(
@@ -92,10 +92,8 @@ def update_wedding(
 ) -> Wedding:
     user = request.user
     instance = wedding_get_selector(company=user.company, uuid=uuid)
-    updated_wedding = WeddingService.update(
-        company=user.company, instance=instance, payload=payload
-    )
-    return updated_wedding
+    WeddingService.update(company=user.company, instance=instance, payload=payload)
+    return wedding_get_selector(company=user.company, uuid=uuid)
 
 
 @router.delete(

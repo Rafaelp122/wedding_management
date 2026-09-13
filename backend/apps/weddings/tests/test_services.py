@@ -27,18 +27,34 @@ from apps.weddings.tests.factories import WeddingFactory
 class TestWeddingService:
     """Testes de mutação do WeddingService (create, update, delete)."""
 
-    def test_update_wedding_with_empty_bride_name_raises_business_rule_violation(
+    def test_update_wedding_with_premature_completion_raises_business_rule_violation(
         self, user
     ):
-        """update() com dado inválido deve levantar BusinessRuleViolation."""
-        wedding = WeddingFactory(company=user.company, bride_name="Antiga")
+        """update() tentando concluir casamento futuro levanta BusinessRuleViolation."""
+        future_date = timezone.now().date() + timedelta(days=30)
+        wedding = WeddingFactory(company=user.company, date=future_date)
 
-        with pytest.raises(BusinessRuleViolation, match="não pode estar vazio"):
+        with pytest.raises(
+            BusinessRuleViolation, match="Não pode marcar como CONCLUÍDO antes da data"
+        ):
             WeddingService.update(
                 instance=wedding,
                 company=user.company,
-                payload=WeddingPatchIn(**{"bride_name": ""}),
+                payload=WeddingPatchIn(status=Wedding.StatusChoices.COMPLETED),
             )
+
+    def test_update_wedding_delegates_valid_status_transition(self, user):
+        """update() delega transição de status válida para a entidade."""
+        wedding = WeddingFactory(company=user.company)
+
+        updated = WeddingService.update(
+            instance=wedding,
+            company=user.company,
+            payload=WeddingPatchIn(status=Wedding.StatusChoices.CANCELED),
+        )
+
+        assert updated.status == Wedding.StatusChoices.CANCELED
+        assert updated.is_canceled is True
 
     def test_create_wedding_does_not_create_financial_data_eagerly(
         self, user, wedding_payload
@@ -103,21 +119,54 @@ class TestWeddingService:
                 payload=WeddingPatchIn(**{"bride_name": "Hack"}),
             )
 
-    def test_create_wedding_fail_fast_validation_error(self, user, wedding_payload):
+    def test_create_wedding_fail_fast_schema_validation_error(
+        self, user, wedding_payload
+    ):
         """
-        Cenário 2: Garante que dados inválidos no casamento interrompem o processo
-        antes de tocar na parte financeira (Fail Fast).
+        Nível 1 (Pydantic Fail Fast): Garante que dados sintáticos inválidos são
+        rejeitados na instanciação do Schema antes de tocar no Service ou banco.
         """
+        from pydantic import ValidationError as PydanticValidationError
+
         wedding_payload["bride_name"] = ""
 
-        with pytest.raises(BusinessRuleViolation, match="não pode estar vazio"):
-            WeddingService.create(
-                company=user.company, payload=WeddingIn(**wedding_payload)
-            )
+        with pytest.raises(PydanticValidationError):
+            WeddingIn(**wedding_payload)
 
         assert Wedding.objects.count() == 0
         assert Budget.objects.count() == 0
         assert BudgetCategory.objects.count() == 0
+
+    def test_wedding_service_complete_success(self, user):
+        """Caso de uso: complete() conclui casamento que já ocorreu ou ocorre hoje."""
+        today = timezone.now().date()
+        wedding = WeddingFactory(company=user.company, date=today)
+
+        completed = WeddingService.complete(company=user.company, instance=wedding)
+
+        assert completed.status == Wedding.StatusChoices.COMPLETED
+        assert completed.is_completed is True
+
+    def test_wedding_service_complete_premature_fails(self, user):
+        """Caso de uso: complete() rejeita conclusão precoce
+        com BusinessRuleViolation.
+        """
+        future_date = timezone.now().date() + timedelta(days=10)
+        wedding = WeddingFactory(company=user.company, date=future_date)
+
+        with pytest.raises(
+            BusinessRuleViolation, match="Não pode marcar como CONCLUÍDO antes da data"
+        ):
+            WeddingService.complete(company=user.company, instance=wedding)
+
+    def test_wedding_service_cancel_success(self, user):
+        """Caso de uso: cancel() cancela casamento em andamento."""
+        wedding = WeddingFactory(company=user.company)
+
+        canceled = WeddingService.cancel(company=user.company, instance=wedding)
+
+        assert canceled.status == Wedding.StatusChoices.CANCELED
+        assert canceled.is_canceled is True
 
     def test_create_wedding_fail_with_invalid_date(self, user, wedding_payload):
         """
