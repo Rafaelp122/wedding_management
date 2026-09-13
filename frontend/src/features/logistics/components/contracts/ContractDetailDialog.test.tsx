@@ -300,12 +300,109 @@ describe("ContractDetailDialog", () => {
     expect(await screen.findByText("Aditivos")).toBeInTheDocument();
     expect(screen.getByText("Aditivo Prazo")).toBeInTheDocument();
     expect(screen.getByText("Aditivo Escopo")).toBeInTheDocument();
-    expect(screen.getByText(/1\.000,00/)).toBeInTheDocument();
-    expect(screen.getByText(/2\.500,00/)).toBeInTheDocument();
+    expect(screen.getAllByText(/1\.000,00/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/2\.500,00/).length).toBeGreaterThanOrEqual(1);
+
+    // Verifica exibição do resumo financeiro consolidado
+    expect(screen.getByText("Valor Principal:")).toBeInTheDocument();
+    expect(screen.getByText("Total Consolidado:")).toBeInTheDocument();
+    expect(screen.getByText("Total dos Aditivos")).toBeInTheDocument();
 
     const assinadoBadges = screen.getAllByText("Assinado");
     expect(assinadoBadges.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Rascunho")).toBeInTheDocument();
+  });
+
+  it("shows consolidated total from API fields when provided", async () => {
+    const contractWithAddendums = createMockContract({
+      total_amount: "10000.00",
+      addendums_count: 2,
+      addendums_total_amount: "3500.00",
+      total_amount_with_addendums: "13500.00",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(contractWithAddendums);
+      })
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText("Valor Principal:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*10\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText("Aditivos (2):")).toBeInTheDocument();
+    expect(screen.getByText(/\+\s*R\$\s*3\.500,00/)).toBeInTheDocument();
+    expect(screen.getByText("Total Consolidado:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*13\.500,00/)).toBeInTheDocument();
+  });
+
+  it("ignores canceled addendums when calculating fallback sum without API fields", async () => {
+    const mainContract = createMockContract({
+      total_amount: "5000.00",
+      addendums_count: 0,
+      addendums_total_amount: undefined,
+      total_amount_with_addendums: undefined,
+    });
+    const activeAddendum = createMockContract({
+      uuid: "ad-1",
+      name: "Aditivo Ativo",
+      total_amount: "2000.00",
+      status: "SIGNED",
+      parent: CONTRACT_UUID,
+    });
+    const canceledAddendum = createMockContract({
+      uuid: "ad-2",
+      name: "Aditivo Cancelado",
+      total_amount: "3000.00",
+      status: "CANCELED",
+      parent: CONTRACT_UUID,
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(mainContract);
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({
+          items: [activeAddendum, canceledAddendum],
+          count: 2,
+        });
+      })
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText("Valor Principal:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*5\.000,00/)).toBeInTheDocument();
+    // Apenas o aditivo ativo de 2000 é somado
+    expect(screen.getByText(/\+\s*R\$\s*2\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*7\.000,00/)).toBeInTheDocument();
+  });
+
+  it("renders simple 'Valor Total' when contract has no addendums", async () => {
+    const simpleContract = createMockContract({
+      total_amount: "8000.00",
+      addendums_count: 0,
+      addendums_total_amount: "0.00",
+      total_amount_with_addendums: "8000.00",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(simpleContract);
+      }),
+      http.get("*/api/v1/logistics/contracts/", () => {
+        return HttpResponse.json({ items: [], count: 0 });
+      })
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText("Valor Total:")).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*8\.000,00/)).toBeInTheDocument();
+    expect(screen.queryByText("Valor Principal:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Total Consolidado:")).not.toBeInTheDocument();
   });
 
   it('shows "Criar Aditivo" button when onCreateAddendum is provided', async () => {

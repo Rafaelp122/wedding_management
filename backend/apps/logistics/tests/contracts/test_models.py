@@ -6,6 +6,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.core.validators import MaxFileSizeValidator
 from apps.logistics.models import Contract, Supplier
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
@@ -274,51 +275,101 @@ class TestContractFileValidation:
 
 @pytest.mark.django_db
 class TestContractStatusTransitionValidation:
-    """Testes da máquina de estados de contrato em Contract.clean()."""
+    """Testes da máquina de estados e métodos de ciclo de vida do modelo Contract."""
 
-    _SIGNED_KWARGS = {
-        "pdf_file": "contracts/dummy.pdf",
-        "signed_date": date.today(),
-        "total_amount": Decimal("5000.00"),
-    }
-
-    _VALID: list[tuple[str, str, dict[str, object]]] = [
-        ("DRAFT", "PENDING", {}),
-        ("DRAFT", "CANCELED", {}),
-        ("PENDING", "SIGNED", {}),
-        ("PENDING", "DRAFT", {}),
-        ("PENDING", "CANCELED", {}),
-        ("SIGNED", "CANCELED", _SIGNED_KWARGS),
-        ("CANCELED", "DRAFT", {}),
+    _VALID: list[tuple[str, str]] = [
+        ("DRAFT", "PENDING"),
+        ("DRAFT", "CANCELED"),
+        ("PENDING", "SIGNED"),
+        ("PENDING", "DRAFT"),
+        ("PENDING", "CANCELED"),
+        ("SIGNED", "CANCELED"),
+        ("CANCELED", "DRAFT"),
     ]
 
-    _INVALID: list[tuple[str, str, dict[str, object]]] = [
-        ("DRAFT", "SIGNED", {}),
-        ("SIGNED", "DRAFT", _SIGNED_KWARGS),
-        ("CANCELED", "SIGNED", {}),
-        ("CANCELED", "PENDING", {}),
+    _INVALID: list[tuple[str, str]] = [
+        ("DRAFT", "SIGNED"),
+        ("SIGNED", "DRAFT"),
+        ("CANCELED", "SIGNED"),
+        ("CANCELED", "PENDING"),
     ]
 
-    @pytest.mark.parametrize("from_status, to_status, kwargs", _VALID)
-    def test_valid_transitions(
-        self, make_contract: Any, from_status: Any, to_status: Any, kwargs: Any
+    @pytest.mark.parametrize("from_status, to_status", _VALID)
+    def test_can_transition_to_valid(
+        self, make_contract: Any, from_status: str, to_status: str
     ) -> None:
-        contract = make_contract(from_status, **kwargs)
-        if to_status == "SIGNED":
-            contract.pdf_file = "contracts/test.pdf"
-            contract.signed_date = date.today()
-            contract.total_amount = Decimal("5000.00")
-        contract.status = to_status
-        contract.full_clean()
+        contract = make_contract(from_status)
+        assert contract.can_transition_to(to_status) is True
 
-    @pytest.mark.parametrize("from_status, to_status, kwargs", _INVALID)
-    def test_invalid_transitions(
-        self, make_contract: Any, from_status: Any, to_status: Any, kwargs: Any
+    @pytest.mark.parametrize("from_status, to_status", _INVALID)
+    def test_can_transition_to_invalid(
+        self, make_contract: Any, from_status: str, to_status: str
     ) -> None:
-        contract = make_contract(from_status, **kwargs)
-        contract.status = to_status
-        with pytest.raises(ValidationError):
-            contract.full_clean()
+        contract = make_contract(from_status)
+        assert contract.can_transition_to(to_status) is False
+
+    def test_can_transition_to_same_status_is_true(self, make_contract: Any) -> None:
+        contract = make_contract("DRAFT")
+        assert contract.can_transition_to("DRAFT") is True
+        assert contract.can_transition_to(Contract.StatusChoices.DRAFT) is True
+
+    @pytest.mark.parametrize("from_status, to_status", _VALID)
+    def test_transition_to_valid(
+        self, make_contract: Any, from_status: str, to_status: str
+    ) -> None:
+        contract = make_contract(from_status)
+        contract.transition_to(to_status)
+        assert contract.status == to_status
+
+    @pytest.mark.parametrize("from_status, to_status", _INVALID)
+    def test_transition_to_invalid_raises_violation(
+        self, make_contract: Any, from_status: str, to_status: str
+    ) -> None:
+        contract = make_contract(from_status)
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            contract.transition_to(to_status)
+        msg = f"Não é permitido transitar de '{from_status}' para '{to_status}'"
+        assert msg in str(exc_info.value.detail)
+
+    def test_transition_to_same_status_noop(self, make_contract: Any) -> None:
+        contract = make_contract("DRAFT")
+        contract.transition_to("DRAFT")
+        assert contract.status == "DRAFT"
+
+    def test_semantic_send_to_pending(self, make_contract: Any) -> None:
+        contract = make_contract("DRAFT")
+        contract.send_to_pending()
+        assert contract.status == Contract.StatusChoices.PENDING
+        assert contract.is_pending is True
+
+    def test_semantic_sign(self, make_contract: Any) -> None:
+        contract = make_contract("PENDING")
+        today = date.today()
+        dummy_pdf = "contracts/signed.pdf"
+        contract.sign(signed_date=today, pdf_file=dummy_pdf)
+        assert contract.status == Contract.StatusChoices.SIGNED
+        assert contract.signed_date == today
+        assert contract.pdf_file == dummy_pdf
+        assert contract.is_signed is True
+
+    def test_semantic_cancel(self, make_contract: Any) -> None:
+        contract = make_contract("DRAFT")
+        contract.cancel()
+        assert contract.status == Contract.StatusChoices.CANCELED
+        assert contract.is_canceled is True
+
+    def test_semantic_revert_to_draft(self, make_contract: Any) -> None:
+        contract = make_contract("CANCELED")
+        contract.revert_to_draft()
+        assert contract.status == Contract.StatusChoices.DRAFT
+        assert contract.is_draft is True
+
+    def test_convenience_properties(self, make_contract: Any) -> None:
+        contract = make_contract("DRAFT")
+        assert contract.is_draft is True
+        assert contract.is_pending is False
+        assert contract.is_signed is False
+        assert contract.is_canceled is False
 
     def test_new_instance_not_validated_as_transition(self) -> None:
         """Criação direta de contrato ASSINADO não deve falhar por transição,
@@ -334,3 +385,69 @@ class TestContractStatusTransitionValidation:
         errors = str(exc_info.value)
         assert "PDF" in errors.upper() or "data" in errors.lower()
         assert "transitar" not in errors
+
+
+@pytest.mark.django_db
+class TestContractHierarchyValidation:
+    """Testes de validação de integridade da hierarquia e termos aditivos."""
+
+    def test_contract_self_parent_fails(self, user: Any) -> None:
+        """Um contrato não pode ser pai de si mesmo."""
+        wedding = WeddingFactory(user_context=user)
+        contract = ContractFactory(wedding=wedding, company=user.company)
+        contract.parent = contract
+
+        with pytest.raises(ValidationError) as exc_info:
+            contract.clean()
+
+        assert "não pode ser pai de si mesmo" in str(exc_info.value)
+
+    def test_contract_cross_wedding_parent_fails(self, user: Any) -> None:
+        """Contrato pai deve pertencer ao mesmo casamento."""
+        wedding1 = WeddingFactory(user_context=user)
+        wedding2 = WeddingFactory(user_context=user)
+        parent = ContractFactory(wedding=wedding1, company=user.company)
+        child = ContractFactory(wedding=wedding2, company=user.company)
+        child.parent = parent
+
+        with pytest.raises(ValidationError) as exc_info:
+            child.clean()
+
+        assert "outro casamento" in str(exc_info.value)
+
+    def test_contract_circular_parent_fails(self, user: Any) -> None:
+        """Cadeia circular de parentesco é bloqueada."""
+        wedding = WeddingFactory(user_context=user)
+        c1 = ContractFactory(wedding=wedding, company=user.company)
+        c2 = ContractFactory(wedding=wedding, company=user.company, parent=c1)
+        c3 = ContractFactory(wedding=wedding, company=user.company, parent=c2)
+
+        c1.parent = c3
+        with pytest.raises(ValidationError) as exc_info:
+            c1.clean()
+
+        assert "descendente" in str(exc_info.value)
+
+    def test_contract_valid_parent_passes(self, user: Any) -> None:
+        """Vínculo de aditivo válido com pai do mesmo casamento passa com sucesso."""
+        wedding = WeddingFactory(user_context=user)
+        parent = ContractFactory(wedding=wedding, company=user.company)
+        child = ContractFactory(wedding=wedding, company=user.company, parent=parent)
+        child.clean()
+
+    def test_unsaved_contract_with_parent_passes(self, user: Any) -> None:
+        """Contrato novo (sem pk) com pai válido passa na validação."""
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding, company=user.company, supplier=supplier
+        )
+        new_contract = Contract(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            parent=parent,
+            total_amount=Decimal("1000.00"),
+            status=Contract.StatusChoices.DRAFT,
+        )
+        new_contract.clean()

@@ -4,6 +4,7 @@ Exporta todos os seletores de leitura para fornecedores, contratos e itens.
 """
 
 from .contract_selectors import (
+    contract_consolidated_total_selector,
     contract_get_selector,
     contract_list_selector,
     contract_pending_count_selector,
@@ -19,6 +20,7 @@ from .supplier_selectors import (
 
 
 __all__ = [
+    "contract_consolidated_total_selector",
     "contract_get_selector",
     "contract_list_selector",
     "contract_pending_count_selector",

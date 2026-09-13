@@ -2,6 +2,7 @@ from datetime import timedelta
 from typing import Any, cast
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.scheduler.models import Event
@@ -126,3 +127,92 @@ class TestEventReminder:
         """RecurrenceChoices contém os valores em português."""
         expected = {"none", "semanal", "quinzenal", "mensal"}
         assert set(Event.RecurrenceChoices.values) == expected
+
+
+@pytest.mark.django_db
+class TestEventRichDomainModel:
+    """Testes de invariantes e métodos de domínio do modelo Event."""
+
+    def test_clean_end_time_before_start_time_raises_error(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now()
+        event = Event(
+            company=user.company,
+            wedding=wedding,
+            title="Evento Inválido",
+            start_time=now,
+            end_time=now - timedelta(minutes=30),
+        )
+        with pytest.raises(ValidationError) as exc_info:
+            event.clean()
+        assert "end_time" in exc_info.value.message_dict
+        assert "não pode ser anterior" in str(exc_info.value.message_dict["end_time"])
+
+    def test_clean_valid_interval_passes(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now()
+        event = Event(
+            company=user.company,
+            wedding=wedding,
+            title="Evento Válido",
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+        )
+        event.clean()
+
+    def test_semantic_properties(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now()
+
+        event = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.PAYMENT,
+            recurrence_rule=Event.RecurrenceChoices.MONTHLY,
+            start_time=now,
+            end_time=now + timedelta(hours=1, minutes=30),
+        )
+        assert event.is_payment_event is True
+        assert event.is_recurrent is True
+        assert event.duration == timedelta(hours=1, minutes=30)
+
+        non_payment = EventFactory(
+            wedding=wedding,
+            event_type=Event.TypeChoices.MEETING,
+            recurrence_rule=Event.RecurrenceChoices.NONE,
+            start_time=now,
+            end_time=None,
+        )
+        assert non_payment.is_payment_event is False
+        assert non_payment.is_recurrent is False
+        assert non_payment.duration is None
+
+    def test_reschedule_valid(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now()
+        event = EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=1),
+        )
+
+        new_start = now + timedelta(days=2)
+        new_end = new_start + timedelta(hours=3)
+        event.reschedule(new_start, new_end)
+
+        assert event.start_time == new_start
+        assert event.end_time == new_end
+        assert event.duration == timedelta(hours=3)
+
+    def test_reschedule_invalid_raises_error(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now()
+        event = EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=1),
+        )
+
+        new_start = now + timedelta(days=2)
+        new_end = new_start - timedelta(minutes=10)
+        with pytest.raises(ValidationError):
+            event.reschedule(new_start, new_end)

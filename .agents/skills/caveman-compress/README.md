@@ -48,7 +48,7 @@ All validations passed ✅ — headings, code blocks, URLs, file paths preserved
 <tr>
 <td width="50%">
 
-### 📄 Original (706 tokens)
+### Original (706 tokens)
 
 > "I strongly prefer TypeScript with strict mode enabled for all new code. Please don't use `any` type unless there's genuinely no way around it, and if you do, leave a comment explaining the reasoning. I find that taking the time to properly type things catches a lot of bugs before they ever make it to runtime."
 

@@ -227,9 +227,8 @@ class NotificationService:
             raise ObjectNotFoundError(detail="Notificação não encontrada.")
 
         if not notification.is_read:
-            notification.is_read = True
-            notification.read_at = timezone.now()
-            notification.save()
+            notification.mark_as_read()
+            notification.save(update_fields=["is_read", "read_at", "updated_at"])
             logger.info(
                 "Notificação marcada como lida: uuid=%s para user_id=%s",
                 notification.uuid,

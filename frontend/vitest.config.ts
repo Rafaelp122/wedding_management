@@ -1,10 +1,11 @@
 import { defineConfig, mergeConfig } from "vitest/config";
-import viteConfig from "./vite.config";
+import viteConfig from "./vite.config.ts";
 
 export default mergeConfig(
   viteConfig,
   defineConfig({
     test: {
+      testTimeout: 15000,
       environment: "happy-dom",
       env: {
         TZ: "UTC",

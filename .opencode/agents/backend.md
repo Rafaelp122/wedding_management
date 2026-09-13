@@ -9,13 +9,14 @@ tools:
   bash: true
 permission:
   bash:
-    "make test*": "allow"
-    "make lint*": "allow"
-    "make mypy*": "allow"
-    "make migrate*": "allow"
-    "make makemigrations*": "allow"
-    "make openapi*": "allow"
-    "make format*": "allow"
+    "just test*": "allow"
+    "just lint*": "allow"
+    "just mypy*": "allow"
+    "just migrate*": "allow"
+    "just makemigrations*": "allow"
+    "just openapi*": "allow"
+    "just format*": "allow"
+    "just sync-api*": "allow"
     "docker compose exec backend*": "allow"
     "uv*": "allow"
 ---
@@ -34,6 +35,6 @@ Read `AGENTS.md` for architectural rules (Service Layer, Multi-tenancy, Data Int
 - Docker, `uv` package manager
 
 ## Workflow
-- After API changes: run `make sync-api`
-- Before finishing: `make lint`, `make mypy`, `make test`
+- After API changes: run `just sync-api`
+- Before finishing: `just lint`, `just mypy`, `just test`
 - Commits: Conventional Commits (`feat(weddings): add list endpoint`)

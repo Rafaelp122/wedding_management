@@ -9,8 +9,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
@@ -41,7 +42,6 @@ FROM builder AS development
 
 RUN uv sync --frozen --no-install-project --all-extras
 
-
 COPY . .
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.development
@@ -60,7 +60,7 @@ ENV DJANGO_SETTINGS_MODULE=config.settings.production
 
 RUN useradd -m -u 1000 appuser
 
-COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+COPY --from=builder --chown=appuser:appuser /opt/venv /opt/venv
 
 COPY --chown=appuser:appuser . .
 

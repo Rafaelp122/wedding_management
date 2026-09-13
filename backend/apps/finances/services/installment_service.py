@@ -260,6 +260,7 @@ class InstallmentService:
             f"Atualizando Parcela uuid={instance.uuid} por company_id={company.id}"
         )
 
+        updated_fields: set[str] = set()
         data = payload.model_dump(exclude_unset=True)
         protected_fields = {"amount", "due_date", "installment_number"}
         changed_protected_fields = {
@@ -281,8 +282,11 @@ class InstallmentService:
 
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
-        instance.save()
+        if updated_fields:
+            updated_fields.add("updated_at")
+            instance.save(update_fields=list(updated_fields))
 
         # Revalidação da Despesa Pai (Tolerância Zero)
         try:
@@ -326,15 +330,8 @@ class InstallmentService:
             detail="Parcela não encontrada ou acesso negado.",
             code="installment_not_found_or_denied",
         )
-        if instance.status == Installment.StatusChoices.PAID:
-            raise BusinessRuleViolation(
-                detail="Esta parcela já foi marcada como paga.",
-                code="installment_already_paid",
-            )
-
-        instance.status = Installment.StatusChoices.PAID
-        instance.paid_date = date.today()
-        instance.save()
+        instance.mark_as_paid(paid_date=date.today())
+        instance.save(update_fields=["status", "paid_date", "updated_at"])
 
         try:
             instance.expense.full_clean()
@@ -377,18 +374,8 @@ class InstallmentService:
             detail="Parcela não encontrada ou acesso negado.",
             code="installment_not_found_or_denied",
         )
-        if instance.status != Installment.StatusChoices.PAID:
-            raise BusinessRuleViolation(
-                detail="Apenas parcelas marcadas como pagas podem ser desmarcadas.",
-                code="installment_not_paid",
-            )
-
-        instance.paid_date = None
-        if instance.due_date < date.today():
-            instance.status = Installment.StatusChoices.OVERDUE
-        else:
-            instance.status = Installment.StatusChoices.PENDING
-        instance.save()
+        instance.unmark_as_paid()
+        instance.save(update_fields=["status", "paid_date", "updated_at"])
 
         try:
             instance.expense.full_clean()
@@ -481,10 +468,13 @@ class InstallmentService:
                     code="due_date_after_next_installment",
                 )
 
+        updated_fields: set[str] = set()
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
-        instance.save()
+        if updated_fields:
+            instance.save(update_fields=list(updated_fields | {"updated_at"}))
 
         try:
             instance.expense.full_clean()
@@ -597,7 +587,7 @@ class InstallmentService:
 
         for inst in pending_overdue:
             inst.status = Installment.StatusChoices.OVERDUE
-            inst.save(skip_clean=True)
+            inst.save(skip_clean=True, update_fields=["status", "updated_at"])
             count += 1
 
             users = [u for u in inst.company.users.all() if u.is_active]

@@ -5,6 +5,7 @@ from typing import Any, cast
 import pytest
 from django.core.exceptions import ValidationError
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.finances.models import Budget, BudgetCategory, Expense, Installment
 from apps.finances.tests.factories import (
     BudgetCategoryFactory as _BudgetCategoryFactory,
@@ -207,3 +208,311 @@ class TestInstallmentAmountValidator:
 
         with pytest.raises(ValidationError):
             installment.full_clean()
+
+
+@pytest.mark.django_db
+class TestInstallmentTransitions:
+    """Testes da máquina de estados e transições de Installment."""
+
+    def test_allowed_transitions_matrix(self) -> None:
+        """Verifica se a matriz de transições permitidas está correta."""
+        assert Installment.ALLOWED_TRANSITIONS == {
+            Installment.StatusChoices.PENDING: {
+                Installment.StatusChoices.PAID,
+                Installment.StatusChoices.OVERDUE,
+            },
+            Installment.StatusChoices.OVERDUE: {
+                Installment.StatusChoices.PAID,
+                Installment.StatusChoices.PENDING,
+            },
+            Installment.StatusChoices.PAID: {
+                Installment.StatusChoices.PENDING,
+                Installment.StatusChoices.OVERDUE,
+            },
+        }
+
+    def test_can_transition_to(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        assert inst.can_transition_to(Installment.StatusChoices.PAID) is True
+        assert inst.can_transition_to(Installment.StatusChoices.OVERDUE) is True
+        assert inst.can_transition_to("UNKNOWN") is False
+
+    def test_transition_to_valid(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        inst.transition_to(Installment.StatusChoices.OVERDUE)
+        assert inst.status == Installment.StatusChoices.OVERDUE
+
+    def test_transition_to_same_status_noop(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        inst.transition_to(Installment.StatusChoices.PENDING)
+        assert inst.status == Installment.StatusChoices.PENDING
+
+    def test_transition_to_invalid_raises_violation(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            inst.transition_to("INVALID_STATUS")
+        assert exc_info.value.code == "installment_invalid_status_transition"
+        assert "Não é permitido transitar" in str(exc_info.value.detail)
+
+
+@pytest.mark.django_db
+class TestInstallmentSemanticMethods:
+    """Testes dos métodos semânticos de ciclo de vida de Installment."""
+
+    def test_mark_as_paid_success(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        custom_date = date.today() - timedelta(days=2)
+        inst.mark_as_paid(paid_date=custom_date)
+
+        assert inst.status == Installment.StatusChoices.PAID
+        assert inst.paid_date == custom_date
+        assert inst.is_paid is True
+
+    def test_mark_as_paid_default_today(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        inst.mark_as_paid()
+        assert inst.paid_date == date.today()
+        assert inst.is_paid is True
+
+    def test_mark_as_paid_already_paid_raises_violation(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            paid_date=date.today(),
+            status=Installment.StatusChoices.PAID,
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            inst.mark_as_paid()
+        assert exc_info.value.code == "installment_already_paid"
+
+    def test_unmark_as_paid_future_due_date_transitions_to_pending(
+        self, user: Any
+    ) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() + timedelta(days=5),
+            paid_date=date.today(),
+            status=Installment.StatusChoices.PAID,
+        )
+        inst.unmark_as_paid()
+        assert inst.status == Installment.StatusChoices.PENDING
+        assert inst.paid_date is None
+        assert inst.is_pending is True
+
+    def test_unmark_as_paid_past_due_date_transitions_to_overdue(
+        self, user: Any
+    ) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() - timedelta(days=5),
+            paid_date=date.today(),
+            status=Installment.StatusChoices.PAID,
+        )
+        inst.unmark_as_paid()
+        assert inst.status == Installment.StatusChoices.OVERDUE
+        assert inst.paid_date is None
+        assert inst.is_overdue is True
+
+    def test_unmark_as_paid_not_paid_raises_violation(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            inst.unmark_as_paid()
+        assert exc_info.value.code == "installment_not_paid"
+
+    def test_mark_as_overdue_success(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() - timedelta(days=1),
+            status=Installment.StatusChoices.PENDING,
+        )
+        inst.mark_as_overdue()
+        assert inst.status == Installment.StatusChoices.OVERDUE
+        assert inst.is_overdue is True
+
+    def test_mark_as_overdue_future_due_date_raises_violation(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() + timedelta(days=2),
+            status=Installment.StatusChoices.PENDING,
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            inst.mark_as_overdue()
+        assert exc_info.value.code == "installment_not_overdue"
+
+
+@pytest.mark.django_db
+class TestInstallmentConvenienceProperties:
+    """Testes de propriedades de conveniência em Installment."""
+
+    def test_status_flags(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PENDING,
+        )
+        assert inst.is_pending is True
+        assert inst.is_paid is False
+        assert inst.is_overdue is False
+
+        inst.status = Installment.StatusChoices.PAID
+        assert inst.is_paid is True
+        assert inst.is_pending is False
+
+        inst.status = Installment.StatusChoices.OVERDUE
+        assert inst.is_overdue is True
+        assert inst.is_pending is False
+
+    def test_is_late_flag(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst_late = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() - timedelta(days=2),
+            status=Installment.StatusChoices.PENDING,
+        )
+        assert inst_late.is_late is True
+
+        inst_ontime = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("500.00"),
+            due_date=date.today() + timedelta(days=2),
+            status=Installment.StatusChoices.PENDING,
+        )
+        assert inst_ontime.is_late is False
+
+        inst_paid_past = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=3,
+            amount=Decimal("500.00"),
+            due_date=date.today() - timedelta(days=2),
+            paid_date=date.today(),
+            status=Installment.StatusChoices.PAID,
+        )
+        assert inst_paid_past.is_late is False
+
+    def test_days_overdue_and_until_due(self, user: Any) -> None:
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        past_inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today() - timedelta(days=5),
+            status=Installment.StatusChoices.OVERDUE,
+        )
+        assert past_inst.days_overdue == 5
+        assert past_inst.days_until_due == 0
+
+        future_inst = Installment(
+            company=user.company,
+            wedding=expense.wedding,
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("500.00"),
+            due_date=date.today() + timedelta(days=10),
+            status=Installment.StatusChoices.PENDING,
+        )
+        assert future_inst.days_overdue == 0
+        assert future_inst.days_until_due == 10

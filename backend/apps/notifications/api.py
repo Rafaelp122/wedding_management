@@ -13,6 +13,7 @@ from apps.notifications.schemas import (
     UnreadCountOut,
 )
 from apps.notifications.selectors import (
+    notification_get_selector,
     notification_list_selector,
     notification_unread_count_selector,
 )
@@ -118,8 +119,11 @@ def clear_all(request: AuthRequest) -> BulkOperationOut:
 def mark_as_read(request: AuthRequest, notification_id: UUID4) -> Any:
     """Marca uma notificação específica como lida."""
     user = request.user
-    return NotificationService.mark_as_read(
+    NotificationService.mark_as_read(
         company=user.company, user=user, notification_id=notification_id
+    )
+    return notification_get_selector(
+        company=user.company, user=user, uuid=notification_id
     )
 
 

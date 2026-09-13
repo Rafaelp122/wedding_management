@@ -173,7 +173,7 @@ class TestExpenseServiceCreate:
         }
 
         with pytest.raises(BusinessRuleViolation) as exc_info:
-            ExpenseService.create(user.company, ExpenseIn(**data))
+            ExpenseService.create(user.company, ExpenseIn.model_construct(**data))
 
         assert "invalid_installment_number" in str(exc_info.value.code)
 
@@ -367,6 +367,41 @@ class TestExpenseServiceUpdate:
                 other_expense,
                 ExpensePatchIn.model_construct(name="Hack"),
             )
+
+    def test_update_expense_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """Verifica que update() persiste cirurgicamente apenas campos alterados."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            description="Antiga",
+            contract=None,
+            actual_amount=Decimal("500.00"),
+            name="Nome Antigo",
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+        )
+        spy_save = mocker.spy(expense, "save")
+
+        updated = ExpenseService.update(
+            user.company,
+            expense,
+            ExpensePatchIn.model_construct(
+                name="Nome Novo", description="Nova Descrição"
+            ),
+        )
+
+        assert updated.name == "Nome Novo"
+        assert updated.description == "Nova Descrição"
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"name", "description", "updated_at"}
 
     def test_update_expense_amount_with_installment_count(self, user: Any) -> None:
         """Alterar actual_amount + especificar num_installments redistribui

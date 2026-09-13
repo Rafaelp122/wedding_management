@@ -144,10 +144,12 @@ class BudgetCategoryService:
             f"Atualizando Categoria uuid={instance.uuid} por company_id={company.id}"
         )
 
+        updated_fields: set[str] = set()
         data = payload.model_dump(exclude_unset=True)
 
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
         # TRAVA DE SEGURANÇA (TOCTOU): lock no budget antes de re-validar teto
         budget = (
@@ -159,7 +161,9 @@ class BudgetCategoryService:
         instance.full_clean()
         _validate_budget_cap(company, instance, budget)
 
-        instance.save(skip_clean=True)
+        if updated_fields:
+            updated_fields.add("updated_at")
+            instance.save(skip_clean=True, update_fields=list(updated_fields))
 
         logger.info(f"Categoria uuid={instance.uuid} atualizada com sucesso.")
         return instance

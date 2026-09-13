@@ -63,6 +63,6 @@ def event_get_selector(*, company: Company, uuid: UUID | str) -> Event:
         Event,
         company,
         uuid,
-        select_related=["wedding"],
+        select_related=["wedding", "company"],
         code="event_not_found_or_denied",
     )

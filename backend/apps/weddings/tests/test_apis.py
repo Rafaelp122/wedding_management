@@ -65,6 +65,78 @@ class TestWeddingNinjaAPI:
         assert body["code"] == "wedding_validation_error"
         assert "A data do casamento não pode ser no passado." in body["detail"]
 
+    def test_create_wedding_with_empty_bride_name_returns_422_schema_error(
+        self, auth_client
+    ):
+        """Nível 1: Pydantic rejeita string vazia com 422
+        validation_error na entrada.
+        """
+        payload = {
+            "groom_name": "Noivo",
+            "bride_name": "",
+            "date": (timezone.now().date() + timedelta(days=30)).isoformat(),
+            "location": "Salão Teste",
+        }
+
+        response = auth_client.post(
+            "/api/v1/weddings/", data=payload, content_type="application/json"
+        )
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "validation_error"
+
+    def test_create_wedding_with_whitespace_only_bride_name_returns_422(
+        self, auth_client
+    ):
+        """Nível 1: str_strip_whitespace=True sanitiza e rejeita apenas espaços."""
+        payload = {
+            "groom_name": "Noivo",
+            "bride_name": "    ",
+            "date": (timezone.now().date() + timedelta(days=30)).isoformat(),
+            "location": "Salão Teste",
+        }
+
+        response = auth_client.post(
+            "/api/v1/weddings/", data=payload, content_type="application/json"
+        )
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "validation_error"
+
+    def test_create_wedding_with_negative_guests_returns_422(self, auth_client):
+        """Nível 1: expected_guests ge=1 rejeita valores negativos ou zero."""
+        payload = {
+            "groom_name": "Noivo",
+            "bride_name": "Noiva",
+            "date": (timezone.now().date() + timedelta(days=30)).isoformat(),
+            "location": "Salão Teste",
+            "expected_guests": -10,
+        }
+
+        response = auth_client.post(
+            "/api/v1/weddings/", data=payload, content_type="application/json"
+        )
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "validation_error"
+
+    def test_update_wedding_with_empty_bride_name_returns_422(self, auth_client, user):
+        """Nível 1: WeddingPatchIn rejeita bride_name vazio com 422 validation_error."""
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.patch(
+            f"/api/v1/weddings/{wedding.uuid}/",
+            data={"bride_name": ""},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "validation_error"
+
     def test_unauthenticated_access_denied(self, client):
         response = client.get("/api/v1/weddings/")
         assert response.status_code == 401

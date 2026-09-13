@@ -13,24 +13,24 @@ class WeddingStatusEnum(StrEnum):
 
 
 class WeddingIn(Schema):
-    model_config = {"extra": "ignore"}
+    model_config = {"extra": "ignore", "str_strip_whitespace": True}
 
-    groom_name: str
-    bride_name: str
+    groom_name: str = Field(..., min_length=1, max_length=100)
+    bride_name: str = Field(..., min_length=1, max_length=100)
     date: datetime.date
-    location: str
-    expected_guests: int | None = None
+    location: str = Field(..., min_length=1, max_length=255)
+    expected_guests: int | None = Field(None, ge=1)
     template: str | None = Field(None, max_length=50)
 
 
 class WeddingPatchIn(Schema):
-    model_config = {"extra": "ignore"}
+    model_config = {"extra": "ignore", "str_strip_whitespace": True}
 
-    groom_name: str | None = None
-    bride_name: str | None = None
+    groom_name: str | None = Field(None, min_length=1, max_length=100)
+    bride_name: str | None = Field(None, min_length=1, max_length=100)
     date: datetime.date | None = None
-    location: str | None = None
-    expected_guests: int | None = None
+    location: str | None = Field(None, min_length=1, max_length=255)
+    expected_guests: int | None = Field(None, ge=1)
     status: WeddingStatusEnum | None = None
 
 

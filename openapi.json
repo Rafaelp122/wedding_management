@@ -2981,6 +2981,82 @@
             "JWTAuth": []
           }
         ]
+      },
+      "post": {
+        "operationId": "finances_budgets_create",
+        "summary": "Create Budget",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cria um novo orçamento mestre para um casamento.",
+        "tags": [
+          "Finances"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
       }
     },
     "/api/v1/finances/budgets/{uuid}/": {
@@ -6102,10 +6178,14 @@
       "WeddingIn": {
         "properties": {
           "groom_name": {
+            "maxLength": 100,
+            "minLength": 1,
             "title": "Groom Name",
             "type": "string"
           },
           "bride_name": {
+            "maxLength": 100,
+            "minLength": 1,
             "title": "Bride Name",
             "type": "string"
           },
@@ -6115,12 +6195,15 @@
             "type": "string"
           },
           "location": {
+            "maxLength": 255,
+            "minLength": 1,
             "title": "Location",
             "type": "string"
           },
           "expected_guests": {
             "anyOf": [
               {
+                "minimum": 1,
                 "type": "integer"
               },
               {
@@ -6177,6 +6260,8 @@
           "groom_name": {
             "anyOf": [
               {
+                "maxLength": 100,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -6188,6 +6273,8 @@
           "bride_name": {
             "anyOf": [
               {
+                "maxLength": 100,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -6211,6 +6298,8 @@
           "location": {
             "anyOf": [
               {
+                "maxLength": 255,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -6222,6 +6311,7 @@
           "expected_guests": {
             "anyOf": [
               {
+                "minimum": 1,
                 "type": "integer"
               },
               {
@@ -6518,6 +6608,7 @@
         "type": "object"
       },
       "SupplierOut": {
+        "description": "Schema de saída para exibição de fornecedor.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -6596,6 +6687,7 @@
         "type": "object"
       },
       "SupplierIn": {
+        "description": "Schema de entrada para criação de fornecedor.",
         "properties": {
           "name": {
             "title": "Name",
@@ -6658,6 +6750,7 @@
         "type": "object"
       },
       "SupplierPatchIn": {
+        "description": "Schema de entrada para atualização parcial de fornecedor.",
         "properties": {
           "name": {
             "anyOf": [
@@ -6777,6 +6870,7 @@
         "type": "object"
       },
       "ContractOut": {
+        "description": "Schema de saída para exibição de contrato.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -6911,6 +7005,18 @@
             "title": "Addendums Count",
             "type": "integer"
           },
+          "addendums_total_amount": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Addendums Total Amount",
+            "type": "string"
+          },
+          "total_amount_with_addendums": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount With Addendums",
+            "type": "string"
+          },
           "has_file": {
             "default": false,
             "title": "Has File",
@@ -6962,6 +7068,7 @@
         "type": "object"
       },
       "ContractIn": {
+        "description": "Schema de entrada para criação de contrato.",
         "properties": {
           "wedding": {
             "format": "uuid4",
@@ -6974,12 +7081,15 @@
             "type": "string"
           },
           "name": {
+            "maxLength": 255,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },
           "total_amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7033,6 +7143,7 @@
         "type": "object"
       },
       "ContractPatchIn": {
+        "description": "Schema de entrada para atualização parcial de contrato.",
         "properties": {
           "supplier": {
             "anyOf": [
@@ -7049,6 +7160,8 @@
           "name": {
             "anyOf": [
               {
+                "maxLength": 255,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -7060,6 +7173,7 @@
           "total_amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7178,6 +7292,7 @@
         "type": "object"
       },
       "ContractFullCreateIn": {
+        "description": "Schema de entrada para criação de contrato com itens e despesa opcional.",
         "properties": {
           "wedding": {
             "format": "uuid4",
@@ -7190,12 +7305,15 @@
             "type": "string"
           },
           "name": {
+            "maxLength": 255,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },
           "total_amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7308,8 +7426,10 @@
         "type": "object"
       },
       "ContractStatusTransitionIn": {
+        "description": "Schema de entrada para transição de status de contrato.",
         "properties": {
           "status": {
+            "minLength": 1,
             "title": "Status",
             "type": "string"
           }
@@ -7321,6 +7441,7 @@
         "type": "object"
       },
       "ItemOut": {
+        "description": "Schema de saída para exibição de item de logística.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -7406,6 +7527,7 @@
         "type": "object"
       },
       "ItemIn": {
+        "description": "Schema de entrada para criação de item de logística.",
         "properties": {
           "wedding": {
             "anyOf": [
@@ -7432,6 +7554,8 @@
             "title": "Contract"
           },
           "name": {
+            "maxLength": 255,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },
@@ -7442,6 +7566,7 @@
           },
           "quantity": {
             "default": 1,
+            "exclusiveMinimum": 0,
             "title": "Quantity",
             "type": "integer"
           },
@@ -7458,6 +7583,7 @@
         "type": "object"
       },
       "ItemPatchIn": {
+        "description": "Schema de entrada para atualização parcial de item de logística.",
         "properties": {
           "contract": {
             "anyOf": [
@@ -7474,6 +7600,8 @@
           "name": {
             "anyOf": [
               {
+                "maxLength": 255,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -7490,6 +7618,7 @@
           "quantity": {
             "anyOf": [
               {
+                "exclusiveMinimum": 0,
                 "type": "integer"
               },
               {
@@ -7514,8 +7643,10 @@
         "type": "object"
       },
       "ItemStatusTransitionIn": {
+        "description": "Schema de entrada para transição de status de aquisição do item.",
         "properties": {
           "acquisition_status": {
+            "minLength": 1,
             "title": "Acquisition Status",
             "type": "string"
           }
@@ -7527,6 +7658,7 @@
         "type": "object"
       },
       "BudgetOut": {
+        "description": "Schema de saída para exibição de orçamento.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -7590,11 +7722,48 @@
         "title": "PagedBudgetOut",
         "type": "object"
       },
+      "BudgetIn": {
+        "description": "Schema de entrada para criação de orçamento.",
+        "properties": {
+          "wedding": {
+            "format": "uuid4",
+            "title": "Wedding",
+            "type": "string"
+          },
+          "total_estimated": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Total Estimated"
+          },
+          "notes": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "wedding",
+          "total_estimated"
+        ],
+        "title": "BudgetIn",
+        "type": "object"
+      },
       "BudgetPatchIn": {
+        "description": "Schema de entrada para atualização parcial de orçamento.",
         "properties": {
           "total_estimated": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7609,6 +7778,7 @@
           },
           "notes": {
             "default": "",
+            "maxLength": 1000,
             "title": "Notes",
             "type": "string"
           }
@@ -7617,6 +7787,7 @@
         "type": "object"
       },
       "BudgetCategoryOut": {
+        "description": "Schema de saída para exibição de categoria de orçamento.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -7692,6 +7863,7 @@
         "type": "object"
       },
       "BudgetCategoryIn": {
+        "description": "Schema de entrada para criação de categoria de orçamento.",
         "properties": {
           "budget": {
             "format": "uuid4",
@@ -7699,18 +7871,21 @@
             "type": "string"
           },
           "name": {
-            "maxLength": 255,
+            "maxLength": 100,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },
           "description": {
             "default": "",
+            "maxLength": 500,
             "title": "Description",
             "type": "string"
           },
           "allocated_budget": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7730,11 +7905,13 @@
         "type": "object"
       },
       "BudgetCategoryPatchIn": {
+        "description": "Schema de entrada para atualização parcial de categoria de orçamento.",
         "properties": {
           "name": {
             "anyOf": [
               {
-                "maxLength": 255,
+                "maxLength": 100,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -7745,12 +7922,14 @@
           },
           "description": {
             "default": "",
+            "maxLength": 500,
             "title": "Description",
             "type": "string"
           },
           "allocated_budget": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7768,6 +7947,7 @@
         "type": "object"
       },
       "ExpenseOut": {
+        "description": "Schema de saída para exibição de despesa (CQRS puro sem queries ORM).",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -7892,6 +8072,7 @@
         "type": "object"
       },
       "ExpenseIn": {
+        "description": "Schema de entrada para criação de despesa.",
         "properties": {
           "category": {
             "format": "uuid4",
@@ -7912,17 +8093,20 @@
           },
           "name": {
             "maxLength": 255,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },
           "description": {
             "default": "",
+            "maxLength": 1000,
             "title": "Description",
             "type": "string"
           },
           "estimated_amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7935,6 +8119,7 @@
           "actual_amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -7947,7 +8132,7 @@
           "num_installments": {
             "anyOf": [
               {
-                "minimum": 0,
+                "exclusiveMinimum": 0,
                 "type": "integer"
               },
               {
@@ -7979,6 +8164,7 @@
         "type": "object"
       },
       "ExpensePatchIn": {
+        "description": "Schema de entrada para atualização parcial de despesa.",
         "properties": {
           "contract": {
             "anyOf": [
@@ -7996,6 +8182,7 @@
             "anyOf": [
               {
                 "maxLength": 255,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -8006,12 +8193,14 @@
           },
           "description": {
             "default": "",
+            "maxLength": 1000,
             "title": "Description",
             "type": "string"
           },
           "estimated_amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -8027,6 +8216,7 @@
           "actual_amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -8042,7 +8232,7 @@
           "num_installments": {
             "anyOf": [
               {
-                "minimum": 0,
+                "exclusiveMinimum": 0,
                 "type": "integer"
               },
               {
@@ -8068,6 +8258,7 @@
         "type": "object"
       },
       "ExpenseFromDocumentOut": {
+        "description": "Schema de saída com dados extraídos de documento/contrato.",
         "properties": {
           "name": {
             "title": "Name",
@@ -8133,6 +8324,7 @@
         "type": "object"
       },
       "InstallmentOut": {
+        "description": "Schema de saída para exibição de parcela.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -8225,10 +8417,12 @@
         "type": "object"
       },
       "InstallmentAdjustIn": {
+        "description": "Schema de entrada para ajuste financeiro de parcela.",
         "properties": {
           "amount": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
@@ -8258,6 +8452,7 @@
         "type": "object"
       },
       "EventOut": {
+        "description": "Schema de saída para exibição de evento/compromisso.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -8370,6 +8565,7 @@
         "type": "object"
       },
       "EventIn": {
+        "description": "Schema de entrada para criação de evento/compromisso.",
         "properties": {
           "wedding": {
             "format": "uuid4",
@@ -8378,6 +8574,7 @@
           },
           "title": {
             "maxLength": 255,
+            "minLength": 1,
             "title": "Title",
             "type": "string"
           },
@@ -8447,6 +8644,7 @@
         "type": "object"
       },
       "EventPatchIn": {
+        "description": "Schema de entrada para atualização parcial de evento/compromisso.",
         "properties": {
           "wedding": {
             "anyOf": [
@@ -8464,6 +8662,7 @@
             "anyOf": [
               {
                 "maxLength": 255,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -8578,6 +8777,7 @@
         "type": "object"
       },
       "TaskOut": {
+        "description": "Schema de saída para exibição de tarefa.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -8637,6 +8837,7 @@
         "type": "object"
       },
       "TaskIn": {
+        "description": "Schema de entrada para criação de tarefa.",
         "properties": {
           "wedding": {
             "format": "uuid4",
@@ -8645,6 +8846,7 @@
           },
           "title": {
             "maxLength": 255,
+            "minLength": 1,
             "title": "Title",
             "type": "string"
           },
@@ -8679,11 +8881,13 @@
         "type": "object"
       },
       "TaskPatchIn": {
+        "description": "Schema de entrada para atualização parcial de tarefa.",
         "properties": {
           "title": {
             "anyOf": [
               {
                 "maxLength": 255,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -8725,6 +8929,7 @@
         "type": "object"
       },
       "NotificationOut": {
+        "description": "Schema de saída para exibição de notificação.",
         "properties": {
           "uuid": {
             "format": "uuid4",
@@ -8843,6 +9048,7 @@
         "type": "object"
       },
       "UnreadCountOut": {
+        "description": "Schema de saída para contagem de notificações não lidas.",
         "properties": {
           "count": {
             "description": "Quantidade de notificações não lidas",
@@ -8857,6 +9063,7 @@
         "type": "object"
       },
       "MarkAllReadOut": {
+        "description": "Schema de saída para o total de notificações marcadas como lidas.",
         "properties": {
           "marked_count": {
             "description": "Quantidade de notificações marcadas como lidas",
@@ -8871,6 +9078,7 @@
         "type": "object"
       },
       "BulkOperationOut": {
+        "description": "Schema de saída com a quantidade de registros afetados na operação.",
         "properties": {
           "affected_count": {
             "description": "Quantidade de registros afetados",
@@ -8885,6 +9093,7 @@
         "type": "object"
       },
       "BulkNotificationIdsIn": {
+        "description": "Schema de entrada para operações em massa com lista de IDs de notificações.",
         "properties": {
           "notification_ids": {
             "description": "Lista de UUIDs de notificações",
@@ -8892,6 +9101,7 @@
               "format": "uuid4",
               "type": "string"
             },
+            "minItems": 1,
             "title": "Notification Ids",
             "type": "array"
           }

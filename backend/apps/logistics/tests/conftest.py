@@ -30,6 +30,10 @@ def make_contract(user):
     def _make(status=Contract.StatusChoices.DRAFT, **kwargs):
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
+        if status in (Contract.StatusChoices.SIGNED, "SIGNED"):
+            kwargs.setdefault("pdf_file", "contracts/dummy.pdf")
+            kwargs.setdefault("signed_date", date.today())
+            kwargs.setdefault("total_amount", Decimal("5000.00"))
         return ContractFactory(
             wedding=wedding, supplier=supplier, status=status, **kwargs
         )

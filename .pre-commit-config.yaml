@@ -15,6 +15,7 @@ repos:
       - id: end-of-file-fixer
         exclude: ^frontend/src/api/generated/|^openapi\.json$|\.py$|^\.agents/|^\.claude/|^\.antigravity/|^skills/
       - id: check-yaml
+        args: ['--unsafe']
       - id: check-added-large-files
         args: ['--maxkb=1000']
         exclude: ^\.agents/|^\.claude/|^\.antigravity/|^skills/

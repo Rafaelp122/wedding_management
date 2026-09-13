@@ -158,3 +158,78 @@ class TestExpenseToleranceZero:
             expense.full_clean()
 
         assert "não bate" in str(exc_info.value).lower()
+
+
+@pytest.mark.django_db
+class TestExpenseDomainProperties:
+    """Testes das propriedades de domínio ricas do modelo Expense."""
+
+    def test_is_settled_and_partially_paid_with_relations(self, user: Any) -> None:
+        _, category = _setup_expense(user)
+        expense = _make_expense(user, category, actual_amount=Decimal("1000.00"))
+
+        i1 = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PENDING,
+        )
+        i2 = InstallmentFactory(
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PENDING,
+        )
+
+        assert expense.is_settled is False
+        assert expense.is_partially_paid is False
+        assert expense.balance_due == Decimal("1000.00")
+        assert expense.payment_progress_percent == 0
+
+        # Paga a primeira parcela
+        i1.mark_as_paid()
+        i1.save()
+
+        assert expense.is_settled is False
+        assert expense.is_partially_paid is True
+        assert expense.balance_due == Decimal("500.00")
+        assert expense.payment_progress_percent == 50
+
+        # Paga a segunda parcela
+        i2.mark_as_paid()
+        i2.save()
+
+        assert expense.is_settled is True
+        assert expense.is_partially_paid is False
+        assert expense.balance_due == Decimal("0.00")
+        assert expense.payment_progress_percent == 100
+
+    def test_properties_with_annotated_attributes(self, user: Any) -> None:
+        _, category = _setup_expense(user)
+        expense = _make_expense(user, category, actual_amount=Decimal("1000.00"))
+
+        # Simula anotações do queryset with_details()
+        expense.installments_count = 4  # type: ignore[attr-defined]
+        expense.paid_installments_count = 2  # type: ignore[attr-defined]
+        expense.total_paid = Decimal("500.00")  # type: ignore[attr-defined]
+
+        assert expense.is_settled is False
+        assert expense.is_partially_paid is True
+        assert expense.balance_due == Decimal("500.00")
+        assert expense.payment_progress_percent == 50
+
+        # Simula todas pagas
+        expense.paid_installments_count = 4  # type: ignore[attr-defined]
+        expense.total_paid = Decimal("1000.00")  # type: ignore[attr-defined]
+
+        assert expense.is_settled is True
+        assert expense.is_partially_paid is False
+        assert expense.balance_due == Decimal("0.00")
+        assert expense.payment_progress_percent == 100
+
+    def test_payment_progress_percent_zero_amount(self, user: Any) -> None:
+        _, category = _setup_expense(user)
+        expense = _make_expense(user, category, actual_amount=Decimal("0.00"))
+        assert expense.payment_progress_percent == 0
+        assert expense.is_settled is False
+        assert expense.is_partially_paid is False

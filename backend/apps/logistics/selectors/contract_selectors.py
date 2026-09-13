@@ -1,15 +1,14 @@
-"""
-Selectors de leitura para o domínio de contratos.
-"""
-
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
+from django.db.models import Sum
 
 from apps.core.exceptions import ObjectNotFoundError
+from apps.core.tenant import validate_tenant_ownership
 from apps.logistics.managers import ContractQuerySet
 from apps.logistics.models import Contract
 from apps.tenants.models import Company
@@ -91,3 +90,40 @@ def contract_pending_count_selector(
     if wedding_id:
         qs = qs.for_wedding(wedding_id)
     return qs.count()
+
+
+def contract_consolidated_total_selector(
+    company: Company,
+    contract: Contract,
+) -> Decimal:
+    """
+    Calcula o valor total consolidado de um contrato somado aos seus
+    aditivos ativos para um tenant.
+
+    Exclui termos aditivos com status CANCELED.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+        contract: Instância do contrato a ser calculado.
+
+    Returns:
+        Decimal com a soma do valor de face do contrato mais seus
+        aditivos ativos.
+
+    Raises:
+        ObjectNotFoundError: Se o contrato não pertencer ao tenant.
+    """
+    validate_tenant_ownership(
+        company,
+        contract,
+        detail="Contrato não encontrado ou acesso negado.",
+        code="contract_not_found_or_denied",
+    )
+    addendums_sum = (
+        contract.addendums.for_tenant(company)
+        .exclude(status=Contract.StatusChoices.CANCELED)
+        .aggregate(total=Sum("total_amount"))["total"]
+    )
+    return (contract.total_amount or Decimal("0.00")) + (
+        addendums_sum or Decimal("0.00")
+    )

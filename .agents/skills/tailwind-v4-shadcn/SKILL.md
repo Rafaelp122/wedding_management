@@ -50,7 +50,7 @@ license: MIT
 
 ---
 
-## ⚠️ BEFORE YOU START (READ THIS!)
+## BEFORE YOU START (READ THIS!)
 
 **CRITICAL FOR AI AGENTS**: If you're Claude Code helping a user set up Tailwind v4:
 
@@ -252,7 +252,7 @@ See `reference/dark-mode.md` for ModeToggle component code.
 
 ## Critical Rules (MUST FOLLOW)
 
-### ✅ Always Do:
+### Always Do:
 
 1. **Wrap color values with `hsl()` in `:root` and `.dark`**
    ```css
@@ -281,7 +281,7 @@ See `reference/dark-mode.md` for ModeToggle component code.
    <div className={cn("base", isActive && "active")} />
    ```
 
-### ❌ Never Do:
+### Never Do:
 
 1. **Put `:root` or `.dark` inside `@layer base`**
    ```css
@@ -426,7 +426,7 @@ For detailed patterns and component composition examples, load `references/advan
 
 ## Dependencies
 
-### ✅ Install These
+### Install These
 
 ```json
 {
@@ -449,7 +449,7 @@ For detailed patterns and component composition examples, load `references/advan
 }
 ```
 
-### ❌ NEVER Install These (Deprecated in v4)
+### NEVER Install These (Deprecated in v4)
 
 ```bash
 # These packages will cause build errors:

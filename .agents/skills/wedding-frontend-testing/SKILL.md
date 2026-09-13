@@ -22,4 +22,4 @@ Operational testing checklist for Vitest, React Testing Library, MSW, and Playwr
 - [ ] **Execution & Standards Reference**:
   - `cd frontend && pnpm test` (Testes de unidade e integração Vitest)
   - `cd frontend && pnpm test:e2e` (Testes E2E Playwright)
-  - Documentação de referência: [Frontend Testing Spec](../../../docs/3-reference/testing/frontend-testing-spec.md) | [E2E Testing Spec](../../../docs/3-reference/testing/e2e-testing-spec.md) | [Testing Index](../../../docs/3-reference/testing/index.md), [MSW Patterns](../../../docs/2-how-to/frontend/msw-testing-patterns.md)
+  - Documentação de referência: [Frontend Testing Spec](../../../docs/reference/testing/frontend-testing-spec.md) | [E2E Testing Spec](../../../docs/reference/testing/e2e-testing-spec.md) | [Testing Index](../../../docs/reference/testing/index.md), [MSW Patterns](../../../docs/guides/frontend/msw-testing-patterns.md)

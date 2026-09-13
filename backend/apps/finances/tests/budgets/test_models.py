@@ -172,3 +172,50 @@ class TestBudgetTotalOverallSpent:
         )
 
         assert budget.total_overall_spent == Decimal("3000.00")
+
+
+@pytest.mark.django_db
+class TestBudgetConvenienceProperties:
+    """Testes de propriedades de conveniência em Budget."""
+
+    def test_remaining_overall_budget_and_is_over_budget(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("10000.00"))
+        cat = BudgetCategoryFactory(budget=budget, wedding=wedding)
+
+        assert budget.remaining_overall_budget == Decimal("10000.00")
+        assert budget.is_over_budget is False
+
+        # Cria despesa paga de 6000
+        expense = ExpenseFactory(
+            wedding=wedding,
+            category=cat,
+            actual_amount=Decimal("6000.00"),
+            contract=None,
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=Decimal("6000.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-01-15",
+        )
+
+        assert budget.remaining_overall_budget == Decimal("4000.00")
+        assert budget.is_over_budget is False
+
+        # Cria mais uma despesa paga de 5000 (total 11000 vs 10000)
+        expense2 = ExpenseFactory(
+            wedding=wedding,
+            category=cat,
+            actual_amount=Decimal("5000.00"),
+            contract=None,
+        )
+        InstallmentFactory(
+            expense=expense2,
+            amount=Decimal("5000.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date="2026-02-15",
+        )
+
+        assert budget.remaining_overall_budget == Decimal("-1000.00")
+        assert budget.is_over_budget is True

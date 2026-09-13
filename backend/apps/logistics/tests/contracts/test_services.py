@@ -222,6 +222,43 @@ class TestContractServiceCreate:
         assert contract.supplier == supplier
         assert contract.status == Contract.StatusChoices.DRAFT
 
+    def test_create_contract_with_parent_success(self, user: Any) -> None:
+        """Criação de contrato com vínculo de pai válido."""
+        wedding, supplier = _setup_contract_context(user)
+        parent = ContractFactory(
+            wedding=wedding, supplier=supplier, company=user.company
+        )
+        data: dict[str, Any] = {
+            "wedding": wedding.uuid,
+            "supplier": supplier.uuid,
+            "name": "Termo Aditivo 1",
+            "total_amount": Decimal("2000.00"),
+            "parent": parent.uuid,
+        }
+
+        addendum = ContractService.create(user.company, ContractIn(**data))
+        assert addendum.parent == parent
+
+    def test_create_contract_cross_wedding_parent_raises_error(self, user: Any) -> None:
+        """Criação de contrato com pai de outro casamento dispara erro de negócio."""
+        wedding_a, supplier = _setup_contract_context(user)
+        wedding_b = WeddingFactory(user_context=user)
+        parent = ContractFactory(
+            wedding=wedding_b, supplier=supplier, company=user.company
+        )
+        data: dict[str, Any] = {
+            "wedding": wedding_a.uuid,
+            "supplier": supplier.uuid,
+            "name": "Aditivo Inválido",
+            "total_amount": Decimal("1000.00"),
+            "parent": parent.uuid,
+        }
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.create(user.company, ContractIn(**data))
+
+        assert exc_info.value.code == "contract_cross_wedding_parent"
+
 
 @pytest.mark.django_db
 class TestContractServiceUpdate:
@@ -316,6 +353,49 @@ class TestContractServiceUpdate:
             ContractService.update(user.company, contract, payload)
 
         assert exc_info.value.code == "supplier_not_found_or_denied"
+
+    def test_update_contract_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """update() persiste alterações com update_fields contendo updated_at."""
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+        spy_save = mocker.spy(contract, "save")
+
+        ContractService.update(
+            user.company,
+            contract,
+            ContractPatchIn(name="Novo Nome Contrato", description="Nova desc"),
+        )
+
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        update_fields = set(kwargs["update_fields"])
+        assert update_fields == {"name", "description", "updated_at"}
+
+    def test_update_validation_error_converted_to_business_rule_violation(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """ValidationError no save() em update() vira BusinessRuleViolation."""
+        wedding, supplier = _setup_contract_context(user)
+        contract = ContractFactory(wedding=wedding, supplier=supplier)
+
+        mocker.patch.object(
+            contract,
+            "save",
+            side_effect=ValidationError("Erro de validação simulado no model."),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.update(
+                user.company,
+                contract,
+                ContractPatchIn(name="Nome Inválido"),
+            )
+
+        assert exc_info.value.code == "contract_update_validation_error"
+        assert "Erro de validação simulado no model." in str(exc_info.value.detail)
 
 
 @pytest.mark.django_db
@@ -559,6 +639,156 @@ class TestContractServiceTransitionStatus:
             contract.company, contract, "CANCELED"
         )
         assert updated.status == "CANCELED"
+
+
+@pytest.mark.django_db
+class TestContractServiceSemanticLifecycle:
+    """Testes dos métodos semânticos de ciclo de vida de contratos."""
+
+    def test_send_to_pending_success(self, make_contract: Any, mocker: Any) -> None:
+        """send_to_pending transita de DRAFT para PENDING e persiste update_fields."""
+        contract = make_contract("DRAFT")
+        spy_save = mocker.spy(contract, "save")
+
+        result = ContractService.send_to_pending(contract.company, contract)
+
+        assert result.status == Contract.StatusChoices.PENDING
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {"status", "updated_at"}
+
+    def test_send_to_pending_invalid_transition(self, user: Any) -> None:
+        """send_to_pending a partir de SIGNED levanta BusinessRuleViolation."""
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            status=Contract.StatusChoices.SIGNED,
+            total_amount=Decimal("5000.00"),
+            signed_date=date.today(),
+            pdf_file="contracts/dummy.pdf",
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.send_to_pending(contract.company, contract)
+        assert exc_info.value.code == "contract_invalid_status_transition"
+
+    def test_send_to_pending_cross_tenant(self, make_contract: Any) -> None:
+        """send_to_pending para contrato de outro tenant levanta ObjectNotFoundError."""
+        contract = make_contract("DRAFT")
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.send_to_pending(other_user.company, contract)
+
+    def test_sign_success(self, make_contract: Any, mocker: Any) -> None:
+        """sign transita de PENDING para SIGNED com signed_date e pdf_file_key."""
+        contract = make_contract("PENDING")
+        contract.total_amount = Decimal("5000.00")
+        contract.save()
+        today = date.today()
+        spy_save = mocker.spy(contract, "save")
+
+        result = ContractService.sign(
+            contract.company,
+            contract,
+            signed_date=today,
+            pdf_file_key="contracts/signed.pdf",
+        )
+
+        assert result.status == Contract.StatusChoices.SIGNED
+        assert result.signed_date == today
+        assert result.pdf_file.name == "contracts/signed.pdf"
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {
+            "status",
+            "signed_date",
+            "pdf_file",
+            "updated_at",
+        }
+
+    def test_sign_without_pdf_raises_validation_error(self, make_contract: Any) -> None:
+        """sign sem PDF deve falhar nas invariantes do modelo."""
+        contract = make_contract("PENDING", pdf_file=None)
+        contract.total_amount = Decimal("5000.00")
+        contract.save()
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.sign(
+                contract.company,
+                contract,
+                signed_date=date.today(),
+            )
+        assert exc_info.value.code == "contract_invalid_status_transition"
+        assert "PDF" in str(exc_info.value.detail)
+
+    def test_sign_invalid_transition(self, make_contract: Any) -> None:
+        """sign a partir de CANCELED levanta BusinessRuleViolation."""
+        contract = make_contract("CANCELED")
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.sign(contract.company, contract)
+        assert exc_info.value.code == "contract_invalid_status_transition"
+
+    def test_sign_cross_tenant(self, make_contract: Any) -> None:
+        """sign para contrato de outro tenant levanta ObjectNotFoundError."""
+        contract = make_contract("PENDING")
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.sign(other_user.company, contract)
+
+    def test_cancel_success(self, make_contract: Any, mocker: Any) -> None:
+        """cancel transita para CANCELED e persiste com update_fields."""
+        contract = make_contract("DRAFT")
+        spy_save = mocker.spy(contract, "save")
+
+        result = ContractService.cancel(contract.company, contract)
+
+        assert result.status == Contract.StatusChoices.CANCELED
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {"status", "updated_at"}
+
+    def test_cancel_cross_tenant(self, make_contract: Any) -> None:
+        """cancel para contrato de outro tenant levanta ObjectNotFoundError."""
+        contract = make_contract("DRAFT")
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.cancel(other_user.company, contract)
+
+    def test_revert_to_draft_success(self, make_contract: Any, mocker: Any) -> None:
+        """revert_to_draft transita para DRAFT e persiste com update_fields."""
+        contract = make_contract("PENDING")
+        spy_save = mocker.spy(contract, "save")
+
+        result = ContractService.revert_to_draft(contract.company, contract)
+
+        assert result.status == Contract.StatusChoices.DRAFT
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert set(kwargs["update_fields"]) == {"status", "updated_at"}
+
+    def test_revert_to_draft_invalid_transition(self, user: Any) -> None:
+        """revert_to_draft a partir de SIGNED levanta BusinessRuleViolation."""
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            status=Contract.StatusChoices.SIGNED,
+            total_amount=Decimal("5000.00"),
+            signed_date=date.today(),
+            pdf_file="contracts/dummy.pdf",
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.revert_to_draft(contract.company, contract)
+        assert exc_info.value.code == "contract_invalid_status_transition"
+
+    def test_revert_to_draft_cross_tenant(self, make_contract: Any) -> None:
+        """revert_to_draft para contrato de outro tenant levanta ObjectNotFoundError."""
+        contract = make_contract("PENDING")
+        other_user = UserFactory()
+        with pytest.raises(ObjectNotFoundError):
+            ContractService.revert_to_draft(other_user.company, contract)
 
 
 @pytest.mark.django_db
@@ -1177,4 +1407,6 @@ class TestContractServiceGenerateUploadUrl:
             assert client is not None
         finally:
             # Restaura o estado original
+            ContractService._storage_service = original_storage
+
             ContractService._storage_service = original_storage

@@ -2,6 +2,8 @@
 Test settings: in-memory SQLite, fast password hashers, disabled zeal.
 """
 
+from pathlib import Path
+
 from .base import *
 
 
@@ -45,4 +47,14 @@ HUEY = {
     "huey_class": "huey.MemoryHuey",
     "name": "test_tasks",
     "immediate": True,
+}
+
+MEDIA_ROOT = Path("/tmp/test_media")  # noqa: S108
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.InMemoryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
 }

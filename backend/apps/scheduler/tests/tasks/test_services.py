@@ -157,6 +157,91 @@ class TestTaskServiceUpdate:
                 TaskPatchIn.model_construct(title="Hack"),
             )
 
+    def test_update_task_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """Verifica que update() persiste cirurgicamente apenas campos alterados."""
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, title="Título Inicial", description="Desc")
+        spy_save = mocker.spy(task, "save")
+
+        updated = TaskService.update(
+            user.company,
+            task,
+            TaskPatchIn(title="Título Atualizado", is_completed=True),
+        )
+
+        assert updated.title == "Título Atualizado"
+        assert updated.is_completed is True
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"title", "is_completed", "updated_at"}
+
+    def test_update_task_reopen_via_update(self, user: Any) -> None:
+        """Verifica que update com is_completed=False chama reopen()."""
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, is_completed=True)
+
+        updated = TaskService.update(
+            user.company,
+            task,
+            TaskPatchIn(is_completed=False),
+        )
+
+        assert updated.is_completed is False
+
+
+@pytest.mark.django_db
+class TestTaskServiceLifecycle:
+    """Testes dos métodos semânticos de ciclo de vida (complete e reopen)."""
+
+    def test_complete_task_success(self, user: Any, mocker: Any) -> None:
+        """complete() marca tarefa como concluída e persiste com update_fields."""
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, is_completed=False)
+        spy_save = mocker.spy(task, "save")
+
+        completed = TaskService.complete(user.company, task)
+
+        assert completed.is_completed is True
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"is_completed", "updated_at"}
+
+    def test_complete_task_cross_tenant(self, user: Any) -> None:
+        """complete() em tarefa de outro tenant levanta ObjectNotFoundError."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_task = TaskFactory(wedding=other_wedding, is_completed=False)
+
+        with pytest.raises(ObjectNotFoundError):
+            TaskService.complete(user.company, other_task)
+
+    def test_reopen_task_success(self, user: Any, mocker: Any) -> None:
+        """reopen() reabre tarefa concluída e persiste com update_fields."""
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, is_completed=True)
+        spy_save = mocker.spy(task, "save")
+
+        reopened = TaskService.reopen(user.company, task)
+
+        assert reopened.is_completed is False
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"is_completed", "updated_at"}
+
+    def test_reopen_task_cross_tenant(self, user: Any) -> None:
+        """reopen() em tarefa de outro tenant levanta ObjectNotFoundError."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_task = TaskFactory(wedding=other_wedding, is_completed=True)
+
+        with pytest.raises(ObjectNotFoundError):
+            TaskService.reopen(user.company, other_task)
+
 
 @pytest.mark.django_db
 class TestTaskServiceDelete:

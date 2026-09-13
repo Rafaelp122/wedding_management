@@ -43,13 +43,20 @@ def budget_list_selector(
     return qs
 
 
-def budget_get_selector(*, company: Company, uuid: UUID | str) -> Budget:
+def budget_get_selector(
+    *,
+    company: Company,
+    uuid: UUID | str | None = None,
+    wedding_id: int | UUID | str | None = None,
+) -> Budget:
     """
-    Recupera um orçamento específico pelo UUID com o total gasto anotado.
+    Recupera um orçamento específico pelo UUID ou pelo casamento com o
+    total gasto anotado.
 
     Args:
         company: O tenant atual para isolamento de dados.
-        uuid: Identificador único do orçamento.
+        uuid: Identificador único do orçamento (opcional).
+        wedding_id: ID primário ou UUID do casamento associado (opcional).
 
     Returns:
         A instância do Budget encontrada com total gasto anotado.
@@ -57,14 +64,24 @@ def budget_get_selector(*, company: Company, uuid: UUID | str) -> Budget:
     Raises:
         ObjectNotFoundError: Se o orçamento não for encontrado ou
             não pertencer ao tenant.
+        ValueError: Se nem uuid nem wedding_id forem informados.
     """
+    if uuid is None and wedding_id is None:
+        raise ValueError("É necessário informar uuid ou wedding_id.")
+
     try:
-        return (
+        qs = (
             Budget.objects.for_tenant(company)
             .with_total_spent()
             .select_related("wedding")
-            .get(uuid=uuid)
         )
+        if uuid is not None:
+            return qs.get(uuid=uuid)
+        if isinstance(wedding_id, int):
+            return qs.get(wedding_id=wedding_id)
+        if wedding_id is not None:
+            return qs.get(wedding__uuid=wedding_id)
+        raise ValueError("É necessário informar uuid ou wedding_id.")
     except (Budget.DoesNotExist, ValueError, ValidationError) as e:
         raise ObjectNotFoundError(
             detail="Orçamento não encontrado ou acesso negado.",
