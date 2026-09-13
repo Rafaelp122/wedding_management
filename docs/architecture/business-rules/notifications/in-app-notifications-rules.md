@@ -85,29 +85,26 @@ sequenceDiagram
 
 ## 4. Implementação no Código-Fonte Real
 
-### A. Tipos e Modelo de Notificação (`models.py`)
+O subsistema de notificações encapsula regras de isolamento, idempotência e auditoria nos seguintes módulos:
 
-```python
---8<-- "backend/apps/notifications/models.py:9:78"
-```
+### A. Tipos e Entidade Rica de Notificação (`Notification`)
+Implementado em [`Notification`](../../../../backend/apps/notifications/models.py):
+- `NotificationType` e `NotificationTargetType`: Enumerações tipadas para categorização e redirecionamento.
+- Invariantes no `clean()`: Garante isolamento estrito (`user.company_id == company_id`) e integridade temporal entre `is_read` e `read_at`.
+- Métodos de ciclo de vida: `mark_as_read(read_at=...)`, `mark_as_unread()`.
+- Propriedades de conveniência: `is_urgent`, `is_actionable`.
 
-### B. Criação Síncrona e Validação de Tenant (`services.py`)
+### B. Criação Síncrona e Validação de Tenant (`NotificationService.create_notification`)
+Implementado em [`NotificationService.create_notification`](../../../../backend/apps/notifications/services.py):
+Valida permissão multi-tenant e cria a notificação vinculada atomicamente ao destinatário.
 
-```python
---8<-- "backend/apps/notifications/services.py:44:106"
-```
+### C. Criação Assíncrona via Background Task (`NotificationService.create_async_notification`)
+Implementado em [`NotificationService.create_async_notification`](../../../../backend/apps/notifications/services.py):
+Enfileira a criação via `dispatch_async_notification_task` usando o motor do `django.tasks` sem bloquear a requisição HTTP.
 
-### C. Criação Assíncrona via Background Task (`services.py`)
-
-```python
---8<-- "backend/apps/notifications/services.py:151:197"
-```
-
-### D. Gestão de Leitura e Auditoria Temporal (`services.py`)
-
-```python
---8<-- "backend/apps/notifications/services.py:199:262"
-```
+### D. Gestão de Leitura e Auditoria Temporal (`NotificationService.mark_as_read`)
+Implementado em [`NotificationService.mark_as_read`](../../../../backend/apps/notifications/services.py):
+Invoca o método semântico `notification.mark_as_read()` e persiste cirurgicamente com `update_fields=["is_read", "read_at", "updated_at"]`.
 
 ---
 

@@ -9,11 +9,11 @@
 
 Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding Management System. Cada ADR documenta uma decisão estrutural relevante, seu contexto, alternativas consideradas e as consequências arquiteturais adotadas.
 
-> **Nota de Numeração Imutável:** A numeração das ADRs é mantida estritamente imutável para preservar a rastreabilidade histórica no código-fonte, comentários de classe e mensagens de commit do Git. A identificação `ADR-015` refere-se a uma proposta descontinuada na fase inicial do projeto, mantendo-se a sequência oficial das 28 ADRs ativas.
+> **Nota de Numeração Imutável:** A numeração das ADRs é mantida estritamente imutável para preservar a rastreabilidade histórica no código-fonte, comentários de classe e mensagens de commit do Git. A identificação `ADR-015` refere-se a uma proposta descontinuada na fase inicial do projeto, mantendo-se a sequência oficial das 29 ADRs ativas.
 
 ---
 
-## 2. Índice de Decisões Arquiteturais (001 a 029)
+## 2. Índice de Decisões Arquiteturais (001 a 030)
 
 ### Infraestrutura, Automação & Cloud Storage
 - **[ADR-001: Cloud Run](001-why-cloud-run.md)** — Hospedagem Serverless do Backend Django Ninja no GCP Cloud Run.
@@ -43,6 +43,7 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-019: Tenant Validation in Services](019-tenant-validation-service-layer.md)** — Recebimento obrigatório do parâmetro `company` em métodos de serviço.
 - **[ADR-022: Static Routes Optimization](022-static-routes-for-performance.md)** — Priorização de rotas estáticas para otimização de performance de resposta da API.
 - **[ADR-023: Desacoplamento dos Módulos Core e Extração do Módulo Reporting](023-desacoplamento-modulos-scheduler-finances-weddings.md)** — Desacoplamento entre os domínios Scheduler, Finances e Weddings e extração do app Reporting.
+- **[ADR-030: Rich Domain Model e Service Layer como Casos de Uso](030-rich-domain-model-service-layer.md)** — Transição do modelo anêmico para Rich Domain Model, 3 níveis de validação e diretriz pragmática de documentação.
 
 
 ---

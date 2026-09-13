@@ -89,25 +89,34 @@ sequenceDiagram
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Implementação e Uso do Modelo de Domínio e Serviços
 
-### A. Criação de Eventos de Pagamento (`installment_service.py`)
+### A. Integração Transacional Finanças-Scheduler
+A criação de compromissos no calendário reside em [`apps/finances/services/installment_service.py`](../../../../backend/apps/finances/services/installment_service.py):
 
-```python
---8<-- "backend/apps/finances/services/installment_service.py:668:707"
-```
-
-### B. Limpeza Transacional de Eventos Órfãos (`installment_service.py`)
+- `InstallmentService._create_payment_event(company, installment)`: Projeta um evento de calendário (`event_type="pagamento"`) às 09:00 na data de vencimento da parcela, passando `_caller_internal=True`.
+- `InstallmentService._delete_payment_events_for_expense(company, expense)` / `_delete_payment_event_for_single(company, installment)`: Limpeza atômica de eventos vinculados quando parcelas são redistribuídas ou excluídas, prevenindo eventos fantasmas na agenda.
 
 ```python
---8<-- "backend/apps/finances/services/installment_service.py:632:666"
+# Criação do evento protegido na agenda via chamada interna autorizada:
+event_service.create(
+    company=company,
+    payload=EventIn(
+        wedding=installment.wedding.uuid,
+        title=f"Pagamento: Parcela {installment.installment_number} - {expense.description}",
+        start_time=datetime.combine(installment.due_date, time(9, 0)),
+        end_time=datetime.combine(installment.due_date, time(10, 0)),
+        event_type="pagamento",
+        notes=f"Vencimento da parcela R${installment.amount}.",
+    ),
+    _caller_internal=True,
+)
 ```
 
-### C. Validação de Guard Somente-Leitura (`events.py`)
+### B. Guard Somente-Leitura no Scheduler
+O guard reside em [`apps/scheduler/services/events.py`](../../../../backend/apps/scheduler/services/events.py):
 
-```python
---8<-- "backend/apps/scheduler/services/events.py:78:88"
-```
+- `EventService._validate_payment_event_internal(data, _caller_internal)`: Bloqueia a criação ou edição manual de eventos de pagamento por chamadas externas à API, exigindo que qualquer movimentação se origine estritamente no `InstallmentService`.
 
 ---
 

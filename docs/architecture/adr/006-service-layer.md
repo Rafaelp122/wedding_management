@@ -28,6 +28,10 @@ Django REST Framework coloca lógica de negócio em 3 lugares:
 
 Introduzir **Service Layer** para encapsular lógica de negócio complexa.
 
+> [!NOTE]
+> **Evolução Arquitetural (Setembro 2026):**
+> Esta decisão foi refinada pela [ADR-030: Rich Domain Model e Service Layer como Casos de Uso](030-rich-domain-model-service-layer.md). A Service Layer continua sendo a responsável pela orquestração transacional de casos de uso, mas regras intrínsecas e máquinas de estados da entidade residem no próprio modelo de domínio (Rich Active Record).
+
 ---
 
 ## Justificativa

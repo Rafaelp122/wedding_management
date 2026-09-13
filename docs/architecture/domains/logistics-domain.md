@@ -1,7 +1,7 @@
 # Domínio de Logística, Fornecedores & Contratos (Logistics)
 
 > **Categoria:** Domínios de Arquitetura (Bounded Contexts)
-> **Relacionados:** [Regras de Validação de CNPJ](../business-rules/logistics/cnpj-validation-rules.md) · [Hierarquia de Contratos e Aditivos](../business-rules/logistics/contract-parent-child-hierarchy.md) · [Máquina de Estados de Contratos](../business-rules/logistics/contract-state-machine.md) · [Upload de Contratos PDF via R2](../concepts/contract-pdf-upload-r2-flow.md) · [ADR-003: Storage Cloudflare R2](../adr/003-why-r2.md) · [ADR-004: Presigned URLs](../adr/004-presigned-urls.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-020: Abstração de Storage](../adr/020-storage-service-abstraction.md)
+> **Relacionados:** [Regras de Validação de CNPJ](../business-rules/logistics/cnpj-validation-rules.md) · [Hierarquia de Contratos e Aditivos](../business-rules/logistics/contract-parent-child-hierarchy.md) · [Máquina de Estados de Contratos](../business-rules/logistics/contract-state-machine.md) · [Upload de Contratos PDF via R2](../concepts/contract-pdf-upload-r2-flow.md) · [ADR-003: Storage Cloudflare R2](../adr/003-why-r2.md) · [ADR-004: Presigned URLs](../adr/004-presigned-urls.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-020: Abstração de Storage](../adr/020-storage-service-abstraction.md) · [ADR-030: Rich Domain Model e Validação em 3 Níveis](../adr/030-rich-domain-model-service-layer.md)
 
 ---
 
@@ -82,37 +82,34 @@ erDiagram
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação do Modelo de Domínio e Serviços
 
-### A. Modelo de Fornecedores com Validador de CNPJ (`Supplier`)
-```python
---8<-- "backend/apps/logistics/models/supplier.py:26:106"
-```
+O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer), estruturado em três níveis de validação:
 
-### B. Modelo de Contratos e Máquina de Transição (`Contract`)
-```python
---8<-- "backend/apps/logistics/models/contract.py:23:118"
-```
-
-### C. Invariantes de Contrato Assinado e Hierarquia de Aditivos (`Contract.clean`)
-```python
---8<-- "backend/apps/logistics/models/contract.py:143:196"
-```
-
-### D. Modelo de Itens de Logística (`Item`)
-```python
---8<-- "backend/apps/logistics/models/item.py:24:76"
-```
+- **Modelos de Domínio Ricos:**
+  - [`apps/logistics/models/supplier.py`](../../../backend/apps/logistics/models/supplier.py) (`Supplier`): Encapsula normalização e validação estrita de CNPJ e dados de contato.
+  - [`apps/logistics/models/contract.py`](../../../backend/apps/logistics/models/contract.py) (`Contract`): Encapsula a máquina de estados determinística (`DRAFT`, `PENDING`, `SIGNED`, `CANCELED`), validações invariantes de formalização em `clean()` e hierarquia acíclica de aditivos.
+  - [`apps/logistics/models/item.py`](../../../backend/apps/logistics/models/item.py) (`Item`): Encapsula o ciclo de vida operacional (`PENDING`, `IN_PROGRESS`, `DONE`), quantidade mínima invariante ($\ge 1$) e resolução do fornecedor via contrato.
+- **Casos de Uso e Serviços:**
+  - [`apps/logistics/services/supplier_service.py`](../../../backend/apps/logistics/services/supplier_service.py) (`SupplierService`): Orquestração multi-tenant e mutações cirúrgicas com `update_fields`.
+  - [`apps/logistics/services/contract_service.py`](../../../backend/apps/logistics/services/contract_service.py) (`ContractService`): Ciclo de vida contratual, upload assíncrono em storage e proteção relacional.
+  - [`apps/logistics/services/item_service.py`](../../../backend/apps/logistics/services/item_service.py) (`ItemService`): Gestão de itens e avanço do status operacional de aquisição.
+- **Seletores de Leitura CQRS:**
+  - [`apps/logistics/selectors/contract_selectors.py`](../../../backend/apps/logistics/selectors/contract_selectors.py) (`contract_list_selector`, `contract_get_selector`): Consultas otimizadas via `ContractQuerySet.with_totals()` com anotações pré-computadas em SQL para `supplier_name`, `total_paid`, `addendums_count` e `expense_id`.
+  - [`apps/logistics/selectors/supplier_selectors.py`](../../../backend/apps/logistics/selectors/supplier_selectors.py) e [`apps/logistics/selectors/item_selectors.py`](../../../backend/apps/logistics/selectors/item_selectors.py): Filtros isolados por tenant e anotações agregadas.
+- **Validação de Entrada (Pydantic):**
+  - [`apps/logistics/schemas/`](../../../backend/apps/logistics/schemas/): Pacote modular (`supplier.py`, `contract.py`, `item.py`) com regras de Nível 1 (sanitização de strings via `str_strip_whitespace=True`, limites de caracteres e valores numéricos positivos).
 
 ---
 
 ## 5. Mapeamento de Camadas (Fullstack)
 
 ### Camada de Backend (`backend/apps/logistics/`)
-- **Modelos:** `Supplier` (`supplier.py`), `Contract` (`contract.py`), `Item` (`item.py`).
+- **Modelos:** `Supplier` (`supplier.py`), `Contract` (`contract.py`), `Item` (`item.py`) em `models/`.
+- **Schemas:** `Supplier` (`supplier.py`), `Contract` (`contract.py`), `Item` (`item.py`) em `schemas/`.
 - **Managers:** `SupplierQuerySet`, `ContractQuerySet`, `ItemQuerySet` em `managers.py`.
-- **Services:** `supplier_service.py`, `contract_service.py`, `item_service.py`.
-- **Selectors:** `supplier_selectors.py`, `contract_selectors.py`, `item_selectors.py`.
+- **Services:** `supplier_service.py`, `contract_service.py`, `item_service.py` em `services/`.
+- **Selectors:** `supplier_selectors.py`, `contract_selectors.py`, `item_selectors.py` em `selectors/`.
 - **Armazenamento:** `core/services/storage/` (Cloudflare R2 Storage Provider com geração de URLs seguras).
 
 ### Camada de Frontend (`frontend/src/features/logistics/`)

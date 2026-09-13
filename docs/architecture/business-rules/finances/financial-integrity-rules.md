@@ -73,25 +73,28 @@ graph TD
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Implementação e Uso do Modelo de Domínio e Serviços
 
-### A. Algoritmo de Geração com Ajuste na Última Parcela (`installment_service.py`)
+### A. Algoritmo de Geração de Parcelas com Tolerância Zero
+A geração controlada reside em [`apps/finances/services/installment_service.py`](../../../../backend/apps/finances/services/installment_service.py):
 
-```python
---8<-- "backend/apps/finances/services/installment_service.py:83:119"
-```
-
-### B. Validação Cross-Wedding e Regra BR-F02 (`expense_service.py`)
+- `InstallmentService.auto_generate_installments(company, expense, num_installments, first_due_date)`: Calcula $N-1$ parcelas de valor base arredondado e absorve a diferença de centavos estritamente na última parcela, garantindo $\sum \text{parcelas} \equiv \text{actual\_amount}$.
 
 ```python
---8<-- "backend/apps/finances/services/expense_service.py:33:53"
+# Algoritmo de ajuste centesimal na última parcela (ADR-010):
+base_amount = round(expense.actual_amount / num_installments, 2)
+allocated_so_far = base_amount * (num_installments - 1)
+last_installment_amount = expense.actual_amount - allocated_so_far
 ```
 
-### C. Bloqueio de Alteração por Pagamento Efetuado (`expense_service.py`)
+### B. Invariantes de Tolerância Zero e Validação com Contrato
+Implementadas em [`apps/finances/models/expense.py`](../../../../backend/apps/finances/models/expense.py) e [`apps/finances/services/expense_service.py`](../../../../backend/apps/finances/services/expense_service.py):
 
-```python
---8<-- "backend/apps/finances/services/expense_service.py:314:334"
-```
+- `Expense.clean()`: Para despesas persistidas (`self.pk`), bloqueia qualquer salvamento se a soma real das parcelas divergir de `self.actual_amount` (BR-F01).
+- `ExpenseService._validate_br_f02(instance, data)`: Valida se despesas vinculadas a contratos mantêm valor exatamente idêntico a `contract.total_amount`.
+
+### C. Imutabilidade e Proteção Contra Alteração Estrutural
+- `ExpenseService.update()`: Bloqueia redistribuição de parcelas ou alteração do montante total caso qualquer parcela já tenha status `PAID`, exigindo reversão prévia explícita.
 
 ---
 

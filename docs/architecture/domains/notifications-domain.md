@@ -78,22 +78,19 @@ sequenceDiagram
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação do Modelo de Domínio e Serviços
 
-### A. Modelo de Dados e Enums de Notificação (`Notification`)
-```python
---8<-- "backend/apps/notifications/models.py:27:78"
-```
+O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer), estruturado em três níveis de validação:
 
-### B. Tarefa Assíncrona de Despacho (`dispatch_async_notification_task`)
-```python
---8<-- "backend/apps/notifications/tasks.py:4:54"
-```
-
-### C. Serviço de Criação e Validação de Tenant (`NotificationService.create_notification`)
-```python
---8<-- "backend/apps/notifications/services.py:43:100"
-```
+- **Modelos de Domínio Ricos:**
+  - [`apps/notifications/models.py`](../../../backend/apps/notifications/models.py) (`Notification`): Encapsula invariantes multi-tenant e temporais no `clean()`, métodos de ciclo de vida (`mark_as_read()`, `mark_as_unread()`) e propriedades semânticas (`is_urgent`, `is_actionable`).
+- **Casos de Uso e Serviços:**
+  - [`apps/notifications/services.py`](../../../backend/apps/notifications/services.py) (`NotificationService`): Orquestra criação síncrona e assíncrona, marcações individuais e em lote com persistência cirúrgica via `update_fields` e expurgação segura de notificações por tenant.
+  - [`apps/notifications/tasks.py`](../../../backend/apps/notifications/tasks.py) (`dispatch_async_notification_task`): Enfileiramento desacoplado em segundo plano via `django.tasks` (ADR-017).
+- **Seletores de Leitura CQRS:**
+  - [`apps/notifications/selectors.py`](../../../backend/apps/notifications/selectors.py) (`notification_list_selector`, `notification_unread_count_selector`, `notification_get_selector`): Consultas otimizadas com contagens indexadas e anotações do nome do casamento via SQL (`with_wedding_name`).
+- **Validação de Entrada (Pydantic):**
+  - [`apps/notifications/schemas/`](../../../backend/apps/notifications/schemas/): Pacote modular (`notification.py`, `bulk.py`) com regras de Nível 1 (sanitização de entrada via `str_strip_whitespace=True`, lista com `min_length=1` e DTOs de contagem).
 
 ---
 

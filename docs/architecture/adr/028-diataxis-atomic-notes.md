@@ -60,7 +60,7 @@ quadrantChart
    > **Relacionados:** [Link para Nota Relacionada](../caminho/outro-doc.md)
    ```
 4. **Hubs e Mapas de Conteúdo (MOC):** Todas as notas devem ser registradas no `index.md` de sua pasta e no hub principal [docs/index.md](../../index.md). Documentos órfãos são proibidos.
-5. **Transclusão de Código (`--8<--`):** Trechos de código de produção devem ser transcluídos diretamente dos arquivos-fonte usando a extensão PyMdown do MkDocs, prevenindo duplicação e desatualização.
+5. **Transclusão e Referência de Código:** Conforme refinado na [ADR-030](030-rich-domain-model-service-layer.md), priorizar links diretos para classes e métodos ou tags semânticas nomeadas (`[start:tag]`), evitando transclusões com faixas de linhas numéricas (`:start:end`) que causam fragilidade na manutenção.
 
 ---
 
