@@ -6,6 +6,7 @@ from datetime import datetime, time, timedelta
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError
+from django.utils import timezone
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -118,27 +119,115 @@ class WeddingService:
         )
 
         data = payload.model_dump(exclude_unset=True)
+        updated_fields: set[str] = set()
 
-        valid_fields = {f.name for f in Wedding._meta.concrete_fields}
+        status_input = data.pop("status", None)
+        if status_input is not None and status_input != instance.status:
+            instance.transition_to(status_input)
+            updated_fields.add("status")
+
+        # Validação temporal de mudança de data para casamentos em andamento
+        new_date = data.get("date")
+        if (
+            new_date
+            and new_date != instance.date
+            and instance.status == Wedding.StatusChoices.IN_PROGRESS
+            and new_date < timezone.now().date()
+        ):
+            raise BusinessRuleViolation(
+                detail="A nova data do casamento não pode ser no passado.",
+                code="wedding_invalid_date",
+            )
+
+        valid_fields = {f.name for f in Wedding._meta.concrete_fields} - {"status"}
         for field, value in data.items():
             if field in valid_fields:
                 setattr(instance, field, value)
+                updated_fields.add(field)
 
-        # Validação estrita
+        if updated_fields:
+            updated_fields.add("updated_at")
+            try:
+                instance.save(update_fields=list(updated_fields))
+            except DjangoValidationError as e:
+                logger.warning(
+                    f"Falha de validação ao atualizar casamento uuid={instance.uuid} "
+                    f"pela company_id={company.id}: {e}"
+                )
+                detail = "; ".join(e.messages) if e.messages else str(e)
+                raise BusinessRuleViolation(
+                    detail=detail,
+                    code="wedding_validation_error",
+                ) from e
+
+        logger.info(f"Casamento uuid={instance.uuid} atualizado.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def complete(company: Company, instance: Wedding) -> Wedding:
+        """
+        Caso de uso: Conclui um casamento existente delegando a regra para a entidade.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: Instância de Wedding a ser concluída.
+
+        Returns:
+            A instância de Wedding concluída e persistida.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Casamento não encontrado ou acesso negado.",
+            code="wedding_not_found_or_denied",
+        )
+        instance.complete()
         try:
-            instance.save()
+            instance.save(update_fields=["status", "updated_at"])
         except DjangoValidationError as e:
-            logger.warning(
-                f"Falha de validação ao atualizar casamento uuid={instance.uuid} "
-                f"pela company_id={company.id}: {e}"
-            )
             detail = "; ".join(e.messages) if e.messages else str(e)
             raise BusinessRuleViolation(
                 detail=detail,
                 code="wedding_validation_error",
             ) from e
 
-        logger.info(f"Casamento uuid={instance.uuid} atualizado.")
+        logger.info(f"Casamento uuid={instance.uuid} concluído com sucesso.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def cancel(
+        company: Company, instance: Wedding, reason: str | None = None
+    ) -> Wedding:
+        """
+        Caso de uso: Cancela um casamento existente delegando a regra para a entidade.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: Instância de Wedding a ser cancelada.
+            reason: Motivo opcional do cancelamento.
+
+        Returns:
+            A instância de Wedding cancelada e persistida.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Casamento não encontrado ou acesso negado.",
+            code="wedding_not_found_or_denied",
+        )
+        instance.cancel(reason=reason)
+        try:
+            instance.save(update_fields=["status", "updated_at"])
+        except DjangoValidationError as e:
+            detail = "; ".join(e.messages) if e.messages else str(e)
+            raise BusinessRuleViolation(
+                detail=detail,
+                code="wedding_validation_error",
+            ) from e
+
+        logger.info(f"Casamento uuid={instance.uuid} cancelado com sucesso.")
         return instance
 
     @staticmethod

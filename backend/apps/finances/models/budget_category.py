@@ -90,3 +90,22 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         já é validada pelo WeddingOwnedMixin.clean().
         """
         super().clean()
+
+    # ── Propriedades de Conveniência ─────────────────────────────────────
+
+    @property
+    def remaining_budget(self) -> Decimal:
+        """Valor restante do orçamento alocado para esta categoria."""
+        return self.allocated_budget - self.total_spent
+
+    @property
+    def is_over_budget(self) -> bool:
+        """Indica se os gastos ultrapassaram a verba alocada."""
+        return self.total_spent > self.allocated_budget
+
+    @property
+    def budget_utilization_percent(self) -> int:
+        """Percentual do orçamento alocado consumido (0 a 100+)."""
+        if not self.allocated_budget or self.allocated_budget <= Decimal("0.00"):
+            return 0
+        return int((self.total_spent / self.allocated_budget) * 100)

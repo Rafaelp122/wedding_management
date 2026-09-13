@@ -5,7 +5,7 @@ from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.budget import Budget
-from apps.finances.schemas import BudgetOut, BudgetPatchIn
+from apps.finances.schemas import BudgetIn, BudgetOut, BudgetPatchIn
 from apps.finances.selectors import budget_get_selector, budget_list_selector
 from apps.finances.services.budget_service import BudgetService
 from apps.users.types import AuthRequest
@@ -37,6 +37,20 @@ def get_budget(request: AuthRequest, uuid: UUID4) -> Budget:
     return budget_get_selector(company=user.company, uuid=uuid)
 
 
+@budgets_router.post(
+    "/",
+    response={201: BudgetOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_budgets_create",
+)
+def create_budget(request: AuthRequest, payload: BudgetIn) -> tuple[int, Budget]:
+    """
+    Cria um novo orçamento mestre para um casamento.
+    """
+    user = request.user
+    created = BudgetService.create(user.company, payload)
+    return 201, budget_get_selector(company=user.company, wedding_id=created.wedding_id)
+
+
 @budgets_router.get(
     "/for-wedding/{wedding_uuid}/",
     response={200: BudgetOut, **READ_ERROR_RESPONSES},
@@ -62,4 +76,5 @@ def update_budget(request: AuthRequest, uuid: UUID4, payload: BudgetPatchIn) -> 
     """
     user = request.user
     instance = budget_get_selector(company=user.company, uuid=uuid)
-    return BudgetService.update(user.company, instance, payload)
+    BudgetService.update(user.company, instance, payload)
+    return budget_get_selector(company=user.company, wedding_id=instance.wedding_id)

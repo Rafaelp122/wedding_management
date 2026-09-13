@@ -44,6 +44,7 @@ def seed_data(user: User, django_user_model: Any) -> dict[str, Any]:
             location="Local",
             date=date(2026, 10, 10),
             template=None,
+            expected_guests=None,
         ),
     )
     my_supplier = SupplierService.create(
@@ -90,6 +91,7 @@ def seed_data(user: User, django_user_model: Any) -> dict[str, Any]:
             location="Local",
             date=date(2026, 10, 10),
             template=None,
+            expected_guests=None,
         ),
     )
     other_supplier = SupplierService.create(

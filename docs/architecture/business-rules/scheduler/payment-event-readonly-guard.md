@@ -80,22 +80,55 @@ sequenceDiagram
 
 ## 4. Implementação no Código-Fonte Real
 
-### A. Guard de Criação (`events.py`)
+A lógica de proteção somente-leitura reside diretamente em [`EventService`](../../../../backend/apps/scheduler/services/events.py) e na entidade [`Event`](../../../../backend/apps/scheduler/models/event.py):
 
+### A. Guard de Criação (`EventService.create`)
+Impede a inserção de compromissos contábeis sem a flag interna `_caller_internal=True`:
 ```python
---8<-- "backend/apps/scheduler/services/events.py:78:88"
+if not _caller_internal and data.get("event_type") == Event.TypeChoices.PAYMENT:
+    raise BusinessRuleViolation(
+        detail=(
+            "Eventos de pagamento são gerados automaticamente e não podem "
+            "ser criados manualmente. Use o módulo financeiro para criar "
+            "despesas com parcelas."
+        ),
+        code="payment_event_readonly",
+    )
 ```
 
-### B. Guard de Atualização (`events.py`)
-
+### B. Guard de Atualização (`EventService.update`)
+Bloqueia alterações parciais em eventos originados no financeiro e impede a conversão ilegal de tipo:
 ```python
---8<-- "backend/apps/scheduler/services/events.py:137:155"
+if instance.event_type == Event.TypeChoices.PAYMENT:
+    raise BusinessRuleViolation(
+        detail=(
+            "Eventos de pagamento são gerados automaticamente e não podem "
+            "ser editados manualmente. Acesse o módulo financeiro para ajustar."
+        ),
+        code="payment_event_readonly",
+    )
+
+if data.get("event_type") == Event.TypeChoices.PAYMENT:
+    raise BusinessRuleViolation(
+        detail=(
+            "Não é permitido alterar o tipo de um evento para 'pagamento'. "
+            "Eventos de pagamento são gerados automaticamente."
+        ),
+        code="payment_event_readonly",
+    )
 ```
 
-### C. Guard de Exclusão (`events.py`)
-
+### C. Guard de Exclusão (`EventService.delete`)
+Garante que compromissos contábeis só possam ser removidos de forma atômica pelo `InstallmentService`:
 ```python
---8<-- "backend/apps/scheduler/services/events.py:192:201"
+if instance.event_type == Event.TypeChoices.PAYMENT:
+    raise BusinessRuleViolation(
+        detail=(
+            "Eventos de pagamento são gerados automaticamente e não podem ser "
+            "deletados manualmente. Acesse o módulo financeiro para ajustar."
+        ),
+        code="payment_event_readonly",
+    )
 ```
 
 ---

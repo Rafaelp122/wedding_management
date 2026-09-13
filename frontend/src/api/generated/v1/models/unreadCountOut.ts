@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída para contagem de notificações não lidas.
+ */
 export interface UnreadCountOut {
   /** Quantidade de notificações não lidas */
   count: number;

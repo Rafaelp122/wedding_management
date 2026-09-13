@@ -74,7 +74,8 @@ def mark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     """
     user = request.user
     instance = installment_get_selector(company=user.company, uuid=uuid)
-    return InstallmentService.mark_as_paid(user.company, instance)
+    InstallmentService.mark_as_paid(user.company, instance)
+    return installment_get_selector(company=user.company, uuid=instance.uuid)
 
 
 @installments_router.post(
@@ -88,7 +89,8 @@ def unmark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment
     """
     user = request.user
     instance = installment_get_selector(company=user.company, uuid=uuid)
-    return InstallmentService.unmark_as_paid(user.company, instance)
+    InstallmentService.unmark_as_paid(user.company, instance)
+    return installment_get_selector(company=user.company, uuid=instance.uuid)
 
 
 @installments_router.patch(
@@ -105,4 +107,5 @@ def adjust_installment(
     """
     user = request.user
     instance = installment_get_selector(company=user.company, uuid=uuid)
-    return InstallmentService.adjust(user.company, instance, payload)
+    InstallmentService.adjust(user.company, instance, payload)
+    return installment_get_selector(company=user.company, uuid=instance.uuid)

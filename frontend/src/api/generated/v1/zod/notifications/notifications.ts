@@ -40,7 +40,7 @@ export const NotificationsListResponse = zod.object({
   "link": zod.string(),
   "read_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
   "created_at": zod.iso.datetime({"offset":true})
-})),
+}).describe('Schema de saída para exibição de notificação.')),
   "count": zod.int()
 })
 
@@ -50,7 +50,7 @@ export const NotificationsListResponse = zod.object({
  */
 export const NotificationsUnreadCountResponse = zod.object({
   "count": zod.int().describe('Quantidade de notificações não lidas')
-})
+}).describe('Schema de saída para contagem de notificações não lidas.')
 
 /**
  * Marca todas as notificações pendentes do usuário como lidas.
@@ -58,31 +58,37 @@ export const NotificationsUnreadCountResponse = zod.object({
  */
 export const NotificationsMarkAllAsReadResponse = zod.object({
   "marked_count": zod.int().describe('Quantidade de notificações marcadas como lidas')
-})
+}).describe('Schema de saída para o total de notificações marcadas como lidas.')
 
 /**
  * Marca uma lista de notificações selecionadas como lidas.
  * @summary Bulk Mark As Read
  */
+
+
+
 export const NotificationsBulkMarkAsReadBody = zod.object({
-  "notification_ids": zod.array(zod.string()).describe('Lista de UUIDs de notificações')
-})
+  "notification_ids": zod.array(zod.string()).min(1).describe('Lista de UUIDs de notificações')
+}).describe('Schema de entrada para operações em massa com lista de IDs de notificações.')
 
 export const NotificationsBulkMarkAsReadResponse = zod.object({
   "affected_count": zod.int().describe('Quantidade de registros afetados')
-})
+}).describe('Schema de saída com a quantidade de registros afetados na operação.')
 
 /**
  * Exclui uma lista de notificações selecionadas.
  * @summary Bulk Delete
  */
+
+
+
 export const NotificationsBulkDeleteBody = zod.object({
-  "notification_ids": zod.array(zod.string()).describe('Lista de UUIDs de notificações')
-})
+  "notification_ids": zod.array(zod.string()).min(1).describe('Lista de UUIDs de notificações')
+}).describe('Schema de entrada para operações em massa com lista de IDs de notificações.')
 
 export const NotificationsBulkDeleteResponse = zod.object({
   "affected_count": zod.int().describe('Quantidade de registros afetados')
-})
+}).describe('Schema de saída com a quantidade de registros afetados na operação.')
 
 /**
  * Exclui todas as notificações do usuário no tenant atual.
@@ -90,7 +96,7 @@ export const NotificationsBulkDeleteResponse = zod.object({
  */
 export const NotificationsClearAllResponse = zod.object({
   "affected_count": zod.int().describe('Quantidade de registros afetados')
-})
+}).describe('Schema de saída com a quantidade de registros afetados na operação.')
 
 /**
  * Marca uma notificação específica como lida.
@@ -115,7 +121,7 @@ export const NotificationsMarkAsReadResponse = zod.object({
   "link": zod.string(),
   "read_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
   "created_at": zod.iso.datetime({"offset":true})
-})
+}).describe('Schema de saída para exibição de notificação.')
 
 /**
  * Exclui uma notificação individual do usuário.

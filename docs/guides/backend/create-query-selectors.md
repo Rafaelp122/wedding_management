@@ -97,35 +97,70 @@ __all__ = ["item_get_selector", "item_list_selector"]
 
 ---
 
-### Passo 4: Consumir os Selectors no Router (`api.py`)
+### Passo 4: Consumir os Selectors no Router (`api.py`) e Padrão Read-After-Write
 
-No router do Django Ninja, use o selector nas rotas `GET` e para carregar instâncias antes de mutações no service:
+No router do Django Ninja, utilize os selectors não apenas para responder rotas `GET`, mas também no padrão canônico **Read-After-Write**:
+1. Para rotas `GET`: Chame o selector diretamente.
+2. Para rotas `POST` (Criação): Delegue ao serviço e reidrate o recurso chamando `*_get_selector` com o `uuid` do objeto persistido.
+3. Para rotas `PATCH`/`PUT` (Atualização): Carregue a instância com o selector, execute o serviço e retorne a instância reidratada novamente via `*_get_selector`.
 
 ```python
 # apps/meu_dominio/api/items.py
 from ninja.pagination import paginate
 from ninja_extra import Router
 from pydantic import UUID4
+
+from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.meu_dominio.models import Item
+from apps.meu_dominio.schemas import ItemIn, ItemOut, ItemPatchIn
 from apps.meu_dominio.selectors import item_get_selector, item_list_selector
 from apps.meu_dominio.services import ItemService
 from apps.users.types import AuthRequest
 
 items_router = Router(tags=["MeuDominio"])
 
+
 @items_router.get("/", response=list[ItemOut], operation_id="meudominio_items_list")
 @paginate
 def list_items(request: AuthRequest):
     return item_list_selector(company=request.user.company)
 
-@items_router.get("/{uuid}/", response=ItemOut, operation_id="meudominio_items_read")
-def get_item(request: AuthRequest, uuid: UUID4):
+
+@items_router.get(
+    "/{uuid:uuid}/",
+    response={200: ItemOut, **READ_ERROR_RESPONSES},
+    operation_id="meudominio_items_read",
+)
+def get_item(request: AuthRequest, uuid: UUID4) -> Item:
     return item_get_selector(company=request.user.company, uuid=uuid)
 
-@items_router.patch("/{uuid}/", response=ItemOut, operation_id="meudominio_items_update")
-def update_item(request: AuthRequest, uuid: UUID4, payload: ItemPatchIn):
-    instance = item_get_selector(company=request.user.company, uuid=uuid)
-    return ItemService.update(request.user.company, instance, payload)
+
+@items_router.post(
+    "/",
+    response={201: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="meudominio_items_create",
+)
+def create_item(request: AuthRequest, payload: ItemIn) -> tuple[int, Item]:
+    company = request.user.company
+    item = ItemService.create(company=company, payload=payload)
+    return 201, item_get_selector(company=company, uuid=item.uuid)
+
+
+@items_router.patch(
+    "/{uuid:uuid}/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="meudominio_items_update",
+)
+def update_item(request: AuthRequest, uuid: UUID4, payload: ItemPatchIn) -> Item:
+    company = request.user.company
+    instance = item_get_selector(company=company, uuid=uuid)
+    ItemService.update(company=company, instance=instance, payload=payload)
+    return item_get_selector(company=company, uuid=uuid)
 ```
+
+> [!TIP]
+> **Por que Read-After-Write?** O retorno direto de um método de serviço contém instâncias com estado bruto de memória. Re-executar o selector garante que campos calculados no SQL, anotações de agregados e relacionamentos `select_related`/`prefetch_related` sejam hidratos com integridade absoluta antes da resposta HTTP.
+
 
 ---
 

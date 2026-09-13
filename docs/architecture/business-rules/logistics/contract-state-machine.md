@@ -15,7 +15,7 @@ tests:
 # Máquina de Estados de Contratos e Itens Logísticos
 
 > **Categoria:** Regra de Negócio (Domínio Logístico)
-> **Relacionados:** [Hierarquia de Contratos e Aditivos](contract-parent-child-hierarchy.md) · [Validação de CNPJ](cnpj-validation-rules.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md)
+> **Relacionados:** [Hierarquia de Contratos e Aditivos](contract-parent-child-hierarchy.md) · [Validação de CNPJ](cnpj-validation-rules.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md) · [ADR-030: Rich Domain Model e Validação em 3 Níveis](../../adr/030-rich-domain-model-service-layer.md)
 
 ---
 
@@ -81,25 +81,46 @@ stateDiagram-v2
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Implementação e Uso do Modelo de Domínio
 
-### A. Mapeamento de Transições e Validação (`contract.py`)
+### A. Entidade Rica `Contract`
+A lógica de transição e invariantes de formalização reside diretamente em [`apps/logistics/models/contract.py`](../../../../backend/apps/logistics/models/contract.py):
 
-```python
---8<-- "backend/apps/logistics/models/contract.py:113:166"
-```
-
-### B. Validação dos Requisitos de `SIGNED` (`contract.py`)
-
-```python
---8<-- "backend/apps/logistics/models/contract.py:167:180"
-```
-
-### C. Método de Transição no Serviço (`contract_service.py`)
+- `contract.can_transition_to(target_status)`: Consulta a matriz canônica `ALLOWED_TRANSITIONS`.
+- `contract.transition_to(target_status)`: Executa a transição ou dispara `BusinessRuleViolation` (`contract_invalid_status_transition`).
+- `contract.send_to_pending()`: Transita para `PENDING`.
+- `contract.sign(signed_date=..., pdf_file=...)`: Atribui os dados comprobatórios e transita para `SIGNED`.
+- `contract.cancel()`: Distrata o contrato e transita para `CANCELED`.
+- `contract.revert_to_draft()`: Retorna o contrato para `DRAFT`.
+- `contract._clean_signed_requirements()`: Invariante executada em `clean()`, validando `pdf_file`, `signed_date` e `total_amount > 0`.
+- Propriedades de conveniência: `contract.is_draft`, `contract.is_pending`, `contract.is_signed`, `contract.is_canceled`, `contract.has_file`, `contract.file_name`.
 
 ```python
---8<-- "backend/apps/logistics/services/contract_service.py:521:562"
+# Exemplo canônico de uso do modelo rico:
+contract = contract_get_selector(company=company, uuid=contract_uuid)
+
+if contract.can_transition_to(Contract.StatusChoices.SIGNED):
+    contract.sign(signed_date=today, pdf_file=uploaded_file)
+    contract.save(update_fields=["status", "signed_date", "pdf_file", "updated_at"])
 ```
+
+### B. Entidade Rica `Item`
+O ciclo de vida operacional e regras de quantidade residem em [`apps/logistics/models/item.py`](../../../../backend/apps/logistics/models/item.py):
+
+- `item.can_transition_to(target_status)`: Consulta transições permitidas para aquisição (`PENDING` $\leftrightarrow$ `IN_PROGRESS` $\leftrightarrow$ `DONE`).
+- `item.transition_to(target_status)`: Executa a transição ou dispara `BusinessRuleViolation` (`item_invalid_status_transition`).
+- `item.start()`: Inicia o processo de aquisição (`IN_PROGRESS`).
+- `item.complete()`: Marca o item como concluído/entregue (`DONE`).
+- `item.reopen()`: Reabre item concluído para `IN_PROGRESS`.
+- `item.revert_to_pending()`: Retorna o item para `PENDING`.
+- Propriedades de conveniência: `item.is_pending`, `item.is_in_progress`, `item.is_done`.
+
+### C. Orquestração no `ContractService` e `ItemService`
+A camada de serviços em [`apps/logistics/services/`](../../../../backend/apps/logistics/services/) orquestra autorização multi-tenant e persistência cirúrgica com `update_fields`:
+
+- `ContractService.transition_status(company, uuid, status_input)`: Valida permissão do tenant, executa `contract.transition_to(status_input)` e persiste estritamente com `update_fields=["status", "updated_at"]`.
+- `ContractService.sign(company, instance, ...)` / `send_to_pending` / `cancel` / `revert_to_draft`: Casos de uso semânticos para formalização e distrato.
+- `ItemService.start(company, instance)` / `complete` / `reopen` / `revert_to_pending`: Orquestração do ciclo operacional do item.
 
 ---
 
@@ -107,9 +128,10 @@ stateDiagram-v2
 
 A suíte de testes unitários em `apps/logistics/tests/contracts/test_models.py` e `apps/logistics/tests/contracts/test_services.py` valida 100% dos caminhos e bloqueios da máquina de estados:
 
-- `test_valid_transitions`: Valida todas as 7 transições permitidas no ciclo de vida.
-- `test_invalid_transitions`: Valida rejeição com `ValidationError` para transições proibidas (ex.: `DRAFT -> SIGNED`, `SIGNED -> DRAFT`, `CANCELED -> SIGNED`).
-- `test_signed_without_pdf_fails`: Valida exigência do arquivo PDF para contratos assinados.
+- `test_valid_transitions`: Valida todas as 7 transições permitidas no ciclo de vida da entidade.
+- `test_invalid_transitions`: Valida rejeição com `BusinessRuleViolation` (`contract_invalid_status_transition`) para transições proibidas (ex.: `DRAFT -> SIGNED`, `SIGNED -> DRAFT`, `CANCELED -> SIGNED`).
+- `test_signed_without_pdf_fails`: Valida exigência do arquivo PDF para contratos assinados via `full_clean()`.
 - `test_signed_without_positive_amount_fails`: Valida exigência de valor estritamente positivo.
 - `test_signed_without_signed_date_fails`: Valida exigência da data de formalização.
 - `test_transition_to_signed_without_pdf_raises_error`: Valida propagação de erro de negócio no `ContractService.transition_status`.
+- `test_contract_semantic_lifecycle`: Valida métodos semânticos (`send_to_pending`, `sign`, `cancel`, `revert_to_draft`).

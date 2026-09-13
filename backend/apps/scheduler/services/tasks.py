@@ -86,13 +86,80 @@ class TaskService:
         )
 
         data = payload.model_dump(exclude_unset=True)
+        data.pop("wedding", None)
+        data.pop("company", None)
+
+        updated_fields: set[str] = set()
+
+        if "is_completed" in data:
+            is_completed = data.pop("is_completed")
+            if is_completed is True:
+                instance.complete()
+            elif is_completed is False:
+                instance.reopen()
+            updated_fields.add("is_completed")
 
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
-        instance.save()
+        if updated_fields:
+            updated_fields.add("updated_at")
+            instance.save(update_fields=list(updated_fields))
 
         logger.info(f"Tarefa uuid={instance.uuid} atualizada com sucesso.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def complete(company: Company, instance: Task) -> Task:
+        """Marca a tarefa como concluída no contexto do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A tarefa a ser concluída.
+
+        Returns:
+            Task: A tarefa atualizada.
+
+        Raises:
+            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Tarefa não encontrada ou acesso negado.",
+            code="task_not_found_or_denied",
+        )
+        instance.complete()
+        instance.save(update_fields=["is_completed", "updated_at"])
+        logger.info(f"Tarefa uuid={instance.uuid} concluída com sucesso.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def reopen(company: Company, instance: Task) -> Task:
+        """Reabre uma tarefa concluída no contexto do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A tarefa a ser reaberta.
+
+        Returns:
+            Task: A tarefa atualizada.
+
+        Raises:
+            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Tarefa não encontrada ou acesso negado.",
+            code="task_not_found_or_denied",
+        )
+        instance.reopen()
+        instance.save(update_fields=["is_completed", "updated_at"])
+        logger.info(f"Tarefa uuid={instance.uuid} reaberta com sucesso.")
         return instance
 
     @staticmethod

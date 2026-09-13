@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para atualização parcial de fornecedor.
+ */
 export interface SupplierPatchIn {
   name?: string | null;
   cnpj?: string | null;

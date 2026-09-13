@@ -72,19 +72,32 @@ sequenceDiagram
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Implementação e Uso do Modelo de Domínio e Serviços
 
-### A. Algoritmo de Varredura e Notificação (`installment_service.py`)
+### A. Ciclo de Vida Semântico na Entidade (`Installment`)
+A máquina de estados e validações de transição residem diretamente em [`apps/finances/models/installment.py`](../../../../backend/apps/finances/models/installment.py):
+
+- `installment.can_transition_to(target_status)`: Consulta a matriz canônica `ALLOWED_TRANSITIONS` (`PENDING` $\leftrightarrow$ `PAID`, `PENDING` $\leftrightarrow$ `OVERDUE`, `OVERDUE` $\rightarrow$ `PAID`).
+- `installment.transition_to(target_status)`: Executa a transição ou dispara `BusinessRuleViolation("installment_invalid_status_transition")`.
+- `installment.mark_as_paid(paid_date=...)`: Valida idempotência, atribui a data de quitação e transita para `PAID`.
+- `installment.unmark_as_paid()`: Zera a data de quitação e restaura para `OVERDUE` (se vencida) ou `PENDING` (se futura).
+- `installment.mark_as_overdue()`: Transita para `OVERDUE` validando vencimento no passado.
+- Propriedades de conveniência: `installment.is_paid`, `installment.is_pending`, `installment.is_overdue`, `installment.is_late`, `installment.days_overdue`, `installment.days_until_due`.
 
 ```python
---8<-- "backend/apps/finances/services/installment_service.py:559:630"
+# Exemplo canônico de liquidação da parcela:
+installment = installment_get_selector(company=company, uuid=installment_uuid)
+
+if installment.can_transition_to(Installment.StatusChoices.PAID):
+    installment.mark_as_paid(paid_date=date.today())
+    installment.save(update_fields=["status", "paid_date", "updated_at"])
 ```
 
-### B. Marcação e Reversão de Pagamento (`installment_service.py`)
+### B. Algoritmo de Varredura e Notificação no Serviço
+A orquestração operacional reside em [`apps/finances/services/installment_service.py`](../../../../backend/apps/finances/services/installment_service.py):
 
-```python
---8<-- "backend/apps/finances/services/installment_service.py:305:354"
-```
+- `InstallmentService.mark_overdue_installments()`: Varre parcelas vencidas em status `PENDING`, atualiza cirurgicamente para `OVERDUE` (`update_fields=["status", "updated_at"]`) e dispara notificações in-app para os usuários da empresa dona do registro.
+- `InstallmentService.mark_as_paid()` / `unmark_as_paid()`: Casos de uso atômicos que delegam para a entidade e revalidam a despesa pai via `expense.full_clean()`.
 
 ---
 

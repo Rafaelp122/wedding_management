@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída para exibição de categoria de orçamento.
+ */
 export interface BudgetCategoryOut {
   uuid: string;
   wedding: string;

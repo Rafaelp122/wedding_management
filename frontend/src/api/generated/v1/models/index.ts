@@ -9,6 +9,7 @@ export * from './batchTaskResult';
 export * from './budgetCategoryIn';
 export * from './budgetCategoryOut';
 export * from './budgetCategoryPatchIn';
+export * from './budgetIn';
 export * from './budgetOut';
 export * from './budgetPatchIn';
 export * from './bulkNotificationIdsIn';

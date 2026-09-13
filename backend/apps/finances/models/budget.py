@@ -89,3 +89,15 @@ class Budget(TenantModel, WeddingOwnedMixin):
                 filter=Q(expenses__installments__status=Installment.StatusChoices.PAID),
             )
         )["total"] or Decimal("0.00")
+
+    # ── Propriedades de Conveniência ─────────────────────────────────────
+
+    @property
+    def remaining_overall_budget(self) -> Decimal:
+        """Valor restante do orçamento geral estimado."""
+        return self.total_estimated - self.total_overall_spent
+
+    @property
+    def is_over_budget(self) -> bool:
+        """Indica se os gastos totais ultrapassaram o teto estimado do orçamento."""
+        return self.total_overall_spent > self.total_estimated

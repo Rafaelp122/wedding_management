@@ -344,6 +344,57 @@ class TestEventServiceUpdate:
                 EventPatchIn.model_construct(title="Hack"),
             )
 
+    def test_update_event_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """Verifica que update() persiste cirurgicamente apenas campos alterados."""
+        wedding = WeddingFactory(user_context=user)
+        event = EventFactory(
+            wedding=wedding, title="Título Inicial", location="Local A"
+        )
+        spy_save = mocker.spy(event, "save")
+
+        updated = EventService.update(
+            user.company,
+            event,
+            EventPatchIn(title="Título Atualizado", location="Local B"),
+        )
+
+        assert updated.title == "Título Atualizado"
+        assert updated.location == "Local B"
+        spy_save.assert_called_once()
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        assert set(kwargs["update_fields"]) == {"title", "location", "updated_at"}
+
+    def test_update_event_validation_error_converted_to_business_rule_violation(
+        self, user: Any
+    ) -> None:
+        """Verifica que ValidationError do modelo é convertido em
+        BusinessRuleViolation."""
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now()
+        event = EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(days=10),
+            end_time=now + timedelta(days=10, hours=2),
+        )
+
+        # Passar end_time anterior ao start_time existente no banco
+        invalid_end_time = now + timedelta(days=5)
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.update(
+                user.company,
+                event,
+                EventPatchIn(end_time=invalid_end_time),
+            )
+
+        assert exc_info.value.code == "event_update_validation_error"
+        assert "A hora de término não pode ser anterior à hora de início" in str(
+            exc_info.value.detail
+        )
+
 
 @pytest.mark.django_db
 class TestEventServiceDelete:

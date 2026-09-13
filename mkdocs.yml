@@ -187,6 +187,7 @@ nav:
           - 027 - Topologia de States do Terraform: architecture/adr/027-terraform-state-topology.md
           - 028 - Documentação Diátaxis & Notas Atômicas: architecture/adr/028-diataxis-atomic-notes.md
           - 029 - Task Runner Moderno (Just): architecture/adr/029-modern-task-runner-just.md
+          - 030 - Rich Domain Model & Casos de Uso: architecture/adr/030-rich-domain-model-service-layer.md
       - Design System & Racional de UX: architecture/concepts/design-system-rationale.md
 
   - Guias & Onboarding:
@@ -209,6 +210,7 @@ nav:
           - Testes E2E com Playwright: guides/frontend/run-playwright-e2e.md
       - Backend (Django Ninja):
           - Padrão Service Layer: guides/backend/use-core-services.md
+          - Estruturação de Modelos Ricos: guides/backend/structure-and-modularize-rich-models.md
           - Query Selectors Customizados: guides/backend/create-query-selectors.md
           - Suíte Pytest & Factories: guides/backend/run-pytest-suite.md
           - Notificações In-App: guides/backend/send-in-app-notifications.md

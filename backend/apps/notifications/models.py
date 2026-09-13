@@ -1,4 +1,8 @@
+from datetime import datetime
+
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BaseModel
@@ -75,3 +79,49 @@ class Notification(BaseModel):
 
     def __str__(self) -> str:
         return f"[{self.type}] {self.title} (user_id={self.user_id})"
+
+    def clean(self) -> None:
+        """Valida o isolamento de tenant do usuário e sincroniza data de leitura."""
+        super().clean()
+        if self.user_id and self.company_id and self.user.company_id != self.company_id:
+            raise ValidationError(
+                {"user": "O usuário destinatário deve pertencer à empresa informada."}
+            )
+        if self.is_read and not self.read_at:
+            self.read_at = timezone.now()
+        elif not self.is_read and self.read_at is not None:
+            self.read_at = None
+
+    # ── Métodos Semânticos de Ciclo de Vida ──────────────────────────────
+
+    def mark_as_read(self, read_at: datetime | None = None) -> None:
+        """Marca a notificação como lida de forma idempotente.
+
+        Args:
+            read_at: Data/hora opcional da leitura. Se omitido, usa timezone.now().
+        """
+        if self.is_read:
+            return
+        self.is_read = True
+        self.read_at = read_at or timezone.now()
+
+    def mark_as_unread(self) -> None:
+        """Marca a notificação como não lida."""
+        self.is_read = False
+        self.read_at = None
+
+    # ── Propriedades Semânticas ──────────────────────────────────────────
+
+    @property
+    def is_urgent(self) -> bool:
+        """Indica se a notificação é de alta prioridade/urgente."""
+        return self.type in (
+            NotificationType.OVERDUE_INSTALLMENT,
+            NotificationType.CHECKLIST_ITEM_OVERDUE,
+        )
+
+    @property
+    def is_actionable(self) -> bool:
+        """Indica se a notificação aponta para uma entidade específica que
+        permite ação."""
+        return bool(self.target_id and self.target_type)

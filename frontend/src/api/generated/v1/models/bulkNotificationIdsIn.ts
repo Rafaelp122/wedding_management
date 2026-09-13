@@ -5,7 +5,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para operações em massa com lista de IDs de notificações.
+ */
 export interface BulkNotificationIdsIn {
-  /** Lista de UUIDs de notificações */
+  /**
+     * Lista de UUIDs de notificações
+     * @minItems 1
+     */
   notification_ids: string[];
 }

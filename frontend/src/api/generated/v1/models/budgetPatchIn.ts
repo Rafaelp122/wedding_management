@@ -5,7 +5,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para atualização parcial de orçamento.
+ */
 export interface BudgetPatchIn {
   total_estimated?: number | string | null;
+  /** @maxLength 1000 */
   notes?: string;
 }

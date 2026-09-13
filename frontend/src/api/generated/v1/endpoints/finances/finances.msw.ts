@@ -25,6 +25,7 @@ import type {
 } from '../../models';
 
 import {
+  getFinancesBudgetsCreateResponseMock,
   getFinancesBudgetsForWeddingResponseMock,
   getFinancesBudgetsListResponseMock,
   getFinancesBudgetsReadResponseMock,
@@ -45,7 +46,7 @@ import {
   getFinancesInstallmentsUnmarkAsPaidResponseMock
 } from './finances.faker';
 
-export { getFinancesBudgetsListResponseMock, getFinancesBudgetsReadResponseMock, getFinancesBudgetsUpdateResponseMock, getFinancesBudgetsForWeddingResponseMock, getFinancesCategoriesListResponseMock, getFinancesCategoriesCreateResponseMock, getFinancesCategoriesReadResponseMock, getFinancesCategoriesUpdateResponseMock, getFinancesExpensesListResponseMock, getFinancesExpensesCreateResponseMock, getFinancesExpensesReadResponseMock, getFinancesExpensesUpdateResponseMock, getFinancesExpensesFromDocumentResponseMock, getFinancesInstallmentsListResponseMock, getFinancesInstallmentsReadResponseMock, getFinancesInstallmentsMarkAsPaidResponseMock, getFinancesInstallmentsUnmarkAsPaidResponseMock, getFinancesInstallmentsAdjustResponseMock } from './finances.faker';
+export { getFinancesBudgetsListResponseMock, getFinancesBudgetsCreateResponseMock, getFinancesBudgetsReadResponseMock, getFinancesBudgetsUpdateResponseMock, getFinancesBudgetsForWeddingResponseMock, getFinancesCategoriesListResponseMock, getFinancesCategoriesCreateResponseMock, getFinancesCategoriesReadResponseMock, getFinancesCategoriesUpdateResponseMock, getFinancesExpensesListResponseMock, getFinancesExpensesCreateResponseMock, getFinancesExpensesReadResponseMock, getFinancesExpensesUpdateResponseMock, getFinancesExpensesFromDocumentResponseMock, getFinancesInstallmentsListResponseMock, getFinancesInstallmentsReadResponseMock, getFinancesInstallmentsMarkAsPaidResponseMock, getFinancesInstallmentsUnmarkAsPaidResponseMock, getFinancesInstallmentsAdjustResponseMock } from './finances.faker';
 
 
 export const getFinancesBudgetsListMockHandler = (overrideResponse?: PagedBudgetOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedBudgetOut> | PagedBudgetOut), options?: RequestHandlerOptions) => {
@@ -56,6 +57,18 @@ export const getFinancesBudgetsListMockHandler = (overrideResponse?: PagedBudget
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getFinancesBudgetsListResponseMock(),
       { status: 200
+      })
+  }, options)
+}
+
+export const getFinancesBudgetsCreateMockHandler = (overrideResponse?: BudgetOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<BudgetOut> | BudgetOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/finances/budgets/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getFinancesBudgetsCreateResponseMock(),
+      { status: 201
       })
   }, options)
 }
@@ -285,6 +298,7 @@ export const getFinancesInstallmentsAdjustMockHandler = (overrideResponse?: Inst
 }
 export const getFinancesMock = () => [
   getFinancesBudgetsListMockHandler(),
+  getFinancesBudgetsCreateMockHandler(),
   getFinancesBudgetsReadMockHandler(),
   getFinancesBudgetsUpdateMockHandler(),
   getFinancesBudgetsForWeddingMockHandler(),

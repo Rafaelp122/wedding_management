@@ -82,23 +82,33 @@ graph TD
 
 ## 4. Implementação no Código-Fonte Real
 
-### A. Definição do Modelo e Choices de Recorrência (`event.py`)
+A parametrização de recorrência, prazos e integridade temporal está encapsulada nos modelos e serviços do módulo `scheduler`:
 
+### A. Definição do Modelo e Choices de Recorrência (`Event`)
+Implementado em [`Event`](../../../../backend/apps/scheduler/models/event.py):
+- `RecurrenceChoices`: Suporta intervalos canônicos (`none`, `semanal`, `quinzenal`, `mensal`).
+- `TypeChoices`: Classificação de eventos (`reuniao`, `pagamento`, `visita`, `degustacao`, `outro`).
+- Invariante de horário em `clean()`: Garante que `end_time >= start_time`.
+- Propriedades de conveniência: `is_recurrent`, `is_payment_event`, `duration`.
+
+### B. Validação Cronológica no Serviço de Eventos (`EventService.create`)
+Implementado em [`EventService.create`](../../../../backend/apps/scheduler/services/events.py):
 ```python
---8<-- "backend/apps/scheduler/models/event.py:13:61"
+if (
+    not _allow_historical_start
+    and timezone.localdate(data["start_time"]) < timezone.localdate()
+):
+    raise BusinessRuleViolation(
+        detail="A data e hora de início do evento não pode estar no passado.",
+        code="event_start_time_in_past",
+    )
 ```
 
-### B. Validação Cronológica no Serviço de Eventos (`events.py`)
-
-```python
---8<-- "backend/apps/scheduler/services/events.py:64:72"
-```
-
-### C. Modelo de Tarefas do Checklist (`task.py`)
-
-```python
---8<-- "backend/apps/scheduler/models/task.py:8:31"
-```
+### C. Modelo de Tarefas do Checklist (`Task`)
+Implementado em [`Task`](../../../../backend/apps/scheduler/models/task.py):
+- Ordenação canônica: `ordering = ["is_completed", "due_date", "created_at"]`.
+- Métodos semânticos de ciclo de vida: `complete()`, `reopen()`.
+- Propriedades temporais: `is_overdue`, `days_overdue`.
 
 ---
 

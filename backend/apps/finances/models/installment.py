@@ -7,9 +7,13 @@ de pagamento.
 Referência: RF04
 """
 
+from datetime import date
+from typing import ClassVar
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.core.mixins import WeddingOwnedMixin
 from apps.finances.managers import InstallmentManager
 from apps.tenants.models import TenantModel
@@ -27,6 +31,12 @@ class Installment(TenantModel, WeddingOwnedMixin):
         PAID = "PAID", "Pago"
         PENDING = "PENDING", "Pendente"
         OVERDUE = "OVERDUE", "Atrasado"
+
+    ALLOWED_TRANSITIONS: ClassVar[dict[str, set[str]]] = {
+        StatusChoices.PENDING: {StatusChoices.PAID, StatusChoices.OVERDUE},
+        StatusChoices.OVERDUE: {StatusChoices.PAID, StatusChoices.PENDING},
+        StatusChoices.PAID: {StatusChoices.PENDING, StatusChoices.OVERDUE},
+    }
 
     # Relacionamento forte com a Despesa
     expense = models.ForeignKey(
@@ -71,3 +81,123 @@ class Installment(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 "Parcela PAGA precisa ter data de pagamento preenchida"
             )
+
+    # ── Métodos de Ciclo de Vida da Entidade ─────────────────────────────
+
+    def can_transition_to(self, target_status: str | StatusChoices) -> bool:
+        """Verifica se a transição para o status informado é válida.
+
+        Args:
+            target_status: Status de destino a ser avaliado.
+
+        Returns:
+            True se a transição for permitida, False caso contrário.
+        """
+        target = str(target_status)
+        return target in self.ALLOWED_TRANSITIONS.get(self.status, set())
+
+    def transition_to(self, target_status: str | StatusChoices) -> None:
+        """Executa a transição de status da parcela validando as regras do domínio.
+
+        Args:
+            target_status: Status de destino desejado.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+        """
+        target = str(target_status)
+        if self.status == target:
+            return
+
+        if not self.can_transition_to(target):
+            raise BusinessRuleViolation(
+                detail=f"Não é permitido transitar de '{self.status}' para '{target}'.",
+                code="installment_invalid_status_transition",
+            )
+
+        self.status = target
+
+    def mark_as_paid(self, *, paid_date: date | None = None) -> None:
+        """Marca a parcela como paga com a data informada ou atual.
+
+        Args:
+            paid_date: Data opcional do pagamento. Se omitida, utiliza a data atual.
+
+        Raises:
+            BusinessRuleViolation: Se a parcela já estiver marcada como paga.
+        """
+        if self.status == self.StatusChoices.PAID:
+            raise BusinessRuleViolation(
+                detail="Esta parcela já foi marcada como paga.",
+                code="installment_already_paid",
+            )
+        self.paid_date = paid_date or date.today()
+        self.transition_to(self.StatusChoices.PAID)
+
+    def unmark_as_paid(self) -> None:
+        """Desmarca o pagamento da parcela, restaurando o status adequado ao vencimento.
+
+        Raises:
+            BusinessRuleViolation: Se a parcela não estiver marcada como paga.
+        """
+        if self.status != self.StatusChoices.PAID:
+            raise BusinessRuleViolation(
+                detail="Apenas parcelas marcadas como pagas podem ser desmarcadas.",
+                code="installment_not_paid",
+            )
+        self.paid_date = None
+        if self.due_date < date.today():
+            self.transition_to(self.StatusChoices.OVERDUE)
+        else:
+            self.transition_to(self.StatusChoices.PENDING)
+
+    def mark_as_overdue(self) -> None:
+        """Altera status para atrasado caso a data de vencimento tenha passado.
+
+        Raises:
+            BusinessRuleViolation: Se a data de vencimento ainda não tiver passado.
+        """
+        if self.due_date >= date.today():
+            raise BusinessRuleViolation(
+                detail=(
+                    "Apenas parcelas vencidas podem ter status alterado para atrasado."
+                ),
+                code="installment_not_overdue",
+            )
+        self.transition_to(self.StatusChoices.OVERDUE)
+
+    # ── Propriedades de Conveniência ─────────────────────────────────────
+
+    @property
+    def is_paid(self) -> bool:
+        """Indica se a parcela está com status PAGO."""
+        return self.status == self.StatusChoices.PAID
+
+    @property
+    def is_pending(self) -> bool:
+        """Indica se a parcela está com status PENDENTE."""
+        return self.status == self.StatusChoices.PENDING
+
+    @property
+    def is_overdue(self) -> bool:
+        """Indica se a parcela está com status ATRASADO."""
+        return self.status == self.StatusChoices.OVERDUE
+
+    @property
+    def is_late(self) -> bool:
+        """Indica se a parcela está pendente e com vencimento ultrapassado."""
+        return self.is_pending and self.due_date < date.today()
+
+    @property
+    def days_overdue(self) -> int:
+        """Número de dias em atraso em relação à data atual."""
+        if self.due_date < date.today():
+            return (date.today() - self.due_date).days
+        return 0
+
+    @property
+    def days_until_due(self) -> int:
+        """Número de dias restantes até a data de vencimento."""
+        if self.due_date >= date.today():
+            return (self.due_date - date.today()).days
+        return 0

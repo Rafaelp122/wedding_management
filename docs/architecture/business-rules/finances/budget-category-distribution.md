@@ -72,25 +72,43 @@ graph TD
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Implementação e Uso do Modelo de Domínio e Serviços
 
-### A. Validação de Teto com Agregação Segura (`budget_category_service.py`)
+### A. Validação de Teto Orçamentário e Prevenção TOCTOU
+A orquestração transacional reside em [`apps/finances/services/budget_category_service.py`](../../../../backend/apps/finances/services/budget_category_service.py):
 
-```python
---8<-- "backend/apps/finances/services/budget_category_service.py:22:53"
-```
-
-### B. Criação com Lock Pessimista (`budget_category_service.py`)
-
-```python
---8<-- "backend/apps/finances/services/budget_category_service.py:63:113"
-```
-
-### C. Geração Idempotente de Categorias Canônicas (`budget_category_service.py`)
+- `BudgetCategoryService.create()`: Adquire lock pessimista via `select_for_update()` na instância pai do `Budget` antes de calcular a soma das categorias filhas, prevenindo concorrência desordenada.
+- `BudgetCategoryService.update()`: Mantém a proteção sob lock e persiste cirurgicamente com `instance.save(skip_clean=True, update_fields=list(updated_fields | {"updated_at"}))`.
+- `_validate_budget_cap(company, category, budget)`: Invariante de negócio que garante $\sum \text{allocated} \le \text{total\_estimated}$.
 
 ```python
---8<-- "backend/apps/finances/services/budget_category_service.py:213:261"
+# Exemplo canônico de trava pessimista e validação de teto:
+budget = Budget.objects.for_tenant(company).select_for_update().get(pk=budget.pk)
+
+current_allocated = (
+    budget.categories.exclude(pk=category.pk).aggregate(
+        total=Coalesce(Sum("allocated_budget"), Decimal("0.00"))
+    )["total"]
+)
+
+if current_allocated + category.allocated_budget > budget.total_estimated:
+    raise BusinessRuleViolation(
+        detail="A soma das verbas alocadas ultrapassa o orçamento total do casamento.",
+        code="allocated_budget_exceeds_cap",
+    )
 ```
+
+### B. Métodos Ricos na Categoria (`BudgetCategory`) e Orçamento (`Budget`)
+Modelos em [`apps/finances/models/budget_category.py`](../../../../backend/apps/finances/models/budget_category.py) e [`apps/finances/models/budget.py`](../../../../backend/apps/finances/models/budget.py):
+
+- `category.remaining_budget`: Retorna a verba disponível calculada em memória (`allocated_budget - total_spent`).
+- `category.is_over_budget`: Propriedade booleana indicando se o gasto superou a verba alocada.
+- `category.budget_utilization_percent`: Percentual de consumo da verba alocada.
+- `budget.remaining_overall_budget`: Saldo global disponível do casamento.
+- `budget.is_over_budget`: Propriedade booleana indicando estouro do teto orçamentário mestre.
+
+### C. Geração Idempotente de Categorias Canônicas
+- `BudgetCategoryService.setup_defaults(company, budget)`: Cria as 6 categorias padrão essenciais de casamento de forma segura e idempotente caso ainda não existam.
 
 ---
 

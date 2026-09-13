@@ -277,7 +277,7 @@ Escolha a modalidade de ambiente de desenvolvimento preferida:
 | **Frontend SPA** | React 19, TypeScript, Tailwind CSS v4, shadcn/ui | `React 19.2+`, `Vite 8.2+`, `TS 7.0+` | Interface do usuário rica e autenticada para cerimonialistas e casais. |
 | **Camada de Contratos** | Django Ninja, OpenAPI 3.1, Orval, Zod | `Ninja 1.6+`, `Orval 8.24+`, `Zod 4.4+` | Sincronização automática e tipagem estrita de ponta a ponta sem clientes manuais. |
 | **Backend & APIs** | Python, Django, Django Ninja, Pydantic v2 | `Python 3.12+`, `Django 6.0+`, `Ninja 1.6+` | Roteamento performático, validação de payload, autenticação JWT e serialização. |
-| **Lógica & Domínio** | Service Layer (`@transaction.atomic`), `TenantQuerySet` | Padrão Nativo CQRS | Validação de regras de negócio, garantia de tolerância zero e isolamento multi-tenant. |
+| **Lógica & Domínio** | Rich Domain Model ([ADR-030](architecture/adr/030-rich-domain-model-service-layer.md)), Service Layer, `TenantQuerySet` | Padrão CQRS & Use Cases | Validação em 3 níveis (Pydantic, Model, Service), tolerância zero e isolamento multi-tenant. |
 | **Persistência de Dados** | Neon Serverless PostgreSQL | `psycopg 3.3+` | Banco relacional escalável com isolamento lógico estrito por empresa (`company_id`). |
 | **Armazenamento de Arquivos** | Cloudflare R2 (S3-Compatible) | `django-storages 1.14+`, `boto3 1.43+` | Armazenamento de PDFs contratuais via Presigned URLs com custo de egresso zero. |
 | **Tarefas & Workers** | Huey, Redis/Valkey, Cloud Scheduler | `huey 2.5+`, `redis 5.0+` | Execução de rotinas assíncronas em segundo plano e cron tasks via OIDC. |

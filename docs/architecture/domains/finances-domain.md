@@ -89,42 +89,36 @@ erDiagram
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação do Modelo de Domínio e Serviços
 
-### A. Modelo de Orçamento Mestre (`Budget`)
-```python
---8<-- "backend/apps/finances/models/budget.py:21:64"
-```
+O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer), estruturado em três níveis de validação:
 
-### B. Modelo de Categoria Orçamentária (`BudgetCategory`)
-```python
---8<-- "backend/apps/finances/models/budget_category.py:21:57"
-```
-
-### C. Modelo de Despesa e Validador de Tolerância Zero (`Expense.clean`)
-```python
---8<-- "backend/apps/finances/models/expense.py:19:80"
-```
-
-### D. Modelo de Parcelas e Invariantes de Pagamento (`Installment.clean`)
-```python
---8<-- "backend/apps/finances/models/installment.py:18:74"
-```
-
-### E. Orquestração de Criação de Despesa com Contrato e Parcelas (`ExpenseService.create`)
-```python
---8<-- "backend/apps/finances/services/expense_service.py:93:196"
-```
+- **Modelos de Domínio Ricos:**
+  - [`apps/finances/models/installment.py`](../../../backend/apps/finances/models/installment.py) (`Installment`): Encapsula a máquina de estados finitos (`PENDING`, `PAID`, `OVERDUE`), métodos semânticos de ciclo de vida (`mark_as_paid()`, `unmark_as_paid()`, `mark_as_overdue()`) e invariantes temporais em `clean()`.
+  - [`apps/finances/models/expense.py`](../../../backend/apps/finances/models/expense.py) (`Expense`): Encapsula propriedades de liquidação em memória (`is_settled`, `is_partially_paid`, `balance_due`, `payment_progress_percent`) e a regra de Tolerância Zero (ADR-010 / BR-F01) no `clean()`.
+  - [`apps/finances/models/budget_category.py`](../../../backend/apps/finances/models/budget_category.py) (`BudgetCategory`): Encapsula cálculo de verba restante (`remaining_budget`), detecção de estouro (`is_over_budget`) e percentual de utilização orçamentária.
+  - [`apps/finances/models/budget.py`](../../../backend/apps/finances/models/budget.py) (`Budget`): Encapsula o teto global do casamento (`remaining_overall_budget`, `is_over_budget`) e garante a relação $1:1$ (ADR-003).
+- **Casos de Uso e Serviços:**
+  - [`apps/finances/services/installment_service.py`](../../../backend/apps/finances/services/installment_service.py) (`InstallmentService`): Orquestra a geração inicial de parcelas com ajuste centesimal na última cota, reversão atômica, sincronização de eventos com a agenda e mutações cirúrgicas com `update_fields`.
+  - [`apps/finances/services/expense_service.py`](../../../backend/apps/finances/services/expense_service.py) (`ExpenseService`): Coordena a criação de despesas, validação com o contrato vinculado (BR-F02), redistribuição proporcional e exclusão segura.
+  - [`apps/finances/services/budget_category_service.py`](../../../backend/apps/finances/services/budget_category_service.py) (`BudgetCategoryService`): Gerencia alocações sob trava pessimista (`select_for_update`) prevenindo estouro concorrente (TOCTOU).
+  - [`apps/finances/services/budget_service.py`](../../../backend/apps/finances/services/budget_service.py) (`BudgetService`): Controla o orçamento mestre por tenant.
+- **Seletores de Leitura CQRS:**
+  - [`apps/finances/selectors/expense_selectors.py`](../../../backend/apps/finances/selectors/expense_selectors.py) (`expense_list_selector`, `expense_get_selector`): Consultas otimizadas via `ExpenseQuerySet.with_details()` com anotações pré-calculadas em SQL (`installments_count`, `paid_installments_count`, `total_paid`, `total_pending`).
+  - [`apps/finances/selectors/budget_category_selectors.py`](../../../backend/apps/finances/selectors/budget_category_selectors.py), [`budget_selectors.py`](../../../backend/apps/finances/selectors/budget_selectors.py) e [`installment_selectors.py`](../../../backend/apps/finances/selectors/installment_selectors.py): Consultas analíticas e agregações isoladas por tenant.
+- **Validação de Entrada (Pydantic):**
+  - [`apps/finances/schemas/`](../../../backend/apps/finances/schemas/): Pacote modular (`budget.py`, `budget_category.py`, `expense.py`, `installment.py`) com regras de Nível 1 (sanitização de strings via `str_strip_whitespace=True`, limites de caracteres e valores numéricos não negativos).
 
 ---
 
 ## 5. Mapeamento de Camadas (Fullstack)
 
 ### Camada de Backend (`backend/apps/finances/`)
-- **Modelos:** `Budget` (`budget.py`), `BudgetCategory` (`budget_category.py`), `Expense` (`expense.py`), `Installment` (`installment.py`).
+- **Modelos:** `Budget` (`budget.py`), `BudgetCategory` (`budget_category.py`), `Expense` (`expense.py`), `Installment` (`installment.py`) em `models/`.
+- **Schemas:** `Budget` (`budget.py`), `BudgetCategory` (`budget_category.py`), `Expense` (`expense.py`), `Installment` (`installment.py`) em `schemas/`.
 - **Managers:** `BudgetManager`, `BudgetCategoryManager`, `ExpenseManager`, `InstallmentManager` em `managers.py`.
-- **Services:** `budget_service.py`, `budget_category_service.py`, `expense_service.py`, `installment_service.py`.
-- **Selectors:** `budget_selectors.py`, `budget_category_selectors.py`, `expense_selectors.py`, `installment_selectors.py`.
+- **Services:** `budget_service.py`, `budget_category_service.py`, `expense_service.py`, `installment_service.py` em `services/`.
+- **Selectors:** `budget_selectors.py`, `budget_category_selectors.py`, `expense_selectors.py`, `installment_selectors.py` em `selectors/`.
 - **Management Command:** `python manage.py mark_overdue_installments` (atualização automática de parcelas com data de vencimento no passado).
 
 ### Camada de Frontend (`frontend/src/features/finances/`)

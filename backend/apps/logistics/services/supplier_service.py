@@ -77,12 +77,16 @@ class SupplierService:
             f"Atualizando Fornecedor uuid={instance.uuid} por company_id={company.id}"
         )
 
+        updated_fields: set[str] = set()
         data = payload.model_dump(exclude_unset=True)
 
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
-        instance.save()
+        if updated_fields:
+            updated_fields.add("updated_at")
+            instance.save(update_fields=list(updated_fields))
 
         logger.info(f"Fornecedor uuid={instance.uuid} atualizado com sucesso.")
         return instance

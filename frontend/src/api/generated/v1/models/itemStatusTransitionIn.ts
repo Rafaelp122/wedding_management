@@ -5,6 +5,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para transição de status de aquisição do item.
+ */
 export interface ItemStatusTransitionIn {
+  /** @minLength 1 */
   acquisition_status: string;
 }

@@ -191,6 +191,8 @@ class ItemService:
             f"Atualizando Item uuid={instance.uuid} por company_id={company.id}"
         )
 
+        updated_fields: set[str] = set()
+
         data = payload.model_dump(exclude_unset=True)
 
         if "contract" in data:
@@ -202,11 +204,20 @@ class ItemService:
                     code="item_contract_wedding_mismatch",
                 )
             instance.contract = contract
+            updated_fields.add("contract")
+
+        status_input = data.pop("acquisition_status", None)
+        if status_input is not None and status_input != instance.acquisition_status:
+            instance.transition_to(status_input)
+            updated_fields.add("acquisition_status")
 
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
-        instance.save()
+        if updated_fields:
+            updated_fields.add("updated_at")
+            instance.save(update_fields=list(updated_fields))
 
         logger.info(f"Item uuid={instance.uuid} atualizado com sucesso.")
         return instance
@@ -274,9 +285,9 @@ class ItemService:
             f"{instance.acquisition_status} -> {new_status}"
         )
 
-        instance.acquisition_status = new_status
+        instance.transition_to(new_status)
         try:
-            instance.save()
+            instance.save(update_fields=["acquisition_status", "updated_at"])
         except ValidationError as e:
             raise BusinessRuleViolation(
                 detail="; ".join(e.messages),
@@ -284,4 +295,132 @@ class ItemService:
             ) from e
 
         logger.info(f"Item uuid={instance.uuid} transitado para '{new_status}'.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def start(company: Company, instance: Item) -> Item:
+        """Inicia a aquisição/execução do item, transitando para EM ANDAMENTO.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser iniciada.
+
+        Returns:
+            A instância do Item atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.start()
+        try:
+            instance.save(update_fields=["acquisition_status", "updated_at"])
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="item_invalid_status_transition",
+            ) from e
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def complete(company: Company, instance: Item) -> Item:
+        """Conclui a aquisição do item, transitando para CONCLUÍDO.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser concluída.
+
+        Returns:
+            A instância do Item atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.complete()
+        try:
+            instance.save(update_fields=["acquisition_status", "updated_at"])
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="item_invalid_status_transition",
+            ) from e
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def reopen(company: Company, instance: Item) -> Item:
+        """Reabre um item concluído, transitando de volta para EM ANDAMENTO.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser reaberta.
+
+        Returns:
+            A instância do Item atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.reopen()
+        try:
+            instance.save(update_fields=["acquisition_status", "updated_at"])
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="item_invalid_status_transition",
+            ) from e
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def revert_to_pending(company: Company, instance: Item) -> Item:
+        """Reverte o item em andamento de volta para PENDENTE.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser revertida.
+
+        Returns:
+            A instância do Item atualizada.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for inválida.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.revert_to_pending()
+        try:
+            instance.save(update_fields=["acquisition_status", "updated_at"])
+        except ValidationError as e:
+            raise BusinessRuleViolation(
+                detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                code="item_invalid_status_transition",
+            ) from e
         return instance

@@ -5,11 +5,19 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para criação de item de logística.
+ */
 export interface ItemIn {
   wedding?: string | null;
   contract?: string | null;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
   name: string;
   description?: string;
+  /** @exclusiveMinimum 0 */
   quantity?: number;
   acquisition_status?: string;
 }

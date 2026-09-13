@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para criação de fornecedor.
+ */
 export interface SupplierIn {
   name: string;
   /**

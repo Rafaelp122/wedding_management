@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para atualização parcial de evento/compromisso.
+ */
 export interface EventPatchIn {
   wedding?: string | null;
   title?: string | null;

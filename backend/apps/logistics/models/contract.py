@@ -7,13 +7,14 @@ documentação.
 Referências: RF10, RF13
 """
 
-from collections.abc import Collection
-from typing import Any, ClassVar, Self
+from datetime import date
+from typing import Any, ClassVar
 
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.core.mixins import WeddingOwnedMixin
 from apps.core.validators import MaxFileSizeValidator
 from apps.logistics.managers import ContractQuerySet
@@ -22,8 +23,6 @@ from apps.tenants.models import TenantModel
 
 class Contract(TenantModel, WeddingOwnedMixin):
     objects = ContractQuerySet.as_manager()  # type: ignore[assignment,misc]
-
-    _original_status: str | None = None
 
     wedding = models.ForeignKey(
         "weddings.Wedding",
@@ -117,52 +116,113 @@ class Contract(TenantModel, WeddingOwnedMixin):
         "CANCELED": ["DRAFT"],
     }
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self._original_status = self.status
-
     def __str__(self) -> str:
         name = self.name or "Contrato"
         return (
             f"{name} - {self.supplier.name} ({self.wedding}) - R$ {self.total_amount}"
         )
 
-    @classmethod
-    def from_db(
-        cls,
-        db: str | None,
-        field_names: Collection[str],
-        values: Collection[Any],
-        *args: Any,
-        **kwargs: Any,
-    ) -> Self:
-        instance = super().from_db(db, field_names, values, *args, **kwargs)
-        instance._original_status = instance.status
-        return instance
-
     def clean(self) -> None:
         super().clean()
-        self._clean_status_transition()
         self._clean_signed_requirements()
         self._clean_parent_hierarchy()
 
-    def _clean_status_transition(self) -> None:
-        if not self._state.adding:
-            original = self._original_status
-            if original is None:
-                msg = (
-                    "Não foi possível determinar o status original do contrato. "
-                    "Recarregue a instância do banco e tente novamente."
-                )
-                raise ValidationError(msg)
-            if self.status != original:
-                allowed = self.ALLOWED_TRANSITIONS.get(original, [])
-                if self.status not in allowed:
-                    msg = (
-                        f"Não é permitido transitar de '{original}' "
-                        f"para '{self.status}'."
-                    )
-                    raise ValidationError(msg)
+    # ── Métodos de Ciclo de Vida da Entidade ─────────────────────────────
+
+    def can_transition_to(self, target_status: str | StatusChoices) -> bool:
+        """Verifica se a transição para o status informado é válida.
+
+        Args:
+            target_status: Status de destino a ser avaliado.
+
+        Returns:
+            True se a transição for permitida, False caso contrário.
+        """
+        target = str(target_status)
+        if self.status == target:
+            return True
+        allowed = self.ALLOWED_TRANSITIONS.get(self.status, [])
+        return target in allowed
+
+    def transition_to(self, target_status: str | StatusChoices) -> None:
+        """Executa a transição de status validando as regras de negócio de domínio.
+
+        Args:
+            target_status: Status de destino para a transição.
+
+        Raises:
+            BusinessRuleViolation: Se a transição de status não for permitida.
+        """
+        target = str(target_status)
+        if self.status == target:
+            return
+
+        if not self.can_transition_to(target):
+            raise BusinessRuleViolation(
+                detail=f"Não é permitido transitar de '{self.status}' para '{target}'.",
+                code="contract_invalid_status_transition",
+            )
+
+        self.status = str(target_status)
+
+    def send_to_pending(self) -> None:
+        """Transita o contrato para pendente de assinaturas externas."""
+        self.transition_to(self.StatusChoices.PENDING)
+
+    def sign(self, *, signed_date: date | None = None, pdf_file: Any = None) -> None:
+        """Formaliza a assinatura do contrato externamente.
+
+        Args:
+            signed_date: Data opcional em que o contrato foi assinado.
+            pdf_file: Arquivo PDF ou chave de arquivo opcional do documento assinado.
+        """
+        if signed_date is not None:
+            self.signed_date = signed_date
+        if pdf_file is not None:
+            self.pdf_file = pdf_file
+        self.transition_to(self.StatusChoices.SIGNED)
+
+    def cancel(self) -> None:
+        """Cancela o contrato."""
+        self.transition_to(self.StatusChoices.CANCELED)
+
+    def revert_to_draft(self) -> None:
+        """Reverte o contrato para rascunho."""
+        self.transition_to(self.StatusChoices.DRAFT)
+
+    # ── Propriedades de Conveniência ─────────────────────────────────────
+
+    @property
+    def is_draft(self) -> bool:
+        """Indica se o contrato está em estado de rascunho."""
+        return self.status == self.StatusChoices.DRAFT
+
+    @property
+    def is_pending(self) -> bool:
+        """Indica se o contrato está pendente de assinatura."""
+        return self.status == self.StatusChoices.PENDING
+
+    @property
+    def is_signed(self) -> bool:
+        """Indica se o contrato já foi assinado."""
+        return self.status == self.StatusChoices.SIGNED
+
+    @property
+    def is_canceled(self) -> bool:
+        """Indica se o contrato foi cancelado."""
+        return self.status == self.StatusChoices.CANCELED
+
+    @property
+    def has_file(self) -> bool:
+        """Indica se o contrato possui arquivo PDF anexado."""
+        return bool(self.pdf_file)
+
+    @property
+    def file_name(self) -> str | None:
+        """Retorna o nome do arquivo anexado ao contrato, se houver."""
+        if self.pdf_file and self.pdf_file.name:
+            return self.pdf_file.name.split("/")[-1]
+        return None
 
     def _clean_signed_requirements(self) -> None:
         if self.status == self.StatusChoices.SIGNED:

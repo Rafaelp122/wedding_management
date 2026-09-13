@@ -322,6 +322,7 @@ log_level = "ERROR"
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
+    "ignore:Pydantic serializer warnings:UserWarning",
 ]
 
 # ==============================================================================

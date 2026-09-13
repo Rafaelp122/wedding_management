@@ -5,10 +5,17 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para criação de categoria de orçamento.
+ */
 export interface BudgetCategoryIn {
   budget: string;
-  /** @maxLength 255 */
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
   name: string;
+  /** @maxLength 500 */
   description?: string;
   allocated_budget: number | string;
 }

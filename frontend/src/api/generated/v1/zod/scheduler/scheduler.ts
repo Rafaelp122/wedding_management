@@ -41,7 +41,7 @@ export const SchedulerEventsListResponse = zod.object({
   "recurrence_rule": zod.string(),
   "reminder_enabled": zod.boolean(),
   "reminder_minutes_before": zod.int()
-})),
+}).describe('Schema de saída para exibição de evento\/compromisso.')),
   "count": zod.int()
 })
 
@@ -67,7 +67,7 @@ export const schedulerEventsCreateBodyReminderMinutesBeforeDefault = 60;
 
 export const SchedulerEventsCreateBody = zod.object({
   "wedding": zod.string(),
-  "title": zod.string().max(schedulerEventsCreateBodyTitleMax),
+  "title": zod.string().min(1).max(schedulerEventsCreateBodyTitleMax),
   "location": zod.string().max(schedulerEventsCreateBodyLocationMax).default(schedulerEventsCreateBodyLocationDefault),
   "description": zod.string().default(schedulerEventsCreateBodyDescriptionDefault),
   "event_type": zod.string().max(schedulerEventsCreateBodyEventTypeMax),
@@ -76,7 +76,7 @@ export const SchedulerEventsCreateBody = zod.object({
   "recurrence_rule": zod.union([zod.string(),zod.null()]).default(schedulerEventsCreateBodyRecurrenceRuleDefault),
   "reminder_enabled": zod.boolean().default(schedulerEventsCreateBodyReminderEnabledDefault),
   "reminder_minutes_before": zod.int().default(schedulerEventsCreateBodyReminderMinutesBeforeDefault)
-})
+}).describe('Schema de entrada para criação de evento\/compromisso.')
 
 export const SchedulerEventsCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -91,7 +91,7 @@ export const SchedulerEventsCreateResponse = zod.object({
   "recurrence_rule": zod.string(),
   "reminder_enabled": zod.boolean(),
   "reminder_minutes_before": zod.int()
-})
+}).describe('Schema de saída para exibição de evento\/compromisso.')
 
 /**
  * Retorna os detalhes completos de um evento específico no cronograma.
@@ -116,7 +116,7 @@ export const SchedulerEventsReadResponse = zod.object({
   "recurrence_rule": zod.string(),
   "reminder_enabled": zod.boolean(),
   "reminder_minutes_before": zod.int()
-})
+}).describe('Schema de saída para exibição de evento\/compromisso.')
 
 /**
  * Atualiza informações específicas de um evento do cronograma.
@@ -140,7 +140,7 @@ export const schedulerEventsUpdateBodyEventTypeOneMax = 50;
 
 export const SchedulerEventsUpdateBody = zod.object({
   "wedding": zod.union([zod.string(),zod.null()]).optional(),
-  "title": zod.union([zod.string().max(schedulerEventsUpdateBodyTitleOneMax),zod.null()]).optional(),
+  "title": zod.union([zod.string().min(1).max(schedulerEventsUpdateBodyTitleOneMax),zod.null()]).optional(),
   "location": zod.string().max(schedulerEventsUpdateBodyLocationMax).default(schedulerEventsUpdateBodyLocationDefault),
   "description": zod.string().default(schedulerEventsUpdateBodyDescriptionDefault),
   "event_type": zod.union([zod.string().max(schedulerEventsUpdateBodyEventTypeOneMax),zod.null()]).optional(),
@@ -149,7 +149,7 @@ export const SchedulerEventsUpdateBody = zod.object({
   "recurrence_rule": zod.union([zod.string(),zod.null()]).optional(),
   "reminder_enabled": zod.union([zod.boolean(),zod.null()]).optional(),
   "reminder_minutes_before": zod.union([zod.int(),zod.null()]).optional()
-})
+}).describe('Schema de entrada para atualização parcial de evento\/compromisso.')
 
 export const SchedulerEventsUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -164,7 +164,7 @@ export const SchedulerEventsUpdateResponse = zod.object({
   "recurrence_rule": zod.string(),
   "reminder_enabled": zod.boolean(),
   "reminder_minutes_before": zod.int()
-})
+}).describe('Schema de saída para exibição de evento\/compromisso.')
 
 /**
  * Remove um compromisso ou evento do cronograma.
@@ -205,7 +205,7 @@ export const SchedulerTasksListResponse = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "is_completed": zod.boolean()
-})),
+}).describe('Schema de saída para exibição de tarefa.')),
   "count": zod.int()
 })
 
@@ -220,11 +220,11 @@ export const schedulerTasksCreateBodyIsCompletedDefault = false;
 
 export const SchedulerTasksCreateBody = zod.object({
   "wedding": zod.string(),
-  "title": zod.string().max(schedulerTasksCreateBodyTitleMax),
+  "title": zod.string().min(1).max(schedulerTasksCreateBodyTitleMax),
   "description": zod.string().default(schedulerTasksCreateBodyDescriptionDefault),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "is_completed": zod.boolean().default(schedulerTasksCreateBodyIsCompletedDefault)
-})
+}).describe('Schema de entrada para criação de tarefa.')
 
 export const SchedulerTasksCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -234,7 +234,7 @@ export const SchedulerTasksCreateResponse = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "is_completed": zod.boolean()
-})
+}).describe('Schema de saída para exibição de tarefa.')
 
 /**
  * Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
@@ -249,11 +249,11 @@ export const schedulerTasksUpdateBodyTitleOneMax = 255;
 export const schedulerTasksUpdateBodyDescriptionDefault = ``;
 
 export const SchedulerTasksUpdateBody = zod.object({
-  "title": zod.union([zod.string().max(schedulerTasksUpdateBodyTitleOneMax),zod.null()]).optional(),
+  "title": zod.union([zod.string().min(1).max(schedulerTasksUpdateBodyTitleOneMax),zod.null()]).optional(),
   "description": zod.string().default(schedulerTasksUpdateBodyDescriptionDefault),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "is_completed": zod.union([zod.boolean(),zod.null()]).optional()
-})
+}).describe('Schema de entrada para atualização parcial de tarefa.')
 
 export const SchedulerTasksUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -263,7 +263,7 @@ export const SchedulerTasksUpdateResponse = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "is_completed": zod.boolean()
-})
+}).describe('Schema de saída para exibição de tarefa.')
 
 /**
  * Remove uma tarefa permanentemente.

@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.core.mixins import WeddingOwnedMixin
@@ -81,3 +84,51 @@ class Event(TenantModel, WeddingOwnedMixin):
 
     def __str__(self) -> str:
         return self.title
+
+    def clean(self) -> None:
+        """Valida invariantes de integridade do intervalo de horários."""
+        super().clean()
+        if self.end_time and self.start_time and self.end_time < self.start_time:
+            raise ValidationError(
+                {
+                    "end_time": (
+                        "A hora de término não pode ser anterior à hora de início."
+                    )
+                }
+            )
+
+    # ── Propriedades Semânticas ──────────────────────────────────────────
+
+    @property
+    def is_payment_event(self) -> bool:
+        """Indica se o evento é do tipo pagamento."""
+        return self.event_type == self.TypeChoices.PAYMENT
+
+    @property
+    def is_recurrent(self) -> bool:
+        """Indica se o evento possui recorrência configurada."""
+        return self.recurrence_rule != self.RecurrenceChoices.NONE
+
+    @property
+    def duration(self) -> timedelta | None:
+        """Duração calculada do evento."""
+        return (
+            (self.end_time - self.start_time)
+            if (self.end_time and self.start_time)
+            else None
+        )
+
+    # ── Métodos de Domínio ───────────────────────────────────────────────
+
+    def reschedule(
+        self, start_time: datetime, end_time: datetime | None = None
+    ) -> None:
+        """Reagenda o evento para novo horário validando suas invariantes.
+
+        Args:
+            start_time: Novo início do evento.
+            end_time: Novo término do evento opcional.
+        """
+        self.start_time = start_time
+        self.end_time = end_time
+        self.full_clean()

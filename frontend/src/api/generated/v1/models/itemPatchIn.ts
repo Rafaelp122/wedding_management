@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para atualização parcial de item de logística.
+ */
 export interface ItemPatchIn {
   contract?: string | null;
   name?: string | null;

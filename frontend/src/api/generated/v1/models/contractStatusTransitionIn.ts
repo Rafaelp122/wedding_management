@@ -5,6 +5,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de entrada para transição de status de contrato.
+ */
 export interface ContractStatusTransitionIn {
+  /** @minLength 1 */
   status: string;
 }

@@ -141,6 +141,25 @@ class TestSupplierServiceUpdate:
         assert updated.website == "https://example.com"
         assert updated.notes == "Observação atualizada"
 
+    def test_update_supplier_persists_with_update_fields(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """update() persiste alterações com update_fields contendo updated_at."""
+        supplier = SupplierFactory(company=user.company, name="Nome Antigo")
+        spy_save = mocker.spy(supplier, "save")
+
+        SupplierService.update(
+            user.company,
+            supplier,
+            SupplierPatchIn.model_construct(name="Nome Novo", city="Curitiba"),
+        )
+
+        assert spy_save.call_count == 1
+        _, kwargs = spy_save.call_args
+        assert "update_fields" in kwargs
+        update_fields = set(kwargs["update_fields"])
+        assert update_fields == {"name", "city", "updated_at"}
+
 
 @pytest.mark.django_db
 class TestSupplierServiceDelete:

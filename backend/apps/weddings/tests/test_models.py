@@ -5,6 +5,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -198,3 +199,172 @@ class TestWeddingTemplateField:
             wedding.full_clean()
 
         assert "template" in excinfo.value.message_dict
+
+
+@pytest.mark.django_db
+class TestWeddingDomainMethodsAndProperties:
+    """Testes dos métodos de domínio e propriedades calculadas da entidade Wedding."""
+
+    def test_domain_properties_in_progress_future(self, user: Any) -> None:
+        future_date = timezone.now().date() + timedelta(days=45)
+        wedding = Wedding(
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+
+        assert wedding.is_in_progress is True
+        assert wedding.is_completed is False
+        assert wedding.is_canceled is False
+        assert wedding.is_past is False
+        assert wedding.days_until == 45
+
+    def test_domain_properties_completed_past(self, user: Any) -> None:
+        past_date = timezone.now().date() - timedelta(days=5)
+        wedding = Wedding(
+            company=user.company,
+            date=past_date,
+            status=Wedding.StatusChoices.COMPLETED,
+        )
+
+        assert wedding.is_in_progress is False
+        assert wedding.is_completed is True
+        assert wedding.is_canceled is False
+        assert wedding.is_past is True
+        assert wedding.days_until == 0
+
+    def test_domain_properties_canceled(self, user: Any) -> None:
+        future_date = timezone.now().date() + timedelta(days=10)
+        wedding = Wedding(
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.CANCELED,
+        )
+
+        assert wedding.is_in_progress is False
+        assert wedding.is_completed is False
+        assert wedding.is_canceled is True
+
+    def test_complete_success_on_wedding_day(self, user: Any) -> None:
+        today = timezone.now().date()
+        wedding = Wedding(
+            company=user.company,
+            date=today,
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+
+        wedding.complete()
+
+        assert wedding.status == Wedding.StatusChoices.COMPLETED
+        assert wedding.is_completed is True
+
+    def test_complete_fails_when_date_is_future(self, user: Any) -> None:
+        future_date = timezone.now().date() + timedelta(days=1)
+        wedding = Wedding(
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            wedding.complete()
+
+        assert "Não pode marcar como CONCLUÍDO antes da data do casamento" in str(
+            excinfo.value.detail
+        )
+
+    def test_cancel_success_from_in_progress(self, user: Any) -> None:
+        future_date = timezone.now().date() + timedelta(days=30)
+        wedding = Wedding(
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+
+        wedding.cancel()
+
+        assert wedding.status == Wedding.StatusChoices.CANCELED
+        assert wedding.is_canceled is True
+
+    def test_reopen_success_from_canceled(self, user: Any) -> None:
+        future_date = timezone.now().date() + timedelta(days=30)
+        wedding = Wedding(
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.CANCELED,
+        )
+
+        wedding.reopen()
+
+        assert wedding.status == Wedding.StatusChoices.IN_PROGRESS
+        assert wedding.is_in_progress is True
+
+    def test_can_transition_to_matrix(self, user: Any) -> None:
+        today = timezone.now().date()
+        w_in_progress = Wedding(
+            company=user.company,
+            date=today,
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+        assert w_in_progress.can_transition_to(Wedding.StatusChoices.COMPLETED) is True
+        assert w_in_progress.can_transition_to(Wedding.StatusChoices.CANCELED) is True
+        assert (
+            w_in_progress.can_transition_to(Wedding.StatusChoices.IN_PROGRESS) is True
+        )
+
+        w_canceled = Wedding(
+            company=user.company,
+            date=today,
+            status=Wedding.StatusChoices.CANCELED,
+        )
+        assert w_canceled.can_transition_to(Wedding.StatusChoices.IN_PROGRESS) is True
+        assert w_canceled.can_transition_to(Wedding.StatusChoices.COMPLETED) is False
+
+        w_completed = Wedding(
+            company=user.company,
+            date=today,
+            status=Wedding.StatusChoices.COMPLETED,
+        )
+        assert w_completed.can_transition_to(Wedding.StatusChoices.CANCELED) is False
+        assert w_completed.can_transition_to(Wedding.StatusChoices.IN_PROGRESS) is False
+
+
+@pytest.mark.django_db
+class TestWeddingStateTransitions:
+    """Testes de invariantes de transição de estado da entidade."""
+
+    def test_transition_to_blocks_completed_to_canceled(self, user: Any) -> None:
+        today = timezone.now().date()
+        wedding = cast(
+            Wedding,
+            WeddingFactory(
+                company=user.company,
+                date=today,
+                status=Wedding.StatusChoices.COMPLETED,
+            ),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            wedding.transition_to(Wedding.StatusChoices.CANCELED)
+
+        assert "Não é permitido transitar de 'COMPLETED' para 'CANCELED'" in str(
+            excinfo.value.detail
+        )
+
+    def test_transition_to_blocks_canceled_to_completed(self, user: Any) -> None:
+        today = timezone.now().date()
+        wedding = cast(
+            Wedding,
+            WeddingFactory(
+                company=user.company,
+                date=today,
+                status=Wedding.StatusChoices.CANCELED,
+            ),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            wedding.transition_to(Wedding.StatusChoices.COMPLETED)
+
+        assert "Não é permitido transitar de 'CANCELED' para 'COMPLETED'" in str(
+            excinfo.value.detail
+        )

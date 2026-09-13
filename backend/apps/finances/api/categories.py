@@ -62,7 +62,8 @@ def create_category(
     Associa devidamente ao orçamento atrelado em tela.
     """
     user = request.user
-    return 201, BudgetCategoryService.create(user.company, payload)
+    created = BudgetCategoryService.create(user.company, payload)
+    return 201, budget_category_get_selector(company=user.company, uuid=created.uuid)
 
 
 @budget_categories_router.patch(
@@ -79,7 +80,8 @@ def update_category(
     """
     user = request.user
     instance = budget_category_get_selector(company=user.company, uuid=uuid)
-    return BudgetCategoryService.update(user.company, instance, payload)
+    BudgetCategoryService.update(user.company, instance, payload)
+    return budget_category_get_selector(company=user.company, uuid=instance.uuid)
 
 
 @budget_categories_router.delete(

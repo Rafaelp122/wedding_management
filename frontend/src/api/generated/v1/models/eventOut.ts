@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída para exibição de evento/compromisso.
+ */
 export interface EventOut {
   uuid: string;
   company_id: string;

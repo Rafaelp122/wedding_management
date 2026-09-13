@@ -1,7 +1,7 @@
 # Domínio de Casamentos & Gestão de Cerimônias (Weddings)
 
 > **Categoria:** Domínios de Arquitetura (Bounded Contexts)
-> **Relacionados:** [Ciclo de Vida do Casamento](../business-rules/weddings/wedding-status-lifecycle.md) · [Templates de Cronograma](../business-rules/weddings/wedding-schedule-templates.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-011: BaseModel save com full_clean](../adr/011-basemodel-save-full-clean.md) · [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md) · [Modelos Base & Padrões Core](../../reference/models/core-models.md)
+> **Relacionados:** [Ciclo de Vida do Casamento](../business-rules/weddings/wedding-status-lifecycle.md) · [Templates de Cronograma](../business-rules/weddings/wedding-schedule-templates.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-011: BaseModel save com full_clean](../adr/011-basemodel-save-full-clean.md) · [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md) · [Modelos Base & Padrões Core](../../reference/models/core-models.md)
 
 ---
 
@@ -57,33 +57,20 @@ stateDiagram-v2
 
 | Entidade / Componente | Papel Arquitetural | Campos & Chaves | Invariantes de Persistência & Regras de Negócio |
 | :--- | :--- | :--- | :--- |
-| **`Wedding`** | Agregado Central (`TenantModel`) | `groom_name` (max 100), `bride_name` (max 100), `date` (DateField), `location` (max 255), `expected_guests` (PositiveInt, nullable), `status` (`StatusChoices`), `template` (string, nullable) | **Validação de Data Futura:** Na criação, `date >= timezone.now().date()` (regra `validate_future_date`).<br/>**Regra de Conclusão (BR-W01):** Um casamento só pode transitar para `COMPLETED` se `date <= timezone.now().date()`.<br/>**Proteção de Deleção (BR-W03):** Não pode ser excluído se possuir contratos assinados ou despesas protegidas (`ProtectedError`). |
+| **`Wedding`** | Rich Domain Model (`TenantModel`) | `groom_name` (max 100), `bride_name` (max 100), `date` (DateField), `location` (max 255), `expected_guests` (PositiveInt, nullable), `status` (`StatusChoices`), `template` (string, nullable) | **Máquina de Estados (ADR-030):** Métodos de ciclo de vida `complete()`, `cancel()`, `reopen()` e `transition_to()`.<br/>**Regra de Conclusão (BR-W01):** Um casamento só pode ser concluído se `date <= timezone.now().date()`.<br/>**Proteção de Deleção (BR-W03):** Bloqueio de exclusão em cascata se existirem contratos ou despesas protegidos (`ProtectedError`). |
 | **`WeddingQuerySet`** | Camada de Consulta Otimizada | `search()`, `by_status()`, `with_metrics()` | Anota de forma eficiente contagens de tarefas incompletas, parcelas atrasadas e total orçado sem incorrer em problemas de N+1 queries. |
-| **`WeddingService`** | Mutação e Orquestração | `create()`, `update()`, `delete()` | **Transações Atômicas:** Métodos decorados com `@transaction.atomic`.<br/>**Aplicação de Template (BR-W02):** Caso `template` seja fornecido no payload, executa `_apply_template_events()`, calculando datas relativas e chamando `EventService.create()`. |
+| **`WeddingService`** | Casos de Uso e Orquestração | `create()`, `update()`, `complete()`, `cancel()`, `delete()` | **Transações Atômicas:** Métodos decorados com `@transaction.atomic`.<br/>**Orquestração de Casos de Uso:** Delega regras de transição para a entidade e coordena efeitos colaterais como templates de eventos (`_apply_template_events`). |
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Contratos de Código e Implementação
 
-### A. Modelo de Dados e Validações de Invariantes (`Wedding`)
-```python
---8<-- "backend/apps/weddings/models.py:16:69"
-```
+As implementações de código-fonte seguem a diretriz pragmática da [ADR-030](../adr/030-rich-domain-model-service-layer.md):
 
-### B. Criação com Orquestração de Templates (`WeddingService.create`)
-```python
---8<-- "backend/apps/weddings/services.py:38:88"
-```
-
-### C. Aplicação de Eventos de Template de Cerimônia (`_apply_template_events`)
-```python
---8<-- "backend/apps/weddings/services.py:192:233"
-```
-
-### D. Seletores de Leitura e Otimização com Métricas (`selectors.py`)
-```python
---8<-- "backend/apps/weddings/selectors.py:24:60"
-```
+- **Modelo de Domínio Rico:** [`apps/weddings/models.py`](../../../backend/apps/weddings/models.py) (`Wedding`) encapsula a máquina de estados, propriedades de domínio e validação no `clean()`.
+- **Casos de Uso e Serviços:** [`apps/weddings/services.py`](../../../backend/apps/weddings/services.py) (`WeddingService`) orquestra transações atômicas, resolução de tenant e aplicação de templates.
+- **Seletores de Leitura CQRS:** [`apps/weddings/selectors.py`](../../../backend/apps/weddings/selectors.py) (`wedding_list_selector`, `wedding_get_selector`) concentra queries otimizadas com anotações de métricas.
+- **Validação de Entrada (Pydantic):** [`apps/weddings/schemas.py`](../../../backend/apps/weddings/schemas.py) (`WeddingIn`, `WeddingPatchIn`) garante fail-fast na borda da API para campos obrigatórios, sanitização de espaços e limites de caracteres.
 
 ---
 

@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída para exibição de notificação.
+ */
 export interface NotificationOut {
   uuid: string;
   title: string;

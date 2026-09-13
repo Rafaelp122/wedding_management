@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de saída para o total de notificações marcadas como lidas.
+ */
 export interface MarkAllReadOut {
   /** Quantidade de notificações marcadas como lidas */
   marked_count: number;

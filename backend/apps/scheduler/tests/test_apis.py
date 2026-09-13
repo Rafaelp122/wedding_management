@@ -217,10 +217,10 @@ class TestSchedulerEventsAPI:
         event.refresh_from_db()
         assert event.recurrence_rule == Event.RecurrenceChoices.NONE
 
-    def test_update_event_recurrence_rule_null_returns_400(
+    def test_update_event_recurrence_rule_null_returns_422(
         self, auth_client: Any, user: Any
     ) -> None:
-        """PATCH de evento enviando null retorna 400."""
+        """PATCH de evento enviando null viola validação de modelo e retorna 422."""
         wedding = WeddingFactory(company=user.company)
         event = EventFactory(
             wedding=wedding,
@@ -233,7 +233,7 @@ class TestSchedulerEventsAPI:
             {"recurrence_rule": None},
             content_type="application/json",
         )
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     def test_delete_event_success(self, auth_client: Any, user: Any) -> None:
         wedding = WeddingFactory(company=user.company)

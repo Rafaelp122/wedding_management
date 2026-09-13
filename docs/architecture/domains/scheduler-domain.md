@@ -68,27 +68,22 @@ erDiagram
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação do Modelo de Domínio e Serviços
 
-### A. Modelo de Eventos e Regras de Recorrência (`Event`)
-```python
---8<-- "backend/apps/scheduler/models/event.py:8:84"
-```
+O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer), estruturado em três níveis de validação:
 
-### B. Modelo de Tarefas do Checklist (`Task`)
-```python
---8<-- "backend/apps/scheduler/models/task.py:8:31"
-```
-
-### C. Serviço de Criação com Validação de Data Passada (`EventService.create`)
-```python
---8<-- "backend/apps/scheduler/services/events.py:27:72"
-```
-
-### D. Especificação de Templates de Cronograma (`templates.py`)
-```python
---8<-- "backend/apps/scheduler/services/templates.py:18:58"
-```
+- **Modelos de Domínio Ricos:**
+  - [`apps/scheduler/models/event.py`](../../../backend/apps/scheduler/models/event.py) (`Event`): Encapsula invariantes temporais em `clean()` (`end_time >= start_time`), propriedades semânticas (`is_payment_event`, `is_recurrent`, `duration`) e método de reprogramação `reschedule()`.
+  - [`apps/scheduler/models/task.py`](../../../backend/apps/scheduler/models/task.py) (`Task`): Encapsula métodos de ciclo de vida (`complete()`, `reopen()`) e propriedades dinâmicas de atraso (`is_overdue`, `days_overdue`).
+- **Casos de Uso e Serviços:**
+  - [`apps/scheduler/services/events.py`](../../../backend/apps/scheduler/services/events.py) (`EventService`): Orquestra criação e mutações sob `@transaction.atomic`, validando a proteção somente-leitura de pagamentos (BR-S01), data futura na criação manual (BR-S02) e salvando estritamente com `update_fields`.
+  - [`apps/scheduler/services/tasks.py`](../../../backend/apps/scheduler/services/tasks.py) (`TaskService`): Coordena checklist, métodos semânticos `complete()` e `reopen()` e mutações cirúrgicas por `update_fields`.
+  - [`apps/scheduler/services/templates.py`](../../../backend/apps/scheduler/services/templates.py) (`TemplateEngine`): Define e provisiona cronogramas de casamentos parametrizados por marcos temporais relativos.
+- **Seletores de Leitura CQRS:**
+  - [`apps/scheduler/selectors/event_selectors.py`](../../../backend/apps/scheduler/selectors/event_selectors.py) (`event_list_selector`, `event_get_selector`): Consultas otimizadas com relacionamentos pré-carregados (`select_related=["wedding", "company"]`) e filtros por período.
+  - [`apps/scheduler/selectors/task_selectors.py`](../../../backend/apps/scheduler/selectors/task_selectors.py) (`task_list_selector`, `task_get_selector`, `task_urgent_list_selector`): Consultas isoladas por tenant e casamento para tarefas do checklist.
+- **Validação de Entrada (Pydantic):**
+  - [`apps/scheduler/schemas/`](../../../backend/apps/scheduler/schemas/): Pacote modular (`event.py`, `task.py`) com regras de Nível 1 (sanitização de strings via `str_strip_whitespace=True`, limites de caracteres e validações de data/hora).
 
 ---
 

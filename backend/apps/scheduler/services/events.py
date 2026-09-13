@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -156,10 +157,20 @@ class EventService:
         data.pop("wedding", None)
         data.pop("company", None)
 
+        updated_fields: set[str] = set()
         for field, value in data.items():
             setattr(instance, field, value)
+            updated_fields.add(field)
 
-        instance.save()
+        if updated_fields:
+            updated_fields.add("updated_at")
+            try:
+                instance.save(update_fields=list(updated_fields))
+            except DjangoValidationError as e:
+                raise BusinessRuleViolation(
+                    detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                    code="event_update_validation_error",
+                ) from e
 
         logger.info(f"Evento uuid={instance.uuid} atualizado com sucesso.")
         return instance
