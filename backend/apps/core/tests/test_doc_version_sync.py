@@ -18,7 +18,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 # isort: split
-from scripts.sync_doc_versions import (  # noqa: E402
+from scripts.sync_doc_versions import (  # type: ignore[import-not-found]  # noqa: E402
     extract_manifest_versions,
     process_markers,
     sync_all,
