@@ -65,26 +65,81 @@ erDiagram
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação no Código-Fonte Real
+
+- **Modelos de Isolamento:** [`Company`](../../../backend/apps/tenants/models.py) e [`TenantModel`](../../../backend/apps/tenants/models.py)
+- **Manager e QuerySet Especializado:** [`TenantQuerySet`](../../../backend/apps/tenants/managers.py) e [`TenantManager`](../../../backend/apps/tenants/managers.py)
+- **Serviço de Provisionamento:** [`TenantService`](../../../backend/apps/tenants/services/tenant_service.py)
+- **Seletor de Consulta:** [`company_get_selector()`](../../../backend/apps/tenants/selectors.py)
 
 ### A. Definição do Modelo `Company` e `TenantModel`
+
 ```python
---8<-- "backend/apps/tenants/models.py:7:48"
+class Company(BaseModel):
+    name = models.CharField("Nome da Empresa", max_length=255)
+    is_active = models.BooleanField("Ativa", default=True)
+    slug = models.SlugField(unique=True, help_text="Identificador único na URL")
+
+    class Meta:
+        db_table = "companies"
+
+class TenantModel(BaseModel):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="%(class)s_records")
+    objects = TenantManager()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["company", "uuid"]),
+        ]
 ```
 
 ### B. Manager e QuerySet de Isolamento (`TenantQuerySet`)
+
 ```python
---8<-- "backend/apps/tenants/managers.py:14:32"
+class TenantQuerySet(models.QuerySet[_ModelT]):
+    def for_tenant(self, company: Company) -> Self:
+        return self.filter(company=company)
+
+class TenantManager(models.Manager[_ModelT]):
+    _queryset_class = TenantQuerySet
+
+    def get_queryset(self) -> TenantQuerySet[_ModelT]:
+        return self._queryset_class(self.model, using=self._db)
+
+    def for_tenant(self, company: Company) -> TenantQuerySet[_ModelT]:
+        return self.get_queryset().for_tenant(company)
 ```
 
 ### C. Serviço de Provisionamento de Tenants (`TenantService`)
+
 ```python
---8<-- "backend/apps/tenants/services/tenant_service.py:13:65"
+class TenantService:
+    @staticmethod
+    @transaction.atomic
+    def create_company(display_name: str, company_name: str = "") -> Company:
+        name = company_name.strip() if company_name else f"Workspace de {display_name}"
+        base_slug = slugify(display_name)[:40]
+        unique_slug = f"{base_slug}-{str(uuid_lib.uuid4())[:8]}"
+        return Company.objects.create(name=name, slug=unique_slug, is_active=True)
+
+    @staticmethod
+    @transaction.atomic
+    def get_or_create_admin_workspace() -> Company:
+        company, _ = Company.objects.get_or_create(
+            slug="admin-workspace", defaults={"name": "Workspace Administrativo"}
+        )
+        return company
 ```
 
 ### D. Seletor de Busca Segura de Empresa (`company_get_selector`)
+
 ```python
---8<-- "backend/apps/tenants/selectors.py:13:28"
+def company_get_selector(*, uuid: UUID | str) -> Company:
+    company = Company.objects.filter(uuid=uuid).first()
+    if not company:
+        raise ObjectNotFoundError(detail="Empresa não encontrada.")
+    return company
 ```
 
 ---

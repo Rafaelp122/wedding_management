@@ -11,9 +11,12 @@ on:
       - '.github/workflows/docs-ci.yml'
       - 'scripts/validate_docs_links.py'
       - 'scripts/validate_docs_snippets.py'
+      - 'scripts/sync_doc_versions.py'
       - 'scripts/**'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
+      - 'frontend/package.json'
+      - 'landing/package.json'
       - 'justfile'
   pull_request:
     branches: [main, develop]
@@ -25,9 +28,12 @@ on:
       - '.github/workflows/docs-ci.yml'
       - 'scripts/validate_docs_links.py'
       - 'scripts/validate_docs_snippets.py'
+      - 'scripts/sync_doc_versions.py'
       - 'scripts/**'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
+      - 'frontend/package.json'
+      - 'landing/package.json'
       - 'justfile'
 
 permissions:
@@ -60,6 +66,7 @@ jobs:
         run: |
           uv run --project backend python scripts/validate_docs_links.py
           uv run --project backend python scripts/validate_docs_snippets.py
+          uv run --project backend python scripts/sync_doc_versions.py --check
           npx -y @google/design.md lint DESIGN.md
           uv run --project backend --group docs mkdocs build --strict
 

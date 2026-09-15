@@ -1,9 +1,10 @@
 # ADR-025: Adoção de Terraform e GitOps para Infraestrutura Multi-Cloud
 
-> **Status:** Aceito
-> **Data:** 1 de agosto de 2026
-> **Decisores:** Time de Arquitetura & Plataforma
-> **Relacionados:** [ADR-001](001-why-cloud-run.md) | [ADR-004](004-presigned-urls.md) | [ADR-027](027-terraform-state-topology.md) | [ci-cd-pipeline-flow](../concepts/ci-cd-pipeline-flow.md)
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Agosto 2026
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-001: Cloud Run para Hospedagem Serverless](001-why-cloud-run.md) · [ADR-004: Upload Direto via URLs Pré-Assinadas](004-presigned-urls.md) · [ADR-026: Estratégia GitOps de Branching e Deploy](026-gitops-branching-and-deployment-strategy.md) · [ADR-027: Topologia de States do Terraform](027-terraform-state-topology.md) · [Fluxo de CI/CD](../concepts/ci-cd-pipeline-flow.md)
 
 ---
 

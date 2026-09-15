@@ -83,10 +83,14 @@ sequenceDiagram
 Qualquer mutação que envolva múltiplas tabelas ou múltiplos registros ORM deve ser decorada com `@transaction.atomic`. Em caso de exceção de validação ou erro de banco em qualquer ponto do fluxo, a transação é revertida integralmente (*rollback*), impedindo estados inconsistentes.
 
 ### C. Validação de Invariantes via `full_clean()` no `save()`
-Conforme estabelecido na [ADR-011](../adr/011-basemodel-save-full-clean.md), todos os modelos herdando de `BaseModel` executam `self.full_clean()` dentro de `save()`, prevenindo que chamadas no nível de serviço contornem os validadores dos campos ou do método `clean()`.
+Conforme estabelecido na [ADR-011](../adr/011-basemodel-save-full-clean.md), todos os modelos herdando de [`BaseModel`](../../../backend/apps/core/models.py) executam `self.full_clean()` dentro de `save()`, prevenindo que chamadas no nível de serviço contornem os validadores dos campos ou do método `clean()`.
 
 ```python
---8<-- "backend/apps/core/models.py:20:31"
+def save(self, *args: Any, skip_clean: bool = False, **kwargs: Any) -> None:
+    """Garante a execução das validações do clean() antes de persistir (ADR-011)."""
+    if not skip_clean:
+        self.full_clean()
+    super().save(*args, **kwargs)
 ```
 
 ### D. Responsabilidades em 3 Níveis (ADR-030)
@@ -110,15 +114,36 @@ return 201, my_get_selector(company=company, uuid=created.uuid)
 2. **Desacoplamento de Estados em Memória:** Evita vazamento de atributos internos ou referências transitórias em memória geradas durante o ciclo de escrita do ORM.
 3. **Cache e Invalidação Previsíveis:** O cliente frontend (TanStack Query) recebe a representação canônica exata do recurso, facilitando atualizações de cache ou invalidação direta de chaves de query.
 
-
 ---
 
-## 4. Implementação Real: `ExpenseService.create`
+## 4. Implementação Canônica: Orquestração de Caso de Uso
 
-O trecho a seguir demonstra a orquestração completa de criação de despesas, validação com contrato (BR-F02), transação atômica e geração automática de parcelas financeiras:
+A orquestração de criação de despesas ilustra a aplicação prática das diretrizes da Service Layer:
+
+- **Orquestrador de Serviço:** [`ExpenseService.create()`](../../../backend/apps/finances/services/expense_service.py)
+- **Geração de Parcelas:** [`InstallmentService.auto_generate_installments()`](../../../backend/apps/finances/services/installment_service.py)
+- **Entidade Rica de Domínio:** [`Expense`](../../../backend/apps/finances/models/expense.py)
 
 ```python
---8<-- "backend/apps/finances/services/expense_service.py:93:196"
+@staticmethod
+@transaction.atomic
+def create(company: Company, payload: ExpenseIn) -> Expense:
+    # 1. Resolução segura de dependências com isolamento multi-tenant
+    data = payload.model_dump(exclude_unset=True)
+    category = resolve_tenant_resource(BudgetCategory, company, data.pop("category", None), ...)
+    contract = resolve_tenant_resource(Contract, company, data.pop("contract", None), ...) if "contract" in data else None
+
+    # 2. Validação trans-domínio (BR-F02: valor idêntico ao contrato)
+    if contract and data.get("actual_amount") != contract.total_amount:
+        raise BusinessRuleViolation("BR-F02: Valor da despesa diverge do contrato.", code="br_f02_violation")
+
+    # 3. Persistência da entidade (executa full_clean() do BaseModel)
+    expense = Expense(company=company, wedding=category.wedding, category=category, contract=contract, **data)
+    expense.save()
+
+    # 4. Efeito colateral coordenado: geração de parcelas em transação atômica
+    InstallmentService.auto_generate_installments(company=company, expense=expense, num_installments=..., first_due_date=...)
+    return expense
 ```
 
 ---

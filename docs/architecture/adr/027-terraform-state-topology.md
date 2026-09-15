@@ -1,16 +1,22 @@
 # ADR-027: Topologia e Ownership dos States Terraform
 
-> **Status:** Aceito
-> **Data:** 6 de agosto de 2026
-> **Relacionados:** [ADR-025](025-terraform-iac-architecture.md) | [ADR-026](026-gitops-branching-and-deployment-strategy.md) | [guia de onboarding](../../guides/ops-troubleshooting/terraform-service-onboarding.md)
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Agosto 2026
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-025: Adoção de Terraform e GitOps](025-terraform-iac-architecture.md) · [ADR-026: Estratégia GitOps de Branching e Deploy](026-gitops-branching-and-deployment-strategy.md) · [Guia de Onboarding Terraform](../../guides/ops-troubleshooting/terraform-service-onboarding.md)
 
-## Contexto
+---
+
+## 1. Contexto e Problema
 
 O root Terraform original misturava recursos globais, staging e produção no mesmo prefixo GCS. Como os arquivos `staging.tfvars` e `production.tfvars` usavam os mesmos endereços Terraform para objetos físicos diferentes, um plano de staging podia propor a substituição de recursos de produção.
 
 Parte da infraestrutura também já existia fora do state: Cloud Run, Artifact Registry, WIF, IAM, Secret Manager, Vercel e Cloudflare R2. Aplicar antes da adoção poderia recriar ou remover recursos ativos.
 
-## Decisão
+---
+
+## 2. Decisão
 
 Adotamos três roots e prefixes independentes:
 
@@ -22,13 +28,13 @@ Adotamos três roots e prefixes independentes:
 
 Não usamos workspaces para representar ambientes. Cada objeto remoto pertence a um único state ativo.
 
-### Limite entre Terraform e CD
+### 2.1 Limite entre Terraform e CD
 
 Terraform gerencia configuração estável: existência dos serviços, capacidade, rede, IAM, buckets, containers de secrets e projetos. O CD gerencia cada release: imagem por SHA, env vars, referências de versões, migrations, revisões, tráfego e deployments Vercel.
 
 Valores de secrets, objetos R2, imagens, projetos Neon e connection strings permanecem externos ao Terraform. Os values do Secret Manager nunca entram no state.
 
-### Adoção
+### 2.2 Adoção
 
 Os recursos existentes são importados diretamente no state proprietário. Durante a adoção:
 
@@ -40,24 +46,34 @@ Os recursos existentes são importados diretamente no state proprietário. Duran
 
 Hardening e redução de IAM não são misturados com imports. Essas alterações ocorrem em planos posteriores e revisáveis.
 
-## Consequências
+---
+
+## 3. Consequências
 
 ### Positivas
-
 - Staging não pode alterar recursos de produção pelo compartilhamento de endereços.
 - Ownership entre Terraform e CD fica explícito.
 - Imports e rollback podem ser executados por domínio.
 - Novos serviços permanentes, como filas Cloud Tasks, podem ser adicionados ao state correto.
 
-### Negativas
-
-- Há pequena duplicação entre os roots ambientais.
+### Negativas e mitigações
+- Há pequena duplicação estrutural entre os roots ambientais (mitigada por módulos reutilizáveis quando aplicável).
 - Mudanças compartilhadas e ambientais exigem planos separados.
 - A adoção inicial requer inventário e imports manuais controlados.
 
-## Restrições Operacionais
+---
+
+## 4. Restrições Operacionais
 
 - Não usar `state push -force`, `init -force-copy`, `force-unlock` ou `-lock=false`.
-- Não publicar state ou planos como artifacts.
-- Não habilitar `TERRAFORM_PRODUCTION_APPLY_ENABLED` antes da convergência.
-- Manter versionamento e soft delete no bucket GCS.
+- Não publicar state ou planos como artifacts públicos.
+- Não habilitar `TERRAFORM_PRODUCTION_APPLY_ENABLED` antes da convergência dos três states.
+- Manter versionamento e soft delete no bucket GCS de state.
+
+---
+
+## 5. Referências
+
+1. [ADR-025: Adoção de Terraform e GitOps para Infraestrutura Multi-Cloud](025-terraform-iac-architecture.md)
+2. [ADR-026: Estratégia de Branches, Ambientes e GitOps Workflow](026-gitops-branching-and-deployment-strategy.md)
+3. [Guia de Onboarding Terraform](../../guides/ops-troubleshooting/terraform-service-onboarding.md)

@@ -1,13 +1,14 @@
 # ADR-002: Por que Neon PostgreSQL?
 
-**Status:** Aceito
-**Data:** Janeiro 2025
-**Decisor:** Rafael
-**Contexto:** Escolha de banco de dados PostgreSQL gerenciado
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Janeiro 2025
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-001: Cloud Run](001-why-cloud-run.md) · [ADR-007: Hybrid Keys](007-hybrid-keys.md) · [ADR-025: Terraform & GitOps](025-terraform-iac-architecture.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Precisamos de um banco de dados PostgreSQL que:
 
@@ -27,13 +28,13 @@ Precisamos de um banco de dados PostgreSQL que:
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Escolhemos **Neon PostgreSQL** como banco de dados gerenciado.
 
 ---
 
-## Justificativa
+## 3. Justificativa
 
 ### Vantagens do Neon
 
@@ -170,7 +171,7 @@ DATABASES = {
 
 ---
 
-## Configuração de Exemplo
+### Configuração de Exemplo
 
 **Variáveis de ambiente:**
 
@@ -217,7 +218,7 @@ neon branches merge dev --to main
 
 ---
 
-## Consequências
+## 4. Consequências
 
 ### Positivas :material-check-circle:
 
@@ -242,30 +243,29 @@ neon branches merge dev --to main
 
 ---
 
-## Monitoramento
+### Monitoramento e Alertas
 
 **Métricas a observar:**
 
 ```sql
--- Storage usado
+-- Tamanho do database
 SELECT pg_size_pretty(pg_database_size('wedding_db'));
 
 -- Conexões ativas
 SELECT count(*) FROM pg_stat_activity WHERE state = 'active';
 
--- Queries lentas (> 1s)
-SELECT query, mean_exec_time, calls
+-- Queries lentas (> 100ms)
+SELECT query, total_exec_time, calls
 FROM pg_stat_statements
-WHERE mean_exec_time > 1000
+WHERE mean_exec_time > 100
 ORDER BY mean_exec_time DESC
-LIMIT 10;
+LIMIT 5;
 ```
 
 **Gatilhos de revisão:**
 
 - Storage > 2.5GB (83% do limite)
 - Compute > 150h/mês (78% do limite)
-- Cold start > 20% das requisições
 - Latência P95 > 500ms
 
 **Ações:**
@@ -276,7 +276,7 @@ LIMIT 10;
 
 ---
 
-## Referências
+## 5. Referências
 
 - [Neon Documentation](https://neon.tech/docs)
 - [Neon Branching Guide](https://neon.tech/docs/guides/branching)

@@ -1,13 +1,14 @@
 # ADR-001: Por que Google Cloud Run?
 
-**Status:** Aceito
-**Data:** Janeiro 2025
-**Decisor:** Rafael
-**Contexto:** Escolha de plataforma de deploy para backend Django
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Janeiro 2025
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-002: Neon PostgreSQL](002-why-neon.md) · [ADR-005: OIDC para Cloud Scheduler](005-oidc-scheduler.md) · [ADR-025: Terraform & GitOps](025-terraform-iac-architecture.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Precisamos de uma plataforma serverless para hospedar o backend Django REST Framework que:
 
@@ -27,13 +28,13 @@ Precisamos de uma plataforma serverless para hospedar o backend Django REST Fram
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Escolhemos **Google Cloud Run** como plataforma de deploy do backend.
 
 ---
 
-## Justificativa
+## 3. Justificativa
 
 ### Vantagens do Cloud Run
 
@@ -112,7 +113,7 @@ CMD gunicorn config.wsgi:application
 
 ---
 
-## Configuração de Exemplo
+### Configuração de Exemplo
 
 ```yaml
 # cloud-run.yaml
@@ -153,7 +154,7 @@ gcloud run deploy wedding-api \
 
 ---
 
-## Consequências
+## 4. Consequências
 
 ### Positivas :material-check-circle:
 
@@ -177,7 +178,7 @@ gcloud run deploy wedding-api \
 
 ---
 
-## Monitoramento
+### Monitoramento e Gatilhos de Revisão
 
 **Métricas a observar:**
 
@@ -194,7 +195,7 @@ gcloud run deploy wedding-api \
 
 ---
 
-## Referências
+## 5. Referências
 
 - [Cloud Run Documentation](https://cloud.google.com/run/docs)
 - [Cloud Run Pricing](https://cloud.google.com/run/pricing)

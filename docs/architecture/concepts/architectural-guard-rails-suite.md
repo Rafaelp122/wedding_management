@@ -68,18 +68,33 @@ flowchart TD
 
 ## 3. Catálogo dos Principais Guard-Rails
 
-### A. Auditoria de Operation IDs da API Ninja (`test_api_architecture.py`)
+### A. Auditoria de Operation IDs da API Ninja ([`test_api_architecture.py`](../../../backend/apps/core/tests/test_api_architecture.py))
 Inspeciona todos os roteadores registrados na instância global do Django Ninja e assegura que 100% dos endpoints possuam um `operation_id` explícito e não vazio. Essa regra é crítica para a geração determinística dos hooks TypeScript no frontend via Orval:
 
 ```python
---8<-- "backend/apps/core/tests/test_api_architecture.py:26:51"
+def test_all_routes_have_operation_id(self) -> None:
+    missing_operation_ids: list[tuple[str, list[str]]] = []
+
+    for prefix, router in api._routers:
+        for path, path_op in router.path_operations.items():
+            full_path = f"{prefix}{path}"
+            for op in path_op.operations:
+                if not op.operation_id or not str(op.operation_id).strip():
+                    missing_operation_ids.append((full_path, op.methods))
+
+    assert not missing_operation_ids, f"Rotas sem operation_id: {missing_operation_ids}"
 ```
 
-### B. Auditoria Estática de Transações Atômicas via AST (`test_atomic_service_audit.py`)
+### B. Auditoria Estática de Transações Atômicas via AST ([`test_atomic_service_audit.py`](../../../backend/apps/core/tests/test_atomic_service_audit.py))
 Varre a árvore sintática (AST) de todos os arquivos em `apps/*/services/` e detecta métodos que invocam mutações no ORM (`save`, `create`, `update`, `delete`, `bulk_*`). Caso a função não esteja decorada com `@transaction.atomic` ou encapsulada em `with transaction.atomic():`, o teste falha:
 
 ```python
---8<-- "backend/apps/core/tests/test_atomic_service_audit.py:45:54"
+def _has_atomic_decorator(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Verifica se a função possui o decorador @transaction.atomic ou @atomic."""
+    for decorator in func_node.decorator_list:
+        if _is_atomic_expr(decorator):
+            return True
+    return False
 ```
 
 ### C. Isolamento Multitenant (`test_tenant_isolation.py`)

@@ -108,3 +108,43 @@ Cada camada arquitetural do Django Ninja possui necessidades diferentes de docum
 | **Services (`services/`)** | Docstrings completas em estilo **Google Style** (`Args`, `Returns`, `Raises`). | Documentar a orquestração de lógica de negócios, tipos internos e fluxo de exceções. |
 | **Models (`models.py`)** | Docstring de classe simples focada no papel da entidade. Docstrings Google Style apenas para métodos de *Manager* / *QuerySet*. | Explicar o papel do modelo no domínio de negócio e relações. |
 | **Schemas (`schemas.py`)** | Sem docstrings nas classes. Apenas comentários inline quando houver resolvedores ou validadores (`@model_validator`) complexos. | Manter a camada de transporte de dados limpa (os tipos Pydantic já são autoexplicativos). |
+
+---
+
+## 7. Rastreabilidade Bidirecional (*Code $\leftrightarrow$ Docs*)
+
+Para manter sincronização contínua entre o código-fonte e as especificações técnicas sem fragilidade a mudanças de linhas de código:
+
+### 7.1 Do Código para a Documentação (*Code $\to$ Docs*)
+Docstrings de métodos ou classes que implementam regras de negócio atômicas (`BR-XXX`) ou padrões arquiteturais específicos (`ADR-XXX`) devem declarar as referências no corpo da docstring Google Style:
+
+```python
+def create_contract(
+    company: Company,
+    payload: ContractCreateIn,
+) -> Contract:
+    """
+    Cria um contrato e dispara a geração inicial de obrigações financeiras.
+
+    Regra de Negócio:
+        BR-L01 (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+    Decisão Arquitetural:
+        ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
+    Args:
+        company: Empresa locatária (tenant) proprietária.
+        payload: Dados validados de entrada para a criação do contrato.
+    ...
+    """
+```
+
+> [!NOTE]
+> O validador automatizado `scripts/validate_docs_links.py` inspeciona todas as docstrings do backend e falha no CI caso o caminho referenciado não exista na pasta `docs/`.
+
+### 7.2 Da Documentação para o Código (*Docs $\to$ Code*)
+As notas atômicas em `docs/` devem apontar diretamente para os símbolos semânticos e arquivos do backend/frontend utilizando links Markdown relativos, dispensando citações de números de linha que sofrem drift com facilidade:
+```markdown
+- **Serviço de Negócio**: [`ContractService.create_contract()`](../../backend/apps/logistics/services/contract_service.py)
+- **Validador de Domínio**: [`Contract.clean()`](../../backend/apps/logistics/models/contract.py)
+- **Teste de Regra**: [`test_contract_hierarchy_depth`](../../backend/apps/logistics/tests/test_services.py)
+```

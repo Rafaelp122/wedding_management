@@ -65,18 +65,42 @@ sequenceDiagram
 
 ## 3. Implementação e Mecanismos de Proteção
 
+- **Tipagem de Requisição:** [`AuthRequest`](../../../backend/apps/users/types.py)
+- **Interceptor com Fila:** [`setupAuthRefreshInterceptor`](../../../frontend/src/api/interceptors/auth-refresh.ts)
+- **Serviço de Emissão de Tokens:** [`TokenService`](../../../backend/apps/users/services/token_service.py)
+
 ### A. Limite de Tipagem Estrita no Backend (`AuthRequest`)
 No backend, todas as rotas protegidas utilizam `AuthRequest` na assinatura dos métodos do roteador. Isso garante compatibilidade com as regras do Mypy Strict sem exigir `cast()` manual:
 
 ```python
---8<-- "backend/apps/users/types.py:14:23"
+class AuthRequest(HttpRequest):
+    """
+    Type Hinting Boundary para rotas autenticadas do Django Ninja.
+    Informa ao Mypy que `request.user` é sempre uma instância do nosso User.
+    """
+    user: "User"
 ```
 
 ### B. Interceptor com Fila Anti-Concorrência no Frontend (`auth-refresh.ts`)
 Quando múltiplas requisições sofrem `401` em paralelo durante o carregamento de um painel, o interceptor do Axios cria um bloqueio (*mutex*) temporário. Apenas a primeira requisição aciona o endpoint `/api/v1/auth/refresh/`, enquanto as demais aguardam na fila assíncrona para serem reexecutadas com o novo token:
 
 ```typescript
---8<-- "frontend/src/api/interceptors/auth-refresh.ts:14:60"
+async function performRefresh(
+  originalRequest: InternalAxiosRequestConfig,
+  instance: AxiosInstance,
+  baseURL: string,
+  onTokensUpdated: (access: string, refresh: string) => void,
+  onQueueProcessed: (token: string) => void,
+) {
+  const refreshToken = useAuthStore.getState().refreshToken;
+  if (!refreshToken) throw new Error("Sessão irrecuperável: Refresh token ausente.");
+
+  const { data } = await Axios.post("/api/v1/auth/refresh/", { refresh: refreshToken }, { baseURL, timeout: 5000 });
+  onTokensUpdated(data.access, data.refresh || refreshToken);
+  if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${data.access}`;
+  onQueueProcessed(data.access);
+  return instance(originalRequest);
+}
 ```
 
 ---

@@ -337,6 +337,12 @@ class ContractService:
         """
         Resolve o contrato pai e valida regras de hierarquia de contratos.
 
+        Regra de Negócio:
+            BR-L02-A a BR-L02-C:
+            docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md
+        Decisão Arquitetural:
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
         Args:
             company: O tenant atual para isolamento de dados.
             instance: O contrato em edição que receberá o pai.

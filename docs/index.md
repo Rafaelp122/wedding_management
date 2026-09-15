@@ -5,6 +5,7 @@ Plataforma SaaS Multi-Tenant de Alta Confiabilidade para Gestão de Casamentos, 
 </p>
 
 <p align="left" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem;">
+  <!-- sync-versions:tags:start -->
   <span class="md-tag" style="background-color: #3776AB; color: white; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;">Python 3.12+</span>
   <span class="md-tag" style="background-color: #092E20; color: white; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;">Django 6.0</span>
   <span class="md-tag" style="background-color: #087EA4; color: white; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;">Django Ninja 1.6+</span>
@@ -15,6 +16,7 @@ Plataforma SaaS Multi-Tenant de Alta Confiabilidade para Gestão de Casamentos, 
   <span class="md-tag" style="background-color: #F38020; color: white; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;">Cloudflare R2</span>
   <span class="md-tag" style="background-color: #7B42BC; color: white; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;">Terraform IaC</span>
   <span class="md-tag" style="background-color: #2EAD33; color: white; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;">Playwright E2E</span>
+  <!-- sync-versions:tags:end -->
 </p>
 
 [:material-rocket-launch: Funcionalidades](features/index.md){ .md-button .md-button--primary }
@@ -271,6 +273,7 @@ Escolha a modalidade de ambiente de desenvolvimento preferida:
 
 ## Tabela de Stack Tecnológica
 
+<!-- sync-versions:table:start -->
 | Camada | Tecnologia Principal | Versão Exata | Papel & Responsabilidade |
 | :--- | :--- | :--- | :--- |
 | **Landing Page Comercial** | Astro, Tailwind CSS v4, React 19 | `Astro 7.1+`, `Tailwind 4.3+`, `React 19.2+` | Portal institucional público de alta conversão, renderização estática (SSG) e SEO. |
@@ -283,3 +286,4 @@ Escolha a modalidade de ambiente de desenvolvimento preferida:
 | **Tarefas & Workers** | Huey, Redis/Valkey, Cloud Scheduler | `huey 2.5+`, `redis 5.0+` | Execução de rotinas assíncronas em segundo plano e cron tasks via OIDC. |
 | **Infraestrutura como Código** | Terraform, Google Cloud Run, Cloud Scheduler | `Terraform 1.10+` | Provisionamento declarativo serverless e esteiras de automação GitOps. |
 | **Qualidade & Testes** | Pytest, Vitest, Playwright E2E, Ruff, Mypy, Oxlint | `Pytest 9.1+`, `Vitest 4.0+`, `Playwright 1.62+` | Pirâmide completa de testes (unitários, integração, E2E) e linters rigorosos. |
+<!-- sync-versions:table:end -->

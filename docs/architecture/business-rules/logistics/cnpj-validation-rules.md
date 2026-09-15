@@ -90,16 +90,40 @@ graph TD
 
 ## 4. Implementação no Código-Fonte Real
 
-### A. Validador Regex e Campo no Modelo (`supplier.py`)
+- **Validador e Modelo:** [`cnpj_validator`](../../../../backend/apps/logistics/models/supplier.py) e [`Supplier`](../../../../backend/apps/logistics/models/supplier.py)
+- **Serviço de Orquestração:** [`SupplierService.create()`](../../../../backend/apps/logistics/services/supplier_service.py)
+- **Testes de Domínio:** [`test_models.py`](../../../../backend/apps/logistics/tests/suppliers/test_models.py) e [`test_services.py`](../../../../backend/apps/logistics/tests/suppliers/test_services.py)
+
+### A. Validador Regex e Definição no Modelo (`supplier.py`)
 
 ```python
---8<-- "backend/apps/logistics/models/supplier.py:20:47"
+cnpj_validator = RegexValidator(
+    regex=r"^(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})?$",
+    message="CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.",
+)
+
+class Supplier(TenantModel):
+    name = models.CharField(max_length=255, verbose_name="Nome")
+    cnpj = models.CharField(
+        max_length=18,
+        blank=True,
+        validators=[cnpj_validator],
+        verbose_name="CNPJ",
+        help_text="Formato: 00.000.000/0000-00",
+    )
 ```
 
 ### B. Criação de Fornecedor no Serviço (`supplier_service.py`)
 
 ```python
---8<-- "backend/apps/logistics/services/supplier_service.py:23:48"
+@staticmethod
+@transaction.atomic
+def create(company: Company, payload: SupplierIn) -> Supplier:
+    data = payload.model_dump(exclude_unset=True)
+    supplier = Supplier(company=company, **data)
+    # Validação estrita via full_clean() herdado de BaseModel
+    supplier.save()
+    return supplier
 ```
 
 ---

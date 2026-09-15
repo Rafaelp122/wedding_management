@@ -1,13 +1,18 @@
 # ADR-008: Soft Delete Seletivo
 
-**Status:** REJEITADO (Decidi remover para reduzir a complexidade no MVP e garantir a integridade financeira imediata.)
-**Data:** Janeiro 2025
-**Decisor:** Rafael
-**Contexto:** Estratégia de exclusão lógica para auditoria e recuperação
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** ⚪ Rejeitada / Descontinuada
+> **Data:** Janeiro 2025
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-007: Hybrid Keys](007-hybrid-keys.md) · [ADR-011: BaseModel full_clean()](011-basemodel-save-full-clean.md)
+
+> [!NOTE]
+> **Decisão Rejeitada no MVP:**
+> A proposta de implementar soft delete generalizado via `deleted_at` foi rejeitada para reduzir a complexidade no MVP e garantir a integridade contábil imediata. O sistema adotou hard delete transacional com integridade referencial estrita e backups contínuos no Neon DB.
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Hard delete (`DELETE FROM table WHERE id=X`) tem problemas:
 
@@ -24,7 +29,7 @@ Hard delete (`DELETE FROM table WHERE id=X`) tem problemas:
 
 ---
 
-## Decisão
+## 2. Decisão (Proposta Avaliada)
 
 Aplicar **soft delete seletivo**:
 
@@ -33,7 +38,7 @@ Aplicar **soft delete seletivo**:
 
 ---
 
-## Justificativa
+## 3. Justificativa e Racional da Rejeição
 
 ### Quando Usar Soft Delete?
 
@@ -271,7 +276,7 @@ Contract.all_objects.all()  # Com deletados
 
 ---
 
-## Consequências
+## 4. Consequências
 
 ### Positivas :material-check-circle:
 
@@ -291,7 +296,7 @@ Contract.all_objects.all()  # Com deletados
 
 ---
 
-## Monitoramento
+### Monitoramento Histórico
 
 **Métricas:**
 
@@ -310,7 +315,7 @@ Contract.all_objects.all()  # Com deletados
 
 ---
 
-## Referências
+## 5. Referências
 
 - [Django Soft Delete Patterns](https://django-safedelete.readthedocs.io/)
 - [LGPD - Lei Geral de Proteção de Dados](https://www.gov.br/cidadania/pt-br/acesso-a-informacao/lgpd)

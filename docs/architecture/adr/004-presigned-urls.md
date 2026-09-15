@@ -1,13 +1,14 @@
 # ADR-004: Presigned URLs para Upload
 
-**Status:** Aceito
-**Data:** Janeiro 2025
-**Decisor:** Rafael
-**Contexto:** Método de upload de arquivos para R2/S3
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Janeiro 2025
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-003: Cloudflare R2](003-why-r2.md) · [ADR-020: StorageService Abstraction](020-storage-service-abstraction.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Precisamos permitir upload de PDFs de contratos (2-5MB) com:
 
@@ -24,13 +25,13 @@ Precisamos permitir upload de PDFs de contratos (2-5MB) com:
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Escolhemos **Presigned URLs** para upload de arquivos.
 
 ---
 
-## Justificativa
+## 3. Justificativa
 
 ### Fluxo Presigned URL
 
@@ -180,7 +181,7 @@ async function uploadContract(file: File, weddingId: string) {
 
 ---
 
-## Vantagens
+### Vantagens do Padrão
 
 ### 1. Performance
 
@@ -197,40 +198,20 @@ async function uploadContract(file: File, weddingId: string) {
 
 ### 2. Escalabilidade
 
-**Uploads simultâneos:**
-
-- Presigned URL: Ilimitado (R2 escala automaticamente)
-- Backend upload: ~10 simultâneos (limite de containers)
-
-**Custo:**
-
-```
-100 uploads/dia × 5s cada = 500s compute/dia
-Cloud Run: USD 0,0000024/vCPU-s × 500 = USD 0,0012/dia
-Mês: USD 0,036 (~R$ 0,18)
-
-Presigned URL: R$ 0 (R2 Class B operations grátis)
-```
+- **Zero load no backend:** 100 uploads simultâneos = mesmo load que 1
+- R2 escala automaticamente (suporta milhares de req/s)
+- Sem buffering de arquivos na memória do container
 
 ### 3. Segurança
 
-**Presigned URL:**
-
-- Expira em 15 minutos
-- Permite **apenas** PUT (não GET/DELETE)
-- Object key tem UUID (impossível adivinhar)
-
-**Validação:**
-
-```python
-# Backend valida antes de gerar URL
-if not Wedding.objects.filter(id=wedding_id, planner=request.user).exists():
-    raise PermissionDenied()
-```
+- URL expira em 15 minutos
+- Apenas método PUT permitido
+- Caminho do arquivo controlado pelo backend (UUID)
+- Content-Type restrito a `application/pdf`
 
 ---
 
-## Trade-offs Aceitos
+### Trade-offs Aceitos
 
 **:material-close-circle: Complexidade (2 requests):**
 
@@ -249,7 +230,7 @@ if not Wedding.objects.filter(id=wedding_id, planner=request.user).exists():
 
 ---
 
-## Consequências
+## 4. Consequências
 
 ### Positivas :material-check-circle:
 
@@ -269,7 +250,7 @@ if not Wedding.objects.filter(id=wedding_id, planner=request.user).exists():
 
 ---
 
-## Monitoramento
+### Monitoramento e Alertas
 
 **Métricas:**
 
@@ -285,7 +266,7 @@ if not Wedding.objects.filter(id=wedding_id, planner=request.user).exists():
 
 ---
 
-## Referências
+## 5. Referências
 
 - [AWS S3 Presigned URLs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html)
 - [boto3 generate_presigned_url](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/generate_presigned_url.html)

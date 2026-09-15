@@ -14,16 +14,18 @@
 </p>
 
 <p align="center">
+  <!-- sync-versions:badges:start -->
   <img src="https://img.shields.io/badge/python-3.12+-3776AB?logo=python&logoColor=white&style=flat-square" alt="Python">
   <img src="https://img.shields.io/badge/django-6.0-092E20?logo=django&logoColor=white&style=flat-square" alt="Django">
   <img src="https://img.shields.io/badge/django--ninja-1.6+-087EA4?style=flat-square" alt="Django Ninja">
   <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black&style=flat-square" alt="React 19">
-  <img src="https://img.shields.io/badge/astro-7.1-FF5D01?logo=astro&logoColor=white&style=flat-square" alt="Astro 7">
+  <img src="https://img.shields.io/badge/astro-7.1-FF5D01?logo=astro&logoColor=white&style=flat-square" alt="Astro 7.1">
   <img src="https://img.shields.io/badge/tailwind-v4-38B2AC?logo=tailwindcss&logoColor=white&style=flat-square" alt="Tailwind CSS v4">
   <img src="https://img.shields.io/badge/postgresql-neon-00E599?logo=postgresql&logoColor=black&style=flat-square" alt="Neon DB">
   <img src="https://img.shields.io/badge/storage-cloudflare--r2-F38020?logo=cloudflare&logoColor=white&style=flat-square" alt="Cloudflare R2">
   <img src="https://img.shields.io/badge/iac-terraform-7B42BC?logo=terraform&logoColor=white&style=flat-square" alt="Terraform">
   <img src="https://img.shields.io/badge/e2e-playwright-2EAD33?logo=playwright&logoColor=white&style=flat-square" alt="Playwright">
+  <!-- sync-versions:badges:end -->
 </p>
 
 ---

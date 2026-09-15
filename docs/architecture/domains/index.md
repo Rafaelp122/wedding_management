@@ -172,10 +172,25 @@ sequenceDiagram
 
 ## 6. Registro Centralizado de Rotas (Django Ninja Extra)
 
-A integração e exposição dos 10 domínios via API REST HTTP ocorre centralizadamente em `backend/config/api.py`:
+A integração e exposição dos 10 domínios via API REST HTTP ocorre centralizadamente na instância global [`NinjaExtraAPI`](../../../backend/config/api.py):
 
 ```python
---8<-- "backend/config/api.py:157:176"
+# backend/config/api.py
+api.add_router("/auth/", auth_router, auth=None)
+api.add_router("/weddings/", weddings_router)
+api.add_router("/dashboard/", dashboard_router)
+api.add_router("/reports/", reports_router)
+api.add_router("/logistics/suppliers/", suppliers_router)
+api.add_router("/logistics/contracts/", contracts_router)
+api.add_router("/logistics/items/", items_router)
+api.add_router("/finances/budgets/", budgets_router)
+api.add_router("/finances/categories/", budget_categories_router)
+api.add_router("/finances/expenses/", expenses_router)
+api.add_router("/finances/installments/", installments_router)
+api.add_router("/scheduler/events/", scheduler_events_router)
+api.add_router("/scheduler/tasks/", scheduler_tasks_router)
+api.add_router("/notifications/", notifications_router)
+api.add_router("/internal/cron/", cron_router, auth=None)
 ```
 
 ---

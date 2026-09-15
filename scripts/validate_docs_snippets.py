@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Script de Validação e Auditoria de Snippets de Código na Documentação.
 
-Este script garante a integridade contínua entre o código da aplicação e a documentação:
+Este script garante a integridade contínua e o desacoplamento entre o código e a documentação:
 1. Valida se todas as transclusões de código PyMdown (`--8<-- "path/to/file:..."`) apontam para arquivos reais.
-2. Valida se as seções/delimitadores `# --8<-- [start:tag]` existem nos arquivos de origem.
-3. Falha com código de saída 1 se qualquer inconsistência de código for encontrada, protegendo o CI/CD contra code-drift.
+2. Rejeita ativamente faixas numéricas rígidas (`:start:end`), conforme ADR-028 e ADR-030.
+3. Valida se as tags semânticas delimitadoras `# --8<-- [start:tag]` e `# --8<-- [end:tag]` existem nos arquivos de origem.
+4. Falha com código de saída 1 se qualquer inconsistência for encontrada, protegendo o CI/CD contra code-drift.
 """
 
 import re
@@ -22,6 +23,9 @@ def validate_snippets() -> list[str]:
     """Valida todas as transclusões de snippets no MkDocs."""
     errors = []
     snippet_count = 0
+    line_based_count = 0
+    tag_based_count = 0
+    whole_file_count = 0
 
     for md_file in DOCS_DIR.rglob("*.md"):
         if "superpowers" in md_file.parts:
@@ -33,7 +37,6 @@ def validate_snippets() -> list[str]:
         matches = SNIPPET_REGEX.findall(content)
         for match in matches:
             snippet_count += 1
-            # Extrair caminho e seletor (linhas ou tags)
             parts = match.split(":")
             target_path_str = parts[0]
             target_path = ROOT_DIR / target_path_str
@@ -48,9 +51,20 @@ def validate_snippets() -> list[str]:
                 )
                 continue
 
-            # Se houver tag semântica (ex: "file.py:tag_name")
-            if len(parts) > 1 and not parts[1].isdigit():
+            # 1. Proibição de faixas numéricas de linha (:start:end)
+            if len(parts) > 1 and parts[1].isdigit():
+                line_based_count += 1
+                errors.append(
+                    f"[{rel_path}] Transclusão por faixa numérica proibida: '{match}'. "
+                    f"Conforme ADR-028 e ADR-030 (§ 2.3), faixas numéricas de linha geram code-drift frágil. "
+                    f"Substitua por links canônicos para classes/métodos ou use tags semânticas (# --8<-- [start:tag])."
+                )
+                continue
+
+            # 2. Validação de tags semânticas (ex: "file.py:tag_name")
+            if len(parts) > 1:
                 tag_name = parts[1]
+                tag_based_count += 1
                 target_content = target_path.read_text(encoding="utf-8")
                 start_tag = f"[start:{tag_name}]"
                 end_tag = f"[end:{tag_name}]"
@@ -58,10 +72,16 @@ def validate_snippets() -> list[str]:
                 if start_tag not in target_content or end_tag not in target_content:
                     errors.append(
                         f"[{rel_path}] Tag de snippet inválida '{tag_name}' no arquivo '{target_path_str}'. "
-                        f"Certifique-se de delimitar com '# --8<-- [{start_tag}]' e '# --8<-- [{end_tag}]'."
+                        f"Certifique-se de delimitar o bloco com '# --8<-- [{start_tag}]' e '# --8<-- [{end_tag}]'."
                     )
+            else:
+                whole_file_count += 1
 
     print(f"   - Snippets PyMdown verificados: {snippet_count}")
+    print(f"     • Tags semânticas válidas: {tag_based_count}")
+    print(f"     • Arquivos inteiros: {whole_file_count}")
+    if line_based_count > 0:
+        print(f"     • Faixas numéricas proibidas: {line_based_count}")
     return errors
 
 
@@ -76,7 +96,7 @@ def main() -> int:
         for err in errors:
             print(f"   🚨 {err}")
         print(
-            "\n💡 O build falhou para evitar documentação defasada em relação ao código real."
+            "\n💡 O build falhou para evitar documentação defasada ou acoplada a números de linha."
         )
         return 1
 

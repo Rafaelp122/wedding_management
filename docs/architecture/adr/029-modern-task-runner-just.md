@@ -1,7 +1,7 @@
 # ADR-029: Adoção do Just como Task Runner Moderno e Padronização de Scripts Multiplataforma
 
 > **Categoria:** Decisões de Arquitetura (ADR)
-> **Status:** Aceito
+> **Status:** 🟢 Vigente
 > **Data:** Setembro 2026
 > **Decisor:** Rafael
 > **Relacionados:** [Guia do Task Runner Just & Trilha Nativa](../../guides/dev-environment/task-runner-just.md) · [Setup do Ambiente Local](../../guides/dev-environment/setup-local-environment.md) · [Pipeline de CI/CD](../concepts/ci-cd-pipeline-flow.md) · [ADR-028: Diátaxis & Notas Atômicas](028-diataxis-atomic-notes.md)
@@ -96,12 +96,21 @@ flowchart TD
 
 ## 4. Consequências
 
-### Positivas :material-check-circle:
+### Positivas
 - **Redução de 85% de Código de Automação:** Eliminação de centenas de linhas de shell script imperativo frágil, substituídas por receitas declarativas diretas e enxutas.
 - **Paridade Multiplataforma Total:** Engenheiros em Windows, macOS e Linux compartilham exatamente a mesma experiência de desenvolvimento e os mesmos comandos.
 - **Zero Overhead em Produção e CI:** A imagem Docker de produção e os workflows do GitHub Actions não necessitam do binário do `just`, pois utilizam os comandos nativos padronizados (`uv run poe` e `pnpm`).
 - **Desacoplamento e Manutenibilidade:** Cada ecossistema gerencia suas próprias tarefas de forma isolada (`backend/pyproject.toml` para Python e `frontend/package.json` para Node.js).
 
-### Negativas / Mitigações :material-alert:
+### Negativas e mitigações
 - **Ferramenta Adicional no Host (Opcional):** Para utilizar os atalhos unificados do `just`, o desenvolvedor precisa instalar o binário localmente.
   - *Mitigação:* A instalação do `just` é trivial e suportada por todos os gerenciadores de pacotes populares (`winget`, `scoop`, `brew`, `apt`, `pacman` ou `uv tool install rust-just`). Caso o desenvolvedor opte por não instalar, a Trilha Nativa Direta continua 100% suportada e documentada.
+
+---
+
+## 5. Referências
+
+1. [Guia do Task Runner Just & Trilha Nativa](../../guides/dev-environment/task-runner-just.md)
+2. [Setup do Ambiente Local](../../guides/dev-environment/setup-local-environment.md)
+3. [ADR-028: Adoção do Framework Diatáxis e Anotações Atômicas](028-diataxis-atomic-notes.md)
+4. [Pipeline de CI/CD](../concepts/ci-cd-pipeline-flow.md)
