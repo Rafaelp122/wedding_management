@@ -113,9 +113,10 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Armazenamento:** `core/services/storage/` (Cloudflare R2 Storage Provider com geração de URLs seguras).
 
 ### Camada de Frontend (`frontend/src/features/logistics/`)
-- **Páginas & Views:** `SuppliersPage.tsx`, `VendorsItemsView.tsx`.
-- **Componentes:** `SuppliersTable.tsx`, `SupplierFormDialog.tsx`, `SupplierDetailDialog.tsx`, `ContractDetailDialog.tsx`, `EditContractDialog.tsx`, `ContractUploadDialog.tsx`, `ItemsTable.tsx`.
-- **Hooks Customizados:** `useSuppliersPage.ts`, `useContractUpload.ts`, `useVendorsItems.ts`.
+- **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
+  - **Containers (Smart):** Orquestram os hooks Orval (`useLogisticsSuppliersList`, `useLogisticsContractsList`), filtros de fornecedor/contrato e upload direto para Cloudflare R2 via `useContractUpload`.
+  - **Presenters (Dumb):** Tabelas síncronas de fornecedores, visualizadores de hierarquia de aditivos e detalhes de contratos orientados estritamente por props.
+  - **Formulários e Diálogos:** Formulários com validação instantânea de CNPJ via Zod e composição de componentes atômicos shadcn/ui.
 
 ---
 

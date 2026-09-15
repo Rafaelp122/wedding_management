@@ -27,6 +27,12 @@ class SupplierService:
 
         Aplica as validações do modelo ao salvar.
 
+        Regra de Negócio:
+            BR-L-CNPJ-01:
+            docs/architecture/business-rules/logistics/cnpj-validation-rules.md
+        Decisão Arquitetural:
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
         Args:
             company: O tenant atual para isolamento de dados.
             payload: Dados de entrada para criação do fornecedor.

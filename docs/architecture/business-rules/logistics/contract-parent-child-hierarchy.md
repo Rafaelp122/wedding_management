@@ -77,22 +77,65 @@ graph TD
 
 ## 4. Implementação no Código-Fonte Real
 
+- **Validação no Modelo:** [`Contract._clean_parent_hierarchy()`](../../../../backend/apps/logistics/models/contract.py)
+- **Resolução e Guarda Circular:** [`ContractService._resolve_parent()`](../../../../backend/apps/logistics/services/contract_service.py)
+- **Consulta de Totais Consolidados:** [`contract_consolidated_total_selector()`](../../../../backend/apps/logistics/selectors/contract_selectors.py)
+
 ### A. Validação de Hierarquia no Modelo (`contract.py`)
 
 ```python
---8<-- "backend/apps/logistics/models/contract.py:181:196"
+def _clean_parent_hierarchy(self) -> None:
+    if self.parent:
+        if self.pk and self.parent_id == self.pk:
+            raise ValidationError("Um contrato não pode ser pai de si mesmo.")
+        if self.wedding_id and self.parent.wedding_id != self.wedding_id:
+            raise ValidationError("O contrato pai pertence a outro casamento.")
+        if self.pk:
+            current: Contract | None = self.parent
+            while current:
+                if current.pk == self.pk:
+                    raise ValidationError(
+                        "Não é possível vincular um contrato pai que é descendente deste contrato."
+                    )
+                current = current.parent
 ```
 
 ### B. Resolução e Trava Circular no Serviço (`contract_service.py`)
 
 ```python
---8<-- "backend/apps/logistics/services/contract_service.py:333:385"
+@staticmethod
+def _resolve_parent(company: Company, instance: Contract, parent_input: Any) -> None:
+    if parent_input == "":
+        instance.parent = None
+        return
+
+    parent = resolve_tenant_resource(Contract, company, parent_input, ...)
+    if parent is not None:
+        if parent.pk == instance.pk:
+            raise BusinessRuleViolation(detail="Um contrato não pode ser pai de si mesmo.", code="contract_self_parent")
+        if parent.wedding_id != instance.wedding_id:
+            raise BusinessRuleViolation(detail="O contrato pai deve pertencer ao mesmo casamento.", code="contract_cross_wedding_parent")
+
+        # Prevenção de loops cíclicos
+        current = parent
+        while current.parent:
+            if current.parent.pk == instance.pk:
+                raise BusinessRuleViolation(detail="Não é possível vincular um contrato pai que é descendente deste contrato.", code="contract_circular_parent")
+            current = current.parent
+        instance.parent = parent
 ```
 
 ### C. Seletor de Valor Total Consolidado (`contract_selectors.py`)
 
 ```python
---8<-- "backend/apps/logistics/selectors/contract_selectors.py:95:130"
+def contract_consolidated_total_selector(company: Company, contract: Contract) -> Decimal:
+    validate_tenant_ownership(company, contract, ...)
+    addendums_sum = (
+        contract.addendums.for_tenant(company)
+        .exclude(status=Contract.StatusChoices.CANCELED)
+        .aggregate(total=Sum("total_amount"))["total"]
+    )
+    return (contract.total_amount or Decimal("0.00")) + (addendums_sum or Decimal("0.00"))
 ```
 
 ---

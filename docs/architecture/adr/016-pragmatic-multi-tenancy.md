@@ -1,10 +1,10 @@
 # ADR-016: Multi-tenancy Pragmático e Orientado a Organização
 
 > **Categoria:** Decisões de Arquitetura (ADR)
-> **Status:** Aceito
+> **Status:** 🟢 Vigente
 > **Data:** Fevereiro 2026
 > **Decisor:** Rafael
-> **Relacionados:** [ADR-009: Multitenancy Base](009-multitenancy.md) · [ADR-019: Tenant Validation no Service Layer](019-tenant-validation-service-layer.md) · [Guard-Rail de Isolação Multitenant](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md)
+> **Relacionados:** [ADR-009: Multitenancy Base](009-multitenancy.md) · [ADR-019: Tenant Validation no Service Layer](019-tenant-validation-service-layer.md) · [ADR-030: Rich Domain Model e Service Layer](030-rich-domain-model-service-layer.md) · [Guard-Rail de Isolação Multitenant](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md)
 
 ---
 
@@ -41,7 +41,7 @@ flowchart TD
 
 Implementar uma arquitetura de **Multi-tenancy Pragmático** baseado em **Organizações (`Company`)** com isolamento no nível de linha (*Row-Level Security* lógico no ORM) e validação obrigatória na camada de serviços.
 
-### 2.1 Pilares da Implementação:
+### 2.1 Pilares da Implementação
 1. **Domínio `tenants`:** Aplicação dedicada ao gerenciamento de `Company`, assinaturas e configurações corporativas.
 2. **`TenantModel` Abstrato:** Substitui os mixins legados. Todo modelo de domínio herda de `TenantModel`, possuindo uma Foreign Key mandatória para `Company`.
 3. **`TenantManager` e `TenantQuerySet`:** Centraliza a filtragem obrigatória via `.for_tenant(company)`, garantindo consultas isoladas e indexadas por `(company, uuid)`.
@@ -142,17 +142,26 @@ class ExpenseService:
 A integridade do isolamento multitenant é auditada continuamente no pipeline de testes:
 
 1. **`test_tenant_isolation.py`:** Testa metaprogramaticamente todos os modelos de domínio herdados de `TenantModel` com duas empresas (`Company A` e `Company B`), validando que `.for_tenant()` e `get_object_or_404_for_tenant()` barram 100% dos acessos cruzados.
-2. **`test_security_audit.py`:** Analisa via AST (Abstract Syntax Tree) todas as funções públicas em `services/` para assegurar que declaram o parâmetro mandatrio `company: Company`.
+2. **`test_security_audit.py`:** Analisa via AST (Abstract Syntax Tree) todas as funções públicas em `services/` para assegurar que declaram o parâmetro obrigatório `company: Company`.
 
 ---
 
 ## 5. Consequências
 
-### Positivas :material-check-circle:
+### Positivas
 - **Blindagem Contra IDOR:** Impossibilidade de recuperar ou alterar dados de outros clientes por enumeração de UUID.
 - **Preparação SaaS Multi-User:** Permite associar múltiplos usuários a uma mesma agência sem refatoração de banco de dados.
 - **Performance Otimizada:** Criação de índices compostos `(company_id, uuid)` e `(company_id, created_at)` que aceleram as consultas de tenant.
 
-### Negativas / Mitigações :material-alert:
+### Negativas e mitigações
 - **Sobrecarga de Assinatura:** Todo seletor e método de serviço deve receber obrigatoriamente a instância `company: Company` (mitigado via injeção automática no `request.user.company` dos routers Ninja).
 - **Proibição de Métodos Globais:** O uso de `Model.objects.all()` ou `django.shortcuts.get_object_or_404` é terminantemente proibido e reprovado pelo CI.
+
+---
+
+## 6. Referências
+
+1. [ADR-009: Arquitetura de Multitenancy (Base Histórica)](009-multitenancy.md)
+2. [ADR-019: Validação Explícita de Tenant Ownership no Service Layer](019-tenant-validation-service-layer.md)
+3. [ADR-030: Rich Domain Model e Service Layer](030-rich-domain-model-service-layer.md)
+4. [Guard-Rail de Isolação Multitenant](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md)

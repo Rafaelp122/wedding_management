@@ -1,13 +1,18 @@
 # ADR-011: `full_clean()` Centralizado no `BaseModel.save()`
 
-**Status:** Aceito
-**Data:** Março 2026
-**Decisor:** Rafael
-**Contexto:** Garantir que validações de negócio (`clean()`) nunca sejam bypassadas
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente / Consolidada na [ADR-030](030-rich-domain-model-service-layer.md)
+> **Data:** Março 2026
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-007: Hybrid Keys](007-hybrid-keys.md) · [ADR-030: Rich Domain Model e Service Layer](030-rich-domain-model-service-layer.md)
+
+> [!NOTE]
+> **Consolidação Arquitetural (Setembro 2026):**
+> O mecanismo de execução automática do `full_clean()` centralizado no `BaseModel.save()` estabelecido nesta ADR foi incorporado como o pilar estrutural do **Nível 2 (Invariantes de Domínio)** na arquitetura Rich Domain Model formalizada pela [ADR-030: Rich Domain Model e Service Layer como Casos de Uso](030-rich-domain-model-service-layer.md).
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 O Django **não** chama `full_clean()` automaticamente no `save()`. Isso significa que validações definidas em `clean()` (regras de negócio, cross-field, cross-FK) só são executadas se alguém chamar `full_clean()` explicitamente antes de `save()`.
 
@@ -25,7 +30,7 @@ Essa inconsistência era perigosa:
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Centralizar `full_clean()` no `BaseModel.save()` com escape hatch:
 
@@ -45,7 +50,7 @@ class BaseModel(models.Model):
 
 ---
 
-## Quando usar `skip_clean=True`
+### Política de Uso de `skip_clean=True`
 
 | Cenário | Justificativa |
 |---|---|
@@ -61,33 +66,33 @@ class BaseModel(models.Model):
 
 ---
 
-## Alternativas Consideradas
+### Alternativas Consideradas
 
-### 1. Manter `full_clean()` nos Services + `save()` nos Models
-
+#### 1. Manter `full_clean()` nos Services + `save()` nos Models
 **Rejeitado.** Causa double validation (performance) e a inconsistência entre models que fazem e não fazem continua.
 
-### 2. Manter `full_clean()` apenas nos Services
-
+#### 2. Manter `full_clean()` apenas nos Services
 **Rejeitado.** O Admin, shell e management commands ficam desprotegidos. Defesa em profundidade é mais segura.
 
-### 3. Usar `django-fullclean` ou `django-model-validation`
-
+#### 3. Usar `django-fullclean` ou `django-model-validation`
 **Rejeitado.** Dependência externa para algo trivial (3 linhas de código). O `skip_clean` já resolve o escape hatch.
 
 ---
 
-## Impacto
+## 3. Consequências e Impacto
 
-- **Services:** Removidas ~18 chamadas explícitas de `full_clean()`. Cada service agora faz apenas `instance.save()`.
-- **Models:** Removidos 5 overrides de `save()` em models individuais.
-- **Performance:** Eliminada a double validation no caminho da API.
-- **Segurança:** Todos os 10 models agora validam automaticamente em qualquer caminho de persistência.
-- **Testes:** 31/31 passando após as mudanças.
+### Positivas :material-check-circle:
+- **Services Limpos:** Removidas ~18 chamadas explícitas de `full_clean()`. Cada service agora executa apenas `instance.save()`.
+- **Eliminação de Duplicação:** Removidos overrides de `save()` em models individuais.
+- **Performance:** Eliminada a dupla validação no fluxo de requisições.
+- **Segurança Global:** Todos os models validam automaticamente em qualquer caminho de persistência (Admin, scripts, shell).
+
+### Negativas / Trade-offs :material-close-circle:
+- Necessidade de usar `skip_clean=True` conscientemente em operações de lote massivas para evitar overhead desnecessário de CPU.
 
 ---
 
-## Referências
+## 4. Referências
 
 - [Django docs: Validating objects](https://docs.djangoproject.com/en/5.2/ref/models/instances/#validating-objects)
 - ADR-006: Service Layer Pattern

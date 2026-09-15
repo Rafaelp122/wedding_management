@@ -71,9 +71,25 @@ Combina performance interna e segurança externa:
 - **`created_at` (`DateTimeField`, `auto_now_add=True`)**: Timestamp imutável do momento exato de inserção do registro.
 - **`updated_at` (`DateTimeField`, `auto_now=True`)**: Timestamp atualizado automaticamente a cada mutação persistida.
 
-#### Implementação Real (`backend/apps/core/models.py`):
+#### Implementação Canônica ([`BaseModel`](../../../backend/apps/core/models.py)):
 ```python
---8<-- "backend/apps/core/models.py:7:35"
+class BaseModel(models.Model):
+    id = models.BigAutoField(primary_key=True, editable=False)
+    uuid = models.UUIDField(default=uuid4, unique=True, editable=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args: Any, skip_clean: bool = False, **kwargs: Any) -> None:
+        if not skip_clean:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_by_uuid(cls, uuid_value: UUID | str) -> Self | None:
+        return cast(Self | None, cls.objects.filter(uuid=uuid_value).first())
 ```
 
 ---
@@ -87,9 +103,22 @@ O `TenantModel` (`backend/apps/tenants/models.py`) é a classe base abstrata par
 2. **`TenantManager` Padronizado**: Associa o manager customizado que fornece a interface `.for_tenant(company)`, retornando um `TenantQuerySet` seguro com predicado SQL `WHERE company_id = ...`.
 3. **Índice Composto de Alta Performance**: Índice B-Tree composto sobre `(company, uuid)` otimizando lookups públicos dentro do contexto do tenant autenticado.
 
-#### Implementação Real (`backend/apps/tenants/models.py`):
+#### Implementação Canônica ([`TenantModel`](../../../backend/apps/tenants/models.py)):
 ```python
---8<-- "backend/apps/tenants/models.py:27:48"
+class TenantModel(BaseModel):
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name="%(class)s_records",
+        verbose_name="Empresa",
+    )
+    objects = TenantManager()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["company", "uuid"]),
+        ]
 ```
 
 ---
@@ -102,9 +131,35 @@ O `WeddingOwnedMixin` (`backend/apps/core/mixins.py`) é aplicado a entidades qu
 - **Blindagem Vertical (Cross-Tenant Guard)**: Garante que `instance.company_id == instance.wedding.company_id`. Impede que um casamento de uma empresa seja associado a um registro de outra empresa.
 - **Consistência Horizontal (Cross-Wedding Guard)**: Varre dinamicamente todas as FKs concretas da entidade e valida se os objetos relacionados pertencem ao mesmo `wedding_id`.
 
-#### Implementação Real (`backend/apps/core/mixins.py`):
+#### Implementação Canônica ([`WeddingOwnedMixin`](../../../backend/apps/core/mixins.py)):
 ```python
---8<-- "backend/apps/core/mixins.py:5:52"
+class WeddingOwnedMixin(models.Model):
+    wedding = models.ForeignKey(
+        "weddings.Wedding",
+        on_delete=models.CASCADE,
+        related_name="%(class)s_records",
+    )
+
+    class Meta:
+        abstract = True
+
+    def clean(self) -> None:
+        super().clean()
+        if hasattr(self, "company_id") and self.wedding_id:
+            if self.company_id != self.wedding.company_id:
+                raise ValidationError({"wedding": "Este casamento pertence a outra organização."})
+
+        for field in self._meta.concrete_fields:
+            if not isinstance(field, models.ForeignKey) or field.name == "wedding":
+                continue
+            fk_id = getattr(self, field.attname, None)
+            if fk_id is None:
+                continue
+            if field.related_model is None or not hasattr(field.related_model, "wedding_id"):
+                continue
+            related_obj = getattr(self, field.name)
+            if related_obj and related_obj.wedding_id != self.wedding_id:
+                raise ValidationError({field.name: "Este recurso pertence a outro casamento."})
 ```
 
 ---

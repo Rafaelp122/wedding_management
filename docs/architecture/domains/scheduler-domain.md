@@ -97,9 +97,10 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Endpoints:** `api.py` com roteadores `/scheduler/events/` e `/scheduler/tasks/`.
 
 ### Camada de Frontend (`frontend/src/features/scheduler/`)
-- **Páginas & Abas:** `SchedulerPage.tsx`, `SchedulerCalendar.tsx`, `TimelineView.tsx`, `TimelineTable.tsx`, `ChecklistView.tsx`, `ChecklistTable.tsx`.
-- **Componentes:** `SchedulerSummaryCards.tsx`, `ReadOnlyEventDetails.tsx`, `CreateEventDialog.tsx`, `EditEventDialog.tsx`.
-- **Hooks Customizados:** `useSchedulerPage.ts`, `useTimeline.ts`, `useChecklist.ts`, `useCreateEventForm.ts`, `useEditEventForm.ts`.
+- **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
+  - **Containers (Smart):** Orquestram os hooks Orval (`useSchedulerEventsList`, `useSchedulerTasksList`), alternância de visualizações (Calendário, Linha do Tempo e Checklist) e diálogo de eventos.
+  - **Presenters (Dumb):** Componentes visuais da agenda, tabelas de marcos temporais e checklist operacional orientados por props.
+  - **Visualização de Pagamentos Read-Only:** Eventos originados de parcelas financeiras (`source_installment`) são exibidos com bloqueio visual de edição direta, direcionando o usuário para o módulo de finanças.
 
 ---
 

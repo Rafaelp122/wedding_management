@@ -1,7 +1,7 @@
 # ADR-022: Otimização de Performance e Ordenação de Rotas Estáticas (Fullstack)
 
 > **Categoria:** Decisões de Arquitetura (ADR)
-> **Status:** Aprovado
+> **Status:** 🟢 Vigente
 > **Data:** Fevereiro 2026
 > **Decisor:** Rafael
 > **Relacionados:** [ADR-013: Migração para Django Ninja](013-migrate-drf-to-ninja.md) · [Referência de API](../../reference/api/index.md) · [Smart vs Dumb Components](../concepts/smart-dumb-components.md)
@@ -150,10 +150,19 @@ export function AppRoutes() {
 
 ## 4. Consequências
 
-### Positivas :material-check-circle:
+### Positivas
 - **Zero Falsos-Positivos de 422 no Backend:** Rotas como `/presign-upload/`, `/lookup/` e `/by-month/` funcionam com 100% de estabilidade.
 - **Navegação Instantânea no Frontend:** Transição de abas e páginas do fluxo central ocorre em 0ms sem flashes de recarregamento.
 - **Melhoria nos Índices de Core Web Vitals:** Redução do *Interaction to Next Paint (INP)* e estabilização do *Cumulative Layout Shift (CLS)*.
 
-### Negativas / Mitigações :material-alert:
+### Negativas e mitigações
 - **Aumento Marginal do Bundle Inicial:** O pacote JavaScript principal cresceu ~60KB gzipped, totalmente amortizado pelo cache HTTP do navegador.
+
+---
+
+## 5. Referências
+
+1. [ADR-012: Geração Automática da Camada de API do Frontend via Orval](012-orval-contract-driven-frontend.md)
+2. [ADR-013: Migração de DRF para Django Ninja](013-migrate-drf-to-ninja.md)
+3. [ADR-024: Padrão Smart/Dumb Components](024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
+4. [Referência de API](../../reference/api/index.md)

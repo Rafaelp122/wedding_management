@@ -1,13 +1,14 @@
 # ADR-005: OIDC para Cloud Scheduler
 
-**Status:** Aceito
-**Data:** Janeiro 2025
-**Decisor:** Rafael
-**Contexto:** Autenticação service-to-service para tarefas agendadas
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Janeiro 2025
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-001: Cloud Run](001-why-cloud-run.md) · [ADR-017: Async Task Infrastructure](017-async-task-infrastructure.md) · [ADR-025: Terraform & GitOps](025-terraform-iac-architecture.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Cloud Scheduler precisa chamar endpoint `/api/tasks/check-overdue/` diariamente para atualizar parcelas vencidas.
 
@@ -27,13 +28,13 @@ Cloud Scheduler precisa chamar endpoint `/api/tasks/check-overdue/` diariamente 
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Escolhemos **OIDC (OpenID Connect)** para autenticar Cloud Scheduler.
 
 ---
 
-## Justificativa
+## 3. Justificativa
 
 ### Comparação de Métodos
 
@@ -136,7 +137,7 @@ logger.info(
 
 ---
 
-## Configuração
+### Configuração de Integração
 
 **1. Criar Service Account:**
 
@@ -159,60 +160,59 @@ gcloud scheduler jobs create http check-overdue \
 **3. Backend (Django):**
 
 ```python
-# apps/core/decorators.py
-from google.oauth2 import id_token
+# apps/core/authentication.py
 from google.auth.transport import requests
-from rest_framework.exceptions import PermissionDenied
+from google.oauth2 import id_token
+from rest_framework.exceptions import AuthenticationFailed
 
-def require_oidc_auth(view_func):
-    def wrapper(request, *args, **kwargs):
-        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+def authenticate_scheduler_oidc(request):
+    """
+    Valida token OIDC do Cloud Scheduler.
 
-        if not auth_header.startswith('Bearer '):
-            raise PermissionDenied('Missing OIDC token')
+    Raises:
+        AuthenticationFailed: Token inválido ou expirado
+    """
+    auth_header = request.headers.get('Authorization', '')
 
-        token = auth_header.replace('Bearer ', '')
+    if not auth_header.startswith('Bearer '):
+        raise AuthenticationFailed('Missing Bearer token')
 
-        try:
-            claim = id_token.verify_oauth2_token(
-                token,
-                requests.Request(),
-                settings.CLOUD_RUN_SERVICE_URL
-            )
+    token = auth_header.split(' ')[1]
 
-            if claim['email'] != settings.SCHEDULER_SERVICE_ACCOUNT:
-                raise PermissionDenied(f"Unauthorized: {claim['email']}")
+    try:
+        # Valida token com chaves públicas do Google
+        id_info = id_token.verify_oauth2_token(
+            token,
+            requests.Request(),
+            audience=settings.CLOUD_RUN_URL
+        )
 
-        except Exception as e:
-            raise PermissionDenied(f'Invalid OIDC token: {e}')
+        # Valida service account email
+        expected_email = settings.SCHEDULER_SERVICE_ACCOUNT_EMAIL
+        if id_info.get('email') != expected_email:
+            raise AuthenticationFailed(f'Invalid service account: {id_info.get("email")}')
 
-        return view_func(request, *args, **kwargs)
+        return id_info
 
-    return wrapper
+    except ValueError as e:
+        raise AuthenticationFailed(f'Invalid token: {str(e)}')
 
-# apps/finances/views.py
+# apps/tasks/views.py
 @api_view(['POST'])
-@require_oidc_auth
-def check_overdue(request):
-    """
-    Atualiza parcelas vencidas para status OVERDUE.
-    Endpoint chamado APENAS pelo Cloud Scheduler.
-    """
-    today = timezone.now().date()
+def check_overdue_tasks(request):
+    """Endpoint chamado pelo Cloud Scheduler para atualizar parcelas."""
+    # Valida OIDC
+    authenticate_scheduler_oidc(request)
 
-    overdue_count = Installment.objects.filter(
-        status='PENDING',
-        due_date__lt=today
-    ).update(status='OVERDUE')
-
-    logger.info('overdue_task_executed', count=overdue_count)
+    # Executa task
+    overdue_count = InstallmentService.update_overdue_installments()
 
     return Response({'overdue_count': overdue_count})
 ```
 
 ---
 
-## Trade-offs Aceitos
+### Trade-offs Aceitos
 
 **:material-close-circle: Vendor Lock-in (GCP):**
 
@@ -228,7 +228,7 @@ def check_overdue(request):
 
 ---
 
-## Consequências
+## 4. Consequências
 
 ### Positivas :material-check-circle:
 
@@ -248,7 +248,7 @@ def check_overdue(request):
 
 ---
 
-## Monitoramento
+### Monitoramento e Alertas
 
 **Métricas:**
 
@@ -267,7 +267,7 @@ def check_overdue(request):
 
 ---
 
-## Referências
+## 5. Referências
 
 - [Google OIDC Documentation](https://cloud.google.com/run/docs/authenticating/service-to-service)
 - [Cloud Scheduler Authentication](https://cloud.google.com/scheduler/docs/http-target-auth)

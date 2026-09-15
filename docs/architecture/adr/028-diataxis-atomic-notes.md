@@ -1,10 +1,14 @@
 # ADR-028: Adoção do Framework Diatáxis e Padrão de Anotações Atômicas na Documentação
 
 > **Categoria:** Decisões de Arquitetura (ADR)
-> **Status:** Aceito
+> **Status:** 🟡 Emendada pela [ADR-030](030-rich-domain-model-service-layer.md) (§ 3)
 > **Data:** Agosto 2026
 > **Decisor:** Rafael
 > **Relacionados:** [Padrão de Documentação Diátaxis & Notas Atômicas](../../reference/architecture-standards/documentation-standards.md) · [Como Escrever e Atualizar Docs](../../guides/documentation/write-and-update-docs.md) · [CI/CD Pipelines](../../reference/ci-cd/index.md)
+
+> [!NOTE]
+> **Emenda Arquitetural (Setembro 2026):**
+> A seção 2.2 (item 5) desta ADR foi formalmente emendada pela [ADR-030: Rich Domain Model e Service Layer como Casos de Uso](030-rich-domain-model-service-layer.md) (§ 3), substituindo a exigência de transclusões PyMdown de código com faixas numéricas de linhas (`:start:end`) por referências diretas a classes e métodos e exemplos canônicos estáveis, eliminando o code-drift durante refatorações contínuas.
 
 ---
 
@@ -89,10 +93,18 @@ flowchart LR
 
 ## 4. Consequências
 
-### Positivas :material-check-circle:
+### Positivas
 - **Zero Documentação Obsoleta:** O CI bloqueia PRs se qualquer snippet transcluído ou link relativo quebrar.
 - **Navegação Intuitiva:** Desenvolvedores sabem exatamente em qual pasta buscar tutoriais (`onboarding`), receitas (`guides`), contratos (`reference`) ou decisões (`architecture`).
 - **Eficiência de Contexto para Agentes:** Subagentes leem notas atômicas cirúrgicas de 50-150 linhas em vez de arquivos monolíticos, aumentando a precisão do código gerado.
 
-### Negativas / Mitigações :material-alert:
+### Negativas e mitigações
 - **Múltiplos Arquivos Pequenos:** A estrutura granular exige o uso consistente dos mapas de conteúdo (`index.md`) e busca por texto na IDE.
+
+---
+
+## 5. Referências
+
+1. [ADR-030: Rich Domain Model e Service Layer](030-rich-domain-model-service-layer.md)
+2. [Padrão de Documentação Diátaxis & Notas Atômicas](../../reference/architecture-standards/documentation-standards.md)
+3. [Como Escrever e Atualizar Docs](../../guides/documentation/write-and-update-docs.md)

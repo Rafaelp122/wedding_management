@@ -98,6 +98,13 @@ class ExpenseService:
         Valida se o valor total da despesa é idêntico ao total do contrato
         associado (Regra BR-F02) e auto-gera pelo menos 1 parcela de pagamento.
 
+        Regra de Negócio:
+            BR-F02:
+            docs/architecture/business-rules/finances/financial-integrity-rules.md
+        Decisão Arquitetural:
+            ADR-006 (docs/architecture/adr/006-service-layer.md)
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
         Args:
             company: O tenant atual para isolamento de dados.
             payload: Dados de entrada para criação da despesa.

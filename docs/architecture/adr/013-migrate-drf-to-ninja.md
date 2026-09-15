@@ -1,7 +1,7 @@
 # ADR-013: Migração de Django REST Framework para Django Ninja
 
 > **Categoria:** Decisões de Arquitetura (ADR)
-> **Status:** Aceito
+> **Status:** 🟢 Vigente
 > **Data:** Fevereiro 2026
 > **Decisor:** Rafael
 > **Relacionados:** [ADR-006: Service Layer Pattern](006-service-layer.md) · [ADR-012: Orval Contract-Driven Frontend](012-orval-contract-driven-frontend.md) · [ADR-014: Tipagem Estática Mypy](014-adocao-tipagem-estatica-mypy.md)

@@ -60,31 +60,63 @@ sequenceDiagram
 ## 3. Diretrizes e Regras de Ouro
 
 ### A. Avaliação Preguiçosa (*Lazy Evaluation*) e Paginação Ninja
-As funções de listagem (`*_list_selector`) retornam instâncias de `TenantQuerySet` especializado (ex: `ContractQuerySet`, `ExpenseQuerySet`) e **nunca** listas Python materializadas em memória (`list(qs)`).
+As funções de listagem (`*_list_selector`) retornam instâncias de `TenantQuerySet` especializado (ex: [`ExpenseQuerySet`](../../../backend/apps/finances/managers.py), [`ContractQuerySet`](../../../backend/apps/logistics/managers.py)) e **nunca** listas Python materializadas em memória (`list(qs)`).
 
 Isso garante:
 1. **Paginação Eficiente:** O decorador `@paginate` do Django Ninja adiciona automaticamente as cláusulas `LIMIT` e `OFFSET` na query SQL executada pelo banco de dados.
 2. **Componibilidade:** Outros seletores ou endpoints podem encadear novos filtros (`.filter(...)`, `.order_by(...)`) sem disparar requisições intermediárias ao banco.
 
+Exemplo canônico em [`expense_list_selector()`](../../../backend/apps/finances/selectors/expense_selectors.py):
 ```python
---8<-- "backend/apps/finances/selectors/expense_selectors.py:22:46"
+def expense_list_selector(
+    *,
+    company: Company,
+    wedding_id: UUID | str | None = None,
+    category_id: UUID | str | None = None,
+) -> ExpenseQuerySet:
+    qs: ExpenseQuerySet = Expense.objects.for_tenant(company).with_details()
+    if wedding_id:
+        qs = qs.for_wedding(wedding_id)
+    if category_id:
+        qs = qs.by_category(category_id)
+    return qs  # Retorno lazy, avaliado apenas no momento da serialização HTTP
 ```
 
 ### B. Prevenção Ativa de Consultas N+1
 Para manter o tempo de resposta abaixo de 50ms mesmo sob alta densidade de dados:
 - **`select_related`:** Usado para relacionamentos `1:1` e `N:1` (Foreign Keys), gerando um `SQL JOIN` imediato (ex: carregar `supplier` e `wedding` junto do contrato).
 - **`prefetch_related`:** Usado para relacionamentos `1:N` e `N:N` (ex: carregar parcelas de uma lista de despesas).
-- **`Subquery` + `Coalesce`:** Encapsulado em métodos do `QuerySet` (como `.with_totals()`) para calcular somas ou contagens agregadas em um único comando SQL, sem explosão de linhas por joins cartesianos.
+- **`Subquery` + `Coalesce`:** Encapsulado em métodos do `QuerySet` (como [`.with_totals()`](../../../backend/apps/logistics/managers.py)) para calcular somas ou contagens agregadas em um único comando SQL, sem explosão de linhas por joins cartesianos.
 
 ```python
---8<-- "backend/apps/logistics/managers.py:59:92"
+# apps/logistics/managers.py
+class ContractQuerySet(TenantQuerySet["Contract"]):
+    def with_totals(self) -> ContractQuerySet:
+        return self.select_related("supplier", "wedding", "parent").annotate(
+            supplier_name=F("supplier__name"),
+            total_paid=Coalesce(
+                Subquery(
+                    Installment.objects.filter(
+                        company=OuterRef("company"),
+                        expense__contract=OuterRef("pk"),
+                        status=Installment.StatusChoices.PAID,
+                    ).values("expense__contract").annotate(s=Sum("amount")).values("s")[:1]
+                ),
+                Value(Decimal("0.00")),
+            ),
+        )
 ```
 
 ### C. Busca Individual Segura (`*_get_selector`)
-Os seletores de registro individual encapsulam a resolução segura por UUID dentro do escopo do tenant e retornam `ObjectNotFoundError` (HTTP 404) quando o recurso não existe ou pertence a outro tenant.
+Os seletores de registro individual encapsulam a resolução segura por UUID dentro do escopo do tenant e retornam `ObjectNotFoundError` (HTTP 404) quando o recurso não existe ou pertence a outro tenant:
 
+Exemplo canônico em [`contract_get_selector()`](../../../backend/apps/logistics/selectors/contract_selectors.py):
 ```python
---8<-- "backend/apps/logistics/selectors/contract_selectors.py:21:52"
+def contract_get_selector(company: Company, uuid: UUID | str) -> Contract:
+    try:
+        return Contract.objects.for_tenant(company).with_totals().get(uuid=uuid)
+    except (Contract.DoesNotExist, ValueError, ValidationError) as e:
+        raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
 ```
 
 ---

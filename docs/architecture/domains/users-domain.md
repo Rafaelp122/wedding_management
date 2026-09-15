@@ -81,26 +81,82 @@ sequenceDiagram
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação no Código-Fonte Real
+
+- **Modelo de Identidade:** [`User`](../../../backend/apps/users/models.py)
+- **Serviço de Registro:** [`RegistrationService.register_new_owner()`](../../../backend/apps/users/services/registration_service.py)
+- **Serviço de Autenticação JWT:** [`TokenService.obtain()`](../../../backend/apps/users/services/token_service.py)
+- **Seletores de Usuário:** [`user_get_by_email_selector()`](../../../backend/apps/users/selectors.py) e [`user_get_by_uuid_selector()`](../../../backend/apps/users/selectors.py)
 
 ### A. Definição do Modelo de Usuário (`User`)
+
 ```python
---8<-- "backend/apps/users/models.py:119:210"
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField("E-mail", unique=True, max_length=255)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    company = models.ForeignKey("tenants.Company", on_delete=models.PROTECT, related_name="users")
+    first_name = models.CharField("Primeiro Nome", max_length=150)
+    last_name = models.CharField("Sobrenome", max_length=150)
+    is_staff = models.BooleanField("Status da Equipe", default=False)
+    is_active = models.BooleanField("Ativo", default=False)
+    is_email_verified = models.BooleanField("E-mail Verificado", default=False)
+    email_verified_at = models.DateTimeField("Data da Validação", null=True, blank=True)
+    USERNAME_FIELD = "email"
 ```
 
 ### B. Onboarding Atômico de Proprietário (`RegistrationService`)
+
 ```python
---8<-- "backend/apps/users/services/registration_service.py:14:98"
+class RegistrationService:
+    @staticmethod
+    @transaction.atomic
+    def register_new_owner(email: str, password: str, first_name: str = "", last_name: str = "", company_name: str = "") -> User:
+        validate_password(password)
+        company = TenantService.create_company(display_name=first_name or email, company_name=company_name)
+        user = User.objects.create_user(
+            email=email,
+            password=password,
+            company=company,
+            first_name=first_name,
+            last_name=last_name,
+            is_active=False,
+            is_email_verified=False,
+        )
+        transaction.on_commit(lambda: EmailVerificationService.send_verification_email(user))
+        return user
 ```
 
 ### C. Emissão e Validação de Tokens JWT (`TokenService`)
+
 ```python
---8<-- "backend/apps/users/services/token_service.py:20:83"
+class TokenService:
+    @staticmethod
+    def obtain(email: str, password: str) -> TokenOut:
+        user = authenticate(request=None, username=email, password=password)
+        if user is None:
+            raise AuthenticationFailedError("Credenciais inválidas.", code="invalid_credentials")
+        if not user.is_email_verified:
+            raise AuthenticationFailedError("Sua conta ainda não foi ativada.", code="email_not_verified")
+
+        refresh = RefreshToken.for_user(user)
+        return TokenOut(access=str(refresh.access_token), refresh=str(refresh), user=UserOut.from_orm(user))
 ```
 
 ### D. Seletores de Leitura de Usuários (`selectors.py`)
+
 ```python
---8<-- "backend/apps/users/selectors.py:20:55"
+def user_get_by_email_selector(*, email: str) -> User:
+    normalized_email = User.objects.normalize_email(email.strip().lower())
+    user = User.objects.filter(email__iexact=normalized_email).first()
+    if not user:
+        raise ObjectNotFoundError(detail="Usuário não encontrado.")
+    return user
+
+def user_get_by_uuid_selector(*, uuid: UUID | str) -> User:
+    user = User.objects.filter(uuid=uuid).first()
+    if not user:
+        raise ObjectNotFoundError(detail="Usuário não encontrado.")
+    return user
 ```
 
 ---

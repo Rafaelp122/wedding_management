@@ -122,10 +122,11 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Management Command:** `python manage.py mark_overdue_installments` (atualização automática de parcelas com data de vencimento no passado).
 
 ### Camada de Frontend (`frontend/src/features/finances/`)
-- **Containers & Views:** `FinancesView.tsx`, `ExpensesTab.tsx`, `ExpensesTable.tsx`, `ExpenseDetailSheet.tsx`, `ExpenseDetailSheetPresenter.tsx`.
-- **Gráficos & Resumos:** `FinancesSummaryCards.tsx`, `FinancesDistributionChart.tsx` (Recharts).
-- **Dialogs:** `CreateExpenseDialog.tsx`, `EditExpenseDialog.tsx`, `DeleteExpenseDialog.tsx`, `CreateBudgetCategoryDialog.tsx`, `EditBudgetCategoryDialog.tsx`.
-- **Hooks Customizados:** `useBudget.ts`, `useExpenses.ts`, `useCreateExpenseForm.ts`, `useEditExpenseForm.ts`.
+- **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
+  - **Containers (Smart):** Orquestram os hooks gerados pelo Orval (`useFinancesExpensesList`, `useFinancesBudgetsList`), gerenciam o estado de filtros temporais e dialogs de mutação.
+  - **Presenters (Dumb):** Componentes síncronos puros orientados a props (tabelas de despesas e parcelas, resumo executivo de categorias e `ExpenseDetailSheet`).
+  - **Visualização Analítica:** Gráficos interativos de distribuição orçamentária via Recharts e cartões de KPI financeiro.
+  - **Formulários e Mutações:** Integração com `react-hook-form` + Zod para validação antecipada de tolerância zero e notificações de feedback via Sonner.
 
 ---
 

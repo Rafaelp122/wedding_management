@@ -209,6 +209,7 @@ check-landing:
 check-docs:
     uv run --project backend python scripts/validate_docs_links.py
     uv run --project backend python scripts/validate_docs_snippets.py
+    uv run --project backend python scripts/sync_doc_versions.py --check
     npx -y @google/design.md lint DESIGN.md
     just docs-build
 
@@ -230,6 +231,11 @@ docs-dev:
 [group('Documentação')]
 docs-build:
     uv run --project backend --group docs mkdocs build --strict
+
+# Sincroniza as versões dos pacotes nos badges e cards da documentação
+[group('Documentação')]
+sync-docs:
+    uv run --project backend python scripts/sync_doc_versions.py --write
 
 # Publica a documentação no GitHub Pages
 [group('Documentação')]

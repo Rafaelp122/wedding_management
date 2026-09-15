@@ -37,12 +37,12 @@ flowchart TD
     B -- Não --> C["Ignorar Workflow"]
     B -- Sim --> D{"Alterou apenas *.lock, .gitignore ou .vscode?"}
     D -- Sim --> E["Ignorar Workflow (paths-ignore)"]
-    D -- Não --> F{"É Draft PR?"}
-    F -- Sim --> G["Job Skipped (github.event.pull_request.draft == true)"]
+    D -- Não --> F{"É Draft PR ou Bot/Dependabot?"}
+    F -- Sim --> G["Job Skipped (draft ou dependabot)"]
     F -- Não --> H["Cancelar execuções anteriores no mesmo PR (concurrency)"]
     H --> I["Step 1: Checkout Code (fetch-depth: 0)"]
-    I --> J["Step 2: Prepare PR Context & Diff Stat"]
-    J --> K["Step 3: Run OpenCode Review (DeepSeek v4 Pro)"]
+    I --> J["Step 2: Prepare PR Context, Diff Stat & Diff Content"]
+    J --> K["Step 3: Run OpenCode Review (Agente reviewer: steps=10, DeepSeek v4 Pro)"]
     K --> L["Publicação do Comentário / Sugestões Inline no GitHub"]
 ```
 
@@ -52,14 +52,14 @@ flowchart TD
 
 O diagrama abaixo detalha o caminho lógico percorrido pela IA (DeepSeek v4 Pro) ao processar o prompt e avaliar o código do Pull Request:
 
-````mermaid
+```mermaid
 flowchart TD
-    A["Recebe Contexto do PR (Título, Diff Stat)"] --> B{"Tipo de Evento: Novo PR ou synchronize?"}
+    A["Recebe Contexto do PR (Título, Diff Stat, Diff Unificado)"] --> B{"Tipo de Evento: Novo PR ou synchronize?"}
     B -- "synchronize (Novo Commit)" --> C1["1. Checa resolução/justificativas dos itens anteriores"]
     C1 --> C2["2. Exige revisão completa das NOVAS implementações (OBRIGATÓRIO)"]
     B -- "opened / reopened" --> D["Inicia análise do diff completo contra origin/develop"]
     C2 --> D
-    D --> E["Inspecionar arquivos alterados no Diff Stat"]
+    D --> E["Inspecionar arquivos alterados no Diff Stat e Diff Unificado"]
 
     E --> F1{"Altera Backend (backend/)?"}
     F1 -- Sim --> G1["Valida Service Layer, multi-tenancy, operation_id e factories"]
@@ -83,14 +83,17 @@ flowchart TD
     K --> L{"Houve desvios nas alterações novas ou anteriores?"}
     L -- Não --> M["Emite aprovação: Code Review Aprovado"]
     L -- Sim --> N["Emite sugestões inline (```suggestion) e Tabela Síntese no rodapé"]
-````
+```
 
 ---
 
-## 5. Diretrizes de Qualidade & Roteamento Dinâmico
+## 5. Diretrizes de Qualidade, Eficiência & Roteamento Dinâmico
 
-1. **Prefix Caching Optimization**: As regras fixas (`AGENTS.md`, `DESIGN.md`, `SKILL.md`) são mantidas no topo do prompt para aproveitar o _prefix caching_ do DeepSeek (reduzindo até 90% dos custos de tokens de entrada).
-2. **Dupla Checagem em Re-Revisões (`synchronize`)**: A IA é instruída a validar a resolução dos apontamentos anteriores E obrigatoriamente realizar a revisão estática completa de todo o código novo adicionado no commit, evitando aprovação prematura por ancoragem.
-3. **Roteamento por Escopo**: A IA consulta apenas as skills e especificações relevantes aos arquivos alterados listados no `Diff Stat`.
-4. **Análise Estática Exclusiva**: A IA não executa comandos de shell ou testes durante a revisão, delegando validações dinâmicas às demais pipelines de CI.
-5. **Validação de Doc Drift**: Alterações que modifiquem schemas, endpoints ou regras de negócio exigem a atualização ou criação correspondente da nota atômica sob `docs/`.
+1. **Filtro de Bots & Dependabot**: Execuções originadas por bots de atualização de dependências (`dependabot[bot]`) são ignoradas no nível do job, evitando desperdício de saldo em revisões de bumps de pacotes.
+2. **Diff Unificado Pré-Injetado**: O step preparatório extrai uma amostra limpa de até 400 linhas do diff (excluindo lockfiles, `openapi.json` e arquivos gerados/minificados), eliminando chamadas redundantes de ferramentas de terminal para descobrir as alterações.
+3. **Agente Especializado (`reviewer`) com Step Limiting**: Configurado em `opencode.json` com `mode: primary`, `steps: 10` e permissões de somente leitura (`edit: deny`, `write: deny`), prevenindo loops desnecessários de exploração.
+4. **Prefix Caching Optimization**: As regras fixas (`AGENTS.md`, `DESIGN.md`, `SKILL.md`) são mantidas no topo do prompt para aproveitar o _prefix caching_ do DeepSeek (reduzindo custos de tokens de entrada repetidos).
+5. **Dupla Checagem em Re-Revisões (`synchronize`)**: A IA é instruída a validar a resolução dos apontamentos anteriores E obrigatoriamente realizar a revisão estática completa de todo o código novo adicionado no commit, evitando aprovação prematura por ancoragem.
+6. **Roteamento por Escopo**: A IA consulta apenas as skills e especificações relevantes aos arquivos alterados listados no `Diff Stat`.
+7. **Análise Estática Exclusiva**: A IA não executa comandos de shell ou testes durante a revisão, delegando validações dinâmicas às demais pipelines de CI.
+8. **Validação de Doc Drift**: Alterações que modifiquem schemas, endpoints ou regras de negócio exigem a atualização ou criação correspondente da nota atômica sob `docs/`.

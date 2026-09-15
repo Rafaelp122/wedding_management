@@ -1,13 +1,14 @@
 # ADR-007: Chaves Híbridas (BigInt + UUID)
 
-**Status:** Aceito
-**Data:** Janeiro 2025
-**Decisor:** Rafael
-**Contexto:** Estratégia de chaves primárias para performance e segurança
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Janeiro 2025
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-011: BaseModel full_clean()](011-basemodel-save-full-clean.md) · [ADR-016: Multi-tenancy Pragmático](016-pragmatic-multi-tenancy.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Django usa `id = AutoField(primary_key=True)` por padrão (integer sequencial).
 
@@ -26,7 +27,7 @@ Django usa `id = AutoField(primary_key=True)` por padrão (integer sequencial).
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Usar **chave híbrida**:
 
@@ -35,7 +36,7 @@ Usar **chave híbrida**:
 
 ---
 
-## Justificativa
+## 3. Justificativa
 
 ### Comparação de Abordagens
 
@@ -197,7 +198,7 @@ installments = contract.installments.all()  # FK usa id (BigInt)
 
 ---
 
-## Implementação
+### Detalhes de Implementação
 
 **1. Model Base:**
 
@@ -239,7 +240,7 @@ router.register(r'contracts', ContractViewSet)
 
 ---
 
-## Trade-offs Aceitos
+### Trade-offs Aceitos
 
 **:material-close-circle: Complexidade:**
 
@@ -258,7 +259,7 @@ router.register(r'contracts', ContractViewSet)
 
 ---
 
-## Consequências
+## 4. Consequências
 
 ### Positivas :material-check-circle:
 
@@ -279,7 +280,7 @@ router.register(r'contracts', ContractViewSet)
 
 ---
 
-## Monitoramento
+### Monitoramento e Auditoria
 
 **Métricas:**
 
@@ -298,7 +299,7 @@ router.register(r'contracts', ContractViewSet)
 
 ---
 
-## Referências
+## 5. Referências
 
 - [Django BigAutoField](https://docs.djangoproject.com/en/5.0/ref/models/fields/#bigautofield)
 - [UUID Performance Analysis](https://www.cybertec-postgresql.com/en/uuid-serial-or-identity-columns-for-postgresql-auto-generated-primary-keys/)

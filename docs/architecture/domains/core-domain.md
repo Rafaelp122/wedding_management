@@ -66,31 +66,113 @@ classDiagram
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação no Código-Fonte Real
+
+- **Modelo Base:** [`BaseModel`](../../../backend/apps/core/models.py)
+- **Mixin de Casamento:** [`WeddingOwnedMixin`](../../../backend/apps/core/mixins.py)
+- **Hierarquia de Exceções:** [`ApplicationError`](../../../backend/apps/core/exceptions.py)
+- **Resolução de Tenant:** [`get_object_or_404_for_tenant()`](../../../backend/apps/core/shortcuts.py)
+- **Validador de Uploads:** [`MaxFileSizeValidator`](../../../backend/apps/core/validators.py)
 
 ### A. Modelo Base com Validação de Invariantes (`BaseModel`)
+
 ```python
---8<-- "backend/apps/core/models.py:7:35"
+class BaseModel(models.Model):
+    id = models.BigAutoField(primary_key=True, editable=False)
+    uuid = models.UUIDField(default=uuid4, unique=True, editable=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args: Any, skip_clean: bool = False, **kwargs: Any) -> None:
+        if not skip_clean:
+            self.full_clean()
+        super().save(*args, **kwargs)
 ```
 
 ### B. Mixin de Isolamento Transversal (`WeddingOwnedMixin`)
+
 ```python
---8<-- "backend/apps/core/mixins.py:5:52"
+class WeddingOwnedMixin(models.Model):
+    wedding = models.ForeignKey("weddings.Wedding", on_delete=models.CASCADE, related_name="%(class)s_records")
+
+    class Meta:
+        abstract = True
+
+    def clean(self) -> None:
+        super().clean()
+        # 1. Blindagem Vertical: Garante mesmo tenant
+        if hasattr(self, "company_id") and self.wedding_id:
+            if self.company_id != self.wedding.company_id:
+                raise ValidationError({"wedding": "Este casamento pertence a outra organização."})
+
+        # 2. Blindagem Horizontal: Valida se outras FKs pertencem ao mesmo casamento
+        for field in self._meta.concrete_fields:
+            if isinstance(field, models.ForeignKey) and field.name != "wedding":
+                related_obj = getattr(self, field.name, None)
+                if related_obj and getattr(related_obj, "wedding_id", None) != self.wedding_id:
+                    raise ValidationError({field.name: "Este recurso pertence a outro casamento."})
 ```
 
 ### C. Hierarquia de Exceções de Domínio (`ApplicationError`)
+
 ```python
---8<-- "backend/apps/core/exceptions.py:1:66"
+class ApplicationError(Exception):
+    status_code = 400
+    default_detail = "Ocorreu um erro na aplicação."
+    default_code = "application_error"
+
+class ObjectNotFoundError(ApplicationError):
+    status_code = 404
+    default_code = "not_found"
+
+class BusinessRuleViolation(ApplicationError):
+    status_code = 422
+    default_code = "business_rule_violation"
+
+class DomainIntegrityError(ApplicationError):
+    status_code = 409
+    default_code = "domain_integrity_error"
 ```
 
 ### D. Atalhos de Resolução Segura de Tenant (`shortcuts.py`)
+
 ```python
---8<-- "backend/apps/core/shortcuts.py:50:86"
+def get_object_or_404_for_tenant[ModelT: models.Model](
+    model_cls: type[ModelT],
+    company: "Company",
+    uuid: UUID | str,
+    *,
+    select_related: list[str] | None = None,
+    prefetch_related: list[str] | None = None,
+    detail: str | None = None,
+    code: str = "not_found_or_denied",
+) -> ModelT:
+    try:
+        queryset = _build_tenant_queryset(model_cls, company, select_related=select_related, prefetch_related=prefetch_related)
+        return queryset.get(uuid=uuid)
+    except (ObjectDoesNotExist, ValueError, ValidationError) as e:
+        raise ObjectNotFoundError(detail=_get_not_found_detail(model_cls, detail), code=code) from e
 ```
 
 ### E. Validador de Tamanho de Uploads (`MaxFileSizeValidator`)
+
 ```python
---8<-- "backend/apps/core/validators.py:12:46"
+class MaxFileSizeValidator:
+    def __init__(self, max_size: int) -> None:
+        self.max_size = max_size
+
+    def __call__(self, value: _FileLike) -> None:
+        try:
+            size = value.size
+        except OSError:
+            return  # Degradação graciosa em indisponibilidade de I/O externo
+
+        if size is not None and size > self.max_size:
+            mb = self.max_size // (1024 * 1024)
+            raise ValidationError(f"Arquivo excede o limite de {mb}MB.", code="max_file_size")
 ```
 
 ---

@@ -4,7 +4,7 @@ domain: architecture
 type: concept
 source_code:
   - backend/apps/core/cron_api.py
-  - backend/apps/core/cron.py
+  - backend/apps/core/cron/registry.py
   - backend/apps/core/decorators.py
 tests:
   - backend/apps/core/tests/test_cron_api.py
@@ -77,18 +77,58 @@ sequenceDiagram
 
 ## 4. Implementação Técnica
 
+- **Endpoint de Disparo:** [`run_daily_cron_batch()`](../../../backend/apps/core/cron_api.py)
+- **Decorator de Blindagem OIDC:** [`require_oidc_auth()`](../../../backend/apps/core/decorators.py)
+- **Registro Central de Tarefas:** [`cron_registry`](../../../backend/apps/core/cron/registry.py)
+
 ### A. Endpoint de Disparo em Lote (`cron_api.py`)
 O endpoint `/daily-batch/` é protegido pelo decorator `@require_oidc_auth` e orquestra a execução de todas as tarefas cadastradas no `CronRegistry`, respondendo com status `207 Multi-Status` em caso de falha parcial para alertar os monitores do GCP:
 
 ```python
---8<-- "backend/apps/core/cron_api.py:29:72"
+@cron_router.post(
+    "/daily-batch/",
+    response={200: DailyBatchResponse, 207: DailyBatchResponse},
+    auth=None,
+    operation_id="core_cron_daily_batch",
+)
+@require_oidc_auth
+def run_daily_cron_batch(request: HttpRequest) -> tuple[int, DailyBatchResponse]:
+    logger.info("Iniciando execução do lote diário de tarefas (Daily Batch Cron)...")
+    tasks_executed = cron_registry.run_batch()
+
+    has_errors = any(t["status"] == "error" for t in tasks_executed)
+    batch_status = "completed_with_errors" if has_errors else "completed"
+    http_status = 207 if has_errors else 200
+
+    payload = DailyBatchResponse(
+        status=batch_status,
+        timestamp=datetime.now(),
+        tasks=[BatchTaskResult(**t) for t in tasks_executed],
+    )
+    return http_status, payload
 ```
 
 ### B. Decorator de Validação Criptográfica OIDC (`decorators.py`)
 A autenticação extrai o token JWT do cabeçalho `Authorization: Bearer <token>`, valida as chaves públicas via Google JWKS e assegura que a requisição partiu exclusivamente da Service Account autorizada:
 
 ```python
---8<-- "backend/apps/core/decorators.py:15:57"
+def require_oidc_auth[R](view_func: Callable[..., R]) -> Callable[..., R]:
+    @wraps(view_func)
+    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> R:
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        if not auth_header.startswith("Bearer "):
+            raise AuthenticationFailedError(detail="Token OIDC ausente.", code="missing_token")
+
+        token = auth_header.replace("Bearer ", "").strip()
+        try:
+            verifier = get_oidc_verifier()
+            claim = verifier.verify_token(token)
+            logger.info("OIDC authentication successful for %s", claim.get("email"))
+        except Exception:
+            raise PermissionDeniedError(detail="Token OIDC inválido ou SA não autorizada.")
+
+        return view_func(request, *args, **kwargs)
+    return wrapper
 ```
 
 ---

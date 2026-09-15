@@ -70,18 +70,44 @@ sequenceDiagram
 
 ## 3. Implementação Técnica
 
+- **Serviço de Armazenamento:** [`CloudflareR2StorageService.generate_presigned_put_url()`](../../../backend/apps/core/services/storage/cloudflare_r2.py)
+- **Hook de Upload Direto:** [`useContractUpload`](../../../frontend/src/features/logistics/hooks/useContractUpload.ts)
+- **Orquestração de Contrato:** [`ContractService.generate_upload_url()`](../../../backend/apps/logistics/services/contract_service.py)
+
 ### A. Geração de URLs Pré-Assinadas no Backend (`cloudflare_r2.py`)
 O serviço de storage gera URLs assinadas criptograficamente com parâmetros de cabeçalho estritos (`Bucket`, `Key`, `ContentType`) e tempo de expiração de 15 minutos:
 
 ```python
---8<-- "backend/apps/core/services/storage/cloudflare_r2.py:75:120"
+def generate_presigned_put_url(
+    self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
+) -> str:
+    s3_client = boto3.client("s3", endpoint_url=self.endpoint_url, aws_access_key_id=self.access_key_id, aws_secret_access_key=self.secret_access_key)
+    return s3_client.generate_presigned_url(
+        "put_object",
+        Params={"Bucket": bucket, "Key": object_key, "ContentType": content_type},
+        ExpiresIn=expires_in,
+    )
 ```
 
 ### B. Upload Direto pelo Frontend (`useContractUpload.ts`)
 O hook do cliente executa o ciclo de vida completo: obtém a URL assinada, envia o arquivo via `PUT` diretamente para a nuvem e, em seguida, dispara a criação atômica dos registros de banco de dados:
 
 ```typescript
---8<-- "frontend/src/features/logistics/hooks/useContractUpload.ts:42:61"
+// 1. Solicita URL pré-assinada à API
+const uploadUrlRes = await getUploadUrl({
+  data: { filename: selectedFile.name, wedding_id: weddingUuid },
+});
+
+// 2. Upload direto via PUT para o Cloudflare R2
+const uploadResponse = await fetch(uploadUrlRes.data.upload_url, {
+  method: "PUT",
+  body: selectedFile,
+  headers: { "Content-Type": selectedFile.type || "application/octet-stream" },
+});
+
+if (!uploadResponse.ok) {
+  throw new Error(`Erro no envio do arquivo: ${uploadResponse.statusText}`);
+}
 ```
 
 ---

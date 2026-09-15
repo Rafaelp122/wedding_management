@@ -33,6 +33,12 @@ Esta diretriz estabelece as regras de autoria, estruturação, vinculação e ma
 - Pastas que agrupam múltiplas notas atômicas (ex: `docs/reference/models/`, `docs/reference/testing/`, `docs/architecture/business-rules/`) devem conter um arquivo `index.md` atuando como **MOC (Map of Content)**.
 - O MOC fornece uma introdução sucinta e uma lista organizada de links para todas as notas atômicas daquela categoria.
 
+### 2.4 Desacoplamento de Código e Proibição de Snippets Numéricos
+- **Proibição Estrita de Faixas Numéricas (`:start:end`):** É terminantemente proibido o uso de transclusões baseadas em números de linha (ex.: `--8<-- arquivo.py:10:25`). Alterações cotidianas como novas importações ou formatação deslocam silenciosamente essas faixas, provocando *code-drift* e exibindo trechos quebrados na documentação.
+- **Padrão Canônico ADR-030 (Links Semânticos + Blocos Estáveis):** Documente o comportamento do sistema apresentando blocos conceituais estáveis acompanhados de links diretos para as classes, métodos ou testes (ex.: `[Supplier.clean()](../../backend/apps/logistics/models/supplier.py)`).
+- **Tags Semânticas Delimitadas (Exceção Controlada):** Caso seja indispensável transcluir um trecho literal de código, utilize exclusivamente marcadores semânticos nomeados no arquivo fonte (`# --8<-- [start:tag_name]` e `# --8<-- [end:tag_name]`), devidamente validados pelo CI (`scripts/validate_docs_snippets.py`).
+- **Rastreabilidade Bidirecional (*Code $\leftrightarrow$ Docs*):** Documentos de regras de negócio (`BR-XXX`) e decisões (`ADR-XXX`) devem apontar para seus respectivos símbolos em código, enquanto as docstrings do Python referenciam a documentação canônica (conforme [ADR-021](../../architecture/adr/021-padrao-comentarios-docstrings.md)).
+
 ---
 
 ## 3. Quadrantes da Metodologia Diátaxis

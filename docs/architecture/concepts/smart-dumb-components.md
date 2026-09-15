@@ -78,18 +78,59 @@ graph TD
 
 ## 4. Implementação no Código-Fonte Real
 
+- **Smart Container:** [`DashboardOperations`](../../../frontend/src/features/dashboard/components/DashboardOperations.tsx)
+- **Dumb Presenter:** [`DashboardOperationsView`](../../../frontend/src/features/dashboard/components/DashboardOperationsView.tsx)
+- **Hook Agregador de Estado:** [`useDashboardOperations`](../../../frontend/src/features/dashboard/hooks/useDashboardOperations.ts)
+
 ### A. Smart Container (`DashboardOperations.tsx`)
 O container consome o hook agregador de operações e conecta as ações de navegação do `react-router-dom`:
 
 ```tsx
---8<-- "frontend/src/features/dashboard/components/DashboardOperations.tsx:1:36"
+export function DashboardOperations({ weddings }: DashboardOperationsProps) {
+  const operations = useDashboardOperations({ weddings });
+  const navigate = useNavigate();
+
+  const handleNavigateToWedding = (weddingUuid: string, tab?: string) => {
+    navigate(`/weddings/${weddingUuid}${tab ? `?tab=${tab}` : ""}`);
+  };
+
+  return (
+    <DashboardOperationsView
+      activeTab={operations.activeTab}
+      onTabChange={operations.setActiveTab}
+      isLoadingTasks={operations.isLoadingTasks}
+      isLoadingContracts={operations.isLoadingContracts}
+      isUpdatingTask={operations.isUpdatingTask}
+      displayWeddings={operations.displayWeddings}
+      urgentTasks={operations.urgentTasks}
+      pendingContracts={operations.pendingContracts}
+      weddingMap={operations.weddingMap}
+      handleTaskToggle={operations.handleTaskToggle}
+      todayStr={operations.todayStr}
+      onNavigateToWedding={handleNavigateToWedding}
+    />
+  );
+}
 ```
 
 ### B. Dumb Presenter Interface (`DashboardOperationsView.tsx`)
 A View declara estritamente o contrato de dados que necessita para renderizar a interface, sem conhecer a origem dos dados:
 
 ```tsx
---8<-- "frontend/src/features/dashboard/components/DashboardOperationsView.tsx:22:50"
+interface DashboardOperationsViewProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  isLoadingTasks: boolean;
+  isLoadingContracts: boolean;
+  isUpdatingTask: boolean;
+  displayWeddings: WeddingOut[];
+  urgentTasks: TaskOut[];
+  pendingContracts: ContractOut[];
+  weddingMap: Record<string, string>;
+  handleTaskToggle: (taskUuid: string, isCurrentlyCompleted: boolean) => void;
+  todayStr: string;
+  onNavigateToWedding: (weddingUuid: string, tab?: string) => void;
+}
 ```
 
 ---

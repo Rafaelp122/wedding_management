@@ -67,6 +67,15 @@ Se o texto precisar mencionar outro conceito (ex: como o CI valida a doc), **NÃ
 A validação de links da documentação é explicada em [documentation-standards](../../reference/architecture-standards/documentation-standards.md).
 ```
 
+### Desacoplamento de Código e Rastreabilidade Bidirecional:
+- **Evite Snippets Numéricos:** Nunca use transclusões baseadas em linhas (`--8<-- caminho:inicio:fim`). O CI rejeitará snippets com faixas numéricas de linhas.
+- **Prefira Links Canônicos (ADR-030):** Explique o comportamento ou regra conceitualmente e forneça links navegáveis para os símbolos em código:
+  ```markdown
+  - Regra implementada em: [`ContractService.create_contract()`](../../backend/apps/logistics/services/contract_service.py)
+  - Validação de integridade: [`Contract.clean()`](../../backend/apps/logistics/models/contract.py)
+  ```
+- **Rastreabilidade Bidirecional (*Code $\leftrightarrow$ Docs*):** Ao criar regras atômicas de negócio (`BR-XXX`) ou decisões arquiteturais (`ADR-XXX`), registre a referência cruzada na docstring do método no código (`Regra de Negócio: BR-XXX (docs/...)`) para fechar o ciclo de auditoria contínua.
+
 ---
 
 ## Passo 4: Atualizar os Índices (MOC e `docs/index.md`)
