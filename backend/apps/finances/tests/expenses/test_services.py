@@ -816,7 +816,7 @@ class TestExpenseServiceValidateContractWedding:
 
         result = ExpenseService._validate_contract_wedding(
             category=category,  # type: ignore[arg-type]
-            contract=contract,  # type: ignore[arg-type]
+            contract=contract,
         )
         assert result is None
 
@@ -828,7 +828,7 @@ class TestExpenseServiceValidateContractWedding:
         with pytest.raises(DomainIntegrityError) as exc:
             ExpenseService._validate_contract_wedding(
                 category=category,  # type: ignore[arg-type]
-                contract=contract,  # type: ignore[arg-type]
+                contract=contract,
             )
 
         assert exc.value.code == "expense_contract_wedding_mismatch"

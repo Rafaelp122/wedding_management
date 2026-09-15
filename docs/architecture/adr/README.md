@@ -38,6 +38,7 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-022: Static Routes Optimization](022-static-routes-for-performance.md)** 🟢 — Priorização de rotas estáticas sobre dinâmicas para evitar colisão e otimizar latência.
 - **[ADR-023: Desacoplamento dos Módulos Core e Extração do Módulo Reporting](023-desacoplamento-modulos-scheduler-finances-weddings.md)** 🟢 — Desacoplamento modular e extração do app dedicado de relatórios.
 - **[ADR-030: Rich Domain Model e Service Layer como Casos de Uso](030-rich-domain-model-service-layer.md)** 🟢 — Rich Active Record no Django, 3 Níveis Formais de Validação e Service Layer como orquestradora.
+- **[ADR-031: Comunicação Entre Módulos com DDD Pragmático](031-inter-module-communication.md)** 🟢 — Comunicação entre Bounded Contexts via fachadas públicas (interfaces.py), tarefas assíncronas coordenadas, CQRS Reporting e barreira arquitetural com Import Linter.
 
 ### Frontend, UX & Padrões de Qualidade
 - **[ADR-012: Orval Contract-Driven API](012-orval-contract-driven-frontend.md)** 🟢 — Geração de hooks React Query e tipos TypeScript a partir do OpenAPI schema do Django Ninja.

@@ -1,7 +1,7 @@
 # Arquitetura & System Design da Plataforma
 
 > **Categoria:** Arquitetura (System Design & Decision Records)
-> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [Índice de ADRs (001–030)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
+> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
 
 <p class="mdx-hero__subtitle" style="font-size: 1.15rem; font-weight: 500; color: var(--md-default-fg-color--light); margin-top: -0.5rem; margin-bottom: 1.5rem;">
 Hub executivo de engenharia, topologia de microsserviços e padrões de projeto do Wedding Management System.
@@ -19,7 +19,7 @@ Hub executivo de engenharia, topologia de microsserviços e padrões de projeto 
 [:material-sitemap: System Design Unificado](#system-design-unificado){ .md-button .md-button--primary }
 [:material-shield-star: Pilares de Engenharia](#pilares-de-engenharia-padroes-arquiteturais){ .md-button }
 [:material-view-grid: Bounded Contexts (10 Domínios)](#bounded-contexts-10-dominios-da-plataforma){ .md-button }
-[:material-file-document-multiple: Catálogo de ADRs](#catalogo-de-decisoes-arquiteturais-adrs-001030){ .md-button }
+[:material-file-document-multiple: Catálogo de ADRs](#catalogo-de-decisoes-arquiteturais-adrs-001031){ .md-button }
 [:material-palette: Design System](#design-system-ergonomia-visual){ .md-button }
 
 ---
@@ -221,8 +221,8 @@ Para uma navegação aprofundada em cada bounded context, consulte o [MOC Geral 
 
 ---
 
-<a id="catalogo-de-decisoes-arquiteturais-adrs-001030"></a>
-## Catálogo de Decisões Arquiteturais (ADRs 001–030)
+<a id="catalogo-de-decisoes-arquiteturais-adrs-001031"></a>
+## Catálogo de Decisões Arquiteturais (ADRs 001–031)
 
 Todas as decisões arquiteturais fundamentais, alternativas descartadas e trade-offs técnicos são registrados formalmente em **Architecture Decision Records (ADRs)** com numeração sequencial imutável.
 
@@ -260,6 +260,7 @@ Todas as decisões arquiteturais fundamentais, alternativas descartadas e trade-
     | **[ADR-022](adr/022-static-routes-for-performance.md)** | **Rotas Estáticas para Performance** | Priorização e ordenação estrita de rotas estáticas antes de rotas dinâmicas com parâmetros na API. | `Aceita` |
     | **[ADR-023](adr/023-desacoplamento-modulos-scheduler-finances-weddings.md)** | **Desacoplamento de Domínios Core & Reporting** | Eliminação de dependências circulares entre Scheduler, Finances e Weddings e extração do app Reporting. | `Aceita` |
     | **[ADR-030](adr/030-rich-domain-model-service-layer.md)** | **Rich Domain Model & Use Cases** | Transição para Active Record Rico no Django, validação em 3 níveis (Pydantic/Model/Service) e desacoplamento de documentação. | `Aceita` |
+    | **[ADR-031](adr/031-inter-module-communication.md)** | **Comunicação Entre Módulos com DDD Pragmático** | Fachadas públicas (interfaces.py), tarefas assíncronas coordenadas, CQRS Reporting e barreira Import Linter. | `Aceita` |
 
 === "Frontend, Qualidade & Processos"
 

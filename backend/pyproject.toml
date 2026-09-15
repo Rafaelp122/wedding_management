@@ -64,6 +64,7 @@ dev = [
     "bandit>=1.9.4,<2.0",
     "types-openpyxl>=3.1.5.20260807",
     "poethepoet>=0.32.0,<1.0",
+    "import-linter>=2.1",
 ]
 docs = [
     "mkdocs-material>=9.5.0",
@@ -89,7 +90,8 @@ shell      = "python manage.py shell"
 seed-db    = "python manage.py seed_db"
 seed-e2e   = "python manage.py seed_e2e"
 openapi    = "python manage.py export_openapi_schema --api config.api.api --output openapi.json --indent 2 --settings=config.settings.development"
-check      = ["lint", "mypy", "test", "openapi"]
+lint-imports = "lint-imports --no-cache"
+check      = ["lint", "mypy", "lint-imports", "test", "openapi"]
 
 # ==============================================================================
 # CODE QUALITY: RUFF CONFIGURATION
@@ -349,4 +351,172 @@ exclude_lines = [
     "def __repr__",
     "if settings.DEBUG",
     "raise NotImplementedError",
+]
+
+# ==============================================================================
+# IMPORT LINTER: BOUNDED CONTEXT ARCHITECTURAL GUARDS
+# ==============================================================================
+[tool.importlinter]
+root_package = "apps"
+
+[[tool.importlinter.contracts]]
+name = "Finances não pode importar models ou services alheios"
+type = "forbidden"
+source_modules = [
+    "apps.finances.services",
+    "apps.finances.managers",
+    "apps.finances.api",
+]
+forbidden_modules = [
+    "apps.scheduler.models",
+    "apps.scheduler.services",
+    "apps.logistics.models",
+    "apps.logistics.services",
+    "apps.notifications.models",
+    "apps.notifications.services",
+]
+ignore_imports = [
+    "apps.finances.services.installment_service -> apps.scheduler.interfaces",
+    "apps.finances.services.expense_service -> apps.logistics.interfaces",
+    "apps.finances.services.installment_service -> apps.notifications.interfaces",
+]
+
+[[tool.importlinter.contracts]]
+name = "Logistics não pode importar models ou services alheios"
+type = "forbidden"
+source_modules = [
+    "apps.logistics.services",
+    "apps.logistics.managers",
+    "apps.logistics.api",
+]
+forbidden_modules = [
+    "apps.scheduler.models",
+    "apps.scheduler.services",
+    "apps.finances.models",
+    "apps.finances.services",
+    "apps.notifications.models",
+    "apps.notifications.services",
+]
+ignore_imports = [
+    "apps.logistics.services.contract_service -> apps.finances.interfaces",
+]
+
+[[tool.importlinter.contracts]]
+name = "Scheduler não pode importar models ou services alheios"
+type = "forbidden"
+source_modules = [
+    "apps.scheduler.services",
+    "apps.scheduler.managers",
+    "apps.scheduler.api",
+]
+forbidden_modules = [
+    "apps.finances.models",
+    "apps.finances.services",
+    "apps.logistics.models",
+    "apps.logistics.services",
+    "apps.notifications.models",
+    "apps.notifications.services",
+    "apps.reporting",
+]
+ignore_imports = [
+    "apps.scheduler.services.tasks -> apps.notifications.interfaces",
+]
+
+[[tool.importlinter.contracts]]
+name = "Weddings não pode importar models ou services alheios"
+type = "forbidden"
+source_modules = [
+    "apps.weddings.services",
+    "apps.weddings.managers",
+    "apps.weddings.api",
+]
+forbidden_modules = [
+    "apps.scheduler.models",
+    "apps.scheduler.services",
+    "apps.finances.models",
+    "apps.finances.services",
+    "apps.logistics.models",
+    "apps.logistics.services",
+    "apps.notifications.models",
+    "apps.notifications.services",
+]
+ignore_imports = [
+    "apps.weddings.services -> apps.scheduler.interfaces",
+    "apps.weddings.api -> apps.reporting.selectors.summaries.wedding",
+]
+
+[[tool.importlinter.contracts]]
+name = "Notifications não pode importar models ou services alheios"
+type = "forbidden"
+source_modules = [
+    "apps.notifications.services",
+    "apps.notifications.managers",
+    "apps.notifications.api",
+    "apps.notifications.selectors",
+]
+forbidden_modules = [
+    "apps.finances.models",
+    "apps.finances.services",
+    "apps.logistics.models",
+    "apps.logistics.services",
+    "apps.scheduler.models",
+    "apps.scheduler.services",
+    "apps.weddings.models",
+    "apps.weddings.services",
+    "apps.reporting",
+]
+ignore_imports = [
+    "apps.notifications.services -> apps.weddings.interfaces",
+]
+
+[[tool.importlinter.contracts]]
+name = "Tenants não pode importar módulos de negócio"
+type = "forbidden"
+source_modules = [
+    "apps.tenants.models",
+    "apps.tenants.managers",
+    "apps.tenants.services",
+    "apps.tenants.selectors",
+]
+forbidden_modules = [
+    "apps.finances",
+    "apps.logistics",
+    "apps.scheduler",
+    "apps.weddings",
+    "apps.notifications",
+    "apps.reporting",
+]
+
+[[tool.importlinter.contracts]]
+name = "Users não pode importar módulos de negócio"
+type = "forbidden"
+source_modules = [
+    "apps.users.models",
+    "apps.users.services",
+    "apps.users.api",
+    "apps.users.selectors",
+]
+forbidden_modules = [
+    "apps.finances",
+    "apps.logistics",
+    "apps.scheduler",
+    "apps.weddings",
+    "apps.notifications",
+    "apps.reporting",
+]
+
+[[tool.importlinter.contracts]]
+name = "Reporting não pode importar services de mutação"
+type = "forbidden"
+source_modules = [
+    "apps.reporting.selectors",
+    "apps.reporting.api",
+    "apps.reporting.services",
+]
+forbidden_modules = [
+    "apps.finances.services",
+    "apps.logistics.services",
+    "apps.scheduler.services",
+    "apps.weddings.services",
+    "apps.notifications.services",
 ]

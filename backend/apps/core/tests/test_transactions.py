@@ -90,7 +90,7 @@ class TestTransactionRollback:
         )
 
         with patch(
-            "apps.finances.services.installment_service._create_payment_events",
+            "apps.finances.services.installment_service.create_payment_events_for_installments",
             side_effect=ValueError("Simulação de falha no serviço de agendamento"),
         ):
             with pytest.raises(ValueError, match="Simulação de falha"):

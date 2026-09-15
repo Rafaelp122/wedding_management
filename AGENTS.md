@@ -8,13 +8,14 @@
 
 ## Universal Guard-Rails (Non-Negotiable)
 
-### Backend (ADR-006, ADR-011, ADR-016, ADR-030)
+### Backend (ADR-006, ADR-011, ADR-016, ADR-030, ADR-031)
 
 - **Rich Domain Model (Rich Active Record)**: Entidades herdam `BaseModel` / `TenantModel` e encapsulam suas invariantes, máquinas de estado (`ALLOWED_TRANSITIONS`) e métodos de ciclo de vida (`complete()`, `cancel()`, `transition_to()`). PROIBIDO modelo anêmico ou mutação procedural de estado dentro de services. O `clean()` do model é o guardião de integridade (`full_clean()` no `save()`).
 - **Validação em 3 Níveis Formais (ADR-030)**:
   - _Nível 1 (Entrada / Sintaxe)_: Pydantic Schemas (`schemas.py`) tratam tipos, strings (`str_strip_whitespace=True`) e limites numéricos (Fail-Fast HTTP 422).
   - _Nível 2 (Invariantes de Domínio)_: Django Models (`models.py`) tratam regras intrínsecas, transições de estado e `clean()`.
   - _Nível 3 (Caso de Uso / Orquestração)_: Services (`services.py`) orquestram `@transaction.atomic`, multi-tenancy (`validate_tenant_ownership`), dependências entre agregados e efeitos colaterais.
+- **Isolamento de Bounded Contexts & Interfaces (ADR-031)**: PROIBIDO importar `models.py`, `services.py` ou `managers.py` de outros domínios diretamente. Toda comunicação síncrona transacional entre módulos passa exclusivamente por `apps.<contexto>.interfaces`. Efeitos secundários utilizam tarefas assíncronas coordenadas (`django.tasks`) enfileiradas pós-commit (`transaction.on_commit`). Consultas analíticas compostas multi-domínio residem exclusivamente em `apps/reporting`. Toda dependência é auditada pelo `import-linter` (`just lint-imports`).
 - **Service Layer & CQRS**: Rotas de mutação (`POST`, `PUT`, `PATCH`, `DELETE`) em `api.py` delegam para `services/`. Rotas `GET` delegam para `selectors/` e `managers.py` (`TenantQuerySet`), retornando querysets lazy e chainable. PROIBIDO métodos de leitura pura em `services.py`.
 - **Multi-Tenancy (ADR-009, ADR-016, ADR-019)**: Todo service/selector aceita `company` e filtra via `Model.objects.for_tenant(company)`. Use `validate_tenant_ownership` em services e `get_object_or_404_for_tenant` ou `*_get_selector` para lookups individuais.
 - **Data Integrity & Typing**: Modelos herdam `BaseModel` (`full_clean()` no `save()`). Tipagem estrita `mypy` obrigatória.

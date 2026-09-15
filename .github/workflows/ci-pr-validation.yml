@@ -75,6 +75,12 @@ jobs:
           uv run ruff format --check .
           uv run mypy . --show-error-codes --no-color-output
 
+      - name: Import Linter Architectural Guard
+        if: needs.detect-changes.outputs.backend == 'true'
+        run: |
+          cd backend
+          uv run poe lint-imports
+
       - name: Frontend Typecheck & Oxlint
         if: needs.detect-changes.outputs.frontend == 'true'
         run: |

@@ -6,7 +6,6 @@ Consultas otimizadas e encapsuladas de leitura para Wedding.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -28,7 +27,7 @@ def wedding_list_selector(
     status: str = "",
 ) -> WeddingQuerySet:
     """
-    Retorna o QuerySet encadeável de casamentos do tenant com métricas embutidas.
+    Retorna o QuerySet encadeável de casamentos do tenant com filtros aplicados.
 
     Args:
         company: O tenant atual para isolamento de dados.
@@ -36,11 +35,10 @@ def wedding_list_selector(
         status: Filtro por status do casamento (ex: IN_PROGRESS).
 
     Returns:
-        WeddingQuerySet com casamentos filtrados e anotados com total_budget,
-        overdue_installments e incomplete_tasks.
+        WeddingQuerySet com casamentos filtrados.
     """
     qs = Wedding.objects.for_tenant(company)
-    return qs.select_related("company").search(search).by_status(status).with_metrics()
+    return qs.select_related("company").search(search).by_status(status)
 
 
 def wedding_get_selector(
@@ -112,30 +110,3 @@ def wedding_count_by_month_selector(
         .order_by("date__month")
     )
     return [{"month": item["date__month"], "count": item["count"]} for item in qs]
-
-
-def critical_weddings_selector(
-    *,
-    company: Company,
-    today: date,
-    limit: int = 5,
-) -> WeddingQuerySet:
-    """
-    Retorna os casamentos em andamento nos próximos 90 dias com métricas críticas.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        today: Data de referência para cálculo dos prazos e métricas.
-        limit: Quantidade máxima de registros retornados (padrão: 5).
-
-    Returns:
-        WeddingQuerySet com casamentos ordenados por data e anotados com
-        métricas críticas.
-    """
-    qs = Wedding.objects.for_tenant(company)
-    return (
-        qs.by_status(Wedding.StatusChoices.IN_PROGRESS)
-        .upcoming(today=today, days=90)
-        .with_critical_metrics(today=today)
-        .order_by("date")[:limit]
-    )

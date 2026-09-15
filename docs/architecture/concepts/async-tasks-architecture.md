@@ -14,7 +14,7 @@ tests:
 # Arquitetura de Tarefas Assíncronas, Crons & OIDC (`django.tasks`)
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [ADR-017: Infraestrutura de Tarefas Assíncronas](../adr/017-async-task-infrastructure.md) · [ADR-005: Autenticação OIDC no Scheduler](../adr/005-oidc-scheduler.md) · [Visão Geral do Sistema](system-overview.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [Guia de Tarefas em Background](../../guides/backend/create-background-tasks.md) · [Guia de Crons](../../guides/backend/register-cron-tasks.md)
+> **Relacionados:** [ADR-017: Infraestrutura de Tarefas Assíncronas](../adr/017-async-task-infrastructure.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md) · [ADR-005: Autenticação OIDC no Scheduler](../adr/005-oidc-scheduler.md) · [Visão Geral do Sistema](system-overview.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [Guia de Tarefas em Background](../../guides/backend/create-background-tasks.md) · [Guia de Crons](../../guides/backend/register-cron-tasks.md)
 
 ---
 
@@ -140,3 +140,23 @@ O gatilho periódico é provisionado de forma imutável no arquivo `terraform/pr
 - **Frequência:** `0 2 * * *` (Todos os dias às 02:00 da manhã)
 - **Timezone:** `America/Sao_Paulo`
 - **Autenticação:** Configurado com `oidc_token` vinculado à `google_service_account.runtime_sa.email`.
+
+---
+
+## 6. Tarefas Coordenadoras Pós-Commit (`transaction.on_commit`)
+
+Conforme detalhado na [ADR-031](../adr/031-inter-module-communication.md), quando um evento de ciclo de vida principal exige múltiplos efeitos secundários em outros Bounded Contexts (como a desativação de eventos de agenda e o disparo de notificações transacionais no cancelamento de um casamento), adota-se o padrão de **tarefa coordenadora assíncrona**.
+
+O enfileiramento é vinculado estritamente ao callback de confirmação transacional do Django:
+
+```python
+# Disparo atômico pós-commit dentro do service de domínio:
+transaction.on_commit(
+    lambda: on_wedding_canceled_task.enqueue(company.id, str(instance.uuid))
+)
+```
+
+Essa abordagem garante que:
+1. **A transação web permanece ultrarrápida**, liberando o usuário e as conexões do banco Neon sem reter locks.
+2. **Zero efeitos colaterais órfãos**, pois se a transação do banco sofrer rollback, a tarefa sequer é enviada para a fila.
+3. **Resiliência a falhas**, pois erros de rede ou processamento secundário podem ser reexecutados pelo worker sem impactar o estado persistido do agregado raiz.
