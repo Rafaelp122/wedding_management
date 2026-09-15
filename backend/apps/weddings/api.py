@@ -6,6 +6,7 @@ from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
+from apps.reporting.selectors.summaries.wedding import WeddingSummarySelector
 from apps.users.types import AuthRequest
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import (
@@ -18,7 +19,6 @@ from apps.weddings.schemas import (
 from apps.weddings.selectors import (
     wedding_count_by_month_selector,
     wedding_get_selector,
-    wedding_list_selector,
     wedding_lookup_selector,
 )
 from apps.weddings.services import WeddingService
@@ -42,7 +42,9 @@ def list_weddings(
     status: str = "",
 ) -> QuerySet[Wedding]:
     user = request.user
-    return wedding_list_selector(company=user.company, search=search, status=status)
+    return WeddingSummarySelector.list_weddings_with_metrics(
+        company=user.company, search=search, status=status
+    )
 
 
 @router.get(

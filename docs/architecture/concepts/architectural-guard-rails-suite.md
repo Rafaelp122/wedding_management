@@ -14,7 +14,7 @@ tests:
 # Suíte de Guard-Rails Arquiteturais e Integridade Estática
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [Índice de Guard-Rails](../../reference/architecture-standards/guard-rails/index.md) · [Tenant Isolation Guard](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md) · [Atomic Service Audit Guard](../../reference/architecture-standards/guard-rails/atomic-service-audit-guard.md) · [Security Permissions Guard](../../reference/architecture-standards/guard-rails/security-permissions-guard.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Visão Geral do Sistema](system-overview.md)
+> **Relacionados:** [Índice de Guard-Rails](../../reference/architecture-standards/guard-rails/index.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md) · [Tenant Isolation Guard](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md) · [Atomic Service Audit Guard](../../reference/architecture-standards/guard-rails/atomic-service-audit-guard.md) · [Security Permissions Guard](../../reference/architecture-standards/guard-rails/security-permissions-guard.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Visão Geral do Sistema](system-overview.md)
 
 ---
 
@@ -105,10 +105,15 @@ def _has_atomic_decorator(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> 
 ### D. Blindagem Contra Vazamento de Dados Sensíveis (`test_sensitive_data_leak.py`)
 - Inspeciona os Schemas de saída do Django Ninja para assegurar que campos como `password`, `token`, `secret_key` ou `hash` nunca sejam serializados para o cliente.
 
+### E. Isolamento de Bounded Contexts com Import Linter ([ADR-031](../adr/031-inter-module-communication.md))
+- Audita o isolamento de módulos (`apps.finances`, `apps.logistics`, `apps.scheduler`, `apps.weddings`), impedindo importações diretas de `models.py` ou `services.py` alheios.
+- Força que toda comunicação síncrona transacional ocorra via fachadas explícitas (`apps.<contexto>.interfaces`).
+- Executado via `just lint-imports`, `poe lint-imports` e verificado como quality gate obrigatório no GitHub Actions (`Import Linter Architectural Guard`).
+
 ---
 
 ## 4. Execução e Integração Contínua (CI/CD)
 
 Os guard-rails arquiteturais rodam em dois momentos obrigatórios:
-1. **Localmente:** `pytest backend/apps/core/tests/` ou como parte de `just check-ci` (ou `just test` / `uv run poe test`).
+1. **Localmente:** `pytest backend/apps/core/tests/`, `just lint-imports` ou como parte do macro `poe check`.
 2. **GitHub Actions:** No workflow `.github/workflows/ci-pr-validation.yml` em todo Pull Request aberto para `develop` ou `main`.

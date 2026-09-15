@@ -22,8 +22,7 @@ from apps.core.services.storage import (
 )
 from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
-from apps.finances.schemas import ExpenseIn
-from apps.finances.services.expense_service import ExpenseService
+from apps.finances.interfaces import ExpenseIn, create_expense_from_contract
 from apps.logistics.models import Contract, Supplier
 from apps.logistics.schemas import (
     ContractFullCreateIn,
@@ -320,9 +319,10 @@ class ContractService:
                 )
 
         if expense_data:
-            expense = ExpenseService.create(
+            expense = create_expense_from_contract(
                 company=company,
-                payload=expense_data.model_copy(update={"contract": contract.uuid}),
+                payload=expense_data,
+                contract_uuid=contract.uuid,
             )
             # Otimização: Popula o cache reverso OneToOne para serialização imediata.
             contract.expense = expense

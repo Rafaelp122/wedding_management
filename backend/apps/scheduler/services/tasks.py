@@ -1,9 +1,12 @@
 import logging
+from datetime import date, timedelta
 
 from django.db import transaction
+from django.utils import timezone
 
 from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
+from apps.notifications.interfaces import send_notification_async
 from apps.scheduler.models import Task
 from apps.scheduler.schemas import TaskIn, TaskPatchIn
 from apps.tenants.models import Company
@@ -190,3 +193,96 @@ class TaskService:
         logger.warning(
             f"Tarefa uuid={instance.uuid} DESTRUÍDO por company_id={company.id}"
         )
+
+    @staticmethod
+    def notify_due_tasks(
+        company: Company | None = None,
+        days_threshold: int = 3,
+        today: date | None = None,
+    ) -> int:
+        """Notifica usuários ativos sobre tarefas atrasadas ou próximas do prazo.
+
+        Busca tarefas não concluídas com data de vencimento definida e enfileira
+        notificações para os usuários ativos da empresa proprietária. Tarefas
+        já vencidas geram notificações de checklist atrasado (CHECKLIST_ITEM_OVERDUE),
+        enquanto tarefas com prazo dentro da janela de antecedência geram alertas
+        de prazo próximo (TASK_DEADLINE).
+
+        Args:
+            company: Empresa (tenant) opcional para filtrar tarefas.
+            days_threshold: Quantidade de dias futuros para alertar sobre prazos
+                próximos (padrão: 3).
+            today: Data base de referência. Se omitida, utiliza a data corrente
+                da aplicação via timezone.localdate().
+
+        Returns:
+            int: Quantidade de tarefas que geraram notificações.
+        """
+        if today is None:
+            today = timezone.localdate()
+
+        tasks = Task.objects.filter(is_completed=False, due_date__isnull=False)
+        if company is not None:
+            tasks = tasks.filter(company=company)
+
+        tasks = tasks.select_related("company", "wedding").prefetch_related(
+            "company__users"
+        )
+
+        threshold_date = today + timedelta(days=days_threshold)
+        notified_tasks_count = 0
+
+        for task in tasks:
+            if task.due_date is None:
+                continue
+
+            if task.due_date < today:
+                title = "Item de Checklist Vencido"
+                notification_type = "CHECKLIST_ITEM_OVERDUE"
+                message = (
+                    f"A tarefa '{task.title}' está atrasada "
+                    f"(vencimento em {task.due_date.strftime('%d/%m/%Y')})."
+                )
+            elif today <= task.due_date <= threshold_date:
+                title = "Prazo de Tarefa Próximo"
+                notification_type = "TASK_DEADLINE"
+                message = (
+                    f"A tarefa '{task.title}' vence em "
+                    f"{task.due_date.strftime('%d/%m/%Y')}."
+                )
+            else:
+                continue
+
+            active_users = [u for u in task.company.users.all() if u.is_active]
+            if not active_users:
+                continue
+
+            wedding_id = task.wedding.uuid if task.wedding else None
+            wedding_name = (
+                f"Casamento de {task.wedding.bride_name} e {task.wedding.groom_name}"
+                if task.wedding
+                else ""
+            )
+            link = (
+                f"/weddings/{task.wedding.uuid}?tab=planning&subtab=checklist"
+                if task.wedding
+                else ""
+            )
+
+            for user in active_users:
+                send_notification_async(
+                    company_id=task.company.id,
+                    user_id=user.id,
+                    title=title,
+                    message=message,
+                    notification_type=notification_type,
+                    link=link,
+                    target_type="task",
+                    target_id=task.uuid,
+                    wedding_id=wedding_id,
+                    wedding_name=wedding_name,
+                )
+
+            notified_tasks_count += 1
+
+        return notified_tasks_count

@@ -52,6 +52,7 @@ class NotificationService:
         target_type: str = "",
         target_id: UUID | str | None = None,
         wedding_id: UUID | str | None = None,
+        wedding_name: str | None = None,
     ) -> Notification:
         """Cria e persiste uma nova notificação no banco de dados.
 
@@ -65,6 +66,7 @@ class NotificationService:
             target_type: Tipo da entidade ERP de destino.
             target_id: UUID do recurso de destino.
             wedding_id: UUID do casamento associado.
+            wedding_name: Nome formatado do casamento associado.
 
         Returns:
             Notification: A notificação criada.
@@ -85,6 +87,11 @@ class NotificationService:
         if user.company_id != company.id:
             raise BusinessRuleViolation("Usuário não pertence à empresa informada.")
 
+        if wedding_id and wedding_name is None:
+            from apps.weddings.interfaces import get_wedding_display_name
+
+            wedding_name = get_wedding_display_name(company, wedding_id)
+
         notification = Notification(
             company=company,
             user=user,
@@ -95,6 +102,7 @@ class NotificationService:
             target_type=target_type,
             target_id=target_id,
             wedding_id=wedding_id,
+            wedding_name=wedding_name,
             is_read=False,
         )
         notification.save()
@@ -117,6 +125,7 @@ class NotificationService:
         target_type: str = "",
         target_id: UUID | str | None = None,
         wedding_id: UUID | str | None = None,
+        wedding_name: str | None = None,
     ) -> Notification:
         """
         Atalho de conveniência para criação e envio de notificação.
@@ -131,6 +140,7 @@ class NotificationService:
             target_type: Tipo do recurso vinculado.
             target_id: Identificador do recurso vinculado.
             wedding_id: Identificador do casamento relacionado.
+            wedding_name: Nome do casamento relacionado.
 
         Returns:
             A notificação criada e persistida.
@@ -145,6 +155,7 @@ class NotificationService:
             target_type=target_type,
             target_id=target_id,
             wedding_id=wedding_id,
+            wedding_name=wedding_name,
         )
 
     @staticmethod
@@ -158,6 +169,7 @@ class NotificationService:
         target_type: str = "",
         target_id: UUID | str | None = None,
         wedding_id: UUID | str | None = None,
+        wedding_name: str | None = None,
     ) -> None:
         """Enfileira a criação assíncrona de uma notificação in-app via django.tasks.
 
@@ -171,6 +183,7 @@ class NotificationService:
             target_type: Tipo da entidade ERP de destino.
             target_id: UUID do recurso de destino.
             wedding_id: UUID do casamento associado.
+            wedding_name: Nome do casamento associado.
         """
         company_id: int | str = (
             company.id
@@ -193,6 +206,7 @@ class NotificationService:
             target_type=target_type,
             target_id=str(target_id) if target_id else None,
             wedding_id=str(wedding_id) if wedding_id else None,
+            wedding_name=wedding_name,
         )
 
     @staticmethod

@@ -10,6 +10,8 @@ from apps.logistics.models import Contract
 
 
 if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
     from apps.tenants.models import Company
     from apps.weddings.models import Wedding
 
@@ -61,3 +63,40 @@ class ContractSummarySelector:
         total = int(contracts.exclude(status=Contract.StatusChoices.CANCELED).count())
         signed = int(contracts.filter(status=Contract.StatusChoices.SIGNED).count())
         return signed, total
+
+    @staticmethod
+    def annotate_financial_totals(
+        qs: QuerySet[Contract],
+    ) -> QuerySet[Contract]:
+        """
+        Anota contratos com informações financeiras agregadas (expense_id e total_paid)
+        evitando queries N+1.
+        """
+        from decimal import Decimal
+
+        from django.db.models import OuterRef, Subquery, Sum, Value
+        from django.db.models.functions import Coalesce
+
+        from apps.finances.models import Expense, Installment
+
+        return qs.annotate(
+            expense_id=Subquery(
+                Expense.objects.filter(
+                    company=OuterRef("company"),
+                    contract=OuterRef("pk"),
+                ).values("uuid")[:1]
+            ),
+            total_paid=Coalesce(
+                Subquery(
+                    Installment.objects.filter(
+                        company=OuterRef("company"),
+                        expense__contract=OuterRef("pk"),
+                        status=Installment.StatusChoices.PAID,
+                    )
+                    .values("expense__contract")
+                    .annotate(s=Sum("amount"))
+                    .values("s")[:1]
+                ),
+                Value(Decimal("0.00")),
+            ),
+        )

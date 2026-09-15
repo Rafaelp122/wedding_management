@@ -247,3 +247,49 @@ class TestDashboardSelectors:
             "Visão geral do casamento" in call[0][0]
             for call in mock_logger.info.call_args_list
         )
+
+    def test_contract_summary_selector_annotate_financial_totals(
+        self, user: Any
+    ) -> None:
+        """Valida anotação de expense_id e total_paid via ContractSummarySelector."""
+        from decimal import Decimal
+
+        from apps.logistics.models import Contract
+        from apps.reporting.selectors.summaries import ContractSummarySelector
+
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        contract = cast(
+            Contract,
+            ContractFactory(
+                wedding=wedding,
+                company=user.company,
+                supplier=supplier,
+                total_amount=Decimal("1000.00"),
+            ),
+        )
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = cast(
+            Any,
+            ExpenseFactory(
+                wedding=wedding,
+                category=category,
+                contract=contract,
+                company=user.company,
+            ),
+        )
+        InstallmentFactory(
+            expense=expense,
+            amount=Decimal("400.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+            company=user.company,
+        )
+
+        qs = Contract.objects.for_tenant(user.company).filter(pk=contract.pk)
+        annotated_qs = ContractSummarySelector.annotate_financial_totals(qs)
+        item = cast(Any, annotated_qs.first())
+
+        assert item is not None
+        assert item.expense_id == expense.uuid
+        assert item.total_paid == Decimal("400.00")

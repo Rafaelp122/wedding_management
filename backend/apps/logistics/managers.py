@@ -58,37 +58,16 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
 
     def with_totals(self) -> ContractQuerySet:
         """
-        Anota o contrato com informações do fornecedor, despesa vinculada,
-        total pago e contagem de aditivos, evitando queries N+1.
+        Anota o contrato com informações do fornecedor e contagem de aditivos,
+        evitando queries N+1.
 
         Returns:
             ContractQuerySet com todas as anotações agregadas.
         """
-        from apps.finances.models import Expense, Installment
-
-        return self.select_related("supplier", "wedding", "parent").annotate(
+        return self.select_related("supplier", "wedding", "parent", "expense").annotate(
             supplier_name=F("supplier__name"),
             supplier_phone=F("supplier__phone"),
             supplier_email=F("supplier__email"),
-            expense_id=Subquery(
-                Expense.objects.filter(
-                    company=OuterRef("company"),
-                    contract=OuterRef("pk"),
-                ).values("uuid")[:1]
-            ),
-            total_paid=Coalesce(
-                Subquery(
-                    Installment.objects.filter(
-                        company=OuterRef("company"),
-                        expense__contract=OuterRef("pk"),
-                        status=Installment.StatusChoices.PAID,
-                    )
-                    .values("expense__contract")
-                    .annotate(s=Sum("amount"))
-                    .values("s")[:1]
-                ),
-                Value(Decimal("0.00")),
-            ),
             addendums_count=Coalesce(
                 Subquery(
                     self.model.objects.filter(

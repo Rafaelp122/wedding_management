@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, time, timedelta
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
@@ -13,7 +12,6 @@ from apps.core.exceptions import (
     DomainIntegrityError,
 )
 from apps.core.tenant import validate_tenant_ownership
-from apps.scheduler.schemas import EventIn
 from apps.tenants.models import Company
 
 from .models import Wedding
@@ -227,6 +225,12 @@ class WeddingService:
                 code="wedding_validation_error",
             ) from e
 
+        from apps.weddings.tasks import on_wedding_canceled_task
+
+        transaction.on_commit(
+            lambda: on_wedding_canceled_task.enqueue(company.id, str(instance.uuid))
+        )
+
         logger.info(f"Casamento uuid={instance.uuid} cancelado com sucesso.")
         return instance
 
@@ -283,39 +287,17 @@ def _apply_template_events(
 ) -> None:
     """
     Aplica um template de cronograma criando eventos para o casamento.
-
-    Calcula a data de início de cada evento usando a quantidade de dias
-    especificada como offset relativo à data do casamento.
+    Delega para a fachada pública de interfaces do módulo scheduler.
 
     Args:
         company: O tenant atual para isolamento de dados.
         wedding: O casamento a receber os eventos do template.
         template_name: O identificador/nome do template a ser aplicado.
     """
-    from django.utils import timezone
+    from apps.scheduler.interfaces import apply_wedding_schedule_template
 
-    from apps.scheduler.services import EventService
-    from apps.scheduler.services.templates import get_template_events
-
-    template_events = get_template_events(template_name)
-
-    for event_data in template_events:
-        offset_days = int(event_data["offset_days"])
-        naive_start = datetime.combine(
-            wedding.date - timedelta(days=offset_days),
-            time(hour=9, minute=0),
-        )
-        event_start = timezone.make_aware(naive_start)
-
-        EventService.create(
-            company,
-            EventIn(
-                wedding=wedding.uuid,
-                title=event_data["title"],
-                event_type=event_data["event_type"],
-                start_time=event_start,
-                location="",
-                description="",
-            ),
-            _allow_historical_start=True,
-        )
+    apply_wedding_schedule_template(
+        company=company,
+        wedding=wedding,
+        template_name=template_name,
+    )

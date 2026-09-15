@@ -6,9 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from django.db.models import OuterRef, Subquery, Value
-from django.db.models.functions import Concat
-
 from apps.tenants.managers import TenantQuerySet
 
 
@@ -37,18 +34,8 @@ class NotificationQuerySet(TenantQuerySet["Notification"]):
         return self.order_by("-created_at")
 
     def with_wedding_name(self) -> NotificationQuerySet:
-        """Anota cada notificação com o nome formatado do casamento associado."""
-        from apps.weddings.models import Wedding
+        """Mantido para compatibilidade fluente.
 
-        return self.annotate(
-            wedding_name=Subquery(
-                Wedding.objects.filter(uuid=OuterRef("wedding_id")).values(
-                    name=Concat(
-                        Value("Casamento de "),
-                        "bride_name",
-                        Value(" e "),
-                        "groom_name",
-                    )
-                )[:1]
-            )
-        )
+        O campo wedding_name agora é persistido nativamente na entidade Notification.
+        """
+        return self

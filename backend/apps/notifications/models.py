@@ -62,6 +62,9 @@ class Notification(BaseModel):
     wedding_id = models.UUIDField(
         _("ID do Casamento"), null=True, blank=True, db_index=True
     )
+    wedding_name = models.CharField(  # noqa: DJ001
+        _("Nome do Casamento"), max_length=255, null=True, blank=True, default=None
+    )
     is_read = models.BooleanField(_("Lida"), default=False, db_index=True)
     link = models.CharField(_("Link"), max_length=500, blank=True, default="")
     read_at = models.DateTimeField(_("Lida em"), null=True, blank=True)
