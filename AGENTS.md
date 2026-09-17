@@ -8,23 +8,40 @@
 
 ## Universal Guard-Rails (Non-Negotiable)
 
-### Backend
-- **Service Layer & CQRS**: Route handlers in `api.py` MUST delegate `GET` queries to `selectors/` and mutations (`POST`, `PUT`, `PATCH`, `DELETE`) to `services/`. No business logic or raw queries in controllers.
-- **Query Selectors & Custom QuerySets**: Read queries and annotations reside in `selectors/` and `managers.py` (`TenantQuerySet`), returning chainable lazy querysets. FORBIDDEN pure read methods in `services/`.
-- **Multi-Tenancy**: Every service/selector accepts `company` and queries via `Model.objects.for_tenant(company)` (ADR-009, ADR-016). Use `get_object_or_404_for_tenant` or `*_get_selector` for single lookups.
-- **Data Integrity**: Models inherit `BaseModel` (`full_clean()` on `save()`). `mypy` strict static typing enforced.
-- **Router Endpoints**: `operation_id` required on all router endpoints.
+### Backend (ADR-006, ADR-011, ADR-016, ADR-030, ADR-031)
 
-### Frontend
-- **API Access**: FORBIDDEN to use `fetch` or `axios` directly. Use ONLY generated Orval hooks from `@/api/generated/`.
-- **UI & Components**: Follow [DESIGN.md](DESIGN.md). Compose shadcn/ui primitives with Tailwind in `src/features/<name>/components/`. NEVER modify `src/components/ui/` files directly.
-- **Forms & Icons**: `react-hook-form` + `zod`. `lucide-react` ONLY.
+- **Rich Domain Model (Rich Active Record)**: Entidades herdam `BaseModel` / `TenantModel` e encapsulam suas invariantes, máquinas de estado (`ALLOWED_TRANSITIONS`) e métodos de ciclo de vida (`complete()`, `cancel()`, `transition_to()`). PROIBIDO modelo anêmico ou mutação procedural de estado dentro de services. O `clean()` do model é o guardião de integridade (`full_clean()` no `save()`).
+- **Validação em 3 Níveis Formais (ADR-030)**:
+  - _Nível 1 (Entrada / Sintaxe)_: Pydantic Schemas (`schemas.py`) tratam tipos, strings (`str_strip_whitespace=True`) e limites numéricos (Fail-Fast HTTP 422).
+  - _Nível 2 (Invariantes de Domínio)_: Django Models (`models.py`) tratam regras intrínsecas, transições de estado e `clean()`.
+  - _Nível 3 (Caso de Uso / Orquestração)_: Services (`services.py`) orquestram `@transaction.atomic`, multi-tenancy (`validate_tenant_ownership`), dependências entre agregados e efeitos colaterais.
+- **Isolamento de Bounded Contexts & Interfaces (ADR-031)**: PROIBIDO importar `models.py`, `services.py` ou `managers.py` de outros domínios diretamente. Toda comunicação síncrona transacional entre módulos passa exclusivamente por `apps.<contexto>.interfaces`. Efeitos secundários utilizam tarefas assíncronas coordenadas (`django.tasks`) enfileiradas pós-commit (`transaction.on_commit`). Consultas analíticas compostas multi-domínio residem exclusivamente em `apps/reporting`. Toda dependência é auditada pelo `import-linter` (`just lint-imports`).
+- **Service Layer & CQRS**: Rotas de mutação (`POST`, `PUT`, `PATCH`, `DELETE`) em `api.py` delegam para `services/`. Rotas `GET` delegam para `selectors/` e `managers.py` (`TenantQuerySet`), retornando querysets lazy e chainable. PROIBIDO métodos de leitura pura em `services.py`.
+- **Multi-Tenancy (ADR-009, ADR-016, ADR-019)**: Todo service/selector aceita `company` e filtra via `Model.objects.for_tenant(company)`. Use `validate_tenant_ownership` em services e `get_object_or_404_for_tenant` ou `*_get_selector` para lookups individuais.
+- **Data Integrity & Typing**: Modelos herdam `BaseModel` (`full_clean()` no `save()`). Tipagem estrita `mypy` obrigatória.
+- **Router Endpoints**: `operation_id` obrigatório em todos os endpoints de router.
+
+### Frontend (ADR-012, ADR-024)
+
+- **Padrão Smart/Dumb (ADR-024)**:
+  - _Smart Components (Containers/Pages)_: Orquestram chamadas de rede (hooks Orval/TanStack Query), parâmetros de rota e formulários, repassando dados e callbacks via Props.
+  - _Dumb Components (Presenters/Views)_: Puramente visuais e síncronos (Props-driven). PROIBIDO hooks diretos de mutação/query ou controle de rotas dentro de dumb components (permissão estrita apenas para importar tipos TypeScript via `import type`).
+  - _Helpers Puros_: Cálculos matemáticos, agregações e manipulações de datas devem ser extraídos para funções utilitárias puras e determinísticas em `utils/` ou `helpers.ts`.
+- **API Access (ADR-012)**: PROIBIDO usar `fetch` ou `axios` diretamente. Use EXCLUSIVAMENTE hooks gerados pelo Orval (`@/api/generated/`).
+- **UI & Components**: Siga [DESIGN.md](DESIGN.md). Componha primitivas shadcn/ui com tokens Tailwind em `src/features/<name>/components/`. NUNCA edite arquivos em `src/components/ui/` diretamente.
+- **Forms & Icons**: `react-hook-form` + `zod`. Apenas ícones da biblioteca `lucide-react`.
+
+### Domain Business Rules (SSOT)
+
+- **Catálogo de Regras (`docs/architecture/business-rules/`)**: Regras de negócio intrínsecas, fórmulas e máquinas de estado de finanças, logística, scheduler, casamentos e notificações residem em notas atômicas. Toda alteração de comportamento de domínio DEVE manter paridade estrita com sua respectiva nota atômica, sem doc drift.
 
 ### Testing (`isolate: false`)
+
 - **Backend**: FORBIDDEN `.objects.create()` — use factories in `apps/*/tests/factories.py`. `services.py` requires unit success/failure coverage. `selectors/` requires unit/isolated tenant coverage in `test_selectors.py`.
 - **Frontend**: FORBIDDEN `vi.mock("@/api/generated/...")` or per-file data hook mocks. Centralize all mocks in `test-setup.ts` via `registerMockHook`. Import testing utilities from `@/test-utils`.
 
 ### Documentation & Comments
+
 - **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `just check-docs` (or `uv run --project backend python scripts/validate_docs_links.py`).
 - **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
 - **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments or documentation.
@@ -33,8 +50,8 @@
 
 Dispatch subagents for multi-file changes, multi-step logic, or heavy investigations. Keep the main conversation thread for direct questions and coordination.
 
-| Subagent | Role & Trigger |
-| :--- | :--- |
-| **`backend`** | Django models, services, endpoints, migrations, backend tests, business logic |
+| Subagent       | Role & Trigger                                                                  |
+| :------------- | :------------------------------------------------------------------------------ |
+| **`backend`**  | Django models, services, endpoints, migrations, backend tests, business logic   |
 | **`frontend`** | React components, pages, custom hooks, forms, Orval integration, frontend tests |
-| **`design`** | UI/UX layouts, Tailwind styling, theme tweaks, component accessibility |
+| **`design`**   | UI/UX layouts, Tailwind styling, theme tweaks, component accessibility          |

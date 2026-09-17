@@ -1,46 +1,55 @@
 # ADR-019: Validação de Tenant na Camada de Serviço
 
-## Status
-Aceito
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟡 Consolidada na [ADR-016: Multi-tenancy Pragmático](016-pragmatic-multi-tenancy.md)
+> **Data:** Fevereiro 2026
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-016: Multi-tenancy Pragmático](016-pragmatic-multi-tenancy.md) · [Guard-Rail de Isolação Multitenant](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md)
 
-## Contexto
-A arquitetura de multi-tenancy do sistema (ADR-009, ADR-016) isola os dados verticalmente por `Company` através do `TenantManager` com `.for_tenant(company)` nas queries do banco. No entanto, diversos métodos da camada de serviço (`update()`, `delete()`, `mark_as_paid()`, etc.) recebem uma instância do modelo já carregada — seja pela API (que faz `get()` antes de chamar o service) ou por chamadas internas entre services.
+> [!NOTE]
+> **Consolidação Arquitetural (Fevereiro 2026):**
+> O helper defensivo `validate_tenant_ownership()` introduzido nesta ADR foi consolidado e incorporado como o **Pilar 4** da arquitetura corporativa oficial definida na [ADR-016: Multi-tenancy Pragmático](016-pragmatic-multi-tenancy.md).
 
-Nesses métodos, o parâmetro `company` era recebido mas **nunca validado contra a instância**. Um chamador da API está protegido pelo `get()` na camada de API, mas uma chamada interna entre services (ou um erro na camada de API) poderia operar em uma instância de outro tenant silenciosamente.
+---
 
-## Decisão
-Criar um helper centralizado `validate_tenant_ownership()` que verifica se `instance.company_id == company.id`, levantando `ObjectNotFoundError` (HTTP 404) em caso de mismatch. Aplicar em **todo método que recebe uma instância pré-carregada**.
+## 1. Contexto e Problema
 
-### Por que 404 e não 403?
-Retornar 403 ("acesso negado") revelaria ao atacante que o recurso existe em outro tenant. Com 404, os casos "recurso não existe" e "recurso existe em outro tenant" são indistinguíveis — prática padrão em SaaS multi-tenant.
+A arquitetura de multi-tenancy do sistema isola os dados verticalmente por `Company` através do `TenantManager` com `.for_tenant(company)` nas consultas ao banco de dados. No entanto, diversos métodos da camada de serviço (`update()`, `delete()`, `mark_as_paid()`, etc.) recebem uma instância do modelo já carregada — seja pela API (que faz `get()` antes de chamar o service) ou por chamadas internas entre services.
 
-### Helper centralizado
+Nesses métodos, o parâmetro `company` era recebido mas nunca validado contra a instância. Embora chamadas diretas da API estivessem protegidas pelo filtro no lookup inicial, chamadas internas entre serviços ou falhas na camada de apresentação poderiam operar inadvertidamente sobre dados de outra empresa.
+
+---
+
+## 2. Decisão
+
+Criar um helper centralizado e defensivo `validate_tenant_ownership(company, instance, ...)` que verifica se `instance.company_id == company.id`, levantando `ObjectNotFoundError` (HTTP 404) em caso de divergência.
+
+### Racional da Resposta HTTP 404 vs 403
+Retornar HTTP 403 (*Forbidden*) revelaria a um atacante que o recurso de fato existe em outro tenant (ataque de enumeração IDOR). Retornar HTTP 404 torna os cenários "recurso inexistente" e "recurso pertencente a outra empresa" completamente indistinguíveis para o cliente externo, seguindo a boa prática de segurança em SaaS multi-tenant.
+
 ```python
-def validate_tenant_ownership(company, instance, *, detail, code):
+def validate_tenant_ownership(company, instance, *, detail: str, code: str) -> None:
+    """Garante que a entidade manipulada pertence estritamente ao tenant ativo."""
     if instance.company_id != company.id:
         raise ObjectNotFoundError(detail=detail, code=code)
 ```
 
-### Escopo de aplicação
-Todos os métodos dos 10 services que recebem `(company, instance, ...)`:
-- `delete()` — 10 services
-- `update()` — 8 services
-- `mark_as_paid()`, `unmark_as_paid()` — InstallmentService
-- `adjust()` — InstallmentService
-- `transition_status()` — ContractService, ItemService
+---
 
-## Consequências
-- **Positivas**:
-  - Cross-tenant access silencioso é impossível em qualquer método de serviço
-  - Código mais explícito e defensivo
-  - Helper centralizado permite mudar o comportamento (ex: código do erro) em um único lugar
-- **Negativas**:
-  - O parâmetro `company` em métodos como `delete()` agora serve apenas para logging + validação, não mais para lookup
-  - Leve overhead de CPU por chamada (comparação de dois integers)
-- **Neutras**:
-  - Testes cross-tenant adicionados para todos os métodos validados
+## 3. Consequências
 
-## Arquivos Afetados
-- `backend/apps/core/tenant.py` (novo) — helper
-- `backend/apps/*/services/*.py` (23 métodos em 10 services)
-- `backend/apps/*/tests/*/test_services.py` (17 testes cross-tenant)
+### Positivas :material-check-circle:
+- **Proteção Contra IDOR:** Impossibilita acesso silencioso entre empresas em qualquer método de mutação na camada de serviço.
+- **Defesa em Profundidade:** Mesmo em invocações internas entre serviços onde uma instância pré-carregada é repassada, o pertencimento corporativo é verificado.
+- **Centralização:** Comportamento de auditoria e exceção padronizado em um único ponto.
+
+### Negativas / Trade-offs :material-close-circle:
+- **Parâmetro Mandatório:** Todo método de mutação deve exigir explicitamente `company` como primeiro argumento posicional.
+- **Sobrecarga Mínima:** Comparação trivial de inteiros (`instance.company_id != company.id`) em memória.
+
+---
+
+## 4. Referências
+
+- [ADR-016: Multi-tenancy Pragmático e Orientado a Organização](016-pragmatic-multi-tenancy.md)
+- [Guard-Rail de Isolação Multitenant](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md)

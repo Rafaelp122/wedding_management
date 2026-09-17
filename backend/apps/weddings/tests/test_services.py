@@ -168,6 +168,16 @@ class TestWeddingService:
         assert canceled.status == Wedding.StatusChoices.CANCELED
         assert canceled.is_canceled is True
 
+    def test_on_wedding_canceled_task_success(self, user):
+        """Valida execução da task assíncrona pós-cancelamento."""
+        from apps.weddings.tasks import on_wedding_canceled_task
+
+        wedding = WeddingFactory(company=user.company)
+        on_wedding_canceled_task.func(user.company.id, str(wedding.uuid))
+        on_wedding_canceled_task.func(
+            user.company.id, "00000000-0000-0000-0000-000000000000"
+        )
+
     def test_create_wedding_fail_with_invalid_date(self, user, wedding_payload):
         """
         Cenário 2.1: Garante que uma data passada ou inválida também trava a criação.

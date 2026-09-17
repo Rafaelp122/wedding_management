@@ -13,19 +13,6 @@ from uuid import uuid4
 import pytest
 
 from apps.core.exceptions import ObjectNotFoundError
-from apps.finances.models import Installment
-from apps.finances.tests.factories import (
-    BudgetCategoryFactory as _BudgetCategoryFactory,
-)
-from apps.finances.tests.factories import (
-    BudgetFactory as _BudgetFactory,
-)
-from apps.finances.tests.factories import (
-    ExpenseFactory as _ExpenseFactory,
-)
-from apps.finances.tests.factories import (
-    InstallmentFactory as _InstallmentFactory,
-)
 from apps.logistics.managers import (
     ContractQuerySet,
     ItemQuerySet,
@@ -55,22 +42,6 @@ from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
-
-
-def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> Any:
-    return _BudgetCategoryFactory(*args, **kwargs)
-
-
-def BudgetFactory(*args: Any, **kwargs: Any) -> Any:
-    return _BudgetFactory(*args, **kwargs)
-
-
-def ExpenseFactory(*args: Any, **kwargs: Any) -> Any:
-    return _ExpenseFactory(*args, **kwargs)
-
-
-def InstallmentFactory(*args: Any, **kwargs: Any) -> Installment:
-    return cast(Installment, _InstallmentFactory(*args, **kwargs))
 
 
 def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
@@ -165,7 +136,7 @@ class TestContractQuerySet:
     """Testes dos métodos de ContractQuerySet e seu encadeamento."""
 
     def test_with_totals_annotations(self, user: User) -> None:
-        """with_totals anota supplier_name, expense_id, total_paid e addendums_count."""
+        """with_totals anota supplier_name, addendums_count e addendums_total_amount."""
         wedding = WeddingFactory(user_context=user)
         supplier = SupplierFactory(
             company=user.company, name="Buffet Real", phone="119999", email="b@real.com"
@@ -188,24 +159,12 @@ class TestContractQuerySet:
             status=Contract.StatusChoices.CANCELED,
         )
 
-        budget = BudgetFactory(wedding=wedding)
-        cat = BudgetCategoryFactory(budget=budget, wedding=wedding)
-        expense = ExpenseFactory(wedding=wedding, category=cat, contract=parent)
-        InstallmentFactory(
-            expense=expense,
-            amount=Decimal("400.00"),
-            status=Installment.StatusChoices.PAID,
-            paid_date=date.today(),
-        )
-
         qs = Contract.objects.for_tenant(user.company).with_totals()
         assert isinstance(qs, ContractQuerySet)
         c = qs.get(uuid=parent.uuid)
         assert cast(Any, c).supplier_name == "Buffet Real"
         assert cast(Any, c).supplier_phone == "119999"
         assert cast(Any, c).supplier_email == "b@real.com"
-        assert cast(Any, c).expense_id == expense.uuid
-        assert cast(Any, c).total_paid == Decimal("400.00")
         assert cast(Any, c).addendums_count == 2
         assert cast(Any, c).addendums_total_amount == Decimal("10000.00")
 

@@ -89,11 +89,18 @@ terraform/
 
 ## 4. Gates de Qualidade no `justfile`
 
-O `justfile` centraliza todos os comandos de validação local para evitar discrepâncias entre o ambiente de desenvolvimento e o CI:
+O [`justfile`](../../../justfile) centraliza todos os comandos de validação local para assegurar paridade absoluta entre o ambiente de desenvolvimento e as etapas de CI:
 
 ```just
---8<-- "justfile:170:178"
+# Gate completo de CI local (Docs, Backend, Frontend e Landing)
+[group('Qualidade & CI')]
+check-ci: check-docs check-backend check-frontend check-landing
+    @echo "✅ Todos os gates de qualidade passaram com sucesso!"
 ```
+
+- **`check-docs`**: Valida links Diátaxis (`validate_docs_links.py`), snippets e tags (`validate_docs_snippets.py`), conformidade visual do `DESIGN.md` e compilação estrita do MkDocs (`mkdocs build --strict`).
+- **`check-backend`**: Executa linter (`ruff`), formatação, checagem de tipos estritos (`mypy`) e testes automatizados (`pytest`).
+- **`check-frontend`**: Valida ESLint, TypeScript (`tsc --noEmit`), Vitest e Playwright.
 
 ---
 

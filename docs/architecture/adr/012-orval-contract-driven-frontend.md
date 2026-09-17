@@ -1,13 +1,14 @@
 # ADR-012: Geração Automática da Camada de API do Frontend via Orval
 
-**Status:** Aceito
-**Data:** Março 2026
-**Decisor:** Rafael
-**Contexto:** Eliminar código manual de clients HTTP, tipos TypeScript e hooks React Query no frontend
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Março 2026
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-013: Migração para Django Ninja](013-migrate-drf-to-ninja.md) · [ADR-024: Padrão Smart/Dumb Components](024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 O frontend precisa se comunicar com a API REST do backend. Sem automação, cada endpoint exige:
 
@@ -25,11 +26,11 @@ Manter isso manualmente cria 4 problemas:
 | **Erros de digitação** | Typos em nomes de campos, URLs, enums passam pelo TypeScript se os tipos forem manuais |
 | **Custo de onboarding** | Novo dev precisa entender a convenção de hooks, query keys, etc. |
 
-O backend já expõe um schema OpenAPI completo via `drf-spectacular`, o que viabiliza a geração automática.
+O backend expõe um schema OpenAPI completo (originalmente via `drf-spectacular` e posteriormente via `Django Ninja` na [ADR-013](013-migrate-drf-to-ninja.md)), o que viabiliza a geração contratual 100% automatizada.
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Usar **Orval** como gerador de código, configurado com:
 
@@ -43,20 +44,20 @@ Usar **Orval** como gerador de código, configurado com:
 ### Pipeline de sincronização
 
 ```
-Backend (Django + DRF + drf-spectacular)
+Backend (Django Ninja)
   │
-  ▼  make openapi
+  ▼  just openapi (ou make openapi)
 openapi.json (raiz do projeto — versionado)
   │
-  ▼  make orval
+  ▼  just orval (ou make orval)
 frontend/src/api/generated/ (código gerado — versionado)
 ```
 
-O comando `make sync-api` executa ambos os passos em sequência.
+O comando `just sync-api` executa ambos os passos em sequência.
 
 ---
 
-## Estrutura Gerada
+## 3. Estrutura Gerada
 
 ```
 frontend/src/api/
@@ -83,28 +84,24 @@ frontend/src/api/
 
 ---
 
-## Alternativas Consideradas
+### Alternativas Consideradas
 
-### 1. Código manual de hooks e tipos
-
+#### 1. Código manual de hooks e tipos
 **Rejeitado.** Boilerplate massivo, drift silencioso, alto custo de manutenção. Era viável com 2-3 endpoints, mas o projeto tem 30+.
 
-### 2. `openapi-typescript` + `openapi-fetch`
-
+#### 2. `openapi-typescript` + `openapi-fetch`
 Gera apenas tipos TypeScript e um client fetch leve sem framework de estado. **Rejeitado** porque:
 - Não gera hooks React Query — teríamos que escrevê-los manualmente.
 - Não gera Zod schemas.
 - Menos ecossistema para customização (mutators, transformers).
 
-### 3. `swagger-typescript-api`
-
+#### 3. `swagger-typescript-api`
 Gera client completo com tipos. **Rejeitado** porque:
 - Gera classes (OOP) em vez de funções + hooks — estilo incompatível com React funcional.
 - Não tem integração nativa com React Query.
 - Não gera Zod schemas.
 
-### 4. GraphQL (Apollo / urql)
-
+#### 4. GraphQL (Apollo / urql)
 Eliminaria o problema com codegen nativo. **Rejeitado** porque:
 - Reescrita completa do backend (DRF → Graphene/Strawberry).
 - Overhead desproporcional para o tamanho do projeto.
@@ -112,26 +109,25 @@ Eliminaria o problema com codegen nativo. **Rejeitado** porque:
 
 ---
 
-## Consequências
+## 4. Consequências
 
-### Positivas
+### Positivas :material-check-circle:
 
 - **Zero drift:** Tipos do frontend são derivados diretamente do schema do backend. Se um campo mudar, o TypeScript quebra no build — não em produção.
 - **Zero boilerplate de fetch:** Hooks prontos com query keys, enabled, onSuccess, etc.
 - **Validação sincronizada:** Zod schemas gerados garantem que a validação do formulário reflete as constraints do backend.
 - **Onboarding simplificado:** Novo dev importa um hook e usa. Não precisa saber a URL, método ou formato.
 
-### Negativas
+### Negativas / Trade-offs :material-close-circle:
 
 - **Dependência do Orval:** Se o projeto for descontinuado, precisamos migrar. Mitigação: o código gerado é vanilla TypeScript + React Query — legível e editável se necessário.
-- **Schema OpenAPI como gargalo:** Se o `drf-spectacular` gerar um schema incorreto, o frontend herda o erro. Mitigação: o schema é versionado e revisável em PR.
 - **Diretório `generated/` versionado:** Aumenta o diff em PRs que mudam a API. Mitigação: colapsar a pasta em code review; a alternativa (gerar no CI) impede type-checking local.
 
 ---
 
-## Referências
+## 5. Referências
 
 - [Orval docs](https://orval.dev)
 - [TanStack React Query](https://tanstack.com/query)
-- [drf-spectacular](https://drf-spectacular.readthedocs.io)
-- ADR-006: Service Layer Pattern (define os endpoints que geram o schema)
+- [ADR-013: Migração de Django REST Framework para Django Ninja](013-migrate-drf-to-ninja.md)
+- [ADR-024: Padrão Smart/Dumb para Desacoplamento de Componentes](024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)

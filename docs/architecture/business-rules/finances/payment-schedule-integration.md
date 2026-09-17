@@ -15,7 +15,7 @@ tests:
 # Integração de Pagamentos com Agenda de Compromissos (BR-S01)
 
 > **Categoria:** Regra de Negócio (Domínio Financeiro & Cronograma)
-> **Relacionados:** [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [ADR-031: Comunicação Entre Módulos](../../adr/031-inter-module-communication.md) · [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 
@@ -24,9 +24,9 @@ tests:
 No **Wedding Management System**, o planejamento financeiro e o cronograma de eventos convergem através do **Espelhamento Cronológico de Parcelas**. Todo compromisso de pagamento registrado para uma despesa gera uma representação visual na agenda do casamento para que o cerimonialista e os noivos acompanhem os desembolsos críticos.
 
 ### Invariantes Fundamentais:
-1. **Auto-geração Síncrona:** A criação ou parcelamento automático de despesas via `InstallmentService.auto_generate_installments` gera simultaneamente eventos com `event_type = "pagamento"` no módulo `scheduler`.
+1. **Auto-geração Síncrona via Fachada:** A criação ou parcelamento automático de despesas via `InstallmentService.auto_generate_installments` invoca a fachada pública `apps.scheduler.interfaces.create_payment_events_for_installments` para projetar eventos com `event_type = "pagamento"` no calendário.
 2. **Imutabilidade e Somente-Leitura (BR-S01):** Eventos do tipo `pagamento` são gerenciados exclusivamente pelo motor financeiro. Qualquer tentativa de alteração manual ou exclusão direta no calendário é bloqueada.
-3. **Isolamento Multitenant (ADR-009):** Cada evento de pagamento herda o tenant `company` e o `wedding` da despesa pai.
+3. **Isolamento Multitenant (ADR-009 / ADR-016):** Cada evento de pagamento herda o tenant `company` e o `wedding` da despesa pai.
 4. **Limpeza Transacional em Cascata:** Se parcelas forem redistribuídas ou excluídas, os eventos de pagamento vinculados são removidos atomicamente antes da reemissão.
 
 ### Fórmulas Matemáticas de Agendamento:
@@ -50,25 +50,31 @@ sequenceDiagram
     participant Client as Cliente API
     participant FS as InstallmentService (Finances)
     participant DB as PostgreSQL (Transação Atômica)
+    participant SI as Scheduler Interfaces (interfaces.py)
     participant ES as EventService (Scheduler)
 
     Client->>FS: auto_generate_installments(company, expense, N, first_due_date)
     activate FS
     FS->>DB: Validar despesa, calcular Tolerância Zero & Salvar N Parcelas
     Note over FS,DB: Parcelas persistidas com status PENDING
-    FS->>ES: EventService.create(company, payload, _caller_internal=True)
+    FS->>SI: create_payment_events_for_installments(company, expense, installments)
+    activate SI
+    SI->>ES: EventService.create(company, payload, _caller_internal=True)
     activate ES
     ES->>ES: Validar _caller_internal == True (BR-S01)
     ES->>DB: Salvar Event (event_type="pagamento", source_installment=inst)
-    ES-->>FS: Evento Criado
+    ES-->>SI: Eventos Criados
     deactivate ES
+    SI-->>FS: Concluído
+    deactivate SI
     FS-->>Client: Lista de Parcelas Criadas (com Eventos Espelhados)
     deactivate FS
 
     opt Redistribuição de Parcelas
         Client->>FS: redistribute(company, expense, new_N, new_date)
         activate FS
-        FS->>DB: _delete_payment_events_for_expense(company, expense)
+        FS->>SI: delete_payment_events_for_expense(company, expense)
+        SI->>DB: Remover eventos PAYMENT vinculados à despesa
         FS->>DB: expense.installments.all().delete()
         FS->>FS: auto_generate_installments(...)
         FS-->>Client: Novas Parcelas e Novos Eventos Sincronizados
@@ -85,38 +91,34 @@ sequenceDiagram
 | **BR-S01-A** | **Auto-Geração Obrigatória** | Geração automática de parcelas via `InstallmentService`. | Sucesso na criação de $N$ eventos `PAYMENT`. | Popula o calendário com título e descrição padronizados às 09:00. |
 | **BR-S01-B** | **Guard de Chamada Interna** | Tentativa de criar evento `event_type="pagamento"` com `_caller_internal=False`. | `BusinessRuleViolation('payment_event_readonly')` | Impede criação espúria de eventos financeiros manuais na agenda. |
 | **BR-S01-C** | **Cascata em Redistribuição** | Chamada a `InstallmentService.redistribute()` em despesa sem parcelas pagas. | Exclui eventos antigos e gera novos na mesma transação `@transaction.atomic`. | Evita eventos órfãos ou duplicados no calendário do casamento. |
-| **BR-S01-D** | **Exclusão de Parcela Individual** | Deleção de parcela via `InstallmentService.delete()`. | `_delete_payment_event_for_single()` remove o evento correspondente. | Mantém o calendário estritamente sincronizado com as parcelas ativas. |
+| **BR-S01-D** | **Exclusão de Parcela Individual** | Deleção de parcela via `InstallmentService.delete()`. | `delete_payment_event_for_installment()` remove o evento correspondente. | Mantém o calendário estritamente sincronizado com as parcelas ativas. |
 
 ---
 
 ## 4. Implementação e Uso do Modelo de Domínio e Serviços
 
-### A. Integração Transacional Finanças-Scheduler
-A criação de compromissos no calendário reside em [`apps/finances/services/installment_service.py`](../../../../backend/apps/finances/services/installment_service.py):
+### A. Integração Transacional Finanças-Scheduler via Fachada Pública ([ADR-031](../../adr/031-inter-module-communication.md))
+Em conformidade com a [ADR-031](../../adr/031-inter-module-communication.md), o `InstallmentService` **não importa models ou services do scheduler diretamente**. Toda a manipulação de compromissos de pagamento no calendário é delegada à fachada pública [`apps/scheduler/interfaces.py`](../../../../backend/apps/scheduler/interfaces.py):
 
-- `InstallmentService._create_payment_event(company, installment)`: Projeta um evento de calendário (`event_type="pagamento"`) às 09:00 na data de vencimento da parcela, passando `_caller_internal=True`.
-- `InstallmentService._delete_payment_events_for_expense(company, expense)` / `_delete_payment_event_for_single(company, installment)`: Limpeza atômica de eventos vinculados quando parcelas são redistribuídas ou excluídas, prevenindo eventos fantasmas na agenda.
+- `create_payment_events_for_installments(company, expense, installments)`: Projeta eventos de calendário (`event_type="pagamento"`) às 09:00 na data de vencimento de cada parcela, passando `_caller_internal=True`.
+- `delete_payment_events_for_expense(company, expense)`: Limpeza atômica de todos os eventos de pagamento vinculados a uma despesa durante a redistribuição.
+- `delete_payment_event_for_installment(company, installment)`: Limpeza atômica do evento correspondente na deleção de parcela individual.
 
 ```python
-# Criação do evento protegido na agenda via chamada interna autorizada:
-event_service.create(
+# Chamada à fachada pública em apps/finances/services/installment_service.py:
+from apps.scheduler.interfaces import create_payment_events_for_installments
+
+create_payment_events_for_installments(
     company=company,
-    payload=EventIn(
-        wedding=installment.wedding.uuid,
-        title=f"Pagamento: Parcela {installment.installment_number} - {expense.description}",
-        start_time=datetime.combine(installment.due_date, time(9, 0)),
-        end_time=datetime.combine(installment.due_date, time(10, 0)),
-        event_type="pagamento",
-        notes=f"Vencimento da parcela R${installment.amount}.",
-    ),
-    _caller_internal=True,
+    expense=expense,
+    installments=installments,
 )
 ```
 
 ### B. Guard Somente-Leitura no Scheduler
 O guard reside em [`apps/scheduler/services/events.py`](../../../../backend/apps/scheduler/services/events.py):
 
-- `EventService._validate_payment_event_internal(data, _caller_internal)`: Bloqueia a criação ou edição manual de eventos de pagamento por chamadas externas à API, exigindo que qualquer movimentação se origine estritamente no `InstallmentService`.
+- `EventService._validate_payment_event_internal(data, _caller_internal)`: Bloqueia a criação ou edição manual de eventos de pagamento por chamadas externas à API, exigindo que qualquer movimentação se origine estritamente na interface autorizada.
 
 ---
 

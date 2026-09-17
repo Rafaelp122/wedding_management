@@ -50,14 +50,46 @@ flowchart TD
 
 Os tokens visuais normativos estão declarados no [DESIGN.md](../../../DESIGN.md) e mapeados nas variáveis CSS globais em `src/index.css`:
 
-### A. Paleta Normativa (`DESIGN.md`)
+### A. Paleta Normativa ([`DESIGN.md`](../../../DESIGN.md))
 ```yaml
---8<-- "DESIGN.md:5:24"
+colors:
+  primary: "#7C3AED"
+  primary-hover: "#6D28D9"
+  secondary: "#F5F3FF"
+  surface: "#FAFAFB"
+  surface-dark: "#09090B"
+  surface-dark-secondary: "#18181B"
+  text-primary: "#1A1C1E"
+  text-secondary: "#52585E"
+  text-on-dark: "#FAFAFB"
+  success: "#E0F2F1"
+  warning: "#FEF3C7"
+  destructive: "#DC2626"
 ```
 
-### B. Variáveis CSS Globais (`frontend/src/index.css`)
+### B. Variáveis CSS Globais ([`frontend/src/index.css`](../../../frontend/src/index.css))
 ```css
---8<-- "frontend/src/index.css:10:45"
+@layer base {
+  :root {
+    --background: #FAFAFB;
+    --foreground: #09090B;
+    --card: #FFFFFF;
+    --primary: #7C3AED;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F5F3FF;
+    --muted: #F5F3FF;
+    --muted-foreground: #71717A;
+    --border: #E4E4E7;
+    --ring: #A78BFA;
+  }
+
+  .dark {
+    --background: #09090B;
+    --foreground: #FAFAFA;
+    --card: #18181B;
+    --primary: #A78BFA;
+  }
+}
 ```
 
 ---

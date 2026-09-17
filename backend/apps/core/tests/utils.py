@@ -28,3 +28,29 @@ def find_service_files() -> list[Path]:
             service_files.add(path)
 
     return sorted(service_files)
+
+
+def find_interface_files() -> list[Path]:
+    """
+    Localiza todos os arquivos de interfaces públicas da aplicação.
+
+    Busca por arquivos sob `apps/*/interfaces.py`, desconsiderando
+    subdiretórios de teste, caches e ambientes virtuais.
+
+    Returns:
+        Lista ordenada de caminhos (Path) para os arquivos interfaces.py.
+    """
+    apps_dir = Path(__file__).resolve().parent.parent.parent
+    interface_files: set[Path] = set()
+
+    for path in apps_dir.glob("**/interfaces.py"):
+        if (
+            "tests" in path.parts
+            or "__pycache__" in path.parts
+            or ".venv" in path.parts
+            or "venv" in path.parts
+        ):
+            continue
+        interface_files.add(path)
+
+    return sorted(interface_files)

@@ -1,13 +1,14 @@
 # ADR-030: Rich Domain Model (Active Record Rico) e Service Layer como Casos de Uso
 
-**Status:** Aceito
-**Data:** Setembro 2026
-**Decisor:** Rafael
-**Contexto:** Evolução do padrão de Service Layer e modelo anêmico para Rich Domain Model (Active Record Rico), estabelecendo 3 níveis formais de validação e diretriz pragmática de documentação.
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Setembro 2026
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-006: Service Layer Pattern](006-service-layer.md) · [ADR-011: BaseModel com save() chamando full_clean()](011-basemodel-save-full-clean.md) · [ADR-016: Pragmatic Multi-Tenancy](016-pragmatic-multi-tenancy.md) · [ADR-028: Diátaxis & Notas Atômicas](028-diataxis-atomic-notes.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Historicamente, a [ADR-006](006-service-layer.md) estabeleceu a **Service Layer** no backend para combater serializers inchados (*Fat Serializers*). Como consequência, a arquitetura concentrou praticamente 100% da lógica de negócio e validações nos serviços, tornando os modelos do Django meros esquemas de dados de banco (*Anemic Domain Model*).
 
@@ -19,11 +20,11 @@ Essa concentração excessiva causou novos problemas estruturais à medida que a
 
 ---
 
-## Decisão
+## 2. Decisão
 
 Adotamos a transição incremental para o padrão **Rich Domain Model (Rich Active Record)** no Django monólito, estruturando o processamento de dados e validações em **3 Níveis Formais**:
 
-### 1. Separação em 3 Níveis de Validação
+### 2.1 Separação em 3 Níveis de Validação
 
 ```mermaid
 flowchart TD
@@ -54,7 +55,7 @@ flowchart TD
 | **Nível 2: Invariantes de Domínio** | Regras intrínsecas da entidade, ciclo de vida e transições de estado | **Django Models (`models.py`)** | `BusinessRuleViolation` ou `ValidationError` impedindo persistência. |
 | **Nível 3: Caso de Uso / Orquestração** | Multi-tenancy, limites transacionais atômicos, agregação e I/O externo | **Service Layer (`services.py`)** | `ObjectNotFoundError` (404), `DomainIntegrityError` (409) ou `BusinessRuleViolation` (422). |
 
-### 2. O Padrão Rich Active Record no Django
+### 2.2 O Padrão Rich Active Record no Django
 
 No ecossistema Django, os modelos continuam herdando de `BaseModel` / `TenantModel`. A entidade passa a conter métodos expressivos que alteram seu próprio estado em vez de expor atributos para mutação cega externa:
 
@@ -62,7 +63,7 @@ No ecossistema Django, os modelos continuam herdando de `BaseModel` / `TenantMod
 - Propriedades de conveniência: `is_completed`, `is_canceled`, `is_in_progress`, `is_past`, `days_until`.
 - O método `clean()` atua como a última linha de defesa, garantindo que estados ilegais sejam bloqueados mesmo se houver atribuição direta de atributos antes do `save()`.
 
-### 3. Diretriz Pragmática de Documentação (Desacoplamento de Linhas de Código)
+### 2.3 Diretriz Pragmática de Documentação (Desacoplamento de Linhas de Código)
 
 Para mitigar a fragilidade apontada na [ADR-028](028-diataxis-atomic-notes.md), formalizamos que:
 - Documentos de Arquitetura e Regras de Negócio devem documentar o **comportamento, as regras, fórmulas e diagramas de estado**.
@@ -71,25 +72,26 @@ Para mitigar a fragilidade apontada na [ADR-028](028-diataxis-atomic-notes.md), 
 
 ---
 
-## Consequências
+## 3. Consequências
 
-### Positivas :material-check-circle:
+### Positivas
 - **Entidades Invioláveis:** Nenhum registro pode ser salvo em estado inconsistente em nenhum ponto do sistema.
 - **Services Focados e Enxutos:** Redução estimada de 25% a 40% nas linhas dos maiores services, eliminando checagens primitivas e lógicas procedurais.
 - **Fail-Fast Eficiente:** Erros sintáticos de entrada são barrados pelo Pydantic antes de abrir conexões de banco de dados e transações.
 - **Testabilidade Acelerada:** Regras de domínio podem ser testadas em memória pura sem tocar no banco de dados.
 - **Manutenção Sustentável da Documentação:** Refatorações de código não quebram referências documentais nem exigem recontagem de linhas.
 
-### Negativas / Mitigações :material-alert:
+### Negativas e mitigações
 - **Curva de Adoção:** Requer disciplina do time para não voltar a colocar lógica intrínseca nos services nem I/O nos models.
 - **Migração Incremental:** Adoção módulo a módulo (iniciando por `weddings`, seguido por `logistics` e `finances`).
 
 ---
 
-## Referências
+## 4. Referências
 
-- [ADR-006: Service Layer Pattern](006-service-layer.md)
-- [ADR-011: BaseModel save() com full_clean()](011-basemodel-save-full-clean.md)
-- [ADR-028: Diátaxis e Anotações Atômicas](028-diataxis-atomic-notes.md)
-- [Padrão Service Layer](../concepts/service-layer-pattern.md)
-- [Ciclo de Vida do Casamento](../business-rules/weddings/wedding-status-lifecycle.md)
+1. [ADR-006: Service Layer Pattern](006-service-layer.md)
+2. [ADR-011: BaseModel com save() chamando full_clean()](011-basemodel-save-full-clean.md)
+3. [ADR-016: Pragmatic Multi-Tenancy (Row-Level)](016-pragmatic-multi-tenancy.md)
+4. [ADR-028: Diátaxis e Anotações Atômicas](028-diataxis-atomic-notes.md)
+5. [Padrão Service Layer](../concepts/service-layer-pattern.md)
+6. [Ciclo de Vida do Casamento](../business-rules/weddings/wedding-status-lifecycle.md)

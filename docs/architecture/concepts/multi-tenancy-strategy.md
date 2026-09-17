@@ -61,32 +61,51 @@ sequenceDiagram
 ## 3. Pilares da Blindagem Multitenant
 
 ### A. Herança de `TenantModel` e Índices Otimizados
-Toda entidade de domínio pertence a uma `Company`. Em vez de redeclarar a chave estrangeira em cada tabela, todos os modelos herdam de `TenantModel` (`apps/tenants/models.py`), que por sua vez herda de `BaseModel` (`apps/core/models.py`).
+Toda entidade de domínio pertence a uma `Company`. Em vez de redeclarar a chave estrangeira em cada tabela, todos os modelos herdam de [`TenantModel`](../../../backend/apps/tenants/models.py), que por sua vez herda de [`BaseModel`](../../../backend/apps/core/models.py).
 
 - **Chave Estrangeira Protegida:** A coluna `company` vincula o registro à empresa com integridade referencial estrita.
 - **Índice Composto B-Tree:** Garante que buscas por `uuid` filtradas pelo tenant utilizem varreduras de índice com custo $O(\log n)$.
 
 ```python
---8<-- "backend/apps/tenants/models.py:27:48"
+class TenantModel(BaseModel):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="%(class)s_records")
+    objects = TenantManager()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["company", "uuid"]),
+        ]
 ```
 
 ### B. O `TenantQuerySet` e o `TenantManager`
-O acesso a dados via ORM impede consultas globais desprotegidas. O `TenantManager` injeta o método `for_tenant(company)` que força o predicado SQL `WHERE company_id = ...`.
+O acesso a dados via ORM impede consultas globais desprotegidas. O [`TenantManager`](../../../backend/apps/tenants/managers.py) injeta o método `for_tenant(company)` que força o predicado SQL `WHERE company_id = ...`.
 
 - É expressamente proibido o uso de `Model.objects.all()` sem o encadeamento prévio de `.for_tenant(company)` nas camadas de negócio.
-- O método `for_tenant` retorna um `TenantQuerySet` encadeável e *lazy*.
+- O método `for_tenant` retorna um [`TenantQuerySet`](../../../backend/apps/tenants/managers.py) encadeável e *lazy*.
 
 ```python
---8<-- "backend/apps/tenants/managers.py:14:32"
+class TenantQuerySet(models.QuerySet[_ModelT]):
+    def for_tenant(self, company: Company) -> Self:
+        return self.filter(company=company)
 ```
 
 ### C. Validação Estrita de Posse (`validate_tenant_ownership`)
-Quando uma entidade já instanciada ou carregada em etapas anteriores é recebida por um serviço ou seletor, a função utilitária `validate_tenant_ownership` valida se o `company_id` da instância coincide com o tenant da sessão.
+Quando uma entidade já instanciada ou carregada em etapas anteriores é recebida por um serviço ou seletor, a função utilitária [`validate_tenant_ownership`](../../../backend/apps/core/tenant.py) valida se o `company_id` da instância coincide com o tenant da sessão.
 
 - **Proteção Contra IDOR (Insecure Direct Object Reference):** Se uma requisição tentar manipular um UUID existente que pertence a outra empresa, o sistema levanta `ObjectNotFoundError` (HTTP 404), ocultando a existência do registro de terceiros para evitar enumeração de recursos.
 
 ```python
---8<-- "backend/apps/core/tenant.py:12:40"
+def validate_tenant_ownership[ModelT: models.Model](
+    company: "Company",
+    instance: ModelT,
+    *,
+    detail: str = "Recurso não encontrado ou acesso negado.",
+    code: str = "not_found_or_denied",
+) -> ModelT:
+    if getattr(instance, "company_id", None) != company.id:
+        raise ObjectNotFoundError(detail=detail, code=code)
+    return instance
 ```
 
 ---

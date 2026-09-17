@@ -14,6 +14,11 @@ from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import Expense, Installment
 from apps.finances.schemas import InstallmentAdjustIn, InstallmentIn, InstallmentPatchIn
+from apps.scheduler.interfaces import (
+    create_payment_events_for_installments,
+    delete_payment_event_for_installment,
+    delete_payment_events_for_expense,
+)
 from apps.tenants.models import Company
 
 
@@ -118,7 +123,9 @@ class InstallmentService:
             inst.save()
 
         # ── Auto-geração de Eventos PAYMENT (BR-S01) ──────────────────────
-        _create_payment_events(company, expense, installments)
+        create_payment_events_for_installments(
+            company=company, expense=expense, installments=installments
+        )
 
         return installments
 
@@ -157,7 +164,7 @@ class InstallmentService:
                 code="redistribute_blocked_by_paid",
             )
 
-        _delete_payment_events_for_expense(company, expense)
+        delete_payment_events_for_expense(company=company, expense=expense)
         expense.installments.all().delete()
         return InstallmentService.auto_generate_installments(
             company=company,
@@ -521,7 +528,7 @@ class InstallmentService:
         expense = instance.expense
 
         try:
-            _delete_payment_event_for_single(company, instance)
+            delete_payment_event_for_installment(company=company, installment=instance)
 
             instance.delete()
 
@@ -582,8 +589,7 @@ class InstallmentService:
             return 0
 
         count = 0
-        from apps.notifications.models import NotificationType
-        from apps.notifications.services import NotificationService
+        from apps.notifications.interfaces import notify_installment_overdue
 
         for inst in pending_overdue:
             inst.status = Installment.StatusChoices.OVERDUE
@@ -591,106 +597,23 @@ class InstallmentService:
             count += 1
 
             users = [u for u in inst.company.users.all() if u.is_active]
-            for user in users:
-                NotificationService.create_async_notification(
-                    company=inst.company,
-                    user=user,
-                    title="Parcela Vencida",
-                    message=(
-                        f"A parcela {inst.installment_number} de "
-                        f"'{inst.expense.name}' no valor de R$ {inst.amount} "
-                        f"venceu em {inst.due_date.strftime('%d/%m/%Y')}."
-                    ),
-                    notification_type=NotificationType.OVERDUE_INSTALLMENT,
-                    link=(
-                        f"/weddings/{inst.expense.wedding.uuid}?tab=finances"
-                        if inst.expense and inst.expense.wedding
-                        else "/weddings"
-                    ),
-                    target_type="installment",
-                    target_id=inst.expense.uuid if inst.expense else inst.uuid,
-                    wedding_id=(
-                        inst.expense.wedding.uuid
-                        if inst.expense and inst.expense.wedding
-                        else None
-                    ),
-                )
+            wedding = inst.expense.wedding if inst.expense else None
+            wedding_name = (
+                f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
+                if wedding
+                else None
+            )
+
+            notify_installment_overdue(
+                company=inst.company,
+                installment_uuid=inst.expense.uuid if inst.expense else inst.uuid,
+                expense_name=inst.expense.name if inst.expense else "Despesa",
+                installment_number=inst.installment_number,
+                amount=inst.amount,
+                due_date=inst.due_date,
+                wedding_uuid=wedding.uuid if wedding else None,
+                wedding_name=wedding_name,
+                users=users,
+            )
 
         return count
-
-
-@transaction.atomic
-def _delete_payment_events_for_expense(company: Company, expense: Expense) -> None:
-    """Remove todos os eventos PAYMENT do scheduler vinculados a esta despesa.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        expense: A despesa cujos eventos de pagamento serão removidos.
-    """
-    from apps.scheduler.models import Event as SchedulerEvent
-
-    SchedulerEvent.objects.for_tenant(company).filter(
-        wedding=expense.wedding,
-        event_type="pagamento",
-        source_installment__expense=expense,
-    ).delete()
-
-
-@transaction.atomic
-def _delete_payment_event_for_single(company: Company, instance: Installment) -> None:
-    """Remove o evento PAYMENT vinculado a uma parcela específica.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        instance: A parcela cujo evento de pagamento correspondente será
-            removido.
-    """
-    from apps.scheduler.models import Event as SchedulerEvent
-
-    SchedulerEvent.objects.for_tenant(company).filter(
-        wedding=instance.expense.wedding,
-        event_type="pagamento",
-        source_installment=instance,
-    ).delete()
-
-
-@transaction.atomic
-def _create_payment_events(
-    company: Company,
-    expense: Expense,
-    installments: list[Installment],
-) -> None:
-    """Cria eventos PAYMENT no scheduler para cada parcela gerada.
-
-    Importação lazy do EventService para evitar circular imports.
-    Ref: BR-S01 — Eventos PAYMENT são read-only no calendário.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        expense: A despesa pai associada.
-        installments: Lista de parcelas que receberão eventos de pagamento.
-    """
-    from datetime import datetime, time
-
-    from django.utils import timezone
-
-    from apps.scheduler.services import EventService
-
-    for inst in installments:
-        naive_start = datetime.combine(inst.due_date, time(hour=9, minute=0))
-        event_start = timezone.make_aware(naive_start)
-        EventService.create(
-            company,
-            {
-                "wedding": expense.wedding,
-                "title": (
-                    f"Pagamento: {expense.name} - Parcela "
-                    f"{inst.installment_number}/{len(installments)}"
-                ),
-                "event_type": "pagamento",
-                "start_time": event_start,
-                "description": (f"Valor: R$ {inst.amount:.2f} — {expense.name}"),
-                "source_installment": inst,
-            },
-            _caller_internal=True,
-        )

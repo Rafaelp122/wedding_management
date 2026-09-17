@@ -4,7 +4,7 @@ domain: architecture
 type: concept
 source_code:
   - backend/apps/core/cron_api.py
-  - backend/apps/core/cron.py
+  - backend/apps/core/cron/registry.py
   - backend/apps/core/decorators.py
 tests:
   - backend/apps/core/tests/test_cron_api.py
@@ -14,7 +14,7 @@ tests:
 # Arquitetura de Tarefas Assíncronas, Crons & OIDC (`django.tasks`)
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [ADR-017: Infraestrutura de Tarefas Assíncronas](../adr/017-async-task-infrastructure.md) · [ADR-005: Autenticação OIDC no Scheduler](../adr/005-oidc-scheduler.md) · [Visão Geral do Sistema](system-overview.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [Guia de Tarefas em Background](../../guides/backend/create-background-tasks.md) · [Guia de Crons](../../guides/backend/register-cron-tasks.md)
+> **Relacionados:** [ADR-017: Infraestrutura de Tarefas Assíncronas](../adr/017-async-task-infrastructure.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md) · [ADR-005: Autenticação OIDC no Scheduler](../adr/005-oidc-scheduler.md) · [Visão Geral do Sistema](system-overview.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [Guia de Tarefas em Background](../../guides/backend/create-background-tasks.md) · [Guia de Crons](../../guides/backend/register-cron-tasks.md)
 
 ---
 
@@ -77,18 +77,58 @@ sequenceDiagram
 
 ## 4. Implementação Técnica
 
+- **Endpoint de Disparo:** [`run_daily_cron_batch()`](../../../backend/apps/core/cron_api.py)
+- **Decorator de Blindagem OIDC:** [`require_oidc_auth()`](../../../backend/apps/core/decorators.py)
+- **Registro Central de Tarefas:** [`cron_registry`](../../../backend/apps/core/cron/registry.py)
+
 ### A. Endpoint de Disparo em Lote (`cron_api.py`)
 O endpoint `/daily-batch/` é protegido pelo decorator `@require_oidc_auth` e orquestra a execução de todas as tarefas cadastradas no `CronRegistry`, respondendo com status `207 Multi-Status` em caso de falha parcial para alertar os monitores do GCP:
 
 ```python
---8<-- "backend/apps/core/cron_api.py:29:72"
+@cron_router.post(
+    "/daily-batch/",
+    response={200: DailyBatchResponse, 207: DailyBatchResponse},
+    auth=None,
+    operation_id="core_cron_daily_batch",
+)
+@require_oidc_auth
+def run_daily_cron_batch(request: HttpRequest) -> tuple[int, DailyBatchResponse]:
+    logger.info("Iniciando execução do lote diário de tarefas (Daily Batch Cron)...")
+    tasks_executed = cron_registry.run_batch()
+
+    has_errors = any(t["status"] == "error" for t in tasks_executed)
+    batch_status = "completed_with_errors" if has_errors else "completed"
+    http_status = 207 if has_errors else 200
+
+    payload = DailyBatchResponse(
+        status=batch_status,
+        timestamp=datetime.now(),
+        tasks=[BatchTaskResult(**t) for t in tasks_executed],
+    )
+    return http_status, payload
 ```
 
 ### B. Decorator de Validação Criptográfica OIDC (`decorators.py`)
 A autenticação extrai o token JWT do cabeçalho `Authorization: Bearer <token>`, valida as chaves públicas via Google JWKS e assegura que a requisição partiu exclusivamente da Service Account autorizada:
 
 ```python
---8<-- "backend/apps/core/decorators.py:15:57"
+def require_oidc_auth[R](view_func: Callable[..., R]) -> Callable[..., R]:
+    @wraps(view_func)
+    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> R:
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        if not auth_header.startswith("Bearer "):
+            raise AuthenticationFailedError(detail="Token OIDC ausente.", code="missing_token")
+
+        token = auth_header.replace("Bearer ", "").strip()
+        try:
+            verifier = get_oidc_verifier()
+            claim = verifier.verify_token(token)
+            logger.info("OIDC authentication successful for %s", claim.get("email"))
+        except Exception:
+            raise PermissionDeniedError(detail="Token OIDC inválido ou SA não autorizada.")
+
+        return view_func(request, *args, **kwargs)
+    return wrapper
 ```
 
 ---
@@ -100,3 +140,23 @@ O gatilho periódico é provisionado de forma imutável no arquivo `terraform/pr
 - **Frequência:** `0 2 * * *` (Todos os dias às 02:00 da manhã)
 - **Timezone:** `America/Sao_Paulo`
 - **Autenticação:** Configurado com `oidc_token` vinculado à `google_service_account.runtime_sa.email`.
+
+---
+
+## 6. Tarefas Coordenadoras Pós-Commit (`transaction.on_commit`)
+
+Conforme detalhado na [ADR-031](../adr/031-inter-module-communication.md), quando um evento de ciclo de vida principal exige múltiplos efeitos secundários em outros Bounded Contexts (como a desativação de eventos de agenda e o disparo de notificações transacionais no cancelamento de um casamento), adota-se o padrão de **tarefa coordenadora assíncrona**.
+
+O enfileiramento é vinculado estritamente ao callback de confirmação transacional do Django:
+
+```python
+# Disparo atômico pós-commit dentro do service de domínio:
+transaction.on_commit(
+    lambda: on_wedding_canceled_task.enqueue(company.id, str(instance.uuid))
+)
+```
+
+Essa abordagem garante que:
+1. **A transação web permanece ultrarrápida**, liberando o usuário e as conexões do banco Neon sem reter locks.
+2. **Zero efeitos colaterais órfãos**, pois se a transação do banco sofrer rollback, a tarefa sequer é enviada para a fila.
+3. **Resiliência a falhas**, pois erros de rede ou processamento secundário podem ser reexecutados pelo worker sem impactar o estado persistido do agregado raiz.

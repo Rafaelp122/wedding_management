@@ -10,12 +10,12 @@ from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
 )
-from apps.core.shortcuts import get_object_or_404_for_tenant, resolve_tenant_resource
+from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import BudgetCategory, Expense
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
-from apps.logistics.models import Contract
+from apps.logistics.interfaces import get_contract_for_company
 from apps.tenants.models import Company
 
 
@@ -30,9 +30,7 @@ class ExpenseService:
     """
 
     @staticmethod
-    def _validate_contract_wedding(
-        category: BudgetCategory, contract: Contract | None
-    ) -> None:
+    def _validate_contract_wedding(category: BudgetCategory, contract: Any) -> None:
         """Valida a fronteira cross-wedding entre categoria e contrato.
 
         Args:
@@ -68,12 +66,10 @@ class ExpenseService:
         Raises:
             ObjectNotFoundError: Se o contrato não for encontrado.
         """
-        contract = get_object_or_404_for_tenant(
-            Contract,
-            company,
-            contract_uuid,
+        contract = get_contract_for_company(
+            company=company,
+            contract_uuid_or_id=contract_uuid,
             select_related=["supplier"],
-            code="contract_not_found_or_denied",
         )
 
         return {
@@ -97,6 +93,13 @@ class ExpenseService:
 
         Valida se o valor total da despesa é idêntico ao total do contrato
         associado (Regra BR-F02) e auto-gera pelo menos 1 parcela de pagamento.
+
+        Regra de Negócio:
+            BR-F02:
+            docs/architecture/business-rules/finances/financial-integrity-rules.md
+        Decisão Arquitetural:
+            ADR-006 (docs/architecture/adr/006-service-layer.md)
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
 
         Args:
             company: O tenant atual para isolamento de dados.
@@ -128,12 +131,9 @@ class ExpenseService:
         contract_input = data.pop("contract", None)
 
         if contract_input:
-            contract = resolve_tenant_resource(
-                Contract,
-                company,
-                contract_input,
-                detail="Contrato inválido ou acesso negado.",
-                code="contract_not_found_or_denied",
+            contract = get_contract_for_company(
+                company=company,
+                contract_uuid_or_id=contract_input,
             )
 
         ExpenseService._validate_contract_wedding(category, contract)
@@ -236,12 +236,9 @@ class ExpenseService:
         """
         resolved_contract = None
         if contract_input:
-            resolved_contract = resolve_tenant_resource(
-                Contract,
-                company,
-                contract_input,
-                code="contract_not_found_or_denied",
-                detail="Contrato inválido ou acesso negado.",
+            resolved_contract = get_contract_for_company(
+                company=company,
+                contract_uuid_or_id=contract_input,
             )
 
         if (

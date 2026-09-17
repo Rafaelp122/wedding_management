@@ -189,6 +189,11 @@ format:
 mypy:
     docker compose exec backend uv run poe mypy
 
+# Valida arquitetura e isolamento de Bounded Contexts com Import Linter
+[group('Qualidade & CI')]
+lint-imports:
+    docker compose exec backend uv run poe lint-imports
+
 # Executa todos os checks de qualidade do Backend
 [group('Qualidade & CI')]
 check-backend:
@@ -209,6 +214,7 @@ check-landing:
 check-docs:
     uv run --project backend python scripts/validate_docs_links.py
     uv run --project backend python scripts/validate_docs_snippets.py
+    uv run --project backend python scripts/sync_doc_versions.py --check
     npx -y @google/design.md lint DESIGN.md
     just docs-build
 
@@ -230,6 +236,11 @@ docs-dev:
 [group('Documentação')]
 docs-build:
     uv run --project backend --group docs mkdocs build --strict
+
+# Sincroniza as versões dos pacotes nos badges e cards da documentação
+[group('Documentação')]
+sync-docs:
+    uv run --project backend python scripts/sync_doc_versions.py --write
 
 # Publica a documentação no GitHub Pages
 [group('Documentação')]

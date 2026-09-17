@@ -13,12 +13,10 @@ from apps.reporting.selectors.summaries import (
     ContractSummarySelector,
     FinancialSummarySelector,
     TaskSummarySelector,
+    WeddingSummarySelector,
 )
 from apps.tenants.models import Company
-from apps.weddings.selectors import (
-    critical_weddings_selector,
-    wedding_get_selector,
-)
+from apps.weddings.selectors import wedding_get_selector
 
 
 logger = logging.getLogger(__name__)
@@ -60,7 +58,9 @@ def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
         company=company
     )
 
-    critical_qs = critical_weddings_selector(company=company, today=today, limit=5)
+    critical_qs = WeddingSummarySelector.critical_weddings(
+        company=company, today=today, limit=5
+    )
 
     critical_weddings = []
     for w in critical_qs:

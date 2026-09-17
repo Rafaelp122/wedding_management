@@ -1,9 +1,10 @@
 # ADR-026: Estratégia de Branches, Ambientes e GitOps Workflow
 
-> **Status:** Aceito
-> **Data:** 1 de agosto de 2026
-> **Decisores:** Time de Arquitetura & Plataforma
-> **Relacionados:** [ADR-001](001-why-cloud-run.md) | [ADR-025](025-terraform-iac-architecture.md) | [gitops-sprint-workflow](../../onboarding/gitops-sprint-workflow.md) | [ci-cd-pipeline-flow](../concepts/ci-cd-pipeline-flow.md)
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Agosto 2026
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-001: Cloud Run para Hospedagem Serverless](001-why-cloud-run.md) · [ADR-025: Adoção de Terraform e GitOps](025-terraform-iac-architecture.md) · [ADR-027: Topologia de States do Terraform](027-terraform-state-topology.md) · [Tutorial GitOps](../../onboarding/gitops-sprint-workflow.md) · [Fluxo de CI/CD](../concepts/ci-cd-pipeline-flow.md)
 
 ---
 

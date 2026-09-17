@@ -102,6 +102,10 @@ def contract_consolidated_total_selector(
 
     Exclui termos aditivos com status CANCELED.
 
+    Regra de Negócio:
+        BR-L02-E:
+        docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md
+
     Args:
         company: O tenant atual para isolamento de dados.
         contract: Instância do contrato a ser calculado.

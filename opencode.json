@@ -34,6 +34,27 @@
           "*": "allow"
         }
       }
+    },
+    "reviewer": {
+      "mode": "primary",
+      "model": "deepseek/deepseek-v4-pro",
+      "temperature": 0.1,
+      "steps": 10,
+      "description": "Agente especializado em Code Review estático com limite de turnos e permissão somente de leitura",
+      "permission": {
+        "edit": "deny",
+        "write": "deny",
+        "task": {
+          "*": "deny"
+        },
+        "bash": {
+          "*": "allow",
+          "git push*": "deny",
+          "git commit*": "deny",
+          "git reset*": "deny",
+          "rm *": "deny"
+        }
+      }
     }
   },
   "lsp": {

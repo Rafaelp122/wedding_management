@@ -62,16 +62,67 @@ flowchart TD
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação no Código-Fonte Real
 
-### A. DTO Imutável e Seletor de Compilação (`WeddingReportDataDTO`)
+- **DTO de Agregação:** [`WeddingReportDataDTO`](../../../backend/apps/reporting/selectors/report_selectors.py)
+- **Seletor de Compilação:** [`wedding_report_data_selector()`](../../../backend/apps/reporting/selectors/report_selectors.py)
+- **Serviço Orquestrador:** [`ReportGenerationService`](../../../backend/apps/reporting/services.py)
+- **Motores de Renderização:** [`render_wedding_pdf()`](../../../backend/apps/reporting/pdf_utils.py) e [`render_wedding_excel()`](../../../backend/apps/reporting/excel_utils.py)
+
+### A. DTO Imutável e Seletor de Compilação (`report_selectors.py`)
+
 ```python
---8<-- "backend/apps/reporting/selectors/report_selectors.py:24:60"
+@dataclass(frozen=True)
+class WeddingReportDataDTO:
+    wedding: Wedding
+    overview: dict[str, Any]
+    categories: list[BudgetCategory]
+    installments: list[Installment]
+    contracts: list[Contract]
+    tasks: list[Task]
+
+def wedding_report_data_selector(*, company: Company, wedding_uuid: UUID | str) -> WeddingReportDataDTO:
+    uuid_obj = UUID(str(wedding_uuid)) if not isinstance(wedding_uuid, UUID) else wedding_uuid
+    wedding = wedding_get_selector(company=company, uuid=uuid_obj)
+    overview = wedding_overview_selector(company=company, wedding_uuid=uuid_obj)
+    # Compila coleções tipadas isoladas por tenant
+    return WeddingReportDataDTO(
+        wedding=wedding,
+        overview=overview,
+        categories=list(budget_category_list_selector(company=company, wedding=wedding)),
+        installments=list(installment_list_selector(company=company, wedding_id=wedding.uuid)),
+        contracts=list(contract_list_selector(company=company, wedding_id=wedding.uuid)),
+        tasks=list(task_list_selector(company=company, wedding_id=wedding.uuid)),
+    )
 ```
 
-### B. Serviço de Orquestração de Relatórios (`ReportGenerationService`)
+### B. Serviço de Orquestração de Relatórios (`services.py`)
+
 ```python
---8<-- "backend/apps/reporting/services.py:23:78"
+class ReportGenerationService:
+    @classmethod
+    def generate_wedding_pdf(cls, company: Company, wedding_uuid: UUID | str) -> bytes:
+        data = wedding_report_data_selector(company=company, wedding_uuid=wedding_uuid)
+        return render_wedding_pdf(
+            wedding=data.wedding,
+            overview=data.overview,
+            categories=data.categories,
+            installments=data.installments,
+            contracts=data.contracts,
+            tasks=data.tasks,
+        )
+
+    @classmethod
+    def generate_wedding_excel(cls, company: Company, wedding_uuid: UUID | str) -> bytes:
+        data = wedding_report_data_selector(company=company, wedding_uuid=wedding_uuid)
+        return render_wedding_excel(
+            wedding=data.wedding,
+            overview=data.overview,
+            categories=data.categories,
+            installments=data.installments,
+            contracts=data.contracts,
+            tasks=data.tasks,
+        )
 ```
 
 ---

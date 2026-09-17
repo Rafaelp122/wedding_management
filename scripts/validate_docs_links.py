@@ -86,8 +86,42 @@ def audit_markdown_file(path: Path, errors: list) -> int:
     return links_checked
 
 
+def audit_python_files_for_doc_links(
+    backend_dir: Path, errors: list
+) -> tuple[int, int]:
+    """Audita referências para a documentação em docstrings e comentários do código Python."""
+    py_files_checked = 0
+    py_links_checked = 0
+    doc_link_pattern = re.compile(r"docs/[a-zA-Z0-9_\-./]+\.md")
+
+    for py_file in sorted(backend_dir.rglob("*.py")):
+        if any(
+            ignored in py_file.parts
+            for ignored in (".venv", "__pycache__", ".pytest_cache")
+        ):
+            continue
+
+        py_files_checked += 1
+        content = py_file.read_text(encoding="utf-8")
+        rel_path = py_file.relative_to(BASE_DIR)
+
+        for match in doc_link_pattern.finditer(content):
+            doc_ref = match.group(0)
+            py_links_checked += 1
+            target_path = BASE_DIR / doc_ref
+
+            if not target_path.exists():
+                errors.append(
+                    f"❌ [{rel_path}] Link quebrado no código Python: '{doc_ref}' -> Arquivo Markdown não encontrado."
+                )
+
+    return py_files_checked, py_links_checked
+
+
 def main():
-    print("🔍 Iniciando validação automática de links da documentação e skills...\n")
+    print(
+        "🔍 Iniciando validação automática de links da documentação, skills e código...\n"
+    )
 
     files_checked = 0
     links_checked = 0
@@ -108,20 +142,31 @@ def main():
         files_checked += 1
         links_checked += audit_markdown_file(path, errors)
 
+    # 4. Auditoria Bidirecional no Código Python (Code -> Docs)
+    backend_dir = BASE_DIR / "backend"
+    py_files_count = 0
+    py_links_count = 0
+    if backend_dir.exists():
+        py_files_count, py_links_count = audit_python_files_for_doc_links(
+            backend_dir, errors
+        )
+
     print("📊 Resumo da Validação:")
-    print(f"   - Arquivos auditados: {files_checked}")
-    print(f"   - Links verificados:  {links_checked}")
+    print(f"   - Arquivos Markdown auditados: {files_checked}")
+    print(f"   - Links Markdown verificados:  {links_checked}")
+    print(f"   - Arquivos Python inspecionados: {py_files_count}")
+    print(f"   - Referências Code -> Docs verificadas: {py_links_count}")
 
     if errors:
         print(
-            f"\n🚨 Foram encontrados {len(errors)} erro(s) de link na documentação:\n"
+            f"\n🚨 Foram encontrados {len(errors)} erro(s) de link na documentação ou código:\n"
         )
         for err in errors:
             print(f"  {err}")
         sys.exit(1)
     else:
         print(
-            "\n✨ Todos os links da documentação e skills estão válidos e os arquivos alvo existem!"
+            "\n✨ Todos os links da documentação, skills e código estão 100% válidos!"
         )
         sys.exit(0)
 

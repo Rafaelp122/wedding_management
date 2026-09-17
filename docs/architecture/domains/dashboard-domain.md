@@ -77,16 +77,52 @@ flowchart TD
 
 ---
 
-## 4. Transclusão de Código Real
+## 4. Implementação no Código-Fonte Real
+
+- **Seletor de Resumo Macro:** [`dashboard_summary_selector()`](../../../backend/apps/reporting/selectors/dashboard_selectors.py)
+- **Seletor de Visão do Casamento:** [`wedding_overview_selector()`](../../../backend/apps/reporting/selectors/dashboard_selectors.py)
+- **Sub-Seletores de Agregação:** [`FinancialSummarySelector`](../../../backend/apps/reporting/selectors/summaries/financial.py), [`TaskSummarySelector`](../../../backend/apps/reporting/selectors/summaries/task.py), [`ContractSummarySelector`](../../../backend/apps/reporting/selectors/summaries/contract.py)
 
 ### A. Seletor Consolidado da Empresa (`dashboard_summary_selector`)
+
 ```python
---8<-- "backend/apps/reporting/selectors/dashboard_selectors.py:27:93"
+def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
+    today = date.today()
+    pending_7d = FinancialSummarySelector.pending_installments_7d(company=company, today=today)
+    overdue_amount, overdue_count = FinancialSummarySelector.overdue_installments(company=company, today=today)
+    urgent_tasks_count = TaskSummarySelector.urgent_tasks_count(company=company, today=today)
+    pending_contracts_count = ContractSummarySelector.pending_contracts_count(company=company)
+    critical_qs = critical_weddings_selector(company=company, today=today, limit=5)
+
+    return {
+        "pending_installments_7d": str(pending_7d),
+        "urgent_tasks_count": urgent_tasks_count,
+        "overdue_installments_amount": str(overdue_amount),
+        "overdue_installments_count": overdue_count,
+        "pending_contracts_count": pending_contracts_count,
+        "critical_weddings": [...],
+    }
 ```
 
 ### B. Seletor Detalhado do Casamento (`wedding_overview_selector`)
+
 ```python
---8<-- "backend/apps/reporting/selectors/dashboard_selectors.py:95:158"
+def wedding_overview_selector(*, company: Company, wedding_uuid: UUID | str) -> dict[str, Any]:
+    wedding = wedding_get_selector(company=company, uuid=wedding_uuid)
+    today = date.today()
+    days_until = max(0, (wedding.date - today).days)
+    budget_pct = FinancialSummarySelector.budget_percentage_used(company=company, wedding=wedding)
+    completion_rate = TaskSummarySelector.completion_rate(company=company, wedding=wedding)
+    signed_rate = ContractSummarySelector.signed_rate(company=company, wedding=wedding)
+
+    return {
+        "wedding_id": str(wedding.uuid),
+        "days_until": days_until,
+        "budget_percentage_used": budget_pct,
+        "tasks_completion_rate": completion_rate,
+        "contracts_signed_rate": signed_rate,
+        ...
+    }
 ```
 
 ---

@@ -14,7 +14,7 @@ tests:
 # Aplicação de Templates de Cronograma de Casamento
 
 > **Categoria:** Regra de Negócio (Domínio de Casamentos & Cronograma)
-> **Relacionados:** [Ciclo de Vida do Casamento](wedding-status-lifecycle.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Motor de Recorrência](../scheduler/recurrence-rules-engine.md) · [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Domínio de Casamentos](../../domains/weddings-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [ADR-031: Comunicação Entre Módulos](../../adr/031-inter-module-communication.md) · [Ciclo de Vida do Casamento](wedding-status-lifecycle.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Motor de Recorrência](../scheduler/recurrence-rules-engine.md) · [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Domínio de Casamentos](../../domains/weddings-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 
@@ -99,31 +99,20 @@ def get_template_events(template_name: str) -> list[dict[str, Any]]:
     return copy.deepcopy(TEMPLATES[template_name])
 ```
 
-### B. Orquestração no Serviço de Casamentos
-A função auxiliar [`_apply_template_events`](../../../../backend/apps/weddings/services.py) em `WeddingService.create` itera sobre os eventos retornados e agenda cada marco atomicamente:
+### B. Orquestração no Serviço de Casamentos via Fachada Pública ([ADR-031](../../adr/031-inter-module-communication.md))
+Em conformidade com a [ADR-031](../../adr/031-inter-module-communication.md), o domínio de casamentos **não importa models ou services do scheduler diretamente**. A função auxiliar `_apply_template_events` delega a geração para a fachada pública [`apps/scheduler/interfaces.py`](../../../../backend/apps/scheduler/interfaces.py):
 
 ```python
-# weddings/services.py (Orquestração do Caso de Uso)
-def _apply_template_events(*, wedding: Wedding, template_name: str) -> None:
-    """Aplica eventos de template ao cronograma do casamento sob transação atômica."""
-    events_data = get_template_events(template_name)
-    for data in events_data:
-        offset = timedelta(days=data["offset_days"])
-        event_date = wedding.date - offset
-        start_time = datetime.combine(event_date, time(9, 0), tzinfo=timezone.utc)
+# weddings/services.py (Delegação à Fachada Pública)
+def _apply_template_events(*, company: Company, wedding: Wedding, template_name: str) -> None:
+    """Aplica eventos de template ao cronograma do casamento via interface pública."""
+    from apps.scheduler.interfaces import apply_wedding_schedule_template
 
-        EventService.create(
-            company=wedding.company,
-            wedding=wedding,
-            payload=EventIn(
-                title=data["title"],
-                start_time=start_time,
-                end_time=start_time + timedelta(hours=1),
-                event_type=data["event_type"],
-                description=data.get("description", ""),
-            ),
-            _allow_historical_start=True,
-        )
+    apply_wedding_schedule_template(
+        company=company,
+        wedding=wedding,
+        template_name=template_name,
+    )
 ```
 
 ---

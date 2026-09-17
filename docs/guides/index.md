@@ -49,6 +49,7 @@ Navegue pelos guias e tutoriais práticos organizados por foco de atuação:
     Playbooks operacionais para o Service Layer, queries otimizadas em selectors, notificações em background, tarefas cron e testes automatizados.
 
     [:octicons-arrow-right-24: Padrão Service Layer](backend/use-core-services.md)
+    [:octicons-arrow-right-24: Comunicação Entre Módulos (DDD)](backend/inter-module-communication-guide.md)
     [:octicons-arrow-right-24: Estruturação de Modelos Ricos](backend/structure-and-modularize-rich-models.md)
     [:octicons-arrow-right-24: Query Selectors Customizados](backend/create-query-selectors.md)
     [:octicons-arrow-right-24: Suíte Pytest & Factories](backend/run-pytest-suite.md)

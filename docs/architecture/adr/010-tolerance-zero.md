@@ -1,13 +1,14 @@
 # ADR-010: Tolerância Zero em Cálculos Financeiros
 
-**Status:** Aceito
-**Data:** Janeiro 2025
-**Decisor:** Rafael
-**Contexto:** Precisão absoluta em somas financeiras (zero arredondamentos)
+> **Categoria:** Decisões de Arquitetura (ADR)
+> **Status:** 🟢 Vigente
+> **Data:** Janeiro 2025
+> **Decisor:** Rafael
+> **Relacionados:** [ADR-011: BaseModel full_clean()](011-basemodel-save-full-clean.md) · [ADR-030: Rich Domain Model e Service Layer](030-rich-domain-model-service-layer.md) · [Regras de Integridade Financeira](../business-rules/finances/financial-integrity-rules.md)
 
 ---
 
-## Contexto e Problema
+## 1. Contexto e Problema
 
 Cálculos financeiros com float geram erros de arredondamento:
 
@@ -38,17 +39,18 @@ sum_installments == total  # False :material-close-circle:
 
 ---
 
-## Decisão
+## 2. Decisão
 
-Usar **`Decimal` com tolerância zero**:
+Adotar o princípio de **Tolerância Zero** com tipo `Decimal` em todos os cálculos monetários:
 
-- ZERO arredondamentos (precisão absoluta)
-- Ajuste de centavos na última parcela
-- Validação automática `sum(installments) == contract.total_value`
+- Todos os campos monetários usam `models.DecimalField(max_digits=10, decimal_places=2)`
+- Cálculos usam classe `Decimal` de Python (nunca `float`)
+- Validação estrita: `soma(parcelas) == valor_contrato` (diferença máxima: R$ 0.00)
+- Resíduo de divisões inexatas é ajustado na última parcela
 
 ---
 
-## Justificativa
+## 3. Justificativa
 
 ### Comparação de Abordagens
 
@@ -377,7 +379,7 @@ def test_tolerance_zero_validation():
 
 ---
 
-## Por Que Ajustar a Última Parcela?
+### Racional de Ajuste na Última Parcela
 
 **Alternativas:**
 
@@ -392,7 +394,7 @@ def test_tolerance_zero_validation():
 
 ---
 
-## Trade-offs Aceitos
+### Trade-offs Aceitos
 
 **:material-close-circle: Complexidade:**
 
@@ -409,7 +411,7 @@ def test_tolerance_zero_validation():
 
 ---
 
-## Consequências
+## 4. Consequências
 
 ### Positivas :material-check-circle:
 
@@ -430,7 +432,7 @@ def test_tolerance_zero_validation():
 
 ---
 
-## Monitoramento
+### Monitoramento e Auditoria
 
 **Métricas:**
 
@@ -449,7 +451,7 @@ def test_tolerance_zero_validation():
 
 ---
 
-## Referências
+## 5. Referências
 
 - [Python Decimal Module](https://docs.python.org/3/library/decimal.html)
 - [IEEE 754 Floating Point Problems](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html)
