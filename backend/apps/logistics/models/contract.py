@@ -184,6 +184,18 @@ class Contract(TenantModel, WeddingOwnedMixin):
                 detail="O contrato pai deve pertencer ao mesmo casamento.",
                 code="contract_cross_wedding_parent",
             )
+        if self.pk:
+            current: Contract | None = parent
+            while current:
+                if current.pk == self.pk:
+                    raise BusinessRuleViolation(
+                        detail=(
+                            "Não é possível vincular um contrato pai que é "
+                            "descendente deste contrato."
+                        ),
+                        code="contract_circular_parent",
+                    )
+                current = current.parent
         self.parent = parent
 
     def remove_parent(self) -> None:

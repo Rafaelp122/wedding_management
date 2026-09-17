@@ -1,6 +1,7 @@
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, userEvent } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { toast } from "sonner";
 import { ContractDetailDialog } from "./ContractDetailDialog";
 import { createMockContract } from "@/test-data";
 import { server } from "@/mocks/server";
@@ -482,6 +483,39 @@ describe("ContractDetailDialog", () => {
 
     const sendBtn = await screen.findByRole("button", { name: "Enviar para Assinatura" });
     await user.click(sendBtn);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Contrato enviado para assinatura!");
+    });
+  });
+
+  it("shows error toast when Enviar para Assinatura fails", async () => {
+    const draftContract = createMockContract({
+      status: "DRAFT",
+      name: "Contrato Rascunho",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(draftContract);
+      }),
+      http.post("*/api/v1/logistics/contracts/:uuid/send-to-pending/", () => {
+        return HttpResponse.json(
+          { detail: "Falha ao enviar contrato." },
+          { status: 422 },
+        );
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const sendBtn = await screen.findByRole("button", { name: "Enviar para Assinatura" });
+    await user.click(sendBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Falha ao enviar contrato.");
+    });
   });
 
   it("handles Devolver para Rascunho on a PENDING contract", async () => {
@@ -504,5 +538,38 @@ describe("ContractDetailDialog", () => {
 
     const revertBtn = await screen.findByRole("button", { name: "Devolver para Rascunho" });
     await user.click(revertBtn);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Contrato retornado para rascunho!");
+    });
+  });
+
+  it("shows error toast when Devolver para Rascunho fails", async () => {
+    const pendingContract = createMockContract({
+      status: "PENDING",
+      name: "Contrato Pendente",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(pendingContract);
+      }),
+      http.post("*/api/v1/logistics/contracts/:uuid/revert-to-draft/", () => {
+        return HttpResponse.json(
+          { detail: "Falha ao reverter contrato." },
+          { status: 422 },
+        );
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const revertBtn = await screen.findByRole("button", { name: "Devolver para Rascunho" });
+    await user.click(revertBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Falha ao reverter contrato.");
+    });
   });
 });

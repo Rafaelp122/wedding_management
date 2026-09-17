@@ -260,6 +260,12 @@ class TestEventServiceUpdate:
 
         assert updated.reminder_enabled is True
 
+        disabled = EventService.update(
+            user.company, updated, EventPatchIn.model_construct(reminder_enabled=False)
+        )
+
+        assert disabled.reminder_enabled is False
+
     def test_update_cannot_change_event_type_to_payment(self, user: Any) -> None:
         """BR-S01: Não pode alterar event_type de um evento para PAYMENT."""
         wedding = WeddingFactory(user_context=user)

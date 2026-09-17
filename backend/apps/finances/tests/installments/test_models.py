@@ -463,3 +463,70 @@ class TestInstallmentDomainProperties:
             status=Installment.StatusChoices.PAID,
         )
         assert inst_paid_past.is_late is False
+
+    def test_paid_installment_immutability(self, user: Any) -> None:
+        """clean() impede alteração de dados em parcelas já pagas."""
+        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
+        inst = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            due_date=date.today(),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        inst.amount = Decimal("600.00")
+        with pytest.raises(ValidationError) as excinfo:
+            inst.clean()
+        assert "Parcelas pagas não podem" in str(excinfo.value)
+
+        inst.amount = Decimal("500.00")
+        inst.due_date = date.today() + timedelta(days=5)
+        with pytest.raises(ValidationError) as excinfo:
+            inst.clean()
+        assert "Parcelas pagas não podem" in str(excinfo.value)
+
+        inst.due_date = date.today()
+        inst.installment_number = 2
+        with pytest.raises(ValidationError) as excinfo:
+            inst.clean()
+        assert "Parcelas pagas não podem" in str(excinfo.value)
+
+    def test_validate_chronology_boundaries(self, user: Any) -> None:
+        """validate_chronology valida precedência temporal com parcelas vizinhas."""
+        expense = _setup_expense(user, actual_amount=Decimal("900.00"))
+        base_date = date.today()
+
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("300.00"),
+            due_date=base_date,
+        )
+        i2 = InstallmentFactory(
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("300.00"),
+            due_date=base_date + timedelta(days=30),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=3,
+            amount=Decimal("300.00"),
+            due_date=base_date + timedelta(days=60),
+        )
+
+        # Retorna sem erro se expense_id ou installment_number for None
+        unlinked = Installment()
+        unlinked.validate_chronology(base_date)
+
+        # Tentar mover i2 para antes de i1
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            i2.validate_chronology(base_date - timedelta(days=1))
+        assert excinfo.value.code == "due_date_before_previous_installment"
+
+        # Tentar mover i2 para depois de i3
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            i2.validate_chronology(base_date + timedelta(days=65))
+        assert excinfo.value.code == "due_date_after_next_installment"

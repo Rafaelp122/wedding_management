@@ -118,6 +118,26 @@ class TestWeddingService:
                 payload=WeddingPatchIn(**{"bride_name": "Hack"}),
             )
 
+    def test_update_wedding_status_canceled_enqueues_task(self, user, monkeypatch):
+        """Atualizar status para CANCELED via update() enfileira tarefa."""
+        from unittest.mock import MagicMock
+
+        wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.IN_PROGRESS
+        )
+        mock_task = MagicMock()
+        monkeypatch.setattr("apps.weddings.tasks.on_wedding_canceled_task", mock_task)
+        monkeypatch.setattr("django.db.transaction.on_commit", lambda fn: fn())
+
+        updated = WeddingService.update(
+            company=user.company,
+            instance=wedding,
+            payload=WeddingPatchIn(status=Wedding.StatusChoices.CANCELED),
+        )
+
+        assert updated.status == Wedding.StatusChoices.CANCELED
+        mock_task.enqueue.assert_called_once_with(user.company.id, str(wedding.uuid))
+
     def test_create_wedding_fail_fast_schema_validation_error(
         self, user, wedding_payload
     ):

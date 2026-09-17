@@ -229,6 +229,17 @@ class TestWeddingDomainMethodsAndProperties:
         assert wedding.is_completed is True
         assert wedding.get_days_until() == 0
 
+    def test_domain_properties_get_days_until_none_and_reference(
+        self, user: Any
+    ) -> None:
+        today = timezone.now().date()
+        wedding_no_date = Wedding(company=user.company, date=None)
+        assert wedding_no_date.get_days_until() == 0
+
+        wedding_future = Wedding(company=user.company, date=today + timedelta(days=50))
+        ref_date = today + timedelta(days=20)
+        assert wedding_future.get_days_until(reference_date=ref_date) == 30
+
     def test_domain_properties_canceled(self, user: Any) -> None:
         future_date = timezone.now().date() + timedelta(days=10)
         wedding = Wedding(
@@ -457,3 +468,31 @@ class TestWeddingRichOperations:
         assert wedding.bride_name == "Nova Noiva"
         assert wedding.location == "Salão B"
         assert wedding.expected_guests is None
+
+    def test_clean_raises_when_updating_date_to_past(self, user: Any) -> None:
+        """clean() rejeita atualização de data para o passado em casamento existente."""
+        today = timezone.now().date()
+        wedding = cast(
+            Wedding,
+            WeddingFactory(company=user.company, date=today + timedelta(days=10)),
+        )
+        wedding.date = today - timedelta(days=1)
+        with pytest.raises(ValidationError) as excinfo:
+            wedding.clean()
+        assert "A nova data do casamento não pode ser no passado." in str(excinfo.value)
+
+    def test_clean_allows_existing_past_date_when_unchanged(self, user: Any) -> None:
+        """clean() permite casamentos antigos se a data não foi alterada."""
+        today = timezone.now().date()
+        past = today - timedelta(days=10)
+        wedding = cast(
+            Wedding,
+            WeddingFactory.build(
+                company=user.company,
+                date=past,
+                status=Wedding.StatusChoices.IN_PROGRESS,
+            ),
+        )
+        Wedding.objects.bulk_create([wedding])
+        wedding.refresh_from_db()
+        wedding.clean()  # Não deve levantar ValidationError
