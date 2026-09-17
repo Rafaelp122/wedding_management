@@ -2,526 +2,534 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/requirements/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/001-why-cloud-run/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/002-why-neon/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/003-why-r2/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/004-presigned-urls/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/005-oidc-scheduler/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/006-service-layer/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/007-hybrid-keys/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/008-soft-delete/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/009-multitenancy/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/010-tolerance-zero/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/011-basemodel-save-full-clean/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/012-orval-contract-driven-frontend/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/013-migrate-drf-to-ninja/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/014-adocao-tipagem-estatica-mypy/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/016-pragmatic-multi-tenancy/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/017-async-task-infrastructure/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/018-playwright-e2e-testing/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/019-tenant-validation-service-layer/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/020-storage-service-abstraction/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/021-padrao-comentarios-docstrings/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/022-static-routes-for-performance/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/023-desacoplamento-modulos-scheduler-finances-weddings/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/025-terraform-iac-architecture/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/026-gitops-branching-and-deployment-strategy/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/027-terraform-state-topology/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/028-diataxis-atomic-notes/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/029-modern-task-runner-just/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/030-rich-domain-model-service-layer/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
+    </url>
+    <url>
+         <loc>https://rafaelp122.github.io/wedding_management/architecture/adr/031-inter-module-communication/</loc>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/finances/budget-category-distribution/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/finances/financial-integrity-rules/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/finances/installment-overdue-logic/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/finances/payment-schedule-integration/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/logistics/cnpj-validation-rules/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/logistics/contract-parent-child-hierarchy/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/logistics/contract-state-machine/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/notifications/in-app-notifications-rules/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/scheduler/payment-event-readonly-guard/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/scheduler/recurrence-rules-engine/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/weddings/wedding-schedule-templates/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/business-rules/weddings/wedding-status-lifecycle/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/architectural-guard-rails-suite/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/async-tasks-architecture/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/auth-jwt-flow/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/ci-cd-pipeline-flow/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/contract-pdf-upload-r2-flow/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/design-system-rationale/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/multi-tenancy-strategy/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/query-selectors-pattern/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/service-layer-pattern/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/smart-dumb-components/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/concepts/system-overview/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/core-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/dashboard-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/finances-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/logistics-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/notifications-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/reporting-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/scheduler-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/tenants-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/users-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/architecture/domains/weddings-domain/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/features/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/features/finances/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/features/logistics/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/features/scheduler/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/create-background-tasks/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/create-query-selectors/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
+    </url>
+    <url>
+         <loc>https://rafaelp122.github.io/wedding_management/guides/backend/inter-module-communication-guide/</loc>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/mark-overdue-installments/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/register-cron-tasks/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/run-pytest-suite/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/seed-database/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/send-in-app-notifications/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/structure-and-modularize-rich-models/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/backend/use-core-services/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/dev-environment/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/dev-environment/database-migrations/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/dev-environment/setup-local-environment/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/dev-environment/task-runner-just/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/documentation/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/documentation/write-and-update-docs/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/frontend/create-hook-form-zod/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/frontend/generate-orval-client/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/frontend/msw-testing-patterns/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/frontend/run-playwright-e2e/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/frontend/use-design-md-system/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/ops-troubleshooting/db-connection-locks/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/ops-troubleshooting/r2-upload-failures/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/guides/ops-troubleshooting/terraform-service-onboarding/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/onboarding/backend-first-feature/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/onboarding/frontend-first-feature/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/onboarding/gitops-sprint-workflow/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/onboarding/onboarding-quickstart/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/api/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/api/error-envelope-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/api/openapi-schema/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/commenting-standards/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/commit-convention-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/documentation-standards/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/infrastructure-services/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/query-selectors-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/guard-rails/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/guard-rails/atomic-service-audit-guard/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/guard-rails/security-permissions-guard/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/architecture-standards/guard-rails/tenant-isolation-guard/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/ci-cd/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/ci-cd/ai-code-review-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/ci-cd/cd-deploy-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/ci-cd/ci-pr-validation-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/ci-cd/terraform-pipelines-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/environment/environment-variables/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/frontend/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/frontend/landing-page-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/frontend/store-state-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/frontend/ui-components-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/models/core-models/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/terraform/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/terraform/cloud-run-service-module/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/testing/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/testing/backend-testing-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/testing/e2e-testing-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/testing/frontend-testing-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
     <url>
          <loc>https://rafaelp122.github.io/wedding_management/reference/testing/terraform-testing-spec/</loc>
-         <lastmod>2026-09-13</lastmod>
+         <lastmod>2026-09-17</lastmod>
     </url>
 </urlset>
