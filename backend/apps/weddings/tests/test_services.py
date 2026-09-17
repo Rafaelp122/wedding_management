@@ -54,7 +54,6 @@ class TestWeddingService:
         )
 
         assert updated.status == Wedding.StatusChoices.CANCELED
-        assert updated.is_canceled is True
 
     def test_create_wedding_does_not_create_financial_data_eagerly(
         self, user, wedding_payload
@@ -166,7 +165,6 @@ class TestWeddingService:
         canceled = WeddingService.cancel(company=user.company, instance=wedding)
 
         assert canceled.status == Wedding.StatusChoices.CANCELED
-        assert canceled.is_canceled is True
 
     def test_on_wedding_canceled_task_success(self, user):
         """Valida execução da task assíncrona pós-cancelamento."""

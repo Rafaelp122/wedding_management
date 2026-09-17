@@ -32,47 +32,6 @@ class TestSupplierModelMetadata:
 
 
 @pytest.mark.django_db
-class TestSupplierFullAddress:
-    """Testes da computed property full_address."""
-
-    def test_full_address_with_all_fields(self) -> None:
-        """full_address deve concatenar address, city e state."""
-        supplier = SupplierFactory.build(
-            address="Rua das Flores, 123",
-            city="São Paulo",
-            state="SP",
-        )
-
-        result = supplier.full_address
-        assert "Rua das Flores, 123" in result
-        assert "São Paulo" in result
-        assert "SP" in result
-
-    def test_full_address_without_state(self) -> None:
-        """full_address sem state não deve incluir campo vazio."""
-        supplier = SupplierFactory.build(
-            address="Av. Paulista, 1000",
-            city="São Paulo",
-            state="",
-        )
-
-        result = supplier.full_address
-        assert result == "Av. Paulista, 1000, São Paulo"
-
-    def test_full_address_minimal(self) -> None:
-        """full_address com campos vazios deve retornar string enxuta."""
-        supplier = SupplierFactory.build(
-            address="",
-            city="Rio de Janeiro",
-            state="",
-        )
-
-        result = supplier.full_address
-        assert "Rio de Janeiro" in result
-        assert result.count(", ") == 0
-
-
-@pytest.mark.django_db
 class TestSupplierCnpjValidation:
     """Testes de validação do campo CNPJ via full_clean()."""
 
@@ -99,3 +58,18 @@ class TestSupplierCnpjValidation:
         )
 
         supplier.full_clean()
+
+
+@pytest.mark.django_db
+class TestSupplierActivation:
+    """Testes de ativação e desativação semântica de fornecedor."""
+
+    def test_deactivate_supplier(self) -> None:
+        supplier = SupplierFactory.create(is_active=True)
+        supplier.deactivate()
+        assert supplier.is_active is False
+
+    def test_activate_supplier(self) -> None:
+        supplier = SupplierFactory.create(is_active=False)
+        supplier.activate()
+        assert supplier.is_active is True

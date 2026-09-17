@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, server } from "@/test-utils";
+import { render, screen, userEvent, server, waitFor } from "@/test-utils";
 import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
 import { createMockWedding } from "@/test-data";
 import { useParams } from "react-router-dom";
@@ -351,5 +351,74 @@ describe("WeddingDetailPage", () => {
     );
 
     expect(await screen.findByText("R$ 145.5k")).toBeInTheDocument();
+  });
+
+  it("completes wedding via complete button and calls API", async () => {
+    let completedCalled = false;
+    server.use(
+      http.get("*/api/v1/weddings/:uuid/", () => {
+        return HttpResponse.json({
+          ...mockWedding,
+          uuid: "some-uuid",
+          date: "2020-01-01",
+          status: "IN_PROGRESS",
+        });
+      }),
+      http.post("*/api/v1/weddings/:uuid/complete/", () => {
+        completedCalled = true;
+        return HttpResponse.json({
+          ...mockWedding,
+          uuid: "some-uuid",
+          date: "2020-01-01",
+          status: "COMPLETED",
+        });
+      })
+    );
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    const completeBtn = await screen.findByTitle("Concluir casamento");
+    await userEvent.click(completeBtn);
+
+    await waitFor(() => expect(completedCalled).toBe(true));
+  });
+
+  it("opens cancel dialog and cancels wedding via API", async () => {
+    let cancelCalled = false;
+    server.use(
+      http.get("*/api/v1/weddings/:uuid/", () => {
+        return HttpResponse.json({
+          ...mockWedding,
+          uuid: "some-uuid",
+          status: "IN_PROGRESS",
+        });
+      }),
+      http.post("*/api/v1/weddings/:uuid/cancel/", () => {
+        cancelCalled = true;
+        return HttpResponse.json({
+          ...mockWedding,
+          uuid: "some-uuid",
+          status: "CANCELED",
+        });
+      })
+    );
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    const cancelBtn = await screen.findByTitle("Cancelar casamento");
+    await userEvent.click(cancelBtn);
+
+    expect(await screen.findByText("Cancelar Casamento")).toBeInTheDocument();
+
+    const confirmBtn = screen.getByRole("button", { name: /confirmar cancelamento/i });
+    await userEvent.click(confirmBtn);
+
+    await waitFor(() => expect(cancelCalled).toBe(true));
   });
 });

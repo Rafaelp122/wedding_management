@@ -28,6 +28,7 @@ import type {
   ContractIn,
   ContractOut,
   ContractPatchIn,
+  ContractSignIn,
   ContractStatusTransitionIn,
   ContractUploadIn,
   ContractUploadUrlIn,
@@ -1161,6 +1162,261 @@ export const useLogisticsContractsTransitionStatus = <TError = ErrorType<ErrorRe
       return useMutation(getLogisticsContractsTransitionStatusMutationOptions(options), queryClient);
     }
     /**
+ * Transita o contrato de rascunho para pendente de assinaturas externas.
+ * @summary Send Contract To Pending
+ */
+export const logisticsContractsSendToPending = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ContractOut>(
+      {url: `/api/v1/logistics/contracts/${uuid}/send-to-pending/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsContractsSendToPendingMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsSendToPending>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsSendToPending>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['logisticsContractsSendToPending'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsContractsSendToPending>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  logisticsContractsSendToPending(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsContractsSendToPendingMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsContractsSendToPending>>>
+
+    export type LogisticsContractsSendToPendingMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Send Contract To Pending
+ */
+export const useLogisticsContractsSendToPending = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsSendToPending>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsContractsSendToPending>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getLogisticsContractsSendToPendingMutationOptions(options), queryClient);
+    }
+    /**
+ * Formaliza a assinatura do contrato com data e/ou anexo comprobatório.
+ * @summary Sign Contract
+ */
+export const logisticsContractsSign = (
+    uuid: string,
+    contractSignInNull?: ContractSignIn | null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ContractOut>(
+      {url: `/api/v1/logistics/contracts/${uuid}/sign/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: contractSignInNull, signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsContractsSignMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsSign>>, TError,{uuid: string;data?: ContractSignIn | null}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsSign>>, TError,{uuid: string;data?: ContractSignIn | null}, TContext> => {
+
+const mutationKey = ['logisticsContractsSign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsContractsSign>>, {uuid: string;data?: ContractSignIn | null}> = (props) => {
+          const {uuid,data} = props ?? {};
+
+          return  logisticsContractsSign(uuid,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsContractsSignMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsContractsSign>>>
+    export type LogisticsContractsSignMutationBody = ContractSignIn | null | undefined
+    export type LogisticsContractsSignMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Sign Contract
+ */
+export const useLogisticsContractsSign = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsSign>>, TError,{uuid: string;data?: ContractSignIn | null}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsContractsSign>>,
+        TError,
+        {uuid: string;data?: ContractSignIn | null},
+        TContext
+      > => {
+      return useMutation(getLogisticsContractsSignMutationOptions(options), queryClient);
+    }
+    /**
+ * Cancela/distrata o contrato de fornecedor.
+ * @summary Cancel Contract
+ */
+export const logisticsContractsCancel = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ContractOut>(
+      {url: `/api/v1/logistics/contracts/${uuid}/cancel/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsContractsCancelMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsCancel>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsCancel>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['logisticsContractsCancel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsContractsCancel>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  logisticsContractsCancel(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsContractsCancelMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsContractsCancel>>>
+
+    export type LogisticsContractsCancelMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Cancel Contract
+ */
+export const useLogisticsContractsCancel = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsCancel>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsContractsCancel>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getLogisticsContractsCancelMutationOptions(options), queryClient);
+    }
+    /**
+ * Reverte o contrato para estado de rascunho.
+ * @summary Revert Contract To Draft
+ */
+export const logisticsContractsRevertToDraft = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ContractOut>(
+      {url: `/api/v1/logistics/contracts/${uuid}/revert-to-draft/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsContractsRevertToDraftMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsRevertToDraft>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsRevertToDraft>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['logisticsContractsRevertToDraft'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsContractsRevertToDraft>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  logisticsContractsRevertToDraft(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsContractsRevertToDraftMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsContractsRevertToDraft>>>
+
+    export type LogisticsContractsRevertToDraftMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Revert Contract To Draft
+ */
+export const useLogisticsContractsRevertToDraft = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsContractsRevertToDraft>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsContractsRevertToDraft>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getLogisticsContractsRevertToDraftMutationOptions(options), queryClient);
+    }
+    /**
  * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
  * Permite filtrar por casamento, status de aquisição, busca textual e contrato.
  * @summary List Items
@@ -1609,4 +1865,256 @@ export const useLogisticsItemsTransitionStatus = <TError = ErrorType<ErrorRespon
         TContext
       > => {
       return useMutation(getLogisticsItemsTransitionStatusMutationOptions(options), queryClient);
+    }
+    /**
+ * Inicia a aquisição do item logístico, transitando para EM ANDAMENTO.
+ * @summary Start Item
+ */
+export const logisticsItemsStart = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ItemOut>(
+      {url: `/api/v1/logistics/items/${uuid}/start/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsItemsStartMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsStart>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsStart>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['logisticsItemsStart'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsItemsStart>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  logisticsItemsStart(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsItemsStartMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsItemsStart>>>
+
+    export type LogisticsItemsStartMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Start Item
+ */
+export const useLogisticsItemsStart = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsStart>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsItemsStart>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getLogisticsItemsStartMutationOptions(options), queryClient);
+    }
+    /**
+ * Conclui a aquisição do item logístico, transitando para CONCLUÍDO.
+ * @summary Complete Item
+ */
+export const logisticsItemsComplete = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ItemOut>(
+      {url: `/api/v1/logistics/items/${uuid}/complete/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsItemsCompleteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsComplete>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['logisticsItemsComplete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsItemsComplete>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  logisticsItemsComplete(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsItemsCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsItemsComplete>>>
+
+    export type LogisticsItemsCompleteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Complete Item
+ */
+export const useLogisticsItemsComplete = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsItemsComplete>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getLogisticsItemsCompleteMutationOptions(options), queryClient);
+    }
+    /**
+ * Reabre um item logístico concluído, transitando de volta para EM ANDAMENTO.
+ * @summary Reopen Item
+ */
+export const logisticsItemsReopen = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ItemOut>(
+      {url: `/api/v1/logistics/items/${uuid}/reopen/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsItemsReopenMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsReopen>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['logisticsItemsReopen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsItemsReopen>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  logisticsItemsReopen(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsItemsReopenMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsItemsReopen>>>
+
+    export type LogisticsItemsReopenMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Reopen Item
+ */
+export const useLogisticsItemsReopen = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsItemsReopen>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getLogisticsItemsReopenMutationOptions(options), queryClient);
+    }
+    /**
+ * Reverte o item logístico de volta para PENDENTE.
+ * @summary Revert Item To Pending
+ */
+export const logisticsItemsRevertToPending = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ItemOut>(
+      {url: `/api/v1/logistics/items/${uuid}/revert-to-pending/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsItemsRevertToPendingMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsRevertToPending>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsRevertToPending>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['logisticsItemsRevertToPending'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logisticsItemsRevertToPending>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  logisticsItemsRevertToPending(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogisticsItemsRevertToPendingMutationResult = NonNullable<Awaited<ReturnType<typeof logisticsItemsRevertToPending>>>
+
+    export type LogisticsItemsRevertToPendingMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Revert Item To Pending
+ */
+export const useLogisticsItemsRevertToPending = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logisticsItemsRevertToPending>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logisticsItemsRevertToPending>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getLogisticsItemsRevertToPendingMutationOptions(options), queryClient);
     }

@@ -340,7 +340,6 @@ class TestContractStatusTransitionValidation:
         contract = make_contract("DRAFT")
         contract.send_to_pending()
         assert contract.status == Contract.StatusChoices.PENDING
-        assert contract.is_pending is True
 
     def test_semantic_sign(self, make_contract: Any) -> None:
         contract = make_contract("PENDING")
@@ -350,26 +349,16 @@ class TestContractStatusTransitionValidation:
         assert contract.status == Contract.StatusChoices.SIGNED
         assert contract.signed_date == today
         assert contract.pdf_file == dummy_pdf
-        assert contract.is_signed is True
 
     def test_semantic_cancel(self, make_contract: Any) -> None:
         contract = make_contract("DRAFT")
         contract.cancel()
         assert contract.status == Contract.StatusChoices.CANCELED
-        assert contract.is_canceled is True
 
     def test_semantic_revert_to_draft(self, make_contract: Any) -> None:
         contract = make_contract("CANCELED")
         contract.revert_to_draft()
         assert contract.status == Contract.StatusChoices.DRAFT
-        assert contract.is_draft is True
-
-    def test_convenience_properties(self, make_contract: Any) -> None:
-        contract = make_contract("DRAFT")
-        assert contract.is_draft is True
-        assert contract.is_pending is False
-        assert contract.is_signed is False
-        assert contract.is_canceled is False
 
     def test_new_instance_not_validated_as_transition(self) -> None:
         """Criação direta de contrato ASSINADO não deve falhar por transição,
@@ -451,3 +440,91 @@ class TestContractHierarchyValidation:
             status=Contract.StatusChoices.DRAFT,
         )
         new_contract.clean()
+
+
+@pytest.mark.django_db
+class TestContractRichOperations:
+    """Testes para métodos e propriedades de domínio ricos em Contract (ADR-030)."""
+
+    def test_is_addendum(self, user: Any) -> None:
+        """is_addendum identifica hierarquia de contrato pai e aditivo."""
+        wedding = WeddingFactory(user_context=user)
+        parent = ContractFactory(
+            wedding=wedding, company=user.company, total_amount=Decimal("10000.00")
+        )
+        assert parent.is_addendum is False
+
+        addendum1 = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("2500.00"),
+        )
+        assert addendum1.is_addendum is True
+
+    def test_set_and_remove_parent(self, user: Any) -> None:
+        """set_parent e remove_parent controlam vínculo de aditivos."""
+        wedding1 = WeddingFactory(user_context=user)
+        wedding2 = WeddingFactory(user_context=user)
+        c1 = ContractFactory(wedding=wedding1, company=user.company)
+        c2 = ContractFactory(wedding=wedding1, company=user.company)
+        c_cross = ContractFactory(wedding=wedding2, company=user.company)
+
+        c2.set_parent(c1)
+        assert c2.parent == c1
+
+        c2.remove_parent()
+        assert c2.parent is None
+
+        with pytest.raises(BusinessRuleViolation) as exc1:
+            c1.set_parent(c1)
+        assert exc1.value.code == "contract_self_parent"
+
+        with pytest.raises(BusinessRuleViolation) as exc2:
+            c1.set_parent(c_cross)
+        assert exc2.value.code == "contract_cross_wedding_parent"
+
+    def test_attach_and_detach_file(self, user: Any) -> None:
+        """attach_file e detach_file gerenciam anexo do contrato."""
+        wedding = WeddingFactory(user_context=user)
+        contract = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            status=Contract.StatusChoices.DRAFT,
+            pdf_file=None,
+        )
+
+        contract.attach_file("contracts/test.pdf")
+        assert contract.pdf_file == "contracts/test.pdf"
+
+        contract.detach_file()
+        assert contract.pdf_file is None or not contract.pdf_file
+
+    def test_detach_file_blocked_when_signed(self, user: Any) -> None:
+        """detach_file() é bloqueado se o contrato estiver assinado."""
+        wedding = WeddingFactory(user_context=user)
+        contract = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            status=Contract.StatusChoices.SIGNED,
+            signed_date=date.today(),
+            pdf_file="contracts/doc.pdf",
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            contract.detach_file()
+        assert exc.value.code == "signed_contract_file_required"
+
+    def test_clean_status_transition(self, user: Any) -> None:
+        """clean() bloqueia transições de status inválidas no modelo."""
+        wedding = WeddingFactory(user_context=user)
+        contract = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            status=Contract.StatusChoices.DRAFT,
+        )
+
+        contract.status = Contract.StatusChoices.SIGNED
+        with pytest.raises(ValidationError) as exc:
+            contract.full_clean()
+        assert "Não é permitido transitar de 'DRAFT' para 'SIGNED'" in str(exc.value)

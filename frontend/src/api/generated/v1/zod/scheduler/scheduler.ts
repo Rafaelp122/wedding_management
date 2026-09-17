@@ -196,6 +196,9 @@ export const SchedulerTasksListQueryParams = zod.object({
   "offset": zod.int().min(schedulerTasksListQueryOffsetMin).default(schedulerTasksListQueryOffsetDefault)
 })
 
+export const schedulerTasksListResponseItemsItemIsOverdueDefault = false;
+export const schedulerTasksListResponseItemsItemDaysOverdueDefault = 0;
+
 export const SchedulerTasksListResponse = zod.object({
   "items": zod.array(zod.object({
   "uuid": zod.string(),
@@ -204,7 +207,9 @@ export const SchedulerTasksListResponse = zod.object({
   "title": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "is_completed": zod.boolean()
+  "is_completed": zod.boolean(),
+  "is_overdue": zod.boolean().default(schedulerTasksListResponseItemsItemIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksListResponseItemsItemDaysOverdueDefault)
 }).describe('Schema de saída para exibição de tarefa.')),
   "count": zod.int()
 })
@@ -226,6 +231,9 @@ export const SchedulerTasksCreateBody = zod.object({
   "is_completed": zod.boolean().default(schedulerTasksCreateBodyIsCompletedDefault)
 }).describe('Schema de entrada para criação de tarefa.')
 
+export const schedulerTasksCreateResponseIsOverdueDefault = false;
+export const schedulerTasksCreateResponseDaysOverdueDefault = 0;
+
 export const SchedulerTasksCreateResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
@@ -233,7 +241,9 @@ export const SchedulerTasksCreateResponse = zod.object({
   "title": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "is_completed": zod.boolean()
+  "is_completed": zod.boolean(),
+  "is_overdue": zod.boolean().default(schedulerTasksCreateResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksCreateResponseDaysOverdueDefault)
 }).describe('Schema de saída para exibição de tarefa.')
 
 /**
@@ -255,6 +265,9 @@ export const SchedulerTasksUpdateBody = zod.object({
   "is_completed": zod.union([zod.boolean(),zod.null()]).optional()
 }).describe('Schema de entrada para atualização parcial de tarefa.')
 
+export const schedulerTasksUpdateResponseIsOverdueDefault = false;
+export const schedulerTasksUpdateResponseDaysOverdueDefault = 0;
+
 export const SchedulerTasksUpdateResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
@@ -262,7 +275,9 @@ export const SchedulerTasksUpdateResponse = zod.object({
   "title": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "is_completed": zod.boolean()
+  "is_completed": zod.boolean(),
+  "is_overdue": zod.boolean().default(schedulerTasksUpdateResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksUpdateResponseDaysOverdueDefault)
 }).describe('Schema de saída para exibição de tarefa.')
 
 /**
@@ -274,4 +289,50 @@ export const SchedulerTasksDeleteParams = zod.object({
 })
 
 export const SchedulerTasksDeleteResponse = zod.void()
+
+/**
+ * Marca uma tarefa do checklist como concluída.
+ * @summary Complete Task
+ */
+export const SchedulerTasksCompleteParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const schedulerTasksCompleteResponseIsOverdueDefault = false;
+export const schedulerTasksCompleteResponseDaysOverdueDefault = 0;
+
+export const SchedulerTasksCompleteResponse = zod.object({
+  "uuid": zod.string(),
+  "company_id": zod.string(),
+  "wedding": zod.string(),
+  "title": zod.string(),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "is_completed": zod.boolean(),
+  "is_overdue": zod.boolean().default(schedulerTasksCompleteResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksCompleteResponseDaysOverdueDefault)
+}).describe('Schema de saída para exibição de tarefa.')
+
+/**
+ * Reabre uma tarefa concluída do checklist.
+ * @summary Reopen Task
+ */
+export const SchedulerTasksReopenParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const schedulerTasksReopenResponseIsOverdueDefault = false;
+export const schedulerTasksReopenResponseDaysOverdueDefault = 0;
+
+export const SchedulerTasksReopenResponse = zod.object({
+  "uuid": zod.string(),
+  "company_id": zod.string(),
+  "wedding": zod.string(),
+  "title": zod.string(),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "is_completed": zod.boolean(),
+  "is_overdue": zod.boolean().default(schedulerTasksReopenResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksReopenResponseDaysOverdueDefault)
+}).describe('Schema de saída para exibição de tarefa.')
 

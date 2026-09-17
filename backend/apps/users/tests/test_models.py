@@ -89,10 +89,11 @@ class TestUserModel:
         user = UserFactory(first_name="Full", last_name="Name")
         assert user.get_full_name() == "Full Name"
 
-    def test_get_short_name(self) -> None:
-        """Testa se o nome curto retorna apenas o first_name."""
-        user = UserFactory(first_name="Short", last_name="LongName")
-        assert user.get_short_name() == "Short"
+    def test_clean_normalizes_email(self) -> None:
+        """Testa se o clean() normaliza o email para minúsculo e sem espaços."""
+        user = User(email="  TESTE@EXEMPLO.COM  ")
+        user.clean()
+        assert user.email == "teste@exemplo.com"
 
     def test_email_normalization(self) -> None:
         """Testa se o Manager normaliza o domínio do email para minúsculo."""
@@ -117,3 +118,24 @@ class TestUserCompanyProtect:
 
         with pytest.raises(db_models.ProtectedError):
             company.delete()
+
+
+@pytest.mark.django_db
+class TestUserRichMethods:
+    """Testes para métodos semânticos do modelo User."""
+
+    def test_activate(self) -> None:
+        user = UserFactory(is_active=False)
+        assert user.is_active is False
+
+        user.activate()
+        assert user.is_active is True
+
+    def test_verify_email(self) -> None:
+        user = UserFactory(is_email_verified=False, email_verified_at=None)
+        assert user.is_email_verified is False
+        assert user.email_verified_at is None
+
+        user.verify_email()
+        assert user.is_email_verified is True
+        assert user.email_verified_at is not None

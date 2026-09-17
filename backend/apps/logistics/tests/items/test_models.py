@@ -3,7 +3,7 @@ from typing import Any, cast
 import pytest
 from django.core.exceptions import ValidationError
 
-from apps.core.exceptions import BusinessRuleViolation
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.logistics.models import Contract, Item
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
 from apps.logistics.tests.factories import ItemFactory as _ItemFactory
@@ -62,26 +62,6 @@ class TestItemModelMetadata:
         wedding = WeddingFactory(user_context=user)
         item = Item(wedding=wedding, name="Teste")
         assert item.quantity == 1
-
-
-@pytest.mark.django_db
-class TestItemSupplierProperty:
-    """Testes da computed property supplier."""
-
-    def test_item_supplier_comes_from_contract(self, user: Any) -> None:
-        """Fornecedor do item é derivado do contrato associado."""
-        wedding = WeddingFactory(user_context=user)
-        contract = ContractFactory(wedding=wedding, supplier__name="Decorações Ltda")
-        item = ItemFactory(contract=contract, wedding=wedding)
-
-        assert item.supplier is not None
-        assert item.supplier.name == "Decorações Ltda"
-
-    def test_item_supplier_none_when_no_contract(self, user: Any) -> None:
-        """Item sem contrato retorna supplier=None."""
-        wedding = WeddingFactory(user_context=user)
-        item = ItemFactory(wedding=wedding, contract=None)
-        assert item.supplier is None
 
 
 @pytest.mark.django_db
@@ -203,28 +183,60 @@ class TestItemStatusTransitionValidation:
         item = item_for_transition("PENDING")
         item.start()
         assert item.acquisition_status == Item.AcquisitionStatus.IN_PROGRESS
-        assert item.is_in_progress is True
 
     def test_semantic_complete(self, item_for_transition: Any) -> None:
         item = item_for_transition("IN_PROGRESS")
         item.complete()
         assert item.acquisition_status == Item.AcquisitionStatus.DONE
-        assert item.is_done is True
 
     def test_semantic_reopen(self, item_for_transition: Any) -> None:
         item = item_for_transition("DONE")
         item.reopen()
         assert item.acquisition_status == Item.AcquisitionStatus.IN_PROGRESS
-        assert item.is_in_progress is True
 
     def test_semantic_revert_to_pending(self, item_for_transition: Any) -> None:
         item = item_for_transition("IN_PROGRESS")
         item.revert_to_pending()
         assert item.acquisition_status == Item.AcquisitionStatus.PENDING
-        assert item.is_pending is True
 
-    def test_convenience_properties(self, item_for_transition: Any) -> None:
-        item = item_for_transition("PENDING")
-        assert item.is_pending is True
-        assert item.is_in_progress is False
-        assert item.is_done is False
+
+@pytest.mark.django_db
+class TestItemContractOperations:
+    """Testes de vinculação e desvinculação de contrato em Item."""
+
+    def test_assign_contract_success(self, user: User) -> None:
+        wedding = WeddingFactory(user_context=user)
+        contract = ContractFactory(wedding=wedding)
+        item = ItemFactory(wedding=wedding, contract=None)
+
+        item.assign_contract(contract)
+        assert item.contract == contract
+
+    def test_assign_contract_mismatch_raises_domain_integrity_error(
+        self, user: User
+    ) -> None:
+        wedding_1 = WeddingFactory(user_context=user)
+        wedding_2 = WeddingFactory(user_context=user)
+        contract_2 = ContractFactory(wedding=wedding_2)
+        item_1 = ItemFactory(wedding=wedding_1, contract=None)
+
+        with pytest.raises(DomainIntegrityError) as exc_info:
+            item_1.assign_contract(contract_2)
+        assert exc_info.value.code == "item_contract_wedding_mismatch"
+
+    def test_detach_contract(self, user: User) -> None:
+        wedding = WeddingFactory(user_context=user)
+        contract = ContractFactory(wedding=wedding)
+        item = ItemFactory(wedding=wedding, contract=contract)
+
+        item.detach_contract()
+        assert item.contract is None
+
+    def test_clean_blocks_invalid_status_transition_on_save(self, user: User) -> None:
+        wedding = WeddingFactory(user_context=user)
+        item = ItemFactory(
+            wedding=wedding, acquisition_status=Item.AcquisitionStatus.PENDING
+        )
+        item.acquisition_status = Item.AcquisitionStatus.DONE
+        with pytest.raises(ValidationError):
+            item.clean()

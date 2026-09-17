@@ -13,7 +13,7 @@ class SupplierIn(Schema):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: str
-    cnpj: str = Field(min_length=14, max_length=18)
+    cnpj: str = Field(default="", max_length=18)
     phone: str
     email: str
     is_active: bool = True
@@ -26,8 +26,8 @@ class SupplierIn(Schema):
     @field_validator("cnpj")
     @classmethod
     def validate_cnpj_format(cls, v: str) -> str:
-        """Valida se o CNPJ está no formato padrão XX.XXX.XXX/XXXX-XX."""
-        if not re.match(r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$", v):
+        """Valida se o CNPJ está no formato padrão XX.XXX.XXX/XXXX-XX ou vazio."""
+        if v and not re.match(r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$", v):
             raise ValueError(
                 "CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.",
             )
@@ -48,7 +48,7 @@ class SupplierPatchIn(Schema):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: str | None = None
-    cnpj: str | None = Field(default=None, min_length=14, max_length=18)
+    cnpj: str | None = Field(default=None, max_length=18)
     phone: str | None = None
     email: str | None = None
     is_active: bool | None = None

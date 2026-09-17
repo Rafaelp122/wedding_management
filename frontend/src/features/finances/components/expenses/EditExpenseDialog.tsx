@@ -9,14 +9,6 @@ import {
   FormSelectNullable,
   FormTextarea,
 } from "@/components/form-fields";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 
 interface EditExpenseDialogProps {
   expense: ExpenseOut;
@@ -95,46 +87,9 @@ export function EditExpenseDialog({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormNumber
-          control={form.control}
-          name="num_installments"
-          label="Nº de Parcelas"
-          step="1"
-          min={1}
-          placeholder="Manter atual"
-          disabled={hasPaid}
-          transformEmptyTo={null}
-        />
-
-        <FormField
-          control={form.control}
-          name="first_due_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Venc. 1ª Parcela</FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  disabled={hasPaid}
-                  value={field.value ?? ""}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value,
-                    )
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
       {hasPaid && (
         <p className="text-xs text-muted-foreground">
-          Valores e parcelamento bloqueados — há parcelas marcadas como
-          pagas. Crie uma nova despesa se precisar alterar valores.
+          Valores bloqueados — há parcelas marcadas como pagas. Crie uma nova despesa se precisar alterar valores.
         </p>
       )}
     </FormDialog>

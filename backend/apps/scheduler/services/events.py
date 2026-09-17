@@ -105,6 +105,43 @@ class EventService:
         return event
 
     @staticmethod
+    def _validate_update_payment_guards(instance: Event, data: dict[str, Any]) -> None:
+        if instance.is_payment_event:
+            raise BusinessRuleViolation(
+                detail=(
+                    "Eventos de pagamento são gerados automaticamente e não podem "
+                    "ser editados manualmente. Acesse o módulo financeiro para ajustar."
+                ),
+                code="payment_event_readonly",
+            )
+
+        # BR-S01: Não é permitido alterar o tipo de um evento para PAYMENT
+        if data.get("event_type") == Event.TypeChoices.PAYMENT:
+            raise BusinessRuleViolation(
+                detail=(
+                    "Não é permitido alterar o tipo de um evento para 'pagamento'. "
+                    "Eventos de pagamento são gerados automaticamente."
+                ),
+                code="payment_event_readonly",
+            )
+
+    @staticmethod
+    def _apply_reminder_update(
+        instance: Event, data: dict[str, Any], updated_fields: set[str]
+    ) -> None:
+        if "reminder_enabled" in data:
+            rem_enabled = data.pop("reminder_enabled")
+            if rem_enabled:
+                rem_min = data.pop(
+                    "reminder_minutes_before", instance.reminder_minutes_before
+                )
+                instance.enable_reminder(rem_min)
+                updated_fields.add("reminder_minutes_before")
+            else:
+                instance.disable_reminder()
+            updated_fields.add("reminder_enabled")
+
+    @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Event, payload: EventPatchIn) -> Event:
         """
@@ -134,30 +171,30 @@ class EventService:
         )
 
         data = payload.model_dump(exclude_unset=True)
-
-        if instance.event_type == Event.TypeChoices.PAYMENT:
-            raise BusinessRuleViolation(
-                detail=(
-                    "Eventos de pagamento são gerados automaticamente e não podem "
-                    "ser editados manualmente. Acesse o módulo financeiro para ajustar."
-                ),
-                code="payment_event_readonly",
-            )
-
-        # BR-S01: Não é permitido alterar o tipo de um evento para PAYMENT
-        if data.get("event_type") == Event.TypeChoices.PAYMENT:
-            raise BusinessRuleViolation(
-                detail=(
-                    "Não é permitido alterar o tipo de um evento para 'pagamento'. "
-                    "Eventos de pagamento são gerados automaticamente."
-                ),
-                code="payment_event_readonly",
-            )
+        EventService._validate_update_payment_guards(instance, data)
 
         data.pop("wedding", None)
         data.pop("company", None)
 
         updated_fields: set[str] = set()
+
+        if "start_time" in data or "end_time" in data:
+            new_start = data.pop("start_time", instance.start_time)
+            new_end = data.pop("end_time", instance.end_time)
+            try:
+                instance.reschedule(new_start, new_end)
+            except DjangoValidationError as e:
+                raise BusinessRuleViolation(
+                    detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                    code="event_update_validation_error",
+                ) from e
+            if "start_time" in payload.model_fields_set:
+                updated_fields.add("start_time")
+            if "end_time" in payload.model_fields_set:
+                updated_fields.add("end_time")
+
+        EventService._apply_reminder_update(instance, data, updated_fields)
+
         for field, value in data.items():
             setattr(instance, field, value)
             updated_fields.add(field)
@@ -201,7 +238,7 @@ class EventService:
         )
 
         # BR-S01: Eventos PAYMENT não podem ser deletados manualmente
-        if instance.event_type == Event.TypeChoices.PAYMENT:
+        if instance.is_payment_event:
             raise BusinessRuleViolation(
                 detail=(
                     "Eventos de pagamento são gerados automaticamente e não podem ser "

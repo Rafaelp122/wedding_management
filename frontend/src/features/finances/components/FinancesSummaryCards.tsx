@@ -9,6 +9,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { formatCurrencyBRCompact } from "@/lib/formatters";
 import { useFinancesBudgetsList } from "@/api/generated/v1/endpoints/finances/finances";
+import { calculateBudgetComparison } from "@/features/finances/utils/budgetComparison";
 
 interface WeddingFinancesSummaryCardsProps {
   totalEstimated: number;
@@ -25,31 +26,8 @@ export function WeddingFinancesSummaryCards({
 
   const { data: budgetsListResponse, isLoading: budgetsLoading } = useFinancesBudgetsList();
   const budgets = budgetsListResponse?.data?.items || [];
-  const validBudgets = budgets.filter((b) => Number(b.total_estimated) > 0);
-  const hasEnoughData = validBudgets.length >= 2;
-
-  let diffPercentage = 0;
-  let isBudgetGreater = false;
-  let isBudgetEqual = false;
-
-  if (hasEnoughData) {
-    const totalOfBudgets = validBudgets.reduce(
-      (sum, b) => sum + Number(b.total_estimated),
-      0
-    );
-    const averageBudget = totalOfBudgets / validBudgets.length;
-    if (averageBudget > 0) {
-      if (totalEstimated > averageBudget) {
-        diffPercentage = Math.round(((totalEstimated - averageBudget) / averageBudget) * 100);
-        isBudgetGreater = true;
-      } else if (totalEstimated < averageBudget) {
-        diffPercentage = Math.round(((averageBudget - totalEstimated) / averageBudget) * 100);
-        isBudgetGreater = false;
-      } else {
-        isBudgetEqual = true;
-      }
-    }
-  }
+  const { hasEnoughData, diffPercentage, isBudgetGreater, isBudgetEqual } =
+    calculateBudgetComparison(totalEstimated, budgets);
 
   // Definição do status dinâmico do Total Gasto
   let spentStatusText = "Dentro do planejado";

@@ -86,6 +86,14 @@ class SupplierService:
         updated_fields: set[str] = set()
         data = payload.model_dump(exclude_unset=True)
 
+        if "is_active" in data:
+            is_active = data.pop("is_active")
+            if is_active:
+                instance.activate()
+            else:
+                instance.deactivate()
+            updated_fields.add("is_active")
+
         for field, value in data.items():
             setattr(instance, field, value)
             updated_fields.add(field)

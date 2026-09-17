@@ -80,14 +80,15 @@ export function StatsCards({ summary }: StatsCardsProps) {
   ).filter(
     (inst) =>
       inst.status === "OVERDUE" ||
+      Boolean((inst as { is_late?: boolean }).is_late) ||
       (inst.status === "PENDING" && inst.due_date < todayStr),
   );
 
   const overdueTasksList = (tasksRes?.data?.items || []).filter(
     (task) =>
       !task.is_completed &&
-      task.due_date != null &&
-      task.due_date < todayStr,
+      (Boolean((task as { is_overdue?: boolean }).is_overdue) ||
+        (task.due_date != null && task.due_date < todayStr)),
   );
 
   const pendingContractsList = (contractsRes?.data?.items || []).filter(

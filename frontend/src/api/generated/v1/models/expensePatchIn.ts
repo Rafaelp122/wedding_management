@@ -15,6 +15,4 @@ export interface ExpensePatchIn {
   description?: string;
   estimated_amount?: number | string | null;
   actual_amount?: number | string | null;
-  num_installments?: number | null;
-  first_due_date?: string | null;
 }

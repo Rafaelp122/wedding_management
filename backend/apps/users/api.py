@@ -1,5 +1,3 @@
-from typing import Any
-
 from django.http import HttpRequest
 from ninja_extra import Router
 from ninja_extra.throttling import AnonRateThrottle
@@ -11,6 +9,7 @@ from ninja_jwt.schema import (
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES
 from apps.core.schemas import ErrorResponse
+from apps.users.models import User
 
 from .schemas import (
     GoogleAuthIn,
@@ -79,7 +78,7 @@ router = Router(tags=["auth"])
     throttle=[RegisterAnonThrottle()],
     operation_id="auth_register_user",
 )
-def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, Any]:
+def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, User]:
     """
     Cria um novo usuário e um workspace dedicado (Tenant Pragmático).
     """
@@ -191,7 +190,7 @@ def google_login(request: HttpRequest, payload: GoogleAuthIn) -> TokenOut:
 )
 def request_password_reset(
     request: HttpRequest, payload: PasswordResetRequestIn
-) -> tuple[int, Any]:
+) -> tuple[int, PasswordResetResponseOut]:
     """
     Solicita a redefinição de senha para um e-mail.
     """
@@ -210,7 +209,7 @@ def request_password_reset(
 )
 def confirm_password_reset(
     request: HttpRequest, payload: PasswordResetConfirmIn
-) -> tuple[int, Any]:
+) -> tuple[int, PasswordResetResponseOut]:
     """
     Confirma a redefinição de senha usando UID, token e a nova senha.
     """
@@ -229,7 +228,9 @@ def confirm_password_reset(
     throttle=[VerifyEmailAnonThrottle()],
     operation_id="auth_verify_email",
 )
-def verify_email(request: HttpRequest, payload: VerifyEmailIn) -> tuple[int, Any]:
+def verify_email(
+    request: HttpRequest, payload: VerifyEmailIn
+) -> tuple[int, VerifyEmailResponseOut]:
     """
     Verifica o token de e-mail e ativa o usuário.
     """
@@ -246,7 +247,7 @@ def verify_email(request: HttpRequest, payload: VerifyEmailIn) -> tuple[int, Any
 )
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationIn
-) -> tuple[int, Any]:
+) -> tuple[int, VerifyEmailResponseOut]:
     """
     Reenvia o e-mail de verificação para o usuário (se não estiver verificado).
     """

@@ -39,6 +39,11 @@ export interface ContractDetailDialogViewProps {
   onGenerateExpense?: (contract: ContractOut) => void;
   onSupplierClick?: (supplierUuid: string) => void;
   onCreateAddendum?: (parentUuid: string) => void;
+  onSendToPending?: (contract: ContractOut) => void;
+  onSign?: (contract: ContractOut) => void;
+  onCancel?: (contract: ContractOut) => void;
+  onRevertToDraft?: (contract: ContractOut) => void;
+  isTransitionPending?: boolean;
 }
 
 export const ContractDetailDialogView = memo(function ContractDetailDialogView({
@@ -55,24 +60,31 @@ export const ContractDetailDialogView = memo(function ContractDetailDialogView({
   onGenerateExpense,
   onSupplierClick,
   onCreateAddendum,
+  onSendToPending,
+  onSign,
+  onCancel,
+  onRevertToDraft,
+  isTransitionPending,
 }: ContractDetailDialogViewProps) {
   const baseAmount = contract ? Number(contract.total_amount || 0) : 0;
-  const computedAddendumsSum = addendums.reduce(
+  const fallbackAddendumsSum = addendums.reduce(
     (acc, curr) =>
       curr.status !== "CANCELED" ? acc + Number(curr.total_amount || 0) : acc,
     0,
   );
-  const addendumsTotal = contract?.addendums_total_amount
-    ? Number(contract.addendums_total_amount)
-    : computedAddendumsSum;
-  const consolidatedTotal = contract?.total_amount_with_addendums
-    ? Number(contract.total_amount_with_addendums)
-    : baseAmount + addendumsTotal;
+  const addendumsTotal =
+    contract?.addendums_total_amount != null
+      ? Number(contract.addendums_total_amount)
+      : fallbackAddendumsSum;
+  const consolidatedTotal =
+    contract?.total_amount_with_addendums != null
+      ? Number(contract.total_amount_with_addendums)
+      : baseAmount + addendumsTotal;
   const hasAddendums =
     (contract?.addendums_count ?? 0) > 0 ||
     addendums.length > 0 ||
     addendumsTotal > 0;
-  const addendumsDisplayCount = contract?.addendums_count || addendums.length;
+  const addendumsDisplayCount = contract?.addendums_count ?? addendums.length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -195,6 +207,103 @@ export const ContractDetailDialogView = memo(function ContractDetailDialogView({
                 </div>
               </DialogDescription>
             </DialogHeader>
+
+            <div className="flex flex-wrap gap-2 pt-1 pb-1">
+              {contract.status === "DRAFT" && (
+                <>
+                  {onSendToPending && (
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => onSendToPending(contract)}
+                      disabled={isTransitionPending}
+                    >
+                      Enviar para Assinatura
+                    </Button>
+                  )}
+                  {onCancel && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                      onClick={() => onCancel(contract)}
+                      disabled={isTransitionPending}
+                    >
+                      Cancelar Contrato
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {contract.status === "PENDING" && (
+                <>
+                  {onSign && (
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => onSign(contract)}
+                      disabled={isTransitionPending}
+                    >
+                      Formalizar Assinatura
+                    </Button>
+                  )}
+                  {onRevertToDraft && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => onRevertToDraft(contract)}
+                      disabled={isTransitionPending}
+                    >
+                      Devolver para Rascunho
+                    </Button>
+                  )}
+                  {onCancel && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                      onClick={() => onCancel(contract)}
+                      disabled={isTransitionPending}
+                    >
+                      Cancelar Contrato
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {contract.status === "SIGNED" && (
+                <>
+                  {onCancel && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                      onClick={() => onCancel(contract)}
+                      disabled={isTransitionPending}
+                    >
+                      Distratar / Cancelar
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {contract.status === "CANCELED" && (
+                <>
+                  {onRevertToDraft && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => onRevertToDraft(contract)}
+                      disabled={isTransitionPending}
+                    >
+                      Reabrir como Rascunho
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
 
             <div className="space-y-4">
               <Separator />

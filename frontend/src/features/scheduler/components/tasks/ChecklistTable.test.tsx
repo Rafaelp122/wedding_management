@@ -89,4 +89,62 @@ describe("WeddingChecklistTable", () => {
     const checkbox = screen.getByLabelText("Contratar buffet");
     expect(checkbox).toBeDisabled();
   });
+
+  it("renders due date formatted in pt-BR", () => {
+    render(
+      <WeddingChecklistTable
+        tasks={mockTasks}
+        onToggle={vi.fn()}
+        isUpdating={false}
+      />,
+    );
+
+    expect(screen.getByText("Prazo: 15/03/2025")).toBeInTheDocument();
+  });
+
+  it("renders overdue badge when task is overdue and incomplete", () => {
+    const overdueTasks = [
+      createMockTask({
+        uuid: "t-overdue",
+        title: "Enviar convites atrasados",
+        is_completed: false,
+        is_overdue: true,
+        days_overdue: 4,
+        due_date: "2025-01-10",
+      }),
+    ];
+
+    render(
+      <WeddingChecklistTable
+        tasks={overdueTasks}
+        onToggle={vi.fn()}
+        isUpdating={false}
+      />,
+    );
+
+    expect(screen.getByText("Atrasada (4 dias)")).toBeInTheDocument();
+  });
+
+  it("does not render overdue badge when task is completed", () => {
+    const completedTasks = [
+      createMockTask({
+        uuid: "t-done",
+        title: "Tarefa feita no passado",
+        is_completed: true,
+        is_overdue: true,
+        days_overdue: 10,
+        due_date: "2025-01-01",
+      }),
+    ];
+
+    render(
+      <WeddingChecklistTable
+        tasks={completedTasks}
+        onToggle={vi.fn()}
+        isUpdating={false}
+      />,
+    );
+
+    expect(screen.queryByText(/atrasada/i)).not.toBeInTheDocument();
+  });
 });

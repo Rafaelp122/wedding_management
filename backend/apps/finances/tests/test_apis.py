@@ -375,6 +375,87 @@ class TestFinancesNinjaAPI:
         )
         assert response.status_code == 409
 
+    def test_renegotiate_expense_installments_success(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """Renegociar parcelas de despesa redistribui parcelas e retorna 200."""
+        expense = seed_data["my_expense"]
+        response = auth_client.post(
+            f"/api/v1/finances/expenses/{expense.uuid}/renegotiate/",
+            data={"num_installments": 3, "first_due_date": "2026-11-01"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["installments_count"] == 3
+        expense.refresh_from_db()
+        assert expense.installments.count() == 3
+
+    def test_renegotiate_expense_with_paid_installment_returns_422(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """Renegociar despesa com parcelas pagas retorna 422 (BR-F04)."""
+        expense = seed_data["my_expense"]
+        first_inst = expense.installments.first()
+        assert first_inst is not None
+        auth_client.post(
+            f"/api/v1/finances/installments/{first_inst.uuid}/mark-as-paid/",
+        )
+        response = auth_client.post(
+            f"/api/v1/finances/expenses/{expense.uuid}/renegotiate/",
+            data={"num_installments": 4},
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+
+    def test_renegotiate_other_tenant_expense_returns_404(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """Tentativa de renegociar despesa de outro tenant deve retornar 404."""
+        other_expense = (
+            seed_data["my_expense"].__class__.objects.filter(name="Despesa B").first()
+        )
+        assert other_expense is not None
+        response = auth_client.post(
+            f"/api/v1/finances/expenses/{other_expense.uuid}/renegotiate/",
+            data={"num_installments": 2},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
+    def test_list_installments_exclude_paid(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """GET /installments/?exclude_paid=true deve omitir parcelas com status PAID."""
+        expense = seed_data["my_expense"]
+        # Criamos despesa com 2 parcelas
+        auth_client.post(
+            f"/api/v1/finances/expenses/{expense.uuid}/renegotiate/",
+            data={"num_installments": 2},
+            content_type="application/json",
+        )
+        first_inst = expense.installments.order_by("installment_number").first()
+        assert first_inst is not None
+        auth_client.post(
+            f"/api/v1/finances/installments/{first_inst.uuid}/mark-as-paid/",
+        )
+
+        # Sem exclude_paid: retorna ambas
+        res_all = auth_client.get(
+            f"/api/v1/finances/installments/?expense_id={expense.uuid}",
+        )
+        assert res_all.status_code == 200
+        assert len(res_all.json()["items"]) == 2
+
+        # Com exclude_paid=true: retorna apenas a pendente
+        res_unpaid = auth_client.get(
+            f"/api/v1/finances/installments/?expense_id={expense.uuid}&exclude_paid=true",
+        )
+        assert res_unpaid.status_code == 200
+        items = res_unpaid.json()["items"]
+        assert len(items) == 1
+        assert items[0]["status"] != "PAID"
+
 
 @pytest.mark.django_db
 class TestFinancesAPIErrorHandling:

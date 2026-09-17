@@ -10,6 +10,7 @@ from apps.logistics.schemas import (
     ContractIn,
     ContractOut,
     ContractPatchIn,
+    ContractSignIn,
     ContractStatusTransitionIn,
     ContractUploadIn,
     ContractUploadUrlIn,
@@ -197,4 +198,73 @@ def transition_contract_status(
         instance=contract,
         new_status=payload.status,
     )
+    return contract_get_selector(company=user.company, uuid=uuid)
+
+
+@contracts_router.post(
+    "/{uuid:uuid}/send-to-pending/",
+    response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_send_to_pending",
+)
+def send_contract_to_pending(request: AuthRequest, uuid: UUID4) -> Contract:
+    """
+    Transita o contrato de rascunho para pendente de assinaturas externas.
+    """
+    user = request.user
+    contract = contract_get_selector(company=user.company, uuid=uuid)
+    ContractService.send_to_pending(company=user.company, instance=contract)
+    return contract_get_selector(company=user.company, uuid=uuid)
+
+
+@contracts_router.post(
+    "/{uuid:uuid}/sign/",
+    response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_sign",
+)
+def sign_contract(
+    request: AuthRequest, uuid: UUID4, payload: ContractSignIn | None = None
+) -> Contract:
+    """
+    Formaliza a assinatura do contrato com data e/ou anexo comprobatório.
+    """
+    user = request.user
+    contract = contract_get_selector(company=user.company, uuid=uuid)
+    signed_date = payload.signed_date if payload else None
+    pdf_file_key = payload.pdf_file_key if payload else None
+    ContractService.sign(
+        company=user.company,
+        instance=contract,
+        signed_date=signed_date,
+        pdf_file_key=pdf_file_key,
+    )
+    return contract_get_selector(company=user.company, uuid=uuid)
+
+
+@contracts_router.post(
+    "/{uuid:uuid}/cancel/",
+    response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_cancel",
+)
+def cancel_contract(request: AuthRequest, uuid: UUID4) -> Contract:
+    """
+    Cancela/distrata o contrato de fornecedor.
+    """
+    user = request.user
+    contract = contract_get_selector(company=user.company, uuid=uuid)
+    ContractService.cancel(company=user.company, instance=contract)
+    return contract_get_selector(company=user.company, uuid=uuid)
+
+
+@contracts_router.post(
+    "/{uuid:uuid}/revert-to-draft/",
+    response={200: ContractOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_contracts_revert_to_draft",
+)
+def revert_contract_to_draft(request: AuthRequest, uuid: UUID4) -> Contract:
+    """
+    Reverte o contrato para estado de rascunho.
+    """
+    user = request.user
+    contract = contract_get_selector(company=user.company, uuid=uuid)
+    ContractService.revert_to_draft(company=user.company, instance=contract)
     return contract_get_selector(company=user.company, uuid=uuid)

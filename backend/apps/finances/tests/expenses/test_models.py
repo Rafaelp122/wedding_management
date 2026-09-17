@@ -181,27 +181,18 @@ class TestExpenseDomainProperties:
             status=Installment.StatusChoices.PENDING,
         )
 
-        assert expense.is_settled is False
-        assert expense.is_partially_paid is False
-        assert expense.balance_due == Decimal("1000.00")
         assert expense.payment_progress_percent == 0
 
         # Paga a primeira parcela
         i1.mark_as_paid()
         i1.save()
 
-        assert expense.is_settled is False
-        assert expense.is_partially_paid is True
-        assert expense.balance_due == Decimal("500.00")
         assert expense.payment_progress_percent == 50
 
         # Paga a segunda parcela
         i2.mark_as_paid()
         i2.save()
 
-        assert expense.is_settled is True
-        assert expense.is_partially_paid is False
-        assert expense.balance_due == Decimal("0.00")
         assert expense.payment_progress_percent == 100
 
     def test_properties_with_annotated_attributes(self, user: Any) -> None:
@@ -213,23 +204,65 @@ class TestExpenseDomainProperties:
         expense.paid_installments_count = 2  # type: ignore[attr-defined]
         expense.total_paid = Decimal("500.00")  # type: ignore[attr-defined]
 
-        assert expense.is_settled is False
-        assert expense.is_partially_paid is True
-        assert expense.balance_due == Decimal("500.00")
         assert expense.payment_progress_percent == 50
 
         # Simula todas pagas
         expense.paid_installments_count = 4  # type: ignore[attr-defined]
         expense.total_paid = Decimal("1000.00")  # type: ignore[attr-defined]
 
-        assert expense.is_settled is True
-        assert expense.is_partially_paid is False
-        assert expense.balance_due == Decimal("0.00")
         assert expense.payment_progress_percent == 100
 
     def test_payment_progress_percent_zero_amount(self, user: Any) -> None:
         _, category = _setup_expense(user)
         expense = _make_expense(user, category, actual_amount=Decimal("0.00"))
         assert expense.payment_progress_percent == 0
-        assert expense.is_settled is False
-        assert expense.is_partially_paid is False
+
+    def test_calculate_installment_splits(self, user: Any) -> None:
+        """calculate_installment_splits divide valores com ajuste centesimal."""
+        import datetime as dt
+
+        from apps.core.exceptions import BusinessRuleViolation
+
+        _, category = _setup_expense(user)
+        expense = _make_expense(user, category, actual_amount=Decimal("100.00"))
+        start_date = dt.date(2026, 5, 10)
+
+        splits = expense.calculate_installment_splits(3, start_date)
+        assert len(splits) == 3
+        assert splits[0] == (1, Decimal("33.33"), start_date)
+        assert splits[1] == (2, Decimal("33.33"), start_date + dt.timedelta(days=30))
+        assert splits[2] == (3, Decimal("33.34"), start_date + dt.timedelta(days=60))
+        assert sum(s[1] for s in splits) == Decimal("100.00")
+
+        # Testa validações de entrada
+        with pytest.raises(BusinessRuleViolation):
+            expense.calculate_installment_splits(0, start_date)
+
+    def test_has_paid_installments_and_first_due_date(self, user: Any) -> None:
+        """has_paid_installments e first_due_date refletem o estado das parcelas."""
+        import datetime as dt
+
+        _, category = _setup_expense(user)
+        expense = _make_expense(user, category, actual_amount=Decimal("600.00"))
+        assert expense.has_paid_installments is False
+        assert expense.first_due_date is None
+
+        i1 = InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("300.00"),
+            due_date=dt.date(2026, 6, 1),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=2,
+            amount=Decimal("300.00"),
+            due_date=dt.date(2026, 7, 1),
+        )
+
+        assert expense.first_due_date == dt.date(2026, 6, 1)
+        assert expense.has_paid_installments is False
+
+        i1.mark_as_paid()
+        i1.save()
+        assert expense.has_paid_installments is True

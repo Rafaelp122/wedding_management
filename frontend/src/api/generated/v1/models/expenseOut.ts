@@ -28,4 +28,5 @@ export interface ExpenseOut {
   total_paid?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_pending?: string;
+  payment_progress_percent?: number;
 }

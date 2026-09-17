@@ -305,3 +305,51 @@ class TestWeddingNinjaAPI:
         data = response.json()
         assert len(data) == 1
         assert data[0]["bride_name"] == "Minha Noiva"
+
+    def test_complete_wedding_api_success(self, auth_client, user):
+        """POST /api/v1/weddings/{uuid}/complete/ conclui casamento válido."""
+        today = timezone.now().date()
+        wedding = WeddingFactory(company=user.company, date=today)
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/complete/")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "COMPLETED"
+
+    def test_complete_wedding_api_premature_returns_422(self, auth_client, user):
+        """POST /api/v1/weddings/{uuid}/complete/ rejeita conclusão antes da data."""
+        future_date = timezone.now().date() + timedelta(days=5)
+        wedding = WeddingFactory(company=user.company, date=future_date)
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/complete/")
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "wedding_premature_completion"
+
+    def test_complete_wedding_api_cross_tenant_returns_404(self, auth_client):
+        """POST /api/v1/weddings/{uuid}/complete/ respeita isolamento de tenant."""
+        other_wedding = WeddingFactory()
+
+        response = auth_client.post(f"/api/v1/weddings/{other_wedding.uuid}/complete/")
+
+        assert response.status_code == 404
+
+    def test_cancel_wedding_api_success(self, auth_client, user):
+        """POST /api/v1/weddings/{uuid}/cancel/ cancela casamento em andamento."""
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/cancel/")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "CANCELED"
+
+    def test_cancel_wedding_api_cross_tenant_returns_404(self, auth_client):
+        """POST /api/v1/weddings/{uuid}/cancel/ respeita isolamento de tenant."""
+        other_wedding = WeddingFactory()
+
+        response = auth_client.post(f"/api/v1/weddings/{other_wedding.uuid}/cancel/")
+
+        assert response.status_code == 404

@@ -1,9 +1,13 @@
 import { useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useWeddingDetail } from "../hooks/useWeddingDetail";
 import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { useWeddingsComplete } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { getApiErrorInfo } from "@/api/error-utils";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDialog";
+import { CancelWeddingDialog } from "@/features/weddings/components/CancelWeddingDialog";
 import { WeddingHeader } from "@/features/weddings/components/WeddingHeader";
 import { calculateChecklistPercentage } from "@/features/weddings/utils/wedding-status";
 
@@ -15,8 +19,10 @@ import { AlertCircle } from "lucide-react";
 export default function WeddingDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const { data: response, isLoading, error, invalidateWeddingQueries } = useWeddingDetail(uuid!);
+  const { mutate: completeWedding } = useWeddingsComplete();
 
   const wedding = response?.data;
 
@@ -41,6 +47,23 @@ export default function WeddingDetailPage() {
     if (!overview) return 0;
     return calculateChecklistPercentage(overview.tasks_completed, overview.tasks_total);
   }, [overview]);
+
+  const handleComplete = () => {
+    if (!wedding) return;
+    completeWedding(
+      { uuid: wedding.uuid },
+      {
+        onSuccess: () => {
+          toast.success("Casamento concluído com sucesso!");
+          invalidateWeddingQueries();
+        },
+        onError: (err) => {
+          const { message } = getApiErrorInfo(err, "Erro ao concluir casamento.");
+          toast.error(message);
+        },
+      },
+    );
+  };
 
   if (!uuid) {
     return (
@@ -124,6 +147,8 @@ export default function WeddingDetailPage() {
         checklistPercentage={checklistPercentage}
         isLoadingOverview={isLoadingOverview}
         onEditClick={() => setEditDialogOpen(true)}
+        onCompleteClick={handleComplete}
+        onCancelClick={() => setCancelDialogOpen(true)}
       />
 
       {/* Tabs de conteúdo */}
@@ -136,6 +161,16 @@ export default function WeddingDetailPage() {
         onSuccess={() => {
           invalidateWeddingQueries();
           setEditDialogOpen(false);
+        }}
+      />
+
+      <CancelWeddingDialog
+        wedding={wedding}
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        onSuccess={() => {
+          invalidateWeddingQueries();
+          setCancelDialogOpen(false);
         }}
       />
     </div>

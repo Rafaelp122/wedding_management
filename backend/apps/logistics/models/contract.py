@@ -7,6 +7,8 @@ documentação.
 Referências: RF10, RF13
 """
 
+from __future__ import annotations
+
 from datetime import date
 from typing import Any, ClassVar
 
@@ -124,10 +126,69 @@ class Contract(TenantModel, WeddingOwnedMixin):
 
     def clean(self) -> None:
         super().clean()
+        self._clean_status_transition()
         self._clean_signed_requirements()
         self._clean_parent_hierarchy()
 
-    # ── Métodos de Ciclo de Vida da Entidade ─────────────────────────────
+    def _clean_status_transition(self) -> None:
+        if self.pk:
+            orig = Contract.objects.filter(pk=self.pk).values("status").first()
+            if orig and orig["status"] != self.status:
+                allowed = self.ALLOWED_TRANSITIONS.get(orig["status"], [])
+                if self.status not in allowed:
+                    raise ValidationError(
+                        f"Não é permitido transitar de '{orig['status']}' "
+                        f"para '{self.status}'."
+                    )
+
+    # ── Métodos de Ciclo de Vida e Operações de Domínio ─────────────────
+
+    def attach_file(self, file: Any) -> None:
+        """Anexa o arquivo de contrato físico ou digital."""
+        self.pdf_file = file
+
+    def detach_file(self) -> None:
+        """
+        Remove o arquivo anexo do contrato.
+
+        Raises:
+            BusinessRuleViolation: Se o contrato estiver assinado.
+        """
+        if self.status == self.StatusChoices.SIGNED:
+            raise BusinessRuleViolation(
+                detail="Não é possível remover o arquivo de um contrato já assinado.",
+                code="signed_contract_file_required",
+            )
+        if self.pdf_file:
+            self.pdf_file.delete(save=False)
+        self.pdf_file = None
+
+    def set_parent(self, parent: Contract) -> None:
+        """
+        Define o contrato pai vinculando este como aditivo.
+
+        Args:
+            parent: Contrato principal que atuará como pai deste aditivo.
+
+        Raises:
+            BusinessRuleViolation: Se o contrato for pai de si mesmo ou de outro
+                casamento.
+        """
+        if self.pk and parent.pk == self.pk:
+            raise BusinessRuleViolation(
+                detail="Um contrato não pode ser pai de si mesmo.",
+                code="contract_self_parent",
+            )
+        if self.wedding_id and parent.wedding_id != self.wedding_id:
+            raise BusinessRuleViolation(
+                detail="O contrato pai deve pertencer ao mesmo casamento.",
+                code="contract_cross_wedding_parent",
+            )
+        self.parent = parent
+
+    def remove_parent(self) -> None:
+        """Desvincula este contrato de seu contrato principal tornando-o autônomo."""
+        self.parent = None
 
     def can_transition_to(self, target_status: str | StatusChoices) -> bool:
         """Verifica se a transição para o status informado é válida.
@@ -190,27 +251,12 @@ class Contract(TenantModel, WeddingOwnedMixin):
         """Reverte o contrato para rascunho."""
         self.transition_to(self.StatusChoices.DRAFT)
 
-    # ── Propriedades de Conveniência ─────────────────────────────────────
+    # ── Propriedades de Domínio e Conveniência ───────────────────────────
 
     @property
-    def is_draft(self) -> bool:
-        """Indica se o contrato está em estado de rascunho."""
-        return self.status == self.StatusChoices.DRAFT
-
-    @property
-    def is_pending(self) -> bool:
-        """Indica se o contrato está pendente de assinatura."""
-        return self.status == self.StatusChoices.PENDING
-
-    @property
-    def is_signed(self) -> bool:
-        """Indica se o contrato já foi assinado."""
-        return self.status == self.StatusChoices.SIGNED
-
-    @property
-    def is_canceled(self) -> bool:
-        """Indica se o contrato foi cancelado."""
-        return self.status == self.StatusChoices.CANCELED
+    def is_addendum(self) -> bool:
+        """Indica se este contrato é um aditivo (possui contrato pai)."""
+        return self.parent_id is not None
 
     @property
     def has_file(self) -> bool:

@@ -7,18 +7,34 @@ import pytest
 
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.tests.factories import BudgetCategoryFactory, BudgetFactory
-from apps.logistics.models import Supplier
+from apps.logistics.models import Contract, Item, Supplier
 from apps.logistics.schemas import ContractIn, ItemIn, SupplierIn
 from apps.logistics.services.contract_service import ContractService
 from apps.logistics.services.item_service import ItemService
 from apps.logistics.services.supplier_service import SupplierService
-from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
+from apps.logistics.tests.factories import (
+    ContractFactory as _ContractFactory,
+)
+from apps.logistics.tests.factories import (
+    ItemFactory as _ItemFactory,
+)
+from apps.logistics.tests.factories import (
+    SupplierFactory as _SupplierFactory,
+)
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn
 from apps.weddings.services import WeddingService
 from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def ItemFactory(*args: Any, **kwargs: Any) -> Item:
+    return cast(Item, _ItemFactory(*args, **kwargs))
 
 
 def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
@@ -890,3 +906,128 @@ class TestLogisticsAPIAuth:
         """Verifica que listar fornecedores sem autenticação retorna 401."""
         response = client.get("/api/v1/logistics/suppliers/")
         assert response.status_code == 401
+
+
+@pytest.mark.django_db
+class TestContractSemanticEndpoints:
+    """Testes dos endpoints semânticos de ciclo de vida de contratos."""
+
+    def test_send_to_pending_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(wedding=wedding, status="DRAFT")
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{contract.uuid}/send-to-pending/"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "PENDING"
+
+    def test_sign_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            status="PENDING",
+            total_amount=Decimal("1500.00"),
+        )
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{contract.uuid}/sign/",
+            data=json.dumps(
+                {
+                    "signed_date": "2026-09-17",
+                    "pdf_file_key": "contracts/test.pdf",
+                }
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "SIGNED"
+        assert data["signed_date"] == "2026-09-17"
+        assert data["has_file"] is True
+
+    def test_cancel_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(wedding=wedding, status="DRAFT")
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{contract.uuid}/cancel/"
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "CANCELED"
+
+    def test_revert_to_draft_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(wedding=wedding, status="CANCELED")
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{contract.uuid}/revert-to-draft/"
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "DRAFT"
+
+    def test_contract_out_exposes_is_addendum(
+        self, auth_client: Any, user: User
+    ) -> None:
+        wedding = WeddingFactory(company=user.company)
+        parent = ContractFactory(wedding=wedding, name="Contrato Pai")
+        child = ContractFactory(wedding=wedding, parent=parent, name="Aditivo 1")
+        res_parent = auth_client.get(f"/api/v1/logistics/contracts/{parent.uuid}/")
+        assert res_parent.status_code == 200
+        assert res_parent.json()["is_addendum"] is False
+
+        res_child = auth_client.get(f"/api/v1/logistics/contracts/{child.uuid}/")
+        assert res_child.status_code == 200
+        assert res_child.json()["is_addendum"] is True
+
+    def test_contract_semantic_endpoint_multitenancy(
+        self, auth_client: Any, user: User
+    ) -> None:
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_contract = ContractFactory(wedding=other_wedding, status="DRAFT")
+        response = auth_client.post(
+            f"/api/v1/logistics/contracts/{other_contract.uuid}/send-to-pending/"
+        )
+        assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestItemSemanticEndpoints:
+    """Testes dos endpoints semânticos de ciclo de vida de itens."""
+
+    def test_start_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="PENDING")
+        response = auth_client.post(f"/api/v1/logistics/items/{item.uuid}/start/")
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "IN_PROGRESS"
+
+    def test_complete_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="IN_PROGRESS")
+        response = auth_client.post(f"/api/v1/logistics/items/{item.uuid}/complete/")
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "DONE"
+
+    def test_reopen_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="DONE")
+        response = auth_client.post(f"/api/v1/logistics/items/{item.uuid}/reopen/")
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "IN_PROGRESS"
+
+    def test_revert_to_pending_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="IN_PROGRESS")
+        response = auth_client.post(
+            f"/api/v1/logistics/items/{item.uuid}/revert-to-pending/"
+        )
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "PENDING"
+
+    def test_item_semantic_endpoint_multitenancy(
+        self, auth_client: Any, user: User
+    ) -> None:
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_item = ItemFactory(wedding=other_wedding, acquisition_status="PENDING")
+        response = auth_client.post(f"/api/v1/logistics/items/{other_item.uuid}/start/")
+        assert response.status_code == 404

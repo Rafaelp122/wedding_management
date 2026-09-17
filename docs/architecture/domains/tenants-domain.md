@@ -58,7 +58,7 @@ erDiagram
 
 | Entidade / Componente | Papel Arquitetural | Campos & Chaves | Invariantes de Persistência & Regras de Isolamento |
 | :--- | :--- | :--- | :--- |
-| **`Company`** | Agregado Raiz do Tenant | `id` (bigint PK), `uuid` (UUID4 único), `name` (max 255), `slug` (unique, indexado), `is_active` (boolean, default True) | **Anti-Colisão:** O slug é gerado a partir do nome com sufixo UUID de 8 caracteres (`slugify(name)[:40] + '-' + uuid[:8]`).<br/>**Workspace Administrativo:** O slug `admin-workspace` é reservado exclusivamente para superusuários e tarefas de sistema. |
+| **`Company`** | Agregado Raiz do Tenant | `id` (bigint PK), `uuid` (UUID4 único), `name` (max 255), `slug` (unique, indexado), `is_active` (boolean, default True) | **Anti-Colisão:** O slug é gerado a partir do nome de exibição com sufixo UUID de 8 caracteres (`slugify(display_name)[:40] + '-' + uuid[:8]`).<br/>**Workspace Administrativo:** O slug `admin-workspace` é reservado exclusivamente para superusuários e tarefas de sistema. |
 | **`TenantModel`** | Modelo Base Abstrato | `company` (`ForeignKey` para `Company`, `on_delete=models.CASCADE`), `objects = TenantManager()` | **Isolamento de Linha:** Todo modelo filho é forçado a ter `company_id`.<br/>**Índice Composto:** Possui índice `["company", "uuid"]` para garantir lookups $O(1)$ filtrados por tenant.<br/>**Manager Customizado:** Utiliza `TenantManager` que expõe `.for_tenant(company)`. |
 | **`TenantQuerySet`** | Camada de Consulta Segura | Método `.for_tenant(company: Company)` | **Filtro Estrito:** Aplica `self.filter(company=company)` no nível do QuerySet Django, prevenindo consultas vazadas entre empresas distintas. |
 | **`TenantService`** | Orquestrador de Mutação | `create_company()`, `get_or_create_admin_workspace()` | **Transação Atômica:** Executa a criação da empresa em bloco `@transaction.atomic`. Chamado de forma transparente durante o fluxo de registro do usuário (`RegistrationService`). |
@@ -154,7 +154,7 @@ def company_get_selector(*, uuid: UUID | str) -> Company:
 
 ### Camada de Frontend (`frontend/src/`)
 - **Store de Autenticação:** `useAuthStore` armazena a empresa ativa (`Company`) do usuário logado.
-- **Injeção de Header e Contexto:** O cliente Axios (`src/api/client.ts`) anexa as credenciais JWT que codificam o `company_id` e validam o tenant em cada requisição.
+- **Injeção de Header e Contexto:** O cliente Axios (`src/api/axios-instance.ts`) anexa as credenciais JWT que codificam o `company_id` e validam o tenant em cada requisição.
 
 ---
 

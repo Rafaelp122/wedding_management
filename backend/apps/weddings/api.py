@@ -108,3 +108,29 @@ def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.delete(company=user.company, instance=instance)
     return 204, None
+
+
+@router.post(
+    "/{uuid:uuid}/complete/",
+    response={200: WeddingOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="weddings_complete",
+)
+def complete_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
+    """Caso de uso: Conclui um casamento existente garantindo data válida."""
+    user = request.user
+    instance = wedding_get_selector(company=user.company, uuid=uuid)
+    WeddingService.complete(company=user.company, instance=instance)
+    return wedding_get_selector(company=user.company, uuid=uuid)
+
+
+@router.post(
+    "/{uuid:uuid}/cancel/",
+    response={200: WeddingOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="weddings_cancel",
+)
+def cancel_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
+    """Caso de uso: Cancela um casamento em andamento."""
+    user = request.user
+    instance = wedding_get_selector(company=user.company, uuid=uuid)
+    WeddingService.cancel(company=user.company, instance=instance)
+    return wedding_get_selector(company=user.company, uuid=uuid)

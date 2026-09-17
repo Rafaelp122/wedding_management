@@ -39,3 +39,14 @@ class NotificationQuerySet(TenantQuerySet["Notification"]):
         O campo wedding_name agora é persistido nativamente na entidade Notification.
         """
         return self
+
+    def mark_as_read(self) -> int:
+        """Marca notificações pendentes do queryset como lidas de forma atômica.
+
+        Returns:
+            int: Quantidade de registros atualizados.
+        """
+        from django.utils import timezone
+
+        now = timezone.now()
+        return int(self.unread().update(is_read=True, read_at=now, updated_at=now))

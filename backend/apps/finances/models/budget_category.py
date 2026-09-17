@@ -8,10 +8,12 @@ Referência: RF03
 """
 
 from decimal import Decimal
-from typing import cast
+from typing import ClassVar, cast
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Q, Sum
 
 from apps.core.mixins import WeddingOwnedMixin
 from apps.finances.managers import BudgetCategoryManager
@@ -25,6 +27,15 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
     """
 
     objects = BudgetCategoryManager()  # type: ignore[misc]
+
+    DEFAULT_NAMES: ClassVar[list[str]] = [
+        "Espaço e Buffet",
+        "Decoração e Flores",
+        "Fotografia e Vídeo",
+        "Música e Iluminação",
+        "Assessoria",
+        "Trajes e Beleza",
+    ]
 
     budget = models.ForeignKey(
         "finances.Budget",
@@ -72,7 +83,7 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         if val is not None:
             return cast(Decimal, val)
 
-        from django.db.models import Q, Sum
+        from django.db.models import Sum
 
         from apps.finances.models.installment import Installment
 
@@ -84,24 +95,27 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         )["total"] or Decimal("0.00")
 
     def clean(self) -> None:
-        """
-        Validações de integridade.
-        Nota: A consistência entre o orçamento (budget) e o casamento (wedding)
-        já é validada pelo WeddingOwnedMixin.clean().
-        """
+        """Validações de integridade e conservação do teto orçamentário (BR-F04)."""
         super().clean()
+        if (
+            self.budget_id
+            and self.allocated_budget is not None
+            and getattr(self.budget, "total_estimated", None) is not None
+        ):
+            siblings_qs = self.budget.categories.all()
+            if self.pk:
+                siblings_qs = siblings_qs.exclude(pk=self.pk)
+            allocated_siblings = siblings_qs.aggregate(total=Sum("allocated_budget"))[
+                "total"
+            ] or Decimal("0.00")
+            if allocated_siblings + self.allocated_budget > self.budget.total_estimated:
+                raise ValidationError(
+                    f"A soma das categorias alocadas "
+                    f"({allocated_siblings + self.allocated_budget}) "
+                    f"excede o teto do orçamento ({self.budget.total_estimated})."
+                )
 
     # ── Propriedades de Conveniência ─────────────────────────────────────
-
-    @property
-    def remaining_budget(self) -> Decimal:
-        """Valor restante do orçamento alocado para esta categoria."""
-        return self.allocated_budget - self.total_spent
-
-    @property
-    def is_over_budget(self) -> bool:
-        """Indica se os gastos ultrapassaram a verba alocada."""
-        return self.total_spent > self.allocated_budget
 
     @property
     def budget_utilization_percent(self) -> int:

@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 from django.db import transaction
-from django.utils import timezone
 
 from apps.core.exceptions import BusinessRuleViolation, ObjectNotFoundError
 from apps.notifications.models import Notification, NotificationType
@@ -112,51 +111,6 @@ class NotificationService:
             user.id,
         )
         return notification
-
-    @staticmethod
-    @transaction.atomic
-    def notify(
-        company: Company | UUID | str | int,
-        user: User | UUID | str | int,
-        title: str,
-        message: str,
-        notification_type: str = NotificationType.GENERAL,
-        link: str = "",
-        target_type: str = "",
-        target_id: UUID | str | None = None,
-        wedding_id: UUID | str | None = None,
-        wedding_name: str | None = None,
-    ) -> Notification:
-        """
-        Atalho de conveniência para criação e envio de notificação.
-
-        Args:
-            company: Instância ou identificador da empresa (tenant).
-            user: Usuário destinatário da notificação.
-            title: Título da notificação.
-            message: Mensagem textual da notificação.
-            notification_type: Tipo da notificação (ex: GENERAL, REMINDER).
-            link: URL ou rota associada.
-            target_type: Tipo do recurso vinculado.
-            target_id: Identificador do recurso vinculado.
-            wedding_id: Identificador do casamento relacionado.
-            wedding_name: Nome do casamento relacionado.
-
-        Returns:
-            A notificação criada e persistida.
-        """
-        return NotificationService.create_notification(
-            company=company,
-            user=user,
-            title=title,
-            message=message,
-            notification_type=notification_type,
-            link=link,
-            target_type=target_type,
-            target_id=target_id,
-            wedding_id=wedding_id,
-            wedding_name=wedding_name,
-        )
 
     @staticmethod
     def create_async_notification(
@@ -263,9 +217,8 @@ class NotificationService:
         Returns:
             int: Quantidade de notificações que mudaram para lidas.
         """
-        now = timezone.now()
-        qs = Notification.objects.for_tenant(company).for_user(user).unread()
-        count = int(qs.update(is_read=True, read_at=now, updated_at=now))
+        qs = Notification.objects.for_tenant(company).for_user(user)
+        count = qs.mark_as_read()
         logger.info(
             "Todas as notificações marcadas como lidas: count=%d para user_id=%s",
             count,
@@ -324,14 +277,12 @@ class NotificationService:
         Returns:
             int: Quantidade de notificações atualizadas.
         """
-        now = timezone.now()
         qs = (
             Notification.objects.for_tenant(company)
             .for_user(user)
-            .unread()
             .filter(uuid__in=notification_ids)
         )
-        count = int(qs.update(is_read=True, read_at=now, updated_at=now))
+        count = qs.mark_as_read()
         logger.info(
             "Notificações em lote marcadas como lidas: count=%d para user_id=%s",
             count,

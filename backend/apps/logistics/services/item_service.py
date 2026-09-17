@@ -135,14 +135,8 @@ class ItemService:
             wedding = contract.wedding
             if wedding_input:
                 resolved_wedding = ItemService._resolve_wedding(company, wedding_input)
-                if resolved_wedding and wedding != resolved_wedding:
-                    raise DomainIntegrityError(
-                        detail=(
-                            "O wedding informado não corresponde ao wedding "
-                            "do contrato."
-                        ),
-                        code="item_contract_wedding_mismatch",
-                    )
+                if resolved_wedding:
+                    wedding = resolved_wedding
         else:
             wedding = ItemService._resolve_wedding(company, wedding_input)
 
@@ -154,7 +148,17 @@ class ItemService:
             )
 
         item = Item(company=company, wedding=wedding, contract=contract, **data)
-        item.save()
+        try:
+            item.save()
+        except ValidationError as exc:
+            if "contract" in getattr(exc, "message_dict", {}):
+                raise DomainIntegrityError(
+                    detail=(
+                        "O wedding informado não corresponde ao wedding do contrato."
+                    ),
+                    code="item_contract_wedding_mismatch",
+                ) from exc
+            raise
 
         logger.info(f"Item criado com sucesso: uuid={item.uuid}")
         return item
@@ -198,12 +202,10 @@ class ItemService:
         if "contract" in data:
             contract_input = data.pop("contract")
             contract = ItemService._resolve_contract(company, contract_input)
-            if contract and contract.wedding != instance.wedding:
-                raise DomainIntegrityError(
-                    detail="O contrato informado não pertence ao casamento deste item.",
-                    code="item_contract_wedding_mismatch",
-                )
-            instance.contract = contract
+            if contract:
+                instance.assign_contract(contract)
+            else:
+                instance.detach_contract()
             updated_fields.add("contract")
 
         status_input = data.pop("acquisition_status", None)
@@ -217,7 +219,17 @@ class ItemService:
 
         if updated_fields:
             updated_fields.add("updated_at")
-            instance.save(update_fields=list(updated_fields))
+            try:
+                instance.save(update_fields=list(updated_fields))
+            except ValidationError as exc:
+                if "contract" in getattr(exc, "message_dict", {}):
+                    raise DomainIntegrityError(
+                        detail=(
+                            "O contrato informado não pertence ao casamento deste item."
+                        ),
+                        code="item_contract_wedding_mismatch",
+                    ) from exc
+                raise
 
         logger.info(f"Item uuid={instance.uuid} atualizado com sucesso.")
         return instance

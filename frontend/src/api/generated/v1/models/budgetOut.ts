@@ -15,5 +15,9 @@ export interface BudgetOut {
   total_estimated: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_overall_spent?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_allocated?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  unallocated_budget?: string;
   notes?: string | null;
 }

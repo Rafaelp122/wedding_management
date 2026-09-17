@@ -10,6 +10,7 @@ from apps.finances.schemas import (
     ExpenseIn,
     ExpenseOut,
     ExpensePatchIn,
+    ExpenseRenegotiateIn,
 )
 from apps.finances.selectors import expense_get_selector, expense_list_selector
 from apps.finances.services.expense_service import ExpenseService
@@ -106,3 +107,26 @@ def from_document(request: AuthRequest, uuid: UUID4) -> ExpenseFromDocumentOut:
     user = request.user
     data = ExpenseService.from_document(company=user.company, contract_uuid=uuid)
     return ExpenseFromDocumentOut(**data)
+
+
+@expenses_router.post(
+    "/{uuid:uuid}/renegotiate/",
+    response={200: ExpenseOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="finances_expenses_renegotiate",
+)
+def renegotiate_expense(
+    request: AuthRequest, uuid: UUID4, payload: ExpenseRenegotiateIn
+) -> Expense:
+    """
+    Renegocia e redistribui as parcelas de uma despesa.
+    Bloqueia a operação se houver parcelas já marcadas como pagas (BR-F04).
+    """
+    user = request.user
+    instance = expense_get_selector(company=user.company, uuid=uuid)
+    ExpenseService.renegotiate_installments(
+        company=user.company,
+        expense=instance,
+        num_installments=payload.num_installments,
+        first_due_date=payload.first_due_date,
+    )
+    return expense_get_selector(company=user.company, uuid=instance.uuid)

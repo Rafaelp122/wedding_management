@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
-  useFinancesExpensesUpdate,
+  useFinancesExpensesRenegotiate,
   getFinancesInstallmentsListQueryKey,
   getFinancesExpensesReadQueryKey,
 } from "@/api/generated/v1/endpoints/finances/finances";
@@ -24,7 +24,7 @@ export function ExpenseRedistributeForm({
   firstExistingDate,
 }: ExpenseRedistributeFormProps) {
   const queryClient = useQueryClient();
-  const updateMutation = useFinancesExpensesUpdate();
+  const renegotiateMutation = useFinancesExpensesRenegotiate();
 
   const [numInstallments, setNumInstallments] = useState(currentCount);
   const [firstDueDate, setFirstDueDate] = useState(
@@ -33,7 +33,7 @@ export function ExpenseRedistributeForm({
 
   const handleApply = async () => {
     try {
-      await updateMutation.mutateAsync({
+      await renegotiateMutation.mutateAsync({
         uuid: expenseUuid,
         data: {
           num_installments: numInstallments,
@@ -81,7 +81,7 @@ export function ExpenseRedistributeForm({
           size="sm"
           className="h-8 text-xs"
           onClick={handleApply}
-          disabled={updateMutation.isPending}
+          disabled={renegotiateMutation.isPending}
         >
           Aplicar
         </Button>

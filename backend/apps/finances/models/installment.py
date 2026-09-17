@@ -82,7 +82,74 @@ class Installment(TenantModel, WeddingOwnedMixin):
                 "Parcela PAGA precisa ter data de pagamento preenchida"
             )
 
-    # ── Métodos de Ciclo de Vida da Entidade ─────────────────────────────
+        # BR-F06: Imutabilidade de parcelas pagas
+        if self.pk:
+            orig = (
+                Installment.objects.filter(pk=self.pk)
+                .values("status", "amount", "due_date", "installment_number")
+                .first()
+            )
+            if orig and orig["status"] == self.StatusChoices.PAID:
+                if (
+                    self.amount != orig["amount"]
+                    or self.due_date != orig["due_date"]
+                    or self.installment_number != orig["installment_number"]
+                ):
+                    raise ValidationError(
+                        "Parcelas pagas não podem ter valor, vencimento ou número "
+                        "alterados. Faça a reversão antes de ajustar."
+                    )
+
+    # ── Métodos de Domínio e Ciclo de Vida da Entidade ──────────────────
+
+    def validate_chronology(self, new_due_date: date) -> None:
+        """
+        Valida a regra BR-F05 de consistência temporal com parcelas vizinhas.
+
+        Args:
+            new_due_date: Nova data de vencimento proposta.
+
+        Raises:
+            BusinessRuleViolation: Se a data conflitar com parcelas vizinhas.
+        """
+        if not self.expense_id or not self.installment_number:
+            return
+
+        prev = (
+            Installment.objects.filter(
+                expense_id=self.expense_id,
+                installment_number__lt=self.installment_number,
+            )
+            .exclude(pk=self.pk)
+            .order_by("-installment_number")
+            .first()
+        )
+        if prev and new_due_date < prev.due_date:
+            raise BusinessRuleViolation(
+                detail=(
+                    "A data de vencimento não pode ser anterior à "
+                    f"parcela #{prev.installment_number} ({prev.due_date})."
+                ),
+                code="due_date_before_previous_installment",
+            )
+
+        nxt = (
+            Installment.objects.filter(
+                expense_id=self.expense_id,
+                installment_number__gt=self.installment_number,
+            )
+            .exclude(pk=self.pk)
+            .order_by("installment_number")
+            .first()
+        )
+        if nxt and new_due_date > nxt.due_date:
+            raise BusinessRuleViolation(
+                detail=(
+                    "A data de vencimento não pode ser posterior à "
+                    f"parcela #{nxt.installment_number} ({nxt.due_date})."
+                ),
+                code="due_date_after_next_installment",
+            )
 
     def can_transition_to(self, target_status: str | StatusChoices) -> bool:
         """Verifica se a transição para o status informado é válida.
@@ -166,38 +233,11 @@ class Installment(TenantModel, WeddingOwnedMixin):
             )
         self.transition_to(self.StatusChoices.OVERDUE)
 
-    # ── Propriedades de Conveniência ─────────────────────────────────────
-
-    @property
-    def is_paid(self) -> bool:
-        """Indica se a parcela está com status PAGO."""
-        return self.status == self.StatusChoices.PAID
-
-    @property
-    def is_pending(self) -> bool:
-        """Indica se a parcela está com status PENDENTE."""
-        return self.status == self.StatusChoices.PENDING
-
-    @property
-    def is_overdue(self) -> bool:
-        """Indica se a parcela está com status ATRASADO."""
-        return self.status == self.StatusChoices.OVERDUE
+    # ── Propriedades de Domínio com Consumidores Ativos ─────────────────
 
     @property
     def is_late(self) -> bool:
         """Indica se a parcela está pendente e com vencimento ultrapassado."""
-        return self.is_pending and self.due_date < date.today()
-
-    @property
-    def days_overdue(self) -> int:
-        """Número de dias em atraso em relação à data atual."""
-        if self.due_date < date.today():
-            return (date.today() - self.due_date).days
-        return 0
-
-    @property
-    def days_until_due(self) -> int:
-        """Número de dias restantes até a data de vencimento."""
-        if self.due_date >= date.today():
-            return (self.due_date - date.today()).days
-        return 0
+        return (
+            self.status == self.StatusChoices.PENDING and self.due_date < date.today()
+        )

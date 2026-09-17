@@ -403,9 +403,10 @@ class TestExpenseServiceUpdate:
         assert "update_fields" in kwargs
         assert set(kwargs["update_fields"]) == {"name", "description", "updated_at"}
 
-    def test_update_expense_amount_with_installment_count(self, user: Any) -> None:
-        """Alterar actual_amount + especificar num_installments redistribui
-        com o número informado."""
+    def test_update_expense_amount_adjusts_existing_installments(
+        self, user: Any
+    ) -> None:
+        """Alterar actual_amount ajusta proporcionalmente as parcelas existentes."""
         category = _setup_category(user)
         expense = ExpenseFactory(
             wedding=category.wedding,
@@ -428,8 +429,6 @@ class TestExpenseServiceUpdate:
             expense,
             ExpensePatchIn.model_construct(
                 actual_amount=Decimal("900.00"),
-                num_installments=3,
-                first_due_date=date.today(),
             ),
         )
 
@@ -771,30 +770,6 @@ class TestExpenseServiceInstallmentDistribution:
         assert total == Decimal("100.00")
         assert expense.installments.count() == 3
 
-    def test_update_redistribute_invalid_number(self, user: Any) -> None:
-        """Redistribuir com num_installments < 1 levanta BusinessRuleViolation."""
-        category = _setup_category(user)
-        expense = ExpenseFactory(
-            wedding=category.wedding,
-            category=category,
-            contract=None,
-            actual_amount=Decimal("500.00"),
-        )
-        InstallmentFactory(
-            expense=expense, installment_number=1, amount=Decimal("500.00")
-        )
-
-        with pytest.raises(BusinessRuleViolation) as exc:
-            ExpenseService.update(
-                user.company,
-                expense,
-                ExpensePatchIn.model_construct(
-                    actual_amount=Decimal("500.00"),
-                    num_installments=0,
-                ),
-            )
-        assert exc.value.code == "invalid_installment_number"
-
 
 class TestExpenseServiceValidateContractWedding:
     """Testes isolados para o método interno _validate_contract_wedding."""
@@ -832,3 +807,101 @@ class TestExpenseServiceValidateContractWedding:
             )
 
         assert exc.value.code == "expense_contract_wedding_mismatch"
+
+
+@pytest.mark.django_db
+class TestExpenseServiceRenegotiate:
+    """Testes para o método ExpenseService.renegotiate_installments."""
+
+    def test_renegotiate_installments_success(self, user: Any) -> None:
+        """Renegociação bem-sucedida redistribui as parcelas com novo número e datas."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("1200.00"),
+        )
+        InstallmentFactory(
+            expense=expense, installment_number=1, amount=Decimal("1200.00")
+        )
+
+        future_date = date.today()
+        renegotiated = ExpenseService.renegotiate_installments(
+            company=user.company,
+            expense=expense,
+            num_installments=4,
+            first_due_date=future_date,
+        )
+
+        assert renegotiated.installments.count() == 4
+        total = sum(i.amount for i in renegotiated.installments.all())
+        assert total == Decimal("1200.00")
+
+    def test_renegotiate_installments_invalid_number(self, user: Any) -> None:
+        """num_installments < 1 levanta BusinessRuleViolation."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        InstallmentFactory(
+            expense=expense, installment_number=1, amount=Decimal("500.00")
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            ExpenseService.renegotiate_installments(
+                company=user.company,
+                expense=expense,
+                num_installments=0,
+            )
+        assert exc.value.code == "invalid_installment_number"
+
+    def test_renegotiate_installments_blocked_by_paid(self, user: Any) -> None:
+        """Renegociação bloqueada se houver parcelas pagas."""
+        category = _setup_category(user)
+        expense = ExpenseFactory(
+            wedding=category.wedding,
+            category=category,
+            contract=None,
+            actual_amount=Decimal("500.00"),
+        )
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("500.00"),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            ExpenseService.renegotiate_installments(
+                company=user.company,
+                expense=expense,
+                num_installments=3,
+            )
+        assert exc.value.code == "redistribute_blocked_by_paid"
+
+    def test_renegotiate_cross_tenant(self, user: Any) -> None:
+        """Despesa de outro tenant não pode ser renegociada."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_budget = BudgetFactory(wedding=other_wedding)
+        other_category = BudgetCategoryFactory(
+            budget=other_budget, wedding=other_wedding
+        )
+        other_expense = ExpenseFactory(
+            wedding=other_wedding,
+            category=other_category,
+            company=other_user.company,
+            contract=None,
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            ExpenseService.renegotiate_installments(
+                company=user.company,
+                expense=other_expense,
+                num_installments=2,
+            )

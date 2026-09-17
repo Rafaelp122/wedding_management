@@ -174,7 +174,9 @@ export function DashboardOperationsView({
             ) : (
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
                 {urgentTasks.map((task) => {
-                  const isOverdue = task.due_date && task.due_date < todayStr;
+                  const isOverdue =
+                    (task as { is_overdue?: boolean }).is_overdue ??
+                    Boolean(task.due_date && task.due_date < todayStr);
                   return (
                     <div
                       key={task.uuid}

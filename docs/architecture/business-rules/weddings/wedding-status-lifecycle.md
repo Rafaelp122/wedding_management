@@ -78,11 +78,12 @@ stateDiagram-v2
 A lógica de transição e cálculo reside diretamente em [`apps/weddings/models.py`](../../../../backend/apps/weddings/models.py):
 
 - `wedding.complete()`: Conclui o evento validando que a data já chegou.
-- `wedding.cancel(reason=...)`: Cancela o evento caso não esteja concluído.
+- `wedding.cancel()`: Cancela o evento caso não esteja concluído.
 - `wedding.reopen()`: Retorna um evento cancelado para o status em andamento.
 - `wedding.can_transition_to(target_status)`: Consulta a matriz `ALLOWED_TRANSITIONS`.
-- `wedding.days_until`: Retorna a quantidade de dias restantes até o casamento em memória.
-- `wedding.is_completed`, `wedding.is_canceled`, `wedding.is_in_progress`, `wedding.is_past`: Propriedades de conveniência.
+- `wedding.get_days_until(reference_date)`: Retorna a quantidade de dias restantes até o casamento.
+- `wedding.is_completed`: Propriedade indicando se o evento já foi realizado e concluído.
+- `wedding.display_name`: Nome formatado de exibição canônica do casamento.
 
 ```python
 # Exemplo canônico de uso do modelo rico:
@@ -93,12 +94,12 @@ if wedding.can_transition_to(Wedding.StatusChoices.COMPLETED):
     wedding.save()
 ```
 
-### B. Orquestração no `WeddingService`
+### B. Orquestração no `WeddingService` e Endpoints de API
 O serviço em [`apps/weddings/services.py`](../../../../backend/apps/weddings/services.py) coordena transações, verificações de tenant e orquestra a persistência:
 
-- `WeddingService.complete(company, instance)`: Caso de uso para conclusão segura.
-- `WeddingService.cancel(company, instance, reason)`: Caso de uso para cancelamento.
-- `WeddingService.update(company, instance, payload)`: Delega atualizações de status para `instance.transition_to()`.
+- `WeddingService.complete(company, instance)`: Caso de uso para conclusão segura, exposto em `POST /api/v1/weddings/{uuid}/complete/` (`weddings_complete`).
+- `WeddingService.cancel(company, instance)`: Caso de uso para cancelamento com disparo de task assíncrona pós-commit, exposto em `POST /api/v1/weddings/{uuid}/cancel/` (`weddings_cancel`).
+- `WeddingService.update(company, instance, payload)`: Delega atualizações cadastrais e transições de status para `instance.transition_to()`.
 - `WeddingService.delete(company, instance)`: Trata proteção relacional com o banco.
 
 ---

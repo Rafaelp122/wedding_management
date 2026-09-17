@@ -73,8 +73,8 @@ erDiagram
 O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer), estruturado em três níveis de validação:
 
 - **Modelos de Domínio Ricos:**
-  - [`apps/scheduler/models/event.py`](../../../backend/apps/scheduler/models/event.py) (`Event`): Encapsula invariantes temporais em `clean()` (`end_time >= start_time`), propriedades semânticas (`is_payment_event`, `is_recurrent`, `duration`) e método de reprogramação `reschedule()`.
-  - [`apps/scheduler/models/task.py`](../../../backend/apps/scheduler/models/task.py) (`Task`): Encapsula métodos de ciclo de vida (`complete()`, `reopen()`) e propriedades dinâmicas de atraso (`is_overdue`, `days_overdue`).
+  - [`apps/scheduler/models/event.py`](../../../backend/apps/scheduler/models/event.py) (`Event`): Encapsula invariantes temporais em `clean()` (`end_time >= start_time`), propriedade semântica `is_payment_event`, configuração de lembretes (`enable_reminder`, `disable_reminder`) e método de reprogramação `reschedule()`.
+  - [`apps/scheduler/models/task.py`](../../../backend/apps/scheduler/models/task.py) (`Task`): Encapsula métodos de ciclo de vida (`complete()`, `reopen()`, `update_details()`) e propriedades dinâmicas de atraso (`is_overdue`, `days_overdue`).
 - **Casos de Uso e Serviços:**
   - [`apps/scheduler/services/events.py`](../../../backend/apps/scheduler/services/events.py) (`EventService`): Orquestra criação e mutações sob `@transaction.atomic`, validando a proteção somente-leitura de pagamentos (BR-S01), data futura na criação manual (BR-S02) e salvando estritamente com `update_fields`.
   - [`apps/scheduler/services/tasks.py`](../../../backend/apps/scheduler/services/tasks.py) (`TaskService`): Coordena checklist, métodos semânticos `complete()` e `reopen()` e mutações cirúrgicas por `update_fields`.
@@ -94,11 +94,11 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Managers:** `EventQuerySet`, `TaskQuerySet` em `managers.py`.
 - **Services:** `events.py`, `tasks.py`, `templates.py`.
 - **Selectors:** `event_selectors.py`, `task_selectors.py`.
-- **Endpoints:** `api.py` com roteadores `/scheduler/events/` e `/scheduler/tasks/`.
+- **Endpoints:** `api/events.py` (`/scheduler/events/`) e `api/tasks.py` (`/scheduler/tasks/`, com endpoints de ciclo de vida `POST /{uuid}/complete/` e `POST /{uuid}/reopen/`).
 
 ### Camada de Frontend (`frontend/src/features/scheduler/`)
 - **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
-  - **Containers (Smart):** Orquestram os hooks Orval (`useSchedulerEventsList`, `useSchedulerTasksList`), alternância de visualizações (Calendário, Linha do Tempo e Checklist) e diálogo de eventos.
+  - **Containers (Smart):** Orquestram os hooks Orval (`useSchedulerEventsList`, `useSchedulerTasksList`, `useSchedulerTasksComplete`, `useSchedulerTasksReopen`), alternância de visualizações (Calendário, Linha do Tempo e Checklist) e diálogo de eventos.
   - **Presenters (Dumb):** Componentes visuais da agenda, tabelas de marcos temporais e checklist operacional orientados por props.
   - **Visualização de Pagamentos Read-Only:** Eventos originados de parcelas financeiras (`source_installment`) são exibidos com bloqueio visual de edição direta, direcionando o usuário para o módulo de finanças.
 

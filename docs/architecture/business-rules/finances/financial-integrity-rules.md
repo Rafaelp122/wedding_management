@@ -94,7 +94,8 @@ Implementadas em [`apps/finances/models/expense.py`](../../../../backend/apps/fi
 - `ExpenseService._validate_br_f02(instance, data)`: Valida se despesas vinculadas a contratos mantêm valor exatamente idêntico a `contract.total_amount`.
 
 ### C. Imutabilidade e Proteção Contra Alteração Estrutural
-- `ExpenseService.update()`: Bloqueia redistribuição de parcelas ou alteração do montante total caso qualquer parcela já tenha status `PAID`, exigindo reversão prévia explícita.
+- `ExpenseService.update()` (`PATCH /api/v1/finances/expenses/{uuid}/`): Restrito à atualização de metadados (`name`, `description`, `estimated_amount`, `contract`) e valor total (`actual_amount`). Caso o valor seja alterado e não haja parcelas pagas, redistribui proporcionalmente as parcelas existentes mantendo a quantidade atual (BR-F01). Se houver parcelas com status `PAID`, bloqueia qualquer alteração de montante (`amount_change_blocked_by_paid`). Não aceita parâmetros de cronograma (`num_installments`, `first_due_date`).
+- `ExpenseService.renegotiate_installments()` (`POST /api/v1/finances/expenses/{uuid}/renegotiate/`, `operation_id="finances_expenses_renegotiate"`): Caso de uso semântico dedicado exclusivamente à repactuação de cronograma e quantidade de parcelas de uma despesa não liquidada.
 
 ---
 

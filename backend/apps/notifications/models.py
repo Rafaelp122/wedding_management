@@ -107,24 +107,3 @@ class Notification(BaseModel):
             return
         self.is_read = True
         self.read_at = read_at or timezone.now()
-
-    def mark_as_unread(self) -> None:
-        """Marca a notificação como não lida."""
-        self.is_read = False
-        self.read_at = None
-
-    # ── Propriedades Semânticas ──────────────────────────────────────────
-
-    @property
-    def is_urgent(self) -> bool:
-        """Indica se a notificação é de alta prioridade/urgente."""
-        return self.type in (
-            NotificationType.OVERDUE_INSTALLMENT,
-            NotificationType.CHECKLIST_ITEM_OVERDUE,
-        )
-
-    @property
-    def is_actionable(self) -> bool:
-        """Indica se a notificação aponta para uma entidade específica que
-        permite ação."""
-        return bool(self.target_id and self.target_type)

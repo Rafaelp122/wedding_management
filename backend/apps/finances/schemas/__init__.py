@@ -15,6 +15,7 @@ from apps.finances.schemas.expense import (
     ExpenseIn,
     ExpenseOut,
     ExpensePatchIn,
+    ExpenseRenegotiateIn,
 )
 from apps.finances.schemas.installment import (
     InstallmentAdjustIn,
@@ -35,6 +36,7 @@ __all__ = [
     "ExpenseIn",
     "ExpenseOut",
     "ExpensePatchIn",
+    "ExpenseRenegotiateIn",
     "InstallmentAdjustIn",
     "InstallmentIn",
     "InstallmentOut",

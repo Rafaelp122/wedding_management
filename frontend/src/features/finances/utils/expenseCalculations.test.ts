@@ -22,4 +22,14 @@ describe("calculateExpenseProgress", () => {
     expect(calculateExpenseProgress({ total_paid: null, actual_amount: 100 })).toBe(0);
     expect(calculateExpenseProgress({ total_paid: undefined, actual_amount: 100 })).toBe(0);
   });
+
+  it("should prioritize payment_progress_percent when provided by backend", () => {
+    expect(
+      calculateExpenseProgress({
+        total_paid: 10,
+        actual_amount: 100,
+        payment_progress_percent: 75,
+      }),
+    ).toBe(75);
+  });
 });

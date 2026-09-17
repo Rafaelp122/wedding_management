@@ -626,12 +626,12 @@ class TestContractServiceTransitionStatus:
             wedding=contract.wedding,
             category=category,
             contract=contract,
-            actual_amount=Decimal("3000.00"),
+            actual_amount=contract.total_amount,
         )
         InstallmentFactory(
             expense=expense,
             installment_number=1,
-            amount=Decimal("3000.00"),
+            amount=contract.total_amount,
             status="PENDING",
         )
 

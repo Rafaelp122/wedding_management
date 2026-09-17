@@ -24,7 +24,7 @@ class ItemAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = [
         "name",
         "wedding",
-        "supplier",
+        "contract",
         "quantity",
         "acquisition_status",
     ]

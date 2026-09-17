@@ -213,11 +213,9 @@ class TestWeddingDomainMethodsAndProperties:
             status=Wedding.StatusChoices.IN_PROGRESS,
         )
 
-        assert wedding.is_in_progress is True
+        assert wedding.status == Wedding.StatusChoices.IN_PROGRESS
         assert wedding.is_completed is False
-        assert wedding.is_canceled is False
-        assert wedding.is_past is False
-        assert wedding.days_until == 45
+        assert wedding.get_days_until() == 45
 
     def test_domain_properties_completed_past(self, user: Any) -> None:
         past_date = timezone.now().date() - timedelta(days=5)
@@ -227,11 +225,9 @@ class TestWeddingDomainMethodsAndProperties:
             status=Wedding.StatusChoices.COMPLETED,
         )
 
-        assert wedding.is_in_progress is False
+        assert wedding.status == Wedding.StatusChoices.COMPLETED
         assert wedding.is_completed is True
-        assert wedding.is_canceled is False
-        assert wedding.is_past is True
-        assert wedding.days_until == 0
+        assert wedding.get_days_until() == 0
 
     def test_domain_properties_canceled(self, user: Any) -> None:
         future_date = timezone.now().date() + timedelta(days=10)
@@ -241,9 +237,8 @@ class TestWeddingDomainMethodsAndProperties:
             status=Wedding.StatusChoices.CANCELED,
         )
 
-        assert wedding.is_in_progress is False
+        assert wedding.status == Wedding.StatusChoices.CANCELED
         assert wedding.is_completed is False
-        assert wedding.is_canceled is True
 
     def test_complete_success_on_wedding_day(self, user: Any) -> None:
         today = timezone.now().date()
@@ -284,7 +279,6 @@ class TestWeddingDomainMethodsAndProperties:
         wedding.cancel()
 
         assert wedding.status == Wedding.StatusChoices.CANCELED
-        assert wedding.is_canceled is True
 
     def test_reopen_success_from_canceled(self, user: Any) -> None:
         future_date = timezone.now().date() + timedelta(days=30)
@@ -297,7 +291,6 @@ class TestWeddingDomainMethodsAndProperties:
         wedding.reopen()
 
         assert wedding.status == Wedding.StatusChoices.IN_PROGRESS
-        assert wedding.is_in_progress is True
 
     def test_can_transition_to_matrix(self, user: Any) -> None:
         today = timezone.now().date()
@@ -368,3 +361,88 @@ class TestWeddingStateTransitions:
         assert "Não é permitido transitar de 'CANCELED' para 'COMPLETED'" in str(
             excinfo.value.detail
         )
+
+
+@pytest.mark.django_db
+class TestWeddingRichOperations:
+    """Testes de operações ricas e propriedades de domínio em Wedding (ADR-030)."""
+
+    def test_wedding_display_name_property(self, user: Any) -> None:
+        """display_name deve retornar formato canônico."""
+        wedding = Wedding(
+            company=user.company,
+            bride_name="Juliana",
+            groom_name="Marcos",
+            date=timezone.now().date(),
+        )
+        assert wedding.display_name == "Casamento de Juliana e Marcos"
+
+    def test_reschedule_success(self, user: Any) -> None:
+        """reschedule() atualiza data futura válida."""
+        today = timezone.now().date()
+        wedding = cast(
+            Wedding,
+            WeddingFactory(company=user.company, date=today + timedelta(days=10)),
+        )
+        new_date = today + timedelta(days=45)
+
+        wedding.reschedule(new_date)
+        assert wedding.date == new_date
+
+    def test_reschedule_raises_when_date_in_past(self, user: Any) -> None:
+        """reschedule() rejeita data retroativa com BusinessRuleViolation."""
+        today = timezone.now().date()
+        wedding = cast(
+            Wedding,
+            WeddingFactory(company=user.company, date=today + timedelta(days=10)),
+        )
+        past_date = today - timedelta(days=1)
+
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            wedding.reschedule(past_date)
+        assert "A nova data do casamento não pode ser no passado." in str(
+            excinfo.value.detail
+        )
+
+    def test_reschedule_raises_when_already_completed(self, user: Any) -> None:
+        """reschedule() rejeita alteração de data em casamento já concluído."""
+        today = timezone.now().date()
+        wedding = cast(
+            Wedding,
+            WeddingFactory(
+                company=user.company,
+                date=today,
+                status=Wedding.StatusChoices.COMPLETED,
+            ),
+        )
+
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            wedding.reschedule(today + timedelta(days=10))
+        assert "Não é possível reagendar um casamento já concluído." in str(
+            excinfo.value.detail
+        )
+
+    def test_update_details(self, user: Any) -> None:
+        """update_details() atualiza campos cadastrais descritivos."""
+        wedding = cast(
+            Wedding,
+            WeddingFactory(
+                company=user.company,
+                groom_name="Antigo Noivo",
+                bride_name="Antiga Noiva",
+                location="Salão A",
+                expected_guests=100,
+            ),
+        )
+
+        wedding.update_details(
+            groom_name="Novo Noivo",
+            bride_name="Nova Noiva",
+            location="Salão B",
+            expected_guests=250,
+        )
+
+        assert wedding.groom_name == "Novo Noivo"
+        assert wedding.bride_name == "Nova Noiva"
+        assert wedding.location == "Salão B"
+        assert wedding.expected_guests == 250

@@ -83,7 +83,7 @@ sequenceDiagram
 O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer), estruturado em três níveis de validação:
 
 - **Modelos de Domínio Ricos:**
-  - [`apps/notifications/models.py`](../../../backend/apps/notifications/models.py) (`Notification`): Encapsula invariantes multi-tenant e temporais no `clean()`, métodos de ciclo de vida (`mark_as_read()`, `mark_as_unread()`) e propriedades semânticas (`is_urgent`, `is_actionable`).
+  - [`apps/notifications/models.py`](../../../backend/apps/notifications/models.py) (`Notification`): Encapsula invariantes multi-tenant e temporais no `clean()` e métodos de ciclo de vida (`mark_as_read()`).
 - **Casos de Uso e Serviços:**
   - [`apps/notifications/services.py`](../../../backend/apps/notifications/services.py) (`NotificationService`): Orquestra criação síncrona e assíncrona, marcações individuais e em lote com persistência cirúrgica via `update_fields` e expurgação segura de notificações por tenant.
   - [`apps/notifications/tasks.py`](../../../backend/apps/notifications/tasks.py) (`dispatch_async_notification_task`): Enfileiramento desacoplado em segundo plano via `django.tasks` (ADR-017).
@@ -101,12 +101,12 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Managers:** `NotificationQuerySet` em `managers.py`.
 - **Services:** `NotificationService` em `services.py`.
 - **Tasks:** `dispatch_async_notification_task` em `tasks.py`.
-- **Selectors:** `notification_list_selector`, `unread_notifications_count_selector` em `selectors.py`.
-- **Endpoints:** `api.py` com rotas `GET /notifications/`, `PATCH /notifications/{uuid}/read/`, `POST /notifications/read-all/`.
+- **Selectors:** `notification_list_selector`, `notification_unread_count_selector` em `selectors.py`.
+- **Endpoints:** `api.py` com rotas `GET /notifications/`, `GET /notifications/unread-count/`, `POST /notifications/read-all/`, `POST /notifications/bulk-read/`, `POST /notifications/bulk-delete/`, `DELETE /notifications/clear-all/`, `PATCH /notifications/{notification_id}/read/`, `DELETE /notifications/{notification_id}/`.
 
-### Camada de Frontend (`frontend/src/`)
-- **Componentes:** `NotificationBell.tsx`, `NotificationPopover.tsx`, `NotificationItem.tsx`.
-- **Hooks Customizados:** `useNotifications.ts` (busca periódica com TanStack Query e marcação rápida como lida).
+### Camada de Frontend (`frontend/src/features/notifications/`)
+- **Componentes:** `NotificationsDropdown.tsx` (orquestrador com popover e badge de contagem), `NotificationItem.tsx` (apresentação do item individual).
+- **Integração de API:** Hooks gerados pelo Orval (`useNotificationsList`, `useNotificationsUnreadCount`, `useNotificationsMarkAsRead`, `useNotificationsMarkAllAsRead`, etc.).
 
 ---
 

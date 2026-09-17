@@ -336,3 +336,55 @@ class TestSchedulerTasksAPI:
 
         response = auth_client.delete(f"/api/v1/scheduler/tasks/{other_task.uuid}/")
         assert response.status_code == 404
+
+    def test_complete_task_success(self, auth_client: Any, user: Any) -> None:
+        wedding = WeddingFactory(company=user.company)
+        task = TaskFactory(wedding=wedding, is_completed=False)
+
+        response = auth_client.post(f"/api/v1/scheduler/tasks/{task.uuid}/complete/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_completed"] is True
+
+        task.refresh_from_db()
+        assert task.is_completed is True
+
+    def test_complete_task_isolation_404(self, auth_client: Any) -> None:
+        other_task = TaskFactory(is_completed=False)
+
+        response = auth_client.post(
+            f"/api/v1/scheduler/tasks/{other_task.uuid}/complete/"
+        )
+        assert response.status_code == 404
+
+    def test_complete_task_unauthorized(self, client: Any) -> None:
+        response = client.post(
+            "/api/v1/scheduler/tasks/00000000-0000-0000-0000-000000000001/complete/"
+        )
+        assert response.status_code == 401
+
+    def test_reopen_task_success(self, auth_client: Any, user: Any) -> None:
+        wedding = WeddingFactory(company=user.company)
+        task = TaskFactory(wedding=wedding, is_completed=True)
+
+        response = auth_client.post(f"/api/v1/scheduler/tasks/{task.uuid}/reopen/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_completed"] is False
+
+        task.refresh_from_db()
+        assert task.is_completed is False
+
+    def test_reopen_task_isolation_404(self, auth_client: Any) -> None:
+        other_task = TaskFactory(is_completed=True)
+
+        response = auth_client.post(
+            f"/api/v1/scheduler/tasks/{other_task.uuid}/reopen/"
+        )
+        assert response.status_code == 404
+
+    def test_reopen_task_unauthorized(self, client: Any) -> None:
+        response = client.post(
+            "/api/v1/scheduler/tasks/00000000-0000-0000-0000-000000000001/reopen/"
+        )
+        assert response.status_code == 401

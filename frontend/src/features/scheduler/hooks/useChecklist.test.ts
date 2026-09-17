@@ -31,4 +31,18 @@ describe("useWeddingChecklist", () => {
       });
     }).not.toThrow();
   });
+
+  it("toggleTaskCompletion reopens task when currentStatus is true", async () => {
+    const { result } = renderHook(() => useWeddingChecklist(weddingUuid));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(() => {
+      act(() => {
+        result.current.toggleTaskCompletion("task-1", true);
+      });
+    }).not.toThrow();
+  });
 });

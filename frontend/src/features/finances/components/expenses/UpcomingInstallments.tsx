@@ -36,12 +36,13 @@ export function WeddingUpcomingInstallments({
   const { data: response, isLoading } = useFinancesInstallmentsList({
     limit: 10,
     wedding_id: weddingUuid,
+    exclude_paid: true,
   });
 
   const payMutation = useFinancesInstallmentsMarkAsPaid();
 
   const installments = (response?.data?.items || []).filter(
-    (i) => i.status !== "PAID"
+    (i) => i.status !== "PAID",
   );
 
   if (isLoading) {

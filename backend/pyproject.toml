@@ -133,7 +133,7 @@ lines-after-imports = 2
     "S106", # Permite senhas em argumentos de funções
 ]
 "**/factories.py" = ["S105", "S106"]
-"config/settings/*.py" = ["F405", "F403", "S104"]
+"**/config/settings/*.py" = ["F405", "F403", "S104"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -246,11 +246,6 @@ class ContractService:
                 detail="Contrato pai não encontrado.",
                 code="parent_contract_not_found",
             )
-            if parent.wedding_id != wedding.id:
-                raise BusinessRuleViolation(
-                    detail="O contrato pai deve pertencer ao mesmo casamento.",
-                    code="contract_cross_wedding_parent",
-                )
 
         # 2. Instanciação em Memória
         contract = Contract(
@@ -263,8 +258,33 @@ class ContractService:
         )
 
         # 3. Validação Estrita (O Model aplica as suas regras, incluindo checagem de
-        # datas)
-        contract.save()
+        # datas e hierarquia)
+        try:
+            contract.save()
+        except ValidationError as e:
+            msg = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
+            if "outro casamento" in msg or "mesmo casamento" in msg:
+                raise BusinessRuleViolation(
+                    detail="O contrato pai deve pertencer ao mesmo casamento.",
+                    code="contract_cross_wedding_parent",
+                ) from e
+            if "não pode ser pai de si mesmo" in msg:
+                raise BusinessRuleViolation(
+                    detail="Um contrato não pode ser pai de si mesmo.",
+                    code="contract_self_parent",
+                ) from e
+            if "descendente" in msg:
+                raise BusinessRuleViolation(
+                    detail=(
+                        "Não é possível vincular um contrato pai que é "
+                        "descendente deste contrato."
+                    ),
+                    code="contract_circular_parent",
+                ) from e
+            raise BusinessRuleViolation(
+                detail=msg,
+                code="contract_creation_validation_error",
+            ) from e
 
         logger.info(f"Contrato criado com sucesso: uuid={contract.uuid}")
         return contract
@@ -296,14 +316,10 @@ class ContractService:
         Returns:
             A instância do Contract criada e totalmente populada.
         """
-        logger.info(
-            f"Iniciando criação completa de Contrato para company_id={company.id}"
-        )
-
         contract = ContractService.create(company=company, payload=contract_data)
 
         if pdf_file_key:
-            contract.pdf_file = pdf_file_key
+            contract.attach_file(pdf_file_key)
             contract.save(update_fields=["pdf_file", "updated_at"])
 
         if items_data:
@@ -354,9 +370,8 @@ class ContractService:
                 casamentos divergentes ou vinculação cíclica.
             ObjectNotFoundError: Se o contrato pai não for encontrado para o tenant.
         """
-        parent: Contract | None = None
         if parent_input == "":
-            instance.parent = None
+            instance.remove_parent()
             return
 
         parent = resolve_tenant_resource(
@@ -366,29 +381,7 @@ class ContractService:
             detail="Contrato pai inválido ou acesso negado.",
             code="parent_contract_not_found_or_denied",
         )
-
-        if parent is not None:
-            if parent.pk == instance.pk:
-                raise BusinessRuleViolation(
-                    detail="Um contrato não pode ser pai de si mesmo.",
-                    code="contract_self_parent",
-                )
-            if parent.wedding_id != instance.wedding_id:
-                raise BusinessRuleViolation(
-                    detail="O contrato pai deve pertencer ao mesmo casamento.",
-                    code="contract_cross_wedding_parent",
-                )
-            # Prevent circular: parent can't be a descendant of instance
-            current = parent
-            while current.parent:
-                if current.parent.pk == instance.pk:
-                    raise BusinessRuleViolation(
-                        detail="Não é possível vincular um contrato pai que é "
-                        "descendente deste contrato.",
-                        code="contract_circular_parent",
-                    )
-                current = current.parent
-            instance.parent = parent
+        instance.set_parent(parent)
 
     @staticmethod
     @transaction.atomic
@@ -429,7 +422,7 @@ class ContractService:
         data = payload.model_dump(exclude_unset=True)
         pdf_file_key = data.pop("pdf_file_key", None)
         if pdf_file_key is not None:
-            instance.pdf_file = pdf_file_key
+            instance.attach_file(pdf_file_key)
             updated_fields.add("pdf_file")
 
         supplier_input = data.pop("supplier", None)
@@ -460,8 +453,27 @@ class ContractService:
             try:
                 instance.save(update_fields=list(updated_fields))
             except ValidationError as e:
+                msg = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
+                if "outro casamento" in msg or "mesmo casamento" in msg:
+                    raise BusinessRuleViolation(
+                        detail="O contrato pai deve pertencer ao mesmo casamento.",
+                        code="contract_cross_wedding_parent",
+                    ) from e
+                if "não pode ser pai de si mesmo" in msg:
+                    raise BusinessRuleViolation(
+                        detail="Um contrato não pode ser pai de si mesmo.",
+                        code="contract_self_parent",
+                    ) from e
+                if "descendente" in msg:
+                    raise BusinessRuleViolation(
+                        detail=(
+                            "Não é possível vincular um contrato pai que é "
+                            "descendente deste contrato."
+                        ),
+                        code="contract_circular_parent",
+                    ) from e
                 raise BusinessRuleViolation(
-                    detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
+                    detail=msg,
                     code="contract_update_validation_error",
                 ) from e
 
@@ -765,9 +777,7 @@ class ContractService:
         """
         logger.info(f"Removendo arquivo do contrato uuid={uuid}")
         contract = contract_get_selector(company, uuid)
-        if contract.pdf_file:
-            contract.pdf_file.delete(save=False)
-        contract.pdf_file = None
+        contract.detach_file()
         contract.save(update_fields=["pdf_file", "updated_at"])
         logger.info(f"Arquivo removido do contrato uuid={uuid}")
 
