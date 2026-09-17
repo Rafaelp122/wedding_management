@@ -268,7 +268,7 @@ class TestExpenseDomainProperties:
         assert expense.has_paid_installments is False
 
         # Verifica atributo anotado em queryset
-        expense.paid_installments_count = 1
+        expense.paid_installments_count = 1  # type: ignore[attr-defined]
         assert expense.has_paid_installments is True
         delattr(expense, "paid_installments_count")
 
@@ -315,10 +315,13 @@ class TestExpenseDomainProperties:
 
         wedding, category = _setup_expense(user)
         supplier = SupplierFactory(company=user.company)
-        contract = ContractFactory(
-            wedding=wedding,
-            supplier=supplier,
-            total_amount=Decimal("1000.00"),
+        contract = cast(
+            Any,
+            ContractFactory(
+                wedding=wedding,
+                supplier=supplier,
+                total_amount=Decimal("1000.00"),
+            ),
         )
 
         # BR-F02: Valor divergente
@@ -336,10 +339,13 @@ class TestExpenseDomainProperties:
 
         # Cross-wedding contract
         wedding_b = WeddingFactory(user_context=user)
-        contract_b = ContractFactory(
-            wedding=wedding_b,
-            supplier=supplier,
-            total_amount=Decimal("1000.00"),
+        contract_b = cast(
+            Any,
+            ContractFactory(
+                wedding=wedding_b,
+                supplier=supplier,
+                total_amount=Decimal("1000.00"),
+            ),
         )
         expense_cross = Expense(
             company=user.company,

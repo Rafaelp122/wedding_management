@@ -233,7 +233,8 @@ class TestWeddingDomainMethodsAndProperties:
         self, user: Any
     ) -> None:
         today = timezone.now().date()
-        wedding_no_date = Wedding(company=user.company, date=None)
+        wedding_no_date = Wedding(company=user.company)
+        wedding_no_date.date = None  # type: ignore[assignment]
         assert wedding_no_date.get_days_until() == 0
 
         wedding_future = Wedding(company=user.company, date=today + timedelta(days=50))

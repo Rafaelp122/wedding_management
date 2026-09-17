@@ -38,4 +38,16 @@ describe("calculateBudgetComparison", () => {
     expect(result.isBudgetEqual).toBe(true);
     expect(result.diffPercentage).toBe(0);
   });
+
+  it("returns hasEnoughData=false when budgets list is empty or values are zero/null", () => {
+    const emptyResult = calculateBudgetComparison(10000, []);
+    expect(emptyResult.hasEnoughData).toBe(false);
+
+    const zeroResult = calculateBudgetComparison(10000, [
+      { total_estimated: "0.00" },
+      { total_estimated: null },
+      { total_estimated: undefined },
+    ]);
+    expect(zeroResult.hasEnoughData).toBe(false);
+  });
 });

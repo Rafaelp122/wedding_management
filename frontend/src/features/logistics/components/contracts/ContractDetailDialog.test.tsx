@@ -572,4 +572,46 @@ describe("ContractDetailDialog", () => {
       expect(toast.error).toHaveBeenCalledWith("Falha ao reverter contrato.");
     });
   });
+
+  it("opens CancelContractDialog when clicking Cancelar Contrato on a DRAFT contract", async () => {
+    const draftContract = createMockContract({
+      status: "DRAFT",
+      name: "Contrato Rascunho Para Cancelar",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(draftContract);
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const cancelBtn = await screen.findByRole("button", { name: "Cancelar Contrato" });
+    await user.click(cancelBtn);
+
+    expect(await screen.findByRole("heading", { name: "Cancelar Contrato" })).toBeInTheDocument();
+  });
+
+  it("opens CancelContractDialog when clicking Cancelar Contrato on a PENDING contract", async () => {
+    const pendingContract = createMockContract({
+      status: "PENDING",
+      name: "Contrato Pendente Para Cancelar",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(pendingContract);
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const cancelBtn = await screen.findByRole("button", { name: "Cancelar Contrato" });
+    await user.click(cancelBtn);
+
+    expect(await screen.findByRole("heading", { name: "Cancelar Contrato" })).toBeInTheDocument();
+  });
 });
