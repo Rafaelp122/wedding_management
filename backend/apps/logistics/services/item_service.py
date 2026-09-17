@@ -219,17 +219,7 @@ class ItemService:
 
         if updated_fields:
             updated_fields.add("updated_at")
-            try:
-                instance.save(update_fields=list(updated_fields))
-            except ValidationError as exc:
-                if "contract" in getattr(exc, "message_dict", {}):
-                    raise DomainIntegrityError(
-                        detail=(
-                            "O contrato informado não pertence ao casamento deste item."
-                        ),
-                        code="item_contract_wedding_mismatch",
-                    ) from exc
-                raise
+            instance.save(update_fields=list(updated_fields))
 
         logger.info(f"Item uuid={instance.uuid} atualizado com sucesso.")
         return instance

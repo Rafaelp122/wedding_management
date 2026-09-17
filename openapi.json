@@ -7024,6 +7024,7 @@
         "type": "object"
       },
       "VerifyEmailResponseOut": {
+        "description": "Schema de resposta para operações de verificação de e-mail.",
         "properties": {
           "message": {
             "title": "Message",
@@ -7037,6 +7038,7 @@
         "type": "object"
       },
       "VerifyEmailIn": {
+        "description": "Schema para validação do token de e-mail.",
         "properties": {
           "uid": {
             "title": "Uid",
@@ -7055,6 +7057,7 @@
         "type": "object"
       },
       "ResendVerificationIn": {
+        "description": "Schema para reenvio do e-mail de verificação.",
         "properties": {
           "email": {
             "format": "email",

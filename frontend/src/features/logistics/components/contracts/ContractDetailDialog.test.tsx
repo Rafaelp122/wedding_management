@@ -419,4 +419,90 @@ describe("ContractDetailDialog", () => {
     await user.click(addendumBtn);
     expect(onCreateAddendum).toHaveBeenCalledWith(CONTRACT_UUID);
   });
+
+  it("opens SignContractDialog when clicking Formalizar Assinatura on a PENDING contract", async () => {
+    const pendingContract = createMockContract({
+      status: "PENDING",
+      name: "Contrato Pendente",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(pendingContract);
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const signBtn = await screen.findByRole("button", { name: "Formalizar Assinatura" });
+    await user.click(signBtn);
+
+    expect(await screen.findByRole("heading", { name: "Formalizar Assinatura" })).toBeInTheDocument();
+  });
+
+  it("opens CancelContractDialog when clicking Distratar / Cancelar on a SIGNED contract", async () => {
+    const signedContract = createMockContract({
+      status: "SIGNED",
+      name: "Contrato Assinado",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(signedContract);
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const cancelBtn = await screen.findByRole("button", { name: "Distratar / Cancelar" });
+    await user.click(cancelBtn);
+
+    expect(await screen.findByRole("heading", { name: "Cancelar Contrato" })).toBeInTheDocument();
+  });
+
+  it("handles Enviar para Assinatura on a DRAFT contract", async () => {
+    const draftContract = createMockContract({
+      status: "DRAFT",
+      name: "Contrato Rascunho",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(draftContract);
+      }),
+      http.post("*/api/v1/logistics/contracts/:uuid/send-to-pending/", () => {
+        return HttpResponse.json({ ...draftContract, status: "PENDING" });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const sendBtn = await screen.findByRole("button", { name: "Enviar para Assinatura" });
+    await user.click(sendBtn);
+  });
+
+  it("handles Devolver para Rascunho on a PENDING contract", async () => {
+    const pendingContract = createMockContract({
+      status: "PENDING",
+      name: "Contrato Pendente",
+    });
+
+    server.use(
+      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
+        return HttpResponse.json(pendingContract);
+      }),
+      http.post("*/api/v1/logistics/contracts/:uuid/revert-to-draft/", () => {
+        return HttpResponse.json({ ...pendingContract, status: "DRAFT" });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderDialog();
+
+    const revertBtn = await screen.findByRole("button", { name: "Devolver para Rascunho" });
+    await user.click(revertBtn);
+  });
 });

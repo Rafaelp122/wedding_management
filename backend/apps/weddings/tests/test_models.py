@@ -446,3 +446,14 @@ class TestWeddingRichOperations:
         assert wedding.bride_name == "Nova Noiva"
         assert wedding.location == "Salão B"
         assert wedding.expected_guests == 250
+
+        # Permite limpar a quantidade de convidados passando None
+        wedding.update_details(expected_guests=None)
+        assert wedding.expected_guests is None
+
+        # Chamada sem argumentos mantém os dados existentes
+        wedding.update_details()
+        assert wedding.groom_name == "Novo Noivo"
+        assert wedding.bride_name == "Nova Noiva"
+        assert wedding.location == "Salão B"
+        assert wedding.expected_guests is None

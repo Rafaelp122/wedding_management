@@ -156,11 +156,11 @@ export const AuthPasswordResetConfirmResponse = zod.object({
 export const AuthVerifyEmailBody = zod.object({
   "uid": zod.string(),
   "token": zod.string()
-})
+}).describe('Schema para validação do token de e-mail.')
 
 export const AuthVerifyEmailResponse = zod.object({
   "message": zod.string()
-})
+}).describe('Schema de resposta para operações de verificação de e-mail.')
 
 /**
  * Reenvia o e-mail de verificação para o usuário (se não estiver verificado).
@@ -168,9 +168,9 @@ export const AuthVerifyEmailResponse = zod.object({
  */
 export const AuthResendVerificationBody = zod.object({
   "email": zod.email()
-})
+}).describe('Schema para reenvio do e-mail de verificação.')
 
 export const AuthResendVerificationResponse = zod.object({
   "message": zod.string()
-})
+}).describe('Schema de resposta para operações de verificação de e-mail.')
 

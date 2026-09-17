@@ -268,19 +268,6 @@ class ContractService:
                     detail="O contrato pai deve pertencer ao mesmo casamento.",
                     code="contract_cross_wedding_parent",
                 ) from e
-            if "não pode ser pai de si mesmo" in msg:
-                raise BusinessRuleViolation(
-                    detail="Um contrato não pode ser pai de si mesmo.",
-                    code="contract_self_parent",
-                ) from e
-            if "descendente" in msg:
-                raise BusinessRuleViolation(
-                    detail=(
-                        "Não é possível vincular um contrato pai que é "
-                        "descendente deste contrato."
-                    ),
-                    code="contract_circular_parent",
-                ) from e
             raise BusinessRuleViolation(
                 detail=msg,
                 code="contract_creation_validation_error",
