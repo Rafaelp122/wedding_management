@@ -186,6 +186,34 @@ class TestWeddingService:
 
         assert canceled.status == Wedding.StatusChoices.CANCELED
 
+    def test_wedding_service_cancel_validation_error(self, user, mocker):
+        """cancel() propagando DjangoValidationError como BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        wedding = WeddingFactory(company=user.company)
+        mocker.patch.object(
+            wedding, "save", side_effect=DjangoValidationError("Simulated cancel error")
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.cancel(company=user.company, instance=wedding)
+        assert exc_info.value.code == "wedding_validation_error"
+
+    def test_wedding_service_update_validation_error(self, user, mocker):
+        """update() propagando DjangoValidationError como BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        wedding = WeddingFactory(company=user.company)
+        mocker.patch.object(
+            wedding, "save", side_effect=DjangoValidationError("Simulated update error")
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.update(
+                company=user.company,
+                instance=wedding,
+                payload=WeddingPatchIn(location="Novo Local"),
+            )
+        assert exc_info.value.code == "wedding_validation_error"
+
     def test_on_wedding_canceled_task_success(self, user):
         """Valida execução da task assíncrona pós-cancelamento."""
         from apps.weddings.tasks import on_wedding_canceled_task

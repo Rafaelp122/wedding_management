@@ -357,6 +357,19 @@ class TestItemServiceUpdate:
         update_fields = set(kwargs["update_fields"])
         assert update_fields == {"name", "quantity", "updated_at"}
 
+    def test_update_item_detach_contract(self, user: Any) -> None:
+        """update() com contract=None desvincula contrato com detach_contract()."""
+        wedding, contract = _setup_item_context(user)
+        item = ItemFactory(contract=contract, wedding=wedding)
+        assert item.contract == contract
+
+        updated = ItemService.update(
+            user.company,
+            item,
+            ItemPatchIn.model_construct(contract=None),
+        )
+        assert updated.contract is None
+
 
 @pytest.mark.django_db
 class TestItemServiceDelete:

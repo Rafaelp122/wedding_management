@@ -259,6 +259,28 @@ class TestContractServiceCreate:
 
         assert exc_info.value.code == "contract_cross_wedding_parent"
 
+    def test_create_contract_validation_error_propagates(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """save() lançando ValidationError propaga BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError
+
+        wedding, supplier = _setup_contract_context(user)
+        mocker.patch.object(
+            Contract,
+            "save",
+            side_effect=ValidationError("Simulated save validation error"),
+        )
+        payload = ContractIn(
+            wedding=wedding.uuid,
+            supplier=supplier.uuid,
+            name="Contrato Erro",
+            total_amount=Decimal("1000.00"),
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            ContractService.create(user.company, payload)
+        assert exc_info.value.code == "contract_creation_validation_error"
+
 
 @pytest.mark.django_db
 class TestContractServiceUpdate:
@@ -835,6 +857,19 @@ class TestContractServiceResolveParent:
 
         child.refresh_from_db()
         assert child.parent == parent
+
+    def test_update_parent_empty_string_removes_parent(self, user: Any) -> None:
+        wedding = WeddingFactory(company=user.company)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(wedding=wedding, supplier=supplier)
+        child = ContractFactory(wedding=wedding, supplier=supplier, parent=parent)
+        assert child.parent == parent
+
+        ContractService.update(
+            child.company, child, ContractPatchIn.model_construct(parent="")
+        )
+        child.refresh_from_db()
+        assert child.parent is None
 
     def test_update_parent_self_raises_error(self, make_contract: Any) -> None:
         contract = make_contract("DRAFT")
