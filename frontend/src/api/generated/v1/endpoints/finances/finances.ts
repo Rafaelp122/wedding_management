@@ -35,6 +35,7 @@ import type {
   ExpenseIn,
   ExpenseOut,
   ExpensePatchIn,
+  ExpenseRenegotiateIn,
   FinancesBudgetsListParams,
   FinancesCategoriesListParams,
   FinancesExpensesListParams,
@@ -1312,6 +1313,73 @@ export const useFinancesExpensesFromDocument = <TError = ErrorType<ErrorResponse
         TContext
       > => {
       return useMutation(getFinancesExpensesFromDocumentMutationOptions(options), queryClient);
+    }
+    /**
+ * Renegocia e redistribui as parcelas de uma despesa.
+ * Bloqueia a operação se houver parcelas já marcadas como pagas (BR-F04).
+ * @summary Renegotiate Expense
+ */
+export const financesExpensesRenegotiate = (
+    uuid: string,
+    expenseRenegotiateIn: ExpenseRenegotiateIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ExpenseOut>(
+      {url: `/api/v1/finances/expenses/${uuid}/renegotiate/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: expenseRenegotiateIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getFinancesExpensesRenegotiateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof financesExpensesRenegotiate>>, TError,{uuid: string;data: ExpenseRenegotiateIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof financesExpensesRenegotiate>>, TError,{uuid: string;data: ExpenseRenegotiateIn}, TContext> => {
+
+const mutationKey = ['financesExpensesRenegotiate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof financesExpensesRenegotiate>>, {uuid: string;data: ExpenseRenegotiateIn}> = (props) => {
+          const {uuid,data} = props ?? {};
+
+          return  financesExpensesRenegotiate(uuid,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FinancesExpensesRenegotiateMutationResult = NonNullable<Awaited<ReturnType<typeof financesExpensesRenegotiate>>>
+    export type FinancesExpensesRenegotiateMutationBody = ExpenseRenegotiateIn
+    export type FinancesExpensesRenegotiateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Renegotiate Expense
+ */
+export const useFinancesExpensesRenegotiate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof financesExpensesRenegotiate>>, TError,{uuid: string;data: ExpenseRenegotiateIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof financesExpensesRenegotiate>>,
+        TError,
+        {uuid: string;data: ExpenseRenegotiateIn},
+        TContext
+      > => {
+      return useMutation(getFinancesExpensesRenegotiateMutationOptions(options), queryClient);
     }
     /**
  * Lista parcelas com filtros opcionais por casamento, despesa,

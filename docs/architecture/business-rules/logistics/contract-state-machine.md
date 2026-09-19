@@ -93,7 +93,7 @@ A lógica de transição e invariantes de formalização reside diretamente em [
 - `contract.cancel()`: Distrata o contrato e transita para `CANCELED`.
 - `contract.revert_to_draft()`: Retorna o contrato para `DRAFT`.
 - `contract._clean_signed_requirements()`: Invariante executada em `clean()`, validando `pdf_file`, `signed_date` e `total_amount > 0`.
-- Propriedades de conveniência: `contract.is_draft`, `contract.is_pending`, `contract.is_signed`, `contract.is_canceled`, `contract.has_file`, `contract.file_name`.
+- Propriedades com consumidores ativos: `contract.is_addendum` (consumida na UI e serializada em `ContractOut`), `contract.has_file`, `contract.file_name` (propriedades anêmicas de conferência de status como `is_draft`, `is_pending`, `is_signed` e `is_canceled` foram expurgadas em conformidade com YAGNI e ADR-030).
 
 ```python
 # Exemplo canônico de uso do modelo rico:
@@ -113,7 +113,7 @@ O ciclo de vida operacional e regras de quantidade residem em [`apps/logistics/m
 - `item.complete()`: Marca o item como concluído/entregue (`DONE`).
 - `item.reopen()`: Reabre item concluído para `IN_PROGRESS`.
 - `item.revert_to_pending()`: Retorna o item para `PENDING`.
-- Propriedades de conveniência: `item.is_pending`, `item.is_in_progress`, `item.is_done`.
+- Observação: propriedades anêmicas de status (`is_pending`, `is_in_progress`, `is_done`) foram expurgadas do modelo por ausência de consumidores reais (YAGNI).
 
 ### C. Orquestração no `ContractService` e `ItemService`
 A camada de serviços em [`apps/logistics/services/`](../../../../backend/apps/logistics/services/) orquestra autorização multi-tenant e persistência cirúrgica com `update_fields`:
@@ -121,6 +121,19 @@ A camada de serviços em [`apps/logistics/services/`](../../../../backend/apps/l
 - `ContractService.transition_status(company, uuid, status_input)`: Valida permissão do tenant, executa `contract.transition_to(status_input)` e persiste estritamente com `update_fields=["status", "updated_at"]`.
 - `ContractService.sign(company, instance, ...)` / `send_to_pending` / `cancel` / `revert_to_draft`: Casos de uso semânticos para formalização e distrato.
 - `ItemService.start(company, instance)` / `complete` / `reopen` / `revert_to_pending`: Orquestração do ciclo operacional do item.
+
+### D. Endpoints Semânticos de API (Django Ninja)
+Em conformidade com a ADR-030 e o Rich Domain Model, os roteadores expõem ações semânticas diretas:
+- **Contratos (`apps/logistics/api/contracts.py`):**
+  - `POST /contracts/{uuid}/send-to-pending/` (`logistics_contracts_send_to_pending`)
+  - `POST /contracts/{uuid}/sign/` (`logistics_contracts_sign`)
+  - `POST /contracts/{uuid}/cancel/` (`logistics_contracts_cancel`)
+  - `POST /contracts/{uuid}/revert-to-draft/` (`logistics_contracts_revert_to_draft`)
+- **Itens (`apps/logistics/api/items.py`):**
+  - `POST /items/{uuid}/start/` (`logistics_items_start`)
+  - `POST /items/{uuid}/complete/` (`logistics_items_complete`)
+  - `POST /items/{uuid}/reopen/` (`logistics_items_reopen`)
+  - `POST /items/{uuid}/revert-to-pending/` (`logistics_items_revert_to_pending`)
 
 ---
 

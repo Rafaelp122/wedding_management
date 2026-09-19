@@ -82,7 +82,7 @@ A máquina de estados e validações de transição residem diretamente em [`app
 - `installment.mark_as_paid(paid_date=...)`: Valida idempotência, atribui a data de quitação e transita para `PAID`.
 - `installment.unmark_as_paid()`: Zera a data de quitação e restaura para `OVERDUE` (se vencida) ou `PENDING` (se futura).
 - `installment.mark_as_overdue()`: Transita para `OVERDUE` validando vencimento no passado.
-- Propriedades de conveniência: `installment.is_paid`, `installment.is_pending`, `installment.is_overdue`, `installment.is_late`, `installment.days_overdue`, `installment.days_until_due`.
+- Propriedade com consumidor ativo: `installment.is_late` (consumida e serializada em `InstallmentOut`). Propriedades anêmicas de conferência de status (`is_paid`, `is_pending`, `is_overdue`) foram expurgadas em conformidade com YAGNI e ADR-030.
 
 ```python
 # Exemplo canônico de liquidação da parcela:
@@ -98,6 +98,12 @@ A orquestração operacional reside em [`apps/finances/services/installment_serv
 
 - `InstallmentService.mark_overdue_installments()`: Varre parcelas vencidas em status `PENDING`, atualiza cirurgicamente para `OVERDUE` (`update_fields=["status", "updated_at"]`) e dispara notificações in-app para os usuários da empresa dona do registro.
 - `InstallmentService.mark_as_paid()` / `unmark_as_paid()`: Casos de uso atômicos que delegam para a entidade e revalidam a despesa pai via `expense.full_clean()`.
+
+### C. Endpoints Semânticos de API (Django Ninja)
+- `POST /api/v1/finances/installments/{uuid}/mark-as-paid/` (`finances_installments_mark_as_paid`)
+- `POST /api/v1/finances/installments/{uuid}/unmark-as-paid/` (`finances_installments_unmark_as_paid`)
+- `PATCH /api/v1/finances/installments/{uuid}/adjust/` (`finances_installments_adjust`)
+- `GET /api/v1/finances/installments/?exclude_paid=true` (`finances_installments_list`)
 
 ---
 

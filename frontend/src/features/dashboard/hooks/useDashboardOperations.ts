@@ -5,7 +5,8 @@ import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { formatWeddingName } from "../utils";
 import {
   useSchedulerTasksList,
-  useSchedulerTasksUpdate,
+  useSchedulerTasksComplete,
+  useSchedulerTasksReopen,
 } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 
@@ -46,19 +47,31 @@ export function useDashboardOperations({ weddings, referenceDate }: UseDashboard
     { query: { enabled: activeTab === "contratos" } }
   );
 
-  // Mutation for updating a task
-  const updateTaskMutation = useSchedulerTasksUpdate({
+  // Mutations for completing and reopening a task
+  const invalidateTasksAndDashboard = () => {
+    toast.success("Tarefa atualizada com sucesso!");
+    queryClient.invalidateQueries({ queryKey: ["/api/v1/scheduler/tasks/"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/v1/dashboard/summary"] });
+  };
+
+  const onTaskMutationError = () => {
+    toast.error("Erro ao atualizar a tarefa.");
+  };
+
+  const completeTaskMutation = useSchedulerTasksComplete({
     mutation: {
-      onSuccess: () => {
-        toast.success("Tarefa atualizada com sucesso!");
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/scheduler/tasks/"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/dashboard/summary"] });
-      },
-      onError: () => {
-        toast.error("Erro ao atualizar a tarefa.");
-      },
+      onSuccess: invalidateTasksAndDashboard,
+      onError: onTaskMutationError,
     },
   });
+
+  const reopenTaskMutation = useSchedulerTasksReopen({
+    mutation: {
+      onSuccess: invalidateTasksAndDashboard,
+      onError: onTaskMutationError,
+    },
+  });
+
 
   // 1. Process Grooms & Brides map for name resolution
   const weddingMap = useMemo(() => {
@@ -98,10 +111,11 @@ export function useDashboardOperations({ weddings, referenceDate }: UseDashboard
   }, [contractsRes]);
 
   const handleTaskToggle = (taskUuid: string, isCurrentlyCompleted: boolean) => {
-    updateTaskMutation.mutate({
-      uuid: taskUuid,
-      data: { is_completed: !isCurrentlyCompleted },
-    });
+    if (isCurrentlyCompleted) {
+      reopenTaskMutation.mutate({ uuid: taskUuid });
+    } else {
+      completeTaskMutation.mutate({ uuid: taskUuid });
+    }
   };
 
   return {
@@ -109,7 +123,7 @@ export function useDashboardOperations({ weddings, referenceDate }: UseDashboard
     setActiveTab,
     isLoadingTasks,
     isLoadingContracts,
-    isUpdatingTask: updateTaskMutation.isPending,
+    isUpdatingTask: completeTaskMutation.isPending || reopenTaskMutation.isPending,
     displayWeddings,
     urgentTasks,
     pendingContracts,

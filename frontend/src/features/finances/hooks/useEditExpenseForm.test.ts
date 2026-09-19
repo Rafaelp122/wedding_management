@@ -49,8 +49,6 @@ describe("useEditExpenseForm", () => {
       estimated_amount: 5000,
       actual_amount: 4800,
       contract: mockExpense.contract || null,
-      num_installments: null,
-      first_due_date: null,
     });
 
     await waitFor(() => {

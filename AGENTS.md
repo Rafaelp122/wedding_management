@@ -20,6 +20,7 @@
 - **Multi-Tenancy (ADR-009, ADR-016, ADR-019)**: Todo service/selector aceita `company` e filtra via `Model.objects.for_tenant(company)`. Use `validate_tenant_ownership` em services e `get_object_or_404_for_tenant` ou `*_get_selector` para lookups individuais.
 - **Data Integrity & Typing**: Modelos herdam `BaseModel` (`full_clean()` no `save()`). Tipagem estrita `mypy` obrigatória.
 - **Router Endpoints**: `operation_id` obrigatório em todos os endpoints de router.
+- **YAGNI & Outside-In Domain Modeling (Anti-Código Morto)**: É ESTRITAMENTE PROIBIDO criar métodos, propriedades (`@property`) ou utilitários em modelos Django de forma preventiva ou especulativa ("para o futuro"). Todo método ou propriedade adicionado a um model DEVE ter um consumidor de produção imediato e obrigatório (um Service de caso de uso, um Seletor analítico, um Schema de API Ninja ou uma invariante no `clean()`). Código coberto apenas por `test_models.py` sem chamador em produção é considerado violação de YAGNI e débito técnico.
 
 ### Frontend (ADR-012, ADR-024)
 

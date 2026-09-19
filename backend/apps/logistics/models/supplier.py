@@ -104,10 +104,10 @@ class Supplier(TenantModel):
     def __str__(self) -> str:
         return self.name
 
-    @property
-    def full_address(self) -> str:
-        """Retorna endereço completo formatado."""
-        parts = [self.address, self.city]
-        if self.state:
-            parts.append(self.state)
-        return ", ".join(filter(None, parts))
+    def activate(self) -> None:
+        """Ativa o fornecedor para novos contratos."""
+        self.is_active = True
+
+    def deactivate(self) -> None:
+        """Desativa o fornecedor impedindo novos contratos."""
+        self.is_active = False

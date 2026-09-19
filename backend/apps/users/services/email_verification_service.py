@@ -6,7 +6,6 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
@@ -79,10 +78,16 @@ class EmailVerificationService:
                 code="invalid_token",
             )
 
-        user.is_email_verified = True
-        user.is_active = True
-        user.email_verified_at = timezone.now()
-        user.save()
+        user.verify_email()
+        user.activate()
+        user.save(
+            update_fields=[
+                "is_email_verified",
+                "email_verified_at",
+                "is_active",
+                "updated_at",
+            ]
+        )
 
         return user
 

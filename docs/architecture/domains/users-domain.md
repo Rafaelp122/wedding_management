@@ -75,7 +75,7 @@ sequenceDiagram
 | **`CustomUserManager`** | Manager do Modelo `User` | `create_user()`, `create_superuser()` | Configura `is_active=False` por padrão para usuários comuns e provisiona automaticamente uma empresa padrão caso nenhuma seja passada em testes ou migrações. |
 | **`RegistrationService`** | Orquestrador de Cadastro | `register_new_owner()` | Executa em transação `@transaction.atomic`. Cria a `Company` e o `User` em sequência e agenda o envio de e-mail de ativação via `transaction.on_commit()`. |
 | **`TokenService`** | Gestão de Sessões JWT | `obtain()`, `refresh()`, `verify()` | Emite tokens de curta duração (*access token*) e de longa duração (*refresh token*) com rotação e suporte a blacklist. |
-| **`EmailVerificationService`** | Ciclo de Ativação | `send_verification_email()`, `verify_email_token()`, `resend_verification_email()` | Gera tokens temporários assinados com HMAC-SHA256 (`default_token_generator`), ativa a conta e preenche `email_verified_at = timezone.now()`. |
+| **`EmailVerificationService`** | Ciclo de Ativação | `send_verification_email()`, `verify_email()`, `resend_verification_email()` | Gera tokens temporários assinados com HMAC-SHA256 (`default_token_generator`), ativa a conta e preenche `email_verified_at = timezone.now()`. |
 | **`PasswordResetService`** | Recuperação de Senha | `request_password_reset()`, `confirm_password_reset()` | Previne enumeração de usuários (retorna mensagem de sucesso genérica mesmo se o e-mail não existir). |
 | **`GoogleAuthService`** | Login Social OAuth2 | `authenticate_with_google()` | Valida o token de identidade emitido pelos servidores do Google, mascara e-mails em logs e auto-provisiona o usuário com senha aleatória segura. |
 

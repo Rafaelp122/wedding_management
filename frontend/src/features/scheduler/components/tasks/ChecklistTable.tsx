@@ -1,7 +1,9 @@
 import { memo } from "react";
 import type { TaskOut } from "@/api/generated/v1/models/taskOut";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { formatDateBR } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface WeddingChecklistTableProps {
@@ -41,15 +43,22 @@ export const WeddingChecklistTable = memo(function WeddingChecklistTable({
             className="mt-1"
           />
           <div className="flex flex-col gap-1 leading-none">
-            <label
-              htmlFor={`task-${task.uuid}`}
-              className={cn(
-                "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer",
-                task.is_completed && "line-through text-muted-foreground"
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor={`task-${task.uuid}`}
+                className={cn(
+                  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer",
+                  task.is_completed && "line-through text-muted-foreground"
+                )}
+              >
+                {task.title}
+              </label>
+              {task.is_overdue && !task.is_completed && (
+                <Badge variant="destructive" className="text-xs font-normal">
+                  Atrasada ({task.days_overdue} {task.days_overdue === 1 ? "dia" : "dias"})
+                </Badge>
               )}
-            >
-              {task.title}
-            </label>
+            </div>
             {task.description && (
               <p className={cn("text-sm text-muted-foreground", task.is_completed && "line-through opacity-70")}>
                 {task.description}
@@ -57,7 +66,7 @@ export const WeddingChecklistTable = memo(function WeddingChecklistTable({
             )}
             {task.due_date && (
               <p className="text-xs text-muted-foreground pt-1">
-                Prazo: {new Date(task.due_date).toLocaleDateString("pt-BR")}
+                Prazo: {formatDateBR(task.due_date)}
               </p>
             )}
           </div>
@@ -65,4 +74,4 @@ export const WeddingChecklistTable = memo(function WeddingChecklistTable({
       ))}
     </div>
   );
-})
+});

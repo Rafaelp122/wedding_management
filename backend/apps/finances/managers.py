@@ -10,7 +10,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 
 from apps.tenants.managers import TenantManager, TenantQuerySet
@@ -29,10 +29,19 @@ class BudgetQuerySet(TenantQuerySet["Budget"]):
     """QuerySet customizado para Budget com métodos encadeáveis."""
 
     def with_total_spent(self) -> BudgetQuerySet:
-        """Anota cada orçamento com o total geral pago."""
+        """Anota cada orçamento com o total geral pago e total alocado."""
+        from apps.finances.models.budget_category import BudgetCategory
         from apps.finances.models.installment import Installment
 
+        allocated_subquery = Subquery(
+            BudgetCategory.objects.filter(budget_id=OuterRef("pk"))
+            .values("budget_id")
+            .annotate(total=Sum("allocated_budget"))
+            .values("total")[:1]
+        )
+
         return self.annotate(
+            _total_allocated=Coalesce(allocated_subquery, Decimal("0.00")),
             _total_overall_spent=Coalesce(
                 Sum(
                     "categories__expenses__installments__amount",
@@ -41,7 +50,7 @@ class BudgetQuerySet(TenantQuerySet["Budget"]):
                     ),
                 ),
                 Decimal("0.00"),
-            )
+            ),
         )
 
     def for_wedding(

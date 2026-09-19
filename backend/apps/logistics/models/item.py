@@ -12,13 +12,12 @@ from typing import ClassVar
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.core.exceptions import BusinessRuleViolation
+from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
 from apps.core.mixins import WeddingOwnedMixin
 from apps.logistics.managers import ItemQuerySet
 from apps.tenants.models import TenantModel
 
 from .contract import Contract
-from .supplier import Supplier
 
 
 class Item(TenantModel, WeddingOwnedMixin):
@@ -81,8 +80,51 @@ class Item(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 {"quantity": "A quantidade deve ser de no mínimo 1 unidade."}
             )
+        if (
+            self.contract
+            and self.wedding_id
+            and self.contract.wedding_id != self.wedding_id
+        ):
+            raise ValidationError(
+                {
+                    "contract": (
+                        "O contrato informado não pertence ao casamento deste item."
+                    )
+                }
+            )
+        if self.pk:
+            orig = Item.objects.filter(pk=self.pk).values("acquisition_status").first()
+            if orig and orig["acquisition_status"] != self.acquisition_status:
+                allowed = self.ALLOWED_TRANSITIONS.get(orig["acquisition_status"], [])
+                if self.acquisition_status not in allowed:
+                    raise ValidationError(
+                        f"Não é permitido transitar de "
+                        f"'{orig['acquisition_status']}' para "
+                        f"'{self.acquisition_status}'."
+                    )
 
-    # ── Métodos de Ciclo de Vida da Entidade ─────────────────────────────
+    # ── Métodos de Domínio e Ciclo de Vida da Entidade ──────────────────
+
+    def assign_contract(self, contract: Contract) -> None:
+        """
+        Associa o item a um contrato garantindo consistência de casamento.
+
+        Args:
+            contract: Contrato a ser vinculado.
+
+        Raises:
+            BusinessRuleViolation: Se o contrato pertencer a outro casamento.
+        """
+        if self.wedding_id and contract.wedding_id != self.wedding_id:
+            raise DomainIntegrityError(
+                detail="O contrato informado não pertence ao casamento deste item.",
+                code="item_contract_wedding_mismatch",
+            )
+        self.contract = contract
+
+    def detach_contract(self) -> None:
+        """Remove o vínculo do item com seu contrato."""
+        self.contract = None
 
     def can_transition_to(self, target_status: str | AcquisitionStatus) -> bool:
         """Verifica se a transição para o status de aquisição informado é válida.
@@ -138,25 +180,3 @@ class Item(TenantModel, WeddingOwnedMixin):
     def revert_to_pending(self) -> None:
         """Reverte o item em andamento de volta para PENDENTE."""
         self.transition_to(self.AcquisitionStatus.PENDING)
-
-    # ── Propriedades de Conveniência ─────────────────────────────────────
-
-    @property
-    def is_pending(self) -> bool:
-        """Indica se o item está pendente de aquisição."""
-        return self.acquisition_status == self.AcquisitionStatus.PENDING
-
-    @property
-    def is_in_progress(self) -> bool:
-        """Indica se o item está em andamento/aquisição."""
-        return self.acquisition_status == self.AcquisitionStatus.IN_PROGRESS
-
-    @property
-    def is_done(self) -> bool:
-        """Indica se o item já foi concluído."""
-        return self.acquisition_status == self.AcquisitionStatus.DONE
-
-    @property
-    def supplier(self) -> Supplier | None:
-        """Fornecedor vem do contrato associado."""
-        return self.contract.supplier if self.contract else None

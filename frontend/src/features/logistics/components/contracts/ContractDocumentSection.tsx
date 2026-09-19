@@ -8,6 +8,7 @@ import {
   useLogisticsContractsUpload,
   useLogisticsContractsDeleteUpload,
   getLogisticsContractsListQueryKey,
+  getLogisticsContractsReadQueryKey,
   useLogisticsContractsUploadUrl,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 
@@ -71,7 +72,7 @@ export function ContractDocumentSection({
         queryKey: getLogisticsContractsListQueryKey(),
       });
       queryClient.invalidateQueries({
-        queryKey: [`/api/v1/logistics/contracts/${contractUuid}/`],
+        queryKey: getLogisticsContractsReadQueryKey(contractUuid),
       });
       setSelectedFile(null);
     } catch (error) {
@@ -92,7 +93,7 @@ export function ContractDocumentSection({
             queryKey: getLogisticsContractsListQueryKey(),
           });
           queryClient.invalidateQueries({
-            queryKey: [`/api/v1/logistics/contracts/${contractUuid}/`],
+            queryKey: getLogisticsContractsReadQueryKey(contractUuid),
           });
         },
         onError: () => {

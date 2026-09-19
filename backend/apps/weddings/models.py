@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 from datetime import date
 from typing import ClassVar
 
@@ -13,7 +14,7 @@ from apps.weddings.managers import WeddingQuerySet
 
 
 def validate_future_date(value: date) -> None:
-    """Validador auxiliar para verificar se a data informada não está no passado."""
+    """Validador auxiliar mantido para compatibilidade com migration 0001."""
     if value < timezone.now().date():
         raise ValidationError("A data do casamento não pode ser no passado.")
 
@@ -87,14 +88,21 @@ class Wedding(TenantModel):
         super().clean()
         today = timezone.now().date()
         if (
-            self._state.adding
-            and self.status == self.StatusChoices.IN_PROGRESS
+            self.status == self.StatusChoices.IN_PROGRESS
             and self.date
             and self.date < today
         ):
-            raise ValidationError(
-                {"date": "A data do casamento não pode ser no passado."}
-            )
+            if self._state.adding:
+                raise ValidationError(
+                    {"date": "A data do casamento não pode ser no passado."}
+                )
+            elif self.pk:
+                orig = Wedding.objects.filter(pk=self.pk).values("date").first()
+                if orig and orig["date"] != self.date:
+                    raise ValidationError(
+                        {"date": "A nova data do casamento não pode ser no passado."}
+                    )
+
         if (
             self.status == self.StatusChoices.COMPLETED
             and self.date
@@ -104,7 +112,66 @@ class Wedding(TenantModel):
                 "Não pode marcar como CONCLUÍDO antes da data do casamento"
             )
 
-    # ── Métodos de Ciclo de Vida da Entidade ─────────────────────────────
+        if self.pk:
+            orig_status = Wedding.objects.filter(pk=self.pk).values("status").first()
+            if orig_status and orig_status["status"] != self.status:
+                allowed = self.ALLOWED_TRANSITIONS.get(orig_status["status"], [])
+                if self.status not in allowed:
+                    raise ValidationError(
+                        f"Não é permitido transitar de "
+                        f"'{orig_status['status']}' para '{self.status}'."
+                    )
+
+    # ── Métodos de Ciclo de Vida e Operações de Domínio ─────────────────
+
+    def reschedule(self, new_date: dt.date) -> None:
+        """
+        Reagenda a data do casamento validando as regras temporais.
+
+        Args:
+            new_date: Nova data pretendida para a realização da cerimônia.
+
+        Raises:
+            BusinessRuleViolation: Se o casamento já estiver concluído ou a data
+                for no passado.
+        """
+        if self.is_completed:
+            raise BusinessRuleViolation(
+                detail="Não é possível reagendar um casamento já concluído.",
+                code="wedding_already_completed",
+            )
+        if new_date < timezone.now().date():
+            raise BusinessRuleViolation(
+                detail="A nova data do casamento não pode ser no passado.",
+                code="wedding_reschedule_in_past",
+            )
+        self.date = new_date
+
+    def update_details(
+        self,
+        *,
+        groom_name: str | None = None,
+        bride_name: str | None = None,
+        location: str | None = None,
+        expected_guests: int | object | None = ...,
+    ) -> None:
+        """
+        Atualiza dados cadastrais descritivos do casamento.
+
+        Args:
+            groom_name: Nome do noivo.
+            bride_name: Nome da noiva.
+            location: Local planejado para a realização.
+            expected_guests: Quantidade estimada de convidados.
+        """
+        if groom_name is not None:
+            self.groom_name = groom_name
+        if bride_name is not None:
+            self.bride_name = bride_name
+        if location is not None:
+            self.location = location
+        if expected_guests is not ...:
+            self.expected_guests = expected_guests  # type: ignore[assignment]
 
     def can_transition_to(self, target_status: str | StatusChoices) -> bool:
         """Verifica se a transição para o status informado é válida."""
@@ -149,7 +216,7 @@ class Wedding(TenantModel):
         """Conclui o casamento garantindo que o evento já foi realizado."""
         self.transition_to(self.StatusChoices.COMPLETED)
 
-    def cancel(self, reason: str | None = None) -> None:
+    def cancel(self) -> None:
         """Cancela o casamento."""
         self.transition_to(self.StatusChoices.CANCELED)
 
@@ -157,34 +224,23 @@ class Wedding(TenantModel):
         """Reabre um casamento previamente cancelado voltando para EM ANDAMENTO."""
         self.transition_to(self.StatusChoices.IN_PROGRESS)
 
-    # ── Propriedades de Domínio ──────────────────────────────────────────
+    # ── Propriedades e Métodos de Domínio ────────────────────────────────
+
+    @property
+    def display_name(self) -> str:
+        """Retorna o nome formatado de exibição canônica do casamento."""
+        return f"Casamento de {self.bride_name} e {self.groom_name}"
 
     @property
     def is_completed(self) -> bool:
         """Indica se o casamento já foi realizado e concluído."""
         return self.status == self.StatusChoices.COMPLETED
 
-    @property
-    def is_canceled(self) -> bool:
-        """Indica se o casamento foi cancelado."""
-        return self.status == self.StatusChoices.CANCELED
-
-    @property
-    def is_in_progress(self) -> bool:
-        """Indica se o casamento está com planejamento ativo."""
-        return self.status == self.StatusChoices.IN_PROGRESS
-
-    @property
-    def is_past(self) -> bool:
-        """Indica se a data prevista do evento já ficou no passado."""
-        return bool(self.date and self.date < timezone.now().date())
-
-    @property
-    def days_until(self) -> int:
-        """Retorna os dias restantes até o casamento, ou zero se já passou."""
+    def get_days_until(self, reference_date: dt.date | None = None) -> int:
+        """Retorna dias restantes até o casamento com suporte a data de referência."""
         if not self.date:
             return 0
-        today = timezone.now().date()
-        if self.date <= today:
+        ref = reference_date or timezone.now().date()
+        if self.date <= ref:
             return 0
-        return (self.date - today).days
+        return (self.date - ref).days

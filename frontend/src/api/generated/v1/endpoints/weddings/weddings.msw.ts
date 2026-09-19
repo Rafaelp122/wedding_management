@@ -21,6 +21,8 @@ import type {
 
 import {
   getWeddingsByMonthResponseMock,
+  getWeddingsCancelResponseMock,
+  getWeddingsCompleteResponseMock,
   getWeddingsCreateResponseMock,
   getWeddingsListResponseMock,
   getWeddingsLookupResponseMock,
@@ -28,7 +30,7 @@ import {
   getWeddingsUpdateResponseMock
 } from './weddings.faker';
 
-export { getWeddingsLookupResponseMock, getWeddingsListResponseMock, getWeddingsCreateResponseMock, getWeddingsByMonthResponseMock, getWeddingsReadResponseMock, getWeddingsUpdateResponseMock } from './weddings.faker';
+export { getWeddingsLookupResponseMock, getWeddingsListResponseMock, getWeddingsCreateResponseMock, getWeddingsByMonthResponseMock, getWeddingsReadResponseMock, getWeddingsUpdateResponseMock, getWeddingsCompleteResponseMock, getWeddingsCancelResponseMock } from './weddings.faker';
 
 
 export const getWeddingsLookupMockHandler = (overrideResponse?: WeddingLookupOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingLookupOut[]> | WeddingLookupOut[]), options?: RequestHandlerOptions) => {
@@ -112,6 +114,30 @@ export const getWeddingsDeleteMockHandler = (overrideResponse?: void | ((info: P
       })
   }, options)
 }
+
+export const getWeddingsCompleteMockHandler = (overrideResponse?: WeddingOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<WeddingOut> | WeddingOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/weddings/:uuid/complete/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getWeddingsCompleteResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getWeddingsCancelMockHandler = (overrideResponse?: WeddingOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<WeddingOut> | WeddingOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/weddings/:uuid/cancel/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getWeddingsCancelResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getWeddingsMock = () => [
   getWeddingsLookupMockHandler(),
   getWeddingsListMockHandler(),
@@ -119,5 +145,7 @@ export const getWeddingsMock = () => [
   getWeddingsByMonthMockHandler(),
   getWeddingsReadMockHandler(),
   getWeddingsUpdateMockHandler(),
-  getWeddingsDeleteMockHandler()
+  getWeddingsDeleteMockHandler(),
+  getWeddingsCompleteMockHandler(),
+  getWeddingsCancelMockHandler()
 ]

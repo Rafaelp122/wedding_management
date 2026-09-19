@@ -189,6 +189,8 @@ class TestTaskSchemas:
             description="Enviar convites via correio",
             due_date=date(2026, 8, 1),
             is_completed=False,
+            is_overdue=True,
+            days_overdue=5,
         )
 
         out = TaskOut.from_orm(mock_task)
@@ -197,3 +199,5 @@ class TestTaskSchemas:
         assert out.wedding == wedding_uuid
         assert out.title == "Enviar convites"
         assert out.is_completed is False
+        assert out.is_overdue is True
+        assert out.days_overdue == 5

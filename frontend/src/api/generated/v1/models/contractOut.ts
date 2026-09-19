@@ -36,4 +36,5 @@ export interface ContractOut {
   total_amount_with_addendums?: string;
   has_file?: boolean;
   file_name?: string | null;
+  is_addendum?: boolean;
 }

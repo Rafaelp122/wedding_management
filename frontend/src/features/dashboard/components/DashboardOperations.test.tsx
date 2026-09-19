@@ -79,14 +79,13 @@ describe("DashboardOperations", () => {
       },
     ];
 
-    const patchMock = vi.fn();
+    const completeMock = vi.fn();
     server.use(
       http.get("*/api/v1/scheduler/tasks/", () =>
         HttpResponse.json({ items: mockTasks, count: 1, limit: 100, offset: 0 }),
       ),
-      http.patch("*/api/v1/scheduler/tasks/:uuid/", async ({ request, params }) => {
-        const body = await request.json();
-        patchMock(params.uuid, body);
+      http.post("*/api/v1/scheduler/tasks/:uuid/complete/", ({ params }) => {
+        completeMock(params.uuid);
         return HttpResponse.json({ ...mockTasks[0], is_completed: true });
       }),
     );
@@ -104,7 +103,7 @@ describe("DashboardOperations", () => {
     await user.click(checkbox);
 
     await waitFor(() => {
-      expect(patchMock).toHaveBeenCalledWith("t-1", { is_completed: true });
+      expect(completeMock).toHaveBeenCalledWith("t-1");
     });
   });
 

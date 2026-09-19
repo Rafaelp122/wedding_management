@@ -743,3 +743,129 @@ export const useSchedulerTasksDelete = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getSchedulerTasksDeleteMutationOptions(options), queryClient);
     }
+    /**
+ * Marca uma tarefa do checklist como concluída.
+ * @summary Complete Task
+ */
+export const schedulerTasksComplete = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TaskOut>(
+      {url: `/api/v1/scheduler/tasks/${uuid}/complete/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getSchedulerTasksCompleteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulerTasksComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof schedulerTasksComplete>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['schedulerTasksComplete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof schedulerTasksComplete>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  schedulerTasksComplete(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SchedulerTasksCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof schedulerTasksComplete>>>
+
+    export type SchedulerTasksCompleteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Complete Task
+ */
+export const useSchedulerTasksComplete = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulerTasksComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof schedulerTasksComplete>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getSchedulerTasksCompleteMutationOptions(options), queryClient);
+    }
+    /**
+ * Reabre uma tarefa concluída do checklist.
+ * @summary Reopen Task
+ */
+export const schedulerTasksReopen = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TaskOut>(
+      {url: `/api/v1/scheduler/tasks/${uuid}/reopen/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getSchedulerTasksReopenMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulerTasksReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof schedulerTasksReopen>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['schedulerTasksReopen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof schedulerTasksReopen>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  schedulerTasksReopen(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SchedulerTasksReopenMutationResult = NonNullable<Awaited<ReturnType<typeof schedulerTasksReopen>>>
+
+    export type SchedulerTasksReopenMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Reopen Task
+ */
+export const useSchedulerTasksReopen = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof schedulerTasksReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof schedulerTasksReopen>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getSchedulerTasksReopenMutationOptions(options), queryClient);
+    }

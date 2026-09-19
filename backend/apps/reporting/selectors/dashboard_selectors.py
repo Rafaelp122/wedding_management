@@ -64,7 +64,7 @@ def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
 
     critical_weddings = []
     for w in critical_qs:
-        days_until = max(0, (w.date - today).days)
+        days_until = w.get_days_until(today)
         critical_weddings.append(
             {
                 "uuid": w.uuid,
@@ -120,7 +120,7 @@ def wedding_overview_selector(
         f"para company_id={company.id}"
     )
     today = date.today()
-    days_until = max(0, (wedding.date - today).days)
+    days_until = wedding.get_days_until(today)
 
     budget_pct = FinancialSummarySelector.budget_percentage_used(
         company=company, wedding=wedding

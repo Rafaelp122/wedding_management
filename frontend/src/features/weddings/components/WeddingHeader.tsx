@@ -3,7 +3,7 @@ import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, MapPin, Pencil, Users } from "lucide-react";
+import { Calendar, CheckCircle2, MapPin, Pencil, Users, XCircle } from "lucide-react";
 import { getWeddingStatusBadgeStyle, getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { cn } from "@/lib/utils";
 import { TEMPLATE_MAP } from "../constants";
@@ -14,6 +14,8 @@ interface WeddingHeaderProps {
   checklistPercentage: number;
   isLoadingOverview?: boolean;
   onEditClick: () => void;
+  onCompleteClick?: () => void;
+  onCancelClick?: () => void;
 }
 
 export const WeddingHeader = memo(function WeddingHeader({
@@ -22,6 +24,8 @@ export const WeddingHeader = memo(function WeddingHeader({
   checklistPercentage,
   isLoadingOverview = false,
   onEditClick,
+  onCompleteClick,
+  onCancelClick,
 }: WeddingHeaderProps) {
   const templateLabel = wedding.template ? (TEMPLATE_MAP[wedding.template] ?? wedding.template) : null;
   const statusStyle = getWeddingStatusBadgeStyle(wedding.status);
@@ -37,6 +41,10 @@ export const WeddingHeader = memo(function WeddingHeader({
     }
     return `R$ ${num}`;
   };
+
+  const isDateReached = wedding.date
+    ? new Date(wedding.date + "T23:59:59") <= new Date()
+    : false;
 
   return (
     <div className="bg-white dark:bg-[#18181B] p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
@@ -86,6 +94,38 @@ export const WeddingHeader = memo(function WeddingHeader({
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
+            {wedding.status === "IN_PROGRESS" && onCompleteClick && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-7 w-7 rounded-full cursor-pointer transition-colors",
+                  isDateReached
+                    ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                    : "text-zinc-300 dark:text-zinc-600 cursor-not-allowed",
+                )}
+                onClick={isDateReached ? onCompleteClick : undefined}
+                disabled={!isDateReached}
+                title={
+                  isDateReached
+                    ? "Concluir casamento"
+                    : "O casamento só pode ser concluído na data do evento ou posterior"
+                }
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {wedding.status === "IN_PROGRESS" && onCancelClick && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-full cursor-pointer transition-colors"
+                onClick={onCancelClick}
+                title="Cancelar casamento"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
 
           {/* Linha 2: Data, Endereço e Convidados consolidados */}

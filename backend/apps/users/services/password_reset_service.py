@@ -107,4 +107,4 @@ class PasswordResetService:
             ) from e
 
         user.set_password(new_password)
-        user.save()
+        user.save(update_fields=["password", "updated_at"])

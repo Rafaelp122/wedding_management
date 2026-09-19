@@ -1,5 +1,5 @@
 from ninja import Schema
-from pydantic import UUID4, EmailStr, Field
+from pydantic import UUID4, ConfigDict, EmailStr, Field
 
 from apps.users.models import User
 
@@ -7,12 +7,16 @@ from apps.users.models import User
 class TokenPayloadIn(Schema):
     """Credenciais para autenticação (obtain token)."""
 
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     email: EmailStr
     password: str
 
 
 class GoogleAuthIn(Schema):
     """Payload para autenticação via Google OAuth2."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     id_token: str
 
@@ -37,6 +41,8 @@ class TokenOut(Schema):
 
 class RegisterIn(Schema):
     """Schema para entrada de novos usuários (Owners)."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     email: EmailStr
     password: str = Field(min_length=8)
@@ -69,11 +75,15 @@ class UserOut(Schema):
 class PasswordResetRequestIn(Schema):
     """Schema para solicitação de redefinição de senha."""
 
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     email: EmailStr
 
 
 class PasswordResetConfirmIn(Schema):
     """Schema para confirmação de redefinição de senha."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     uid: str
     token: str
@@ -87,13 +97,23 @@ class PasswordResetResponseOut(Schema):
 
 
 class VerifyEmailIn(Schema):
+    """Schema para validação do token de e-mail."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     uid: str
     token: str
 
 
 class ResendVerificationIn(Schema):
+    """Schema para reenvio do e-mail de verificação."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     email: EmailStr
 
 
 class VerifyEmailResponseOut(Schema):
+    """Schema de resposta para operações de verificação de e-mail."""
+
     message: str

@@ -224,3 +224,69 @@ export const WeddingsDeleteParams = zod.object({
 
 export const WeddingsDeleteResponse = zod.void()
 
+/**
+ * Caso de uso: Conclui um casamento existente garantindo data válida.
+ * @summary Complete Wedding
+ */
+export const WeddingsCompleteParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const weddingsCompleteResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsCompleteResponseOverdueInstallmentsDefault = 0;
+export const weddingsCompleteResponseOverdueInstallmentsMin = 0;
+
+export const weddingsCompleteResponseIncompleteTasksDefault = 0;
+export const weddingsCompleteResponseIncompleteTasksMin = 0;
+
+
+
+export const WeddingsCompleteResponse = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.int(),zod.null()]),
+  "status": zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.string().regex(weddingsCompleteResponseTotalBudgetOneRegExp),zod.null()]).optional(),
+  "overdue_installments": zod.int().min(weddingsCompleteResponseOverdueInstallmentsMin).default(weddingsCompleteResponseOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.int().min(weddingsCompleteResponseIncompleteTasksMin).default(weddingsCompleteResponseIncompleteTasksDefault)
+})
+
+/**
+ * Caso de uso: Cancela um casamento em andamento.
+ * @summary Cancel Wedding
+ */
+export const WeddingsCancelParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const weddingsCancelResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsCancelResponseOverdueInstallmentsDefault = 0;
+export const weddingsCancelResponseOverdueInstallmentsMin = 0;
+
+export const weddingsCancelResponseIncompleteTasksDefault = 0;
+export const weddingsCancelResponseIncompleteTasksMin = 0;
+
+
+
+export const WeddingsCancelResponse = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.int(),zod.null()]),
+  "status": zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.string().regex(weddingsCancelResponseTotalBudgetOneRegExp),zod.null()]).optional(),
+  "overdue_installments": zod.int().min(weddingsCancelResponseOverdueInstallmentsMin).default(weddingsCancelResponseOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.int().min(weddingsCancelResponseIncompleteTasksMin).default(weddingsCancelResponseIncompleteTasksDefault)
+})
+

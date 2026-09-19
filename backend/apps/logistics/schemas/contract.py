@@ -80,6 +80,7 @@ class ContractOut(Schema):
     total_amount_with_addendums: Decimal = Decimal("0.00")
     has_file: bool = False
     file_name: str | None = None
+    is_addendum: bool = False
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
@@ -173,6 +174,20 @@ class ContractOut(Schema):
     def resolve_file_name(obj: "Contract") -> str | None:
         """Retorna o nome do arquivo PDF anexado."""
         return obj.file_name
+
+    @staticmethod
+    def resolve_is_addendum(obj: "Contract") -> bool:
+        """Indica se este contrato é um termo aditivo (possui contrato pai)."""
+        return obj.is_addendum
+
+
+class ContractSignIn(Schema):
+    """Schema de entrada para formalização de assinatura de contrato."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    signed_date: date | None = None
+    pdf_file_key: str | None = None
 
 
 class ContractFullCreateIn(Schema):

@@ -59,6 +59,36 @@ def update_task(request: AuthRequest, uuid: UUID4, payload: TaskPatchIn) -> Task
     return task_get_selector(company=user.company, uuid=updated.uuid)
 
 
+@tasks_router.post(
+    "/{uuid}/complete/",
+    response={200: TaskOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="scheduler_tasks_complete",
+)
+def complete_task(request: AuthRequest, uuid: UUID4) -> Task:
+    """
+    Marca uma tarefa do checklist como concluída.
+    """
+    user = request.user
+    instance = task_get_selector(company=user.company, uuid=uuid)
+    completed = TaskService.complete(user.company, instance)
+    return task_get_selector(company=user.company, uuid=completed.uuid)
+
+
+@tasks_router.post(
+    "/{uuid}/reopen/",
+    response={200: TaskOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="scheduler_tasks_reopen",
+)
+def reopen_task(request: AuthRequest, uuid: UUID4) -> Task:
+    """
+    Reabre uma tarefa concluída do checklist.
+    """
+    user = request.user
+    instance = task_get_selector(company=user.company, uuid=uuid)
+    reopened = TaskService.reopen(user.company, instance)
+    return task_get_selector(company=user.company, uuid=reopened.uuid)
+
+
 @tasks_router.delete(
     "/{uuid}/",
     response={204: None, **MUTATION_ERROR_RESPONSES},

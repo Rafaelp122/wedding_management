@@ -39,3 +39,5 @@ class TaskOut(Schema):
     description: str | None = None
     due_date: date | None = None
     is_completed: bool
+    is_overdue: bool = False
+    days_overdue: int = 0

@@ -141,3 +141,13 @@ class TestTaskRichDomainModel:
         )
         assert task_no_date.is_overdue is False
         assert task_no_date.days_overdue == 0
+
+    def test_update_details(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, title="Antigo", description="Desc Antiga")
+        new_due = date.today() + timedelta(days=10)
+
+        task.update_details(title="Novo", description="Nova Desc", due_date=new_due)
+        assert task.title == "Novo"
+        assert task.description == "Nova Desc"
+        assert task.due_date == new_due

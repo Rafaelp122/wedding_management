@@ -102,6 +102,15 @@ class TaskService:
                 instance.reopen()
             updated_fields.add("is_completed")
 
+        details_kwargs = {}
+        for field in ("title", "description", "due_date"):
+            if field in data:
+                details_kwargs[field] = data.pop(field)
+                updated_fields.add(field)
+
+        if details_kwargs:
+            instance.update_details(**details_kwargs)
+
         for field, value in data.items():
             setattr(instance, field, value)
             updated_fields.add(field)
@@ -236,7 +245,12 @@ class TaskService:
             if task.due_date is None:
                 continue
 
-            if task.due_date < today:
+            is_overdue = (
+                task.is_overdue
+                if today == timezone.localdate()
+                else task.due_date < today
+            )
+            if is_overdue:
                 title = "Item de Checklist Vencido"
                 notification_type = "CHECKLIST_ITEM_OVERDUE"
                 message = (
@@ -258,11 +272,7 @@ class TaskService:
                 continue
 
             wedding_id = task.wedding.uuid if task.wedding else None
-            wedding_name = (
-                f"Casamento de {task.wedding.bride_name} e {task.wedding.groom_name}"
-                if task.wedding
-                else ""
-            )
+            wedding_name = task.wedding.display_name if task.wedding else ""
             link = (
                 f"/weddings/{task.wedding.uuid}?tab=planning&subtab=checklist"
                 if task.wedding

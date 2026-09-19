@@ -5,7 +5,6 @@ import logging
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError
-from django.utils import timezone
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -55,12 +54,17 @@ class WeddingService:
         logger.info(f"Criando casamento para company_id={company.id}")
 
         data = payload.model_dump(exclude_unset=True)
+        template_name = data.get("template")
 
-        valid_fields = {f.name for f in Wedding._meta.concrete_fields}
-        model_data = {k: v for k, v in data.items() if k in valid_fields}
-
-        # Instanciação e Validação do Casamento
-        wedding = Wedding(company=company, **model_data)
+        wedding = Wedding(
+            company=company,
+            groom_name=payload.groom_name,
+            bride_name=payload.bride_name,
+            date=payload.date,
+            location=payload.location,
+            expected_guests=payload.expected_guests,
+            template=template_name,
+        )
         try:
             wedding.save()
         except DjangoValidationError as e:
@@ -75,7 +79,6 @@ class WeddingService:
             ) from e
 
         # ── Template de Cronograma ────────────────────────────────────────
-        template_name = data.get("template")
         if template_name is not None:
             logger.info(
                 f"Aplicando template '{template_name}' ao casamento uuid={wedding.uuid}"
@@ -89,10 +92,10 @@ class WeddingService:
     @transaction.atomic
     def update(company: Company, instance: Wedding, payload: WeddingPatchIn) -> Wedding:
         """
-        Atualiza dados de um casamento existente com base no payload fornecido.
+        Atualiza dados de um casamento existente delegando mutações ao modelo.
 
-        Garante isolamento de tenant antes de atualizar e executa validações
-        com full_clean() antes de persistir as modificações.
+        Garante isolamento de tenant antes de atualizar e invoca métodos
+        semânticos da entidade Wedding para transição e reagendamento.
 
         Args:
             company: O tenant atual para isolamento de dados.
@@ -123,25 +126,28 @@ class WeddingService:
         if status_input is not None and status_input != instance.status:
             instance.transition_to(status_input)
             updated_fields.add("status")
+            if instance.status == Wedding.StatusChoices.CANCELED:
+                from apps.weddings.tasks import on_wedding_canceled_task
 
-        # Validação temporal de mudança de data para casamentos em andamento
-        new_date = data.get("date")
-        if (
-            new_date
-            and new_date != instance.date
-            and instance.status == Wedding.StatusChoices.IN_PROGRESS
-            and new_date < timezone.now().date()
-        ):
-            raise BusinessRuleViolation(
-                detail="A nova data do casamento não pode ser no passado.",
-                code="wedding_invalid_date",
-            )
+                transaction.on_commit(
+                    lambda: on_wedding_canceled_task.enqueue(
+                        company.id, str(instance.uuid)
+                    )
+                )
 
-        valid_fields = {f.name for f in Wedding._meta.concrete_fields} - {"status"}
-        for field, value in data.items():
-            if field in valid_fields:
-                setattr(instance, field, value)
+        new_date = data.pop("date", None)
+        if new_date is not None and new_date != instance.date:
+            instance.reschedule(new_date)
+            updated_fields.add("date")
+
+        detail_kwargs = {}
+        for field in ("groom_name", "bride_name", "location", "expected_guests"):
+            if field in data:
+                detail_kwargs[field] = data[field]
                 updated_fields.add(field)
+
+        if detail_kwargs:
+            instance.update_details(**detail_kwargs)
 
         if updated_fields:
             updated_fields.add("updated_at")
@@ -195,16 +201,13 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
-    def cancel(
-        company: Company, instance: Wedding, reason: str | None = None
-    ) -> Wedding:
+    def cancel(company: Company, instance: Wedding) -> Wedding:
         """
         Caso de uso: Cancela um casamento existente delegando a regra para a entidade.
 
         Args:
             company: O tenant atual para isolamento de dados.
             instance: Instância de Wedding a ser cancelada.
-            reason: Motivo opcional do cancelamento.
 
         Returns:
             A instância de Wedding cancelada e persistida.
@@ -215,7 +218,7 @@ class WeddingService:
             detail="Casamento não encontrado ou acesso negado.",
             code="wedding_not_found_or_denied",
         )
-        instance.cancel(reason=reason)
+        instance.cancel()
         try:
             instance.save(update_fields=["status", "updated_at"])
         except DjangoValidationError as e:

@@ -73,6 +73,8 @@ export function createMockTask(overrides?: Partial<TaskOut>): TaskOut {
     description: "Pesquisar e fechar contrato",
     due_date: "2025-03-15",
     is_completed: false,
+    is_overdue: false,
+    days_overdue: 0,
     ...overrides,
   };
 }

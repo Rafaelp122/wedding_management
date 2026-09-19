@@ -19,6 +19,7 @@ from apps.finances.schemas import (
     ExpenseIn,
     ExpenseOut,
     ExpensePatchIn,
+    ExpenseRenegotiateIn,
     InstallmentAdjustIn,
     InstallmentIn,
     InstallmentOut,
@@ -31,6 +32,8 @@ class Dummy:
 
     installments_count: int = 0
     paid_installments_count: int = 0
+    total_paid: Decimal = Decimal("0.00")
+    due_date: Any = None
     _state: Any = None
 
     def __init__(self, **kwargs: Any) -> None:
@@ -77,6 +80,7 @@ class TestBudgetSchemas:
             uuid=budget_uuid,
             wedding=Dummy(uuid=wedding_uuid),
             total_estimated=Decimal("30000.00"),
+            _total_allocated=Decimal("20000.00"),
             _total_overall_spent=Decimal("12500.00"),
             notes="Notas do orçamento",
         )
@@ -85,6 +89,8 @@ class TestBudgetSchemas:
         assert out.uuid == budget_uuid
         assert out.wedding == wedding_uuid
         assert out.total_estimated == Decimal("30000.00")
+        assert out.total_allocated == Decimal("20000.00")
+        assert out.unallocated_budget == Decimal("10000.00")
         assert out.total_overall_spent == Decimal("12500.00")
         assert out.notes == "Notas do orçamento"
 
@@ -165,6 +171,7 @@ class TestBudgetCategorySchemas:
         assert out.name == "Música"
         assert out.allocated_budget == Decimal("8000.00")
         assert out.total_spent == Decimal("4500.00")
+        assert out.budget_utilization_percent == 56
 
 
 class TestExpenseSchemas:
@@ -227,8 +234,16 @@ class TestExpenseSchemas:
         with pytest.raises(ValidationError):
             ExpensePatchIn(actual_amount=Decimal("-5.00"))
 
+    def test_expense_renegotiate_in_validations(self) -> None:
+        schema = ExpenseRenegotiateIn(
+            num_installments=3,
+            first_due_date=date.today(),
+        )
+        assert schema.num_installments == 3
+        assert schema.first_due_date == date.today()
+
         with pytest.raises(ValidationError):
-            ExpensePatchIn(num_installments=0)
+            ExpenseRenegotiateIn(num_installments=0)
 
     def test_expense_from_document_out(self) -> None:
         c_id = uuid.uuid4()
@@ -269,24 +284,30 @@ class TestExpenseSchemas:
         assert out.status == "PENDING"
         assert out.installments_count == 0
         assert out.paid_installments_count == 0
+        assert out.payment_progress_percent == 0
 
         # 2. total = 2, paid = 0 -> PENDING
         mock_expense.installments_count = 2
         mock_expense.paid_installments_count = 0
         out = ExpenseOut.from_orm(mock_expense)
         assert out.status == "PENDING"
+        assert out.payment_progress_percent == 0
 
         # 3. total = 2, paid = 1 -> PARTIALLY_PAID
         mock_expense.installments_count = 2
         mock_expense.paid_installments_count = 1
+        mock_expense.total_paid = Decimal("500.00")
         out = ExpenseOut.from_orm(mock_expense)
         assert out.status == "PARTIALLY_PAID"
+        assert out.payment_progress_percent == 50
 
         # 4. total = 2, paid = 2 -> SETTLED
         mock_expense.installments_count = 2
         mock_expense.paid_installments_count = 2
+        mock_expense.total_paid = Decimal("1000.00")
         out = ExpenseOut.from_orm(mock_expense)
         assert out.status == "SETTLED"
+        assert out.payment_progress_percent == 100
 
     def test_expense_out_contract_resolution_pure(self) -> None:
         contract_uuid = uuid.uuid4()
@@ -399,3 +420,8 @@ class TestInstallmentSchemas:
         assert out.installment_number == 1
         assert out.amount == Decimal("750.00")
         assert out.status == "PENDING"
+        assert out.is_late is False
+
+        mock_inst.due_date = date(2020, 1, 1)
+        out_late = InstallmentOut.from_orm(mock_inst)
+        assert out_late.is_late is True

@@ -178,44 +178,34 @@ class TestBudgetTotalOverallSpent:
 class TestBudgetConvenienceProperties:
     """Testes de propriedades de conveniência em Budget."""
 
-    def test_remaining_overall_budget_and_is_over_budget(self, user: Any) -> None:
+    def test_budget_total_allocated_and_unallocated(self, user: Any) -> None:
+        """total_allocated e unallocated_budget calculam as fatias orçamentárias."""
         wedding = WeddingFactory(user_context=user)
-        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("10000.00"))
-        cat = BudgetCategoryFactory(budget=budget, wedding=wedding)
+        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("20000.00"))
 
-        assert budget.remaining_overall_budget == Decimal("10000.00")
-        assert budget.is_over_budget is False
+        assert budget.total_allocated == Decimal("0.00")
+        assert budget.unallocated_budget == Decimal("20000.00")
 
-        # Cria despesa paga de 6000
-        expense = ExpenseFactory(
-            wedding=wedding,
-            category=cat,
-            actual_amount=Decimal("6000.00"),
-            contract=None,
+        BudgetCategoryFactory(
+            budget=budget, wedding=wedding, allocated_budget=Decimal("7000.00")
         )
-        InstallmentFactory(
-            expense=expense,
-            amount=Decimal("6000.00"),
-            status=Installment.StatusChoices.PAID,
-            paid_date="2026-01-15",
+        BudgetCategoryFactory(
+            budget=budget, wedding=wedding, allocated_budget=Decimal("5000.00")
         )
 
-        assert budget.remaining_overall_budget == Decimal("4000.00")
-        assert budget.is_over_budget is False
+        assert budget.total_allocated == Decimal("12000.00")
+        assert budget.unallocated_budget == Decimal("8000.00")
 
-        # Cria mais uma despesa paga de 5000 (total 11000 vs 10000)
-        expense2 = ExpenseFactory(
-            wedding=wedding,
-            category=cat,
-            actual_amount=Decimal("5000.00"),
-            contract=None,
-        )
-        InstallmentFactory(
-            expense=expense2,
-            amount=Decimal("5000.00"),
-            status=Installment.StatusChoices.PAID,
-            paid_date="2026-02-15",
+    def test_budget_clean_blocks_reduction_below_allocated(self, user: Any) -> None:
+        """clean() impede redução de total_estimated abaixo do total já alocado."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("20000.00"))
+        BudgetCategoryFactory(
+            budget=budget, wedding=wedding, allocated_budget=Decimal("15000.00")
         )
 
-        assert budget.remaining_overall_budget == Decimal("-1000.00")
-        assert budget.is_over_budget is True
+        budget.total_estimated = Decimal("10000.00")
+        with pytest.raises(ValidationError) as excinfo:
+            budget.full_clean()
+
+        assert "não pode ser inferior ao total já alocado" in str(excinfo.value)

@@ -121,3 +121,59 @@ def transition_item_status(
         instance=item,
         new_status=payload.acquisition_status,
     )
+
+
+@items_router.post(
+    "/{uuid:uuid}/start/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_start",
+)
+def start_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Inicia a aquisição do item logístico, transitando para EM ANDAMENTO.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.start(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/complete/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_complete",
+)
+def complete_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Conclui a aquisição do item logístico, transitando para CONCLUÍDO.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.complete(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/reopen/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_reopen",
+)
+def reopen_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Reabre um item logístico concluído, transitando de volta para EM ANDAMENTO.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.reopen(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/revert-to-pending/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_revert_to_pending",
+)
+def revert_item_to_pending(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Reverte o item logístico de volta para PENDENTE.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.revert_to_pending(company=user.company, instance=item)

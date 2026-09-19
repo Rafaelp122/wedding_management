@@ -23,17 +23,25 @@ import type {
 } from '../../models';
 
 import {
+  getLogisticsContractsCancelResponseMock,
   getLogisticsContractsCreateFullResponseMock,
   getLogisticsContractsCreateResponseMock,
   getLogisticsContractsListResponseMock,
   getLogisticsContractsReadResponseMock,
+  getLogisticsContractsRevertToDraftResponseMock,
+  getLogisticsContractsSendToPendingResponseMock,
+  getLogisticsContractsSignResponseMock,
   getLogisticsContractsTransitionStatusResponseMock,
   getLogisticsContractsUpdateResponseMock,
   getLogisticsContractsUploadResponseMock,
   getLogisticsContractsUploadUrlResponseMock,
+  getLogisticsItemsCompleteResponseMock,
   getLogisticsItemsCreateResponseMock,
   getLogisticsItemsListResponseMock,
   getLogisticsItemsReadResponseMock,
+  getLogisticsItemsReopenResponseMock,
+  getLogisticsItemsRevertToPendingResponseMock,
+  getLogisticsItemsStartResponseMock,
   getLogisticsItemsTransitionStatusResponseMock,
   getLogisticsItemsUpdateResponseMock,
   getLogisticsSuppliersCreateResponseMock,
@@ -42,7 +50,7 @@ import {
   getLogisticsSuppliersUpdateResponseMock
 } from './logistics.faker';
 
-export { getLogisticsSuppliersListResponseMock, getLogisticsSuppliersCreateResponseMock, getLogisticsSuppliersReadResponseMock, getLogisticsSuppliersUpdateResponseMock, getLogisticsContractsListResponseMock, getLogisticsContractsCreateResponseMock, getLogisticsContractsReadResponseMock, getLogisticsContractsUpdateResponseMock, getLogisticsContractsUploadUrlResponseMock, getLogisticsContractsCreateFullResponseMock, getLogisticsContractsUploadResponseMock, getLogisticsContractsTransitionStatusResponseMock, getLogisticsItemsListResponseMock, getLogisticsItemsCreateResponseMock, getLogisticsItemsReadResponseMock, getLogisticsItemsUpdateResponseMock, getLogisticsItemsTransitionStatusResponseMock } from './logistics.faker';
+export { getLogisticsSuppliersListResponseMock, getLogisticsSuppliersCreateResponseMock, getLogisticsSuppliersReadResponseMock, getLogisticsSuppliersUpdateResponseMock, getLogisticsContractsListResponseMock, getLogisticsContractsCreateResponseMock, getLogisticsContractsReadResponseMock, getLogisticsContractsUpdateResponseMock, getLogisticsContractsUploadUrlResponseMock, getLogisticsContractsCreateFullResponseMock, getLogisticsContractsUploadResponseMock, getLogisticsContractsTransitionStatusResponseMock, getLogisticsContractsSendToPendingResponseMock, getLogisticsContractsSignResponseMock, getLogisticsContractsCancelResponseMock, getLogisticsContractsRevertToDraftResponseMock, getLogisticsItemsListResponseMock, getLogisticsItemsCreateResponseMock, getLogisticsItemsReadResponseMock, getLogisticsItemsUpdateResponseMock, getLogisticsItemsTransitionStatusResponseMock, getLogisticsItemsStartResponseMock, getLogisticsItemsCompleteResponseMock, getLogisticsItemsReopenResponseMock, getLogisticsItemsRevertToPendingResponseMock } from './logistics.faker';
 
 
 export const getLogisticsSuppliersListMockHandler = (overrideResponse?: PagedSupplierOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedSupplierOut> | PagedSupplierOut), options?: RequestHandlerOptions) => {
@@ -219,6 +227,54 @@ export const getLogisticsContractsTransitionStatusMockHandler = (overrideRespons
   }, options)
 }
 
+export const getLogisticsContractsSendToPendingMockHandler = (overrideResponse?: ContractOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ContractOut> | ContractOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/contracts/:uuid/send-to-pending/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsContractsSendToPendingResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getLogisticsContractsSignMockHandler = (overrideResponse?: ContractOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ContractOut> | ContractOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/contracts/:uuid/sign/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsContractsSignResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getLogisticsContractsCancelMockHandler = (overrideResponse?: ContractOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ContractOut> | ContractOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/contracts/:uuid/cancel/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsContractsCancelResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getLogisticsContractsRevertToDraftMockHandler = (overrideResponse?: ContractOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ContractOut> | ContractOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/contracts/:uuid/revert-to-draft/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsContractsRevertToDraftResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
 export const getLogisticsItemsListMockHandler = (overrideResponse?: PagedItemOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedItemOut> | PagedItemOut), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/logistics/items/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
@@ -288,6 +344,54 @@ export const getLogisticsItemsTransitionStatusMockHandler = (overrideResponse?: 
       })
   }, options)
 }
+
+export const getLogisticsItemsStartMockHandler = (overrideResponse?: ItemOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ItemOut> | ItemOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/items/:uuid/start/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsItemsStartResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getLogisticsItemsCompleteMockHandler = (overrideResponse?: ItemOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ItemOut> | ItemOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/items/:uuid/complete/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsItemsCompleteResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getLogisticsItemsReopenMockHandler = (overrideResponse?: ItemOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ItemOut> | ItemOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/items/:uuid/reopen/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsItemsReopenResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getLogisticsItemsRevertToPendingMockHandler = (overrideResponse?: ItemOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<ItemOut> | ItemOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/logistics/items/:uuid/revert-to-pending/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsItemsRevertToPendingResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getLogisticsMock = () => [
   getLogisticsSuppliersListMockHandler(),
   getLogisticsSuppliersCreateMockHandler(),
@@ -304,10 +408,18 @@ export const getLogisticsMock = () => [
   getLogisticsContractsUploadMockHandler(),
   getLogisticsContractsDeleteUploadMockHandler(),
   getLogisticsContractsTransitionStatusMockHandler(),
+  getLogisticsContractsSendToPendingMockHandler(),
+  getLogisticsContractsSignMockHandler(),
+  getLogisticsContractsCancelMockHandler(),
+  getLogisticsContractsRevertToDraftMockHandler(),
   getLogisticsItemsListMockHandler(),
   getLogisticsItemsCreateMockHandler(),
   getLogisticsItemsReadMockHandler(),
   getLogisticsItemsUpdateMockHandler(),
   getLogisticsItemsDeleteMockHandler(),
-  getLogisticsItemsTransitionStatusMockHandler()
+  getLogisticsItemsTransitionStatusMockHandler(),
+  getLogisticsItemsStartMockHandler(),
+  getLogisticsItemsCompleteMockHandler(),
+  getLogisticsItemsReopenMockHandler(),
+  getLogisticsItemsRevertToPendingMockHandler()
 ]

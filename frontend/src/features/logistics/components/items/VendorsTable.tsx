@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { STATUS_STYLES, STATUS_LABELS } from "@/features/logistics/constants";
+import { CancelContractDialog } from "../contracts/CancelContractDialog";
 
 interface WeddingVendorsTableProps {
   contracts: ContractOut[];
@@ -46,6 +47,7 @@ export const WeddingVendorsTable = memo(function WeddingVendorsTable({
   onRefresh,
 }: WeddingVendorsTableProps) {
   const [deletingContract, setDeletingContract] = useState<ContractOut | null>(null);
+  const [cancelingContract, setCancelingContract] = useState<ContractOut | null>(null);
   const { mutate: deleteContract, isPending: isDeleting } =
     useLogisticsContractsDelete();
 
@@ -72,7 +74,7 @@ export const WeddingVendorsTable = memo(function WeddingVendorsTable({
     );
   }
 
-  const hasActions = onEdit || onGenerateExpense;
+  const hasActions = true;
 
   return (
     <>
@@ -90,7 +92,8 @@ export const WeddingVendorsTable = memo(function WeddingVendorsTable({
           </TableHeader>
           <TableBody>
             {contracts.map((contract) => {
-              const addendum = isAddendum?.(contract) ?? false;
+              const addendum =
+                contract.is_addendum ?? (isAddendum ? isAddendum(contract) : false);
               const progressLabel = contract.has_linked_expense
                 ? `${contract.progress_percent ?? 0}% pago`
                 : undefined;
@@ -205,6 +208,14 @@ export const WeddingVendorsTable = memo(function WeddingVendorsTable({
                               Gerar Despesa
                             </DropdownMenuItem>
                           )}
+                          {contract.status !== "CANCELED" && (
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setCancelingContract(contract)}
+                            >
+                              Cancelar Contrato
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => setDeletingContract(contract)}
@@ -237,6 +248,18 @@ export const WeddingVendorsTable = memo(function WeddingVendorsTable({
         ]}
         onConfirm={handleDelete}
         isPending={isDeleting}
+      />
+
+      <CancelContractDialog
+        contract={cancelingContract}
+        open={!!cancelingContract}
+        onOpenChange={(open) => {
+          if (!open) setCancelingContract(null);
+        }}
+        onSuccess={() => {
+          setCancelingContract(null);
+          onRefresh?.();
+        }}
       />
     </>
   );

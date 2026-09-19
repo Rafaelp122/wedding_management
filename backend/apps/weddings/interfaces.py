@@ -37,4 +37,4 @@ def get_wedding_display_name(
     )
     if not wedding:
         return None
-    return f"Casamento de {wedding.bride_name} e {wedding.groom_name}"
+    return wedding.display_name

@@ -11,8 +11,9 @@ Use this operational checklist when implementing, validating, or reviewing busin
 
 ## 1. Domain: Weddings & Multi-Tenancy
 
-- [ ] **BR-W01 (Completion Status)**: A wedding can only be marked as `CONCLUDED` after the event date has passed. Prevent premature closure. → [wedding-status-lifecycle.md](../../../docs/architecture/business-rules/weddings/wedding-status-lifecycle.md)
+- [ ] **BR-W01 (Completion Status)**: A wedding can only be marked as `COMPLETED` (`concluido`) after the event date has passed. Prevent premature closure. → [wedding-status-lifecycle.md](../../../docs/architecture/business-rules/weddings/wedding-status-lifecycle.md)
 - [ ] **BR-W02 (Multi-Tenancy Isolation)**: All access to weddings, categories, suppliers, and items is strictly isolated by tenant `company`. Use `for_tenant(company)`. → [multi-tenancy-strategy.md](../../../docs/architecture/concepts/multi-tenancy-strategy.md)
+- [ ] **BR-W03 (Event Date Invariant)**: Wedding date cannot be in the past on creation or update. → [wedding-status-lifecycle.md](../../../docs/architecture/business-rules/weddings/wedding-status-lifecycle.md)
 
 ---
 

@@ -18,4 +18,5 @@ export interface BudgetCategoryOut {
   allocated_budget: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_spent?: string;
+  budget_utilization_percent?: number;
 }

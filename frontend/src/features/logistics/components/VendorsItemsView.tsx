@@ -125,7 +125,6 @@ export function WeddingVendorsItemsTabView({
         <CardContent>
           <WeddingVendorsTable
             contracts={contracts}
-            isAddendum={(c) => !!c.parent}
             onDetail={setDetailContractUuid}
           />
         </CardContent>

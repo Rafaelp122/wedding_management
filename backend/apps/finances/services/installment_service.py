@@ -60,7 +60,6 @@ class InstallmentService:
                 número de parcelas for <= 0, ou se o valor total da despesa for
                 inválido.
         """
-        from datetime import timedelta
 
         # Bloqueio preventivo contra reentrada e duplicação de parcelas na despesa.
         if expense.installments.exists():
@@ -72,50 +71,19 @@ class InstallmentService:
                 code="installments_already_exist",
             )
 
-        if num_installments <= 0:
-            raise BusinessRuleViolation(
-                detail="O número de parcelas deve ser maior que zero.",
-                code="invalid_installment_number",
-            )
-
-        if not expense.actual_amount or expense.actual_amount <= 0:
-            raise BusinessRuleViolation(
-                detail="A despesa precisa ter um valor maior que zero para "
-                "parcelamento.",
-                code="invalid_expense_amount",
-            )
-
-        base_amount = round(expense.actual_amount / num_installments, 2)
-        installments: list[Installment] = []
-
-        current_due_date = first_due_date
-
-        for i in range(1, num_installments):
-            installments.append(
-                Installment(
-                    company=company,
-                    wedding=expense.wedding,
-                    expense=expense,
-                    installment_number=i,
-                    amount=base_amount,
-                    due_date=current_due_date,
-                    status=Installment.StatusChoices.PENDING,
-                )
-            )
-            current_due_date += timedelta(days=30)
-
-        last_amount = expense.actual_amount - (base_amount * (num_installments - 1))
-        installments.append(
+        splits = expense.calculate_installment_splits(num_installments, first_due_date)
+        installments: list[Installment] = [
             Installment(
                 company=company,
                 wedding=expense.wedding,
                 expense=expense,
-                installment_number=num_installments,
-                amount=last_amount,
-                due_date=current_due_date,
+                installment_number=num,
+                amount=amt,
+                due_date=due,
                 status=Installment.StatusChoices.PENDING,
             )
-        )
+            for num, amt, due in splits
+        ]
 
         # Usar .save() em vez de bulk_create para garantir que full_clean()
         # e hooks do BaseModel/Tolerância Zero sejam executados (ADR-011)
@@ -155,7 +123,7 @@ class InstallmentService:
             BusinessRuleViolation: Se existirem parcelas já pagas (status PAID)
                 na despesa.
         """
-        if expense.installments.filter(status="PAID").exists():
+        if expense.has_paid_installments:
             raise BusinessRuleViolation(
                 detail=(
                     "Não é possível alterar o número de parcelas — existem "
@@ -439,41 +407,7 @@ class InstallmentService:
 
         new_due_date = data.get("due_date")
         if new_due_date:
-            prev = (
-                Installment.objects.for_tenant(company)
-                .filter(
-                    expense=instance.expense,
-                    installment_number__lt=instance.installment_number,
-                )
-                .order_by("-installment_number")
-                .first()
-            )
-            if prev and new_due_date < prev.due_date:
-                raise BusinessRuleViolation(
-                    detail=(
-                        "A data de vencimento não pode ser anterior à "
-                        f"parcela #{prev.installment_number} ({prev.due_date})."
-                    ),
-                    code="due_date_before_previous_installment",
-                )
-
-            nxt = (
-                Installment.objects.for_tenant(company)
-                .filter(
-                    expense=instance.expense,
-                    installment_number__gt=instance.installment_number,
-                )
-                .order_by("installment_number")
-                .first()
-            )
-            if nxt and new_due_date > nxt.due_date:
-                raise BusinessRuleViolation(
-                    detail=(
-                        "A data de vencimento não pode ser posterior à "
-                        f"parcela #{nxt.installment_number} ({nxt.due_date})."
-                    ),
-                    code="due_date_after_next_installment",
-                )
+            instance.validate_chronology(new_due_date)
 
         updated_fields: set[str] = set()
         for field, value in data.items():
@@ -592,8 +526,8 @@ class InstallmentService:
         from apps.notifications.interfaces import notify_installment_overdue
 
         for inst in pending_overdue:
-            inst.status = Installment.StatusChoices.OVERDUE
-            inst.save(skip_clean=True, update_fields=["status", "updated_at"])
+            inst.mark_as_overdue()
+            inst.save(update_fields=["status", "updated_at"])
             count += 1
 
             users = [u for u in inst.company.users.all() if u.is_active]

@@ -621,3 +621,129 @@ export const useWeddingsDelete = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getWeddingsDeleteMutationOptions(options), queryClient);
     }
+    /**
+ * Caso de uso: Conclui um casamento existente garantindo data válida.
+ * @summary Complete Wedding
+ */
+export const weddingsComplete = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/${uuid}/complete/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsCompleteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof weddingsComplete>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['weddingsComplete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof weddingsComplete>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  weddingsComplete(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WeddingsCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof weddingsComplete>>>
+
+    export type WeddingsCompleteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Complete Wedding
+ */
+export const useWeddingsComplete = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof weddingsComplete>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getWeddingsCompleteMutationOptions(options), queryClient);
+    }
+    /**
+ * Caso de uso: Cancela um casamento em andamento.
+ * @summary Cancel Wedding
+ */
+export const weddingsCancel = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/${uuid}/cancel/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsCancelMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsCancel>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof weddingsCancel>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['weddingsCancel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof weddingsCancel>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  weddingsCancel(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WeddingsCancelMutationResult = NonNullable<Awaited<ReturnType<typeof weddingsCancel>>>
+
+    export type WeddingsCancelMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Cancel Wedding
+ */
+export const useWeddingsCancel = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsCancel>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof weddingsCancel>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getWeddingsCancelMutationOptions(options), queryClient);
+    }

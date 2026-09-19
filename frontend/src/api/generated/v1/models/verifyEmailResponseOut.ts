@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema de resposta para operações de verificação de e-mail.
+ */
 export interface VerifyEmailResponseOut {
   message: string;
 }

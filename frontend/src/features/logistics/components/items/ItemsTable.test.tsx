@@ -160,4 +160,87 @@ describe("WeddingItemsTable", () => {
       expect(onRefresh).not.toHaveBeenCalled();
     });
   });
+
+  it("handles starting item acquisition when clicking Iniciar Aquisição", async () => {
+    const onRefresh = vi.fn();
+    const item = createMockItem({ acquisition_status: "PENDING" });
+
+    server.use(
+      http.post("*/api/v1/logistics/items/:uuid/start/", () => {
+        return HttpResponse.json({ ...item, acquisition_status: "IN_PROGRESS" });
+      }),
+    );
+
+    const { container } = render(
+      <WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Iniciar Aquisição"));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Aquisição do item iniciada!");
+      expect(onRefresh).toHaveBeenCalled();
+    });
+  });
+
+  it("handles completing and reverting item when status is IN_PROGRESS", async () => {
+    const onRefresh = vi.fn();
+    const item = createMockItem({ acquisition_status: "IN_PROGRESS" });
+
+    server.use(
+      http.post("*/api/v1/logistics/items/:uuid/complete/", () => {
+        return HttpResponse.json({ ...item, acquisition_status: "DONE" });
+      }),
+      http.post("*/api/v1/logistics/items/:uuid/revert-to-pending/", () => {
+        return HttpResponse.json({ ...item, acquisition_status: "PENDING" });
+      }),
+    );
+
+    const { container } = render(
+      <WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Marcar como Concluído"));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Item concluído com sucesso!");
+      expect(onRefresh).toHaveBeenCalled();
+    });
+
+    // Test revert to pending
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Voltar para Pendente"));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Item retornado para pendente!");
+    });
+  });
+
+  it("handles reopening item acquisition when status is DONE", async () => {
+    const onRefresh = vi.fn();
+    const item = createMockItem({ acquisition_status: "DONE" });
+
+    server.use(
+      http.post("*/api/v1/logistics/items/:uuid/reopen/", () => {
+        return HttpResponse.json({ ...item, acquisition_status: "IN_PROGRESS" });
+      }),
+    );
+
+    const { container } = render(
+      <WeddingItemsTable items={[item]} onEdit={vi.fn()} onRefresh={onRefresh} />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Reabrir Aquisição"));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Item reaberto com sucesso!");
+      expect(onRefresh).toHaveBeenCalled();
+    });
+  });
 });

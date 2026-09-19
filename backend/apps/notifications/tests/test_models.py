@@ -1,6 +1,5 @@
 from datetime import timedelta
 from typing import Any, cast
-from uuid import uuid4
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -8,7 +7,6 @@ from django.utils import timezone
 
 from apps.notifications.models import (
     Notification,
-    NotificationTargetType,
     NotificationType,
 )
 from apps.notifications.tests.factories import (
@@ -170,73 +168,24 @@ class TestNotificationLifecycleMethods:
         assert notification.is_read is True
         assert notification.read_at == initial_read_at
 
-    def test_mark_as_unread_clears_flags(self, user: Any) -> None:
-        """mark_as_unread() deve resetar is_read para False e zerar read_at."""
-        notification = NotificationFactory(
-            user=user, is_read=True, read_at=timezone.now()
-        )
-
-        notification.mark_as_unread()
-
-        assert notification.is_read is False
-        assert notification.read_at is None
-
 
 @pytest.mark.django_db
-class TestNotificationSemanticProperties:
-    """Testes das propriedades semânticas is_urgent e is_actionable."""
+class TestNotificationQuerySetMarkAsRead:
+    """Testes para o método mark_as_read no NotificationQuerySet."""
 
-    @pytest.mark.parametrize(
-        ("notif_type", "expected_urgent"),
-        [
-            (NotificationType.OVERDUE_INSTALLMENT, True),
-            (NotificationType.CHECKLIST_ITEM_OVERDUE, True),
-            (NotificationType.UPCOMING_INSTALLMENT, False),
-            (NotificationType.EXPIRING_CONTRACT, False),
-            (NotificationType.TASK_DEADLINE, False),
-            (NotificationType.GENERAL, False),
-        ],
-    )
-    def test_is_urgent_property(
-        self, user: Any, notif_type: str, expected_urgent: bool
-    ) -> None:
-        """is_urgent deve retornar True apenas para tipos com urgência
-        financeira/operacional."""
-        notification = NotificationFactory(user=user, type=notif_type)
-        assert notification.is_urgent is expected_urgent
+    def test_queryset_mark_as_read(self, user: Any) -> None:
+        n1 = NotificationFactory(user=user, is_read=False)
+        n2 = NotificationFactory(user=user, is_read=False)
+        n3 = NotificationFactory(user=user, is_read=True)
 
-    def test_is_actionable_true_when_target_present(self, user: Any) -> None:
-        """is_actionable deve retornar True quando target_type e target_id existem."""
-        notification = NotificationFactory(
-            user=user,
-            target_type=NotificationTargetType.TASK,
-            target_id=uuid4(),
-        )
-        assert notification.is_actionable is True
+        updated_count = Notification.objects.for_user(user).mark_as_read()
+        assert updated_count == 2
 
-    def test_is_actionable_false_when_target_id_missing(self, user: Any) -> None:
-        """is_actionable deve retornar False quando target_id é nulo."""
-        notification = NotificationFactory(
-            user=user,
-            target_type=NotificationTargetType.TASK,
-            target_id=None,
-        )
-        assert notification.is_actionable is False
+        n1.refresh_from_db()
+        n2.refresh_from_db()
+        n3.refresh_from_db()
 
-    def test_is_actionable_false_when_target_type_empty(self, user: Any) -> None:
-        """is_actionable deve retornar False quando target_type está em branco."""
-        notification = NotificationFactory(
-            user=user,
-            target_type="",
-            target_id=uuid4(),
-        )
-        assert notification.is_actionable is False
-
-    def test_is_actionable_false_when_both_missing(self, user: Any) -> None:
-        """is_actionable deve retornar False quando não há alvo especificado."""
-        notification = NotificationFactory(
-            user=user,
-            target_type="",
-            target_id=None,
-        )
-        assert notification.is_actionable is False
+        assert n1.is_read is True
+        assert n1.read_at is not None
+        assert n2.is_read is True
+        assert n2.read_at is not None

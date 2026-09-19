@@ -4,6 +4,10 @@ import { MoreHorizontal } from "lucide-react";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import {
   useLogisticsItemsDelete,
+  useLogisticsItemsStart,
+  useLogisticsItemsComplete,
+  useLogisticsItemsReopen,
+  useLogisticsItemsRevertToPending,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 
@@ -20,6 +24,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -35,6 +40,10 @@ interface WeddingItemsTableProps {
 export const WeddingItemsTable = memo(function WeddingItemsTable({ items, onEdit, onRefresh }: WeddingItemsTableProps) {
   const [deletingItem, setDeletingItem] = useState<ItemOut | null>(null);
   const { mutate: deleteItem, isPending: isDeleting } = useLogisticsItemsDelete();
+  const { mutate: startItem } = useLogisticsItemsStart();
+  const { mutate: completeItem } = useLogisticsItemsComplete();
+  const { mutate: reopenItem } = useLogisticsItemsReopen();
+  const { mutate: revertToPendingItem } = useLogisticsItemsRevertToPending();
 
   const handleDelete = () => {
     if (!deletingItem) return;
@@ -51,6 +60,50 @@ export const WeddingItemsTable = memo(function WeddingItemsTable({ items, onEdit
     );
   };
 
+  const handleStart = (item: ItemOut) => {
+    startItem(
+      { uuid: item.uuid },
+      createMutationCallbacks({
+        successMsg: "Aquisição do item iniciada!",
+        fallbackErrorMsg: "Erro ao iniciar aquisição.",
+        onSuccess: () => onRefresh?.(),
+      }),
+    );
+  };
+
+  const handleComplete = (item: ItemOut) => {
+    completeItem(
+      { uuid: item.uuid },
+      createMutationCallbacks({
+        successMsg: "Item concluído com sucesso!",
+        fallbackErrorMsg: "Erro ao concluir item.",
+        onSuccess: () => onRefresh?.(),
+      }),
+    );
+  };
+
+  const handleReopen = (item: ItemOut) => {
+    reopenItem(
+      { uuid: item.uuid },
+      createMutationCallbacks({
+        successMsg: "Item reaberto com sucesso!",
+        fallbackErrorMsg: "Erro ao reabrir item.",
+        onSuccess: () => onRefresh?.(),
+      }),
+    );
+  };
+
+  const handleRevertToPending = (item: ItemOut) => {
+    revertToPendingItem(
+      { uuid: item.uuid },
+      createMutationCallbacks({
+        successMsg: "Item retornado para pendente!",
+        fallbackErrorMsg: "Erro ao retornar item para pendente.",
+        onSuccess: () => onRefresh?.(),
+      }),
+    );
+  };
+
   if (items.length === 0) {
     return (
       <div className="text-center py-6 text-muted-foreground border rounded-md">
@@ -59,7 +112,7 @@ export const WeddingItemsTable = memo(function WeddingItemsTable({ items, onEdit
     );
   }
 
-  const hasActions = !!onEdit;
+  const hasActions = true;
 
   return (
     <>
@@ -103,6 +156,29 @@ export const WeddingItemsTable = memo(function WeddingItemsTable({ items, onEdit
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                        {item.acquisition_status === "PENDING" && (
+                          <DropdownMenuItem onClick={() => handleStart(item)}>
+                            Iniciar Aquisição
+                          </DropdownMenuItem>
+                        )}
+                        {item.acquisition_status === "IN_PROGRESS" && (
+                          <>
+                            <DropdownMenuItem onClick={() => handleComplete(item)}>
+                              Marcar como Concluído
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleRevertToPending(item)}>
+                              Voltar para Pendente
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {item.acquisition_status === "DONE" && (
+                          <DropdownMenuItem onClick={() => handleReopen(item)}>
+                            Reabrir Aquisição
+                          </DropdownMenuItem>
+                        )}
+                        {(item.acquisition_status === "PENDING" ||
+                          item.acquisition_status === "IN_PROGRESS" ||
+                          item.acquisition_status === "DONE") && <DropdownMenuSeparator />}
                         {onEdit && (
                           <DropdownMenuItem onClick={() => onEdit(item)}>
                             Editar
@@ -137,4 +213,4 @@ export const WeddingItemsTable = memo(function WeddingItemsTable({ items, onEdit
       />
     </>
   );
-})
+});

@@ -1,3 +1,5 @@
+import datetime as dt
+
 from django.db import models
 from django.utils import timezone
 
@@ -39,6 +41,27 @@ class Task(TenantModel, WeddingOwnedMixin):
     def reopen(self) -> None:
         """Reabre a tarefa previamente concluída."""
         self.is_completed = False
+
+    def update_details(
+        self,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        due_date: dt.date | None = None,
+    ) -> None:
+        """Atualiza os dados cadastrais da tarefa.
+
+        Args:
+            title: Novo título opcional.
+            description: Nova descrição opcional.
+            due_date: Novo prazo estimado opcional.
+        """
+        if title is not None:
+            self.title = title
+        if description is not None:
+            self.description = description
+        if due_date is not None:
+            self.due_date = due_date
 
     # ── Propriedades Semânticas ──────────────────────────────────────────
 

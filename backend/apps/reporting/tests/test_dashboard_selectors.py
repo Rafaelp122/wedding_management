@@ -275,6 +275,7 @@ class TestDashboardSelectors:
                 wedding=wedding,
                 category=category,
                 contract=contract,
+                actual_amount=contract.total_amount,
                 company=user.company,
             ),
         )
