@@ -30,6 +30,7 @@ export const financesBudgetsListResponseItemsItemTotalAllocatedDefault = `0.00`;
 export const financesBudgetsListResponseItemsItemTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsListResponseItemsItemUnallocatedBudgetDefault = `0.00`;
 export const financesBudgetsListResponseItemsItemUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsListResponseItemsItemTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsListResponse = zod.object({
@@ -40,6 +41,8 @@ export const FinancesBudgetsListResponse = zod.object({
   "total_overall_spent": zod.string().regex(financesBudgetsListResponseItemsItemTotalOverallSpentRegExp).default(financesBudgetsListResponseItemsItemTotalOverallSpentDefault),
   "total_allocated": zod.string().regex(financesBudgetsListResponseItemsItemTotalAllocatedRegExp).default(financesBudgetsListResponseItemsItemTotalAllocatedDefault),
   "unallocated_budget": zod.string().regex(financesBudgetsListResponseItemsItemUnallocatedBudgetRegExp).default(financesBudgetsListResponseItemsItemUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsListResponseItemsItemTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')),
   "count": zod.int()
@@ -70,6 +73,7 @@ export const financesBudgetsCreateResponseTotalAllocatedDefault = `0.00`;
 export const financesBudgetsCreateResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsCreateResponseUnallocatedBudgetDefault = `0.00`;
 export const financesBudgetsCreateResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsCreateResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsCreateResponse = zod.object({
@@ -79,6 +83,8 @@ export const FinancesBudgetsCreateResponse = zod.object({
   "total_overall_spent": zod.string().regex(financesBudgetsCreateResponseTotalOverallSpentRegExp).default(financesBudgetsCreateResponseTotalOverallSpentDefault),
   "total_allocated": zod.string().regex(financesBudgetsCreateResponseTotalAllocatedRegExp).default(financesBudgetsCreateResponseTotalAllocatedDefault),
   "unallocated_budget": zod.string().regex(financesBudgetsCreateResponseUnallocatedBudgetRegExp).default(financesBudgetsCreateResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsCreateResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -97,6 +103,7 @@ export const financesBudgetsReadResponseTotalAllocatedDefault = `0.00`;
 export const financesBudgetsReadResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsReadResponseUnallocatedBudgetDefault = `0.00`;
 export const financesBudgetsReadResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsReadResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsReadResponse = zod.object({
@@ -106,6 +113,8 @@ export const FinancesBudgetsReadResponse = zod.object({
   "total_overall_spent": zod.string().regex(financesBudgetsReadResponseTotalOverallSpentRegExp).default(financesBudgetsReadResponseTotalOverallSpentDefault),
   "total_allocated": zod.string().regex(financesBudgetsReadResponseTotalAllocatedRegExp).default(financesBudgetsReadResponseTotalAllocatedDefault),
   "unallocated_budget": zod.string().regex(financesBudgetsReadResponseUnallocatedBudgetRegExp).default(financesBudgetsReadResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsReadResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -138,6 +147,7 @@ export const financesBudgetsUpdateResponseTotalAllocatedDefault = `0.00`;
 export const financesBudgetsUpdateResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsUpdateResponseUnallocatedBudgetDefault = `0.00`;
 export const financesBudgetsUpdateResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsUpdateResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsUpdateResponse = zod.object({
@@ -147,6 +157,8 @@ export const FinancesBudgetsUpdateResponse = zod.object({
   "total_overall_spent": zod.string().regex(financesBudgetsUpdateResponseTotalOverallSpentRegExp).default(financesBudgetsUpdateResponseTotalOverallSpentDefault),
   "total_allocated": zod.string().regex(financesBudgetsUpdateResponseTotalAllocatedRegExp).default(financesBudgetsUpdateResponseTotalAllocatedDefault),
   "unallocated_budget": zod.string().regex(financesBudgetsUpdateResponseUnallocatedBudgetRegExp).default(financesBudgetsUpdateResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsUpdateResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -165,6 +177,7 @@ export const financesBudgetsForWeddingResponseTotalAllocatedDefault = `0.00`;
 export const financesBudgetsForWeddingResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsForWeddingResponseUnallocatedBudgetDefault = `0.00`;
 export const financesBudgetsForWeddingResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsForWeddingResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsForWeddingResponse = zod.object({
@@ -174,6 +187,8 @@ export const FinancesBudgetsForWeddingResponse = zod.object({
   "total_overall_spent": zod.string().regex(financesBudgetsForWeddingResponseTotalOverallSpentRegExp).default(financesBudgetsForWeddingResponseTotalOverallSpentDefault),
   "total_allocated": zod.string().regex(financesBudgetsForWeddingResponseTotalAllocatedRegExp).default(financesBudgetsForWeddingResponseTotalAllocatedDefault),
   "unallocated_budget": zod.string().regex(financesBudgetsForWeddingResponseUnallocatedBudgetRegExp).default(financesBudgetsForWeddingResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsForWeddingResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -198,6 +213,7 @@ export const financesCategoriesListResponseItemsItemAllocatedBudgetRegExp = new 
 export const financesCategoriesListResponseItemsItemTotalSpentDefault = `0.00`;
 export const financesCategoriesListResponseItemsItemTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesListResponseItemsItemBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesListResponseItemsItemExpensesCountDefault = 0;
 
 export const FinancesCategoriesListResponse = zod.object({
   "items": zod.array(zod.object({
@@ -208,7 +224,8 @@ export const FinancesCategoriesListResponse = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesListResponseItemsItemAllocatedBudgetRegExp),
   "total_spent": zod.string().regex(financesCategoriesListResponseItemsItemTotalSpentRegExp).default(financesCategoriesListResponseItemsItemTotalSpentDefault),
-  "budget_utilization_percent": zod.int().default(financesCategoriesListResponseItemsItemBudgetUtilizationPercentDefault)
+  "budget_utilization_percent": zod.int().default(financesCategoriesListResponseItemsItemBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesListResponseItemsItemExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')),
   "count": zod.int()
 })
@@ -239,6 +256,7 @@ export const financesCategoriesCreateResponseAllocatedBudgetRegExp = new RegExp(
 export const financesCategoriesCreateResponseTotalSpentDefault = `0.00`;
 export const financesCategoriesCreateResponseTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesCreateResponseBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesCreateResponseExpensesCountDefault = 0;
 
 export const FinancesCategoriesCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -248,7 +266,8 @@ export const FinancesCategoriesCreateResponse = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesCreateResponseAllocatedBudgetRegExp),
   "total_spent": zod.string().regex(financesCategoriesCreateResponseTotalSpentRegExp).default(financesCategoriesCreateResponseTotalSpentDefault),
-  "budget_utilization_percent": zod.int().default(financesCategoriesCreateResponseBudgetUtilizationPercentDefault)
+  "budget_utilization_percent": zod.int().default(financesCategoriesCreateResponseBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesCreateResponseExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')
 
 /**
@@ -264,6 +283,7 @@ export const financesCategoriesReadResponseAllocatedBudgetRegExp = new RegExp('^
 export const financesCategoriesReadResponseTotalSpentDefault = `0.00`;
 export const financesCategoriesReadResponseTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesReadResponseBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesReadResponseExpensesCountDefault = 0;
 
 export const FinancesCategoriesReadResponse = zod.object({
   "uuid": zod.string(),
@@ -273,7 +293,8 @@ export const FinancesCategoriesReadResponse = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesReadResponseAllocatedBudgetRegExp),
   "total_spent": zod.string().regex(financesCategoriesReadResponseTotalSpentRegExp).default(financesCategoriesReadResponseTotalSpentDefault),
-  "budget_utilization_percent": zod.int().default(financesCategoriesReadResponseBudgetUtilizationPercentDefault)
+  "budget_utilization_percent": zod.int().default(financesCategoriesReadResponseBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesReadResponseExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')
 
 /**
@@ -305,6 +326,7 @@ export const financesCategoriesUpdateResponseAllocatedBudgetRegExp = new RegExp(
 export const financesCategoriesUpdateResponseTotalSpentDefault = `0.00`;
 export const financesCategoriesUpdateResponseTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesUpdateResponseBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesUpdateResponseExpensesCountDefault = 0;
 
 export const FinancesCategoriesUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -314,7 +336,8 @@ export const FinancesCategoriesUpdateResponse = zod.object({
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesUpdateResponseAllocatedBudgetRegExp),
   "total_spent": zod.string().regex(financesCategoriesUpdateResponseTotalSpentRegExp).default(financesCategoriesUpdateResponseTotalSpentDefault),
-  "budget_utilization_percent": zod.int().default(financesCategoriesUpdateResponseBudgetUtilizationPercentDefault)
+  "budget_utilization_percent": zod.int().default(financesCategoriesUpdateResponseBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesUpdateResponseExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')
 
 /**
@@ -442,6 +465,25 @@ export const FinancesExpensesCreateResponse = zod.object({
   "total_pending": zod.string().regex(financesExpensesCreateResponseTotalPendingRegExp).default(financesExpensesCreateResponseTotalPendingDefault),
   "payment_progress_percent": zod.int().default(financesExpensesCreateResponsePaymentProgressPercentDefault)
 }).describe('Schema de saída para exibição de despesa (CQRS puro sem queries ORM).')
+
+/**
+ * Lista contratos vinculados a um casamento para associação em despesas.
+ * @summary List Contracts Lookup
+ */
+export const FinancesExpensesContractsLookupQueryParams = zod.object({
+  "wedding_id": zod.string()
+})
+
+export const financesExpensesContractsLookupResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+
+
+export const FinancesExpensesContractsLookupResponseItem = zod.object({
+  "uuid": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
+  "total_amount": zod.string().regex(financesExpensesContractsLookupResponseTotalAmountRegExp)
+}).describe('Schema de saída para listagem simplificada de contratos em dropdowns\/lookups.')
+export const FinancesExpensesContractsLookupResponse = zod.array(FinancesExpensesContractsLookupResponseItem)
 
 /**
  * Retorna recibo unitário simplificado nominal registrado no controle base.

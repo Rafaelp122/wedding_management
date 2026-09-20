@@ -309,3 +309,40 @@ class TestBudgetCategoryConvenienceProperties:
             allocated_budget=Decimal("0.00"),
         )
         assert category.budget_utilization_percent == 0
+
+    def test_expenses_count_annotated_fast_path(self, user: Any) -> None:
+        """Quando _expenses_count está presente, utiliza o valor anotado sem query."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("1000.00"),
+        )
+        category._expenses_count = 7  # type: ignore[attr-defined]
+        assert category.expenses_count == 7
+
+    def test_expenses_count_query_fallback(self, user: Any) -> None:
+        """Quando _expenses_count não está presente, executa count() nas despesas."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("1000.00"),
+        )
+        assert category.expenses_count == 0
+
+        ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            actual_amount=Decimal("100.00"),
+            contract=None,
+        )
+        ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            actual_amount=Decimal("200.00"),
+            contract=None,
+        )
+        assert category.expenses_count == 2

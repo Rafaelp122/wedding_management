@@ -24,8 +24,15 @@ from apps.finances.api import (
 from apps.logistics.api import contracts_router, items_router, suppliers_router
 from apps.notifications.api import notifications_router
 from apps.reporting.api import dashboard_router, reports_router
-from apps.scheduler.api import events_router as scheduler_events_router
-from apps.scheduler.api import tasks_router as scheduler_tasks_router
+from apps.scheduler.api import (
+    events_router as scheduler_events_router,
+)
+from apps.scheduler.api import (
+    scheduler_router,
+)
+from apps.scheduler.api import (
+    tasks_router as scheduler_tasks_router,
+)
 from apps.users.api import router as auth_router
 from apps.weddings.api import router as weddings_router
 
@@ -170,6 +177,7 @@ api.add_router("/finances/categories/", budget_categories_router)
 api.add_router("/finances/expenses/", expenses_router)
 api.add_router("/finances/installments/", installments_router)
 
+api.add_router("/scheduler/", scheduler_router)
 api.add_router("/scheduler/events/", scheduler_events_router)
 api.add_router("/scheduler/tasks/", scheduler_tasks_router)
 api.add_router("/notifications/", notifications_router)

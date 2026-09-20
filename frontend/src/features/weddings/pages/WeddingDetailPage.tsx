@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useWeddingDetail } from "../hooks/useWeddingDetail";
 import { useDashboardWedding } from "@/api/generated/v1/endpoints/dashboard/dashboard";
-import { useWeddingsComplete } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingsComplete, useWeddingsReopen } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDialog";
@@ -23,6 +23,7 @@ export default function WeddingDetailPage() {
 
   const { data: response, isLoading, error, invalidateWeddingQueries } = useWeddingDetail(uuid!);
   const { mutate: completeWedding } = useWeddingsComplete();
+  const { mutate: reopenWedding } = useWeddingsReopen();
 
   const wedding = response?.data;
 
@@ -59,6 +60,23 @@ export default function WeddingDetailPage() {
         },
         onError: (err) => {
           const { message } = getApiErrorInfo(err, "Erro ao concluir casamento.");
+          toast.error(message);
+        },
+      },
+    );
+  };
+
+  const handleReopen = () => {
+    if (!wedding) return;
+    reopenWedding(
+      { uuid: wedding.uuid },
+      {
+        onSuccess: () => {
+          toast.success("Casamento reaberto com sucesso!");
+          invalidateWeddingQueries();
+        },
+        onError: (err) => {
+          const { message } = getApiErrorInfo(err, "Erro ao reabrir casamento.");
           toast.error(message);
         },
       },
@@ -149,6 +167,7 @@ export default function WeddingDetailPage() {
         onEditClick={() => setEditDialogOpen(true)}
         onCompleteClick={handleComplete}
         onCancelClick={() => setCancelDialogOpen(true)}
+        onReopenClick={handleReopen}
       />
 
       {/* Tabs de conteúdo */}

@@ -1,6 +1,7 @@
 """Módulo de schemas para o domínio de logística."""
 
 from apps.logistics.schemas.contract import (
+    ContractDetailAggregateOut,
     ContractFullCreateIn,
     ContractIn,
     ContractOut,
@@ -25,6 +26,7 @@ from apps.logistics.schemas.supplier import (
 
 
 __all__ = [
+    "ContractDetailAggregateOut",
     "ContractFullCreateIn",
     "ContractIn",
     "ContractOut",

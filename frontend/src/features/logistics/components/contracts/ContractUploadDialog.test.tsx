@@ -498,4 +498,18 @@ describe("ContractUploadDialog", () => {
 
     expect(await screen.findByText("Categoria da Despesa")).toBeInTheDocument();
   });
+
+  it("defaults status to DRAFT and excludes SIGNED and CANCELED options", async () => {
+    const user = userEvent.setup();
+    render(<ContractUploadDialog {...defaultProps} />);
+
+    const statusSelect = screen.getByRole("combobox", { name: /status/i });
+    expect(statusSelect).toHaveTextContent("Rascunho");
+
+    await user.click(statusSelect);
+    expect(screen.getByRole("option", { name: "Rascunho" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Pendente" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Assinado" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Cancelado" })).not.toBeInTheDocument();
+  });
 });

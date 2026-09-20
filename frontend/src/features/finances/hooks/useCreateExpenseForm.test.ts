@@ -16,7 +16,9 @@ describe("useCreateExpenseForm", () => {
 
   const mockContract = {
     uuid: "contract-1",
-    description: "Contrato Buffet",
+    name: "Contrato Buffet",
+    status: "ACTIVE",
+    total_amount: "5000.00",
   };
 
   beforeEach(() => {
@@ -25,8 +27,8 @@ describe("useCreateExpenseForm", () => {
       http.get("*/api/v1/finances/categories/", () => {
         return HttpResponse.json({ items: [mockCategory], count: 1 });
       }),
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({ items: [mockContract], count: 1 });
+      http.get("*/api/v1/finances/expenses/contracts-lookup/", () => {
+        return HttpResponse.json([mockContract]);
       }),
       http.post("*/api/v1/finances/expenses/", () => {
         return HttpResponse.json({ uuid: "expense-1" }, { status: 201 });

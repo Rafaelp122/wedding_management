@@ -100,7 +100,10 @@ class BudgetCategoryQuerySet(TenantQuerySet["BudgetCategory"]):
     """QuerySet customizado para BudgetCategory com métodos encadeáveis."""
 
     def with_total_spent(self) -> BudgetCategoryQuerySet:
-        """Anota cada categoria com o total pago (soma de parcelas PAID)."""
+        """
+        Anota cada categoria com o total pago (soma de parcelas PAID)
+        e a contagem de despesas.
+        """
         from apps.finances.models.installment import Installment
 
         return self.annotate(
@@ -112,7 +115,8 @@ class BudgetCategoryQuerySet(TenantQuerySet["BudgetCategory"]):
                     ),
                 ),
                 Decimal("0.00"),
-            )
+            ),
+            _expenses_count=Count("expenses", distinct=True),
         )
 
     def for_budget(

@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { getMonthlyWeddingsData, getCashFlowData, getTasksProgressData } from "./chart-helpers";
+import {
+  getMonthlyWeddingsData,
+  formatCashFlowData,
+  formatTasksProgressData,
+} from "./chart-helpers";
 import type { WeddingByMonthOut } from "@/api/generated/v1/models/weddingByMonthOut";
-import type { InstallmentOut } from "@/api/generated/v1/models/installmentOut";
-import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import type { TaskOut } from "@/api/generated/v1/models/taskOut";
+import type { CashFlowMonthOut } from "@/api/generated/v1/models/cashFlowMonthOut";
+import type { TaskProgressWeddingOut } from "@/api/generated/v1/models/taskProgressWeddingOut";
 
 describe("chart-helpers", () => {
   describe("getMonthlyWeddingsData", () => {
@@ -28,60 +31,58 @@ describe("chart-helpers", () => {
     });
   });
 
-  describe("getCashFlowData", () => {
-    it("correctly calculates paid and pending amounts for selected year", () => {
-      const input = [
-        { uuid: "1", amount: "1000.00", due_date: "2026-01-15", status: "PAID" },
-        { uuid: "2", amount: "500.00", due_date: "2026-01-20", status: "PENDING" },
-        { uuid: "3", amount: "2000.00", due_date: "2026-06-10", status: "PAID" },
-        { uuid: "4", amount: "1500.00", due_date: "2025-01-15", status: "PAID" }, // different year
-      ] as unknown as InstallmentOut[];
-      const result = getCashFlowData(input, 2026);
+  describe("formatCashFlowData", () => {
+    it("formats backend cash flow projection into chart items", () => {
+      const input: CashFlowMonthOut[] = [
+        { month: 1, paid: "1000.00", pending: "500.00" },
+        { month: 6, paid: "2000.00", pending: "0.00" },
+      ];
+      const result = formatCashFlowData(input);
       expect(result.hasCashFlowData).toBe(true);
       expect(result.cashFlowData[0]).toEqual({ name: "Jan", pago: 1000, pendente: 500 });
-      expect(result.cashFlowData[5]).toEqual({ name: "Jun", pago: 2000, pendente: 0 });
-      expect(result.cashFlowData[11]).toEqual({ name: "Dez", pago: 0, pendente: 0 });
+      expect(result.cashFlowData[1]).toEqual({ name: "Jun", pago: 2000, pendente: 0 });
     });
 
-    it("returns false for hasCashFlowData when no installments match the year", () => {
-      const input = [
-        { uuid: "1", amount: "1000.00", due_date: "2025-01-15", status: "PAID" },
-      ] as unknown as InstallmentOut[];
-      const result = getCashFlowData(input, 2026);
-      expect(result.hasCashFlowData).toBe(false);
-      expect(result.cashFlowData.every((d) => d.pago === 0 && d.pendente === 0)).toBe(true);
+    it("returns false for hasCashFlowData when list is empty or zero amounts", () => {
+      const resultEmpty = formatCashFlowData([]);
+      expect(resultEmpty.hasCashFlowData).toBe(false);
+      expect(resultEmpty.cashFlowData).toEqual([]);
+
+      const resultZeros = formatCashFlowData([
+        { month: 1, paid: "0.00", pending: "0.00" },
+      ]);
+      expect(resultZeros.hasCashFlowData).toBe(false);
     });
   });
 
-  describe("getTasksProgressData", () => {
-    it("filters weddings by year, computes completed task percentage, sorts and limits to top 10", () => {
-      const weddings = [
-        { uuid: "w1", bride_name: "Alice Smith", groom_name: "Bob Jones", date: "2026-05-20", status: "ACTIVE" },
-        { uuid: "w2", bride_name: "Carol White", groom_name: "Dave Brown", date: "2026-08-15", status: "ACTIVE" },
-        { uuid: "w3", bride_name: "Eve Green", groom_name: "Frank Black", date: "2025-08-15", status: "ACTIVE" }, // different year
-      ] as unknown as WeddingOut[];
-      const tasks = [
-        { uuid: "t1", wedding: "w1", title: "Task 1", is_completed: true },
-        { uuid: "t2", wedding: "w1", title: "Task 2", is_completed: false },
-        { uuid: "t3", wedding: "w2", title: "Task 3", is_completed: true },
-        { uuid: "t4", wedding: "w3", title: "Task 4", is_completed: true },
-      ] as unknown as TaskOut[];
+  describe("formatTasksProgressData", () => {
+    it("formats backend task progress records into chart items", () => {
+      const input: TaskProgressWeddingOut[] = [
+        {
+          wedding_uuid: "w-1",
+          wedding_name: "Carol & Dave",
+          total_tasks: 10,
+          completed_tasks: 10,
+          progress_pct: 100,
+        },
+        {
+          wedding_uuid: "w-2",
+          wedding_name: "Alice & Bob",
+          total_tasks: 8,
+          completed_tasks: 4,
+          progress_pct: 50,
+        },
+      ];
 
-      const result = getTasksProgressData(weddings, tasks, 2026);
+      const result = formatTasksProgressData(input);
       expect(result.hasTasksData).toBe(true);
-      expect(result.tasksData.length).toBe(2);
-      // w2 has 1 task completed out of 1 (100%)
-      // w1 has 1 task completed out of 2 (50%)
-      // w2 comes first because sorted desc
+      expect(result.tasksData).toHaveLength(2);
       expect(result.tasksData[0]).toEqual({ name: "Carol & Dave", concluido: 100 });
       expect(result.tasksData[1]).toEqual({ name: "Alice & Bob", concluido: 50 });
     });
 
-    it("returns empty array and false if no weddings in the year", () => {
-      const weddings = [
-        { uuid: "w3", bride_name: "Eve Green", groom_name: "Frank Black", date: "2025-08-15", status: "ACTIVE" },
-      ] as unknown as WeddingOut[];
-      const result = getTasksProgressData(weddings, [], 2026);
+    it("returns empty array and false when input is empty", () => {
+      const result = formatTasksProgressData([]);
       expect(result.hasTasksData).toBe(false);
       expect(result.tasksData).toEqual([]);
     });

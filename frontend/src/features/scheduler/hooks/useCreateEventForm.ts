@@ -1,8 +1,10 @@
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSchedulerEventsCreate } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
+import type { EventIn } from "@/api/generated/v1/models/eventIn";
+import { getApiErrorInfo } from "@/api/error-utils";
+import { toast } from "sonner";
 import { z } from "zod";
 import { createEventSchema, type CreateEventFormData } from "../utils/validation";
 import { toISODateTime } from "../utils";
@@ -27,6 +29,8 @@ export function useCreateEventForm({
   onOpenChange,
 }: UseCreateEventFormProps) {
   const { mutate, isPending } = useSchedulerEventsCreate();
+  const [hasOverlapConflict, setHasOverlapConflict] = useState(false);
+  const pendingPayloadRef = useRef<EventIn | null>(null);
 
   const defaultStartTimeIso = defaultStartTime?.toISOString() ?? "";
 
@@ -50,35 +54,77 @@ export function useCreateEventForm({
     (newOpen: boolean) => {
       if (!newOpen) {
         form.reset();
+        setHasOverlapConflict(false);
+        pendingPayloadRef.current = null;
       }
       onOpenChange(newOpen);
     },
     [form, onOpenChange],
   );
 
+  const executeCreate = useCallback(
+    (payload: EventIn) => {
+      mutate(
+        { data: payload },
+        {
+          onSuccess: () => {
+            toast.success("Evento criado com sucesso!");
+            setHasOverlapConflict(false);
+            pendingPayloadRef.current = null;
+            form.reset();
+            onSuccess();
+          },
+          onError: (error: unknown) => {
+            const errorInfo = getApiErrorInfo(error, "Erro ao criar evento.");
+            const isConflict =
+              errorInfo.code === "event_schedule_conflict" ||
+              (error as { response?: { data?: { code?: string } } })?.response?.data?.code === "event_schedule_conflict" ||
+              errorInfo.message.toLowerCase().includes("conflito") ||
+              errorInfo.message.toLowerCase().includes("compromisso agendado");
+
+            if (isConflict) {
+              pendingPayloadRef.current = payload;
+              setHasOverlapConflict(true);
+              return;
+            }
+
+            toast.error(errorInfo.message);
+          },
+        },
+      );
+    },
+    [form, mutate, onSuccess],
+  );
+
   const onSubmit = (data: CreateEventFormData) => {
-    const payload = {
+    setHasOverlapConflict(false);
+    const payload: EventIn = {
       ...data,
       start_time: toISODateTime(data.start_time),
       end_time: data.end_time ? toISODateTime(data.end_time) : null,
     };
-
-    mutate(
-      { data: payload },
-      createMutationCallbacks({
-        successMsg: "Evento criado com sucesso!",
-        fallbackErrorMsg: "Erro ao criar evento.",
-        onSuccess: () => {
-          form.reset();
-          onSuccess();
-        },
-      }),
-    );
+    executeCreate(payload);
   };
+
+  const confirmOverlap = useCallback(() => {
+    if (!pendingPayloadRef.current) return;
+    executeCreate({
+      ...pendingPayloadRef.current,
+      force_overlap: true,
+    });
+  }, [executeCreate]);
+
+  const cancelOverlap = useCallback(() => {
+    setHasOverlapConflict(false);
+    pendingPayloadRef.current = null;
+  }, []);
 
   return {
     form,
     isPending,
+    hasOverlapConflict,
+    confirmOverlap,
+    cancelOverlap,
     onSubmit,
     handleOpenChange,
   };

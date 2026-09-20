@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
@@ -20,7 +21,11 @@ from apps.users.tests.factories import UserFactory
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingPatchIn
 from apps.weddings.services import WeddingService
-from apps.weddings.tests.factories import WeddingFactory
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
@@ -196,6 +201,58 @@ class TestWeddingService:
         )
         with pytest.raises(BusinessRuleViolation) as exc_info:
             WeddingService.cancel(company=user.company, instance=wedding)
+        assert exc_info.value.code == "wedding_validation_error"
+
+    def test_wedding_service_reopen_success(self, user: Any) -> None:
+        """
+        Caso de uso: reopen() reabre casamento cancelado voltando a IN_PROGRESS.
+        """
+        wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.CANCELED
+        )
+
+        reopened = WeddingService.reopen(company=user.company, instance=wedding)
+
+        assert reopened.status == Wedding.StatusChoices.IN_PROGRESS
+
+    def test_wedding_service_reopen_invalid_status_raises(self, user: Any) -> None:
+        """Caso de uso: reopen() rejeita reabrir casamento concluído."""
+        wedding = WeddingFactory(
+            company=user.company,
+            date=timezone.now().date(),
+            status=Wedding.StatusChoices.COMPLETED,
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.reopen(company=user.company, instance=wedding)
+        assert exc_info.value.code == "wedding_invalid_status_transition"
+
+    def test_wedding_service_reopen_cross_tenant_raises(self, user: Any) -> None:
+        """
+        reopen() com casamento de outro tenant levanta ObjectNotFoundError.
+        """
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(
+            company=other_user.company, status=Wedding.StatusChoices.CANCELED
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            WeddingService.reopen(company=user.company, instance=other_wedding)
+
+    def test_wedding_service_reopen_validation_error(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """reopen() propagando DjangoValidationError como BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.CANCELED
+        )
+        mocker.patch.object(
+            wedding, "save", side_effect=DjangoValidationError("Simulated reopen error")
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.reopen(company=user.company, instance=wedding)
         assert exc_info.value.code == "wedding_validation_error"
 
     def test_wedding_service_update_validation_error(self, user, mocker):

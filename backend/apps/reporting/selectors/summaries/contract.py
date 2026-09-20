@@ -4,7 +4,7 @@ Selectors para resumos e estatísticas de contratos.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from apps.logistics.models import Contract
 
@@ -100,3 +100,50 @@ class ContractSummarySelector:
                 Value(Decimal("0.00")),
             ),
         )
+
+    @staticmethod
+    def pending_contracts_detail(
+        *,
+        company: Company,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """
+        Retorna os Top N contratos pendentes ou em rascunho do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            limit: Quantidade máxima de contratos retornados (padrão: 10).
+
+        Returns:
+            Lista de dicionários contendo uuid, wedding_name, supplier_name,
+            total_amount e status.
+        """
+        contracts = (
+            Contract.objects.for_tenant(company)
+            .filter(
+                status__in=[
+                    Contract.StatusChoices.DRAFT,
+                    Contract.StatusChoices.PENDING,
+                ]
+            )
+            .select_related("wedding", "supplier")
+            .order_by("-created_at")[:limit]
+        )
+
+        return [
+            {
+                "uuid": c.uuid,
+                "wedding_name": (
+                    f"{c.wedding.bride_name} e {c.wedding.groom_name}"
+                    if c.wedding
+                    else ""
+                ),
+                "supplier_name": c.supplier.name if c.supplier else "",
+                "total_amount": f"{c.total_amount:.2f}",
+                "status": c.status,
+            }
+            for c in contracts
+        ]
+
+
+pending_contracts_detail = ContractSummarySelector.pending_contracts_detail

@@ -29,7 +29,36 @@ export const DashboardSummaryResponse = zod.object({
   "pending_installments": zod.int(),
   "overdue_tasks": zod.int(),
   "overdue_installments": zod.int()
-}).describe('Métricas de atenção de um casamento crítico nos próximos 90 dias.'))
+}).describe('Métricas de atenção de um casamento crítico nos próximos 90 dias.')),
+  "upcoming_installments": zod.array(zod.object({
+  "uuid": zod.string(),
+  "wedding_name": zod.string(),
+  "amount": zod.string(),
+  "due_date": zod.iso.date(),
+  "installment_number": zod.int(),
+  "status": zod.string()
+}).describe('Detalhes de parcela financeira para listas e modais no dashboard global.')).optional(),
+  "overdue_installments": zod.array(zod.object({
+  "uuid": zod.string(),
+  "wedding_name": zod.string(),
+  "amount": zod.string(),
+  "due_date": zod.iso.date(),
+  "installment_number": zod.int(),
+  "status": zod.string()
+}).describe('Detalhes de parcela financeira para listas e modais no dashboard global.')).optional(),
+  "urgent_tasks": zod.array(zod.object({
+  "uuid": zod.string(),
+  "wedding_name": zod.string(),
+  "title": zod.string(),
+  "due_date": zod.union([zod.iso.date(),zod.null()]).optional()
+}).describe('Detalhes de tarefa urgente para listas e modais no dashboard global.')).optional(),
+  "pending_contracts": zod.array(zod.object({
+  "uuid": zod.string(),
+  "wedding_name": zod.string(),
+  "supplier_name": zod.string(),
+  "total_amount": zod.string(),
+  "status": zod.string()
+}).describe('Detalhes de contrato pendente para listas e modais no dashboard global.')).optional()
 }).describe('Resumo consolidado de indicadores importantes para o dashboard da empresa.')
 
 /**
@@ -43,6 +72,9 @@ export const DashboardSummaryResponse = zod.object({
 export const DashboardWeddingParams = zod.object({
   "uuid": zod.string()
 })
+
+export const dashboardWeddingResponseTotalAllocatedDefault = `0.00`;
+export const dashboardWeddingResponseTotalSpentDefault = `0.00`;
 
 export const DashboardWeddingResponse = zod.object({
   "days_until_wedding": zod.int(),
@@ -68,6 +100,72 @@ export const DashboardWeddingResponse = zod.object({
   "allocated": zod.string(),
   "spent": zod.string(),
   "percentage": zod.number()
-}).describe('Resumo de gastos por categoria no orçamento do casamento.'))
+}).describe('Resumo de gastos por categoria no orçamento do casamento.')),
+  "total_allocated": zod.string().default(dashboardWeddingResponseTotalAllocatedDefault),
+  "total_spent": zod.string().default(dashboardWeddingResponseTotalSpentDefault)
 }).describe('Visão geral agregada de indicadores de um casamento específico.')
+
+/**
+ * Retorna o fluxo de caixa projetado mês a mês (parcelas pagas vs pendentes).
+ *
+ * Filtra as parcelas do tenant pelo ano especificado (padrão: ano corrente).
+ * @summary Dashboard Chart Cash Flow
+ */
+export const DashboardChartCashFlowQueryParams = zod.object({
+  "year": zod.union([zod.int(),zod.null()]).optional()
+})
+
+export const DashboardChartCashFlowResponseItem = zod.object({
+  "month": zod.int(),
+  "paid": zod.string(),
+  "pending": zod.string()
+}).describe('Projeção de fluxo de caixa mensal (parcelas pagas vs pendentes).')
+export const DashboardChartCashFlowResponse = zod.array(DashboardChartCashFlowResponseItem)
+
+/**
+ * Retorna o progresso percentual e contagem de tarefas dos casamentos.
+ *
+ * Ordenado pelo volume total de tarefas, com filtro opcional por ano do evento.
+ * @summary Dashboard Chart Task Progress
+ */
+export const DashboardChartTaskProgressQueryParams = zod.object({
+  "year": zod.union([zod.int(),zod.null()]).optional()
+})
+
+export const DashboardChartTaskProgressResponseItem = zod.object({
+  "wedding_uuid": zod.string(),
+  "wedding_name": zod.string(),
+  "total_tasks": zod.int(),
+  "completed_tasks": zod.int(),
+  "progress_pct": zod.int()
+}).describe('Progresso consolidado de tarefas agrupado por casamento.')
+export const DashboardChartTaskProgressResponse = zod.array(DashboardChartTaskProgressResponseItem)
+
+/**
+ * Retorna o painel operacional consolidado com os Top 5 casamentos futuros,
+ * Top 5 tarefas urgentes e Top 5 contratos pendentes do tenant.
+ * @summary Dashboard Operations
+ */
+export const DashboardOperationsListResponse = zod.object({
+  "upcoming_weddings": zod.array(zod.object({
+  "uuid": zod.string(),
+  "bride_name": zod.string(),
+  "groom_name": zod.string(),
+  "date": zod.iso.date(),
+  "days_until": zod.int()
+}).describe('Resumo simplificado de casamento próximo para o painel de operações.')),
+  "urgent_tasks": zod.array(zod.object({
+  "uuid": zod.string(),
+  "wedding_name": zod.string(),
+  "title": zod.string(),
+  "due_date": zod.union([zod.iso.date(),zod.null()]).optional()
+}).describe('Detalhes de tarefa urgente para listas e modais no dashboard global.')),
+  "pending_contracts": zod.array(zod.object({
+  "uuid": zod.string(),
+  "wedding_name": zod.string(),
+  "supplier_name": zod.string(),
+  "total_amount": zod.string(),
+  "status": zod.string()
+}).describe('Detalhes de contrato pendente para listas e modais no dashboard global.'))
+}).describe('Painel de operações consolidado (casamentos, tarefas e contratos).')
 

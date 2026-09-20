@@ -7,6 +7,10 @@ import type { WeddingDashboardCategoryOut } from "@/api/generated/v1/models/wedd
 interface WeddingBudgetBreakdownProps {
   categories: WeddingDashboardCategoryOut[];
   isLoading?: boolean;
+  totalAllocated?: string | number;
+  totalSpent?: string | number;
+  total_allocated?: string;
+  total_spent?: string;
 }
 
 function CategoryBar({ category }: { category: WeddingDashboardCategoryOut }) {
@@ -60,6 +64,10 @@ function CategoryBar({ category }: { category: WeddingDashboardCategoryOut }) {
 export function WeddingBudgetBreakdown({
   categories,
   isLoading,
+  totalAllocated,
+  totalSpent,
+  total_allocated,
+  total_spent,
 }: WeddingBudgetBreakdownProps) {
   if (isLoading) {
     return (
@@ -107,16 +115,12 @@ export function WeddingBudgetBreakdown({
   // Sort by percentage desc to show most spent categories first
   const sorted = [...categories].sort((a, b) => b.percentage - a.percentage);
 
-  const totalAllocated = categories.reduce(
-    (sum, c) => sum + Number(c.allocated),
-    0,
-  );
-  const totalSpent = categories.reduce(
-    (sum, c) => sum + Number(c.spent),
-    0,
-  );
-  const totalPct = totalAllocated > 0
-    ? Math.round((totalSpent / totalAllocated) * 100)
+  const allocatedStr = String(totalAllocated ?? total_allocated ?? "0");
+  const spentStr = String(totalSpent ?? total_spent ?? "0");
+  const totalAllocatedNum = Number(allocatedStr) || 0;
+  const totalSpentNum = Number(spentStr) || 0;
+  const totalPct = totalAllocatedNum > 0
+    ? Math.round((totalSpentNum / totalAllocatedNum) * 100)
     : 0;
 
   return (
@@ -128,9 +132,9 @@ export function WeddingBudgetBreakdown({
             Orçamento por Categoria
           </CardTitle>
           <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            <span>{formatCurrencyBR(totalSpent)}</span>
+            <span>{formatCurrencyBR(totalSpentNum)}</span>
             <span>/</span>
-            <span className="text-zinc-700 dark:text-zinc-300">{formatCurrencyBR(totalAllocated)}</span>
+            <span className="text-zinc-700 dark:text-zinc-300">{formatCurrencyBR(totalAllocatedNum)}</span>
             <span
               className={`ml-1 font-bold ${
                 totalPct >= 90

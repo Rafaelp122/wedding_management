@@ -249,7 +249,7 @@ describe("WeddingFinancesView", () => {
     const user = userEvent.setup();
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(1));
     const requestsBeforeSuccess = expenseRequests;
 
     await user.click(await screen.findByRole("button", { name: /adicionar despesa/i }));
@@ -280,7 +280,7 @@ describe("WeddingFinancesView", () => {
     const user = userEvent.setup();
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(1));
     const requestsBeforeActions = expenseRequests;
 
     await user.click(await screen.findByRole("button", { name: "Editar mock" }));
@@ -321,7 +321,7 @@ describe("WeddingFinancesView", () => {
     const user = userEvent.setup();
     render(<WeddingFinancesView weddingUuid="w-1" />);
 
-    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(expenseRequests).toBeGreaterThanOrEqual(1));
     const requestsBeforeDelete = expenseRequests;
 
     await user.click(await screen.findByRole("button", { name: "Excluir mock" }));

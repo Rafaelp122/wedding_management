@@ -13,16 +13,22 @@ import type {
 } from 'msw';
 
 import type {
+  CashFlowMonthOut,
+  DashboardOperationsOut,
   DashboardSummaryOut,
+  TaskProgressWeddingOut,
   WeddingDashboardOut
 } from '../../models';
 
 import {
+  getDashboardChartCashFlowResponseMock,
+  getDashboardChartTaskProgressResponseMock,
+  getDashboardOperationsListResponseMock,
   getDashboardSummaryResponseMock,
   getDashboardWeddingResponseMock
 } from './dashboard.faker';
 
-export { getDashboardSummaryResponseMock, getDashboardWeddingResponseMock } from './dashboard.faker';
+export { getDashboardSummaryResponseMock, getDashboardWeddingResponseMock, getDashboardChartCashFlowResponseMock, getDashboardChartTaskProgressResponseMock, getDashboardOperationsListResponseMock } from './dashboard.faker';
 
 
 export const getDashboardSummaryMockHandler = (overrideResponse?: DashboardSummaryOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DashboardSummaryOut> | DashboardSummaryOut), options?: RequestHandlerOptions) => {
@@ -48,7 +54,46 @@ export const getDashboardWeddingMockHandler = (overrideResponse?: WeddingDashboa
       })
   }, options)
 }
+
+export const getDashboardChartCashFlowMockHandler = (overrideResponse?: CashFlowMonthOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<CashFlowMonthOut[]> | CashFlowMonthOut[]), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/dashboard/chart/cash-flow/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getDashboardChartCashFlowResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getDashboardChartTaskProgressMockHandler = (overrideResponse?: TaskProgressWeddingOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<TaskProgressWeddingOut[]> | TaskProgressWeddingOut[]), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/dashboard/chart/task-progress/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getDashboardChartTaskProgressResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
+export const getDashboardOperationsListMockHandler = (overrideResponse?: DashboardOperationsOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<DashboardOperationsOut> | DashboardOperationsOut), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/dashboard/operations/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getDashboardOperationsListResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getDashboardMock = () => [
   getDashboardSummaryMockHandler(),
-  getDashboardWeddingMockHandler()
+  getDashboardWeddingMockHandler(),
+  getDashboardChartCashFlowMockHandler(),
+  getDashboardChartTaskProgressMockHandler(),
+  getDashboardOperationsListMockHandler()
 ]

@@ -1306,6 +1306,85 @@
         ]
       }
     },
+    "/api/v1/weddings/{uuid}/reopen/": {
+      "post": {
+        "operationId": "weddings_reopen",
+        "summary": "Reopen Wedding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeddingOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Caso de uso: Reabre um casamento cancelado voltando para em andamento.",
+        "tags": [
+          "Weddings"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/dashboard/summary/": {
       "get": {
         "operationId": "dashboard_summary",
@@ -1383,6 +1462,162 @@
           }
         },
         "description": "Retorna a visão detalhada de indicadores e métricas de um casamento.\n\nGera um WeddingDashboardOut contendo contagem regressiva, percentual de\nuso do orçamento, estatísticas de tarefas e contratos, parcelas a vencer,\ntarefas urgentes e distribuição de despesas por categoria.",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dashboard/chart/cash-flow/": {
+      "get": {
+        "operationId": "dashboard_chart_cash_flow",
+        "summary": "Dashboard Chart Cash Flow",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CashFlowMonthOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna o fluxo de caixa projetado mês a mês (parcelas pagas vs pendentes).\n\nFiltra as parcelas do tenant pelo ano especificado (padrão: ano corrente).",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dashboard/chart/task-progress/": {
+      "get": {
+        "operationId": "dashboard_chart_task_progress",
+        "summary": "Dashboard Chart Task Progress",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaskProgressWeddingOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna o progresso percentual e contagem de tarefas dos casamentos.\n\nOrdenado pelo volume total de tarefas, com filtro opcional por ano do evento.",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dashboard/operations/": {
+      "get": {
+        "operationId": "dashboard_operations_list",
+        "summary": "Dashboard Operations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOperationsOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna o painel operacional consolidado com os Top 5 casamentos futuros,\nTop 5 tarefas urgentes e Top 5 contratos pendentes do tenant.",
         "tags": [
           "Dashboard"
         ],
@@ -1985,6 +2220,55 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/logistics/contracts/{uuid}/details/": {
+      "get": {
+        "operationId": "logistics_contracts_details_read",
+        "summary": "Retrieve Contract Details",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractDetailAggregateOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Exibe as cláusulas, itens e aditivos agregados de um contrato.",
+        "tags": [
+          "Logistics"
+        ],
         "security": [
           {
             "JWTAuth": []
@@ -4545,6 +4829,49 @@
         ]
       }
     },
+    "/api/v1/finances/expenses/contracts-lookup/": {
+      "get": {
+        "operationId": "finances_expenses_contracts_lookup",
+        "summary": "List Contracts Lookup",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "wedding_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Wedding Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContractLookupOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Lista contratos vinculados a um casamento para associação em despesas.",
+        "tags": [
+          "Finances"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/finances/expenses/{uuid}/": {
       "get": {
         "operationId": "finances_expenses_read",
@@ -5467,6 +5794,34 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/scheduler/events/summary/": {
+      "get": {
+        "operationId": "scheduler_summary_get",
+        "summary": "Get Scheduler Summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulerSummaryOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna o resumo estatístico consolidado dos eventos do cronograma.",
+        "tags": [
+          "Scheduler"
+        ],
         "security": [
           {
             "JWTAuth": []
@@ -7216,6 +7571,18 @@
             "minimum": 0,
             "title": "Incomplete Tasks",
             "type": "integer"
+          },
+          "allowed_transitions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Transitions",
+            "type": "array"
+          },
+          "can_complete": {
+            "default": false,
+            "title": "Can Complete",
+            "type": "boolean"
           }
         },
         "required": [
@@ -7451,6 +7818,82 @@
         "title": "CriticalWeddingOut",
         "type": "object"
       },
+      "DashboardContractDetailOut": {
+        "description": "Detalhes de contrato pendente para listas e modais no dashboard global.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "wedding_name": {
+            "title": "Wedding Name",
+            "type": "string"
+          },
+          "supplier_name": {
+            "title": "Supplier Name",
+            "type": "string"
+          },
+          "total_amount": {
+            "title": "Total Amount",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "wedding_name",
+          "supplier_name",
+          "total_amount",
+          "status"
+        ],
+        "title": "DashboardContractDetailOut",
+        "type": "object"
+      },
+      "DashboardInstallmentDetailOut": {
+        "description": "Detalhes de parcela financeira para listas e modais no dashboard global.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "wedding_name": {
+            "title": "Wedding Name",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "due_date": {
+            "format": "date",
+            "title": "Due Date",
+            "type": "string"
+          },
+          "installment_number": {
+            "title": "Installment Number",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "wedding_name",
+          "amount",
+          "due_date",
+          "installment_number",
+          "status"
+        ],
+        "title": "DashboardInstallmentDetailOut",
+        "type": "object"
+      },
       "DashboardSummaryOut": {
         "description": "Resumo consolidado de indicadores importantes para o dashboard da empresa.",
         "properties": {
@@ -7480,6 +7923,34 @@
             },
             "title": "Critical Weddings",
             "type": "array"
+          },
+          "upcoming_installments": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardInstallmentDetailOut"
+            },
+            "title": "Upcoming Installments",
+            "type": "array"
+          },
+          "overdue_installments": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardInstallmentDetailOut"
+            },
+            "title": "Overdue Installments",
+            "type": "array"
+          },
+          "urgent_tasks": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardTaskDetailOut"
+            },
+            "title": "Urgent Tasks",
+            "type": "array"
+          },
+          "pending_contracts": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardContractDetailOut"
+            },
+            "title": "Pending Contracts",
+            "type": "array"
           }
         },
         "required": [
@@ -7491,6 +7962,43 @@
           "critical_weddings"
         ],
         "title": "DashboardSummaryOut",
+        "type": "object"
+      },
+      "DashboardTaskDetailOut": {
+        "description": "Detalhes de tarefa urgente para listas e modais no dashboard global.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "wedding_name": {
+            "title": "Wedding Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "required": [
+          "uuid",
+          "wedding_name",
+          "title"
+        ],
+        "title": "DashboardTaskDetailOut",
         "type": "object"
       },
       "WeddingDashboardCategoryOut": {
@@ -7605,6 +8113,16 @@
             },
             "title": "Categories Summary",
             "type": "array"
+          },
+          "total_allocated": {
+            "default": "0.00",
+            "title": "Total Allocated",
+            "type": "string"
+          },
+          "total_spent": {
+            "default": "0.00",
+            "title": "Total Spent",
+            "type": "string"
           }
         },
         "required": [
@@ -7651,6 +8169,134 @@
           "title"
         ],
         "title": "WeddingDashboardTaskOut",
+        "type": "object"
+      },
+      "CashFlowMonthOut": {
+        "description": "Projeção de fluxo de caixa mensal (parcelas pagas vs pendentes).",
+        "properties": {
+          "month": {
+            "title": "Month",
+            "type": "integer"
+          },
+          "paid": {
+            "title": "Paid",
+            "type": "string"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "paid",
+          "pending"
+        ],
+        "title": "CashFlowMonthOut",
+        "type": "object"
+      },
+      "TaskProgressWeddingOut": {
+        "description": "Progresso consolidado de tarefas agrupado por casamento.",
+        "properties": {
+          "wedding_uuid": {
+            "format": "uuid4",
+            "title": "Wedding Uuid",
+            "type": "string"
+          },
+          "wedding_name": {
+            "title": "Wedding Name",
+            "type": "string"
+          },
+          "total_tasks": {
+            "title": "Total Tasks",
+            "type": "integer"
+          },
+          "completed_tasks": {
+            "title": "Completed Tasks",
+            "type": "integer"
+          },
+          "progress_pct": {
+            "title": "Progress Pct",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "wedding_uuid",
+          "wedding_name",
+          "total_tasks",
+          "completed_tasks",
+          "progress_pct"
+        ],
+        "title": "TaskProgressWeddingOut",
+        "type": "object"
+      },
+      "DashboardOperationsOut": {
+        "description": "Painel de operações consolidado (casamentos, tarefas e contratos).",
+        "properties": {
+          "upcoming_weddings": {
+            "items": {
+              "$ref": "#/components/schemas/UpcomingWeddingOut"
+            },
+            "title": "Upcoming Weddings",
+            "type": "array"
+          },
+          "urgent_tasks": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardTaskDetailOut"
+            },
+            "title": "Urgent Tasks",
+            "type": "array"
+          },
+          "pending_contracts": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardContractDetailOut"
+            },
+            "title": "Pending Contracts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "upcoming_weddings",
+          "urgent_tasks",
+          "pending_contracts"
+        ],
+        "title": "DashboardOperationsOut",
+        "type": "object"
+      },
+      "UpcomingWeddingOut": {
+        "description": "Resumo simplificado de casamento próximo para o painel de operações.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "bride_name": {
+            "title": "Bride Name",
+            "type": "string"
+          },
+          "groom_name": {
+            "title": "Groom Name",
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "days_until": {
+            "title": "Days Until",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uuid",
+          "bride_name",
+          "groom_name",
+          "date",
+          "days_until"
+        ],
+        "title": "UpcomingWeddingOut",
         "type": "object"
       },
       "PagedSupplierOut": {
@@ -8102,6 +8748,13 @@
             "default": false,
             "title": "Is Addendum",
             "type": "boolean"
+          },
+          "allowed_transitions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Transitions",
+            "type": "array"
           }
         },
         "required": [
@@ -8210,6 +8863,100 @@
           "total_amount"
         ],
         "title": "ContractIn",
+        "type": "object"
+      },
+      "ContractDetailAggregateOut": {
+        "description": "Schema de saída agregado com contrato, itens e aditivos.",
+        "properties": {
+          "contract": {
+            "$ref": "#/components/schemas/ContractOut"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "addendums": {
+            "items": {
+              "$ref": "#/components/schemas/ContractOut"
+            },
+            "title": "Addendums",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contract",
+          "items",
+          "addendums"
+        ],
+        "title": "ContractDetailAggregateOut",
+        "type": "object"
+      },
+      "ItemOut": {
+        "description": "Schema de saída para exibição de item de logística.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "wedding": {
+            "format": "uuid4",
+            "title": "Wedding",
+            "type": "string"
+          },
+          "contract": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "acquisition_status": {
+            "title": "Acquisition Status",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "wedding",
+          "name",
+          "description",
+          "quantity",
+          "acquisition_status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ItemOut",
         "type": "object"
       },
       "ContractPatchIn": {
@@ -8426,10 +9173,23 @@
             ],
             "title": "Pdf File Key"
           },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ItemIn"
+            },
+            "title": "Items",
+            "type": "array"
+          },
           "items_data": {
-            "default": "[]",
-            "title": "Items Data",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Items Data"
           },
           "create_expense": {
             "default": false,
@@ -8479,6 +9239,62 @@
           "total_amount"
         ],
         "title": "ContractFullCreateIn",
+        "type": "object"
+      },
+      "ItemIn": {
+        "description": "Schema de entrada para criação de item de logística.",
+        "properties": {
+          "wedding": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wedding"
+          },
+          "contract": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "quantity": {
+            "default": 1,
+            "exclusiveMinimum": 0,
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "acquisition_status": {
+            "default": "PENDING",
+            "title": "Acquisition Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ItemIn",
         "type": "object"
       },
       "ContractUploadIn": {
@@ -8540,71 +9356,6 @@
         "title": "ContractSignIn",
         "type": "object"
       },
-      "ItemOut": {
-        "description": "Schema de saída para exibição de item de logística.",
-        "properties": {
-          "uuid": {
-            "format": "uuid4",
-            "title": "Uuid",
-            "type": "string"
-          },
-          "wedding": {
-            "format": "uuid4",
-            "title": "Wedding",
-            "type": "string"
-          },
-          "contract": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Contract"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "description": {
-            "title": "Description",
-            "type": "string"
-          },
-          "quantity": {
-            "title": "Quantity",
-            "type": "integer"
-          },
-          "acquisition_status": {
-            "title": "Acquisition Status",
-            "type": "string"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "uuid",
-          "wedding",
-          "name",
-          "description",
-          "quantity",
-          "acquisition_status",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "ItemOut",
-        "type": "object"
-      },
       "PagedItemOut": {
         "properties": {
           "items": {
@@ -8624,62 +9375,6 @@
           "count"
         ],
         "title": "PagedItemOut",
-        "type": "object"
-      },
-      "ItemIn": {
-        "description": "Schema de entrada para criação de item de logística.",
-        "properties": {
-          "wedding": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Wedding"
-          },
-          "contract": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Contract"
-          },
-          "name": {
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          },
-          "description": {
-            "default": "",
-            "title": "Description",
-            "type": "string"
-          },
-          "quantity": {
-            "default": 1,
-            "exclusiveMinimum": 0,
-            "title": "Quantity",
-            "type": "integer"
-          },
-          "acquisition_status": {
-            "default": "PENDING",
-            "title": "Acquisition Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "title": "ItemIn",
         "type": "object"
       },
       "ItemPatchIn": {
@@ -8792,6 +9487,29 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Unallocated Budget",
             "type": "string"
+          },
+          "tenant_average_budget": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Average Budget"
+          },
+          "comparison_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Percentage"
           },
           "notes": {
             "anyOf": [
@@ -8945,6 +9663,11 @@
           "budget_utilization_percent": {
             "default": 0,
             "title": "Budget Utilization Percent",
+            "type": "integer"
+          },
+          "expenses_count": {
+            "default": 0,
+            "title": "Expenses Count",
             "type": "integer"
           }
         },
@@ -9285,6 +10008,37 @@
         "title": "ExpenseIn",
         "type": "object"
       },
+      "ContractLookupOut": {
+        "description": "Schema de saída para listagem simplificada de contratos em dropdowns/lookups.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "name",
+          "status",
+          "total_amount"
+        ],
+        "title": "ContractLookupOut",
+        "type": "object"
+      },
       "ExpensePatchIn": {
         "description": "Schema de entrada para atualização parcial de despesa.",
         "properties": {
@@ -9599,6 +10353,17 @@
             "title": "Wedding",
             "type": "string"
           },
+          "wedding_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wedding Name"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -9762,6 +10527,11 @@
             "default": 60,
             "title": "Reminder Minutes Before",
             "type": "integer"
+          },
+          "force_overlap": {
+            "default": false,
+            "title": "Force Overlap",
+            "type": "boolean"
           }
         },
         "required": [
@@ -9771,6 +10541,30 @@
           "start_time"
         ],
         "title": "EventIn",
+        "type": "object"
+      },
+      "SchedulerSummaryOut": {
+        "description": "Schema de saída para resumo estatístico do cronograma.",
+        "properties": {
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "upcoming_7_days": {
+            "title": "Upcoming 7 Days",
+            "type": "integer"
+          },
+          "with_reminder": {
+            "title": "With Reminder",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "upcoming_7_days",
+          "with_reminder"
+        ],
+        "title": "SchedulerSummaryOut",
         "type": "object"
       },
       "EventPatchIn": {
@@ -9880,6 +10674,11 @@
               }
             ],
             "title": "Reminder Minutes Before"
+          },
+          "force_overlap": {
+            "default": false,
+            "title": "Force Overlap",
+            "type": "boolean"
           }
         },
         "title": "EventPatchIn",

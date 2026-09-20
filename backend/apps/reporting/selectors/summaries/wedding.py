@@ -5,7 +5,7 @@ Selectors para resumos e estatísticas consolidadas de casamentos.
 from __future__ import annotations
 
 from datetime import date
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.db.models import Count, OuterRef, QuerySet, Subquery
 from django.db.models.functions import Coalesce
@@ -168,3 +168,43 @@ class WeddingSummarySelector:
                 0,
             ),
         ).order_by("date")[:limit]
+
+    @staticmethod
+    def upcoming_weddings_detail(
+        *,
+        company: Company,
+        today: date | None = None,
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        """
+        Retorna os Top N casamentos futuros do tenant com contagem regressiva de dias.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            today: Data de referência (caso não informada, usa a data atual).
+            limit: Quantidade máxima de casamentos retornados (padrão: 5).
+
+        Returns:
+            Lista de dicionários contendo uuid, bride_name, groom_name,
+            date e days_until.
+        """
+        today = today or date.today()
+        weddings = (
+            Wedding.objects.for_tenant(company)
+            .exclude(status=Wedding.StatusChoices.CANCELED)
+            .filter(date__gte=today)
+            .order_by("date")[:limit]
+        )
+        return [
+            {
+                "uuid": w.uuid,
+                "bride_name": w.bride_name,
+                "groom_name": w.groom_name,
+                "date": w.date,
+                "days_until": w.get_days_until(today),
+            }
+            for w in weddings
+        ]
+
+
+upcoming_weddings_detail = WeddingSummarySelector.upcoming_weddings_detail

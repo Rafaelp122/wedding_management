@@ -186,4 +186,30 @@ describe("EditContractDialog", () => {
 
     expect(onSuccess).toHaveBeenCalled();
   });
+
+  it("restricts status options strictly to allowed_transitions and current status", async () => {
+    const user = userEvent.setup();
+    const contract = createMockContractWithName({
+      status: "SIGNED",
+      allowed_transitions: ["CANCELED"],
+    });
+
+    render(
+      <EditContractDialog
+        contract={contract}
+        weddingUuid={weddingUuid}
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    const statusCombobox = screen.getByRole("combobox", { name: /status/i });
+    await user.click(statusCombobox);
+
+    expect(screen.getByRole("option", { name: "Assinado" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Cancelado" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Rascunho" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Pendente" })).not.toBeInTheDocument();
+  });
 });

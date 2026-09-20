@@ -15,6 +15,7 @@ from apps.finances.schemas import (
     BudgetIn,
     BudgetOut,
     BudgetPatchIn,
+    ContractLookupOut,
     ExpenseFromDocumentOut,
     ExpenseIn,
     ExpenseOut,
@@ -82,6 +83,8 @@ class TestBudgetSchemas:
             total_estimated=Decimal("30000.00"),
             _total_allocated=Decimal("20000.00"),
             _total_overall_spent=Decimal("12500.00"),
+            _tenant_average_budget=Decimal("25000.00"),
+            _comparison_percentage=20.0,
             notes="Notas do orçamento",
         )
 
@@ -92,6 +95,8 @@ class TestBudgetSchemas:
         assert out.total_allocated == Decimal("20000.00")
         assert out.unallocated_budget == Decimal("10000.00")
         assert out.total_overall_spent == Decimal("12500.00")
+        assert out.tenant_average_budget == Decimal("25000.00")
+        assert out.comparison_percentage == 20.0
         assert out.notes == "Notas do orçamento"
 
 
@@ -162,6 +167,7 @@ class TestBudgetCategorySchemas:
             description="DJ e Banda",
             allocated_budget=Decimal("8000.00"),
             _total_spent=Decimal("4500.00"),
+            _expenses_count=5,
         )
 
         out = BudgetCategoryOut.from_orm(mock_cat)
@@ -172,6 +178,22 @@ class TestBudgetCategorySchemas:
         assert out.allocated_budget == Decimal("8000.00")
         assert out.total_spent == Decimal("4500.00")
         assert out.budget_utilization_percent == 56
+        assert out.expenses_count == 5
+
+        # Fallback para property expenses_count quando _expenses_count
+        # não estiver presente
+        mock_cat_fallback = Dummy(
+            uuid=cat_uuid,
+            wedding=Dummy(uuid=wedding_uuid),
+            budget=Dummy(uuid=budget_uuid),
+            name="Decoração",
+            description="",
+            allocated_budget=Decimal("3000.00"),
+            total_spent=Decimal("1000.00"),
+            expenses_count=3,
+        )
+        out_fallback = BudgetCategoryOut.from_orm(mock_cat_fallback)
+        assert out_fallback.expenses_count == 3
 
 
 class TestExpenseSchemas:
@@ -339,6 +361,20 @@ class TestExpenseSchemas:
         mock_expense._state = Dummy(fields_cache={})
         out_no_cache = ExpenseOut.from_orm(mock_expense)
         assert out_no_cache.contract is None
+
+    def test_contract_lookup_out_serialization(self) -> None:
+        contract_uuid = uuid.uuid4()
+        mock_contract = Dummy(
+            uuid=contract_uuid,
+            name="Buffet Premium",
+            status="SIGNED",
+            total_amount=Decimal("15000.00"),
+        )
+        out = ContractLookupOut.from_orm(mock_contract)
+        assert out.uuid == contract_uuid
+        assert out.name == "Buffet Premium"
+        assert out.status == "SIGNED"
+        assert out.total_amount == Decimal("15000.00")
 
 
 class TestInstallmentSchemas:

@@ -4,8 +4,10 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, renderHook, server, waitFor } from "@/test-utils";
 import { createMockExpense } from "@/test-data";
 import { useEditExpenseForm } from "./useEditExpenseForm";
-import { getFinancesExpensesUpdateMockHandler } from "@/api/generated/v1/endpoints/finances/finances.msw";
-import { getLogisticsContractsListMockHandler } from "@/api/generated/v1/endpoints/logistics/logistics.msw";
+import {
+  getFinancesExpensesUpdateMockHandler,
+  getFinancesExpensesContractsLookupMockHandler,
+} from "@/api/generated/v1/endpoints/finances/finances.msw";
 
 describe("useEditExpenseForm", () => {
   const weddingUuid = "wedding-1";
@@ -21,13 +23,15 @@ describe("useEditExpenseForm", () => {
 
   const mockContract = {
     uuid: "contract-1",
-    description: "Contrato Buffet",
+    name: "Contrato Buffet",
+    status: "ACTIVE",
+    total_amount: "5000.00",
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     server.use(
-      getLogisticsContractsListMockHandler({ items: [mockContract as any], count: 1 }),
+      getFinancesExpensesContractsLookupMockHandler([mockContract as any]),
       getFinancesExpensesUpdateMockHandler(mockExpense as any),
     );
   });

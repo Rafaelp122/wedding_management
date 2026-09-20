@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import sys
 from datetime import date
 from typing import ClassVar
 
@@ -244,3 +245,8 @@ class Wedding(TenantModel):
         if self.date <= ref:
             return 0
         return (self.date - ref).days
+
+
+WeddingStatusEnum = Wedding.StatusChoices
+
+sys.modules.setdefault("apps.weddings.models.wedding", sys.modules[__name__])

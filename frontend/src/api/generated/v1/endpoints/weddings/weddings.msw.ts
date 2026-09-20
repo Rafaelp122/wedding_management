@@ -27,10 +27,11 @@ import {
   getWeddingsListResponseMock,
   getWeddingsLookupResponseMock,
   getWeddingsReadResponseMock,
+  getWeddingsReopenResponseMock,
   getWeddingsUpdateResponseMock
 } from './weddings.faker';
 
-export { getWeddingsLookupResponseMock, getWeddingsListResponseMock, getWeddingsCreateResponseMock, getWeddingsByMonthResponseMock, getWeddingsReadResponseMock, getWeddingsUpdateResponseMock, getWeddingsCompleteResponseMock, getWeddingsCancelResponseMock } from './weddings.faker';
+export { getWeddingsLookupResponseMock, getWeddingsListResponseMock, getWeddingsCreateResponseMock, getWeddingsByMonthResponseMock, getWeddingsReadResponseMock, getWeddingsUpdateResponseMock, getWeddingsCompleteResponseMock, getWeddingsCancelResponseMock, getWeddingsReopenResponseMock } from './weddings.faker';
 
 
 export const getWeddingsLookupMockHandler = (overrideResponse?: WeddingLookupOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<WeddingLookupOut[]> | WeddingLookupOut[]), options?: RequestHandlerOptions) => {
@@ -138,6 +139,18 @@ export const getWeddingsCancelMockHandler = (overrideResponse?: WeddingOut | ((i
       })
   }, options)
 }
+
+export const getWeddingsReopenMockHandler = (overrideResponse?: WeddingOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<WeddingOut> | WeddingOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/weddings/:uuid/reopen/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getWeddingsReopenResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getWeddingsMock = () => [
   getWeddingsLookupMockHandler(),
   getWeddingsListMockHandler(),
@@ -147,5 +160,6 @@ export const getWeddingsMock = () => [
   getWeddingsUpdateMockHandler(),
   getWeddingsDeleteMockHandler(),
   getWeddingsCompleteMockHandler(),
-  getWeddingsCancelMockHandler()
+  getWeddingsCancelMockHandler(),
+  getWeddingsReopenMockHandler()
 ]

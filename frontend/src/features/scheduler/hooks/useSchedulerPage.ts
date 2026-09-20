@@ -1,19 +1,24 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useSchedulerEventsList, getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/scheduler/scheduler";
+import {
+  useSchedulerEventsList,
+  getSchedulerEventsListQueryKey,
+  useSchedulerSummaryGet,
+  getSchedulerSummaryGetQueryKey,
+} from "@/api/generated/v1/endpoints/scheduler/scheduler";
 import { useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
 import { getPaginationInfo, usePagination } from "@/hooks/use-pagination";
-import { sortEvents, paginateEvents, calculateSchedulerSummary } from "../utils/scheduler-helpers";
+import { mapSchedulerSummary } from "../utils/scheduler-helpers";
 
 type ViewMode = "table" | "calendar";
 
 /**
  * Hook principal para gerenciar o estado, dados e interações da página do cronograma (Scheduler).
  *
- * Consolida a listagem de eventos e casamentos, paginação, modo de visualização (tabela/calendário),
- * além do controle dos diálogos de criação e edição de eventos.
+ * Consolida a listagem de eventos com paginação de servidor, resumo estatístico do backend,
+ * modo de visualização (tabela/calendário) e opções de casamento para criação de eventos.
  *
  * @returns Estados compilados, dados calculados, paginação e manipuladores de eventos da página.
  */
@@ -36,7 +41,16 @@ export function useSchedulerPage() {
     data: eventsResponse,
     isLoading: isLoadingEvents,
     error: eventsError,
-  } = useSchedulerEventsList({ limit: 500, offset: 0 });
+  } = useSchedulerEventsList({
+    limit: pagination.limit,
+    offset: pagination.offset,
+  });
+
+  const {
+    data: summaryResponse,
+    isLoading: isLoadingSummary,
+    error: summaryError,
+  } = useSchedulerSummaryGet();
 
   const {
     data: weddingsResponse,
@@ -57,28 +71,13 @@ export function useSchedulerPage() {
     eventsCount,
   );
 
-  const isLoading = isLoadingEvents || isLoadingWeddings;
-  const firstError = eventsError ?? weddingsError;
+  const isLoading = isLoadingEvents || isLoadingWeddings || isLoadingSummary;
+  const firstError = eventsError ?? summaryError ?? weddingsError;
 
-  const weddingsByUuid = useMemo(
-    () =>
-      new Map(
-        weddings.map((wedding) => [
-          wedding.uuid,
-          `${wedding.groom_name} & ${wedding.bride_name}`,
-        ]),
-      ),
-    [weddings],
+  const summary = useMemo(
+    () => mapSchedulerSummary(summaryResponse?.data),
+    [summaryResponse],
   );
-
-  const sortedEvents = useMemo(() => sortEvents(events), [events]);
-
-  const paginatedEvents = useMemo(
-    () => paginateEvents(sortedEvents, pagination.offset, pagination.limit),
-    [sortedEvents, pagination.offset, pagination.limit],
-  );
-
-  const summary = useMemo(() => calculateSchedulerSummary(events), [events]);
 
   const handleSelectEvent = useCallback((event: EventOut) => {
     setSelectedEvent(event);
@@ -89,6 +88,7 @@ export function useSchedulerPage() {
     setEditDialogOpen(false);
     setSelectedEvent(null);
     queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getSchedulerSummaryGetQueryKey() });
   }, [queryClient]);
 
   const weddingOptions = useMemo(
@@ -126,6 +126,7 @@ export function useSchedulerPage() {
     setCreateDialogOpen(false);
     setCreateDefaultStart(undefined);
     queryClient.invalidateQueries({ queryKey: getSchedulerEventsListQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getSchedulerSummaryGetQueryKey() });
   }, [queryClient]);
 
   return {
@@ -140,11 +141,9 @@ export function useSchedulerPage() {
     pagination,
     events,
     eventsCount,
-    paginatedEvents,
     paginationInfo,
     isLoading,
     firstError,
-    weddingsByUuid,
     summary,
     weddingOptions,
     defaultWeddingUuid,

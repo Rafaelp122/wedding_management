@@ -21,6 +21,7 @@ from apps.logistics.managers import (
 from apps.logistics.models import Contract, Item, Supplier
 from apps.logistics.selectors import (
     contract_consolidated_total_selector,
+    contract_detail_aggregate_selector,
     contract_get_selector,
     contract_list_selector,
     contract_pending_count_selector,
@@ -639,3 +640,58 @@ class TestContractConsolidatedTotalSelector:
 
         with pytest.raises(ObjectNotFoundError):
             contract_consolidated_total_selector(user.company, other_contract)
+
+    def test_contract_detail_aggregate_selector_success(self, user: User) -> None:
+        """
+        contract_detail_aggregate_selector retorna contrato com itens e aditivos.
+        """
+        wedding = WeddingFactory(user_context=user)
+        supplier = SupplierFactory(company=user.company)
+        parent = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            total_amount=Decimal("10000.00"),
+        )
+        item1 = ItemFactory(
+            wedding=wedding,
+            contract=parent,
+            company=user.company,
+            name="Item 1",
+            quantity=2,
+        )
+        addendum = ContractFactory(
+            wedding=wedding,
+            supplier=supplier,
+            company=user.company,
+            parent=parent,
+            total_amount=Decimal("1500.00"),
+        )
+
+        data = contract_detail_aggregate_selector(
+            company=user.company, contract_uuid=parent.uuid
+        )
+
+        assert data["contract"].uuid == parent.uuid
+        assert len(data["items"]) == 1
+        assert data["items"][0].uuid == item1.uuid
+        assert len(data["addendums"]) == 1
+        assert data["addendums"][0].uuid == addendum.uuid
+
+    def test_contract_detail_aggregate_selector_cross_tenant_raises(
+        self, user: User
+    ) -> None:
+        """contract_detail_aggregate_selector para contrato alheio dispara erro."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+            company=other_user.company,
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            contract_detail_aggregate_selector(
+                company=user.company, contract_uuid=other_contract.uuid
+            )

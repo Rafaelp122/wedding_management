@@ -20,4 +20,5 @@ export interface EventPatchIn {
   recurrence_rule?: string | null;
   reminder_enabled?: boolean | null;
   reminder_minutes_before?: number | null;
+  force_overlap?: boolean;
 }

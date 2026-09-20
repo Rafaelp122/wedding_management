@@ -279,4 +279,48 @@ describe("CreateEventDialog", () => {
     });
     expect(onSuccess).toHaveBeenCalled();
   });
+
+  it("displays conflict alert and retries with force_overlap when user confirms", async () => {
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.post("*/api/v1/scheduler/events/", async ({ request }) => {
+        const body = (await request.json()) as { force_overlap?: boolean };
+        if (!body.force_overlap) {
+          return HttpResponse.json(
+            {
+              code: "event_schedule_conflict",
+              message: "Existe outro compromisso agendado para este horário no casamento.",
+            },
+            { status: 422 },
+          );
+        }
+        return HttpResponse.json(
+          { uuid: "new-forced-ev", title: "Evento Sobreposto" },
+          { status: 201 },
+        );
+      }),
+    );
+
+    render(
+      <CreateEventDialog
+        weddingUuid="wedding-1"
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    await userEvent.type(screen.getByLabelText("Título"), "Evento Sobreposto");
+    await userEvent.type(screen.getByLabelText("Data/Hora Início *"), "2028-08-15T14:00");
+    await userEvent.click(screen.getByRole("button", { name: /criar evento/i }));
+
+    expect(await screen.findByText("Conflito de Horário Detectado")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /confirmar sobreposição/i }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Evento criado com sucesso!");
+    });
+    expect(onSuccess).toHaveBeenCalled();
+  });
 });

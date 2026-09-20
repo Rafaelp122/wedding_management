@@ -15,6 +15,7 @@ import { LogisticsContractsCreateBody } from "@/api/generated/v1/zod/logistics/l
 import { uploadFileToR2 } from "@/services/r2";
 import { getApiErrorInfo } from "@/api/error-utils";
 import type { ItemDraft } from "../components/contracts/ContractItemDrafts";
+import type { ItemIn } from "@/api/generated/v1/models/itemIn";
 
 export type CreateContractFormData = z.input<typeof LogisticsContractsCreateBody>;
 
@@ -135,13 +136,12 @@ export function useContractUploadForm({
         pdfFileKey = uploadUrlRes.data.object_key;
       }
 
-      const itemsData = JSON.stringify(
-        itemDrafts.map((d) => ({
-          name: d.name,
-          quantity: d.quantity,
-          acquisition_status: d.acquisition_status,
-        })),
-      );
+      const items: ItemIn[] = itemDrafts.map((d) => ({
+        wedding: data.wedding,
+        name: d.name,
+        quantity: d.quantity,
+        acquisition_status: d.acquisition_status,
+      }));
 
       await createFull({
         data: {
@@ -152,7 +152,7 @@ export function useContractUploadForm({
           status: data.status,
           description: data.description,
           parent: data.parent ?? null,
-          items_data: itemsData,
+          items,
           create_expense: expenseChecked,
           expense_category: expenseChecked ? expenseCategory : null,
           expense_num_installments: expenseChecked

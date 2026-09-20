@@ -59,7 +59,7 @@ describe("EditExpenseDialog", () => {
     });
   });
 
-  it("blocks amount fields when has paid installments", () => {
+  it("blocks actual_amount but keeps estimated_amount enabled when has paid installments", () => {
     render(
       <EditExpenseDialog
         expense={createMockExpense({ paid_installments_count: 2 })}
@@ -70,10 +70,10 @@ describe("EditExpenseDialog", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Valor Estimado")).toBeDisabled();
+    expect(screen.getByLabelText("Valor Estimado")).not.toBeDisabled();
     expect(screen.getByLabelText("Valor Realizado")).toBeDisabled();
     expect(
-      screen.getByText(/valores bloqueados/i),
+      screen.getByText(/valor realizado bloqueado/i),
     ).toBeInTheDocument();
   });
 

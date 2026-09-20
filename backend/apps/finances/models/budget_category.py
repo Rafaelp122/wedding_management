@@ -123,3 +123,18 @@ class BudgetCategory(TenantModel, WeddingOwnedMixin):
         if not self.allocated_budget or self.allocated_budget <= Decimal("0.00"):
             return 0
         return int((self.total_spent / self.allocated_budget) * 100)
+
+    @property
+    def expenses_count(self) -> int:
+        """
+        Retorna o total de despesas associadas a esta categoria.
+
+        Se anotado via `_expenses_count` (ex: `with_total_spent`), reutiliza
+        o valor já computado; caso contrário, executa `self.expenses.count()`.
+        """
+        val = getattr(self, "_expenses_count", None)
+        if val is not None:
+            return int(val)
+        if not self.pk:
+            return 0
+        return self.expenses.count()

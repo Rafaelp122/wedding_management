@@ -20,6 +20,10 @@ const CONTRACT_UUID = "c-1";
 
 const DEFAULT_CONTRACT = createMockContract();
 
+function mockDetails(contract: any, items: any[] = [], addendums: any[] = []) {
+  return HttpResponse.json({ contract, items, addendums });
+}
+
 function renderDialog(
   props: Partial<React.ComponentProps<typeof ContractDetailDialog>> = {},
 ) {
@@ -39,14 +43,8 @@ describe("ContractDetailDialog", () => {
     vi.clearAllMocks();
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(DEFAULT_CONTRACT);
-      }),
-      http.get("*/api/v1/logistics/items/", () => {
-        return HttpResponse.json({ items: [], count: 0 });
-      }),
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({ items: [], count: 0 });
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(DEFAULT_CONTRACT);
       })
     );
   });
@@ -55,9 +53,9 @@ describe("ContractDetailDialog", () => {
 
   it("shows loading skeleton while contract is loading", () => {
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", async () => {
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", async () => {
         await delay("infinite");
-        return HttpResponse.json(DEFAULT_CONTRACT);
+        return mockDetails(DEFAULT_CONTRACT);
       }),
     );
 
@@ -101,8 +99,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contract);
       })
     );
 
@@ -125,8 +123,8 @@ describe("ContractDetailDialog", () => {
     const user = userEvent.setup();
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contract);
       })
     );
 
@@ -149,8 +147,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contract);
       })
     );
 
@@ -184,8 +182,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contract);
       })
     );
 
@@ -210,8 +208,8 @@ describe("ContractDetailDialog", () => {
     const user = userEvent.setup();
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contract);
       })
     );
 
@@ -232,8 +230,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contract);
       })
     );
 
@@ -256,8 +254,8 @@ describe("ContractDetailDialog", () => {
     const user = userEvent.setup();
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contract);
       })
     );
 
@@ -290,9 +288,16 @@ describe("ContractDetailDialog", () => {
       parent: CONTRACT_UUID,
     });
 
+    const contractWithAddendums = createMockContract({
+      total_amount: "5000.00",
+      addendums_count: 2,
+      addendums_total_amount: "3500.00",
+      total_amount_with_addendums: "8500.00",
+    });
+
     server.use(
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({ items: [addendum1, addendum2], count: 2 });
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contractWithAddendums, [], [addendum1, addendum2]);
       })
     );
 
@@ -323,8 +328,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(contractWithAddendums);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(contractWithAddendums);
       })
     );
 
@@ -338,12 +343,12 @@ describe("ContractDetailDialog", () => {
     expect(screen.getByText(/R\$\s*13\.500,00/)).toBeInTheDocument();
   });
 
-  it("ignores canceled addendums when calculating fallback sum without API fields", async () => {
+  it("shows consolidated totals from contract fields with active and canceled addendums", async () => {
     const mainContract = createMockContract({
       total_amount: "5000.00",
-      addendums_count: 0,
-      addendums_total_amount: undefined,
-      total_amount_with_addendums: undefined,
+      addendums_count: 1,
+      addendums_total_amount: "2000.00",
+      total_amount_with_addendums: "7000.00",
     });
     const activeAddendum = createMockContract({
       uuid: "ad-1",
@@ -361,14 +366,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(mainContract);
-      }),
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({
-          items: [activeAddendum, canceledAddendum],
-          count: 2,
-        });
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(mainContract, [], [activeAddendum, canceledAddendum]);
       })
     );
 
@@ -390,11 +389,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(simpleContract);
-      }),
-      http.get("*/api/v1/logistics/contracts/", () => {
-        return HttpResponse.json({ items: [], count: 0 });
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(simpleContract);
       })
     );
 
@@ -428,8 +424,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(pendingContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(pendingContract);
       }),
     );
 
@@ -449,8 +445,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(signedContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(signedContract);
       }),
     );
 
@@ -470,8 +466,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(draftContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(draftContract);
       }),
       http.post("*/api/v1/logistics/contracts/:uuid/send-to-pending/", () => {
         return HttpResponse.json({ ...draftContract, status: "PENDING" });
@@ -496,8 +492,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(draftContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(draftContract);
       }),
       http.post("*/api/v1/logistics/contracts/:uuid/send-to-pending/", () => {
         return HttpResponse.json(
@@ -525,8 +521,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(pendingContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(pendingContract);
       }),
       http.post("*/api/v1/logistics/contracts/:uuid/revert-to-draft/", () => {
         return HttpResponse.json({ ...pendingContract, status: "DRAFT" });
@@ -551,8 +547,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(pendingContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(pendingContract);
       }),
       http.post("*/api/v1/logistics/contracts/:uuid/revert-to-draft/", () => {
         return HttpResponse.json(
@@ -580,8 +576,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(draftContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(draftContract);
       }),
     );
 
@@ -601,8 +597,8 @@ describe("ContractDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/contracts/:uuid/", () => {
-        return HttpResponse.json(pendingContract);
+      http.get("*/api/v1/logistics/contracts/:uuid/details/", () => {
+        return mockDetails(pendingContract);
       }),
     );
 

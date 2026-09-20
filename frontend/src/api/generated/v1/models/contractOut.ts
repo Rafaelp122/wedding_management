@@ -37,4 +37,5 @@ export interface ContractOut {
   has_file?: boolean;
   file_name?: string | null;
   is_addendum?: boolean;
+  allowed_transitions?: string[];
 }

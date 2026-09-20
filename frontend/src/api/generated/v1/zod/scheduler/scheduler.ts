@@ -32,6 +32,7 @@ export const SchedulerEventsListResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
@@ -64,6 +65,7 @@ export const schedulerEventsCreateBodyEventTypeMax = 50;
 export const schedulerEventsCreateBodyRecurrenceRuleDefault = `none`;
 export const schedulerEventsCreateBodyReminderEnabledDefault = false;
 export const schedulerEventsCreateBodyReminderMinutesBeforeDefault = 60;
+export const schedulerEventsCreateBodyForceOverlapDefault = false;
 
 export const SchedulerEventsCreateBody = zod.object({
   "wedding": zod.string(),
@@ -75,13 +77,15 @@ export const SchedulerEventsCreateBody = zod.object({
   "end_time": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
   "recurrence_rule": zod.union([zod.string(),zod.null()]).default(schedulerEventsCreateBodyRecurrenceRuleDefault),
   "reminder_enabled": zod.boolean().default(schedulerEventsCreateBodyReminderEnabledDefault),
-  "reminder_minutes_before": zod.int().default(schedulerEventsCreateBodyReminderMinutesBeforeDefault)
+  "reminder_minutes_before": zod.int().default(schedulerEventsCreateBodyReminderMinutesBeforeDefault),
+  "force_overlap": zod.boolean().default(schedulerEventsCreateBodyForceOverlapDefault)
 }).describe('Schema de entrada para criação de evento\/compromisso.')
 
 export const SchedulerEventsCreateResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
@@ -92,6 +96,16 @@ export const SchedulerEventsCreateResponse = zod.object({
   "reminder_enabled": zod.boolean(),
   "reminder_minutes_before": zod.int()
 }).describe('Schema de saída para exibição de evento\/compromisso.')
+
+/**
+ * Retorna o resumo estatístico consolidado dos eventos do cronograma.
+ * @summary Get Scheduler Summary
+ */
+export const SchedulerSummaryGetResponse = zod.object({
+  "total": zod.int(),
+  "upcoming_7_days": zod.int(),
+  "with_reminder": zod.int()
+}).describe('Schema de saída para resumo estatístico do cronograma.')
 
 /**
  * Retorna os detalhes completos de um evento específico no cronograma.
@@ -107,6 +121,7 @@ export const SchedulerEventsReadResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
@@ -136,7 +151,7 @@ export const schedulerEventsUpdateBodyLocationMax = 255;
 export const schedulerEventsUpdateBodyDescriptionDefault = ``;
 export const schedulerEventsUpdateBodyEventTypeOneMax = 50;
 
-
+export const schedulerEventsUpdateBodyForceOverlapDefault = false;
 
 export const SchedulerEventsUpdateBody = zod.object({
   "wedding": zod.union([zod.string(),zod.null()]).optional(),
@@ -148,13 +163,15 @@ export const SchedulerEventsUpdateBody = zod.object({
   "end_time": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
   "recurrence_rule": zod.union([zod.string(),zod.null()]).optional(),
   "reminder_enabled": zod.union([zod.boolean(),zod.null()]).optional(),
-  "reminder_minutes_before": zod.union([zod.int(),zod.null()]).optional()
+  "reminder_minutes_before": zod.union([zod.int(),zod.null()]).optional(),
+  "force_overlap": zod.boolean().default(schedulerEventsUpdateBodyForceOverlapDefault)
 }).describe('Schema de entrada para atualização parcial de evento\/compromisso.')
 
 export const SchedulerEventsUpdateResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),

@@ -15,6 +15,7 @@ from apps.scheduler.models import Event, Task
 from apps.scheduler.selectors import (
     event_get_selector,
     event_list_selector,
+    scheduler_summary_selector,
     task_get_selector,
     task_list_selector,
     task_urgent_list_selector,
@@ -331,3 +332,59 @@ class TestEventSelectors:
 
         with pytest.raises(ObjectNotFoundError):
             event_get_selector(company=user_a.company, uuid=event_b.uuid)
+
+
+@pytest.mark.django_db
+class TestSchedulerSummarySelector:
+    """Testes para o seletor scheduler_summary_selector."""
+
+    def test_scheduler_summary_selector_counts(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now()
+
+        # 1. Evento hoje com lembrete (entra em total, upcoming_7_days, with_reminder)
+        EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(hours=2),
+            reminder_enabled=True,
+        )
+        # 2. Evento em 3 dias sem lembrete (entra em total, upcoming_7_days)
+        EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(days=3),
+            reminder_enabled=False,
+        )
+        # 3. Evento em 6 dias com lembrete (total, upcoming_7_days, with_reminder)
+        EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(days=6),
+            reminder_enabled=True,
+        )
+        # 4. Evento em 15 dias com lembrete (total, with_reminder - fora dos 7 dias)
+        EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(days=15),
+            reminder_enabled=True,
+        )
+
+        # Evento de outro tenant (não deve afetar)
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        EventFactory(
+            wedding=other_wedding,
+            start_time=now + timedelta(days=1),
+            reminder_enabled=True,
+        )
+
+        summary = scheduler_summary_selector(company=user.company)
+        assert summary["total"] == 4
+        assert summary["upcoming_7_days"] == 3
+        assert summary["with_reminder"] == 3
+
+    def test_scheduler_summary_selector_empty(self, user: Any) -> None:
+        summary = scheduler_summary_selector(company=user.company)
+        assert summary == {
+            "total": 0,
+            "upcoming_7_days": 0,
+            "with_reminder": 0,
+        }

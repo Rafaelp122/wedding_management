@@ -43,6 +43,29 @@ def get_contract_for_company(
     )
 
 
+def list_contracts_for_wedding(
+    *,
+    company: Company,
+    wedding_uuid: UUID | str,
+) -> list[Contract]:
+    """
+    Lista todos os contratos vinculados a um casamento para um determinado tenant.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+        wedding_uuid: Identificador único do casamento.
+
+    Returns:
+        Lista de contratos ordenados por nome.
+    """
+    return list(
+        Contract.objects.for_tenant(company)
+        .filter(wedding__uuid=wedding_uuid)
+        .order_by("name")
+    )
+
+
 __all__ = [
     "get_contract_for_company",
+    "list_contracts_for_wedding",
 ]

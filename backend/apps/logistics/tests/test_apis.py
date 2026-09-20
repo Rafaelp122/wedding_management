@@ -486,9 +486,11 @@ class TestLogisticsNinjaAPI:
             f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/"
         )
         assert response.status_code == 200
-        assert response.json()["name"] == "Contrato Teste"
-        assert "addendums_total_amount" in response.json()
-        assert "total_amount_with_addendums" in response.json()
+        data = response.json()
+        assert data["name"] == "Contrato Teste"
+        assert data["allowed_transitions"] == ["PENDING", "CANCELED"]
+        assert "addendums_total_amount" in data
+        assert "total_amount_with_addendums" in data
 
     def test_retrieve_contract_with_addendums_consolidated_totals(
         self, auth_client: Any, seed_data: dict[str, Any]
@@ -517,6 +519,61 @@ class TestLogisticsNinjaAPI:
         assert Decimal(str(data["total_amount_with_addendums"])) == Decimal(
             str(parent.total_amount)
         ) + Decimal("2500.00")
+
+    def test_retrieve_contract_details_aggregate_success(
+        self, auth_client: Any, seed_data: dict[str, Any]
+    ) -> None:
+        """
+        GET /contracts/{uuid}/details/ retorna agregado de contrato, itens e aditivos.
+        """
+        parent = seed_data["my_contract"]
+        addendum_payload = {
+            "wedding": str(parent.wedding.uuid),
+            "supplier": str(seed_data["my_supplier"].uuid),
+            "name": "Aditivo Detalhes",
+            "total_amount": "1200.00",
+            "status": "DRAFT",
+            "parent": str(parent.uuid),
+        }
+        res_addendum = auth_client.post(
+            "/api/v1/logistics/contracts/",
+            data=addendum_payload,
+            content_type="application/json",
+        )
+        assert res_addendum.status_code == 201
+
+        response = auth_client.get(
+            f"/api/v1/logistics/contracts/{parent.uuid}/details/"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "contract" in data
+        assert "items" in data
+        assert "addendums" in data
+        assert data["contract"]["uuid"] == str(parent.uuid)
+        assert data["contract"]["allowed_transitions"] == ["PENDING", "CANCELED"]
+        assert len(data["items"]) >= 1
+        assert data["items"][0]["uuid"] == str(seed_data["my_item"].uuid)
+        assert len(data["addendums"]) == 1
+        assert data["addendums"][0]["name"] == "Aditivo Detalhes"
+
+    def test_retrieve_contract_details_cross_tenant_returns_404(
+        self, auth_client: Any, seed_data: dict[str, Any]
+    ) -> None:
+        """GET /contracts/{uuid}/details/ de outro tenant retorna 404."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+            company=other_user.company,
+        )
+
+        response = auth_client.get(
+            f"/api/v1/logistics/contracts/{other_contract.uuid}/details/"
+        )
+        assert response.status_code == 404
 
     def test_create_contract_via_api(
         self, auth_client: Any, seed_data: dict[str, Any]
@@ -698,6 +755,32 @@ class TestContractCreateFullAPI:
         )
         assert response.status_code == 201
         assert response.json()["name"] == "Contrato com Itens"
+
+    def test_create_full_with_typed_items_array(
+        self, auth_client: Any, user: User
+    ) -> None:
+        """POST /full/ com array tipado de items retorna 201 e persiste itens."""
+        wedding, supplier = self._wedding_supplier(user)
+        response = auth_client.post(
+            "/api/v1/logistics/contracts/full/",
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato Itens Tipados",
+                    "total_amount": "4500.00",
+                    "items": [
+                        {"name": "Mesa Rústica", "quantity": 10},
+                        {"name": "Cadeira Medalhão", "quantity": 100},
+                    ],
+                }
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        data = response.json()
+        contract_uuid = data["uuid"]
+        assert Item.objects.filter(contract__uuid=contract_uuid).count() == 2
 
     def test_create_full_with_file(self, auth_client: Any, user: User) -> None:
         """POST /full/ com pdf_file_key retorna 201."""

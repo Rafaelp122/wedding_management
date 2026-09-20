@@ -30,6 +30,7 @@ import type {
   BudgetIn,
   BudgetOut,
   BudgetPatchIn,
+  ContractLookupOut,
   ErrorResponse,
   ExpenseFromDocumentOut,
   ExpenseIn,
@@ -38,6 +39,7 @@ import type {
   ExpenseRenegotiateIn,
   FinancesBudgetsListParams,
   FinancesCategoriesListParams,
+  FinancesExpensesContractsLookupParams,
   FinancesExpensesListParams,
   FinancesInstallmentsListParams,
   InstallmentAdjustIn,
@@ -1029,6 +1031,100 @@ export const useFinancesExpensesCreate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getFinancesExpensesCreateMutationOptions(options), queryClient);
     }
     /**
+ * Lista contratos vinculados a um casamento para associação em despesas.
+ * @summary List Contracts Lookup
+ */
+export const financesExpensesContractsLookup = (
+    params: FinancesExpensesContractsLookupParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ContractLookupOut[]>(
+      {url: `/api/v1/finances/expenses/contracts-lookup/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getFinancesExpensesContractsLookupQueryKey = (params?: FinancesExpensesContractsLookupParams,) => {
+    return [
+    `/api/v1/finances/expenses/contracts-lookup/`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getFinancesExpensesContractsLookupQueryOptions = <TData = Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError = ErrorType<unknown>>(params: FinancesExpensesContractsLookupParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getFinancesExpensesContractsLookupQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof financesExpensesContractsLookup>>> = ({ signal }) => financesExpensesContractsLookup(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type FinancesExpensesContractsLookupQueryResult = NonNullable<Awaited<ReturnType<typeof financesExpensesContractsLookup>>>
+export type FinancesExpensesContractsLookupQueryError = ErrorType<unknown>
+
+
+export function useFinancesExpensesContractsLookup<TData = Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError = ErrorType<unknown>>(
+ params: FinancesExpensesContractsLookupParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof financesExpensesContractsLookup>>,
+          TError,
+          Awaited<ReturnType<typeof financesExpensesContractsLookup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFinancesExpensesContractsLookup<TData = Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError = ErrorType<unknown>>(
+ params: FinancesExpensesContractsLookupParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof financesExpensesContractsLookup>>,
+          TError,
+          Awaited<ReturnType<typeof financesExpensesContractsLookup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFinancesExpensesContractsLookup<TData = Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError = ErrorType<unknown>>(
+ params: FinancesExpensesContractsLookupParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Contracts Lookup
+ */
+
+export function useFinancesExpensesContractsLookup<TData = Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError = ErrorType<unknown>>(
+ params: FinancesExpensesContractsLookupParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof financesExpensesContractsLookup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getFinancesExpensesContractsLookupQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
  * Retorna recibo unitário simplificado nominal registrado no controle base.
  * @summary Get Expense
  */

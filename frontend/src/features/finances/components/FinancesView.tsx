@@ -55,6 +55,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   const queryClient = useQueryClient();
 
   const {
+    budget,
     categories,
     isLoading: isBudgetLoading,
     totalEstimated,
@@ -83,15 +84,9 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
     }
   }, [expenseIdParam, expensesResponse, fetchedExpenseResponse]);
 
-  const { data: recentExpensesResponse, isLoading: isRecentExpensesLoading } =
-    useFinancesExpensesList({ wedding_id: weddingUuid, limit: 5 });
-
   const handleExpenseUpdated = () => {
     queryClient.invalidateQueries({
       queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid }),
-    });
-    queryClient.invalidateQueries({
-      queryKey: getFinancesExpensesListQueryKey({ wedding_id: weddingUuid, limit: 5 }),
     });
     queryClient.invalidateQueries({
       queryKey: getFinancesBudgetsForWeddingQueryKey(weddingUuid),
@@ -109,7 +104,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
   };
 
   const expenses = expensesResponse?.data?.items || [];
-  const recentExpensesItems = recentExpensesResponse?.data?.items || [];
+  const recentExpensesItems = expenses.slice(0, 5);
 
   return (
     <div className="space-y-8 pb-12">
@@ -122,6 +117,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
         </div>
       ) : (
         <WeddingFinancesSummaryCards
+          budget={budget}
           totalEstimated={totalEstimated}
           totalSpent={totalSpent}
         />
@@ -163,7 +159,7 @@ export function WeddingFinancesView({ weddingUuid }: WeddingFinancesViewProps) {
       </div>
 
       {/* Despesas Recentes (cards) */}
-      {isRecentExpensesLoading ? (
+      {isExpensesLoading ? (
         <Skeleton className="h-48 w-full rounded-xl" />
       ) : (
         <WeddingFinancesRecentExpenses

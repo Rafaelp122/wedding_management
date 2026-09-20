@@ -2,7 +2,8 @@
 Roteadores e endpoints para o módulo de reporting (dashboard e relatórios).
 """
 
-from typing import Literal
+import datetime
+from typing import Any, Literal
 
 from django.http import HttpResponse
 from ninja_extra import Router
@@ -10,10 +11,16 @@ from pydantic import UUID4
 
 from apps.core.constants import READ_ERROR_RESPONSES
 from apps.reporting.schemas import (
+    CashFlowMonthOut,
+    DashboardOperationsOut,
     DashboardSummaryOut,
+    TaskProgressWeddingOut,
     WeddingDashboardOut,
 )
 from apps.reporting.selectors import (
+    FinancialSummarySelector,
+    TaskSummarySelector,
+    dashboard_operations_selector,
     dashboard_summary_selector,
     wedding_overview_selector,
 )
@@ -60,6 +67,60 @@ def wedding_dashboard(request: AuthRequest, uuid: UUID4) -> dict[str, object]:
         company=user.company,
         wedding_uuid=uuid,
     )
+
+
+@dashboard_router.get(
+    "/chart/cash-flow/",
+    response={200: list[CashFlowMonthOut], **READ_ERROR_RESPONSES},
+    operation_id="dashboard_chart_cash_flow",
+)
+def dashboard_chart_cash_flow(
+    request: AuthRequest,
+    year: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Retorna o fluxo de caixa projetado mês a mês (parcelas pagas vs pendentes).
+
+    Filtra as parcelas do tenant pelo ano especificado (padrão: ano corrente).
+    """
+    target_year = year if year is not None else datetime.date.today().year
+    return FinancialSummarySelector.cash_flow_by_month(
+        company=request.user.company,
+        year=target_year,
+    )
+
+
+@dashboard_router.get(
+    "/chart/task-progress/",
+    response={200: list[TaskProgressWeddingOut], **READ_ERROR_RESPONSES},
+    operation_id="dashboard_chart_task_progress",
+)
+def dashboard_chart_task_progress(
+    request: AuthRequest,
+    year: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Retorna o progresso percentual e contagem de tarefas dos casamentos.
+
+    Ordenado pelo volume total de tarefas, com filtro opcional por ano do evento.
+    """
+    return TaskSummarySelector.tasks_progress_by_wedding(
+        company=request.user.company,
+        year=year,
+    )
+
+
+@dashboard_router.get(
+    "/operations/",
+    response={200: DashboardOperationsOut, **READ_ERROR_RESPONSES},
+    operation_id="dashboard_operations_list",
+)
+def dashboard_operations(request: AuthRequest) -> dict[str, Any]:
+    """
+    Retorna o painel operacional consolidado com os Top 5 casamentos futuros,
+    Top 5 tarefas urgentes e Top 5 contratos pendentes do tenant.
+    """
+    return dashboard_operations_selector(company=request.user.company)
 
 
 # ── Rotas de Relatórios (Exportações) ──

@@ -4,6 +4,8 @@ from apps.scheduler.schemas.event import (
     EventIn,
     EventOut,
     EventPatchIn,
+    EventUpdateIn,
+    SchedulerSummaryOut,
 )
 from apps.scheduler.schemas.task import (
     TaskIn,
@@ -16,6 +18,8 @@ __all__ = [
     "EventIn",
     "EventOut",
     "EventPatchIn",
+    "EventUpdateIn",
+    "SchedulerSummaryOut",
     "TaskIn",
     "TaskOut",
     "TaskPatchIn",

@@ -1,9 +1,18 @@
 import { memo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import {
+  useWeddingsReopen,
+  getWeddingsReadQueryKey,
+  getWeddingsListQueryKey,
+} from "@/api/generated/v1/endpoints/weddings/weddings";
+import { getDashboardWeddingQueryKey } from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import { getApiErrorInfo } from "@/api/error-utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, CheckCircle2, MapPin, Pencil, Users, XCircle } from "lucide-react";
+import { Calendar, CheckCircle2, MapPin, Pencil, RotateCcw, Users, XCircle } from "lucide-react";
 import { getWeddingStatusBadgeStyle, getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { cn } from "@/lib/utils";
 import { TEMPLATE_MAP } from "../constants";
@@ -16,6 +25,7 @@ interface WeddingHeaderProps {
   onEditClick: () => void;
   onCompleteClick?: () => void;
   onCancelClick?: () => void;
+  onReopenClick?: () => void;
 }
 
 export const WeddingHeader = memo(function WeddingHeader({
@@ -26,7 +36,11 @@ export const WeddingHeader = memo(function WeddingHeader({
   onEditClick,
   onCompleteClick,
   onCancelClick,
+  onReopenClick,
 }: WeddingHeaderProps) {
+  const queryClient = useQueryClient();
+  const { mutate: reopenWedding, isPending: isReopening } = useWeddingsReopen();
+
   const templateLabel = wedding.template ? (TEMPLATE_MAP[wedding.template] ?? wedding.template) : null;
   const statusStyle = getWeddingStatusBadgeStyle(wedding.status);
   const statusLabel = getWeddingStatusLabel(wedding.status);
@@ -42,9 +56,32 @@ export const WeddingHeader = memo(function WeddingHeader({
     return `R$ ${num}`;
   };
 
-  const isDateReached = wedding.date
-    ? new Date(wedding.date + "T23:59:59") <= new Date()
-    : false;
+  const canComplete = Boolean(wedding.can_complete);
+  const canReopen =
+    wedding.status === "CANCELED" ||
+    (wedding.allowed_transitions?.includes("IN_PROGRESS") ?? false);
+
+  const handleReopen = () => {
+    if (onReopenClick) {
+      onReopenClick();
+      return;
+    }
+    reopenWedding(
+      { uuid: wedding.uuid },
+      {
+        onSuccess: () => {
+          toast.success("Casamento reaberto com sucesso!");
+          queryClient.invalidateQueries({ queryKey: getWeddingsReadQueryKey(wedding.uuid) });
+          queryClient.invalidateQueries({ queryKey: getWeddingsListQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getDashboardWeddingQueryKey(wedding.uuid) });
+        },
+        onError: (err) => {
+          const { message } = getApiErrorInfo(err, "Erro ao reabrir casamento.");
+          toast.error(message);
+        },
+      },
+    );
+  };
 
   return (
     <div className="bg-white dark:bg-[#18181B] p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
@@ -100,19 +137,31 @@ export const WeddingHeader = memo(function WeddingHeader({
                 size="icon"
                 className={cn(
                   "h-7 w-7 rounded-full cursor-pointer transition-colors",
-                  isDateReached
+                  canComplete
                     ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                     : "text-zinc-300 dark:text-zinc-600 cursor-not-allowed",
                 )}
-                onClick={isDateReached ? onCompleteClick : undefined}
-                disabled={!isDateReached}
+                onClick={canComplete ? onCompleteClick : undefined}
+                disabled={!canComplete}
                 title={
-                  isDateReached
+                  canComplete
                     ? "Concluir casamento"
                     : "O casamento só pode ser concluído na data do evento ou posterior"
                 }
               >
                 <CheckCircle2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {canReopen && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-full cursor-pointer transition-colors"
+                onClick={handleReopen}
+                disabled={isReopening}
+                title="Reabrir casamento"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
               </Button>
             )}
             {wedding.status === "IN_PROGRESS" && onCancelClick && (

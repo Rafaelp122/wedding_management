@@ -53,7 +53,6 @@ interface DashboardPageViewProps {
   isLoadingWeddingDashboard: boolean;
   weddingDashboard: WeddingDashboardOut | undefined;
   summary: DashboardSummaryOut | undefined;
-  fullWeddingsArray: WeddingOut[];
   onNavigateToWedding: (weddingUuid: string, tab?: string) => void;
 }
 
@@ -75,7 +74,6 @@ export function DashboardPageView({
   isLoadingWeddingDashboard,
   weddingDashboard,
   summary,
-  fullWeddingsArray,
   onNavigateToWedding,
 }: DashboardPageViewProps) {
   return (
@@ -222,6 +220,8 @@ export function DashboardPageView({
                   <WeddingBudgetBreakdown
                     categories={weddingDashboard?.categories_summary ?? []}
                     isLoading={isLoadingWeddingDashboard}
+                    totalAllocated={weddingDashboard?.total_allocated}
+                    totalSpent={weddingDashboard?.total_spent}
                   />
                 </div>
                 <UpcomingAppointments weddingUuid={selectedWeddingUuid} />
@@ -250,7 +250,7 @@ export function DashboardPageView({
         {/* Recent Weddings — only in global view */}
         {!isWeddingSelected && (
           <div className="grid gap-6">
-            <DashboardOperations weddings={fullWeddingsArray} />
+            <DashboardOperations />
           </div>
         )}
       </div>
