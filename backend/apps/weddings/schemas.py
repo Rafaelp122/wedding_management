@@ -66,10 +66,6 @@ class WeddingOut(Schema):
     @staticmethod
     def resolve_can_complete(obj: "Wedding") -> bool:
         if hasattr(obj, "can_transition_to"):
-            from apps.weddings.models.wedding import (  # type: ignore[import-not-found]
-                WeddingStatusEnum,
-            )
-
             return obj.can_transition_to(WeddingStatusEnum.COMPLETED)
         return False
 
