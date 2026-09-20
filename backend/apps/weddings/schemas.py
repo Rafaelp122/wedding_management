@@ -66,7 +66,7 @@ class WeddingOut(Schema):
     @staticmethod
     def resolve_can_complete(obj: "Wedding") -> bool:
         if hasattr(obj, "can_transition_to"):
-            return obj.can_transition_to(WeddingStatusEnum.COMPLETED)
+            return bool(obj.can_transition_to("COMPLETED"))
         return False
 
 
