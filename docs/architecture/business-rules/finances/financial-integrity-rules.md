@@ -1,5 +1,5 @@
 ---
-title: "Regras de Integridade Financeira (Tolerância Zero)"
+title: "Regras de Integridade Financeira (Tolerância Zero) (BR-F01 a BR-F05)"
 domain: finances
 type: business-rule
 source_code:
@@ -15,7 +15,7 @@ tests:
 # Regras de Integridade Financeira & Tolerância Zero
 
 > **Categoria:** Regra de Negócio (Domínio Financeiro)
-> **Relacionados:** [ADR-010: Tolerância Zero](../../adr/010-tolerance-zero.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md)
+> **Relacionados:** [MOC de Finanças](index.md) · [ADR-010: Tolerância Zero](../../adr/010-tolerance-zero.md) · [Distribuição e Alocação de Orçamento por Categoria](budget-category-distribution.md) · [Benchmark e Média Orçamentária por Assessoria](tenant-budget-benchmark.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md)
 
 ---
 
@@ -26,14 +26,18 @@ No ecossistema do **Wedding Management System**, o dinheiro comprometido e desem
 ### A Fórmula de Conservação de Centavos
 Quando uma despesa é parcelada em $N$ vezes, o valor base de cada uma das $N-1$ primeiras parcelas é arredondado para duas casas decimais, e o valor da **última parcela** absorve o resíduo exato da divisão:
 
-$$\text{Valor Base} = \text{round}\left(\frac{\text{Total}}{N}, 2\right)$$
-$$\text{Última Parcela} = \text{Total} - \left(\text{Valor Base} \times (N - 1)\right)$$
+\[
+\text{Valor Base} = \text{round}\left(\frac{\text{Total}}{N}, 2\right)
+\]
+\[
+\text{Última Parcela} = \text{Total} - \left(\text{Valor Base} \times (N - 1)\right)
+\]
 
 ### Exemplo Numérico:
 - **Despesa:** R$ 100,00 dividida em 3 parcelas.
 - **Parcelas 1 e 2:** R$ 33,33 cada (totalizando R$ 66,66).
-- **Parcela 3 (Última):** $\text{R\$} 100,00 - \text{R\$} 66,66 = \text{R\$} 33,34$.
-- **Soma Final:** $\text{R\$} 33,33 + \text{R\$} 33,33 + \text{R\$} 33,34 = \text{R\$} 100,00$ (**Exatidão Absoluta**).
+- **Parcela 3 (Última):** \(\text{R\$} 100,00 - \text{R\$} 66,66 = \text{R\$} 33,34\).
+- **Soma Final:** \(\text{R\$} 33,33 + \text{R\$} 33,33 + \text{R\$} 33,34 = \text{R\$} 100,00\) (**Exatidão Absoluta**).
 
 ---
 
@@ -53,7 +57,7 @@ graph TD
     E -->|Sim| F
 
     F --> G["3. InstallmentService.auto_generate_installments()"]
-    G --> H["Cálculo das N parcelas com ajuste na última"]
+    G --> H["Cálculo das N parcelas com ajuste na última (BR-F01)"]
     H --> I["Persistência com full_clean() em cada parcela"]
     I --> J["4. Geração Automática de Eventos PAYMENT no Scheduler (BR-S01)"]
     J --> K["Sucesso: 201 Created / 200 OK"]
@@ -65,11 +69,13 @@ graph TD
 
 | Código | Nome da Regra | Gatilho / Condição | Exceção Lançada | Ação do Sistema |
 | :--- | :--- | :--- | :--- | :--- |
-| **BR-F01** | **Proteção de Categoria (`models.PROTECT`)** | Tentativa de excluir categoria orçamentária que possua despesas ativas. | `ProtectedError` / `DomainIntegrityError` | Bloqueia a exclusão física para evitar parcelas órfãs. |
+| **BR-F01** | **Tolerância Zero Centesimal de Parcelas** | Criação, redistribuição ou alteração de parcelas onde a soma divirja do total (\(\sum \text{parcelas} \not\equiv \text{actual\_amount}\)). | `ValidationError` em `Expense.clean()` | Garante exatidão centesimal absoluta (\(\sum \text{parcelas} \equiv \text{actual\_amount}\)), absorvendo qualquer resíduo na última parcela. |
 | **BR-F02** | **Conformidade com Contrato** | Despesa criada a partir de um contrato com valor divergente (`actual_amount != contract.total_amount`). | `BusinessRuleViolation` (`br_f02_violation`) | Impede discrepância entre o documento jurídico e o registro financeiro. |
 | **BR-F03** | **Fronteira Cross-Wedding Guard** | Contrato vinculado pertence a um casamento diferente da categoria orçamentária. | `DomainIntegrityError` (`expense_contract_wedding_mismatch`) | Impede contaminação de dados entre casamentos distintos. |
 | **BR-F04** | **Imutabilidade de Parcelas Pagas** | Tentativa de alterar valor total ou redistribuir parcelas de despesa que já tenha parcela `PAID`. | `BusinessRuleViolation` (`amount_change_blocked_by_paid`) | Exige reversão explícita do pagamento antes de qualquer alteração estrutural. |
 | **BR-F05** | **Invariante Cronológica de Parcelas** | Alteração de vencimento onde a nova data viola a ordem sequencial entre parcelas vizinhas. | `BusinessRuleViolation` (`due_date_before_previous_installment` / `due_date_after_next_installment`) | Garante ordenação temporal estrita dos vencimentos. |
+
+> **Nota de Relação:** A proteção contra exclusão de categorias orçamentárias que possuam despesas ativas vinculadas é tratada formalmente pela regra **BR-F04-D** em [Distribuição e Alocação de Orçamento por Categoria](budget-category-distribution.md).
 
 ---
 
@@ -81,7 +87,7 @@ A geração controlada reside em [`apps/finances/services/installment_service.py
 - `InstallmentService.auto_generate_installments(company, expense, num_installments, first_due_date)`: Calcula $N-1$ parcelas de valor base arredondado e absorve a diferença de centavos estritamente na última parcela, garantindo $\sum \text{parcelas} \equiv \text{actual\_amount}$.
 
 ```python
-# Algoritmo de ajuste centesimal na última parcela (ADR-010):
+# Algoritmo de ajuste centesimal na última parcela (ADR-010 / BR-F01):
 base_amount = round(expense.actual_amount / num_installments, 2)
 allocated_so_far = base_amount * (num_installments - 1)
 last_installment_amount = expense.actual_amount - allocated_so_far

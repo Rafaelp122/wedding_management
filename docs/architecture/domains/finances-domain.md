@@ -99,13 +99,14 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
   - [`apps/finances/models/budget_category.py`](../../../backend/apps/finances/models/budget_category.py) (`BudgetCategory`): Encapsula cálculo de verba restante (`remaining_budget`), detecção de estouro (`is_over_budget`) e percentual de utilização orçamentária.
   - [`apps/finances/models/budget.py`](../../../backend/apps/finances/models/budget.py) (`Budget`): Encapsula o teto global do casamento (`remaining_overall_budget`, `is_over_budget`) e garante a relação $1:1$ (ADR-003).
 - **Casos de Uso e Serviços:**
-  - [`apps/finances/services/installment_service.py`](../../../backend/apps/finances/services/installment_service.py) (`InstallmentService`): Orquestra a geração inicial de parcelas com ajuste centesimal na última cota, reversão atômica, sincronização de eventos com a agenda e mutações cirúrgicas com `update_fields`.
-  - [`apps/finances/services/expense_service.py`](../../../backend/apps/finances/services/expense_service.py) (`ExpenseService`): Coordena a criação de despesas, validação com o contrato vinculado (BR-F02), redistribuição proporcional e exclusão segura.
+  - [`apps/finances/services/installment_service.py`](../../../backend/apps/finances/services/installment_service.py) (`InstallmentService`): Orquestra a geração inicial de parcelas com ajuste centesimal na última cota, reversão atômica, sincronização de eventos com a agenda via fachada do scheduler e mutações cirúrgicas com `update_fields`.
+  - [`apps/finances/services/expense_service.py`](../../../backend/apps/finances/services/expense_service.py) (`ExpenseService`): Coordena a criação de despesas, validação com o contrato vinculado (BR-F02), redistribuição proporcional, exclusão segura e importação via `ExpenseService.from_document()`, que consome a fachada pública [`apps.logistics.interfaces.get_contract_for_company`](../../../backend/apps/logistics/interfaces.py) sem acoplamento direto com os models de logística (ADR-031).
   - [`apps/finances/services/budget_category_service.py`](../../../backend/apps/finances/services/budget_category_service.py) (`BudgetCategoryService`): Gerencia alocações sob trava pessimista (`select_for_update`) prevenindo estouro concorrente (TOCTOU).
   - [`apps/finances/services/budget_service.py`](../../../backend/apps/finances/services/budget_service.py) (`BudgetService`): Controla o orçamento mestre por tenant.
 - **Seletores de Leitura CQRS:**
   - [`apps/finances/selectors/expense_selectors.py`](../../../backend/apps/finances/selectors/expense_selectors.py) (`expense_list_selector`, `expense_get_selector`): Consultas otimizadas via `ExpenseQuerySet.with_details()` com anotações pré-calculadas em SQL (`installments_count`, `paid_installments_count`, `total_paid`, `total_pending`).
-  - [`apps/finances/selectors/budget_category_selectors.py`](../../../backend/apps/finances/selectors/budget_category_selectors.py), [`budget_selectors.py`](../../../backend/apps/finances/selectors/budget_selectors.py) e [`installment_selectors.py`](../../../backend/apps/finances/selectors/installment_selectors.py): Consultas analíticas e agregações isoladas por tenant.
+  - [`apps/finances/selectors/budget_selectors.py`](../../../backend/apps/finances/selectors/budget_selectors.py): Consultas do orçamento que integram a função `_attach_tenant_budget_metrics()`, anotando métricas analíticas globais do tenant: `tenant_average_budget` (média de orçamento entre casamentos da empresa) e `comparison_percentage` (desvio percentual do casamento frente à média corporativa).
+  - [`apps/finances/selectors/budget_category_selectors.py`](../../../backend/apps/finances/selectors/budget_category_selectors.py) e [`installment_selectors.py`](../../../backend/apps/finances/selectors/installment_selectors.py): Consultas analíticas e agregações isoladas por tenant.
 - **Validação de Entrada (Pydantic):**
   - [`apps/finances/schemas/`](../../../backend/apps/finances/schemas/): Pacote modular (`budget.py`, `budget_category.py`, `expense.py`, `installment.py`) com regras de Nível 1 (sanitização de strings via `str_strip_whitespace=True`, limites de caracteres e valores numéricos não negativos).
 
@@ -119,6 +120,11 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Managers:** `BudgetManager`, `BudgetCategoryManager`, `ExpenseManager`, `InstallmentManager` em `managers.py`.
 - **Services:** `budget_service.py`, `budget_category_service.py`, `expense_service.py`, `installment_service.py` em `services/`.
 - **Selectors:** `budget_selectors.py`, `budget_category_selectors.py`, `expense_selectors.py`, `installment_selectors.py` em `selectors/`.
+- **Endpoints:**
+  - Orçamentos: `GET /finances/budgets/`, `GET /finances/budgets/{uuid}/`.
+  - Categorias: `GET /finances/categories/`, `POST /finances/categories/`, `PUT /finances/categories/{uuid}/`, `DELETE /finances/categories/{uuid}/`.
+  - Despesas: `GET /finances/expenses/`, `POST /finances/expenses/`, `GET /finances/expenses/{uuid}/`, `PATCH /finances/expenses/{uuid}/`, `DELETE /finances/expenses/{uuid}/`, rota de busca de contratos `GET /finances/expenses/contracts-lookup/` (consumindo [`apps.logistics.interfaces.list_contracts_for_wedding`](../../../backend/apps/logistics/interfaces.py)) e `GET /finances/expenses/{uuid}/from-document/`.
+  - Parcelas: `GET /finances/installments/`, `POST /finances/installments/{uuid}/pay/`, `POST /finances/installments/{uuid}/unpay/`.
 - **Management Command:** `python manage.py mark_overdue_installments` (atualização automática de parcelas com data de vencimento no passado).
 
 ### Camada de Frontend (`frontend/src/features/finances/`)

@@ -45,7 +45,8 @@ flowchart LR
 | `Finances` | `/api/v1/finances/` | `apps/finances/api/` | Orçamentos, categorias, despesas e parcelas financeiras. |
 | `Logistics` | `/api/v1/logistics/` | `apps/logistics/api/` | Fornecedores, contratos logísticos e itens/serviços. |
 | `Scheduler` | `/api/v1/scheduler/` | `apps/scheduler/api/` | Eventos do cronograma, checklist e tarefas operacionais. |
-| `Reporting` | `/api/v1/dashboard/`, `/api/v1/reports/` | `apps/reporting/api.py` | Métricas agregadas, painel executivo e relatórios. |
+| `Dashboard` | `/api/v1/dashboard/` | `apps/reporting/api.py` | Métricas agregadas, KPIs operacionais do tenant, fluxo de caixa e tarefas. |
+| `Reports` | `/api/v1/reports/` | `apps/reporting/api.py` | Exportação de relatórios analíticos consolidados em PDF e planilhas Excel. |
 | `Auth` | `/api/v1/auth/` | `apps/users/api.py` | Login JWT, registro, refresh token e recuperação de senha. |
 | `Notifications` | `/api/v1/notifications/` | `apps/notifications/api.py` | Notificações do sistema e alertas em tempo real. |
 | `Core` | `/api/v1/health`, `/api/v1/internal/cron/` | `config/api.py`, `core/cron_api.py` | Health check de infraestrutura e disparo de jobs agendados. |

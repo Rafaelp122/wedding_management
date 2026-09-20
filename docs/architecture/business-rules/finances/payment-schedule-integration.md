@@ -15,7 +15,7 @@ tests:
 # Integração de Pagamentos com Agenda de Compromissos (BR-S01)
 
 > **Categoria:** Regra de Negócio (Domínio Financeiro & Cronograma)
-> **Relacionados:** [ADR-031: Comunicação Entre Módulos](../../adr/031-inter-module-communication.md) · [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [MOC de Finanças](index.md) · [ADR-031: Comunicação Entre Módulos](../../adr/031-inter-module-communication.md) · [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 

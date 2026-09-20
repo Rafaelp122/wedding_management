@@ -143,7 +143,7 @@ A arquitetura estabelece contratos tipados onde o frontend consome diretamente o
             return Budget.objects.create(
                 company=company,
                 wedding=wedding,
-                total_budget=payload.total_budget,
+                total_estimated=payload.total_estimated,
             )
     ```
 
@@ -166,7 +166,7 @@ A arquitetura estabelece contratos tipados onde o frontend consome diretamente o
         resolver: zodResolver(FinancesBudgetsCreateBody),
         defaultValues: {
           wedding: weddingUuid,
-          total_budget: 0,
+          total_estimated: 0,
         },
       });
 

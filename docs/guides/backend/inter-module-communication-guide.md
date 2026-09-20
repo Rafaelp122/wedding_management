@@ -36,25 +36,33 @@ Quando o módulo `B` precisa fornecer uma operação transacional síncrona para
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.expense_service import ExpenseService
 
 if TYPE_CHECKING:
+    from apps.finances.models import Expense
     from apps.tenants.models import Company
 
 
-def create_expense_from_contract(*, company: Company, payload: ExpenseIn) -> str:
+def create_expense_from_contract(
+    *,
+    company: Company,
+    payload: ExpenseIn,
+    contract_uuid: UUID | str,
+) -> Expense:
     """Cria uma despesa financeira vinculada a um contrato logístico.
 
     Args:
         company: O tenant corporativo atual.
         payload: Dados validados da despesa (ExpenseIn reutilizado da API Ninja).
+        contract_uuid: Identificador único do contrato a ser vinculado.
 
     Returns:
-        UUID da despesa gerada em formato string.
+        A instância de Expense criada e persistida.
     """
-    expense = ExpenseService.create(company=company, payload=payload)
-    return str(expense.uuid)
+    expense_payload = payload.model_copy(update={"contract": contract_uuid})
+    return ExpenseService.create(company=company, payload=expense_payload)
 ```
 
 ### Passo 2.2: Consumir Exclusivamente via Fachada
@@ -66,7 +74,11 @@ No módulo consumidor (`apps/logistics/services/contract_service.py`), importe e
 from apps.finances.interfaces import ExpenseIn, create_expense_from_contract
 
 # Execução segura sem importar Expense ou ExpenseService internamente:
-create_expense_from_contract(company=company, payload=payload)
+create_expense_from_contract(
+    company=company,
+    payload=payload,
+    contract_uuid=contract.uuid,
+)
 ```
 
 ### Passo 2.3: Atualizar Exceção no `pyproject.toml`
@@ -88,7 +100,7 @@ ignore_imports = [
 | Módulo | Arquivo | Funções Exportadas |
 | :--- | :--- | :--- |
 | **Finanças** | `apps/finances/interfaces.py` | `create_expense_from_contract` |
-| **Logística** | `apps/logistics/interfaces.py` | `get_contract_for_company` |
+| **Logística** | `apps/logistics/interfaces.py` | `get_contract_for_company`, `list_contracts_for_wedding` |
 | **Scheduler** | `apps/scheduler/interfaces.py` | `create_payment_events_for_installments`, `delete_payment_events_for_expense`, `delete_payment_event_for_installment`, `apply_wedding_schedule_template` |
 | **Casamentos** | `apps/weddings/interfaces.py` | `get_wedding_display_name` |
 | **Notificações** | `apps/notifications/interfaces.py` | `notify_installment_overdue`, `send_notification_async`, `create_notification` |

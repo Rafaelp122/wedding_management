@@ -14,7 +14,7 @@ tests:
 # Padrão Smart/Dumb Components (Container vs Presenter)
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [ADR-024: Padrão Smart/Dumb no Frontend](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md) · [Referência Frontend](../../reference/frontend/index.md) · [Especificação de Testes Frontend](../../reference/testing/frontend-testing-spec.md) · [Racional do Sistema de Design](design-system-rationale.md)
+> **Relacionados:** [ADR-024: Padrão Smart/Dumb no Frontend](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md) · [Padrão Anti-Data-Stitching no Frontend](anti-data-stitching-pattern.md) · [Referência Frontend](../../reference/frontend/index.md) · [Especificação de Testes Frontend](../../reference/testing/frontend-testing-spec.md) · [Racional do Sistema de Design](design-system-rationale.md)
 
 ---
 
@@ -37,7 +37,7 @@ graph TD
     end
 
     subgraph CONTAINER["2. Camada Smart (Containers & Hooks)"]
-        Hook["useDashboardOperations()<br/>(Orval Hooks: useSchedulerTasksList, useLogisticsContractsList)"]
+        Hook["useDashboardOperations()<br/>(Orval Hook Unificado: useDashboardOperationsList via /dashboard/operations/)"]
         SmartComp["DashboardOperations.tsx<br/>(Smart Container)"]
     end
 
@@ -83,15 +83,16 @@ graph TD
 - **Hook Agregador de Estado:** [`useDashboardOperations`](../../../frontend/src/features/dashboard/hooks/useDashboardOperations.ts)
 
 ### A. Smart Container (`DashboardOperations.tsx`)
-O container consome o hook agregador de operações e conecta as ações de navegação do `react-router-dom`:
+O container consome o hook agregador de operações e conecta as ações de navegação do `react-router-dom`. Em conformidade com o [Padrão Anti-Data-Stitching](anti-data-stitching-pattern.md), o container não recebe mais casamentos nas props nem injeta mapas relacionais locais (`weddingMap`), pois consome o DTO consolidado do backend:
 
 ```tsx
-export function DashboardOperations({ weddings }: DashboardOperationsProps) {
-  const operations = useDashboardOperations({ weddings });
+export function DashboardOperations(_props?: DashboardOperationsProps) {
+  const operations = useDashboardOperations();
   const navigate = useNavigate();
 
   const handleNavigateToWedding = (weddingUuid: string, tab?: string) => {
-    navigate(`/weddings/${weddingUuid}${tab ? `?tab=${tab}` : ""}`);
+    const url = weddingUuid ? `/weddings/${weddingUuid}${tab ? `?tab=${tab}` : ""}` : "/weddings";
+    navigate(url);
   };
 
   return (
@@ -104,7 +105,6 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
       displayWeddings={operations.displayWeddings}
       urgentTasks={operations.urgentTasks}
       pendingContracts={operations.pendingContracts}
-      weddingMap={operations.weddingMap}
       handleTaskToggle={operations.handleTaskToggle}
       todayStr={operations.todayStr}
       onNavigateToWedding={handleNavigateToWedding}
@@ -114,7 +114,7 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
 ```
 
 ### B. Dumb Presenter Interface (`DashboardOperationsView.tsx`)
-A View declara estritamente o contrato de dados que necessita para renderizar a interface, sem conhecer a origem dos dados:
+A View declara estritamente o contrato de dados que necessita para renderizar a interface, utilizando os tipos DTO especializados gerados pelo backend (`UpcomingWeddingOut`, `DashboardTaskDetailOut`, `DashboardContractDetailOut`):
 
 ```tsx
 interface DashboardOperationsViewProps {
@@ -123,10 +123,10 @@ interface DashboardOperationsViewProps {
   isLoadingTasks: boolean;
   isLoadingContracts: boolean;
   isUpdatingTask: boolean;
-  displayWeddings: WeddingOut[];
-  urgentTasks: TaskOut[];
-  pendingContracts: ContractOut[];
-  weddingMap: Record<string, string>;
+  displayWeddings: UpcomingWeddingOut[];
+  urgentTasks: DashboardTaskDetailOut[];
+  pendingContracts: DashboardContractDetailOut[];
+  weddingMap?: Record<string, string>;
   handleTaskToggle: (taskUuid: string, isCurrentlyCompleted: boolean) => void;
   todayStr: string;
   onNavigateToWedding: (weddingUuid: string, tab?: string) => void;

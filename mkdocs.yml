@@ -123,6 +123,7 @@ nav:
           - Service Layer Pattern: architecture/concepts/service-layer-pattern.md
           - Query Selectors & QuerySets: architecture/concepts/query-selectors-pattern.md
           - Smart vs Dumb Components: architecture/concepts/smart-dumb-components.md
+          - Anti-Data-Stitching & CQRS: architecture/concepts/anti-data-stitching-pattern.md
           - Autenticação JWT & Axios: architecture/concepts/auth-jwt-flow.md
           - Upload de Contratos R2: architecture/concepts/contract-pdf-upload-r2-flow.md
           - CI/CD & Ownership Terraform: architecture/concepts/ci-cd-pipeline-flow.md
@@ -140,22 +141,31 @@ nav:
           - Users Domain: architecture/domains/users-domain.md
           - Weddings Domain: architecture/domains/weddings-domain.md
           - Notifications Domain: architecture/domains/notifications-domain.md
-      - Regras de Negócio:
-          - Finanças:
-              - Tolerância Zero & Integridade: architecture/business-rules/finances/financial-integrity-rules.md
-              - Lógica de Parcelas Vencidas: architecture/business-rules/finances/installment-overdue-logic.md
-              - Integração de Pagamentos: architecture/business-rules/finances/payment-schedule-integration.md
-              - Distribuição Orçamentária: architecture/business-rules/finances/budget-category-distribution.md
-          - Logística:
-              - Hierarquia de Contratos: architecture/business-rules/logistics/contract-parent-child-hierarchy.md
-              - Máquina de Estados de Contratos: architecture/business-rules/logistics/contract-state-machine.md
-              - Validação de CNPJ: architecture/business-rules/logistics/cnpj-validation-rules.md
-          - Scheduler & Casamentos:
+      - Regras de Negócio (SSOT):
+          - Visão Geral das Regras (MOC): architecture/business-rules/index.md
+          - Cronograma & Scheduler:
+              - MOC de Cronograma: architecture/business-rules/scheduler/index.md
+              - Conflito de Agenda (Soft Overlap): architecture/business-rules/scheduler/schedule-conflict-validation.md
               - Motor de Recorrência: architecture/business-rules/scheduler/recurrence-rules-engine.md
               - Guard Read-Only de Pagamentos: architecture/business-rules/scheduler/payment-event-readonly-guard.md
+          - Finanças:
+              - MOC de Finanças: architecture/business-rules/finances/index.md
+              - Tolerância Zero & Integridade: architecture/business-rules/finances/financial-integrity-rules.md
+              - Benchmark e Média do Tenant: architecture/business-rules/finances/tenant-budget-benchmark.md
+              - Distribuição Orçamentária: architecture/business-rules/finances/budget-category-distribution.md
+              - Lógica de Parcelas Vencidas: architecture/business-rules/finances/installment-overdue-logic.md
+              - Integração de Pagamentos: architecture/business-rules/finances/payment-schedule-integration.md
+          - Logística:
+              - MOC de Logística: architecture/business-rules/logistics/index.md
+              - Máquina de Estados de Contratos: architecture/business-rules/logistics/contract-state-machine.md
+              - Hierarquia de Contratos: architecture/business-rules/logistics/contract-parent-child-hierarchy.md
+              - Validação de CNPJ: architecture/business-rules/logistics/cnpj-validation-rules.md
+          - Casamentos (Weddings):
+              - MOC de Casamentos: architecture/business-rules/weddings/index.md
               - Ciclo de Vida do Casamento: architecture/business-rules/weddings/wedding-status-lifecycle.md
               - Templates de Cronograma: architecture/business-rules/weddings/wedding-schedule-templates.md
           - Notificações:
+              - MOC de Notificações: architecture/business-rules/notifications/index.md
               - Regras de Notificação In-App: architecture/business-rules/notifications/in-app-notifications-rules.md
       - Decisões Arquiteturais (ADRs):
           - architecture/adr/README.md
@@ -207,6 +217,7 @@ nav:
           - Uso do Design System: guides/frontend/use-design-md-system.md
           - Geração de Cliente Orval: guides/frontend/generate-orval-client.md
           - Formulários com Hook Form + Zod: guides/frontend/create-hook-form-zod.md
+          - Upload Direto no R2: guides/frontend/upload-files-to-r2.md
           - Testes MSW: guides/frontend/msw-testing-patterns.md
           - Testes E2E com Playwright: guides/frontend/run-playwright-e2e.md
       - Backend (Django Ninja):

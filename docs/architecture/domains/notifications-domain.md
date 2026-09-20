@@ -33,10 +33,11 @@ erDiagram
         bigint user_id FK "User (Destinatário)"
         string title "Título Curto"
         text message "Mensagem do Alerta"
-        string type "OVERDUE_INSTALLMENT | UPCOMING_INSTALLMENT | EXPIRING_CONTRACT | TASK_DEADLINE | GENERAL"
+        string type "OVERDUE_INSTALLMENT | UPCOMING_INSTALLMENT | EXPIRING_CONTRACT | TASK_DEADLINE | CHECKLIST_ITEM_OVERDUE | GENERAL"
         string target_type "installment | expense | task | contract | wedding | general"
         uuid target_id "UUID do Recurso Alvo"
         uuid wedding_id "UUID do Casamento"
+        string wedding_name "Nome do Casamento (Desnormalizado)"
         boolean is_read "Status de Leitura"
         datetime read_at "Data da Leitura"
         string link "URL / Rota de Redirecionamento"
@@ -71,7 +72,7 @@ sequenceDiagram
 
 | Entidade / Componente | Papel Arquitetural | Campos & Tipos | Invariantes de Persistência & Regras de Notificação |
 | :--- | :--- | :--- | :--- |
-| **`Notification`** | Agregado de Notificação (`BaseModel`) | `company` (`ForeignKey`, `CASCADE`), `user` (`ForeignKey`, `CASCADE`), `title`, `message`, `type` (`NotificationType`), `target_type` (`NotificationTargetType`), `target_id`, `wedding_id`, `is_read`, `read_at`, `link` | **Validação de Tenant (BR-N01):** `user.company_id == company.id` (usuário deve pertencer à empresa informada).<br/>**Índice Composto:** `models.Index(fields=["company", "user", "is_read"])` para lookups rápidos da contagem de não-lidas.<br/>**Transição de Leitura:** Ao marcar como lida, preenche `read_at = timezone.now()`. |
+| **`Notification`** | Agregado de Notificação (`BaseModel`) | `company` (`ForeignKey`, `CASCADE`), `user` (`ForeignKey`, `CASCADE`), `title`, `message`, `type` (`NotificationType`), `target_type` (`NotificationTargetType`), `target_id`, `wedding_id`, `wedding_name` (CharField nullable), `is_read`, `read_at`, `link` | **Validação de Tenant (BR-N01):** `user.company_id == company.id` (usuário deve pertencer à empresa informada).<br/>**Índice Composto:** `models.Index(fields=["company", "user", "is_read"])` para lookups rápidos da contagem de não-lidas.<br/>**Transição de Leitura:** Ao marcar como lida, preenche `read_at = timezone.now()`. |
 | **`NotificationType`** | Tipos de Eventos do Sistema | `OVERDUE_INSTALLMENT`, `UPCOMING_INSTALLMENT`, `EXPIRING_CONTRACT`, `TASK_DEADLINE`, `CHECKLIST_ITEM_OVERDUE`, `GENERAL` | Categoriza a severidade e o ícone visual a ser renderizado na interface. |
 | **`NotificationTargetType`** | Tipos de Entidades Alvo | `installment`, `expense`, `task`, `contract`, `wedding`, `general` | Mapeia o alvo para permitir deep-linking e navegação direta na interface React. |
 | **`dispatch_async_notification_task`** | Tarefa em Segundo Plano (`@task()`) | `company_id`, `user_id`, `title`, `message`, `notification_type`, ... | Enfileira a criação da notificação usando `django.tasks` sem bloquear o ciclo de vida da requisição HTTP principal. |
@@ -105,8 +106,10 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Endpoints:** `api.py` com rotas `GET /notifications/`, `GET /notifications/unread-count/`, `POST /notifications/read-all/`, `POST /notifications/bulk-read/`, `POST /notifications/bulk-delete/`, `DELETE /notifications/clear-all/`, `PATCH /notifications/{notification_id}/read/`, `DELETE /notifications/{notification_id}/`.
 
 ### Camada de Frontend (`frontend/src/features/notifications/`)
-- **Componentes:** `NotificationsDropdown.tsx` (orquestrador com popover e badge de contagem), `NotificationItem.tsx` (apresentação do item individual).
-- **Integração de API:** Hooks gerados pelo Orval (`useNotificationsList`, `useNotificationsUnreadCount`, `useNotificationsMarkAsRead`, `useNotificationsMarkAllAsRead`, etc.).
+- **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
+  - **Smart Container ([`NotificationsDropdown.tsx`](../../../frontend/src/features/notifications/components/NotificationsDropdown.tsx)):** Orquestra o popover suspenso (*notification bell*), sincronização de contadores não lidos e navegação via deep links.
+  - **Smart Hook ([`useNotificationsDropdown.ts`](../../../frontend/src/features/notifications/hooks/useNotificationsDropdown.ts)):** Gerencia requisições TanStack Query (`useNotificationsList`, `useNotificationsUnreadCount`), filtros de visualização (todas vs não lidas) e ações de mutação em lote (`markAllAsRead`, `bulkRead`, `bulkDelete`).
+  - **Dumb Presenter ([`NotificationsDropdownView.tsx`](../../../frontend/src/features/notifications/components/NotificationsDropdownView.tsx)):** Visual puro orientado por props, oferecendo modo de seleção múltipla com checkboxes, exclusão em massa, estados de loading/empty e itens individuais ([`NotificationItem.tsx`](../../../frontend/src/features/notifications/components/NotificationItem.tsx)).
 
 ---
 

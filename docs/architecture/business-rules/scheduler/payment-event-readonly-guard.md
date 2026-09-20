@@ -14,7 +14,7 @@ tests:
 # Proteção Somente-Leitura para Eventos de Pagamento (BR-S01)
 
 > **Categoria:** Regra de Negócio (Domínio de Cronograma & Finanças)
-> **Relacionados:** [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Motor de Recorrência](recurrence-rules-engine.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [MOC de Cronograma (Scheduler)](index.md) · [Detecção e Validação de Conflito de Agenda](schedule-conflict-validation.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Motor de Recorrência](recurrence-rules-engine.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 

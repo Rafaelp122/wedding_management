@@ -13,7 +13,7 @@ tests:
 # Regra de Negócio: Lógica de Vencimento e Máquina de Estados de Parcelas
 
 > **Categoria:** Regra de Negócio (Domínio Financeiro & Automação)
-> **Relacionados:** [Tolerância Zero](financial-integrity-rules.md) · [Notificações In-App](../notifications/in-app-notifications-rules.md) · [ADR-005: Cloud Scheduler & OIDC](../../adr/005-oidc-scheduler.md) · [Domínio de Finanças](../../domains/finances-domain.md)
+> **Relacionados:** [MOC de Finanças](index.md) · [Tolerância Zero](financial-integrity-rules.md) · [Distribuição e Alocação de Orçamento por Categoria](budget-category-distribution.md) · [Benchmark e Média Orçamentária por Assessoria](tenant-budget-benchmark.md) · [Notificações In-App](../notifications/in-app-notifications-rules.md) · [ADR-005: Cloud Scheduler & OIDC](../../adr/005-oidc-scheduler.md) · [Domínio de Finanças](../../domains/finances-domain.md)
 
 ---
 
