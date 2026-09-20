@@ -71,6 +71,14 @@ export function EditWeddingDialog({
     );
   };
 
+  const allowedSet = new Set([
+    wedding.status,
+    ...(wedding.allowed_transitions ?? []),
+  ]);
+  const availableStatusOptions = WEDDING_STATUS_OPTIONS.filter((opt) =>
+    allowedSet.has(opt.value),
+  );
+
   return (
     <FormDialog
       open={open}
@@ -101,7 +109,7 @@ export function EditWeddingDialog({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {WEDDING_STATUS_OPTIONS.map((opt) => (
+                {availableStatusOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>

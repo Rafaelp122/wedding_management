@@ -67,6 +67,7 @@ Navegue pelos guias e tutoriais práticos organizados por foco de atuação:
 
     [:octicons-arrow-right-24: Geração de Cliente Orval](frontend/generate-orval-client.md)
     [:octicons-arrow-right-24: Formulários com Hook Form + Zod](frontend/create-hook-form-zod.md)
+    [:octicons-arrow-right-24: Upload Direto para Cloudflare R2](frontend/upload-files-to-r2.md)
     [:octicons-arrow-right-24: Uso do Design System](frontend/use-design-md-system.md)
     [:octicons-arrow-right-24: Mocks de API com MSW](frontend/msw-testing-patterns.md)
     [:octicons-arrow-right-24: Testes E2E com Playwright](frontend/run-playwright-e2e.md)

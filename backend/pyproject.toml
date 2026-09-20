@@ -379,6 +379,7 @@ ignore_imports = [
     "apps.finances.services.installment_service -> apps.scheduler.interfaces",
     "apps.finances.services.expense_service -> apps.logistics.interfaces",
     "apps.finances.services.installment_service -> apps.notifications.interfaces",
+    "apps.finances.api.expenses -> apps.logistics.interfaces",
 ]
 
 [[tool.importlinter.contracts]]

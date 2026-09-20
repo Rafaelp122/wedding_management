@@ -6,6 +6,7 @@ from pydantic import UUID4
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.expense import Expense
 from apps.finances.schemas import (
+    ContractLookupOut,
     ExpenseFromDocumentOut,
     ExpenseIn,
     ExpenseOut,
@@ -14,6 +15,7 @@ from apps.finances.schemas import (
 )
 from apps.finances.selectors import expense_get_selector, expense_list_selector
 from apps.finances.services.expense_service import ExpenseService
+from apps.logistics.interfaces import list_contracts_for_wedding
 from apps.users.types import AuthRequest
 
 
@@ -32,6 +34,32 @@ def list_expenses(
     """
     user = request.user
     return expense_list_selector(company=user.company, wedding_id=wedding_id)
+
+
+@expenses_router.get(
+    "/contracts-lookup/",
+    response=list[ContractLookupOut],
+    operation_id="finances_expenses_contracts_lookup",
+)
+def list_contracts_lookup(
+    request: AuthRequest, wedding_id: UUID4
+) -> list[ContractLookupOut]:
+    """
+    Lista contratos vinculados a um casamento para associação em despesas.
+    """
+    user = request.user
+    contracts = list_contracts_for_wedding(
+        company=user.company, wedding_uuid=wedding_id
+    )
+    return [
+        ContractLookupOut(
+            uuid=c.uuid,
+            name=c.name,
+            status=c.status,
+            total_amount=c.total_amount,
+        )
+        for c in contracts
+    ]
 
 
 @expenses_router.get(

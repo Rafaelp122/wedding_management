@@ -92,13 +92,21 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
   - [`apps/logistics/models/item.py`](../../../backend/apps/logistics/models/item.py) (`Item`): Encapsula o ciclo de vida operacional (`PENDING`, `IN_PROGRESS`, `DONE`), quantidade mínima invariante ($\ge 1$) e resolução do fornecedor via contrato.
 - **Casos de Uso e Serviços:**
   - [`apps/logistics/services/supplier_service.py`](../../../backend/apps/logistics/services/supplier_service.py) (`SupplierService`): Orquestração multi-tenant e mutações cirúrgicas com `update_fields`.
-  - [`apps/logistics/services/contract_service.py`](../../../backend/apps/logistics/services/contract_service.py) (`ContractService`): Ciclo de vida contratual, upload assíncrono em storage e proteção relacional.
+  - [`apps/logistics/services/contract_service.py`](../../../backend/apps/logistics/services/contract_service.py) (`ContractService`): Ciclo de vida contratual, upload assíncrono em storage e criação atômica consolidada (`create_full_from_payload()`) sob `@transaction.atomic`.
   - [`apps/logistics/services/item_service.py`](../../../backend/apps/logistics/services/item_service.py) (`ItemService`): Gestão de itens e avanço do status operacional de aquisição.
+  - **Fachada Pública Trans-Domínio ([`apps/logistics/interfaces.py`](../../../backend/apps/logistics/interfaces.py)):** Ponto único de entrada para outros Bounded Contexts (ADR-031), expondo `get_contract_for_company` (resolução segura por tenant) e `list_contracts_for_wedding` (consulta de contratos por casamento para vínculo financeiro).
 - **Seletores de Leitura CQRS:**
-  - [`apps/logistics/selectors/contract_selectors.py`](../../../backend/apps/logistics/selectors/contract_selectors.py) (`contract_list_selector`, `contract_get_selector`): Consultas otimizadas via `ContractQuerySet.with_totals()` com anotações pré-computadas em SQL para `supplier_name`, `total_paid`, `addendums_count` e `expense_id`.
+  - [`apps/logistics/selectors/contract_selectors.py`](../../../backend/apps/logistics/selectors/contract_selectors.py):
+    - `contract_list_selector`: Consultas otimizadas via `ContractQuerySet.with_totals()` com anotações pré-computadas em SQL para `supplier_name`, `total_paid`, `addendums_count` e `expense_id`.
+    - `contract_get_selector`: Busca unitária por UUID com validação de tenant e 404 semântico.
+    - `contract_detail_aggregate_selector`: Seletor analítico consolidado que pré-carrega o contrato, seus itens e termos aditivos em uma única consulta (`select_related` + `prefetch_related`), devolvendo o DTO `ContractDetailAggregateOut` para eliminar waterfalls no frontend.
   - [`apps/logistics/selectors/supplier_selectors.py`](../../../backend/apps/logistics/selectors/supplier_selectors.py) e [`apps/logistics/selectors/item_selectors.py`](../../../backend/apps/logistics/selectors/item_selectors.py): Filtros isolados por tenant e anotações agregadas.
-- **Validação de Entrada (Pydantic):**
-  - [`apps/logistics/schemas/`](../../../backend/apps/logistics/schemas/): Pacote modular (`supplier.py`, `contract.py`, `item.py`) com regras de Nível 1 (sanitização de strings via `str_strip_whitespace=True`, limites de caracteres e valores numéricos positivos).
+- **Validação de Entrada e Schemas Ninja (Pydantic):**
+  - [`apps/logistics/schemas/contract.py`](../../../backend/apps/logistics/schemas/contract.py):
+    - `ContractIn`, `ContractPatchIn`, `ContractOut`: Schemas CRUD fundamentais com sanitização `str_strip_whitespace=True`.
+    - `ContractFullCreateIn`: Contrato completo para criação em lote recebendo `items: list[ItemIn]` tipados e dados opcionais de despesa financeira.
+    - `ContractDetailAggregateOut`: DTO agregado contendo o contrato, lista de itens e aditivos para o diálogo de visualização rápida.
+  - [`apps/logistics/schemas/supplier.py`](../../../backend/apps/logistics/schemas/supplier.py) e [`item.py`](../../../backend/apps/logistics/schemas/item.py): Schemas tipados de fornecedores e itens.
 
 ---
 
@@ -106,10 +114,16 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 
 ### Camada de Backend (`backend/apps/logistics/`)
 - **Modelos:** `Supplier` (`supplier.py`), `Contract` (`contract.py`), `Item` (`item.py`) em `models/`.
-- **Schemas:** `Supplier` (`supplier.py`), `Contract` (`contract.py`), `Item` (`item.py`) em `schemas/`.
+- **Schemas:** `supplier.py`, `contract.py`, `item.py` em `schemas/`.
 - **Managers:** `SupplierQuerySet`, `ContractQuerySet`, `ItemQuerySet` em `managers.py`.
 - **Services:** `supplier_service.py`, `contract_service.py`, `item_service.py` em `services/`.
+- **Interfaces Públicas:** `apps/logistics/interfaces.py` (`get_contract_for_company`, `list_contracts_for_wedding`).
 - **Selectors:** `supplier_selectors.py`, `contract_selectors.py`, `item_selectors.py` em `selectors/`.
+- **Endpoints:**
+  - `POST /logistics/contracts/upload-url/`: Geração de URL pré-assinada no Cloudflare R2.
+  - `POST /logistics/contracts/full/`: Criação atômica consolidada com `ContractFullCreateIn`.
+  - `GET /logistics/contracts/{uuid}/details/`: Detalhes agregados do contrato via `ContractDetailAggregateOut`.
+  - CRUD padrão para contratos, fornecedores e itens (`/logistics/suppliers/`, `/logistics/contracts/`, `/logistics/items/`).
 - **Armazenamento:** `core/services/storage/` (Cloudflare R2 Storage Provider com geração de URLs seguras).
 
 ### Camada de Frontend (`frontend/src/features/logistics/`)

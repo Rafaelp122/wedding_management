@@ -1,7 +1,7 @@
 # Arquitetura & System Design da Plataforma
 
 > **Categoria:** Arquitetura (System Design & Decision Records)
-> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
+> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [MOC de Regras de Negócio](business-rules/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
 
 <p class="mdx-hero__subtitle" style="font-size: 1.15rem; font-weight: 500; color: var(--md-default-fg-color--light); margin-top: -0.5rem; margin-bottom: 1.5rem;">
 Hub executivo de engenharia, topologia de microsserviços e padrões de projeto do Wedding Management System.
@@ -18,6 +18,7 @@ Hub executivo de engenharia, topologia de microsserviços e padrões de projeto 
 
 [:material-sitemap: System Design Unificado](#system-design-unificado){ .md-button .md-button--primary }
 [:material-shield-star: Pilares de Engenharia](#pilares-de-engenharia-padroes-arquiteturais){ .md-button }
+[:material-scale-balance: Regras de Negócio (SSOT)](business-rules/index.md){ .md-button }
 [:material-view-grid: Bounded Contexts (10 Domínios)](#bounded-contexts-10-dominios-da-plataforma){ .md-button }
 [:material-file-document-multiple: Catálogo de ADRs](#catalogo-de-decisoes-arquiteturais-adrs-001031){ .md-button }
 [:material-palette: Design System](#design-system-ergonomia-visual){ .md-button }
@@ -170,6 +171,14 @@ A arquitetura do **Wedding Management System** foi construída sobre princípios
     Divisão clara no frontend React 19 entre contêineres inteligentes (que consom hooks Orval, gerenciam estado Zustand e orquestram fluxos) e componentes de apresentação visuais (100% orientados a props e estilizados).
 
     [:octicons-arrow-right-24: Smart & Dumb Pattern](concepts/smart-dumb-components.md) · [:octicons-shield-check-24: ADR-024](adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
+
+-   :material-database-sync:{ .lg .middle } **Anti-Data-Stitching & CQRS**
+
+    ---
+
+    Proibição de costura de dados em memória no frontend ($O(W \times T)$ loops e mapas relacionais). Agregações analíticas e projeções multi-domínio centralizadas no backend CQRS (`apps/reporting`), entregando DTOs consolidados prontos para renderização imediata.
+
+    [:octicons-arrow-right-24: Anti-Data-Stitching](concepts/anti-data-stitching-pattern.md) · [:octicons-shield-check-24: ADR-024](adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md) · [:octicons-shield-check-24: ADR-031](adr/031-inter-module-communication.md)
 
 -   :material-shield-check:{ .lg .middle } **Suíte de Guard-Rails**
 

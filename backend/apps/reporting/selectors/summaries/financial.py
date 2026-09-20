@@ -7,10 +7,11 @@ from __future__ import annotations
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 from uuid import UUID
 
 from django.db.models import Q, Sum
+from django.db.models.functions import ExtractMonth
 from django.utils import timezone
 
 from apps.finances.models import Budget, BudgetCategory, Installment
@@ -208,3 +209,153 @@ class FinancialSummarySelector:
             "Categorias computadas: wedding=%s, total=%s", wedding.uuid, len(result)
         )
         return result
+
+    @staticmethod
+    def cash_flow_by_month(company: Company, year: int) -> list[dict[str, Any]]:
+        """
+        Calcula em SQL agrupado por mês (1 a 12) a soma de parcelas PAID e PENDING
+        no ano especificado (due_date__year=year).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            year: O ano de referência para filtragem das parcelas.
+
+        Returns:
+            Lista com exatamente 12 itens, um para cada mês do ano (1 a 12),
+            no formato {"month": i, "paid": f"{paid:.2f}", "pending": f"{pending:.2f}"}.
+        """
+        monthly_qs = (
+            Installment.objects.for_tenant(company)
+            .filter(due_date__year=year)
+            .annotate(month=ExtractMonth("due_date"))
+            .values("month")
+            .annotate(
+                paid=Sum("amount", filter=Q(status=Installment.StatusChoices.PAID)),
+                pending=Sum(
+                    "amount",
+                    filter=Q(
+                        status__in=[
+                            Installment.StatusChoices.PENDING,
+                            Installment.StatusChoices.OVERDUE,
+                        ]
+                    ),
+                ),
+            )
+        )
+
+        data_by_month: dict[int, Any] = {item["month"]: item for item in monthly_qs}
+
+        result: list[dict[str, Any]] = []
+        for m in range(1, 13):
+            row: dict[str, Any] = data_by_month.get(m, {})
+            paid = row.get("paid") or Decimal("0.00")
+            pending = row.get("pending") or Decimal("0.00")
+            result.append(
+                {
+                    "month": m,
+                    "paid": f"{paid:.2f}",
+                    "pending": f"{pending:.2f}",
+                }
+            )
+        return result
+
+    @staticmethod
+    def upcoming_installments_detail(
+        *,
+        company: Company,
+        today: date | None = None,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """
+        Retorna as Top N parcelas a vencer nos próximos 7 dias do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            today: Data de referência (caso não informada, usa a data atual).
+            limit: Quantidade máxima de registros retornados (padrão: 10).
+
+        Returns:
+            Lista de dicionários contendo uuid, wedding_name, amount, due_date,
+            installment_number e status.
+        """
+        today = today or timezone.localdate()
+        seven_days = today + timedelta(days=7)
+
+        installments = (
+            Installment.objects.for_tenant(company)
+            .filter(
+                status=Installment.StatusChoices.PENDING,
+                due_date__gte=today,
+                due_date__lte=seven_days,
+            )
+            .select_related("wedding")
+            .order_by("due_date", "installment_number")[:limit]
+        )
+
+        return [
+            {
+                "uuid": inst.uuid,
+                "wedding_name": (
+                    f"{inst.wedding.bride_name} e {inst.wedding.groom_name}"
+                    if inst.wedding
+                    else ""
+                ),
+                "amount": f"{inst.amount:.2f}",
+                "due_date": inst.due_date,
+                "installment_number": inst.installment_number,
+                "status": inst.status,
+            }
+            for inst in installments
+        ]
+
+    @staticmethod
+    def overdue_installments_detail(
+        *,
+        company: Company,
+        today: date | None = None,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """
+        Retorna as Top N parcelas atrasadas do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            today: Data de referência (caso não informada, usa a data atual).
+            limit: Quantidade máxima de registros retornados (padrão: 10).
+
+        Returns:
+            Lista de dicionários contendo uuid, wedding_name, amount, due_date,
+            installment_number e status.
+        """
+        today = today or timezone.localdate()
+
+        installments = (
+            Installment.objects.for_tenant(company)
+            .filter(
+                Q(status=Installment.StatusChoices.OVERDUE)
+                | Q(status=Installment.StatusChoices.PENDING, due_date__lt=today)
+            )
+            .select_related("wedding")
+            .order_by("due_date", "installment_number")[:limit]
+        )
+
+        return [
+            {
+                "uuid": inst.uuid,
+                "wedding_name": (
+                    f"{inst.wedding.bride_name} e {inst.wedding.groom_name}"
+                    if inst.wedding
+                    else ""
+                ),
+                "amount": f"{inst.amount:.2f}",
+                "due_date": inst.due_date,
+                "installment_number": inst.installment_number,
+                "status": inst.status,
+            }
+            for inst in installments
+        ]
+
+
+cash_flow_by_month = FinancialSummarySelector.cash_flow_by_month
+upcoming_installments_detail = FinancialSummarySelector.upcoming_installments_detail
+overdue_installments_detail = FinancialSummarySelector.overdue_installments_detail

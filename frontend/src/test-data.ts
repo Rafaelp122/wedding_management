@@ -3,6 +3,7 @@ import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import type { TaskOut } from "@/api/generated/v1/models/taskOut";
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
+import type { BudgetOut } from "@/api/generated/v1/models/budgetOut";
 import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
@@ -26,6 +27,8 @@ export function createMockWedding(overrides?: Partial<WeddingOut>): WeddingOut {
     template: null,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
+    allowed_transitions: ["COMPLETED", "CANCELED"],
+    can_complete: true,
     ...overrides,
   };
 }
@@ -95,6 +98,21 @@ export function createMockEvent(overrides?: Partial<EventOut>): EventOut {
   };
 }
 
+export function createMockBudget(overrides?: Partial<BudgetOut>): BudgetOut {
+  return {
+    uuid: "b-1",
+    wedding: "w-1",
+    total_estimated: "50000.00",
+    total_overall_spent: "25000.00",
+    total_allocated: "40000.00",
+    unallocated_budget: "10000.00",
+    tenant_average_budget: "50000.00",
+    comparison_percentage: 0,
+    notes: null,
+    ...overrides,
+  };
+}
+
 export function createMockBudgetCategory(
   overrides?: Partial<BudgetCategoryOut>,
 ): BudgetCategoryOut {
@@ -106,6 +124,7 @@ export function createMockBudgetCategory(
     description: "Comida e bebidas",
     allocated_budget: "5000.00",
     total_spent: "3200.00",
+    expenses_count: 0,
     ...overrides,
   };
 }
@@ -125,6 +144,7 @@ export function createMockContract(
     addendums_count: 0,
     addendums_total_amount: "0.00",
     total_amount_with_addendums: "5000.00",
+    allowed_transitions: ["COMPLETED", "CANCELED"],
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
     ...overrides,
@@ -145,6 +165,13 @@ export function createMockItem(overrides?: Partial<ItemOut>): ItemOut {
   };
 }
 
+import type { DashboardInstallmentDetailOut } from "@/api/generated/v1/models/dashboardInstallmentDetailOut";
+import type { DashboardTaskDetailOut } from "@/api/generated/v1/models/dashboardTaskDetailOut";
+import type { DashboardContractDetailOut } from "@/api/generated/v1/models/dashboardContractDetailOut";
+import type { UpcomingWeddingOut } from "@/api/generated/v1/models/upcomingWeddingOut";
+import type { CashFlowMonthOut } from "@/api/generated/v1/models/cashFlowMonthOut";
+import type { TaskProgressWeddingOut } from "@/api/generated/v1/models/taskProgressWeddingOut";
+
 export function createMockDashboardSummary(
   overrides?: Partial<DashboardSummaryOut>,
 ): DashboardSummaryOut {
@@ -155,6 +182,86 @@ export function createMockDashboardSummary(
     overdue_installments_count: 2,
     pending_contracts_count: 5,
     critical_weddings: [],
+    upcoming_installments: [],
+    overdue_installments: [],
+    urgent_tasks: [],
+    pending_contracts: [],
+    ...overrides,
+  };
+}
+
+export function createMockDashboardInstallmentDetail(
+  overrides?: Partial<DashboardInstallmentDetailOut>,
+): DashboardInstallmentDetailOut {
+  return {
+    uuid: "inst-1",
+    wedding_name: "Ana e Carlos",
+    amount: "5000.00",
+    due_date: "2025-01-15",
+    installment_number: 1,
+    status: "OVERDUE",
+    ...overrides,
+  };
+}
+
+export function createMockDashboardTaskDetail(
+  overrides?: Partial<DashboardTaskDetailOut>,
+): DashboardTaskDetailOut {
+  return {
+    uuid: "task-1",
+    wedding_name: "Ana e Carlos",
+    title: "Contratar buffet",
+    due_date: "2025-01-01",
+    ...overrides,
+  };
+}
+
+export function createMockDashboardContractDetail(
+  overrides?: Partial<DashboardContractDetailOut>,
+): DashboardContractDetailOut {
+  return {
+    uuid: "ctr-1",
+    wedding_name: "Ana e Carlos",
+    supplier_name: "Buffet Sabor",
+    total_amount: "15000.00",
+    status: "DRAFT",
+    ...overrides,
+  };
+}
+
+export function createMockUpcomingWedding(
+  overrides?: Partial<UpcomingWeddingOut>,
+): UpcomingWeddingOut {
+  return {
+    uuid: "w-1",
+    bride_name: "Maria",
+    groom_name: "João",
+    date: "2026-06-15",
+    days_until: 45,
+    ...overrides,
+  };
+}
+
+export function createMockCashFlowMonth(
+  overrides?: Partial<CashFlowMonthOut>,
+): CashFlowMonthOut {
+  return {
+    month: 1,
+    paid: "3000.00",
+    pending: "2000.00",
+    ...overrides,
+  };
+}
+
+export function createMockTaskProgressWedding(
+  overrides?: Partial<TaskProgressWeddingOut>,
+): TaskProgressWeddingOut {
+  return {
+    wedding_uuid: "w-1",
+    wedding_name: "Maria e João",
+    total_tasks: 5,
+    completed_tasks: 3,
+    progress_pct: 60,
     ...overrides,
   };
 }

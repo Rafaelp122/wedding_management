@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import Router
@@ -5,8 +7,17 @@ from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.scheduler.models import Event
-from apps.scheduler.schemas import EventIn, EventOut, EventPatchIn
-from apps.scheduler.selectors import event_get_selector, event_list_selector
+from apps.scheduler.schemas import (
+    EventIn,
+    EventOut,
+    EventPatchIn,
+    SchedulerSummaryOut,
+)
+from apps.scheduler.selectors import (
+    event_get_selector,
+    event_list_selector,
+    scheduler_summary_selector,
+)
 from apps.scheduler.services import EventService
 from apps.users.types import AuthRequest
 
@@ -31,6 +42,34 @@ def list_events(
         company=user.company,
         wedding_id=wedding_id,
     )
+
+
+@events_router.get(
+    "/summary/",
+    response=SchedulerSummaryOut,
+    operation_id="scheduler_summary_get",
+)
+def get_scheduler_summary(request: AuthRequest) -> dict[str, Any]:
+    """
+    Retorna o resumo estatístico consolidado dos eventos do cronograma.
+    """
+    return scheduler_summary_selector(company=request.user.company)
+
+
+scheduler_router = Router(tags=["Scheduler"])
+
+
+@scheduler_router.get(
+    "/summary/",
+    response=SchedulerSummaryOut,
+    operation_id="scheduler_root_summary_get",
+    include_in_schema=False,
+)
+def get_scheduler_root_summary(request: AuthRequest) -> dict[str, Any]:
+    """
+    Retorna o resumo consolidado de eventos (alias na raiz do scheduler).
+    """
+    return scheduler_summary_selector(company=request.user.company)
 
 
 @events_router.get(

@@ -107,4 +107,28 @@ describe("EditWeddingDialog", () => {
       expect(toast.error).toHaveBeenCalled();
     });
   });
+
+  it("restricts status options strictly to allowed_transitions and current status", async () => {
+    const weddingWithRestrictedTransitions = createMockWedding({
+      status: "IN_PROGRESS",
+      allowed_transitions: ["CANCELED"],
+    });
+
+    render(
+      <EditWeddingDialog
+        wedding={weddingWithRestrictedTransitions}
+        open={true}
+        onOpenChange={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const statusTrigger = screen.getByRole("combobox");
+    await user.click(statusTrigger);
+
+    expect(screen.getByRole("option", { name: "Em Andamento" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Cancelado" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Concluído" })).not.toBeInTheDocument();
+  });
 });

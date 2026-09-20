@@ -11,6 +11,7 @@ from apps.finances.schemas.budget_category import (
     BudgetCategoryPatchIn,
 )
 from apps.finances.schemas.expense import (
+    ContractLookupOut,
     ExpenseFromDocumentOut,
     ExpenseIn,
     ExpenseOut,
@@ -32,6 +33,7 @@ __all__ = [
     "BudgetIn",
     "BudgetOut",
     "BudgetPatchIn",
+    "ContractLookupOut",
     "ExpenseFromDocumentOut",
     "ExpenseIn",
     "ExpenseOut",

@@ -11,6 +11,8 @@ from apps.scheduler.schemas import (
     EventIn,
     EventOut,
     EventPatchIn,
+    EventUpdateIn,
+    SchedulerSummaryOut,
     TaskIn,
     TaskOut,
     TaskPatchIn,
@@ -140,6 +142,108 @@ class TestEventSchemas:
         assert out.wedding == wedding_uuid
         assert out.title == "Cerimônia"
         assert out.event_type == "CEREMONY"
+
+    def test_event_in_rejects_end_time_equal_to_start_time(self) -> None:
+        wedding_id = uuid.uuid4()
+        now = datetime.now(UTC)
+        with pytest.raises(ValidationError) as exc:
+            EventIn(
+                wedding=wedding_id,
+                title="Reunião com Fotógrafo",
+                event_type="MEETING",
+                start_time=now,
+                end_time=now,
+            )
+        assert "A hora de término não pode ser anterior à hora de início" in str(
+            exc.value
+        )
+
+    def test_event_in_force_overlap_default(self) -> None:
+        wedding_id = uuid.uuid4()
+        now = datetime.now(UTC)
+        schema = EventIn(
+            wedding=wedding_id,
+            title="Reunião",
+            event_type="MEETING",
+            start_time=now,
+        )
+        assert schema.force_overlap is False
+
+    def test_event_update_in_and_patch_in(self) -> None:
+        assert EventUpdateIn is EventPatchIn
+        schema = EventUpdateIn(force_overlap=True)
+        assert schema.force_overlap is True
+
+    def test_event_out_wedding_name_resolution(self) -> None:
+        event_uuid = uuid.uuid4()
+        company_uuid = uuid.uuid4()
+        wedding_uuid = uuid.uuid4()
+        now = datetime.now(UTC)
+
+        # 1. Com wedding_name direto no objeto
+        mock_annotated = Dummy(
+            uuid=event_uuid,
+            company=Dummy(uuid=company_uuid),
+            wedding=Dummy(uuid=wedding_uuid, bride_name="Maria", groom_name="João"),
+            wedding_name="Casamento Personalizado",
+            title="Cerimônia",
+            location="",
+            description="",
+            event_type="CEREMONY",
+            start_time=now,
+            end_time=now + timedelta(hours=1),
+            recurrence_rule="none",
+            reminder_enabled=False,
+            reminder_minutes_before=60,
+        )
+        out1 = EventOut.from_orm(mock_annotated)
+        assert out1.wedding_name == "Casamento Personalizado"
+
+        # 2. Sem wedding_name direto, resolvendo a partir do objeto wedding
+        mock_with_wedding = Dummy(
+            uuid=event_uuid,
+            company=Dummy(uuid=company_uuid),
+            wedding=Dummy(uuid=wedding_uuid, bride_name="Juliana", groom_name="Lucas"),
+            title="Cerimônia",
+            location="",
+            description="",
+            event_type="CEREMONY",
+            start_time=now,
+            end_time=now + timedelta(hours=1),
+            recurrence_rule="none",
+            reminder_enabled=False,
+            reminder_minutes_before=60,
+        )
+        out2 = EventOut.from_orm(mock_with_wedding)
+        assert out2.wedding_name == "Juliana e Lucas"
+
+        # 3. Com wedding sem nomes dos noivos
+        mock_no_names = Dummy(
+            uuid=event_uuid,
+            company=Dummy(uuid=company_uuid),
+            wedding=Dummy(uuid=wedding_uuid),
+            title="Cerimônia",
+            location="",
+            description="",
+            event_type="CEREMONY",
+            start_time=now,
+            end_time=now + timedelta(hours=1),
+            recurrence_rule="none",
+            reminder_enabled=False,
+            reminder_minutes_before=60,
+        )
+        out3 = EventOut.from_orm(mock_no_names)
+        assert out3.wedding_name is None
+
+    def test_scheduler_summary_out(self) -> None:
+        summary = SchedulerSummaryOut(
+            total=10,
+            upcoming_7_days=3,
+            with_reminder=5,
+        )
+        assert summary.total == 10
+        assert summary.upcoming_7_days == 3
+        assert summary.with_reminder == 5
 
 
 class TestTaskSchemas:

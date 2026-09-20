@@ -8,17 +8,18 @@ import { useSchedulerPage } from "./useSchedulerPage";
 
 const eventsUrl = "*/api/v1/scheduler/events/";
 const weddingsUrl = "*/api/v1/weddings/";
+const summaryUrl = "*/api/v1/scheduler/events/summary/";
 
 describe("useSchedulerPage", () => {
   it("organizes API data for the page", async () => {
+    const earlierEvent = createMockEvent({
+      uuid: "earlier",
+      start_time: "2030-06-10T10:00:00Z",
+    });
     const laterEvent = createMockEvent({
       uuid: "later",
       start_time: "2030-06-20T10:00:00Z",
       reminder_enabled: true,
-    });
-    const earlierEvent = createMockEvent({
-      uuid: "earlier",
-      start_time: "2030-06-10T10:00:00Z",
     });
     const wedding = createMockWedding({
       uuid: "w-1",
@@ -28,7 +29,10 @@ describe("useSchedulerPage", () => {
 
     server.use(
       http.get(eventsUrl, () =>
-        HttpResponse.json({ items: [laterEvent, earlierEvent], count: 2 }),
+        HttpResponse.json({ items: [earlierEvent, laterEvent], count: 2 }),
+      ),
+      http.get(summaryUrl, () =>
+        HttpResponse.json({ total: 2, upcoming_7_days: 1, with_reminder: 1 }),
       ),
       http.get(weddingsUrl, () =>
         HttpResponse.json({ items: [wedding], count: 1 }),
@@ -39,16 +43,15 @@ describe("useSchedulerPage", () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.events).toHaveLength(2);
-    expect(result.current.paginatedEvents.map((event) => event.uuid)).toEqual([
+    expect(result.current.events.map((event) => event.uuid)).toEqual([
       "earlier",
       "later",
     ]);
-    expect(result.current.weddingsByUuid.get("w-1")).toBe("Joao & Maria");
     expect(result.current.weddingOptions).toEqual([
       { uuid: "w-1", label: "Maria & Joao" },
     ]);
     expect(result.current.defaultWeddingUuid).toBe("w-1");
-    expect(result.current.summary).toMatchObject({ total: 2, withReminder: 1 });
+    expect(result.current.summary).toEqual({ total: 2, upcoming: 1, withReminder: 1 });
     expect(result.current.paginationInfo.totalCount).toBe(2);
   });
 
@@ -117,6 +120,6 @@ describe("useSchedulerPage", () => {
     act(() => result.current.handleEditSuccess());
     expect(result.current.selectedEvent).toBeNull();
     expect(result.current.editDialogOpen).toBe(false);
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(invalidateQueries).toHaveBeenCalledTimes(4);
   });
 });

@@ -8,7 +8,7 @@ import logging
 from datetime import date
 from typing import TYPE_CHECKING, Any
 
-from django.db.models import F, Q
+from django.db.models import Count, F, Q
 
 from apps.scheduler.models import Task
 
@@ -99,3 +99,102 @@ class TaskSummarySelector:
             }
             for t in urgent
         ]
+
+    @staticmethod
+    def tasks_progress_by_wedding(
+        company: Company, year: int | None = None, limit: int = 10
+    ) -> list[dict[str, Any]]:
+        """
+        Agrupa tarefas por casamento no tenant via SQL Count("id") e
+        Count("id", filter=Q(is_completed=True)).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            year: Ano opcional para filtragem dos casamentos (wedding__date__year=year).
+            limit: Quantidade máxima de casamentos retornados (padrão: 10).
+
+        Returns:
+            Lista ordenada pelo volume total de tarefas em ordem decrescente,
+            contendo wedding_uuid, wedding_name, total_tasks, completed_tasks
+            e progress_pct.
+        """
+        qs = Task.objects.for_tenant(company)
+        if year is not None:
+            qs = qs.filter(wedding__date__year=year)
+
+        grouped = (
+            qs.values(
+                "wedding__uuid",
+                "wedding__bride_name",
+                "wedding__groom_name",
+            )
+            .annotate(
+                total_tasks=Count("id"),
+                completed_tasks=Count("id", filter=Q(is_completed=True)),
+            )
+            .order_by("-total_tasks", "wedding__bride_name")[:limit]
+        )
+
+        result: list[dict[str, Any]] = []
+        for row in grouped:
+            total = int(row["total_tasks"])
+            completed = int(row["completed_tasks"])
+            progress_pct = round((completed / total) * 100) if total > 0 else 0
+            bride = row["wedding__bride_name"] or ""
+            groom = row["wedding__groom_name"] or ""
+            wedding_name = f"{bride} e {groom}".strip()
+            result.append(
+                {
+                    "wedding_uuid": row["wedding__uuid"],
+                    "wedding_name": wedding_name,
+                    "total_tasks": total,
+                    "completed_tasks": completed,
+                    "progress_pct": progress_pct,
+                }
+            )
+        return result
+
+    @staticmethod
+    def urgent_tasks_detail(
+        *,
+        company: Company,
+        today: date | None = None,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """
+        Retorna as Top N tarefas atrasadas do tenant.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            today: Data de referência (caso não informada, usa a data atual).
+            limit: Quantidade máxima de registros retornados (padrão: 10).
+
+        Returns:
+            Lista de dicionários contendo uuid, wedding_name, title e due_date.
+        """
+        today = today or date.today()
+
+        tasks = (
+            Task.objects.for_tenant(company)
+            .filter(is_completed=False, due_date__lte=today)
+            .select_related("wedding")
+            .order_by("due_date", "created_at")[:limit]
+        )
+
+        return [
+            {
+                "uuid": t.uuid,
+                "wedding_name": (
+                    f"{t.wedding.bride_name} e {t.wedding.groom_name}"
+                    if t.wedding
+                    else ""
+                ),
+                "title": t.title,
+                "due_date": t.due_date,
+            }
+            for t in tasks
+        ]
+
+
+tasks_progress_by_wedding = TaskSummarySelector.tasks_progress_by_wedding
+urgent_tasks_detail = TaskSummarySelector.urgent_tasks_detail

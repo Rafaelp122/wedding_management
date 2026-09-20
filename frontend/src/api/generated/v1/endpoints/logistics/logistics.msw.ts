@@ -13,6 +13,7 @@ import type {
 } from 'msw';
 
 import type {
+  ContractDetailAggregateOut,
   ContractOut,
   ContractUploadUrlOut,
   ItemOut,
@@ -26,6 +27,7 @@ import {
   getLogisticsContractsCancelResponseMock,
   getLogisticsContractsCreateFullResponseMock,
   getLogisticsContractsCreateResponseMock,
+  getLogisticsContractsDetailsReadResponseMock,
   getLogisticsContractsListResponseMock,
   getLogisticsContractsReadResponseMock,
   getLogisticsContractsRevertToDraftResponseMock,
@@ -50,7 +52,7 @@ import {
   getLogisticsSuppliersUpdateResponseMock
 } from './logistics.faker';
 
-export { getLogisticsSuppliersListResponseMock, getLogisticsSuppliersCreateResponseMock, getLogisticsSuppliersReadResponseMock, getLogisticsSuppliersUpdateResponseMock, getLogisticsContractsListResponseMock, getLogisticsContractsCreateResponseMock, getLogisticsContractsReadResponseMock, getLogisticsContractsUpdateResponseMock, getLogisticsContractsUploadUrlResponseMock, getLogisticsContractsCreateFullResponseMock, getLogisticsContractsUploadResponseMock, getLogisticsContractsTransitionStatusResponseMock, getLogisticsContractsSendToPendingResponseMock, getLogisticsContractsSignResponseMock, getLogisticsContractsCancelResponseMock, getLogisticsContractsRevertToDraftResponseMock, getLogisticsItemsListResponseMock, getLogisticsItemsCreateResponseMock, getLogisticsItemsReadResponseMock, getLogisticsItemsUpdateResponseMock, getLogisticsItemsTransitionStatusResponseMock, getLogisticsItemsStartResponseMock, getLogisticsItemsCompleteResponseMock, getLogisticsItemsReopenResponseMock, getLogisticsItemsRevertToPendingResponseMock } from './logistics.faker';
+export { getLogisticsSuppliersListResponseMock, getLogisticsSuppliersCreateResponseMock, getLogisticsSuppliersReadResponseMock, getLogisticsSuppliersUpdateResponseMock, getLogisticsContractsListResponseMock, getLogisticsContractsCreateResponseMock, getLogisticsContractsDetailsReadResponseMock, getLogisticsContractsReadResponseMock, getLogisticsContractsUpdateResponseMock, getLogisticsContractsUploadUrlResponseMock, getLogisticsContractsCreateFullResponseMock, getLogisticsContractsUploadResponseMock, getLogisticsContractsTransitionStatusResponseMock, getLogisticsContractsSendToPendingResponseMock, getLogisticsContractsSignResponseMock, getLogisticsContractsCancelResponseMock, getLogisticsContractsRevertToDraftResponseMock, getLogisticsItemsListResponseMock, getLogisticsItemsCreateResponseMock, getLogisticsItemsReadResponseMock, getLogisticsItemsUpdateResponseMock, getLogisticsItemsTransitionStatusResponseMock, getLogisticsItemsStartResponseMock, getLogisticsItemsCompleteResponseMock, getLogisticsItemsReopenResponseMock, getLogisticsItemsRevertToPendingResponseMock } from './logistics.faker';
 
 
 export const getLogisticsSuppliersListMockHandler = (overrideResponse?: PagedSupplierOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedSupplierOut> | PagedSupplierOut), options?: RequestHandlerOptions) => {
@@ -131,6 +133,18 @@ export const getLogisticsContractsCreateMockHandler = (overrideResponse?: Contra
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getLogisticsContractsCreateResponseMock(),
       { status: 201
+      })
+  }, options)
+}
+
+export const getLogisticsContractsDetailsReadMockHandler = (overrideResponse?: ContractDetailAggregateOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ContractDetailAggregateOut> | ContractDetailAggregateOut), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/logistics/contracts/:uuid/details/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getLogisticsContractsDetailsReadResponseMock(),
+      { status: 200
       })
   }, options)
 }
@@ -400,6 +414,7 @@ export const getLogisticsMock = () => [
   getLogisticsSuppliersDeleteMockHandler(),
   getLogisticsContractsListMockHandler(),
   getLogisticsContractsCreateMockHandler(),
+  getLogisticsContractsDetailsReadMockHandler(),
   getLogisticsContractsReadMockHandler(),
   getLogisticsContractsUpdateMockHandler(),
   getLogisticsContractsDeleteMockHandler(),

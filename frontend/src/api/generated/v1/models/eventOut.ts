@@ -12,6 +12,7 @@ export interface EventOut {
   uuid: string;
   company_id: string;
   wedding: string;
+  wedding_name?: string | null;
   title: string;
   location?: string | null;
   description?: string | null;

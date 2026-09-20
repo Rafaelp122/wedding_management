@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import Router
@@ -6,6 +8,7 @@ from pydantic import UUID4
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.logistics.models.contract import Contract
 from apps.logistics.schemas import (
+    ContractDetailAggregateOut,
     ContractFullCreateIn,
     ContractIn,
     ContractOut,
@@ -16,7 +19,11 @@ from apps.logistics.schemas import (
     ContractUploadUrlIn,
     ContractUploadUrlOut,
 )
-from apps.logistics.selectors import contract_get_selector, contract_list_selector
+from apps.logistics.selectors import (
+    contract_detail_aggregate_selector,
+    contract_get_selector,
+    contract_list_selector,
+)
 from apps.logistics.services.contract_service import ContractService
 from apps.users.types import AuthRequest
 
@@ -47,6 +54,19 @@ def list_contracts(
         supplier_id=supplier_id,
         parent_id=parent_id,
     )
+
+
+@contracts_router.get(
+    "/{uuid:uuid}/details/",
+    response={200: ContractDetailAggregateOut, **READ_ERROR_RESPONSES},
+    operation_id="logistics_contracts_details_read",
+)
+def retrieve_contract_details(request: AuthRequest, uuid: UUID4) -> dict[str, Any]:
+    """
+    Exibe as cláusulas, itens e aditivos agregados de um contrato.
+    """
+    user = request.user
+    return contract_detail_aggregate_selector(company=user.company, contract_uuid=uuid)
 
 
 @contracts_router.get(

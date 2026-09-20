@@ -43,6 +43,7 @@ class BudgetCategoryOut(Schema):
     allocated_budget: Decimal
     total_spent: Decimal = Field(default=Decimal("0.00"))
     budget_utilization_percent: int = 0
+    expenses_count: int = 0
 
     @staticmethod
     def resolve_wedding(obj: "BudgetCategory") -> UUID4:
@@ -61,6 +62,14 @@ class BudgetCategoryOut(Schema):
         if val is not None:
             return cast(Decimal, val)
         return obj.total_spent
+
+    @staticmethod
+    def resolve_expenses_count(obj: "BudgetCategory") -> int:
+        """Resolve a contagem de despesas da categoria."""
+        val = getattr(obj, "_expenses_count", None)
+        if val is not None:
+            return int(val)
+        return obj.expenses_count
 
     @staticmethod
     def resolve_budget_utilization_percent(obj: Any) -> int:

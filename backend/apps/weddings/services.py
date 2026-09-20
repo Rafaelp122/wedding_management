@@ -239,6 +239,38 @@ class WeddingService:
 
     @staticmethod
     @transaction.atomic
+    def reopen(*, company: Company, instance: Wedding) -> Wedding:
+        """
+        Reabre um casamento previamente cancelado voltando para EM ANDAMENTO.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: Instância de Wedding a ser reaberta.
+
+        Returns:
+            A instância de Wedding reaberta e persistida.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Casamento não encontrado ou acesso negado.",
+            code="wedding_not_found_or_denied",
+        )
+        instance.reopen()
+        try:
+            instance.save(update_fields=["status", "updated_at"])
+        except DjangoValidationError as e:
+            detail = "; ".join(e.messages) if e.messages else str(e)
+            raise BusinessRuleViolation(
+                detail=detail,
+                code="wedding_validation_error",
+            ) from e
+
+        logger.info(f"Casamento uuid={instance.uuid} reaberto com sucesso.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
     def delete(company: Company, instance: Wedding) -> None:
         """
         Deleta um casamento existente validando a propriedade de tenant.

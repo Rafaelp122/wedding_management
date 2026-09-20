@@ -31,6 +31,7 @@ import type {
   PagedEventOut,
   PagedTaskOut,
   SchedulerEventsListParams,
+  SchedulerSummaryOut,
   SchedulerTasksListParams,
   TaskIn,
   TaskOut,
@@ -227,6 +228,99 @@ export const useSchedulerEventsCreate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getSchedulerEventsCreateMutationOptions(options), queryClient);
     }
     /**
+ * Retorna o resumo estatístico consolidado dos eventos do cronograma.
+ * @summary Get Scheduler Summary
+ */
+export const schedulerSummaryGet = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SchedulerSummaryOut>(
+      {url: `/api/v1/scheduler/events/summary/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getSchedulerSummaryGetQueryKey = () => {
+    return [
+    `/api/v1/scheduler/events/summary/`
+    ] as const;
+    }
+
+
+export const getSchedulerSummaryGetQueryOptions = <TData = Awaited<ReturnType<typeof schedulerSummaryGet>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSchedulerSummaryGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof schedulerSummaryGet>>> = ({ signal }) => schedulerSummaryGet(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof schedulerSummaryGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SchedulerSummaryGetQueryResult = NonNullable<Awaited<ReturnType<typeof schedulerSummaryGet>>>
+export type SchedulerSummaryGetQueryError = ErrorType<unknown>
+
+
+export function useSchedulerSummaryGet<TData = Awaited<ReturnType<typeof schedulerSummaryGet>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerSummaryGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof schedulerSummaryGet>>,
+          TError,
+          Awaited<ReturnType<typeof schedulerSummaryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSchedulerSummaryGet<TData = Awaited<ReturnType<typeof schedulerSummaryGet>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerSummaryGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof schedulerSummaryGet>>,
+          TError,
+          Awaited<ReturnType<typeof schedulerSummaryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSchedulerSummaryGet<TData = Awaited<ReturnType<typeof schedulerSummaryGet>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Scheduler Summary
+ */
+
+export function useSchedulerSummaryGet<TData = Awaited<ReturnType<typeof schedulerSummaryGet>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSchedulerSummaryGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
  * Retorna os detalhes completos de um evento específico no cronograma.
  *
  * Realiza a busca pelo UUID garantindo que o evento pertence ao Planner logado.

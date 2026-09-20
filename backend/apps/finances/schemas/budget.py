@@ -39,7 +39,25 @@ class BudgetOut(Schema):
     total_overall_spent: Decimal = Field(default=Decimal("0.00"))
     total_allocated: Decimal = Field(default=Decimal("0.00"))
     unallocated_budget: Decimal = Field(default=Decimal("0.00"))
+    tenant_average_budget: Decimal | None = None
+    comparison_percentage: float | None = None
     notes: str | None = None
+
+    @staticmethod
+    def resolve_tenant_average_budget(obj: Any) -> Decimal | None:
+        """Resolve a média do orçamento dos casamentos do tenant."""
+        val = getattr(obj, "_tenant_average_budget", None)
+        if val is not None:
+            return Decimal(str(val)) if not isinstance(val, Decimal) else val
+        return None
+
+    @staticmethod
+    def resolve_comparison_percentage(obj: Any) -> float | None:
+        """Resolve o percentual de comparação com a média do tenant."""
+        val = getattr(obj, "_comparison_percentage", None)
+        if val is not None:
+            return float(val)
+        return None
 
     @staticmethod
     def resolve_wedding(obj: "Budget") -> UUID4:

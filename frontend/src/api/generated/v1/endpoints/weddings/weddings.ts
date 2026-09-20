@@ -747,3 +747,66 @@ export const useWeddingsCancel = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getWeddingsCancelMutationOptions(options), queryClient);
     }
+    /**
+ * Caso de uso: Reabre um casamento cancelado voltando para em andamento.
+ * @summary Reopen Wedding
+ */
+export const weddingsReopen = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/${uuid}/reopen/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsReopenMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof weddingsReopen>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['weddingsReopen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof weddingsReopen>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  weddingsReopen(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WeddingsReopenMutationResult = NonNullable<Awaited<ReturnType<typeof weddingsReopen>>>
+
+    export type WeddingsReopenMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Reopen Wedding
+ */
+export const useWeddingsReopen = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof weddingsReopen>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getWeddingsReopenMutationOptions(options), queryClient);
+    }

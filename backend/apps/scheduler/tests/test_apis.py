@@ -254,6 +254,181 @@ class TestSchedulerEventsAPI:
         response = auth_client.delete(f"/api/v1/scheduler/events/{other_event.uuid}/")
         assert response.status_code == 404
 
+    def test_create_event_overlap_conflict_returns_422(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """Criação com conflito de horário e force_overlap=False deve retornar 422."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now() + timedelta(days=2)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        response = auth_client.post(
+            "/api/v1/scheduler/events/",
+            {
+                "wedding": str(wedding.uuid),
+                "title": "Reunião Conflitante",
+                "event_type": "reuniao",
+                "start_time": (now + timedelta(hours=1)).isoformat(),
+                "end_time": (now + timedelta(hours=3)).isoformat(),
+                "force_overlap": False,
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        data = response.json()
+        assert data.get("code") == "event_schedule_conflict"
+
+    def test_create_event_overlap_with_force_overlap_returns_201(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """Criação com overlap e force_overlap=True deve permitir e retornar 201."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now() + timedelta(days=2)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        response = auth_client.post(
+            "/api/v1/scheduler/events/",
+            {
+                "wedding": str(wedding.uuid),
+                "title": "Reunião Concorrente Permitida",
+                "event_type": "reuniao",
+                "start_time": (now + timedelta(hours=1)).isoformat(),
+                "end_time": (now + timedelta(hours=3)).isoformat(),
+                "force_overlap": True,
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        assert response.json()["title"] == "Reunião Concorrente Permitida"
+
+    def test_update_event_overlap_conflict_returns_422(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """Edição com overlap e force_overlap=False deve retornar 422."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now() + timedelta(days=3)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+        event2 = EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(hours=5),
+            end_time=now + timedelta(hours=7),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        response = auth_client.patch(
+            f"/api/v1/scheduler/events/{event2.uuid}/",
+            {
+                "start_time": (now + timedelta(hours=1)).isoformat(),
+                "end_time": (now + timedelta(hours=3)).isoformat(),
+                "force_overlap": False,
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+        assert response.json().get("code") == "event_schedule_conflict"
+
+    def test_update_event_overlap_with_force_overlap_returns_200(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """Edição com overlap e force_overlap=True deve permitir e retornar 200."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now() + timedelta(days=3)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+        event2 = EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(hours=5),
+            end_time=now + timedelta(hours=7),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        response = auth_client.patch(
+            f"/api/v1/scheduler/events/{event2.uuid}/",
+            {
+                "start_time": (now + timedelta(hours=1)).isoformat(),
+                "end_time": (now + timedelta(hours=3)).isoformat(),
+                "force_overlap": True,
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+    def test_event_out_resolves_wedding_name(self, auth_client: Any, user: Any) -> None:
+        """Endpoint de evento serializa wedding_name com os nomes dos noivos."""
+        wedding = WeddingFactory(
+            company=user.company,
+            bride_name="Juliana",
+            groom_name="Rodrigo",
+        )
+        event = EventFactory(wedding=wedding, title="Cerimônia")
+
+        response = auth_client.get(f"/api/v1/scheduler/events/{event.uuid}/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["wedding_name"] == "Juliana e Rodrigo"
+
+    def test_scheduler_summary_endpoint_success(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """Endpoint de resumo do cronograma retorna métricas agregadas."""
+        wedding = WeddingFactory(company=user.company)
+        now = timezone.now()
+        EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(days=1),
+            reminder_enabled=True,
+        )
+        EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(days=3),
+            reminder_enabled=False,
+        )
+        EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(days=10),
+            reminder_enabled=True,
+        )
+
+        # Testa na rota de events (/scheduler/events/summary/)
+        resp_events = auth_client.get("/api/v1/scheduler/events/summary/")
+        assert resp_events.status_code == 200
+        data_events = resp_events.json()
+        assert data_events["total"] == 3
+        assert data_events["upcoming_7_days"] == 2
+        assert data_events["with_reminder"] == 2
+
+        # Testa no alias raiz (/scheduler/summary/)
+        resp_root = auth_client.get("/api/v1/scheduler/summary/")
+        assert resp_root.status_code == 200
+        data_root = resp_root.json()
+        assert data_root["total"] == 3
+        assert data_root["upcoming_7_days"] == 2
+        assert data_root["with_reminder"] == 2
+
+    def test_scheduler_summary_endpoint_unauthorized(self, client: Any) -> None:
+        """Endpoints de resumo exigem autenticação."""
+        assert client.get("/api/v1/scheduler/events/summary/").status_code == 401
+        assert client.get("/api/v1/scheduler/summary/").status_code == 401
+
 
 @pytest.mark.django_db
 class TestSchedulerTasksAPI:

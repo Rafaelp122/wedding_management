@@ -13,8 +13,9 @@ Pilares arquiteturais de agendamento:
 1. **Agenda Multimodal:** Suporte a diferentes naturezas de compromissos (`reuniao`, `pagamento`, `visita`, `degustacao`, `outro`) com definição de horários de início e término e alertas configuráveis.
 2. **Proteção de Eventos de Pagamento (BR-S01):** Eventos de pagamento vinculados a parcelas financeiras (`source_installment`) são somente leitura no Scheduler. Criação, edição e exclusão desses eventos só podem ser disparadas pela Service Layer de `Finances`.
 3. **Trava de Eventos no Passado (BR-S02):** Eventos criados manualmente por usuários não podem possuir data de início anterior ao dia corrente. Apenas a aplicação de templates de casamento permite offsets retroativos (`_allow_historical_start=True`).
-4. **Motor de Recorrência:** Eventos podem se repetir em intervalos definidos (`semanal`, `quinzenal`, `mensal`).
-5. **Checklist Operacional:** Tarefas com prazos estimados (`due_date`) e alternador de conclusão (`is_completed`).
+4. **Detecção de Conflitos e Sobreposição de Eventos (BR-S03):** Validação de sobreposição temporal (`_validate_event_overlap`) que identifica choques de horário entre compromissos não-financeiros do mesmo casamento. Adota validação flexível (*soft validation*) via parâmetro `force_overlap: bool = False`, lançando `BusinessRuleViolation("event_schedule_conflict")` caso o usuário não tenha autorizado a sobreposição conscientemente.
+5. **Motor de Recorrência:** Eventos podem se repetir em intervalos definidos (`semanal`, `quinzenal`, `mensal`).
+6. **Checklist Operacional:** Tarefas com prazos estimados (`due_date`) e alternador de conclusão (`is_completed`).
 
 ---
 
@@ -61,9 +62,9 @@ erDiagram
 
 | Entidade | Papel & Relações | Campos & Tipos | Invariantes de Persistência & Regras Temporais |
 | :--- | :--- | :--- | :--- |
-| **`Event`** | Compromisso na Agenda (`TenantModel`, `WeddingOwnedMixin`) | `wedding` (`ForeignKey`, `CASCADE`), `source_installment` (`ForeignKey`, `SET_NULL`, nullable), `title`, `event_type` (`TypeChoices`), `start_time`, `end_time`, `recurrence_rule`, `reminder_enabled`, `reminder_minutes_before` | **Imutabilidade Financeira (BR-S01):** Eventos com `event_type == 'pagamento'` não podem ser criados, editados ou excluídos diretamente por endpoints do Scheduler.<br/>**Trava de Data (BR-S02):** Na criação manual, `timezone.localdate(start_time) >= timezone.localdate()`.<br/>**Ordenação:** `ordering = ["start_time"]`. |
+| **`Event`** | Compromisso na Agenda (`TenantModel`, `WeddingOwnedMixin`) | `wedding` (`ForeignKey`, `CASCADE`), `source_installment` (`ForeignKey`, `SET_NULL`, nullable), `title`, `event_type` (`TypeChoices`), `start_time`, `end_time`, `recurrence_rule`, `reminder_enabled`, `reminder_minutes_before` | **Imutabilidade Financeira (BR-S01):** Eventos com `event_type == 'pagamento'` não podem ser criados, editados ou excluídos diretamente por endpoints do Scheduler.<br/>**Trava de Data (BR-S02):** Na criação manual, `timezone.localdate(start_time) >= timezone.localdate()`.<br/>**Detecção de Sobreposição (BR-S03):** Validação de choque temporal via `_validate_event_overlap`, contornável apenas com `force_overlap=True`.<br/>**Ordenação:** `ordering = ["start_time"]`. |
 | **`Task`** | Item do Checklist (`TenantModel`, `WeddingOwnedMixin`) | `wedding` (`ForeignKey`, `CASCADE`), `title`, `description`, `due_date`, `is_completed` (boolean, default False) | **Ordenação Padrão:** `ordering = ["is_completed", "due_date", "created_at"]` (tarefas pendentes e com prazos mais próximos aparecem primeiro). |
-| **`EventService`** | Mutação e Validação | `create()`, `update()`, `delete()` | Executa validações em `@transaction.atomic`. Gerencia flags internas `_caller_internal` e `_allow_historical_start`. |
+| **`EventService`** | Mutação e Validação | `create()`, `update()`, `delete()` | Executa validações em `@transaction.atomic`. Valida `_validate_event_overlap` e gerencia flags internas `_caller_internal` e `_allow_historical_start`. |
 | **`TemplateEngine`** | Geração Automática | `get_template_events()` | Define listas de marcos com `offset_days` relativos à data da cerimônia para inicialização rápida de novos casamentos. |
 
 ---
@@ -76,14 +77,19 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
   - [`apps/scheduler/models/event.py`](../../../backend/apps/scheduler/models/event.py) (`Event`): Encapsula invariantes temporais em `clean()` (`end_time >= start_time`), propriedade semântica `is_payment_event`, configuração de lembretes (`enable_reminder`, `disable_reminder`) e método de reprogramação `reschedule()`.
   - [`apps/scheduler/models/task.py`](../../../backend/apps/scheduler/models/task.py) (`Task`): Encapsula métodos de ciclo de vida (`complete()`, `reopen()`, `update_details()`) e propriedades dinâmicas de atraso (`is_overdue`, `days_overdue`).
 - **Casos de Uso e Serviços:**
-  - [`apps/scheduler/services/events.py`](../../../backend/apps/scheduler/services/events.py) (`EventService`): Orquestra criação e mutações sob `@transaction.atomic`, validando a proteção somente-leitura de pagamentos (BR-S01), data futura na criação manual (BR-S02) e salvando estritamente com `update_fields`.
+  - [`apps/scheduler/services/events.py`](../../../backend/apps/scheduler/services/events.py) (`EventService`): Orquestra criação e mutações sob `@transaction.atomic`, validando a proteção de pagamentos (BR-S01), data futura na criação manual (BR-S02), detecção de sobreposição com *soft override* `force_overlap` (BR-S03) e salvando estritamente com `update_fields`.
   - [`apps/scheduler/services/tasks.py`](../../../backend/apps/scheduler/services/tasks.py) (`TaskService`): Coordena checklist, métodos semânticos `complete()` e `reopen()` e mutações cirúrgicas por `update_fields`.
   - [`apps/scheduler/services/templates.py`](../../../backend/apps/scheduler/services/templates.py) (`TemplateEngine`): Define e provisiona cronogramas de casamentos parametrizados por marcos temporais relativos.
 - **Seletores de Leitura CQRS:**
-  - [`apps/scheduler/selectors/event_selectors.py`](../../../backend/apps/scheduler/selectors/event_selectors.py) (`event_list_selector`, `event_get_selector`): Consultas otimizadas com relacionamentos pré-carregados (`select_related=["wedding", "company"]`) e filtros por período.
+  - [`apps/scheduler/selectors/event_selectors.py`](../../../backend/apps/scheduler/selectors/event_selectors.py) (`event_list_selector`, `event_get_selector`): Consultas lazy otimizadas com relacionamentos pré-carregados (`select_related=["wedding", "company"]`) e ordenação cronológica.
+  - [`apps/scheduler/selectors/event_selectors.py`](../../../backend/apps/scheduler/selectors/event_selectors.py) (`scheduler_summary_selector`): Seletor agregado para KPIs da agenda (`total`, `upcoming_7_days`, `with_reminder`).
   - [`apps/scheduler/selectors/task_selectors.py`](../../../backend/apps/scheduler/selectors/task_selectors.py) (`task_list_selector`, `task_get_selector`, `task_urgent_list_selector`): Consultas isoladas por tenant e casamento para tarefas do checklist.
-- **Validação de Entrada (Pydantic):**
-  - [`apps/scheduler/schemas/`](../../../backend/apps/scheduler/schemas/): Pacote modular (`event.py`, `task.py`) com regras de Nível 1 (sanitização de strings via `str_strip_whitespace=True`, limites de caracteres e validações de data/hora).
+- **Validação de Entrada e Schemas Ninja (Pydantic):**
+  - [`apps/scheduler/schemas/event.py`](../../../backend/apps/scheduler/schemas/event.py):
+    - `EventIn` e `EventPatchIn`: Contratos de entrada com flag `force_overlap: bool = False` e sanitização de strings.
+    - `EventOut`: DTO enriquecido que inclui a projeção `wedding_name: str | None`, calculada dinamicamente pelo método `resolve_wedding_name(obj)` a partir de `bride_name` e `groom_name`.
+    - `SchedulerSummaryOut`: DTO para resumo estatístico da agenda (`total`, `upcoming_7_days`, `with_reminder`).
+  - [`apps/scheduler/schemas/task.py`](../../../backend/apps/scheduler/schemas/task.py): Schemas de entrada e saída para checklist com prazos e status.
 
 ---
 
@@ -94,7 +100,14 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer),
 - **Managers:** `EventQuerySet`, `TaskQuerySet` em `managers.py`.
 - **Services:** `events.py`, `tasks.py`, `templates.py`.
 - **Selectors:** `event_selectors.py`, `task_selectors.py`.
-- **Endpoints:** `api/events.py` (`/scheduler/events/`) e `api/tasks.py` (`/scheduler/tasks/`, com endpoints de ciclo de vida `POST /{uuid}/complete/` e `POST /{uuid}/reopen/`).
+- **Endpoints:**
+  - `api/events.py`:
+    - `GET /scheduler/events/` (paginado via `@paginate` do Django Ninja, retornando itens serializados com `EventOut`).
+    - `GET /scheduler/events/summary/` e rota raiz `GET /api/v1/scheduler/summary/` (resumo estatístico com `SchedulerSummaryOut`).
+    - `GET /scheduler/events/{uuid}/`, `POST /scheduler/events/`, `PATCH /scheduler/events/{uuid}/`, `DELETE /scheduler/events/{uuid}/`.
+  - `api/tasks.py`:
+    - `GET /scheduler/tasks/`, `POST /scheduler/tasks/`, `PATCH /scheduler/tasks/{uuid}/`, `DELETE /scheduler/tasks/{uuid}/`.
+    - Ciclo de vida: `POST /scheduler/tasks/{uuid}/complete/` e `POST /scheduler/tasks/{uuid}/reopen/`.
 
 ### Camada de Frontend (`frontend/src/features/scheduler/`)
 - **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**

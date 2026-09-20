@@ -134,3 +134,18 @@ def cancel_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.cancel(company=user.company, instance=instance)
     return wedding_get_selector(company=user.company, uuid=uuid)
+
+
+@router.post(
+    "/{uuid:uuid}/reopen/",
+    response={200: WeddingOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="weddings_reopen",
+)
+def reopen_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
+    """
+    Caso de uso: Reabre um casamento cancelado voltando para em andamento.
+    """
+    user = request.user
+    instance = wedding_get_selector(company=user.company, uuid=uuid)
+    WeddingService.reopen(company=user.company, instance=instance)
+    return wedding_get_selector(company=user.company, uuid=uuid)

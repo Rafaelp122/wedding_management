@@ -456,6 +456,73 @@ class TestFinancesNinjaAPI:
         assert len(items) == 1
         assert items[0]["status"] != "PAID"
 
+    def test_contracts_lookup_success(
+        self, auth_client: Any, user: Any, seed_data: Any
+    ) -> None:
+        """
+        Verifica a listagem de contratos vinculados ao casamento
+        ordenados por nome.
+        """
+        wedding = seed_data["my_budget"].wedding
+        c1 = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            name="Z Buffet",
+            total_amount=Decimal("12000.00"),
+        )
+        c2 = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            name="A Decoração",
+            total_amount=Decimal("8000.00"),
+        )
+
+        response = auth_client.get(
+            f"/api/v1/finances/expenses/contracts-lookup/?wedding_id={wedding.uuid}"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        # Ordenado por nome ("A Decoração" antes de "Z Buffet")
+        assert data[0]["uuid"] == str(c2.uuid)
+        assert data[0]["name"] == "A Decoração"
+        assert Decimal(data[0]["total_amount"]) == Decimal("8000.00")
+        assert data[1]["uuid"] == str(c1.uuid)
+        assert data[1]["name"] == "Z Buffet"
+
+    def test_contracts_lookup_multitenancy_and_wedding_isolation(
+        self, auth_client: Any, user: Any, seed_data: Any
+    ) -> None:
+        """Contratos de outro tenant ou casamento não devem vazar no lookup."""
+        other_user = UserFactory()
+        other_wedding = WeddingService.create(
+            other_user.company,
+            WeddingIn(
+                bride_name="Noiva 2",
+                groom_name="Noivo 2",
+                location="Local",
+                date=date(2026, 12, 1),
+                template="civil_buffet_3m",
+                expected_guests=50,
+            ),
+        )
+        ContractFactory(
+            wedding=other_wedding,
+            company=other_user.company,
+            name="Outro Contrato",
+        )
+
+        response = auth_client.get(
+            f"/api/v1/finances/expenses/contracts-lookup/?wedding_id={other_wedding.uuid}"
+        )
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_contracts_lookup_missing_wedding_id(self, auth_client: Any) -> None:
+        """Sem wedding_id, endpoint deve responder 422 Unprocessable Entity."""
+        response = auth_client.get("/api/v1/finances/expenses/contracts-lookup/")
+        assert response.status_code == 422
+
 
 @pytest.mark.django_db
 class TestFinancesAPIErrorHandling:

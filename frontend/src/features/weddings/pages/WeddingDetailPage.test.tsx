@@ -421,4 +421,36 @@ describe("WeddingDetailPage", () => {
 
     await waitFor(() => expect(cancelCalled).toBe(true));
   });
+
+  it("reopens wedding via reopen button and calls API", async () => {
+    let reopenCalled = false;
+    server.use(
+      http.get("*/api/v1/weddings/:uuid/", () => {
+        return HttpResponse.json({
+          ...mockWedding,
+          uuid: "some-uuid",
+          status: "CANCELED",
+          allowed_transitions: ["IN_PROGRESS"],
+        });
+      }),
+      http.post("*/api/v1/weddings/:uuid/reopen/", () => {
+        reopenCalled = true;
+        return HttpResponse.json({
+          ...mockWedding,
+          uuid: "some-uuid",
+          status: "IN_PROGRESS",
+        });
+      })
+    );
+    vi.mocked(useParams).mockReturnValue({ uuid: "some-uuid" });
+
+    render(<WeddingDetailPage />, {
+      initialEntries: ["/weddings/some-uuid"],
+    });
+
+    const reopenBtn = await screen.findByTitle("Reabrir casamento");
+    await userEvent.click(reopenBtn);
+
+    await waitFor(() => expect(reopenCalled).toBe(true));
+  });
 });

@@ -19,5 +19,7 @@ export interface BudgetOut {
   total_allocated?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   unallocated_budget?: string;
+  tenant_average_budget?: string | null;
+  comparison_percentage?: number | null;
   notes?: string | null;
 }

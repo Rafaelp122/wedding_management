@@ -15,7 +15,7 @@ tests:
 # Máquina de Estados de Contratos e Itens Logísticos
 
 > **Categoria:** Regra de Negócio (Domínio Logístico)
-> **Relacionados:** [Hierarquia de Contratos e Aditivos](contract-parent-child-hierarchy.md) · [Validação de CNPJ](cnpj-validation-rules.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md) · [ADR-030: Rich Domain Model e Validação em 3 Níveis](../../adr/030-rich-domain-model-service-layer.md)
+> **Relacionados:** [MOC de Logística](index.md) · [Hierarquia de Contratos e Aditivos](contract-parent-child-hierarchy.md) · [Validação de CNPJ](cnpj-validation-rules.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md) · [ADR-030: Rich Domain Model e Validação em 3 Níveis](../../adr/030-rich-domain-model-service-layer.md)
 
 ---
 

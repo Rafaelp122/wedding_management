@@ -126,7 +126,9 @@ export const ContractUploadDialog = memo(function ContractUploadDialog({
                 control={form.control}
                 name="status"
                 label="Status"
-                items={CONTRACT_STATUS_OPTIONS.filter((o) => o.value !== "CANCELED")}
+                items={CONTRACT_STATUS_OPTIONS.filter(
+                  (o) => o.value !== "CANCELED" && o.value !== "SIGNED",
+                )}
                 getItemKey={(o) => o.value}
                 getItemLabel={(o) => o.label}
               />

@@ -24,12 +24,11 @@ import { EVENT_LABELS } from "../constants";
 
 interface SchedulerEventsTableProps {
   events: EventOut[];
-  weddingsByUuid: Map<string, string>;
+  weddingsByUuid?: Map<string, string>;
 }
 
 export const SchedulerEventsTable = memo(function SchedulerEventsTable({
   events,
-  weddingsByUuid,
 }: SchedulerEventsTableProps) {
   return (
     <Card>
@@ -66,7 +65,7 @@ export const SchedulerEventsTable = memo(function SchedulerEventsTable({
                 events.map((event) => (
                   <TableRow key={event.uuid}>
                     <TableCell className="font-medium">{event.title}</TableCell>
-                    <TableCell>{weddingsByUuid.get(event.wedding) ?? event.wedding}</TableCell>
+                    <TableCell>{event.wedding_name ?? event.wedding}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">
                         {EVENT_LABELS[event.event_type] ?? event.event_type}

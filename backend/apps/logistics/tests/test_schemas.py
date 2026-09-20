@@ -7,8 +7,10 @@ import pytest
 from pydantic import ValidationError
 
 from apps.logistics.schemas import (
+    ContractDetailAggregateOut,
     ContractFullCreateIn,
     ContractIn,
+    ContractOut,
     ContractPatchIn,
     ContractStatusTransitionIn,
     ContractUploadIn,
@@ -200,6 +202,67 @@ class TestContractSchemas:
 
         upload_in = ContractUploadIn(pdf_file_key="  path/to/key.pdf  ")
         assert upload_in.pdf_file_key == "path/to/key.pdf"
+
+    def test_contract_out_allowed_transitions(self) -> None:
+        """ContractOut resolve allowed_transitions conforme máquina de estados."""
+        from apps.logistics.models.contract import Contract
+
+        # Simula objeto com status e ALLOWED_TRANSITIONS
+        class DummyContract:
+            ALLOWED_TRANSITIONS = Contract.ALLOWED_TRANSITIONS
+
+            def __init__(self, status: str) -> None:
+                self.status = status
+
+        draft = DummyContract("DRAFT")
+        pending = DummyContract("PENDING")
+        signed = DummyContract("SIGNED")
+        canceled = DummyContract("CANCELED")
+
+        assert ContractOut.resolve_allowed_transitions(draft) == [  # type: ignore[arg-type]
+            "PENDING",
+            "CANCELED",
+        ]
+        assert ContractOut.resolve_allowed_transitions(pending) == [  # type: ignore[arg-type]
+            "SIGNED",
+            "DRAFT",
+            "CANCELED",
+        ]
+        assert ContractOut.resolve_allowed_transitions(signed) == [  # type: ignore[arg-type]
+            "CANCELED"
+        ]
+        assert ContractOut.resolve_allowed_transitions(canceled) == [  # type: ignore[arg-type]
+            "DRAFT"
+        ]
+
+    def test_contract_full_create_in_with_items_array(self) -> None:
+        """ContractFullCreateIn aceita lista tipada de ItemIn."""
+        w_id = uuid.uuid4()
+        s_id = uuid.uuid4()
+        items = [
+            ItemIn(name="Item A", quantity=2),
+            ItemIn(name="Item B", quantity=5),
+        ]
+
+        schema = ContractFullCreateIn(
+            wedding=w_id,
+            supplier=s_id,
+            name="Contrato com Itens",
+            total_amount=Decimal("1500.00"),
+            items=items,
+        )
+
+        assert len(schema.items) == 2
+        assert schema.items[0].name == "Item A"
+        assert schema.items[0].quantity == 2
+        assert schema.items[1].name == "Item B"
+        assert schema.items_data is None
+
+    def test_contract_detail_aggregate_out_schema(self) -> None:
+        """ContractDetailAggregateOut estrutura contract, items e addendums."""
+        assert "contract" in ContractDetailAggregateOut.model_fields
+        assert "items" in ContractDetailAggregateOut.model_fields
+        assert "addendums" in ContractDetailAggregateOut.model_fields
 
 
 class TestItemSchemas:

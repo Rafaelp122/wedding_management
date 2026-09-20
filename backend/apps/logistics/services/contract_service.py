@@ -138,33 +138,49 @@ class ContractService:
             BusinessRuleViolation: Se `items_data` não for uma lista de objetos
                 JSON compatíveis com ItemIn.
         """
-        try:
-            raw_items = json.loads(payload.items_data or "[]")
-        except json.JSONDecodeError as e:
-            raise BusinessRuleViolation(
-                detail="items_data deve ser um JSON válido.",
-                code="invalid_items_data",
-            ) from e
-
-        if not isinstance(raw_items, list) or not all(
-            isinstance(item_data, dict) for item_data in raw_items
-        ):
-            raise BusinessRuleViolation(
-                detail="items_data deve ser uma lista de objetos JSON.",
-                code="invalid_items_data",
-            )
-
-        try:
-            items_data = [
-                ItemIn(**{**item_data, "wedding": payload.wedding})
-                for item_data in raw_items
+        if payload.items:
+            return [
+                ItemIn(
+                    wedding=item.wedding or payload.wedding,
+                    contract=item.contract,
+                    name=item.name,
+                    description=item.description,
+                    quantity=item.quantity,
+                    acquisition_status=item.acquisition_status,
+                )
+                for item in payload.items
             ]
-        except PydanticValidationError as e:
-            raise BusinessRuleViolation(
-                detail="items_data contém item inválido.",
-                code="invalid_items_data",
-            ) from e
-        return items_data or None
+
+        if payload.items_data:
+            try:
+                raw_items = json.loads(payload.items_data)
+            except json.JSONDecodeError as e:
+                raise BusinessRuleViolation(
+                    detail="items_data deve ser um JSON válido.",
+                    code="invalid_items_data",
+                ) from e
+
+            if not isinstance(raw_items, list) or not all(
+                isinstance(item_data, dict) for item_data in raw_items
+            ):
+                raise BusinessRuleViolation(
+                    detail="items_data deve ser uma lista de objetos JSON.",
+                    code="invalid_items_data",
+                )
+
+            try:
+                items_data = [
+                    ItemIn(**{**item_data, "wedding": payload.wedding})
+                    for item_data in raw_items
+                ]
+            except PydanticValidationError as e:
+                raise BusinessRuleViolation(
+                    detail="items_data contém item inválido.",
+                    code="invalid_items_data",
+                ) from e
+            return items_data or None
+
+        return None
 
     @staticmethod
     def _build_full_expense_payload(

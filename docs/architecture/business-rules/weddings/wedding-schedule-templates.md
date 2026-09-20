@@ -14,7 +14,7 @@ tests:
 # Aplicação de Templates de Cronograma de Casamento
 
 > **Categoria:** Regra de Negócio (Domínio de Casamentos & Cronograma)
-> **Relacionados:** [ADR-031: Comunicação Entre Módulos](../../adr/031-inter-module-communication.md) · [Ciclo de Vida do Casamento](wedding-status-lifecycle.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Motor de Recorrência](../scheduler/recurrence-rules-engine.md) · [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Domínio de Casamentos](../../domains/weddings-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [MOC de Casamentos (Weddings)](index.md) · [ADR-031: Comunicação Entre Módulos](../../adr/031-inter-module-communication.md) · [Ciclo de Vida do Casamento](wedding-status-lifecycle.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Motor de Recorrência](../scheduler/recurrence-rules-engine.md) · [Proteção Somente-Leitura de Pagamentos](../scheduler/payment-event-readonly-guard.md) · [Domínio de Casamentos](../../domains/weddings-domain.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 

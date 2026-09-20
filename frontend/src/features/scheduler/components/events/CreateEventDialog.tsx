@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 import { EVENT_TYPE_OPTIONS, RECURRENCE_OPTIONS } from "../../constants";
 import { toDateTimeLocalValue, toISODateTime } from "../../utils";
 
@@ -39,7 +42,15 @@ export function CreateEventDialog({
   defaultStartTime,
   weddingOptions,
 }: CreateEventDialogProps) {
-  const { form, isPending, onSubmit, handleOpenChange } = useCreateEventForm({
+  const {
+    form,
+    isPending,
+    hasOverlapConflict,
+    confirmOverlap,
+    cancelOverlap,
+    onSubmit,
+    handleOpenChange,
+  } = useCreateEventForm({
     weddingUuid,
     defaultStartTime,
     onSuccess,
@@ -58,6 +69,42 @@ export function CreateEventDialog({
       submitLabel="Criar Evento"
       maxWidth="560px"
     >
+      {hasOverlapConflict && (
+        <Alert
+          variant="destructive"
+          className="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400"
+        >
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Conflito de Horário Detectado</AlertTitle>
+          <AlertDescription className="mt-2 space-y-3 text-xs sm:text-sm">
+            <p>
+              Já existe outro compromisso agendado para este horário no casamento. Deseja agendar mesmo assim com sobreposição?
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={cancelOverlap}
+                disabled={isPending}
+                className="h-8 text-xs"
+              >
+                Voltar e Ajustar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                onClick={confirmOverlap}
+                disabled={isPending}
+                className="h-8 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                Confirmar Sobreposição
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Wedding selector — only shown when multiple weddings available */}
       {weddingOptions && weddingOptions.length > 1 && (
         <FormField

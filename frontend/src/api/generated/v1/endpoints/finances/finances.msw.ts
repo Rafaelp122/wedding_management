@@ -15,6 +15,7 @@ import type {
 import type {
   BudgetCategoryOut,
   BudgetOut,
+  ContractLookupOut,
   ExpenseFromDocumentOut,
   ExpenseOut,
   InstallmentOut,
@@ -34,6 +35,7 @@ import {
   getFinancesCategoriesListResponseMock,
   getFinancesCategoriesReadResponseMock,
   getFinancesCategoriesUpdateResponseMock,
+  getFinancesExpensesContractsLookupResponseMock,
   getFinancesExpensesCreateResponseMock,
   getFinancesExpensesFromDocumentResponseMock,
   getFinancesExpensesListResponseMock,
@@ -47,7 +49,7 @@ import {
   getFinancesInstallmentsUnmarkAsPaidResponseMock
 } from './finances.faker';
 
-export { getFinancesBudgetsListResponseMock, getFinancesBudgetsCreateResponseMock, getFinancesBudgetsReadResponseMock, getFinancesBudgetsUpdateResponseMock, getFinancesBudgetsForWeddingResponseMock, getFinancesCategoriesListResponseMock, getFinancesCategoriesCreateResponseMock, getFinancesCategoriesReadResponseMock, getFinancesCategoriesUpdateResponseMock, getFinancesExpensesListResponseMock, getFinancesExpensesCreateResponseMock, getFinancesExpensesReadResponseMock, getFinancesExpensesUpdateResponseMock, getFinancesExpensesFromDocumentResponseMock, getFinancesExpensesRenegotiateResponseMock, getFinancesInstallmentsListResponseMock, getFinancesInstallmentsReadResponseMock, getFinancesInstallmentsMarkAsPaidResponseMock, getFinancesInstallmentsUnmarkAsPaidResponseMock, getFinancesInstallmentsAdjustResponseMock } from './finances.faker';
+export { getFinancesBudgetsListResponseMock, getFinancesBudgetsCreateResponseMock, getFinancesBudgetsReadResponseMock, getFinancesBudgetsUpdateResponseMock, getFinancesBudgetsForWeddingResponseMock, getFinancesCategoriesListResponseMock, getFinancesCategoriesCreateResponseMock, getFinancesCategoriesReadResponseMock, getFinancesCategoriesUpdateResponseMock, getFinancesExpensesListResponseMock, getFinancesExpensesCreateResponseMock, getFinancesExpensesContractsLookupResponseMock, getFinancesExpensesReadResponseMock, getFinancesExpensesUpdateResponseMock, getFinancesExpensesFromDocumentResponseMock, getFinancesExpensesRenegotiateResponseMock, getFinancesInstallmentsListResponseMock, getFinancesInstallmentsReadResponseMock, getFinancesInstallmentsMarkAsPaidResponseMock, getFinancesInstallmentsUnmarkAsPaidResponseMock, getFinancesInstallmentsAdjustResponseMock } from './finances.faker';
 
 
 export const getFinancesBudgetsListMockHandler = (overrideResponse?: PagedBudgetOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedBudgetOut> | PagedBudgetOut), options?: RequestHandlerOptions) => {
@@ -192,6 +194,18 @@ export const getFinancesExpensesCreateMockHandler = (overrideResponse?: ExpenseO
   }, options)
 }
 
+export const getFinancesExpensesContractsLookupMockHandler = (overrideResponse?: ContractLookupOut[] | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ContractLookupOut[]> | ContractLookupOut[]), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/finances/expenses/contracts-lookup/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getFinancesExpensesContractsLookupResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
+
 export const getFinancesExpensesReadMockHandler = (overrideResponse?: ExpenseOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<ExpenseOut> | ExpenseOut), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/finances/expenses/:uuid/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
 
@@ -322,6 +336,7 @@ export const getFinancesMock = () => [
   getFinancesCategoriesDeleteMockHandler(),
   getFinancesExpensesListMockHandler(),
   getFinancesExpensesCreateMockHandler(),
+  getFinancesExpensesContractsLookupMockHandler(),
   getFinancesExpensesReadMockHandler(),
   getFinancesExpensesUpdateMockHandler(),
   getFinancesExpensesDeleteMockHandler(),

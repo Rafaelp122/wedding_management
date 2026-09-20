@@ -82,16 +82,16 @@ describe("WeddingHeader", () => {
     expect(onCancelClick).toHaveBeenCalledTimes(1);
   });
 
-  it("calls onCompleteClick when complete button is clicked on or after wedding date", async () => {
+  it("calls onCompleteClick when complete button is clicked and can_complete is true", async () => {
     const onCompleteClick = vi.fn();
-    const pastWedding = createMockWedding({
+    const readyWedding = createMockWedding({
       ...mockWedding,
-      date: "2020-01-01",
+      can_complete: true,
     });
 
     render(
       <WeddingHeader
-        wedding={pastWedding}
+        wedding={readyWedding}
         displayDate="01 Jan 2020"
         checklistPercentage={100}
         onEditClick={vi.fn()}
@@ -106,16 +106,16 @@ describe("WeddingHeader", () => {
     expect(onCompleteClick).toHaveBeenCalledTimes(1);
   });
 
-  it("disables complete button when wedding date is in the future", () => {
+  it("disables complete button when can_complete is false", () => {
     const onCompleteClick = vi.fn();
-    const futureWedding = createMockWedding({
+    const notReadyWedding = createMockWedding({
       ...mockWedding,
-      date: "2099-12-31",
+      can_complete: false,
     });
 
     render(
       <WeddingHeader
-        wedding={futureWedding}
+        wedding={notReadyWedding}
         displayDate="31 Dez 2099"
         checklistPercentage={10}
         onEditClick={vi.fn()}
@@ -127,5 +127,71 @@ describe("WeddingHeader", () => {
       "O casamento só pode ser concluído na data do evento ou posterior"
     );
     expect(completeBtn).toBeDisabled();
+  });
+
+  it("renders reopen button when wedding status is CANCELED", async () => {
+    const onReopenClick = vi.fn();
+    const canceledWedding = createMockWedding({
+      ...mockWedding,
+      status: "CANCELED",
+      allowed_transitions: ["IN_PROGRESS"],
+    });
+
+    render(
+      <WeddingHeader
+        wedding={canceledWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={30}
+        onEditClick={vi.fn()}
+        onReopenClick={onReopenClick}
+      />
+    );
+
+    const reopenBtn = screen.getByTitle("Reabrir casamento");
+    expect(reopenBtn).toBeInTheDocument();
+    await userEvent.click(reopenBtn);
+
+    expect(onReopenClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders reopen button when allowed_transitions includes IN_PROGRESS", async () => {
+    const onReopenClick = vi.fn();
+    const weddingWithReopen = createMockWedding({
+      ...mockWedding,
+      status: "COMPLETED",
+      allowed_transitions: ["IN_PROGRESS"],
+    });
+
+    render(
+      <WeddingHeader
+        wedding={weddingWithReopen}
+        displayDate="15 Set 2026"
+        checklistPercentage={100}
+        onEditClick={vi.fn()}
+        onReopenClick={onReopenClick}
+      />
+    );
+
+    const reopenBtn = screen.getByTitle("Reabrir casamento");
+    expect(reopenBtn).toBeInTheDocument();
+  });
+
+  it("does not render reopen button when not canceled and allowed_transitions lacks IN_PROGRESS", () => {
+    const closedWedding = createMockWedding({
+      ...mockWedding,
+      status: "COMPLETED",
+      allowed_transitions: [],
+    });
+
+    render(
+      <WeddingHeader
+        wedding={closedWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={100}
+        onEditClick={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTitle("Reabrir casamento")).not.toBeInTheDocument();
   });
 });

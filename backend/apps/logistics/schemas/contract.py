@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, cast
 from ninja import Field, Schema
 from pydantic import UUID4, ConfigDict, field_validator, model_validator
 
+from apps.logistics.schemas.item import ItemIn, ItemOut
+
 
 if TYPE_CHECKING:
     from apps.logistics.models.contract import Contract
@@ -81,6 +83,7 @@ class ContractOut(Schema):
     has_file: bool = False
     file_name: str | None = None
     is_addendum: bool = False
+    allowed_transitions: list[str] = Field(default_factory=list)
 
     @staticmethod
     def resolve_expense_uuid(obj: "Contract") -> UUID4 | None:
@@ -180,6 +183,22 @@ class ContractOut(Schema):
         """Indica se este contrato é um termo aditivo (possui contrato pai)."""
         return obj.is_addendum
 
+    @staticmethod
+    def resolve_allowed_transitions(obj: "Contract") -> list[str]:
+        """Resolve as transições de status permitidas para o contrato."""
+        return [
+            t.value if hasattr(t, "value") else str(t)
+            for t in obj.ALLOWED_TRANSITIONS.get(obj.status, [])
+        ]
+
+
+class ContractDetailAggregateOut(Schema):
+    """Schema de saída agregado com contrato, itens e aditivos."""
+
+    contract: ContractOut
+    items: list[ItemOut]
+    addendums: list[ContractOut]
+
 
 class ContractSignIn(Schema):
     """Schema de entrada para formalização de assinatura de contrato."""
@@ -204,7 +223,8 @@ class ContractFullCreateIn(Schema):
     parent: UUID4 | None = None
     pdf_file_key: str | None = None
 
-    items_data: str = "[]"
+    items: list[ItemIn] = Field(default_factory=list)
+    items_data: str | None = None
 
     create_expense: bool = False
     expense_category: UUID4 | None = None
@@ -213,8 +233,10 @@ class ContractFullCreateIn(Schema):
 
     @field_validator("items_data")
     @classmethod
-    def validate_items_json(cls, v: str) -> str:
+    def validate_items_json(cls, v: str | None) -> str | None:
         """Valida se items_data é um JSON decodificável."""
+        if v is None:
+            return None
         try:
             json.loads(v or "[]")
         except json.JSONDecodeError as e:

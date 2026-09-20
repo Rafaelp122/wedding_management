@@ -25,11 +25,9 @@ export default function SchedulerPage() {
     pagination,
     events,
     eventsCount,
-    paginatedEvents,
     paginationInfo,
     isLoading,
     firstError,
-    weddingsByUuid,
     summary,
     weddingOptions,
     defaultWeddingUuid,
@@ -116,13 +114,11 @@ export default function SchedulerPage() {
 
           {viewMode === "table" ? (
             <SchedulerEventsTable
-              events={paginatedEvents}
-              weddingsByUuid={weddingsByUuid}
+              events={events}
             />
           ) : (
             <SchedulerCalendar
               events={events}
-              weddingsByUuid={weddingsByUuid}
               onSelectEvent={handleSelectEvent}
               onSelectSlot={handleSelectSlot}
             />

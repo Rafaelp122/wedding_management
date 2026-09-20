@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadFileToR2 } from "@/services/r2";
 
 interface ContractDocumentSectionProps {
   contractUuid: string;
@@ -48,17 +49,7 @@ export function ContractDocumentSection({
         },
       });
 
-      const uploadResponse = await fetch(uploadUrlRes.data.upload_url, {
-        method: "PUT",
-        body: selectedFile,
-        headers: {
-          "Content-Type": selectedFile.type || "application/octet-stream",
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Erro no envio do arquivo: ${uploadResponse.statusText}`);
-      }
+      await uploadFileToR2(uploadUrlRes.data.upload_url, selectedFile);
 
       await uploadMutation.mutateAsync({
         uuid: contractUuid,

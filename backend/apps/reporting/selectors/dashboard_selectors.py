@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -27,20 +28,14 @@ def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
     Gera um resumo consolidado de indicadores importantes para o dashboard da empresa.
 
     Busca estatísticas financeiras gerais (parcelas a vencer e atrasadas),
-    quantidade de tarefas urgentes, contratos pendentes e uma listagem
-    de casamentos críticos ocorrendo nos próximos 90 dias com pendências.
+    quantidade de tarefas urgentes, contratos pendentes, listas de detalhamento
+    e uma listagem de casamentos críticos ocorrendo nos próximos 90 dias com pendências.
 
     Args:
         company: O tenant atual para isolamento de dados.
 
     Returns:
-        Dicionário contendo as chaves:
-            - pending_installments_7d (str): Valor pendente em 7 dias formatado.
-            - urgent_tasks_count (int): Tarefas urgentes acumuladas.
-            - overdue_installments_amount (str): Valor total em atraso formatado.
-            - overdue_installments_count (int): Quantidade de parcelas em atraso.
-            - pending_contracts_count (int): Quantidade de contratos pendentes.
-            - critical_weddings (list[dict]): Lista dos top 5 casamentos críticos.
+        Dicionário contendo os KPIs agregados e as listas de detalhamento operacional.
     """
     logger.info(f"Computando resumo do dashboard para company_id={company.id}")
     today = date.today()
@@ -78,6 +73,19 @@ def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
             }
         )
 
+    upcoming_installments = FinancialSummarySelector.upcoming_installments_detail(
+        company=company, today=today, limit=10
+    )
+    overdue_installments = FinancialSummarySelector.overdue_installments_detail(
+        company=company, today=today, limit=10
+    )
+    urgent_tasks = TaskSummarySelector.urgent_tasks_detail(
+        company=company, today=today, limit=10
+    )
+    pending_contracts = ContractSummarySelector.pending_contracts_detail(
+        company=company, limit=10
+    )
+
     logger.info(
         f"Dashboard resumo computado: company_id={company.id}, "
         f"critical_weddings={len(critical_weddings)}"
@@ -89,6 +97,10 @@ def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
         "overdue_installments_count": overdue_count,
         "pending_contracts_count": pending_contracts_count,
         "critical_weddings": critical_weddings,
+        "upcoming_installments": upcoming_installments,
+        "overdue_installments": overdue_installments,
+        "urgent_tasks": urgent_tasks,
+        "pending_contracts": pending_contracts,
     }
 
 
@@ -101,8 +113,8 @@ def wedding_overview_selector(
     Computa uma visão geral detalhada de indicadores de um casamento específico.
 
     Reúne métricas de contagem regressiva, uso do orçamento, progresso de tarefas,
-    assinatura de contratos, parcelas financeiras a vencer, tarefas urgentes
-    e resumo por categorias de despesa.
+    assinatura de contratos, parcelas financeiras a vencer, tarefas urgentes,
+    resumo por categorias de despesa e totais orçados/gastos consolidados.
 
     Args:
         company: O tenant atual para isolamento de dados.
@@ -141,6 +153,15 @@ def wedding_overview_selector(
         company=company, wedding=wedding
     )
 
+    total_allocated = sum(
+        (Decimal(c["allocated"]) for c in categories_summary),
+        Decimal("0.00"),
+    )
+    total_spent = sum(
+        (Decimal(c["spent"]) for c in categories_summary),
+        Decimal("0.00"),
+    )
+
     logger.info(
         f"Visão geral do casamento uuid={wedding_uuid} computada: "
         f"days_until={days_until}, budget_pct={budget_pct}"
@@ -155,4 +176,37 @@ def wedding_overview_selector(
         "upcoming_installments": upcoming_installments,
         "urgent_tasks": urgent_tasks,
         "categories_summary": categories_summary,
+        "total_allocated": f"{total_allocated:.2f}",
+        "total_spent": f"{total_spent:.2f}",
+    }
+
+
+def dashboard_operations_selector(*, company: Company) -> dict[str, Any]:
+    """
+    Retorna os indicadores operacionais consolidados da empresa (Top 5 de cada):
+    próximos casamentos, tarefas urgentes e contratos pendentes.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+
+    Returns:
+        Dicionário com as listas de upcoming_weddings, urgent_tasks e pending_contracts.
+    """
+    logger.info(f"Computando painel de operações para company_id={company.id}")
+    today = date.today()
+
+    upcoming_weddings = WeddingSummarySelector.upcoming_weddings_detail(
+        company=company, today=today, limit=5
+    )
+    urgent_tasks = TaskSummarySelector.urgent_tasks_detail(
+        company=company, today=today, limit=5
+    )
+    pending_contracts = ContractSummarySelector.pending_contracts_detail(
+        company=company, limit=5
+    )
+
+    return {
+        "upcoming_weddings": upcoming_weddings,
+        "urgent_tasks": urgent_tasks,
+        "pending_contracts": pending_contracts,
     }

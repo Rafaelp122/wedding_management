@@ -3,6 +3,7 @@ Testes unitários e de integração para Dashboard Selectors do módulo Reportin
 """
 
 from datetime import date, timedelta
+from decimal import Decimal
 from typing import Any, cast
 from unittest.mock import patch
 
@@ -18,7 +19,14 @@ from apps.finances.tests.factories import (
 )
 from apps.logistics.tests.factories import ContractFactory, SupplierFactory
 from apps.reporting.selectors import (
+    cash_flow_by_month,
+    dashboard_operations_selector,
     dashboard_summary_selector,
+    overdue_installments_detail,
+    pending_contracts_detail,
+    tasks_progress_by_wedding,
+    upcoming_installments_detail,
+    urgent_tasks_detail,
     wedding_overview_selector,
 )
 from apps.scheduler.tests.factories import TaskFactory
@@ -94,6 +102,13 @@ class TestDashboardSelectors:
         assert len(summary["critical_weddings"]) == 1
         assert summary["critical_weddings"][0]["uuid"] == wedding.uuid
         assert summary["critical_weddings"][0]["days_until"] == 20
+        assert len(summary["upcoming_installments"]) == 1
+        assert summary["upcoming_installments"][0]["amount"] == "2500.00"
+        assert len(summary["overdue_installments"]) == 1
+        assert summary["overdue_installments"][0]["amount"] == "1000.00"
+        assert len(summary["urgent_tasks"]) == 1
+        assert len(summary["pending_contracts"]) == 1
+        assert summary["pending_contracts"][0]["supplier_name"] == supplier.name
 
     def test_dashboard_summary_selector_empty_company(self, user: Any) -> None:
         summary = dashboard_summary_selector(company=user.company)
@@ -104,6 +119,10 @@ class TestDashboardSelectors:
         assert summary["overdue_installments_count"] == 0
         assert summary["pending_contracts_count"] == 0
         assert summary["critical_weddings"] == []
+        assert summary["upcoming_installments"] == []
+        assert summary["overdue_installments"] == []
+        assert summary["urgent_tasks"] == []
+        assert summary["pending_contracts"] == []
 
     def test_dashboard_summary_selector_multitenancy(self, user: Any) -> None:
         other_company = CompanyFactory()
@@ -222,6 +241,8 @@ class TestDashboardSelectors:
         assert len(overview["categories_summary"]) == 1
         assert overview["categories_summary"][0]["name"] == category.name
         assert overview["categories_summary"][0]["percentage"] == 20
+        assert overview["total_allocated"] == "5000.00"
+        assert overview["total_spent"] == "1000.00"
 
     def test_wedding_overview_selector_not_found(self, user: Any) -> None:
         other_company = CompanyFactory()
@@ -294,3 +315,346 @@ class TestDashboardSelectors:
         assert item is not None
         assert item.expense_id == expense.uuid
         assert item.total_paid == Decimal("400.00")
+
+    def test_cash_flow_by_month_success(self, user: Any) -> None:
+        """
+        Valida que cash_flow_by_month retorna exatamente 12 meses preenchidos
+        e agrega valores corretamente.
+        """
+        wedding = WeddingFactory(company=user.company)
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+
+        # Janeiro (mês 1): parcela PAGA 1200.00
+        InstallmentFactory(
+            expense=expense,
+            amount=1200.00,
+            due_date=date(2026, 1, 15),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date(2026, 1, 15),
+            wedding=wedding,
+            company=user.company,
+        )
+        # Janeiro (mês 1): parcela PENDENTE 800.00
+        InstallmentFactory(
+            expense=expense,
+            amount=800.00,
+            due_date=date(2026, 1, 20),
+            status=Installment.StatusChoices.PENDING,
+            wedding=wedding,
+            company=user.company,
+        )
+        # Fevereiro (mês 2): parcela ATRASADA (OVERDUE) 500.00
+        InstallmentFactory(
+            expense=expense,
+            amount=500.00,
+            due_date=date(2026, 2, 10),
+            status=Installment.StatusChoices.OVERDUE,
+            wedding=wedding,
+            company=user.company,
+        )
+        # Outro ano (2025): não deve aparecer no cômputo de 2026
+        InstallmentFactory(
+            expense=expense,
+            amount=9999.00,
+            due_date=date(2025, 1, 15),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date(2025, 1, 15),
+            wedding=wedding,
+            company=user.company,
+        )
+
+        flow = cash_flow_by_month(company=user.company, year=2026)
+
+        assert len(flow) == 12
+        assert flow[0] == {"month": 1, "paid": "1200.00", "pending": "800.00"}
+        assert flow[1] == {"month": 2, "paid": "0.00", "pending": "500.00"}
+        for i in range(2, 12):
+            assert flow[i] == {"month": i + 1, "paid": "0.00", "pending": "0.00"}
+
+    def test_cash_flow_by_month_multitenancy(self, user: Any) -> None:
+        """Valida isolamento multi-tenant de cash_flow_by_month."""
+        other_company = CompanyFactory()
+        other_wedding = WeddingFactory(company=other_company)
+        other_category = BudgetCategoryFactory(wedding=other_wedding)
+        other_expense = ExpenseFactory(
+            wedding=other_wedding, category=other_category, contract=None
+        )
+
+        InstallmentFactory(
+            expense=other_expense,
+            amount=5000.00,
+            due_date=date(2026, 3, 10),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date(2026, 3, 10),
+            wedding=other_wedding,
+            company=other_company,
+        )
+
+        flow = cash_flow_by_month(company=user.company, year=2026)
+        assert len(flow) == 12
+        assert flow[2] == {"month": 3, "paid": "0.00", "pending": "0.00"}
+
+    def test_upcoming_and_overdue_installments_detail(self, user: Any) -> None:
+        """
+        Valida que upcoming_installments_detail e overdue_installments_detail
+        retornam dados formatados.
+        """
+        today = date(2026, 6, 15)
+        wedding = WeddingFactory(
+            company=user.company,
+            bride_name="Juliana",
+            groom_name="Rodrigo",
+        )
+        category = BudgetCategoryFactory(wedding=wedding)
+        expense = ExpenseFactory(wedding=wedding, category=category, contract=None)
+
+        # Parcela a vencer em 3 dias
+        inst_upcoming = cast(
+            Any,
+            InstallmentFactory(
+                expense=expense,
+                amount=1500.00,
+                due_date=today + timedelta(days=3),
+                status=Installment.StatusChoices.PENDING,
+                installment_number=1,
+                wedding=wedding,
+                company=user.company,
+            ),
+        )
+
+        # Parcela vencida há 5 dias
+        inst_overdue = cast(
+            Any,
+            InstallmentFactory(
+                expense=expense,
+                amount=2000.00,
+                due_date=today - timedelta(days=5),
+                status=Installment.StatusChoices.OVERDUE,
+                installment_number=2,
+                wedding=wedding,
+                company=user.company,
+            ),
+        )
+
+        # Outra empresa (multi-tenant)
+        other_company = CompanyFactory()
+        other_wedding = WeddingFactory(company=other_company)
+        other_cat = BudgetCategoryFactory(wedding=other_wedding)
+        other_exp = ExpenseFactory(
+            wedding=other_wedding, category=other_cat, contract=None
+        )
+        InstallmentFactory(
+            expense=other_exp,
+            amount=9999.00,
+            due_date=today + timedelta(days=2),
+            status=Installment.StatusChoices.PENDING,
+            wedding=other_wedding,
+            company=other_company,
+        )
+
+        upcoming = upcoming_installments_detail(
+            company=user.company, today=today, limit=10
+        )
+        assert len(upcoming) == 1
+        assert upcoming[0]["uuid"] == inst_upcoming.uuid
+        assert upcoming[0]["wedding_name"] == "Juliana e Rodrigo"
+        assert upcoming[0]["amount"] == "1500.00"
+        assert upcoming[0]["installment_number"] == 1
+        assert upcoming[0]["status"] == "PENDING"
+
+        overdue = overdue_installments_detail(
+            company=user.company, today=today, limit=10
+        )
+        assert len(overdue) == 1
+        assert overdue[0]["uuid"] == inst_overdue.uuid
+        assert overdue[0]["wedding_name"] == "Juliana e Rodrigo"
+        assert overdue[0]["amount"] == "2000.00"
+        assert overdue[0]["installment_number"] == 2
+        assert overdue[0]["status"] == "OVERDUE"
+
+    def test_tasks_progress_by_wedding(self, user: Any) -> None:
+        """
+        Valida que tasks_progress_by_wedding agrupa tarefas por casamento
+        e calcula percentual.
+        """
+        today = date.today()
+        wedding1 = WeddingFactory(
+            company=user.company,
+            bride_name="Marina",
+            groom_name="Lucas",
+            date=today + timedelta(days=60),
+        )
+        wedding2 = WeddingFactory(
+            company=user.company,
+            bride_name="Camila",
+            groom_name="Felipe",
+            date=today + timedelta(days=90),
+        )
+
+        # Casamento 1: 4 tarefas (3 concluídas -> 75%)
+        for _ in range(3):
+            TaskFactory(wedding=wedding1, company=user.company, is_completed=True)
+        TaskFactory(wedding=wedding1, company=user.company, is_completed=False)
+
+        # Casamento 2: 2 tarefas (1 concluída -> 50%)
+        TaskFactory(wedding=wedding2, company=user.company, is_completed=True)
+        TaskFactory(wedding=wedding2, company=user.company, is_completed=False)
+
+        # Outra empresa
+        other_company = CompanyFactory()
+        other_w = WeddingFactory(company=other_company)
+        TaskFactory(wedding=other_w, company=other_company, is_completed=True)
+
+        progress = tasks_progress_by_wedding(company=user.company)
+        assert len(progress) == 2
+        # Ordenado por volume total decrescente: wedding1 (4 tarefas) primeiro
+        assert progress[0]["wedding_uuid"] == wedding1.uuid
+        assert progress[0]["wedding_name"] == "Marina e Lucas"
+        assert progress[0]["total_tasks"] == 4
+        assert progress[0]["completed_tasks"] == 3
+        assert progress[0]["progress_pct"] == 75
+
+        assert progress[1]["wedding_uuid"] == wedding2.uuid
+        assert progress[1]["wedding_name"] == "Camila e Felipe"
+        assert progress[1]["total_tasks"] == 2
+        assert progress[1]["completed_tasks"] == 1
+        assert progress[1]["progress_pct"] == 50
+
+    def test_tasks_progress_by_wedding_filter_year(self, user: Any) -> None:
+        """Valida filtro de ano em tasks_progress_by_wedding."""
+        wedding_2027 = WeddingFactory(
+            company=user.company,
+            date=date(2027, 5, 1),
+            bride_name="Ana",
+            groom_name="Bruno",
+        )
+        wedding_2028 = WeddingFactory(
+            company=user.company,
+            date=date(2028, 5, 1),
+            bride_name="Clara",
+            groom_name="Diego",
+        )
+        TaskFactory(wedding=wedding_2027, company=user.company, is_completed=True)
+        TaskFactory(wedding=wedding_2028, company=user.company, is_completed=True)
+
+        progress_2027 = tasks_progress_by_wedding(company=user.company, year=2027)
+        assert len(progress_2027) == 1
+        assert progress_2027[0]["wedding_uuid"] == wedding_2027.uuid
+
+    def test_urgent_tasks_detail(self, user: Any) -> None:
+        """Valida busca de tarefas atrasadas no tenant."""
+        today = date(2026, 4, 10)
+        wedding = WeddingFactory(
+            company=user.company,
+            bride_name="Sofia",
+            groom_name="Gabriel",
+        )
+        task_urgent = cast(
+            Any,
+            TaskFactory(
+                wedding=wedding,
+                company=user.company,
+                title="Degustação do Bolo",
+                due_date=today - timedelta(days=2),
+                is_completed=False,
+            ),
+        )
+        # Tarefa já concluída: não deve vir
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            title="Contratar Banda",
+            due_date=today - timedelta(days=3),
+            is_completed=True,
+        )
+
+        tasks = urgent_tasks_detail(company=user.company, today=today, limit=10)
+        assert len(tasks) == 1
+        assert tasks[0]["uuid"] == task_urgent.uuid
+        assert tasks[0]["wedding_name"] == "Sofia e Gabriel"
+        assert tasks[0]["title"] == "Degustação do Bolo"
+        assert tasks[0]["due_date"] == task_urgent.due_date
+
+    def test_pending_contracts_detail(self, user: Any) -> None:
+        """
+        Valida busca de contratos pendentes com detalhes de fornecedor e casamento.
+        """
+        wedding = WeddingFactory(
+            company=user.company,
+            bride_name="Paula",
+            groom_name="Marcos",
+        )
+        supplier = SupplierFactory(company=user.company, name="Buffet Delícias")
+        contract = cast(
+            Any,
+            ContractFactory(
+                wedding=wedding,
+                company=user.company,
+                supplier=supplier,
+                status="PENDING",
+                total_amount=Decimal("15000.00"),
+            ),
+        )
+        # Contrato assinado: não deve vir
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="SIGNED",
+            total_amount=Decimal("5000.00"),
+            pdf_file="contracts/dummy.pdf",
+            signed_date=date.today(),
+        )
+
+        contracts = pending_contracts_detail(company=user.company, limit=10)
+        assert len(contracts) == 1
+        assert contracts[0]["uuid"] == contract.uuid
+        assert contracts[0]["wedding_name"] == "Paula e Marcos"
+        assert contracts[0]["supplier_name"] == "Buffet Delícias"
+        assert contracts[0]["total_amount"] == "15000.00"
+        assert contracts[0]["status"] == "PENDING"
+
+    def test_dashboard_operations_selector(self, user: Any) -> None:
+        """
+        Valida consolidação de operações
+        (próximos casamentos, tarefas e contratos Top 5).
+        """
+        today = date.today()
+        wedding = WeddingFactory(
+            company=user.company,
+            bride_name="Fernanda",
+            groom_name="Thiago",
+            date=today + timedelta(days=15),
+            status=Wedding.StatusChoices.IN_PROGRESS,
+        )
+        supplier = SupplierFactory(company=user.company, name="DJ Som & Luz")
+        ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            supplier=supplier,
+            status="DRAFT",
+            total_amount=Decimal("3500.00"),
+        )
+        TaskFactory(
+            wedding=wedding,
+            company=user.company,
+            title="Aprovar playlist",
+            due_date=today - timedelta(days=1),
+            is_completed=False,
+        )
+
+        operations = dashboard_operations_selector(company=user.company)
+        assert "upcoming_weddings" in operations
+        assert "urgent_tasks" in operations
+        assert "pending_contracts" in operations
+
+        assert len(operations["upcoming_weddings"]) >= 1
+        assert operations["upcoming_weddings"][0]["uuid"] == wedding.uuid
+        assert operations["upcoming_weddings"][0]["days_until"] == 15
+
+        assert len(operations["urgent_tasks"]) == 1
+        assert operations["urgent_tasks"][0]["title"] == "Aprovar playlist"
+
+        assert len(operations["pending_contracts"]) == 1
+        assert operations["pending_contracts"][0]["supplier_name"] == "DJ Som & Luz"

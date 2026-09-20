@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -131,3 +131,40 @@ def contract_consolidated_total_selector(
     return (contract.total_amount or Decimal("0.00")) + (
         addendums_sum or Decimal("0.00")
     )
+
+
+def contract_detail_aggregate_selector(
+    *,
+    company: Company,
+    contract_uuid: UUID | str,
+) -> dict[str, Any]:
+    """
+    Busca o contrato com totais anotados, seus itens associados e termos aditivos.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+        contract_uuid: Identificador único do contrato.
+
+    Returns:
+        Dicionário agregando o contrato com totais, itens e aditivos.
+
+    Raises:
+        ObjectNotFoundError: Se o contrato não for encontrado ou
+            não pertencer ao tenant.
+    """
+    try:
+        contract = (
+            Contract.objects.for_tenant(company)
+            .with_totals()
+            .select_related("wedding", "supplier", "parent")
+            .prefetch_related("items", "addendums")
+            .get(uuid=contract_uuid)
+        )
+    except (Contract.DoesNotExist, ValueError, ValidationError) as e:
+        raise ObjectNotFoundError(detail="Contrato não encontrado.") from e
+
+    return {
+        "contract": contract,
+        "items": list(contract.items.all()),
+        "addendums": list(contract.addendums.all()),
+    }

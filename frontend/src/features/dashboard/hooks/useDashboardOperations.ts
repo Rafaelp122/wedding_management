@@ -1,21 +1,20 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import { formatWeddingName } from "../utils";
 import {
-  useSchedulerTasksList,
+  useDashboardOperationsList,
+  getDashboardOperationsListQueryKey,
+  getDashboardSummaryQueryKey,
+} from "@/api/generated/v1/endpoints/dashboard/dashboard";
+import {
   useSchedulerTasksComplete,
   useSchedulerTasksReopen,
 } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 
 /**
  * Propriedades para o hook useDashboardOperations.
  */
 interface UseDashboardOperationsProps {
-  /** Lista de casamentos a serem gerenciados pelo dashboard. */
-  weddings: WeddingOut[];
   /** Data de referência opcional para determinar a data atual (útil para testes). */
   referenceDate?: Date;
 }
@@ -23,35 +22,27 @@ interface UseDashboardOperationsProps {
 /**
  * Hook personalizado para gerenciar as operações do painel (dashboard).
  *
- * Este hook encapsula as chamadas de API, mutações e lógica de filtragem para
- * tarefas urgentes, casamentos futuros e contratos pendentes.
+ * Utiliza o endpoint consolidado useDashboardOperationsList() para obter
+ * os Top 5 casamentos futuros, tarefas urgentes e contratos pendentes,
+ * eliminando busca de centenas de registros e manipulações pesadas no cliente.
  *
- * @param props As propriedades de entrada do hook.
- * @param props.weddings A lista completa de casamentos.
- * @param props.referenceDate A data opcional que define o momento "atual".
+ * @param props As propriedades de entrada opcionais do hook.
  * @returns Um objeto com estados e callbacks necessários para renderizar o painel.
  */
-export function useDashboardOperations({ weddings, referenceDate }: UseDashboardOperationsProps) {
+export function useDashboardOperations(props?: UseDashboardOperationsProps) {
   const [activeTab, setActiveTab] = useState<string>("tarefas");
   const queryClient = useQueryClient();
 
-  // API query for Tasks (enabled only when Tasks tab is active)
-  const { data: tasksRes, isLoading: isLoadingTasks } = useSchedulerTasksList(
-    { limit: 100 },
-    { query: { enabled: activeTab === "tarefas" } }
-  );
-
-  // API query for Contracts (enabled only when Contracts tab is active)
-  const { data: contractsRes, isLoading: isLoadingContracts } = useLogisticsContractsList(
-    { limit: 100 },
-    { query: { enabled: activeTab === "contratos" } }
-  );
+  // Consolidated API query for Dashboard Operations
+  const { data: operationsRes, isLoading: isLoadingOperations } =
+    useDashboardOperationsList();
 
   // Mutations for completing and reopening a task
   const invalidateTasksAndDashboard = () => {
     toast.success("Tarefa atualizada com sucesso!");
+    queryClient.invalidateQueries({ queryKey: getDashboardOperationsListQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getDashboardSummaryQueryKey() });
     queryClient.invalidateQueries({ queryKey: ["/api/v1/scheduler/tasks/"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/v1/dashboard/summary"] });
   };
 
   const onTaskMutationError = () => {
@@ -72,43 +63,14 @@ export function useDashboardOperations({ weddings, referenceDate }: UseDashboard
     },
   });
 
+  const displayWeddings = operationsRes?.data?.upcoming_weddings ?? [];
+  const urgentTasks = operationsRes?.data?.urgent_tasks ?? [];
+  const pendingContracts = operationsRes?.data?.pending_contracts ?? [];
 
-  // 1. Process Grooms & Brides map for name resolution
-  const weddingMap = useMemo(() => {
-    return weddings.reduce((acc, w) => {
-      acc[w.uuid] = formatWeddingName(w.bride_name, w.groom_name);
-      return acc;
-    }, {} as Record<string, string>);
-  }, [weddings]);
-
-  // 2. Upcoming Weddings
-  const displayWeddings = useMemo(() => {
-    return weddings.slice(0, 5);
-  }, [weddings]);
-
-  // 3. Urgent Tasks (Incomplete + sort by due date)
   const todayStr = useMemo(() => {
-    const refDate = referenceDate || new Date();
+    const refDate = props?.referenceDate || new Date();
     return refDate.toISOString().slice(0, 10);
-  }, [referenceDate]);
-
-  const urgentTasks = useMemo(() => {
-    return (tasksRes?.data?.items ?? [])
-      .filter((task) => !task.is_completed)
-      .sort((a, b) => {
-        if (!a.due_date) return 1;
-        if (!b.due_date) return -1;
-        return a.due_date.localeCompare(b.due_date);
-      })
-      .slice(0, 5);
-  }, [tasksRes]);
-
-  // 4. Pending Contracts (DRAFT or PENDING status)
-  const pendingContracts = useMemo(() => {
-    return (contractsRes?.data?.items ?? [])
-      .filter((c) => c.status === "DRAFT" || c.status === "PENDING")
-      .slice(0, 5);
-  }, [contractsRes]);
+  }, [props?.referenceDate]);
 
   const handleTaskToggle = (taskUuid: string, isCurrentlyCompleted: boolean) => {
     if (isCurrentlyCompleted) {
@@ -121,13 +83,13 @@ export function useDashboardOperations({ weddings, referenceDate }: UseDashboard
   return {
     activeTab,
     setActiveTab,
-    isLoadingTasks,
-    isLoadingContracts,
+    isLoading: isLoadingOperations,
+    isLoadingTasks: isLoadingOperations,
+    isLoadingContracts: isLoadingOperations,
     isUpdatingTask: completeTaskMutation.isPending || reopenTaskMutation.isPending,
     displayWeddings,
     urgentTasks,
     pendingContracts,
-    weddingMap,
     handleTaskToggle,
     todayStr,
   };

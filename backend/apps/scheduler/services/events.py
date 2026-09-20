@@ -11,7 +11,7 @@ from apps.core.exceptions import (
 from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
 from apps.scheduler.models import Event
-from apps.scheduler.schemas import EventIn, EventPatchIn
+from apps.scheduler.schemas import EventIn, EventPatchIn, EventUpdateIn
 from apps.tenants.models import Company
 from apps.weddings.models import Wedding
 
@@ -24,6 +24,42 @@ class EventService:
     Camada de serviço para gestão de compromissos e calendário.
     Garante isolamento total (Multitenancy), auditoria e integridade de agendamento.
     """
+
+    @staticmethod
+    def _validate_event_overlap(
+        *,
+        company: Company,
+        wedding: Wedding,
+        start_time: Any,
+        end_time: Any,
+        event_type: str,
+        force_overlap: bool,
+        instance: Event | None = None,
+    ) -> None:
+        if (
+            event_type != Event.TypeChoices.PAYMENT
+            and not force_overlap
+            and end_time is not None
+        ):
+            overlap_qs = (
+                Event.objects.for_tenant(company)
+                .filter(
+                    wedding=wedding,
+                    start_time__lt=end_time,
+                    end_time__gt=start_time,
+                )
+                .exclude(event_type=Event.TypeChoices.PAYMENT)
+            )
+            if instance is not None and instance.pk:
+                overlap_qs = overlap_qs.exclude(pk=instance.pk)
+            if overlap_qs.exists():
+                raise BusinessRuleViolation(
+                    "event_schedule_conflict",
+                    message=(
+                        "Existe outro compromisso agendado para este "
+                        "horário no casamento."
+                    ),
+                )
 
     @staticmethod
     @transaction.atomic
@@ -58,9 +94,13 @@ class EventService:
         logger.info(f"Iniciando criação de Evento para company_id={company.id}")
 
         if isinstance(payload, dict):
-            data = payload
+            data = payload.copy()
+            force_overlap = bool(data.pop("force_overlap", False))
         else:
             data = payload.model_dump(exclude_unset=True)
+            force_overlap = bool(
+                data.pop("force_overlap", getattr(payload, "force_overlap", False))
+            )
 
         if (
             not _allow_historical_start
@@ -93,6 +133,15 @@ class EventService:
             wedding_input,
             code="wedding_not_found_or_denied",
             detail="Acesso negado ao casamento.",
+        )
+
+        EventService._validate_event_overlap(
+            company=company,
+            wedding=wedding,
+            start_time=data["start_time"],
+            end_time=data.get("end_time"),
+            event_type=data.get("event_type", Event.TypeChoices.OTHER),
+            force_overlap=force_overlap,
         )
 
         event = Event(company=company, wedding=wedding, **data)
@@ -143,7 +192,11 @@ class EventService:
 
     @staticmethod
     @transaction.atomic
-    def update(company: Company, instance: Event, payload: EventPatchIn) -> Event:
+    def update(
+        company: Company,
+        instance: Event,
+        payload: EventPatchIn | EventUpdateIn | dict[str, Any],
+    ) -> Event:
         """
         Atualiza as informações de um evento existente.
 
@@ -170,11 +223,31 @@ class EventService:
             f"Atualizando Evento uuid={instance.uuid} por company_id={company.id}"
         )
 
-        data = payload.model_dump(exclude_unset=True)
+        if isinstance(payload, dict):
+            data = payload.copy()
+            force_overlap = bool(data.pop("force_overlap", False))
+            model_fields_set = set(data.keys())
+        else:
+            data = payload.model_dump(exclude_unset=True)
+            force_overlap = bool(
+                data.pop("force_overlap", getattr(payload, "force_overlap", False))
+            )
+            model_fields_set = payload.model_fields_set
+
         EventService._validate_update_payment_guards(instance, data)
 
         data.pop("wedding", None)
         data.pop("company", None)
+
+        EventService._validate_event_overlap(
+            company=company,
+            wedding=instance.wedding,
+            start_time=data.get("start_time", instance.start_time),
+            end_time=data.get("end_time", instance.end_time),
+            event_type=data.get("event_type", instance.event_type),
+            force_overlap=force_overlap,
+            instance=instance,
+        )
 
         updated_fields: set[str] = set()
 
@@ -188,9 +261,9 @@ class EventService:
                     detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
                     code="event_update_validation_error",
                 ) from e
-            if "start_time" in payload.model_fields_set:
+            if "start_time" in model_fields_set:
                 updated_fields.add("start_time")
-            if "end_time" in payload.model_fields_set:
+            if "end_time" in model_fields_set:
                 updated_fields.add("end_time")
 
         EventService._apply_reminder_update(instance, data, updated_fields)

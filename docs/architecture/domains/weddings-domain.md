@@ -59,7 +59,7 @@ stateDiagram-v2
 | :--- | :--- | :--- | :--- |
 | **`Wedding`** | Rich Domain Model (`TenantModel`) | `groom_name` (max 100), `bride_name` (max 100), `date` (DateField), `location` (max 255), `expected_guests` (PositiveInt, nullable), `status` (`StatusChoices`), `template` (string, nullable) | **Máquina de Estados (ADR-030):** Métodos de ciclo de vida `complete()`, `cancel()`, `reopen()` e `transition_to()`.<br/>**Regra de Conclusão (BR-W01):** Um casamento só pode ser concluído se `date <= timezone.now().date()`.<br/>**Proteção de Deleção (BR-W03):** Bloqueio de exclusão em cascata se existirem contratos ou despesas protegidos (`ProtectedError`). |
 | **`WeddingQuerySet`** | Camada de Consulta Otimizada | `search()`, `by_status()`, `with_metrics()` | Anota de forma eficiente contagens de tarefas incompletas, parcelas atrasadas e total orçado sem incorrer em problemas de N+1 queries. |
-| **`WeddingService`** | Casos de Uso e Orquestração | `create()`, `update()`, `complete()`, `cancel()`, `delete()` | **Transações Atômicas:** Métodos decorados com `@transaction.atomic`.<br/>**Orquestração de Casos de Uso:** Delega regras de transição para a entidade e coordena efeitos colaterais como templates de eventos (`_apply_template_events`). |
+| **`WeddingService`** | Casos de Uso e Orquestração | `create()`, `update()`, `complete()`, `cancel()`, `reopen()`, `delete()` | **Transações Atômicas:** Métodos decorados com `@transaction.atomic`.<br/>**Orquestração de Casos de Uso:** Delega regras de transição para a entidade (inclusive `reopen()` para reativar eventos cancelados) e coordena templates de cronograma via fachada do scheduler. |
 
 ---
 
@@ -68,9 +68,13 @@ stateDiagram-v2
 As implementações de código-fonte seguem a diretriz pragmática da [ADR-030](../adr/030-rich-domain-model-service-layer.md):
 
 - **Modelo de Domínio Rico:** [`apps/weddings/models.py`](../../../backend/apps/weddings/models.py) (`Wedding`) encapsula a máquina de estados, propriedades de domínio e validação no `clean()`.
-- **Casos de Uso e Serviços:** [`apps/weddings/services.py`](../../../backend/apps/weddings/services.py) (`WeddingService`) orquestra transações atômicas, resolução de tenant e aplicação de templates.
+- **Casos de Uso e Serviços:** [`apps/weddings/services.py`](../../../backend/apps/weddings/services.py) (`WeddingService`) orquestra transações atômicas, resolução de tenant, aplicação de templates e as mutações de ciclo de vida: `complete()`, `cancel()` e `reopen()`.
 - **Seletores de Leitura CQRS:** [`apps/weddings/selectors.py`](../../../backend/apps/weddings/selectors.py) (`wedding_list_selector`, `wedding_get_selector`) concentra queries otimizadas com anotações de métricas.
-- **Validação de Entrada (Pydantic):** [`apps/weddings/schemas.py`](../../../backend/apps/weddings/schemas.py) (`WeddingIn`, `WeddingPatchIn`) garante fail-fast na borda da API para campos obrigatórios, sanitização de espaços e limites de caracteres.
+- **Validação de Entrada e Schemas de Saída (Pydantic):**
+  - [`apps/weddings/schemas.py`](../../../backend/apps/weddings/schemas.py) (`WeddingIn`, `WeddingPatchIn`): Garante fail-fast na borda da API para campos obrigatórios, sanitização de espaços e limites de caracteres.
+  - [`apps/weddings/schemas.py`](../../../backend/apps/weddings/schemas.py) (`WeddingOut`): DTO enriquecido que inclui os campos dinâmicos:
+    - `can_complete: bool`: Calculado via `resolve_can_complete()` indicando se o casamento pode transitar para `COMPLETED` (`date <= hoje`).
+    - `allowed_transitions: list[str]`: Calculado via `resolve_allowed_transitions()` a partir do mapa de transições válidas da entidade, informando ao frontend exatamente quais botões de ação devem ficar habilitados.
 
 ---
 
@@ -81,7 +85,12 @@ As implementações de código-fonte seguem a diretriz pragmática da [ADR-030](
 - **Managers:** `WeddingQuerySet` em `managers.py`.
 - **Services:** `WeddingService` e `_apply_template_events` em `services.py`.
 - **Selectors:** `wedding_list_selector`, `wedding_get_selector`, `critical_weddings_selector` em `selectors.py`.
-- **Endpoints:** `api.py` com rotas `/weddings/` (CRUD completo).
+- **Endpoints:** `api.py` com rotas:
+  - CRUD base: `GET /weddings/`, `POST /weddings/`, `GET /weddings/{uuid}/`, `PATCH /weddings/{uuid}/`, `DELETE /weddings/{uuid}/`.
+  - Ações de Ciclo de Vida:
+    - `POST /weddings/{uuid}/complete/` (`weddings_complete`): Conclui o casamento.
+    - `POST /weddings/{uuid}/cancel/` (`weddings_cancel`): Cancela o casamento.
+    - `POST /weddings/{uuid}/reopen/` (`weddings_reopen`): Reabre casamentos cancelados de volta para `IN_PROGRESS`.
 
 ### Camada de Frontend (`frontend/src/features/weddings/`)
 - **Páginas:** `WeddingsListPage.tsx`, `WeddingDetailPage.tsx`.

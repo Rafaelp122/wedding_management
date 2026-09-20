@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ContractDetailAggregateOut,
   ContractFullCreateIn,
   ContractIn,
   ContractOut,
@@ -615,6 +616,99 @@ export const useLogisticsContractsCreate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getLogisticsContractsCreateMutationOptions(options), queryClient);
     }
     /**
+ * Exibe as cláusulas, itens e aditivos agregados de um contrato.
+ * @summary Retrieve Contract Details
+ */
+export const logisticsContractsDetailsRead = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ContractDetailAggregateOut>(
+      {url: `/api/v1/logistics/contracts/${uuid}/details/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getLogisticsContractsDetailsReadQueryKey = (uuid: string,) => {
+    return [
+    `/api/v1/logistics/contracts/${uuid}/details/`
+    ] as const;
+    }
+
+
+export const getLogisticsContractsDetailsReadQueryOptions = <TData = Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError = ErrorType<ErrorResponse>>(uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getLogisticsContractsDetailsReadQueryKey(uuid);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>> = ({ signal }) => logisticsContractsDetailsRead(uuid, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: uuid !== null && uuid !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type LogisticsContractsDetailsReadQueryResult = NonNullable<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>>
+export type LogisticsContractsDetailsReadQueryError = ErrorType<ErrorResponse>
+
+
+export function useLogisticsContractsDetailsRead<TData = Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof logisticsContractsDetailsRead>>,
+          TError,
+          Awaited<ReturnType<typeof logisticsContractsDetailsRead>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLogisticsContractsDetailsRead<TData = Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof logisticsContractsDetailsRead>>,
+          TError,
+          Awaited<ReturnType<typeof logisticsContractsDetailsRead>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useLogisticsContractsDetailsRead<TData = Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieve Contract Details
+ */
+
+export function useLogisticsContractsDetailsRead<TData = Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError = ErrorType<ErrorResponse>>(
+ uuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof logisticsContractsDetailsRead>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getLogisticsContractsDetailsReadQueryOptions(uuid,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
  * Exibe as cláusulas e informações completas de um contrato.
  * @summary Retrieve Contract
  */

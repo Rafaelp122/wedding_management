@@ -1,9 +1,14 @@
 import datetime
 from decimal import Decimal
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from ninja import Field, Schema
 from pydantic import UUID4
+
+
+if TYPE_CHECKING:
+    from apps.weddings.models import Wedding
 
 
 class WeddingStatusEnum(StrEnum):
@@ -48,6 +53,21 @@ class WeddingOut(Schema):
     total_budget: Decimal | None = Field(None, ge=0)
     overdue_installments: int = Field(0, ge=0)
     incomplete_tasks: int = Field(0, ge=0)
+    allowed_transitions: list[str] = Field(default_factory=list)
+    can_complete: bool = False
+
+    @staticmethod
+    def resolve_allowed_transitions(obj: "Wedding") -> list[str]:
+        return [
+            t.value if hasattr(t, "value") else str(t)
+            for t in obj.ALLOWED_TRANSITIONS.get(obj.status, [])
+        ]
+
+    @staticmethod
+    def resolve_can_complete(obj: "Wedding") -> bool:
+        if hasattr(obj, "can_transition_to"):
+            return bool(obj.can_transition_to("COMPLETED"))
+        return False
 
 
 class WeddingLookupOut(Schema):

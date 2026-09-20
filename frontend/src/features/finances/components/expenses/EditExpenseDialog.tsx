@@ -57,7 +57,7 @@ export function EditExpenseDialog({
         label="Contrato (Opcional)"
         items={contracts}
         getItemKey={(c) => c.uuid}
-        getItemLabel={(c) => c.description || c.uuid.substring(0, 8)}
+        getItemLabel={(c) => c.name || c.uuid.substring(0, 8)}
         placeholder="Nenhum contrato"
       />
 
@@ -72,7 +72,6 @@ export function EditExpenseDialog({
           control={form.control}
           name="estimated_amount"
           label="Valor Estimado"
-          disabled={hasPaid}
           onFocus={selectOnFocus}
           transformEmptyTo={0}
         />
@@ -89,7 +88,7 @@ export function EditExpenseDialog({
 
       {hasPaid && (
         <p className="text-xs text-muted-foreground">
-          Valores bloqueados — há parcelas marcadas como pagas. Crie uma nova despesa se precisar alterar valores.
+          Valor realizado bloqueado — há parcelas marcadas como pagas. Crie uma nova despesa se precisar alterar o valor realizado.
         </p>
       )}
     </FormDialog>

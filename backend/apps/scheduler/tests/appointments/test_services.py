@@ -207,6 +207,108 @@ class TestEventServiceCreate:
 
         assert event.start_time == data["start_time"]
 
+    def test_create_event_overlap_blocked_when_force_overlap_false(
+        self, user: Any
+    ) -> None:
+        """Criação com sobreposição de horário é bloqueada com force_overlap=False."""
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now() + timedelta(days=2)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        payload = EventIn(
+            wedding=wedding.uuid,
+            title="Conflito de Reunião",
+            event_type=Event.TypeChoices.MEETING,
+            start_time=now + timedelta(hours=1),
+            end_time=now + timedelta(hours=3),
+            force_overlap=False,
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.create(user.company, payload)
+
+        assert exc_info.value.code == "event_schedule_conflict"
+        assert exc_info.value.status_code == 422
+        assert "Existe outro compromisso agendado" in exc_info.value.detail
+
+    def test_create_event_overlap_allowed_when_force_overlap_true(
+        self, user: Any
+    ) -> None:
+        """Criação com sobreposição de horário é permitida com force_overlap=True."""
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now() + timedelta(days=2)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        payload = EventIn(
+            wedding=wedding.uuid,
+            title="Reunião Concorrente",
+            event_type=Event.TypeChoices.MEETING,
+            start_time=now + timedelta(hours=1),
+            end_time=now + timedelta(hours=3),
+            force_overlap=True,
+        )
+
+        created = EventService.create(user.company, payload)
+        assert created.uuid is not None
+        assert created.title == "Reunião Concorrente"
+
+    def test_create_event_overlap_ignores_payment_events(self, user: Any) -> None:
+        """Sobreposição com eventos do tipo PAYMENT é ignorada."""
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now() + timedelta(days=2)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.PAYMENT,
+        )
+
+        payload = EventIn(
+            wedding=wedding.uuid,
+            title="Reunião Durante Pagamento",
+            event_type=Event.TypeChoices.MEETING,
+            start_time=now + timedelta(hours=1),
+            end_time=now + timedelta(hours=3),
+            force_overlap=False,
+        )
+
+        created = EventService.create(user.company, payload)
+        assert created.uuid is not None
+
+    def test_create_event_overlap_ignores_different_wedding(self, user: Any) -> None:
+        """Sobreposição só é restrita ao mesmo casamento."""
+        wedding1 = WeddingFactory(user_context=user)
+        wedding2 = WeddingFactory(user_context=user)
+        now = timezone.now() + timedelta(days=2)
+        EventFactory(
+            wedding=wedding1,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        payload = EventIn(
+            wedding=wedding2.uuid,
+            title="Reunião Casamento 2",
+            event_type=Event.TypeChoices.MEETING,
+            start_time=now + timedelta(hours=1),
+            end_time=now + timedelta(hours=3),
+            force_overlap=False,
+        )
+
+        created = EventService.create(user.company, payload)
+        assert created.uuid is not None
+
 
 @pytest.mark.django_db
 class TestEventServiceUpdate:
@@ -400,6 +502,81 @@ class TestEventServiceUpdate:
         assert "A hora de término não pode ser anterior à hora de início" in str(
             exc_info.value.detail
         )
+
+    def test_update_event_overlap_blocked_when_force_overlap_false(
+        self, user: Any
+    ) -> None:
+        """Edição com sobreposição em outro evento é bloqueada."""
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now() + timedelta(days=3)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+        event2 = EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(hours=5),
+            end_time=now + timedelta(hours=7),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        payload = EventPatchIn(
+            start_time=now + timedelta(hours=1),
+            end_time=now + timedelta(hours=3),
+            force_overlap=False,
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            EventService.update(user.company, event2, payload)
+
+        assert exc_info.value.code == "event_schedule_conflict"
+        assert exc_info.value.status_code == 422
+        assert "Existe outro compromisso agendado" in exc_info.value.detail
+
+    def test_update_event_overlap_allowed_when_force_overlap_true(
+        self, user: Any
+    ) -> None:
+        """Edição com sobreposição é permitida quando force_overlap=True."""
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now() + timedelta(days=3)
+        EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+        event2 = EventFactory(
+            wedding=wedding,
+            start_time=now + timedelta(hours=5),
+            end_time=now + timedelta(hours=7),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        payload = EventPatchIn(
+            start_time=now + timedelta(hours=1),
+            end_time=now + timedelta(hours=3),
+            force_overlap=True,
+        )
+
+        updated = EventService.update(user.company, event2, payload)
+        assert updated.start_time == now + timedelta(hours=1)
+
+    def test_update_event_does_not_conflict_with_itself(self, user: Any) -> None:
+        """Edição do próprio evento não causa falso conflito de overlap."""
+        wedding = WeddingFactory(user_context=user)
+        now = timezone.now() + timedelta(days=3)
+        event = EventFactory(
+            wedding=wedding,
+            start_time=now,
+            end_time=now + timedelta(hours=2),
+            event_type=Event.TypeChoices.MEETING,
+        )
+
+        payload = EventPatchIn(title="Novo Título Sem Conflito", force_overlap=False)
+        updated = EventService.update(user.company, event, payload)
+        assert updated.title == "Novo Título Sem Conflito"
 
 
 @pytest.mark.django_db

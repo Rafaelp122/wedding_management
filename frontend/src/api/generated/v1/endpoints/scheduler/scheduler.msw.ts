@@ -16,6 +16,7 @@ import type {
   EventOut,
   PagedEventOut,
   PagedTaskOut,
+  SchedulerSummaryOut,
   TaskOut
 } from '../../models';
 
@@ -24,6 +25,7 @@ import {
   getSchedulerEventsListResponseMock,
   getSchedulerEventsReadResponseMock,
   getSchedulerEventsUpdateResponseMock,
+  getSchedulerSummaryGetResponseMock,
   getSchedulerTasksCompleteResponseMock,
   getSchedulerTasksCreateResponseMock,
   getSchedulerTasksListResponseMock,
@@ -31,7 +33,7 @@ import {
   getSchedulerTasksUpdateResponseMock
 } from './scheduler.faker';
 
-export { getSchedulerEventsListResponseMock, getSchedulerEventsCreateResponseMock, getSchedulerEventsReadResponseMock, getSchedulerEventsUpdateResponseMock, getSchedulerTasksListResponseMock, getSchedulerTasksCreateResponseMock, getSchedulerTasksUpdateResponseMock, getSchedulerTasksCompleteResponseMock, getSchedulerTasksReopenResponseMock } from './scheduler.faker';
+export { getSchedulerEventsListResponseMock, getSchedulerEventsCreateResponseMock, getSchedulerSummaryGetResponseMock, getSchedulerEventsReadResponseMock, getSchedulerEventsUpdateResponseMock, getSchedulerTasksListResponseMock, getSchedulerTasksCreateResponseMock, getSchedulerTasksUpdateResponseMock, getSchedulerTasksCompleteResponseMock, getSchedulerTasksReopenResponseMock } from './scheduler.faker';
 
 
 export const getSchedulerEventsListMockHandler = (overrideResponse?: PagedEventOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedEventOut> | PagedEventOut), options?: RequestHandlerOptions) => {
@@ -54,6 +56,18 @@ export const getSchedulerEventsCreateMockHandler = (overrideResponse?: EventOut 
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getSchedulerEventsCreateResponseMock(),
       { status: 201
+      })
+  }, options)
+}
+
+export const getSchedulerSummaryGetMockHandler = (overrideResponse?: SchedulerSummaryOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<SchedulerSummaryOut> | SchedulerSummaryOut), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/scheduler/events/summary/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getSchedulerSummaryGetResponseMock(),
+      { status: 200
       })
   }, options)
 }
@@ -164,6 +178,7 @@ export const getSchedulerTasksReopenMockHandler = (overrideResponse?: TaskOut | 
 export const getSchedulerMock = () => [
   getSchedulerEventsListMockHandler(),
   getSchedulerEventsCreateMockHandler(),
+  getSchedulerSummaryGetMockHandler(),
   getSchedulerEventsReadMockHandler(),
   getSchedulerEventsUpdateMockHandler(),
   getSchedulerEventsDeleteMockHandler(),

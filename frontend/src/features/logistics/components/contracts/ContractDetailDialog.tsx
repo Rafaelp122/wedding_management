@@ -4,13 +4,12 @@ import { toast } from "sonner";
 
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
 import {
-  useLogisticsItemsList,
-  useLogisticsContractsRead,
-  useLogisticsContractsList,
+  useLogisticsContractsDetailsRead,
   useLogisticsContractsSendToPending,
   useLogisticsContractsRevertToDraft,
   getLogisticsContractsListQueryKey,
   getLogisticsContractsReadQueryKey,
+  getLogisticsContractsDetailsReadQueryKey,
 } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { getApiErrorInfo } from "@/api/error-utils";
 import { ContractDetailDialogView } from "./ContractDetailDialogView";
@@ -42,33 +41,22 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [signOpen, setSignOpen] = useState(false);
 
-  const { data: contractResponse, isLoading: isContractLoading } =
-    useLogisticsContractsRead(contractUuid ?? "", {
+  const { data: detailsResponse, isLoading } =
+    useLogisticsContractsDetailsRead(contractUuid ?? "", {
       query: { enabled: !!contractUuid && open, staleTime: 0 },
     });
-  const contract = contractResponse?.data;
-
-  const { data: itemsResponse, isLoading: isItemsLoading } =
-    useLogisticsItemsList(
-      { contract_id: contractUuid ?? "" },
-      { query: { enabled: !!contractUuid && open } },
-    );
-  const items = itemsResponse?.data?.items ?? [];
-
-  const { data: addendumsResponse } = useLogisticsContractsList(
-    {
-      wedding_id: weddingUuid,
-      parent_id: contractUuid ?? "",
-    },
-    { query: { enabled: !!contractUuid && open } },
-  );
-  const addendums = addendumsResponse?.data?.items ?? [];
+  const contract = detailsResponse?.data?.contract;
+  const items = detailsResponse?.data?.items ?? [];
+  const addendums = detailsResponse?.data?.addendums ?? [];
 
   const invalidateContractQueries = () => {
     queryClient.invalidateQueries({
       queryKey: getLogisticsContractsListQueryKey(),
     });
     if (contractUuid) {
+      queryClient.invalidateQueries({
+        queryKey: getLogisticsContractsDetailsReadQueryKey(contractUuid),
+      });
       queryClient.invalidateQueries({
         queryKey: getLogisticsContractsReadQueryKey(contractUuid),
       });
@@ -135,9 +123,9 @@ export const ContractDetailDialog = memo(function ContractDetailDialog({
         open={open}
         onOpenChange={onOpenChange}
         contract={contract}
-        isContractLoading={isContractLoading}
+        isContractLoading={isLoading}
         items={items}
-        isItemsLoading={isItemsLoading}
+        isItemsLoading={isLoading}
         addendums={addendums}
         onExpenseClick={onExpenseClick}
         onGenerateExpense={onGenerateExpense}

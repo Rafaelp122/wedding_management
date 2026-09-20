@@ -14,6 +14,7 @@ Use this operational checklist when implementing, validating, or reviewing busin
 - [ ] **BR-W01 (Completion Status)**: A wedding can only be marked as `COMPLETED` (`concluido`) after the event date has passed. Prevent premature closure. → [wedding-status-lifecycle.md](../../../docs/architecture/business-rules/weddings/wedding-status-lifecycle.md)
 - [ ] **BR-W02 (Multi-Tenancy Isolation)**: All access to weddings, categories, suppliers, and items is strictly isolated by tenant `company`. Use `for_tenant(company)`. → [multi-tenancy-strategy.md](../../../docs/architecture/concepts/multi-tenancy-strategy.md)
 - [ ] **BR-W03 (Event Date Invariant)**: Wedding date cannot be in the past on creation or update. → [wedding-status-lifecycle.md](../../../docs/architecture/business-rules/weddings/wedding-status-lifecycle.md)
+- [ ] **BR-W06 (Wedding Reopen)**: Reopening a canceled wedding (`CANCELED -> IN_PROGRESS`). Blocked if status is `COMPLETED`. → [wedding-status-lifecycle.md](../../../docs/architecture/business-rules/weddings/wedding-status-lifecycle.md)
 
 ---
 
@@ -24,7 +25,7 @@ Use this operational checklist when implementing, validating, or reviewing busin
 - [ ] **BR-F03 (Payment Consistency)**: Installment marked `PAID` requires `paid_date`. → [financial-integrity-rules.md](../../../docs/architecture/business-rules/finances/financial-integrity-rules.md)
 - [ ] **BR-F04 (Budget Monitoring)**: Warn planner if category expenses exceed allocated budget. → [budget-category-distribution.md](../../../docs/architecture/business-rules/finances/budget-category-distribution.md)
 - [ ] **BR-F05 (Status Machine)**: PENDING → PAID (with paid_date) or PENDING → OVERDUE (automatic when `due_date < today`). → [financial-integrity-rules.md](../../../docs/architecture/business-rules/finances/financial-integrity-rules.md)
-- [ ] **BR-F06 (Paid Immutability)**: `PAID` installments cannot change amount or due date directly. Adjustments require reversal or addendum. → [financial-integrity-rules.md](../../../docs/architecture/business-rules/finances/financial-integrity-rules.md)
+- [ ] **BR-F06 (Tenant Budget Benchmark)**: Aggregate benchmark calculation comparing planned budget against historical tenant average. → [tenant-budget-benchmark.md](../../../docs/architecture/business-rules/finances/tenant-budget-benchmark.md)
 - [ ] **BR-F07 (Mandatory Installment)**: Every expense auto-generates at least 1 installment if unassigned. → [financial-integrity-rules.md](../../../docs/architecture/business-rules/finances/financial-integrity-rules.md)
 - [ ] **BR-F08 (Redistribution Guard)**: Installments can only be redistributed if NO installment has been `PAID`. → [financial-integrity-rules.md](../../../docs/architecture/business-rules/finances/financial-integrity-rules.md)
 - [ ] **BR-F09 (Composite Status)**: Expense status (`PENDING`, `PARTIALLY_PAID`, `SETTLED`) is derived dynamically from installments. → [financial-integrity-rules.md](../../../docs/architecture/business-rules/finances/financial-integrity-rules.md)
@@ -48,6 +49,7 @@ Use this operational checklist when implementing, validating, or reviewing busin
 
 - [ ] **BR-S01 (Read-Only Payment Events)**: `PAYMENT` calendar events are auto-generated and read-only. → [payment-event-readonly-guard.md](../../../docs/architecture/business-rules/scheduler/payment-event-readonly-guard.md)
 - [ ] **BR-S02 (Recurrence Engine)**: Recurring task alerts and installment overdue notifications follow standard recurrence schedule. → [recurrence-rules-engine.md](../../../docs/architecture/business-rules/scheduler/recurrence-rules-engine.md)
+- [ ] **BR-S03 (Schedule Overlap / Soft Overlap)**: Prevent accidental schedule collision for the same wedding (\((s_1 < e_2) \land (e_1 > s_2)\)), excluding `pagamento` events. Soft validation returns HTTP 422 (`event_schedule_conflict`) unless `force_overlap: bool = True`. → [schedule-conflict-validation.md](../../../docs/architecture/business-rules/scheduler/schedule-conflict-validation.md)
 
 ---
 

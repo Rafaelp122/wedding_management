@@ -22,4 +22,6 @@ export interface WeddingOut {
   overdue_installments?: number;
   /** @minimum 0 */
   incomplete_tasks?: number;
+  allowed_transitions?: string[];
+  can_complete?: boolean;
 }

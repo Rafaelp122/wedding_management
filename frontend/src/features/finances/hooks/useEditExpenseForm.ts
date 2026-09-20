@@ -3,8 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 
-import { useFinancesExpensesUpdate } from "@/api/generated/v1/endpoints/finances/finances";
-import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
+import {
+  useFinancesExpensesUpdate,
+  useFinancesExpensesContractsLookup,
+} from "@/api/generated/v1/endpoints/finances/finances";
 import { FinancesExpensesUpdateBody } from "@/api/generated/v1/zod/finances/finances";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 import { buildPatchPayload } from "@/lib/patch-payload";
@@ -37,10 +39,10 @@ export function useEditExpenseForm({
 }: UseEditExpenseFormProps) {
   const { mutate, isPending } = useFinancesExpensesUpdate();
 
-  const { data: contractsResponse } = useLogisticsContractsList({
+  const { data: contractsResponse } = useFinancesExpensesContractsLookup({
     wedding_id: weddingUuid,
   });
-  const contracts = contractsResponse?.data?.items || [];
+  const contracts = contractsResponse?.data || [];
 
   const hasPaid = (expense.paid_installments_count ?? 0) > 0;
 

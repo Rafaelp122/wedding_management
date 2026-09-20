@@ -58,6 +58,14 @@ export const EditContractDialog = memo(function EditContractDialog({
     },
   });
 
+  const allowedSet = new Set([
+    contract.status,
+    ...(contract.allowed_transitions ?? []),
+  ]);
+  const availableStatusOptions = CONTRACT_STATUS_OPTIONS.filter((opt) =>
+    allowedSet.has(opt.value),
+  );
+
   const onSubmit = (data: EditContractFormData) => {
     const original: Record<string, unknown> = {
       supplier: contract.supplier,
@@ -145,7 +153,7 @@ export const EditContractDialog = memo(function EditContractDialog({
           control={form.control}
           name="status"
           label="Status"
-          items={CONTRACT_STATUS_OPTIONS}
+          items={availableStatusOptions}
           getItemKey={(opt) => opt.value}
           getItemLabel={(opt) => opt.label}
         />

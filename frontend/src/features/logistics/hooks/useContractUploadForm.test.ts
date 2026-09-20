@@ -207,6 +207,13 @@ describe("useContractUploadForm", () => {
       supplier: "supplier-1",
       name: "Novo Contrato",
       total_amount: 5000,
+      items: [
+        {
+          name: "Mesas",
+          quantity: 10,
+          acquisition_status: "PENDING",
+        },
+      ],
       create_expense: true,
       expense_category: "category-1",
       expense_num_installments: 3,

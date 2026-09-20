@@ -67,19 +67,10 @@ export const ContractDetailDialogView = memo(function ContractDetailDialogView({
   isTransitionPending,
 }: ContractDetailDialogViewProps) {
   const baseAmount = contract ? Number(contract.total_amount || 0) : 0;
-  const fallbackAddendumsSum = addendums.reduce(
-    (acc, curr) =>
-      curr.status !== "CANCELED" ? acc + Number(curr.total_amount || 0) : acc,
-    0,
+  const addendumsTotal = Number(contract?.addendums_total_amount ?? 0);
+  const consolidatedTotal = Number(
+    contract?.total_amount_with_addendums ?? baseAmount + addendumsTotal,
   );
-  const addendumsTotal =
-    contract?.addendums_total_amount != null
-      ? Number(contract.addendums_total_amount)
-      : fallbackAddendumsSum;
-  const consolidatedTotal =
-    contract?.total_amount_with_addendums != null
-      ? Number(contract.total_amount_with_addendums)
-      : baseAmount + addendumsTotal;
   const hasAddendums =
     (contract?.addendums_count ?? 0) > 0 ||
     addendums.length > 0 ||

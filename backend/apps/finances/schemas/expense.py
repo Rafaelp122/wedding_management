@@ -60,6 +60,15 @@ class ExpenseFromDocumentOut(Schema):
     first_due_date: date | None = None
 
 
+class ContractLookupOut(Schema):
+    """Schema de saída para listagem simplificada de contratos em dropdowns/lookups."""
+
+    uuid: UUID4
+    name: str
+    status: str
+    total_amount: Decimal
+
+
 class ExpenseOut(Schema):
     """Schema de saída para exibição de despesa (CQRS puro sem queries ORM)."""
 

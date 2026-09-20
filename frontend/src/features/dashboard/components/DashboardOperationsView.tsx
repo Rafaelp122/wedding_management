@@ -4,15 +4,12 @@ import {
   CheckSquare,
   FileText,
   Clock,
-  ExternalLink,
 } from "lucide-react";
-import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
-import type { TaskOut } from "@/api/generated/v1/models/taskOut";
-import type { ContractOut } from "@/api/generated/v1/models/contractOut";
-import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
+import type { UpcomingWeddingOut } from "@/api/generated/v1/models/upcomingWeddingOut";
+import type { DashboardTaskDetailOut } from "@/api/generated/v1/models/dashboardTaskDetailOut";
+import type { DashboardContractDetailOut } from "@/api/generated/v1/models/dashboardContractDetailOut";
 import { formatCurrencyBR, formatDateBR } from "@/lib/formatters";
 import { formatWeddingName } from "../utils";
-import { getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,10 +22,10 @@ interface DashboardOperationsViewProps {
   isLoadingTasks: boolean;
   isLoadingContracts: boolean;
   isUpdatingTask: boolean;
-  displayWeddings: WeddingOut[];
-  urgentTasks: TaskOut[];
-  pendingContracts: ContractOut[];
-  weddingMap: Record<string, string>;
+  displayWeddings: UpcomingWeddingOut[];
+  urgentTasks: DashboardTaskDetailOut[];
+  pendingContracts: DashboardContractDetailOut[];
+  weddingMap?: Record<string, string>;
   handleTaskToggle: (taskUuid: string, isCurrentlyCompleted: boolean) => void;
   todayStr: string;
   onNavigateToWedding: (weddingUuid: string, tab?: string) => void;
@@ -43,7 +40,6 @@ export function DashboardOperationsView({
   displayWeddings,
   urgentTasks,
   pendingContracts,
-  weddingMap,
   handleTaskToggle,
   todayStr,
   onNavigateToWedding,
@@ -90,15 +86,14 @@ export function DashboardOperationsView({
                   <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#18181B]">
                     <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Noivos</th>
                     <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Data do Evento</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Local</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">Status</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Contagem Regressiva</th>
                     <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
                   {displayWeddings.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                      <td colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
                         Nenhum casamento encontrado.
                       </td>
                     </tr>
@@ -116,22 +111,11 @@ export function DashboardOperationsView({
                           </span>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="text-sm text-zinc-600 dark:text-zinc-300 truncate max-w-[200px] block">
-                            {wedding.location || "Não definido"}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-center">
                           <Badge
-                            variant={
-                              wedding.status === WeddingStatusEnum.COMPLETED ? "default" : "secondary"
-                            }
-                            className={`text-[10px] font-bold uppercase tracking-wider h-5 px-2.5 rounded-md ${
-                              wedding.status === WeddingStatusEnum.COMPLETED
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
-                                : "bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20"
-                            }`}
+                            variant="secondary"
+                            className="text-[10px] font-bold uppercase tracking-wider h-5 px-2.5 rounded-md bg-aura-50 text-aura-700 border border-aura-200 dark:bg-aura-500/10 dark:text-aura-400 dark:border-aura-500/20"
                           >
-                            {getWeddingStatusLabel(wedding.status)}
+                            {wedding.days_until <= 0 ? "Hoje!" : `${wedding.days_until} dias`}
                           </Badge>
                         </td>
                         <td className="py-4 px-6 text-right">
@@ -174,9 +158,7 @@ export function DashboardOperationsView({
             ) : (
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
                 {urgentTasks.map((task) => {
-                  const isOverdue =
-                    (task as { is_overdue?: boolean }).is_overdue ??
-                    Boolean(task.due_date && task.due_date < todayStr);
+                  const isOverdue = Boolean(task.due_date && task.due_date < todayStr);
                   return (
                     <div
                       key={task.uuid}
@@ -185,23 +167,21 @@ export function DashboardOperationsView({
                       <div className="flex items-start gap-3 flex-1 min-w-0 mr-4">
                         <Checkbox
                           id={`task-${task.uuid}`}
-                          checked={task.is_completed}
-                          onCheckedChange={() => handleTaskToggle(task.uuid, task.is_completed)}
+                          checked={false}
+                          onCheckedChange={() => handleTaskToggle(task.uuid, false)}
                           className="mt-1 shrink-0"
                           disabled={isUpdatingTask}
                         />
                         <div className="min-w-0">
                           <label
                             htmlFor={`task-${task.uuid}`}
-                            className={`text-sm font-medium text-zinc-900 dark:text-zinc-100 cursor-pointer block truncate ${
-                              task.is_completed ? "line-through text-zinc-400 dark:text-zinc-600" : ""
-                            }`}
+                            className="text-sm font-medium text-zinc-900 dark:text-zinc-100 cursor-pointer block truncate"
                           >
                             {task.title}
                           </label>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
-                              Casamento: {weddingMap[task.wedding] || "Não definido"}
+                              Casamento: {task.wedding_name || "Não definido"}
                             </span>
                             {task.due_date && (
                               <span className={`text-[11px] flex items-center gap-1 font-semibold ${
@@ -215,13 +195,6 @@ export function DashboardOperationsView({
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => onNavigateToWedding(task.wedding, "planning")}
-                        className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1 shrink-0 cursor-pointer"
-                      >
-                        Ir para Cronograma
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   );
                 })}
@@ -252,7 +225,6 @@ export function DashboardOperationsView({
                       <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Casamento</th>
                       <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Valor do Contrato</th>
                       <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">Status</th>
-                      <th className="py-4 px-6 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">Ação</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
@@ -260,17 +232,12 @@ export function DashboardOperationsView({
                       <tr key={contract.uuid} className="table-row-hover">
                         <td className="py-4 px-6">
                           <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                            {contract.supplier_name}
+                            {contract.supplier_name || "Fornecedor"}
                           </p>
-                          {contract.description && (
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-[200px] truncate">
-                              {contract.description}
-                            </p>
-                          )}
                         </td>
                         <td className="py-4 px-6">
                           <span className="text-sm text-zinc-600 dark:text-zinc-300">
-                            {weddingMap[contract.wedding] || "Não definido"}
+                            {contract.wedding_name || "Não definido"}
                           </span>
                         </td>
                         <td className="py-4 px-6">
@@ -289,15 +256,6 @@ export function DashboardOperationsView({
                           >
                             {contract.status === "DRAFT" ? "Rascunho" : "Pendente"}
                           </Badge>
-                        </td>
-                        <td className="py-4 px-6 text-right">
-                          <button
-                            onClick={() => onNavigateToWedding(contract.wedding, "logistics")}
-                            className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-primary dark:hover:border-primary text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-primary dark:hover:text-primary px-3 py-1.5 rounded-md btn-transition shadow-sm cursor-pointer"
-                          >
-                            <ExternalLink className="size-3" />
-                            Ver Contrato
-                          </button>
                         </td>
                       </tr>
                     ))}
