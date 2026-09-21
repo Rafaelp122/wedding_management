@@ -78,12 +78,12 @@ A validação de links da documentação é explicada em [documentation-standard
 
 ---
 
-## Passo 4: Atualizar os Índices (MOC e `docs/index.md`)
+## Passo 4: Registrar a Navegação no MkDocs (`mkdocs.yml`)
 
-Para garantir que a nota não fique "órfã" e inacessível:
+Para garantir que o documento seja navegável e indexado:
 
-1. Adicione o link para o novo arquivo no `index.md` (MOC) da subpasta onde ele foi criado.
-2. Registre a nova nota na seção correspondente do [docs/index.md](../../index.md).
+1. **Árvore de Navegação (SSOT):** Adicione a nova página diretamente na seção apropriada do [`mkdocs.yml`](../../../mkdocs.yml). É expressamente proibido criar arquivos `index.md` intermediários apenas para listar links (eliminação de MOCs burocráticos).
+2. **Hubs de Domínio & Regras:** Se o novo arquivo for uma regra de negócio (`BR-*`), registre-a na tabela canônica do seu respectivo Hub de Domínio (`docs/architecture/domains/`) e no [Catálogo Geral de Regras](../../architecture/business-rules/index.md).
 
 ---
 

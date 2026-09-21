@@ -1,7 +1,7 @@
 # Especificação Técnica: Módulo Terraform Cloud Run Service (GCP & Multi-Cloud)
 
 > **Categoria:** Referência Técnica (Terraform & IaC)
-> **Relacionados:** [MOC de Terraform](index.md) · [ADR-025: Arquitetura Terraform](../../architecture/adr/025-terraform-iac-architecture.md) · [Testes Terraform](../testing/terraform-testing-spec.md) · [Pipelines Terraform](../ci-cd/terraform-pipelines-spec.md)
+> **Relacionados:** [ADR-025: Arquitetura Terraform](../../architecture/adr/025-terraform-iac-architecture.md) · [Testes Terraform](../testing/terraform-testing-spec.md) · [Pipelines Terraform](../ci-cd/terraform-pipelines-spec.md)
 > **Caminho do Módulo:** `terraform/modules/gcp/cloud-run-service/`
 
 ---

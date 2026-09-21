@@ -14,7 +14,7 @@ tests:
 # Benchmark e Média Orçamentária por Assessoria (Tenant Budget)
 
 > **Categoria:** Regra de Negócio (Domínio Financeiro / CQRS)
-> **Relacionados:** [MOC de Finanças](index.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Distribuição e Alocação de Orçamento por Categoria](budget-category-distribution.md) · [Padrão Query Selectors](../../concepts/query-selectors-pattern.md) · [Domínio de Finanças](../../domains/finances-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Distribuição e Alocação de Orçamento por Categoria](budget-category-distribution.md) · [Padrão Query Selectors](../../concepts/query-selectors-pattern.md) · [Domínio de Finanças](../../domains/finances-domain.md)
 
 ---
 

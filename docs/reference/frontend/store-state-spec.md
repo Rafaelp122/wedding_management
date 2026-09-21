@@ -1,6 +1,6 @@
 # Especificação Técnica: Gerenciamento de Estado (Zustand Stores & TanStack Query)
 
-> **Módulo:** [frontend-reference](index.md) | [system-overview](../../architecture/concepts/system-overview.md)
+> **Módulo:** Referência Frontend | [Componentes UI](ui-components-spec.md) | [system-overview](../../architecture/concepts/system-overview.md)
 > **Camada:** Frontend (`src/stores/`, `src/api/generated/`, `src/features/weddings/hooks/`)
 
 ---

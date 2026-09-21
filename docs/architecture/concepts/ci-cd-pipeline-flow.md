@@ -17,7 +17,7 @@ tests:
 # Arquitetura e Fluxo da Pipeline GitOps (CI/CD & IaC)
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [ADR-025: Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md) · [ADR-026: Estratégia de Branches e Deploy](../adr/026-gitops-branching-and-deployment-strategy.md) · [ADR-027: Topologia de States do Terraform](../adr/027-terraform-state-topology.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Índice de CI/CD](../../reference/ci-cd/index.md) · [Índice de Testes](../../reference/testing/index.md)
+> **Relacionados:** [ADR-025: Terraform e GitOps Multi-Cloud](../adr/025-terraform-iac-architecture.md) · [ADR-026: Estratégia de Branches e Deploy](../adr/026-gitops-branching-and-deployment-strategy.md) · [ADR-027: Topologia de States do Terraform](../adr/027-terraform-state-topology.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Validação de PRs (CI)](../../reference/ci-cd/ci-pr-validation-spec.md) · [Suíte de Testes Backend](../../reference/testing/backend-testing-spec.md)
 
 ---
 

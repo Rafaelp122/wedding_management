@@ -23,6 +23,10 @@ class TokenService:
 
     Centraliza a lógica de validação de credenciais, criação de tokens
     e montagem da resposta com dados do usuário autenticado.
+
+    Regras de Negócio e SSOT:
+    - Hub do Domínio de Usuários (BR-U01..05): docs/architecture/domains/users-domain.md
+    - Fluxo de Autenticação JWT: docs/architecture/concepts/auth-jwt-flow.md
     """
 
     @staticmethod

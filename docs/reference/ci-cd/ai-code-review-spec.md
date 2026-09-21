@@ -1,6 +1,6 @@
 # Especificação Técnica: Workflows de IA (`ai-code-review.yml` & `opencode-assistant.yml`)
 
-> **Módulo:** [ci-cd](index.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
+> **Módulo:** CI/CD | [ci-pr-validation-spec](ci-pr-validation-spec.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
 > **Workflows:** `.github/workflows/ai-code-review.yml` | `.github/workflows/opencode-assistant.yml`
 
 ---

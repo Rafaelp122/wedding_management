@@ -16,7 +16,7 @@ tests:
 # Motor de Regras de Recorrência e Agendamentos
 
 > **Categoria:** Regra de Negócio (Domínio de Cronograma e Tarefas)
-> **Relacionados:** [MOC de Cronograma (Scheduler)](index.md) · [Detecção e Validação de Conflito de Agenda](schedule-conflict-validation.md) · [Proteção Somente-Leitura de Pagamentos](payment-event-readonly-guard.md) · [Templates de Cronograma](../weddings/wedding-schedule-templates.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Detecção e Validação de Conflito de Agenda](schedule-conflict-validation.md) · [Proteção Somente-Leitura de Pagamentos](payment-event-readonly-guard.md) · [Templates de Cronograma](../weddings/wedding-schedule-templates.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 

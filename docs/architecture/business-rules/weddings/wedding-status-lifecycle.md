@@ -16,7 +16,7 @@ tests:
 # Ciclo de Vida do Status do Casamento e Validações
 
 > **Categoria:** Regra de Negócio (Domínio de Casamentos)
-> **Relacionados:** [MOC de Casamentos (Weddings)](index.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Templates de Cronograma](wedding-schedule-templates.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Máquina de Estados de Contratos](../logistics/contract-state-machine.md) · [Domínio de Casamentos](../../domains/weddings-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Templates de Cronograma](wedding-schedule-templates.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Máquina de Estados de Contratos](../logistics/contract-state-machine.md) · [Domínio de Casamentos](../../domains/weddings-domain.md)
 
 ---
 

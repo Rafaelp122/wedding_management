@@ -13,7 +13,7 @@ tests:
 # Detecção e Validação de Conflito de Agenda (Soft Overlap)
 
 > **Categoria:** Regra de Negócio (Domínio de Cronograma / Scheduler)
-> **Relacionados:** [MOC de Cronograma (Scheduler)](index.md) · [Proteção Somente-Leitura para Eventos de Pagamento](payment-event-readonly-guard.md) · [Motor de Regras de Recorrência](recurrence-rules-engine.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Proteção Somente-Leitura para Eventos de Pagamento](payment-event-readonly-guard.md) · [Motor de Regras de Recorrência](recurrence-rules-engine.md) · [ADR-030: Rich Domain Model](../../adr/030-rich-domain-model-service-layer.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 

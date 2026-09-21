@@ -20,6 +20,12 @@ class TaskService:
     """
     Camada de serviço para gestão de tarefas (checklist).
     Garante isolamento total (Multitenancy), lógicas de negócio e integridade.
+
+    Regras de Negócio e SSOT:
+    - Hub do Domínio do Cronograma:
+      docs/architecture/domains/scheduler-domain.md
+    - Notificações de Vencimento de Tarefas:
+      docs/architecture/business-rules/notifications/in-app-notifications-rules.md
     """
 
     @staticmethod

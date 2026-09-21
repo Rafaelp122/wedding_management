@@ -1,6 +1,6 @@
 # Troubleshooting: Resolução de Falhas de Upload no Cloudflare R2
 
-> **Categoria:** [ops-troubleshooting](../../reference/architecture-standards/index.md) | [contract-pdf-upload-r2-flow](../../architecture/concepts/contract-pdf-upload-r2-flow.md) | [004-presigned-urls](../../architecture/adr/004-presigned-urls.md)
+> **Categoria:** Operações & Troubleshooting | [contract-pdf-upload-r2-flow](../../architecture/concepts/contract-pdf-upload-r2-flow.md) | [004-presigned-urls](../../architecture/adr/004-presigned-urls.md)
 > **Sintomas:** HTTP `403 Forbidden` (`SignatureDoesNotMatch`), `CORS Error` no browser, `RequestTimeTooSkewed`, upload zerado
 
 ---

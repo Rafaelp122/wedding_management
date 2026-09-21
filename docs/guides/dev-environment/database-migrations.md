@@ -1,6 +1,6 @@
 # Como Executar Migrações de Banco de Dados com Segurança
 
-> **Categoria:** [dev-environment](index.md) | [setup-local-environment](setup-local-environment.md) | [db-connection-locks](../ops-troubleshooting/db-connection-locks.md)
+> **Categoria:** Guia de Desenvolvimento | [setup-local-environment](setup-local-environment.md) | [db-connection-locks](../ops-troubleshooting/db-connection-locks.md)
 > **Comandos Principais:** `just makemigrations`, `just migrate` / `uv run poe migrate`, `uv run python manage.py showmigrations`
 
 ---

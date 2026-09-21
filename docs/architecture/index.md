@@ -1,7 +1,7 @@
 # Arquitetura & System Design da Plataforma
 
 > **Categoria:** Arquitetura (System Design & Decision Records)
-> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [MOC de Regras de Negócio](business-rules/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
+> **Relacionados:** [Matriz de Requisitos](requirements.md) | [Topologia de Domínios](domains/index.md) | [Catálogo de Regras de Negócio](business-rules/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
 
 <p class="mdx-hero__subtitle" style="font-size: 1.15rem; font-weight: 500; color: var(--md-default-fg-color--light); margin-top: -0.5rem; margin-bottom: 1.5rem;">
 Hub executivo de engenharia, topologia de microsserviços e padrões de projeto do Wedding Management System.
@@ -186,7 +186,7 @@ A arquitetura do **Wedding Management System** foi construída sobre princípios
 
     Testes arquiteturais estritos que rodam em CI e impedem regressões: barram chamadas `.objects.create()` em testes, bloqueiam queries sem filtro de tenant e validam a presença de docstrings e typing.
 
-    [:octicons-arrow-right-24: Suíte de Guard-Rails](concepts/architectural-guard-rails-suite.md) · [:octicons-checklist-24: Catálogo de Guards](../reference/architecture-standards/guard-rails/index.md)
+    [:octicons-arrow-right-24: Suíte de Guard-Rails](concepts/architectural-guard-rails-suite.md) · [:octicons-shield-check-24: Tenant Isolation Guard](../reference/architecture-standards/guard-rails/tenant-isolation-guard.md)
 
 -   :material-clock-fast:{ .lg .middle } **Tarefas Assíncronas & Crons**
 
@@ -213,7 +213,7 @@ A arquitetura do **Wedding Management System** foi construída sobre princípios
 
 O sistema é dividido em **10 Bounded Contexts** independentes e desacoplados, cada um com sua camada de modelos, rotas de API, serviços de domínio e seletores de consulta.
 
-Para uma navegação aprofundada em cada bounded context, consulte o [MOC Geral de Domínios](domains/index.md).
+Para uma navegação aprofundada em cada bounded context, consulte a [Topologia Geral de Domínios](domains/index.md).
 
 | Domínio | Especificação | Responsabilidade Arquitetural | Entidades Chave |
 | :--- | :--- | :--- | :--- |

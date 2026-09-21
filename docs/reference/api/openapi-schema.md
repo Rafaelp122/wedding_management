@@ -1,7 +1,7 @@
 # Especificação Técnica: Endpoints e Schemas OpenAPI
 
 > **Categoria:** Referência Técnica (API & Contratos)
-> **Relacionados:** [Hub de APIs](index.md) · [Envelope de Erros](error-envelope-spec.md) · [ADR-012: Orval Contract-Driven Frontend](../../architecture/adr/012-orval-contract-driven-frontend.md) · [ADR-013: Migração para Django Ninja](../../architecture/adr/013-migrate-drf-to-ninja.md)
+> **Relacionados:** [Envelope de Erros](error-envelope-spec.md) · [ADR-012: Orval Contract-Driven Frontend](../../architecture/adr/012-orval-contract-driven-frontend.md) · [ADR-013: Migração para Django Ninja](../../architecture/adr/013-migrate-drf-to-ninja.md)
 
 ---
 

@@ -17,6 +17,10 @@ class RegistrationService:
 
     Assegura que o fluxo de cadastro e a criação do par Usuário-Empresa
     sejam executados de forma atômica no banco de dados.
+
+    Regras de Negócio e SSOT:
+    - Hub do Domínio de Usuários (BR-U01..05): docs/architecture/domains/users-domain.md
+    - Fluxo de Autenticação e Onboarding: docs/architecture/concepts/auth-jwt-flow.md
     """
 
     @staticmethod

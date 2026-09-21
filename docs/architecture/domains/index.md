@@ -1,4 +1,4 @@
-# Topologia Geral de Domínios e Bounded Contexts (MOC)
+# Topologia Geral de Domínios e Bounded Contexts
 
 > **Categoria:** Arquitetura de Domínios (Bounded Contexts)
 > **Relacionados:** [Visão Geral do Sistema](../concepts/system-overview.md) · [Estratégia de Multi-Tenancy](../concepts/multi-tenancy-strategy.md) · [Padrão Service Layer](../concepts/service-layer-pattern.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-009: Multi-Tenancy](../adr/009-multitenancy.md) · [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md)

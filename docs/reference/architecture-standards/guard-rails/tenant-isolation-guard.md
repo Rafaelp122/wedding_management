@@ -1,7 +1,7 @@
 # Especificação Técnica: Guard-Rail de Isolação Multitenant
 
 > **Categoria:** Referência Técnica (Guard-Rails & Integridade)
-> **Relacionados:** [MOC de Guard-Rails](index.md) · [ADR-016: Multi-tenancy Pragmático](../../../architecture/adr/016-pragmatic-multi-tenancy.md) · [Suíte de Guard-Rails](../../../architecture/concepts/architectural-guard-rails-suite.md)
+> **Relacionados:** [Suíte de Guard-Rails](../../../architecture/concepts/architectural-guard-rails-suite.md) · [ADR-016: Multi-tenancy Pragmático](../../../architecture/adr/016-pragmatic-multi-tenancy.md)
 > **Implementação:** `backend/apps/core/tests/test_tenant_isolation.py` e `backend/apps/core/tests/base.py`
 
 ---

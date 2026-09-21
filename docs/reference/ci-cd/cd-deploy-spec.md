@@ -1,6 +1,6 @@
 # Especificação Técnica: Workflow `cd-deploy.yml`
 
-> **Módulo:** [ci-cd](index.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
+> **Módulo:** CI/CD | [ci-pr-validation-spec](ci-pr-validation-spec.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
 > **Workflow:** `.github/workflows/cd-deploy.yml`
 
 ---

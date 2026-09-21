@@ -1,6 +1,6 @@
 # Especificação Técnica: Padrões de Teste Frontend (`Vitest`, `RTL`, `MSW`)
 
-> **Módulo:** [testing](index.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
+> **Módulo:** Testes | [backend-testing-spec](backend-testing-spec.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
 > **Camada:** Frontend (`Vitest` + React Testing Library + MSW)
 
 ---

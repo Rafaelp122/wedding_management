@@ -15,7 +15,7 @@ tests:
 # Distribuição e Alocação de Orçamento por Categoria
 
 > **Categoria:** Regra de Negócio (Domínio Financeiro)
-> **Relacionados:** [MOC de Finanças](index.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Benchmark e Média Orçamentária por Assessoria](tenant-budget-benchmark.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Regras de Integridade Financeira](financial-integrity-rules.md) · [Benchmark e Média Orçamentária por Assessoria](tenant-budget-benchmark.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md)
 
 ---
 

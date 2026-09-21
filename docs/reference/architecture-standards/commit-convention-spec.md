@@ -1,6 +1,6 @@
 # Especificação Técnica: Padrão de Commits (Conventional Commits)
 
-> **Módulo:** [architecture-standards](index.md) | [gitops-sprint-workflow](../../onboarding/gitops-sprint-workflow.md)
+> **Módulo:** Padrões de Arquitetura | [gitops-sprint-workflow](../../onboarding/gitops-sprint-workflow.md)
 > **Camada:** Controle de Versão & Git Ops
 
 ---

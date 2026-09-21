@@ -108,13 +108,42 @@ validation:
 nav:
   - Início: index.md
 
-  - Funcionalidades:
-      - Visão Geral das Funcionalidades: features/index.md
-      - Módulo Financeiro: features/finances.md
-      - Módulo de Logística e Contratos: features/logistics.md
-      - Agenda e Cronograma: features/scheduler.md
+  - Domínios & Negócio:
+      - Topologia Geral de Domínios: architecture/domains/index.md
+      - Subdomínios Operacionais do Casamento:
+          - Domínio de Casamentos (Weddings):
+              - Hub de Casamentos: architecture/domains/weddings-domain.md
+              - Ciclo de Vida do Casamento: architecture/business-rules/weddings/wedding-status-lifecycle.md
+              - Templates de Cronograma: architecture/business-rules/weddings/wedding-schedule-templates.md
+          - Domínio Financeiro (Finances):
+              - Hub Financeiro: architecture/domains/finances-domain.md
+              - Tolerância Zero & Integridade: architecture/business-rules/finances/financial-integrity-rules.md
+              - Distribuição Orçamentária: architecture/business-rules/finances/budget-category-distribution.md
+              - Vencimento de Parcelas: architecture/business-rules/finances/installment-overdue-logic.md
+              - Integração com Agenda: architecture/business-rules/finances/payment-schedule-integration.md
+              - Benchmark da Assessoria: architecture/business-rules/finances/tenant-budget-benchmark.md
+          - Domínio de Logística & Contratos:
+              - Hub de Logística: architecture/domains/logistics-domain.md
+              - Máquina de Estados de Contratos: architecture/business-rules/logistics/contract-state-machine.md
+              - Hierarquia e Aditivos: architecture/business-rules/logistics/contract-parent-child-hierarchy.md
+              - Validação de CNPJ: architecture/business-rules/logistics/cnpj-validation-rules.md
+          - Domínio de Agenda & Cronograma:
+              - Hub do Cronograma: architecture/domains/scheduler-domain.md
+              - Conflito de Agenda (Soft Overlap): architecture/business-rules/scheduler/schedule-conflict-validation.md
+              - Motor de Recorrência: architecture/business-rules/scheduler/recurrence-rules-engine.md
+              - Guard Read-Only de Pagamentos: architecture/business-rules/scheduler/payment-event-readonly-guard.md
+          - Domínio de Notificações:
+              - Hub de Notificações: architecture/domains/notifications-domain.md
+              - Regras In-App: architecture/business-rules/notifications/in-app-notifications-rules.md
+      - Subdomínios de Plataforma & Inteligência:
+          - Core & Fundação Transversal: architecture/domains/core-domain.md
+          - Tenants & Multi-Tenancy: architecture/domains/tenants-domain.md
+          - Usuários & Identidade (Auth): architecture/domains/users-domain.md
+          - Dashboard & Indicadores: architecture/domains/dashboard-domain.md
+          - Relatórios & Exportações (Reporting): architecture/domains/reporting-domain.md
+      - Catálogo Canônico de Regras (SSOT): architecture/business-rules/index.md
 
-  - Arquitetura:
+  - Arquitetura & Engenharia:
       - Visão Geral & System Design: architecture/index.md
       - Matriz de Requisitos (RF & RNF): architecture/requirements.md
       - Padrões Arquiteturais:
@@ -129,46 +158,9 @@ nav:
           - CI/CD & Ownership Terraform: architecture/concepts/ci-cd-pipeline-flow.md
           - Suíte de Guard-Rails: architecture/concepts/architectural-guard-rails-suite.md
           - Tarefas Assíncronas & Crons: architecture/concepts/async-tasks-architecture.md
-      - Domínios da Plataforma (Bounded Contexts):
-          - Visão Geral dos Domínios: architecture/domains/index.md
-          - Core Domain: architecture/domains/core-domain.md
-          - Dashboard Domain: architecture/domains/dashboard-domain.md
-          - Reporting Domain: architecture/domains/reporting-domain.md
-          - Finances Domain: architecture/domains/finances-domain.md
-          - Logistics Domain: architecture/domains/logistics-domain.md
-          - Scheduler Domain: architecture/domains/scheduler-domain.md
-          - Tenants Domain: architecture/domains/tenants-domain.md
-          - Users Domain: architecture/domains/users-domain.md
-          - Weddings Domain: architecture/domains/weddings-domain.md
-          - Notifications Domain: architecture/domains/notifications-domain.md
-      - Regras de Negócio (SSOT):
-          - Visão Geral das Regras (MOC): architecture/business-rules/index.md
-          - Cronograma & Scheduler:
-              - MOC de Cronograma: architecture/business-rules/scheduler/index.md
-              - Conflito de Agenda (Soft Overlap): architecture/business-rules/scheduler/schedule-conflict-validation.md
-              - Motor de Recorrência: architecture/business-rules/scheduler/recurrence-rules-engine.md
-              - Guard Read-Only de Pagamentos: architecture/business-rules/scheduler/payment-event-readonly-guard.md
-          - Finanças:
-              - MOC de Finanças: architecture/business-rules/finances/index.md
-              - Tolerância Zero & Integridade: architecture/business-rules/finances/financial-integrity-rules.md
-              - Benchmark e Média do Tenant: architecture/business-rules/finances/tenant-budget-benchmark.md
-              - Distribuição Orçamentária: architecture/business-rules/finances/budget-category-distribution.md
-              - Lógica de Parcelas Vencidas: architecture/business-rules/finances/installment-overdue-logic.md
-              - Integração de Pagamentos: architecture/business-rules/finances/payment-schedule-integration.md
-          - Logística:
-              - MOC de Logística: architecture/business-rules/logistics/index.md
-              - Máquina de Estados de Contratos: architecture/business-rules/logistics/contract-state-machine.md
-              - Hierarquia de Contratos: architecture/business-rules/logistics/contract-parent-child-hierarchy.md
-              - Validação de CNPJ: architecture/business-rules/logistics/cnpj-validation-rules.md
-          - Casamentos (Weddings):
-              - MOC de Casamentos: architecture/business-rules/weddings/index.md
-              - Ciclo de Vida do Casamento: architecture/business-rules/weddings/wedding-status-lifecycle.md
-              - Templates de Cronograma: architecture/business-rules/weddings/wedding-schedule-templates.md
-          - Notificações:
-              - MOC de Notificações: architecture/business-rules/notifications/index.md
-              - Regras de Notificação In-App: architecture/business-rules/notifications/in-app-notifications-rules.md
+          - Design System & Racional de UX: architecture/concepts/design-system-rationale.md
       - Decisões Arquiteturais (ADRs):
-          - architecture/adr/README.md
+          - Índice Geral (ADR 001–031): architecture/adr/README.md
           - 001 - Por que Cloud Run: architecture/adr/001-why-cloud-run.md
           - 002 - Por que Neon DB: architecture/adr/002-why-neon.md
           - 003 - Por que Cloudflare R2: architecture/adr/003-why-r2.md
@@ -199,19 +191,16 @@ nav:
           - 029 - Task Runner Moderno (Just): architecture/adr/029-modern-task-runner-just.md
           - 030 - Rich Domain Model & Casos de Uso: architecture/adr/030-rich-domain-model-service-layer.md
           - 031 - Comunicação Entre Módulos: architecture/adr/031-inter-module-communication.md
-      - Design System & Racional de UX: architecture/concepts/design-system-rationale.md
 
-  - Guias & Onboarding:
-      - Visão Geral dos Guias & Onboarding: guides/index.md
+  - Guias & Playbooks:
       - Onboarding & Primeiros Passos:
-          - Quickstart do Ambiente Local: onboarding/onboarding-quickstart.md
+          - Quickstart do Ambiente: onboarding/onboarding-quickstart.md
           - Criando Endpoints no Backend: onboarding/backend-first-feature.md
           - Criando Telas no Frontend: onboarding/frontend-first-feature.md
           - GitOps & Fluxo por Sprints: onboarding/gitops-sprint-workflow.md
-      - Ambiente & Migrações:
-          - MOC de Ambiente: guides/dev-environment/index.md
-          - Task Runner Just & Comandos: guides/dev-environment/task-runner-just.md
+      - Ambiente Local & Migrações:
           - Setup Local Completo: guides/dev-environment/setup-local-environment.md
+          - Task Runner Just & Comandos: guides/dev-environment/task-runner-just.md
           - Migrações do Banco: guides/dev-environment/database-migrations.md
       - Frontend (React & Orval):
           - Uso do Design System: guides/frontend/use-design-md-system.md
@@ -236,47 +225,37 @@ nav:
           - Uploads R2 Failures: guides/ops-troubleshooting/r2-upload-failures.md
           - Terraform Onboarding: guides/ops-troubleshooting/terraform-service-onboarding.md
       - Governança & Documentação:
-          - MOC de Guias de Docs: guides/documentation/index.md
           - Como Escrever Docs: guides/documentation/write-and-update-docs.md
 
   - Referência Técnica:
-      - Visão Geral da Referência: reference/index.md
       - APIs & Contratos OpenAPI:
-          - Hub de APIs: reference/api/index.md
           - Contrato OpenAPI: reference/api/openapi-schema.md
           - Envelope de Erros: reference/api/error-envelope-spec.md
       - Modelos do Banco de Dados:
           - Modelos Base & Padrões Core: reference/models/core-models.md
-          - Modelos por Domínio (ERD & Agregados): architecture/domains/index.md
       - Infraestrutura & IaC (Terraform):
-          - Módulos Terraform (MOC): reference/terraform/index.md
           - Módulo GCP Cloud Run: reference/terraform/cloud-run-service-module.md
           - Variáveis de Ambiente (.env): reference/environment/environment-variables.md
           - Serviços de Infraestrutura Core: reference/architecture-standards/infrastructure-services.md
       - Suíte de Testes Automatizados:
-          - MOC de Testes: reference/testing/index.md
           - Testes de Backend (Pytest): reference/testing/backend-testing-spec.md
           - Testes de Frontend (Vitest): reference/testing/frontend-testing-spec.md
           - Testes E2E (Playwright): reference/testing/e2e-testing-spec.md
           - Testes de Infraestrutura (Terraform): reference/testing/terraform-testing-spec.md
       - CI/CD & Esteiras de Entrega:
-          - MOC de CI/CD: reference/ci-cd/index.md
           - Validação de Pull Requests (CI): reference/ci-cd/ci-pr-validation-spec.md
           - Deploy Contínuo (CD): reference/ci-cd/cd-deploy-spec.md
           - Pipelines do Terraform: reference/ci-cd/terraform-pipelines-spec.md
           - Revisão Automatizada de Código: reference/ci-cd/ai-code-review-spec.md
       - Padrões Técnicos & Guard-Rails:
-          - Visão Geral dos Padrões: reference/architecture-standards/index.md
           - Padrões de Documentação: reference/architecture-standards/documentation-standards.md
           - Padrão Query Selectors: reference/architecture-standards/query-selectors-spec.md
           - Convencional de Commits: reference/architecture-standards/commit-convention-spec.md
           - Padrão de Comentários & Docstrings: reference/architecture-standards/commenting-standards.md
-          - Guard-Rails de Integridade (MOC): reference/architecture-standards/guard-rails/index.md
           - Guard-Rail de Isolamento de Tenant: reference/architecture-standards/guard-rails/tenant-isolation-guard.md
           - Guard-Rail de Permissões & Segurança: reference/architecture-standards/guard-rails/security-permissions-guard.md
           - Guard-Rail de Auditoria de Serviços Atômicos: reference/architecture-standards/guard-rails/atomic-service-audit-guard.md
       - Frontend Specs:
-          - Visão Geral do Frontend: reference/frontend/index.md
           - Landing Page Comercial (Astro): reference/frontend/landing-page-spec.md
           - Componentes UI (shadcn/ui): reference/frontend/ui-components-spec.md
           - Estado Global & Cache (Zustand/Query): reference/frontend/store-state-spec.md

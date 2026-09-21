@@ -14,7 +14,7 @@ tests:
 # Padrão Smart/Dumb Components (Container vs Presenter)
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [ADR-024: Padrão Smart/Dumb no Frontend](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md) · [Padrão Anti-Data-Stitching no Frontend](anti-data-stitching-pattern.md) · [Referência Frontend](../../reference/frontend/index.md) · [Especificação de Testes Frontend](../../reference/testing/frontend-testing-spec.md) · [Racional do Sistema de Design](design-system-rationale.md)
+> **Relacionados:** [ADR-024: Padrão Smart/Dumb no Frontend](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md) · [Padrão Anti-Data-Stitching no Frontend](anti-data-stitching-pattern.md) · [Componentes UI](../../reference/frontend/ui-components-spec.md) · [Especificação de Testes Frontend](../../reference/testing/frontend-testing-spec.md) · [Racional do Sistema de Design](design-system-rationale.md)
 
 ---
 

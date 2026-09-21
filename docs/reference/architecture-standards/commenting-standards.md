@@ -1,6 +1,6 @@
 # Padrões de Comentários e Docstrings
 
-> **Módulo:** [architecture-standards](index.md) | [system-overview](../../architecture/concepts/system-overview.md)
+> **Módulo:** Padrões de Arquitetura | [system-overview](../../architecture/concepts/system-overview.md)
 > **Escopo:** Backend Python/Django e Frontend React/TypeScript
 
 ---
