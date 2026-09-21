@@ -37,6 +37,12 @@ class NotificationService:
 
     Centraliza a criação e alteração do estado de notificações (mutações),
     garantindo isolamento multitenant.
+
+    Regras de Negócio e SSOT:
+    - BR-N01..04 (Ciclo de Vida e Leitura de Notificações In-App):
+      docs/architecture/business-rules/notifications/in-app-notifications-rules.md
+    - Hub do Domínio de Notificações:
+      docs/architecture/domains/notifications-domain.md
     """
 
     @staticmethod

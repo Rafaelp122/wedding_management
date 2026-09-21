@@ -1,7 +1,7 @@
 # Especificação Técnica: Guard-Rail de Segurança, Permissões e Prevenção de Vazamentos
 
 > **Categoria:** Referência Técnica (Guard-Rails & Integridade)
-> **Relacionados:** [MOC de Guard-Rails](index.md) · [Fluxo de Autenticação JWT](../../../architecture/concepts/auth-jwt-flow.md) · [Suíte de Guard-Rails](../../../architecture/concepts/architectural-guard-rails-suite.md)
+> **Relacionados:** [Suíte de Guard-Rails](../../../architecture/concepts/architectural-guard-rails-suite.md) · [Fluxo de Autenticação JWT](../../../architecture/concepts/auth-jwt-flow.md)
 > **Implementação:** `backend/apps/core/tests/test_security_audit.py`, `test_sensitive_data_leak.py` e `test_api_architecture.py`
 
 ---

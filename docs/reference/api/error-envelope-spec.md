@@ -1,6 +1,6 @@
 # Especificação Técnica: Envelope de Erros da API (Django Ninja)
 
-> **Módulo:** [api-reference](index.md) | [system-overview](../../architecture/concepts/system-overview.md)
+> **Módulo:** Referência de API | [openapi-schema](openapi-schema.md) | [system-overview](../../architecture/concepts/system-overview.md)
 > **Camada:** Backend (`backend/apps/core/exceptions.py`, `backend/apps/api.py`)
 
 ---

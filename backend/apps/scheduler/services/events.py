@@ -23,6 +23,16 @@ class EventService:
     """
     Camada de serviço para gestão de compromissos e calendário.
     Garante isolamento total (Multitenancy), auditoria e integridade de agendamento.
+
+    Regras de Negócio e SSOT:
+    - BR-S01 (Read-Only Guard de Pagamentos):
+      docs/architecture/business-rules/scheduler/payment-event-readonly-guard.md
+    - BR-S02 (Motor de Recorrência e Agendamento):
+      docs/architecture/business-rules/scheduler/recurrence-rules-engine.md
+    - BR-S03 (Detecção de Conflitos de Agenda):
+      docs/architecture/business-rules/scheduler/schedule-conflict-validation.md
+    - Hub do Domínio:
+      docs/architecture/domains/scheduler-domain.md
     """
 
     @staticmethod

@@ -30,6 +30,16 @@ class InstallmentService:
 
     Garante o isolamento multitenant e a integridade da Tolerância Zero (ADR-010)
     nas despesas pai.
+
+    Regras de Negócio e SSOT:
+    - BR-F01 (Tolerância Zero Centesimal):
+      docs/architecture/business-rules/finances/financial-integrity-rules.md
+    - BR-F05 (Vencimento e Máquina de Estados de Parcelas):
+      docs/architecture/business-rules/finances/installment-overdue-logic.md
+    - BR-S01-SYNC (Integração de Pagamentos com Agenda):
+      docs/architecture/business-rules/finances/payment-schedule-integration.md
+    - Hub do Domínio Financeiro:
+      docs/architecture/domains/finances-domain.md
     """
 
     @staticmethod

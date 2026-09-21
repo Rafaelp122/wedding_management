@@ -29,6 +29,14 @@ class WeddingService:
 
     Responsável pela criação, atualização e deleção de instâncias de Wedding,
     além de aplicação automática de templates de cronograma.
+
+    Regras de Negócio e SSOT:
+    - BR-W01 a BR-W06 (Ciclo de Vida do Casamento):
+      docs/architecture/business-rules/weddings/wedding-status-lifecycle.md
+    - BR-W07 (Templates Canônicos de Cronograma):
+      docs/architecture/business-rules/weddings/wedding-schedule-templates.md
+    - Hub do Domínio de Casamentos:
+      docs/architecture/domains/weddings-domain.md
     """
 
     @staticmethod

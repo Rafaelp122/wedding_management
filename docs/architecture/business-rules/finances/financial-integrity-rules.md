@@ -15,7 +15,7 @@ tests:
 # Regras de Integridade Financeira & Tolerância Zero
 
 > **Categoria:** Regra de Negócio (Domínio Financeiro)
-> **Relacionados:** [MOC de Finanças](index.md) · [ADR-010: Tolerância Zero](../../adr/010-tolerance-zero.md) · [Distribuição e Alocação de Orçamento por Categoria](budget-category-distribution.md) · [Benchmark e Média Orçamentária por Assessoria](tenant-budget-benchmark.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [ADR-010: Tolerância Zero](../../adr/010-tolerance-zero.md) · [Distribuição e Alocação de Orçamento por Categoria](budget-category-distribution.md) · [Benchmark e Média Orçamentária por Assessoria](tenant-budget-benchmark.md) · [Lógica de Parcelas Vencidas](installment-overdue-logic.md) · [Domínio de Finanças](../../domains/finances-domain.md)
 
 ---
 

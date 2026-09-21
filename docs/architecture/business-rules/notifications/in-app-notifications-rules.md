@@ -16,7 +16,7 @@ tests:
 # Regras de Negócio de Notificações In-App
 
 > **Categoria:** Regra de Negócio (Domínio de Notificações)
-> **Relacionados:** [MOC de Notificações](index.md) · [Lógica de Parcelas Vencidas](../finances/installment-overdue-logic.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Notificações](../../domains/notifications-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Lógica de Parcelas Vencidas](../finances/installment-overdue-logic.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Notificações](../../domains/notifications-domain.md)
 
 ---
 

@@ -1,6 +1,6 @@
 # Como Popular o Banco de Dados Local (Seeding & Templates)
 
-> **Módulo:** [dev-environment](../../guides/dev-environment/index.md) | [weddings-domain](../../architecture/domains/weddings-domain.md)
+> **Módulo:** [dev-environment](../../guides/dev-environment/setup-local-environment.md) | [weddings-domain](../../architecture/domains/weddings-domain.md)
 > **Comandos:** `python manage.py seed_db`, `python manage.py seed_wedding_templates`
 
 ---

@@ -1,25 +1,25 @@
 # Domínio de Notificações & Alertas In-App (Notifications)
 
 > **Categoria:** Domínios de Arquitetura (Bounded Contexts)
-> **Relacionados:** [Regras de Notificações In-App](../business-rules/notifications/in-app-notifications-rules.md) · [Arquitetura de Tarefas Assíncronas](../concepts/async-tasks-architecture.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-009: Multi-Tenancy](../adr/009-multitenancy.md) · [ADR-017: Infraestrutura de Tarefas Assíncronas](../adr/017-async-task-infrastructure.md) · [Modelos Base & Padrões Core](../../reference/models/core-models.md)
+> **Relacionados:** [Catálogo Canônico de Regras de Negócio](../business-rules/index.md) · [Arquitetura de Tarefas Assíncronas](../concepts/async-tasks-architecture.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-009: Multi-Tenancy](../adr/009-multitenancy.md) · [ADR-017: Tarefas Assíncronas](../adr/017-async-task-infrastructure.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md)
+
+O **Domínio de Notificações (`notifications`)** fornece o mecanismo transacional e assíncrono de alertas operacionais, avisos e lembretes para usuários da assessoria e casais, reagindo a eventos disparados pelos demais domínios.
 
 ---
 
-## 1. Visão Geral do Domínio
+## 1. Visão de Negócio & Capacidades Operacionais
 
-O domínio de **Notifications** centraliza todo o pipeline de comunicação de eventos, alertas e lembretes gerados pelos módulos operacionais do ERP para os usuários do sistema.
+Em um ambiente operacional de casamentos, perder um prazo de pagamento ou de confirmação de contrato pode inviabilizar um serviço. O módulo centraliza avisos operacionais com entrega visual in-app e suporte a deep linking.
 
-Pilares arquiteturais de notificações:
-1. **Comunicação In-App Centralizada:** Persistência de notificações para consumo em tempo real no sino (*notification bell*) da interface web.
-2. **Dupla Interface de Criação (Síncrona & Assíncrona):**
-   - **Síncrona (`NotificationService.create_notification`):** Para disparos imediatos durante execuções diretas de serviços.
-   - **Assíncrona (`dispatch_async_notification_task` via `django.tasks`):** Para disparos disparados por crons ou rotinas pesadas em background (ADR-017).
-3. **Isolamento Estrito de Multi-Tenancy:** Cada notificação pertence a uma `Company` e a um `User` destinatário (`user.company_id == company.id`).
-4. **Ancoragem Polimórfica Leve:** Associação dinâmica com entidades de negócio (`target_type` e `target_id` UUID), permitindo redirecionamento com clique (*deep link*).
+### Principais Capacidades Operacionais
+- **Central de Alertas In-App:** Exibição em tempo real no sino de notificações (*notification bell*) da interface web, com contadores de não lidas.
+- **Deep Linking Contextual:** Cada notificação contém metadados de ancoragem (`target_type` e `target_id`), permitindo redirecionar o usuário diretamente para o contrato, parcela, tarefa ou casamento em questão.
+- **Gestão Individual e em Lote:** Capacidade de marcar itens como lidos individualmente, marcar todos como lidos em massa ou expurgar notificações obsoletas.
+- **Despacho Desacoplado:** Notificações disparadas por rotinas cron pesadas utilizam execução assíncrona não bloqueante via `django.tasks`.
 
 ---
 
-## 2. Diagrama ERD e Fluxo de Despacho Assíncrono
+## 2. Modelo de Dados & Diagrama ERD
 
 ```mermaid
 erDiagram
@@ -58,7 +58,7 @@ sequenceDiagram
 
     Cron->>CronService: Dispara varredura diária de parcelas vencidas
     CronService->>TaskQueue: Enfileira dispatch_async_notification_task(...)
-    Note over TaskQueue: Desacoplamento não-bloqueante
+    Note over TaskQueue: Desacoplamento assíncrono (ADR-017)
     TaskQueue->>NotifTask: Executa tarefa assíncrona
     NotifTask->>NotifSvc: NotificationService.create_notification(company, user, ...)
     NotifSvc->>DB: INSERT INTO notifications (is_read=False, ...)
@@ -66,60 +66,68 @@ sequenceDiagram
     DB-->>Frontend: Retorna lista de notificações não lidas + Contador
 ```
 
----
-
-## 3. Tabela de Entidades, Tipos e Invariantes de Persistência
+### Tabela de Entidades e Invariantes de Persistência
 
 | Entidade / Componente | Papel Arquitetural | Campos & Tipos | Invariantes de Persistência & Regras de Notificação |
 | :--- | :--- | :--- | :--- |
-| **`Notification`** | Agregado de Notificação (`BaseModel`) | `company` (`ForeignKey`, `CASCADE`), `user` (`ForeignKey`, `CASCADE`), `title`, `message`, `type` (`NotificationType`), `target_type` (`NotificationTargetType`), `target_id`, `wedding_id`, `wedding_name` (CharField nullable), `is_read`, `read_at`, `link` | **Validação de Tenant (BR-N01):** `user.company_id == company.id` (usuário deve pertencer à empresa informada).<br/>**Índice Composto:** `models.Index(fields=["company", "user", "is_read"])` para lookups rápidos da contagem de não-lidas.<br/>**Transição de Leitura:** Ao marcar como lida, preenche `read_at = timezone.now()`. |
-| **`NotificationType`** | Tipos de Eventos do Sistema | `OVERDUE_INSTALLMENT`, `UPCOMING_INSTALLMENT`, `EXPIRING_CONTRACT`, `TASK_DEADLINE`, `CHECKLIST_ITEM_OVERDUE`, `GENERAL` | Categoriza a severidade e o ícone visual a ser renderizado na interface. |
-| **`NotificationTargetType`** | Tipos de Entidades Alvo | `installment`, `expense`, `task`, `contract`, `wedding`, `general` | Mapeia o alvo para permitir deep-linking e navegação direta na interface React. |
-| **`dispatch_async_notification_task`** | Tarefa em Segundo Plano (`@task()`) | `company_id`, `user_id`, `title`, `message`, `notification_type`, ... | Enfileira a criação da notificação usando `django.tasks` sem bloquear o ciclo de vida da requisição HTTP principal. |
+| **`Notification`** | Agregado de Notificação (`BaseModel`) | `company` (`ForeignKey`, `CASCADE`), `user` (`ForeignKey`, `CASCADE`), `title`, `message`, `type` (`NotificationType`), `target_type` (`NotificationTargetType`), `target_id`, `wedding_id`, `wedding_name`, `is_read`, `read_at`, `link` | **Validação de Tenant (BR-N01):** `user.company_id == company.id`.<br/>**Índice Composto:** `models.Index(fields=["company", "user", "is_read"])` para contagens rápidas.<br/>**Transição de Leitura:** Ao marcar como lida, registra `read_at = timezone.now()`. |
 
 ---
 
-## 4. Implementação do Modelo de Domínio e Serviços
+## 3. Matriz Consolidada de Regras de Negócio (SSOT)
 
-O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer), estruturado em três níveis de validação:
+| Código Canônico | Regra / Especificação | Escopo / Responsabilidade | Entidades Envolvidas | Nota Detalhada |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BR-N01`** | **Criação e Isolamento de Alertas** | Disparo de alertas síncronos e assíncronos vinculados a um usuário e tenant específicos, com tipos canônicos de notificação. | `Notification`, `Company`, `User` | [in-app-notifications-rules.md](../business-rules/notifications/in-app-notifications-rules.md) |
+| **`BR-N02`** | **Ciclo de Leitura Individual e em Lote** | Marcação atômica de leitura (`read_at`), mutação em lote via `bulk-read` e limpeza controlada via `clear-all`. | `Notification` | [in-app-notifications-rules.md](../business-rules/notifications/in-app-notifications-rules.md) |
+| **`BR-N03`** | **Contadores e Badges na UI** | Consulta indexada em tempo constante de contagem de notificações não lidas por usuário/empresa. | `Notification` | [in-app-notifications-rules.md](../business-rules/notifications/in-app-notifications-rules.md) |
+| **`BR-N04`** | **Ancoragem e Deep Linking** | Rastreabilidade da entidade geradora com rota canônica de redirecionamento na interface. | `Notification` | [in-app-notifications-rules.md](../business-rules/notifications/in-app-notifications-rules.md) |
 
+### Matriz de Integração e Relações Cruzadas
+- **Com o Módulo de Finanças:** Tarefas diárias de parcelas vencidas emitem alertas para a assessoria. Veja [Domínio Financeiro](finances-domain.md).
+- **Com o Módulo de Cronograma:** Lembretes de eventos configurados com antecedência disparam notificações contextuais. Veja [Domínio de Cronograma](scheduler-domain.md).
+
+---
+
+## 4. Arquitetura Fullstack do Módulo
+
+O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer):
+
+### Backend (`backend/apps/notifications/`)
 - **Modelos de Domínio Ricos:**
-  - [`apps/notifications/models.py`](../../../backend/apps/notifications/models.py) (`Notification`): Encapsula invariantes multi-tenant e temporais no `clean()` e métodos de ciclo de vida (`mark_as_read()`).
+  - `Notification`: Encapsula invariantes de tenant e temporais no `clean()` e métodos de ciclo de vida (`mark_as_read()`).
 - **Casos de Uso e Serviços:**
-  - [`apps/notifications/services.py`](../../../backend/apps/notifications/services.py) (`NotificationService`): Orquestra criação síncrona e assíncrona, marcações individuais e em lote com persistência cirúrgica via `update_fields` e expurgação segura de notificações por tenant.
-  - [`apps/notifications/tasks.py`](../../../backend/apps/notifications/tasks.py) (`dispatch_async_notification_task`): Enfileiramento desacoplado em segundo plano via `django.tasks` (ADR-017).
+  - `NotificationService`: Orquestra criação síncrona, leitura individual e em lote e expurgação segura de registros por tenant.
+  - `dispatch_async_notification_task`: Enfileiramento desacoplado em segundo plano via `django.tasks` (ADR-017).
 - **Seletores de Leitura CQRS:**
-  - [`apps/notifications/selectors.py`](../../../backend/apps/notifications/selectors.py) (`notification_list_selector`, `notification_unread_count_selector`, `notification_get_selector`): Consultas otimizadas com contagens indexadas e anotações do nome do casamento via SQL (`with_wedding_name`).
-- **Validação de Entrada (Pydantic):**
-  - [`apps/notifications/schemas/`](../../../backend/apps/notifications/schemas/): Pacote modular (`notification.py`, `bulk.py`) com regras de Nível 1 (sanitização de entrada via `str_strip_whitespace=True`, lista com `min_length=1` e DTOs de contagem).
+  - `notification_list_selector`, `notification_unread_count_selector`: Consultas otimizadas com contagens indexadas e anotações do casamento via SQL.
+- **Validação de Entrada e Schemas Ninja (Pydantic):**
+  - Schemas modulares em `apps/notifications/schemas/` com sanitização e validação de listas mínimas.
+- **Endpoints:**
+  - `GET /notifications/`, `GET /notifications/unread-count/`, `POST /notifications/read-all/`, `POST /notifications/bulk-read/`, `POST /notifications/bulk-delete/`, `DELETE /notifications/clear-all/`, `PATCH /notifications/{notification_id}/read/`.
+
+### Frontend (`frontend/src/features/notifications/`)
+- **Padrão Smart/Dumb (ADR-024):**
+  - **Smart Container (`NotificationsDropdown.tsx`):** Orquestra o popover suspenso (*notification bell*), contadores em tempo real e deep links.
+  - **Smart Hook (`useNotificationsDropdown.ts`):** Gerencia requisições TanStack Query (`useNotificationsList`, `useNotificationsUnreadCount`) e ações de mutação em lote.
+  - **Dumb Presenter (`NotificationsDropdownView.tsx`):** Visual puro orientado por props com modo de seleção múltipla, exclusão em massa e itens individuais (`NotificationItem.tsx`).
 
 ---
 
-## 5. Mapeamento de Camadas (Fullstack)
+## 5. Integrações & Interfaces Públicas (ADR-031)
 
-### Camada de Backend (`backend/apps/notifications/`)
-- **Modelos:** `Notification`, `NotificationType`, `NotificationTargetType` em `models.py`.
-- **Managers:** `NotificationQuerySet` em `managers.py`.
-- **Services:** `NotificationService` em `services.py`.
-- **Tasks:** `dispatch_async_notification_task` em `tasks.py`.
-- **Selectors:** `notification_list_selector`, `notification_unread_count_selector` em `selectors.py`.
-- **Endpoints:** `api.py` com rotas `GET /notifications/`, `GET /notifications/unread-count/`, `POST /notifications/read-all/`, `POST /notifications/bulk-read/`, `POST /notifications/bulk-delete/`, `DELETE /notifications/clear-all/`, `PATCH /notifications/{notification_id}/read/`, `DELETE /notifications/{notification_id}/`.
-
-### Camada de Frontend (`frontend/src/features/notifications/`)
-- **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
-  - **Smart Container ([`NotificationsDropdown.tsx`](../../../frontend/src/features/notifications/components/NotificationsDropdown.tsx)):** Orquestra o popover suspenso (*notification bell*), sincronização de contadores não lidos e navegação via deep links.
-  - **Smart Hook ([`useNotificationsDropdown.ts`](../../../frontend/src/features/notifications/hooks/useNotificationsDropdown.ts)):** Gerencia requisições TanStack Query (`useNotificationsList`, `useNotificationsUnreadCount`), filtros de visualização (todas vs não lidas) e ações de mutação em lote (`markAllAsRead`, `bulkRead`, `bulkDelete`).
-  - **Dumb Presenter ([`NotificationsDropdownView.tsx`](../../../frontend/src/features/notifications/components/NotificationsDropdownView.tsx)):** Visual puro orientado por props, oferecendo modo de seleção múltipla com checkboxes, exclusão em massa, estados de loading/empty e itens individuais ([`NotificationItem.tsx`](../../../frontend/src/features/notifications/components/NotificationItem.tsx)).
+- `apps.notifications.interfaces.notify_tenant_users`: Ponto único de entrada para disparos transacionais oriundos de outros Bounded Contexts.
 
 ---
 
-## 6. Links e Regras de Negócio Associadas
+## 6. Aprofundamento & Referências
 
-- [Regras de Negócio de Notificações In-App](../business-rules/notifications/in-app-notifications-rules.md)
-- [Arquitetura de Tarefas Assíncronas](../concepts/async-tasks-architecture.md)
-- [ADR-006: Service Layer](../adr/006-service-layer.md)
-- [ADR-009: Multi-Tenancy](../adr/009-multitenancy.md)
+### Regras de Negócio Detalhadas
+- [Regras de Negócio de Notificações In-App (`BR-N01` a `BR-N04`)](../business-rules/notifications/in-app-notifications-rules.md)
+
+### Decisões de Arquitetura (ADRs)
+- [ADR-006: Service Layer Pattern](../adr/006-service-layer.md)
+- [ADR-009: Isolamento Multi-Tenancy](../adr/009-multitenancy.md)
 - [ADR-017: Infraestrutura de Tarefas Assíncronas](../adr/017-async-task-infrastructure.md)
-- [Modelos Base & Padrões Core](../../reference/models/core-models.md)
-- [Core Domain](core-domain.md)
-- [Users Domain](users-domain.md)
+- [ADR-030: Rich Domain Model e Casos de Uso](../adr/030-rich-domain-model-service-layer.md)
+- [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md)

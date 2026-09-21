@@ -1,6 +1,6 @@
 # Como Escrever Testes de Frontend com MSW e RTL
 
-> **Categoria:** [frontend](../../reference/frontend/index.md) | [frontend-testing-spec](../../reference/testing/frontend-testing-spec.md) | [ui-components-spec](../../reference/frontend/ui-components-spec.md)
+> **Categoria:** Guias de Frontend | [frontend-testing-spec](../../reference/testing/frontend-testing-spec.md) | [ui-components-spec](../../reference/frontend/ui-components-spec.md)
 > **Stack:** Vitest (`isolate: false`), React Testing Library (RTL), Mock Service Worker (MSW), Orval
 
 ---

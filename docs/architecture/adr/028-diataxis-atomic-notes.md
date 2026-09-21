@@ -1,14 +1,18 @@
 # ADR-028: Adoção do Framework Diatáxis e Padrão de Anotações Atômicas na Documentação
 
 > **Categoria:** Decisões de Arquitetura (ADR)
-> **Status:** 🟡 Emendada pela [ADR-030](030-rich-domain-model-service-layer.md) (§ 3)
+> **Status:** 🟡 Emendada pelas [ADR-030](030-rich-domain-model-service-layer.md) (§ 3) e Emenda MkDocs-First (Setembro 2026)
 > **Data:** Agosto 2026
 > **Decisor:** Rafael
-> **Relacionados:** [Padrão de Documentação Diátaxis & Notas Atômicas](../../reference/architecture-standards/documentation-standards.md) · [Como Escrever e Atualizar Docs](../../guides/documentation/write-and-update-docs.md) · [CI/CD Pipelines](../../reference/ci-cd/index.md)
+> **Relacionados:** [Padrão de Documentação Diátaxis & Notas Atômicas](../../reference/architecture-standards/documentation-standards.md) · [Como Escrever e Atualizar Docs](../../guides/documentation/write-and-update-docs.md) · [CI/CD Pipelines](../../reference/ci-cd/ci-pr-validation-spec.md)
 
 > [!NOTE]
-> **Emenda Arquitetural (Setembro 2026):**
+> **Emenda Arquitetural 1 (Setembro 2026):**
 > A seção 2.2 (item 5) desta ADR foi formalmente emendada pela [ADR-030: Rich Domain Model e Service Layer como Casos de Uso](030-rich-domain-model-service-layer.md) (§ 3), substituindo a exigência de transclusões PyMdown de código com faixas numéricas de linhas (`:start:end`) por referências diretas a classes e métodos e exemplos canônicos estáveis, eliminando o code-drift durante refatorações contínuas.
+
+> [!NOTE]
+> **Emenda Arquitetural 2 — Poda Pragmática MkDocs-First (Setembro 2026):**
+> A seção 2.2 (item 4) e a taxonomia de 4 quadrantes isolados foram revisadas. Aboliu-se o paradigma do Obsidian e a obrigatoriedade de MOCs intermediários (`index.md`) em cada subpasta. O [`mkdocs.yml`](../../../mkdocs.yml) passa a ser a Fonte Única da Verdade para navegação, e os domínios foram consolidados em **Hubs de Domínio Ricos** (`docs/architecture/domains/`), unificando visão funcional de produto, modelo de dados/ERD, matriz de regras de negócio e arquitetura fullstack.
 
 ---
 
@@ -63,7 +67,7 @@ quadrantChart
    > **Categoria:** [Nome do Quadrante / Subpasta]
    > **Relacionados:** [Link para Nota Relacionada](../caminho/outro-doc.md)
    ```
-4. **Hubs e Mapas de Conteúdo (MOC):** Todas as notas devem ser registradas no `index.md` de sua pasta e no hub principal [docs/index.md](../../index.md). Documentos órfãos são proibidos.
+4. **Navegação MkDocs-First & Hubs de Domínio (Emenda 2):** Abolição dos MOCs (`index.md`) burocráticos de subpastas. O [`mkdocs.yml`](../../../mkdocs.yml) é o único mapa hierárquico de navegação. Cada domínio possui um **Hub de Domínio Rico** em `docs/architecture/domains/` que consolida visão funcional, modelo de dados/ERD, regras de negócio canônicas e arquitetura fullstack.
 5. **Transclusão e Referência de Código:** Conforme refinado na [ADR-030](030-rich-domain-model-service-layer.md), priorizar links diretos para classes e métodos ou tags semânticas nomeadas (`[start:tag]`), evitando transclusões com faixas de linhas numéricas (`:start:end`) que causam fragilidade na manutenção.
 
 ---

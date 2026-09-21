@@ -67,28 +67,40 @@ sequenceDiagram
 
 ---
 
-## 3. Tabela de Entidades e Invariantes de Persistência
+## 3. Matriz Canônica de Regras de Identidade (SSOT)
 
-| Entidade / Componente | Papel Arquitetural | Campos & Chaves | Invariantes de Persistência & Regras de Negócio |
-| :--- | :--- | :--- | :--- |
-| **`User`** | Agregado de Identidade (`AbstractBaseUser`, `PermissionsMixin`) | `email` (unique, max 255), `uuid` (unique, indexado), `company` (`ForeignKey` para `tenants.Company`, `on_delete=models.PROTECT`), `first_name`, `last_name`, `is_active`, `is_email_verified`, `is_staff`, `is_superuser` | **Unicidade de E-mail:** `email` normalizado e único globalmente.<br/>**Proteção contra Órfãos:** `company` usa `models.PROTECT`, impedindo a deleção de empresas com usuários vinculados.<br/>**Superusuários:** Superusuários são automaticamente associados ao `admin-workspace`. |
-| **`CustomUserManager`** | Manager do Modelo `User` | `create_user()`, `create_superuser()` | Configura `is_active=False` por padrão para usuários comuns e provisiona automaticamente uma empresa padrão caso nenhuma seja passada em testes ou migrações. |
-| **`RegistrationService`** | Orquestrador de Cadastro | `register_new_owner()` | Executa em transação `@transaction.atomic`. Cria a `Company` e o `User` em sequência e agenda o envio de e-mail de ativação via `transaction.on_commit()`. |
-| **`TokenService`** | Gestão de Sessões JWT | `obtain()`, `refresh()`, `verify()` | Emite tokens de curta duração (*access token*) e de longa duração (*refresh token*) com rotação e suporte a blacklist. |
-| **`EmailVerificationService`** | Ciclo de Ativação | `send_verification_email()`, `verify_email()`, `resend_verification_email()` | Gera tokens temporários assinados com HMAC-SHA256 (`default_token_generator`), ativa a conta e preenche `email_verified_at = timezone.now()`. |
-| **`PasswordResetService`** | Recuperação de Senha | `request_password_reset()`, `confirm_password_reset()` | Previne enumeração de usuários (retorna mensagem de sucesso genérica mesmo se o e-mail não existir). |
-| **`GoogleAuthService`** | Login Social OAuth2 | `authenticate_with_google()` | Valida o token de identidade emitido pelos servidores do Google, mascara e-mails em logs e auto-provisiona o usuário com senha aleatória segura. |
+| ID | Regra / Invariante | Descrição & Comportamento | Entidades / Camadas | Referência Canônica |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BR-U01`** | **Normalização e Unicidade Estrita de E-mail** | O campo `email` atua como `USERNAME_FIELD`, normalizado em caixa baixa e sem espaços no cadastro, com consultas insensíveis a maiúsculas (`iexact`). | `User`, `CustomUserManager` | [auth-jwt-flow.md](../concepts/auth-jwt-flow.md) |
+| **`BR-U02`** | **Vínculo Imutável ao Tenant via `on_delete=PROTECT`** | Todo usuário pertence obrigatoriamente a uma empresa (`Company`), sendo proibida a deleção física da empresa enquanto houver contas de usuário vinculadas. | `User`, `Company` | [ADR-009](../adr/009-multitenancy.md) · [ADR-016](../adr/016-pragmatic-multi-tenancy.md) |
+| **`BR-U03`** | **Onboarding Atômico de Owner + Empresa** | O registro de um novo proprietário cria simultaneamente o usuário e sua `Company` em uma única transação atômica (`RegistrationService`), disparando e-mail pós-commit. | `RegistrationService`, `TenantService` | [ADR-006](../adr/006-service-layer.md) · [ADR-030](../adr/030-rich-domain-model-service-layer.md) |
+| **`BR-U04`** | **Verificação Preventiva de E-mail** | Contas iniciam com `is_active=False` e `is_email_verified=False`. Tentativas de login antes da validação por link seguro retornam `HTTP 401 (email_not_verified)`. | `User`, `TokenService`, `EmailVerificationService` | [auth-jwt-flow.md](../concepts/auth-jwt-flow.md) |
+| **`BR-U05`** | **Login Social Google OAuth2 com Auto-Provisionamento** | Validação criptográfica do `id_token` do Google; se o e-mail não existir, provisiona automaticamente o usuário, empresa e senha de alta entropia. | `GoogleAuthService`, `TokenService` | [ADR-013](../adr/013-migrate-drf-to-ninja.md) |
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Arquitetura Fullstack e Implementação no Código-Fonte
+
+### Backend (`backend/apps/users/`)
+- **Modelos:** `User` e `CustomUserManager` em `models.py`.
+- **Services:** `registration_service.py`, `token_service.py`, `email_verification_service.py`, `password_reset_service.py`, `google_auth_service.py`.
+- **Selectors CQRS:** `user_get_by_email_selector`, `user_get_by_uuid_selector`, `user_list_selector` em `selectors.py`.
+- **Endpoints Ninja:** `api.py` com rotas `/auth/token/`, `/auth/register/`, `/auth/verify-email/`, `/auth/password-reset/`, `/auth/google/`.
+
+### Frontend (`frontend/src/features/auth/`)
+- **Padrão Smart/Dumb (ADR-024):**
+  - **Containers (Smart):** `LoginPage.tsx`, `RegisterPage.tsx`, `VerifyEmailPage.tsx`, `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx` orquestram chamadas de rede e redirecionamentos.
+  - **Presenters (Dumb):** `LoginForm.tsx`, `RegisterForm.tsx`, `PasswordInput.tsx`, `SocialButtons.tsx` orientados por props e `react-hook-form` + `zod`.
+- **Estado Global:** `useAuthStore` (`src/stores/authStore.ts`).
+
+### Trechos Canônicos de Implementação
 
 - **Modelo de Identidade:** [`User`](../../../backend/apps/users/models.py)
 - **Serviço de Registro:** [`RegistrationService.register_new_owner()`](../../../backend/apps/users/services/registration_service.py)
 - **Serviço de Autenticação JWT:** [`TokenService.obtain()`](../../../backend/apps/users/services/token_service.py)
 - **Seletores de Usuário:** [`user_get_by_email_selector()`](../../../backend/apps/users/selectors.py) e [`user_get_by_uuid_selector()`](../../../backend/apps/users/selectors.py)
 
-### A. Definição do Modelo de Usuário (`User`)
+#### A. Definição do Modelo de Usuário (`User`)
 
 ```python
 class User(AbstractBaseUser, PermissionsMixin):
@@ -104,7 +116,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
 ```
 
-### B. Onboarding Atômico de Proprietário (`RegistrationService`)
+#### B. Onboarding Atômico de Proprietário (`RegistrationService`)
 
 ```python
 class RegistrationService:
@@ -126,7 +138,7 @@ class RegistrationService:
         return user
 ```
 
-### C. Emissão e Validação de Tokens JWT (`TokenService`)
+#### C. Emissão e Validação de Tokens JWT (`TokenService`)
 
 ```python
 class TokenService:
@@ -142,7 +154,7 @@ class TokenService:
         return TokenOut(access=str(refresh.access_token), refresh=str(refresh), user=UserOut.from_orm(user))
 ```
 
-### D. Seletores de Leitura de Usuários (`selectors.py`)
+#### D. Seletores de Leitura de Usuários (`selectors.py`)
 
 ```python
 def user_get_by_email_selector(*, email: str) -> User:
@@ -161,25 +173,24 @@ def user_get_by_uuid_selector(*, uuid: UUID | str) -> User:
 
 ---
 
-## 5. Mapeamento de Camadas (Fullstack)
+## 5. Integrações & Interfaces Públicas (ADR-031)
 
-### Camada de Backend (`backend/apps/users/`)
-- **Modelos:** `User` e `CustomUserManager` em `models.py`.
-- **Services:** `registration_service.py`, `token_service.py`, `email_verification_service.py`, `password_reset_service.py`, `google_auth_service.py`.
-- **Selectors:** `user_get_by_email_selector`, `user_get_by_uuid_selector`, `user_list_selector` em `selectors.py`.
-- **Endpoints Ninja:** `api.py` com rotas para `/auth/token/`, `/auth/register/`, `/auth/verify-email/`, `/auth/password-reset/`, `/auth/google/`.
-
-### Camada de Frontend (`frontend/src/features/auth/`)
-- **Páginas:** `LoginPage.tsx`, `RegisterPage.tsx`, `VerifyEmailPage.tsx`, `VerifyEmailPendingPage.tsx`, `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx`.
-- **Componentes:** `AuthLayout.tsx`, `LoginForm.tsx`, `RegisterForm.tsx`, `PasswordInput.tsx`, `SocialButtons.tsx`.
-- **Estado Global:** `useAuthStore` (`src/stores/authStore.ts`).
+A camada de identidade é consumida pelos demais módulos e pelo gateway HTTP através das seguintes fachadas:
+- `apps.users.interfaces.get_user_by_uuid`: Lookup defensivo de usuário por UUID para orçamentos, auditoria e perfil.
+- `apps.users.services.token_service.TokenService.obtain`: Autenticação e emissão do par de tokens JWT.
+- `apps.users.services.registration_service.RegistrationService.register_new_owner`: Ponto de entrada de onboarding completo.
 
 ---
 
-## 6. Links e Referências Cruzadas
+## 6. Aprofundamento & Referências
 
-- [Fluxo de Autenticação JWT](../concepts/auth-jwt-flow.md)
+### Decisões Arquiteturais (ADRs)
 - [ADR-006: Service Layer](../adr/006-service-layer.md)
-- [ADR-009: Multi-Tenancy](../adr/009-multitenancy.md)
+- [ADR-009: Isolamento Multi-Tenancy](../adr/009-multitenancy.md)
+- [ADR-013: Migração para Django Ninja](../adr/013-migrate-drf-to-ninja.md)
+- [ADR-024: Padrão Smart & Dumb Components](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
+
+### Conceitos & Especificações
+- [Fluxo de Autenticação JWT](../concepts/auth-jwt-flow.md)
+- [Domínio de Tenants](tenants-domain.md)
 - [Modelos Base & Padrões Core](../../reference/models/core-models.md)
-- [Tenants Domain](tenants-domain.md)

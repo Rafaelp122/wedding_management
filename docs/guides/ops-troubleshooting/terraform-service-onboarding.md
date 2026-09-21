@@ -1,6 +1,6 @@
 # Como Adicionar e Manter Serviços na Infraestrutura Terraform
 
-> **Relacionados:** [ADR-025](../../architecture/adr/025-terraform-iac-architecture.md) | [ADR-027](../../architecture/adr/027-terraform-state-topology.md) | [terraform-index](../../reference/terraform/index.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
+> **Relacionados:** [ADR-025](../../architecture/adr/025-terraform-iac-architecture.md) | [ADR-027](../../architecture/adr/027-terraform-state-topology.md) | [Módulo Cloud Run](../../reference/terraform/cloud-run-service-module.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
 
 Este guia orienta os engenheiros sobre como manter a infraestrutura atual e como adicionar novos serviços (como GCP Memorystore/Redis, Cloud Tasks/Celery, Cloud Run Jobs, Cloud Scheduler, recursos adicionais da Cloudflare e Vercel) seguindo os padrões de modularização do projeto.
 

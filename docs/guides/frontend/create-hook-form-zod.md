@@ -1,6 +1,6 @@
 # Como Criar Formulários com React Hook Form & Zod
 
-> **Categoria:** [frontend](../../reference/frontend/index.md) | [generate-orval-client](generate-orval-client.md) | [ui-components-spec](../../reference/frontend/ui-components-spec.md)
+> **Categoria:** Guias de Frontend | [generate-orval-client](generate-orval-client.md) | [ui-components-spec](../../reference/frontend/ui-components-spec.md)
 > **Stack:** React 19, `react-hook-form`, `@hookform/resolvers/zod`, `zod`, `shadcn/ui`, `sonner`
 
 ---

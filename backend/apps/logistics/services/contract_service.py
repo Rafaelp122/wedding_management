@@ -46,6 +46,14 @@ class ContractService:
     Camada de serviço para gestão de contratos.
     Foco: Orquestração de escrita, Multitenancy Segura e Auditoria.
     Validações de integridade do dado ficam delegadas ao Model.
+
+    Regras de Negócio e SSOT:
+    - BR-L01 (Máquina de Estados e Assinatura):
+      docs/architecture/business-rules/logistics/contract-state-machine.md
+    - BR-L02 (Hierarquia Pai-Filho e Termos Aditivos):
+      docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md
+    - Hub do Domínio de Logística:
+      docs/architecture/domains/logistics-domain.md
     """
 
     # Injeção de dependência para desacoplar a infraestrutura de Storage (R2/S3).

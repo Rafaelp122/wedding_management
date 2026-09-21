@@ -1,7 +1,7 @@
 # Especificação Técnica: Componentes de UI (shadcn/ui & Tailwind CSS v4)
 
 > **Categoria:** Referência Técnica (Frontend & Apresentação)
-> **Relacionados:** [Referência de Frontend](index.md) · [Smart vs Dumb Components](../../architecture/concepts/smart-dumb-components.md) · [Design System](../../architecture/concepts/design-system-rationale.md)
+> **Relacionados:** [Gerenciamento de Estado](store-state-spec.md) · [Smart vs Dumb Components](../../architecture/concepts/smart-dumb-components.md) · [Design System](../../architecture/concepts/design-system-rationale.md)
 > **Camada:** Frontend (`frontend/src/components/ui/` e `frontend/src/features/*/components/`)
 
 ---

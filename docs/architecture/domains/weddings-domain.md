@@ -1,24 +1,46 @@
 # Domínio de Casamentos & Gestão de Cerimônias (Weddings)
 
 > **Categoria:** Domínios de Arquitetura (Bounded Contexts)
-> **Relacionados:** [Ciclo de Vida do Casamento](../business-rules/weddings/wedding-status-lifecycle.md) · [Templates de Cronograma](../business-rules/weddings/wedding-schedule-templates.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-011: BaseModel save com full_clean](../adr/011-basemodel-save-full-clean.md) · [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md) · [Modelos Base & Padrões Core](../../reference/models/core-models.md)
+> **Relacionados:** [Catálogo Canônico de Regras de Negócio](../business-rules/index.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-011: BaseModel save com full_clean](../adr/011-basemodel-save-full-clean.md) · [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md)
+
+O **Domínio de Casamentos (`weddings`)** é o agregador central de operações de toda a plataforma. Cada casamento (`Wedding`) aglutina o escopo relacional de orçamento, contratos de fornecedores, agenda de compromissos, convidados e cronograma de um casal.
 
 ---
 
-## 1. Visão Geral do Domínio
+## 1. Visão de Negócio & Capacidades Operacionais
 
-O domínio de **Weddings** é o agregador central de operações de toda a plataforma. Ele representa o evento do casamento em si, definindo a identidade dos noivos, data, local, capacidade estimada de convidados, status de planejamento e o modelo inicial de cronograma (*template*).
+O casamento é a entidade raiz em torno da qual todos os módulos operacionais orbitam. Ele define a identidade dos noivos, data da cerimônia, local físico, estimativa de convidados, status de planejamento e o modelo inicial de cronograma (*template*).
 
-Todos os demais domínios operacionais (`Finances`, `Logistics`, `Scheduler`, `Reporting`) orbitam em torno da entidade `Wedding`, herdando o pertencimento através do mixin `WeddingOwnedMixin`.
+### Principais Capacidades Operacionais
+- **Gestão do Ciclo de Vida do Evento:** Acompanhamento do casamento desde a contratação inicial da assessoria até a conclusão ou eventual cancelamento e reabertura.
+- **Ancoragem Temporal:** A data do casamento (`date`) é o marco zero que norteia todos os prazos de contratação, provas de vestido e pagamentos.
+- **Templates de Cronograma Automatizados:** Injeção automática de dezenas de tarefas e eventos baseados no perfil do evento (ex.: 12 meses, 6 meses, 3 meses).
+- **Proteção Relacional e de Integridade:** Bloqueio de deleção acidental de casamentos com contratos assinados ou despesas vinculadas (`models.PROTECT`).
+
+### Ciclo de Vida e Máquina de Estados
+A entidade `Wedding` encapsula uma máquina de estados finita:
+- **`IN_PROGRESS` (Em Andamento):** Estado inicial padrão na criação. A data deve ser futura ou o dia corrente (`date >= hoje`).
+- **`COMPLETED` (Concluído):** O casamento foi realizado com sucesso. Trava arquitetural (BR-W01) impede que um casamento seja marcado como concluído antes da data efetiva da cerimônia (`date <= hoje`).
+- **`CANCELED` (Cancelado):** O evento foi cancelado. Permite reabertura sem perda de dados históricos via método semântico `reopen()`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> IN_PROGRESS : Criação (data >= hoje)
+    IN_PROGRESS --> COMPLETED : Concluir (exige data <= hoje - BR-W01)
+    IN_PROGRESS --> CANCELED : Cancelar
+    CANCELED --> IN_PROGRESS : Reabrir (reopen - BR-W06)
+    COMPLETED --> [*] : Arquivado com Sucesso
+    CANCELED --> [*] : Encerrado
+```
 
 ---
 
-## 2. Diagrama ERD e Máquina de Estados de Status
+## 2. Modelo de Dados & Diagrama ERD
 
 ```mermaid
 erDiagram
     Company ||--o{ Wedding : "gerencia (CASCADE)"
-    Wedding ||--o| Budget : "possui orçamento mestre (CASCADE)"
+    Wedding ||--o| Budget : "possui orçamento (CASCADE)"
     Wedding ||--o{ Contract : "possui contratos (PROTECT)"
     Wedding ||--o{ Event : "agenda eventos (CASCADE)"
     Wedding ||--o{ Task : "possui checklist (CASCADE)"
@@ -39,74 +61,75 @@ erDiagram
     }
 ```
 
-```mermaid
-stateDiagram-v2
-    [*] --> IN_PROGRESS : Criação do Casamento (data >= hoje)
+### Tabela de Entidades e Invariantes de Persistência
 
-    IN_PROGRESS --> COMPLETED : Marcar como Concluído (exige data <= hoje)
-    IN_PROGRESS --> CANCELED : Cancelar Casamento
-
-    CANCELED --> IN_PROGRESS : Reativar Planejamento
-    COMPLETED --> [*] : Arquivado com Sucesso
-    CANCELED --> [*] : Encerrado
-```
-
----
-
-## 3. Tabela de Entidades e Invariantes de Persistência
-
-| Entidade / Componente | Papel Arquitetural | Campos & Chaves | Invariantes de Persistência & Regras de Negócio |
+| Entidade | Papel & Relações | Campos & Tipos | Invariantes de Persistência & Regras de Domínio |
 | :--- | :--- | :--- | :--- |
-| **`Wedding`** | Rich Domain Model (`TenantModel`) | `groom_name` (max 100), `bride_name` (max 100), `date` (DateField), `location` (max 255), `expected_guests` (PositiveInt, nullable), `status` (`StatusChoices`), `template` (string, nullable) | **Máquina de Estados (ADR-030):** Métodos de ciclo de vida `complete()`, `cancel()`, `reopen()` e `transition_to()`.<br/>**Regra de Conclusão (BR-W01):** Um casamento só pode ser concluído se `date <= timezone.now().date()`.<br/>**Proteção de Deleção (BR-W03):** Bloqueio de exclusão em cascata se existirem contratos ou despesas protegidos (`ProtectedError`). |
-| **`WeddingQuerySet`** | Camada de Consulta Otimizada | `search()`, `by_status()`, `with_metrics()` | Anota de forma eficiente contagens de tarefas incompletas, parcelas atrasadas e total orçado sem incorrer em problemas de N+1 queries. |
-| **`WeddingService`** | Casos de Uso e Orquestração | `create()`, `update()`, `complete()`, `cancel()`, `reopen()`, `delete()` | **Transações Atômicas:** Métodos decorados com `@transaction.atomic`.<br/>**Orquestração de Casos de Uso:** Delega regras de transição para a entidade (inclusive `reopen()` para reativar eventos cancelados) e coordena templates de cronograma via fachada do scheduler. |
+| **`Wedding`** | Agregador Raiz (`TenantModel`) | `groom_name` (max 100), `bride_name` (max 100), `date` (DateField), `location` (max 255), `expected_guests` (PositiveInt, nullable), `status` (`StatusChoices`), `template` (string, nullable) | **Máquina de Estados (ADR-030):** Métodos de ciclo de vida `complete()`, `cancel()`, `reopen()` e `transition_to()`.<br/>**Regra de Conclusão (BR-W01):** Um casamento só pode ser concluído se `date <= hoje`.<br/>**Proteção de Deleção (BR-W03):** Bloqueio de exclusão em cascata se existirem contratos ou despesas protegidos (`ProtectedError`). |
 
 ---
 
-## 4. Contratos de Código e Implementação
+## 3. Matriz Consolidada de Regras de Negócio (SSOT)
 
-As implementações de código-fonte seguem a diretriz pragmática da [ADR-030](../adr/030-rich-domain-model-service-layer.md):
+| Código Canônico | Regra / Especificação | Escopo / Responsabilidade | Entidades Envolvidas | Nota Detalhada |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BR-W01`** | **Conclusão Prematura Bloqueada** | Um casamento só pode transitar para `COMPLETED` se a data da cerimônia for igual ou anterior ao dia atual (\(d_{\text{wedding}} \le d_{\text{today}}\)). | `Wedding` | [wedding-status-lifecycle.md](../business-rules/weddings/wedding-status-lifecycle.md) |
+| **`BR-W02`** | **Data Inicial no Futuro** | Na criação de um novo casamento, a data da cerimônia deve ser estritamente no presente ou futuro (\(d_{\text{wedding}} \ge d_{\text{today}}\)). | `Wedding` | [wedding-status-lifecycle.md](../business-rules/weddings/wedding-status-lifecycle.md) |
+| **`BR-W03`** | **Proteção Relacional na Exclusão** | Casamentos com contratos formalizados (`Contract`) ou despesas ativas (`Expense`) não podem ser deletados (`models.PROTECT`). | `Wedding`, `Contract` | [wedding-status-lifecycle.md](../business-rules/weddings/wedding-status-lifecycle.md) |
+| **`BR-W04`** | **Ordenação Decrescente** | Listagens de casamentos adotam ordenação padrão por data decrescente (`ordering = ["-date"]`). | `Wedding` | [wedding-status-lifecycle.md](../business-rules/weddings/wedding-status-lifecycle.md) |
+| **`BR-W05`** | **Transição Ilegal de Status** | Transições de status não cadastradas em `ALLOWED_TRANSITIONS` são bloqueadas pelo método `transition_to()`. | `Wedding` | [wedding-status-lifecycle.md](../business-rules/weddings/wedding-status-lifecycle.md) |
+| **`BR-W06`** | **Reabertura de Cancelados** | Casamentos no estado `CANCELED` podem retornar para `IN_PROGRESS` via `reopen()`, preservando todo o histórico relacional. | `Wedding` | [wedding-status-lifecycle.md](../business-rules/weddings/wedding-status-lifecycle.md) |
+| **`BR-W07`** | **Templates Canônicos** | Provisionamento idempotente de marcos no calendário a partir de templates canônicos relativos à data do casamento. | `Wedding`, `Event` | [wedding-schedule-templates.md](../business-rules/weddings/wedding-schedule-templates.md) |
 
-- **Modelo de Domínio Rico:** [`apps/weddings/models.py`](../../../backend/apps/weddings/models.py) (`Wedding`) encapsula a máquina de estados, propriedades de domínio e validação no `clean()`.
-- **Casos de Uso e Serviços:** [`apps/weddings/services.py`](../../../backend/apps/weddings/services.py) (`WeddingService`) orquestra transações atômicas, resolução de tenant, aplicação de templates e as mutações de ciclo de vida: `complete()`, `cancel()` e `reopen()`.
-- **Seletores de Leitura CQRS:** [`apps/weddings/selectors.py`](../../../backend/apps/weddings/selectors.py) (`wedding_list_selector`, `wedding_get_selector`) concentra queries otimizadas com anotações de métricas.
-- **Validação de Entrada e Schemas de Saída (Pydantic):**
-  - [`apps/weddings/schemas.py`](../../../backend/apps/weddings/schemas.py) (`WeddingIn`, `WeddingPatchIn`): Garante fail-fast na borda da API para campos obrigatórios, sanitização de espaços e limites de caracteres.
-  - [`apps/weddings/schemas.py`](../../../backend/apps/weddings/schemas.py) (`WeddingOut`): DTO enriquecido que inclui os campos dinâmicos:
-    - `can_complete: bool`: Calculado via `resolve_can_complete()` indicando se o casamento pode transitar para `COMPLETED` (`date <= hoje`).
-    - `allowed_transitions: list[str]`: Calculado via `resolve_allowed_transitions()` a partir do mapa de transições válidas da entidade, informando ao frontend exatamente quais botões de ação devem ficar habilitados.
+### Matriz de Integração e Relações Cruzadas
+- **Com o Módulo de Cronograma:** A data do casamento é o ponto de ancoragem para o cálculo de todos os prazos relativos e templates de cronograma via `TemplateEngine`. Veja [Domínio de Cronograma](scheduler-domain.md).
+- **Com o Módulo de Finanças:** Cada casamento possui exatamente um orçamento mestre (`Budget`), instanciado após a criação válida do casamento. Veja [Domínio Financeiro](finances-domain.md).
+- **Com o Módulo de Logística:** Fornecedores e contratos são vinculados estritamente ao casamento, impedindo contaminação cross-wedding. Veja [Domínio de Logística](logistics-domain.md).
 
 ---
 
-## 5. Mapeamento de Camadas (Fullstack)
+## 4. Arquitetura Fullstack do Módulo
 
-### Camada de Backend (`backend/apps/weddings/`)
-- **Modelos:** `Wedding` em `models.py`.
-- **Managers:** `WeddingQuerySet` em `managers.py`.
-- **Services:** `WeddingService` e `_apply_template_events` em `services.py`.
-- **Selectors:** `wedding_list_selector`, `wedding_get_selector`, `critical_weddings_selector` em `selectors.py`.
-- **Endpoints:** `api.py` com rotas:
+O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer):
+
+### Backend (`backend/apps/weddings/`)
+- **Modelos de Domínio Ricos:**
+  - `Wedding`: Encapsula a máquina de estados, propriedades dinâmicas e validação em `clean()`.
+- **Casos de Uso e Serviços:**
+  - `WeddingService`: Orquestra transações atômicas (`@transaction.atomic`), resolução de tenant, aplicação de templates de cronograma e mutações de ciclo de vida (`complete()`, `cancel()`, `reopen()`).
+- **Seletores de Leitura CQRS:**
+  - `wedding_list_selector`, `wedding_get_selector`: Consultas otimizadas com anotações de métricas agregadas (total orçado, parcelas atrasadas, tarefas pendentes) sem incorrer em N+1 queries.
+- **Validação de Entrada e Schemas Ninja (Pydantic):**
+  - `WeddingIn`, `WeddingPatchIn`: Sanitização e regras de validação sintática.
+  - `WeddingOut`: DTO enriquecido que inclui `can_complete: bool` e `allowed_transitions: list[str]`.
+- **Endpoints:**
   - CRUD base: `GET /weddings/`, `POST /weddings/`, `GET /weddings/{uuid}/`, `PATCH /weddings/{uuid}/`, `DELETE /weddings/{uuid}/`.
-  - Ações de Ciclo de Vida:
-    - `POST /weddings/{uuid}/complete/` (`weddings_complete`): Conclui o casamento.
-    - `POST /weddings/{uuid}/cancel/` (`weddings_cancel`): Cancela o casamento.
-    - `POST /weddings/{uuid}/reopen/` (`weddings_reopen`): Reabre casamentos cancelados de volta para `IN_PROGRESS`.
+  - Transições Semânticas: `POST /weddings/{uuid}/complete/`, `POST /weddings/{uuid}/cancel/`, `POST /weddings/{uuid}/reopen/`.
 
-### Camada de Frontend (`frontend/src/features/weddings/`)
-- **Páginas:** `WeddingsListPage.tsx`, `WeddingDetailPage.tsx`.
-- **Componentes:** `WeddingHeader.tsx`, `WeddingOverview.tsx`, `WeddingDetailTabs.tsx`, `WeddingsTable.tsx`, `WeddingFilters.tsx`.
-- **Dialogs:** `CreateWeddingDialog.tsx`, `EditWeddingDialog.tsx`, `DeleteWeddingDialog.tsx`.
-- **Estado Global & Hooks:** `useWeddingStore`, `useWeddingsPage`, `useWeddingDetail`.
+### Frontend (`frontend/src/features/weddings/`)
+- **Padrão Smart/Dumb (ADR-024):**
+  - **Containers (Smart):** Páginas `WeddingsListPage.tsx` e `WeddingDetailPage.tsx` orquestram hooks Orval, filtros de busca e dialogs de ciclo de vida.
+  - **Presenters (Dumb):** `WeddingOverview.tsx`, `WeddingDetailTabs.tsx`, `WeddingsTable.tsx` e `WeddingFilters.tsx` recebem dados via props puras.
+  - **Controle Dinâmico de Ações:** O frontend habilita botões de ação baseado estritamente na lista `allowed_transitions` fornecida pelo backend.
 
 ---
 
-## 6. Links e Regras de Negócio Associadas
+## 5. Integrações & Interfaces Públicas (ADR-031)
 
-- [Ciclo de Vida e Transições de Status do Casamento](../business-rules/weddings/wedding-status-lifecycle.md)
-- [Templates de Cronograma e Cerimônia](../business-rules/weddings/wedding-schedule-templates.md)
-- [ADR-006: Service Layer](../adr/006-service-layer.md)
+- `apps.weddings.interfaces.get_wedding_for_company`: Lookup seguro por tenant para orçamentos, contratos e eventos.
+- Injeção de templates de cronograma via `apps.scheduler.interfaces.apply_wedding_template`.
+
+---
+
+## 6. Aprofundamento & Referências
+
+### Regras de Negócio Detalhadas
+- [Ciclo de Vida do Status do Casamento e Validações (`BR-W01` a `BR-W06`)](../business-rules/weddings/wedding-status-lifecycle.md)
+- [Aplicação de Templates de Cronograma de Casamento (`BR-W07`)](../business-rules/weddings/wedding-schedule-templates.md)
+
+### Decisões de Arquitetura (ADRs)
+- [ADR-006: Service Layer Pattern](../adr/006-service-layer.md)
 - [ADR-011: BaseModel save com full_clean](../adr/011-basemodel-save-full-clean.md)
-- [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md)
-- [Modelos Base & Padrões Core](../../reference/models/core-models.md)
-- [Finances Domain](finances-domain.md)
-- [Scheduler Domain](scheduler-domain.md)
+- [ADR-023: Desacoplamento entre Scheduler, Finances e Weddings](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md)
+- [ADR-030: Rich Domain Model e Casos de Uso](../adr/030-rich-domain-model-service-layer.md)
+- [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md)

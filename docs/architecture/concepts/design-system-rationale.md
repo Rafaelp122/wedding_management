@@ -13,7 +13,7 @@ tests:
 # Racional do Sistema de Design (Sim, Aceito! Prestige & Ergonomia)
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [Padrão Smart/Dumb Components](smart-dumb-components.md) · [Referência Frontend](../../reference/frontend/index.md) · [Padrões de Documentação](../../reference/architecture-standards/documentation-standards.md) · [DESIGN.md](../../../DESIGN.md)
+> **Relacionados:** [Padrão Smart/Dumb Components](smart-dumb-components.md) · [Componentes UI](../../reference/frontend/ui-components-spec.md) · [Padrões de Documentação](../../reference/architecture-standards/documentation-standards.md) · [DESIGN.md](../../../DESIGN.md)
 
 ---
 

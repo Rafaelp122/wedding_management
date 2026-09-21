@@ -16,6 +16,10 @@ class TenantService:
 
     Centraliza a lógica de criação de workspaces e a inicialização de
     tenants para isolamento de dados no sistema.
+
+    Regras de Negócio e SSOT:
+    - Hub do Domínio de Tenants: docs/architecture/domains/tenants-domain.md
+    - Estratégia de Multi-Tenancy: docs/architecture/concepts/multi-tenancy-strategy.md
     """
 
     @staticmethod

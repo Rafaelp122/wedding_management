@@ -72,24 +72,50 @@ flowchart TD
 
 ---
 
-## 3. Tabela de Eixos Analíticos e Otimizações
+## 3. Matriz Canônica de Regras de Agregação (SSOT)
 
-| Eixo Analítico | Endpoint & Seletor | DTO de Resposta | Estratégia de Consulta & Otimização Anti-N+1 |
-| :--- | :--- | :--- | :--- |
-| **1. Resumo Executivo** | `GET /summary/`<br/>`dashboard_summary_selector` | `DashboardSummaryOut` | Agregações condicionais em SQL com `Sum` e `Count`. Retorna listas de detalhamento embutidas no payload para consumo direto pelos modais do frontend. |
-| **2. Visão do Casamento** | `GET /wedding/{uuid}/`<br/>`wedding_overview_selector` | `WeddingDashboardOut` | Cruza `total_allocated` do orçamento mestre com `total_spent` das parcelas pagas, anota taxa de conclusão de tarefas e distribuição de categorias em $< 30\text{ ms}$. |
-| **3. Séries Temporais** | `GET /chart/cash-flow/`<br/>`cash_flow_by_month` | `list[CashFlowMonthOut]` | Agrupamento por mês (`TruncMonth`) somando valores pagos vs pendentes em uma única query com filtro de ano. |
-| **3. Séries Temporais** | `GET /chart/task-progress/`<br/>`tasks_progress_by_wedding` | `list[TaskProgressWeddingOut]` | Agrupamento por casamento anotando contagem de tarefas concluídas e total de tarefas com filtro de ano. |
-| **4. Painel de Operações** | `GET /operations/`<br/>`dashboard_operations_selector` | `DashboardOperationsOut` | Consulta atômica com `LIMIT 5` para casamentos futuros, tarefas urgentes e contratos pendentes com `wedding_name` e `supplier_name` pré-projetados. |
+| ID | Regra / Invariante | Descrição & Comportamento | Entidades / Camadas | Referência Canônica |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BR-D01`** | **Anti-Data-Stitching em DTOs Agregados** | O backend projeta nomes e vínculos relacionais em SQL, proibindo requisições em cascata ou reconstrução de dicionários relacionais manuais (`weddingMap`) no cliente. | `DashboardOperationsOut`, `selectors.py` | [anti-data-stitching-pattern.md](../concepts/anti-data-stitching-pattern.md) |
+| **`BR-D02`** | **Resumo Executivo com Coleções Embutidas** | `DashboardSummaryOut` embute coleções detalhadas de parcelas, tarefas e contratos pendentes, viabilizando abertura de *DetailSheets* sem overhead de novas chamadas de rede. | `DashboardSummaryOut`, `StatsCards.tsx` | [smart-dumb-components.md](../concepts/smart-dumb-components.md) |
+| **`BR-D03`** | **Painel de Operações Unificado com LIMIT 5** | Seleciona os Top 5 casamentos futuros, tarefas urgentes e contratos pendentes em consultas atômicas com relacionamentos pré-carregados e ordenação por criticidade. | `DashboardOperationsOut`, `selectors.py` | [query-selectors-pattern.md](../concepts/query-selectors-pattern.md) |
+| **`BR-D04`** | **Séries Temporais Pré-Agregadas em SQL** | Fluxo de caixa mensal e progresso de tarefas por casamento computados diretamente via `TruncMonth` e agregações de banco, devolvendo vetores prontos para o Recharts. | `CashFlowMonthOut`, `WeddingMonthlyChart.tsx` | [ADR-024](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md) |
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Arquitetura Fullstack e Implementação no Código-Fonte
+
+### Backend (`backend/apps/reporting/`)
+- **Query Selectors:**
+  - `selectors/dashboard_selectors.py`: `dashboard_summary_selector`, `wedding_overview_selector`, `dashboard_operations_selector`.
+  - `selectors/summaries/financial.py`: `FinancialSummarySelector` (séries temporais de fluxo de caixa).
+  - `selectors/summaries/task.py`: `TaskSummarySelector` (análise de progresso de tarefas).
+  - `selectors/summaries/contract.py`: `ContractSummarySelector` (resumo e contratos pendentes).
+- **Endpoints Ninja:**
+  - `GET /api/v1/dashboard/summary/`: Resumo executivo com DTO `DashboardSummaryOut`.
+  - `GET /api/v1/dashboard/wedding/{uuid}/`: Detalhamento do casamento com DTO `WeddingDashboardOut`.
+  - `GET /api/v1/dashboard/chart/cash-flow/`: Série temporal de fluxo de caixa com `CashFlowMonthOut`.
+  - `GET /api/v1/dashboard/chart/task-progress/`: Progresso de tarefas com `TaskProgressWeddingOut`.
+  - `GET /api/v1/dashboard/operations/`: Operações consolidadas com DTO `DashboardOperationsOut`.
+
+### Frontend (`frontend/src/features/dashboard/`)
+- **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
+  - **Smart Containers:**
+    - `DashboardPage.tsx`: Orquestra o carregamento de métricas executivas (`useDashboardSummary`) e casamentos do tenant.
+    - `DashboardOperations.tsx`: Orquestra o hook `useDashboardOperations()` (`useDashboardOperationsList`) e navegação contextual.
+    - `WeddingMonthlyChart.tsx`: Orquestra abas gráficas e busca preguiçosa dos endpoints de séries temporais.
+  - **Dumb Presenters (Views Puras):**
+    - `DashboardOperationsView.tsx`: View síncrona orientada estritamente por props tipadas (`UpcomingWeddingOut[]`, `DashboardTaskDetailOut[]`, `DashboardContractDetailOut[]`).
+    - `WeddingMonthlyChartView.tsx`: View síncrona que recebe dados pré-formatados e renderiza gráficos via Recharts.
+    - `StatsCards.tsx`: View síncrona que recebe `summary?: DashboardSummaryOut` e renderiza os 4 cartões de KPIs e *DetailSheets* em memória sem efetuar novas consultas HTTP.
+- **Utilitários Puros:** `chart-helpers.ts` (funções puras de formatação monetária e agrupamento temporal).
+
+### Trechos Canônicos de Implementação
 
 - **Seletores Centrais:** [`dashboard_summary_selector()`](../../../backend/apps/reporting/selectors/dashboard_selectors.py), [`wedding_overview_selector()`](../../../backend/apps/reporting/selectors/dashboard_selectors.py), [`dashboard_operations_selector()`](../../../backend/apps/reporting/selectors/dashboard_selectors.py).
 - **Sub-Seletores Especializados:** [`FinancialSummarySelector`](../../../backend/apps/reporting/selectors/summaries/financial.py), [`TaskSummarySelector`](../../../backend/apps/reporting/selectors/summaries/task.py), [`ContractSummarySelector`](../../../backend/apps/reporting/selectors/summaries/contract.py).
 
-### A. Seletor do Painel de Operações (`dashboard_operations_selector`)
+#### A. Seletor do Painel de Operações (`dashboard_operations_selector`)
 
 ```python
 def dashboard_operations_selector(*, company: Company) -> dict[str, Any]:
@@ -118,43 +144,25 @@ def dashboard_operations_selector(*, company: Company) -> dict[str, Any]:
 
 ---
 
-## 5. Mapeamento de Camadas (Fullstack)
+## 5. Integrações & Interfaces Públicas (ADR-031)
 
-### Camada de Backend (`backend/apps/reporting/`)
-- **Query Selectors:**
-  - `selectors/dashboard_selectors.py`: `dashboard_summary_selector`, `wedding_overview_selector`, `dashboard_operations_selector`.
-  - `selectors/summaries/financial.py`: `FinancialSummarySelector` (incluindo `cash_flow_by_month`).
-  - `selectors/summaries/task.py`: `TaskSummarySelector` (incluindo `tasks_progress_by_wedding`).
-  - `selectors/summaries/contract.py`: `ContractSummarySelector`.
-- **Endpoints Ninja:**
-  - `GET /api/v1/dashboard/summary/`: Resumo executivo com DTO `DashboardSummaryOut`.
-  - `GET /api/v1/dashboard/wedding/{uuid}/`: Detalhamento do casamento com DTO `WeddingDashboardOut`.
-  - `GET /api/v1/dashboard/chart/cash-flow/`: Série temporal de fluxo de caixa com `CashFlowMonthOut`.
-  - `GET /api/v1/dashboard/chart/task-progress/`: Progresso de tarefas com `TaskProgressWeddingOut`.
-  - `GET /api/v1/dashboard/operations/`: Operações consolidadas com DTO `DashboardOperationsOut`.
-
-### Camada de Frontend (`frontend/src/features/dashboard/`)
-- **Padrão Smart/Dumb ([ADR-024](../concepts/smart-dumb-components.md)):**
-  - **Smart Containers:**
-    - [`DashboardPage.tsx`](../../../frontend/src/features/dashboard/pages/DashboardPage.tsx): Orquestra o carregamento de métricas executivas (`useDashboardSummary`) e casamentos do tenant.
-    - [`DashboardOperations.tsx`](../../../frontend/src/features/dashboard/components/DashboardOperations.tsx): Orquestra o hook `useDashboardOperations()` (`useDashboardOperationsList`) e a navegação entre casamentos.
-    - [`WeddingMonthlyChart.tsx`](../../../frontend/src/features/dashboard/components/WeddingMonthlyChart.tsx): Orquestra as abas gráficas e busca preguiçosa dos endpoints de séries temporais.
-  - **Dumb Presenters (Views Puras):**
-    - [`DashboardOperationsView.tsx`](../../../frontend/src/features/dashboard/components/DashboardOperationsView.tsx): View síncrona orientada estritamente por props tipadas (`UpcomingWeddingOut[]`, `DashboardTaskDetailOut[]`, `DashboardContractDetailOut[]`).
-    - [`WeddingMonthlyChartView.tsx`](../../../frontend/src/features/dashboard/components/WeddingMonthlyChartView.tsx): View síncrona que recebe dados pré-formatados e delega para o Recharts sem dependência de rede.
-    - [`StatsCards.tsx`](../../../frontend/src/features/dashboard/components/StatsCards.tsx): View síncrona que recebe `summary?: DashboardSummaryOut` e renderiza os 4 cartões de KPIs e *DetailSheets* em memória sem efetuar novas consultas HTTP.
-- **Utilitários Puros:** [`chart-helpers.ts`](../../../frontend/src/features/dashboard/utils/chart-helpers.ts) (funções puras de formatação monetária e agrupamento temporal).
+O módulo de Dashboard expõe exclusivamente projeções de leitura CQRS, sem mutações diretas de estado:
+- `apps.reporting.selectors.dashboard_selectors.dashboard_summary_selector`: Projeção analítica do resumo executivo da empresa.
+- `apps.reporting.selectors.dashboard_selectors.wedding_overview_selector`: Projeção micro dos indicadores de um casamento individual.
+- `apps.reporting.selectors.dashboard_selectors.dashboard_operations_selector`: Visão operacional unificada anti-data-stitching.
 
 ---
 
-## 6. Links e Referências Cruzadas
+## 6. Aprofundamento & Referências
 
-- [Padrão Query Selectors](../concepts/query-selectors-pattern.md)
-- [Estratégia de Multi-Tenancy](../concepts/multi-tenancy-strategy.md)
+### Decisões Arquiteturais (ADRs)
 - [ADR-006: Service Layer](../adr/006-service-layer.md)
 - [ADR-022: Rotas Estáticas para Performance](../adr/022-static-routes-for-performance.md)
-- [Weddings Domain](weddings-domain.md)
-- [Finances Domain](finances-domain.md)
-- [Logistics Domain](logistics-domain.md)
-- [Scheduler Domain](scheduler-domain.md)
-- [Reporting Domain](reporting-domain.md)
+- [ADR-024: Padrão Smart & Dumb Components](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
+- [ADR-031: Isolamento de Bounded Contexts](../adr/031-inter-module-communication.md)
+
+### Conceitos & Padrões
+- [Padrão Anti-Data-Stitching no Frontend](../concepts/anti-data-stitching-pattern.md)
+- [Padrão Smart/Dumb Components](../concepts/smart-dumb-components.md)
+- [Padrão Query Selectors](../concepts/query-selectors-pattern.md)
+- [Estratégia de Multi-Tenancy](../concepts/multi-tenancy-strategy.md)

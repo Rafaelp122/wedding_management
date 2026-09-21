@@ -13,7 +13,7 @@ tests:
 # Regras de Validação e Sanitização de CNPJ de Fornecedores
 
 > **Categoria:** Regra de Negócio (Domínio Logístico)
-> **Relacionados:** [MOC de Logística](index.md) · [Máquina de Estados de Contratos](contract-state-machine.md) · [Hierarquia de Contratos](contract-parent-child-hierarchy.md) · [Domínio de Logística](../../domains/logistics-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Máquina de Estados de Contratos](contract-state-machine.md) · [Hierarquia de Contratos](contract-parent-child-hierarchy.md) · [Domínio de Logística](../../domains/logistics-domain.md)
 
 ---
 

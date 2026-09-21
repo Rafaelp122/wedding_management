@@ -15,7 +15,7 @@ tests:
 # Hierarquia de Contratos e Termos Aditivos
 
 > **Categoria:** Regra de Negócio (Domínio Logístico)
-> **Relacionados:** [MOC de Logística](index.md) · [Máquina de Estados de Contratos](contract-state-machine.md) · [Validação de CNPJ](cnpj-validation-rules.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Máquina de Estados de Contratos](contract-state-machine.md) · [Validação de CNPJ](cnpj-validation-rules.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md)
 
 ---
 

@@ -1,37 +1,30 @@
-# Especificação Técnica: Padrões de Documentação (Diátaxis & Notas Atômicas)
+# Especificação Técnica: Padrões de Documentação (MkDocs-First & Hubs de Domínio)
 
-> **Módulo:** [architecture-standards](index.md) | [docs-readme](../../index.md)
+> **Módulo:** Padrões de Arquitetura & Engenharia | [docs-readme](../../index.md)
 > **Camada:** Documentação do Projeto (`docs/`)
 
 ---
 
 ## 1. Visão Geral
 
-Toda a documentação técnica do **Wedding Management System** sob o diretório `docs/` segue estritamente a metodologia **Diátaxis** combinada com o princípio de **Notas Atômicas** e **Single Source of Truth (SSOT)**.
+Toda a documentação técnica do **Wedding Management System** sob o diretório `docs/` segue o paradigma **MkDocs-First**, estruturado em **Hubs de Domínio Ricos** (`docs/architecture/domains/`), **Regras de Negócio SSOT** (`docs/architecture/business-rules/`) e **Guias Práticos Operacionais**.
 
-Esta diretriz estabelece as regras de autoria, estruturação, vinculação e manutenção dos arquivos de documentação do repositório.
+A árvore hierárquica do [`mkdocs.yml`](../../../mkdocs.yml) atua como a **Única Fonte da Verdade (SSOT)** para toda a navegação, eliminando a sobrecarga de MOCs intermediários.
 
 ---
 
 ## 2. Princípios Fundamentais de Autoria
 
-### 2.1 Princípio da Nota Atômica (Assunto Único)
-- **Um Único Tópico por Arquivo**: Cada arquivo Markdown (`.md`) deve ser dedicado a **apenas um único conceito, entidade, modelo ou procedimento**.
-- **Sem Monólitos**: Se um documento começar a abordar múltiplos assuntos distintos (ex: juntar testes de backend, frontend e infraestrutura em um único arquivo), ele **DEVE** ser dividido em notas atômicas separadas.
+### 2.1 Hubs de Domínio Ricos (Single Source of Truth de Domínio)
+- Cada Bounded Context da aplicação possui um Hub canônico em `docs/architecture/domains/` que consolida a visão de produto/negócio, diagrama de dados ERD com invariantes, matriz de regras de negócio, arquitetura técnica fullstack e interfaces públicas (ADR-031).
 
 ### 2.2 Princípio de Cross-Linking (Sem Duplicação de Conteúdo)
-- **Single Source of Truth (SSOT)**: A explicação técnica de um assunto deve residir em exatamente um único arquivo de referência.
-- **Link ao Invés de Repetição**: Se um documento precisar mencionar outro tópico (ex: a especificação de CI/CD mencionar os gates de testes automatizados), **É PROIBIDO duplicar o texto**. Em vez disso, insira um link Markdown direto para a nota atômica especializada:
-  ```markdown
-  <!-- CORRETO: Link para a nota atômica especializada -->
-  Para a especificação detalhada dos testes nativos do Terraform, consulte [terraform-testing-spec](../testing/terraform-testing-spec.md).
+- **Single Source of Truth (SSOT)**: A explicação técnica de um assunto deve residir em exatamente um único arquivo canônico.
+- **Link ao Invés de Repetição**: Se um documento precisar mencionar outro tópico, **É PROIBIDO duplicar o texto**. Em vez disso, insira um link Markdown direto para o arquivo especializado.
 
-  <!-- ERRADO: Redigitar as regras e códigos de teste do Terraform dentro do arquivo de CI/CD -->
-  ```
-
-### 2.3 Map of Content (MOC / Arquivos `index.md`)
-- Pastas que agrupam múltiplas notas atômicas (ex: `docs/reference/models/`, `docs/reference/testing/`, `docs/architecture/business-rules/`) devem conter um arquivo `index.md` atuando como **MOC (Map of Content)**.
-- O MOC fornece uma introdução sucinta e uma lista organizada de links para todas as notas atômicas daquela categoria.
+### 2.3 Navegação MkDocs-First (Sem MOCs Burocráticos)
+- Toda e qualquer nova página deve ser registrada diretamente no `mkdocs.yml`.
+- É **PROIBIDO** criar arquivos `index.md` intermediários em subpastas com o único propósito de listar links que já aparecem na barra lateral do MkDocs.
 
 ### 2.4 Desacoplamento de Código e Proibição de Snippets Numéricos
 - **Proibição Estrita de Faixas Numéricas (`:start:end`):** É terminantemente proibido o uso de transclusões baseadas em números de linha (ex.: `--8<-- arquivo.py:10:25`). Alterações cotidianas como novas importações ou formatação deslocam silenciosamente essas faixas, provocando *code-drift* e exibindo trechos quebrados na documentação.

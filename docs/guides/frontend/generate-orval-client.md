@@ -1,6 +1,6 @@
 # Como Sincronizar Contratos OpenAPI e Gerar Hooks Orval
 
-> **Categoria:** [frontend](../../reference/frontend/index.md) | [create-hook-form-zod](create-hook-form-zod.md) | [msw-testing-patterns](msw-testing-patterns.md)
+> **Categoria:** Guias de Frontend | [create-hook-form-zod](create-hook-form-zod.md) | [msw-testing-patterns](msw-testing-patterns.md)
 > **Comandos Principais:** `just sync-api`, `just openapi`, `just orval` / `pnpm run generate:api`
 
 ---
