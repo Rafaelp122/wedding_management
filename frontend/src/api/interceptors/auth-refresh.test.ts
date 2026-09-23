@@ -138,7 +138,7 @@ describe("addAuthRefreshInterceptor", () => {
       useAuthStore.setState({
         accessToken: "old-access",
         refreshToken: "valid-refresh",
-        user: { id: 1, email: "user@test.com", first_name: "Test", last_name: "User" },
+        user: { id: 1, uuid: "00000000-0000-0000-0000-000000000001", email: "user@test.com", first_name: "Test", last_name: "User" },
         isAuthenticated: true,
       });
 

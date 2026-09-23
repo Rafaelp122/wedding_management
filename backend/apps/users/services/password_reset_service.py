@@ -2,7 +2,6 @@ import logging
 
 import django.contrib.auth.password_validation as password_validation
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import EmailMultiAlternatives
@@ -11,46 +10,17 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from apps.core.exceptions import ApplicationError
+from apps.core.logging import mask_email
+from apps.users.models import User
 
 
-User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 class PasswordResetService:
-    @staticmethod
-    def request_password_reset(email: str, frontend_url: str | None = None) -> None:
-        """
-        Inicia o fluxo de redefinição de senha para o e-mail fornecido.
-
-        Gera token seguro via PasswordResetTokenGenerator e envia o e-mail
-        transacional contendo o link de recuperação. Retorna silenciosamente
-        caso o usuário não exista para evitar enumeração de e-mails.
-
-        Args:
-            email: E-mail do usuário que solicita a redefinição.
-            frontend_url: URL base opcional do frontend para construção do link.
-        """
-        email_normalized = email.strip().lower()
-        user = User.objects.filter(
-            email__iexact=email_normalized, is_active=True
-        ).first()
-
-        if not user:
-            logger.warning(
-                "Tentativa de redefinição de senha para e-mail "
-                f"inexistente ou inativo: {email_normalized}"
-            )
-            return
-
-        uidb64 = urlsafe_base64_encode(force_bytes(str(user.uuid)))
-        token = default_token_generator.make_token(user)
-
-        base_url = frontend_url or getattr(
-            settings, "FRONTEND_URL", "http://localhost:5173"
-        )
-        reset_url = f"{base_url}/reset-password?uid={uidb64}&token={token}"
-
+    @classmethod
+    def _send_reset_email(cls, user: User, reset_url: str) -> None:
+        """Envia o e-mail de redefinição de senha para o usuário."""
         context = {
             "user": user,
             "reset_url": reset_url,
@@ -68,6 +38,45 @@ class PasswordResetService:
         )
         msg.attach_alternative(html_content, "text/html")
         msg.send()
+
+    @classmethod
+    def request_password_reset(
+        cls, email: str, frontend_url: str | None = None
+    ) -> None:
+        """
+        Inicia o fluxo de redefinição de senha para o e-mail fornecido.
+
+        Gera token seguro via PasswordResetTokenGenerator e envia o e-mail
+        transacional contendo o link de recuperação de forma assíncrona pós-commit.
+        Retorna silenciosamente caso o usuário não exista para evitar
+        enumeração de e-mails.
+
+        Args:
+            email: E-mail do usuário que solicita a redefinição.
+            frontend_url: URL base opcional do frontend para construção do link.
+        """
+        email_normalized = email.strip().lower()
+        masked = mask_email(email_normalized)
+        user = User.objects.filter(
+            email__iexact=email_normalized, is_active=True
+        ).first()
+
+        if not user:
+            logger.warning(
+                "Tentativa de redefinição de senha para e-mail "
+                f"inexistente ou inativo: {masked}"
+            )
+            return
+
+        uidb64 = urlsafe_base64_encode(force_bytes(str(user.uuid)))
+        token = default_token_generator.make_token(user)
+
+        base_url = frontend_url or getattr(
+            settings, "FRONTEND_URL", "http://localhost:5173"
+        )
+        reset_url = f"{base_url}/reset-password?uid={uidb64}&token={token}"
+
+        cls._send_reset_email(user, reset_url)
 
     @staticmethod
     def confirm_password_reset(uid: str, token: str, new_password: str) -> None:

@@ -1,6 +1,6 @@
 
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -22,10 +22,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { PasswordInput } from "../components/PasswordInput";
+import { PasswordStrengthMeter } from "../components/PasswordStrengthMeter";
 
 const ResetPasswordFormSchema = zod
   .object({
-    new_password: zod.string().min(8, "A senha deve ter no mínimo 8 caracteres."),
+    new_password: zod
+      .string()
+      .min(8, "A senha deve ter no mínimo 8 caracteres.")
+      .max(128, "A senha não pode exceder 128 caracteres."),
     confirm_password: zod.string(),
   })
   .refine((data) => data.new_password === data.confirm_password, {
@@ -48,6 +52,11 @@ export function ResetPasswordPage() {
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(ResetPasswordFormSchema),
     defaultValues: { new_password: "", confirm_password: "" },
+  });
+
+  const newPasswordValue = useWatch({
+    control: form.control,
+    name: "new_password",
   });
 
   const isInvalidLink = !uid || !token;
@@ -126,10 +135,13 @@ export function ResetPasswordPage() {
                     </FormLabel>
                     <FormControl>
                       <PasswordInput
+                        autoComplete="new-password"
+                        maxLength={128}
                         placeholder="••••••••"
                         {...field}
                       />
                     </FormControl>
+                    <PasswordStrengthMeter password={newPasswordValue} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -145,6 +157,8 @@ export function ResetPasswordPage() {
                     </FormLabel>
                     <FormControl>
                       <PasswordInput
+                        autoComplete="new-password"
+                        maxLength={128}
                         placeholder="••••••••"
                         {...field}
                       />

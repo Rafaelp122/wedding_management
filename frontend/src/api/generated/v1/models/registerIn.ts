@@ -10,7 +10,10 @@
  */
 export interface RegisterIn {
   email: string;
-  /** @minLength 8 */
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
   password: string;
   first_name?: string;
   last_name?: string;

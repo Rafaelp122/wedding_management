@@ -147,4 +147,5 @@ NINJA_EXTRA["THROTTLE_RATES"] = {
     "auth_password_reset_confirm": "1000/m",  # pragma: allowlist secret
     "auth_verify_email_token": "1000/m",  # pragma: allowlist secret
     "auth_resend_verification": "1000/m",  # pragma: allowlist secret
+    "auth_logout": "1000/m",
 }

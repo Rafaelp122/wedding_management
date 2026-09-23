@@ -11,6 +11,9 @@
 export interface PasswordResetConfirmIn {
   uid: string;
   token: string;
-  /** @minLength 8 */
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
   new_password: string;
 }

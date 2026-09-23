@@ -726,6 +726,79 @@
         }
       }
     },
+    "/api/v1/auth/logout/": {
+      "post": {
+        "operationId": "auth_logout",
+        "summary": "Logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Invalida o refresh token no servidor, revogando a sessão ativa.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
     "/api/v1/weddings/lookup/": {
       "get": {
         "operationId": "weddings_lookup",
@@ -7149,6 +7222,7 @@
             "type": "string"
           },
           "password": {
+            "maxLength": 128,
             "minLength": 8,
             "title": "Password",
             "type": "string"
@@ -7206,6 +7280,11 @@
             "title": "Id",
             "type": "integer"
           },
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
           "email": {
             "title": "Email",
             "type": "string"
@@ -7226,6 +7305,7 @@
         },
         "required": [
           "id",
+          "uuid",
           "email",
           "first_name",
           "last_name"
@@ -7242,6 +7322,7 @@
             "type": "string"
           },
           "password": {
+            "maxLength": 128,
             "title": "Password",
             "type": "string"
           }
@@ -7365,6 +7446,7 @@
             "type": "string"
           },
           "new_password": {
+            "maxLength": 128,
             "minLength": 8,
             "title": "New Password",
             "type": "string"
@@ -7424,6 +7506,34 @@
           "email"
         ],
         "title": "ResendVerificationIn",
+        "type": "object"
+      },
+      "LogoutOut": {
+        "description": "Schema de resposta para logout bem-sucedido.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "LogoutOut",
+        "type": "object"
+      },
+      "LogoutIn": {
+        "description": "Schema para logout de usuário via revogação de refresh token.",
+        "properties": {
+          "refresh": {
+            "title": "Refresh",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh"
+        ],
+        "title": "LogoutIn",
         "type": "object"
       },
       "WeddingLookupOut": {

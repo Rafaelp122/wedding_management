@@ -12,6 +12,7 @@ import * as zod from 'zod';
  * @summary Register User
  */
 export const authRegisterUserBodyPasswordMin = 8;
+export const authRegisterUserBodyPasswordMax = 128;
 
 export const authRegisterUserBodyFirstNameDefault = ``;
 export const authRegisterUserBodyLastNameDefault = ``;
@@ -19,7 +20,7 @@ export const authRegisterUserBodyCompanyNameDefault = ``;
 
 export const AuthRegisterUserBody = zod.object({
   "email": zod.email(),
-  "password": zod.string().min(authRegisterUserBodyPasswordMin),
+  "password": zod.string().min(authRegisterUserBodyPasswordMin).max(authRegisterUserBodyPasswordMax),
   "first_name": zod.string().default(authRegisterUserBodyFirstNameDefault),
   "last_name": zod.string().default(authRegisterUserBodyLastNameDefault),
   "company_name": zod.string().default(authRegisterUserBodyCompanyNameDefault)
@@ -44,9 +45,13 @@ export const AuthRegisterUserResponse = zod.object({
  * No sucesso, retorna os tokens JWT e os dados básicos do usuário logado.
  * @summary Obtain Token
  */
+export const authObtainTokenBodyPasswordMax = 128;
+
+
+
 export const AuthObtainTokenBody = zod.object({
   "email": zod.email(),
-  "password": zod.string()
+  "password": zod.string().max(authObtainTokenBodyPasswordMax)
 }).describe('Credenciais para autenticação (obtain token).')
 
 export const authObtainTokenResponseUserIsEmailVerifiedDefault = false;
@@ -56,6 +61,7 @@ export const AuthObtainTokenResponse = zod.object({
   "refresh": zod.string(),
   "user": zod.object({
   "id": zod.int(),
+  "uuid": zod.string(),
   "email": zod.string(),
   "first_name": zod.string(),
   "last_name": zod.string(),
@@ -112,6 +118,7 @@ export const AuthGoogleLoginResponse = zod.object({
   "refresh": zod.string(),
   "user": zod.object({
   "id": zod.int(),
+  "uuid": zod.string(),
   "email": zod.string(),
   "first_name": zod.string(),
   "last_name": zod.string(),
@@ -136,13 +143,14 @@ export const AuthPasswordResetRequestResponse = zod.object({
  * @summary Confirm Password Reset
  */
 export const authPasswordResetConfirmBodyNewPasswordMin = 8;
+export const authPasswordResetConfirmBodyNewPasswordMax = 128;
 
 
 
 export const AuthPasswordResetConfirmBody = zod.object({
   "uid": zod.string(),
   "token": zod.string(),
-  "new_password": zod.string().min(authPasswordResetConfirmBodyNewPasswordMin)
+  "new_password": zod.string().min(authPasswordResetConfirmBodyNewPasswordMin).max(authPasswordResetConfirmBodyNewPasswordMax)
 }).describe('Schema para confirmação de redefinição de senha.')
 
 export const AuthPasswordResetConfirmResponse = zod.object({
@@ -173,4 +181,16 @@ export const AuthResendVerificationBody = zod.object({
 export const AuthResendVerificationResponse = zod.object({
   "message": zod.string()
 }).describe('Schema de resposta para operações de verificação de e-mail.')
+
+/**
+ * Invalida o refresh token no servidor, revogando a sessão ativa.
+ * @summary Logout
+ */
+export const AuthLogoutBody = zod.object({
+  "refresh": zod.string()
+}).describe('Schema para logout de usuário via revogação de refresh token.')
+
+export const AuthLogoutResponse = zod.object({
+  "message": zod.string()
+}).describe('Schema de resposta para logout bem-sucedido.')
 

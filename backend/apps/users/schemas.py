@@ -10,7 +10,7 @@ class TokenPayloadIn(Schema):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     email: EmailStr
-    password: str
+    password: str = Field(..., max_length=128)
 
 
 class GoogleAuthIn(Schema):
@@ -25,6 +25,7 @@ class UserDataOut(Schema):
     """Dados básicos do usuário retornados no token JWT."""
 
     id: int
+    uuid: UUID4
     email: str
     first_name: str
     last_name: str
@@ -45,7 +46,7 @@ class RegisterIn(Schema):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=128)
     first_name: str = ""
     last_name: str = ""
     company_name: str = ""
@@ -87,7 +88,7 @@ class PasswordResetConfirmIn(Schema):
 
     uid: str
     token: str
-    new_password: str = Field(min_length=8)
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 class PasswordResetResponseOut(Schema):
@@ -115,5 +116,19 @@ class ResendVerificationIn(Schema):
 
 class VerifyEmailResponseOut(Schema):
     """Schema de resposta para operações de verificação de e-mail."""
+
+    message: str
+
+
+class LogoutIn(Schema):
+    """Schema para logout de usuário via revogação de refresh token."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    refresh: str
+
+
+class LogoutOut(Schema):
+    """Schema de resposta para logout bem-sucedido."""
 
     message: str

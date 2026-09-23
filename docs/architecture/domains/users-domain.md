@@ -76,6 +76,8 @@ sequenceDiagram
 | **`BR-U03`** | **Onboarding Atômico de Owner + Empresa** | O registro de um novo proprietário cria simultaneamente o usuário e sua `Company` em uma única transação atômica (`RegistrationService`), disparando e-mail pós-commit. | `RegistrationService`, `TenantService` | [ADR-006](../adr/006-service-layer.md) · [ADR-030](../adr/030-rich-domain-model-service-layer.md) |
 | **`BR-U04`** | **Verificação Preventiva de E-mail** | Contas iniciam com `is_active=False` e `is_email_verified=False`. Tentativas de login antes da validação por link seguro retornam `HTTP 401 (email_not_verified)`. | `User`, `TokenService`, `EmailVerificationService` | [auth-jwt-flow.md](../concepts/auth-jwt-flow.md) |
 | **`BR-U05`** | **Login Social Google OAuth2 com Auto-Provisionamento** | Validação criptográfica do `id_token` do Google; se o e-mail não existir, provisiona automaticamente o usuário, empresa e senha de alta entropia. | `GoogleAuthService`, `TokenService` | [ADR-013](../adr/013-migrate-drf-to-ninja.md) |
+| **`BR-U06`** | **Mitigação de DoS por Senhas Longas (Max 128 Caracteres)** | Senhas de entrada são limitadas estritamente a 128 caracteres em schemas e formulários antes da submissão a algoritmos pesados de hashing (Argon2/PBKDF2), mitigando exaustão computacional de CPU. | `schemas.py`, `RegisterForm`, `ResetPasswordPage` | [auth-jwt-flow.md](../concepts/auth-jwt-flow.md) |
+| **`BR-U07`** | **Bloqueio Temporário de Conta por Força Bruta (Account Lockout)** | Após 5 tentativas de login consecutivas incorretas para um e-mail, a conta é bloqueada por 15 minutos (900s), retornando HTTP 429 (`code="account_locked"`). Sucesso na autenticação limpa as falhas. | `LockoutService`, `TokenService` | [auth-jwt-flow.md](../concepts/auth-jwt-flow.md) |
 
 ---
 
@@ -83,14 +85,14 @@ sequenceDiagram
 
 ### Backend (`backend/apps/users/`)
 - **Modelos:** `User` e `CustomUserManager` em `models.py`.
-- **Services:** `registration_service.py`, `token_service.py`, `email_verification_service.py`, `password_reset_service.py`, `google_auth_service.py`.
+- **Services:** `registration_service.py`, `token_service.py`, `lockout_service.py`, `email_verification_service.py`, `password_reset_service.py`, `google_auth_service.py`.
 - **Selectors CQRS:** `user_get_by_email_selector`, `user_get_by_uuid_selector`, `user_list_selector` em `selectors.py`.
-- **Endpoints Ninja:** `api.py` com rotas `/auth/token/`, `/auth/register/`, `/auth/verify-email/`, `/auth/password-reset/`, `/auth/google/`.
+- **Endpoints Ninja:** `api.py` com rotas `/auth/token/`, `/auth/refresh/`, `/auth/logout/`, `/auth/register/`, `/auth/verify-email/`, `/auth/password-reset/`, `/auth/google/`.
 
 ### Frontend (`frontend/src/features/auth/`)
 - **Padrão Smart/Dumb (ADR-024):**
   - **Containers (Smart):** `LoginPage.tsx`, `RegisterPage.tsx`, `VerifyEmailPage.tsx`, `ForgotPasswordPage.tsx`, `ResetPasswordPage.tsx` orquestram chamadas de rede e redirecionamentos.
-  - **Presenters (Dumb):** `LoginForm.tsx`, `RegisterForm.tsx`, `PasswordInput.tsx`, `SocialButtons.tsx` orientados por props e `react-hook-form` + `zod`.
+  - **Presenters (Dumb):** `LoginForm.tsx`, `RegisterForm.tsx`, `PasswordStrengthMeter.tsx`, `PasswordInput.tsx`, `SocialButtons.tsx` orientados por props e `react-hook-form` + `zod`.
 - **Estado Global:** `useAuthStore` (`src/stores/authStore.ts`).
 
 ### Trechos Canônicos de Implementação
@@ -175,10 +177,10 @@ def user_get_by_uuid_selector(*, uuid: UUID | str) -> User:
 
 ## 5. Integrações & Interfaces Públicas (ADR-031)
 
-A camada de identidade é consumida pelos demais módulos e pelo gateway HTTP através das seguintes fachadas:
-- `apps.users.interfaces.get_user_by_uuid`: Lookup defensivo de usuário por UUID para orçamentos, auditoria e perfil.
+A camada de identidade é consumida pelos demais módulos e pelo gateway HTTP através dos seguintes pontos de entrada:
 - `apps.users.services.token_service.TokenService.obtain`: Autenticação e emissão do par de tokens JWT.
 - `apps.users.services.registration_service.RegistrationService.register_new_owner`: Ponto de entrada de onboarding completo.
+- `apps.users.selectors.user_get_by_email_selector` / `user_get_by_uuid_selector`: Consultas defensivas de usuário sob demanda.
 
 ---
 
@@ -189,6 +191,7 @@ A camada de identidade é consumida pelos demais módulos e pelo gateway HTTP at
 - [ADR-009: Isolamento Multi-Tenancy](../adr/009-multitenancy.md)
 - [ADR-013: Migração para Django Ninja](../adr/013-migrate-drf-to-ninja.md)
 - [ADR-024: Padrão Smart & Dumb Components](../adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
+- [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md)
 
 ### Conceitos & Especificações
 - [Fluxo de Autenticação JWT](../concepts/auth-jwt-flow.md)
