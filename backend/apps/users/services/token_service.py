@@ -10,8 +10,10 @@ from ninja_jwt.schema import (
 )
 from ninja_jwt.tokens import RefreshToken
 
-from apps.core.exceptions import AuthenticationFailedError
+from apps.core.exceptions import AccountLockedError, AuthenticationFailedError
+from apps.core.logging import mask_email
 from apps.users.schemas import TokenOut, UserDataOut, VerifyTokenOut
+from apps.users.services.lockout_service import LockoutService
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ class TokenService:
     e montagem da resposta com dados do usuário autenticado.
 
     Regras de Negócio e SSOT:
-    - Hub do Domínio de Usuários (BR-U01..05): docs/architecture/domains/users-domain.md
+    - Hub do Domínio de Usuários (BR-U01..08): docs/architecture/domains/users-domain.md
     - Fluxo de Autenticação JWT: docs/architecture/concepts/auth-jwt-flow.md
     """
 
@@ -43,10 +45,22 @@ class TokenService:
             (refresh) e os dados básicos do usuário autenticado.
 
         Raises:
-            AuthenticationFailedError: Caso as credenciais sejam inválidas ou a conta
-                esteja inativa.
+            AuthenticationFailedError: Caso credenciais sejam inválidas ou inativas.
+            AccountLockedError: Caso a conta esteja bloqueada por força bruta.
         """
-        logger.info(f"Tentativa de obtenção de token para email={email}")
+        masked = mask_email(email)
+        logger.info(f"Tentativa de obtenção de token para email={masked}")
+
+        # 1. Verifica se a conta está sob bloqueio temporário (Account Lockout)
+        if LockoutService.is_locked(email):
+            remaining = LockoutService.get_remaining_lockout_seconds(email)
+            logger.warning(
+                f"Bloqueio ativo para email={masked}. Restante: {remaining}s"
+            )
+            raise AccountLockedError(
+                "Muitas tentativas com erro. Tente novamente mais tarde.",
+                code="account_locked",
+            )
 
         user = authenticate(request=None, username=email, password=password)
 
@@ -54,19 +68,37 @@ class TokenService:
             from apps.users.models import User
 
             potential_user = User.objects.filter(email=email).first()
-            if potential_user and potential_user.check_password(password):
-                if not potential_user.is_email_verified:
-                    raise AuthenticationFailedError(
-                        "Sua conta ainda não foi ativada. "
-                        "Verifique sua caixa de entrada para confirmar seu e-mail.",
-                        code="email_not_verified",
-                    )
 
-            logger.warning(f"Falha de autenticação para email={email}")
+            if potential_user is not None:
+                password_valid = potential_user.check_password(password)
+            else:
+                # Mitigação de Timing Attack: executa hash dummy em tempo constante
+                dummy_user = User()
+                dummy_user.set_password("dummy_password_timing_defense")
+                dummy_user.check_password(password)
+                password_valid = False
+
+            if (
+                potential_user
+                and password_valid
+                and not potential_user.is_email_verified
+            ):
+                raise AuthenticationFailedError(
+                    "Sua conta ainda não foi ativada. "
+                    "Verifique sua caixa de entrada para confirmar seu e-mail.",
+                    code="email_not_verified",
+                )
+
+            # Registra falha para controle de força bruta (ativa lockout)
+            LockoutService.record_failure(email)
+            logger.warning(f"Falha de autenticação para email={masked}")
             raise AuthenticationFailedError(
                 "Credenciais inválidas ou conta desativada.",
                 code="invalid_credentials",
             )
+
+        # Sucesso: limpa contador de falhas acumuladas
+        LockoutService.reset_failures(email)
 
         # ninja_jwt v5.4.5 alterou a assinatura de for_user
         refresh = RefreshToken.for_user(user)  # type: ignore[misc]
@@ -75,6 +107,7 @@ class TokenService:
             refresh=str(refresh),
             user=UserDataOut(
                 id=user.id,
+                uuid=user.uuid,
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
@@ -84,6 +117,23 @@ class TokenService:
 
         logger.info(f"Token gerado com sucesso para user uuid={user.uuid}")
         return token_out
+
+    @staticmethod
+    def logout(refresh_token: str) -> None:
+        """
+        Invalida o refresh token no servidor adicionando-o à blacklist do ninja_jwt.
+
+        Args:
+            refresh_token: O refresh token enviado para revogação.
+        """
+        token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
+        logger.info(f"Tentativa de revogação/logout de token (fp={token_fp})")
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            logger.info(f"Token adicionado à blacklist com sucesso (fp={token_fp})")
+        except Exception as e:
+            logger.warning(f"Falha ao invalidar token no logout (fp={token_fp}): {e}")
 
     @staticmethod
     def refresh(refresh_token: str) -> TokenRefreshOutputSchema:

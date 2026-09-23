@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { PasswordInput } from "./PasswordInput";
+import { PasswordStrengthMeter } from "./PasswordStrengthMeter";
 import { SocialButtons } from "./SocialButtons";
 
 import type { ErrorType } from "@/api/api-client";
@@ -50,6 +51,8 @@ export function RegisterForm() {
       company_name: "",
     },
   });
+
+  const passwordValue = useWatch({ control: form.control, name: "password" });
 
   const onSubmit = (data: RegisterFormData) => {
     // Remove confirm_password before sending to API
@@ -144,6 +147,7 @@ export function RegisterForm() {
                 <FormControl>
                   <Input
                     type="email"
+                    autoComplete="username"
                     className="text-xs border-zinc-200 dark:border-zinc-855 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
                     placeholder="nome@agencia.com"
                     {...field}
@@ -185,10 +189,13 @@ export function RegisterForm() {
                 <FormControl>
                   <PasswordInput
                     id="regPassword"
+                    autoComplete="new-password"
+                    maxLength={128}
                     placeholder="••••••••"
                     {...field}
                   />
                 </FormControl>
+                <PasswordStrengthMeter password={passwordValue} />
                 <FormMessage />
               </FormItem>
             )}
@@ -205,6 +212,8 @@ export function RegisterForm() {
                 <FormControl>
                   <PasswordInput
                     id="regConfirmPassword"
+                    autoComplete="new-password"
+                    maxLength={128}
                     placeholder="••••••••"
                     {...field}
                   />

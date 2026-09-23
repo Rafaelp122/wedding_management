@@ -13,6 +13,8 @@ from apps.users.models import User
 
 from .schemas import (
     GoogleAuthIn,
+    LogoutIn,
+    LogoutOut,
     PasswordResetConfirmIn,
     PasswordResetRequestIn,
     PasswordResetResponseOut,
@@ -66,6 +68,10 @@ class VerifyEmailAnonThrottle(AnonRateThrottle):
 
 class ResendVerificationAnonThrottle(AnonRateThrottle):
     scope = "auth_resend_verification"
+
+
+class LogoutThrottle(AnonRateThrottle):
+    scope = "auth_logout"
 
 
 router = Router(tags=["auth"])
@@ -255,3 +261,18 @@ def resend_verification(
     return 200, VerifyEmailResponseOut(
         message="Se a conta existir e não estiver verificada, o e-mail será reenviado."
     )
+
+
+@router.post(
+    "/logout/",
+    response={200: LogoutOut, **MUTATION_ERROR_RESPONSES},
+    auth=None,
+    throttle=[LogoutThrottle()],
+    operation_id="auth_logout",
+)
+def logout(request: HttpRequest, payload: LogoutIn) -> tuple[int, LogoutOut]:
+    """
+    Invalida o refresh token no servidor, revogando a sessão ativa.
+    """
+    TokenService.logout(payload.refresh)
+    return 200, LogoutOut(message="Logout realizado com sucesso.")

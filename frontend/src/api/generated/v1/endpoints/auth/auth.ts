@@ -17,6 +17,8 @@ import type {
 import type {
   ErrorResponse,
   GoogleAuthIn,
+  LogoutIn,
+  LogoutOut,
   PasswordResetConfirmIn,
   PasswordResetRequestIn,
   PasswordResetResponseOut,
@@ -638,4 +640,69 @@ export const useAuthResendVerification = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getAuthResendVerificationMutationOptions(options), queryClient);
+    }
+    /**
+ * Invalida o refresh token no servidor, revogando a sessão ativa.
+ * @summary Logout
+ */
+export const authLogout = (
+    logoutIn: LogoutIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LogoutOut>(
+      {url: `/api/v1/auth/logout/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: logoutIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAuthLogoutMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError,{data: LogoutIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError,{data: LogoutIn}, TContext> => {
+
+const mutationKey = ['authLogout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authLogout>>, {data: LogoutIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authLogout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof authLogout>>>
+    export type AuthLogoutMutationBody = LogoutIn
+    export type AuthLogoutMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Logout
+ */
+export const useAuthLogout = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authLogout>>, TError,{data: LogoutIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authLogout>>,
+        TError,
+        {data: LogoutIn},
+        TContext
+      > => {
+      return useMutation(getAuthLogoutMutationOptions(options), queryClient);
     }

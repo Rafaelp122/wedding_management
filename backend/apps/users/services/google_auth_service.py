@@ -70,6 +70,7 @@ class GoogleAuthService:
             refresh=str(refresh),
             user=UserDataOut(
                 id=user.id,
+                uuid=user.uuid,
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,

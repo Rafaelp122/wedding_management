@@ -10,5 +10,6 @@
  */
 export interface TokenPayloadIn {
   email: string;
+  /** @maxLength 128 */
   password: string;
 }

@@ -60,6 +60,8 @@ export * from './itemStatusTransitionIn';
 export * from './logisticsContractsListParams';
 export * from './logisticsItemsListParams';
 export * from './logisticsSuppliersListParams';
+export * from './logoutIn';
+export * from './logoutOut';
 export * from './markAllReadOut';
 export * from './notificationOut';
 export * from './notificationsListParams';

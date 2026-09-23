@@ -120,7 +120,7 @@ CORS_ALLOW_HEADERS = [
 
 NINJA_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default=60)
+        minutes=env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default=15)
     ),
     "REFRESH_TOKEN_LIFETIME": timedelta(
         days=env.int("REFRESH_TOKEN_LIFETIME_DAYS", default=7)
@@ -131,9 +131,13 @@ NINJA_JWT = {
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
-    "USER_ID_FIELD": "id",
+    "USER_ID_FIELD": "uuid",
     "USER_ID_CLAIM": "user_id",
 }
+
+# --- Configurações de Segurança de Autenticação ---
+AUTH_LOCKOUT_MAX_ATTEMPTS = 5
+AUTH_LOCKOUT_DURATION_SECONDS = 900  # 15 minutos de bloqueio temporário
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
@@ -162,6 +166,7 @@ NINJA_EXTRA = {
         "auth_password_reset_confirm": "5/m",  # pragma: allowlist secret
         "auth_verify_email_token": "5/m",  # pragma: allowlist secret
         "auth_resend_verification": "3/m",  # pragma: allowlist secret
+        "auth_logout": "10/m",
     }
 }
 

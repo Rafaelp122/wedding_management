@@ -41,6 +41,20 @@ const sonnerMock = vi.hoisted(() => {
   });
 });
 
+const sentryMock = vi.hoisted(() => {
+  const globalState = globalThis as typeof globalThis & {
+    __SENTRY_MOCK__?: {
+      setContext: ReturnType<typeof vi.fn>;
+      captureException: ReturnType<typeof vi.fn>;
+    };
+  };
+
+  return (globalState.__SENTRY_MOCK__ ??= {
+    setContext: vi.fn(),
+    captureException: vi.fn(),
+  });
+});
+
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({
     children,
@@ -254,13 +268,6 @@ vi.mock("@/components/ui/dropdown-menu", () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalAny = globalThis as any;
 
-if (!globalAny.__SENTRY_MOCK__) {
-  globalAny.__SENTRY_MOCK__ = {
-    setContext: vi.fn(),
-    captureException: vi.fn(),
-  };
-}
-
 if (!globalAny.__MOCK_NAVIGATE__) {
   globalAny.__MOCK_NAVIGATE__ = vi.fn();
 }
@@ -270,12 +277,12 @@ vi.mock("sonner", () => ({
   Toaster: () => null,
 }));
 
-vi.mock("@sentry/react", () => globalAny.__SENTRY_MOCK__);
+vi.mock("@sentry/react", () => sentryMock);
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
     ...actual,
-    useNavigate: () => globalAny.__MOCK_NAVIGATE__,
+    useNavigate: () => (globalThis as any).__MOCK_NAVIGATE__,
     useRouteError: vi.fn(),
   };
 });

@@ -101,6 +101,7 @@ class TestSecurityAudit:
             "apps/users/services/google_auth_service.py",
             "apps/users/services/password_reset_service.py",
             "apps/users/services/email_verification_service.py",
+            "apps/users/services/lockout_service.py",
             "apps/tenants/services/tenant_service.py",
             "apps/core/services/storage/base.py",
             "apps/core/services/storage/cloudflare_r2.py",

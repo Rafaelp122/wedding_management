@@ -104,6 +104,7 @@ export function ForgotPasswordPage() {
                     <FormControl>
                       <Input
                         type="email"
+                        autoComplete="username"
                         className="text-xs border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
                         placeholder="helena@simaceito.com"
                         {...field}
