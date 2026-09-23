@@ -31,7 +31,7 @@ jobs:
       !startsWith(github.head_ref, 'dependabot/')
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -53,7 +53,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Run OpenCode AI Review
-        uses: anomalyco/opencode/github@v1.18.10
+        uses: anomalyco/opencode/github@v2.0.3
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
