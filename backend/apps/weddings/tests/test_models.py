@@ -497,3 +497,45 @@ class TestWeddingRichOperations:
         Wedding.objects.bulk_create([wedding])
         wedding.refresh_from_db()
         wedding.clean()  # Não deve levantar ValidationError
+
+    def test_primary_signatory_client_property(self, user: Any) -> None:
+        """primary_signatory_client retorna o Client marcado como is_primary_signatory=True."""
+        from apps.clients.tests.factories import ClientFactory
+        from apps.weddings.models import WeddingClient
+
+        wedding = WeddingFactory(company=user.company)
+        assert wedding.primary_signatory_client is None
+
+        client1 = ClientFactory(company=user.company, name="Noiva")
+        client2 = ClientFactory(company=user.company, name="Pagador")
+
+        WeddingClient.objects.create(
+            company=user.company,
+            wedding=wedding,
+            client=client1,
+            role=WeddingClient.RoleChoices.BRIDE,
+            is_primary_signatory=False,
+        )
+        assert wedding.primary_signatory_client is None
+
+        WeddingClient.objects.create(
+            company=user.company,
+            wedding=wedding,
+            client=client2,
+            role=WeddingClient.RoleChoices.FINANCIAL_PAYER,
+            is_primary_signatory=True,
+        )
+        assert wedding.primary_signatory_client == client2
+
+    def test_convert_to_planning_transitions_to_planning_status(
+        self, user: Any
+    ) -> None:
+        """convert_to_planning deve transitar para StatusChoices.PLANNING."""
+        future_date = timezone.now().date() + timedelta(days=60)
+        wedding = WeddingFactory(
+            company=user.company,
+            date=future_date,
+            status=Wedding.StatusChoices.PROPOSAL,
+        )
+        wedding.convert_to_planning()
+        assert wedding.status == Wedding.StatusChoices.PLANNING

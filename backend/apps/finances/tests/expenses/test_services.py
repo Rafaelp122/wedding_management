@@ -6,6 +6,8 @@ from uuid import uuid4
 
 import pytest
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory as _SupplierFactory
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
@@ -25,9 +27,7 @@ from apps.finances.tests.factories import (
 from apps.finances.tests.factories import BudgetFactory as _BudgetFactory
 from apps.finances.tests.factories import ExpenseFactory as _ExpenseFactory
 from apps.finances.tests.factories import InstallmentFactory as _InstallmentFactory
-from apps.logistics.models import Contract, Supplier
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
-from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.models import Wedding
@@ -723,7 +723,8 @@ class TestExpenseServiceContractIntegration:
 
     def test_update_expense_clear_contract(self, user: Any) -> None:
         """Desvinculação de contrato (contract=None) via update."""
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+        from apps.contracts.tests.factories import SupplierFactory
+        from apps.logistics.tests.factories import ContractFactory
 
         category = _setup_category(user)
         supplier = SupplierFactory(company=user.company)

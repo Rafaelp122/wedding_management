@@ -12,10 +12,11 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from pytest_factoryboy import register
 
-from apps.logistics.models import Contract
+from apps.contracts.models import Contract
+from apps.contracts.tests.factories import SupplierFactory
 from apps.weddings.tests.factories import WeddingFactory
 
-from .factories import ContractFactory, ItemFactory, SupplierFactory
+from .factories import ContractFactory, ItemFactory
 
 
 register(SupplierFactory)
@@ -39,26 +40,6 @@ def make_contract(user):
         )
 
     return _make
-
-
-@pytest.fixture
-def contract_with_addendum(user):
-    """Contrato pai SIGNED com um aditivo DRAFT vinculado."""
-    parent = ContractFactory(
-        wedding__company=user.company,
-        status="SIGNED",
-        total_amount=Decimal("5000.00"),
-        signed_date=date.today(),
-        pdf_file="contracts/dummy.pdf",
-    )
-    addendum = ContractFactory(
-        wedding=parent.wedding,
-        supplier=parent.supplier,
-        parent=parent,
-        status="DRAFT",
-        total_amount=Decimal("1000.00"),
-    )
-    return parent, addendum
 
 
 @pytest.fixture

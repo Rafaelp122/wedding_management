@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Wedding
+from .models import Wedding, WeddingClient
 
 
 @admin.register(Wedding)
@@ -42,3 +42,10 @@ class WeddingAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             },
         ),
     ]
+
+
+@admin.register(WeddingClient)
+class WeddingClientAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    list_display = ["wedding", "client", "role", "is_primary_signatory", "company"]
+    list_filter = ["role", "is_primary_signatory", "company"]
+    search_fields = ["wedding__groom_name", "wedding__bride_name", "client__name"]

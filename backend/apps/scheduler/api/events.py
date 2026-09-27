@@ -12,10 +12,12 @@ from apps.scheduler.schemas import (
     EventOut,
     EventPatchIn,
     SchedulerSummaryOut,
+    TimelineCompressionOut,
 )
 from apps.scheduler.selectors import (
     event_get_selector,
     event_list_selector,
+    get_wedding_timeline_compression_selector,
     scheduler_summary_selector,
 )
 from apps.scheduler.services import EventService
@@ -70,6 +72,24 @@ def get_scheduler_root_summary(request: AuthRequest) -> dict[str, Any]:
     Retorna o resumo consolidado de eventos (alias na raiz do scheduler).
     """
     return scheduler_summary_selector(company=request.user.company)
+
+
+@scheduler_router.get(
+    "/timeline-compression/",
+    response={200: TimelineCompressionOut, **READ_ERROR_RESPONSES},
+    operation_id="scheduler_timeline_compression_get",
+)
+def get_timeline_compression(
+    request: AuthRequest,
+    wedding_id: UUID4,
+) -> dict[str, Any]:
+    """
+    Retorna o diagnóstico de compressão temporal da linha do tempo para o casamento (RFC-001).
+    """
+    return get_wedding_timeline_compression_selector(
+        company=request.user.company,
+        wedding_uuid=wedding_id,
+    )
 
 
 @events_router.get(

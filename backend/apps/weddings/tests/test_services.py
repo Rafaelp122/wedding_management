@@ -500,3 +500,83 @@ class TestWeddingTemplateApplication:
 
         assert events1 == 8
         assert events2 == 8
+
+
+@pytest.mark.django_db
+class TestWeddingProposalAndPlanningLifecycle:
+    """Testes de ciclo de vida de propostas, clientes e conversão para planejamento."""
+
+    def test_create_wedding_proposal_creates_client_and_wedding_client(
+        self, user: Any
+    ) -> None:
+        from apps.clients.models import Client
+        from apps.weddings.models import WeddingClient
+        from apps.weddings.schemas import WeddingProposalIn
+
+        future_date = timezone.now().date() + timedelta(days=120)
+        payload = WeddingProposalIn(
+            groom_name="Rodrigo",
+            bride_name="Juliana",
+            date=future_date,
+            location="Espaço Villa",
+            expected_guests=150,
+            client_name="Rodrigo Silva",
+            client_cpf="123.456.789-10",
+            client_email="rodrigo@example.com",
+            client_phone="11977778888",
+        )
+
+        wedding = WeddingService.create_wedding_proposal(
+            company=user.company, payload=payload
+        )
+        assert wedding.status == Wedding.StatusChoices.PROPOSAL
+
+        client = Client.objects.filter(
+            company=user.company, cpf="123.456.789-10"
+        ).first()
+        assert client is not None
+        assert client.name == "Rodrigo Silva"
+
+        participant = WeddingClient.objects.filter(
+            wedding=wedding, client=client
+        ).first()
+        assert participant is not None
+        assert participant.is_primary_signatory is True
+        assert participant.role == WeddingClient.RoleChoices.FINANCIAL_PAYER
+        assert wedding.primary_signatory_client == client
+
+    def test_convert_wedding_to_planning_success(self, user: Any) -> None:
+        from apps.finances.models import Budget
+        from apps.weddings.schemas import PlannerContractIn, WeddingProposalIn
+
+        future_date = timezone.now().date() + timedelta(days=180)
+        proposal_payload = WeddingProposalIn(
+            groom_name="Lucas",
+            bride_name="Beatriz",
+            date=future_date,
+            location="Praia de Toque-Toque",
+            expected_guests=100,
+        )
+        wedding = WeddingService.create_wedding_proposal(
+            company=user.company, payload=proposal_payload
+        )
+
+        contract_payload = PlannerContractIn(
+            service_tier="COMPLETA",
+            effective_amount=Decimal("12000.00"),
+            installments_count=3,
+        )
+        WeddingService.save_planner_contract(
+            company=user.company,
+            wedding=wedding,
+            payload=contract_payload,
+        )
+
+        activated_wedding = WeddingService.convert_wedding_to_planning(
+            company=user.company,
+            wedding_id=wedding.uuid,
+        )
+
+        assert activated_wedding.status == Wedding.StatusChoices.PLANNING
+        budget = Budget.objects.get(company=user.company, wedding=wedding)
+        assert budget.baseline_amount == Decimal("12000.00")

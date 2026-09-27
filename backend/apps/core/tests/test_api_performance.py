@@ -12,8 +12,9 @@ import pytest
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
+from apps.contracts.tests.factories import SupplierFactory
 from apps.finances.tests.factories import BudgetCategoryFactory, ExpenseFactory
-from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+from apps.logistics.tests.factories import ContractFactory
 from apps.scheduler.tests.factories import EventFactory
 from apps.weddings.tests.factories import WeddingFactory
 
@@ -73,8 +74,8 @@ class TestApiPerformanceNPlusOne:
         "endpoint, setup_func",
         [
             ("/api/v1/finances/expenses/", _setup_expenses),
-            ("/api/v1/logistics/suppliers/", _setup_suppliers),
-            ("/api/v1/logistics/contracts/", _setup_contracts),
+            ("/api/v1/suppliers/", _setup_suppliers),
+            ("/api/v1/contracts/", _setup_contracts),
             ("/api/v1/scheduler/events/", _setup_events),
             ("/api/v1/weddings/", _setup_weddings),
         ],

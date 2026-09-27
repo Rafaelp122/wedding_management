@@ -13,12 +13,13 @@ from unittest.mock import patch
 import pytest
 from django.db import transaction
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory
 from apps.finances.models import BudgetCategory, Expense, Installment
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import BudgetCategoryFactory
-from apps.logistics.models import Contract, Supplier
-from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+from apps.logistics.tests.factories import ContractFactory
 from apps.scheduler.models import Event
 from apps.tenants.models import Company
 from apps.tenants.tests.factories import CompanyFactory

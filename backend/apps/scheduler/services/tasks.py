@@ -109,7 +109,7 @@ class TaskService:
             updated_fields.add("is_completed")
 
         details_kwargs = {}
-        for field in ("title", "description", "due_date"):
+        for field in ("title", "description", "due_date", "priority"):
             if field in data:
                 details_kwargs[field] = data.pop(field)
                 updated_fields.add(field)

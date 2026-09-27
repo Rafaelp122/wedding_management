@@ -16,6 +16,10 @@ class ItemIn(Schema):
     name: str = Field(min_length=1, max_length=255)
     description: str = ""
     quantity: int = Field(default=1, gt=0)
+    scope_status: str = "INCLUDED"
+    rejection_reason: str = ""
+    procurement_status: str = "CONTRATADO"
+    delivery_status: str = "PENDING"
     acquisition_status: str = "PENDING"
 
 
@@ -27,6 +31,14 @@ class ItemStatusTransitionIn(Schema):
     acquisition_status: str = Field(min_length=1)
 
 
+class ItemDiscardIn(Schema):
+    """Schema de entrada para descarte justificado de item de suprimento (RF-15)."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    rejection_reason: str = Field(min_length=1, max_length=1000)
+
+
 class ItemPatchIn(Schema):
     """Schema de entrada para atualização parcial de item de logística."""
 
@@ -36,6 +48,10 @@ class ItemPatchIn(Schema):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     description: str = ""
     quantity: int | None = Field(default=None, gt=0)
+    scope_status: str | None = None
+    rejection_reason: str | None = None
+    procurement_status: str | None = None
+    delivery_status: str | None = None
     acquisition_status: str | None = None
 
 
@@ -48,6 +64,17 @@ class ItemOut(Schema):
     name: str
     description: str
     quantity: int
+    scope_status: str = "INCLUDED"
+    rejection_reason: str = ""
+    procurement_status: str = "CONTRATADO"
+    delivery_status: str = "PENDING"
     acquisition_status: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
+
+
+# Aliases canônicos alinhados com a RFC-001 (RF-15)
+SupplyItemIn = ItemIn
+SupplyItemPatchIn = ItemPatchIn
+SupplyItemOut = ItemOut
+SupplyItemDiscardIn = ItemDiscardIn

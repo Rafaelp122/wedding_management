@@ -44,8 +44,15 @@ class Budget(TenantModel, WeddingOwnedMixin):
         related_name="budget",
         verbose_name="Casamento",
     )
+    baseline_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Linha de Base Original",
+    )
     total_estimated = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Orçamento Total Estimado",
@@ -63,6 +70,14 @@ class Budget(TenantModel, WeddingOwnedMixin):
 
     def __str__(self) -> str:
         return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"
+
+    def freeze_baseline(self) -> None:
+        """
+        Congela a linha de base original do orçamento caso ainda não tenha sido congelada.
+        Preserva o valor da primeira formalização de planejamento.
+        """
+        if self.baseline_amount is None:
+            self.baseline_amount = self.total_estimated
 
     def clean(self) -> None:
         """Valida se o teto estimado do orçamento não é inferior ao total já alocado."""

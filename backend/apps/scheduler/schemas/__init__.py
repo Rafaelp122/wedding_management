@@ -8,13 +8,20 @@ from apps.scheduler.schemas.event import (
     SchedulerSummaryOut,
 )
 from apps.scheduler.schemas.task import (
+    ChecklistItemIn,
+    ChecklistItemOut,
+    ChecklistItemPatchIn,
     TaskIn,
     TaskOut,
     TaskPatchIn,
+    TimelineCompressionOut,
 )
 
 
 __all__ = [
+    "ChecklistItemIn",
+    "ChecklistItemOut",
+    "ChecklistItemPatchIn",
     "EventIn",
     "EventOut",
     "EventPatchIn",
@@ -23,4 +30,5 @@ __all__ = [
     "TaskIn",
     "TaskOut",
     "TaskPatchIn",
+    "TimelineCompressionOut",
 ]

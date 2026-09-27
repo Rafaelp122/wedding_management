@@ -16,6 +16,8 @@ import factory
 import pytest
 from django.db import models
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory
 from apps.core.tests.base import BaseTenantIsolationTest
 from apps.finances.models import Budget, BudgetCategory, Expense, Installment
 from apps.finances.tests.factories import (
@@ -24,12 +26,10 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.logistics.models import Contract, Supplier
 from apps.logistics.models import Item as LogisticsItem
 from apps.logistics.tests.factories import (
     ContractFactory,
     ItemFactory,
-    SupplierFactory,
 )
 from apps.scheduler.models import Event, Task
 from apps.scheduler.tests.factories import EventFactory, TaskFactory

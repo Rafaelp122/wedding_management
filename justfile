@@ -189,10 +189,15 @@ format:
 mypy:
     docker compose exec backend uv run poe mypy
 
-# Valida arquitetura e isolamento de Bounded Contexts com Import Linter
+# Valida arquitetura e isolamento de Bounded Contexts com Tach
 [group('Qualidade & CI')]
 lint-imports:
     docker compose exec backend uv run poe lint-imports
+
+# Alias para validação arquitetural com Tach
+[group('Qualidade & CI')]
+arch:
+    docker compose exec backend uv run poe check-arch
 
 # Executa todos os checks de qualidade do Backend
 [group('Qualidade & CI')]

@@ -90,6 +90,10 @@ class TaskQuerySet(TenantQuerySet["Task"]):
         return qs
 
 
+# Alias canônico para alinhamento com a RFC-001 (ADR-031)
+ChecklistItemQuerySet = TaskQuerySet
+
+
 class EventQuerySet(TenantQuerySet["Event"]):
     """QuerySet customizado para Event com métodos encadeáveis."""
 

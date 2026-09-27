@@ -5,12 +5,12 @@ from uuid import uuid4
 
 import pytest
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory as _SupplierFactory
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.services.expense_service import ExpenseService
-from apps.logistics.models import Contract, Supplier
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
-from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.schemas import WeddingIn

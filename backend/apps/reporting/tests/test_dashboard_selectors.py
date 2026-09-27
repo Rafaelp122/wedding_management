@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+from apps.contracts.tests.factories import SupplierFactory
 from apps.core.exceptions import ObjectNotFoundError
 from apps.finances.models import Installment
 from apps.finances.tests.factories import (
@@ -17,7 +18,7 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+from apps.logistics.tests.factories import ContractFactory
 from apps.reporting.selectors import (
     cash_flow_by_month,
     dashboard_operations_selector,
@@ -275,7 +276,7 @@ class TestDashboardSelectors:
         """Valida anotação de expense_id e total_paid via ContractSummarySelector."""
         from decimal import Decimal
 
-        from apps.logistics.models import Contract
+        from apps.contracts.models import Contract
         from apps.reporting.selectors.summaries import ContractSummarySelector
 
         wedding = WeddingFactory(company=user.company)

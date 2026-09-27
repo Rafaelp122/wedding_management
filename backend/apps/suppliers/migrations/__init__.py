@@ -1,0 +1,1 @@
+"""Migrations para apps.suppliers."""
