@@ -17,7 +17,8 @@ import type {
   PagedEventOut,
   PagedTaskOut,
   SchedulerSummaryOut,
-  TaskOut
+  TaskOut,
+  TimelineCompressionOut
 } from '../../models';
 
 import {
@@ -30,11 +31,24 @@ import {
   getSchedulerTasksCreateResponseMock,
   getSchedulerTasksListResponseMock,
   getSchedulerTasksReopenResponseMock,
-  getSchedulerTasksUpdateResponseMock
+  getSchedulerTasksUpdateResponseMock,
+  getSchedulerTimelineCompressionGetResponseMock
 } from './scheduler.faker';
 
-export { getSchedulerEventsListResponseMock, getSchedulerEventsCreateResponseMock, getSchedulerSummaryGetResponseMock, getSchedulerEventsReadResponseMock, getSchedulerEventsUpdateResponseMock, getSchedulerTasksListResponseMock, getSchedulerTasksCreateResponseMock, getSchedulerTasksUpdateResponseMock, getSchedulerTasksCompleteResponseMock, getSchedulerTasksReopenResponseMock } from './scheduler.faker';
+export { getSchedulerTimelineCompressionGetResponseMock, getSchedulerEventsListResponseMock, getSchedulerEventsCreateResponseMock, getSchedulerSummaryGetResponseMock, getSchedulerEventsReadResponseMock, getSchedulerEventsUpdateResponseMock, getSchedulerTasksListResponseMock, getSchedulerTasksCreateResponseMock, getSchedulerTasksUpdateResponseMock, getSchedulerTasksCompleteResponseMock, getSchedulerTasksReopenResponseMock } from './scheduler.faker';
 
+
+export const getSchedulerTimelineCompressionGetMockHandler = (overrideResponse?: TimelineCompressionOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<TimelineCompressionOut> | TimelineCompressionOut), options?: RequestHandlerOptions) => {
+  return http.get('*/api/v1/scheduler/timeline-compression/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getSchedulerTimelineCompressionGetResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 
 export const getSchedulerEventsListMockHandler = (overrideResponse?: PagedEventOut | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<PagedEventOut> | PagedEventOut), options?: RequestHandlerOptions) => {
   return http.get('*/api/v1/scheduler/events/', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
@@ -176,6 +190,7 @@ export const getSchedulerTasksReopenMockHandler = (overrideResponse?: TaskOut | 
   }, options)
 }
 export const getSchedulerMock = () => [
+  getSchedulerTimelineCompressionGetMockHandler(),
   getSchedulerEventsListMockHandler(),
   getSchedulerEventsCreateMockHandler(),
   getSchedulerSummaryGetMockHandler(),

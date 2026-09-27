@@ -1,11 +1,12 @@
-import { useLogisticsContractsList, useLogisticsItemsList } from "@/api/generated/v1/endpoints/logistics/logistics";
+import { useContractsList } from "@/api/generated/v1/endpoints/contracts/contracts";
+import { useLogisticsItemsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 
 export function useWeddingVendorsItems(weddingUuid: string) {
   const {
     data: contractsData,
     isLoading: isLoadingContracts,
     error: contractsError,
-  } = useLogisticsContractsList({ wedding_id: weddingUuid });
+  } = useContractsList({ wedding_id: weddingUuid });
 
   const {
     data: itemsData,

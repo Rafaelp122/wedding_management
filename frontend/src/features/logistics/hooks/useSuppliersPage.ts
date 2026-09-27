@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  useLogisticsSuppliersList,
-} from "@/api/generated/v1/endpoints/logistics/logistics";
+  useSuppliersList,
+} from "@/api/generated/v1/endpoints/suppliers/suppliers";
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import {
   getPaginationInfo,
@@ -38,7 +38,7 @@ export function useSuppliersPage() {
     isFetching,
     error,
     refetch,
-  } = useLogisticsSuppliersList(
+  } = useSuppliersList(
     {
       limit: pagination.limit,
       offset: pagination.offset,

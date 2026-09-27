@@ -13,7 +13,7 @@ const supplier = createMockSupplier({
 
 function mockSuppliers(items = [supplier], count = items.length) {
   server.use(
-    http.get("*/api/v1/logistics/suppliers/", () =>
+    http.get("*/api/v1/suppliers/", () =>
       HttpResponse.json({ items, count }),
     ),
   );
@@ -90,7 +90,7 @@ describe("SuppliersPage", () => {
   it("shows the API error and retries the request", async () => {
     let shouldFail = true;
     server.use(
-      http.get("*/api/v1/logistics/suppliers/", () =>
+      http.get("*/api/v1/suppliers/", () =>
         shouldFail
           ? HttpResponse.json({ detail: "Falha ao listar" }, { status: 500 })
           : HttpResponse.json({ items: [supplier], count: 1 }),
@@ -138,7 +138,7 @@ describe("SuppliersPage", () => {
   it("filters active suppliers", async () => {
     let activeFilter: string | null = null;
     server.use(
-      http.get("*/api/v1/logistics/suppliers/", ({ request }) => {
+      http.get("*/api/v1/suppliers/", ({ request }) => {
         activeFilter = new URL(request.url).searchParams.get("is_active");
         return HttpResponse.json({ items: [supplier], count: 1 });
       }),
@@ -160,11 +160,11 @@ describe("SuppliersPage", () => {
   it("refetches suppliers after creation", async () => {
     let listRequests = 0;
     server.use(
-      http.get("*/api/v1/logistics/suppliers/", () => {
+      http.get("*/api/v1/suppliers/", () => {
         listRequests += 1;
         return HttpResponse.json({ items: [], count: 0 });
       }),
-      http.post("*/api/v1/logistics/suppliers/", () =>
+      http.post("*/api/v1/suppliers/", () =>
         HttpResponse.json(supplier),
       ),
     );
@@ -194,7 +194,7 @@ describe("SuppliersPage", () => {
       name: "Fotografia Aurora",
     });
     server.use(
-      http.get("*/api/v1/logistics/suppliers/", ({ request }) => {
+      http.get("*/api/v1/suppliers/", ({ request }) => {
         const offset = new URL(request.url).searchParams.get("offset");
         return HttpResponse.json({
           items: offset === "10" ? [pageTwoSupplier] : [supplier],
@@ -213,7 +213,7 @@ describe("SuppliersPage", () => {
   it("opens supplier details when a row is clicked", async () => {
     mockSuppliers();
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () =>
+      http.get("*/api/v1/suppliers/:uuid/", () =>
         HttpResponse.json(supplier),
       ),
     );
@@ -259,7 +259,7 @@ describe("SuppliersPage", () => {
   it("deletes a supplier from the confirmation dialog", async () => {
     mockSuppliers();
     server.use(
-      http.delete("*/api/v1/logistics/suppliers/:uuid/", () =>
+      http.delete("*/api/v1/suppliers/:uuid/", () =>
         HttpResponse.json(null, { status: 204 }),
       ),
     );

@@ -48,7 +48,7 @@ describe("useSupplierMutations", () => {
   it("shows error toast on API failure when deleting", async () => {
     const { http, HttpResponse } = await import("msw");
     server.use(
-      http.delete("*/api/v1/logistics/suppliers/*", () =>
+      http.delete("*/api/v1/suppliers/*", () =>
         HttpResponse.json({ detail: "Fornecedor não encontrado" }, { status: 404 }),
       ),
     );

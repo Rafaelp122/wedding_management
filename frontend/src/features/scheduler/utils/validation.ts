@@ -30,3 +30,20 @@ export const createEventSchema = SchedulerEventsCreateBody.superRefine((data, ct
 
 /** Dados validados do formulário de criação de evento. */
 export type CreateEventFormData = z.infer<typeof createEventSchema>;
+
+/** Valida os dados de criação de item de checklist / tarefa. */
+export const createTaskSchema = z.object({
+  title: z
+    .string()
+    .min(1, "O título da tarefa é obrigatório.")
+    .max(255, "Máximo de 255 caracteres."),
+  description: z.string().optional().default(""),
+  priority: z.string().default("MEDIUM"),
+  due_date: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.trim() !== "" ? val : null)),
+});
+
+export type CreateTaskFormData = z.input<typeof createTaskSchema>;

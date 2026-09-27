@@ -8,6 +8,8 @@ import { getApiErrorInfo } from "@/api/error-utils";
 import { WeddingDetailTabs } from "@/features/weddings/components/WeddingDetailTabs";
 import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDialog";
 import { CancelWeddingDialog } from "@/features/weddings/components/CancelWeddingDialog";
+import { PlannerContractDialog } from "@/features/weddings/components/PlannerContractDialog";
+import { ConvertToPlanningDialog } from "@/features/weddings/components/ConvertToPlanningDialog";
 import { WeddingHeader } from "@/features/weddings/components/WeddingHeader";
 import { calculateChecklistPercentage } from "@/features/weddings/utils/wedding-status";
 
@@ -20,6 +22,8 @@ export default function WeddingDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [plannerContractDialogOpen, setPlannerContractDialogOpen] = useState(false);
+  const [convertToPlanningDialogOpen, setConvertToPlanningDialogOpen] = useState(false);
 
   const { data: response, isLoading, error, invalidateWeddingQueries } = useWeddingDetail(uuid!);
   const { mutate: completeWedding } = useWeddingsComplete();
@@ -168,10 +172,16 @@ export default function WeddingDetailPage() {
         onCompleteClick={handleComplete}
         onCancelClick={() => setCancelDialogOpen(true)}
         onReopenClick={handleReopen}
+        onPlannerContractClick={() => setPlannerContractDialogOpen(true)}
+        onConvertToPlanningClick={() => setConvertToPlanningDialogOpen(true)}
       />
 
       {/* Tabs de conteúdo */}
-      <WeddingDetailTabs wedding={wedding} overview={overview} />
+      <WeddingDetailTabs
+        wedding={wedding}
+        overview={overview}
+        onEditContract={() => setPlannerContractDialogOpen(true)}
+      />
 
       <EditWeddingDialog
         wedding={wedding}
@@ -191,6 +201,22 @@ export default function WeddingDetailPage() {
           invalidateWeddingQueries();
           setCancelDialogOpen(false);
         }}
+      />
+
+      <PlannerContractDialog
+        weddingUuid={wedding.uuid}
+        contract={wedding.planner_contract}
+        open={plannerContractDialogOpen}
+        onOpenChange={setPlannerContractDialogOpen}
+        onSuccess={invalidateWeddingQueries}
+      />
+
+      <ConvertToPlanningDialog
+        wedding={wedding}
+        open={convertToPlanningDialogOpen}
+        onOpenChange={setConvertToPlanningDialogOpen}
+        onSuccess={invalidateWeddingQueries}
+        onOpenContractDialog={() => setPlannerContractDialogOpen(true)}
       />
     </div>
   );

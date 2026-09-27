@@ -47,6 +47,9 @@ describe("CreateItemDialog", () => {
     expect(screen.getByLabelText("Descrição (Opcional)")).toBeInTheDocument();
     expect(screen.getByLabelText("Quantidade")).toBeInTheDocument();
     expect(
+      screen.getByRole("combobox", { name: /escopo/i }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("combobox", { name: /status/i }),
     ).toBeInTheDocument();
     expect(
@@ -58,7 +61,7 @@ describe("CreateItemDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("fills form and submits", async () => {
+  it("fills form and submits with default INCLUDED scope", async () => {
     const user = userEvent.setup();
 
     let capturedBody: unknown;
@@ -90,14 +93,58 @@ describe("CreateItemDialog", () => {
     await user.click(screen.getByRole("button", { name: /criar item/i }));
 
     await waitFor(() => {
-      expect(capturedBody).toEqual({
-        wedding: weddingUuid,
-        name: "Item de Teste",
-        description: "Descrição detalhada do item",
-        quantity: 3,
-        acquisition_status: "PENDING",
-        contract: null,
-      });
+      expect(capturedBody).toEqual(
+        expect.objectContaining({
+          wedding: weddingUuid,
+          name: "Item de Teste",
+          description: "Descrição detalhada do item",
+          quantity: 3,
+          acquisition_status: "PENDING",
+          contract: null,
+          scope_status: "INCLUDED",
+          delivery_status: "PENDING",
+        }),
+      );
+    });
+  });
+
+  it("submits with DESIRED scope when selected", async () => {
+    const user = userEvent.setup();
+
+    let capturedBody: unknown;
+    server.use(
+      http.post("*/api/v1/logistics/items/", async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json({}, { status: 201 });
+      }),
+    );
+
+    render(
+      <CreateItemDialog
+        weddingUuid={weddingUuid}
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Nome"), "Item Desejado");
+
+    const scopeSelect = screen.getByRole("combobox", { name: /escopo/i });
+    await user.click(scopeSelect);
+    const desiredOption = await screen.findByRole("option", { name: "Desejado" });
+    await user.click(desiredOption);
+
+    await user.click(screen.getByRole("button", { name: /criar item/i }));
+
+    await waitFor(() => {
+      expect(capturedBody).toEqual(
+        expect.objectContaining({
+          wedding: weddingUuid,
+          name: "Item Desejado",
+          scope_status: "DESIRED",
+        }),
+      );
     });
   });
 

@@ -12,5 +12,6 @@ export interface TaskPatchIn {
   title?: string | null;
   description?: string;
   due_date?: string | null;
+  priority?: string | null;
   is_completed?: boolean | null;
 }

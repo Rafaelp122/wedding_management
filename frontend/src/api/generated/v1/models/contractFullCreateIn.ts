@@ -4,25 +4,29 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
-import type { ItemIn } from './itemIn';
 
 /**
  * Schema de entrada para criação de contrato com itens e despesa opcional.
  */
 export interface ContractFullCreateIn {
   wedding: string;
-  supplier: string;
+  contract_type?: string;
+  service_tier?: string | null;
+  supplier?: string | null;
+  client?: string | null;
   /**
      * @minLength 1
      * @maxLength 255
      */
   name: string;
   total_amount: number | string;
+  /** @minimum 1 */
+  installments_count?: number;
   status?: string;
   description?: string;
   parent?: string | null;
   pdf_file_key?: string | null;
-  items?: ItemIn[];
+  items?: unknown[];
   items_data?: string | null;
   create_expense?: boolean;
   expense_category?: string | null;

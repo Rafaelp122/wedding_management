@@ -19,5 +19,9 @@ export interface ItemIn {
   description?: string;
   /** @exclusiveMinimum 0 */
   quantity?: number;
+  scope_status?: string;
+  rejection_reason?: string;
+  procurement_status?: string;
+  delivery_status?: string;
   acquisition_status?: string;
 }

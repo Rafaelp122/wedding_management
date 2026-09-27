@@ -4,8 +4,23 @@ import { WeddingChecklistTable } from "@/features/scheduler/components/tasks/Che
 import { createMockTask } from "@/test-data";
 
 const mockTasks = [
-  createMockTask({ uuid: "t-1", title: "Contratar buffet", description: "Pesquisar e fechar contrato", due_date: "2025-03-15", is_completed: false }),
-  createMockTask({ uuid: "t-2", title: "Escolher local", description: null, due_date: null, is_completed: true }),
+  createMockTask({
+    uuid: "t-1",
+    title: "Contratar buffet",
+    description: "Pesquisar e fechar contrato",
+    due_date: "2025-03-15",
+    priority: "HIGH",
+    is_completed: false,
+  }),
+  createMockTask({
+    uuid: "t-2",
+    title: "Escolher local",
+    description: null,
+    due_date: null,
+    priority: "LOW",
+    is_completed: true,
+    completed_at: "2025-01-20",
+  }),
 ];
 
 describe("WeddingChecklistTable", () => {
@@ -36,7 +51,20 @@ describe("WeddingChecklistTable", () => {
     expect(screen.getByText("Escolher local")).toBeInTheDocument();
   });
 
-  it("shows completed task with line-through", () => {
+  it("renders priority badges", () => {
+    render(
+      <WeddingChecklistTable
+        tasks={mockTasks}
+        onToggle={vi.fn()}
+        isUpdating={false}
+      />,
+    );
+
+    expect(screen.getByText("Alta")).toBeInTheDocument();
+    expect(screen.getByText("Baixa")).toBeInTheDocument();
+  });
+
+  it("shows completed task with line-through and completion date", () => {
     render(
       <WeddingChecklistTable
         tasks={mockTasks}
@@ -47,6 +75,7 @@ describe("WeddingChecklistTable", () => {
 
     const completedLabel = screen.getByText("Escolher local");
     expect(completedLabel.className).toContain("line-through");
+    expect(screen.getByText("Concluída em: 20/01/2025")).toBeInTheDocument();
   });
 
   it("renders due date when present", () => {

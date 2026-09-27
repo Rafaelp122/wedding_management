@@ -17,5 +17,6 @@ export interface TaskIn {
   title: string;
   description?: string;
   due_date?: string | null;
+  priority?: string;
   is_completed?: boolean;
 }

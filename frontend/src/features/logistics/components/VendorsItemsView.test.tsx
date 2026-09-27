@@ -55,7 +55,7 @@ vi.mock("./items/ItemsTable", () => ({
   ),
 }));
 
-vi.mock("./contracts/ContractDetailDialog", () => ({
+vi.mock("@/features/contracts/components/ContractDetailDialog", () => ({
   ContractDetailDialog: vi.fn(
     ({
       open,
@@ -88,7 +88,7 @@ vi.mock("./contracts/ContractDetailDialog", () => ({
   ),
 }));
 
-vi.mock("./contracts/ContractUploadDialog", () => ({
+vi.mock("@/features/contracts/components/ContractUploadDialog", () => ({
   ContractUploadDialog: vi.fn(
     ({
       open,
@@ -152,7 +152,7 @@ vi.mock("./items/EditItemDialog", () => ({
 // ---------------------------------------------------------------------------
 function mockLoading() {
   server.use(
-    http.get("*/api/v1/logistics/contracts/", async () => {
+    http.get("*/api/v1/contracts/", async () => {
       await delay("infinite");
       return HttpResponse.json({ items: [], count: 0 });
     }),
@@ -165,7 +165,7 @@ function mockLoading() {
 
 function mockError() {
   server.use(
-    http.get("*/api/v1/logistics/contracts/", () => {
+    http.get("*/api/v1/contracts/", () => {
       return HttpResponse.json({ detail: "API failure" }, { status: 500 });
     }),
     http.get("*/api/v1/logistics/items/", () => {
@@ -179,7 +179,7 @@ function mockData(
   items: ReturnType<typeof createMockItem>[] = [],
 ) {
   server.use(
-    http.get("*/api/v1/logistics/contracts/", () => {
+    http.get("*/api/v1/contracts/", () => {
       return HttpResponse.json({
         items: contracts,
         count: contracts.length,

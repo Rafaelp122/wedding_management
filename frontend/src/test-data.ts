@@ -1,4 +1,5 @@
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import type { PlannerContractOut } from "@/api/generated/v1/models/plannerContractOut";
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import type { ExpenseOut } from "@/api/generated/v1/models/expenseOut";
 import type { TaskOut } from "@/api/generated/v1/models/taskOut";
@@ -6,6 +7,7 @@ import type { EventOut } from "@/api/generated/v1/models/eventOut";
 import type { BudgetOut } from "@/api/generated/v1/models/budgetOut";
 import type { BudgetCategoryOut } from "@/api/generated/v1/models/budgetCategoryOut";
 import type { ContractOut } from "@/api/generated/v1/models/contractOut";
+import type { ContractAddendumOut } from "@/api/generated/v1/models/contractAddendumOut";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import type { DashboardSummaryOut } from "@/api/generated/v1/models/dashboardSummaryOut";
 import type { CriticalWeddingOut } from "@/api/generated/v1/models/criticalWeddingOut";
@@ -14,6 +16,25 @@ import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashb
 import type { WeddingDashboardCategoryOut } from "@/api/generated/v1/models/weddingDashboardCategoryOut";
 import type { WeddingDashboardInstallmentOut } from "@/api/generated/v1/models/weddingDashboardInstallmentOut";
 import type { WeddingDashboardTaskOut } from "@/api/generated/v1/models/weddingDashboardTaskOut";
+import type { ClientOut } from "@/api/generated/v1/models/clientOut";
+import type { WeddingParticipantOut } from "@/api/generated/v1/models/weddingParticipantOut";
+
+export function createMockPlannerContract(
+  overrides?: Partial<PlannerContractOut>,
+): PlannerContractOut {
+  return {
+    uuid: "pc-1",
+    service_tier: "COMPLETA",
+    effective_amount: "5000.00",
+    installments_count: 3,
+    signed_date: "2025-01-15",
+    pdf_file: null,
+    status: "SIGNED",
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
 
 export function createMockWedding(overrides?: Partial<WeddingOut>): WeddingOut {
   return {
@@ -75,12 +96,16 @@ export function createMockTask(overrides?: Partial<TaskOut>): TaskOut {
     title: "Contratar buffet",
     description: "Pesquisar e fechar contrato",
     due_date: "2025-03-15",
+    priority: "MEDIUM",
     is_completed: false,
+    completed_at: null,
     is_overdue: false,
     days_overdue: 0,
     ...overrides,
   };
 }
+
+export const createMockChecklistItem = createMockTask;
 
 export function createMockEvent(overrides?: Partial<EventOut>): EventOut {
   return {
@@ -132,21 +157,44 @@ export function createMockBudgetCategory(
 export function createMockContract(
   overrides?: Partial<ContractOut>,
 ): ContractOut {
+  const total = overrides?.total_amount ?? "5000.00";
   return {
     uuid: "c-1",
     wedding: "w-1",
     supplier: "supplier-uuid-123",
-    total_amount: "5000.00",
+    total_amount: total,
     status: "SIGNED",
     description: "Buffet contrato",
     signed_date: "2025-01-15",
     supplier_name: "Buffet Gourmet Ltda",
     addendums_count: 0,
     addendums_total_amount: "0.00",
-    total_amount_with_addendums: "5000.00",
+    total_amount_with_addendums: total,
+    base_amount: total,
+    addendums_total: "0.00",
+    effective_amount: total,
+    addendums: [],
     allowed_transitions: ["COMPLETED", "CANCELED"],
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+export function createMockContractAddendum(
+  overrides?: Partial<ContractAddendumOut>,
+): ContractAddendumOut {
+  return {
+    uuid: "addendum-1",
+    contract_id: "c-1",
+    amount: "1000.00",
+    signed_date: "2025-01-20",
+    justification: "Inclusão de mesas extras",
+    status: "PENDING",
+    has_file: false,
+    file_name: null,
+    created_at: "2025-01-15T00:00:00Z",
+    updated_at: "2025-01-15T00:00:00Z",
     ...overrides,
   };
 }
@@ -158,12 +206,18 @@ export function createMockItem(overrides?: Partial<ItemOut>): ItemOut {
     name: "Cadeiras",
     description: "Cadeiras Tiffany",
     quantity: 150,
+    scope_status: "INCLUDED",
+    rejection_reason: "",
+    procurement_status: "CONTRATADO",
+    delivery_status: "PENDING",
     acquisition_status: "PENDING",
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
     ...overrides,
   };
 }
+
+export const createMockSupplyItem = createMockItem;
 
 import type { DashboardInstallmentDetailOut } from "@/api/generated/v1/models/dashboardInstallmentDetailOut";
 import type { DashboardTaskDetailOut } from "@/api/generated/v1/models/dashboardTaskDetailOut";
@@ -352,6 +406,40 @@ export function createMockWeddingDashboard(
     upcoming_installments: [],
     urgent_tasks: [],
     categories_summary: [],
+    ...overrides,
+  };
+}
+
+export function createMockClient(overrides?: Partial<ClientOut>): ClientOut {
+  return {
+    uuid: "client-1",
+    name: "Ana Clara Silva",
+    cpf: "123.456.789-00",
+    email: "anaclara@exemplo.com",
+    phone: "(11) 98765-4321",
+    notes: "Cliente preferencial",
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+export function createMockWeddingParticipant(
+  overrides?: Partial<WeddingParticipantOut>,
+): WeddingParticipantOut {
+  return {
+    uuid: "part-1",
+    client_id: "client-1",
+    client_name: "Ana Clara Silva",
+    client_cpf: "123.456.789-00",
+    client_email: "anaclara@exemplo.com",
+    client_phone: "(11) 98765-4321",
+    role: "BRIDE",
+    role_display: "Noiva",
+    is_primary_signatory: true,
+    notes: "Signatária do contrato principal",
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
     ...overrides,
   };
 }

@@ -33,9 +33,11 @@ import type {
   SchedulerEventsListParams,
   SchedulerSummaryOut,
   SchedulerTasksListParams,
+  SchedulerTimelineCompressionGetParams,
   TaskIn,
   TaskOut,
-  TaskPatchIn
+  TaskPatchIn,
+  TimelineCompressionOut
 } from '../../models';
 
 import { customInstance } from '../../../../api-client';
@@ -60,6 +62,100 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+/**
+ * Retorna o diagnóstico de compressão temporal da linha do tempo para o casamento (RFC-001).
+ * @summary Get Timeline Compression
+ */
+export const schedulerTimelineCompressionGet = (
+    params: SchedulerTimelineCompressionGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimelineCompressionOut>(
+      {url: `/api/v1/scheduler/timeline-compression/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getSchedulerTimelineCompressionGetQueryKey = (params?: SchedulerTimelineCompressionGetParams,) => {
+    return [
+    `/api/v1/scheduler/timeline-compression/`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSchedulerTimelineCompressionGetQueryOptions = <TData = Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError = ErrorType<ErrorResponse>>(params: SchedulerTimelineCompressionGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSchedulerTimelineCompressionGetQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>> = ({ signal }) => schedulerTimelineCompressionGet(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SchedulerTimelineCompressionGetQueryResult = NonNullable<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>>
+export type SchedulerTimelineCompressionGetQueryError = ErrorType<ErrorResponse>
+
+
+export function useSchedulerTimelineCompressionGet<TData = Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError = ErrorType<ErrorResponse>>(
+ params: SchedulerTimelineCompressionGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>,
+          TError,
+          Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSchedulerTimelineCompressionGet<TData = Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError = ErrorType<ErrorResponse>>(
+ params: SchedulerTimelineCompressionGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>,
+          TError,
+          Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSchedulerTimelineCompressionGet<TData = Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError = ErrorType<ErrorResponse>>(
+ params: SchedulerTimelineCompressionGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Timeline Compression
+ */
+
+export function useSchedulerTimelineCompressionGet<TData = Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError = ErrorType<ErrorResponse>>(
+ params: SchedulerTimelineCompressionGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof schedulerTimelineCompressionGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSchedulerTimelineCompressionGetQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
 
 /**
  * Lista todos os eventos do cronograma do Planner logado.

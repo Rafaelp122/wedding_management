@@ -194,4 +194,71 @@ describe("WeddingHeader", () => {
 
     expect(screen.queryByTitle("Reabrir casamento")).not.toBeInTheDocument();
   });
+
+  it("renders contract and convert buttons when status is PROPOSAL", async () => {
+    const onPlannerContractClick = vi.fn();
+    const onConvertToPlanningClick = vi.fn();
+
+    const proposalWedding = createMockWedding({
+      ...mockWedding,
+      status: "PROPOSAL",
+    });
+
+    render(
+      <WeddingHeader
+        wedding={proposalWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={0}
+        onEditClick={vi.fn()}
+        onPlannerContractClick={onPlannerContractClick}
+        onConvertToPlanningClick={onConvertToPlanningClick}
+      />,
+    );
+
+    expect(screen.getByText("Proposta")).toBeInTheDocument();
+
+    const contractBtn = screen.getByRole("button", {
+      name: /contrato da assessoria/i,
+    });
+    const convertBtn = screen.getByRole("button", {
+      name: /efetivar casamento/i,
+    });
+
+    expect(contractBtn).toBeInTheDocument();
+    expect(convertBtn).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(contractBtn);
+    expect(onPlannerContractClick).toHaveBeenCalledTimes(1);
+
+    await user.click(convertBtn);
+    expect(onConvertToPlanningClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders status badge, contract button and cancel button when status is PLANNING", async () => {
+    const onPlannerContractClick = vi.fn();
+    const onCancelClick = vi.fn();
+
+    const planningWedding = createMockWedding({
+      ...mockWedding,
+      status: "PLANNING",
+    });
+
+    render(
+      <WeddingHeader
+        wedding={planningWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={20}
+        onEditClick={vi.fn()}
+        onPlannerContractClick={onPlannerContractClick}
+        onCancelClick={onCancelClick}
+      />,
+    );
+
+    expect(screen.getByText("Planejamento")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /contrato da assessoria/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByTitle("Cancelar casamento")).toBeInTheDocument();
+  });
 });

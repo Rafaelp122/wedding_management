@@ -9,13 +9,18 @@
  * Schema de entrada para atualização parcial de contrato.
  */
 export interface ContractPatchIn {
+  contract_type?: string | null;
+  service_tier?: string | null;
   supplier?: string | null;
+  client?: string | null;
   name?: string | null;
   total_amount?: number | string | null;
+  installments_count?: number | null;
   status?: string | null;
   description?: string;
   parent?: string | null;
   pdf_file_key?: string | null;
   expiration_date?: string | null;
   alert_days_before?: number | null;
+  signed_date?: string | null;
 }

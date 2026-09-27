@@ -1,6 +1,6 @@
 import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 
-type WeddingStatusBadgeVariant = "default" | "secondary" | "destructive";
+type WeddingStatusBadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
 interface WeddingStatusInfo {
   label: string;
@@ -22,12 +22,24 @@ interface WeddingStatusAvatarStyle {
 const DEFAULT_WEDDING_STATUS = WeddingStatusEnum.IN_PROGRESS;
 
 const WEDDING_STATUS_INFO: Record<WeddingStatusEnum, WeddingStatusInfo> = {
+  [WeddingStatusEnum.PROPOSAL]: { label: "Proposta", variant: "outline" },
+  [WeddingStatusEnum.PLANNING]: { label: "Planejamento", variant: "default" },
   [WeddingStatusEnum.IN_PROGRESS]: { label: "Em Andamento", variant: "default" },
   [WeddingStatusEnum.COMPLETED]: { label: "Concluído", variant: "secondary" },
   [WeddingStatusEnum.CANCELED]: { label: "Cancelado", variant: "destructive" },
 };
 
 const WEDDING_STATUS_BADGE_STYLES: Record<WeddingStatusEnum, WeddingStatusBadgeStyle> = {
+  [WeddingStatusEnum.PROPOSAL]: {
+    className:
+      "bg-aura-50 text-aura-700 border-aura-200 dark:bg-aura-500/10 dark:text-aura-400 dark:border-aura-500/20",
+    dotClassName: "bg-aura-500",
+  },
+  [WeddingStatusEnum.PLANNING]: {
+    className:
+      "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20",
+    dotClassName: "bg-indigo-500",
+  },
   [WeddingStatusEnum.IN_PROGRESS]: {
     className:
       "bg-aura-50 text-aura-700 border-aura-200 dark:bg-aura-500/10 dark:text-aura-400 dark:border-aura-500/20",
@@ -46,6 +58,16 @@ const WEDDING_STATUS_BADGE_STYLES: Record<WeddingStatusEnum, WeddingStatusBadgeS
 };
 
 const WEDDING_STATUS_AVATAR_STYLES: Record<WeddingStatusEnum, WeddingStatusAvatarStyle> = {
+  [WeddingStatusEnum.PROPOSAL]: {
+    bg: "bg-aura-100 dark:bg-aura-900/40",
+    border: "border-aura-200 dark:border-aura-800/50",
+    text: "text-aura-700 dark:text-aura-300",
+  },
+  [WeddingStatusEnum.PLANNING]: {
+    bg: "bg-indigo-100 dark:bg-indigo-900/40",
+    border: "border-indigo-200 dark:border-indigo-800/50",
+    text: "text-indigo-700 dark:text-indigo-300",
+  },
   [WeddingStatusEnum.IN_PROGRESS]: {
     bg: "bg-aura-100 dark:bg-aura-900/40",
     border: "border-aura-200 dark:border-aura-800/50",

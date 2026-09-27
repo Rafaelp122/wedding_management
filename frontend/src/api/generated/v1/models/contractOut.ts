@@ -4,6 +4,7 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
+import type { ContractAddendumOut } from './contractAddendumOut';
 
 /**
  * Schema de saída para exibição de contrato.
@@ -11,10 +12,14 @@
 export interface ContractOut {
   uuid: string;
   wedding: string;
-  supplier: string;
+  contract_type?: string;
+  service_tier?: string | null;
+  supplier?: string | null;
+  client?: string | null;
   name?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_amount: string;
+  installments_count?: number;
   status: string;
   description?: string;
   expiration_date?: string | null;
@@ -24,6 +29,7 @@ export interface ContractOut {
   supplier_name?: string;
   supplier_phone?: string;
   supplier_email?: string;
+  client_name?: string;
   has_linked_expense?: boolean;
   progress_percent?: number;
   alert_days_before?: number | null;
@@ -34,6 +40,13 @@ export interface ContractOut {
   addendums_total_amount?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_amount_with_addendums?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  base_amount?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  addendums_total?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  effective_amount?: string;
+  addendums?: ContractAddendumOut[];
   has_file?: boolean;
   file_name?: string | null;
   is_addendum?: boolean;

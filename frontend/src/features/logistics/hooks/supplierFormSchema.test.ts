@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { z } from "zod";
 import { SupplierFormSchema } from "./supplierFormSchema";
 
 describe("SupplierFormSchema", () => {
@@ -30,7 +31,7 @@ describe("SupplierFormSchema", () => {
     const result = SupplierFormSchema.safeParse(invalidSupplier);
     expect(result.success).toBe(false);
     if (!result.success) {
-      const issue = result.error.issues.find((i) => i.path.includes("cnpj"));
+      const issue = result.error.issues.find((i: z.ZodIssue) => i.path.includes("cnpj"));
       expect(issue).toBeDefined();
       expect(issue?.message).toBe("CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.");
     }
@@ -43,7 +44,7 @@ describe("SupplierFormSchema", () => {
     const result = SupplierFormSchema.safeParse(invalidSupplier);
     expect(result.success).toBe(false);
     if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join("."));
+      const paths = result.error.issues.map((i: z.ZodIssue) => i.path.join("."));
       expect(paths).toContain("name");
       expect(paths).toContain("phone");
       expect(paths).toContain("email");
